@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "name": "polished_stone_gabbro",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "evolution:polished_stone_gabbro"
+        }
+      ],
+      "functions": [
+        {
+          "function": "minecraft:set_count",
+          "conditions": [
+            {
+              "condition": "minecraft:survives_explosion"
+            }
+          ],
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

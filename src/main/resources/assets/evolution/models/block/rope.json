@@ -1,0 +1,27 @@
+{
+	"textures": {
+		"0": "evolution:block/rope",
+		"particle": "evolution:block/rope"
+	},
+	"ambientocclusion": false,
+	"elements": [
+		{
+			"from": [8.45, 0, 1.5],
+			"to": [12.95, 16, 1.5],
+			"rotation": {"angle": 22.5, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"north": {"uv": [5, 0, 10.5, 16], "texture": "#0"},
+				"south": {"uv": [5, 0, 10.5, 16], "texture": "#0"}
+			}
+		},
+		{
+			"from": [3.05, 0, 1.5],
+			"to": [7.55, 16, 1.5],
+			"rotation": {"angle": -22.5, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"north": {"uv": [5, 0, 10.5, 16], "texture": "#0"},
+				"south": {"uv": [5, 0, 10.5, 16], "texture": "#0"}
+			}
+		}
+	]
+}

@@ -1,0 +1,13 @@
+{
+    "variants": {
+		"oxidation=0": { "model": "evolution:block/block_copper_0" },
+        "oxidation=1": { "model": "evolution:block/block_copper_1" },
+		"oxidation=2": { "model": "evolution:block/block_copper_2" },
+		"oxidation=3": { "model": "evolution:block/block_copper_3" },
+		"oxidation=4": { "model": "evolution:block/block_copper_4" },
+		"oxidation=5": { "model": "evolution:block/block_copper_5" },
+		"oxidation=6": { "model": "evolution:block/block_copper_6" },
+		"oxidation=7": { "model": "evolution:block/block_copper_7" },
+		"oxidation=8": { "model": "evolution:block/block_copper_8" }
+    }
+}

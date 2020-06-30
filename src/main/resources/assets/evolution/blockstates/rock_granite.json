@@ -1,0 +1,10 @@
+{
+    "variants": {
+        "": [
+			{"model": "evolution:block/rock_granite"},
+			{"model": "evolution:block/rock_granite", "y": 90},
+			{"model": "evolution:block/rock_granite", "y": 180},
+			{"model": "evolution:block/rock_granite", "y": 270}
+		]
+    }
+}

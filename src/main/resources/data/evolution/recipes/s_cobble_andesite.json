@@ -1,0 +1,10 @@
+{
+	"type": "minecraft:smelting",
+	"group": "stone",
+	"ingredient": {
+		"tag": "evolution:t_cobblestone"
+	},
+	"result":  "evolution:stone_andesite",
+	"experience": 1.3,
+	"cookingtime": 10
+}

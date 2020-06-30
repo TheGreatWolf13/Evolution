@@ -1,0 +1,10 @@
+{
+    "variants": {
+        "": [
+			{"model": "evolution:block/rock_gneiss"},
+			{"model": "evolution:block/rock_gneiss", "y": 90},
+			{"model": "evolution:block/rock_gneiss", "y": 180},
+			{"model": "evolution:block/rock_gneiss", "y": 270}
+		]
+    }
+}

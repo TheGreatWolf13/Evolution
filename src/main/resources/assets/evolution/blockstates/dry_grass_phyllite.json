@@ -1,0 +1,16 @@
+{
+	"variants": {
+    	"snowy=false": [
+			{"model": "evolution:block/dry_grass_phyllite"},
+			{"model": "evolution:block/dry_grass_phyllite", "y": 90},
+			{"model": "evolution:block/dry_grass_phyllite", "y": 180},
+			{"model": "evolution:block/dry_grass_phyllite", "y": 270}
+		],
+    	"snowy=true": [
+			{"model": "evolution:block/dry_grass_phyllite_snow"},
+			{"model": "evolution:block/dry_grass_phyllite_snow", "y": 90},
+			{"model": "evolution:block/dry_grass_phyllite_snow", "y": 180},
+			{"model": "evolution:block/dry_grass_phyllite_snow", "y": 270}
+		]
+	}
+}

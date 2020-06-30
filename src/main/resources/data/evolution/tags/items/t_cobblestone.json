@@ -1,0 +1,25 @@
+{
+	"replace": false,
+	"values":[
+		"evolution:cobble_andesite",
+		"evolution:cobble_basalt",
+		"evolution:cobble_chalk",
+		"evolution:cobble_chert",
+		"evolution:cobble_conglomerate",
+		"evolution:cobble_dacite",
+		"evolution:cobble_diorite",
+		"evolution:cobble_dolomite",
+		"evolution:cobble_gabbro",
+		"evolution:cobble_gneiss",
+		"evolution:cobble_granite",
+		"evolution:cobble_limestone",
+		"evolution:cobble_marble",
+		"evolution:cobble_phyllite",
+		"evolution:cobble_quartzite",
+		"evolution:cobble_red_sandstone",
+		"evolution:cobble_sandstone",
+		"evolution:cobble_schist",
+		"evolution:cobble_shale",
+		"evolution:cobble_slate"
+	]
+}

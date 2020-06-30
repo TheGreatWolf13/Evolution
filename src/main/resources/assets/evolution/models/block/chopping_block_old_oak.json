@@ -1,0 +1,8 @@
+{
+    "parent": "block/slab",
+    "textures": {
+        "top": "evolution:block/log_top_old_oak",
+        "side": "evolution:block/log_old_oak",
+		"bottom": "evolution:block/log_top_old_oak"
+    }
+}

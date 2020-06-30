@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "axis=y":  { "model": "evolution:block/log_eucalyptus" },
+        "axis=z":  { "model": "evolution:block/log_eucalyptus", "x": 90 },
+        "axis=x":  { "model": "evolution:block/log_eucalyptus", "x": 90, "y": 90 }
+    }
+}

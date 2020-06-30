@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "name": "planks_aspen",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "evolution:planks_aspen"
+        }
+      ],
+      "functions": [
+        {
+          "function": "minecraft:set_count",
+          "conditions": [
+            {
+              "condition": "minecraft:survives_explosion"
+            }
+          ],
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+    "variants": {
+        "facing=up":  { "model": "evolution:block/puzzle" },
+		"facing=down":  { "model": "evolution:block/puzzle", "x": 180 },
+        "facing=north":  { "model": "evolution:block/puzzle", "x": 90 },
+		"facing=south":  { "model": "evolution:block/puzzle", "x": 270 },
+        "facing=east":  { "model": "evolution:block/puzzle", "x": 90, "y": 90 },
+		"facing=west":  { "model": "evolution:block/puzzle", "x": 90, "y": 270 }
+    }
+}

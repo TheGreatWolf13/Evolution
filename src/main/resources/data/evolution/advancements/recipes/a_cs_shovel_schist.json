@@ -1,0 +1,25 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "evolution:cs_shovel_schist"
+    ]
+  },
+  "criteria": {
+    "has_item": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:shovel_head_schist"
+          }
+        ]
+      }
+    }
+  },
+	"requirements": [
+    [
+      "has_item"
+    ]
+  ]
+}

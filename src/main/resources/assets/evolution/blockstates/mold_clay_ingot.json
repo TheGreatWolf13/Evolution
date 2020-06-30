@@ -1,0 +1,8 @@
+{
+    "variants": {
+        "facing=north":  { "model": "evolution:block/mold_clay_ingot" },
+        "facing=east":  { "model": "evolution:block/mold_clay_ingot", "y": 90 },
+        "facing=south":  { "model": "evolution:block/mold_clay_ingot", "y": 180 },
+		"facing=west":  { "model": "evolution:block/mold_clay_ingot", "y": 270 }
+    }
+}

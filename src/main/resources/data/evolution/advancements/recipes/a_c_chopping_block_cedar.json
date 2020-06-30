@@ -1,0 +1,25 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "evolution:c_chopping_block_cedar"
+    ]
+  },
+  "criteria": {
+    "has_item": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:log_cedar"
+          }
+        ]
+      }
+    }
+  },
+	"requirements": [
+    [
+      "has_item"
+    ]
+  ]
+}

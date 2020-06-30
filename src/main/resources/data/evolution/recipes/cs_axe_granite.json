@@ -1,0 +1,19 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"group": "evolution:axe",
+	"pattern":[
+		"R",
+		"X"
+	],
+	"key": {
+		"R": {
+			"item": "evolution:axe_head_granite"
+		},
+		"X": {
+			"item": "evolution:stick"
+		}
+	},
+	"result": {
+		"item": "evolution:axe_granite"
+	} 
+}

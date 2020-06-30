@@ -1,0 +1,6 @@
+{
+    "variants": {
+		"lit=true": { "model": "evolution:block/torch" },
+        "lit=false": { "model": "evolution:block/torch_unlit" }
+    }
+}

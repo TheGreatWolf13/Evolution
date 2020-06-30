@@ -1,0 +1,8 @@
+{
+    "parent": "block/slab",
+    "textures": {
+        "top": "evolution:block/log_top_mangrove",
+        "side": "evolution:block/log_mangrove",
+		"bottom": "evolution:block/log_top_mangrove"
+    }
+}

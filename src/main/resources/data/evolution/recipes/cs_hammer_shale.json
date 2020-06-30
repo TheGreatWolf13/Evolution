@@ -1,0 +1,19 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"group": "evolution:hammer",
+	"pattern":[
+		"R",
+		"X"
+	],
+	"key": {
+		"R": {
+			"item": "evolution:hammer_head_shale"
+		},
+		"X": {
+			"item": "evolution:stick"
+		}
+	},
+	"result": {
+		"item": "evolution:hammer_shale"
+	} 
+}

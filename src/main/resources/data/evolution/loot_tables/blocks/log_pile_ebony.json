@@ -1,0 +1,313 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "1"
+                      }
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "2"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 2
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "3"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 3
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "4"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 4
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "5"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 5
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "6"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 6
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "7"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 7
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "8"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 8
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "9"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 9
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "10"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 10
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "11"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 11
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "12"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 12
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "13"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 13
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "14"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 14
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "15"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 15
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:log_pile_ebony",
+                      "properties": {
+                        "log_count": "16"
+                      }
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "function": "minecraft:set_count",
+                      "count": 16
+                    }
+                  ],
+                  "name": "evolution:log_ebony"
+                }
+            ]
+        }
+      ]
+    }
+  ]
+}

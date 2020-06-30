@@ -1,0 +1,10 @@
+{
+    "variants": {
+        "": [
+			{"model": "evolution:block/rock_andesite"},
+			{"model": "evolution:block/rock_andesite", "y": 90},
+			{"model": "evolution:block/rock_andesite", "y": 180},
+			{"model": "evolution:block/rock_andesite", "y": 270}
+		]
+    }
+}

@@ -1,0 +1,244 @@
+{
+	"parent": "evolution:general/root",
+	"display": {
+		"icon": {
+			"item": "evolution:rock_andesite"
+		},
+		"title": {
+			"translate": "evolution.advancements.general.definitely_a_rock.title"
+		},
+		"description": {
+			"translate": "evolution.advancements.general.definitely_a_rock.description"
+		},
+		"frame": "task",
+		"show_toast": true,
+		"announce_to_chat": true,
+		"hidden": false
+	},
+	"criteria": {
+		"andesite": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_andesite"
+					}
+				]
+			}
+		},
+		"basalt": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_basalt"
+					}
+				]
+			}
+		},
+		"chalk": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_chalk"
+					}
+				]
+			}
+		},
+		"chert": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_chert"
+					}
+				]
+			}
+		},
+		"conglomerate": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_conglomerate"
+					}
+				]
+			}
+		},
+		"dacite": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_dacite"
+					}
+				]
+			}
+		},
+		"diorite": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_diorite"
+					}
+				]
+			}
+		},
+		"dolomite": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_dolomite"
+					}
+				]
+			}
+		},
+		"gabbro": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_gabbro"
+					}
+				]
+			}
+		},
+		"gneiss": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_gneiss"
+					}
+				]
+			}
+		},
+		"granite": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_granite"
+					}
+				]
+			}
+		},
+		"limestone": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_limestone"
+					}
+				]
+			}
+		},
+		"marble": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_marble"
+					}
+				]
+			}
+		},
+		"phyllite": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_phyllite"
+					}
+				]
+			}
+		},
+		"quartzite": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_quartzite"
+					}
+				]
+			}
+		},
+		"red_sandstone": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_red_sandstone"
+					}
+				]
+			}
+		},
+		"sandstone": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_sandstone"
+					}
+				]
+			}
+		},
+		"schist": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_schist"
+					}
+				]
+			}
+		},
+		"shale": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_shale"
+					}
+				]
+			}
+		},
+		"slate": {
+			"trigger": "minecraft:inventory_changed",
+			"conditions": {
+				"items": [
+					{
+						"item": "evolution:rock_slate"
+					}
+				]
+			}
+		}
+	},
+	"requirements": [
+		[
+			"andesite",
+			"basalt",
+			"chalk",
+			"chert",
+			"conglomerate",
+			"dacite",
+			"diorite",
+			"dolomite",
+			"gabbro",
+			"gneiss",
+			"granite",
+			"limestone",
+			"marble",
+			"phyllite",
+			"quartzite",
+			"red_sandstone",
+			"sandstone",
+			"schist",
+			"shale",
+			"slate"
+		]
+	]
+}													

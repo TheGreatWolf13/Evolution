@@ -1,0 +1,8 @@
+{
+    "parent": "evolution:block/log_pile_12",
+    "textures": {
+        "bark": "evolution:block/log_ebony",
+        "inside": "evolution:block/log_top_ebony",
+		"particle": "evolution:block/log_ebony"
+    }
+}

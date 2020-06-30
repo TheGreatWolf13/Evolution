@@ -1,0 +1,25 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "evolution:c_clay_knife"
+    ]
+  },
+  "criteria": {
+    "has_item": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:mold_clay_knife"
+          }
+        ]
+      }
+    }
+  },
+	"requirements": [
+    [
+      "has_item"
+    ]
+  ]
+}

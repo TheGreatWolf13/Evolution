@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "axis=y":  { "model": "evolution:block/log_maple" },
+        "axis=z":  { "model": "evolution:block/log_maple", "x": 90 },
+        "axis=x":  { "model": "evolution:block/log_maple", "x": 90, "y": 90 }
+    }
+}

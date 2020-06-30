@@ -1,0 +1,6 @@
+{
+    "variants": {
+        "half=lower": { "model": "evolution:block/tallgrass_bottom" },
+        "half=upper":    { "model": "evolution:block/tallgrass_top" }
+    }
+}

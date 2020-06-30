@@ -1,0 +1,8 @@
+{
+    "parent": "block/slab",
+    "textures": {
+        "top": "evolution:block/log_top_aspen",
+        "side": "evolution:block/log_aspen",
+		"bottom": "evolution:block/log_top_aspen"
+    }
+}

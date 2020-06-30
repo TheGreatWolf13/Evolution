@@ -1,0 +1,25 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "evolution:cs_hammer_chert"
+    ]
+  },
+  "criteria": {
+    "has_item": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:hammer_head_chert"
+          }
+        ]
+      }
+    }
+  },
+	"requirements": [
+    [
+      "has_item"
+    ]
+  ]
+}

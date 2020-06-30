@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "group": "evolution:chopping_block",
+  "ingredients": [
+    {
+      "item": "evolution:log_elm"
+    }
+  ],
+  "result": {
+    "item": "evolution:chopping_block_elm"
+  }
+}

@@ -1,0 +1,16 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"group": "evolution:cobblestone",
+	"pattern":[
+		"RR",
+		"RR"
+	],
+	"key": {
+		"R": {
+			"item": "evolution:rock_schist"
+		}
+	},
+	"result": {
+		"item": "evolution:cobble_schist"
+	} 
+}

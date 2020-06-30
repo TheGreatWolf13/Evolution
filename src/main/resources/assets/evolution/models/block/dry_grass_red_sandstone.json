@@ -1,0 +1,11 @@
+{
+    "parent": "evolution:block/dry_grass",
+    "textures": {
+        "side": "evolution:block/dirt_red_sandstone",
+        "upover": "evolution:block/dry_grass_top",
+        "overlay": "evolution:block/dry_grass_side_overlay",
+        "bottom": "evolution:block/dirt_red_sandstone",
+		"top": "evolution:block/dirt_red_sandstone",
+        "particle": "evolution:block/dirt_red_sandstone"
+    }
+}

@@ -1,0 +1,25 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "evolution:cs_cobble_chert"
+    ]
+  },
+  "criteria": {
+    "has_item": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_chert"
+          }
+        ]
+      }
+    }
+  },
+	"requirements": [
+    [
+      "has_item"
+    ]
+  ]
+}

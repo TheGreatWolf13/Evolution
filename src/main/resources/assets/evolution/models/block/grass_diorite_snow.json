@@ -1,0 +1,10 @@
+{
+    "parent": "evolution:block/grass_snow",
+    "textures": {
+        "side": "evolution:block/dirt_diorite",
+        "top": "evolution:block/grass_top",
+        "overlay": "evolution:block/grass_side_overlay_snow",
+        "bottom": "evolution:block/dirt_diorite",
+        "particle": "evolution:block/dirt_diorite"
+    }
+}

@@ -1,0 +1,12 @@
+{
+    "parent": "block/cube",
+    "textures": {
+	    "particle": "evolution:block/puzzle_top",
+        "down": "evolution:block/puzzle_bottom",
+        "north": "evolution:block/puzzle_side",
+		"south": "evolution:block/puzzle_side",
+        "east": "evolution:block/puzzle_side",
+        "west": "evolution:block/puzzle_side",
+        "up": "evolution:block/puzzle_top"
+    }
+}

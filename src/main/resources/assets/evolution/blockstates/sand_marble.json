@@ -1,0 +1,10 @@
+{
+    "variants": {
+        "": [
+            { "model": "evolution:block/sand_marble" },
+            { "model": "evolution:block/sand_marble", "y": 90 },
+            { "model": "evolution:block/sand_marble", "y": 180 },
+            { "model": "evolution:block/sand_marble", "y": 270 }
+        ]
+    }
+}

@@ -1,0 +1,10 @@
+{
+    "variants": {
+        "": [
+            { "model": "evolution:block/sand_phyllite" },
+            { "model": "evolution:block/sand_phyllite", "y": 90 },
+            { "model": "evolution:block/sand_phyllite", "y": 180 },
+            { "model": "evolution:block/sand_phyllite", "y": 270 }
+        ]
+    }
+}

@@ -1,0 +1,9 @@
+{
+	"variants": {
+		"layers=1": {"model": "evolution:block/molding_block"},
+		"layers=2": {"model": "evolution:block/molding_block"},
+		"layers=3": {"model": "evolution:block/molding_block"},
+		"layers=4": {"model": "evolution:block/molding_block"},
+		"layers=5": {"model": "evolution:block/molding_block"}
+	}
+}

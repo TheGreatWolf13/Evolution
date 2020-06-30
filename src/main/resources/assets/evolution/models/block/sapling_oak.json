@@ -1,0 +1,6 @@
+{
+    "parent": "block/cross",
+    "textures": {
+        "cross": "evolution:block/sapling_oak"
+    }
+}

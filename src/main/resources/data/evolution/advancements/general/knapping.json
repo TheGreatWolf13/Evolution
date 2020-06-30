@@ -1,0 +1,164 @@
+{
+	"parent": "evolution:general/definitely_a_rock",
+	"display": {
+		"icon": {
+			"item": "evolution:axe_head_andesite"
+		},
+		"title": {
+			"translate": "evolution.advancements.general.knapping.title"
+		},
+		"description": {
+			"translate": "evolution.advancements.general.knapping.description"
+		},
+		"frame": "task",
+		"show_toast": true,
+		"announce_to_chat": true,
+		"hidden": false
+	},
+	"criteria": {
+		"andesite": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_andesite"
+			}
+		},
+		"basalt": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_basalt"
+			}
+		},
+		"chalk": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_chalk"
+			}
+		},
+		"chert": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_chert"
+			}
+		},
+		"conglomerate": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_conglomerate"
+			}
+		},
+		"dacite": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_dacite"
+			}
+		},
+		"diorite": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_diorite"
+			}
+		},
+		"dolomite": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_dolomite"
+			}
+		},
+		"gabbro": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_gabbro"
+			}
+		},
+		"gneiss": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_gneiss"
+			}
+		},
+		"granite": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_granite"
+			}
+		},
+		"limestone": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_limestone"
+			}
+		},
+		"marble": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_marble"
+			}
+		},
+		"phyllite": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_phyllite"
+			}
+		},
+		"quartzite": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_quartzite"
+			}
+		},
+		"red_sandstone": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_red_sandstone"
+			}
+		},
+		"sandstone": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_sandstone"
+			}
+		},
+		"schist": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_schist"
+			}
+		},
+		"shale": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_shale"
+			}
+		},
+		"slate": {
+			"trigger": "minecraft:placed_block",
+			"conditions": {
+				"block": "evolution:knapping_block_slate"
+			}
+		}
+	},
+	"requirements": [
+		[
+			"andesite",
+			"basalt",
+			"chalk",
+			"chert",
+			"conglomerate",
+			"dacite",
+			"diorite",
+			"dolomite",
+			"gabbro",
+			"gneiss",
+			"granite",
+			"limestone",
+			"marble",
+			"phyllite",
+			"quartzite",
+			"red_sandstone",
+			"sandstone",
+			"schist",
+			"shale",
+			"slate"
+		]
+	]
+}		

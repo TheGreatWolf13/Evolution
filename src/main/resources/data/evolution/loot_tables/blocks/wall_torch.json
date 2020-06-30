@@ -1,0 +1,41 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:wall_torch",
+                      "properties": {
+                        "lit": "true"
+                      }
+                    }
+                  ],
+                  "name": "evolution:torch"
+                },
+                {
+                  "type": "minecraft:item",
+                  "conditions": [
+                    {
+                      "condition": "minecraft:block_state_property",
+                      "block": "evolution:wall_torch",
+                      "properties": {
+                        "lit": "false"
+                      }
+                    }
+                  ],
+                  "name": "evolution:stick"
+                }
+            ]
+        }
+      ]
+    }
+  ]
+}

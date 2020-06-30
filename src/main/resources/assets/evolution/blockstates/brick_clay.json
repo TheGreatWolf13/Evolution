@@ -1,0 +1,8 @@
+{
+    "variants": {
+        "facing=north":  { "model": "evolution:block/brick_clay" },
+        "facing=east":  { "model": "evolution:block/brick_clay", "y": 90 },
+        "facing=south":  { "model": "evolution:block/brick_clay", "y": 180 },
+		"facing=west":  { "model": "evolution:block/brick_clay", "y": 270 }
+    }
+}

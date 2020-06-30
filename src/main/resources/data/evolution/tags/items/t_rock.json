@@ -1,0 +1,25 @@
+{
+	"replace": false,
+	"values":[
+		"evolution:rock_andesite",
+		"evolution:rock_basalt",
+		"evolution:rock_chalk",
+		"evolution:rock_chert",
+		"evolution:rock_conglomerate",
+		"evolution:rock_dacite",
+		"evolution:rock_diorite",
+		"evolution:rock_dolomite",
+		"evolution:rock_gabbro",
+		"evolution:rock_gneiss",
+		"evolution:rock_granite",
+		"evolution:rock_limestone",
+		"evolution:rock_marble",
+		"evolution:rock_phyllite",
+		"evolution:rock_quartzite",
+		"evolution:rock_red_sandstone",
+		"evolution:rock_sandstone",
+		"evolution:rock_schist",
+		"evolution:rock_shale",
+		"evolution:rock_slate"
+	]
+}

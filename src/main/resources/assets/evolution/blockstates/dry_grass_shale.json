@@ -1,0 +1,16 @@
+{
+	"variants": {
+    	"snowy=false": [
+			{"model": "evolution:block/dry_grass_shale"},
+			{"model": "evolution:block/dry_grass_shale", "y": 90},
+			{"model": "evolution:block/dry_grass_shale", "y": 180},
+			{"model": "evolution:block/dry_grass_shale", "y": 270}
+		],
+    	"snowy=true": [
+			{"model": "evolution:block/dry_grass_shale_snow"},
+			{"model": "evolution:block/dry_grass_shale_snow", "y": 90},
+			{"model": "evolution:block/dry_grass_shale_snow", "y": 180},
+			{"model": "evolution:block/dry_grass_shale_snow", "y": 270}
+		]
+	}
+}

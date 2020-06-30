@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "group": "evolution:clay_mold",
+  "ingredients": [
+    {
+      "item": "evolution:mold_clay_knife"
+    }
+  ],
+  "result": {
+    "item": "evolution:clayball"
+  }
+}

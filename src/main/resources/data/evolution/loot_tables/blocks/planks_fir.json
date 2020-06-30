@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "name": "planks_fir",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "evolution:planks_fir"
+        }
+      ],
+      "functions": [
+        {
+          "function": "minecraft:set_count",
+          "conditions": [
+            {
+              "condition": "minecraft:survives_explosion"
+            }
+          ],
+          "count": 1
+        }
+      ]
+    }
+  ]
+}
