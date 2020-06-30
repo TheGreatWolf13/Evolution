@@ -35,6 +35,16 @@ public class ForcedPuzzlePiece extends SinglePuzzlePiece {
     }
 
     @Override
+    public boolean equals(Object o) {
+        return this == o;
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + this.forceType.hashCode();
+    }
+
+    @Override
     public EnumPuzzleType getType() {
         return EnumPuzzleType.FORCED;
     }

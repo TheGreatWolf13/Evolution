@@ -118,4 +118,14 @@ public class SinglePuzzlePiece extends PuzzlePiece {
     public String toString() {
         return "SinglePuzzlePiece[" + this.location + "]";
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return this == o;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.location.hashCode();
+    }
 }
