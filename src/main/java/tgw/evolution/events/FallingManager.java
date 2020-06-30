@@ -60,8 +60,8 @@ public class FallingManager {
         private final Set<BlockPos> logs = new HashSet<>();
         private final Tree tree;
         private final BlockPos start;
-        private boolean hasLeaves = false;
-        private boolean rooted = false;
+        private boolean hasLeaves;
+        private boolean rooted;
 
         Branch(FallingManager fallingManager, Tree tree, BlockPos startPos) {
             this.instance = fallingManager;
@@ -102,6 +102,7 @@ public class FallingManager {
             logsToExpand.add(root);
             BlockPos nextBlock;
             while ((nextBlock = logsToExpand.poll()) != null) {
+                //noinspection ObjectAllocationInLoop
                 TreeUtils.iterateBlocks(1, nextBlock, targetPos -> {
                     if (this.tree.contains(targetPos)) {
                         return;

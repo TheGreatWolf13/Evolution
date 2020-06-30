@@ -10,13 +10,11 @@ import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 import tgw.evolution.util.NBTHelper;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Random;
 
 public abstract class PuzzlePiece {
 
-    @Nullable
     private volatile PuzzlePattern.PlacementBehaviour projection;
 
     protected PuzzlePiece(PuzzlePattern.PlacementBehaviour projection) {

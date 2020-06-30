@@ -16,9 +16,9 @@ import javax.annotation.Nullable;
 public class TEPitKiln extends TileEntity {
 
     public byte[] logs = {-1, -1, -1, -1, -1, -1, -1, -1};
-    public boolean single = false;
-    public boolean burning = false;
-    public boolean finished = false;
+    public boolean single;
+    public boolean burning;
+    public boolean finished;
     public int timeStart = -1;
     public ItemStack nwStack = ItemStack.EMPTY;
     public ItemStack neStack = ItemStack.EMPTY;

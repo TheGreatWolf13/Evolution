@@ -3,8 +3,11 @@ package tgw.evolution.blocks.tileentities;
 import tgw.evolution.Evolution;
 import tgw.evolution.util.MathHelper;
 
+import javax.annotation.Nonnull;
+
 public abstract class MoldingPatterns {
 
+    public static final boolean[][] PLATE = KnappingPatterns.NULL;
     private static final boolean[][] FULL = {{true, true, true, true, true},
                                              {true, true, true, true, true},
                                              {true, true, true, true, true},
@@ -20,6 +23,7 @@ public abstract class MoldingPatterns {
                                                   {true, false, false, false, true},
                                                   {true, false, false, false, true},
                                                   {true, true, true, true, true}};
+    public static final boolean[][][] CRUCIBLE = {FULL, FULL_RING, FULL_RING, FULL_RING, FULL_RING};
     private static final boolean[][] AXE1 = {{true, false, true, true, true},
                                              {false, false, false, false, true},
                                              {false, false, false, false, false},
@@ -126,7 +130,6 @@ public abstract class MoldingPatterns {
                                                {true, true, true, true, true}};
     private static final boolean[][] INGOT2 = MathHelper.rotateClockWise(INGOT1);
     public static final boolean[][][] INGOT = {INGOT1, INGOT2};
-    public static final boolean[][] PLATE = KnappingPatterns.NULL;
     private static final boolean[][] BRICK_LAYER1 = {{true, true, true, true, false},
                                                      {true, true, true, true, false},
                                                      {false, false, false, false, false},
@@ -140,13 +143,12 @@ public abstract class MoldingPatterns {
     private static final boolean[][][] BRICK3 = {BRICK_LAYER3, BRICK_LAYER3};
     private static final boolean[][][] BRICK4 = {BRICK_LAYER4, BRICK_LAYER4};
     public static final boolean[][][][] BRICK = {BRICK1, BRICK2, BRICK3, BRICK4};
-    public static final boolean[][][] CRUCIBLE = {FULL, FULL_RING, FULL_RING, FULL_RING, FULL_RING};
 
     public static void load() {
         Evolution.LOGGER.info("Molding patterns loaded");
     }
 
-    public static boolean comparePatternsOneLayer(boolean[][] matrix, boolean[][][] pattern) {
+    public static boolean comparePatternsOneLayer(@Nonnull boolean[][] matrix, @Nonnull boolean[][][] pattern) {
         for (boolean[][] booleans : pattern) {
             if (MathHelper.matricesEqual(matrix, booleans)) {
                 return true;
@@ -155,7 +157,7 @@ public abstract class MoldingPatterns {
         return false;
     }
 
-    public static boolean comparePatternsTwoLayer(boolean[][][] matrix, boolean[][][][] pattern) {
+    public static boolean comparePatternsTwoLayer(@Nonnull boolean[][][] matrix, @Nonnull boolean[][][][] pattern) {
         for (boolean[][][] booleans : pattern) {
             if (MathHelper.matricesEqual(matrix[0], booleans[0])) {
                 if (MathHelper.matricesEqual(matrix[1], booleans[1])) {

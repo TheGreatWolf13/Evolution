@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
 public class EntityHook extends AbstractArrowEntity {
 
     private final double gravity;
-    private boolean dealtDamage = false;
+    private boolean dealtDamage;
     private Direction facing = Direction.NORTH;
 
     public EntityHook(EntityType<EntityHook> type, World worldIn) {

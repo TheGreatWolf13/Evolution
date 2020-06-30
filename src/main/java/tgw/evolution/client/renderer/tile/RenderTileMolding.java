@@ -9,11 +9,8 @@ import tgw.evolution.client.models.tile.ModelTileMolding;
 
 public class RenderTileMolding extends TileEntityRenderer<TEMolding> {
 
-    private final ModelTileMolding model = new ModelTileMolding();
     private static final ResourceLocation TEXTURE = Evolution.location("textures/block/molding_block.png");
-
-    public RenderTileMolding() {
-    }
+    private final ModelTileMolding model = new ModelTileMolding();
 
     @Override
     public void render(TEMolding tile, double x, double y, double z, float partialTicks, int destroyStage) {

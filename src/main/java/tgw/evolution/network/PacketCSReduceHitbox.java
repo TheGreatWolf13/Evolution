@@ -18,9 +18,11 @@ public class PacketCSReduceHitbox extends PacketAbstract {
         super(LogicalSide.SERVER);
     }
 
+    @SuppressWarnings("unused")
     public static void encode(PacketCSReduceHitbox packet, PacketBuffer buffer) {
     }
 
+    @SuppressWarnings("unused")
     public static PacketCSReduceHitbox decode(PacketBuffer buffer) {
         return new PacketCSReduceHitbox();
     }

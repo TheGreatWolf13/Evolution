@@ -195,7 +195,7 @@ public class EntityCow extends AnimalEntity {
 
     @Override
     public AgeableEntity createChild(AgeableEntity ageable) {
-        return (AgeableEntity) EvolutionEntities.COW.get().create(this.world);
+        return EvolutionEntities.COW.get().create(this.world);
     }
 
     @Override

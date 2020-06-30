@@ -47,10 +47,11 @@ public class PacketCSOffhandAttack extends PacketAbstract {
         super(LogicalSide.SERVER);
     }
 
+    @SuppressWarnings("unused")
     public static void encode(PacketCSOffhandAttack message, PacketBuffer buffer) {
     }
 
-    public static PacketCSOffhandAttack decode(PacketBuffer buffer) {
+    public static PacketCSOffhandAttack decode(@SuppressWarnings("unused") PacketBuffer buffer) {
         return new PacketCSOffhandAttack();
     }
 

@@ -2,7 +2,7 @@ package tgw.evolution.util;
 
 import java.util.Locale;
 
-public class Utils {
+public class Metrics {
 
     public static final int SECONDS_IN_A_MINUTE = 60;
     public static final int SECONDS_IN_AN_HOUR = 3600;

@@ -14,6 +14,8 @@ import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -53,7 +55,7 @@ public class MathHelper {
     /**
      * Used to compare boolean matrices of the same size only.
      */
-    public static boolean matricesEqual(boolean[][] a, boolean[][] b) {
+    public static boolean matricesEqual(@Nonnull boolean[][] a, @Nonnull boolean[][] b) {
         for (int i = 0; i < a.length; i++) {
             for (int j = 0; j < a[i].length; j++) {
                 if (a[i][j] != b[i][j]) {
@@ -79,7 +81,7 @@ public class MathHelper {
     /**
      * Used to compare boolean tensors of the same size only.
      */
-    public static boolean tensorsEquals(boolean[][][] a, boolean[][][] b) {
+    public static boolean tensorsEquals(@Nonnull boolean[][][] a, @Nonnull boolean[][][] b) {
         for (int i = 0; i < a.length; i++) {
             for (int j = 0; j < a[i].length; j++) {
                 for (int k = 0; k < a[i][j].length; k++) {
@@ -107,7 +109,7 @@ public class MathHelper {
         return 1.0 / chargeTimeInSec - 4.0;
     }
 
-    public static String numericalValue(String input) {
+    public static String numericalValue(@Nonnull String input) {
         int size = input.length();
         StringBuilder builder = new StringBuilder(input);
         for (int i = 0; i < size; i++) {
@@ -124,7 +126,7 @@ public class MathHelper {
      * @param input A square boolean matrix.
      * @return A new square boolean matrix rotated 90 degrees clockwise.
      */
-    public static boolean[][] rotateClockWise(boolean[][] input) {
+    public static boolean[][] rotateClockWise(@Nonnull boolean[][] input) {
         boolean[][] output = new boolean[input.length][input[0].length];
         int n = input.length;
         for (int ring = 0; ring < input.length / 2; ring++) {
@@ -145,7 +147,7 @@ public class MathHelper {
      * @param input A square boolean matrix.
      * @return A new square boolean matrix translated one index to the right and wrapped around.
      */
-    public static boolean[][] translateRight(boolean[][] input) {
+    public static boolean[][] translateRight(@Nonnull boolean[][] input) {
         boolean[][] output = new boolean[input.length][input[0].length];
         for (int i = 0; i < input.length; i++) {
             output[i][0] = input[i][input.length - 1];
@@ -158,7 +160,7 @@ public class MathHelper {
      * @param input A square boolean matrix.
      * @return A new square boolean matrix mirrored vertically.
      */
-    public static boolean[][] mirrorVertically(boolean[][] input) {
+    public static boolean[][] mirrorVertically(@Nonnull boolean[][] input) {
         boolean[][] output = new boolean[input.length][input[0].length];
         for (int i = 0; i < output.length; i++) {
             System.arraycopy(input[input.length - 1 - i], 0, output[i], 0, output[i].length);
@@ -166,7 +168,7 @@ public class MathHelper {
         return output;
     }
 
-    public static String printBooleanMatrix(boolean[][] matrix) {
+    public static String printBooleanMatrix(@Nonnull boolean[][] matrix) {
         StringBuilder builder = new StringBuilder().append("\n");
         for (boolean[] booleans : matrix) {
             for (boolean aBoolean : booleans) {
@@ -228,7 +230,7 @@ public class MathHelper {
             case OFF_HAND:
                 return EquipmentSlotType.OFFHAND;
             default:
-                return null;
+                throw new IllegalStateException("Unknown hand " + hand);
         }
     }
 
@@ -285,7 +287,7 @@ public class MathHelper {
      * @param reference The VoxelShape that should totally encompass the first.
      * @return True if the first VoxelShape is totally encompassed by the second one; false otherwise.
      */
-    public static boolean isShapeTotallyInside(VoxelShape inside, VoxelShape reference) {
+    public static boolean isShapeTotallyInside(@Nonnull VoxelShape inside, @Nonnull VoxelShape reference) {
         return !VoxelShapes.compare(reference, inside, IBooleanFunction.ONLY_SECOND);
     }
 
@@ -303,7 +305,7 @@ public class MathHelper {
      * @param B The VoxelShape to subtract
      * @return A new VoxelShape, consisting of the VoxelShape A minus B.
      */
-    public static VoxelShape subtract(VoxelShape A, VoxelShape B) {
+    public static VoxelShape subtract(@Nonnull VoxelShape A, @Nonnull VoxelShape B) {
         return VoxelShapes.combine(A, B, IBooleanFunction.ONLY_FIRST);
     }
 
@@ -312,11 +314,11 @@ public class MathHelper {
      * @param B The second VoxelShape
      * @return A new VoxelShape made of the union of both VoxelShapes.
      */
-    public static VoxelShape union(VoxelShape A, VoxelShape B) {
+    public static VoxelShape union(@Nonnull VoxelShape A, @Nonnull VoxelShape B) {
         return VoxelShapes.combine(A, B, IBooleanFunction.OR);
     }
 
-    public static VoxelShape rotateShape(Direction from, Direction to, VoxelShape shape) {
+    public static VoxelShape rotateShape(@Nonnull Direction from, @Nonnull Direction to, @Nonnull VoxelShape shape) {
         if (to == from) {
             return shape;
         }
@@ -331,7 +333,7 @@ public class MathHelper {
         return buffer[0];
     }
 
-    public static String printVoxelShape(VoxelShape shape) {
+    public static String printVoxelShape(@Nullable VoxelShape shape) {
         if (shape == null) {
             return "VoxelShape: null";
         }

@@ -61,6 +61,7 @@ public class ServerRecipePlacerEv {
                 if (i == -1) {
                     i = inventory.getFirstEmptyStack();
                 }
+                //noinspection ObjectAllocationInLoop
                 ItemStack itemstack1 = itemstack.copy();
                 itemstack1.setCount(1);
                 if (!inventory.add(i, itemstack1)) {
@@ -203,6 +204,7 @@ public class ServerRecipePlacerEv {
         int i = getEmptyPlayerSlots(inventory);
         for (int j = 0; j < container.getWidth() * container.getHeight() + 1; ++j) {
             if (j != container.getOutputSlot()) {
+                //noinspection ObjectAllocationInLoop
                 ItemStack itemstack = container.getSlot(j).getStack().copy();
                 if (!itemstack.isEmpty()) {
                     int k = inventory.storeItemStack(itemstack);

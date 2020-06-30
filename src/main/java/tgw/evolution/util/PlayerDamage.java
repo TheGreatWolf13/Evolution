@@ -25,6 +25,7 @@ public abstract class PlayerDamage {
     private static final Predicate<Entity> PREDICATE = EntityPredicates.CAN_AI_TARGET.and(e -> e != null && e.canBeCollidedWith() && e instanceof LivingEntity && !(e instanceof FakePlayer));
     private static final Random RAND = new Random();
 
+    @Nullable
     public static EntityRayTraceResult rayTraceEntities(Entity shooter, Vec3d startVec, Vec3d endVec, AxisAlignedBB boundingBox, double distanceSquared) {
         World world = shooter.world;
         double range = distanceSquared;

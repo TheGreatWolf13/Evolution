@@ -18,6 +18,7 @@ import tgw.evolution.network.PacketSCOpenKnappingGui;
 import tgw.evolution.util.EnumRockNames;
 import tgw.evolution.util.EnumRockVariant;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 public class ItemRock extends ItemBlockPlaceable implements IStoneVariant {
@@ -51,6 +52,7 @@ public class ItemRock extends ItemBlockPlaceable implements IStoneVariant {
     }
 
     @Override
+    @Nullable
     public BlockState getCustomState(BlockItemUseContext context) {
         return null;
     }

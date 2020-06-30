@@ -1,7 +1,5 @@
 package tgw.evolution.entities.ai;
 
-import java.util.EnumSet;
-
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.player.PlayerEntity;
@@ -12,19 +10,21 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import tgw.evolution.entities.EntityShadowHound;
 
+import java.util.EnumSet;
+
 public class ShadowHoundAttackGoal extends Goal {
 
     protected final EntityShadowHound attacker;
-    protected int attackTick = 0;
     private final double speedTowardsTarget;
     private final boolean longMemory;
-    private Path path = null;
-    private int delayCounter = 0;
-    private double targetX = 0.0;
-    private double targetY = 0.0;
-    private double targetZ = 0.0;
-    private long field_220720_k = 0L;
-    private int failedPathFindingPenalty = 0;
+    protected int attackTick;
+    private Path path;
+    private int delayCounter;
+    private double targetX;
+    private double targetY;
+    private double targetZ;
+    private long timeOfLastAttack;
+    private int failedPathFindingPenalty;
 
     public ShadowHoundAttackGoal(EntityShadowHound creature, double speedIn, boolean useLongMemory) {
         this.attacker = creature;
@@ -46,10 +46,10 @@ public class ShadowHoundAttackGoal extends Goal {
             return false;
         }
         long i = this.attacker.world.getGameTime();
-        if (i - this.field_220720_k < 20L) {
+        if (i - this.timeOfLastAttack < 20L) {
             return false;
         }
-        this.field_220720_k = i;
+        this.timeOfLastAttack = i;
         LivingEntity livingentity = this.attacker.getAttackTarget();
         if (livingentity == null) {
             return false;

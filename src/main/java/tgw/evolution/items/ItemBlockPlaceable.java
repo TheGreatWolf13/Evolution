@@ -17,6 +17,8 @@ import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCHandAnimation;
 
+import javax.annotation.Nullable;
+
 public abstract class ItemBlockPlaceable extends ItemBlock {
 
     public ItemBlockPlaceable(Block blockIn, Properties builder) {
@@ -84,6 +86,7 @@ public abstract class ItemBlockPlaceable extends ItemBlock {
 
     public abstract boolean customCondition(Block block);
 
+    @Nullable
     public abstract BlockState getCustomState(BlockItemUseContext context);
 
     public void sneakingAction(BlockItemUseContext context) {
