@@ -2,6 +2,7 @@ package tgw.evolution.world.puzzle;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
+import com.google.common.collect.Sets;
 import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
@@ -21,9 +22,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockPuzzle;
 import tgw.evolution.util.MathHelper;
 
-import java.util.Deque;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PuzzleManager {
@@ -54,6 +53,7 @@ public class PuzzleManager {
         private final List<StructurePiece> structurePieces;
         private final Random rand;
         private final Deque<PuzzleManager.Entry> availablePieces = Queues.newArrayDeque();
+        private final Set<BlockPos> placedPuzzlesPos;
 
         public Assembler(ResourceLocation spawnPool, int size, PuzzleManager.IPieceFactory pieceFactory, ChunkGenerator<?> chunkGenerator, TemplateManager manager, BlockPos pos, List<StructurePiece> pieces, Random rand) {
             Evolution.LOGGER.debug("Assembler");
@@ -63,6 +63,7 @@ public class PuzzleManager {
             this.chunkGenerator = chunkGenerator;
             this.templateManager = manager;
             this.structurePieces = pieces;
+            this.placedPuzzlesPos = new HashSet<>();
             this.rand = rand;
             Rotation chosenRotation = Rotation.randomRotation(rand);
             Evolution.LOGGER.debug("chosenRotation = " + chosenRotation);
@@ -115,6 +116,7 @@ public class PuzzleManager {
             Evolution.LOGGER.debug("placingMinY = {}", placingMinY);
             List<PuzzlePiece> piecesForConnection = Lists.newArrayList();
             BlockPos.MutableBlockPos matchingCornerPos = new BlockPos.MutableBlockPos();
+            Set<PuzzlePiece> failedPieces = Sets.newHashSet();
             placingPuzzleBlocks:
             for (Template.BlockInfo puzzleBlock : placingPiece.getPuzzleBlocks(this.templateManager, placingPos, placingRotation, this.rand)) {
                 Evolution.LOGGER.debug("1st for: puzzleBlock = {}", puzzleBlock);
@@ -126,6 +128,10 @@ public class PuzzleManager {
                 Evolution.LOGGER.debug("puzzleBlockPos = {}", puzzleBlockPos);
                 BlockPos connectionPos = puzzleBlockPos.offset(puzzleBlockFacing);
                 Evolution.LOGGER.debug("connectionPos = {}", connectionPos);
+                if (this.placedPuzzlesPos.contains(connectionPos)) {
+                    Evolution.LOGGER.debug("puzzle block already matched, skipping");
+                    continue;
+                }
                 int relativePuzzleBlockYPos = puzzleBlockPos.getY() - placingMinY;
                 Evolution.LOGGER.debug("relativePuzzleBlockYPos = {}", relativePuzzleBlockYPos);
                 //noinspection ObjectAllocationInLoop
@@ -147,7 +153,6 @@ public class PuzzleManager {
                     }
                     //noinspection ObjectAllocationInLoop
                     checkingBB.set(shouldPuzzleBlockCheckBB ? currentShape.get() : MathHelper.union(currentShape.get(), VoxelShapes.create(AxisAlignedBB.func_216363_a(placingBB))));
-                    Evolution.LOGGER.debug("checkingBB = {}", MathHelper.printVoxelShape(checkingBB.get()));
                     piecesForConnection.clear();
                     Evolution.LOGGER.debug("currentSize = {}", currentSize);
                     if (currentSize != this.size) {
@@ -156,12 +161,17 @@ public class PuzzleManager {
                     }
                     piecesForConnection.addAll(fallbackPool.getShuffledPieces(this.rand));
                     Evolution.LOGGER.debug("adding fallbackPool to piecesForConnection");
+                    failedPieces.clear();
                     int surfaceYForPuzzleBlock = -1;
                     for (PuzzlePiece candidatePiece : piecesForConnection) {
                         Evolution.LOGGER.debug("2nd for: candidatePiece = {}", candidatePiece);
                         if (candidatePiece == EmptyPuzzlePiece.INSTANCE) {
                             Evolution.LOGGER.debug("candidatePiece is empty, breaking");
                             break;
+                        }
+                        if (failedPieces.contains(candidatePiece)) {
+                            Evolution.LOGGER.debug("Failed piece, continuing");
+                            continue;
                         }
                         for (Rotation candidateRotation : Rotation.shuffledRotations(this.rand)) {
                             Evolution.LOGGER.debug("3rd for: candidateRotation = {}", candidateRotation);
@@ -237,11 +247,30 @@ public class PuzzleManager {
                                     //                                        actualMachingBB.maxY = actualMachingBB.minY + k2;
                                     //                                        Evolution.LOGGER.debug("actualMachingBB.maxY = {}", actualMachingBB.maxY);
                                     //                                    }
-                                    //noinspection ObjectAllocationInLoop
-                                    if (MathHelper.isShapeTotallyInside(VoxelShapes.create(AxisAlignedBB.func_216363_a(actualMachingBB).shrink(0.25)), checkingBB.get())) {
+                                    boolean canPlace;
+                                    if (candidatePiece instanceof ForcedPuzzlePiece) {
+                                        Evolution.LOGGER.debug("candidatePiece instanceof ForcedPuzzlePiece");
+                                        switch (((ForcedPuzzlePiece) candidatePiece).getForceType()) {
+                                            case HARD:
+                                                Evolution.LOGGER.debug("forceType is HARD");
+                                                canPlace = true;
+                                                break;
+                                            case SOFT:
+                                                //noinspection ObjectAllocationInLoop
+                                                canPlace = !MathHelper.isShapeTotallyOutside(VoxelShapes.create(AxisAlignedBB.func_216363_a(actualMachingBB).shrink(0.25)), checkingBB.get());
+                                                Evolution.LOGGER.debug("forceType is SOFT and resulted in {}", canPlace);
+                                                break;
+                                            default:
+                                                throw new IllegalStateException("Missing ForceType");
+                                        }
+                                    }
+                                    else {
+                                        //noinspection ObjectAllocationInLoop
+                                        canPlace = MathHelper.isShapeTotallyInside(VoxelShapes.create(AxisAlignedBB.func_216363_a(actualMachingBB).shrink(0.25)), checkingBB.get());
+                                    }
+                                    if (canPlace) {
                                         Evolution.LOGGER.debug("actualMatchingBB is inside currentShape");
                                         currentShape.set(MathHelper.subtract(currentShape.get(), VoxelShapes.create(AxisAlignedBB.func_216363_a(actualMachingBB))));
-                                        Evolution.LOGGER.debug("currentShape = {}", MathHelper.printVoxelShape(currentShape.get()));
                                         int placingGroundLevelDelta = structurePiece.getGroundLevelDelta();
                                         Evolution.LOGGER.debug("placingGroundLevelDelta = {}", placingGroundLevelDelta);
                                         int matchingGroundLevelDelta;
@@ -280,19 +309,20 @@ public class PuzzleManager {
                                         if (currentSize + 1 <= this.size) {
                                             Evolution.LOGGER.debug("currentSize + 1 <= size, size = {}", this.size);
                                             //noinspection ObjectAllocationInLoop
-                                            this.availablePieces.addLast(new PuzzleManager.Entry(matchingStructure, currentShape, maxHeight, currentSize + 1));
+                                            this.availablePieces.addLast(new Entry(matchingStructure, currentShape, maxHeight, currentSize + 1));
                                             Evolution.LOGGER.debug("added {} to availableList", matchingStructure);
                                         }
                                         Evolution.LOGGER.debug("continuing to 1st loop");
+                                        this.placedPuzzlesPos.add(puzzleBlockPos);
                                         continue placingPuzzleBlocks;
                                     }
-                                    Evolution.LOGGER.debug("actualMatchingBB is not inside currentShape");
                                 }
                                 else {
                                     Evolution.LOGGER.debug("puzzles do not match");
                                 }
                             }
                         }
+                        failedPieces.add(candidatePiece);
                     }
                 }
                 else {

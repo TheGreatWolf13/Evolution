@@ -281,12 +281,21 @@ public class MathHelper {
     }
 
     /**
-     * @param inside The VoxelShape that should be totally inside.
-     * @param bigger The VoxelShape that should totally encompass the first.
-     * @return True if the first VoxelShape is totally encompassed by the second one, False otherwise.
+     * @param inside    The VoxelShape that should be totally inside.
+     * @param reference The VoxelShape that should totally encompass the first.
+     * @return True if the first VoxelShape is totally encompassed by the second one; false otherwise.
      */
-    public static boolean isShapeTotallyInside(VoxelShape inside, VoxelShape bigger) {
-        return !VoxelShapes.compare(bigger, inside, IBooleanFunction.ONLY_SECOND);
+    public static boolean isShapeTotallyInside(VoxelShape inside, VoxelShape reference) {
+        return !VoxelShapes.compare(reference, inside, IBooleanFunction.ONLY_SECOND);
+    }
+
+    /**
+     * @param outside   The VoxelShape that should be totally ouside the reference.
+     * @param reference The reference VoxelShape.
+     * @return True if the first VoxelShape is totally outside the reference one, false otherwise.
+     */
+    public static boolean isShapeTotallyOutside(VoxelShape outside, VoxelShape reference) {
+        return !VoxelShapes.compare(reference, outside, IBooleanFunction.AND);
     }
 
     /**
