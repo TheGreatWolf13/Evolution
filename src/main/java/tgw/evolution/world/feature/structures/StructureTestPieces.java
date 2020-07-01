@@ -15,6 +15,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.world.feature.EvolutionFeatures;
 import tgw.evolution.world.puzzle.PuzzleManager;
 import tgw.evolution.world.puzzle.PuzzlePattern;
+import tgw.evolution.world.puzzle.PuzzlePiece;
 import tgw.evolution.world.puzzle.StructurePuzzlePiece;
 import tgw.evolution.world.puzzle.pieces.ForcedPuzzlePiece;
 import tgw.evolution.world.puzzle.pieces.HeightPuzzlePiece;
@@ -44,7 +45,7 @@ public class StructureTestPieces {
 
     public static class Piece extends StructurePuzzlePiece {
 
-        public Piece(TemplateManager manager, tgw.evolution.world.puzzle.PuzzlePiece puzzlePiece, BlockPos pos, int groundLevelDelta, Rotation rotation, MutableBoundingBox boundingBox) {
+        public Piece(TemplateManager manager, PuzzlePiece puzzlePiece, BlockPos pos, int groundLevelDelta, Rotation rotation, MutableBoundingBox boundingBox) {
             super(EvolutionFeatures.PIECE_TEST, manager, puzzlePiece, pos, groundLevelDelta, rotation, boundingBox);
         }
 
