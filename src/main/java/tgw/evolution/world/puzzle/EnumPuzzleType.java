@@ -6,6 +6,7 @@ public enum EnumPuzzleType {
     EMPTY("empty_pool"),
     FEATURE("feature_pool"),
     FORCED("forced"),
+    HEIGHT("height"),
     LIST("list_pool"),
     SINGLE("single_pool"),
     UNDERGROUND("underground");

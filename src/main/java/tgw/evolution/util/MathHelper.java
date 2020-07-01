@@ -26,6 +26,20 @@ public class MathHelper {
     public static final Direction[] DIRECTIONS_EXCEPT_DOWN = {Direction.UP, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
     public static final Direction[] DIRECTIONS_HORIZONTAL = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
 
+    public static short toShortExact(int value) {
+        if ((short) value != value) {
+            throw new ArithmeticException("Short overflow " + value);
+        }
+        return (short) value;
+    }
+
+    public static byte toByteExact(int value) {
+        if ((byte) value != value) {
+            throw new ArithmeticException("Byte overflow " + value);
+        }
+        return (byte) value;
+    }
+
     public static int clamp(int value, int min, int max) {
         if (value < min) {
             return min;

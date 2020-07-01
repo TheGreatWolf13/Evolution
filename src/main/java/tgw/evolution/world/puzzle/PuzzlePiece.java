@@ -51,7 +51,7 @@ public abstract class PuzzlePiece {
 
     protected abstract INBT serialize0();
 
-    public INBT serialize() {
+    public final INBT serialize() {
         INBT pieceNBT = this.serialize0();
         INBT thisNBT = NBTHelper.mergeInto(pieceNBT, new StringNBT("element_type"), new StringNBT(this.getType().getKey()));
         return NBTHelper.mergeInto(thisNBT, new StringNBT("projection"), new StringNBT(this.projection.getName()));

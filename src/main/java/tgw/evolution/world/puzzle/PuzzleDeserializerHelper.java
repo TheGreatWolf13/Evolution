@@ -3,6 +3,7 @@ package tgw.evolution.world.puzzle;
 import net.minecraft.nbt.INBT;
 import tgw.evolution.Evolution;
 import tgw.evolution.util.NBTHelper;
+import tgw.evolution.world.puzzle.pieces.*;
 
 public class PuzzleDeserializerHelper {
 
@@ -17,6 +18,8 @@ public class PuzzleDeserializerHelper {
                 return new FeaturePuzzlePiece(nbt);
             case FORCED:
                 return new ForcedPuzzlePiece(nbt);
+            case HEIGHT:
+                return new HeightPuzzlePiece(nbt);
             case LIST:
                 return new ListPuzzlePiece(nbt);
             case SINGLE:

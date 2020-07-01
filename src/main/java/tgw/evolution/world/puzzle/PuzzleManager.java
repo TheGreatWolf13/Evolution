@@ -19,9 +19,12 @@ import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockPuzzle;
 import tgw.evolution.util.MathHelper;
+import tgw.evolution.world.puzzle.pieces.EmptyPuzzlePiece;
+import tgw.evolution.world.puzzle.pieces.ForcedPuzzlePiece;
+import tgw.evolution.world.puzzle.pieces.HeightPuzzlePiece;
+import tgw.evolution.world.puzzle.pieces.UndergroundPuzzlePiece;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -42,7 +45,7 @@ public class PuzzleManager {
 
     public interface IPieceFactory {
 
-        PuzzleStructurePiece create(TemplateManager manager, PuzzlePiece puzzlePiece, BlockPos pos, int groundLevelDelta, Rotation rotation, MutableBoundingBox boundingBox);
+        StructurePuzzlePiece create(TemplateManager manager, PuzzlePiece puzzlePiece, BlockPos pos, int groundLevelDelta, Rotation rotation, MutableBoundingBox boundingBox);
     }
 
     static final class Assembler {
@@ -67,7 +70,7 @@ public class PuzzleManager {
             Rotation chosenRotation = Rotation.randomRotation(rand);
             PuzzlePattern pool = PuzzleManager.REGISTRY.get(spawnPool);
             PuzzlePiece chosenSpawnPiece = pool.getRandomPiece(rand);
-            PuzzleStructurePiece structure = pieceFactory.create(manager, chosenSpawnPiece, pos, chosenSpawnPiece.groundLevelDelta(), chosenRotation, chosenSpawnPiece.getBoundingBox(manager, pos, chosenRotation));
+            StructurePuzzlePiece structure = pieceFactory.create(manager, chosenSpawnPiece, pos, chosenSpawnPiece.groundLevelDelta(), chosenRotation, chosenSpawnPiece.getBoundingBox(manager, pos, chosenRotation));
             MutableBoundingBox chosenBB = structure.getBoundingBox();
             int middleX = (chosenBB.maxX + chosenBB.minX) / 2;
             int middleZ = (chosenBB.maxZ + chosenBB.minZ) / 2;
@@ -83,7 +86,7 @@ public class PuzzleManager {
             }
         }
 
-        private void placePuzzlePiece(PuzzleStructurePiece structurePiece, AtomicReference<VoxelShape> currentShape, int maxHeight, int currentSize) {
+        private void placePuzzlePiece(StructurePuzzlePiece structurePiece, AtomicReference<VoxelShape> currentShape, int maxHeight, int currentSize) {
             PuzzlePiece placingPiece = structurePiece.getPuzzlePiece();
             BlockPos placingPos = structurePiece.getPos();
             Rotation placingRotation = structurePiece.getRotation();
@@ -196,7 +199,7 @@ public class PuzzleManager {
                                         else {
                                             matchingGroundLevelDelta = candidatePiece.groundLevelDelta();
                                         }
-                                        PuzzleStructurePiece matchingStructure = this.pieceFactory.create(this.templateManager, candidatePiece, actualMatchingCornerPos, matchingGroundLevelDelta, candidateRotation, actualMachingBB);
+                                        StructurePuzzlePiece matchingStructure = this.pieceFactory.create(this.templateManager, candidatePiece, actualMatchingCornerPos, matchingGroundLevelDelta, candidateRotation, actualMachingBB);
                                         int junctionPosY;
                                         if (isPlacingRigid) {
                                             junctionPosY = placingMinY + relativePuzzleBlockYPos;
@@ -244,18 +247,20 @@ public class PuzzleManager {
                 }
             }
             if (piece instanceof UndergroundPuzzlePiece) {
-                Evolution.LOGGER.debug("piece is underground {}", piece);
+                if (piece instanceof HeightPuzzlePiece) {
+                    int standardDeviation = 3;
+                    int chosenHeight = (pieceBB.minY + pieceBB.maxY) / 2;
+                    int deltaY = Math.abs(((HeightPuzzlePiece) piece).getDesiredHeight() - chosenHeight);
+                    if (Math.abs(this.rand.nextGaussian()) >= standardDeviation - deltaY / (((HeightPuzzlePiece) piece).getMaxDeviation() / (float) standardDeviation)) {
+                        return false;
+                    }
+                }
                 int middleX = (pieceBB.maxX + pieceBB.minX) / 2;
-                Evolution.LOGGER.debug("middleX = {}", middleX);
                 int middleZ = (pieceBB.maxZ + pieceBB.minZ) / 2;
-                Evolution.LOGGER.debug("middleZ = {}", middleZ);
                 int surfaceY = this.chunkGenerator.func_222532_b(middleX, middleZ, Heightmap.Type.OCEAN_FLOOR_WG);
-                Evolution.LOGGER.debug("surfaceY = {}", surfaceY);
                 if (pieceBB.maxY > surfaceY - 5) {
-                    Evolution.LOGGER.debug("piece failed");
                     return false;
                 }
-                Evolution.LOGGER.debug("piece passed height check");
             }
             return MathHelper.isShapeTotallyInside(VoxelShapes.create(AxisAlignedBB.func_216363_a(pieceBB).shrink(0.25)), checkingShape.get());
         }
@@ -263,12 +268,12 @@ public class PuzzleManager {
 
     static final class Entry {
 
-        private final PuzzleStructurePiece structurePiece;
+        private final StructurePuzzlePiece structurePiece;
         private final AtomicReference<VoxelShape> currentShape;
         private final int maxHeight;
         private final int currentSize;
 
-        private Entry(PuzzleStructurePiece structurePiece, AtomicReference<VoxelShape> currentShape, int maxHeight, int currentSize) {
+        private Entry(StructurePuzzlePiece structurePiece, AtomicReference<VoxelShape> currentShape, int maxHeight, int currentSize) {
             this.structurePiece = structurePiece;
             this.currentShape = currentShape;
             this.maxHeight = maxHeight;
