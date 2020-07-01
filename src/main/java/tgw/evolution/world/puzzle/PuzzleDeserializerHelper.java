@@ -21,6 +21,8 @@ public class PuzzleDeserializerHelper {
                 return new ListPuzzlePiece(nbt);
             case SINGLE:
                 return new SinglePuzzlePiece(nbt);
+            case UNDERGROUND:
+                return new UndergroundPuzzlePiece(nbt);
             default:
             case EMPTY:
                 return EmptyPuzzlePiece.INSTANCE;

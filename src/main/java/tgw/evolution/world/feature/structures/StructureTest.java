@@ -76,7 +76,7 @@ public class StructureTest extends Structure<NoFeatureConfig> {
             int x = (chunkX << 4) + 8;
             int z = (chunkZ << 4) + 8;
             int surfaceY = generator.func_222531_c(x, z, Heightmap.Type.WORLD_SURFACE_WG);
-            BlockPos pos = new BlockPos(x, surfaceY - 30, z);
+            BlockPos pos = new BlockPos(x, surfaceY - 4, z);
             StructureTestPieces.start(generator, templateManagerIn, pos, this.components, this.rand);
             this.recalculateStructureSize();
         }

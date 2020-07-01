@@ -7,7 +7,8 @@ public enum EnumPuzzleType {
     FEATURE("feature_pool"),
     FORCED("forced"),
     LIST("list_pool"),
-    SINGLE("single_pool");
+    SINGLE("single_pool"),
+    UNDERGROUND("underground");
 
     private final String key;
 
