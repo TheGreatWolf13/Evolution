@@ -41,13 +41,13 @@ public abstract class StructurePuzzlePiece extends StructurePiece {
         super(pieceType, nbt);
         this.templateManager = manager;
         this.pos = new BlockPos(nbt.getInt("PosX"), nbt.getInt("PosY"), nbt.getInt("PosZ"));
-        this.groundLevelDelta = nbt.getInt("ground_level_delta");
-        this.puzzlePiece = PuzzleDeserializerHelper.deserialize(nbt.getCompound("pool_element"), "element_type", EmptyPuzzlePiece.INSTANCE);
-        this.rotation = Rotation.valueOf(nbt.getString("rotation"));
+        this.groundLevelDelta = nbt.getInt("GroundLevelDelta");
+        this.puzzlePiece = PuzzleDeserializerHelper.deserialize(nbt.getCompound("Elements"), "PieceType", EmptyPuzzlePiece.INSTANCE);
+        this.rotation = Rotation.valueOf(nbt.getString("Rot"));
         this.boundingBox = this.puzzlePiece.getBoundingBox(manager, this.pos, this.rotation);
-        ListNBT listnbt = nbt.getList("junctions", 10);
+        ListNBT listnbt = nbt.getList("Junc", 10);
         this.junctions.clear();
-        listnbt.forEach(p_214827_1_ -> this.junctions.add(PuzzleJunction.deserialize(new Dynamic<>(NBTDynamicOps.INSTANCE, p_214827_1_))));
+        listnbt.forEach(inbt -> this.junctions.add(PuzzleJunction.deserialize(new Dynamic<>(NBTDynamicOps.INSTANCE, inbt))));
     }
 
     @Override
@@ -55,14 +55,14 @@ public abstract class StructurePuzzlePiece extends StructurePiece {
         tagCompound.putInt("PosX", this.pos.getX());
         tagCompound.putInt("PosY", this.pos.getY());
         tagCompound.putInt("PosZ", this.pos.getZ());
-        tagCompound.putInt("ground_level_delta", this.groundLevelDelta);
-        tagCompound.put("pool_element", this.puzzlePiece.serialize());
-        tagCompound.putString("rotation", this.rotation.name());
+        tagCompound.putInt("GroundLevelDelta", this.groundLevelDelta);
+        tagCompound.put("Elements", this.puzzlePiece.serialize());
+        tagCompound.putString("Rot", this.rotation.name());
         ListNBT junctionList = new ListNBT();
         for (PuzzleJunction puzzleJunction : this.junctions) {
             junctionList.add(puzzleJunction.serialize(NBTDynamicOps.INSTANCE).getValue());
         }
-        tagCompound.put("junctions", junctionList);
+        tagCompound.put("Junc", junctionList);
     }
 
     @Override

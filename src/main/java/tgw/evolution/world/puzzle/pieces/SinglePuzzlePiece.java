@@ -21,8 +21,8 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.NBTHelper;
 import tgw.evolution.world.puzzle.EnumPuzzleType;
 import tgw.evolution.world.puzzle.ProcessorPuzzleReplacement;
-import tgw.evolution.world.puzzle.PuzzlePattern;
 import tgw.evolution.world.puzzle.PuzzlePiece;
+import tgw.evolution.world.puzzle.pieces.config.PlacementType;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,10 +34,10 @@ public class SinglePuzzlePiece extends PuzzlePiece {
     protected final ImmutableList<StructureProcessor> processors;
 
     public SinglePuzzlePiece(String location, List<StructureProcessor> processors) {
-        this(location, processors, PuzzlePattern.PlacementBehaviour.RIGID);
+        this(location, processors, PlacementType.RIGID);
     }
 
-    public SinglePuzzlePiece(String location, List<StructureProcessor> processors, PuzzlePattern.PlacementBehaviour placementBehaviour) {
+    public SinglePuzzlePiece(String location, List<StructureProcessor> processors, PlacementType placementBehaviour) {
         super(placementBehaviour);
         this.location = new ResourceLocation(location);
         this.processors = ImmutableList.copyOf(processors);
@@ -49,8 +49,8 @@ public class SinglePuzzlePiece extends PuzzlePiece {
 
     public SinglePuzzlePiece(INBT nbt) {
         super(nbt);
-        this.location = new ResourceLocation(NBTHelper.asString(nbt, "location", ""));
-        this.processors = ImmutableList.copyOf(NBTHelper.asList(nbt, "processors", inbt -> IDynamicDeserializer.func_214907_a(new Dynamic<>(NBTDynamicOps.INSTANCE, inbt), Registry.STRUCTURE_PROCESSOR, "processor_type", NopProcessor.INSTANCE)));
+        this.location = new ResourceLocation(NBTHelper.asString(nbt, "Loc", ""));
+        this.processors = ImmutableList.copyOf(NBTHelper.asList(nbt, "Proc", inbt -> IDynamicDeserializer.func_214907_a(new Dynamic<>(NBTDynamicOps.INSTANCE, inbt), Registry.STRUCTURE_PROCESSOR, "processor_type", NopProcessor.INSTANCE)));
     }
 
     public List<Template.BlockInfo> func_214857_a(TemplateManager manager, BlockPos pos, Rotation rotation, boolean p_214857_4_) {
@@ -115,7 +115,7 @@ public class SinglePuzzlePiece extends PuzzlePiece {
 
     @Override
     public INBT serialize0() {
-        return NBTHelper.createMap(ImmutableMap.of(new StringNBT("location"), new StringNBT(this.location.toString()), new StringNBT("processors"), NBTHelper.createList(this.processors.stream().map(processor -> processor.serialize(NBTDynamicOps.INSTANCE).getValue()))));
+        return NBTHelper.createMap(ImmutableMap.of(new StringNBT("Loc"), new StringNBT(this.location.toString()), new StringNBT("Proc"), NBTHelper.createList(this.processors.stream().map(processor -> processor.serialize(NBTDynamicOps.INSTANCE).getValue()))));
     }
 
     @Override
@@ -123,13 +123,21 @@ public class SinglePuzzlePiece extends PuzzlePiece {
         return "SinglePuzzlePiece[" + this.location + "]";
     }
 
-    @Override
-    public boolean equals(Object o) {
-        return this == o;
-    }
 
     @Override
     public int hashCode() {
         return this.location.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof SinglePuzzlePiece)) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        SinglePuzzlePiece that = (SinglePuzzlePiece) o;
+        return this.location.equals(that.location);
     }
 }

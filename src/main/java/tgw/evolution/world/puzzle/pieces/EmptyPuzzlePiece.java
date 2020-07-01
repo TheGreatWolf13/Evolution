@@ -9,8 +9,8 @@ import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 import tgw.evolution.util.NBTHelper;
 import tgw.evolution.world.puzzle.EnumPuzzleType;
-import tgw.evolution.world.puzzle.PuzzlePattern;
 import tgw.evolution.world.puzzle.PuzzlePiece;
+import tgw.evolution.world.puzzle.pieces.config.PlacementType;
 
 import java.util.Collections;
 import java.util.List;
@@ -21,7 +21,7 @@ public class EmptyPuzzlePiece extends PuzzlePiece {
     public static final EmptyPuzzlePiece INSTANCE = new EmptyPuzzlePiece();
 
     public EmptyPuzzlePiece() {
-        super(PuzzlePattern.PlacementBehaviour.TERRAIN_MATCHING);
+        super(PlacementType.TERRAIN_MATCHING);
     }
 
     @Override

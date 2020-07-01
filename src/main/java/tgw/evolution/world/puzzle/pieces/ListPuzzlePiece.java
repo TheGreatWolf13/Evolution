@@ -12,8 +12,8 @@ import net.minecraft.world.gen.feature.template.TemplateManager;
 import tgw.evolution.util.NBTHelper;
 import tgw.evolution.world.puzzle.EnumPuzzleType;
 import tgw.evolution.world.puzzle.PuzzleDeserializerHelper;
-import tgw.evolution.world.puzzle.PuzzlePattern;
 import tgw.evolution.world.puzzle.PuzzlePiece;
+import tgw.evolution.world.puzzle.pieces.config.PlacementType;
 
 import java.util.List;
 import java.util.Random;
@@ -24,10 +24,10 @@ public class ListPuzzlePiece extends PuzzlePiece {
     private final List<PuzzlePiece> elements;
 
     public ListPuzzlePiece(List<PuzzlePiece> elementList) {
-        this(elementList, PuzzlePattern.PlacementBehaviour.RIGID);
+        this(elementList, PlacementType.RIGID);
     }
 
-    public ListPuzzlePiece(List<PuzzlePiece> elementList, PuzzlePattern.PlacementBehaviour placementBehaviour) {
+    public ListPuzzlePiece(List<PuzzlePiece> elementList, PlacementType placementBehaviour) {
         super(placementBehaviour);
         if (elementList.isEmpty()) {
             throw new IllegalArgumentException("Elements are empty");
@@ -38,7 +38,7 @@ public class ListPuzzlePiece extends PuzzlePiece {
 
     public ListPuzzlePiece(INBT nbt) {
         super(nbt);
-        List<PuzzlePiece> list = NBTHelper.asList(nbt, "elements", inbt -> PuzzleDeserializerHelper.deserialize(inbt, "element_type", EmptyPuzzlePiece.INSTANCE));
+        List<PuzzlePiece> list = NBTHelper.asList(nbt, "Elements", inbt -> PuzzleDeserializerHelper.deserialize(inbt, "PieceType", EmptyPuzzlePiece.INSTANCE));
         if (list.isEmpty()) {
             throw new IllegalArgumentException("Elements are empty");
         }
@@ -76,7 +76,7 @@ public class ListPuzzlePiece extends PuzzlePiece {
     }
 
     @Override
-    public PuzzlePiece setPlacementBehaviour(PuzzlePattern.PlacementBehaviour placementBehaviour) {
+    public PuzzlePiece setPlacementBehaviour(PlacementType placementBehaviour) {
         super.setPlacementBehaviour(placementBehaviour);
         this.setChildrenPlacementBehaviour(placementBehaviour);
         return this;
@@ -85,7 +85,7 @@ public class ListPuzzlePiece extends PuzzlePiece {
     @Override
     public INBT serialize0() {
         INBT nbt = NBTHelper.createList(this.elements.stream().map(PuzzlePiece::serialize));
-        return NBTHelper.createMap(ImmutableMap.of(new StringNBT("elements"), nbt));
+        return NBTHelper.createMap(ImmutableMap.of(new StringNBT("Elements"), nbt));
     }
 
     @Override
@@ -93,7 +93,7 @@ public class ListPuzzlePiece extends PuzzlePiece {
         return "List[" + this.elements.stream().map(Object::toString).collect(Collectors.joining(", ")) + "]";
     }
 
-    private void setChildrenPlacementBehaviour(PuzzlePattern.PlacementBehaviour placementBehaviour) {
+    private void setChildrenPlacementBehaviour(PlacementType placementBehaviour) {
         this.elements.forEach(puzzlePiece -> puzzlePiece.setPlacementBehaviour(placementBehaviour));
     }
 }

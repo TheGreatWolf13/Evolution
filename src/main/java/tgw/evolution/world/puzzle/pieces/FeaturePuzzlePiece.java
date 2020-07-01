@@ -21,8 +21,8 @@ import tgw.evolution.blocks.BlockPuzzle;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.NBTHelper;
 import tgw.evolution.world.puzzle.EnumPuzzleType;
-import tgw.evolution.world.puzzle.PuzzlePattern;
 import tgw.evolution.world.puzzle.PuzzlePiece;
+import tgw.evolution.world.puzzle.pieces.config.PlacementType;
 
 import java.util.List;
 import java.util.Random;
@@ -33,10 +33,10 @@ public class FeaturePuzzlePiece extends PuzzlePiece {
     private final CompoundNBT nbt;
 
     public FeaturePuzzlePiece(ConfiguredFeature<?> feature) {
-        this(feature, PuzzlePattern.PlacementBehaviour.RIGID);
+        this(feature, PlacementType.RIGID);
     }
 
-    public FeaturePuzzlePiece(ConfiguredFeature<?> feature, PuzzlePattern.PlacementBehaviour placementBehaviour) {
+    public FeaturePuzzlePiece(ConfiguredFeature<?> feature, PlacementType placementBehaviour) {
         super(placementBehaviour);
         this.feature = feature;
         this.nbt = this.writeNBT();
@@ -44,7 +44,7 @@ public class FeaturePuzzlePiece extends PuzzlePiece {
 
     public FeaturePuzzlePiece(INBT nbt) {
         super(nbt);
-        this.feature = ConfiguredFeature.deserialize(new Dynamic<>(NBTDynamicOps.INSTANCE, nbt).get("feature").orElseEmptyMap());
+        this.feature = ConfiguredFeature.deserialize(new Dynamic<>(NBTDynamicOps.INSTANCE, nbt).get("Feature").orElseEmptyMap());
         this.nbt = this.writeNBT();
     }
 
@@ -81,7 +81,7 @@ public class FeaturePuzzlePiece extends PuzzlePiece {
 
     @Override
     public INBT serialize0() {
-        return NBTHelper.createMap(ImmutableMap.of(new StringNBT("feature"), this.feature.serialize(NBTDynamicOps.INSTANCE).getValue()));
+        return NBTHelper.createMap(ImmutableMap.of(new StringNBT("Feature"), this.feature.serialize(NBTDynamicOps.INSTANCE).getValue()));
     }
 
     @Override

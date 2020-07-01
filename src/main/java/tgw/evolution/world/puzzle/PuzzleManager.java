@@ -21,10 +21,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import tgw.evolution.blocks.BlockPuzzle;
 import tgw.evolution.util.MathHelper;
+import tgw.evolution.world.puzzle.pieces.ConfiguredPuzzlePiece;
 import tgw.evolution.world.puzzle.pieces.EmptyPuzzlePiece;
-import tgw.evolution.world.puzzle.pieces.ForcedPuzzlePiece;
-import tgw.evolution.world.puzzle.pieces.HeightPuzzlePiece;
-import tgw.evolution.world.puzzle.pieces.UndergroundPuzzlePiece;
+import tgw.evolution.world.puzzle.pieces.config.PlacementType;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -90,8 +89,8 @@ public class PuzzleManager {
             PuzzlePiece placingPiece = structurePiece.getPuzzlePiece();
             BlockPos placingPos = structurePiece.getPos();
             Rotation placingRotation = structurePiece.getRotation();
-            PuzzlePattern.PlacementBehaviour placingProjection = placingPiece.getPlacementBehaviour();
-            boolean isPlacingRigid = placingProjection == PuzzlePattern.PlacementBehaviour.RIGID;
+            PlacementType placingProjection = placingPiece.getPlacementBehaviour();
+            boolean isPlacingRigid = placingProjection == PlacementType.RIGID;
             AtomicReference<VoxelShape> checkingShape = new AtomicReference<>();
             MutableBoundingBox placingBB = structurePiece.getBoundingBox();
             int placingMinY = placingBB.minY;
@@ -164,8 +163,8 @@ public class PuzzleManager {
                                     matchingCornerPos.setPos(connectionPos.getX() - matchingPuzzleBlockRelativePos.getX(), connectionPos.getY() - matchingPuzzleBlockRelativePos.getY(), connectionPos.getZ() - matchingPuzzleBlockRelativePos.getZ());
                                     MutableBoundingBox matchingBB = candidatePiece.getBoundingBox(this.templateManager, matchingCornerPos, candidateRotation);
                                     int matchingMinY = matchingBB.minY;
-                                    PuzzlePattern.PlacementBehaviour matchingProjection = candidatePiece.getPlacementBehaviour();
-                                    boolean isMatchingRigid = matchingProjection == PuzzlePattern.PlacementBehaviour.RIGID;
+                                    PlacementType matchingProjection = candidatePiece.getPlacementBehaviour();
+                                    boolean isMatchingRigid = matchingProjection == PlacementType.RIGID;
                                     int matchingPuzzleBlockRelativePosY = matchingPuzzleBlockRelativePos.getY();
                                     int heightDelta = relativePuzzleBlockYPos - matchingPuzzleBlockRelativePosY + puzzleBlock.state.get(BlockPuzzle.FACING).getYOffset();
                                     int actualMatchingMinY;
@@ -236,29 +235,31 @@ public class PuzzleManager {
         }
 
         private boolean canPlace(PuzzlePiece piece, MutableBoundingBox pieceBB, AtomicReference<VoxelShape> checkingShape) {
-            if (piece instanceof ForcedPuzzlePiece) {
-                switch (((ForcedPuzzlePiece) piece).getForceType()) {
+            if (piece instanceof ConfiguredPuzzlePiece) {
+                ConfiguredPuzzlePiece config = (ConfiguredPuzzlePiece) piece;
+                switch (config.getForceType()) {
                     case HARD:
                         return true;
                     case SOFT:
                         return !MathHelper.isShapeTotallyOutside(VoxelShapes.create(AxisAlignedBB.func_216363_a(pieceBB).shrink(0.25)), checkingShape.get());
-                    default:
-                        throw new IllegalStateException("Missing ForceType");
                 }
-            }
-            if (piece instanceof UndergroundPuzzlePiece) {
-                if (piece instanceof HeightPuzzlePiece) {
+                if (config.getDesiredHeight() != -1) {
                     int standardDeviation = 3;
                     int chosenHeight = (pieceBB.minY + pieceBB.maxY) / 2;
-                    int deltaY = Math.abs(((HeightPuzzlePiece) piece).getDesiredHeight() - chosenHeight);
-                    if (Math.abs(this.rand.nextGaussian()) >= standardDeviation - deltaY / (((HeightPuzzlePiece) piece).getMaxDeviation() / (float) standardDeviation)) {
+                    int deltaY = Math.abs(config.getDesiredHeight() - chosenHeight);
+                    if (Math.abs(this.rand.nextGaussian()) >= standardDeviation - deltaY / (config.getMaxDeviation() / (float) standardDeviation)) {
                         return false;
                     }
                 }
-                int middleX = (pieceBB.maxX + pieceBB.minX) / 2;
-                int middleZ = (pieceBB.maxZ + pieceBB.minZ) / 2;
-                int surfaceY = this.chunkGenerator.func_222532_b(middleX, middleZ, Heightmap.Type.OCEAN_FLOOR_WG);
-                if (pieceBB.maxY > surfaceY - 5) {
+                if (config.isUnderground()) {
+                    int middleX = (pieceBB.maxX + pieceBB.minX) / 2;
+                    int middleZ = (pieceBB.maxZ + pieceBB.minZ) / 2;
+                    int surfaceY = this.chunkGenerator.func_222532_b(middleX, middleZ, Heightmap.Type.OCEAN_FLOOR_WG);
+                    if (pieceBB.maxY > surfaceY - 5) {
+                        return false;
+                    }
+                }
+                if (config.failConditions()) {
                     return false;
                 }
             }

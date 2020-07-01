@@ -78,12 +78,20 @@ public class NBTHelper {
         return defaultEntry;
     }
 
+    public static float asFloat(INBT input, String key, float defaultEntry) {
+        return asNumber(input, key, defaultEntry).floatValue();
+    }
+
     public static int asInt(INBT input, String key, int defaultEntry) {
         return asNumber(input, key, defaultEntry).intValue();
     }
 
     public static short asShort(INBT input, String key, int defaultEntry) {
         return asNumber(input, key, defaultEntry).shortValue();
+    }
+
+    public static boolean asBoolean(INBT input, String key, boolean defaultEntry) {
+        return asByte(input, key, defaultEntry ? 1 : 0) == 1;
     }
 
     public static byte asByte(INBT input, String key, int defaultEntry) {

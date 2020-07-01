@@ -8,24 +8,22 @@ import tgw.evolution.world.puzzle.pieces.*;
 public class PuzzleDeserializerHelper {
 
     public static PuzzlePiece deserialize(INBT nbt, String string, PuzzlePiece defaultEntry) {
-        EnumPuzzleType type = EnumPuzzleType.byKey(NBTHelper.asString(nbt, string, ""));
+        EnumPuzzleType type = EnumPuzzleType.byId(NBTHelper.asByte(nbt, string, 0));
         if (type == null) {
             Evolution.LOGGER.error("Unknown type {}, replacing with {}", nbt.getString(), defaultEntry);
             return defaultEntry;
         }
         switch (type) {
+            case CAVE:
+                return new CavePuzzlePiece(nbt);
+            case CONFIGURED:
+                return new ConfiguredPuzzlePiece(nbt);
             case FEATURE:
                 return new FeaturePuzzlePiece(nbt);
-            case FORCED:
-                return new ForcedPuzzlePiece(nbt);
-            case HEIGHT:
-                return new HeightPuzzlePiece(nbt);
             case LIST:
                 return new ListPuzzlePiece(nbt);
             case SINGLE:
                 return new SinglePuzzlePiece(nbt);
-            case UNDERGROUND:
-                return new UndergroundPuzzlePiece(nbt);
             default:
             case EMPTY:
                 return EmptyPuzzlePiece.INSTANCE;
