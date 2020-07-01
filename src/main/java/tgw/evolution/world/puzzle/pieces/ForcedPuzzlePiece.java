@@ -1,10 +1,12 @@
-package tgw.evolution.world.puzzle;
+package tgw.evolution.world.puzzle.pieces;
 
 import com.google.common.collect.ImmutableList;
 import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.StringNBT;
 import net.minecraft.world.gen.feature.template.StructureProcessor;
 import tgw.evolution.util.NBTHelper;
+import tgw.evolution.world.puzzle.EnumPuzzleType;
+import tgw.evolution.world.puzzle.PuzzlePattern;
 
 import java.util.List;
 

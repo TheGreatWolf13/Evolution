@@ -1,7 +1,9 @@
-package tgw.evolution.world.puzzle;
+package tgw.evolution.world.puzzle.pieces;
 
 import net.minecraft.nbt.INBT;
 import net.minecraft.world.gen.feature.template.StructureProcessor;
+import tgw.evolution.world.puzzle.EnumPuzzleType;
+import tgw.evolution.world.puzzle.PuzzlePattern;
 
 import java.util.List;
 
@@ -9,6 +11,7 @@ public class UndergroundPuzzlePiece extends SinglePuzzlePiece {
 
     public UndergroundPuzzlePiece(String location, List<StructureProcessor> processors) {
         super(location, processors);
+
     }
 
     public UndergroundPuzzlePiece(String location, List<StructureProcessor> processors, PuzzlePattern.PlacementBehaviour placementBehaviour) {

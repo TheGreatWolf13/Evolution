@@ -1,4 +1,4 @@
-package tgw.evolution.world.puzzle;
+package tgw.evolution.world.puzzle.pieces;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -19,6 +19,10 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.gen.feature.template.*;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.NBTHelper;
+import tgw.evolution.world.puzzle.EnumPuzzleType;
+import tgw.evolution.world.puzzle.ProcessorPuzzleReplacement;
+import tgw.evolution.world.puzzle.PuzzlePattern;
+import tgw.evolution.world.puzzle.PuzzlePiece;
 
 import java.util.Collections;
 import java.util.List;
@@ -103,7 +107,7 @@ public class SinglePuzzlePiece extends PuzzlePiece {
         placementsettings.func_215223_c(true);
         placementsettings.setIgnoreEntities(false);
         placementsettings.addProcessor(BlockIgnoreStructureProcessor.STRUCTURE_BLOCK);
-        placementsettings.addProcessor(PuzzleReplacementProcessor.INSTANCE);
+        placementsettings.addProcessor(ProcessorPuzzleReplacement.INSTANCE);
         this.processors.forEach(placementsettings::addProcessor);
         this.getPlacementBehaviour().getStructureProcessors().forEach(placementsettings::addProcessor);
         return placementsettings;

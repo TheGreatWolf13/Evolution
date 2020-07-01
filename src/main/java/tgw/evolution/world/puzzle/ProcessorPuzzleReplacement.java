@@ -17,9 +17,9 @@ import tgw.evolution.init.EvolutionBlocks;
 
 import javax.annotation.Nullable;
 
-public class PuzzleReplacementProcessor extends StructureProcessor {
+public class ProcessorPuzzleReplacement extends StructureProcessor {
 
-    public static final PuzzleReplacementProcessor INSTANCE = new PuzzleReplacementProcessor();
+    public static final ProcessorPuzzleReplacement INSTANCE = new ProcessorPuzzleReplacement();
     public static final IStructureProcessorType PUZZLE_REPLACEMENT = IStructureProcessorType.register("puzzle_replacement", a -> INSTANCE);
 
     @Override

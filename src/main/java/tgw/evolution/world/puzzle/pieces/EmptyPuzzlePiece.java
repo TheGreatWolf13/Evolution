@@ -1,4 +1,4 @@
-package tgw.evolution.world.puzzle;
+package tgw.evolution.world.puzzle.pieces;
 
 import net.minecraft.nbt.INBT;
 import net.minecraft.util.Rotation;
@@ -8,6 +8,9 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 import tgw.evolution.util.NBTHelper;
+import tgw.evolution.world.puzzle.EnumPuzzleType;
+import tgw.evolution.world.puzzle.PuzzlePattern;
+import tgw.evolution.world.puzzle.PuzzlePiece;
 
 import java.util.Collections;
 import java.util.List;

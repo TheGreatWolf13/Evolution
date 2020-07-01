@@ -15,9 +15,9 @@ import tgw.evolution.blocks.IStoneVariant;
 import java.util.Random;
 import java.util.function.Function;
 
-public class RockFeature extends Feature<NoFeatureConfig> {
+public class FeatureRock extends Feature<NoFeatureConfig> {
 
-    public RockFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> configFactoryIn) {
+    public FeatureRock(Function<Dynamic<?>, ? extends NoFeatureConfig> configFactoryIn) {
         super(configFactoryIn);
     }
 

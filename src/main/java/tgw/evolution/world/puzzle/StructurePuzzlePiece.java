@@ -13,11 +13,12 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.gen.feature.structure.IStructurePieceType;
 import net.minecraft.world.gen.feature.structure.StructurePiece;
 import net.minecraft.world.gen.feature.template.TemplateManager;
+import tgw.evolution.world.puzzle.pieces.EmptyPuzzlePiece;
 
 import java.util.List;
 import java.util.Random;
 
-public abstract class PuzzleStructurePiece extends StructurePiece {
+public abstract class StructurePuzzlePiece extends StructurePiece {
 
     protected final PuzzlePiece puzzlePiece;
     protected final Rotation rotation;
@@ -26,7 +27,7 @@ public abstract class PuzzleStructurePiece extends StructurePiece {
     private final TemplateManager templateManager;
     protected BlockPos pos;
 
-    public PuzzleStructurePiece(IStructurePieceType pieceType, TemplateManager manager, PuzzlePiece puzzlePiece, BlockPos pos, int groundLevelDelta, Rotation rotation, MutableBoundingBox boundingBox) {
+    public StructurePuzzlePiece(IStructurePieceType pieceType, TemplateManager manager, PuzzlePiece puzzlePiece, BlockPos pos, int groundLevelDelta, Rotation rotation, MutableBoundingBox boundingBox) {
         super(pieceType, 0);
         this.templateManager = manager;
         this.puzzlePiece = puzzlePiece;
@@ -36,7 +37,7 @@ public abstract class PuzzleStructurePiece extends StructurePiece {
         this.boundingBox = boundingBox;
     }
 
-    public PuzzleStructurePiece(TemplateManager manager, CompoundNBT nbt, IStructurePieceType pieceType) {
+    public StructurePuzzlePiece(TemplateManager manager, CompoundNBT nbt, IStructurePieceType pieceType) {
         super(pieceType, nbt);
         this.templateManager = manager;
         this.pos = new BlockPos(nbt.getInt("PosX"), nbt.getInt("PosY"), nbt.getInt("PosZ"));

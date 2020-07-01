@@ -22,7 +22,7 @@ import java.util.function.Function;
 
 import static tgw.evolution.util.EnumRockVariant.*;
 
-public class StrataFeature extends Feature<NoFeatureConfig> {
+public class FeatureStrata extends Feature<NoFeatureConfig> {
 
     public static final List<EnumRockVariant> SURFACE_BLOCKS = ImmutableList.of(ANDESITE, BASALT, CHALK, CHERT, CONGLOMERATE, DACITE, DOLOMITE, GNEISS, LIMESTONE, MARBLE, PHYLLITE, QUARTZITE, RED_SANDSTONE, SANDSTONE, SCHIST, SHALE, SLATE);
     public static final List<EnumRockVariant> BOTTOM_BLOCKS = ImmutableList.of(DIORITE, GABBRO, GNEISS, GRANITE, MARBLE, PHYLLITE, QUARTZITE, SCHIST, SLATE);
@@ -31,7 +31,7 @@ public class StrataFeature extends Feature<NoFeatureConfig> {
     public static List<EnumRockVariant> LAYER_BOTTOM = new ArrayList<>(BOTTOM_BLOCKS);
     public static Long seed;
 
-    public StrataFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> configFactoryIn) {
+    public FeatureStrata(Function<Dynamic<?>, ? extends NoFeatureConfig> configFactoryIn) {
         super(configFactoryIn);
     }
 

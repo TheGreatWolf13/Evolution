@@ -1,4 +1,4 @@
-package tgw.evolution.world.puzzle;
+package tgw.evolution.world.puzzle.pieces;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -20,6 +20,9 @@ import net.minecraftforge.registries.ForgeRegistries;
 import tgw.evolution.blocks.BlockPuzzle;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.NBTHelper;
+import tgw.evolution.world.puzzle.EnumPuzzleType;
+import tgw.evolution.world.puzzle.PuzzlePattern;
+import tgw.evolution.world.puzzle.PuzzlePiece;
 
 import java.util.List;
 import java.util.Random;
