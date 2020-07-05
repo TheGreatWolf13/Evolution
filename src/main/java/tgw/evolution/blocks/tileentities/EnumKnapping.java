@@ -2,7 +2,9 @@ package tgw.evolution.blocks.tileentities;
 
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
+import tgw.evolution.Evolution;
 import tgw.evolution.blocks.EvolutionHitBoxes;
+import tgw.evolution.util.MathHelper;
 
 public enum EnumKnapping {
     NULL(0, VoxelShapes.empty(), KnappingPatterns.NULL),
@@ -13,18 +15,28 @@ public enum EnumKnapping {
     HOE(5, EvolutionHitBoxes.HOE, KnappingPatterns.HOE),
     KNIFE(6, EvolutionHitBoxes.KNIFE, KnappingPatterns.KNIFE);
 
-    private final byte type;
+    private final byte id;
     private final VoxelShape shape;
     private final boolean[][] pattern;
 
-    EnumKnapping(int type, VoxelShape shape, boolean[][] pattern) {
-        this.type = (byte) type;
+    EnumKnapping(int id, VoxelShape shape, boolean[][] pattern) {
+        this.id = MathHelper.toByteExact(id);
         this.shape = shape;
         this.pattern = pattern;
     }
 
-    public byte getByte() {
-        return this.type;
+    public static EnumKnapping byId(int id) {
+        for (EnumKnapping knapping : EnumKnapping.values()) {
+            if (knapping.id == id) {
+                return knapping;
+            }
+        }
+        Evolution.LOGGER.warn("Could not find EnumKnapping with id {}, replacing with NULL", id);
+        return NULL;
+    }
+
+    public byte getId() {
+        return this.id;
     }
 
     public VoxelShape getShape() {
@@ -33,14 +45,5 @@ public enum EnumKnapping {
 
     public boolean[][] getPattern() {
         return this.pattern;
-    }
-
-    public static EnumKnapping fromByte(byte type) {
-        for (EnumKnapping knapping : EnumKnapping.values()) {
-            if (knapping.type == type) {
-                return knapping;
-            }
-        }
-        throw new IllegalStateException("No EnumKnapping for type " + type);
     }
 }

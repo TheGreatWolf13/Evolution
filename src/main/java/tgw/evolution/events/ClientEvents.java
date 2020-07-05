@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.settings.AttackIndicatorStatus;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.INamedContainerProvider;
@@ -41,6 +42,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.blocks.BlockMolding;
 import tgw.evolution.blocks.tileentities.TEKnapping;
+import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.IOffhandAttackable;
@@ -50,6 +52,7 @@ import tgw.evolution.network.PacketCSOpenExtendedInventory;
 import tgw.evolution.network.PacketCSSetProne;
 import tgw.evolution.potion.EffectDizziness;
 import tgw.evolution.util.EvolutionStyles;
+import tgw.evolution.util.MathHelper;
 
 import java.util.UUID;
 
@@ -132,7 +135,8 @@ public class ClientEvents {
                 return;
             }
             if (this.mc.world.getBlockState(hitPos).getBlock() instanceof BlockMolding) {
-                //TODO clay molding outlines
+                TEMolding tile = (TEMolding) this.mc.world.getTileEntity(hitPos);
+                this.renderOutlines(tile.molding.getShape(), event.getInfo(), hitPos);
             }
         }
     }
@@ -349,10 +353,12 @@ public class ClientEvents {
                             this.blit(x, y, 52, 94, l, 4);
                         }
                         if (offhandValid) {
+                            EntityRayTraceResult rayTrace = MathHelper.rayTraceEntity(this.mc.player, 1f, ((IOffhandAttackable) this.mc.player.getHeldItemOffhand().getItem()).getReach() + 5);
+                            Entity pointedEntity = rayTrace != null ? rayTrace.getEntity() : null;
                             boolean shouldShowRightAttackIndicator = false;
                             float rightCooledAttackStrength = this.getCooledAttackStrength(this.mc.player.getHeldItemOffhand().getItem(), 0);
-                            if (this.mc.pointedEntity != null && this.mc.pointedEntity instanceof LivingEntity && rightCooledAttackStrength >= 1) {
-                                shouldShowRightAttackIndicator = this.mc.pointedEntity.isAlive();
+                            if (pointedEntity instanceof LivingEntity && rightCooledAttackStrength >= 1) {
+                                shouldShowRightAttackIndicator = pointedEntity.isAlive();
                             }
                             x -= 20;
                             if (shouldShowRightAttackIndicator) {

@@ -25,7 +25,7 @@
       },
       "apply": {
         "model": "evolution:block/climbing_stake_wall",
-        "y": 180
+        "y": 90
       }
     },
     {
@@ -35,7 +35,7 @@
       },
       "apply": {
         "model": "evolution:block/climbing_stake_wall_hit",
-        "y": 180
+        "y": 90
       }
     },
     {
@@ -45,7 +45,7 @@
       },
       "apply": {
         "model": "evolution:block/climbing_stake_wall",
-        "y": 270
+        "y": 180
       }
     },
     {
@@ -55,12 +55,32 @@
       },
       "apply": {
         "model": "evolution:block/climbing_stake_wall_hit",
-        "y": 270
+        "y": 180
       }
     },
     {
       "when": {
         "facing": "west",
+        "hit": "false"
+      },
+      "apply": {
+        "model": "evolution:block/climbing_stake_wall",
+		"y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "hit": "true"
+      },
+      "apply": {
+        "model": "evolution:block/climbing_stake_wall_hit",
+		"y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
         "hit": "false"
       },
       "apply": {
@@ -69,7 +89,7 @@
     },
     {
       "when": {
-        "facing": "west",
+        "facing": "north",
         "hit": "true"
       },
       "apply": {
@@ -78,30 +98,10 @@
     },
     {
       "when": {
-        "facing": "north",
-        "hit": "false"
-      },
-      "apply": {
-        "model": "evolution:block/climbing_stake_wall",
-        "y": 90
-      }
-    },
-    {
-      "when": {
-        "facing": "north",
-        "hit": "true"
-      },
-      "apply": {
-        "model": "evolution:block/climbing_stake_wall_hit",
-        "y": 90
-      }
-    },
-    {
-      "when": {
         "north": "true"
       },
       "apply": {
-        "model": "block/redstone_dust_side0"
+        "model": "evolution:block/rope_stake"
       }
     },
     {
@@ -109,7 +109,8 @@
         "south": "true"
       },
       "apply": {
-        "model": "block/redstone_dust_side_alt0"
+        "model": "evolution:block/rope_stake",
+		"y" : 180
       }
     },
     {
@@ -117,8 +118,8 @@
         "east": "true"
       },
       "apply": {
-        "model": "block/redstone_dust_side_alt1",
-        "y": 270
+        "model": "evolution:block/rope_stake_ew",
+        "y": 90
       }
     },
     {
@@ -126,7 +127,7 @@
         "west": "true"
       },
       "apply": {
-        "model": "block/redstone_dust_side1",
+        "model": "evolution:block/rope_stake_ew",
         "y": 270
       }
     },
@@ -136,7 +137,7 @@
         "down": "true"
       },
       "apply": {
-        "model": "block/redstone_dust_up"
+        "model": "evolution:block/rope_stake_wall"
       }
     },
     {
@@ -145,9 +146,9 @@
         "down": "true"
       },
       "apply": {
-        "model": "block/redstone_dust_up",
-        "y": 90
-      }
+	  "model": "evolution:block/rope_stake_wall",
+	  "y": 90
+	  }
     },
     {
       "when": {
@@ -155,7 +156,7 @@
         "down": "true"
       },
       "apply": {
-        "model": "block/redstone_dust_up",
+        "model": "evolution:block/rope_stake_wall",
         "y": 180
       }
     },
@@ -165,7 +166,7 @@
         "down": "true"
       },
       "apply": {
-        "model": "block/redstone_dust_up",
+        "model": "evolution:block/rope_stake_wall",
         "y": 270
       }
     }

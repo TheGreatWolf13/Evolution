@@ -5,6 +5,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
+import tgw.evolution.Evolution;
 import tgw.evolution.client.models.entities.ModelHook;
 import tgw.evolution.entities.EntityHook;
 
@@ -12,7 +13,7 @@ import javax.annotation.Nullable;
 
 public class RenderHook extends EntityRenderer<EntityHook> {
 
-    public static final ResourceLocation TRIDENT = new ResourceLocation("textures/entity/trident.png");
+    public static final ResourceLocation HOOK = Evolution.location("textures/entity/climbing_hook.png");
     private final ModelHook model = new ModelHook();
 
     public RenderHook(EntityRendererManager renderManager) {
@@ -37,6 +38,6 @@ public class RenderHook extends EntityRenderer<EntityHook> {
     @Nullable
     @Override
     protected ResourceLocation getEntityTexture(EntityHook entity) {
-        return TRIDENT;
+        return HOOK;
     }
 }

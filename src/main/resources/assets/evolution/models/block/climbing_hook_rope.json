@@ -1,5 +1,6 @@
 {
 	"textures": {
+		"1": "evolution:block/rope",
 		"2": "evolution:block/climbing_hook",
 		"particle": "evolution:block/climbing_hook"
 	},
@@ -122,6 +123,15 @@
 				"west": {"uv": [13, 3, 16, 4], "texture": "#2"},
 				"up": {"uv": [13, 0, 16, 1], "rotation": 90, "texture": "#2"},
 				"down": {"uv": [13, 2, 16, 3], "rotation": 90, "texture": "#2"}
+			}
+		},
+		{
+			"from": [6.2, 0.7, 7.65],
+			"to": [9.8, 0.7, 15.65],
+			"rotation": {"angle": 22.5, "axis": "x", "origin": [8, 0, 16]},
+			"faces": {
+				"up": {"uv": [12, 3.5, 15.5, 11.5], "rotation": 180, "texture": "#1"},
+				"down": {"uv": [15.5, 3.5, 12, 11.5], "texture": "#1"}
 			}
 		},
 		{

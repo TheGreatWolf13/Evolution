@@ -21,7 +21,9 @@ import net.minecraft.potion.Effects;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.*;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.EntityRayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.GameType;
 import net.minecraft.world.World;
@@ -53,9 +55,9 @@ import tgw.evolution.items.IKnockback;
 import tgw.evolution.items.ISweepAttack;
 import tgw.evolution.util.Gravity;
 import tgw.evolution.util.HarvestLevel;
+import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.PlayerDamage;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -66,14 +68,6 @@ public class EntityEvents {
     private static final Random RANDOM = new Random();
     private final Set<CreatureEntity> jumping = new HashSet<>();
     private final Map<DamageSource, Float> damageMultipliers = new WeakHashMap<>();
-
-    @Nullable
-    public static EntityRayTraceResult rayTraceEntity(Entity entity, float partialTicks, double blockReachDistance) {
-        Vec3d from = entity.getEyePosition(partialTicks);
-        Vec3d look = entity.getLook(partialTicks);
-        Vec3d to = from.add(look.x * blockReachDistance, look.y * blockReachDistance, look.z * blockReachDistance);
-        return PlayerDamage.rayTraceEntities(entity, from, to, new AxisAlignedBB(from, to), blockReachDistance * blockReachDistance);
-    }
 
     private static void spawnDrops(ItemStack stack, World worldIn, BlockPos pos) {
         double xOffset = worldIn.getRandom().nextFloat() * 0.7F + 0.65F;
@@ -177,7 +171,7 @@ public class EntityEvents {
         if (!state.getCollisionShape(event.getWorld(), event.getPos()).isEmpty()) {
             return;
         }
-        EntityRayTraceResult rayTraceResult = rayTraceEntity(player, 1, player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue());
+        EntityRayTraceResult rayTraceResult = MathHelper.rayTraceEntity(player, 1, player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue());
         if (rayTraceResult != null) {
             player.attackTargetEntityWithCurrentItem(rayTraceResult.getEntity());
             player.resetCooldown();
@@ -516,7 +510,7 @@ public class EntityEvents {
         DamageSource source = event.getSource();
         Evolution.LOGGER.debug("amount = " + damage);
         if (source == DamageSource.FALL) {
-            float strength = tgw.evolution.util.MathHelper.relativize(damage, 0, hitEntity.getMaxHealth() + 3);
+            float strength = MathHelper.relativize(damage, 0, hitEntity.getMaxHealth() + 3);
             Evolution.LOGGER.debug("fall damage, damage feet / legs / spine rarely / depending on damage amount");
             Evolution.LOGGER.debug("fall strength = " + strength);
             return;
@@ -535,7 +529,7 @@ public class EntityEvents {
             }
             if (!((EntityDamageSource) source).getIsThornsDamage()) {
                 //TODO use range
-                EntityRayTraceResult rayTrace = rayTraceEntity(trueSource, 1f, 5);
+                EntityRayTraceResult rayTrace = MathHelper.rayTraceEntity(trueSource, 1f, 5);
                 if (rayTrace == null) {
                     event.setCanceled(true);
                     return;

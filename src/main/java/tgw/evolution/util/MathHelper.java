@@ -1,15 +1,13 @@
 package tgw.evolution.util;
 
+import net.minecraft.client.renderer.entity.model.RendererModel;
 import net.minecraft.entity.Entity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.Direction.AxisDirection;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.RayTraceContext;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
+import net.minecraft.util.math.*;
 import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
@@ -94,6 +92,8 @@ public class MathHelper {
 
     /**
      * Used to compare boolean tensors of the same size only.
+     *
+     * @return true if the tensors are equal; otherwise returns false.
      */
     public static boolean tensorsEquals(@Nonnull boolean[][][] a, @Nonnull boolean[][][] b) {
         for (int i = 0; i < a.length; i++) {
@@ -109,16 +109,29 @@ public class MathHelper {
     }
 
     /**
-     * Returns the spherical, shortest distance between two points in 3 dimensional space.
+     * @return the spherical, shortest distance between two points in 3 dimensional space.
      */
     public static float distance(double x, double y, double z, double x0, double y0, double z0) {
         return net.minecraft.util.math.MathHelper.sqrt((x - x0) * (x - x0) + (y - y0) * (y - y0) + (z - z0) * (z - z0));
     }
 
+    /**
+     * Calculates an attack speed given a charge time.
+     *
+     * @param chargeTimeInSec The time it takes to charge the item, in seconds.
+     * @return the corresponding attack speed.
+     */
     public static float attackSpeed(float chargeTimeInSec) {
         return 1.0F / chargeTimeInSec;
     }
 
+    /**
+     * Calculates the amount to add to the default attack speed (4.0) to change it
+     * to the given charge time.
+     *
+     * @param chargeTimeInSec The time it takes to charge the item.
+     * @return the corresponding attack speed, which must be added to the default one.
+     */
     public static double attackSpeedAdd(double chargeTimeInSec) {
         return 1.0 / chargeTimeInSec - 4.0;
     }
@@ -137,6 +150,8 @@ public class MathHelper {
     }
 
     /**
+     * Rotates a boolean matrix clockwise.
+     *
      * @param input A square boolean matrix.
      * @return A new square boolean matrix rotated 90 degrees clockwise.
      */
@@ -158,6 +173,8 @@ public class MathHelper {
     }
 
     /**
+     * Translates a boolean matrix 1 unit to the right, wrapping values around.
+     *
      * @param input A square boolean matrix.
      * @return A new square boolean matrix translated one index to the right and wrapped around.
      */
@@ -171,6 +188,8 @@ public class MathHelper {
     }
 
     /**
+     * Mirrors a boolean matrix vertically.
+     *
      * @param input A square boolean matrix.
      * @return A new square boolean matrix mirrored vertically.
      */
@@ -182,6 +201,12 @@ public class MathHelper {
         return output;
     }
 
+    /**
+     * Turns a boolean matrix in a human-readable format.
+     *
+     * @param matrix The matrix to print.
+     * @return The corresponding String containing the matrix in a human-readable format.
+     */
     public static String printBooleanMatrix(@Nonnull boolean[][] matrix) {
         StringBuilder builder = new StringBuilder().append("\n");
         for (boolean[] booleans : matrix) {
@@ -193,26 +218,49 @@ public class MathHelper {
         return builder.toString();
     }
 
+    /**
+     * Resets a boolean vector starting at the desired index to -1.
+     *
+     * @param array The boolean vector to reset.
+     * @param index The index to start the reset.
+     */
     public static void resetArray(int[] array, int index) {
         for (int i = index; i < array.length; i++) {
             array[i] = -1;
         }
     }
 
+    /**
+     * Resets a boolean tensor starting at the desired index to null.
+     *
+     * @param tensor A boolean tensor to reset.
+     * @param index  The index to start the reset.
+     */
     public static void resetTensor(boolean[][][] tensor, int index) {
         for (int i = index; i < tensor.length; i++) {
             tensor[i] = null;
         }
     }
 
+    /**
+     * Fills a boolean matrix with true.
+     *
+     * @param matrix The matrix to fill.
+     */
     public static void fillBooleanMatrix(boolean[][] matrix) {
         for (boolean[] vectors : matrix) {
             Arrays.fill(vectors, true);
         }
     }
 
+    /**
+     * Converts a float in degrees to radians.
+     *
+     * @param degrees The value in degrees.
+     * @return the corresponding value in radians.
+     */
     public static float degToRad(float degrees) {
-        return (float) (degrees * Math.PI / 180F);
+        return degrees * PI / 180;
     }
 
     public static int getHitIndex(int length, double min, double max, double hitRelativistic) {
@@ -223,6 +271,14 @@ public class MathHelper {
             }
         }
         return clamp(length - 1, 0, length - 1);
+    }
+
+    @Nullable
+    public static EntityRayTraceResult rayTraceEntity(Entity entity, float partialTicks, double blockReachDistance) {
+        Vec3d from = entity.getEyePosition(partialTicks);
+        Vec3d look = entity.getLook(partialTicks);
+        Vec3d to = from.add(look.x * blockReachDistance, look.y * blockReachDistance, look.z * blockReachDistance);
+        return PlayerDamage.rayTraceEntities(entity, from, to, new AxisAlignedBB(from, to), blockReachDistance * blockReachDistance);
     }
 
     public static double hitOffset(Axis axis, double hit, Direction dir) {
@@ -347,13 +403,47 @@ public class MathHelper {
         return buffer[0];
     }
 
-    public static String printVoxelShape(@Nullable VoxelShape shape) {
-        if (shape == null) {
-            return "VoxelShape: null";
+    /**
+     * Sets the rotation angles of a RendererModel.
+     *
+     * @param model The model to set the rotation angles.
+     * @param x     The rotation angle around the x axis.
+     * @param y     The rotation angle around the y axis.
+     * @param z     The rotation angle around the z axis.
+     */
+    public static void setRotationAngle(RendererModel model, float x, float y, float z) {
+        model.rotateAngleX = x;
+        model.rotateAngleY = y;
+        model.rotateAngleZ = z;
+    }
+
+    /**
+     * Inverts the values of a boolean matrix.
+     *
+     * @param matrix The boolean matrix to invert.
+     * @return a new, inverted boolean matrix.
+     */
+    @SuppressWarnings("ObjectAllocationInLoop")
+    public static boolean[][] invertMatrix(boolean[][] matrix) {
+        boolean[][] mat = new boolean[matrix.length][];
+        for (int i = 0; i < matrix.length; i++) {
+            mat[i] = new boolean[matrix[i].length];
+            for (int j = 0; j < matrix[i].length; j++) {
+                mat[i][j] = !matrix[i][j];
+            }
         }
-        StringBuilder builder = new StringBuilder();
-        builder.append("VoxelShape:\n");
-        shape.forEachBox((minX, minY, minZ, maxX, maxY, maxZ) -> builder.append("            [").append(minX).append(", ").append(minY).append(", ").append(minZ).append(" -> ").append(maxX).append(", ").append(maxY).append(", ").append(maxZ).append("],\n"));
-        return builder.toString();
+        return mat;
+    }
+
+    public static int floor(double value) {
+        return net.minecraft.util.math.MathHelper.floor(value);
+    }
+
+    public static float lerp(float partialTicks, float old, float now) {
+        return net.minecraft.util.math.MathHelper.lerp(partialTicks, old, now);
+    }
+
+    public static float sqrt(float value) {
+        return (float) Math.sqrt(value);
     }
 }
