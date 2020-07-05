@@ -26,5 +26,6 @@ public class EvolutionRenderer {
         ClientRegistry.bindTileEntitySpecialRenderer(TEMolding.class, new RenderTileMolding());
         ClientRegistry.bindTileEntitySpecialRenderer(TEChopping.class, new RenderTileChopping());
         ClientRegistry.bindTileEntitySpecialRenderer(TEPitKiln.class, new RenderTilePitKiln());
+        ClientRegistry.bindTileEntitySpecialRenderer(TESchematic.class, new RenderTileSchematic());
     }
 }

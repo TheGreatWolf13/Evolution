@@ -24,6 +24,7 @@ public class EvolutionTileEntities {
     public static final RegistryObject<TileEntityType<?>> TE_CHOPPING = TILES.register("te_chopping", () -> Builder.create(TEChopping::new, CHOPPING_BLOCK_ACACIA.get(), CHOPPING_BLOCK_ASPEN.get(), CHOPPING_BLOCK_BIRCH.get(), CHOPPING_BLOCK_CEDAR.get(), CHOPPING_BLOCK_ELM.get(), CHOPPING_BLOCK_EBONY.get(), CHOPPING_BLOCK_EUCALYPTUS.get(), CHOPPING_BLOCK_FIR.get(), CHOPPING_BLOCK_KAPOK.get(), CHOPPING_BLOCK_MANGROVE.get(), CHOPPING_BLOCK_MAPLE.get(), CHOPPING_BLOCK_OAK.get(), CHOPPING_BLOCK_OLD_OAK.get(), CHOPPING_BLOCK_PALM.get(), CHOPPING_BLOCK_PINE.get(), CHOPPING_BLOCK_REDWOOD.get(), CHOPPING_BLOCK_SPRUCE.get(), CHOPPING_BLOCK_WILLOW.get()).build(null));
     public static final RegistryObject<TileEntityType<?>> TE_PIT_KILN = TILES.register("te_pit_kiln", () -> Builder.create(TEPitKiln::new, PIT_KILN.get()).build(null));
     public static final RegistryObject<TileEntityType<?>> TE_PUZZLE = TILES.register("te_puzzle", () -> Builder.create(TEPuzzle::new, PUZZLE.get()).build(null));
+    public static final RegistryObject<TileEntityType<?>> TE_SCHEMATIC = TILES.register("te_schematic", () -> Builder.create(TESchematic::new, SCHEMATIC_BLOCK.get()).build(null));
 
     public static void register() {
         TILES.register(FMLJavaModLoadingContext.get().getModEventBus());

@@ -427,6 +427,7 @@ public class EvolutionBlocks {
     public static final RegistryObject<Block> STONE_BRICKS_SLATE = BLOCKS.register("stone_bricks_slate", () -> stoneBricks(SLATE));
 
     public static final RegistryObject<Block> PUZZLE = BLOCKS.register("puzzle", BlockPuzzle::new);
+    public static final RegistryObject<Block> SCHEMATIC_BLOCK = BLOCKS.register("schematic_block", BlockSchematic::new);
 
     public static void register() {
         BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());

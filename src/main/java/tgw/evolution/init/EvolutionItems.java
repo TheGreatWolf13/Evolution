@@ -300,6 +300,7 @@ public class EvolutionItems {
     public static final RegistryObject<Item> organic_getter = ITEMS.register("organic_getter", () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.ORGANIC));
     public static final RegistryObject<Item> clock = ITEMS.register("clock", () -> new ItemClock(propMisc()));
     public static final RegistryObject<Item> puzzle = ITEMS.register("puzzle", () -> itemBlock(PUZZLE));
+    public static final RegistryObject<Item> schematic_block = ITEMS.register("schematic_block", () -> itemBlock(SCHEMATIC_BLOCK));
     //Vegetation
     public static final RegistryObject<Item> grass = ITEMS.register("grass", () -> itemBlock(GRASS));
     public static final RegistryObject<Item> tallgrass = ITEMS.register("tallgrass", () -> itemBlock(TALLGRASS));
