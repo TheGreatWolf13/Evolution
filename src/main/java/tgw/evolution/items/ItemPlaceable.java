@@ -19,10 +19,26 @@ import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCHandAnimation;
 
+import javax.annotation.Nullable;
+
 public abstract class ItemPlaceable extends ItemEv {
 
     protected ItemPlaceable(Properties properties) {
         super(properties);
+    }
+
+    protected static boolean placeBlock(BlockItemUseContext context, BlockState state) {
+        return context.getWorld().setBlockState(context.getPos(), state, 11);
+    }
+
+    protected static SoundEvent getPlaceSound(BlockState state, World world, BlockPos pos, PlayerEntity entity) {
+        return state.getSoundType(world, pos, entity).getPlaceSound();
+    }
+
+    protected static boolean canPlace(BlockItemUseContext context, BlockState state) {
+        PlayerEntity playerentity = context.getPlayer();
+        ISelectionContext iselectioncontext = playerentity == null ? ISelectionContext.dummy() : ISelectionContext.forEntity(playerentity);
+        return state.isValidPosition(context.getWorld(), context.getPos()) && context.getWorld().func_217350_a(state, context.getPos(), iselectioncontext);
     }
 
     public ActionResultType tryPlace(BlockItemUseContext context) {
@@ -79,25 +95,13 @@ public abstract class ItemPlaceable extends ItemEv {
         return actionresulttype != ActionResultType.SUCCESS && this.isFood() ? this.onItemRightClick(context.getWorld(), context.getPlayer(), context.getHand()).getType() : actionresulttype;
     }
 
+    @Nullable
     public abstract BlockState getSneakingState(BlockItemUseContext context);
 
     public abstract boolean customCondition(Block block);
 
+    @Nullable
     public abstract BlockState getCustomState(BlockItemUseContext context);
 
     public abstract void sucessPlaceLogic(BlockItemUseContext context);
-
-    protected static boolean placeBlock(BlockItemUseContext context, BlockState state) {
-        return context.getWorld().setBlockState(context.getPos(), state, 11);
-    }
-
-    protected static SoundEvent getPlaceSound(BlockState state, World world, BlockPos pos, PlayerEntity entity) {
-        return state.getSoundType(world, pos, entity).getPlaceSound();
-    }
-
-    protected static boolean canPlace(BlockItemUseContext context, BlockState state) {
-        PlayerEntity playerentity = context.getPlayer();
-        ISelectionContext iselectioncontext = playerentity == null ? ISelectionContext.dummy() : ISelectionContext.forEntity(playerentity);
-        return state.isValidPosition(context.getWorld(), context.getPos()) && context.getWorld().func_217350_a(state, context.getPos(), iselectioncontext);
-    }
 }

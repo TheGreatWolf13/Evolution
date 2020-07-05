@@ -22,7 +22,6 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.ForgeHooks;
@@ -32,12 +31,12 @@ import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
-import tgw.evolution.events.EntityEvents;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.IFireAspect;
 import tgw.evolution.items.IKnockback;
 import tgw.evolution.items.IOffhandAttackable;
 import tgw.evolution.items.ISweepAttack;
+import tgw.evolution.util.MathHelper;
 
 import java.util.function.Supplier;
 
@@ -64,7 +63,7 @@ public class PacketCSOffhandAttack extends PacketAbstract {
                 if (offhandItem instanceof IOffhandAttackable) {
                     Evolution.LOGGER.debug("item is valid");
                     float distance = (float) ((IOffhandAttackable) offhandItem).getReach() + 5;
-                    EntityRayTraceResult result = EntityEvents.rayTraceEntity(player, 1f, distance);
+                    EntityRayTraceResult result = tgw.evolution.util.MathHelper.rayTraceEntity(player, 1f, distance);
                     Evolution.LOGGER.debug("rayTrace = " + result);
                     if (result != null) {
                         Evolution.LOGGER.debug("entity traced = " + result.getEntity());

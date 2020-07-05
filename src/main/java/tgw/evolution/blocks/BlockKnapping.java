@@ -32,31 +32,7 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
 
     private static final VoxelShape FULL_SHAPE = Block.makeCuboidShape(0.5, 0, 0.5, 15.5, 1, 15.5);
     private static final VoxelShape SHAPE = Block.makeCuboidShape(0.5, 0, 0.5, 3.5, 1, 3.5);
-    private static final VoxelShape[][] SHAPES = {{SHAPE,
-                                                   SHAPE.withOffset(0.0 / 16.0, 0, 3.0 / 16.0),
-                                                   SHAPE.withOffset(0.0 / 16.0, 0, 6.0 / 16.0),
-                                                   SHAPE.withOffset(0.0 / 16.0, 0, 9.0 / 16.0),
-                                                   SHAPE.withOffset(0.0 / 16.0, 0, 12.0 / 16.0)},
-                                                  {SHAPE.withOffset(3.0 / 16.0, 0, 0),
-                                                   SHAPE.withOffset(3.0 / 16.0, 0, 3.0 / 16.0),
-                                                   SHAPE.withOffset(3.0 / 16.0, 0, 6.0 / 16.0),
-                                                   SHAPE.withOffset(3.0 / 16.0, 0, 9.0 / 16.0),
-                                                   SHAPE.withOffset(3.0 / 16.0, 0, 12.0 / 16.0)},
-                                                  {SHAPE.withOffset(6.0 / 16.0, 0, 0),
-                                                   SHAPE.withOffset(6.0 / 16.0, 0, 3.0 / 16.0),
-                                                   SHAPE.withOffset(6.0 / 16.0, 0, 6.0 / 16.0),
-                                                   SHAPE.withOffset(6.0 / 16.0, 0, 9.0 / 16.0),
-                                                   SHAPE.withOffset(6.0 / 16.0, 0, 12.0 / 16.0)},
-                                                  {SHAPE.withOffset(9.0 / 16.0, 0, 0),
-                                                   SHAPE.withOffset(9.0 / 16.0, 0, 3.0 / 16.0),
-                                                   SHAPE.withOffset(9.0 / 16.0, 0, 6.0 / 16.0),
-                                                   SHAPE.withOffset(9.0 / 16.0, 0, 9.0 / 16.0),
-                                                   SHAPE.withOffset(9.0 / 16.0, 0, 12.0 / 16.0)},
-                                                  {SHAPE.withOffset(12.0 / 16.0, 0, 0),
-                                                   SHAPE.withOffset(12.0 / 16.0, 0, 3.0 / 16.0),
-                                                   SHAPE.withOffset(12.0 / 16.0, 0, 6.0 / 16.0),
-                                                   SHAPE.withOffset(12.0 / 16.0, 0, 9.0 / 16.0),
-                                                   SHAPE.withOffset(12.0 / 16.0, 0, 12.0 / 16.0)}};
+
     private final EnumRockNames name;
     private EnumRockVariant variant;
 
@@ -70,7 +46,7 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
         for (int i = 0; i < tile.matrix.length; i++) {
             for (int j = 0; j < tile.matrix[i].length; j++) {
                 if (tile.matrix[i][j]) {
-                    shape = VoxelShapes.combineAndSimplify(shape, SHAPES[i][j], IBooleanFunction.OR);
+                    shape = VoxelShapes.combineAndSimplify(shape, SHAPE.withOffset(3 * i / 16f, 0, 3 * j / 16f), IBooleanFunction.OR);
                 }
             }
         }

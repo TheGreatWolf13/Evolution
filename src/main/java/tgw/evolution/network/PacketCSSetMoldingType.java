@@ -7,42 +7,42 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
 import tgw.evolution.Evolution;
-import tgw.evolution.blocks.tileentities.EnumKnapping;
-import tgw.evolution.blocks.tileentities.TEKnapping;
+import tgw.evolution.blocks.tileentities.EnumMolding;
+import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.init.EvolutionNetwork;
 
 import java.util.function.Supplier;
 
-public class PacketCSSetKnappingType extends PacketAbstract {
+public class PacketCSSetMoldingType extends PacketAbstract {
 
     private final BlockPos pos;
-    private final EnumKnapping type;
+    private final EnumMolding molding;
 
-    public PacketCSSetKnappingType(BlockPos pos, EnumKnapping type) {
+    public PacketCSSetMoldingType(BlockPos pos, EnumMolding molding) {
         super(LogicalSide.SERVER);
         this.pos = pos;
-        this.type = type;
+        this.molding = molding;
     }
 
-    public static void encode(PacketCSSetKnappingType packet, PacketBuffer buffer) {
+    public static void encode(PacketCSSetMoldingType packet, PacketBuffer buffer) {
         buffer.writeBlockPos(packet.pos);
-        buffer.writeByte(packet.type.getId());
+        buffer.writeByte(packet.molding.getId());
     }
 
-    public static PacketCSSetKnappingType decode(PacketBuffer buffer) {
-        return new PacketCSSetKnappingType(buffer.readBlockPos(), EnumKnapping.byId(buffer.readByte()));
+    public static PacketCSSetMoldingType decode(PacketBuffer buffer) {
+        return new PacketCSSetMoldingType(buffer.readBlockPos(), EnumMolding.byId(buffer.readByte()));
     }
 
-    public static void handle(PacketCSSetKnappingType packet, Supplier<NetworkEvent.Context> context) {
+    public static void handle(PacketCSSetMoldingType packet, Supplier<NetworkEvent.Context> context) {
         if (EvolutionNetwork.checkSide(context, packet)) {
             context.get().enqueueWork(() -> {
                 World world = context.get().getSender().world;
                 TileEntity tile = world.getTileEntity(packet.pos);
-                if (tile instanceof TEKnapping) {
-                    ((TEKnapping) tile).setType(packet.type);
+                if (tile instanceof TEMolding) {
+                    ((TEMolding) tile).setType(packet.molding);
                     return;
                 }
-                Evolution.LOGGER.warn("Could not find TEKnapping at {}", packet.pos);
+                Evolution.LOGGER.warn("Could not find TEMolding at {}", packet.pos);
             });
             context.get().setPacketHandled(true);
         }

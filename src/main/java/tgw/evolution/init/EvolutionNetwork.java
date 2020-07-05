@@ -32,11 +32,13 @@ public class EvolutionNetwork {
         INSTANCE.registerMessage(increaseId(), PacketCSSetProne.class, PacketCSSetProne::encode, PacketCSSetProne::decode, PacketCSSetProne::handle);
         INSTANCE.registerMessage(increaseId(), PacketCSReduceHitbox.class, PacketCSReduceHitbox::encode, PacketCSReduceHitbox::decode, PacketCSReduceHitbox::handle);
         INSTANCE.registerMessage(increaseId(), PacketCSUpdatePuzzle.class, PacketCSUpdatePuzzle::encode, PacketCSUpdatePuzzle::decode, PacketCSUpdatePuzzle::handle);
+        INSTANCE.registerMessage(increaseId(), PacketSCOpenMoldingGui.class, PacketSCOpenMoldingGui::encode, PacketSCOpenMoldingGui::decode, PacketSCOpenMoldingGui::handle);
+        INSTANCE.registerMessage(increaseId(), PacketCSSetMoldingType.class, PacketCSSetMoldingType::encode, PacketCSSetMoldingType::decode, PacketCSSetMoldingType::handle);
     }
 
     public static boolean checkSide(Supplier<NetworkEvent.Context> context, PacketAbstract packet) {
         if (context.get().getDirection().getReceptionSide() != packet.destinationSide) {
-            Evolution.LOGGER.warn("Received " + packet.getClass().getName() + " on " + (packet.destinationSide.isClient() ? LogicalSide.SERVER : LogicalSide.CLIENT) + "!");
+            Evolution.LOGGER.warn("Received {} on {}!", packet.getClass().getName(), packet.destinationSide.isClient() ? LogicalSide.SERVER : LogicalSide.CLIENT);
             return false;
         }
         return true;
