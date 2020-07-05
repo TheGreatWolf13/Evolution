@@ -3,10 +3,10 @@ package tgw.evolution.client.models.entities;
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.renderer.entity.model.EntityModel;
 import net.minecraft.client.renderer.entity.model.RendererModel;
-import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.entities.EntityCow;
+import tgw.evolution.util.MathHelper;
 
 @OnlyIn(Dist.CLIENT)
 public class ModelCow extends EntityModel<EntityCow> {
@@ -47,23 +47,23 @@ public class ModelCow extends EntityModel<EntityCow> {
         this.head = new RendererModel(this, 40, 22);
         this.head.setRotationPoint(0.0F, 0.0F, 0.0F);
         this.head.addBox(-3.0F, -6.0F, -8.0F, 6, 7, 6, 0.0F);
-        ModelCow.setRotateAngle(this.head, -5.585053606381854F, 0.0F);
+        MathHelper.setRotationAngle(this.head, -5.585053606381854F, 0, 0);
         this.snout = new RendererModel(this, 0, 46);
         this.snout.setRotationPoint(0.0F, 0.0F, 0.0F);
         this.snout.addBox(-2.0F, -5.5F, -10.5F, 4, 4, 4, 0.0F);
-        ModelCow.setRotateAngle(this.snout, -5.32325421858F, 0.0F);
+        MathHelper.setRotationAngle(this.snout, -5.32325421858F, 0, 0);
         this.neck = new RendererModel(this, 0, 54);
         this.neck.setRotationPoint(0.0F, 6.0F, -6.0F);
         this.neck.addBox(-2.5F, -1.5F, -4.0F, 5, 5, 5, 0.0F);
-        ModelCow.setRotateAngle(this.neck, 5.585053606381854F, 0.0F);
+        MathHelper.setRotationAngle(this.neck, 5.585053606381854F, 0, 0);
         this.earRight = new RendererModel(this, 56, 17);
         this.earRight.setRotationPoint(0.0F, 0.0F, 0.0F);
         this.earRight.addBox(-6.2F, -5.6F, -2.3F, 3, 2, 1, 0.0F);
-        ModelCow.setRotateAngle(this.earRight, -5.23598775598F, 0.17453292519943295F);
+        MathHelper.setRotationAngle(this.earRight, -5.23598775598F, 0, 0.17453292519943295F);
         this.earLeft = new RendererModel(this, 47, 17);
         this.earLeft.setRotationPoint(0.0F, 0.0F, 0.0F);
         this.earLeft.addBox(3.2F, -5.6F, -2.3F, 3, 2, 1, 0.0F);
-        ModelCow.setRotateAngle(this.earLeft, -5.23598775598F, 6.1086523819801535F);
+        MathHelper.setRotationAngle(this.earLeft, -5.23598775598F, 0, 6.1086523819801535F);
         this.neck.addChild(this.head);
         this.neck.addChild(this.snout);
         this.neck.addChild(this.earLeft);
@@ -72,26 +72,26 @@ public class ModelCow extends EntityModel<EntityCow> {
         this.body = new RendererModel(this, 24, 36);
         this.body.setRotationPoint(1.0F, 5.0F, 2.0F);
         this.body.addBox(-6.0F, -10.0F, -7.0F, 10, 18, 10, 0.0F);
-        ModelCow.setRotateAngle(this.body, 1.5707963267948966F, 0.0F);
+        MathHelper.setRotationAngle(this.body, 1.5707963267948966F, 0, 0);
         this.breasts = new RendererModel(this, 46, 0);
         this.breasts.setRotationPoint(0.0F, 0.0F, 0.0F);
         this.breasts.addBox(-4.0F, 2.0F, -10.0F, 6, 6, 3, 0.0F);
         this.nippleRL = new RendererModel(this, 56, 42);
         this.nippleRL.setRotationPoint(0.0F, 0.0F, 0.0F);
         this.nippleRL.addBox(-0.5F, 9.8F, 6.0F, 1, 2, 1, 0.0F);
-        ModelCow.setRotateAngle(this.nippleRL, -1.5707963267948966F, 0.0F);
+        MathHelper.setRotationAngle(this.nippleRL, -1.5707963267948966F, 0, 0.0F);
         this.nippleRR = new RendererModel(this, 56, 38);
         this.nippleRR.setRotationPoint(0.0F, 0.0F, 0.0F);
         this.nippleRR.addBox(-2.5F, 9.8F, 6.0F, 1, 2, 1, 0.0F);
-        ModelCow.setRotateAngle(this.nippleRR, -1.5707963267948966F, 0.0F);
+        MathHelper.setRotationAngle(this.nippleRR, -1.5707963267948966F, 0, 0.0F);
         this.nippleFR = new RendererModel(this, 60, 42);
         this.nippleFR.setRotationPoint(0.0F, 0.0F, 0.0F);
         this.nippleFR.addBox(-2.5F, 9.8F, 3.0F, 1, 2, 1, 0.0F);
-        ModelCow.setRotateAngle(this.nippleFR, -1.5707963267948966F, 0.0F);
+        MathHelper.setRotationAngle(this.nippleFR, -1.5707963267948966F, 0, 0.0F);
         this.nippleFL = new RendererModel(this, 60, 38);
         this.nippleFL.setRotationPoint(0.0F, 0.0F, 0.0F);
         this.nippleFL.addBox(-0.5F, 9.8F, 3.0F, 1, 2, 1, 0.0F);
-        ModelCow.setRotateAngle(this.nippleFL, -1.5707963267948966F, 0.0F);
+        MathHelper.setRotationAngle(this.nippleFL, -1.5707963267948966F, 0, 0.0F);
         this.body.addChild(this.breasts);
         this.body.addChild(this.nippleFL);
         this.body.addChild(this.nippleFR);
@@ -149,7 +149,7 @@ public class ModelCow extends EntityModel<EntityCow> {
         this.tailX = new RendererModel(this, 17, 47);
         this.tailX.setRotationPoint(-0.5F, 2.4F, 9.5F);
         this.tailX.addBox(0.0F, 0.0F, 0.0F, 2, 11, 0, 0.0F);
-        ModelCow.setRotateAngle(this.tailX, 0.2617993877991494F, 0.0F);
+        MathHelper.setRotationAngle(this.tailX, 0.2617993877991494F, 0, 0);
         this.tailZ = new RendererModel(this, 16, 21);
         this.tailZ.setRotationPoint(0.0F, 0.0F, 0.0F);
         this.tailZ.addBox(0.5F, 0.4F, -1.4F, 0, 11, 2, 0.0F);
@@ -186,14 +186,6 @@ public class ModelCow extends EntityModel<EntityCow> {
         }
     }
 
-    /**
-     * This is a helper function from Tabula to set the rotation of model parts
-     */
-    public static void setRotateAngle(RendererModel modelRenderer, float x, float z) {
-        modelRenderer.rotateAngleX = x;
-        modelRenderer.rotateAngleZ = z;
-    }
-
     @Override
     public void setRotationAngles(EntityCow entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor) {
         if (entityIn.isDead()) {
@@ -226,16 +218,16 @@ public class ModelCow extends EntityModel<EntityCow> {
             this.legRLLower.rotateAngleX = -2.61799F;
             return;
         }
-        this.neck.rotateAngleX = headPitch * ((float) Math.PI / 180.0F) + 5.585053606381854F;
-        this.neck.rotateAngleY = netHeadYaw * ((float) Math.PI / 180.0F);
+        this.neck.rotateAngleX = MathHelper.degToRad(headPitch) + 5.585053606381854F;
+        this.neck.rotateAngleY = MathHelper.degToRad(netHeadYaw);
         this.body.offsetY = 0.0F;
         this.legFRLower.rotateAngleX = 0.0F;
         this.legFLLower.rotateAngleX = 0.0F;
         this.legRRLower.rotateAngleX = 0.0F;
         this.legRLLower.rotateAngleX = 0.0F;
         this.legFrontRight.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
-        this.legFrontLeft.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F + (float) Math.PI) * 1.4F * limbSwingAmount;
-        this.legRearRight.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F + (float) Math.PI) * 1.4F * limbSwingAmount;
+        this.legFrontLeft.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F + MathHelper.PI) * 1.4F * limbSwingAmount;
+        this.legRearRight.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F + MathHelper.PI) * 1.4F * limbSwingAmount;
         this.legRearLeft.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
         this.neck.rotateAngleX = this.headRotationAngleX + 5.585053606381854F;
         this.tailX.rotateAngleX = this.tailRotationAngleX + 0.2617993877991494F;
