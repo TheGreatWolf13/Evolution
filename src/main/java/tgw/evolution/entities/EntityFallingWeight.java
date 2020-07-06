@@ -110,8 +110,8 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
             }
         }
         if (!this.hasNoGravity()) {
-            this.setMotion(this.getMotion().add(0, this.gravity, 0));
-            this.setMotion(this.getMotion().mul(this.horizontalDrag, this.verticalDrag, this.horizontalDrag));
+            Vec3d motion = this.getMotion();
+            this.setMotion(motion.x * this.horizontalDrag, (motion.y + this.gravity) * this.verticalDrag, motion.z * this.horizontalDrag);
         }
         this.move(MoverType.SELF, this.getMotion());
         if (!this.world.isRemote) {
