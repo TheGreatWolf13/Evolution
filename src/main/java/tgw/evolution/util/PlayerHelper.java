@@ -1,7 +1,5 @@
-package tgw.evolution.network;
+package tgw.evolution.util;
 
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.CreatureAttribute;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SharedMonsterAttributes;
@@ -9,86 +7,64 @@ import net.minecraft.entity.boss.dragon.EnderDragonPartEntity;
 import net.minecraft.entity.item.ArmorStandEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.server.SAnimateHandPacket;
 import net.minecraft.network.play.server.SEntityVelocityPacket;
 import net.minecraft.particles.ParticleTypes;
+import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.EffectUtils;
 import net.minecraft.potion.Effects;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.player.CriticalHitEvent;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
-import tgw.evolution.Evolution;
+import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.IFireAspect;
 import tgw.evolution.items.IKnockback;
 import tgw.evolution.items.IOffhandAttackable;
 import tgw.evolution.items.ISweepAttack;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.network.PacketSCHandAnimation;
 
-import java.util.function.Supplier;
+import javax.annotation.Nullable;
+import java.util.Random;
 
-public class PacketCSOffhandAttack extends PacketAbstract {
+public abstract class PlayerHelper {
 
-    public PacketCSOffhandAttack() {
-        super(LogicalSide.SERVER);
-    }
-
-    @SuppressWarnings("unused")
-    public static void encode(PacketCSOffhandAttack message, PacketBuffer buffer) {
-    }
-
-    public static PacketCSOffhandAttack decode(@SuppressWarnings("unused") PacketBuffer buffer) {
-        return new PacketCSOffhandAttack();
-    }
-
-    public static void handle(PacketCSOffhandAttack packet, Supplier<NetworkEvent.Context> context) {
-        if (EvolutionNetwork.checkSide(context, packet)) {
-            context.get().enqueueWork(() -> {
-                Evolution.LOGGER.debug("attacking with left hand");
-                ServerPlayerEntity player = context.get().getSender();
-                Item offhandItem = player.getHeldItemOffhand().getItem();
-                if (offhandItem instanceof IOffhandAttackable) {
-                    Evolution.LOGGER.debug("item is valid");
-                    float distance = (float) ((IOffhandAttackable) offhandItem).getReach() + 5;
-                    EntityRayTraceResult result = tgw.evolution.util.MathHelper.rayTraceEntity(player, 1f, distance);
-                    Evolution.LOGGER.debug("rayTrace = " + result);
-                    if (result != null) {
-                        Evolution.LOGGER.debug("entity traced = " + result.getEntity());
-                        attackEntityWithOffhand(player, result.getEntity());
-                    }
-                }
-                swingArm(player, Hand.OFF_HAND);
-                EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCHandAnimation(Hand.OFF_HAND));
-            });
-            context.get().setPacketHandled(true);
-        }
-    }
+    private static final Random RAND = new Random();
 
     private static void swingArm(PlayerEntity player, Hand hand) {
         ItemStack stack = player.getHeldItem(hand);
         if (!stack.isEmpty() && stack.onEntitySwing(player)) {
             return;
         }
-        if (!player.isSwingInProgress || player.swingProgressInt >= getArmSwingAnimationEnd(player) / 2 || player.swingProgressInt < 0) {
-            player.swingProgressInt = -1;
-            player.isSwingInProgress = true;
-            player.swingingHand = hand;
-            if (player.world instanceof ServerWorld) {
-                ((ServerWorld) player.world).getChunkProvider().sendToAllTracking(player, new SAnimateHandPacket(player, hand == Hand.MAIN_HAND ? 0 : 3));
+        player.swingProgressInt = -1;
+        player.isSwingInProgress = true;
+        player.swingingHand = hand;
+        if (player.world instanceof ServerWorld) {
+            ((ServerWorld) player.world).getChunkProvider().sendToAllTracking(player, new SAnimateHandPacket(player, hand == Hand.MAIN_HAND ? 0 : 3));
+        }
+    }
+
+    public static void performAttack(PlayerEntity player, @Nullable Entity entity, Hand hand) {
+        if (hand == Hand.OFF_HAND) {
+            Item offhandItem = player.getHeldItemOffhand().getItem();
+            if (!(offhandItem instanceof IOffhandAttackable)) {
+                return;
             }
+        }
+        swingArm(player, hand);
+        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new PacketSCHandAnimation(hand));
+        if (entity != null) {
+            attackEntity(player, entity, hand);
         }
     }
 
@@ -99,30 +75,30 @@ public class PacketCSOffhandAttack extends PacketAbstract {
         return player.isPotionActive(Effects.MINING_FATIGUE) ? 6 + (1 + player.getActivePotionEffect(Effects.MINING_FATIGUE).getAmplifier()) * 2 : 6;
     }
 
-    private static void attackEntityWithOffhand(PlayerEntity player, Entity targetEntity) {
-        ItemStack offhandStack = player.getHeldItemOffhand();
-        Item offhandItem = player.getHeldItemOffhand().getItem();
-        if (!(offhandStack.isEmpty() || !offhandItem.onLeftClickEntity(offhandStack, player, targetEntity))) {
+    private static void attackEntity(PlayerEntity player, Entity targetEntity, Hand hand) {
+        ItemStack attackStack = player.getHeldItem(hand);
+        Item attackItem = attackStack.getItem();
+        if (!(attackStack.isEmpty() || !attackItem.onLeftClickEntity(attackStack, player, targetEntity))) {
             return;
         }
         if (targetEntity.canBeAttackedWithItem()) {
             if (!targetEntity.hitByEntity(player)) {
-                float damage = (float) player.getAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getBaseValue();
-                if (offhandItem instanceof IOffhandAttackable) {
-                    damage += ((IOffhandAttackable) offhandItem).getAttackDamage();
+                float damage = (float) player.getAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getValue();
+                if (attackItem instanceof IOffhandAttackable) {
+                    damage = (float) (((IOffhandAttackable) attackItem).getAttackDamage() + player.getAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getBaseValue());
                 }
-                float enchantmentModifier;
-                //TODO damage enchantments
-                if (targetEntity instanceof LivingEntity) {
-                    enchantmentModifier = EnchantmentHelper.getModifierForCreature(offhandStack, ((LivingEntity) targetEntity).getCreatureAttribute());
-                }
-                else {
-                    enchantmentModifier = EnchantmentHelper.getModifierForCreature(offhandStack, CreatureAttribute.UNDEFINED);
-                }
-                if (damage > 0.0F || enchantmentModifier > 0.0F) {
+                //                float enchantmentModifier;
+                //                //TODO damage enchantments
+                //                if (targetEntity instanceof LivingEntity) {
+                //                    enchantmentModifier = EnchantmentHelper.getModifierForCreature(attackStack, ((LivingEntity) targetEntity).getCreatureAttribute());
+                //                }
+                //                else {
+                //                    enchantmentModifier = EnchantmentHelper.getModifierForCreature(attackStack, CreatureAttribute.UNDEFINED);
+                //                }
+                if (damage > 0.0F /*|| enchantmentModifier > 0.0F*/) {
                     int knockbackModifier = 0;
-                    if (offhandItem instanceof IKnockback) {
-                        knockbackModifier += ((IKnockback) offhandItem).getModifier();
+                    if (attackItem instanceof IKnockback) {
+                        knockbackModifier += ((IKnockback) attackItem).getModifier();
                     }
                     boolean sprinting = false;
                     if (player.isSprinting()) {
@@ -137,17 +113,17 @@ public class PacketCSOffhandAttack extends PacketAbstract {
                     if (critical) {
                         damage *= hitResult.getDamageModifier();
                     }
-                    damage += enchantmentModifier;
+                    /*damage += enchantmentModifier;*/
                     boolean isSweepAttack = false;
                     double distanceWalked = player.distanceWalkedModified - player.prevDistanceWalkedModified;
                     if (!critical && !sprinting && player.onGround && distanceWalked < (double) player.getAIMoveSpeed()) {
-                        if (offhandItem instanceof ISweepAttack) {
+                        if (attackItem instanceof ISweepAttack) {
                             isSweepAttack = true;
                         }
                     }
                     int fireAspectModifier = 0;
-                    if (offhandItem instanceof IFireAspect) {
-                        fireAspectModifier = ((IFireAspect) offhandItem).getModifier();
+                    if (attackItem instanceof IFireAspect) {
+                        fireAspectModifier = ((IFireAspect) attackItem).getModifier();
                     }
                     float oldHealth = 0.0F;
                     boolean fireAspect = false;
@@ -173,7 +149,7 @@ public class PacketCSOffhandAttack extends PacketAbstract {
                         }
                         //Sweep Attack
                         if (isSweepAttack) {
-                            float sweepingDamage = 1.0F + ((ISweepAttack) offhandItem).getSweepRatio() * damage;
+                            float sweepingDamage = 1.0F + ((ISweepAttack) attackItem).getSweepRatio() * damage;
                             for (LivingEntity livingentity : player.world.getEntitiesWithinAABB(LivingEntity.class, targetEntity.getBoundingBox().grow(1.0D, 0.25D, 1.0D))) {
                                 if (livingentity != player && livingentity != targetEntity && !player.isOnSameTeam(livingentity) && (!(livingentity instanceof ArmorStandEntity) || !((ArmorStandEntity) livingentity).hasMarker()) && player.getDistanceSq(livingentity) < 9.0D) {
                                     livingentity.knockBack(player, 0.4F, MathHelper.sin(player.rotationYaw * ((float) Math.PI / 180F)), -MathHelper.cos(player.rotationYaw * ((float) Math.PI / 180F)));
@@ -199,26 +175,22 @@ public class PacketCSOffhandAttack extends PacketAbstract {
                         if (!critical && !isSweepAttack) {
                             player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_STRONG, player.getSoundCategory(), 1.0F, 1.0F);
                         }
-                        if (enchantmentModifier > 0.0F) {
+                        /*if (enchantmentModifier > 0.0F) {
                             player.onEnchantmentCritical(targetEntity);
-                        }
+                        }*/
                         player.setLastAttackedEntity(targetEntity);
-                        if (targetEntity instanceof LivingEntity) {
-                            //TODO thorns
-                            EnchantmentHelper.applyThornEnchantments((LivingEntity) targetEntity, player);
-                        }
                         //Entity parts
                         Entity entity = targetEntity;
                         if (targetEntity instanceof EnderDragonPartEntity) {
                             entity = ((EnderDragonPartEntity) targetEntity).dragon;
                         }
                         //Item damage calculation
-                        if (!player.world.isRemote && !offhandStack.isEmpty() && entity instanceof LivingEntity) {
-                            ItemStack copy = offhandStack.copy();
-                            offhandStack.hitEntity((LivingEntity) entity, player);
-                            if (offhandStack.isEmpty()) {
-                                ForgeEventFactory.onPlayerDestroyItem(player, copy, Hand.OFF_HAND);
-                                player.setHeldItem(Hand.OFF_HAND, ItemStack.EMPTY);
+                        if (!player.world.isRemote && !attackStack.isEmpty() && entity instanceof LivingEntity) {
+                            ItemStack copy = attackStack.copy();
+                            attackStack.hitEntity((LivingEntity) entity, player);
+                            if (attackStack.isEmpty()) {
+                                ForgeEventFactory.onPlayerDestroyItem(player, copy, hand);
+                                player.setHeldItem(hand, ItemStack.EMPTY);
                             }
                         }
                         //Stats and Heart particles
@@ -244,6 +216,87 @@ public class PacketCSOffhandAttack extends PacketAbstract {
                     }
                 }
             }
+        }
+    }
+
+    @Nullable
+    public static EquipmentSlotType getPartByPosition(double y, PlayerEntity player) {
+        double yRelativistic = y - player.posY;
+        if (player.isSneaking()) {
+            if (yRelativistic <= 0.25) {
+                return EquipmentSlotType.FEET;
+            }
+            if (MathHelper.rangeInclusive(yRelativistic, 0.25, 0.625)) {
+                return EquipmentSlotType.LEGS;
+            }
+            if (MathHelper.rangeInclusive(yRelativistic, 0.625, 1.125)) {
+                return EquipmentSlotType.CHEST;
+            }
+            if (yRelativistic >= 1.125) {
+                return EquipmentSlotType.HEAD;
+            }
+            return null;
+        }
+        if (yRelativistic <= 0.375) {
+            return EquipmentSlotType.FEET;
+        }
+        if (MathHelper.rangeInclusive(yRelativistic, 0.375, 0.875)) {
+            return EquipmentSlotType.LEGS;
+        }
+        if (MathHelper.rangeInclusive(yRelativistic, 0.875, 1.5)) {
+            return EquipmentSlotType.CHEST;
+        }
+        if (yRelativistic >= 1.5) {
+            return EquipmentSlotType.HEAD;
+        }
+        return null;
+    }
+
+    public static float getHitMultiplier(@Nullable EquipmentSlotType type, PlayerEntity player, float damage) {
+        if (type == null) {
+            return 1;
+        }
+        switch (type) {
+            case HEAD:
+                headHit(player, damage, 1.75f);
+                return 1.75f;
+            case CHEST:
+                return 1.25f;
+            case LEGS:
+                return 1f;
+            case FEET:
+                return 0.5f;
+        }
+        return 1;
+    }
+
+    public static float getProjectileModifier(@Nullable EquipmentSlotType type) {
+        if (type == null) {
+            return 1;
+        }
+        switch (type) {
+            case HEAD:
+                return 2.0f;
+            case CHEST:
+                return 1.5f;
+            case LEGS:
+                return 1f;
+            case FEET:
+                return 0.75f;
+        }
+        return 1;
+    }
+
+    public static void headHit(PlayerEntity player, float damage, float multiplier) {
+        float strength = MathHelper.relativize(damage * multiplier, 0, player.getMaxHealth());
+        if (RAND.nextFloat() < strength) {
+            player.addPotionEffect(new EffectInstance(Effects.NAUSEA, (int) (300 * strength), 0, true, false, true));
+        }
+        if (RAND.nextFloat() < strength) {
+            player.addPotionEffect(new EffectInstance(Effects.BLINDNESS, (int) (100 * strength), strength > 0.8f ? 1 : 0, true, false, true));
+        }
+        if (RAND.nextFloat() < strength) {
+            player.addPotionEffect(new EffectInstance(EvolutionEffects.DIZZINESS.get(), (int) (400 * strength), strength > 0.8f ? 1 : 0, true, false, true));
         }
     }
 }

@@ -2,20 +2,27 @@ package tgw.evolution.util;
 
 import net.minecraft.client.renderer.entity.model.RendererModel;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.Direction.AxisDirection;
+import net.minecraft.util.EntityPredicates;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.world.World;
+import net.minecraftforge.common.util.FakePlayer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Random;
+import java.util.function.Predicate;
 
 public class MathHelper {
 
@@ -23,12 +30,26 @@ public class MathHelper {
     public static final Random RANDOM = new Random();
     public static final Direction[] DIRECTIONS_EXCEPT_DOWN = {Direction.UP, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
     public static final Direction[] DIRECTIONS_HORIZONTAL = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+    private static final Predicate<Entity> PREDICATE = EntityPredicates.CAN_AI_TARGET.and(e -> e != null && e.canBeCollidedWith() && e instanceof LivingEntity && !(e instanceof FakePlayer));
 
     public static short toShortExact(int value) {
         if ((short) value != value) {
             throw new ArithmeticException("Short overflow " + value);
         }
         return (short) value;
+    }
+
+    /**
+     * Checks whether or not two {@link ItemStack} are sufficiently equal.
+     * This means that they are the same item.
+     *
+     * @return {@link Boolean#TRUE} if the {@link ItemStack} are sufficiently equal, {@link Boolean#FALSE} otherwise.
+     */
+    public static boolean areItemStacksSufficientlyEqual(ItemStack a, ItemStack b) {
+        if (a.isEmpty() && b.isEmpty()) {
+            return true;
+        }
+        return a.getItem() == b.getItem();
     }
 
     public static byte toByteExact(int value) {
@@ -274,11 +295,51 @@ public class MathHelper {
     }
 
     @Nullable
-    public static EntityRayTraceResult rayTraceEntity(Entity entity, float partialTicks, double blockReachDistance) {
+    public static EntityRayTraceResult rayTraceEntityFromEyes(Entity entity, float partialTicks, double blockReachDistance) {
         Vec3d from = entity.getEyePosition(partialTicks);
         Vec3d look = entity.getLook(partialTicks);
         Vec3d to = from.add(look.x * blockReachDistance, look.y * blockReachDistance, look.z * blockReachDistance);
-        return PlayerDamage.rayTraceEntities(entity, from, to, new AxisAlignedBB(from, to), blockReachDistance * blockReachDistance);
+        return rayTraceEntities(entity, from, to, new AxisAlignedBB(from, to), blockReachDistance * blockReachDistance);
+    }
+
+    @Nullable
+    public static EntityRayTraceResult rayTraceEntities(Entity shooter, Vec3d startVec, Vec3d endVec, AxisAlignedBB boundingBox, double distanceSquared) {
+        World world = shooter.world;
+        double range = distanceSquared;
+        Entity entity = null;
+        Vec3d vec3d = null;
+        for (Entity entityInBoundingBox : world.getEntitiesInAABBexcluding(shooter, boundingBox, PREDICATE)) {
+            AxisAlignedBB axisalignedbb = entityInBoundingBox.getBoundingBox();
+            Optional<Vec3d> optional = axisalignedbb.rayTrace(startVec, endVec);
+            if (axisalignedbb.contains(startVec)) {
+                if (range >= 0.0D) {
+                    entity = entityInBoundingBox;
+                    vec3d = optional.orElse(startVec);
+                    range = 0.0D;
+                }
+            }
+            else if (optional.isPresent()) {
+                Vec3d hitResult = optional.get();
+                double actualDistanceSquared = startVec.squareDistanceTo(hitResult);
+                if (actualDistanceSquared < range || range == 0.0D) {
+                    if (entityInBoundingBox.getLowestRidingEntity() == shooter.getLowestRidingEntity() && !entityInBoundingBox.canRiderInteract()) {
+                        if (range == 0.0D) {
+                            entity = entityInBoundingBox;
+                            vec3d = hitResult;
+                        }
+                    }
+                    else {
+                        entity = entityInBoundingBox;
+                        vec3d = hitResult;
+                        range = actualDistanceSquared;
+                    }
+                }
+            }
+        }
+        if (entity == null) {
+            return null;
+        }
+        return new EntityRayTraceResult(entity, vec3d);
     }
 
     public static double hitOffset(Axis axis, double hit, Direction dir) {
