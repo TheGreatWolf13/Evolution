@@ -2,13 +2,10 @@ package tgw.evolution.world.puzzle.pieces;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.mojang.datafixers.Dynamic;
-import net.minecraft.block.Blocks;
 import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.nbt.StringNBT;
-import net.minecraft.state.properties.StructureMode;
 import net.minecraft.util.IDynamicDeserializer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
@@ -53,21 +50,6 @@ public class SinglePuzzlePiece extends PuzzlePiece {
         this.processors = ImmutableList.copyOf(NBTHelper.asList(nbt, "Proc", inbt -> IDynamicDeserializer.func_214907_a(new Dynamic<>(NBTDynamicOps.INSTANCE, inbt), Registry.STRUCTURE_PROCESSOR, "processor_type", NopProcessor.INSTANCE)));
     }
 
-    public List<Template.BlockInfo> func_214857_a(TemplateManager manager, BlockPos pos, Rotation rotation, boolean p_214857_4_) {
-        Template template = manager.getTemplateDefaulted(this.location);
-        List<Template.BlockInfo> list = template.func_215386_a(pos, new PlacementSettings().setRotation(rotation), Blocks.STRUCTURE_BLOCK, p_214857_4_);
-        List<Template.BlockInfo> list1 = Lists.newArrayList();
-        for (Template.BlockInfo blockInfo : list) {
-            if (blockInfo.nbt != null) {
-                StructureMode structuremode = StructureMode.valueOf(blockInfo.nbt.getString("mode"));
-                if (structuremode == StructureMode.DATA) {
-                    list1.add(blockInfo);
-                }
-            }
-        }
-        return list1;
-    }
-
     @Override
     public List<Template.BlockInfo> getPuzzleBlocks(TemplateManager manager, BlockPos pos, Rotation rotation, Random rand) {
         Template template = manager.getTemplateDefaulted(this.location);
@@ -86,13 +68,7 @@ public class SinglePuzzlePiece extends PuzzlePiece {
     public boolean place(TemplateManager templateManagerIn, IWorld worldIn, BlockPos pos, Rotation rotationIn, MutableBoundingBox boundsIn, Random rand) {
         Template template = templateManagerIn.getTemplateDefaulted(this.location);
         PlacementSettings placementsettings = this.createPlacementSettings(rotationIn, boundsIn);
-        if (!template.addBlocksToWorld(worldIn, pos, placementsettings, 18)) {
-            return false;
-        }
-        for (Template.BlockInfo blockInfo : Template.processBlockInfos(template, worldIn, pos, placementsettings, this.func_214857_a(templateManagerIn, pos, rotationIn, false))) {
-            this.func_214846_a(worldIn, blockInfo, pos, rotationIn, rand, boundsIn);
-        }
-        return true;
+        return template.addBlocksToWorld(worldIn, pos, placementsettings, 18);
     }
 
     @Override

@@ -6,6 +6,7 @@ import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ShortNBT;
 import net.minecraft.nbt.StringNBT;
 import tgw.evolution.util.NBTHelper;
+import tgw.evolution.world.feature.structures.config.IConfigStruct;
 import tgw.evolution.world.puzzle.EnumPuzzleType;
 import tgw.evolution.world.puzzle.pieces.config.ConfigPuzzle;
 import tgw.evolution.world.puzzle.pieces.config.ForceType;
@@ -17,7 +18,7 @@ public class ConfiguredPuzzlePiece extends SinglePuzzlePiece {
     private final short desiredHeight;
     private final byte maxDeviation;
 
-    public ConfiguredPuzzlePiece(String location, ConfigPuzzle config) {
+    public ConfiguredPuzzlePiece(String location, ConfigPuzzle<?> config) {
         super(location);
         this.underground = config.isUnderground();
         this.forceType = config.getForceType();
@@ -72,8 +73,21 @@ public class ConfiguredPuzzlePiece extends SinglePuzzlePiece {
         return this.underground == that.underground && this.desiredHeight == that.desiredHeight && this.maxDeviation == that.maxDeviation && this.forceType == that.forceType;
     }
 
-    public boolean failConditions() {
-        return false;
+    /**
+     * Additional conditions for this piece to spawn.
+     *
+     * @return Whether or not this piece should spawn.
+     */
+    public boolean childConditions(IConfigStruct config) {
+        return true;
+    }
+
+    /**
+     * Gets called when this piece is marked for spawn.
+     *
+     * @param config The config of the Structure spawning this piece.
+     */
+    public void success(IConfigStruct config) {
     }
 
     @Override

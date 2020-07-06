@@ -33,9 +33,6 @@ public abstract class PuzzlePiece {
 
     public abstract boolean place(TemplateManager templateManagerIn, IWorld worldIn, BlockPos pos, Rotation rotationIn, MutableBoundingBox boundsIn, Random rand);
 
-    public void func_214846_a(IWorld worldIn, Template.BlockInfo blockInfo, BlockPos pos, Rotation rotationIn, Random rand, MutableBoundingBox boundingBox) {
-    }
-
     public PlacementType getPlacementBehaviour() {
         PlacementType placementBehaviour = this.projection;
         if (placementBehaviour == null) {

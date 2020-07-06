@@ -14,13 +14,13 @@ import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.gen.ChunkGenerator;
 import net.minecraft.world.gen.Heightmap;
 import net.minecraft.world.gen.feature.structure.StructurePiece;
-import net.minecraft.world.gen.feature.structure.Structures;
 import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import tgw.evolution.blocks.BlockPuzzle;
 import tgw.evolution.util.MathHelper;
+import tgw.evolution.world.feature.structures.config.IConfigStruct;
 import tgw.evolution.world.puzzle.pieces.ConfiguredPuzzlePiece;
 import tgw.evolution.world.puzzle.pieces.EmptyPuzzlePiece;
 import tgw.evolution.world.puzzle.pieces.config.PlacementType;
@@ -37,9 +37,8 @@ public class PuzzleManager {
         REGISTRY.register(PuzzlePattern.EMPTY);
     }
 
-    public static void startGeneration(ResourceLocation spawnPool, int size, PuzzleManager.IPieceFactory pieceFactory, ChunkGenerator<?> chunkGenerator, TemplateManager manager, BlockPos pos, List<StructurePiece> pieces, Random random) {
-        Structures.init();
-        new PuzzleManager.Assembler(spawnPool, size, pieceFactory, chunkGenerator, manager, pos, pieces, random);
+    public static void startGeneration(ResourceLocation spawnPool, int size, PuzzleManager.IPieceFactory pieceFactory, ChunkGenerator<?> chunkGenerator, TemplateManager manager, BlockPos pos, List<StructurePiece> pieces, Random random, IConfigStruct config) {
+        new PuzzleManager.Assembler(spawnPool, size, pieceFactory, chunkGenerator, manager, pos, pieces, random, config);
     }
 
     public interface IPieceFactory {
@@ -57,14 +56,16 @@ public class PuzzleManager {
         private final Random rand;
         private final Deque<PuzzleManager.Entry> availablePieces = Queues.newArrayDeque();
         private final Set<BlockPos> placedPuzzlesPos;
+        private final IConfigStruct config;
 
-        public Assembler(ResourceLocation spawnPool, int size, PuzzleManager.IPieceFactory pieceFactory, ChunkGenerator<?> chunkGenerator, TemplateManager manager, BlockPos pos, List<StructurePiece> pieces, Random rand) {
+        public Assembler(ResourceLocation spawnPool, int size, PuzzleManager.IPieceFactory pieceFactory, ChunkGenerator<?> chunkGenerator, TemplateManager manager, BlockPos pos, List<StructurePiece> pieces, Random rand, IConfigStruct config) {
             this.size = size;
             this.pieceFactory = pieceFactory;
             this.chunkGenerator = chunkGenerator;
             this.templateManager = manager;
             this.structurePieces = pieces;
             this.placedPuzzlesPos = new HashSet<>();
+            this.config = config;
             this.rand = rand;
             Rotation chosenRotation = Rotation.randomRotation(rand);
             PuzzlePattern pool = PuzzleManager.REGISTRY.get(spawnPool);
@@ -76,7 +77,7 @@ public class PuzzleManager {
             int surfaceY = chunkGenerator.func_222532_b(middleX, middleZ, Heightmap.Type.WORLD_SURFACE_WG);
             pieces.add(structure);
             if (size > 0) {
-                AxisAlignedBB limitBB = new AxisAlignedBB(middleX - 80, MathHelper.clampMin(surfaceY - 80, 5), middleZ - 80, middleX + 80 + 1, surfaceY + 80 + 1, middleZ + 80 + 1);
+                AxisAlignedBB limitBB = new AxisAlignedBB(middleX - 128, MathHelper.clampMin(surfaceY - 80, 5), middleZ - 128, middleX + 128 + 1, surfaceY + 80 + 1, middleZ + 128 + 1);
                 this.availablePieces.addLast(new PuzzleManager.Entry(structure, new AtomicReference<>(MathHelper.subtract(VoxelShapes.create(limitBB), VoxelShapes.create(AxisAlignedBB.func_216363_a(chosenBB)))), surfaceY + 80, 0));
                 while (!this.availablePieces.isEmpty()) {
                     PuzzleManager.Entry managerEntry = this.availablePieces.removeFirst();
@@ -136,27 +137,6 @@ public class PuzzleManager {
                         }
                         for (Rotation candidateRotation : Rotation.shuffledRotations(this.rand)) {
                             List<Template.BlockInfo> candidatePuzzleBlocks = candidatePiece.getPuzzleBlocks(this.templateManager, BlockPos.ZERO, candidateRotation, this.rand);
-                            //not sure yet; has to do with connections inside their own BB
-                            //                            int maxPoolHeight;
-                            //                            if (candidateBB.getYSize() > 16) {
-                            //                                Evolution.LOGGER.debug("candidateBB ySize > 16, maxPoolHeight = 0");
-                            //                                maxPoolHeight = 0;
-                            //                            }
-                            //                            else {
-                            //                                //noinspection ObjectAllocationInLoop
-                            //                                maxPoolHeight = candidatePuzzleBlocks.stream().mapToInt(candidatePuzzleBlock -> {
-                            //                                    //checks if the PuzzleBlock connection is not inside the bounding box of its own piece
-                            //                                    if (!candidateBB.isVecInside(candidatePuzzleBlock.pos.offset(candidatePuzzleBlock.state.get(BlockPuzzle.FACING)))) {
-                            //                                        return 0;
-                            //                                    }
-                            //                                    //noinspection ObjectAllocationInLoop
-                            //                                    ResourceLocation candidatePoolLocation = new ResourceLocation(candidatePuzzleBlock.nbt.getString("TargetPool"));
-                            //                                    PuzzlePattern candidateTargetPool = PuzzleManager.REGISTRY.get(candidatePoolLocation);
-                            //                                    PuzzlePattern candidateFallbackPool = PuzzleManager.REGISTRY.get(candidateTargetPool.getFallbackPool());
-                            //                                    return Math.max(candidateTargetPool.getMaxHeight(this.templateManager), candidateFallbackPool.getMaxHeight(this.templateManager));
-                            //                                }).max().orElse(0);
-                            //                                Evolution.LOGGER.debug("maxPoolHeight = {}", maxPoolHeight);
-                            //                            }
                             for (Template.BlockInfo candidatePuzzleBlock : candidatePuzzleBlocks) {
                                 if (BlockPuzzle.puzzlesMatches(puzzleBlock, candidatePuzzleBlock)) {
                                     BlockPos matchingPuzzleBlockRelativePos = candidatePuzzleBlock.pos;
@@ -181,14 +161,10 @@ public class PuzzleManager {
                                     //func_215127_b moves placingBB
                                     MutableBoundingBox actualMachingBB = matchingMinYDelta == 0 ? matchingBB : matchingBB.func_215127_b(0, matchingMinYDelta, 0);
                                     BlockPos actualMatchingCornerPos = matchingCornerPos.add(0, matchingMinYDelta, 0);
-                                    //                                    if (maxPoolHeight > 0) {
-                                    //                                        Evolution.LOGGER.debug("maxPoolHeight > 0");
-                                    //                                        int k2 = Math.max(maxPoolHeight + 1, actualMachingBB.maxY - actualMachingBB.minY);
-                                    //                                        Evolution.LOGGER.debug("k2 = {}", k2);
-                                    //                                        actualMachingBB.maxY = actualMachingBB.minY + k2;
-                                    //                                        Evolution.LOGGER.debug("actualMachingBB.maxY = {}", actualMachingBB.maxY);
-                                    //                                    }
                                     if (this.canPlace(candidatePiece, actualMachingBB, checkingShape)) {
+                                        if (candidatePiece instanceof ConfiguredPuzzlePiece) {
+                                            ((ConfiguredPuzzlePiece) candidatePiece).success(this.config);
+                                        }
                                         currentShape.set(MathHelper.subtract(currentShape.get(), VoxelShapes.create(AxisAlignedBB.func_216363_a(actualMachingBB))));
                                         int placingGroundLevelDelta = structurePiece.getGroundLevelDelta();
                                         int matchingGroundLevelDelta;
@@ -237,6 +213,9 @@ public class PuzzleManager {
         private boolean canPlace(PuzzlePiece piece, MutableBoundingBox pieceBB, AtomicReference<VoxelShape> checkingShape) {
             if (piece instanceof ConfiguredPuzzlePiece) {
                 ConfiguredPuzzlePiece config = (ConfiguredPuzzlePiece) piece;
+                if (!config.childConditions(this.config)) {
+                    return false;
+                }
                 switch (config.getForceType()) {
                     case HARD:
                         return true;
@@ -258,9 +237,6 @@ public class PuzzleManager {
                     if (pieceBB.maxY > surfaceY - 5) {
                         return false;
                     }
-                }
-                if (config.failConditions()) {
-                    return false;
                 }
             }
             return MathHelper.isShapeTotallyInside(VoxelShapes.create(AxisAlignedBB.func_216363_a(pieceBB).shrink(0.25)), checkingShape.get());
