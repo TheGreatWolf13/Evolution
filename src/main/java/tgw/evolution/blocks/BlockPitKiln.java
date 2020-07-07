@@ -59,6 +59,41 @@ public class BlockPitKiln extends Block implements IReplaceable {
         this.setDefaultState(this.getDefaultState().with(LAYERS, 0));
     }
 
+    public static boolean canBurn(World worldIn, BlockPos pos) {
+        if (checkDirection(worldIn, pos, Direction.NORTH)) {
+            if (checkDirection(worldIn, pos, Direction.SOUTH)) {
+                if (checkDirection(worldIn, pos, Direction.WEST)) {
+                    if (checkDirection(worldIn, pos, Direction.EAST)) {
+                        return worldIn.getBlockState(pos.up()).getBlock() == EvolutionBlocks.FIRE.get();
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean checkDirection(World worldIn, BlockPos pos, Direction direction) {
+        return Block.hasSolidSide(worldIn.getBlockState(pos.offset(direction)), worldIn, pos.offset(direction), direction.getOpposite());
+    }
+
+    private static boolean manageStack(TEPitKiln tile, ItemStack handStack, PlayerEntity player, DirectionDiagonal direction) {
+        if (tile.getStack(direction).isEmpty() && !tile.single && handStack.getItem() instanceof ItemClayMolded && !((ItemClayMolded) handStack.getItem()).single) {
+            tile.setStack(handStack, direction);
+            tile.markDirty();
+            return true;
+        }
+        if (!tile.getStack(direction).isEmpty()) {
+            if (!tile.getWorld().isRemote && !player.inventory.addItemStackToInventory(tile.getStack(direction))) {
+                BlockUtils.dropItemStack(tile.getWorld(), tile.getPos(), tile.getStack(direction));
+            }
+            tile.setStack(ItemStack.EMPTY, direction);
+            tile.markDirty();
+            tile.checkEmpty();
+            return true;
+        }
+        return false;
+    }
+
     @Override
     protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
         builder.add(LAYERS);
@@ -106,23 +141,6 @@ public class BlockPitKiln extends Block implements IReplaceable {
         else {
             tile.reset();
         }
-    }
-
-    public static boolean canBurn(World worldIn, BlockPos pos) {
-        if (checkDirection(worldIn, pos, Direction.NORTH)) {
-            if (checkDirection(worldIn, pos, Direction.SOUTH)) {
-                if (checkDirection(worldIn, pos, Direction.WEST)) {
-                    if (checkDirection(worldIn, pos, Direction.EAST)) {
-                        return worldIn.getBlockState(pos.up()).getBlock() == EvolutionBlocks.FIRE.get();
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private static boolean checkDirection(World worldIn, BlockPos pos, Direction direction) {
-        return Block.hasSolidSide(worldIn.getBlockState(pos.offset(direction)), worldIn, pos.offset(direction), direction.getOpposite());
     }
 
     @Override
@@ -206,8 +224,8 @@ public class BlockPitKiln extends Block implements IReplaceable {
             if (tile.single) {
                 return manageStack(tile, stack, player, DirectionDiagonal.NORTH_WEST);
             }
-            int x = MathHelper.getHitIndex(2, 0, 16, (hit.getHitVec().x - pos.getX()) * 16);
-            int z = MathHelper.getHitIndex(2, 0, 16, (hit.getHitVec().z - pos.getZ()) * 16);
+            int x = MathHelper.getIndex(2, 0, 16, (hit.getHitVec().x - pos.getX()) * 16);
+            int z = MathHelper.getIndex(2, 0, 16, (hit.getHitVec().z - pos.getZ()) * 16);
             if (x == 0) {
                 if (z == 0) {
                     return manageStack(tile, stack, player, DirectionDiagonal.NORTH_WEST);
@@ -265,24 +283,6 @@ public class BlockPitKiln extends Block implements IReplaceable {
     @Override
     public ItemStack getDrops(BlockState state) {
         return new ItemStack(EvolutionItems.straw.get(), MathHelper.clamp(state.get(LAYERS), 0, 8));
-    }
-
-    private static boolean manageStack(TEPitKiln tile, ItemStack handStack, PlayerEntity player, DirectionDiagonal direction) {
-        if (tile.getStack(direction).isEmpty() && !tile.single && handStack.getItem() instanceof ItemClayMolded && !((ItemClayMolded) handStack.getItem()).single) {
-            tile.setStack(handStack, direction);
-            tile.markDirty();
-            return true;
-        }
-        if (!tile.getStack(direction).isEmpty()) {
-            if (!tile.getWorld().isRemote && !player.inventory.addItemStackToInventory(tile.getStack(direction))) {
-                BlockUtils.dropItemStack(tile.getWorld(), tile.getPos(), tile.getStack(direction));
-            }
-            tile.setStack(ItemStack.EMPTY, direction);
-            tile.markDirty();
-            tile.checkEmpty();
-            return true;
-        }
-        return false;
     }
 
     @Override

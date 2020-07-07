@@ -26,6 +26,12 @@ public class ItemFireStarter extends ItemEv implements IDurability {
         super(EvolutionItems.propMisc().maxDamage(10));
     }
 
+    public static boolean canSetFire(IWorld worldIn, BlockPos pos) {
+        BlockState state = worldIn.getBlockState(pos);
+        BlockState fireState = ((BlockFire) EvolutionBlocks.FIRE.get()).getStateForPlacement(worldIn, pos);
+        return state.isAir() && fireState.isValidPosition(worldIn, pos);
+    }
+
     @Override
     public int getUseDuration(ItemStack stack) {
         return 16;
@@ -36,7 +42,7 @@ public class ItemFireStarter extends ItemEv implements IDurability {
         if (player.world.isRemote) {
             return;
         }
-        BlockRayTraceResult rayTrace = MathHelper.rayTraceBlocks(player, 1, 5, false);
+        BlockRayTraceResult rayTrace = MathHelper.rayTraceBlocksFromEyes(player, 1, 5, false);
         ((ServerWorld) player.world).spawnParticle(ParticleTypes.SMOKE, rayTrace.getPos().getX() + 0.5, rayTrace.getPos().getY() + 1, rayTrace.getPos().getZ() + 0.5, 5, 0, 0.1, 0, 0.01);
         if (count <= 8) {
             ((ServerWorld) player.world).spawnParticle(ParticleTypes.LARGE_SMOKE, rayTrace.getPos().getX() + 0.5, rayTrace.getPos().getY() + 1, rayTrace.getPos().getZ() + 0.5, 2, 0, 0.1, 0, 0.01);
@@ -51,7 +57,7 @@ public class ItemFireStarter extends ItemEv implements IDurability {
         if (worldIn.isRemote) {
             return stack;
         }
-        BlockRayTraceResult rayTrace = MathHelper.rayTraceBlocks(entityLiving, 1, 5, false);
+        BlockRayTraceResult rayTrace = MathHelper.rayTraceBlocksFromEyes(entityLiving, 1, 5, false);
         BlockPos pos = rayTrace.getPos();
         BlockPos facingPos = pos.offset(rayTrace.getFace());
         if (canSetFire(worldIn, facingPos)) {
@@ -76,7 +82,7 @@ public class ItemFireStarter extends ItemEv implements IDurability {
 
     @Override
     public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
-        BlockRayTraceResult rayTrace = MathHelper.rayTraceBlocks(playerIn, 1, 5, false);
+        BlockRayTraceResult rayTrace = MathHelper.rayTraceBlocksFromEyes(playerIn, 1, 5, false);
         if (canSetFire(worldIn, rayTrace.getPos().offset(rayTrace.getFace()))) {
             playerIn.setActiveHand(handIn);
             return new ActionResult<>(ActionResultType.SUCCESS, playerIn.getHeldItem(handIn));
@@ -90,11 +96,5 @@ public class ItemFireStarter extends ItemEv implements IDurability {
             return ActionResultType.PASS;
         }
         return ActionResultType.FAIL;
-    }
-
-    public static boolean canSetFire(IWorld worldIn, BlockPos pos) {
-        BlockState state = worldIn.getBlockState(pos);
-        BlockState fireState = ((BlockFire) EvolutionBlocks.FIRE.get()).getStateForPlacement(worldIn, pos);
-        return state.isAir() && fireState.isValidPosition(worldIn, pos);
     }
 }

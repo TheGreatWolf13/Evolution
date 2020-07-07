@@ -116,8 +116,8 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
             return false;
         }
         TEKnapping tileEntity = (TEKnapping) worldIn.getTileEntity(pos);
-        int x = MathHelper.getHitIndex(5, 0.5, 15.5, (hit.getHitVec().x - pos.getX()) * 16);
-        int z = MathHelper.getHitIndex(5, 0.5, 15.5, (hit.getHitVec().z - pos.getZ()) * 16);
+        int x = MathHelper.getIndex(5, 0.5, 15.5, (hit.getHitVec().x - pos.getX()) * 16);
+        int z = MathHelper.getIndex(5, 0.5, 15.5, (hit.getHitVec().z - pos.getZ()) * 16);
         if (!tileEntity.matrix[x][z] || tileEntity.type.getPattern()[x][z]) {
             return false;
         }

@@ -168,9 +168,9 @@ public class BlockMolding extends Block implements IReplaceable {
         if ((hit.getHitVec().z - pos.getZ()) * 16 < 0.5 || (hit.getHitVec().z - pos.getZ()) * 16 > 15.5) {
             return false;
         }
-        int x = MathHelper.getHitIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.X, (hit.getHitVec().x - pos.getX()) * 16, hit.getFace()));
-        int y = MathHelper.getHitIndex(5, 0, 15, MathHelper.hitOffset(Axis.Y, (hit.getHitVec().y - pos.getY()) * 16, hit.getFace()));
-        int z = MathHelper.getHitIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.Z, (hit.getHitVec().z - pos.getZ()) * 16, hit.getFace()));
+        int x = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.X, (hit.getHitVec().x - pos.getX()) * 16, hit.getFace()));
+        int y = MathHelper.getIndex(5, 0, 15, MathHelper.hitOffset(Axis.Y, (hit.getHitVec().y - pos.getY()) * 16, hit.getFace()));
+        int z = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.Z, (hit.getHitVec().z - pos.getZ()) * 16, hit.getFace()));
         if (!tile.matrices[y][x][z] || tile.molding.getPattern()[y][x][z]) {
             return false;
         }
