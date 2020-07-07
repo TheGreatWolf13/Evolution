@@ -102,11 +102,12 @@
 	
 	"COMMENT": "TOOLTIPS",
 	"evolution.tooltip.clay.mold": " Coloque enquanto agachado para moldar",
-	"evolution.tooltip.cooldown": " %1$s Segundos de Carregamento",
 	"evolution.tooltip.damage": " %1$s Dano de Ataque",
 	"evolution.tooltip.distance": " %1$s Distância de Alcance",
-	"evolution.tooltip.dps": " %1$s Dano por Segundo",
 	"evolution.tooltip.durability": " %1$s Durabilidade",
+	"evolution.tooltip.fire_aspect": " ► %1$s Aspecto Flamejante %2$s",
+	"evolution.tooltip.knockback": " ► Repulsão %1$s",
+	"evolution.tooltip.mass": "%1$s kg Massa",
 	"evolution.tooltip.metal.oxidation": " Oxidação: %1$s",
 	"evolution.tooltip.mining": " %1$s Velocidade de Mineração",
 	"evolution.tooltip.offhand": "Na mão principal ou secundária:",
@@ -118,6 +119,7 @@
 	"evolution.tooltip.rope": " Use cordas nela para descer com segurança",
 	"evolution.tooltip.speed": " %1$s Velocidade de Ataque",
 	"evolution.tooltip.stick.lit": " Use numa fonte de fogo para acender uma tocha",
+	"evolution.tooltip.sweep": " ► %1$s Dano em Varredura",
 	"evolution.tooltip.throwable": "Arremessável",
 	"evolution.tooltip.two_handed": "Duas Mãos",
 	

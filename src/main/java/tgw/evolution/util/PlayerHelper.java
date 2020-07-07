@@ -14,7 +14,6 @@ import net.minecraft.network.play.server.SAnimateHandPacket;
 import net.minecraft.network.play.server.SEntityVelocityPacket;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.EffectUtils;
 import net.minecraft.potion.Effects;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.DamageSource;
@@ -68,13 +67,6 @@ public abstract class PlayerHelper {
         }
     }
 
-    private static int getArmSwingAnimationEnd(PlayerEntity player) {
-        if (EffectUtils.hasMiningSpeedup(player)) {
-            return 6 - (1 + EffectUtils.getMiningSpeedup(player));
-        }
-        return player.isPotionActive(Effects.MINING_FATIGUE) ? 6 + (1 + player.getActivePotionEffect(Effects.MINING_FATIGUE).getAmplifier()) * 2 : 6;
-    }
-
     private static void attackEntity(PlayerEntity player, Entity targetEntity, Hand hand) {
         ItemStack attackStack = player.getHeldItem(hand);
         Item attackItem = attackStack.getItem();
@@ -123,7 +115,9 @@ public abstract class PlayerHelper {
                     }
                     int fireAspectModifier = 0;
                     if (attackItem instanceof IFireAspect) {
-                        fireAspectModifier = ((IFireAspect) attackItem).getModifier();
+                        if (RAND.nextFloat() < ((IFireAspect) attackItem).getChance()) {
+                            fireAspectModifier = ((IFireAspect) attackItem).getModifier();
+                        }
                     }
                     float oldHealth = 0.0F;
                     boolean fireAspect = false;

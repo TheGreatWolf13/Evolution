@@ -12,20 +12,18 @@ import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.IItemTier;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.TieredItem;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import tgw.evolution.entities.EvolutionAttributes;
 
 import java.util.Set;
-import java.util.UUID;
 
-public abstract class ItemTool extends TieredItem implements IDurability {
+public abstract class ItemTool extends ItemTiered implements IDurability {
 
-    public static final UUID REACH_DISTANCE_MODIFIER = UUID.fromString("449b8c5d-47b0-4c67-a90e-758b956f2d3c");
-    private final Set<Block> effectiveBlocks;
-    private final Set<Material> effectiveMaterials;
     protected final float efficiency;
     protected final float attackSpeed;
+    private final Set<Block> effectiveBlocks;
+    private final Set<Material> effectiveMaterials;
 
     protected ItemTool(float attackSpeedIn, IItemTier tier, Set<Block> effectiveBlocksIn, Set<Material> effectiveMaterials, Item.Properties builder) {
         super(tier, builder);
@@ -72,7 +70,11 @@ public abstract class ItemTool extends TieredItem implements IDurability {
         if (equipmentSlot == EquipmentSlotType.MAINHAND) {
             multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(), new AttributeModifier(ATTACK_DAMAGE_MODIFIER, "Tool modifier", this.getAttackDamage(), AttributeModifier.Operation.ADDITION));
             multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(), new AttributeModifier(ATTACK_SPEED_MODIFIER, "Tool modifier", this.getAttackSpeed(), AttributeModifier.Operation.ADDITION));
-            multimap.put(PlayerEntity.REACH_DISTANCE.getName(), new AttributeModifier(REACH_DISTANCE_MODIFIER, "Reach Modifier", this.getReach(), AttributeModifier.Operation.ADDITION));
+            multimap.put(PlayerEntity.REACH_DISTANCE.getName(), new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER, "Reach Modifier", this.getReach(), AttributeModifier.Operation.ADDITION));
+            multimap.put(EvolutionAttributes.MASS.getName(), new AttributeModifier(EvolutionAttributes.MASS_MODIFIER, "Mass Modifier", 5, AttributeModifier.Operation.ADDITION));
+        }
+        else if (equipmentSlot == EquipmentSlotType.OFFHAND) {
+            multimap.put(EvolutionAttributes.MASS.getName(), new AttributeModifier(EvolutionAttributes.MASS_MODIFIER_OFFHAND, "Mass Modifier", 3, AttributeModifier.Operation.ADDITION));
         }
         return multimap;
     }
@@ -95,10 +97,5 @@ public abstract class ItemTool extends TieredItem implements IDurability {
 
     public float getAttackSpeed() {
         return this.attackSpeed - 4;
-    }
-
-    @Override
-    public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
-        return !ItemStack.areItemStacksEqual(oldStack, newStack);
     }
 }

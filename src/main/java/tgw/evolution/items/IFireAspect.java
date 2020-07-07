@@ -1,7 +1,5 @@
 package tgw.evolution.items;
 
-import java.util.Random;
-
 public interface IFireAspect {
 
     /**
@@ -9,5 +7,8 @@ public interface IFireAspect {
      */
     int getModifier();
 
-    boolean activate(Random rand);
+    /**
+     * @return The chance of the Fire Aspect to activate, given in a float from 0 to 1f.
+     */
+    float getChance();
 }

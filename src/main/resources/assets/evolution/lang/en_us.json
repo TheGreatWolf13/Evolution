@@ -102,11 +102,12 @@
 	
 	"COMMENT": "TOOLTIPS",
 	"evolution.tooltip.clay.mold": " Place while sneaking to mold",
-	"evolution.tooltip.cooldown": " %1$s Seconds Cooldown",
 	"evolution.tooltip.damage": " %1$s Attack Damage",
 	"evolution.tooltip.distance": " %1$s Reach Distance",
-	"evolution.tooltip.dps": " %1$s Damage per Second",
 	"evolution.tooltip.durability": " %1$s Durability",
+	"evolution.tooltip.fire_aspect": " ► %1$s Fire Aspect %2$s",
+	"evolution.tooltip.knockback": " ► Knockback %1$s",
+	"evolution.tooltip.mass": "%1$s kg Mass",
 	"evolution.tooltip.metal.oxidation": " Oxidation: %1$s",
 	"evolution.tooltip.mining": " %1$s Mining Speed",
 	"evolution.tooltip.offhand": "When in main hand or offhand:",
@@ -118,6 +119,7 @@
 	"evolution.tooltip.rope": " Use ropes on it to descend safely",
 	"evolution.tooltip.speed": " %1$s Attack Speed",
 	"evolution.tooltip.stick.lit": " Use on a fire source to lit into a torch",
+	"evolution.tooltip.sweep": " ► %1$s Sweep Damage",
 	"evolution.tooltip.throwable": "Throwable",
 	"evolution.tooltip.two_handed": "Two-Handed",
 	

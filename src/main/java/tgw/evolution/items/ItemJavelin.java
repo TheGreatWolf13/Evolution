@@ -17,6 +17,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import tgw.evolution.Evolution;
 import tgw.evolution.entities.EntitySpear;
+import tgw.evolution.entities.EvolutionAttributes;
 import tgw.evolution.init.EvolutionSounds;
 
 public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpear, IMelee {
@@ -72,7 +73,7 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
         if (equipmentSlot == EquipmentSlotType.MAINHAND) {
             multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(), new AttributeModifier(ATTACK_DAMAGE_MODIFIER, "Tool modifier", this.damage, AttributeModifier.Operation.ADDITION));
             multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(), new AttributeModifier(ATTACK_SPEED_MODIFIER, "Tool modifier", this.getAttackSpeed(), AttributeModifier.Operation.ADDITION));
-            multimap.put(PlayerEntity.REACH_DISTANCE.getName(), new AttributeModifier(ItemTool.REACH_DISTANCE_MODIFIER, "Reach Modifier", this.getReach(), AttributeModifier.Operation.ADDITION));
+            multimap.put(PlayerEntity.REACH_DISTANCE.getName(), new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER, "Reach Modifier", this.getReach(), AttributeModifier.Operation.ADDITION));
         }
         return multimap;
     }

@@ -76,10 +76,10 @@ public abstract class ItemBlockPlaceable extends ItemBlock {
     }
 
     @Override
-    protected boolean canPlace(BlockItemUseContext context, BlockState stateForPlacement) {
-        PlayerEntity player = context.getPlayer();
+    protected boolean canPlace(BlockItemUseContext blockUseContext, BlockState state) {
+        PlayerEntity player = blockUseContext.getPlayer();
         ISelectionContext selectionContext = player == null ? ISelectionContext.dummy() : ISelectionContext.forEntity(player);
-        return stateForPlacement.isValidPosition(context.getWorld(), context.getPos()) && context.getWorld().func_217350_a(stateForPlacement, context.getPos(), selectionContext);
+        return state.isValidPosition(blockUseContext.getWorld(), blockUseContext.getPos()) && blockUseContext.getWorld().func_217350_a(state, blockUseContext.getPos(), selectionContext);
     }
 
     public abstract BlockState getSneakingState(BlockItemUseContext context);
