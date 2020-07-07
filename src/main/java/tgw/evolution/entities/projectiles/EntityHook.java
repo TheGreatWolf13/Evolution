@@ -1,4 +1,4 @@
-package tgw.evolution.entities;
+package tgw.evolution.entities.projectiles;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -35,17 +35,23 @@ import javax.annotation.Nullable;
 public class EntityHook extends AbstractArrowEntity {
 
     private final double gravity;
+    private final double verticalDrag;
+    private final double horizontalDrag;
     private boolean dealtDamage;
     private Direction facing = Direction.NORTH;
 
     public EntityHook(EntityType<EntityHook> type, World worldIn) {
         super(type, worldIn);
-        this.gravity = -Gravity.gravity(worldIn.getDimension());
+        this.gravity = -Gravity.gravity(worldIn.dimension);
+        this.verticalDrag = Gravity.verticalDrag(worldIn.dimension, this.getWidth());
+        this.horizontalDrag = Gravity.horizontalDrag(worldIn.dimension, this.getWidth(), this.getHeight());
     }
 
     public EntityHook(World worldIn, LivingEntity thrower) {
         super(EvolutionEntities.HOOK.get(), thrower, worldIn);
         this.gravity = -Gravity.gravity(worldIn.getDimension());
+        this.verticalDrag = Gravity.verticalDrag(worldIn.dimension, this.getWidth());
+        this.horizontalDrag = Gravity.horizontalDrag(worldIn.dimension, this.getWidth(), this.getHeight());
         this.facing = thrower.getHorizontalFacing();
     }
 
@@ -134,12 +140,11 @@ public class EntityHook extends AbstractArrowEntity {
         Entity shooter = this.getShooter();
         DamageSource damagesource = EvolutionDamage.causeHookDamage(this, shooter == null ? this : shooter);
         this.dealtDamage = true;
-        //TODO trident hit sound
         SoundEvent soundevent = SoundEvents.ITEM_TRIDENT_HIT;
         float damage = MathHelper.ceil(Math.max(4 * this.getMotion().length(), 0));
-        if (entity.attackEntityFrom(damagesource, damage) && entity instanceof LivingEntity) {
-            LivingEntity livingentity1 = (LivingEntity) entity;
-            this.arrowHit(livingentity1);
+        if (entity instanceof LivingEntity && entity.canBeAttackedWithItem() && entity.attackEntityFrom(damagesource, damage)) {
+            LivingEntity livingEntity = (LivingEntity) entity;
+            this.arrowHit(livingEntity);
         }
         this.setMotion(this.getMotion().mul(-0.01D, -0.1D, -0.01D));
         this.playSound(soundevent, 1.0F, 1.0F);
@@ -174,7 +179,6 @@ public class EntityHook extends AbstractArrowEntity {
         this.facing = Direction.byIndex(compound.getByte("Facing"));
     }
 
-    //TODO trident hit ground sound
     @Override
     protected SoundEvent getHitEntitySound() {
         return SoundEvents.ITEM_TRIDENT_HIT_GROUND;
@@ -188,8 +192,8 @@ public class EntityHook extends AbstractArrowEntity {
             this.remove();
         }
         if (!this.hasNoGravity() && !this.getNoClip()) {
-            Vec3d vec3d3 = this.getMotion();
-            this.setMotion(vec3d3.x, vec3d3.y + 0.05F + this.gravity, vec3d3.z);
+            Vec3d motion = this.getMotion();
+            this.setMotion(motion.x * this.horizontalDrag, (motion.y + 0.05F + this.gravity) * this.verticalDrag, motion.z * this.horizontalDrag);
         }
         super.tick();
     }

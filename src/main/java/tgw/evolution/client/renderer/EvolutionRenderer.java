@@ -8,6 +8,9 @@ import tgw.evolution.blocks.tileentities.*;
 import tgw.evolution.client.renderer.entities.*;
 import tgw.evolution.client.renderer.tile.*;
 import tgw.evolution.entities.*;
+import tgw.evolution.entities.projectiles.EntityHook;
+import tgw.evolution.entities.projectiles.EntitySpear;
+import tgw.evolution.entities.projectiles.EntityTorch;
 
 @OnlyIn(Dist.CLIENT)
 public class EvolutionRenderer {
@@ -21,6 +24,7 @@ public class EvolutionRenderer {
         RenderingRegistry.registerEntityRenderingHandler(EntityShadowHound.class, RenderShadowHound::new);
         RenderingRegistry.registerEntityRenderingHandler(EntitySpear.class, RenderSpear::new);
         RenderingRegistry.registerEntityRenderingHandler(EntityHook.class, RenderHook::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntityTorch.class, RenderTorch::new);
         ClientRegistry.bindTileEntitySpecialRenderer(TEKnapping.class, new RenderTileKnapping());
         ClientRegistry.bindTileEntitySpecialRenderer(TEShadowHound.class, new RenderTileShadowHound());
         ClientRegistry.bindTileEntitySpecialRenderer(TEMolding.class, new RenderTileMolding());

@@ -1,4 +1,4 @@
-package tgw.evolution.entities;
+package tgw.evolution.entities.projectiles;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;

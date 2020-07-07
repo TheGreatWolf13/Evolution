@@ -7,7 +7,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.models.entities.ModelHook;
-import tgw.evolution.entities.EntityHook;
+import tgw.evolution.entities.projectiles.EntityHook;
 
 import javax.annotation.Nullable;
 

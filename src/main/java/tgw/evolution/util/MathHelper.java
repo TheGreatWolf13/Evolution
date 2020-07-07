@@ -580,6 +580,34 @@ public class MathHelper {
     }
 
     /**
+     * Casts a ray tracing for {@code Block}s based on the {@link Entity}'s {@link Entity#rotationYaw} and {@link Entity#rotationPitch}.
+     * This method is useful for Entities that are projectiles, as {@link MathHelper#rayTraceBlocksFromEyes(Entity, float, float, boolean)}
+     * usually do not work on them.
+     *
+     * @param entity   The {@link Entity} from whose {@code yaw} and {@code pitch} to cast the ray.
+     * @param distance The maximum distance this ray will travel.
+     * @param fluid    {@code true} if the ray can hit fluids, {@code false} if the ray can go through them.
+     * @return A {@link BlockRayTraceResult} containing the {@link BlockPos} of the {@code Block} hit.
+     * If no {@code Block}s are hit, this {@link BlockRayTraceResult} will be {@code null}.
+     */
+    public static BlockRayTraceResult rayTraceBlocksFromYawAndPitch(Entity entity, double distance, boolean fluid) {
+        Vec3d from = entity.getEyePosition(1f);
+        float theta = entity.rotationYaw;
+        if (theta < 0) {
+            theta += 360;
+        }
+        theta = MathHelper.degToRad(theta);
+        float phi = entity.rotationPitch;
+        if (phi < 0) {
+            phi += 360;
+        }
+        phi = MathHelper.degToRad(phi);
+        Vec3d looking = new Vec3d(MathHelper.sin(theta), MathHelper.sin(phi), MathHelper.cos(theta)).normalize();
+        Vec3d to = from.add(looking.x * distance, looking.y * distance, looking.z * distance);
+        return entity.world.rayTraceBlocks(new RayTraceContext(from, to, RayTraceContext.BlockMode.OUTLINE, fluid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE, entity));
+    }
+
+    /**
      * Gets the negative {@link Direction} of a given {@link Axis}.
      *
      * @param axis The desired {@link Axis}.

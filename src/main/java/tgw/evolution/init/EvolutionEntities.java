@@ -10,9 +10,11 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.ForgeRegistryEntry;
 import tgw.evolution.Evolution;
 import tgw.evolution.entities.*;
+import tgw.evolution.entities.projectiles.EntityHook;
+import tgw.evolution.entities.projectiles.EntitySpear;
+import tgw.evolution.entities.projectiles.EntityTorch;
 import tgw.evolution.items.ItemSpawnEgg;
 
 import java.util.function.Supplier;
@@ -21,7 +23,7 @@ import static net.minecraft.entity.EntityClassification.*;
 
 @SuppressWarnings("unused")
 @EventBusSubscriber
-public class EvolutionEntities extends ForgeRegistryEntry<EntityType<?>> {
+public class EvolutionEntities {
 
     public static final DeferredRegister<EntityType<?>> ENTITIES = new DeferredRegister<>(ForgeRegistries.ENTITIES, Evolution.MODID);
 
@@ -34,6 +36,7 @@ public class EvolutionEntities extends ForgeRegistryEntry<EntityType<?>> {
     public static final RegistryObject<EntityType<EntityShadowHound>> SHADOW_HOUND = register("shadow_hound", EvolutionEntities::shadowHound);
     public static final RegistryObject<EntityType<EntitySit>> SIT = register("sit", EvolutionEntities::sit);
     public static final RegistryObject<EntityType<EntityHook>> HOOK = register("hook", EvolutionEntities::hook);
+    public static final RegistryObject<EntityType<EntityTorch>> TORCH = register("torch", EvolutionEntities::torch);
 
     public static final DeferredRegister<Item> ITEMS = new DeferredRegister<>(ForgeRegistries.ITEMS, Evolution.MODID);
 
@@ -51,6 +54,10 @@ public class EvolutionEntities extends ForgeRegistryEntry<EntityType<?>> {
 
     private static EntityType.Builder<EntityHook> hook() {
         return EntityType.Builder.<EntityHook>create(EntityHook::new, MISC).size(0.5f, 0.5f).setTrackingRange(5).setUpdateInterval(20).setCustomClientFactory(EntityHook::new).setShouldReceiveVelocityUpdates(true);
+    }
+
+    private static EntityType.Builder<EntityTorch> torch() {
+        return EntityType.Builder.<EntityTorch>create(EntityTorch::new, MISC).size(0.5f, 0.5f).setTrackingRange(5).setUpdateInterval(20).setCustomClientFactory(EntityTorch::new).setShouldReceiveVelocityUpdates(true);
     }
 
     private static EntityType.Builder<EntityFallingPeat> fallingPeat() {

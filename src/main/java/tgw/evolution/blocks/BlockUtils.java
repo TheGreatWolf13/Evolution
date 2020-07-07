@@ -1,5 +1,6 @@
 package tgw.evolution.blocks;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.item.ItemEntity;
@@ -17,6 +18,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public abstract class BlockUtils {
+
+    public static boolean hasSolidSide(World world, BlockPos pos, Direction side) {
+        return Block.hasSolidSide(world.getBlockState(pos), world, pos, side);
+    }
 
     public static boolean canSustainSapling(BlockState state, IPlantable plantable) {
         return plantable instanceof BlockBush && BlockBush.isValidGround(state);
@@ -136,6 +141,9 @@ public abstract class BlockUtils {
     }
 
     public static void dropItemStack(World world, BlockPos pos, @Nonnull ItemStack stack) {
+        if (world.isRemote) {
+            return;
+        }
         ItemEntity entity = new ItemEntity(world, pos.getX() + 0.5f, pos.getY() + 0.3f, pos.getZ() + 0.5f, stack);
         Vec3d motion = entity.getMotion();
         entity.addVelocity(-motion.x, -motion.y, -motion.z);
