@@ -226,16 +226,7 @@ public class BlockPitKiln extends Block implements IReplaceable {
             }
             int x = MathHelper.getIndex(2, 0, 16, (hit.getHitVec().x - pos.getX()) * 16);
             int z = MathHelper.getIndex(2, 0, 16, (hit.getHitVec().z - pos.getZ()) * 16);
-            if (x == 0) {
-                if (z == 0) {
-                    return manageStack(tile, stack, player, DirectionDiagonal.NORTH_WEST);
-                }
-                return manageStack(tile, stack, player, DirectionDiagonal.SOUTH_WEST);
-            }
-            if (z == 0) {
-                return manageStack(tile, stack, player, DirectionDiagonal.NORTH_EAST);
-            }
-            return manageStack(tile, stack, player, DirectionDiagonal.SOUTH_EAST);
+            return manageStack(tile, stack, player, MathHelper.DIAGONALS[z][x]);
         }
         if (layers < 8) {
             if (stack.getItem() == EvolutionItems.straw.get()) {

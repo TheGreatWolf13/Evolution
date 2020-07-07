@@ -109,15 +109,17 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
         if (!(player.getHeldItem(handIn).getItem() instanceof ItemRock)) {
             return false;
         }
-        if ((hit.getHitVec().x - pos.getX()) * 16 < 0.5 || (hit.getHitVec().x - pos.getX()) * 16 > 15.5) {
+        double hitX = (hit.getHitVec().x - pos.getX()) * 16;
+        if (!MathHelper.rangeInclusive(hitX, 0.5, 15.5)) {
             return false;
         }
-        if ((hit.getHitVec().z - pos.getZ()) * 16 < 0.5 || (hit.getHitVec().z - pos.getZ()) * 16 > 15.5) {
+        double hitZ = (hit.getHitVec().z - pos.getZ()) * 16;
+        if (!MathHelper.rangeInclusive(hitZ, 0.5, 15.5)) {
             return false;
         }
         TEKnapping tileEntity = (TEKnapping) worldIn.getTileEntity(pos);
-        int x = MathHelper.getIndex(5, 0.5, 15.5, (hit.getHitVec().x - pos.getX()) * 16);
-        int z = MathHelper.getIndex(5, 0.5, 15.5, (hit.getHitVec().z - pos.getZ()) * 16);
+        int x = MathHelper.getIndex(5, 0.5, 15.5, hitX);
+        int z = MathHelper.getIndex(5, 0.5, 15.5, hitZ);
         if (!tileEntity.matrix[x][z] || tileEntity.type.getPattern()[x][z]) {
             return false;
         }

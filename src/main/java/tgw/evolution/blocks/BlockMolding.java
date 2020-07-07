@@ -162,15 +162,18 @@ public class BlockMolding extends Block implements IReplaceable {
             return false;
         }
         TEMolding tile = (TEMolding) worldIn.getTileEntity(pos);
-        if ((hit.getHitVec().x - pos.getX()) * 16 < 0.5 || (hit.getHitVec().x - pos.getX()) * 16 > 15.5) {
+        double hitX = (hit.getHitVec().x - pos.getX()) * 16;
+        if (!MathHelper.rangeInclusive(hitX, 0.5, 15.5)) {
             return false;
         }
-        if ((hit.getHitVec().z - pos.getZ()) * 16 < 0.5 || (hit.getHitVec().z - pos.getZ()) * 16 > 15.5) {
+        double hitZ = (hit.getHitVec().z - pos.getZ()) * 16;
+        if (!MathHelper.rangeInclusive(hitZ, 0.5, 15.5)) {
             return false;
         }
-        int x = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.X, (hit.getHitVec().x - pos.getX()) * 16, hit.getFace()));
-        int y = MathHelper.getIndex(5, 0, 15, MathHelper.hitOffset(Axis.Y, (hit.getHitVec().y - pos.getY()) * 16, hit.getFace()));
-        int z = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.Z, (hit.getHitVec().z - pos.getZ()) * 16, hit.getFace()));
+        double hitY = (hit.getHitVec().y - pos.getY()) * 16;
+        int x = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.X, hitX, hit.getFace()));
+        int y = MathHelper.getIndex(5, 0, 15, MathHelper.hitOffset(Axis.Y, hitY, hit.getFace()));
+        int z = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.Z, hitZ, hit.getFace()));
         if (!tile.matrices[y][x][z] || tile.molding.getPattern()[y][x][z]) {
             return false;
         }
