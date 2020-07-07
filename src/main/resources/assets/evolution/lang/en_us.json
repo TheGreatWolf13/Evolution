@@ -416,7 +416,7 @@
 	
 	"block.evolution.schematic_block": "Schematic Block",
 
-	"block.evolution.shadow_hound": "Shadow Hound Block",
+	"block.evolution.shadowhound": "Shadowhound Block",
 	
 	"block.evolution.stick": "Stick",
 	
@@ -709,5 +709,8 @@
 	"item.evolution.shovel_head_sandstone": "Sandstone Shovel Head",
 	"item.evolution.shovel_head_schist": "Schist Shovel Head",
 	"item.evolution.shovel_head_shale": "Shale Shovel Head",
-	"item.evolution.shovel_head_slate": "Slate Shovel Head"
+	"item.evolution.shovel_head_slate": "Slate Shovel Head",
+	
+	"item.evolution.spawn_egg_cow": "Cow Spawn Egg",
+	"item.evolution.spawn_egg_shadowhound": "Shadowhound Spawn Egg"
 }

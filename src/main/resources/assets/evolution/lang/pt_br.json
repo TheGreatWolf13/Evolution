@@ -416,7 +416,7 @@
 	
 	"block.evolution.schematic_block": "Bloco de Esquema",
 
-	"block.evolution.shadow_hound": "Bloco de Cachorro das Sombras",
+	"block.evolution.shadowhound": "Bloco de Cachorro das Sombras",
 	
 	"block.evolution.stick": "Graveto",
 	
@@ -709,5 +709,8 @@
 	"item.evolution.shovel_head_sandstone": "Cabeça de Pá de Arenito",
 	"item.evolution.shovel_head_schist": "Cabeça de Pá de Xisto",
 	"item.evolution.shovel_head_shale": "Cabeça de Pá de Folhelho",
-	"item.evolution.shovel_head_slate": "Cabeça de Pá de Ardósia"
+	"item.evolution.shovel_head_slate": "Cabeça de Pá de Ardósia",
+	
+	"item.evolution.spawn_egg_cow": "Ovo Sumonador de Vaca",
+	"item.evolution.spawn_egg_shadowhound": "Ovo Sumonador de Cachorro das Sombras"
 }

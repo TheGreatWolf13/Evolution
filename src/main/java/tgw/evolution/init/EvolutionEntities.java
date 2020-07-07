@@ -33,7 +33,7 @@ public class EvolutionEntities {
     public static final RegistryObject<EntityType<EntitySpear>> SPEAR = register("spear", EvolutionEntities::spear);
     public static final RegistryObject<EntityType<EntityCow>> COW = register("cow", EvolutionEntities::cow);
     public static final RegistryObject<EntityType<EntityBull>> BULL = register("bull", EvolutionEntities::bull);
-    public static final RegistryObject<EntityType<EntityShadowHound>> SHADOW_HOUND = register("shadow_hound", EvolutionEntities::shadowHound);
+    public static final RegistryObject<EntityType<EntityShadowHound>> SHADOWHOUND = register("shadowhound", EvolutionEntities::shadowHound);
     public static final RegistryObject<EntityType<EntitySit>> SIT = register("sit", EvolutionEntities::sit);
     public static final RegistryObject<EntityType<EntityHook>> HOOK = register("hook", EvolutionEntities::hook);
     public static final RegistryObject<EntityType<EntityTorch>> TORCH = register("torch", EvolutionEntities::torch);
@@ -42,7 +42,7 @@ public class EvolutionEntities {
 
     public static final RegistryObject<Item> SPAWN_EGG_COW = ITEMS.register("spawn_egg_cow", () -> genEgg(COW));
     public static final RegistryObject<Item> SPAWN_EGG_BULL = ITEMS.register("spawn_egg_bull", () -> genEgg(BULL));
-    public static final RegistryObject<Item> SPAWN_EGG_SHADOW_HOUND = ITEMS.register("spawn_egg_shadow_hound", () -> genEgg(SHADOW_HOUND));
+    public static final RegistryObject<Item> SPAWN_EGG_SHADOWHOUND = ITEMS.register("spawn_egg_shadowhound", () -> genEgg(SHADOWHOUND));
 
     private static <E extends Entity> RegistryObject<EntityType<E>> register(String name, Supplier<EntityType.Builder<E>> builder) {
         return ENTITIES.register(name, () -> builder.get().build(name));

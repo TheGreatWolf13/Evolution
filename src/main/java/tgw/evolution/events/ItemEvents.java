@@ -282,7 +282,7 @@ public class ItemEvents {
             return;
         }
         Item item = event.getItemStack().getItem();
-        if (!(item instanceof ItemEv)) {
+        if (!(item instanceof IEvolutionItem)) {
             return;
         }
         event.getToolTip().clear();

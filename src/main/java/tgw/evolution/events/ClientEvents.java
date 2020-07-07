@@ -14,6 +14,7 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.Item;
@@ -44,6 +45,7 @@ import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.blocks.BlockMolding;
 import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.blocks.tileentities.TEMolding;
+import tgw.evolution.entities.EvolutionAttributes;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.IOffhandAttackable;
@@ -63,10 +65,6 @@ public class ClientEvents {
     private static final String TWO_HANDED = "evolution.actionbar.two_handed";
     private static final ITextComponent COMPONENT_TWO_HANDED = new TranslationTextComponent(TWO_HANDED).setStyle(EvolutionStyles.WHITE);
     private final Minecraft mc;
-    //Offhand variables
-    Entity rightPointedEntity;
-    //Mainhand variables
-    Entity leftPointedEntity;
     private boolean inverted;
     private boolean renderFood;
     //Jump variables
@@ -75,6 +73,8 @@ public class ClientEvents {
     //Prone variables
     private boolean proneToggle;
     private boolean previousPressed;
+    //Offhand variables
+    private Entity rightPointedEntity;
     private ItemStack offhandStack = ItemStack.EMPTY;
     private int rightTimeSinceLastHit;
     private float rightSwingProgress;
@@ -83,6 +83,8 @@ public class ClientEvents {
     private boolean rightIsSwingInProgress;
     private float rightEquipProgress;
     private float rightPrevEquipProgress;
+    //Mainhand variables
+    private Entity leftPointedEntity;
     private ItemStack mainhandStack = ItemStack.EMPTY;
     private int leftTimeSinceLastHit;
     private float leftSwingProgress;
@@ -177,7 +179,11 @@ public class ClientEvents {
     }
 
     public double getJumpSlowDown() {
-        return 0.03;
+        IAttributeInstance mass = this.mc.player.getAttribute(EvolutionAttributes.MASS);
+        int baseMass = (int) mass.getBaseValue();
+        int totalMass = (int) mass.getValue();
+        int equipMass = totalMass - baseMass;
+        return 0.03 + equipMass * 0.0002;
     }
 
     @SubscribeEvent
@@ -190,13 +196,15 @@ public class ClientEvents {
         //Jump calculation
         if (this.jump) {
             PlayerEntity player = this.mc.player;
-            if (player.getMotion().y > 0 && !player.isOnLadder() && !player.abilities.isFlying) {
-                player.setMotion(player.getMotion().x, player.getMotion().y - this.getJumpSlowDown(), player.getMotion().z);
+            Vec3d motion = player.getMotion();
+            if (motion.y > 0 && !player.isOnLadder() && !player.abilities.isFlying) {
+                player.setMotion(motion.x, motion.y - this.getJumpSlowDown(), motion.z);
             }
             else {
                 this.jump = false;
                 if (!player.isOnLadder() && !player.abilities.isFlying) {
-                    player.setMotion(player.getMotion().x, player.getMotion().y - (this.getJumpSlowDown() + 0.025), player.getMotion().z);
+                    player.setMotion(motion.x, motion.y - 0.055, motion.z);
+                    Evolution.LOGGER.debug("jump slowdown = {}", this.getJumpSlowDown());
                 }
             }
         }
@@ -568,7 +576,7 @@ public class ClientEvents {
 
     @SubscribeEvent
     public void onMouseEvent(InputEvent.MouseInputEvent event) {
-        if (this.mc.currentScreen != null) {
+        if (this.mc.currentScreen != null || this.mc.player == null) {
             return;
         }
         KeyBinding attack = this.mc.gameSettings.keyBindAttack;

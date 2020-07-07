@@ -389,7 +389,7 @@ public class EvolutionItems {
     public static final RegistryObject<Item> planks_spruce = ITEMS.register("planks_spruce", () -> woodBlock(PLANKS_SPRUCE));
     public static final RegistryObject<Item> planks_willow = ITEMS.register("planks_willow", () -> woodBlock(PLANKS_WILLOW));
     //Shadow Hound Block
-    public static final RegistryObject<Item> shadow_hound = ITEMS.register("shadow_hound", () -> new ItemBlock(SHADOW_HOUND.get(), propMisc().setTEISR(() -> RenderStackTileShadowHound::new)));
+    public static final RegistryObject<Item> shadowhound = ITEMS.register("shadowhound", () -> new ItemBlock(SHADOWHOUND.get(), propMisc().setTEISR(() -> RenderStackTileShadowHound::new)));
     //Javelin Heads
     public static final RegistryObject<Item> javelin_head_andesite = ITEMS.register("javelin_head_andesite", EvolutionItems::stoneHeads);
     public static final RegistryObject<Item> javelin_head_basalt = ITEMS.register("javelin_head_basalt", EvolutionItems::stoneHeads);

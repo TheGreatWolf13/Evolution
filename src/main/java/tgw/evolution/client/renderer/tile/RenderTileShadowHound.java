@@ -12,7 +12,7 @@ import tgw.evolution.util.MathHelper;
 public class RenderTileShadowHound extends TileEntityRenderer<TEShadowHound> {
 
     private final ModelTileShadowHound model = new ModelTileShadowHound();
-    private final ResourceLocation texture = Evolution.location("textures/block/shadow_hound.png");
+    private final ResourceLocation texture = Evolution.location("textures/block/shadowhound.png");
 
     @Override
     public void render(TEShadowHound tile, double x, double y, double z, float partialTicks, int destroyStage) {

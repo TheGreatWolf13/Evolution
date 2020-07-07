@@ -12,7 +12,7 @@ public class RenderStackTileShadowHound extends ItemStackTileEntityRenderer {
 
     @Override
     public void renderByItem(ItemStack stack) {
-        if (stack.getItem() == EvolutionItems.shadow_hound.get()) {
+        if (stack.getItem() == EvolutionItems.shadowhound.get()) {
             TileEntityRendererDispatcher.instance.renderAsItem(this.shadowHound);
         }
     }

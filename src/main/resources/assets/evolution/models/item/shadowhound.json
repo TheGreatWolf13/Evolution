@@ -1,7 +1,7 @@
 {
     "parent": "builtin/entity",
     "textures": {
-        "particle": "block/obsidian"
+        "particle": "evolution:block/shadowhound"
     },
     "display": {
         "gui": {

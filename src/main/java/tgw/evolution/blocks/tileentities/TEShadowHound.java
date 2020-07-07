@@ -11,7 +11,7 @@ public class TEShadowHound extends TileEntity implements ITickableTileEntity {
     public float health = 6;
 
     public TEShadowHound() {
-        super(EvolutionTileEntities.TE_SHADOW_HOUND.get());
+        super(EvolutionTileEntities.TE_SHADOWHOUND.get());
     }
 
     @Override

@@ -21,7 +21,7 @@ public class EntityShadowHound extends MonsterEntity {
     }
 
     public EntityShadowHound(World worldIn) {
-        super(EvolutionEntities.SHADOW_HOUND.get(), worldIn);
+        super(EvolutionEntities.SHADOWHOUND.get(), worldIn);
     }
 
     @Override

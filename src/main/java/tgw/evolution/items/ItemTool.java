@@ -71,7 +71,7 @@ public abstract class ItemTool extends ItemTiered implements IDurability {
             multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(), new AttributeModifier(ATTACK_DAMAGE_MODIFIER, "Tool modifier", this.getAttackDamage(), AttributeModifier.Operation.ADDITION));
             multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(), new AttributeModifier(ATTACK_SPEED_MODIFIER, "Tool modifier", this.getAttackSpeed(), AttributeModifier.Operation.ADDITION));
             multimap.put(PlayerEntity.REACH_DISTANCE.getName(), new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER, "Reach Modifier", this.getReach(), AttributeModifier.Operation.ADDITION));
-            multimap.put(EvolutionAttributes.MASS.getName(), new AttributeModifier(EvolutionAttributes.MASS_MODIFIER, "Mass Modifier", 5, AttributeModifier.Operation.ADDITION));
+            multimap.put(EvolutionAttributes.MASS.getName(), new AttributeModifier(EvolutionAttributes.MASS_MODIFIER, "Mass Modifier", 55, AttributeModifier.Operation.ADDITION));
         }
         else if (equipmentSlot == EquipmentSlotType.OFFHAND) {
             multimap.put(EvolutionAttributes.MASS.getName(), new AttributeModifier(EvolutionAttributes.MASS_MODIFIER_OFFHAND, "Mass Modifier", 3, AttributeModifier.Operation.ADDITION));

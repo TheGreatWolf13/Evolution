@@ -11,7 +11,7 @@ import tgw.evolution.util.MathHelper;
 
 public class RenderShadowHound extends MobRenderer<EntityShadowHound, ModelShadowHound> {
 
-    public static final ResourceLocation DEFAULT = Evolution.location("textures/entity/shadow_hound.png");
+    public static final ResourceLocation DEFAULT = Evolution.location("textures/entity/shadowhound.png");
     private static final ModelShadowHound MODEL = new ModelShadowHound();
 
     public RenderShadowHound(EntityRendererManager manager) {

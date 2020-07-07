@@ -352,7 +352,7 @@ public class EvolutionBlocks {
     //Feces Block
     public static final RegistryObject<Block> FECES = BLOCKS.register("feces", BlockFeces::new);
     //Shadow Hound Block
-    public static final RegistryObject<Block> SHADOW_HOUND = BLOCKS.register("shadow_hound", BlockShadowHound::new);
+    public static final RegistryObject<Block> SHADOWHOUND = BLOCKS.register("shadowhound", BlockShadowHound::new);
     //Molding Block
     public static final RegistryObject<Block> MOLDING = BLOCKS.register("molding_block", BlockMolding::new);
     public static final RegistryObject<Block> MOLD_CLAY_AXE = BLOCKS.register("mold_clay_axe", () -> new BlockMoldClay(1));
