@@ -218,7 +218,7 @@ public class ClientEvents {
                 ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, Integer.MAX_VALUE, "field_71429_W");
                 this.mc.player.sendStatusMessage(COMPONENT_TWO_HANDED, true);
             }
-            if (this.getLeftCooledAttackStrength(1f) != 1 && this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
+            if (this.getLeftCooledAttackStrength(1f) != 1 && this.mc.objectMouseOver != null && this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
                 ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, Integer.MAX_VALUE, "field_71429_W");
             }
             //Handle Disoriented Effect
