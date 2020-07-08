@@ -12,16 +12,16 @@ import tgw.evolution.util.Time;
 
 public class EntityShadowHound extends MonsterEntity {
 
-    public boolean isInAttackMode = false;
-    public int attackCooldown = 0;
-    public short hideCooldown = 0;
+    public boolean isInAttackMode;
+    public int attackCooldown;
+    public short hideCooldown;
 
     public EntityShadowHound(EntityType<EntityShadowHound> type, World worldIn) {
         super(type, worldIn);
     }
 
     public EntityShadowHound(World worldIn) {
-        super(EvolutionEntities.SHADOW_HOUND.get(), worldIn);
+        super(EvolutionEntities.SHADOWHOUND.get(), worldIn);
     }
 
     @Override

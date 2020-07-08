@@ -11,7 +11,7 @@ public class TEShadowHound extends TileEntity implements ITickableTileEntity {
     public float health = 6;
 
     public TEShadowHound() {
-        super(EvolutionTileEntities.TE_SHADOW_HOUND.get());
+        super(EvolutionTileEntities.TE_SHADOWHOUND.get());
     }
 
     @Override
@@ -41,7 +41,6 @@ public class TEShadowHound extends TileEntity implements ITickableTileEntity {
         EntityShadowHound shadowHound = new EntityShadowHound(this.world);
         shadowHound.setHealth(this.health);
         shadowHound.setPosition(this.getPos().getX() + 0.5, this.getPos().getY(), this.getPos().getZ() + 0.5);
-        shadowHound.hideCooldown = 1000;
         this.world.addEntity(shadowHound);
     }
 }

@@ -1,77 +1,12 @@
 {
-  "multipart": [
-    {
-      "when": {
-        "facing": "north"
-      },
-      "apply": {
-        "model": "evolution:block/climbing_hook"
-      }
-    },
-    {
-      "when": {
-        "facing": "east"
-      },
-      "apply": {
-        "model": "evolution:block/climbing_hook",
-		"y": 90
-      }
-    },
-    {
-      "when": {
-        "facing": "south"
-      },
-      "apply": {
-        "model": "evolution:block/climbing_hook",
-        "y": 180
-      }
-    },
-    {
-      "when": {
-        "facing": "west"
-      },
-      "apply": {
-        "model": "evolution:block/climbing_hook",
-        "y": 270
-      }
-    },
-    {
-      "when": {
-        "facing": "north",
-		"attached": "true"
-      },
-      "apply": {
-        "model": "block/redstone_dust_side0"
-      }
-    },
-    {
-      "when": {
-        "facing": "south",
-		"attached": "true"
-      },
-      "apply": {
-        "model": "block/redstone_dust_side_alt0"
-      }
-    },
-    {
-      "when": {
-        "facing": "east",
-		"attached": "true"
-      },
-      "apply": {
-        "model": "block/redstone_dust_side_alt1",
-        "y": 270
-      }
-    },
-    {
-      "when": {
-        "facing": "west",
-		"attached": "true"
-      },
-      "apply": {
-        "model": "block/redstone_dust_side1",
-        "y": 270
-      }
-    }
-  ]
+	"variants": {
+    	"facing=north,attached=false": {"model": "evolution:block/climbing_hook", "y": 180},
+    	"facing=north,attached=true": {"model": "evolution:block/climbing_hook_rope", "y": 180},
+    	"facing=east,attached=false": {"model": "evolution:block/climbing_hook", "y": 270},
+    	"facing=east,attached=true": {"model": "evolution:block/climbing_hook_rope", "y": 270},
+    	"facing=south,attached=false": {"model": "evolution:block/climbing_hook"},
+    	"facing=south,attached=true": {"model": "evolution:block/climbing_hook_rope"},
+    	"facing=west,attached=false": {"model": "evolution:block/climbing_hook", "y": 90},
+    	"facing=west,attached=true": {"model": "evolution:block/climbing_hook_rope", "y": 90}
+	}
 }

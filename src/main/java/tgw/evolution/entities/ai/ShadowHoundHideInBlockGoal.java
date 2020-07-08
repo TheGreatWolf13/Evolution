@@ -22,7 +22,7 @@ public class ShadowHoundHideInBlockGoal extends Goal {
     @Override
     public void tick() {
         if (this.shadowHound.world.getBlockState(this.shadowHound.getPosition()).getBlock() == Blocks.AIR) {
-            this.shadowHound.world.setBlockState(this.shadowHound.getPosition(), EvolutionBlocks.SHADOW_HOUND.get().getDefaultState(), 2);
+            this.shadowHound.world.setBlockState(this.shadowHound.getPosition(), EvolutionBlocks.SHADOWHOUND.get().getDefaultState(), 2);
             ((TEShadowHound) this.shadowHound.world.getTileEntity(this.shadowHound.getPosition())).health = this.shadowHound.getHealth();
             this.shadowHound.remove();
         }

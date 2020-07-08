@@ -47,7 +47,6 @@ public class ScreenKnapping extends Screen {
 
     @Override
     protected void init() {
-        Evolution.LOGGER.debug("init");
         this.buttons.clear();
         int nButtons = this.stacks.length;
         int xSize = 20 * nButtons + 5 * (nButtons - 1);

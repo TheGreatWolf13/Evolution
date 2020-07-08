@@ -49,8 +49,8 @@ public class ItemClayMolded extends ItemBlock {
                 context.getWorld().playSound(context.getPlayer(), context.getPos(), SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1F, 0.75F);
                 return ActionResultType.SUCCESS;
             }
-            int x = MathHelper.getHitIndex(2, 0, 16, (context.getHitVec().x - context.getPos().getX()) * 16);
-            int z = MathHelper.getHitIndex(2, 0, 16, (context.getHitVec().z - context.getPos().getZ()) * 16);
+            int x = MathHelper.getIndex(2, 0, 16, (context.getHitVec().x - context.getPos().getX()) * 16);
+            int z = MathHelper.getIndex(2, 0, 16, (context.getHitVec().z - context.getPos().getZ()) * 16);
             if (x == 0) {
                 if (z == 0) {
                     tile.setNwStack(context.getItem());

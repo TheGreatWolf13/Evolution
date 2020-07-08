@@ -12,7 +12,9 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.settings.AttackIndicatorStatus;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.Item;
@@ -21,6 +23,7 @@ import net.minecraft.item.UseAction;
 import net.minecraft.potion.EffectUtils;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.Hand;
+import net.minecraft.util.MovementInput;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.shapes.VoxelShape;
@@ -41,15 +44,18 @@ import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.blocks.BlockMolding;
 import tgw.evolution.blocks.tileentities.TEKnapping;
+import tgw.evolution.blocks.tileentities.TEMolding;
+import tgw.evolution.entities.EvolutionAttributes;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.IOffhandAttackable;
 import tgw.evolution.items.ITwoHanded;
-import tgw.evolution.network.PacketCSOffhandAttack;
 import tgw.evolution.network.PacketCSOpenExtendedInventory;
+import tgw.evolution.network.PacketCSPlayerAttack;
 import tgw.evolution.network.PacketCSSetProne;
 import tgw.evolution.potion.EffectDizziness;
 import tgw.evolution.util.EvolutionStyles;
+import tgw.evolution.util.MathHelper;
 
 import java.util.UUID;
 
@@ -59,20 +65,34 @@ public class ClientEvents {
     private static final String TWO_HANDED = "evolution.actionbar.two_handed";
     private static final ITextComponent COMPONENT_TWO_HANDED = new TranslationTextComponent(TWO_HANDED).setStyle(EvolutionStyles.WHITE);
     private final Minecraft mc;
-    private boolean inverted = false;
-    private boolean jump = false;
-    private boolean isJumpPressed = false;
-    private boolean renderFood = false;
-    private boolean previousPressed = false;
-    private boolean proneToggle = false;
-    private int timeSinceLastHit = 0;
+    private boolean inverted;
+    private boolean renderFood;
+    //Jump variables
+    private boolean jump;
+    private boolean isJumpPressed;
+    //Prone variables
+    private boolean proneToggle;
+    private boolean previousPressed;
+    //Offhand variables
+    private Entity rightPointedEntity;
     private ItemStack offhandStack = ItemStack.EMPTY;
-    private float swingProgress;
-    private float prevSwingProgress;
-    private int swingProgressInt;
-    private boolean isSwingInProgress;
-    private float equipProgress;
-    private float prevEquipProgress;
+    private int rightTimeSinceLastHit;
+    private float rightSwingProgress;
+    private float rightPrevSwingProgress;
+    private int rightSwingProgressInt;
+    private boolean rightIsSwingInProgress;
+    private float rightEquipProgress;
+    private float rightPrevEquipProgress;
+    //Mainhand variables
+    private Entity leftPointedEntity;
+    private ItemStack mainhandStack = ItemStack.EMPTY;
+    private int leftTimeSinceLastHit;
+    private float leftSwingProgress;
+    private float leftPrevSwingProgress;
+    private int leftSwingProgressInt;
+    private boolean leftIsSwingInProgress;
+    private float leftEquipProgress;
+    private float leftPrevEquipProgress;
 
     public ClientEvents(Minecraft mc) {
         this.mc = mc;
@@ -92,7 +112,7 @@ public class ClientEvents {
         b.bind(temp);
     }
 
-    private static float getCooldownPeriod(IOffhandAttackable item) {
+    private static float getRightCooldownPeriod(IOffhandAttackable item) {
         float attackSpeed = item.getAttackSpeed() + 4;
         return 1 / attackSpeed * 20;
     }
@@ -132,7 +152,8 @@ public class ClientEvents {
                 return;
             }
             if (this.mc.world.getBlockState(hitPos).getBlock() instanceof BlockMolding) {
-                //TODO clay molding outlines
+                TEMolding tile = (TEMolding) this.mc.world.getTileEntity(hitPos);
+                this.renderOutlines(tile.molding.getShape(), event.getInfo(), hitPos);
             }
         }
     }
@@ -157,6 +178,14 @@ public class ClientEvents {
         GlStateManager.disableBlend();
     }
 
+    public double getJumpSlowDown() {
+        IAttributeInstance mass = this.mc.player.getAttribute(EvolutionAttributes.MASS);
+        int baseMass = (int) mass.getBaseValue();
+        int totalMass = (int) mass.getValue();
+        int equipMass = totalMass - baseMass;
+        return 0.03 + equipMass * 0.0002;
+    }
+
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
         //Turn auto-jump off
@@ -167,27 +196,37 @@ public class ClientEvents {
         //Jump calculation
         if (this.jump) {
             PlayerEntity player = this.mc.player;
-            if (player.getMotion().y > 0 && !player.isOnLadder() && !player.abilities.isFlying) {
-                player.setMotion(player.getMotion().x, player.getMotion().y - 0.03, player.getMotion().z);
+            Vec3d motion = player.getMotion();
+            if (motion.y > 0 && !player.isOnLadder() && !player.abilities.isFlying) {
+                player.setMotion(motion.x, motion.y - this.getJumpSlowDown(), motion.z);
             }
             else {
                 this.jump = false;
                 if (!player.isOnLadder() && !player.abilities.isFlying) {
-                    player.setMotion(player.getMotion().x, player.getMotion().y - 0.055, player.getMotion().z);
+                    player.setMotion(motion.x, motion.y - 0.055, motion.z);
+                    Evolution.LOGGER.debug("jump slowdown = {}", this.getJumpSlowDown());
                 }
             }
         }
         //Runs at the start of each tick
         if (event.phase == TickEvent.Phase.START) {
+            //RayTrace entities
+            EntityRayTraceResult leftRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player, 1f, this.mc.player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue());
+            this.leftPointedEntity = leftRayTrace == null ? null : leftRayTrace.getEntity();
+            if (this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable) {
+                EntityRayTraceResult rightRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player, 1f, ((IOffhandAttackable) this.mc.player.getHeldItemOffhand().getItem()).getReach() + 5);
+                this.rightPointedEntity = rightRayTrace == null ? null : rightRayTrace.getEntity();
+            }
+            else {
+                this.rightPointedEntity = null;
+            }
             //Handle two-handed items
             if (this.mc.player.getHeldItemMainhand().getItem() instanceof ITwoHanded && !this.mc.player.getHeldItemOffhand().isEmpty()) {
+                this.leftTimeSinceLastHit = 0;
                 ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, Integer.MAX_VALUE, "field_71429_W");
-                if (this.mc.gameSettings.keyBindAttack.isPressed()) {
-                    this.mc.player.sendStatusMessage(COMPONENT_TWO_HANDED, true);
-                }
+                this.mc.player.sendStatusMessage(COMPONENT_TWO_HANDED, true);
             }
-            //Handle main hand cooldown
-            else if (this.mc.player.getCooledAttackStrength(0.5f) < 1) {
+            if (this.getLeftCooledAttackStrength(1f) != 1 && this.mc.objectMouseOver != null && this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
                 ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, Integer.MAX_VALUE, "field_71429_W");
             }
             //Handle Disoriented Effect
@@ -218,24 +257,37 @@ public class ClientEvents {
             }
             this.previousPressed = pressed;
             this.updateClientProneState(this.mc.player);
-            //Handle Offhand swing
-            this.prevSwingProgress = this.swingProgress;
+            //Handle swing
+            this.rightPrevSwingProgress = this.rightSwingProgress;
+            this.rightPrevEquipProgress = this.rightEquipProgress;
+            this.leftPrevSwingProgress = this.leftSwingProgress;
+            this.leftPrevEquipProgress = this.leftEquipProgress;
             this.updateArmSwingProgress();
-            this.prevEquipProgress = this.equipProgress;
             if (this.mc.player.isRowingBoat()) {
-                this.equipProgress = MathHelper.clamp(this.equipProgress - 0.4F, 0.0F, 1.0F);
+                this.leftEquipProgress = MathHelper.clamp(this.leftEquipProgress - 0.4F, 0.0F, 1.0F);
+                this.rightEquipProgress = MathHelper.clamp(this.rightEquipProgress - 0.4F, 0.0F, 1.0F);
             }
             else {
-                float cooledAttackStrength = this.getCooledAttackStrength(this.mc.player.getHeldItemOffhand().getItem(), 1);
-                this.equipProgress += MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength - this.equipProgress, -0.4F, 0.4F);
+                float cooledAttackStrength = this.getRightCooledAttackStrength(this.mc.player.getHeldItemOffhand().getItem(), 1);
+                this.rightEquipProgress += MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength - this.rightEquipProgress, -0.4F, 0.4F);
+                cooledAttackStrength = this.getLeftCooledAttackStrength(1);
+                this.leftEquipProgress += MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength - this.leftEquipProgress, -0.4F, 0.4F);
             }
-            ItemStack stack = this.mc.player.getHeldItemOffhand();
-            if (ItemStack.areItemStacksEqual(stack, this.offhandStack)) {
-                this.timeSinceLastHit++;
+            ItemStack stackOffhand = this.mc.player.getHeldItemOffhand();
+            if (MathHelper.areItemStacksSufficientlyEqual(stackOffhand, this.offhandStack)) {
+                this.rightTimeSinceLastHit++;
             }
             else {
-                this.timeSinceLastHit = 0;
-                this.offhandStack = stack;
+                this.rightTimeSinceLastHit = 0;
+                this.offhandStack = stackOffhand;
+            }
+            ItemStack stackMainhand = this.mc.player.getHeldItemMainhand();
+            if (MathHelper.areItemStacksSufficientlyEqual(stackMainhand, this.mainhandStack)) {
+                this.leftTimeSinceLastHit++;
+            }
+            else {
+                this.leftTimeSinceLastHit = 0;
+                this.mainhandStack = stackMainhand;
             }
         }
     }
@@ -274,17 +326,28 @@ public class ClientEvents {
 
     private void updateArmSwingProgress() {
         int i = this.getArmSwingAnimationEnd();
-        if (this.isSwingInProgress) {
-            ++this.swingProgressInt;
-            if (this.swingProgressInt >= i) {
-                this.swingProgressInt = 0;
-                this.isSwingInProgress = false;
+        if (this.rightIsSwingInProgress) {
+            ++this.rightSwingProgressInt;
+            if (this.rightSwingProgressInt >= i) {
+                this.rightSwingProgressInt = 0;
+                this.rightIsSwingInProgress = false;
             }
         }
         else {
-            this.swingProgressInt = 0;
+            this.rightSwingProgressInt = 0;
         }
-        this.swingProgress = (float) this.swingProgressInt / (float) i;
+        this.rightSwingProgress = (float) this.rightSwingProgressInt / (float) i;
+        if (this.leftIsSwingInProgress) {
+            ++this.leftSwingProgressInt;
+            if (this.leftSwingProgressInt >= i) {
+                this.leftSwingProgressInt = 0;
+                this.leftIsSwingInProgress = false;
+            }
+        }
+        else {
+            this.leftSwingProgressInt = 0;
+        }
+        this.leftSwingProgress = (float) this.leftSwingProgressInt / (float) i;
     }
 
     public void swingArm(Hand hand) {
@@ -292,9 +355,17 @@ public class ClientEvents {
         if (!stack.isEmpty() && stack.onEntitySwing(this.mc.player)) {
             return;
         }
-        if (!this.isSwingInProgress || this.swingProgressInt >= this.getArmSwingAnimationEnd() / 2 || this.swingProgressInt < 0) {
-            this.swingProgressInt = -1;
-            this.isSwingInProgress = true;
+        if (hand == Hand.OFF_HAND) {
+            if (!this.rightIsSwingInProgress || this.rightSwingProgressInt >= this.getArmSwingAnimationEnd() / 2 || this.rightSwingProgressInt < 0) {
+                this.rightSwingProgressInt = -1;
+                this.rightIsSwingInProgress = true;
+            }
+        }
+        else {
+            if (!this.leftIsSwingInProgress || this.leftSwingProgressInt >= this.getArmSwingAnimationEnd() / 2 || this.leftSwingProgressInt < 0) {
+                this.leftSwingProgressInt = -1;
+                this.leftIsSwingInProgress = true;
+            }
         }
     }
 
@@ -331,11 +402,11 @@ public class ClientEvents {
                     GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
                     this.blit((scaledWidth - 15) / 2, (scaledHeight - 15) / 2, 0, 0, 15, 15);
                     if (this.mc.gameSettings.attackIndicator == AttackIndicatorStatus.CROSSHAIR) {
-                        float leftCooledAttackStrength = this.mc.player.getCooledAttackStrength(0);
+                        float leftCooledAttackStrength = this.getLeftCooledAttackStrength(0);
                         boolean shouldShowLeftAttackIndicator = false;
-                        if (this.mc.pointedEntity != null && this.mc.pointedEntity instanceof LivingEntity && leftCooledAttackStrength >= 1) {
+                        if (this.leftPointedEntity instanceof LivingEntity && leftCooledAttackStrength >= 1) {
                             shouldShowLeftAttackIndicator = this.mc.player.getCooldownPeriod() > 5;
-                            shouldShowLeftAttackIndicator = shouldShowLeftAttackIndicator & this.mc.pointedEntity.isAlive();
+                            shouldShowLeftAttackIndicator = shouldShowLeftAttackIndicator & this.leftPointedEntity.isAlive();
                         }
                         int x = scaledWidth / 2 - 8;
                         x = offhandValid ? x + 10 : x;
@@ -350,9 +421,9 @@ public class ClientEvents {
                         }
                         if (offhandValid) {
                             boolean shouldShowRightAttackIndicator = false;
-                            float rightCooledAttackStrength = this.getCooledAttackStrength(this.mc.player.getHeldItemOffhand().getItem(), 0);
-                            if (this.mc.pointedEntity != null && this.mc.pointedEntity instanceof LivingEntity && rightCooledAttackStrength >= 1) {
-                                shouldShowRightAttackIndicator = this.mc.pointedEntity.isAlive();
+                            float rightCooledAttackStrength = this.getRightCooledAttackStrength(this.mc.player.getHeldItemOffhand().getItem(), 0);
+                            if (this.rightPointedEntity instanceof LivingEntity && rightCooledAttackStrength >= 1) {
+                                shouldShowRightAttackIndicator = this.rightPointedEntity.isAlive();
                             }
                             x -= 20;
                             if (shouldShowRightAttackIndicator) {
@@ -396,30 +467,50 @@ public class ClientEvents {
             event.setCanceled(true);
             float partialTicks = event.getPartialTicks();
             float pitch = event.getInterpolatedPitch();
-            float swingProgress = this.getSwingProgress(partialTicks);
+            float rightSwingProgress = this.getRightSwingProgress(partialTicks);
             FirstPersonRenderer renderer = this.mc.getFirstPersonRenderer();
-            float equipProgress = 1.0F - MathHelper.lerp(partialTicks, this.prevEquipProgress, this.equipProgress);
-            renderer.renderItemInFirstPerson(this.mc.player, partialTicks, pitch, Hand.OFF_HAND, swingProgress, this.mc.player.getHeldItemOffhand(), equipProgress);
+            float rightEquipProgress = 1.0F - MathHelper.lerp(partialTicks, this.rightPrevEquipProgress, this.rightEquipProgress);
+            renderer.renderItemInFirstPerson(this.mc.player, partialTicks, pitch, Hand.OFF_HAND, rightSwingProgress, this.mc.player.getHeldItemOffhand(), rightEquipProgress);
+            return;
+        }
+        float cooldown = this.mc.player.getCooldownPeriod();
+        if (event.getHand() == Hand.MAIN_HAND && this.leftTimeSinceLastHit <= cooldown) {
+            event.setCanceled(true);
+            float partialTicks = event.getPartialTicks();
+            float pitch = event.getInterpolatedPitch();
+            float leftSwingProgress = this.getLeftSwingProgress(partialTicks);
+            FirstPersonRenderer renderer = this.mc.getFirstPersonRenderer();
+            float leftEquipProgress = 1.0F - MathHelper.lerp(partialTicks, this.leftPrevEquipProgress, this.leftEquipProgress);
+            renderer.renderItemInFirstPerson(this.mc.player, partialTicks, pitch, Hand.MAIN_HAND, leftSwingProgress, this.mc.player.getHeldItemMainhand(), leftEquipProgress);
         }
     }
 
-    private float getSwingProgress(float partialTickTime) {
-        float f = this.swingProgress - this.prevSwingProgress;
+    private float getLeftSwingProgress(float partialTickTime) {
+        float f = this.leftSwingProgress - this.leftPrevSwingProgress;
         if (f < 0.0F) {
             ++f;
         }
-        return this.prevSwingProgress + f * partialTickTime;
+        return this.leftPrevSwingProgress + f * partialTickTime;
+    }
+
+    private float getRightSwingProgress(float partialTickTime) {
+        float f = this.rightSwingProgress - this.rightPrevSwingProgress;
+        if (f < 0.0F) {
+            ++f;
+        }
+        return this.rightPrevSwingProgress + f * partialTickTime;
     }
 
     @SubscribeEvent
     public void onPlayerInput(InputUpdateEvent event) {
-        this.isJumpPressed = event.getMovementInput().jump;
+        MovementInput movementInput = event.getMovementInput();
+        this.isJumpPressed = movementInput.jump;
         if (!this.jump && this.mc.player.onGround && this.isJumpPressed && !this.proneToggle) {
             this.jump = true;
             return;
         }
         if (this.proneToggle && !this.mc.player.isOnLadder()) {
-            event.getMovementInput().jump = false;
+            movementInput.jump = false;
         }
     }
 
@@ -431,11 +522,15 @@ public class ClientEvents {
         }
     }
 
-    private float getCooledAttackStrength(Item item, float adjustTicks) {
+    private float getLeftCooledAttackStrength(float adjustTicks) {
+        return MathHelper.clamp(((float) this.leftTimeSinceLastHit + adjustTicks) / this.mc.player.getCooldownPeriod(), 0.0F, 1.0F);
+    }
+
+    private float getRightCooledAttackStrength(Item item, float adjustTicks) {
         if (!(item instanceof IOffhandAttackable)) {
             return 0;
         }
-        return MathHelper.clamp(((float) this.timeSinceLastHit + adjustTicks) / getCooldownPeriod((IOffhandAttackable) item), 0.0F, 1.0F);
+        return MathHelper.clamp(((float) this.rightTimeSinceLastHit + adjustTicks) / getRightCooldownPeriod((IOffhandAttackable) item), 0.0F, 1.0F);
     }
 
     @SubscribeEvent
@@ -465,26 +560,56 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
-    public void onMouseEvent(InputEvent.MouseInputEvent event) {
-        KeyBinding useItem = this.mc.gameSettings.keyBindUseItem;
-        if (useItem.isPressed()) {
-            ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, 0, "field_71467_ac");
+    public void onKeyboardEvent(InputEvent.KeyInputEvent event) {
+        if (this.mc.currentScreen != null) {
+            return;
+        }
+        KeyBinding attack = this.mc.gameSettings.keyBindAttack;
+        KeyBinding use = this.mc.gameSettings.keyBindUseItem;
+        if (attack.getKey().getType() == InputMappings.Type.KEYSYM && attack.getKey().getKeyCode() == event.getKey() && event.getAction() == 1) {
+            this.onLeftMouseClick();
+        }
+        if (use.getKey().getType() == InputMappings.Type.KEYSYM && use.getKey().getKeyCode() == event.getKey() && event.getAction() == 1) {
             this.onRightMouseClick();
+        }
+    }
+
+    @SubscribeEvent
+    public void onMouseEvent(InputEvent.MouseInputEvent event) {
+        if (this.mc.currentScreen != null || this.mc.player == null) {
+            return;
+        }
+        KeyBinding attack = this.mc.gameSettings.keyBindAttack;
+        KeyBinding use = this.mc.gameSettings.keyBindUseItem;
+        if (attack.getKey().getType() == InputMappings.Type.MOUSE && attack.getKey().getKeyCode() == event.getButton() && event.getAction() == 1) {
+            this.onLeftMouseClick();
+        }
+        if (use.getKey().getType() == InputMappings.Type.MOUSE && use.getKey().getKeyCode() == event.getButton() && event.getAction() == 1) {
+            this.onRightMouseClick();
+        }
+    }
+
+    //Handle mainhand attack
+    private void onLeftMouseClick() {
+        float cooldown = this.mc.player.getCooldownPeriod();
+        if (this.leftTimeSinceLastHit >= cooldown && this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
+            this.leftTimeSinceLastHit = 0;
+            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.leftPointedEntity, Hand.MAIN_HAND));
+            this.swingArm(Hand.MAIN_HAND);
         }
     }
 
     //Handle offhand attack
     private void onRightMouseClick() {
-        Item offhandStack = this.mc.player.getHeldItemOffhand().getItem();
-        if (!(offhandStack instanceof IOffhandAttackable)) {
+        Item offhandItem = this.mc.player.getHeldItemOffhand().getItem();
+        if (!(offhandItem instanceof IOffhandAttackable)) {
             return;
         }
         ItemStack mainHandStack = this.mc.player.getHeldItemMainhand();
-        float cooldown = getCooldownPeriod((IOffhandAttackable) offhandStack);
-        if (offhandStack instanceof IOffhandAttackable && this.timeSinceLastHit >= cooldown && mainHandStack.getUseAction() == UseAction.NONE) {
-            this.timeSinceLastHit = 0;
-            Evolution.LOGGER.debug("attack");
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSOffhandAttack());
+        float cooldown = getRightCooldownPeriod((IOffhandAttackable) offhandItem);
+        if (offhandItem instanceof IOffhandAttackable && this.rightTimeSinceLastHit >= cooldown && mainHandStack.getUseAction() == UseAction.NONE && this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
+            this.rightTimeSinceLastHit = 0;
+            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.rightPointedEntity, Hand.OFF_HAND));
             this.swingArm(Hand.OFF_HAND);
         }
     }

@@ -22,16 +22,16 @@ import java.util.function.Predicate;
 public class AvoidShadowHoundEntityGoal<T extends LivingEntity> extends Goal {
 
     protected final EntityShadowHound entity;
-    private final double farSpeed;
-    private final double nearSpeed;
-    protected T avoidTarget;
     protected final float avoidDistance;
-    protected Path path;
     protected final PathNavigator navigation;
     protected final Class<T> classToAvoid;
     protected final Predicate<LivingEntity> avoidTargetSelector;
     protected final Predicate<LivingEntity> field_203784_k;
+    private final double farSpeed;
+    private final double nearSpeed;
     private final EntityPredicate builtTargetSelector;
+    protected T avoidTarget;
+    protected Path path;
 
     public AvoidShadowHoundEntityGoal(EntityShadowHound entityIn, Class<T> classToAvoidIn, float avoidDistanceIn, double farSpeedIn, double nearSpeedIn) {
         this(entityIn, classToAvoidIn, entity -> true, avoidDistanceIn, farSpeedIn, nearSpeedIn, EntityPredicates.CAN_AI_TARGET::test);
@@ -61,7 +61,7 @@ public class AvoidShadowHoundEntityGoal<T extends LivingEntity> extends Goal {
         }
         List<Entity> list = this.entity.world.getEntitiesInAABBexcluding(this.entity, new AxisAlignedBB(this.entity.posX - 12, this.entity.posY - 2, this.entity.posZ - 12, this.entity.posX + 12, this.entity.posY + 2, this.entity.posZ + 12), entityIn -> {
             EntityType<?> type = entityIn.getType();
-            return type == EvolutionEntities.SHADOW_HOUND.get() && !((CreatureEntity) entityIn).isDead();
+            return type == EvolutionEntities.SHADOWHOUND.get() && !((CreatureEntity) entityIn).isDead();
         });
         if (list.size() >= 2 && this.entity.attackCooldown == 0) {
             for (Entity entity : list) {
@@ -95,7 +95,7 @@ public class AvoidShadowHoundEntityGoal<T extends LivingEntity> extends Goal {
         }
         List<Entity> list = this.entity.world.getEntitiesInAABBexcluding(this.entity, new AxisAlignedBB(this.entity.posX - 12, this.entity.posY - 2, this.entity.posZ - 12, this.entity.posX + 12, this.entity.posY + 2, this.entity.posZ + 12), entityIn -> {
             EntityType<?> type = entityIn.getType();
-            return type == EvolutionEntities.SHADOW_HOUND.get() && !((CreatureEntity) entityIn).isDead();
+            return type == EvolutionEntities.SHADOWHOUND.get() && !((CreatureEntity) entityIn).isDead();
         });
         if (list.size() >= 2 && this.entity.attackCooldown == 0) {
             for (Entity entity : list) {

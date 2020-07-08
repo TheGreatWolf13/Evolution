@@ -12,6 +12,8 @@ import net.minecraft.world.gen.feature.NoFeatureConfig;
 import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraft.world.gen.feature.structure.StructureStart;
 import net.minecraft.world.gen.feature.template.TemplateManager;
+import tgw.evolution.world.feature.structures.config.ConfigStructCave;
+import tgw.evolution.world.feature.structures.config.IConfigStruct;
 
 import java.util.Random;
 import java.util.function.Function;
@@ -34,7 +36,7 @@ public class StructureCave extends Structure<NoFeatureConfig> {
         ((SharedSeedRandom) random).setLargeFeatureSeedWithSalt(chunkGenerator.getSeed(), validChunkX, validChunkZ, this.getSeedModifier());
         validChunkX = validChunkX * maxDistance;
         validChunkZ = validChunkZ * maxDistance;
-        int minDistance = 40;
+        int minDistance = 20;
         validChunkX = validChunkX + random.nextInt(maxDistance - minDistance);
         validChunkZ = validChunkZ + random.nextInt(maxDistance - minDistance);
         return new ChunkPos(validChunkX, validChunkZ);
@@ -75,9 +77,11 @@ public class StructureCave extends Structure<NoFeatureConfig> {
         public void init(ChunkGenerator<?> generator, TemplateManager templateManagerIn, int chunkX, int chunkZ, Biome biomeIn) {
             int x = (chunkX << 4) + 8;
             int z = (chunkZ << 4) + 8;
-            int surfaceY = generator.func_222531_c(x, z, Heightmap.Type.WORLD_SURFACE_WG);
-            BlockPos pos = new BlockPos(x, surfaceY + 1, z);
-            StructureCavePieces.start(generator, templateManagerIn, pos, this.components, this.rand);
+            ConfigStructCave config = new ConfigStructCave(generator.getSeed(), chunkX, chunkZ);
+            Random random = config.getRandom(); //get random object
+            int determinedY = config.hasEntrance() ? generator.func_222531_c(x, z, Heightmap.Type.WORLD_SURFACE_WG) : 12 + random.nextInt(8); //determinate the Y
+            BlockPos pos = new BlockPos(x, determinedY, z); //set the starting position
+            StructureCavePieces.start(generator, templateManagerIn, pos, this.components, this.rand, config);
             this.recalculateStructureSize();
         }
     }

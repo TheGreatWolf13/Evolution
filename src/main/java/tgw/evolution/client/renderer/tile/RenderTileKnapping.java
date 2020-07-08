@@ -13,9 +13,6 @@ public class RenderTileKnapping extends TileEntityRenderer<TEKnapping> {
 
     private final ModelTileKnapping knappingModel = new ModelTileKnapping();
 
-    public RenderTileKnapping() {
-    }
-
     @Override
     public void render(TEKnapping tileEntityIn, double x, double y, double z, float partialTicks, int destroyStage) {
         GlStateManager.pushMatrix();

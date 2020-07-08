@@ -1,3 +1,6 @@
 {
-    "parent": "builtin/entity"
+    "parent": "item/generated",
+    "textures": {
+        "layer0": "evolution:item/spawn_egg_cow"
+    }
 }

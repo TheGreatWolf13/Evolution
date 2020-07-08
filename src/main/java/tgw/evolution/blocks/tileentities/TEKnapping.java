@@ -59,14 +59,14 @@ public class TEKnapping extends TileEntity {
     public CompoundNBT write(CompoundNBT compound) {
         this.serializeToInt();
         compound.putInt("Parts", this.encoded);
-        compound.putByte("Type", this.type.getByte());
+        compound.putByte("Type", this.type.getId());
         return super.write(compound);
     }
 
     @Override
     public void read(CompoundNBT compound) {
         this.encoded = compound.getInt("Parts");
-        this.type = EnumKnapping.fromByte(compound.getByte("Type"));
+        this.type = EnumKnapping.byId(compound.getByte("Type"));
         this.deserializeToMatrix();
         super.read(compound);
     }

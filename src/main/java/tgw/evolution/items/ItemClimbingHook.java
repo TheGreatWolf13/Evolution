@@ -10,9 +10,10 @@ import net.minecraft.util.*;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
-import tgw.evolution.entities.EntityHook;
+import tgw.evolution.entities.projectiles.EntityHook;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.util.EvolutionStyles;
+import tgw.evolution.util.MathHelper;
 
 public class ItemClimbingHook extends ItemEv implements IThrowable {
 
@@ -20,15 +21,6 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
 
     public ItemClimbingHook() {
         super(EvolutionItems.propMisc().maxStackSize(1));
-    }
-
-    public static float getRelativeChargeStrength(int charge) {
-        float f = charge / 20.0F;
-        f = (f * f + f * 2.0F) / 3.0F;
-        if (f > 1.0F) {
-            f = 1.0F;
-        }
-        return f;
     }
 
     @Override
@@ -49,12 +41,11 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
             if (charge < 0) {
                 return;
             }
-            float strength = getRelativeChargeStrength(charge);
+            float strength = MathHelper.getRelativeChargeStrength(charge);
             if (strength < 0.1) {
                 return;
             }
             if (!worldIn.isRemote) {
-                stack.damageItem(1, player, entity -> entity.sendBreakAnimation(entityLiving.getActiveHand()));
                 EntityHook hook = new EntityHook(worldIn, player);
                 hook.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, 0.5f * strength, 1.0F);
                 hook.pickupStatus = AbstractArrowEntity.PickupStatus.CREATIVE_ONLY;
@@ -81,15 +72,5 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
         }
         playerIn.setActiveHand(handIn);
         return new ActionResult<>(ActionResultType.SUCCESS, stack);
-    }
-
-    @Override
-    public boolean putEmptyLine() {
-        return true;
-    }
-
-    @Override
-    public int line() {
-        return 2;
     }
 }

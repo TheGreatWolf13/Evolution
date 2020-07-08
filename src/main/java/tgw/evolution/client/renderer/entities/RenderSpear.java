@@ -6,7 +6,7 @@ import net.minecraft.client.renderer.entity.EntityRendererManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import tgw.evolution.client.models.entities.ModelSpear;
-import tgw.evolution.entities.EntitySpear;
+import tgw.evolution.entities.projectiles.EntitySpear;
 
 public class RenderSpear extends EntityRenderer<EntitySpear> {
 

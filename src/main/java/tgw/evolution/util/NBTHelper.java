@@ -78,12 +78,44 @@ public class NBTHelper {
         return defaultEntry;
     }
 
+    public static float asFloat(INBT input, String key, float defaultEntry) {
+        return asNumber(input, key, defaultEntry).floatValue();
+    }
+
+    public static int asInt(INBT input, String key, int defaultEntry) {
+        return asNumber(input, key, defaultEntry).intValue();
+    }
+
+    public static short asShort(INBT input, String key, int defaultEntry) {
+        return asNumber(input, key, defaultEntry).shortValue();
+    }
+
+    public static boolean asBoolean(INBT input, String key, boolean defaultEntry) {
+        return asByte(input, key, defaultEntry ? 1 : 0) == 1;
+    }
+
+    public static byte asByte(INBT input, String key, int defaultEntry) {
+        return asNumber(input, key, defaultEntry).byteValue();
+    }
+
+    public static Number asNumber(INBT input, String key, Number defaultEntry) {
+        Optional<INBT> optional = get(input, key);
+        if (optional.isPresent()) {
+            return getNumberValue(optional.get()).orElse(defaultEntry);
+        }
+        return defaultEntry;
+    }
+
     public static Optional<INBT> get(INBT input, String key) {
         return getGeneric(input, new StringNBT(key));
     }
 
     public static Optional<INBT> getGeneric(INBT input, INBT key) {
         return getMapValues(input).flatMap(map -> Optional.ofNullable(map.get(key)));
+    }
+
+    public static Optional<Number> getNumberValue(INBT nbt) {
+        return nbt instanceof NumberNBT ? Optional.of(((NumberNBT) nbt).getAsNumber()) : Optional.empty();
     }
 
     public static Optional<Map<INBT, INBT>> getMapValues(INBT nbt) {
@@ -112,5 +144,37 @@ public class NBTHelper {
 
     public static Optional<Stream<INBT>> getStream(INBT nbt) {
         return nbt instanceof CollectionNBT ? Optional.of(((CollectionNBT<?>) nbt).stream().map(p_210817_0_ -> p_210817_0_)) : Optional.empty();
+    }
+
+    public static INBT mergeInto(INBT nbt1, INBT nbt2) {
+        if (nbt2 instanceof EndNBT) {
+            return nbt1;
+        }
+        if (!(nbt1 instanceof CompoundNBT)) {
+            if (nbt1 instanceof EndNBT) {
+                throw new IllegalArgumentException("mergeInto called with a null input.");
+            }
+            if (nbt1 instanceof CollectionNBT) {
+                CollectionNBT<INBT> list = new ListNBT();
+                CollectionNBT<?> collection = (CollectionNBT<?>) nbt1;
+                list.addAll(collection);
+                list.add(nbt2);
+                return list;
+            }
+            return nbt1;
+        }
+        if (!(nbt2 instanceof CompoundNBT)) {
+            return nbt1;
+        }
+        CompoundNBT compound = new CompoundNBT();
+        CompoundNBT compound1 = (CompoundNBT) nbt1;
+        for (String s : compound1.keySet()) {
+            compound.put(s, compound1.get(s));
+        }
+        CompoundNBT compound2 = (CompoundNBT) nbt2;
+        for (String s1 : compound2.keySet()) {
+            compound.put(s1, compound2.get(s1));
+        }
+        return compound;
     }
 }

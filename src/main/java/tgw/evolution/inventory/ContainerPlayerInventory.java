@@ -33,14 +33,18 @@ import java.util.Optional;
 
 public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInventory> {
 
-    public final LazyOptional<IExtendedItemHandler> handler;
-    private static final String[] ARMOR_SLOT_TEXTURES = {"item/empty_armor_slot_boots", "item/empty_armor_slot_leggings",
-                                                         "item/empty_armor_slot_chestplate", "item/empty_armor_slot_helmet"};
-    private static final EquipmentSlotType[] VALID_EQUIPMENT_SLOTS = {EquipmentSlotType.HEAD, EquipmentSlotType.CHEST, EquipmentSlotType.LEGS,
+    private static final String[] ARMOR_SLOT_TEXTURES = {"item/empty_armor_slot_boots",
+                                                         "item/empty_armor_slot_leggings",
+                                                         "item/empty_armor_slot_chestplate",
+                                                         "item/empty_armor_slot_helmet"};
+    private static final EquipmentSlotType[] VALID_EQUIPMENT_SLOTS = {EquipmentSlotType.HEAD,
+                                                                      EquipmentSlotType.CHEST,
+                                                                      EquipmentSlotType.LEGS,
                                                                       EquipmentSlotType.FEET};
+    public final LazyOptional<IExtendedItemHandler> handler;
+    public final boolean isLocalWorld;
     private final CraftingInventory craftingInventory = new CraftingInventory(this, 2, 2);
     private final CraftResultInventory craftingResult = new CraftResultInventory();
-    public final boolean isLocalWorld;
     private final PlayerEntity player;
 
     public ContainerPlayerInventory(int windowId, PlayerInventory inventory) {
@@ -51,11 +55,13 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
         this.addSlot(new CraftingResultSlot(inventory.player, this.craftingInventory, this.craftingResult, 0, 161, 62));
         for (int i = 0; i < 2; ++i) {
             for (int j = 0; j < 2; ++j) {
+                //noinspection ObjectAllocationInLoop
                 this.addSlot(new Slot(this.craftingInventory, j + i * 2, 152 + j * 18, 8 + i * 18));
             }
         }
         for (int k = 0; k < 4; ++k) {
             EquipmentSlotType equipmentslottype = VALID_EQUIPMENT_SLOTS[k];
+            //noinspection ObjectAllocationInLoop
             this.addSlot(new Slot(inventory, 39 - k, 26, 8 + k * 18) {
 
                 @Override
@@ -86,10 +92,12 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
         }
         for (int l = 0; l < 3; ++l) {
             for (int j1 = 0; j1 < 9; ++j1) {
+                //noinspection ObjectAllocationInLoop
                 this.addSlot(new Slot(inventory, j1 + (l + 1) * 9, 26 + j1 * 18, 84 + l * 18));
             }
         }
         for (int i1 = 0; i1 < 9; ++i1) {
+            //noinspection ObjectAllocationInLoop
             this.addSlot(new Slot(inventory, i1, 26 + i1 * 18, 142));
         }
         this.addSlot(new Slot(inventory, 40, 116, 62) {
@@ -108,6 +116,22 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
         this.addSlot(new SlotExtended(this.player, (ContainerExtendedHandler) this.handler.orElse(null), ContainerExtendedHandler.MASK, 116, 8));
         this.addSlot(new SlotExtended(this.player, (ContainerExtendedHandler) this.handler.orElse(null), ContainerExtendedHandler.BACK, 116, 26));
         this.addSlot(new SlotExtended(this.player, (ContainerExtendedHandler) this.handler.orElse(null), ContainerExtendedHandler.TACTICAL, 116, 44));
+    }
+
+    protected static void func_217066_a(int window, World world, PlayerEntity player, CraftingInventory craftingInventory, CraftResultInventory resultInventory) {
+        if (!world.isRemote) {
+            ServerPlayerEntity playerMP = (ServerPlayerEntity) player;
+            ItemStack stack = ItemStack.EMPTY;
+            Optional<ICraftingRecipe> optional = world.getServer().getRecipeManager().getRecipe(IRecipeType.CRAFTING, craftingInventory, world);
+            if (optional.isPresent()) {
+                ICraftingRecipe recipe = optional.get();
+                if (resultInventory.canUseRecipe(world, playerMP, recipe)) {
+                    stack = recipe.getCraftingResult(craftingInventory);
+                }
+            }
+            resultInventory.setInventorySlotContents(0, stack);
+            playerMP.connection.sendPacket(new SSetSlotPacket(window, 0, stack));
+        }
     }
 
     @Override
@@ -240,22 +264,6 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
     @OnlyIn(Dist.CLIENT)
     public int getSize() {
         return 5;
-    }
-
-    protected static void func_217066_a(int window, World world, PlayerEntity player, CraftingInventory craftingInventory, CraftResultInventory resultInventory) {
-        if (!world.isRemote) {
-            ServerPlayerEntity playerMP = (ServerPlayerEntity) player;
-            ItemStack stack = ItemStack.EMPTY;
-            Optional<ICraftingRecipe> optional = world.getServer().getRecipeManager().getRecipe(IRecipeType.CRAFTING, craftingInventory, world);
-            if (optional.isPresent()) {
-                ICraftingRecipe recipe = optional.get();
-                if (resultInventory.canUseRecipe(world, playerMP, recipe)) {
-                    stack = recipe.getCraftingResult(craftingInventory);
-                }
-            }
-            resultInventory.setInventorySlotContents(0, stack);
-            playerMP.connection.sendPacket(new SSetSlotPacket(window, 0, stack));
-        }
     }
 
     @Override

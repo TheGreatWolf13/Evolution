@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "mode=save": { "model": "evolution:block/schematic_block_save" },
+        "mode=load": { "model": "evolution:block/schematic_block_load" },
+        "mode=corner": { "model": "evolution:block/schematic_block_corner" }
+    }
+}

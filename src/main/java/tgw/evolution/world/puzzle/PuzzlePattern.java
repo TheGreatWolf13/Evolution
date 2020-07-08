@@ -7,28 +7,23 @@ import it.unimi.dsi.fastutil.objects.ObjectArrays;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.gen.Heightmap;
-import net.minecraft.world.gen.feature.template.GravityStructureProcessor;
-import net.minecraft.world.gen.feature.template.StructureProcessor;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 import tgw.evolution.Evolution;
+import tgw.evolution.world.puzzle.pieces.config.PlacementType;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 public class PuzzlePattern {
 
-    public static final PuzzlePattern EMPTY = new PuzzlePattern(Evolution.location("empty"), Evolution.location("empty"), ImmutableList.of(), PuzzlePattern.PlacementBehaviour.RIGID);
-    public static final PuzzlePattern INVALID = new PuzzlePattern(Evolution.location("invalid"), Evolution.location("invalid"), ImmutableList.of(), PuzzlePattern.PlacementBehaviour.RIGID);
+    public static final PuzzlePattern EMPTY = new PuzzlePattern(Evolution.location("empty"), Evolution.location("empty"), ImmutableList.of(), PlacementType.RIGID);
+    public static final PuzzlePattern INVALID = new PuzzlePattern(Evolution.location("invalid"), Evolution.location("invalid"), ImmutableList.of(), PlacementType.RIGID);
     private final ResourceLocation pool;
     private final List<PuzzlePiece> puzzlePieces;
     private final ResourceLocation fallbackPool;
     private int maxHeight = Integer.MIN_VALUE;
 
-    public PuzzlePattern(ResourceLocation pool, ResourceLocation fallbackPool, List<Pair<PuzzlePiece, Integer>> entries, PuzzlePattern.PlacementBehaviour placementBehaviour) {
+    public PuzzlePattern(ResourceLocation pool, ResourceLocation fallbackPool, List<Pair<PuzzlePiece, Integer>> entries, PlacementType placementBehaviour) {
         this.pool = pool;
         this.puzzlePieces = Lists.newArrayList();
         for (Pair<PuzzlePiece, Integer> pair : entries) {
@@ -64,42 +59,5 @@ public class PuzzlePattern {
 
     public int getNumberOfPieces() {
         return this.puzzlePieces.size();
-    }
-
-    public enum PlacementBehaviour implements net.minecraftforge.common.IExtensibleEnum {
-        TERRAIN_MATCHING("terrain_matching", ImmutableList.of(new GravityStructureProcessor(Heightmap.Type.WORLD_SURFACE_WG, -1))),
-        RIGID("rigid", ImmutableList.of());
-
-        private static final Map<String, PuzzlePattern.PlacementBehaviour> BEHAVIOURS = Arrays.stream(values()).collect(Collectors.toMap(PuzzlePattern.PlacementBehaviour::getName, p_214935_0_ -> p_214935_0_));
-        private final String name;
-        private final ImmutableList<StructureProcessor> structureProcessors;
-
-        PlacementBehaviour(String nameIn, ImmutableList<StructureProcessor> processors) {
-            this.name = nameIn;
-            this.structureProcessors = processors;
-        }
-
-        @SuppressWarnings("unused")
-        public static PlacementBehaviour create(String enumName, String name, ImmutableList<StructureProcessor> processors) {
-            throw new IllegalStateException("Enum not extended");
-        }
-
-        public static PuzzlePattern.PlacementBehaviour getBehaviour(String nameIn) {
-            return BEHAVIOURS.get(nameIn);
-        }
-
-        public String getName() {
-            return this.name;
-        }
-
-        public ImmutableList<StructureProcessor> getStructureProcessors() {
-            return this.structureProcessors;
-        }
-
-        @Override
-        @Deprecated
-        public void init() {
-            BEHAVIOURS.put(this.name, this);
-        }
     }
 }

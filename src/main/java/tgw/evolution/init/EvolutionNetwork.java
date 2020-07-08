@@ -26,17 +26,19 @@ public class EvolutionNetwork {
         INSTANCE.registerMessage(increaseId(), PacketSCUpdateChunkStorage.class, PacketSCUpdateChunkStorage::encode, PacketSCUpdateChunkStorage::decode, PacketSCUpdateChunkStorage::handle);
         INSTANCE.registerMessage(increaseId(), PacketSCHandAnimation.class, PacketSCHandAnimation::encode, PacketSCHandAnimation::decode, PacketSCHandAnimation::handle);
         INSTANCE.registerMessage(increaseId(), PacketCSOpenExtendedInventory.class, PacketCSOpenExtendedInventory::encode, PacketCSOpenExtendedInventory::decode, PacketCSOpenExtendedInventory::handle);
-        INSTANCE.registerMessage(increaseId(), PacketCSOffhandAttack.class, PacketCSOffhandAttack::encode, PacketCSOffhandAttack::decode, PacketCSOffhandAttack::handle);
+        INSTANCE.registerMessage(increaseId(), PacketCSPlayerAttack.class, PacketCSPlayerAttack::encode, PacketCSPlayerAttack::decode, PacketCSPlayerAttack::handle);
         INSTANCE.registerMessage(increaseId(), PacketCSSetKnappingType.class, PacketCSSetKnappingType::encode, PacketCSSetKnappingType::decode, PacketCSSetKnappingType::handle);
         INSTANCE.registerMessage(increaseId(), PacketSCOpenKnappingGui.class, PacketSCOpenKnappingGui::encode, PacketSCOpenKnappingGui::decode, PacketSCOpenKnappingGui::handle);
         INSTANCE.registerMessage(increaseId(), PacketCSSetProne.class, PacketCSSetProne::encode, PacketCSSetProne::decode, PacketCSSetProne::handle);
-        INSTANCE.registerMessage(increaseId(), PacketCSReduceHitbox.class, PacketCSReduceHitbox::encode, PacketCSReduceHitbox::decode, PacketCSReduceHitbox::handle);
         INSTANCE.registerMessage(increaseId(), PacketCSUpdatePuzzle.class, PacketCSUpdatePuzzle::encode, PacketCSUpdatePuzzle::decode, PacketCSUpdatePuzzle::handle);
+        INSTANCE.registerMessage(increaseId(), PacketSCOpenMoldingGui.class, PacketSCOpenMoldingGui::encode, PacketSCOpenMoldingGui::decode, PacketSCOpenMoldingGui::handle);
+        INSTANCE.registerMessage(increaseId(), PacketCSSetMoldingType.class, PacketCSSetMoldingType::encode, PacketCSSetMoldingType::decode, PacketCSSetMoldingType::handle);
+        INSTANCE.registerMessage(increaseId(), PacketCSUpdateSchematicBlock.class, PacketCSUpdateSchematicBlock::encode, PacketCSUpdateSchematicBlock::decode, PacketCSUpdateSchematicBlock::handle);
     }
 
     public static boolean checkSide(Supplier<NetworkEvent.Context> context, PacketAbstract packet) {
         if (context.get().getDirection().getReceptionSide() != packet.destinationSide) {
-            Evolution.LOGGER.warn("Received " + packet.getClass().getName() + " on " + (packet.destinationSide.isClient() ? LogicalSide.SERVER : LogicalSide.CLIENT) + "!");
+            Evolution.LOGGER.warn("Received {} on {}!", packet.getClass().getSimpleName(), packet.destinationSide.isClient() ? LogicalSide.SERVER : LogicalSide.CLIENT);
             return false;
         }
         return true;

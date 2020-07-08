@@ -16,10 +16,11 @@ import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import tgw.evolution.Evolution;
-import tgw.evolution.entities.EntitySpear;
+import tgw.evolution.entities.EvolutionAttributes;
+import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.init.EvolutionSounds;
 
-public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpear, IMelee {
+public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpear {
 
     private final float damage;
     private final float speed;
@@ -33,12 +34,6 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
         this.addPropertyOverride(new ResourceLocation("throwing"), (stack, world, entity) -> entity != null && entity.isHandActive() && entity.getActiveItemStack() == stack ? 1.0F : 0.0F);
     }
 
-    @Override
-    public float getAttackDamage() {
-        return this.damage;
-    }
-
-    @Override
     public float getAttackSpeed() {
         return this.speed - 4;
     }
@@ -72,14 +67,9 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
         if (equipmentSlot == EquipmentSlotType.MAINHAND) {
             multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(), new AttributeModifier(ATTACK_DAMAGE_MODIFIER, "Tool modifier", this.damage, AttributeModifier.Operation.ADDITION));
             multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(), new AttributeModifier(ATTACK_SPEED_MODIFIER, "Tool modifier", this.getAttackSpeed(), AttributeModifier.Operation.ADDITION));
-            multimap.put(PlayerEntity.REACH_DISTANCE.getName(), new AttributeModifier(ItemTool.REACH_DISTANCE_MODIFIER, "Reach Modifier", this.getReach(), AttributeModifier.Operation.ADDITION));
+            multimap.put(PlayerEntity.REACH_DISTANCE.getName(), new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER, "Reach Modifier", 5, AttributeModifier.Operation.ADDITION));
         }
         return multimap;
-    }
-
-    @Override
-    public float setReach() {
-        return 5.5f;
     }
 
     @Override
@@ -120,16 +110,6 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
     public boolean hitEntity(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         stack.damageItem(1, attacker, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
         return true;
-    }
-
-    @Override
-    public boolean putEmptyLine() {
-        return false;
-    }
-
-    @Override
-    public int line() {
-        return 2;
     }
 
     @Override

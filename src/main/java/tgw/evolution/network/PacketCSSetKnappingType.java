@@ -26,11 +26,11 @@ public class PacketCSSetKnappingType extends PacketAbstract {
 
     public static void encode(PacketCSSetKnappingType packet, PacketBuffer buffer) {
         buffer.writeBlockPos(packet.pos);
-        buffer.writeByte(packet.type.getByte());
+        buffer.writeByte(packet.type.getId());
     }
 
     public static PacketCSSetKnappingType decode(PacketBuffer buffer) {
-        return new PacketCSSetKnappingType(buffer.readBlockPos(), EnumKnapping.fromByte(buffer.readByte()));
+        return new PacketCSSetKnappingType(buffer.readBlockPos(), EnumKnapping.byId(buffer.readByte()));
     }
 
     public static void handle(PacketCSSetKnappingType packet, Supplier<NetworkEvent.Context> context) {
@@ -42,7 +42,7 @@ public class PacketCSSetKnappingType extends PacketAbstract {
                     ((TEKnapping) tile).setType(packet.type);
                     return;
                 }
-                Evolution.LOGGER.warn("Could not find TEKnapping at " + packet.pos);
+                Evolution.LOGGER.warn("Could not find TEKnapping at {}", packet.pos);
             });
             context.get().setPacketHandled(true);
         }

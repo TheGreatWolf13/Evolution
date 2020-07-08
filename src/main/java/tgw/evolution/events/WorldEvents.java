@@ -19,11 +19,13 @@ import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.world.EvWorldDefault;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Random;
 
 public class WorldEvents {
 
+    @Nullable
     private static BlockPos findSpawnChunk(World world, int chunkPosStartX, int chunkPosStartZ) {
         int chunkPosEndX = chunkPosStartX + 15;
         int chunkPosEndZ = chunkPosStartZ + 15;
@@ -38,6 +40,7 @@ public class WorldEvents {
         return null;
     }
 
+    @Nullable
     public static BlockPos findSpawn(World world, int posX, int posZ) {
         BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos(posX, 0, posZ);
         Biome biome = world.getBiome(mutablePos);

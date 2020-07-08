@@ -3,10 +3,10 @@ package tgw.evolution.client.models.entities;
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.renderer.entity.model.EntityModel;
 import net.minecraft.client.renderer.entity.model.RendererModel;
-import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.entities.EntityBull;
+import tgw.evolution.util.MathHelper;
 
 @OnlyIn(Dist.CLIENT)
 public class ModelBull extends EntityModel<EntityBull> {
@@ -49,31 +49,31 @@ public class ModelBull extends EntityModel<EntityBull> {
         this.head = new RendererModel(this, 40, 22);
         this.head.setRotationPoint(0.0F, 0.0F, 0.0F);
         this.head.addBox(-3.0F, -6.0F, -8.0F, 6, 7, 6, 0.0F);
-        ModelBull.setRotateAngle(this.head, -5.585053606381854F, 0.0F, 0.0F);
+        MathHelper.setRotationAngle(this.head, -5.585053606381854F, 0.0F, 0.0F);
         this.snout = new RendererModel(this, 0, 46);
         this.snout.setRotationPoint(0.0F, 0.0F, 0.0F);
         this.snout.addBox(-2.0F, -5.5F, -10.5F, 4, 4, 4, 0.0F);
-        ModelBull.setRotateAngle(this.snout, -5.32325421858F, 0.0F, 0.0F);
+        MathHelper.setRotationAngle(this.snout, -5.32325421858F, 0.0F, 0.0F);
         this.neck = new RendererModel(this, 0, 54);
         this.neck.setRotationPoint(0.0F, 6F, -6F);
         this.neck.addBox(-2.5F, -1.5F, -4F, 5, 5, 5, 0.0F);
-        ModelBull.setRotateAngle(this.neck, 5.585053606381854F, 0.0F, 0.0F);
+        MathHelper.setRotationAngle(this.neck, 5.585053606381854F, 0.0F, 0.0F);
         this.earRight = new RendererModel(this, 56, 17);
         this.earRight.setRotationPoint(0F, 0F, 0F);
         this.earRight.addBox(-6.2F, -5.6F, -2.3F, 3, 2, 1, 0.0F);
-        ModelBull.setRotateAngle(this.earRight, -5.23598775598F, 0.0F, 0.17453292519943295F);
+        MathHelper.setRotationAngle(this.earRight, -5.23598775598F, 0.0F, 0.17453292519943295F);
         this.earLeft = new RendererModel(this, 47, 17);
         this.earLeft.setRotationPoint(0F, 0F, 0F);
         this.earLeft.addBox(3.2F, -5.6F, -2.3F, 3, 2, 1, 0.0F);
-        ModelBull.setRotateAngle(this.earLeft, -5.23598775598F, 0.0F, 6.1086523819801535F);
+        MathHelper.setRotationAngle(this.earLeft, -5.23598775598F, 0.0F, 6.1086523819801535F);
         this.hornRight = new RendererModel(this, 22, 23);
         this.hornRight.setRotationPoint(0.0F, 0.0F, 0.0F);
         this.hornRight.addBox(-3F, -8F, -2.5F, 1, 3, 1, 0.0F);
-        ModelBull.setRotateAngle(this.hornRight, -5.585053606381854F, 0.0F, 5.93411945678072F);
+        MathHelper.setRotationAngle(this.hornRight, -5.585053606381854F, 0.0F, 5.93411945678072F);
         this.hornLeft = new RendererModel(this, 22, 19);
         this.hornLeft.setRotationPoint(0F, 0F, 0F);
         this.hornLeft.addBox(2F, -8.0F, -2.5F, 1, 3, 1, 0.0F);
-        ModelBull.setRotateAngle(this.hornLeft, -5.585053606381854F, 0.0F, 0.3490658503988659F);
+        MathHelper.setRotationAngle(this.hornLeft, -5.585053606381854F, 0.0F, 0.3490658503988659F);
         this.neck.addChild(this.head);
         this.neck.addChild(this.snout);
         this.neck.addChild(this.earLeft);
@@ -84,7 +84,7 @@ public class ModelBull extends EntityModel<EntityBull> {
         this.body = new RendererModel(this, 24, 36);
         this.body.setRotationPoint(1.0F, 5.0F, 2.0F);
         this.body.addBox(-6F, -10F, -7F, 10, 18, 10, 0.0F);
-        ModelBull.setRotateAngle(this.body, 1.5707963267948966F, 0.0F, 0.0F);
+        MathHelper.setRotationAngle(this.body, MathHelper.degToRad(90), 0.0F, 0.0F);
         //        this.breasts = new RendererModel(this, 46, 0);
         //        this.breasts.setRotationPoint(0F, 0F, 0F);
         //        this.breasts.addBox(-4F, 2F, -10F, 6, 6, 3, 0.0F);
@@ -161,7 +161,7 @@ public class ModelBull extends EntityModel<EntityBull> {
         this.tailX = new RendererModel(this, 17, 47);
         this.tailX.setRotationPoint(-0.5F, 2.4F, 9.5F);
         this.tailX.addBox(0F, 0F, 0F, 2, 11, 0, 0.0F);
-        ModelBull.setRotateAngle(this.tailX, 0.2617993877991494F, 0.0F, 0.0F);
+        MathHelper.setRotationAngle(this.tailX, 0.2617993877991494F, 0.0F, 0.0F);
         this.tailZ = new RendererModel(this, 16, 21);
         this.tailZ.setRotationPoint(0F, 0F, 0F);
         this.tailZ.addBox(0.5F, 0.4F, -1.4F, 0, 11, 2, 0.0F);
@@ -198,15 +198,6 @@ public class ModelBull extends EntityModel<EntityBull> {
         }
     }
 
-    /**
-     * This is a helper function from Tabula to set the rotation of model parts
-     */
-    public static void setRotateAngle(RendererModel modelRenderer, float x, float y, float z) {
-        modelRenderer.rotateAngleX = x;
-        modelRenderer.rotateAngleY = y;
-        modelRenderer.rotateAngleZ = z;
-    }
-
     @Override
     public void setRotationAngles(EntityBull entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor) {
         if (entityIn.isDead()) {
@@ -221,11 +212,11 @@ public class ModelBull extends EntityModel<EntityBull> {
             this.tailX.rotateAngleZ = 0F;
             return;
         }
-        this.neck.rotateAngleX = headPitch * ((float) Math.PI / 180F) + 5.585053606381854F;
-        this.neck.rotateAngleY = netHeadYaw * ((float) Math.PI / 180F);
+        this.neck.rotateAngleX = MathHelper.degToRad(headPitch) + 5.585053606381854F;
+        this.neck.rotateAngleY = MathHelper.degToRad(netHeadYaw);
         this.legFrontRight.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
-        this.legFrontLeft.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F + (float) Math.PI) * 1.4F * limbSwingAmount;
-        this.legRearRight.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F + (float) Math.PI) * 1.4F * limbSwingAmount;
+        this.legFrontLeft.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F + MathHelper.PI) * 1.4F * limbSwingAmount;
+        this.legRearRight.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F + MathHelper.PI) * 1.4F * limbSwingAmount;
         this.legRearLeft.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
         this.neck.rotateAngleX = this.headRotationAngleX + 5.585053606381854F;
         this.tailX.rotateAngleX = this.tailRotationAngleX + 0.2617993877991494F;

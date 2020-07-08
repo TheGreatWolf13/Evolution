@@ -12,6 +12,7 @@ import net.minecraft.world.gen.feature.NoFeatureConfig;
 import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraft.world.gen.feature.structure.StructureStart;
 import net.minecraft.world.gen.feature.template.TemplateManager;
+import tgw.evolution.world.feature.structures.config.ConfigStructDummy;
 
 import java.util.Random;
 import java.util.function.Function;
@@ -76,8 +77,8 @@ public class StructureTest extends Structure<NoFeatureConfig> {
             int x = (chunkX << 4) + 8;
             int z = (chunkZ << 4) + 8;
             int surfaceY = generator.func_222531_c(x, z, Heightmap.Type.WORLD_SURFACE_WG);
-            BlockPos pos = new BlockPos(x, surfaceY - 30, z);
-            StructureTestPieces.start(generator, templateManagerIn, pos, this.components, this.rand);
+            BlockPos pos = new BlockPos(x, surfaceY - 4, z);
+            StructureTestPieces.start(generator, templateManagerIn, pos, this.components, this.rand, new ConfigStructDummy());
             this.recalculateStructureSize();
         }
     }

@@ -2,8 +2,8 @@ package tgw.evolution.client.models.entities;
 
 import net.minecraft.client.renderer.entity.model.EntityModel;
 import net.minecraft.client.renderer.entity.model.RendererModel;
-import net.minecraft.util.math.MathHelper;
 import tgw.evolution.entities.EntityShadowHound;
+import tgw.evolution.util.MathHelper;
 
 public class ModelShadowHound extends EntityModel<EntityShadowHound> {
 
@@ -18,23 +18,23 @@ public class ModelShadowHound extends EntityModel<EntityShadowHound> {
 
         this.body = new RendererModel(this, 0, 14);
         this.body.setRotationPoint(-0.5F, 14.5F, -4.5F);
-        setRotateAngle(this.body, -0.6981F, 0.0F, 0.0F);
+        MathHelper.setRotationAngle(this.body, -0.6981F, 0.0F, 0.0F);
         this.body.addBox(-3.9F, -1.1585F, 0.5827F, 8, 5, 17, 0.0F);
 
         this.head = new RendererModel(this, 0, 0);
         this.head.setRotationPoint(-0.5F, 15.5F, -8.8F);
-        setRotateAngle(this.head, 0.6807F, 0.0F, 0.0F);
+        MathHelper.setRotationAngle(this.head, 0.6807F, 0.0F, 0.0F);
         this.head.addBox(-3.5F, -3.5724F, -3.0041F, 7, 7, 7, 0.0F);
 
         this.legLeft = new RendererModel(this, 0, 14);
         this.legLeft.setRotationPoint(5.5F, 0.5F, 4.5F);
-        setRotateAngle(this.legLeft, 0.6981F, 0.0F, 0.0F);
+        MathHelper.setRotationAngle(this.legLeft, 0.6981F, 0.0F, 0.0F);
         this.body.addChild(this.legLeft);
         this.legLeft.addBox(-1.3F, -4.8F, -1.6122F, 2, 11, 4, 0.0F);
 
         this.legRight = new RendererModel(this, 0, 14);
         this.legRight.setRotationPoint(-5.0F, 1.1F, 4.5F);
-        setRotateAngle(this.legRight, 0.6981F, 0.0F, 0.0F);
+        MathHelper.setRotationAngle(this.legRight, 0.6981F, 0.0F, 0.0F);
         this.body.addChild(this.legRight);
         this.legRight.addBox(-1.0F, -5.3F, -1.71F, 2, 11, 4, 0.0F);
     }
@@ -54,18 +54,9 @@ public class ModelShadowHound extends EntityModel<EntityShadowHound> {
             this.legLeft.rotateAngleX = 0.6981F;
             return;
         }
-        this.head.rotateAngleX = headPitch * ((float) Math.PI / 180F) + 0.6807F;
-        this.head.rotateAngleY = netHeadYaw * ((float) Math.PI / 180F);
+        this.head.rotateAngleX = MathHelper.degToRad(headPitch) + 0.6807F;
+        this.head.rotateAngleY = MathHelper.degToRad(netHeadYaw);
         this.legRight.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
-        this.legLeft.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F + (float) Math.PI) * 1.4F * limbSwingAmount;
-    }
-
-    /**
-     * This is a helper function from Tabula to set the rotation of model parts
-     */
-    public static void setRotateAngle(RendererModel modelRenderer, float x, float y, float z) {
-        modelRenderer.rotateAngleX = x;
-        modelRenderer.rotateAngleY = y;
-        modelRenderer.rotateAngleZ = z;
+        this.legLeft.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F + MathHelper.PI) * 1.4F * limbSwingAmount;
     }
 }

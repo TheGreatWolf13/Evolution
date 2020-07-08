@@ -43,8 +43,14 @@ public class EvFlatChunkGenerator extends ChunkGenerator<EvFlatChunkGenerator.Co
 
     }
 
+    /**
+     * @param x             The X coordinate.
+     * @param z             The Z coordinate.
+     * @param heightmapType The Type of heightMap used in the check.
+     * @return The height of the terrain according to the used heightMap in that (x, z) location.
+     */
     @Override
-    public int func_222529_a(int p_222529_1_, int p_222529_2_, Heightmap.Type heightmapType) {
+    public int func_222529_a(int x, int z, Heightmap.Type heightmapType) {
         return 0;
     }
 

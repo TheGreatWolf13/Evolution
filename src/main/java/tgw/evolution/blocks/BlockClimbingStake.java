@@ -337,8 +337,8 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
     public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
         if (!worldIn.isRemote) {
             if (!state.isValidPosition(worldIn, pos)) {
-                spawnDrops(state, worldIn, pos);
-                worldIn.removeBlock(pos, false);
+                worldIn.destroyBlock(pos, true);
+                return;
             }
             checkSides(state, worldIn, pos);
         }

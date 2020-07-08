@@ -3,7 +3,6 @@ package tgw.evolution.blocks.tileentities;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionTileEntities;
 import tgw.evolution.util.EnumFoodNutrients;
 import tgw.evolution.util.Feces;
@@ -28,14 +27,14 @@ public class TEFeces extends TileEntity implements ITickableTileEntity {
     @Override
     public CompoundNBT write(CompoundNBT compound) {
         super.write(compound);
-        compound.putByteArray("Feces", new byte[] {(byte) this.feces.get(EnumFoodNutrients.FOOD), (byte) this.feces.get(EnumFoodNutrients.NITROGEN),
-                                                   (byte) this.feces.get(EnumFoodNutrients.POTASSIUM),
-                                                   (byte) this.feces.get(EnumFoodNutrients.PHOSPHORUS)});
+        compound.putByteArray("Feces", new byte[]{(byte) this.feces.get(EnumFoodNutrients.FOOD),
+                                                  (byte) this.feces.get(EnumFoodNutrients.NITROGEN),
+                                                  (byte) this.feces.get(EnumFoodNutrients.POTASSIUM),
+                                                  (byte) this.feces.get(EnumFoodNutrients.PHOSPHORUS)});
         return compound;
     }
 
     @Override
     public void tick() {
-        Evolution.LOGGER.debug("Tile entity is ticking at " + this.pos);
     }
 }

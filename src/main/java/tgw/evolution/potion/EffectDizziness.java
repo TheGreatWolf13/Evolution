@@ -15,7 +15,7 @@ import java.util.WeakHashMap;
 public class EffectDizziness extends Effect {
 
     private static final Map<LivingEntity, Pair<Integer, Vec3d>> AFFECTED = new WeakHashMap<>();
-    public static int tick = 0;
+    public static int tick;
     public static Vec3d lastMotion = Vec3d.ZERO;
 
     public EffectDizziness() {

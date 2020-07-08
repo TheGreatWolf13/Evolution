@@ -300,6 +300,7 @@ public class EvolutionItems {
     public static final RegistryObject<Item> organic_getter = ITEMS.register("organic_getter", () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.ORGANIC));
     public static final RegistryObject<Item> clock = ITEMS.register("clock", () -> new ItemClock(propMisc()));
     public static final RegistryObject<Item> puzzle = ITEMS.register("puzzle", () -> itemBlock(PUZZLE));
+    public static final RegistryObject<Item> schematic_block = ITEMS.register("schematic_block", () -> itemBlock(SCHEMATIC_BLOCK));
     //Vegetation
     public static final RegistryObject<Item> grass = ITEMS.register("grass", () -> itemBlock(GRASS));
     public static final RegistryObject<Item> tallgrass = ITEMS.register("tallgrass", () -> itemBlock(TALLGRASS));
@@ -388,7 +389,7 @@ public class EvolutionItems {
     public static final RegistryObject<Item> planks_spruce = ITEMS.register("planks_spruce", () -> woodBlock(PLANKS_SPRUCE));
     public static final RegistryObject<Item> planks_willow = ITEMS.register("planks_willow", () -> woodBlock(PLANKS_WILLOW));
     //Shadow Hound Block
-    public static final RegistryObject<Item> shadow_hound = ITEMS.register("shadow_hound", () -> new ItemBlock(SHADOW_HOUND.get(), propMisc().setTEISR(() -> RenderStackTileShadowHound::new)));
+    public static final RegistryObject<Item> shadowhound = ITEMS.register("shadowhound", () -> new ItemBlock(SHADOWHOUND.get(), propMisc().setTEISR(() -> RenderStackTileShadowHound::new)));
     //Javelin Heads
     public static final RegistryObject<Item> javelin_head_andesite = ITEMS.register("javelin_head_andesite", EvolutionItems::stoneHeads);
     public static final RegistryObject<Item> javelin_head_basalt = ITEMS.register("javelin_head_basalt", EvolutionItems::stoneHeads);

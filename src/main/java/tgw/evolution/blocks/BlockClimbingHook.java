@@ -10,10 +10,14 @@ import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.DirectionProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.shapes.ISelectionContext;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import tgw.evolution.init.EvolutionBlocks;
@@ -51,6 +55,21 @@ public class BlockClimbingHook extends Block implements IReplaceable, IRopeSuppo
             }
         }
         world.setBlockState(pos, state.with(ATTACHED, false));
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+        switch (state.get(ROPE_DIRECTION)) {
+            case NORTH:
+                return EvolutionHitBoxes.HOOK_NORTH;
+            case EAST:
+                return EvolutionHitBoxes.HOOK_EAST;
+            case SOUTH:
+                return EvolutionHitBoxes.HOOK_SOUTH;
+            case WEST:
+                return EvolutionHitBoxes.HOOK_WEST;
+        }
+        throw new IllegalStateException("Invalid horizontal direction " + state.get(ROPE_DIRECTION));
     }
 
     public int removeRope(BlockState state, World world, BlockPos pos) {
@@ -140,6 +159,11 @@ public class BlockClimbingHook extends Block implements IReplaceable, IRopeSuppo
         worldIn.removeBlock(pos, true);
         spawnDrops(state, worldIn, pos);
         worldIn.playSound(player, pos, SoundEvents.BLOCK_METAL_BREAK, SoundCategory.BLOCKS, 1f, 1f);
+    }
+
+    @Override
+    public BlockRenderLayer getRenderLayer() {
+        return BlockRenderLayer.CUTOUT;
     }
 
     @Override

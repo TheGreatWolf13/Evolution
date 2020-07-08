@@ -7,7 +7,6 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.state.IntegerProperty;
 import net.minecraft.state.StateContainer.Builder;
@@ -36,6 +35,7 @@ import javax.annotation.Nonnull;
 
 public class BlockMolding extends Block implements IReplaceable {
 
+    public static final IntegerProperty LAYERS = EvolutionBlockStateProperties.LAYERS_1_5;
     private static final VoxelShape BASE_FILLED = EvolutionHitBoxes.MOLD_1;
     private static final VoxelShape BASE = VoxelShapes.create(0, 0, 0, 1, 0.5 / 16, 1);
     private static final VoxelShape BASE_N = VoxelShapes.create(0, 0, 0, 1, 3 / 16.0, 0.5 / 16);
@@ -43,146 +43,41 @@ public class BlockMolding extends Block implements IReplaceable {
     private static final VoxelShape BASE_W = VoxelShapes.create(0, 0, 0, 0.5 / 16, 3 / 16.0, 1);
     private static final VoxelShape BASE_E = VoxelShapes.create(15.5 / 16, 0, 0, 1, 3 / 16.0, 1);
     private static final VoxelShape TOTAL_BASE = VoxelShapes.or(BASE, BASE_N, BASE_S, BASE_W, BASE_E);
-    //    private static final VoxelShape[] LAYER = {EvolutionHitBoxes.MOLD_1,
-    //                                               Block.makeCuboidShape(0.5, 0, 0.5, 15.5, 6, 15.5),
-    //                                               Block.makeCuboidShape(0.5, 0, 0.5, 15.5, 9, 15.5),
-    //                                               Block.makeCuboidShape(0.5, 0, 0.5, 15.5, 12, 15.5),
-    //                                               EvolutionHitBoxes.MOLD_5};
     private static final VoxelShape SHAPE = Block.makeCuboidShape(0.5, 0, 0.5, 3.5, 3, 3.5);
-    private static final VoxelShape[][][] SHAPES = {{{SHAPE,
-                                                      SHAPE.withOffset(0, 0, 3.0 / 16.0),
-                                                      SHAPE.withOffset(0, 0, 6.0 / 16.0),
-                                                      SHAPE.withOffset(0, 0, 9.0 / 16.0),
-                                                      SHAPE.withOffset(0.0 / 16.0, 0, 12.0 / 16.0)},
-                                                     {SHAPE.withOffset(3.0 / 16.0, 0, 0),
-                                                      SHAPE.withOffset(3.0 / 16.0, 0, 3.0 / 16.0),
-                                                      SHAPE.withOffset(3.0 / 16.0, 0, 6.0 / 16.0),
-                                                      SHAPE.withOffset(3.0 / 16.0, 0, 9.0 / 16.0),
-                                                      SHAPE.withOffset(3.0 / 16.0, 0, 12.0 / 16.0)},
-                                                     {SHAPE.withOffset(6.0 / 16.0, 0, 0),
-                                                      SHAPE.withOffset(6.0 / 16.0, 0, 3.0 / 16.0),
-                                                      SHAPE.withOffset(6.0 / 16.0, 0, 6.0 / 16.0),
-                                                      SHAPE.withOffset(6.0 / 16.0, 0, 9.0 / 16.0),
-                                                      SHAPE.withOffset(6.0 / 16.0, 0, 12.0 / 16.0)},
-                                                     {SHAPE.withOffset(9.0 / 16.0, 0, 0),
-                                                      SHAPE.withOffset(9.0 / 16.0, 0, 3.0 / 16.0),
-                                                      SHAPE.withOffset(9.0 / 16.0, 0, 6.0 / 16.0),
-                                                      SHAPE.withOffset(9.0 / 16.0, 0, 9.0 / 16.0),
-                                                      SHAPE.withOffset(9.0 / 16.0, 0, 12.0 / 16.0)},
-                                                     {SHAPE.withOffset(12.0 / 16.0, 0, 0),
-                                                      SHAPE.withOffset(12.0 / 16.0, 0, 3.0 / 16.0),
-                                                      SHAPE.withOffset(12.0 / 16.0, 0, 6.0 / 16.0),
-                                                      SHAPE.withOffset(12.0 / 16.0, 0, 9.0 / 16.0),
-                                                      SHAPE.withOffset(12.0 / 16.0, 0, 12.0 / 16.0)}},
-                                                    //enc = 1
-                                                    {{SHAPE.withOffset(0, 3 / 16.0, 0),
-                                                      SHAPE.withOffset(0, 3 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(0, 3 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(0, 3 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(0, 3 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(3 / 16.0, 3 / 16.0, 0),
-                                                      SHAPE.withOffset(3 / 16.0, 3 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(3 / 16.0, 3 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(3 / 16.0, 3 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(3 / 16.0, 3 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(6 / 16.0, 3 / 16.0, 0),
-                                                      SHAPE.withOffset(6 / 16.0, 3 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(6 / 16.0, 3 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(6 / 16.0, 3 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(6 / 16.0, 3 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(9 / 16.0, 3 / 16.0, 0),
-                                                      SHAPE.withOffset(9 / 16.0, 3 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(9 / 16.0, 3 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(9 / 16.0, 3 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(9 / 16.0, 3 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(12 / 16.0, 3 / 16.0, 0),
-                                                      SHAPE.withOffset(12 / 16.0, 3 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(12 / 16.0, 3 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(12 / 16.0, 3 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(12 / 16.0, 3 / 16.0, 12 / 16.0)}},
-                                                    //enc = 2
-                                                    {{SHAPE.withOffset(0, 6 / 16.0, 0),
-                                                      SHAPE.withOffset(0, 6 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(0, 6 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(0, 6 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(0, 6 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(3 / 16.0, 6 / 16.0, 0),
-                                                      SHAPE.withOffset(3 / 16.0, 6 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(3 / 16.0, 6 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(3 / 16.0, 6 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(3 / 16.0, 6 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(6 / 16.0, 6 / 16.0, 0),
-                                                      SHAPE.withOffset(6 / 16.0, 6 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(6 / 16.0, 6 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(6 / 16.0, 6 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(6 / 16.0, 6 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(9 / 16.0, 6 / 16.0, 0),
-                                                      SHAPE.withOffset(9 / 16.0, 6 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(9 / 16.0, 6 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(9 / 16.0, 6 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(9 / 16.0, 6 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(12 / 16.0, 6 / 16.0, 0),
-                                                      SHAPE.withOffset(12 / 16.0, 6 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(12 / 16.0, 6 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(12 / 16.0, 6 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(12 / 16.0, 6 / 16.0, 12 / 16.0)}},
-                                                    //enc = 3
-                                                    {{SHAPE.withOffset(0, 9 / 16.0, 0),
-                                                      SHAPE.withOffset(0, 9 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(0, 9 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(0, 9 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(0, 9 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(3 / 16.0, 9 / 16.0, 0),
-                                                      SHAPE.withOffset(3 / 16.0, 9 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(3 / 16.0, 9 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(3 / 16.0, 9 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(3 / 16.0, 9 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(6 / 16.0, 9 / 16.0, 0),
-                                                      SHAPE.withOffset(6 / 16.0, 9 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(6 / 16.0, 9 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(6 / 16.0, 9 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(6 / 16.0, 9 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(9 / 16.0, 9 / 16.0, 0),
-                                                      SHAPE.withOffset(9 / 16.0, 9 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(9 / 16.0, 9 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(9 / 16.0, 9 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(9 / 16.0, 9 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(12 / 16.0, 9 / 16.0, 0),
-                                                      SHAPE.withOffset(12 / 16.0, 9 / 16.0, 3.0 / 16),
-                                                      SHAPE.withOffset(12 / 16.0, 9 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(12 / 16.0, 9 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(12 / 16.0, 9 / 16.0, 12 / 16.0)}},
-                                                    //enc = 4
-                                                    {{SHAPE.withOffset(0, 12 / 16.0, 0),
-                                                      SHAPE.withOffset(0, 12 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(0, 12 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(0, 12 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(0, 12 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(3 / 16.0, 12 / 16.0, 0),
-                                                      SHAPE.withOffset(3 / 16.0, 12 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(3 / 16.0, 12 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(3 / 16.0, 12 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(3 / 16.0, 12 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(6 / 16.0, 12 / 16.0, 0),
-                                                      SHAPE.withOffset(6 / 16.0, 12 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(6 / 16.0, 12 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(6 / 16.0, 12 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(6 / 16.0, 12 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(9 / 16.0, 12 / 16.0, 0),
-                                                      SHAPE.withOffset(9 / 16.0, 12 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(9 / 16.0, 12 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(9 / 16.0, 12 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(9 / 16.0, 12 / 16.0, 12 / 16.0)},
-                                                     {SHAPE.withOffset(12 / 16.0, 12 / 16.0, 0),
-                                                      SHAPE.withOffset(12 / 16.0, 12 / 16.0, 3 / 16.0),
-                                                      SHAPE.withOffset(12 / 16.0, 12 / 16.0, 6 / 16.0),
-                                                      SHAPE.withOffset(12 / 16.0, 12 / 16.0, 9 / 16.0),
-                                                      SHAPE.withOffset(12 / 16.0, 12 / 16.0, 12 / 16.0)}}};
-    public static final IntegerProperty LAYERS = EvolutionBlockStateProperties.LAYERS_1_5;
 
     public BlockMolding() {
         super(Block.Properties.create(Material.CLAY).hardnessAndResistance(0F).sound(SoundType.GROUND));
         this.setDefaultState(this.getDefaultState().with(LAYERS, 1));
+    }
+
+    public static VoxelShape calculateHitbox(BlockState state, TEMolding tile) {
+        if (tile == null) {
+            return BASE_FILLED;
+        }
+        VoxelShape shape = VoxelShapes.empty();
+        if (state.get(LAYERS) == 1) {
+            shape = TOTAL_BASE;
+        }
+        for (int enc = 0; enc < tile.matrices.length; enc++) {
+            if (tile.matrices[enc] == null) {
+                return shape;
+            }
+            for (int i = 0; i < tile.matrices[enc].length; i++) {
+                for (int j = 0; j < tile.matrices[enc][i].length; j++) {
+                    if (tile.matrices[enc][i][j]) {
+                        shape = VoxelShapes.combine(shape, SHAPE.withOffset(3 * i / 16f, 3 * enc / 16f, 3 * j / 16f), IBooleanFunction.OR);
+                    }
+                }
+            }
+        }
+        return shape;
+    }
+
+    private static void dropItemStack(World world, BlockPos pos, @Nonnull ItemStack stack) {
+        ItemEntity entity = new ItemEntity(world, pos.getX() + 0.5f, pos.getY() + 0.3f, pos.getZ() + 0.5f, stack);
+        Vec3d motion = entity.getMotion();
+        entity.addVelocity(-motion.x, -motion.y, -motion.z);
+        world.addEntity(entity);
     }
 
     @Override
@@ -219,29 +114,6 @@ public class BlockMolding extends Block implements IReplaceable {
         return BASE_FILLED;
     }
 
-    public static VoxelShape calculateHitbox(BlockState state, TEMolding tile) {
-        if (tile == null) {
-            return BASE_FILLED;
-        }
-        VoxelShape shape = VoxelShapes.empty();
-        if (state.get(LAYERS) == 1) {
-            shape = TOTAL_BASE;
-        }
-        for (int enc = 0; enc < tile.matrices.length; enc++) {
-            if (tile.matrices[enc] == null) {
-                return shape;
-            }
-            for (int i = 0; i < tile.matrices[enc].length; i++) {
-                for (int j = 0; j < tile.matrices[enc][i].length; j++) {
-                    if (tile.matrices[enc][i][j]) {
-                        shape = VoxelShapes.combine(shape, SHAPES[enc][i][j], IBooleanFunction.OR);
-                    }
-                }
-            }
-        }
-        return shape;
-    }
-
     @Override
     public boolean hasTileEntity(BlockState state) {
         return true;
@@ -272,36 +144,53 @@ public class BlockMolding extends Block implements IReplaceable {
 
     @Override
     public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+        int layers = state.get(LAYERS);
+        if (player.getHeldItem(handIn).getItem() == EvolutionItems.clayball.get()) {
+            if (layers < 5) {
+                worldIn.setBlockState(pos, state.with(LAYERS, layers + 1));
+                TEMolding tile = (TEMolding) worldIn.getTileEntity(pos);
+                tile.addLayer(layers);
+                worldIn.playSound(player, pos, SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 0.5F, 0.8F);
+                if (!player.isCreative()) {
+                    player.getHeldItem(handIn).shrink(1);
+                }
+                return true;
+            }
+            return false;
+        }
         if (!player.getHeldItem(handIn).isEmpty()) {
             return false;
         }
         TEMolding tile = (TEMolding) worldIn.getTileEntity(pos);
-        if ((hit.getHitVec().x - pos.getX()) * 16 < 0.5 || (hit.getHitVec().x - pos.getX()) * 16 > 15.5) {
+        double hitX = (hit.getHitVec().x - pos.getX()) * 16;
+        if (!MathHelper.rangeInclusive(hitX, 0.5, 15.5)) {
             return false;
         }
-        if ((hit.getHitVec().z - pos.getZ()) * 16 < 0.5 || (hit.getHitVec().z - pos.getZ()) * 16 > 15.5) {
+        double hitZ = (hit.getHitVec().z - pos.getZ()) * 16;
+        if (!MathHelper.rangeInclusive(hitZ, 0.5, 15.5)) {
             return false;
         }
-        int x = MathHelper.getHitIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.X, (hit.getHitVec().x - pos.getX()) * 16, hit.getFace()));
-        int y = MathHelper.getHitIndex(5, 0, 15, MathHelper.hitOffset(Axis.Y, (hit.getHitVec().y - pos.getY()) * 16, hit.getFace()));
-        int z = MathHelper.getHitIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.Z, (hit.getHitVec().z - pos.getZ()) * 16, hit.getFace()));
-        if (!tile.matrices[y][x][z]) {
+        double hitY = (hit.getHitVec().y - pos.getY()) * 16;
+        int x = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.X, hitX, hit.getFace()));
+        int y = MathHelper.getIndex(5, 0, 15, MathHelper.hitOffset(Axis.Y, hitY, hit.getFace()));
+        int z = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.Z, hitZ, hit.getFace()));
+        if (!tile.matrices[y][x][z] || tile.molding.getPattern()[y][x][z]) {
             return false;
         }
         worldIn.playSound(player, pos, SoundEvents.BLOCK_GRAVEL_BREAK, SoundCategory.BLOCKS, 1.0F, 0.75F);
         tile.matrices[y][x][z] = false;
-        if (state.get(LAYERS) != 1) {
+        if (layers != 1) {
             int fail = tile.check();
             if (fail != -1) {
                 int count = 0;
-                for (int i = fail; i < state.get(LAYERS); i++) {
+                for (int i = fail; i < layers; i++) {
                     count++;
                 }
-                if (state.get(LAYERS) == count) {
+                if (layers == count) {
                     worldIn.removeBlock(pos, false);
                 }
                 else {
-                    worldIn.setBlockState(pos, state.with(LAYERS, state.get(LAYERS) - count));
+                    worldIn.setBlockState(pos, state.with(LAYERS, layers - count));
                 }
                 if (!worldIn.isRemote) {
                     dropItemStack(worldIn, pos, new ItemStack(EvolutionItems.clayball.get(), count));
@@ -329,35 +218,8 @@ public class BlockMolding extends Block implements IReplaceable {
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        BlockState state = context.getWorld().getBlockState(context.getPos());
-        if (state.getBlock() == this) {
-            return this.getDefaultState().with(LAYERS, Math.min(5, state.get(LAYERS) + 1));
-        }
-        return this.getDefaultState();
-    }
-
-    @Override
-    public boolean isReplaceable(BlockState state, BlockItemUseContext useContext) {
-        if (state.get(LAYERS) == 5) {
-            return false;
-        }
-        if (useContext.getItem().getItem() != EvolutionItems.clayball.get()) {
-            return false;
-        }
-        return useContext.getFace() == Direction.UP;
-    }
-
-    @Override
     protected void fillStateContainer(Builder<Block, BlockState> builder) {
         builder.add(LAYERS);
-    }
-
-    private static void dropItemStack(World world, BlockPos pos, @Nonnull ItemStack stack) {
-        ItemEntity entity = new ItemEntity(world, pos.getX() + 0.5f, pos.getY() + 0.3f, pos.getZ() + 0.5f, stack);
-        Vec3d motion = entity.getMotion();
-        entity.addVelocity(-motion.x, -motion.y, -motion.z);
-        world.addEntity(entity);
     }
 
     @Override

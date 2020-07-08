@@ -9,9 +9,9 @@ import net.minecraft.util.SoundEvent;
 import tgw.evolution.Evolution;
 
 public enum EvolutionArmorMaterials implements IArmorMaterial {
-    generic("tutorial", 400, new int[] {8, 10, 9, 7}, 25, EvolutionItems.placeholder_item.get(), "entity.ender_dragon.growl", 0.0f);
+    generic("placeholder", 400, new int[]{8, 10, 9, 7}, 25, EvolutionItems.placeholder_item.get(), "entity.ender_dragon.growl", 0.0f);
 
-    private static final int[] maxDamageArray = {13, 15, 16, 11};
+    private static final int[] MAX_DAMAGE_ARRAY = {13, 15, 16, 11};
     private final int durability;
     private final int enchantability;
     private final String name;
@@ -32,7 +32,7 @@ public enum EvolutionArmorMaterials implements IArmorMaterial {
 
     @Override
     public int getDurability(EquipmentSlotType slotIn) {
-        return maxDamageArray[slotIn.getIndex()] * this.durability;
+        return MAX_DAMAGE_ARRAY[slotIn.getIndex()] * this.durability;
     }
 
     @Override

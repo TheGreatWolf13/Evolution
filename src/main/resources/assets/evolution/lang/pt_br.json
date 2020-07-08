@@ -102,11 +102,12 @@
 	
 	"COMMENT": "TOOLTIPS",
 	"evolution.tooltip.clay.mold": " Coloque enquanto agachado para moldar",
-	"evolution.tooltip.cooldown": " %1$s Segundos de Carregamento",
 	"evolution.tooltip.damage": " %1$s Dano de Ataque",
 	"evolution.tooltip.distance": " %1$s Distância de Alcance",
-	"evolution.tooltip.dps": " %1$s Dano por Segundo",
 	"evolution.tooltip.durability": " %1$s Durabilidade",
+	"evolution.tooltip.fire_aspect": " ► %1$s Aspecto Flamejante %2$s",
+	"evolution.tooltip.knockback": " ► Repulsão %1$s",
+	"evolution.tooltip.mass": "%1$s kg Massa",
 	"evolution.tooltip.metal.oxidation": " Oxidação: %1$s",
 	"evolution.tooltip.mining": " %1$s Velocidade de Mineração",
 	"evolution.tooltip.offhand": "Na mão principal ou secundária:",
@@ -118,6 +119,7 @@
 	"evolution.tooltip.rope": " Use cordas nela para descer com segurança",
 	"evolution.tooltip.speed": " %1$s Velocidade de Ataque",
 	"evolution.tooltip.stick.lit": " Use numa fonte de fogo para acender uma tocha",
+	"evolution.tooltip.sweep": " ► %1$s Dano em Varredura",
 	"evolution.tooltip.throwable": "Arremessável",
 	"evolution.tooltip.two_handed": "Duas Mãos",
 	
@@ -411,8 +413,10 @@
 	"block.evolution.sapling_redwood": "Muda de Sequoia",
 	"block.evolution.sapling_spruce": "Muda de Pinheiro",
 	"block.evolution.sapling_willow": "Muda de Salgueiro",	
+	
+	"block.evolution.schematic_block": "Bloco de Esquema",
 
-	"block.evolution.shadow_hound": "Bloco de Cachorro das Sombras",
+	"block.evolution.shadowhound": "Bloco de Cachorro das Sombras",
 	
 	"block.evolution.stick": "Graveto",
 	
@@ -644,6 +648,25 @@
 	
 	"item.evolution.placeholder_item": "Item Placeholder",
 	
+	"item.evolution.plank_acacia": "Tábua de Acácia",
+	"item.evolution.plank_aspen": "Tábua de Choupo",
+	"item.evolution.plank_birch": "Tábua de Bétula",
+	"item.evolution.plank_cedar": "Tábua de Cedro",
+	"item.evolution.plank_ebony": "Tábua de Ébano",
+	"item.evolution.plank_elm": "Tábua de Ulmeiro",
+	"item.evolution.plank_eucalyptus": "Tábua de Eucalipto",
+	"item.evolution.plank_fir": "Tábua de Abeto",
+	"item.evolution.plank_kapok": "Tábua de Sumaúma",
+	"item.evolution.plank_mangrove": "Tábua de Árvore de Manguezal",
+	"item.evolution.plank_maple": "Tábua de Bordo",
+	"item.evolution.plank_oak": "Tábua de Carvalho",
+	"item.evolution.plank_old_oak": "Tábua de Carvalho Ancião",
+	"item.evolution.plank_palm": "Tábua de Palmeira",
+	"item.evolution.plank_pine": "Tábua de Pinus",
+	"item.evolution.plank_redwood": "Tábua de Sequoia",
+	"item.evolution.plank_spruce": "Tábua de Pinheiro",
+	"item.evolution.plank_willow": "Tábua de Salgueiro",
+	
 	"item.evolution.rope": "Corda",
 	
 	"item.evolution.shovel_andesite": "Pá de Andesito",
@@ -686,5 +709,8 @@
 	"item.evolution.shovel_head_sandstone": "Cabeça de Pá de Arenito",
 	"item.evolution.shovel_head_schist": "Cabeça de Pá de Xisto",
 	"item.evolution.shovel_head_shale": "Cabeça de Pá de Folhelho",
-	"item.evolution.shovel_head_slate": "Cabeça de Pá de Ardósia"
+	"item.evolution.shovel_head_slate": "Cabeça de Pá de Ardósia",
+	
+	"item.evolution.spawn_egg_cow": "Ovo Sumonador de Vaca",
+	"item.evolution.spawn_egg_shadowhound": "Ovo Sumonador de Cachorro das Sombras"
 }

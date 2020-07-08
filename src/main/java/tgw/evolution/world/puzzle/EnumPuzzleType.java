@@ -1,28 +1,34 @@
 package tgw.evolution.world.puzzle;
 
+import tgw.evolution.util.MathHelper;
+
+import javax.annotation.Nullable;
+
 public enum EnumPuzzleType {
-    EMPTY("empty_pool"),
-    FEATURE("feature_pool"),
-    FORCED("forced"),
-    LIST("list_pool"),
-    SINGLE("single_pool");
+    EMPTY(0),
+    SINGLE(1),
+    FEATURE(2),
+    LIST(3),
+    CONFIGURED(4),
+    CAVE(5);
 
-    private final String key;
+    private final byte id;
 
-    EnumPuzzleType(String key) {
-        this.key = key;
+    EnumPuzzleType(int id) {
+        this.id = MathHelper.toByteExact(id);
     }
 
-    public static EnumPuzzleType byKey(String key) {
+    @Nullable
+    public static EnumPuzzleType byId(int id) {
         for (EnumPuzzleType type : EnumPuzzleType.values()) {
-            if (type.key.equals(key)) {
+            if (type.id == id) {
                 return type;
             }
         }
         return null;
     }
 
-    public String getKey() {
-        return this.key;
+    public byte getId() {
+        return this.id;
     }
 }

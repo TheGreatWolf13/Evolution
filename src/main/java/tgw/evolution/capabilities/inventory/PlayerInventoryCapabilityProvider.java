@@ -10,27 +10,27 @@ import tgw.evolution.inventory.ContainerExtendedHandler;
 
 public class PlayerInventoryCapabilityProvider implements INBTSerializable<CompoundNBT>, ICapabilityProvider {
 
-	private final LazyOptional<ContainerExtendedHandler> handler = LazyOptional.of(this::createHandler);
-	
-	private ContainerExtendedHandler createHandler() {
-		return new ContainerExtendedHandler();
-	}
+    private final LazyOptional<ContainerExtendedHandler> handler = LazyOptional.of(this::createHandler);
 
-	@Override
-	public void deserializeNBT(CompoundNBT nbt) {
-		this.handler.orElse(null).deserializeNBT(nbt);
-	}
+    private ContainerExtendedHandler createHandler() {
+        return new ContainerExtendedHandler();
+    }
 
-	@Override
-	public CompoundNBT serializeNBT() {
-		return this.handler.orElse(null).serializeNBT();
-	}
-	
-	@Override
-	public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction facing) {
-		if (capability == PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY) {
-			return this.handler.cast();
-		}
-		return null;
-	}
+    @Override
+    public void deserializeNBT(CompoundNBT nbt) {
+        this.handler.orElse(null).deserializeNBT(nbt);
+    }
+
+    @Override
+    public CompoundNBT serializeNBT() {
+        return this.handler.orElse(null).serializeNBT();
+    }
+
+    @Override
+    public <T> LazyOptional<T> getCapability(Capability<T> capability, Direction facing) {
+        if (capability == PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY) {
+            return this.handler.cast();
+        }
+        throw new IllegalStateException("Wrong capability: " + capability);
+    }
 }

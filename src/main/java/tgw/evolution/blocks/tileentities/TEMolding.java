@@ -24,6 +24,7 @@ public class TEMolding extends TileEntity {
                                       {true, true, true, true, true},
                                       {true, true, true, true, true}}, null, null, null, null};
     public VoxelShape hitbox;
+    public EnumMolding molding = EnumMolding.NULL;
 
     public TEMolding() {
         super(EvolutionTileEntities.TE_MOLDING.get());
@@ -37,6 +38,7 @@ public class TEMolding extends TileEntity {
         compound.putInt("Part3", this.encoded[2]);
         compound.putInt("Part4", this.encoded[3]);
         compound.putInt("Part5", this.encoded[4]);
+        compound.putByte("Type", this.molding.getId());
         return super.write(compound);
     }
 
@@ -66,6 +68,7 @@ public class TEMolding extends TileEntity {
 
     @Override
     public void read(CompoundNBT compound) {
+        this.molding = EnumMolding.byId(compound.getByte("Type"));
         this.encoded[0] = compound.getInt("Part1");
         this.encoded[1] = compound.getInt("Part2");
         this.encoded[2] = compound.getInt("Part3");
@@ -122,6 +125,11 @@ public class TEMolding extends TileEntity {
         this.sendRenderUpdate();
     }
 
+    public void setType(EnumMolding molding) {
+        this.molding = molding;
+        this.sendRenderUpdate();
+    }
+
     public int check() {
         for (int i = 0; i < this.matrices.length; i++) {
             if (this.matrices[i] == null || MathHelper.matricesEqual(this.matrices[i], KnappingPatterns.NULL)) {
@@ -172,9 +180,9 @@ public class TEMolding extends TileEntity {
                 else if (MoldingPatterns.comparePatternsOneLayer(this.matrices[0], MoldingPatterns.INGOT)) {
                     this.spawnDrops(EvolutionItems.mold_clay_ingot);
                 }
-                else if (MathHelper.matricesEqual(this.matrices[0], MoldingPatterns.PLATE)) {
-                    this.spawnDrops(EvolutionItems.mold_clay_plate);
-                }
+                //                else if (MathHelper.matricesEqual(this.matrices[0], MoldingPatterns.PLATE)) {
+                //                    this.spawnDrops(EvolutionItems.mold_clay_plate);
+                //                }
             }
             else if (layers == 2) {
                 if (MoldingPatterns.comparePatternsTwoLayer(this.matrices, MoldingPatterns.BRICK)) {

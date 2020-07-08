@@ -13,7 +13,7 @@ import tgw.evolution.util.EnumWoodVariant;
 public class TEChopping extends TileEntity {
 
     public byte id = -1;
-    public byte breakProgress = 0;
+    public byte breakProgress;
 
     public TEChopping() {
         super(EvolutionTileEntities.TE_CHOPPING.get());
@@ -39,8 +39,8 @@ public class TEChopping extends TileEntity {
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-        this.handleUpdateTag(pkt.getNbtCompound());
+    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
+        this.handleUpdateTag(packet.getNbtCompound());
     }
 
     public void onRemoved() {

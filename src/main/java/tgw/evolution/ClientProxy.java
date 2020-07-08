@@ -23,7 +23,7 @@ public class ClientProxy implements IProxy {
     public static void changeWorldOrders() {
         int evId = 0;
         for (WorldType worldType : WorldType.WORLD_TYPES) {
-            if (worldType != null && worldType.getName().equals("ev_default")) {
+            if (worldType != null && "ev_default".equals(worldType.getName())) {
                 evId = worldType.getId();
                 break;
             }

@@ -14,75 +14,76 @@ import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.entities.EntityFallingTimber;
 
 public class FallingEvents {
-	public static boolean isFalling = false;
-	public static boolean sound = true;
-	
-	@SubscribeEvent
+
+    public static boolean isFalling;
+    public static boolean sound = true;
+
+    public static void chopEvent(IWorld worldIn, BlockState state, BlockPos pos, Direction direction) {
+        if (isFalling) {
+            return;
+        }
+        if (!(state.getBlock() instanceof BlockLog)) {
+            return;
+        }
+        if (!state.get(BlockLog.TREE)) {
+            return;
+        }
+        isFalling = true;
+        FallingManager.fallingManagers.computeIfAbsent(worldIn, FallingManager::new).onChop(pos, direction);
+    }
+
+    @SubscribeEvent
     public void tick(TickEvent.WorldTickEvent event) {
         if (event.side != LogicalSide.SERVER) {
-        	return;
+            return;
         }
         if (event.phase != TickEvent.Phase.START) {
-        	return;
+            return;
         }
         FallingManager fallingManager = FallingManager.fallingManagers.get(event.world);
         if (fallingManager == null) {
-        	return;
+            return;
         }
         fallingManager.tick();
         if (!fallingManager.isEmpty()) {
-        	return;
+            return;
         }
         FallingManager.fallingManagers.remove(event.world);
         isFalling = false;
         sound = true;
     }
 
-	@SubscribeEvent
+    @SubscribeEvent
     public void entityJoin(EntityJoinWorldEvent event) {
         if (!(event.getEntity() instanceof EntityFallingTimber)) {
-        	return;
+            return;
         }
         EntityFallingTimber falling = (EntityFallingTimber) event.getEntity();
         if (falling.getBlockState() == null) {
-        	return;
+            return;
         }
         if (!(falling.getBlockState().getBlock() instanceof BlockLog)) {
             if (falling.getBlockState().getMaterial() != Material.LEAVES) {
-            	return;
+                return;
             }
         }
         if (falling.fallTime <= 600) {
-        	return;
+            return;
         }
         falling.remove();
     }
 
-	@SubscribeEvent
+    @SubscribeEvent
     public void chopEvent(BlockEvent.BreakEvent event) {
-    	if (!(event.getState().getBlock() instanceof BlockLog)) {
-        	return;
+        if (!(event.getState().getBlock() instanceof BlockLog)) {
+            return;
         }
-    	if (!event.getState().get(BlockLog.TREE)) {
-			return;
-		}
-    	isFalling = true;
+        if (!event.getState().get(BlockLog.TREE)) {
+            return;
+        }
+        isFalling = true;
         Direction fallingDirection = event.getPlayer().getHorizontalFacing();
         IWorld worldIn = event.getWorld();
         FallingManager.fallingManagers.computeIfAbsent(worldIn, FallingManager::new).onChop(event.getPos(), fallingDirection);
-    }
-    
-    public static void chopEvent(IWorld worldIn, BlockState state, BlockPos pos, Direction direction) {
-    	if (isFalling) {
-			return;
-		}
-    	if (!(state.getBlock() instanceof BlockLog)) {
-        	return;
-        }
-    	if (!state.get(BlockLog.TREE)) {
-			return;
-		}
-    	isFalling = true;
-        FallingManager.fallingManagers.computeIfAbsent(worldIn, FallingManager::new).onChop(pos, direction);
     }
 }

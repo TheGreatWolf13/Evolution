@@ -15,9 +15,11 @@ public class PacketCSOpenExtendedInventory extends PacketAbstract {
         super(LogicalSide.SERVER);
     }
 
+    @SuppressWarnings("unused")
     public static void encode(PacketCSOpenExtendedInventory message, PacketBuffer buffer) {
     }
 
+    @SuppressWarnings("unused")
     public static PacketCSOpenExtendedInventory decode(PacketBuffer buffer) {
         return new PacketCSOpenExtendedInventory();
     }
