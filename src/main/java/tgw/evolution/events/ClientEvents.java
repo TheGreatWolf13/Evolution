@@ -93,6 +93,7 @@ public class ClientEvents {
     private boolean leftIsSwingInProgress;
     private float leftEquipProgress;
     private float leftPrevEquipProgress;
+    private boolean requiresReequiping;
 
     public ClientEvents(Minecraft mc) {
         this.mc = mc;
@@ -204,21 +205,22 @@ public class ClientEvents {
                 this.jump = false;
                 if (!player.isOnLadder() && !player.abilities.isFlying) {
                     player.setMotion(motion.x, motion.y - 0.055, motion.z);
-                    Evolution.LOGGER.debug("jump slowdown = {}", this.getJumpSlowDown());
                 }
             }
         }
         //Runs at the start of each tick
         if (event.phase == TickEvent.Phase.START) {
             //RayTrace entities
-            EntityRayTraceResult leftRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player, 1f, this.mc.player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue());
-            this.leftPointedEntity = leftRayTrace == null ? null : leftRayTrace.getEntity();
-            if (this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable) {
-                EntityRayTraceResult rightRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player, 1f, ((IOffhandAttackable) this.mc.player.getHeldItemOffhand().getItem()).getReach() + 5);
-                this.rightPointedEntity = rightRayTrace == null ? null : rightRayTrace.getEntity();
-            }
-            else {
-                this.rightPointedEntity = null;
+            if (!this.mc.isGamePaused()) {
+                EntityRayTraceResult leftRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player, 1f, this.mc.player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue());
+                this.leftPointedEntity = leftRayTrace == null ? null : leftRayTrace.getEntity();
+                if (this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable) {
+                    EntityRayTraceResult rightRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player, 1f, ((IOffhandAttackable) this.mc.player.getHeldItemOffhand().getItem()).getReach() + 5);
+                    this.rightPointedEntity = rightRayTrace == null ? null : rightRayTrace.getEntity();
+                }
+                else {
+                    this.rightPointedEntity = null;
+                }
             }
             //Handle two-handed items
             if (this.mc.player.getHeldItemMainhand().getItem() instanceof ITwoHanded && !this.mc.player.getHeldItemOffhand().isEmpty()) {
@@ -258,36 +260,44 @@ public class ClientEvents {
             this.previousPressed = pressed;
             this.updateClientProneState(this.mc.player);
             //Handle swing
-            this.rightPrevSwingProgress = this.rightSwingProgress;
-            this.rightPrevEquipProgress = this.rightEquipProgress;
-            this.leftPrevSwingProgress = this.leftSwingProgress;
-            this.leftPrevEquipProgress = this.leftEquipProgress;
-            this.updateArmSwingProgress();
-            if (this.mc.player.isRowingBoat()) {
-                this.leftEquipProgress = MathHelper.clamp(this.leftEquipProgress - 0.4F, 0.0F, 1.0F);
-                this.rightEquipProgress = MathHelper.clamp(this.rightEquipProgress - 0.4F, 0.0F, 1.0F);
-            }
-            else {
-                float cooledAttackStrength = this.getRightCooledAttackStrength(this.mc.player.getHeldItemOffhand().getItem(), 1);
-                this.rightEquipProgress += MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength - this.rightEquipProgress, -0.4F, 0.4F);
-                cooledAttackStrength = this.getLeftCooledAttackStrength(1);
-                this.leftEquipProgress += MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength - this.leftEquipProgress, -0.4F, 0.4F);
-            }
-            ItemStack stackOffhand = this.mc.player.getHeldItemOffhand();
-            if (MathHelper.areItemStacksSufficientlyEqual(stackOffhand, this.offhandStack)) {
-                this.rightTimeSinceLastHit++;
-            }
-            else {
-                this.rightTimeSinceLastHit = 0;
-                this.offhandStack = stackOffhand;
-            }
-            ItemStack stackMainhand = this.mc.player.getHeldItemMainhand();
-            if (MathHelper.areItemStacksSufficientlyEqual(stackMainhand, this.mainhandStack)) {
-                this.leftTimeSinceLastHit++;
-            }
-            else {
-                this.leftTimeSinceLastHit = 0;
-                this.mainhandStack = stackMainhand;
+            if (!this.mc.isGamePaused()) {
+                if (this.mc.playerController.getIsHittingBlock()) {
+                    this.requiresReequiping = false;
+                }
+                this.rightPrevSwingProgress = this.rightSwingProgress;
+                this.rightPrevEquipProgress = this.rightEquipProgress;
+                this.leftPrevSwingProgress = this.leftSwingProgress;
+                this.leftPrevEquipProgress = this.leftEquipProgress;
+                this.updateArmSwingProgress();
+                if (this.mc.player.isRowingBoat()) {
+                    this.leftEquipProgress = MathHelper.clamp(this.leftEquipProgress - 0.4F, 0.0F, 1.0F);
+                    this.rightEquipProgress = MathHelper.clamp(this.rightEquipProgress - 0.4F, 0.0F, 1.0F);
+                }
+                else {
+                    float cooledAttackStrength = this.getRightCooledAttackStrength(this.mc.player.getHeldItemOffhand().getItem(), 1);
+                    this.rightEquipProgress += MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength - this.rightEquipProgress, -0.4F, 0.4F);
+                    cooledAttackStrength = this.getLeftCooledAttackStrength(1);
+                    this.leftEquipProgress += MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength - this.leftEquipProgress, -0.4F, 0.4F);
+                }
+                if (!this.requiresReequiping) {
+                    this.leftEquipProgress = 1f;
+                }
+                ItemStack stackOffhand = this.mc.player.getHeldItemOffhand();
+                if (MathHelper.areItemStacksSufficientlyEqual(stackOffhand, this.offhandStack)) {
+                    this.rightTimeSinceLastHit++;
+                }
+                else {
+                    this.rightTimeSinceLastHit = 0;
+                    this.offhandStack = stackOffhand;
+                }
+                ItemStack stackMainhand = this.mc.player.getHeldItemMainhand();
+                if (MathHelper.areItemStacksSufficientlyEqual(stackMainhand, this.mainhandStack)) {
+                    this.leftTimeSinceLastHit++;
+                }
+                else {
+                    this.leftTimeSinceLastHit = 0;
+                    this.mainhandStack = stackMainhand;
+                }
             }
         }
     }
@@ -473,8 +483,7 @@ public class ClientEvents {
             renderer.renderItemInFirstPerson(this.mc.player, partialTicks, pitch, Hand.OFF_HAND, rightSwingProgress, this.mc.player.getHeldItemOffhand(), rightEquipProgress);
             return;
         }
-        float cooldown = this.mc.player.getCooldownPeriod();
-        if (event.getHand() == Hand.MAIN_HAND && this.leftTimeSinceLastHit <= cooldown) {
+        if (event.getHand() == Hand.MAIN_HAND && this.requiresReequiping) {
             event.setCanceled(true);
             float partialTicks = event.getPartialTicks();
             float pitch = event.getInterpolatedPitch();
@@ -593,6 +602,7 @@ public class ClientEvents {
     private void onLeftMouseClick() {
         float cooldown = this.mc.player.getCooldownPeriod();
         if (this.leftTimeSinceLastHit >= cooldown && this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
+            this.requiresReequiping = true;
             this.leftTimeSinceLastHit = 0;
             EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.leftPointedEntity, Hand.MAIN_HAND));
             this.swingArm(Hand.MAIN_HAND);
