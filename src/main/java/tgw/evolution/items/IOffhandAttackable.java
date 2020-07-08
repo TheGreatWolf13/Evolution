@@ -2,7 +2,7 @@ package tgw.evolution.items;
 
 public interface IOffhandAttackable {
 
-    float getAttackSpeed();
+    double getAttackSpeed();
 
     double getReach();
 

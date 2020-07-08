@@ -25,6 +25,7 @@ import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.player.CriticalHitEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
+import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.IFireAspect;
@@ -38,6 +39,8 @@ import java.util.Random;
 
 public abstract class PlayerHelper {
 
+    public static final double ATTACK_SPEED = 2;
+    public static final double REACH_DISTANCE = 3;
     private static final Random RAND = new Random();
 
     private static void swingArm(PlayerEntity player, Hand hand) {
@@ -216,6 +219,7 @@ public abstract class PlayerHelper {
     @Nullable
     public static EquipmentSlotType getPartByPosition(double y, PlayerEntity player) {
         double yRelativistic = y - player.posY;
+        Evolution.LOGGER.debug("yRelative = {}", yRelativistic);
         if (player.isSneaking()) {
             if (yRelativistic <= 0.25) {
                 return EquipmentSlotType.FEET;
@@ -234,22 +238,19 @@ public abstract class PlayerHelper {
         if (yRelativistic <= 0.375) {
             return EquipmentSlotType.FEET;
         }
-        if (MathHelper.rangeInclusive(yRelativistic, 0.375, 0.875)) {
+        if (MathHelper.rangeInclusive(yRelativistic, 0.375, 0.89)) {
             return EquipmentSlotType.LEGS;
         }
-        if (MathHelper.rangeInclusive(yRelativistic, 0.875, 1.5)) {
+        if (MathHelper.rangeInclusive(yRelativistic, 0.89, 1.415)) {
             return EquipmentSlotType.CHEST;
         }
-        if (yRelativistic >= 1.5) {
+        if (yRelativistic >= 1.415) {
             return EquipmentSlotType.HEAD;
         }
         return null;
     }
 
     public static float getHitMultiplier(@Nullable EquipmentSlotType type, PlayerEntity player, float damage) {
-        if (type == null) {
-            return 1;
-        }
         switch (type) {
             case HEAD:
                 headHit(player, damage, 1.75f);
@@ -265,9 +266,6 @@ public abstract class PlayerHelper {
     }
 
     public static float getProjectileModifier(@Nullable EquipmentSlotType type) {
-        if (type == null) {
-            return 1;
-        }
         switch (type) {
             case HEAD:
                 return 2.0f;

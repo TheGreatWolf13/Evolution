@@ -19,6 +19,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.entities.EvolutionAttributes;
 import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.init.EvolutionSounds;
+import tgw.evolution.util.PlayerHelper;
 
 public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpear {
 
@@ -34,8 +35,8 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
         this.addPropertyOverride(new ResourceLocation("throwing"), (stack, world, entity) -> entity != null && entity.isHandActive() && entity.getActiveItemStack() == stack ? 1.0F : 0.0F);
     }
 
-    public float getAttackSpeed() {
-        return this.speed - 4;
+    public double getAttackSpeed() {
+        return this.speed - PlayerHelper.ATTACK_SPEED;
     }
 
     @Override
@@ -67,9 +68,13 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
         if (equipmentSlot == EquipmentSlotType.MAINHAND) {
             multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(), new AttributeModifier(ATTACK_DAMAGE_MODIFIER, "Tool modifier", this.damage, AttributeModifier.Operation.ADDITION));
             multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(), new AttributeModifier(ATTACK_SPEED_MODIFIER, "Tool modifier", this.getAttackSpeed(), AttributeModifier.Operation.ADDITION));
-            multimap.put(PlayerEntity.REACH_DISTANCE.getName(), new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER, "Reach Modifier", 5, AttributeModifier.Operation.ADDITION));
+            multimap.put(PlayerEntity.REACH_DISTANCE.getName(), new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER, "Reach Modifier", this.getReach(), AttributeModifier.Operation.ADDITION));
         }
         return multimap;
+    }
+
+    public double getReach() {
+        return 5 - PlayerHelper.REACH_DISTANCE;
     }
 
     @Override

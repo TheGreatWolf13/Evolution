@@ -56,6 +56,7 @@ import tgw.evolution.network.PacketCSSetProne;
 import tgw.evolution.potion.EffectDizziness;
 import tgw.evolution.util.EvolutionStyles;
 import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.PlayerHelper;
 
 import java.util.UUID;
 
@@ -66,7 +67,6 @@ public class ClientEvents {
     private static final ITextComponent COMPONENT_TWO_HANDED = new TranslationTextComponent(TWO_HANDED).setStyle(EvolutionStyles.WHITE);
     private final Minecraft mc;
     private boolean inverted;
-    private boolean renderFood;
     //Jump variables
     private boolean jump;
     private boolean isJumpPressed;
@@ -114,8 +114,8 @@ public class ClientEvents {
     }
 
     private static float getRightCooldownPeriod(IOffhandAttackable item) {
-        float attackSpeed = item.getAttackSpeed() + 4;
-        return 1 / attackSpeed * 20;
+        double attackSpeed = item.getAttackSpeed() + PlayerHelper.ATTACK_SPEED;
+        return (float) (1 / attackSpeed * 20);
     }
 
     @SubscribeEvent
@@ -215,7 +215,7 @@ public class ClientEvents {
                 EntityRayTraceResult leftRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player, 1f, this.mc.player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue());
                 this.leftPointedEntity = leftRayTrace == null ? null : leftRayTrace.getEntity();
                 if (this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable) {
-                    EntityRayTraceResult rightRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player, 1f, ((IOffhandAttackable) this.mc.player.getHeldItemOffhand().getItem()).getReach() + 5);
+                    EntityRayTraceResult rightRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player, 1f, ((IOffhandAttackable) this.mc.player.getHeldItemOffhand().getItem()).getReach() + PlayerHelper.REACH_DISTANCE);
                     this.rightPointedEntity = rightRayTrace == null ? null : rightRayTrace.getEntity();
                 }
                 else {
@@ -225,10 +225,12 @@ public class ClientEvents {
             //Handle two-handed items
             if (this.mc.player.getHeldItemMainhand().getItem() instanceof ITwoHanded && !this.mc.player.getHeldItemOffhand().isEmpty()) {
                 this.leftTimeSinceLastHit = 0;
+                this.requiresReequiping = true;
                 ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, Integer.MAX_VALUE, "field_71429_W");
                 this.mc.player.sendStatusMessage(COMPONENT_TWO_HANDED, true);
             }
-            if (this.getLeftCooledAttackStrength(1f) != 1 && this.mc.objectMouseOver != null && this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
+            //Prevents the player from attacking if on cooldown
+            if (this.getLeftCooledAttackStrength(0) != 1 && this.mc.objectMouseOver != null && this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
                 ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, Integer.MAX_VALUE, "field_71429_W");
             }
             //Handle Disoriented Effect
@@ -279,9 +281,6 @@ public class ClientEvents {
                     cooledAttackStrength = this.getLeftCooledAttackStrength(1);
                     this.leftEquipProgress += MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength - this.leftEquipProgress, -0.4F, 0.4F);
                 }
-                if (!this.requiresReequiping) {
-                    this.leftEquipProgress = 1f;
-                }
                 ItemStack stackOffhand = this.mc.player.getHeldItemOffhand();
                 if (MathHelper.areItemStacksSufficientlyEqual(stackOffhand, this.offhandStack)) {
                     this.rightTimeSinceLastHit++;
@@ -319,18 +318,12 @@ public class ClientEvents {
 
     @SubscribeEvent
     public void onRenderGameOverlay(RenderGameOverlayEvent.Pre event) {
-        if (event.getType() == RenderGameOverlayEvent.ElementType.FOOD) {
-            this.renderFood = true;
+        if (this.mc.player.getRidingEntity() != null) {
+            ForgeIngameGui.renderFood = true;
         }
         if (event.getType() == RenderGameOverlayEvent.ElementType.CROSSHAIRS) {
             event.setCanceled(true);
             this.renderAttackIndicator();
-        }
-        if (!event.isCancelable() || !this.renderFood) {
-            return;
-        }
-        if (this.mc.player.getRidingEntity() != null) {
-            ForgeIngameGui.renderFood = true;
         }
     }
 
@@ -490,6 +483,9 @@ public class ClientEvents {
             float leftSwingProgress = this.getLeftSwingProgress(partialTicks);
             FirstPersonRenderer renderer = this.mc.getFirstPersonRenderer();
             float leftEquipProgress = 1.0F - MathHelper.lerp(partialTicks, this.leftPrevEquipProgress, this.leftEquipProgress);
+            if (this.leftEquipProgress == 1 && this.leftPrevEquipProgress == 1 && this.leftTimeSinceLastHit != 0) {
+                this.requiresReequiping = false;
+            }
             renderer.renderItemInFirstPerson(this.mc.player, partialTicks, pitch, Hand.MAIN_HAND, leftSwingProgress, this.mc.player.getHeldItemMainhand(), leftEquipProgress);
         }
     }

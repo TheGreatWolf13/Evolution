@@ -15,6 +15,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import tgw.evolution.entities.EvolutionAttributes;
+import tgw.evolution.util.PlayerHelper;
 
 import java.util.Set;
 
@@ -84,7 +85,7 @@ public abstract class ItemTool extends ItemTiered implements IDurability {
     protected abstract float setBaseDamage();
 
     public double getReach() {
-        return this.setReach() - 5F;
+        return this.setReach() - PlayerHelper.REACH_DISTANCE;
     }
 
     public float getEfficiency() {
@@ -95,7 +96,7 @@ public abstract class ItemTool extends ItemTiered implements IDurability {
         return this.setBaseDamage() + this.getTier().getAttackDamage();
     }
 
-    public float getAttackSpeed() {
-        return this.attackSpeed - 4;
+    public double getAttackSpeed() {
+        return this.attackSpeed - PlayerHelper.ATTACK_SPEED;
     }
 }

@@ -132,6 +132,28 @@ public class MathHelper {
     }
 
     /**
+     * Caps the lower limit of a value.
+     *
+     * @param value The value to cap.
+     * @param min   The lower limit.
+     * @return The original value, if it is not less than the {@code min}, otherwise returns the {@code min}.
+     */
+    public static float clampMin(float value, float min) {
+        return Math.max(value, min);
+    }
+
+    /**
+     * Caps the lower limit of a value.
+     *
+     * @param value The value to cap.
+     * @param min   The lower limit.
+     * @return The original value, if it is not less than the {@code min}, otherwise returns the {@code min}.
+     */
+    public static double clampMin(double value, double min) {
+        return Math.max(value, min);
+    }
+
+    /**
      * Caps the upper limit of a value.
      *
      * @param value The value to cap.
@@ -297,17 +319,6 @@ public class MathHelper {
     }
 
     /**
-     * Calculates the amount to add to the default attack speed (4.0) to change it
-     * to the given charge time.
-     *
-     * @param chargeTimeInSec The time it takes to charge the item.
-     * @return the corresponding attack speed, which must be added to the default one.
-     */
-    public static double attackSpeedAdd(double chargeTimeInSec) {
-        return 1.0 / chargeTimeInSec - 4.0;
-    }
-
-    /**
      * Rotates a {@link Nonnull} square {@code boolean} matrix clockwise.
      *
      * @param input A square {@code boolean} matrix.
@@ -437,6 +448,35 @@ public class MathHelper {
         Vec3d look = entity.getLook(partialTicks);
         Vec3d to = from.add(look.x * reachDistance, look.y * reachDistance, look.z * reachDistance);
         return rayTraceEntities(entity, from, to, new AxisAlignedBB(from, to), reachDistance * reachDistance);
+    }
+
+    /**
+     * Casts a ray tracing for {@code Entities} based on the {@link Entity}'s {@link Entity#rotationYaw} and {@link Entity#rotationPitch}.
+     * This method is useful for Entities that are projectiles, as {@link MathHelper#rayTraceEntityFromEyes(Entity, float, double)}
+     * usually do not work on them.
+     *
+     * @param entity   The {@link Entity} from whose {@code yaw} and {@code pitch} to cast the ray.
+     * @param distance The maximum distance this ray will travel.
+     * @return An {@link EntityRayTraceResult} containing the {@link Entity} hit by the ray traced
+     * and a {@link Vec3d} containing the position of the hit. If no {@link Entity} was hit by the ray,
+     * this {@link EntityRayTraceResult} will be {@code null}.
+     */
+    @Nullable
+    public static EntityRayTraceResult rayTraceEntityFromPitchAndYaw(@Nonnull Entity entity, double distance) {
+        Vec3d from = entity.getEyePosition(1f);
+        float theta = entity.rotationYaw;
+        if (theta < 0) {
+            theta += 360;
+        }
+        theta = MathHelper.degToRad(theta);
+        float phi = entity.rotationPitch;
+        if (phi < 0) {
+            phi += 360;
+        }
+        phi = MathHelper.degToRad(phi);
+        Vec3d looking = new Vec3d(MathHelper.sin(theta), MathHelper.sin(phi), MathHelper.cos(theta)).normalize();
+        Vec3d to = from.add(looking.x * distance, looking.y * distance, looking.z * distance);
+        return rayTraceEntities(entity, from, to, new AxisAlignedBB(from, to), distance * distance);
     }
 
     /**
