@@ -46,6 +46,9 @@ public class PuzzlePattern {
     }
 
     public PuzzlePiece getRandomPiece(Random rand) {
+        if (this.puzzlePieces.size() == 0) {
+            throw new IllegalStateException("Pool size is ZERO: " + this.pool);
+        }
         return this.puzzlePieces.get(rand.nextInt(this.puzzlePieces.size()));
     }
 

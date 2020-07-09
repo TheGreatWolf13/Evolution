@@ -2,6 +2,7 @@ package tgw.evolution.blocks.tileentities;
 
 import com.google.common.collect.Lists;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
@@ -339,7 +340,7 @@ public class TESchematic extends TileEntity {
             catch (ResourceLocationException exception) {
                 return false;
             }
-            template.takeBlocksFromWorld(this.world, pos, this.size, !this.ignoreEntities, EvolutionBlocks.SCHEMATIC_BLOCK.get());
+            template.takeBlocksFromWorld(this.world, pos, this.size, !this.ignoreEntities, Blocks.STRUCTURE_VOID);
             if (writeToDisk) {
                 try {
                     return templateManager.writeToFile(this.name);
