@@ -7,7 +7,7 @@ import java.util.Random;
 public enum CivilizationType {
     NORMAL(0, 15),
     TRIBAL(1, 5),
-    STEAMPUNK(2, 1),
+    //STEAMPUNK(2, 1), //removed until technology is developed
     BLIGHTTOWN(3, 5);
 
     private static int weightSum;

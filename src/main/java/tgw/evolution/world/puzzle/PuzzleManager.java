@@ -18,6 +18,7 @@ import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockPuzzle;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.world.feature.structures.config.IConfigStruct;

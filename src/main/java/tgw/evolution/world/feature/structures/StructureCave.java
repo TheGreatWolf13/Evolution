@@ -35,7 +35,7 @@ public class StructureCave extends Structure<NoFeatureConfig> {
         ((SharedSeedRandom) random).setLargeFeatureSeedWithSalt(chunkGenerator.getSeed(), validChunkX, validChunkZ, this.getSeedModifier());
         validChunkX = validChunkX * maxDistance;
         validChunkZ = validChunkZ * maxDistance;
-        int minDistance = 40;
+        int minDistance = 20;
         validChunkX = validChunkX + random.nextInt(maxDistance - minDistance);
         validChunkZ = validChunkZ + random.nextInt(maxDistance - minDistance);
         return new ChunkPos(validChunkX, validChunkZ);
@@ -74,11 +74,15 @@ public class StructureCave extends Structure<NoFeatureConfig> {
 
         @Override
         public void init(ChunkGenerator<?> generator, TemplateManager templateManagerIn, int chunkX, int chunkZ, Biome biomeIn) {
+            ConfigStructCave caveConfig = new ConfigStructCave(generator.getSeed(), chunkX, chunkZ);
+            //
             int x = (chunkX << 4) + 8;
             int z = (chunkZ << 4) + 8;
-            int surfaceY = generator.func_222531_c(x, z, Heightmap.Type.WORLD_SURFACE_WG);
+            //
+            int surfaceY = caveConfig.hasEntrance() ? generator.func_222531_c(x, z, Heightmap.Type.WORLD_SURFACE_WG) : (16 + caveConfig.getRandom().nextInt(12));
+            //
             BlockPos pos = new BlockPos(x, surfaceY + 1, z);
-            StructureCavePieces.start(generator, templateManagerIn, pos, this.components, this.rand, new ConfigStructCave(generator.getSeed(), chunkX, chunkZ));
+            StructureCavePieces.start(generator, templateManagerIn, pos, this.components, this.rand, caveConfig);
             this.recalculateStructureSize();
         }
     }
