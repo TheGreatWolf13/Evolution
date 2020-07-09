@@ -80,7 +80,14 @@ public class CavePuzzlePiece extends ConfiguredPuzzlePiece {
         }
         //Test for civilization type
         if (this.civType != cave.getCivType()) {
-            return false;
+            //
+            if (this.civType != CivilizationType.NORMAL) {
+                return false;
+            }
+            //
+            if (cave.getRandom().nextFloat() > 0.7f) {
+                return false;
+            }
         }
         //Test for danger
         if (this.danger == -1) {

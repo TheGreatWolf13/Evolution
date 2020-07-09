@@ -8,6 +8,7 @@ public class ConfigStructCave implements IConfigStruct {
 
     private final Random random;
     private final boolean hasMega;
+    private final boolean hasEntrance;
     private final float danger;
     private final CivilizationType type;
     private boolean megaGenerated;
@@ -16,11 +17,16 @@ public class ConfigStructCave implements IConfigStruct {
         this.random = new Random(seed * x + z);
         this.danger = this.random.nextFloat();
         this.type = CivilizationType.getRandom(this.random);
+        this.hasEntrance = this.random.nextBoolean();
         this.hasMega = this.random.nextBoolean();
     }
 
     public boolean hasMega() {
         return this.hasMega;
+    }
+
+    public boolean hasEntrance() {
+        return this.hasEntrance;
     }
 
     public float getDanger() {
