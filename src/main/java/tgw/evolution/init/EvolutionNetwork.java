@@ -35,6 +35,7 @@ public class EvolutionNetwork {
         INSTANCE.registerMessage(increaseId(), PacketCSSetMoldingType.class, PacketCSSetMoldingType::encode, PacketCSSetMoldingType::decode, PacketCSSetMoldingType::handle);
         INSTANCE.registerMessage(increaseId(), PacketCSUpdateSchematicBlock.class, PacketCSUpdateSchematicBlock::encode, PacketCSUpdateSchematicBlock::decode, PacketCSUpdateSchematicBlock::handle);
         INSTANCE.registerMessage(increaseId(), PacketCSPlayerFall.class, PacketCSPlayerFall::encode, PacketCSPlayerFall::decode, PacketCSPlayerFall::handle);
+        INSTANCE.registerMessage(increaseId(), PacketCSChangeBlock.class, PacketCSChangeBlock::encode, PacketCSChangeBlock::decode, PacketCSChangeBlock::handle);
     }
 
     public static boolean checkSide(Supplier<NetworkEvent.Context> context, PacketAbstract packet) {

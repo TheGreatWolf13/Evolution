@@ -2,6 +2,7 @@ package tgw.evolution.events;
 
 import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
@@ -17,6 +18,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.UseAction;
@@ -50,6 +52,7 @@ import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.IOffhandAttackable;
 import tgw.evolution.items.ITwoHanded;
+import tgw.evolution.network.PacketCSChangeBlock;
 import tgw.evolution.network.PacketCSOpenExtendedInventory;
 import tgw.evolution.network.PacketCSPlayerAttack;
 import tgw.evolution.network.PacketCSSetProne;
@@ -607,6 +610,16 @@ public class ClientEvents {
 
     //Handle offhand attack
     private void onRightMouseClick() {
+        if (this.mc.player.isCreative() && this.mc.player.isSneaking() && this.mc.player.getHeldItemMainhand().getItem() instanceof BlockItem) {
+            if (this.mc.objectMouseOver instanceof BlockRayTraceResult) {
+                BlockPos pos = ((BlockRayTraceResult) this.mc.objectMouseOver).getPos();
+                if (this.mc.world.getBlockState(pos).getBlock() != Blocks.AIR) {
+                    EvolutionNetwork.INSTANCE.sendToServer(new PacketCSChangeBlock((BlockRayTraceResult) this.mc.objectMouseOver));
+                    ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, 10, "field_71467_ac");
+                }
+                return;
+            }
+        }
         Item offhandItem = this.mc.player.getHeldItemOffhand().getItem();
         if (!(offhandItem instanceof IOffhandAttackable)) {
             return;

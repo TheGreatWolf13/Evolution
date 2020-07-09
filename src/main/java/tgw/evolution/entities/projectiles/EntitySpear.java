@@ -33,7 +33,7 @@ public class EntitySpear extends AbstractArrowEntity implements IEntityAdditiona
     private final double gravity;
     private final double verticalDrag;
     private final double horizontalDrag;
-    public boolean dealtDamage;
+    private boolean dealtDamage;
     private float damage;
     private ItemStack stack;
 
