@@ -105,7 +105,10 @@
 	
 	"COMMENT": "TOOLTIPS",
 	"evolution.tooltip.clay.mold": " Coloque enquanto agachado para moldar",
-	"evolution.tooltip.damage": " %1$s Dano de Ataque",
+	"evolution.tooltip.damage.generic": " %1$s Dano de Ataque",
+	"evolution.tooltip.damage.crushing": " %1$s Dano Esmagante",
+	"evolution.tooltip.damage.piercing": " %1$s Dano Penetrante",
+	"evolution.tooltip.damage.slashing": " %1$s Dano Cortante",	
 	"evolution.tooltip.distance": " %1$s Distância de Alcance",
 	"evolution.tooltip.durability": " %1$s Durabilidade",
 	"evolution.tooltip.fire_aspect": " ► %1$s Aspecto Flamejante %2$s",

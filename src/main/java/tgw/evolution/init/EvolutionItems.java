@@ -648,7 +648,7 @@ public class EvolutionItems {
     }
 
     private static Item javelin(ToolMaterials tier) {
-        return new ItemJavelin(propStoneTool().maxDamage(tier.getMaxUses()).setTEISR(() -> RenderStackItemJavelin::new), tier.getAttackDamage(), MathHelper.attackSpeed(0.9F + tier.getAttackSpeedMod()), tier.getName());
+        return new ItemJavelin(propStoneTool().maxDamage(tier.getMaxUses()).setTEISR(() -> RenderStackItemJavelin::new), tier.getAttackDamage(), MathHelper.attackSpeed(0.9F + tier.getAttackSpeedMod()), tier.getName(), tier.getJavelinMass());
     }
 
     public static Item.Properties propMisc() {
@@ -680,19 +680,19 @@ public class EvolutionItems {
     }
 
     private static Item axeStone(ToolMaterials tier) {
-        return new ItemAxe(tier, MathHelper.attackSpeed(1.25F + tier.getAttackSpeedMod()), propStoneTool());
+        return new ItemAxe(tier, MathHelper.attackSpeed(1.25F + tier.getAttackSpeedMod()), propStoneTool(), tier.getAxeMass());
     }
 
     private static Item pickaxe(ToolMaterials tier) {
-        return new ItemPickaxe(tier, MathHelper.attackSpeed(0.85F + tier.getAttackSpeedMod()), propMisc());
+        return new ItemPickaxe(tier, MathHelper.attackSpeed(0.85F + tier.getAttackSpeedMod()), propMisc(), tier.getPickaxeMass());
     }
 
     private static Item shovelStone(ToolMaterials tier) {
-        return new ItemShovel(tier, MathHelper.attackSpeed(1.0F + tier.getAttackSpeedMod()), propStoneTool());
+        return new ItemShovel(tier, MathHelper.attackSpeed(1.0F + tier.getAttackSpeedMod()), propStoneTool(), tier.getShovelMass());
     }
 
     private static Item hammerStone(ToolMaterials tier) {
-        return new ItemHammer(tier, MathHelper.attackSpeed(1.25F + tier.getAttackSpeedMod()), propStoneTool());
+        return new ItemHammer(tier, MathHelper.attackSpeed(1.25F + tier.getAttackSpeedMod()), propStoneTool(), tier.getHammerMass());
     }
 
     //    private static Item hoe(IItemTier tier) {

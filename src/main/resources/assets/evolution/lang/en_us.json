@@ -105,7 +105,10 @@
 	
 	"COMMENT": "TOOLTIPS",
 	"evolution.tooltip.clay.mold": " Place while sneaking to mold",
-	"evolution.tooltip.damage": " %1$s Attack Damage",
+	"evolution.tooltip.damage.generic": " %1$s Attack Damage",
+	"evolution.tooltip.damage.crushing": " %1$s Crushing Damage",
+	"evolution.tooltip.damage.piercing": " %1$s Piercing Damage",
+	"evolution.tooltip.damage.slashing": " %1$s Slashing Damage",
 	"evolution.tooltip.distance": " %1$s Reach Distance",
 	"evolution.tooltip.durability": " %1$s Durability",
 	"evolution.tooltip.fire_aspect": " ► %1$s Fire Aspect %2$s",

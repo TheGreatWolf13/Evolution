@@ -25,6 +25,7 @@ import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 import tgw.evolution.entities.EvolutionAttributes;
+import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.items.*;
 import tgw.evolution.util.EvolutionStyles;
 import tgw.evolution.util.MathHelper;
@@ -38,7 +39,6 @@ import java.util.stream.Collectors;
 public class ItemEvents {
 
     private static final String SPEED = "evolution.tooltip.speed";
-    private static final String DAMAGE = "evolution.tooltip.damage";
     private static final String DISTANCE = "evolution.tooltip.distance";
     private static final String MINING = "evolution.tooltip.mining";
     private static final String DURABILITY = "evolution.tooltip.durability";
@@ -141,8 +141,8 @@ public class ItemEvents {
                     if (playerIn != null) {
                         if (attributemodifier.getID().compareTo(EvolutionAttributes.ATTACK_DAMAGE_MODIFIER) == 0) {
                             amount += playerIn.getAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getBaseValue();
-                            //amount += (double) EnchantmentHelper.getModifierForCreature(stack, CreatureAttribute.UNDEFINED);
-                            tooltip.add(new TranslationTextComponent(DAMAGE, ItemStack.DECIMALFORMAT.format(amount)).setStyle(EvolutionStyles.DAMAGE));
+                            String damage = stack.getItem() instanceof IMelee ? ((IMelee) stack.getItem()).getDamageType().getTranslationKey() : EvolutionDamage.Type.GENERIC.getTranslationKey();
+                            tooltip.add(new TranslationTextComponent(damage, ItemStack.DECIMALFORMAT.format(amount)).setStyle(EvolutionStyles.DAMAGE));
                             isMassUnique = false;
                             continue;
                         }

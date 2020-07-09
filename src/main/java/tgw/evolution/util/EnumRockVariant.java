@@ -44,7 +44,7 @@ public enum EnumRockVariant {
     private final Block dryGrass;
     private final Block grass;
     private final Block gravel;
-    private final Block stone_bricks;
+    private final Block stoneBricks;
     private final Item axeHead;
     private final Item javelinHead;
     private final Item shovelHead;
@@ -52,7 +52,7 @@ public enum EnumRockVariant {
     private final Item hoeHead;
     private final Item knifeBlade;
 
-    EnumRockVariant(int id, String name, RegistryObject<Block> stone, RegistryObject<Block> cobble, RegistryObject<Block> rock, RegistryObject<Block> knapping, RegistryObject<Block> dirt, RegistryObject<Block> grass, RegistryObject<Block> dryGrass, RegistryObject<Item> axeHead, RegistryObject<Item> javelinHead, RegistryObject<Item> shovelHead, RegistryObject<Item> hammerHead, RegistryObject<Item> hoeHead, RegistryObject<Item> knifeBlade, RegistryObject<Block> gravel, RegistryObject<Block> stone_bricks) {
+    EnumRockVariant(int id, String name, RegistryObject<Block> stone, RegistryObject<Block> cobble, RegistryObject<Block> rock, RegistryObject<Block> knapping, RegistryObject<Block> dirt, RegistryObject<Block> grass, RegistryObject<Block> dryGrass, RegistryObject<Item> axeHead, RegistryObject<Item> javelinHead, RegistryObject<Item> shovelHead, RegistryObject<Item> hammerHead, RegistryObject<Item> hoeHead, RegistryObject<Item> knifeBlade, RegistryObject<Block> gravel, RegistryObject<Block> stoneBricks) {
         this.id = (byte) id;
         this.name = name;
         this.stone = stone != null ? stone.get() : null;
@@ -69,7 +69,7 @@ public enum EnumRockVariant {
         this.hammerHead = hammerHead != null ? hammerHead.get() : null;
         this.knifeBlade = knifeBlade != null ? knifeBlade.get() : null;
         this.hoeHead = hoeHead != null ? hoeHead.get() : null;
-        this.stone_bricks = stone_bricks != null ? stone_bricks.get() : null;
+        this.stoneBricks = stoneBricks != null ? stoneBricks.get() : null;
     }
 
     public static EnumRockVariant fromId(byte id) {
@@ -92,7 +92,7 @@ public enum EnumRockVariant {
             case STONE:
                 return this.stone;
             case STONE_BRICKS:
-                return this.stone_bricks;
+                return this.stoneBricks;
         }
         throw new IllegalStateException("Could not find a Block to replace vanilla " + vanilla);
     }

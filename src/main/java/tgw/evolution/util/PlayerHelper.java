@@ -26,12 +26,10 @@ import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.player.CriticalHitEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
+import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.items.IFireAspect;
-import tgw.evolution.items.IKnockback;
-import tgw.evolution.items.IOffhandAttackable;
-import tgw.evolution.items.ISweepAttack;
+import tgw.evolution.items.*;
 import tgw.evolution.network.PacketSCHandAnimation;
 
 import javax.annotation.Nullable;
@@ -132,7 +130,8 @@ public abstract class PlayerHelper {
                         }
                     }
                     Vec3d targetMotion = targetEntity.getMotion();
-                    boolean attackSuccessfull = targetEntity.attackEntityFrom(DamageSource.causePlayerDamage(player), damage);
+                    EvolutionDamage.Type type = attackItem instanceof IMelee ? ((IMelee) attackItem).getDamageType() : EvolutionDamage.Type.GENERIC;
+                    boolean attackSuccessfull = targetEntity.attackEntityFrom(EvolutionDamage.causePlayerMeleeDamage(player, type), damage);
                     if (attackSuccessfull) {
                         //Knockback calculations
                         if (knockbackModifier > 0) {
@@ -290,5 +289,9 @@ public abstract class PlayerHelper {
         if (RAND.nextFloat() < strength) {
             player.addPotionEffect(new EffectInstance(EvolutionEffects.DIZZINESS.get(), (int) (400 * strength), strength > 0.8f ? 1 : 0, true, false, true));
         }
+    }
+
+    public static void reactToDamageType(PlayerEntity player, EvolutionDamage.Type type) {
+
     }
 }

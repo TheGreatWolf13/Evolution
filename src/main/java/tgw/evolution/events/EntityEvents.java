@@ -46,10 +46,7 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.inventory.ContainerExtendedHandler;
 import tgw.evolution.network.PacketCSPlayerFall;
-import tgw.evolution.util.Gravity;
-import tgw.evolution.util.HarvestLevel;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.PlayerHelper;
+import tgw.evolution.util.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -82,12 +79,12 @@ public class EntityEvents {
         double legHeight = 0.875;
         distanceOfSlowDown += legHeight;
         //TODO entities have a mass attribute
-        int baseMass = 70;
-        int totalMass = baseMass;
+        double baseMass = 70;
+        double totalMass = baseMass;
         if (entity instanceof PlayerEntity) {
             IAttributeInstance massAttribute = ((PlayerEntity) entity).getAttribute(EvolutionAttributes.MASS);
-            baseMass = (int) massAttribute.getBaseValue();
-            totalMass = (int) massAttribute.getValue();
+            baseMass = massAttribute.getBaseValue();
+            totalMass = massAttribute.getValue();
         }
         Evolution.LOGGER.debug("baseMass = {}", baseMass);
         Evolution.LOGGER.debug("totalMass = {}", totalMass);
@@ -362,6 +359,12 @@ public class EntityEvents {
     public void onLivingHurt(LivingHurtEvent event) {
         if (event.getEntityLiving().world.isRemote) {
             return;
+        }
+        if (event.getSource() instanceof DamageSourceMelee) {
+            //TODO my entities damage multipliers
+            if (event.getEntityLiving() instanceof PlayerEntity) {
+                PlayerHelper.reactToDamageType((PlayerEntity) event.getEntityLiving(), ((DamageSourceMelee) event.getSource()).getType());
+            }
         }
         if (event.getSource().getTrueSource() instanceof PlayerEntity) {
             event.getEntityLiving().hurtResistantTime = 0;

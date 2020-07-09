@@ -3,6 +3,7 @@ package tgw.evolution.util;
 import net.minecraft.client.renderer.entity.model.RendererModel;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.item.HangingEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
@@ -32,7 +33,7 @@ public class MathHelper {
     public static final Direction[] DIRECTIONS_HORIZONTAL = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
     public static final DirectionDiagonal[][] DIAGONALS = {{DirectionDiagonal.NORTH_WEST, DirectionDiagonal.NORTH_EAST},
                                                            {DirectionDiagonal.SOUTH_WEST, DirectionDiagonal.SOUTH_EAST}};
-    private static final Predicate<Entity> PREDICATE = EntityPredicates.CAN_AI_TARGET.and(e -> e != null && e.canBeCollidedWith() && e instanceof LivingEntity && !(e instanceof FakePlayer));
+    private static final Predicate<Entity> PREDICATE = EntityPredicates.CAN_AI_TARGET.and(e -> e != null && e.canBeCollidedWith() && (e instanceof LivingEntity || e instanceof HangingEntity) && !(e instanceof FakePlayer));
 
     /**
      * Converts an {@code int} value to {@code short}.

@@ -19,7 +19,7 @@ import tgw.evolution.util.PlayerHelper;
 
 import java.util.Set;
 
-public abstract class ItemTool extends ItemTiered implements IDurability {
+public abstract class ItemTool extends ItemTiered implements IDurability, IMelee, IMass {
 
     protected final float efficiency;
     protected final float attackSpeed;
@@ -72,10 +72,10 @@ public abstract class ItemTool extends ItemTiered implements IDurability {
             multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(), new AttributeModifier(ATTACK_DAMAGE_MODIFIER, "Tool modifier", this.getAttackDamage(), AttributeModifier.Operation.ADDITION));
             multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(), new AttributeModifier(ATTACK_SPEED_MODIFIER, "Tool modifier", this.getAttackSpeed(), AttributeModifier.Operation.ADDITION));
             multimap.put(PlayerEntity.REACH_DISTANCE.getName(), new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER, "Reach Modifier", this.getReach(), AttributeModifier.Operation.ADDITION));
-            multimap.put(EvolutionAttributes.MASS.getName(), new AttributeModifier(EvolutionAttributes.MASS_MODIFIER, "Mass Modifier", 55, AttributeModifier.Operation.ADDITION));
+            multimap.put(EvolutionAttributes.MASS.getName(), new AttributeModifier(EvolutionAttributes.MASS_MODIFIER, "Mass Modifier", this.getMass(), AttributeModifier.Operation.ADDITION));
         }
         else if (equipmentSlot == EquipmentSlotType.OFFHAND) {
-            multimap.put(EvolutionAttributes.MASS.getName(), new AttributeModifier(EvolutionAttributes.MASS_MODIFIER_OFFHAND, "Mass Modifier", 3, AttributeModifier.Operation.ADDITION));
+            multimap.put(EvolutionAttributes.MASS.getName(), new AttributeModifier(EvolutionAttributes.MASS_MODIFIER_OFFHAND, "Mass Modifier", this.getMass(), AttributeModifier.Operation.ADDITION));
         }
         return multimap;
     }
@@ -84,6 +84,7 @@ public abstract class ItemTool extends ItemTiered implements IDurability {
 
     protected abstract float setBaseDamage();
 
+    @Override
     public double getReach() {
         return this.setReach() - PlayerHelper.REACH_DISTANCE;
     }
@@ -92,10 +93,12 @@ public abstract class ItemTool extends ItemTiered implements IDurability {
         return this.efficiency;
     }
 
-    public float getAttackDamage() {
+    @Override
+    public double getAttackDamage() {
         return this.setBaseDamage() + this.getTier().getAttackDamage();
     }
 
+    @Override
     public double getAttackSpeed() {
         return this.attackSpeed - PlayerHelper.ATTACK_SPEED;
     }

@@ -1,8 +1,10 @@
 package tgw.evolution.init;
 
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.IndirectEntityDamageSource;
+import tgw.evolution.util.DamageSourceMelee;
 
 import javax.annotation.Nullable;
 
@@ -22,6 +24,10 @@ public class EvolutionDamage {
         return new IndirectEntityDamageSource("hook", source, indirectEntityIn).setProjectile();
     }
 
+    public static DamageSource causePlayerMeleeDamage(PlayerEntity player, Type type) {
+        return new DamageSourceMelee("player", player, type);
+    }
+
     public enum Type {
         CRUSHING("crushing"),
         GENERIC("generic"),
@@ -29,13 +35,19 @@ public class EvolutionDamage {
         SLASHING("slashing");
 
         private final String name;
+        private final String translationKey;
 
         Type(String name) {
             this.name = name;
+            this.translationKey = "evolution.tooltip.damage." + name;
         }
 
         public String getName() {
             return this.name;
+        }
+
+        public String getTranslationKey() {
+            return this.translationKey;
         }
     }
 }

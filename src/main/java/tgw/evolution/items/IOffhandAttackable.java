@@ -6,5 +6,5 @@ public interface IOffhandAttackable {
 
     double getReach();
 
-    float getAttackDamage();
+    double getAttackDamage();
 }
