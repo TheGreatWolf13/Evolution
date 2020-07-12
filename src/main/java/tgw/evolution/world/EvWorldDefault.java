@@ -10,6 +10,7 @@ import net.minecraft.world.gen.ChunkGenerator;
 import net.minecraft.world.gen.OverworldChunkGenerator;
 import net.minecraft.world.gen.OverworldGenSettings;
 import tgw.evolution.init.EvolutionBiomes;
+import tgw.evolution.init.EvolutionBlocks;
 
 public class EvWorldDefault extends WorldType {
 
@@ -22,6 +23,7 @@ public class EvWorldDefault extends WorldType {
         if (world.getDimension().getType() == DimensionType.OVERWORLD) {
             OverworldGenSettings genSettings = new OverworldGenSettings();
             genSettings.setDefaultBlock(Blocks.STONE.getDefaultState());
+            genSettings.setDefaultFluid(EvolutionBlocks.FRESH_WATER.get().getDefaultState());
             SingleBiomeProviderSettings settings = new SingleBiomeProviderSettings();
             settings.setBiome(EvolutionBiomes.FOREST.get());
             return new OverworldChunkGenerator(world, new SingleBiomeProvider(settings), genSettings);

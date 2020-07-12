@@ -47,6 +47,7 @@ public class Evolution {
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, EvolutionConfig.CLIENT_CONFIG, "evolution-client.toml");
         EvolutionBlocks.register();
         EvolutionItems.register();
+        EvolutionFluids.register();
         EvolutionCarvers.register();
         EvolutionFeatures.register();
         EvolutionEntities.register();

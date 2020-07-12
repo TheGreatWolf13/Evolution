@@ -44,4 +44,8 @@ public class DirectionList {
         }
         return this.values[random.nextInt(this.current)];
     }
+
+    public void clear() {
+        this.current = 0;
+    }
 }

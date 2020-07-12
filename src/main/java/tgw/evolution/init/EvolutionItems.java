@@ -643,6 +643,8 @@ public class EvolutionItems {
     public static final RegistryObject<Item> stone_bricks_shale = ITEMS.register("stone_bricks_shale", () -> itemBlock(STONE_BRICKS_SHALE));
     public static final RegistryObject<Item> stone_bricks_slate = ITEMS.register("stone_bricks_slate", () -> itemBlock(STONE_BRICKS_SLATE));
 
+    public static final RegistryObject<Item> fresh_water_bucket = ITEMS.register("fresh_water_bucket", EvolutionItems::item);
+
     public static void register() {
         ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
     }

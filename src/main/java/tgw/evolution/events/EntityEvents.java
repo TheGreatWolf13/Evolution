@@ -1,6 +1,7 @@
 package tgw.evolution.events;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.item.ItemEntity;
@@ -9,6 +10,7 @@ import net.minecraft.entity.monster.PhantomEntity;
 import net.minecraft.entity.passive.horse.TraderLlamaEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.fluid.IFluidState;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
@@ -107,6 +109,21 @@ public class EntityEvents {
         int equipMass = totalMass - baseMass;
         float stepHeight = 1.0625f - equipMass * 0.00114f;
         return MathHelper.clampMin(stepHeight, 0.6f);
+    }
+
+    private static void calculateWaterFallDamage(Entity entity) {
+        if (entity instanceof ServerPlayerEntity) {
+            return;
+        }
+        BlockPos pos = entity.getPosition();
+        IFluidState fluidState = entity.world.getFluidState(pos);
+        double distanceOfSlowDown = fluidState.getLevel() * 0.0625;
+        double velocity = entity.getMotion().y;
+        if (entity instanceof ClientPlayerEntity) {
+            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerFall(velocity, distanceOfSlowDown));
+            return;
+        }
+        calculateFallDamage(entity, velocity, distanceOfSlowDown);
     }
 
     @SubscribeEvent
@@ -269,6 +286,10 @@ public class EntityEvents {
         double verticalDrag = Gravity.verticalDrag(entity.world.dimension, entity.getWidth());
         event.getEntityLiving().setMotion(entity.getMotion().mul(horizontalDrag, verticalDrag, horizontalDrag));
         event.getEntityLiving().jumpMovementFactor = 0.015F;
+        //Deals with water
+        if (!entity.onGround && entity.isInWater()) {
+            calculateWaterFallDamage(entity);
+        }
         //Reduces the speed of ladders
         if (event.getEntityLiving().isOnLadder()) {
             if (event.getEntityLiving() instanceof PlayerEntity && ((PlayerEntity) event.getEntityLiving()).abilities.isFlying) {
