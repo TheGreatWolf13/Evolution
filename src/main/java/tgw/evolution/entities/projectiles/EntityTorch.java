@@ -18,7 +18,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.network.FMLPlayMessages;
 import net.minecraftforge.fml.network.NetworkHooks;
 import tgw.evolution.blocks.BlockUtils;
-import tgw.evolution.blocks.BlockWallTorch;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionItems;
@@ -102,8 +101,8 @@ public class EntityTorch extends AbstractArrowEntity {
             if (rayTrace != null) {
                 Direction face = rayTrace.getFace();
                 if (BlockUtils.hasSolidSide(this.world, pos.offset(face.getOpposite()), face)) {
-                    if (face != Direction.DOWN) {
-                        BlockState state = face == Direction.UP ? EvolutionBlocks.TORCH.get().getDefaultState() : EvolutionBlocks.WALL_TORCH.get().getDefaultState().with(BlockWallTorch.HORIZONTAL_FACING, face);
+                    if (face == Direction.UP) {
+                        BlockState state = EvolutionBlocks.TORCH.get().getDefaultState();
                         this.world.setBlockState(pos, state);
                         return;
                     }

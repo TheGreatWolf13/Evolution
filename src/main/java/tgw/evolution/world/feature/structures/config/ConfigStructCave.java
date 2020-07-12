@@ -17,8 +17,8 @@ public class ConfigStructCave implements IConfigStruct {
         this.random = new Random(seed * x + z);
         this.danger = this.random.nextFloat();
         this.type = CivilizationType.getRandom(this.random);
-        this.hasEntrance = this.random.nextBoolean();
-        this.hasMega = this.random.nextBoolean();
+        this.hasEntrance = (this.random.nextFloat() < 0.3f);
+        this.hasMega = (this.random.nextFloat() < 0.6f);
     }
 
     public boolean hasMega() {

@@ -62,7 +62,7 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
             }
             if (!worldIn.isRemote) {
                 EntityTorch torch = new EntityTorch(worldIn, player);
-                torch.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, 1.2375f * strength, 1.0F);
+                torch.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, 0.6f * strength, 1.0F);
                 torch.pickupStatus = AbstractArrowEntity.PickupStatus.CREATIVE_ONLY;
                 worldIn.addEntity(torch);
                 worldIn.playMovingSound(null, torch, SoundEvents.ITEM_TRIDENT_THROW, SoundCategory.PLAYERS, 1.0F, 1.0F);
