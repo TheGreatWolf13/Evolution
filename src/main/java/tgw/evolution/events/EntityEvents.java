@@ -397,6 +397,11 @@ public class EntityEvents {
 
     @SubscribeEvent
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (event.player.isCreative()) {
+            event.player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(12);
+        } else {
+            event.player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(PlayerHelper.REACH_DISTANCE);
+        }
         if (event.phase == TickEvent.Phase.END) {
             if (Evolution.PRONED_PLAYERS.getOrDefault(event.player.getUniqueID(), false)) {
                 event.player.setSprinting(false);

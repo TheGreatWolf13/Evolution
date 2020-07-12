@@ -5,10 +5,10 @@ import tgw.evolution.util.MathHelper;
 import java.util.Random;
 
 public enum CivilizationType {
-    NORMAL(0, 15),
-    TRIBAL(1, 5),
+    NORMAL(0, 1), //real weight 15
+    TRIBAL(1, 1), //real weight 5
     //STEAMPUNK(2, 1), //removed until technology is developed
-    BLIGHTTOWN(3, 5);
+    BLIGHTTOWN(3, 0); //real weight 5
 
     private static int weightSum;
     private final byte id;

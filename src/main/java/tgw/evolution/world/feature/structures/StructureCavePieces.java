@@ -3,7 +3,6 @@ package tgw.evolution.world.feature.structures;
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.SharedSeedRandom;
@@ -44,42 +43,61 @@ public class StructureCavePieces {
     static {
         add(CAV_LIST, "caves/cav/cav_mini_2hol1", 10, new CaveConfigPuzzle().underground());
         add(CAV_LIST, "caves/cav/cav_mini_bif1", 10, new CaveConfigPuzzle().underground());
+        add(CAV_LIST, "caves/cav/cav_mini_bif2", 10, new CaveConfigPuzzle().underground());
+        add(CAV_LIST, "caves/cav/cav_mini_bif3", 10, new CaveConfigPuzzle().underground());
         add(CAV_LIST, "caves/cav/cav_mini_cor1", 10, new CaveConfigPuzzle().underground());
         add(CAV_LIST, "caves/cav/cav_mini_corn1", 10, new CaveConfigPuzzle().underground());
         add(CAV_LIST, "caves/cav/cav_mini_holent1", 10, new CaveConfigPuzzle().underground());
         add(CAV_LIST, "caves/cav/cav_mini_holpause1", 10, new CaveConfigPuzzle().underground());
-        add(CAV_LIST, "caves/cav/cav_mini_tran1", 10, new CaveConfigPuzzle().underground());
         add(CAV_LIST, "caves/cav/cav_mini_u1", 10, new CaveConfigPuzzle().underground());
         add(CAV_LIST, "caves/cav/cav_mini_uver1", 10, new CaveConfigPuzzle().underground());
         add(CAV_LIST, "caves/cav/cav_stair1", 10, new CaveConfigPuzzle().underground());
         //--//--//
+        add(CAV_LIST, "caves/cav/tribal/tribal_mega_stair1", 4, new CaveConfigPuzzle().underground().mega().civ(CivilizationType.TRIBAL));
+        add(CAV_LIST, "caves/cav/tribal/tribal_mini_2hol1", 10, new CaveConfigPuzzle().underground().civ(CivilizationType.TRIBAL));
+        add(CAV_LIST, "caves/cav/tribal/tribal_mini_bif1", 10, new CaveConfigPuzzle().underground().civ(CivilizationType.TRIBAL));
+        add(CAV_LIST, "caves/cav/tribal/tribal_mini_bif2", 10, new CaveConfigPuzzle().underground().civ(CivilizationType.TRIBAL));
+        add(CAV_LIST, "caves/cav/tribal/tribal_mini_bif3", 10, new CaveConfigPuzzle().underground().civ(CivilizationType.TRIBAL));
+        add(CAV_LIST, "caves/cav/tribal/tribal_mini_cor1", 10, new CaveConfigPuzzle().underground().civ(CivilizationType.TRIBAL));
+        add(CAV_LIST, "caves/cav/tribal/tribal_mini_corn1", 10, new CaveConfigPuzzle().underground().civ(CivilizationType.TRIBAL));
+        add(CAV_LIST, "caves/cav/tribal/tribal_mini_holent1", 10, new CaveConfigPuzzle().underground().civ(CivilizationType.TRIBAL));
+        add(CAV_LIST, "caves/cav/tribal/tribal_mini_holpause1", 10, new CaveConfigPuzzle().underground().civ(CivilizationType.TRIBAL));
+        add(CAV_LIST, "caves/cav/tribal/tribal_mini_u1", 10, new CaveConfigPuzzle().underground().civ(CivilizationType.TRIBAL));
+        add(CAV_LIST, "caves/cav/tribal/tribal_mini_uver1", 10, new CaveConfigPuzzle().underground().civ(CivilizationType.TRIBAL));
+        add(CAV_LIST, "caves/cav/tribal/tribal_stair1", 10, new CaveConfigPuzzle().underground().civ(CivilizationType.TRIBAL));
+        //--//--//--//
+        add(SUP_LIST, "caves/sup/cav_mega_sup_fenda1", 4, new CaveConfigPuzzle().mega());
+        add(SUP_LIST, "caves/sup/cav_mega_sup_florest1", 4, new CaveConfigPuzzle().mega());
         add(SUP_LIST, "caves/sup/cav_sup_tree1", 10, new CaveConfigPuzzle());
-        //--//--//
+        //--//--//xd
+        add(SUP_LIST, "caves/sup/tribal/tribal_sup_building1", 10, new CaveConfigPuzzle().civ(CivilizationType.TRIBAL));
+        add(SUP_LIST, "caves/sup/tribal/tribal_sup_temple1", 10, new CaveConfigPuzzle().civ(CivilizationType.TRIBAL));
+        //--//--//--//
         add(TERM_LIST, "caves/term/cav_fim_ent1", 10, new CaveConfigPuzzle().underground());
         add(TERM_LIST, "caves/term/cav_fim_ent2", 10, new CaveConfigPuzzle().underground());
         add(TERM_LIST, "caves/term/cav_fim_holu1", 10, new CaveConfigPuzzle().underground());
         add(TERM_LIST, "caves/term/cav_fim_holu2", 10, new CaveConfigPuzzle().underground());
         add(TERM_LIST, "caves/term/cav_fim_hold1", 10, new CaveConfigPuzzle().underground());
         add(TERM_LIST, "caves/term/cav_fim_hold2", 10, new CaveConfigPuzzle().underground());
-        //
+        //--//--//
         add(TERM_LIST, "caves/term/blight_fim_ent1", 10, new CaveConfigPuzzle().civ(CivilizationType.BLIGHTTOWN));
         add(TERM_LIST, "caves/term/blight_fim_ent2", 10, new CaveConfigPuzzle().civ(CivilizationType.BLIGHTTOWN));
         add(TERM_LIST, "caves/term/blight_fim_holu1", 10, new CaveConfigPuzzle().civ(CivilizationType.BLIGHTTOWN));
         add(TERM_LIST, "caves/term/blight_fim_holu2", 10, new CaveConfigPuzzle().civ(CivilizationType.BLIGHTTOWN));
         add(TERM_LIST, "caves/term/blight_fim_hold1", 10, new CaveConfigPuzzle().civ(CivilizationType.BLIGHTTOWN));
         add(TERM_LIST, "caves/term/blight_fim_hold2", 10, new CaveConfigPuzzle().civ(CivilizationType.BLIGHTTOWN));
-        //
+        //--//--//
         add(TERM_LIST, "caves/term/tribal_fim_ent1", 10, new CaveConfigPuzzle().civ(CivilizationType.TRIBAL));
         add(TERM_LIST, "caves/term/tribal_fim_ent2", 10, new CaveConfigPuzzle().civ(CivilizationType.TRIBAL));
         add(TERM_LIST, "caves/term/tribal_fim_holu1", 10, new CaveConfigPuzzle().civ(CivilizationType.TRIBAL));
         add(TERM_LIST, "caves/term/tribal_fim_holu2", 10, new CaveConfigPuzzle().civ(CivilizationType.TRIBAL));
         add(TERM_LIST, "caves/term/tribal_fim_hold1", 10, new CaveConfigPuzzle().civ(CivilizationType.TRIBAL));
         add(TERM_LIST, "caves/term/tribal_fim_hold2", 10, new CaveConfigPuzzle().civ(CivilizationType.TRIBAL));
-        //
+        //--//--//--//
         for (Pair<PuzzlePiece, Integer> piece : TERM_LIST) {
             add(CAV_LIST, piece.getFirst(), 4);
         }
-        //--//--//
+        //--//--//--//
         PuzzleManager.REGISTRY.register(new PuzzlePattern(GEN_SUP, Evolution.location("empty"), ImmutableList.of(Pair.of(new SinglePuzzlePiece("evolution:caves/gen_sup/gen_sup"), 1)), PlacementType.RIGID));
         PuzzleManager.REGISTRY.register(new PuzzlePattern(GEN_UND, Evolution.location("empty"), ImmutableList.of(Pair.of(new SinglePuzzlePiece("evolution:caves/gen_und/gen_und"), 1)), PlacementType.RIGID));
         PuzzleManager.REGISTRY.register(new PuzzlePattern(SUP, Evolution.location("empty"), SUP_LIST, PlacementType.RIGID));
@@ -96,7 +114,7 @@ public class StructureCavePieces {
     }
 
     public static void start(ChunkGenerator<?> generator, TemplateManager manager, BlockPos pos, List<StructurePiece> pieces, SharedSeedRandom random, IConfigStruct config) {
-        int size = 12;
+        int size = 10;
         if (((ConfigStructCave) config).hasEntrance()) {
             PuzzleManager.startGeneration(GEN_SUP, size, StructureCavePieces.Piece::new, generator, manager, pos, pieces, random, config);
         }

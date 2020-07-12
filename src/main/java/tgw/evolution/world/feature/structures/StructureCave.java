@@ -25,7 +25,7 @@ public class StructureCave extends Structure<NoFeatureConfig> {
 
     @Override
     protected ChunkPos getStartPositionForPosition(ChunkGenerator<?> chunkGenerator, Random random, int x, int z, int spacingOffsetsX, int spacingOffsetsZ) {
-        int maxDistance = 60;
+        int maxDistance = 8;
         int xTemp = x + maxDistance * spacingOffsetsX;
         int ztemp = z + maxDistance * spacingOffsetsZ;
         int xTemp2 = xTemp < 0 ? xTemp - maxDistance + 1 : xTemp;
@@ -35,7 +35,7 @@ public class StructureCave extends Structure<NoFeatureConfig> {
         ((SharedSeedRandom) random).setLargeFeatureSeedWithSalt(chunkGenerator.getSeed(), validChunkX, validChunkZ, this.getSeedModifier());
         validChunkX = validChunkX * maxDistance;
         validChunkZ = validChunkZ * maxDistance;
-        int minDistance = 20;
+        int minDistance = 6;
         validChunkX = validChunkX + random.nextInt(maxDistance - minDistance);
         validChunkZ = validChunkZ + random.nextInt(maxDistance - minDistance);
         return new ChunkPos(validChunkX, validChunkZ);
