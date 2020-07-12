@@ -88,17 +88,13 @@ public class EntityEvents {
             baseMass = massAttribute.getBaseValue();
             totalMass = massAttribute.getValue();
         }
-        Evolution.LOGGER.debug("baseMass = {}", baseMass);
-        Evolution.LOGGER.debug("totalMass = {}", totalMass);
         double kinecticEnergy = totalMass * velocity * velocity / 2;
         double forceOfImpact = kinecticEnergy / distanceOfSlowDown;
         double area = entity.getWidth() * entity.getWidth();
         double pressureOfFall = forceOfImpact / area;
         double maxSupportedPressure = baseMass / (area * 0.035);
         double deltaPressure = MathHelper.clampMin(pressureOfFall - maxSupportedPressure, 0);
-        Evolution.LOGGER.debug("deltaPressure = {}", deltaPressure);
         float amount = (float) Math.pow(deltaPressure, 1.7) / 900000;
-        Evolution.LOGGER.debug("amount = {}", amount);
         entity.attackEntityFrom(EvolutionDamage.FALL, amount);
     }
 
@@ -164,11 +160,9 @@ public class EntityEvents {
         ServerPlayerEntity player = (ServerPlayerEntity) event.getPlayer();
         ServerWorld world = (ServerWorld) player.world;
         BlockPos bedPos = player.getBedLocation(player.dimension);
-        if (bedPos != null) {
-            Optional<Vec3d> optional = PlayerEntity.func_213822_a(world, bedPos, false);
-            if (optional.isPresent()) {
-                return;
-            }
+        Optional<Vec3d> optional = PlayerEntity.func_213822_a(world, bedPos, false);
+        if (optional.isPresent()) {
+            return;
         }
         BlockPos worldSpawnPos = world.getSpawnPoint();
         if (world.dimension.hasSkyLight() && world.getWorldInfo().getGameType() != GameType.ADVENTURE) {
@@ -348,9 +342,9 @@ public class EntityEvents {
     @SubscribeEvent
     public void cloneCapabilitiesEvent(PlayerEvent.Clone event) {
         try {
-            ContainerExtendedHandler handler = (ContainerExtendedHandler) event.getOriginal().getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY).orElse(null);
+            ContainerExtendedHandler handler = (ContainerExtendedHandler) event.getOriginal().getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY).orElseThrow(IllegalStateException::new);
             CompoundNBT nbt = handler.serializeNBT();
-            ContainerExtendedHandler handlerClone = (ContainerExtendedHandler) event.getPlayer().getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY).orElse(null);
+            ContainerExtendedHandler handlerClone = (ContainerExtendedHandler) event.getPlayer().getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY).orElseThrow(IllegalStateException::new);
             handlerClone.deserializeNBT(nbt);
         }
         catch (Exception e) {
@@ -367,7 +361,7 @@ public class EntityEvents {
             //Drop contents of extended inventory if keepInventory is off
             PlayerEntity player = (PlayerEntity) event.getEntity();
             if (!player.world.getGameRules().get(GameRules.KEEP_INVENTORY).get()) {
-                ContainerExtendedHandler handler = (ContainerExtendedHandler) player.getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY).orElse(null);
+                ContainerExtendedHandler handler = (ContainerExtendedHandler) player.getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY).orElseThrow(IllegalStateException::new);
                 for (int i = 0; i < handler.getSlots(); i++) {
                     spawnDrops(handler.getStackInSlot(i), player.world, player.getPosition());
                     handler.setStackInSlot(i, ItemStack.EMPTY);

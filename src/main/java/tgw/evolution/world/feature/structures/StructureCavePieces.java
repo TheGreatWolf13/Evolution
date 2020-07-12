@@ -82,7 +82,7 @@ public class StructureCavePieces {
         //--//--//
         PuzzleManager.REGISTRY.register(new PuzzlePattern(GEN_SUP, Evolution.location("empty"), ImmutableList.of(Pair.of(new SinglePuzzlePiece("evolution:caves/gen_sup/gen_sup"), 1)), PlacementType.RIGID));
         PuzzleManager.REGISTRY.register(new PuzzlePattern(GEN_UND, Evolution.location("empty"), ImmutableList.of(Pair.of(new SinglePuzzlePiece("evolution:caves/gen_und/gen_und"), 1)), PlacementType.RIGID));
-        PuzzleManager.REGISTRY.register(new PuzzlePattern(SUP, Evolution.location("empty"),SUP_LIST, PlacementType.RIGID));
+        PuzzleManager.REGISTRY.register(new PuzzlePattern(SUP, Evolution.location("empty"), SUP_LIST, PlacementType.RIGID));
         PuzzleManager.REGISTRY.register(new PuzzlePattern(CAV, TERM, CAV_LIST, PlacementType.RIGID));
         PuzzleManager.REGISTRY.register(new PuzzlePattern(TERM, Evolution.location("empty"), TERM_LIST, PlacementType.RIGID));
     }
@@ -99,7 +99,8 @@ public class StructureCavePieces {
         int size = 12;
         if (((ConfigStructCave) config).hasEntrance()) {
             PuzzleManager.startGeneration(GEN_SUP, size, StructureCavePieces.Piece::new, generator, manager, pos, pieces, random, config);
-        } else {
+        }
+        else {
             PuzzleManager.startGeneration(GEN_UND, size, StructureCavePieces.Piece::new, generator, manager, pos, pieces, random, config);
         }
     }

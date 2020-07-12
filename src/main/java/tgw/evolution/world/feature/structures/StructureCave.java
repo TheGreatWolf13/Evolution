@@ -79,7 +79,7 @@ public class StructureCave extends Structure<NoFeatureConfig> {
             int x = (chunkX << 4) + 8;
             int z = (chunkZ << 4) + 8;
             //
-            int surfaceY = caveConfig.hasEntrance() ? generator.func_222531_c(x, z, Heightmap.Type.WORLD_SURFACE_WG) : (16 + caveConfig.getRandom().nextInt(12));
+            int surfaceY = caveConfig.hasEntrance() ? generator.func_222531_c(x, z, Heightmap.Type.WORLD_SURFACE_WG) : 16 + caveConfig.getRandom().nextInt(12);
             //
             BlockPos pos = new BlockPos(x, surfaceY + 1, z);
             StructureCavePieces.start(generator, templateManagerIn, pos, this.components, this.rand, caveConfig);

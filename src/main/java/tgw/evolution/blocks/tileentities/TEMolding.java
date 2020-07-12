@@ -15,6 +15,8 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTileEntities;
 import tgw.evolution.util.MathHelper;
 
+import javax.annotation.Nullable;
+
 public class TEMolding extends TileEntity {
 
     private final int[] encoded = {0x1FFFFFF, -1, -1, -1, -1};
@@ -23,6 +25,7 @@ public class TEMolding extends TileEntity {
                                       {true, true, true, true, true},
                                       {true, true, true, true, true},
                                       {true, true, true, true, true}}, null, null, null, null};
+    @Nullable
     public VoxelShape hitbox;
     public EnumMolding molding = EnumMolding.NULL;
 

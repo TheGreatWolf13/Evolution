@@ -28,6 +28,7 @@ import net.minecraftforge.common.IShearable;
 import tgw.evolution.entities.EntityFallingWeight;
 import tgw.evolution.init.EvolutionBlocks;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -231,6 +232,7 @@ public class BlockLeaves extends Block implements IShearable, IReplaceable {
         return updateDistance(this.getDefaultState().with(TREE, false), context.getWorld(), context.getPos());
     }
 
+    @Nullable
     @Override
     public ItemStack getDrops(BlockState state) {
         return null;

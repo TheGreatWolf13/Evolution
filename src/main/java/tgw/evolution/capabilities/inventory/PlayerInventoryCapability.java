@@ -6,11 +6,12 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import tgw.evolution.inventory.IExtendedItemHandler;
+import tgw.evolution.util.InjectionUtil;
 
 public class PlayerInventoryCapability {
 
     @CapabilityInject(IExtendedItemHandler.class)
-    public static final Capability<IExtendedItemHandler> CAPABILITY_EXTENDED_INVENTORY = null;
+    public static final Capability<IExtendedItemHandler> CAPABILITY_EXTENDED_INVENTORY = InjectionUtil.Null();
 
     public static void register() {
         CapabilityManager.INSTANCE.register(IExtendedItemHandler.class, new Capability.IStorage<IExtendedItemHandler>() {

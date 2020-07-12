@@ -12,6 +12,8 @@ import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.init.EvolutionTileEntities;
 import tgw.evolution.util.MathHelper;
 
+import javax.annotation.Nullable;
+
 public class TEKnapping extends TileEntity {
 
     public final boolean[][] matrix = {{true, true, true, true, true},
@@ -20,6 +22,7 @@ public class TEKnapping extends TileEntity {
                                        {true, true, true, true, true},
                                        {true, true, true, true, true}};
     public EnumKnapping type = EnumKnapping.NULL;
+    @Nullable
     public VoxelShape hitbox;
     private int encoded = 0x1FFFFFF;
 
