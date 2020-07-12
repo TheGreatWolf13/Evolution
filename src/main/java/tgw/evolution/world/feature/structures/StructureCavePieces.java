@@ -69,7 +69,7 @@ public class StructureCavePieces {
         add(SUP_LIST, "caves/sup/cav_mega_sup_fenda1", 4, new CaveConfigPuzzle().mega());
         add(SUP_LIST, "caves/sup/cav_mega_sup_florest1", 4, new CaveConfigPuzzle().mega());
         add(SUP_LIST, "caves/sup/cav_sup_tree1", 10, new CaveConfigPuzzle());
-        //--//--//
+        //--//--//xd
         add(SUP_LIST, "caves/sup/tribal/tribal_sup_building1", 10, new CaveConfigPuzzle().civ(CivilizationType.TRIBAL));
         add(SUP_LIST, "caves/sup/tribal/tribal_sup_temple1", 10, new CaveConfigPuzzle().civ(CivilizationType.TRIBAL));
         //--//--//--//
