@@ -6,11 +6,13 @@ import net.minecraft.block.Blocks;
 import javax.annotation.Nullable;
 
 public enum EnumVanillaRockVariant {
-    DIRT(Blocks.DIRT),
-    GRAVEL(Blocks.GRAVEL),
-    GRASS_BLOCK(Blocks.GRASS_BLOCK),
     STONE(Blocks.STONE),
-    STONE_BRICKS(Blocks.STONE_BRICKS);
+    DIRT(Blocks.DIRT),
+    GRASS_BLOCK(Blocks.GRASS_BLOCK),
+    GRAVEL(Blocks.GRAVEL),
+    SAND(Blocks.SAND),
+    STONE_BRICKS(Blocks.STONE_BRICKS),
+    COBBLESTONE(Blocks.COBBLESTONE);
 
     private final Block vanillaBlock;
 

@@ -13,6 +13,8 @@ public class BiomeForest extends Biome implements IEvolutionBiome {
 
     @Override
     public void init() {
+        EvolutionBiomeFeatures.addVariantClusters(this);
+        EvolutionBiomeFeatures.addSedimentatyDisks(this);
         EvolutionBiomeFeatures.addCaves(this);
         EvolutionBiomeFeatures.addStrata(this);
         EvolutionBiomeFeatures.addForestTrees(this);

@@ -4,6 +4,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FlowingFluidBlock;
 import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.item.Item;
 import net.minecraft.state.StateContainer;
@@ -122,17 +123,28 @@ public abstract class FluidFreshWater extends ForgeFlowingFluid {
             if (levelAlreadyAtPos >= currentLevel) {
                 continue;
             }
-            int levelForPlacement = Math.min((levelAlreadyAtPos + currentLevel) / 2, 8);
+            if (levelAlreadyAtPos + 1 == currentLevel) {
+                if (BlockUtils.willFluidAllowGap(world, AUX_POS, direction, this, currentLevel)) {
+                    continue;
+                }
+            }
+            int levelForPlacement = Math.min(MathHelper.ceil((levelAlreadyAtPos + currentLevel) / 2f), 8);
             if (levelForPlacement == 0) {
                 break;
             }
             int remainingLevel = currentLevel - levelForPlacement + levelAlreadyAtPos;
-            IFluidState fluidStateForReplacement = this.getFlowingFluidState(remainingLevel, false);
-            fluidState = fluidStateForReplacement;
+            if (remainingLevel > 0) {
+                IFluidState fluidStateForReplacement = this.getFlowingFluidState(remainingLevel, false);
+                fluidState = fluidStateForReplacement;
+                BlockState blockStateForReplacement = fluidStateForReplacement.getBlockState();
+                world.setBlockState(pos, blockStateForReplacement);
+            }
+            else {
+                fluidState = Fluids.EMPTY.getDefaultState();
+                world.setBlockState(pos, Blocks.AIR.getDefaultState());
+            }
             IFluidState fluidStateForPlacement = this.getFlowingFluidState(levelForPlacement, false);
-            BlockState blockStateForReplacement = fluidStateForReplacement.getBlockState();
             BlockState blockStateForPlacement = fluidStateForPlacement.getBlockState();
-            world.setBlockState(pos, blockStateForReplacement);
             world.setBlockState(AUX_POS, blockStateForPlacement);
             break;
         }

@@ -797,6 +797,16 @@ public class MathHelper {
     }
 
     /**
+     * Approximates a {@code double} value to an {@code int}, rounding up.
+     *
+     * @param value The value to approximate.
+     * @return An {@code int} value rounded up.
+     */
+    public static int ceil(double value) {
+        return net.minecraft.util.math.MathHelper.ceil(value);
+    }
+
+    /**
      * Interpolates two numbers.
      *
      * @param partialTicks The partial ticks to interpolate, between {@code 0.0f} and {@code 1.0f}.

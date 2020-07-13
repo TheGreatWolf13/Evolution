@@ -1,12 +1,12 @@
 package tgw.evolution.world.biomes;
 
+import com.google.common.collect.Lists;
+import net.minecraft.block.Blocks;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.GenerationStage;
-import net.minecraft.world.gen.feature.Feature;
-import net.minecraft.world.gen.feature.IFeatureConfig;
-import net.minecraft.world.gen.feature.MultipleRandomFeatureConfig;
-import net.minecraft.world.gen.feature.ProbabilityConfig;
+import net.minecraft.world.gen.feature.*;
 import net.minecraft.world.gen.placement.*;
+import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.world.feature.EvolutionFeatures;
 import tgw.evolution.world.gen.carver.EvolutionCarvers;
 
@@ -41,5 +41,16 @@ public class EvolutionBiomeFeatures {
 
     public static void addStrata(Biome biome) {
         biome.addFeature(GenerationStage.Decoration.UNDERGROUND_DECORATION, Biome.createDecoratedFeature(EvolutionFeatures.STRATA.get(), IFeatureConfig.NO_FEATURE_CONFIG, Placement.COUNT_RANGE, new CountRangeConfig(1, 0, 0, 256)));
+    }
+
+    public static void addVariantClusters(Biome biome) {
+        biome.addFeature(GenerationStage.Decoration.UNDERGROUND_ORES, Biome.createDecoratedFeature(Feature.ORE, new OreFeatureConfig(OreFeatureConfig.FillerBlockType.NATURAL_STONE, Blocks.DIRT.getDefaultState(), 33), Placement.COUNT_RANGE, new CountRangeConfig(10, 0, 0, 256)));
+        biome.addFeature(GenerationStage.Decoration.UNDERGROUND_ORES, Biome.createDecoratedFeature(Feature.ORE, new OreFeatureConfig(OreFeatureConfig.FillerBlockType.NATURAL_STONE, Blocks.GRAVEL.getDefaultState(), 33), Placement.COUNT_RANGE, new CountRangeConfig(8, 0, 0, 256)));
+    }
+
+    public static void addSedimentatyDisks(Biome biome) {
+        biome.addFeature(GenerationStage.Decoration.UNDERGROUND_ORES, Biome.createDecoratedFeature(EvolutionFeatures.SEDIMENTARY_DISKS.get(), new SphereReplaceConfig(Blocks.SAND.getDefaultState(), 10, 2, Lists.newArrayList(Blocks.DIRT.getDefaultState(), Blocks.GRASS_BLOCK.getDefaultState())), Placement.COUNT_TOP_SOLID, new FrequencyConfig(3)));
+        biome.addFeature(GenerationStage.Decoration.UNDERGROUND_ORES, Biome.createDecoratedFeature(EvolutionFeatures.SEDIMENTARY_DISKS.get(), new SphereReplaceConfig(EvolutionBlocks.CLAY.get().getDefaultState(), 4, 1, Lists.newArrayList(Blocks.DIRT.getDefaultState(), EvolutionBlocks.CLAY.get().getDefaultState())), Placement.COUNT_TOP_SOLID, new FrequencyConfig(1)));
+        biome.addFeature(GenerationStage.Decoration.UNDERGROUND_ORES, Biome.createDecoratedFeature(EvolutionFeatures.SEDIMENTARY_DISKS.get(), new SphereReplaceConfig(Blocks.GRAVEL.getDefaultState(), 7, 2, Lists.newArrayList(Blocks.DIRT.getDefaultState(), Blocks.GRASS_BLOCK.getDefaultState())), Placement.COUNT_TOP_SOLID, new FrequencyConfig(1)));
     }
 }

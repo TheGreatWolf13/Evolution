@@ -4,11 +4,15 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.IFluidState;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IPlantable;
 import tgw.evolution.util.DirectionToIntMap;
@@ -18,6 +22,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public abstract class BlockUtils {
+
+    private static final BlockPos.MutableBlockPos AUX_POS = new BlockPos.MutableBlockPos();
 
     public static boolean hasSolidSide(World world, BlockPos pos, Direction side) {
         return Block.hasSolidSide(world.getBlockState(pos), world, pos, side);
@@ -32,6 +38,43 @@ public abstract class BlockUtils {
             return evolution.getBlock() instanceof BlockGrass;
         }
         return false;
+    }
+
+    public static boolean isTouchingWater(IWorld world, BlockPos pos) {
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        for (Direction direction : Direction.values()) {
+            mutablePos.setPos(pos).move(direction);
+            BlockState stateAtPos = world.getBlockState(mutablePos);
+            if (stateAtPos.getFluidState().isTagged(FluidTags.WATER)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean willFluidAllowGap(World world, BlockPos pos, Direction direction, Fluid fluid, int currentLevel) {
+        AUX_POS.setPos(pos).move(direction);
+        if (!willFluidAllowGap(world, AUX_POS, fluid, currentLevel)) {
+            return false;
+        }
+        Direction sideOffset = Direction.byHorizontalIndex(direction.getHorizontalIndex() + 1);
+        AUX_POS.setPos(pos).move(sideOffset);
+        if (!willFluidAllowGap(world, AUX_POS, fluid, currentLevel)) {
+            return false;
+        }
+        AUX_POS.setPos(pos).move(sideOffset.getOpposite());
+        return willFluidAllowGap(world, AUX_POS, fluid, currentLevel);
+    }
+
+    private static boolean willFluidAllowGap(World world, BlockPos pos, Fluid fluid, int currentLevel) {
+        BlockState stateAtPos = world.getBlockState(pos);
+        if (BlockUtils.isReplaceable(stateAtPos)) {
+            IFluidState fluidStateAtPos = stateAtPos.getFluidState();
+            if (fluid.isEquivalentTo(fluidStateAtPos.getFluid())) {
+                return fluidStateAtPos.getLevel() == currentLevel;
+            }
+        }
+        return true;
     }
 
     @Nullable
