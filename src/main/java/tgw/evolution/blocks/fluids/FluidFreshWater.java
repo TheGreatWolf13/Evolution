@@ -43,7 +43,7 @@ public abstract class FluidFreshWater extends ForgeFlowingFluid {
     private static Properties makeProperties() {
         return new Properties(EvolutionFluids.FRESH_WATER,
                               EvolutionFluids.FRESH_WATER_FLOWING,
-                              FluidAttributes.builder(FLUID_STILL, FLUID_FLOWING).color(0x20030ffc)).block(EvolutionBlocks.FRESH_WATER);
+                              FluidAttributes.builder(FLUID_STILL, FLUID_FLOWING).color(0x40030ffc)).block(EvolutionBlocks.FRESH_WATER);
     }
 
     public static int getLevelFromState(IFluidState state) {
