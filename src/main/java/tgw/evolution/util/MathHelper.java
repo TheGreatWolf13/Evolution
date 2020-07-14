@@ -21,8 +21,10 @@ import net.minecraftforge.common.util.FakePlayer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class MathHelper {
@@ -617,7 +619,11 @@ public class MathHelper {
         Vec3d from = entity.getEyePosition(partialTicks);
         Vec3d look = entity.getLook(partialTicks);
         Vec3d to = from.add(look.x * distance, look.y * distance, look.z * distance);
-        return entity.world.rayTraceBlocks(new RayTraceContext(from, to, RayTraceContext.BlockMode.OUTLINE, fluid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE, entity));
+        return entity.world.rayTraceBlocks(new RayTraceContext(from,
+                                                               to,
+                                                               RayTraceContext.BlockMode.OUTLINE,
+                                                               fluid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE,
+                                                               entity));
     }
 
     /**
@@ -645,7 +651,11 @@ public class MathHelper {
         phi = MathHelper.degToRad(phi);
         Vec3d looking = new Vec3d(MathHelper.sin(theta), MathHelper.sin(phi), MathHelper.cos(theta)).normalize();
         Vec3d to = from.add(looking.x * distance, looking.y * distance, looking.z * distance);
-        return entity.world.rayTraceBlocks(new RayTraceContext(from, to, RayTraceContext.BlockMode.OUTLINE, fluid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE, entity));
+        return entity.world.rayTraceBlocks(new RayTraceContext(from,
+                                                               to,
+                                                               RayTraceContext.BlockMode.OUTLINE,
+                                                               fluid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE,
+                                                               entity));
     }
 
     /**
@@ -747,7 +757,13 @@ public class MathHelper {
         int times = (to.getHorizontalIndex() - from.getHorizontalIndex() + 4) % 4;
         for (int i = 0; i < times; i++) {
             //noinspection ObjectAllocationInLoop
-            buffer[0].forEachBox((minX, minY, minZ, maxX, maxY, maxZ) -> buffer[1] = VoxelShapes.or(buffer[1], VoxelShapes.create(1 - maxZ, minY, minX, 1 - minZ, maxY, maxX)));
+            buffer[0].forEachBox((minX, minY, minZ, maxX, maxY, maxZ) -> buffer[1] = VoxelShapes.or(buffer[1],
+                                                                                                    VoxelShapes.create(1 - maxZ,
+                                                                                                                       minY,
+                                                                                                                       minX,
+                                                                                                                       1 - minZ,
+                                                                                                                       maxY,
+                                                                                                                       maxX)));
             buffer[0] = buffer[1];
             buffer[1] = VoxelShapes.empty();
         }
@@ -826,5 +842,18 @@ public class MathHelper {
      */
     public static float sqrt(float value) {
         return (float) Math.sqrt(value);
+    }
+
+    /**
+     * Iterates through a {@link List} in reverse order.
+     *
+     * @param list     The {@link List} to iterate.
+     * @param consumer The action to perform with the parameter.
+     * @param <T>      The Type parameter of the {@link List}
+     */
+    public static <T> void iterateReverse(List<T> list, Consumer<T> consumer) {
+        for (int i = list.size() - 1; i >= 0; i--) {
+            consumer.accept(list.get(i));
+        }
     }
 }

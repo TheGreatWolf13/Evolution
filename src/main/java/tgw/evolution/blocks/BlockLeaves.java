@@ -90,6 +90,11 @@ public class BlockLeaves extends Block implements IShearable, IReplaceable {
     }
 
     @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return false;
+    }
+
+    @Override
     public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
         if (!worldIn.isRemote) {
             worldIn.getPendingBlockTicks().scheduleTick(pos, this, this.tickRate(worldIn));

@@ -41,8 +41,11 @@ public class BlockDoublePlant extends BlockBush {
     @Override
     public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos) {
         DoubleBlockHalf doubleblockhalf = stateIn.get(HALF);
-        if (facing.getAxis() != Direction.Axis.Y || doubleblockhalf == DoubleBlockHalf.LOWER != (facing == Direction.UP) || facingState.getBlock() == this && facingState.get(HALF) != doubleblockhalf) {
-            return doubleblockhalf == DoubleBlockHalf.LOWER && facing == Direction.DOWN && !stateIn.isValidPosition(worldIn, currentPos) ? Blocks.AIR.getDefaultState() : super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+        if (facing.getAxis() != Direction.Axis.Y || doubleblockhalf == DoubleBlockHalf.LOWER != (facing == Direction.UP) || facingState.getBlock() == this && facingState
+                .get(HALF) != doubleblockhalf) {
+            return doubleblockhalf == DoubleBlockHalf.LOWER && facing == Direction.DOWN && !stateIn.isValidPosition(worldIn,
+                                                                                                                    currentPos) ? Blocks.AIR.getDefaultState() : super
+                    .updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
         }
         return Blocks.AIR.getDefaultState();
     }
@@ -60,8 +63,11 @@ public class BlockDoublePlant extends BlockBush {
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
-        BlockPos blockpos = context.getPos();
-        return blockpos.getY() < context.getWorld().getDimension().getHeight() - 1 && context.getWorld().getBlockState(blockpos.up()).isReplaceable(context) ? super.getStateForPlacement(context) : null;
+        BlockPos pos = context.getPos();
+        return pos.getY() < context.getWorld().getDimension().getHeight() - 1 && context.getWorld()
+                                                                                        .getBlockState(pos.up())
+                                                                                        .isReplaceable(context) ? super.getStateForPlacement(
+                context) : null;
     }
 
     @Override
@@ -76,7 +82,8 @@ public class BlockDoublePlant extends BlockBush {
         }
         BlockState blockstate = worldIn.getBlockState(pos.down());
         if (state.getBlock() != this) {
-            return super.isValidPosition(state, worldIn, pos); //Forge: This function is called during world gen and placement, before this block is set, so if we are not 'here' then assume it's the pre-check.
+            //Forge: This function is called during world gen and placement, before this block is set, so if we are not 'here' then assume it's the pre-check.
+            return super.isValidPosition(state, worldIn, pos);
         }
         return blockstate.getBlock() == this && blockstate.get(HALF) == DoubleBlockHalf.LOWER;
     }
@@ -114,10 +121,7 @@ public class BlockDoublePlant extends BlockBush {
 
     @Override
     public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        ChunkStorageCapability.getChunkStorage(worldIn, worldIn.getChunk(pos).getPos()).map(chunkStorages -> {
-            chunkStorages.addMany(NutrientHelper.DECAY_TALL_GRASS);
-            return true;
-        }).orElseGet(() -> false);
+        ChunkStorageCapability.addElements(worldIn.getChunkAt(pos), NutrientHelper.DECAY_TALL_GRASS);
     }
 
     @Override

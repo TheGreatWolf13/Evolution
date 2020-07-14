@@ -77,7 +77,8 @@ public class BlockPitKiln extends Block implements IReplaceable {
     }
 
     private static boolean manageStack(TEPitKiln tile, ItemStack handStack, PlayerEntity player, DirectionDiagonal direction) {
-        if (tile.getStack(direction).isEmpty() && !tile.single && handStack.getItem() instanceof ItemClayMolded && !((ItemClayMolded) handStack.getItem()).single) {
+        if (tile.getStack(direction)
+                .isEmpty() && !tile.single && handStack.getItem() instanceof ItemClayMolded && !((ItemClayMolded) handStack.getItem()).single) {
             tile.setStack(handStack, direction);
             tile.markDirty();
             return true;
@@ -92,6 +93,11 @@ public class BlockPitKiln extends Block implements IReplaceable {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return true;
     }
 
     @Override

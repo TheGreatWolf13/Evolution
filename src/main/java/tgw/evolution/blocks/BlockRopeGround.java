@@ -53,6 +53,11 @@ public class BlockRopeGround extends Block implements IReplaceable {
     }
 
     @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return true;
+    }
+
+    @Override
     public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!worldIn.isRemote) {
             if (!(worldIn.getBlockState(pos.offset(state.get(ORIGIN).getOpposite())).getBlock() == this)) {

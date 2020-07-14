@@ -43,15 +43,28 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
     public static final BooleanProperty ROPE_EAST = BlockStateProperties.EAST;
     public static final BooleanProperty ROPE_WEST = BlockStateProperties.WEST;
     public static final BooleanProperty ROPE_DOWN = BlockStateProperties.DOWN;
-    public static final Map<Direction, BooleanProperty> DIRECTION_TO_PROPERTY = SixWayBlock.FACING_TO_PROPERTY_MAP.entrySet().stream().filter(entry -> entry.getKey() != Direction.UP).collect(Util.toMapCollector());
+    public static final Map<Direction, BooleanProperty> DIRECTION_TO_PROPERTY = SixWayBlock.FACING_TO_PROPERTY_MAP.entrySet()
+                                                                                                                  .stream()
+                                                                                                                  .filter(entry -> entry.getKey() != Direction.UP)
+                                                                                                                  .collect(Util.toMapCollector());
     public static final BooleanProperty HIT = EvolutionBlockStateProperties.HIT;
     public static final DirectionProperty FACING = BlockStateProperties.FACING_EXCEPT_UP;
     public static final ITextComponent TEXT_HIT = new TranslationTextComponent("evolution.actionbar.hit_stake").setStyle(EvolutionStyles.WHITE);
     public static final ITextComponent TEXT_ROPE = new TranslationTextComponent("evolution.tooltip.rope").setStyle(EvolutionStyles.INFO);
-
     public BlockClimbingStake() {
-        super(Properties.create(Material.IRON).sound(SoundType.METAL).hardnessAndResistance(0f).doesNotBlockMovement().harvestLevel(HarvestLevel.UNBREAKABLE));
-        this.setDefaultState(this.getDefaultState().with(ROPE_EAST, false).with(ROPE_NORTH, false).with(ROPE_SOUTH, false).with(ROPE_WEST, false).with(ROPE_DOWN, false).with(HIT, false).with(FACING, Direction.DOWN));
+        super(Properties.create(Material.IRON)
+                        .sound(SoundType.METAL)
+                        .hardnessAndResistance(0f)
+                        .doesNotBlockMovement()
+                        .harvestLevel(HarvestLevel.UNBREAKABLE));
+        this.setDefaultState(this.getDefaultState()
+                                 .with(ROPE_EAST, false)
+                                 .with(ROPE_NORTH, false)
+                                 .with(ROPE_SOUTH, false)
+                                 .with(ROPE_WEST, false)
+                                 .with(ROPE_DOWN, false)
+                                 .with(HIT, false)
+                                 .with(FACING, Direction.DOWN));
     }
 
     public static boolean canGoDown(World world, BlockPos pos) {
@@ -89,6 +102,11 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
     }
 
     @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return false;
+    }
+
+    @Override
     public boolean canSupport(BlockState state, Direction direction) {
         if (direction == Direction.UP) {
             return false;
@@ -122,7 +140,7 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
                 if (temp.getBlock() == EvolutionBlocks.ROPE.get()) {
                     if (temp.get(BlockRope.DIRECTION) == state.get(FACING)) {
                         count++;
-                        toRemove.add(0, mutablePos.toImmutable());
+                        toRemove.add(mutablePos.toImmutable());
                         continue;
                     }
                 }
@@ -143,7 +161,7 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
                     if (movement != Direction.DOWN && temp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
                         if (temp.get(BlockRopeGround.ORIGIN) == movement.getOpposite()) {
                             count++;
-                            toRemove.add(0, mutablePos.toImmutable());
+                            toRemove.add(mutablePos.toImmutable());
                             continue;
                         }
                         break;
@@ -155,7 +173,7 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
                         if (temp.getBlock() == EvolutionBlocks.ROPE.get()) {
                             if (temp.get(BlockRope.DIRECTION) == direction.getOpposite()) {
                                 count++;
-                                toRemove.add(0, mutablePos.toImmutable());
+                                toRemove.add(mutablePos.toImmutable());
                                 continue;
                             }
                         }
@@ -164,7 +182,7 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
                     if (movement == Direction.DOWN && temp.getBlock() == EvolutionBlocks.ROPE.get()) {
                         if (temp.get(BlockRope.DIRECTION) == direction.getOpposite()) {
                             count++;
-                            toRemove.add(0, mutablePos.toImmutable());
+                            toRemove.add(mutablePos.toImmutable());
                             continue;
                         }
                     }
@@ -172,9 +190,7 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
                 }
             }
         }
-        for (BlockPos removing : toRemove) {
-            world.removeBlock(removing, false);
-        }
+        MathHelper.iterateReverse(toRemove, removing -> world.removeBlock(removing, false));
         return count;
     }
 

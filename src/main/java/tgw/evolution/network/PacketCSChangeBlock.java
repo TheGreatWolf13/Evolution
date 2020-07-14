@@ -1,5 +1,6 @@
 package tgw.evolution.network;
 
+import net.minecraft.block.AbstractButtonBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
@@ -44,7 +45,10 @@ public class PacketCSChangeBlock extends PacketAbstract {
     }
 
     public static PacketCSChangeBlock decode(PacketBuffer buffer) {
-        return new PacketCSChangeBlock(new BlockRayTraceResult(new Vec3d(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()), buffer.readEnumValue(Direction.class), buffer.readBlockPos(), buffer.readBoolean()));
+        return new PacketCSChangeBlock(new BlockRayTraceResult(new Vec3d(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()),
+                                                               buffer.readEnumValue(Direction.class),
+                                                               buffer.readBlockPos(),
+                                                               buffer.readBoolean()));
     }
 
     public static void handle(PacketCSChangeBlock packet, Supplier<NetworkEvent.Context> context) {
@@ -58,6 +62,9 @@ public class PacketCSChangeBlock extends PacketAbstract {
                     ItemUseContext itemContext = new ItemUseContext(player, Hand.MAIN_HAND, result);
                     BlockItemUseContext blockContext = new BlockItemUseContext(itemContext);
                     BlockState state = ((BlockItem) item).getBlock().getStateForPlacement(blockContext);
+                    if (state.getBlock() instanceof AbstractButtonBlock) {
+                        return;
+                    }
                     world.setBlockState(packet.pos, state);
                 }
             });

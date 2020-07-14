@@ -33,12 +33,18 @@ import javax.annotation.Nullable;
 
 public class BlockChopping extends BlockMass implements IReplaceable, ISittable {
 
-    private static final VoxelShape SHAPE = EvolutionHitBoxes.SLAB_LOWER;
     public static final BooleanProperty OCCUPIED = BlockStateProperties.OCCUPIED;
+    private static final VoxelShape SHAPE = EvolutionHitBoxes.SLAB_LOWER;
 
     public BlockChopping(EnumWoodNames name) {
-        super(Block.Properties.create(Material.WOOD).harvestLevel(HarvestLevel.STONE).sound(SoundType.WOOD).hardnessAndResistance(8F, 2F), name.getMass());
+        super(Block.Properties.create(Material.WOOD).harvestLevel(HarvestLevel.STONE).sound(SoundType.WOOD).hardnessAndResistance(8F, 2F),
+              name.getMass());
         this.setDefaultState(this.getDefaultState().with(OCCUPIED, false));
+    }
+
+    @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return false;
     }
 
     @Override

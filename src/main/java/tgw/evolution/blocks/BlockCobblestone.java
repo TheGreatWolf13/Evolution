@@ -43,7 +43,7 @@ public class BlockCobblestone extends BlockGravity implements IStoneVariant {
     }
 
     @Override
-    public int slopeChance() {
-        return 2;
+    public float slopeChance() {
+        return 0.5f;
     }
 }

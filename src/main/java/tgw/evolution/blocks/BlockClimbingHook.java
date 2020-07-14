@@ -23,6 +23,7 @@ import net.minecraft.world.World;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.util.HarvestLevel;
+import tgw.evolution.util.MathHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,11 @@ public class BlockClimbingHook extends Block implements IReplaceable, IRopeSuppo
     public static final BooleanProperty ATTACHED = BlockStateProperties.ATTACHED;
 
     public BlockClimbingHook() {
-        super(Properties.create(Material.IRON).sound(SoundType.METAL).hardnessAndResistance(0f).doesNotBlockMovement().harvestLevel(HarvestLevel.UNBREAKABLE));
+        super(Properties.create(Material.IRON)
+                        .sound(SoundType.METAL)
+                        .hardnessAndResistance(0f)
+                        .doesNotBlockMovement()
+                        .harvestLevel(HarvestLevel.UNBREAKABLE));
         this.setDefaultState(this.getDefaultState().with(ROPE_DIRECTION, Direction.NORTH).with(ATTACHED, false));
     }
 
@@ -55,6 +60,11 @@ public class BlockClimbingHook extends Block implements IReplaceable, IRopeSuppo
             }
         }
         world.setBlockState(pos, state.with(ATTACHED, false));
+    }
+
+    @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return false;
     }
 
     @Override
@@ -85,7 +95,7 @@ public class BlockClimbingHook extends Block implements IReplaceable, IRopeSuppo
             if (movement != Direction.DOWN && temp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
                 if (temp.get(BlockRopeGround.ORIGIN) == movement.getOpposite()) {
                     count++;
-                    toRemove.add(0, mutablePos.toImmutable());
+                    toRemove.add(mutablePos.toImmutable());
                     continue;
                 }
                 break;
@@ -97,7 +107,7 @@ public class BlockClimbingHook extends Block implements IReplaceable, IRopeSuppo
                 if (temp.getBlock() == EvolutionBlocks.ROPE.get()) {
                     if (temp.get(BlockRope.DIRECTION) == direction.getOpposite()) {
                         count++;
-                        toRemove.add(0, mutablePos.toImmutable());
+                        toRemove.add(mutablePos.toImmutable());
                         continue;
                     }
                 }
@@ -106,15 +116,13 @@ public class BlockClimbingHook extends Block implements IReplaceable, IRopeSuppo
             if (movement == Direction.DOWN && temp.getBlock() == EvolutionBlocks.ROPE.get()) {
                 if (temp.get(BlockRope.DIRECTION) == direction.getOpposite()) {
                     count++;
-                    toRemove.add(0, mutablePos.toImmutable());
+                    toRemove.add(mutablePos.toImmutable());
                     continue;
                 }
             }
             break;
         }
-        for (BlockPos removing : toRemove) {
-            world.removeBlock(removing, false);
-        }
+        MathHelper.iterateReverse(toRemove, removing -> world.removeBlock(removing, false));
         return count;
     }
 

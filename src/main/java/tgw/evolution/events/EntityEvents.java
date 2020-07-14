@@ -1,5 +1,6 @@
 package tgw.evolution.events;
 
+import net.minecraft.block.AbstractButtonBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.*;
@@ -209,7 +210,9 @@ public class EntityEvents {
         if (!state.getCollisionShape(event.getWorld(), event.getPos()).isEmpty()) {
             return;
         }
-        EntityRayTraceResult rayTraceResult = MathHelper.rayTraceEntityFromEyes(player, 1, player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue());
+        EntityRayTraceResult rayTraceResult = MathHelper.rayTraceEntityFromEyes(player,
+                                                                                1,
+                                                                                player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue());
         if (rayTraceResult != null) {
             player.attackTargetEntityWithCurrentItem(rayTraceResult.getEntity());
             player.resetCooldown();
@@ -264,6 +267,9 @@ public class EntityEvents {
         if (event.getEntity() instanceof PlayerEntity) {
             PlayerEntity player = (PlayerEntity) event.getEntity();
             if (player.isCreative() && player.isSneaking() && player.getHeldItemMainhand().getItem() instanceof BlockItem) {
+                if (event.getState().getBlock() instanceof AbstractButtonBlock) {
+                    return;
+                }
                 event.setCanceled(true);
             }
         }
@@ -315,7 +321,9 @@ public class EntityEvents {
         event.getEntity().isAirBorne = true;
         Vec3d motion = event.getEntity().getMotion();
         double knockbackResistance = 0;
-        Vec3d knockbackVector = new Vec3d(event.getRatioX(), 0, event.getRatioZ()).normalize().scale(2 * event.getStrength()).scale(1 - knockbackResistance);
+        Vec3d knockbackVector = new Vec3d(event.getRatioX(), 0, event.getRatioZ()).normalize()
+                                                                                  .scale(2 * event.getStrength())
+                                                                                  .scale(1 - knockbackResistance);
         event.getEntity().setMotion(motion.x - knockbackVector.x, motion.y, motion.z - knockbackVector.z);
         event.getEntityLiving().velocityChanged = true;
     }
@@ -342,9 +350,13 @@ public class EntityEvents {
     @SubscribeEvent
     public void cloneCapabilitiesEvent(PlayerEvent.Clone event) {
         try {
-            ContainerExtendedHandler handler = (ContainerExtendedHandler) event.getOriginal().getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY).orElseThrow(IllegalStateException::new);
+            ContainerExtendedHandler handler = (ContainerExtendedHandler) event.getOriginal()
+                                                                               .getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY)
+                                                                               .orElseThrow(IllegalStateException::new);
             CompoundNBT nbt = handler.serializeNBT();
-            ContainerExtendedHandler handlerClone = (ContainerExtendedHandler) event.getPlayer().getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY).orElseThrow(IllegalStateException::new);
+            ContainerExtendedHandler handlerClone = (ContainerExtendedHandler) event.getPlayer()
+                                                                                    .getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY)
+                                                                                    .orElseThrow(IllegalStateException::new);
             handlerClone.deserializeNBT(nbt);
         }
         catch (Exception e) {
@@ -361,7 +373,8 @@ public class EntityEvents {
             //Drop contents of extended inventory if keepInventory is off
             PlayerEntity player = (PlayerEntity) event.getEntity();
             if (!player.world.getGameRules().get(GameRules.KEEP_INVENTORY).get()) {
-                ContainerExtendedHandler handler = (ContainerExtendedHandler) player.getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY).orElseThrow(IllegalStateException::new);
+                ContainerExtendedHandler handler = (ContainerExtendedHandler) player.getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY)
+                                                                                    .orElseThrow(IllegalStateException::new);
                 for (int i = 0; i < handler.getSlots(); i++) {
                     spawnDrops(handler.getStackInSlot(i), player.world, player.getPosition());
                     handler.setStackInSlot(i, ItemStack.EMPTY);
@@ -399,7 +412,8 @@ public class EntityEvents {
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.player.isCreative()) {
             event.player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(12);
-        } else {
+        }
+        else {
             event.player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(PlayerHelper.REACH_DISTANCE);
         }
         if (event.phase == TickEvent.Phase.END) {
@@ -433,7 +447,12 @@ public class EntityEvents {
                         torch = true;
                     }
                     if (torch) {
-                        event.player.world.playSound(null, event.player.getPosition(), SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1F, 2.6F + (event.player.world.rand.nextFloat() - event.player.world.rand.nextFloat()) * 0.8F);
+                        event.player.world.playSound(null,
+                                                     event.player.getPosition(),
+                                                     SoundEvents.BLOCK_FIRE_EXTINGUISH,
+                                                     SoundCategory.BLOCKS,
+                                                     1F,
+                                                     2.6F + (event.player.world.rand.nextFloat() - event.player.world.rand.nextFloat()) * 0.8F);
                     }
                 }
             }

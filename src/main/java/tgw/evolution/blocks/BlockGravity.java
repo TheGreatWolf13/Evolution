@@ -108,7 +108,7 @@ public class BlockGravity extends BlockMass {
                 BlockUtils.scheduleBlockTick(worldIn, pos.down(), 2);
                 return;
             }
-            if (this.RANDOM.nextInt(this.slopeChance()) == 0) {
+            if (this.RANDOM.nextFloat() < this.slopeChance()) {
                 DirectionList slopePossibility = new DirectionList();
                 BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
                 for (Direction slopeDirection : Direction.Plane.HORIZONTAL) {
@@ -123,8 +123,7 @@ public class BlockGravity extends BlockMass {
                     if (slopePossibility.isEmpty()) {
                         return;
                     }
-                    Direction slopeDirection = slopePossibility.getRandom(this.RANDOM);
-                    slopePossibility.remove(slopeDirection);
+                    Direction slopeDirection = slopePossibility.getRandomAndRemove(this.RANDOM);
                     //noinspection ObjectAllocationInLoop
                     if (worldIn.isAreaLoaded(pos.add(-32, -32, -32), pos.add(32, 32, 32)) && worldIn.getEntitiesWithinAABB(EntityFallingWeight.class, new AxisAlignedBB(pos.offset(slopeDirection))).isEmpty()) {
                         this.slope(worldIn, pos, slopeDirection);
@@ -236,10 +235,8 @@ public class BlockGravity extends BlockMass {
 
     /**
      * The chance for sloping.
-     * 1 represents 100%; 2 represents 50%...
-     * Defaults to 1
      */
-    public int slopeChance() {
+    public float slopeChance() {
         return 1;
     }
 

@@ -44,7 +44,6 @@ public class BlockMolding extends Block implements IReplaceable {
     private static final VoxelShape BASE_E = VoxelShapes.create(15.5 / 16, 0, 0, 1, 3 / 16.0, 1);
     private static final VoxelShape TOTAL_BASE = VoxelShapes.or(BASE, BASE_N, BASE_S, BASE_W, BASE_E);
     private static final VoxelShape SHAPE = Block.makeCuboidShape(0.5, 0, 0.5, 3.5, 3, 3.5);
-
     public BlockMolding() {
         super(Block.Properties.create(Material.CLAY).hardnessAndResistance(0F).sound(SoundType.GROUND));
         this.setDefaultState(this.getDefaultState().with(LAYERS, 1));
@@ -78,6 +77,11 @@ public class BlockMolding extends Block implements IReplaceable {
         Vec3d motion = entity.getMotion();
         entity.addVelocity(-motion.x, -motion.y, -motion.z);
         world.addEntity(entity);
+    }
+
+    @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return true;
     }
 
     @Override

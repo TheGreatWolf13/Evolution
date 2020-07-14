@@ -53,6 +53,15 @@ public abstract class BlockUtils {
     }
 
     public static boolean willFluidAllowGap(World world, BlockPos pos, Direction direction, Fluid fluid, int currentLevel) {
+        if (currentLevel == 1) {
+            if (!world.getFluidState(AUX_POS.setPos(pos).move(Direction.DOWN)).getFluid().isEquivalentTo(fluid)) {
+                return true;
+            }
+            BlockState fluidState = world.getBlockState(AUX_POS.move(direction));
+            if (BlockUtils.canBeReplacedByWater(fluidState) && fluidState.getFluidState().getLevel() != 8) {
+                return false;
+            }
+        }
         AUX_POS.setPos(pos).move(direction);
         if (!willFluidAllowGap(world, AUX_POS, fluid, currentLevel)) {
             return false;
@@ -71,7 +80,8 @@ public abstract class BlockUtils {
         if (BlockUtils.isReplaceable(stateAtPos)) {
             IFluidState fluidStateAtPos = stateAtPos.getFluidState();
             if (fluid.isEquivalentTo(fluidStateAtPos.getFluid())) {
-                return fluidStateAtPos.getLevel() == currentLevel;
+                int levelAtPos = fluidStateAtPos.getLevel();
+                return levelAtPos == currentLevel;
             }
         }
         return true;
@@ -176,7 +186,17 @@ public abstract class BlockUtils {
      * Returns whether the blockstate is considered replaceable.
      */
     public static boolean isReplaceable(BlockState state) {
-        return state.getMaterial().isReplaceable() || state.getBlock() instanceof IReplaceable && ((IReplaceable) state.getBlock()).isReplaceable(state);
+        return state.getMaterial().isReplaceable() || state.getBlock() instanceof IReplaceable && ((IReplaceable) state.getBlock()).isReplaceable(
+                state);
+    }
+
+    public static boolean canBeReplacedByWater(BlockState state) {
+        if (state.getBlock() instanceof IReplaceable) {
+            if (!((IReplaceable) state.getBlock()).canBeReplacedByLiquid(state)) {
+                return false;
+            }
+        }
+        return isReplaceable(state);
     }
 
     public static boolean hasMass(BlockState state) {
@@ -184,7 +204,7 @@ public abstract class BlockUtils {
     }
 
     public static void dropItemStack(World world, BlockPos pos, @Nonnull ItemStack stack) {
-        if (world.isRemote) {
+        if (world.isRemote || stack.isEmpty()) {
             return;
         }
         ItemEntity entity = new ItemEntity(world, pos.getX() + 0.5f, pos.getY() + 0.3f, pos.getZ() + 0.5f, stack);

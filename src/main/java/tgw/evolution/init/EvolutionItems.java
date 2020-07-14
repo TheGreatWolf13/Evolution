@@ -87,29 +87,40 @@ public class EvolutionItems {
     public static final RegistryObject<Item> rock_marble = ITEMS.register("rock_marble", () -> itemRock(ROCK_MARBLE, MARBLE));
     public static final RegistryObject<Item> rock_phyllite = ITEMS.register("rock_phyllite", () -> itemRock(ROCK_PHYLLITE, PHYLLITE));
     public static final RegistryObject<Item> rock_quartzite = ITEMS.register("rock_quartzite", () -> itemRock(ROCK_QUARTZITE, QUARTZITE));
-    public static final RegistryObject<Item> rock_red_sandstone = ITEMS.register("rock_red_sandstone", () -> itemRock(ROCK_RED_SANDSTONE, RED_SANDSTONE));
+    public static final RegistryObject<Item> rock_red_sandstone = ITEMS.register("rock_red_sandstone",
+                                                                                 () -> itemRock(ROCK_RED_SANDSTONE, RED_SANDSTONE));
     public static final RegistryObject<Item> rock_sandstone = ITEMS.register("rock_sandstone", () -> itemRock(ROCK_SANDSTONE, SANDSTONE));
     public static final RegistryObject<Item> rock_schist = ITEMS.register("rock_schist", () -> itemRock(ROCK_SCHIST, SCHIST));
     public static final RegistryObject<Item> rock_shale = ITEMS.register("rock_shale", () -> itemRock(ROCK_SHALE, SHALE));
     public static final RegistryObject<Item> rock_slate = ITEMS.register("rock_slate", () -> itemRock(ROCK_SLATE, SLATE));
     //Polished Stones
-    public static final RegistryObject<Item> polished_stone_andesite = ITEMS.register("polished_stone_andesite", () -> itemBlock(POLISHED_STONE_ANDESITE));
+    public static final RegistryObject<Item> polished_stone_andesite = ITEMS.register("polished_stone_andesite",
+                                                                                      () -> itemBlock(POLISHED_STONE_ANDESITE));
     public static final RegistryObject<Item> polished_stone_basalt = ITEMS.register("polished_stone_basalt", () -> itemBlock(POLISHED_STONE_BASALT));
     public static final RegistryObject<Item> polished_stone_chalk = ITEMS.register("polished_stone_chalk", () -> itemBlock(POLISHED_STONE_CHALK));
     public static final RegistryObject<Item> polished_stone_chert = ITEMS.register("polished_stone_chert", () -> itemBlock(POLISHED_STONE_CHERT));
-    public static final RegistryObject<Item> polished_stone_conglomerate = ITEMS.register("polished_stone_conglomerate", () -> itemBlock(POLISHED_STONE_CONGLOMERATE));
+    public static final RegistryObject<Item> polished_stone_conglomerate = ITEMS.register("polished_stone_conglomerate",
+                                                                                          () -> itemBlock(POLISHED_STONE_CONGLOMERATE));
     public static final RegistryObject<Item> polished_stone_dacite = ITEMS.register("polished_stone_dacite", () -> itemBlock(POLISHED_STONE_DACITE));
-    public static final RegistryObject<Item> polished_stone_diorite = ITEMS.register("polished_stone_diorite", () -> itemBlock(POLISHED_STONE_DIORITE));
-    public static final RegistryObject<Item> polished_stone_dolomite = ITEMS.register("polished_stone_dolomite", () -> itemBlock(POLISHED_STONE_DOLOMITE));
+    public static final RegistryObject<Item> polished_stone_diorite = ITEMS.register("polished_stone_diorite",
+                                                                                     () -> itemBlock(POLISHED_STONE_DIORITE));
+    public static final RegistryObject<Item> polished_stone_dolomite = ITEMS.register("polished_stone_dolomite",
+                                                                                      () -> itemBlock(POLISHED_STONE_DOLOMITE));
     public static final RegistryObject<Item> polished_stone_gabbro = ITEMS.register("polished_stone_gabbro", () -> itemBlock(POLISHED_STONE_GABBRO));
     public static final RegistryObject<Item> polished_stone_gneiss = ITEMS.register("polished_stone_gneiss", () -> itemBlock(POLISHED_STONE_GNEISS));
-    public static final RegistryObject<Item> polished_stone_granite = ITEMS.register("polished_stone_granite", () -> itemBlock(POLISHED_STONE_GRANITE));
-    public static final RegistryObject<Item> polished_stone_limestone = ITEMS.register("polished_stone_limestone", () -> itemBlock(POLISHED_STONE_LIMESTONE));
+    public static final RegistryObject<Item> polished_stone_granite = ITEMS.register("polished_stone_granite",
+                                                                                     () -> itemBlock(POLISHED_STONE_GRANITE));
+    public static final RegistryObject<Item> polished_stone_limestone = ITEMS.register("polished_stone_limestone",
+                                                                                       () -> itemBlock(POLISHED_STONE_LIMESTONE));
     public static final RegistryObject<Item> polished_stone_marble = ITEMS.register("polished_stone_marble", () -> itemBlock(POLISHED_STONE_MARBLE));
-    public static final RegistryObject<Item> polished_stone_phyllite = ITEMS.register("polished_stone_phyllite", () -> itemBlock(POLISHED_STONE_PHYLLITE));
-    public static final RegistryObject<Item> polished_stone_quartzite = ITEMS.register("polished_stone_quartzite", () -> itemBlock(POLISHED_STONE_QUARTZITE));
-    public static final RegistryObject<Item> polished_stone_red_sandstone = ITEMS.register("polished_stone_red_sandstone", () -> itemBlock(POLISHED_STONE_RED_SANDSTONE));
-    public static final RegistryObject<Item> polished_stone_sandstone = ITEMS.register("polished_stone_sandstone", () -> itemBlock(POLISHED_STONE_SANDSTONE));
+    public static final RegistryObject<Item> polished_stone_phyllite = ITEMS.register("polished_stone_phyllite",
+                                                                                      () -> itemBlock(POLISHED_STONE_PHYLLITE));
+    public static final RegistryObject<Item> polished_stone_quartzite = ITEMS.register("polished_stone_quartzite",
+                                                                                       () -> itemBlock(POLISHED_STONE_QUARTZITE));
+    public static final RegistryObject<Item> polished_stone_red_sandstone = ITEMS.register("polished_stone_red_sandstone",
+                                                                                           () -> itemBlock(POLISHED_STONE_RED_SANDSTONE));
+    public static final RegistryObject<Item> polished_stone_sandstone = ITEMS.register("polished_stone_sandstone",
+                                                                                       () -> itemBlock(POLISHED_STONE_SANDSTONE));
     public static final RegistryObject<Item> polished_stone_schist = ITEMS.register("polished_stone_schist", () -> itemBlock(POLISHED_STONE_SCHIST));
     public static final RegistryObject<Item> polished_stone_shale = ITEMS.register("polished_stone_shale", () -> itemBlock(POLISHED_STONE_SHALE));
     public static final RegistryObject<Item> polished_stone_slate = ITEMS.register("polished_stone_slate", () -> itemBlock(POLISHED_STONE_SLATE));
@@ -208,7 +219,8 @@ public class EvolutionItems {
     public static final RegistryObject<Item> dry_grass_basalt = ITEMS.register("dry_grass_basalt", () -> itemBlock(DRY_GRASS_BASALT));
     public static final RegistryObject<Item> dry_grass_chalk = ITEMS.register("dry_grass_chalk", () -> itemBlock(DRY_GRASS_CHALK));
     public static final RegistryObject<Item> dry_grass_chert = ITEMS.register("dry_grass_chert", () -> itemBlock(DRY_GRASS_CHERT));
-    public static final RegistryObject<Item> dry_grass_conglomerate = ITEMS.register("dry_grass_conglomerate", () -> itemBlock(DRY_GRASS_CONGLOMERATE));
+    public static final RegistryObject<Item> dry_grass_conglomerate = ITEMS.register("dry_grass_conglomerate",
+                                                                                     () -> itemBlock(DRY_GRASS_CONGLOMERATE));
     public static final RegistryObject<Item> dry_grass_dacite = ITEMS.register("dry_grass_dacite", () -> itemBlock(DRY_GRASS_DACITE));
     public static final RegistryObject<Item> dry_grass_diorite = ITEMS.register("dry_grass_diorite", () -> itemBlock(DRY_GRASS_DIORITE));
     public static final RegistryObject<Item> dry_grass_dolomite = ITEMS.register("dry_grass_dolomite", () -> itemBlock(DRY_GRASS_DOLOMITE));
@@ -219,7 +231,8 @@ public class EvolutionItems {
     public static final RegistryObject<Item> dry_grass_marble = ITEMS.register("dry_grass_marble", () -> itemBlock(DRY_GRASS_MARBLE));
     public static final RegistryObject<Item> dry_grass_phyllite = ITEMS.register("dry_grass_phyllite", () -> itemBlock(DRY_GRASS_PHYLLITE));
     public static final RegistryObject<Item> dry_grass_quartzite = ITEMS.register("dry_grass_quartzite", () -> itemBlock(DRY_GRASS_QUARTZITE));
-    public static final RegistryObject<Item> dry_grass_red_sandstone = ITEMS.register("dry_grass_red_sandstone", () -> itemBlock(DRY_GRASS_RED_SANDSTONE));
+    public static final RegistryObject<Item> dry_grass_red_sandstone = ITEMS.register("dry_grass_red_sandstone",
+                                                                                      () -> itemBlock(DRY_GRASS_RED_SANDSTONE));
     public static final RegistryObject<Item> dry_grass_sandstone = ITEMS.register("dry_grass_sandstone", () -> itemBlock(DRY_GRASS_SANDSTONE));
     public static final RegistryObject<Item> dry_grass_schist = ITEMS.register("dry_grass_schist", () -> itemBlock(DRY_GRASS_SCHIST));
     public static final RegistryObject<Item> dry_grass_shale = ITEMS.register("dry_grass_shale", () -> itemBlock(DRY_GRASS_SHALE));
@@ -282,22 +295,42 @@ public class EvolutionItems {
     public static final RegistryObject<Item> sapling_spruce = ITEMS.register("sapling_spruce", () -> woodBlock(SAPLING_SPRUCE));
     public static final RegistryObject<Item> sapling_willow = ITEMS.register("sapling_willow", () -> woodBlock(SAPLING_WILLOW));
     //Debug
-    public static final RegistryObject<Item> nitrogen_setter = ITEMS.register("nitrogen_setter", () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.NITROGEN));
-    public static final RegistryObject<Item> nitrogen_getter = ITEMS.register("nitrogen_getter", () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.NITROGEN));
-    public static final RegistryObject<Item> phosphorus_setter = ITEMS.register("phosphorus_setter", () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.PHOSPHORUS));
-    public static final RegistryObject<Item> phosphorus_getter = ITEMS.register("phosphorus_getter", () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.PHOSPHORUS));
-    public static final RegistryObject<Item> potassium_setter = ITEMS.register("potassium_setter", () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.POTASSIUM));
-    public static final RegistryObject<Item> potassium_getter = ITEMS.register("potassium_getter", () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.POTASSIUM));
-    public static final RegistryObject<Item> water_setter = ITEMS.register("water_setter", () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.WATER));
-    public static final RegistryObject<Item> water_getter = ITEMS.register("water_getter", () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.WATER));
-    public static final RegistryObject<Item> carbon_dioxide_setter = ITEMS.register("carbon_dioxide_setter", () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.CARBON_DIOXIDE));
-    public static final RegistryObject<Item> carbon_dioxide_getter = ITEMS.register("carbon_dioxide_getter", () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.CARBON_DIOXIDE));
-    public static final RegistryObject<Item> oxygen_setter = ITEMS.register("oxygen_setter", () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.OXYGEN));
-    public static final RegistryObject<Item> oxygen_getter = ITEMS.register("oxygen_getter", () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.OXYGEN));
-    public static final RegistryObject<Item> gas_nitrogen_setter = ITEMS.register("gas_nitrogen_setter", () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.GAS_NITROGEN));
-    public static final RegistryObject<Item> gas_nitrogen_getter = ITEMS.register("gas_nitrogen_getter", () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.GAS_NITROGEN));
-    public static final RegistryObject<Item> organic_setter = ITEMS.register("organic_setter", () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.ORGANIC));
-    public static final RegistryObject<Item> organic_getter = ITEMS.register("organic_getter", () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.ORGANIC));
+    public static final RegistryObject<Item> nitrogen_setter = ITEMS.register("nitrogen_setter",
+                                                                              () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.NITROGEN));
+    public static final RegistryObject<Item> nitrogen_getter = ITEMS.register("nitrogen_getter",
+                                                                              () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.NITROGEN));
+    public static final RegistryObject<Item> phosphorus_setter = ITEMS.register("phosphorus_setter",
+                                                                                () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.PHOSPHORUS));
+    public static final RegistryObject<Item> phosphorus_getter = ITEMS.register("phosphorus_getter",
+                                                                                () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.PHOSPHORUS));
+    public static final RegistryObject<Item> potassium_setter = ITEMS.register("potassium_setter",
+                                                                               () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.POTASSIUM));
+    public static final RegistryObject<Item> potassium_getter = ITEMS.register("potassium_getter",
+                                                                               () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.POTASSIUM));
+    public static final RegistryObject<Item> water_setter = ITEMS.register("water_setter",
+                                                                           () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.WATER));
+    public static final RegistryObject<Item> water_getter = ITEMS.register("water_getter",
+                                                                           () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.WATER));
+    public static final RegistryObject<Item> carbon_dioxide_setter = ITEMS.register("carbon_dioxide_setter",
+                                                                                    () -> new ItemChunkStorageSetter(propMisc(),
+                                                                                                                     EnumStorage.CARBON_DIOXIDE));
+    public static final RegistryObject<Item> carbon_dioxide_getter = ITEMS.register("carbon_dioxide_getter",
+                                                                                    () -> new ItemChunkStorageGetter(propMisc(),
+                                                                                                                     EnumStorage.CARBON_DIOXIDE));
+    public static final RegistryObject<Item> oxygen_setter = ITEMS.register("oxygen_setter",
+                                                                            () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.OXYGEN));
+    public static final RegistryObject<Item> oxygen_getter = ITEMS.register("oxygen_getter",
+                                                                            () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.OXYGEN));
+    public static final RegistryObject<Item> gas_nitrogen_setter = ITEMS.register("gas_nitrogen_setter",
+                                                                                  () -> new ItemChunkStorageSetter(propMisc(),
+                                                                                                                   EnumStorage.GAS_NITROGEN));
+    public static final RegistryObject<Item> gas_nitrogen_getter = ITEMS.register("gas_nitrogen_getter",
+                                                                                  () -> new ItemChunkStorageGetter(propMisc(),
+                                                                                                                   EnumStorage.GAS_NITROGEN));
+    public static final RegistryObject<Item> organic_setter = ITEMS.register("organic_setter",
+                                                                             () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.ORGANIC));
+    public static final RegistryObject<Item> organic_getter = ITEMS.register("organic_getter",
+                                                                             () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.ORGANIC));
     public static final RegistryObject<Item> clock = ITEMS.register("clock", () -> new ItemClock(propMisc()));
     public static final RegistryObject<Item> puzzle = ITEMS.register("puzzle", () -> itemBlock(PUZZLE));
     public static final RegistryObject<Item> schematic_block = ITEMS.register("schematic_block", () -> itemBlock(SCHEMATIC_BLOCK));
@@ -343,7 +376,8 @@ public class EvolutionItems {
     public static final RegistryObject<Item> axe_marble = ITEMS.register("axe_marble", () -> axeStone(ToolMaterials.STONE_MARBLE));
     public static final RegistryObject<Item> axe_phyllite = ITEMS.register("axe_phyllite", () -> axeStone(ToolMaterials.STONE_PHYLLITE));
     public static final RegistryObject<Item> axe_quartzite = ITEMS.register("axe_quartzite", () -> axeStone(ToolMaterials.STONE_QUARTZITE));
-    public static final RegistryObject<Item> axe_red_sandstone = ITEMS.register("axe_red_sandstone", () -> axeStone(ToolMaterials.STONE_RED_SANDSTONE));
+    public static final RegistryObject<Item> axe_red_sandstone = ITEMS.register("axe_red_sandstone",
+                                                                                () -> axeStone(ToolMaterials.STONE_RED_SANDSTONE));
     public static final RegistryObject<Item> axe_sandstone = ITEMS.register("axe_sandstone", () -> axeStone(ToolMaterials.STONE_SANDSTONE));
     public static final RegistryObject<Item> axe_schist = ITEMS.register("axe_schist", () -> axeStone(ToolMaterials.STONE_SCHIST));
     public static final RegistryObject<Item> axe_shale = ITEMS.register("axe_shale", () -> axeStone(ToolMaterials.STONE_SHALE));
@@ -353,7 +387,8 @@ public class EvolutionItems {
     public static final RegistryObject<Item> shovel_basalt = ITEMS.register("shovel_basalt", () -> shovelStone(ToolMaterials.STONE_BASALT));
     public static final RegistryObject<Item> shovel_chalk = ITEMS.register("shovel_chalk", () -> shovelStone(ToolMaterials.STONE_CHALK));
     public static final RegistryObject<Item> shovel_chert = ITEMS.register("shovel_chert", () -> shovelStone(ToolMaterials.STONE_CHERT));
-    public static final RegistryObject<Item> shovel_conglomerate = ITEMS.register("shovel_conglomerate", () -> shovelStone(ToolMaterials.STONE_CONGLOMERATE));
+    public static final RegistryObject<Item> shovel_conglomerate = ITEMS.register("shovel_conglomerate",
+                                                                                  () -> shovelStone(ToolMaterials.STONE_CONGLOMERATE));
     public static final RegistryObject<Item> shovel_dacite = ITEMS.register("shovel_dacite", () -> shovelStone(ToolMaterials.STONE_DACITE));
     public static final RegistryObject<Item> shovel_diorite = ITEMS.register("shovel_diorite", () -> shovelStone(ToolMaterials.STONE_DIORITE));
     public static final RegistryObject<Item> shovel_dolomite = ITEMS.register("shovel_dolomite", () -> shovelStone(ToolMaterials.STONE_DOLOMITE));
@@ -364,7 +399,8 @@ public class EvolutionItems {
     public static final RegistryObject<Item> shovel_marble = ITEMS.register("shovel_marble", () -> shovelStone(ToolMaterials.STONE_MARBLE));
     public static final RegistryObject<Item> shovel_phyllite = ITEMS.register("shovel_phyllite", () -> shovelStone(ToolMaterials.STONE_PHYLLITE));
     public static final RegistryObject<Item> shovel_quartzite = ITEMS.register("shovel_quartzite", () -> shovelStone(ToolMaterials.STONE_QUARTZITE));
-    public static final RegistryObject<Item> shovel_red_sandstone = ITEMS.register("shovel_red_sandstone", () -> shovelStone(ToolMaterials.STONE_RED_SANDSTONE));
+    public static final RegistryObject<Item> shovel_red_sandstone = ITEMS.register("shovel_red_sandstone",
+                                                                                   () -> shovelStone(ToolMaterials.STONE_RED_SANDSTONE));
     public static final RegistryObject<Item> shovel_sandstone = ITEMS.register("shovel_sandstone", () -> shovelStone(ToolMaterials.STONE_SANDSTONE));
     public static final RegistryObject<Item> shovel_schist = ITEMS.register("shovel_schist", () -> shovelStone(ToolMaterials.STONE_SCHIST));
     public static final RegistryObject<Item> shovel_shale = ITEMS.register("shovel_shale", () -> shovelStone(ToolMaterials.STONE_SHALE));
@@ -389,7 +425,9 @@ public class EvolutionItems {
     public static final RegistryObject<Item> planks_spruce = ITEMS.register("planks_spruce", () -> woodBlock(PLANKS_SPRUCE));
     public static final RegistryObject<Item> planks_willow = ITEMS.register("planks_willow", () -> woodBlock(PLANKS_WILLOW));
     //Shadow Hound Block
-    public static final RegistryObject<Item> shadowhound = ITEMS.register("shadowhound", () -> new ItemBlock(SHADOWHOUND.get(), propMisc().setTEISR(() -> RenderStackTileShadowHound::new)));
+    public static final RegistryObject<Item> shadowhound = ITEMS.register("shadowhound",
+                                                                          () -> new ItemBlock(SHADOWHOUND.get(),
+                                                                                              propMisc().setTEISR(() -> RenderStackTileShadowHound::new)));
     //Javelin Heads
     public static final RegistryObject<Item> javelin_head_andesite = ITEMS.register("javelin_head_andesite", EvolutionItems::stoneHeads);
     public static final RegistryObject<Item> javelin_head_basalt = ITEMS.register("javelin_head_basalt", EvolutionItems::stoneHeads);
@@ -416,7 +454,8 @@ public class EvolutionItems {
     public static final RegistryObject<Item> javelin_basalt = ITEMS.register("javelin_basalt", () -> javelin(ToolMaterials.STONE_BASALT));
     public static final RegistryObject<Item> javelin_chalk = ITEMS.register("javelin_chalk", () -> javelin(ToolMaterials.STONE_CHALK));
     public static final RegistryObject<Item> javelin_chert = ITEMS.register("javelin_chert", () -> javelin(ToolMaterials.STONE_CHERT));
-    public static final RegistryObject<Item> javelin_conglomerate = ITEMS.register("javelin_conglomerate", () -> javelin(ToolMaterials.STONE_CONGLOMERATE));
+    public static final RegistryObject<Item> javelin_conglomerate = ITEMS.register("javelin_conglomerate",
+                                                                                   () -> javelin(ToolMaterials.STONE_CONGLOMERATE));
     public static final RegistryObject<Item> javelin_dacite = ITEMS.register("javelin_dacite", () -> javelin(ToolMaterials.STONE_DACITE));
     public static final RegistryObject<Item> javelin_diorite = ITEMS.register("javelin_diorite", () -> javelin(ToolMaterials.STONE_DIORITE));
     public static final RegistryObject<Item> javelin_dolomite = ITEMS.register("javelin_dolomite", () -> javelin(ToolMaterials.STONE_DOLOMITE));
@@ -427,7 +466,8 @@ public class EvolutionItems {
     public static final RegistryObject<Item> javelin_marble = ITEMS.register("javelin_marble", () -> javelin(ToolMaterials.STONE_MARBLE));
     public static final RegistryObject<Item> javelin_phyllite = ITEMS.register("javelin_phyllite", () -> javelin(ToolMaterials.STONE_PHYLLITE));
     public static final RegistryObject<Item> javelin_quartzite = ITEMS.register("javelin_quartzite", () -> javelin(ToolMaterials.STONE_QUARTZITE));
-    public static final RegistryObject<Item> javelin_red_sandstone = ITEMS.register("javelin_red_sandstone", () -> javelin(ToolMaterials.STONE_RED_SANDSTONE));
+    public static final RegistryObject<Item> javelin_red_sandstone = ITEMS.register("javelin_red_sandstone",
+                                                                                    () -> javelin(ToolMaterials.STONE_RED_SANDSTONE));
     public static final RegistryObject<Item> javelin_sandstone = ITEMS.register("javelin_sandstone", () -> javelin(ToolMaterials.STONE_SANDSTONE));
     public static final RegistryObject<Item> javelin_schist = ITEMS.register("javelin_schist", () -> javelin(ToolMaterials.STONE_SCHIST));
     public static final RegistryObject<Item> javelin_shale = ITEMS.register("javelin_shale", () -> javelin(ToolMaterials.STONE_SHALE));
@@ -519,16 +559,20 @@ public class EvolutionItems {
     public static final RegistryObject<Item> chopping_block_cedar = ITEMS.register("chopping_block_cedar", () -> woodBlock(CHOPPING_BLOCK_CEDAR));
     public static final RegistryObject<Item> chopping_block_ebony = ITEMS.register("chopping_block_ebony", () -> woodBlock(CHOPPING_BLOCK_EBONY));
     public static final RegistryObject<Item> chopping_block_elm = ITEMS.register("chopping_block_elm", () -> woodBlock(CHOPPING_BLOCK_ELM));
-    public static final RegistryObject<Item> chopping_block_eucalyptus = ITEMS.register("chopping_block_eucalyptus", () -> woodBlock(CHOPPING_BLOCK_EUCALYPTUS));
+    public static final RegistryObject<Item> chopping_block_eucalyptus = ITEMS.register("chopping_block_eucalyptus",
+                                                                                        () -> woodBlock(CHOPPING_BLOCK_EUCALYPTUS));
     public static final RegistryObject<Item> chopping_block_fir = ITEMS.register("chopping_block_fir", () -> woodBlock(CHOPPING_BLOCK_FIR));
     public static final RegistryObject<Item> chopping_block_kapok = ITEMS.register("chopping_block_kapok", () -> woodBlock(CHOPPING_BLOCK_KAPOK));
-    public static final RegistryObject<Item> chopping_block_mangrove = ITEMS.register("chopping_block_mangrove", () -> woodBlock(CHOPPING_BLOCK_MANGROVE));
+    public static final RegistryObject<Item> chopping_block_mangrove = ITEMS.register("chopping_block_mangrove",
+                                                                                      () -> woodBlock(CHOPPING_BLOCK_MANGROVE));
     public static final RegistryObject<Item> chopping_block_maple = ITEMS.register("chopping_block_maple", () -> woodBlock(CHOPPING_BLOCK_MAPLE));
     public static final RegistryObject<Item> chopping_block_oak = ITEMS.register("chopping_block_oak", () -> woodBlock(CHOPPING_BLOCK_OAK));
-    public static final RegistryObject<Item> chopping_block_old_oak = ITEMS.register("chopping_block_old_oak", () -> woodBlock(CHOPPING_BLOCK_OLD_OAK));
+    public static final RegistryObject<Item> chopping_block_old_oak = ITEMS.register("chopping_block_old_oak",
+                                                                                     () -> woodBlock(CHOPPING_BLOCK_OLD_OAK));
     public static final RegistryObject<Item> chopping_block_palm = ITEMS.register("chopping_block_palm", () -> woodBlock(CHOPPING_BLOCK_PALM));
     public static final RegistryObject<Item> chopping_block_pine = ITEMS.register("chopping_block_pine", () -> woodBlock(CHOPPING_BLOCK_PINE));
-    public static final RegistryObject<Item> chopping_block_redwood = ITEMS.register("chopping_block_redwood", () -> woodBlock(CHOPPING_BLOCK_REDWOOD));
+    public static final RegistryObject<Item> chopping_block_redwood = ITEMS.register("chopping_block_redwood",
+                                                                                     () -> woodBlock(CHOPPING_BLOCK_REDWOOD));
     public static final RegistryObject<Item> chopping_block_spruce = ITEMS.register("chopping_block_spruce", () -> woodBlock(CHOPPING_BLOCK_SPRUCE));
     public static final RegistryObject<Item> chopping_block_willow = ITEMS.register("chopping_block_willow", () -> woodBlock(CHOPPING_BLOCK_WILLOW));
     //Destroy Blocks
@@ -544,7 +588,8 @@ public class EvolutionItems {
     public static final RegistryObject<Item> mold_clay_spear = ITEMS.register("mold_clay_spear", () -> new ItemClayMolded(MOLD_CLAY_SPEAR));
     public static final RegistryObject<Item> mold_clay_sword = ITEMS.register("mold_clay_sword", () -> new ItemClayMolded(MOLD_CLAY_SWORD));
     public static final RegistryObject<Item> mold_clay_guard = ITEMS.register("mold_clay_guard", () -> new ItemClayMolded(MOLD_CLAY_GUARD));
-    public static final RegistryObject<Item> mold_clay_prospecting = ITEMS.register("mold_clay_prospecting", () -> new ItemClayMolded(MOLD_CLAY_PROSPECTING));
+    public static final RegistryObject<Item> mold_clay_prospecting = ITEMS.register("mold_clay_prospecting",
+                                                                                    () -> new ItemClayMolded(MOLD_CLAY_PROSPECTING));
     public static final RegistryObject<Item> mold_clay_saw = ITEMS.register("mold_clay_saw", () -> new ItemClayMolded(MOLD_CLAY_SAW));
     public static final RegistryObject<Item> mold_clay_knife = ITEMS.register("mold_clay_knife", () -> new ItemClayMolded(MOLD_CLAY_KNIFE));
     public static final RegistryObject<Item> mold_clay_ingot = ITEMS.register("mold_clay_ingot", () -> new ItemClayMolded(MOLD_CLAY_INGOT));
@@ -605,7 +650,8 @@ public class EvolutionItems {
     public static final RegistryObject<Item> hammer_basalt = ITEMS.register("hammer_basalt", () -> hammerStone(ToolMaterials.STONE_BASALT));
     public static final RegistryObject<Item> hammer_chalk = ITEMS.register("hammer_chalk", () -> hammerStone(ToolMaterials.STONE_CHALK));
     public static final RegistryObject<Item> hammer_chert = ITEMS.register("hammer_chert", () -> hammerStone(ToolMaterials.STONE_CHERT));
-    public static final RegistryObject<Item> hammer_conglomerate = ITEMS.register("hammer_conglomerate", () -> hammerStone(ToolMaterials.STONE_CONGLOMERATE));
+    public static final RegistryObject<Item> hammer_conglomerate = ITEMS.register("hammer_conglomerate",
+                                                                                  () -> hammerStone(ToolMaterials.STONE_CONGLOMERATE));
     public static final RegistryObject<Item> hammer_dacite = ITEMS.register("hammer_dacite", () -> hammerStone(ToolMaterials.STONE_DACITE));
     public static final RegistryObject<Item> hammer_diorite = ITEMS.register("hammer_diorite", () -> hammerStone(ToolMaterials.STONE_DIORITE));
     public static final RegistryObject<Item> hammer_dolomite = ITEMS.register("hammer_dolomite", () -> hammerStone(ToolMaterials.STONE_DOLOMITE));
@@ -616,7 +662,8 @@ public class EvolutionItems {
     public static final RegistryObject<Item> hammer_marble = ITEMS.register("hammer_marble", () -> hammerStone(ToolMaterials.STONE_MARBLE));
     public static final RegistryObject<Item> hammer_phyllite = ITEMS.register("hammer_phyllite", () -> hammerStone(ToolMaterials.STONE_PHYLLITE));
     public static final RegistryObject<Item> hammer_quartzite = ITEMS.register("hammer_quartzite", () -> hammerStone(ToolMaterials.STONE_QUARTZITE));
-    public static final RegistryObject<Item> hammer_red_sandstone = ITEMS.register("hammer_red_sandstone", () -> hammerStone(ToolMaterials.STONE_RED_SANDSTONE));
+    public static final RegistryObject<Item> hammer_red_sandstone = ITEMS.register("hammer_red_sandstone",
+                                                                                   () -> hammerStone(ToolMaterials.STONE_RED_SANDSTONE));
     public static final RegistryObject<Item> hammer_sandstone = ITEMS.register("hammer_sandstone", () -> hammerStone(ToolMaterials.STONE_SANDSTONE));
     public static final RegistryObject<Item> hammer_schist = ITEMS.register("hammer_schist", () -> hammerStone(ToolMaterials.STONE_SCHIST));
     public static final RegistryObject<Item> hammer_shale = ITEMS.register("hammer_shale", () -> hammerStone(ToolMaterials.STONE_SHALE));
@@ -626,31 +673,38 @@ public class EvolutionItems {
     public static final RegistryObject<Item> stone_bricks_basalt = ITEMS.register("stone_bricks_basalt", () -> itemBlock(STONE_BRICKS_BASALT));
     public static final RegistryObject<Item> stone_bricks_chalk = ITEMS.register("stone_bricks_chalk", () -> itemBlock(STONE_BRICKS_CHALK));
     public static final RegistryObject<Item> stone_bricks_chert = ITEMS.register("stone_bricks_chert", () -> itemBlock(STONE_BRICKS_CHERT));
-    public static final RegistryObject<Item> stone_bricks_conglomerate = ITEMS.register("stone_bricks_conglomerate", () -> itemBlock(STONE_BRICKS_CONGLOMERATE));
+    public static final RegistryObject<Item> stone_bricks_conglomerate = ITEMS.register("stone_bricks_conglomerate",
+                                                                                        () -> itemBlock(STONE_BRICKS_CONGLOMERATE));
     public static final RegistryObject<Item> stone_bricks_dacite = ITEMS.register("stone_bricks_dacite", () -> itemBlock(STONE_BRICKS_DACITE));
     public static final RegistryObject<Item> stone_bricks_diorite = ITEMS.register("stone_bricks_diorite", () -> itemBlock(STONE_BRICKS_DIORITE));
     public static final RegistryObject<Item> stone_bricks_dolomite = ITEMS.register("stone_bricks_dolomite", () -> itemBlock(STONE_BRICKS_DOLOMITE));
     public static final RegistryObject<Item> stone_bricks_gabbro = ITEMS.register("stone_bricks_gabbro", () -> itemBlock(STONE_BRICKS_GABBRO));
     public static final RegistryObject<Item> stone_bricks_gneiss = ITEMS.register("stone_bricks_gneiss", () -> itemBlock(STONE_BRICKS_GNEISS));
     public static final RegistryObject<Item> stone_bricks_granite = ITEMS.register("stone_bricks_granite", () -> itemBlock(STONE_BRICKS_GRANITE));
-    public static final RegistryObject<Item> stone_bricks_limestone = ITEMS.register("stone_bricks_limestone", () -> itemBlock(STONE_BRICKS_LIMESTONE));
+    public static final RegistryObject<Item> stone_bricks_limestone = ITEMS.register("stone_bricks_limestone",
+                                                                                     () -> itemBlock(STONE_BRICKS_LIMESTONE));
     public static final RegistryObject<Item> stone_bricks_marble = ITEMS.register("stone_bricks_marble", () -> itemBlock(STONE_BRICKS_MARBLE));
     public static final RegistryObject<Item> stone_bricks_phyllite = ITEMS.register("stone_bricks_phyllite", () -> itemBlock(STONE_BRICKS_PHYLLITE));
-    public static final RegistryObject<Item> stone_bricks_quartzite = ITEMS.register("stone_bricks_quartzite", () -> itemBlock(STONE_BRICKS_QUARTZITE));
-    public static final RegistryObject<Item> stone_bricks_red_sandstone = ITEMS.register("stone_bricks_red_sandstone", () -> itemBlock(STONE_BRICKS_RED_SANDSTONE));
-    public static final RegistryObject<Item> stone_bricks_sandstone = ITEMS.register("stone_bricks_sandstone", () -> itemBlock(STONE_BRICKS_SANDSTONE));
+    public static final RegistryObject<Item> stone_bricks_quartzite = ITEMS.register("stone_bricks_quartzite",
+                                                                                     () -> itemBlock(STONE_BRICKS_QUARTZITE));
+    public static final RegistryObject<Item> stone_bricks_red_sandstone = ITEMS.register("stone_bricks_red_sandstone",
+                                                                                         () -> itemBlock(STONE_BRICKS_RED_SANDSTONE));
+    public static final RegistryObject<Item> stone_bricks_sandstone = ITEMS.register("stone_bricks_sandstone",
+                                                                                     () -> itemBlock(STONE_BRICKS_SANDSTONE));
     public static final RegistryObject<Item> stone_bricks_schist = ITEMS.register("stone_bricks_schist", () -> itemBlock(STONE_BRICKS_SCHIST));
     public static final RegistryObject<Item> stone_bricks_shale = ITEMS.register("stone_bricks_shale", () -> itemBlock(STONE_BRICKS_SHALE));
     public static final RegistryObject<Item> stone_bricks_slate = ITEMS.register("stone_bricks_slate", () -> itemBlock(STONE_BRICKS_SLATE));
-
-    public static final RegistryObject<Item> fresh_water_bucket = ITEMS.register("fresh_water_bucket", EvolutionItems::item);
 
     public static void register() {
         ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
     }
 
     private static Item javelin(ToolMaterials tier) {
-        return new ItemJavelin(propStoneTool().maxDamage(tier.getMaxUses()).setTEISR(() -> RenderStackItemJavelin::new), tier.getAttackDamage(), MathHelper.attackSpeed(0.9F + tier.getAttackSpeedMod()), tier.getName(), tier.getJavelinMass());
+        return new ItemJavelin(propStoneTool().maxDamage(tier.getMaxUses()).setTEISR(() -> RenderStackItemJavelin::new),
+                               tier.getAttackDamage(),
+                               MathHelper.attackSpeed(0.9F + tier.getAttackSpeedMod()),
+                               tier.getName(),
+                               tier.getJavelinMass());
     }
 
     public static Item.Properties propMisc() {

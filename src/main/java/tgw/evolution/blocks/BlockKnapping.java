@@ -54,6 +54,17 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
     }
 
     @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return true;
+    }
+
+    @Override
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+        this.onReplaced(state, worldIn, pos);
+        super.onReplaced(state, worldIn, pos, newState, isMoving);
+    }
+
+    @Override
     public EnumRockVariant getVariant() {
         return this.variant;
     }

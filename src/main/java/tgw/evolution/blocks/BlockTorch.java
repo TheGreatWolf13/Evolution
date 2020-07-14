@@ -35,12 +35,17 @@ import java.util.Random;
 
 public class BlockTorch extends Block implements IReplaceable {
 
-    private static final VoxelShape SHAPE = EvolutionHitBoxes.TORCH;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
+    private static final VoxelShape SHAPE = EvolutionHitBoxes.TORCH;
 
     public BlockTorch() {
         super(Block.Properties.create(Material.MISCELLANEOUS).hardnessAndResistance(0F).tickRandomly().doesNotBlockMovement().sound(SoundType.WOOD));
         this.setDefaultState(this.getDefaultState().with(LIT, true));
+    }
+
+    @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return true;
     }
 
     @Override
@@ -70,6 +75,12 @@ public class BlockTorch extends Block implements IReplaceable {
         }
         TETorch tile = (TETorch) worldIn.getTileEntity(pos);
         tile.create();
+    }
+
+    @Override
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+        this.onReplaced(state, worldIn, pos);
+        super.onReplaced(state, worldIn, pos, newState, isMoving);
     }
 
     @Override
@@ -118,7 +129,12 @@ public class BlockTorch extends Block implements IReplaceable {
         if (stack.isEmpty() && state.get(LIT)) {
             worldIn.setBlockState(pos, state.with(LIT, false));
             worldIn.removeTileEntity(pos);
-            worldIn.playSound(player, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1F, 2.6F + (worldIn.rand.nextFloat() - worldIn.rand.nextFloat()) * 0.8F);
+            worldIn.playSound(player,
+                              pos,
+                              SoundEvents.BLOCK_FIRE_EXTINGUISH,
+                              SoundCategory.BLOCKS,
+                              1F,
+                              2.6F + (worldIn.rand.nextFloat() - worldIn.rand.nextFloat()) * 0.8F);
             return true;
         }
         if (stack.getItem() == EvolutionItems.torch.get() && !state.get(LIT)) {
@@ -139,7 +155,14 @@ public class BlockTorch extends Block implements IReplaceable {
 
     @Override
     public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos) {
-        return facing == Direction.DOWN && !this.isValidPosition(stateIn, worldIn, currentPos) ? Blocks.AIR.getDefaultState() : super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+        return facing == Direction.DOWN && !this.isValidPosition(stateIn,
+                                                                 worldIn,
+                                                                 currentPos) ? Blocks.AIR.getDefaultState() : super.updatePostPlacement(stateIn,
+                                                                                                                                        facing,
+                                                                                                                                        facingState,
+                                                                                                                                        worldIn,
+                                                                                                                                        currentPos,
+                                                                                                                                        facingPos);
     }
 
     @Override

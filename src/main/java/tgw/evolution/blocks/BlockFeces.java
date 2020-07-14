@@ -16,6 +16,11 @@ public class BlockFeces extends Block implements IReplaceable {
     }
 
     @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return true;
+    }
+
+    @Override
     public TileEntity createTileEntity(BlockState state, IBlockReader world) {
         return new TEFeces();
     }

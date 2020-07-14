@@ -68,6 +68,7 @@ public class ClientEvents {
     private static final ResourceLocation ICONS = Evolution.location("textures/gui/icons.png");
     private static final String TWO_HANDED = "evolution.actionbar.two_handed";
     private static final ITextComponent COMPONENT_TWO_HANDED = new TranslationTextComponent(TWO_HANDED).setStyle(EvolutionStyles.WHITE);
+    private static final BlockPos.MutableBlockPos AUX_POS = new BlockPos.MutableBlockPos();
     private final Minecraft mc;
     private boolean inverted;
     //Jump variables
@@ -119,6 +120,30 @@ public class ClientEvents {
     private static float getRightCooldownPeriod(IOffhandAttackable item) {
         double attackSpeed = item.getAttackSpeed() + PlayerHelper.ATTACK_SPEED;
         return (float) (1 / attackSpeed * 20);
+    }
+
+    private float getWaterEmergeMotion(int levelAtPos) {
+        levelAtPos = MathHelper.clamp(levelAtPos, 0, 8);
+        switch (levelAtPos) {
+            case 0:
+                return 0;
+            case 1:
+                return 0.3f;
+            case 2:
+                return this.mc.player.getSubmergedHeight() > 0.2 ? 0.28f : 0.18f;
+            case 3:
+            case 4:
+                return 0.15f;
+            case 5:
+                return 0.135f;
+            case 6:
+                return 0.12f;
+            case 7:
+                return 0.1f;
+            case 8:
+                return 0.08f;
+        }
+        throw new IllegalStateException("Invalid level " + levelAtPos);
     }
 
     @SubscribeEvent
@@ -203,8 +228,7 @@ public class ClientEvents {
             Vec3d motion = player.getMotion();
             if (motion.y > 0 && !player.isOnLadder() && !player.abilities.isFlying) {
                 player.setMotion(motion.x, motion.y - this.getJumpSlowDown(), motion.z);
-            }
-            else {
+            } else {
                 this.jump = false;
                 if (!player.isOnLadder() && !player.abilities.isFlying) {
                     player.setMotion(motion.x, motion.y - 0.055, motion.z);
@@ -220,8 +244,7 @@ public class ClientEvents {
                 if (this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable) {
                     EntityRayTraceResult rightRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player, 1f, ((IOffhandAttackable) this.mc.player.getHeldItemOffhand().getItem()).getReach() + PlayerHelper.REACH_DISTANCE);
                     this.rightPointedEntity = rightRayTrace == null ? null : rightRayTrace.getEntity();
-                }
-                else {
+                } else {
                     this.rightPointedEntity = null;
                 }
             }
@@ -236,14 +259,27 @@ public class ClientEvents {
             if (this.getLeftCooledAttackStrength(0) != 1 && this.mc.objectMouseOver != null && this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
                 ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, Integer.MAX_VALUE, "field_71429_W");
             }
+            //Handle water physics
+            if (this.mc.player.isInWater()) {
+                int levelAtPos = this.mc.world.getFluidState(AUX_POS.setPos(this.mc.player)).getLevel();
+                Vec3d motion = this.mc.player.getMotion();
+                if (!this.mc.player.isSwimming()) {
+                    this.mc.player.setMotion(motion.x * (1 + (8 - levelAtPos) * 0.01), motion.y, motion.z * (1 + (8 - levelAtPos) * 0.01));
+                }
+                //Handle water emerge
+                Vec3d motionForEmerge = this.mc.player.getMotion();
+                if (this.mc.player.collidedHorizontally && this.mc.player.isOffsetPositionInLiquid(motion.x, motion.y + 0.64, motion.z)) {
+                    double waterEmergeMotion = this.getWaterEmergeMotion(levelAtPos);
+                    this.mc.player.setMotion(motionForEmerge.x, waterEmergeMotion, motionForEmerge.z);
+                }
+            }
             //Handle Disoriented Effect
             if (this.mc.player.isPotionActive(EvolutionEffects.DISORIENTED.get())) {
                 if (!this.inverted) {
                     this.inverted = true;
                     swapControls(this.mc);
                 }
-            }
-            else {
+            } else {
                 if (this.inverted) {
                     this.inverted = false;
                     swapControls(this.mc);
@@ -277,8 +313,7 @@ public class ClientEvents {
                 if (this.mc.player.isRowingBoat()) {
                     this.leftEquipProgress = MathHelper.clamp(this.leftEquipProgress - 0.4F, 0.0F, 1.0F);
                     this.rightEquipProgress = MathHelper.clamp(this.rightEquipProgress - 0.4F, 0.0F, 1.0F);
-                }
-                else {
+                } else {
                     float cooledAttackStrength = this.getRightCooledAttackStrength(this.mc.player.getHeldItemOffhand().getItem(), 1);
                     this.rightEquipProgress += MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength - this.rightEquipProgress, -0.4F, 0.4F);
                     cooledAttackStrength = this.getLeftCooledAttackStrength(1);
@@ -287,16 +322,14 @@ public class ClientEvents {
                 ItemStack stackOffhand = this.mc.player.getHeldItemOffhand();
                 if (MathHelper.areItemStacksSufficientlyEqual(stackOffhand, this.offhandStack)) {
                     this.rightTimeSinceLastHit++;
-                }
-                else {
+                } else {
                     this.rightTimeSinceLastHit = 0;
                     this.offhandStack = stackOffhand;
                 }
                 ItemStack stackMainhand = this.mc.player.getHeldItemMainhand();
                 if (MathHelper.areItemStacksSufficientlyEqual(stackMainhand, this.mainhandStack)) {
                     this.leftTimeSinceLastHit++;
-                }
-                else {
+                } else {
                     this.leftTimeSinceLastHit = 0;
                     this.mainhandStack = stackMainhand;
                 }
@@ -338,8 +371,7 @@ public class ClientEvents {
                 this.rightSwingProgressInt = 0;
                 this.rightIsSwingInProgress = false;
             }
-        }
-        else {
+        } else {
             this.rightSwingProgressInt = 0;
         }
         this.rightSwingProgress = (float) this.rightSwingProgressInt / (float) i;
@@ -349,8 +381,7 @@ public class ClientEvents {
                 this.leftSwingProgressInt = 0;
                 this.leftIsSwingInProgress = false;
             }
-        }
-        else {
+        } else {
             this.leftSwingProgressInt = 0;
         }
         this.leftSwingProgress = (float) this.leftSwingProgressInt / (float) i;
@@ -366,8 +397,7 @@ public class ClientEvents {
                 this.rightSwingProgressInt = -1;
                 this.rightIsSwingInProgress = true;
             }
-        }
-        else {
+        } else {
             if (!this.leftIsSwingInProgress || this.leftSwingProgressInt >= this.getArmSwingAnimationEnd() / 2 || this.leftSwingProgressInt < 0) {
                 this.leftSwingProgressInt = -1;
                 this.leftIsSwingInProgress = true;
@@ -400,8 +430,7 @@ public class ClientEvents {
                     GlStateManager.scalef(-1.0F, -1.0F, -1.0F);
                     GLX.renderCrosshair(10);
                     GlStateManager.popMatrix();
-                }
-                else {
+                } else {
                     GlStateManager.enableBlend();
                     GlStateManager.enableAlphaTest();
                     GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
@@ -419,8 +448,7 @@ public class ClientEvents {
                         int y = scaledHeight / 2 - 7 + 16;
                         if (shouldShowLeftAttackIndicator) {
                             this.blit(x, y, 68, 94, 16, 16);
-                        }
-                        else if (leftCooledAttackStrength < 1.0F) {
+                        } else if (leftCooledAttackStrength < 1.0F) {
                             int l = (int) (leftCooledAttackStrength * 17.0F);
                             this.blit(x, y, 36, 94, 16, 4);
                             this.blit(x, y, 52, 94, l, 4);
@@ -434,8 +462,7 @@ public class ClientEvents {
                             x -= 20;
                             if (shouldShowRightAttackIndicator) {
                                 this.blit(x, y, 68, 110, 16, 16);
-                            }
-                            else if (rightCooledAttackStrength < 1.0F) {
+                            } else if (rightCooledAttackStrength < 1.0F) {
                                 int l = (int) (rightCooledAttackStrength * 17.0F);
                                 this.blit(x, y, 36, 110, 16, 4);
                                 this.blit(x, y, 52, 110, l, 4);
@@ -569,7 +596,7 @@ public class ClientEvents {
 
     @SubscribeEvent
     public void onKeyboardEvent(InputEvent.KeyInputEvent event) {
-        if (this.mc.currentScreen != null) {
+        if (this.mc.currentScreen != null || this.mc.player == null) {
             return;
         }
         KeyBinding attack = this.mc.gameSettings.keyBindAttack;

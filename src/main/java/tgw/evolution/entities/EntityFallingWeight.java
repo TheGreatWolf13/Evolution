@@ -45,6 +45,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     private final double verticalDrag;
     private final double horizontalDrag;
     private final double gravity;
+    private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
     public int fallTime;
     private BlockState state = EvolutionBlocks.DESTROY_9.get().getDefaultState();
 
@@ -98,10 +99,10 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         this.prevPosX = this.posX;
         this.prevPosY = this.posY;
         this.prevPosZ = this.posZ;
-        Block block = this.state.getBlock();
+        Block carryingBlock = this.state.getBlock();
         if (this.fallTime++ == 0) {
             BlockPos blockpos = new BlockPos(this);
-            if (this.world.getBlockState(blockpos).getBlock() == block) {
+            if (this.world.getBlockState(blockpos).getBlock() == carryingBlock) {
                 this.world.removeBlock(blockpos, false);
             }
             else if (!this.world.isRemote) {
@@ -114,74 +115,80 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
             this.setMotion(motion.x * this.horizontalDrag, (motion.y + this.gravity) * this.verticalDrag, motion.z * this.horizontalDrag);
         }
         this.move(MoverType.SELF, this.getMotion());
-        if (!this.world.isRemote) {
-            BlockPos pos = new BlockPos(this.posX, this.posY, this.posZ);
-            if (this.world.getBlockState(pos.down()).getBlock() instanceof BlockLeaves) {
-                if (this.state.getBlock() instanceof BlockLeaves) {
-                    this.world.setBlockState(pos, this.state);
-                    this.remove();
-                }
+        this.mutablePos.setPos(this.posX, this.posY, this.posZ);
+        if (this.world.getBlockState(this.mutablePos.down()).getBlock() instanceof BlockLeaves) {
+            if (this.state.getBlock() instanceof BlockLeaves) {
+                this.world.setBlockState(this.mutablePos, this.state);
+                this.remove();
             }
-            if (this.world.getBlockState(pos).getBlock() instanceof BlockLeaves) {
-                if (!(this.state.getBlock() instanceof BlockLeaves)) {
-                    this.world.setBlockState(pos, Blocks.AIR.getDefaultState());
-                    this.playSound(SoundEvents.BLOCK_GRASS_BREAK, 1.0f, 1.0f);
-                }
+        }
+        if (this.world.getBlockState(this.mutablePos).getBlock() instanceof BlockLeaves) {
+            if (!(this.state.getBlock() instanceof BlockLeaves)) {
+                this.world.setBlockState(this.mutablePos, Blocks.AIR.getDefaultState());
+                this.playSound(SoundEvents.BLOCK_GRASS_BREAK, 1.0f, 1.0f);
             }
-            BlockPos blockpos1 = new BlockPos(this);
-            boolean isInWater = this.world.getFluidState(blockpos1).isTagged(FluidTags.WATER);
-            double d0 = this.getMotion().lengthSquared();
-            if (d0 > 1.0D) {
-                BlockRayTraceResult raytraceresult = this.world.rayTraceBlocks(new RayTraceContext(new Vec3d(this.prevPosX, this.prevPosY, this.prevPosZ), new Vec3d(this.posX, this.posY, this.posZ), RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.SOURCE_ONLY, this));
-                if (raytraceresult.getType() != RayTraceResult.Type.MISS && this.world.getFluidState(raytraceresult.getPos()).isTagged(FluidTags.WATER)) {
-                    blockpos1 = raytraceresult.getPos();
-                    isInWater = true;
-                }
+        }
+        this.mutablePos.setPos(this);
+        boolean isInWater = this.world.getFluidState(this.mutablePos).isTagged(FluidTags.WATER);
+        double d0 = this.getMotion().lengthSquared();
+        if (d0 > 1.0D) {
+            BlockRayTraceResult raytraceresult = this.world.rayTraceBlocks(new RayTraceContext(new Vec3d(this.prevPosX,
+                                                                                                         this.prevPosY,
+                                                                                                         this.prevPosZ),
+                                                                                               new Vec3d(this.posX, this.posY, this.posZ),
+                                                                                               RayTraceContext.BlockMode.COLLIDER,
+                                                                                               RayTraceContext.FluidMode.SOURCE_ONLY,
+                                                                                               this));
+            if (raytraceresult.getType() != RayTraceResult.Type.MISS && this.world.getFluidState(raytraceresult.getPos())
+                                                                                  .isTagged(FluidTags.WATER)) {
+                this.mutablePos.setPos(raytraceresult.getPos());
+                isInWater = true;
             }
-            if (!this.onGround && !isInWater) {
-                if (this.fallTime > 100 && !this.world.isRemote && (blockpos1.getY() < 1 || blockpos1.getY() > 256) || this.fallTime > 6000) {
-                    if (this.world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
-                        if (block instanceof BlockCobblestone) {
-                            this.entityDropItem(new ItemStack(((BlockCobblestone) block).getVariant().getRock(), 4));
-                        }
-                        else {
-                            this.entityDropItem(block);
-                        }
+        }
+        if (!this.onGround && !isInWater) {
+            if (this.fallTime > 100 && !this.world.isRemote && (this.mutablePos.getY() < 1 || this.mutablePos.getY() > 256) || this.fallTime > 6000) {
+                if (this.world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
+                    if (carryingBlock instanceof BlockCobblestone) {
+                        this.entityDropItem(new ItemStack(((BlockCobblestone) carryingBlock).getVariant().getRock(), 4));
                     }
-                    this.remove();
-                }
-            }
-            else {
-                BlockState state = this.world.getBlockState(blockpos1);
-                if (this.world.isAirBlock(new BlockPos(this.posX, this.posY - 0.01F, this.posZ))) {
-                    if (!isInWater && FallingBlock.canFallThrough(this.world.getBlockState(new BlockPos(this.posX, this.posY - 0.01F, this.posZ)))) {
-                        this.onGround = false;
-                        return;
+                    else {
+                        this.entityDropItem(carryingBlock);
                     }
                 }
-                this.setMotion(this.getMotion().mul(0.7, -0.5, 0.7));
-                if (state.getBlock() != Blocks.MOVING_PISTON) {
-                    this.remove();
-                    if (BlockUtils.isReplaceable(state)) {
-                        ItemStack stack;
-                        if (state.getBlock() instanceof IReplaceable) {
-                            stack = ((IReplaceable) state.getBlock()).getDrops(state);
-                        }
-                        else {
-                            stack = new ItemStack(state.getBlock());
-                        }
-                        if (this.world.getGameRules().getBoolean(GameRules.DO_TILE_DROPS)) {
-                            this.entityDropItem(stack);
-                        }
-                        this.world.setBlockState(blockpos1, this.state, 3);
+                this.remove();
+            }
+        }
+        else {
+            BlockState state = this.world.getBlockState(this.mutablePos);
+            BlockPos posDown = new BlockPos(this.posX, this.posY - 0.01f, this.posZ);
+            if (this.world.isAirBlock(posDown)) {
+                if (!isInWater && FallingBlock.canFallThrough(this.world.getBlockState(posDown))) {
+                    this.onGround = false;
+                    return;
+                }
+            }
+            this.setMotion(this.getMotion().mul(0.7, 0.7, 0.7));
+            if ((!isInWater || this.onGround) && state.getBlock() != Blocks.MOVING_PISTON) {
+                this.remove();
+                if (BlockUtils.isReplaceable(state)) {
+                    ItemStack stack;
+                    if (state.getBlock() instanceof IReplaceable) {
+                        stack = ((IReplaceable) state.getBlock()).getDrops(state);
                     }
-                    else if (this.world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
-                        if (block instanceof BlockCobblestone) {
-                            this.entityDropItem(new ItemStack(((BlockCobblestone) block).getVariant().getRock(), 4));
-                        }
-                        else {
-                            this.entityDropItem(block);
-                        }
+                    else {
+                        stack = new ItemStack(state.getBlock());
+                    }
+                    if (this.world.getGameRules().getBoolean(GameRules.DO_TILE_DROPS)) {
+                        this.entityDropItem(stack);
+                    }
+                    this.world.setBlockState(this.mutablePos, this.state, 3);
+                }
+                else if (this.world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
+                    if (carryingBlock instanceof BlockCobblestone) {
+                        this.entityDropItem(new ItemStack(((BlockCobblestone) carryingBlock).getVariant().getRock(), 4));
+                    }
+                    else {
+                        this.entityDropItem(carryingBlock);
                     }
                 }
             }

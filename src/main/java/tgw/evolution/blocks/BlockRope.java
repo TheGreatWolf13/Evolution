@@ -71,6 +71,11 @@ public class BlockRope extends Block implements IReplaceable {
     }
 
     @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return true;
+    }
+
+    @Override
     public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
         if (!worldIn.isRemote) {
             if (!state.isValidPosition(worldIn, pos)) {

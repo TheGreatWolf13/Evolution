@@ -1,6 +1,7 @@
 package tgw.evolution.util;
 
 import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockPos;
 
 public enum DirectionDiagonal {
     NORTH_WEST(Direction.WEST, Direction.NORTH),
@@ -16,11 +17,7 @@ public enum DirectionDiagonal {
         this.zDirection = zDirection;
     }
 
-    public Direction getxDirection() {
-        return this.xDirection;
-    }
-
-    public Direction getzDirection() {
-        return this.zDirection;
+    public void movePos(BlockPos.MutableBlockPos mutablePos) {
+        mutablePos.move(this.xDirection).move(this.zDirection);
     }
 }

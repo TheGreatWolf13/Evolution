@@ -22,22 +22,34 @@ import javax.annotation.Nullable;
 
 public class BlockMoldClay extends Block implements IReplaceable {
 
+    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     private static final VoxelShape[] SHAPES = {EvolutionHitBoxes.MOLD_1,
                                                 EvolutionHitBoxes.MOLD_2,
                                                 EvolutionHitBoxes.MOLD_3,
                                                 EvolutionHitBoxes.MOLD_4,
                                                 EvolutionHitBoxes.MOLD_5};
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     private final int layers;
     private VoxelShape shapeNorth;
     private VoxelShape shapeSouth;
     private VoxelShape shapeEast;
     private VoxelShape shapeWest;
-
     public BlockMoldClay(int layers) {
         super(Block.Properties.create(Material.CLAY).hardnessAndResistance(0F).sound(SoundType.GROUND));
         this.setDefaultState(this.getDefaultState().with(FACING, Direction.NORTH));
         this.layers = layers;
+    }
+
+    public BlockMoldClay(VoxelShape shape) {
+        this(0);
+        this.shapeNorth = shape;
+        this.shapeSouth = MathHelper.rotateShape(Direction.NORTH, Direction.SOUTH, shape);
+        this.shapeWest = MathHelper.rotateShape(Direction.NORTH, Direction.WEST, shape);
+        this.shapeEast = MathHelper.rotateShape(Direction.NORTH, Direction.EAST, shape);
+    }
+
+    @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return true;
     }
 
     @Override
@@ -48,14 +60,6 @@ public class BlockMoldClay extends Block implements IReplaceable {
     @Override
     public boolean canBeReplacedByRope(BlockState state) {
         return true;
-    }
-
-    public BlockMoldClay(VoxelShape shape) {
-        this(0);
-        this.shapeNorth = shape;
-        this.shapeSouth = MathHelper.rotateShape(Direction.NORTH, Direction.SOUTH, shape);
-        this.shapeWest = MathHelper.rotateShape(Direction.NORTH, Direction.WEST, shape);
-        this.shapeEast = MathHelper.rotateShape(Direction.NORTH, Direction.EAST, shape);
     }
 
     @Override
