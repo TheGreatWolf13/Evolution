@@ -14,7 +14,7 @@ loaderVersion="[28,)" #mandatory (24 is current forge version)
 # The modid of the mod
 modId="evolution" #mandatory
 # The version number of the mod - there's a few well known ${} variables useable here or just hardcode it
-version="0.6.8" #mandatory
+version="0.6.9" #mandatory
  # A display name for the mod
 displayName="Evolution" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification <here>

@@ -183,6 +183,7 @@ public class MathHelper {
      * @param number The desired number to get the roman representation.
      * @return A {@link String} representing the number in roman form.
      */
+    @Nonnull
     public static String getRomanNumber(int number) {
         switch (number) {
             case 1:
@@ -327,6 +328,7 @@ public class MathHelper {
      * @param input A square {@code boolean} matrix.
      * @return A {@code new} square {@code boolean} matrix rotated 90 degrees clockwise.
      */
+    @Nonnull
     public static boolean[][] rotateClockWise(@Nonnull boolean[][] input) {
         boolean[][] output = new boolean[input.length][input[0].length];
         int n = input.length;
@@ -350,6 +352,7 @@ public class MathHelper {
      * @param input A square {@code boolean} matrix.
      * @return A {@code new} square {@code boolean} matrix translated one index to the right and wrapped around.
      */
+    @Nonnull
     public static boolean[][] translateRight(@Nonnull boolean[][] input) {
         boolean[][] output = new boolean[input.length][input[0].length];
         for (int i = 0; i < input.length; i++) {
@@ -365,6 +368,7 @@ public class MathHelper {
      * @param input A square {@code boolean} matrix.
      * @return A {@code new} square {@code boolean} matrix mirrored vertically.
      */
+    @Nonnull
     public static boolean[][] mirrorVertically(@Nonnull boolean[][] input) {
         boolean[][] output = new boolean[input.length][input[0].length];
         for (int i = 0; i < output.length; i++) {
@@ -495,7 +499,7 @@ public class MathHelper {
      * this {@link EntityRayTraceResult} will be {@code null}.
      */
     @Nullable
-    public static EntityRayTraceResult rayTraceEntities(Entity toExclude, Vec3d startVec, Vec3d endVec, AxisAlignedBB boundingBox, double distanceSquared) {
+    public static EntityRayTraceResult rayTraceEntities(@Nonnull Entity toExclude, Vec3d startVec, Vec3d endVec, AxisAlignedBB boundingBox, double distanceSquared) {
         World world = toExclude.world;
         double range = distanceSquared;
         Entity entity = null;
@@ -544,7 +548,7 @@ public class MathHelper {
      * if the {@link Direction} is in the desired {@link Axis}.
      * If it is not, the position will not change.
      */
-    public static double hitOffset(Axis axis, double hit, Direction direction) {
+    public static double hitOffset(Axis axis, double hit, @Nonnull Direction direction) {
         if (direction.getAxis() != axis) {
             return hit;
         }
@@ -562,7 +566,7 @@ public class MathHelper {
      * @param hand The {@link Hand} to convert.
      * @return The corresponding {@link EquipmentSlotType}.
      */
-    public static EquipmentSlotType getEquipFromHand(Hand hand) {
+    public static EquipmentSlotType getEquipFromHand(@Nonnull Hand hand) {
         switch (hand) {
             case MAIN_HAND:
                 return EquipmentSlotType.MAINHAND;
@@ -613,9 +617,9 @@ public class MathHelper {
      * @param distance     The maximum distance the ray will travel.
      * @param fluid        {@code true} if the ray can hit fluids, {@code false} if the ray can go through them.
      * @return A {@link BlockRayTraceResult} containing the {@link BlockPos} of the {@code Block} hit.
-     * If no {@code Block}s are hit, this {@link BlockRayTraceResult} will be {@code null}.
      */
-    public static BlockRayTraceResult rayTraceBlocksFromEyes(Entity entity, float partialTicks, float distance, boolean fluid) {
+    @Nonnull
+    public static BlockRayTraceResult rayTraceBlocksFromEyes(@Nonnull Entity entity, float partialTicks, float distance, boolean fluid) {
         Vec3d from = entity.getEyePosition(partialTicks);
         Vec3d look = entity.getLook(partialTicks);
         Vec3d to = from.add(look.x * distance, look.y * distance, look.z * distance);
@@ -635,9 +639,9 @@ public class MathHelper {
      * @param distance The maximum distance this ray will travel.
      * @param fluid    {@code true} if the ray can hit fluids, {@code false} if the ray can go through them.
      * @return A {@link BlockRayTraceResult} containing the {@link BlockPos} of the {@code Block} hit.
-     * If no {@code Block}s are hit, this {@link BlockRayTraceResult} will be {@code null}.
      */
-    public static BlockRayTraceResult rayTraceBlocksFromYawAndPitch(Entity entity, double distance, boolean fluid) {
+    @Nonnull
+    public static BlockRayTraceResult rayTraceBlocksFromYawAndPitch(@Nonnull Entity entity, double distance, boolean fluid) {
         Vec3d from = entity.getEyePosition(1f);
         float theta = entity.rotationYaw;
         if (theta < 0) {
@@ -664,7 +668,7 @@ public class MathHelper {
      * @param axis The desired {@link Axis}.
      * @return The negative {@link Direction} on that {@link Axis}.
      */
-    public static Direction getNegativeAxis(Direction.Axis axis) {
+    public static Direction getNegativeAxis(@Nonnull Direction.Axis axis) {
         switch (axis) {
             case X:
                 return Direction.WEST;
@@ -683,7 +687,7 @@ public class MathHelper {
      * @param axis The desired {@link Axis}.
      * @return The positive {@link Direction} on that {@link Axis}.
      */
-    public static Direction getPositiveAxis(Direction.Axis axis) {
+    public static Direction getPositiveAxis(@Nonnull Direction.Axis axis) {
         switch (axis) {
             case X:
                 return Direction.EAST;
@@ -725,6 +729,7 @@ public class MathHelper {
      * @param B The {@link VoxelShape} to subtract
      * @return A {@code new} {@link VoxelShape}, consisting of the {@link VoxelShape} A minus B.
      */
+    @Nonnull
     public static VoxelShape subtract(@Nonnull VoxelShape A, @Nonnull VoxelShape B) {
         return VoxelShapes.combine(A, B, IBooleanFunction.ONLY_FIRST);
     }
@@ -736,6 +741,7 @@ public class MathHelper {
      * @param B The second {@link VoxelShape}.
      * @return A {@code new} {@link VoxelShape} made of the union of both {@link VoxelShape}s.
      */
+    @Nonnull
     public static VoxelShape union(@Nonnull VoxelShape A, @Nonnull VoxelShape B) {
         return VoxelShapes.combine(A, B, IBooleanFunction.OR);
     }
@@ -778,7 +784,7 @@ public class MathHelper {
      * @param y     The rotation angle around the y axis.
      * @param z     The rotation angle around the z axis.
      */
-    public static void setRotationAngle(RendererModel model, float x, float y, float z) {
+    public static void setRotationAngle(@Nonnull RendererModel model, float x, float y, float z) {
         model.rotateAngleX = x;
         model.rotateAngleY = y;
         model.rotateAngleZ = z;
@@ -790,8 +796,9 @@ public class MathHelper {
      * @param matrix The {@code boolean} matrix to invert.
      * @return A {@code new}, inverted {@code boolean} matrix.
      */
+    @Nonnull
     @SuppressWarnings("ObjectAllocationInLoop")
-    public static boolean[][] invertMatrix(boolean[][] matrix) {
+    public static boolean[][] invertMatrix(@Nonnull boolean[][] matrix) {
         boolean[][] mat = new boolean[matrix.length][];
         for (int i = 0; i < matrix.length; i++) {
             mat[i] = new boolean[matrix[i].length];
@@ -851,7 +858,7 @@ public class MathHelper {
      * @param consumer The action to perform with the parameter.
      * @param <T>      The Type parameter of the {@link List}
      */
-    public static <T> void iterateReverse(List<T> list, Consumer<T> consumer) {
+    public static <T> void iterateReverse(@Nonnull List<T> list, Consumer<T> consumer) {
         for (int i = list.size() - 1; i >= 0; i--) {
             consumer.accept(list.get(i));
         }
