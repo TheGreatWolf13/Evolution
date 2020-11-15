@@ -2,9 +2,11 @@ package tgw.evolution.util;
 
 import net.minecraft.util.text.TranslationTextComponent;
 
+@SuppressWarnings("EqualsAndHashcode")
 public class Date {
 
     public static final Date STARTING_DATE = new Date(Month.JUNE, 1, 1000);
+    public static final int DAYS_SINCE_MARCH_EQUINOX = 2 * Time.DAYS_IN_A_MONTH + 1;
     private int day;
     private Month month;
     private int year;
@@ -32,20 +34,21 @@ public class Date {
 
     public Date(int ticks) {
         ticks += 6000;
-        int y = STARTING_DATE.year;
-        int m = STARTING_DATE.month.getNumerical();
-        int d = STARTING_DATE.day;
-        while (ticks >= Time.YEAR_IN_TICKS) {
-            y++;
-            ticks -= Time.YEAR_IN_TICKS;
-        }
-        while (ticks >= Time.MONTH_IN_TICKS) {
+        int y = ticks / Time.YEAR_IN_TICKS;
+        ticks -= Time.YEAR_IN_TICKS * y;
+        int m = ticks / Time.MONTH_IN_TICKS;
+        ticks -= Time.MONTH_IN_TICKS * m;
+        int d = ticks / Time.DAY_IN_TICKS;
+        d += STARTING_DATE.day;
+        m += STARTING_DATE.month.numerical;
+        y += STARTING_DATE.year;
+        if (d > Time.DAYS_IN_A_MONTH) {
+            d -= Time.DAYS_IN_A_MONTH;
             m++;
-            ticks -= Time.MONTH_IN_TICKS;
         }
-        while (ticks >= Time.DAY_IN_TICKS) {
-            d++;
-            ticks -= Time.DAY_IN_TICKS;
+        if (m > Time.MONTHS_IN_A_YEAR) {
+            m -= Time.MONTHS_IN_A_YEAR;
+            y++;
         }
         this.year = y;
         this.month = Month.byNumerical(m);
@@ -108,7 +111,15 @@ public class Date {
         return this;
     }
 
-    public boolean equals(Date date) {
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof Date)) {
+            return false;
+        }
+        Date date = (Date) obj;
         return this.year == date.year && this.month == date.month && this.day == date.day;
     }
 
@@ -116,7 +127,8 @@ public class Date {
      * Returns whether this date happened before the argument date.
      */
     public boolean isBefore(Date date) {
-        return this.year <= date.year && (this.year != date.year || this.month.getNumerical() <= date.month.getNumerical()) && (this.year != date.year || this.month.getNumerical() != date.month.getNumerical() || this.day < date.day);
+        return this.year <= date.year && (this.year != date.year || this.month.getNumerical() <= date.month.getNumerical()) && (this.year != date.year || this.month
+                .getNumerical() != date.month.getNumerical() || this.day < date.day);
     }
 
     /**
@@ -195,10 +207,31 @@ public class Date {
         }
 
         public static Month byNumerical(int number) {
-            for (Month month : Month.values()) {
-                if (month.numerical == number) {
-                    return month;
-                }
+            switch (number) {
+                case 1:
+                    return JANUARY;
+                case 2:
+                    return FEBRUARY;
+                case 3:
+                    return MARCH;
+                case 4:
+                    return APRIL;
+                case 5:
+                    return MAY;
+                case 6:
+                    return JUNE;
+                case 7:
+                    return JULY;
+                case 8:
+                    return AUGUST;
+                case 9:
+                    return SEPTEMBER;
+                case 10:
+                    return OCTOBER;
+                case 11:
+                    return NOVEMBER;
+                case 12:
+                    return DECEMBER;
             }
             throw new IllegalStateException("Invalid month number: " + number);
         }

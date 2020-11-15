@@ -16,7 +16,6 @@ import java.util.function.Function;
 
 public class FeatureSedimentaryDisks extends Feature<SphereReplaceConfig> {
 
-    private static final BlockPos.MutableBlockPos AUX_POS = new BlockPos.MutableBlockPos();
 
     public FeatureSedimentaryDisks(Function<Dynamic<?>, ? extends SphereReplaceConfig> config) {
         super(config);
@@ -29,21 +28,22 @@ public class FeatureSedimentaryDisks extends Feature<SphereReplaceConfig> {
         }
         int placed = 0;
         int radius = rand.nextInt(config.radius - 2) + 2;
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         for (int x = pos.getX() - radius; x <= pos.getX() + radius; ++x) {
             for (int z = pos.getZ() - radius; z <= pos.getZ() + radius; ++z) {
                 int deltaX = x - pos.getX();
                 int deltaZ = z - pos.getZ();
                 if (deltaX * deltaX + deltaZ * deltaZ <= radius * radius) {
                     for (int y = pos.getY() - config.ySize; y <= pos.getY() + config.ySize; ++y) {
-                        AUX_POS.setPos(x, y, z);
-                        if (BlockUtils.isTouchingWater(world, AUX_POS)) {
-                            BlockState stateAtPos = world.getBlockState(AUX_POS);
-                            for (BlockState stateInConfig : config.targets) {
-                                if (stateInConfig.getBlock() == stateAtPos.getBlock()) {
-                                    world.setBlockState(AUX_POS, config.state, 2);
+                        mutablePos.setPos(x, y, z);
+                        BlockState stateAtPos = world.getBlockState(mutablePos);
+                        for (BlockState stateInConfig : config.targets) {
+                            if (stateInConfig.getBlock() == stateAtPos.getBlock()) {
+                                if (BlockUtils.isTouchingWater(world, mutablePos)) {
+                                    world.setBlockState(mutablePos, config.state, 2);
                                     ++placed;
-                                    break;
                                 }
+                                break;
                             }
                         }
                     }

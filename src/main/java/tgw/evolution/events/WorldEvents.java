@@ -2,26 +2,17 @@ package tgw.evolution.events;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.GameType;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.provider.BiomeProvider;
-import net.minecraft.world.chunk.AbstractChunkProvider;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.gen.Heightmap;
-import net.minecraft.world.storage.WorldInfo;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockUtils;
-import tgw.evolution.world.EvWorldDefault;
 
 import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Random;
 
 public class WorldEvents {
 
@@ -50,7 +41,9 @@ public class WorldEvents {
         if (i < 0) {
             return null;
         }
-        if (chunk.getTopBlockY(Heightmap.Type.WORLD_SURFACE, posX & 15, posZ & 15) > chunk.getTopBlockY(Heightmap.Type.OCEAN_FLOOR, posX & 15, posZ & 15)) {
+        if (chunk.getTopBlockY(Heightmap.Type.WORLD_SURFACE, posX & 15, posZ & 15) > chunk.getTopBlockY(Heightmap.Type.OCEAN_FLOOR,
+                                                                                                        posX & 15,
+                                                                                                        posZ & 15)) {
             return null;
         }
         for (int j = i + 1; j >= 0; --j) {
@@ -73,50 +66,50 @@ public class WorldEvents {
         }
     }
 
-    @SubscribeEvent
-    public void createSpawn(WorldEvent.CreateSpawnPosition event) {
-        World world = event.getWorld().getWorld();
-        WorldInfo worldInfo = world.getWorldInfo();
-        if (!(worldInfo.getGenerator() instanceof EvWorldDefault)) {
-            return;
-        }
-        event.setCanceled(true);
-        Dimension dimension = world.getDimension();
-        AbstractChunkProvider chunkProvider = world.getChunkProvider();
-        if (!dimension.canRespawnHere()) {
-            worldInfo.setSpawn(BlockPos.ZERO.up(chunkProvider.getChunkGenerator().getGroundHeight()));
-        }
-        else {
-            BiomeProvider biomeprovider = chunkProvider.getChunkGenerator().getBiomeProvider();
-            List<Biome> list = biomeprovider.getBiomesToSpawnIn();
-            Random random = new Random(world.getSeed());
-            BlockPos biomePosition = biomeprovider.findBiomePosition(0, 0, 256, list, random);
-            ChunkPos chunkpos = biomePosition == null ? new ChunkPos(0, 0) : new ChunkPos(biomePosition);
-            if (biomePosition == null) {
-                Evolution.LOGGER.warn("Unable to find spawn biome");
-            }
-            BlockPos spawnPos = chunkpos.asBlockPos().add(8, chunkProvider.getChunkGenerator().getGroundHeight(), 8);
-            worldInfo.setSpawn(spawnPos);
-            int xPosIncrement = 0;
-            int zPosIncrement = 0;
-            int i = 0;
-            int j = -1;
-            for (int l = 0; l < 1024; ++l) {
-                if (xPosIncrement > -16 && xPosIncrement <= 16 && zPosIncrement > -16 && zPosIncrement <= 16) {
-                    BlockPos blockpos1 = findSpawnChunk(world, chunkpos.x + xPosIncrement << 4, chunkpos.z + zPosIncrement << 4);
-                    if (blockpos1 != null) {
-                        worldInfo.setSpawn(blockpos1);
-                        break;
-                    }
-                }
-                if (xPosIncrement == zPosIncrement || xPosIncrement < 0 && xPosIncrement == -zPosIncrement || xPosIncrement > 0 && xPosIncrement == 1 - zPosIncrement) {
-                    int temp = i;
-                    i = -j;
-                    j = temp;
-                }
-                xPosIncrement += i;
-                zPosIncrement += j;
-            }
-        }
-    }
+//    @SubscribeEvent
+//    public void createSpawn(WorldEvent.CreateSpawnPosition event) {
+//        World world = event.getWorld().getWorld();
+//        WorldInfo worldInfo = world.getWorldInfo();
+//        if (!(worldInfo.getGenerator() instanceof EvWorldDefault)) {
+//            return;
+//        }
+//        event.setCanceled(true);
+//        Dimension dimension = world.getDimension();
+//        AbstractChunkProvider chunkProvider = world.getChunkProvider();
+//        if (!dimension.canRespawnHere()) {
+//            worldInfo.setSpawn(BlockPos.ZERO.up(chunkProvider.getChunkGenerator().getGroundHeight()));
+//        }
+//        else {
+//            BiomeProvider biomeprovider = chunkProvider.getChunkGenerator().getBiomeProvider();
+//            List<Biome> list = biomeprovider.getBiomesToSpawnIn();
+//            Random random = new Random(world.getSeed());
+//            BlockPos biomePosition = biomeprovider.findBiomePosition(0, 0, 256, list, random);
+//            ChunkPos chunkpos = biomePosition == null ? new ChunkPos(0, 0) : new ChunkPos(biomePosition);
+//            if (biomePosition == null) {
+//                Evolution.LOGGER.warn("Unable to find spawn biome");
+//            }
+//            BlockPos spawnPos = chunkpos.asBlockPos().add(8, chunkProvider.getChunkGenerator().getGroundHeight(), 8);
+//            worldInfo.setSpawn(spawnPos);
+//            int xPosIncrement = 0;
+//            int zPosIncrement = 0;
+//            int i = 0;
+//            int j = -1;
+//            for (int l = 0; l < 1024; ++l) {
+//                if (xPosIncrement > -16 && xPosIncrement <= 16 && zPosIncrement > -16 && zPosIncrement <= 16) {
+//                    BlockPos blockpos1 = findSpawnChunk(world, chunkpos.x + xPosIncrement << 4, chunkpos.z + zPosIncrement << 4);
+//                    if (blockpos1 != null) {
+//                        worldInfo.setSpawn(blockpos1);
+//                        break;
+//                    }
+//                }
+//                if (xPosIncrement == zPosIncrement || xPosIncrement < 0 && xPosIncrement == -zPosIncrement || xPosIncrement > 0 && xPosIncrement == 1 - zPosIncrement) {
+//                    int temp = i;
+//                    i = -j;
+//                    j = temp;
+//                }
+//                xPosIncrement += i;
+//                zPosIncrement += j;
+//            }
+//        }
+//    }
 }

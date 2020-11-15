@@ -30,6 +30,7 @@ import java.util.function.Predicate;
 public class MathHelper {
 
     public static final float PI = (float) Math.PI;
+    public static final float SQRT2 = sqrt(2);
     public static final Random RANDOM = new Random();
     public static final Direction[] DIRECTIONS_EXCEPT_DOWN = {Direction.UP, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
     public static final Direction[] DIRECTIONS_HORIZONTAL = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
@@ -76,51 +77,6 @@ public class MathHelper {
             throw new ArithmeticException("Byte overflow " + value);
         }
         return (byte) value;
-    }
-
-    /**
-     * Caps the bounds of a value to be within an inclusive range.
-     *
-     * @param value The value to cap.
-     * @param min   The lower limit.
-     * @param max   The upper limit.
-     * @return The value if it is within the range, otherwise returns the limit it is closer to.
-     */
-    public static int clamp(int value, int min, int max) {
-        if (value < min) {
-            return min;
-        }
-        return Math.min(value, max);
-    }
-
-    /**
-     * Caps the bounds of a value to be within an inclusive range.
-     *
-     * @param value The value to cap.
-     * @param min   The lower limit.
-     * @param max   The upper limit.
-     * @return The value if it is within the range, otherwise returns the limit it is closer to.
-     */
-    public static float clamp(float value, float min, float max) {
-        if (value < min) {
-            return min;
-        }
-        return Math.min(value, max);
-    }
-
-    /**
-     * Caps the bounds of a value to be within an inclusive range.
-     *
-     * @param value The value to cap.
-     * @param min   The lower limit.
-     * @param max   The upper limit.
-     * @return The value if it is within the range, otherwise returns the limit it is closer to.
-     */
-    public static double clamp(double value, double min, double max) {
-        if (value < min) {
-            return min;
-        }
-        return Math.min(value, max);
     }
 
     /**
@@ -246,23 +202,33 @@ public class MathHelper {
     /**
      * Approximates the trigonometric function sine.
      *
-     * @param rad The argument of the sine, given in radians.
+     * @param deg The argument of the sine, given in degrees.
      * @return An approximation of the sine of the given argument.
      * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
      */
-    public static float sin(float rad) {
-        return net.minecraft.util.math.MathHelper.sin(rad);
+    public static float sinDeg(float deg) {
+        return net.minecraft.util.math.MathHelper.sin(MathHelper.degToRad(deg));
+    }
+
+    /**
+     * Converts a {@code float} value from degrees to radians.
+     *
+     * @param degrees The value in degrees.
+     * @return the corresponding value in radians.
+     */
+    public static float degToRad(float degrees) {
+        return degrees * PI / 180;
     }
 
     /**
      * Approximates the trigonometric function cosine.
      *
-     * @param rad The argument of the cosine, given in radians.
+     * @param deg The argument of the cosine, given in degrees.
      * @return An approximation of the cosine of the given argument.
      * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
      */
-    public static float cos(float rad) {
-        return net.minecraft.util.math.MathHelper.cos(rad);
+    public static float cosDeg(float deg) {
+        return net.minecraft.util.math.MathHelper.cos(MathHelper.degToRad(deg));
     }
 
     /**
@@ -274,6 +240,34 @@ public class MathHelper {
      */
     public static float tan(float rad) {
         return net.minecraft.util.math.MathHelper.sin(rad) / net.minecraft.util.math.MathHelper.cos(rad);
+    }
+
+    /**
+     * Approximates the function arc cosine.
+     * The max error is 0.96 degrees.
+     * This method is much faster than the standard {@link Math#acos(double)}
+     *
+     * @param value The arc cosine argument.
+     * @return The angle represented by this arc, in degrees.
+     */
+    public static float arcCosDeg(double value) {
+        return (float) (arcCos(value) * 180 / Math.PI);
+    }
+
+    /**
+     * Approximates the function arc cosine.
+     * The max error is 0.017 rad.
+     * This method is much faster than the standard {@link Math#acos(double)}
+     *
+     * @param value The arc cosine argument.
+     * @return The angle represented by this arc, in radians.
+     */
+    public static double arcCos(double value) {
+        double a = -0.939115566365855;
+        double b = 0.9217841528914573;
+        double c = -1.2845906244690837;
+        double d = 0.295624144969963174;
+        return Math.PI / 2.0 + (a * value + b * value * value * value) / (1 + c * value * value + d * value * value * value * value);
     }
 
     /**
@@ -294,6 +288,20 @@ public class MathHelper {
             }
         }
         return true;
+    }
+
+    /**
+     * Returns whether two {@code float} values have the same sign.
+     *
+     * @param a The first value
+     * @param b The second value
+     * @return {@code true} if they have the same sign, {@code false} otherwise.
+     */
+    public static boolean areSameSign(float a, float b) {
+        if (a >= 0 && b >= 0) {
+            return true;
+        }
+        return a < 0 && b < 0;
     }
 
     /**
@@ -413,13 +421,13 @@ public class MathHelper {
     }
 
     /**
-     * Converts a {@code float} value from degrees to radians.
+     * Converts a {@code float} value from radians to degrees.
      *
-     * @param degrees The value in degrees.
-     * @return the corresponding value in radians.
+     * @param radians The value in radians.
+     * @return the corresponding value in degrees.
      */
-    public static float degToRad(float degrees) {
-        return degrees * PI / 180;
+    public static float radToDeg(float radians) {
+        return radians * 180 / PI;
     }
 
     /**
@@ -440,6 +448,36 @@ public class MathHelper {
     }
 
     /**
+     * Caps the bounds of a value to be within an inclusive range.
+     *
+     * @param value The value to cap.
+     * @param min   The lower limit.
+     * @param max   The upper limit.
+     * @return The value if it is within the range, otherwise returns the limit it is closer to.
+     */
+    public static double clamp(double value, double min, double max) {
+        if (value < min) {
+            return min;
+        }
+        return Math.min(value, max);
+    }
+
+    /**
+     * Caps the bounds of a value to be within an inclusive range.
+     *
+     * @param value The value to cap.
+     * @param min   The lower limit.
+     * @param max   The upper limit.
+     * @return The value if it is within the range, otherwise returns the limit it is closer to.
+     */
+    public static int clamp(int value, int min, int max) {
+        if (value < min) {
+            return min;
+        }
+        return Math.min(value, max);
+    }
+
+    /**
      * Casts a ray tracing for Entities starting from the eyes of the desired {@link Entity}.
      *
      * @param entity        The {@link Entity} from whose eyes to cast the ray off.
@@ -455,35 +493,6 @@ public class MathHelper {
         Vec3d look = entity.getLook(partialTicks);
         Vec3d to = from.add(look.x * reachDistance, look.y * reachDistance, look.z * reachDistance);
         return rayTraceEntities(entity, from, to, new AxisAlignedBB(from, to), reachDistance * reachDistance);
-    }
-
-    /**
-     * Casts a ray tracing for {@code Entities} based on the {@link Entity}'s {@link Entity#rotationYaw} and {@link Entity#rotationPitch}.
-     * This method is useful for Entities that are projectiles, as {@link MathHelper#rayTraceEntityFromEyes(Entity, float, double)}
-     * usually do not work on them.
-     *
-     * @param entity   The {@link Entity} from whose {@code yaw} and {@code pitch} to cast the ray.
-     * @param distance The maximum distance this ray will travel.
-     * @return An {@link EntityRayTraceResult} containing the {@link Entity} hit by the ray traced
-     * and a {@link Vec3d} containing the position of the hit. If no {@link Entity} was hit by the ray,
-     * this {@link EntityRayTraceResult} will be {@code null}.
-     */
-    @Nullable
-    public static EntityRayTraceResult rayTraceEntityFromPitchAndYaw(@Nonnull Entity entity, double distance) {
-        Vec3d from = entity.getEyePosition(1f);
-        float theta = entity.rotationYaw;
-        if (theta < 0) {
-            theta += 360;
-        }
-        theta = MathHelper.degToRad(theta);
-        float phi = entity.rotationPitch;
-        if (phi < 0) {
-            phi += 360;
-        }
-        phi = MathHelper.degToRad(phi);
-        Vec3d looking = new Vec3d(MathHelper.sin(theta), MathHelper.sin(phi), MathHelper.cos(theta)).normalize();
-        Vec3d to = from.add(looking.x * distance, looking.y * distance, looking.z * distance);
-        return rayTraceEntities(entity, from, to, new AxisAlignedBB(from, to), distance * distance);
     }
 
     /**
@@ -536,6 +545,57 @@ public class MathHelper {
             return null;
         }
         return new EntityRayTraceResult(entity, vec3d);
+    }
+
+    /**
+     * Casts a ray tracing for {@code Entities} based on the {@link Entity}'s {@link Entity#rotationYaw} and {@link Entity#rotationPitch}.
+     * This method is useful for Entities that are projectiles, as {@link MathHelper#rayTraceEntityFromEyes(Entity, float, double)}
+     * usually do not work on them.
+     *
+     * @param entity   The {@link Entity} from whose {@code yaw} and {@code pitch} to cast the ray.
+     * @param distance The maximum distance this ray will travel.
+     * @return An {@link EntityRayTraceResult} containing the {@link Entity} hit by the ray traced
+     * and a {@link Vec3d} containing the position of the hit. If no {@link Entity} was hit by the ray,
+     * this {@link EntityRayTraceResult} will be {@code null}.
+     */
+    @Nullable
+    public static EntityRayTraceResult rayTraceEntityFromPitchAndYaw(@Nonnull Entity entity, double distance) {
+        Vec3d from = entity.getEyePosition(1f);
+        float theta = entity.rotationYaw;
+        if (theta < 0) {
+            theta += 360;
+        }
+        theta = MathHelper.degToRad(theta);
+        float phi = entity.rotationPitch;
+        if (phi < 0) {
+            phi += 360;
+        }
+        phi = MathHelper.degToRad(phi);
+        Vec3d looking = new Vec3d(MathHelper.sin(theta), MathHelper.sin(phi), MathHelper.cos(theta)).normalize();
+        Vec3d to = from.add(looking.x * distance, looking.y * distance, looking.z * distance);
+        return rayTraceEntities(entity, from, to, new AxisAlignedBB(from, to), distance * distance);
+    }
+
+    /**
+     * Approximates the trigonometric function sine.
+     *
+     * @param rad The argument of the sine, given in radians.
+     * @return An approximation of the sine of the given argument.
+     * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
+     */
+    public static float sin(float rad) {
+        return net.minecraft.util.math.MathHelper.sin(rad);
+    }
+
+    /**
+     * Approximates the trigonometric function cosine.
+     *
+     * @param rad The argument of the cosine, given in radians.
+     * @return An approximation of the cosine of the given argument.
+     * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
+     */
+    public static float cos(float rad) {
+        return net.minecraft.util.math.MathHelper.cos(rad);
     }
 
     /**
@@ -607,6 +667,21 @@ public class MathHelper {
         float delta = max - min;
         value /= delta;
         return value;
+    }
+
+    /**
+     * Caps the bounds of a value to be within an inclusive range.
+     *
+     * @param value The value to cap.
+     * @param min   The lower limit.
+     * @param max   The upper limit.
+     * @return The value if it is within the range, otherwise returns the limit it is closer to.
+     */
+    public static float clamp(float value, float min, float max) {
+        if (value < min) {
+            return min;
+        }
+        return Math.min(value, max);
     }
 
     /**
@@ -862,5 +937,22 @@ public class MathHelper {
         for (int i = list.size() - 1; i >= 0; i--) {
             consumer.accept(list.get(i));
         }
+    }
+
+    /**
+     * Calculates the Arctangent of a vector given two components.
+     *
+     * @param y The y component of the vector.
+     * @param x The x component of the vector.
+     * @return The angle between the vector and the X axis, given in radians.
+     */
+    public static double atan2(double y, double x) {
+        return net.minecraft.util.math.MathHelper.atan2(y, x);
+    }
+
+    public static boolean isInInterval(float value, float middlePoint, float length) {
+        float start = middlePoint - length / 2;
+        float end = middlePoint + length / 2;
+        return start <= value && value <= end;
     }
 }

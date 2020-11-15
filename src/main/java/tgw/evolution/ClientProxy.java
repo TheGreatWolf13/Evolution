@@ -18,7 +18,11 @@ import tgw.evolution.init.EvolutionContainers;
 
 public class ClientProxy implements IProxy {
 
-    public static final KeyBinding TOGGLE_PRONE = new KeyBinding("key.prone.toggle", KeyConflictContext.IN_GAME, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_X, "key.categories.movement");
+    public static final KeyBinding TOGGLE_PRONE = new KeyBinding("key.prone.toggle",
+                                                                 KeyConflictContext.IN_GAME,
+                                                                 InputMappings.Type.KEYSYM,
+                                                                 GLFW.GLFW_KEY_X,
+                                                                 "key.categories.movement");
 
     public static void changeWorldOrders() {
         int evId = 0;

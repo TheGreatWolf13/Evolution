@@ -3,11 +3,15 @@ package tgw.evolution;
 import com.google.common.collect.Maps;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.World;
+import net.minecraft.world.dimension.Dimension;
+import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.client.event.ParticleFactoryRegisterEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
@@ -26,11 +30,13 @@ import tgw.evolution.events.WorldEvents;
 import tgw.evolution.init.*;
 import tgw.evolution.world.EvWorldDefault;
 import tgw.evolution.world.EvWorldFlat;
+import tgw.evolution.world.dimension.DimensionOverworld;
 import tgw.evolution.world.feature.EvolutionFeatures;
 import tgw.evolution.world.gen.carver.EvolutionCarvers;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.BiFunction;
 
 @Mod("evolution")
 public class Evolution {
@@ -81,6 +87,11 @@ public class Evolution {
         MinecraftForge.EVENT_BUS.register(new ChunkEvents());
         MinecraftForge.EVENT_BUS.register(new EntityEvents());
         MinecraftForge.EVENT_BUS.register(new ItemEvents());
+        BiFunction<World, DimensionType, ? extends Dimension> dimensionFactory = DimensionOverworld::new;
+        ObfuscationReflectionHelper.setPrivateValue(DimensionType.class,
+                                                    DimensionType.OVERWORLD,
+                                                    dimensionFactory,
+                                                    "field_201038_g");
         Evolution.LOGGER.info("Setup registries done.");
     }
 
