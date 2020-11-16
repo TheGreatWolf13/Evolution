@@ -19,7 +19,9 @@ public class ColorManager {
         IBlockColor spruce = (state, blockReader, pos, color) -> FoliageColors.getSpruce();
         IBlockColor birch = (state, blockReader, pos, color) -> FoliageColors.getBirch();
         IBlockColor aspen = (state, blockReader, pos, color) -> 16776192;
-        IBlockColor leaves = (state, blockReader, pos, color) -> blockReader != null && pos != null ? BiomeColors.getFoliageColor(blockReader, pos) : FoliageColors.getDefault();
+        IBlockColor leaves = (state, blockReader, pos, color) -> blockReader != null && pos != null ?
+                                                                 BiomeColors.getFoliageColor(blockReader, pos) :
+                                                                 FoliageColors.getDefault();
         //Grass
         register(colors, grass, GRASS_ANDESITE);
         register(colors, grass, GRASS_ANDESITE);
@@ -83,6 +85,10 @@ public class ColorManager {
         register(colors, leaves, LEAVES_REDWOOD);
         register(colors, spruce, LEAVES_SPRUCE);
         register(colors, leaves, LEAVES_WILLOW);
+    }
+
+    private static void register(BlockColors colors, IBlockColor color, RegistryObject<Block> block) {
+        colors.register(color, block.get());
     }
 
     public static void registerItemColorHandlers(ItemColors colors) {
@@ -152,10 +158,6 @@ public class ColorManager {
         register(colors, leaves, LEAVES_REDWOOD);
         register(colors, spruce, LEAVES_SPRUCE);
         register(colors, leaves, LEAVES_WILLOW);
-    }
-
-    private static void register(BlockColors colors, IBlockColor color, RegistryObject<Block> block) {
-        colors.register(color, block.get());
     }
 
     private static void register(ItemColors colors, IItemColor color, RegistryObject<Block> block) {

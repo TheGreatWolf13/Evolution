@@ -24,17 +24,14 @@ public class ClientProxy implements IProxy {
                                                                  GLFW.GLFW_KEY_X,
                                                                  "key.categories.movement");
 
-    public static void changeWorldOrders() {
-        int evId = 0;
-        for (WorldType worldType : WorldType.WORLD_TYPES) {
-            if (worldType != null && "ev_default".equals(worldType.getName())) {
-                evId = worldType.getId();
-                break;
-            }
-        }
-        WorldType evWorld = WorldType.WORLD_TYPES[evId];
-        System.arraycopy(WorldType.WORLD_TYPES, 0, WorldType.WORLD_TYPES, 1, evId);
-        WorldType.WORLD_TYPES[0] = evWorld;
+    @Override
+    public World getClientWorld() {
+        return Minecraft.getInstance().world;
+    }
+
+    @Override
+    public PlayerEntity getClientPlayer() {
+        return Minecraft.getInstance().player;
     }
 
     @Override
@@ -48,13 +45,16 @@ public class ClientProxy implements IProxy {
         changeWorldOrders();
     }
 
-    @Override
-    public World getClientWorld() {
-        return Minecraft.getInstance().world;
-    }
-
-    @Override
-    public PlayerEntity getClientPlayer() {
-        return Minecraft.getInstance().player;
+    public static void changeWorldOrders() {
+        int evId = 0;
+        for (WorldType worldType : WorldType.WORLD_TYPES) {
+            if (worldType != null && "ev_default".equals(worldType.getName())) {
+                evId = worldType.getId();
+                break;
+            }
+        }
+        WorldType evWorld = WorldType.WORLD_TYPES[evId];
+        System.arraycopy(WorldType.WORLD_TYPES, 0, WorldType.WORLD_TYPES, 1, evId);
+        WorldType.WORLD_TYPES[0] = evWorld;
     }
 }

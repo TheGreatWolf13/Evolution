@@ -13,10 +13,8 @@ public abstract class EarthHelper {
     private static final Vec3f ZENITH = new Vec3f(0, RADIUS, 0);
     private static final Vec3f SUN = new Vec3f(0, 0, 0);
     private static final Vec3f MOON = new Vec3f(0, 0, 0);
-    private static final Vec3f RESULT = new Vec3f(0, 0, 0);
     private static final float[] SUNSET_COLORS = new float[4];
     private static final Vec3f SKY_COLOR = new Vec3f(0, 0, 0);
-    //    private static final Vec3f FOG_COLOR = new Vec3f(0, 0, 0);
     public static float sunX;
     public static float sunZ;
     public static float moonX;
@@ -125,17 +123,6 @@ public abstract class EarthHelper {
     }
 
     /**
-     * Calculates the amplitude of the inclination of the lunar orbit. This phenomena is cyclic and repeats every 18.6 years,
-     * with maximum amplitude of 5.1 degrees.
-     *
-     * @param worldTime The time of the world, in ticks.
-     * @return A value in degrees representing the lunar orbit amplitude.
-     */
-    public static float lunarStandStillAmpl(long worldTime) {
-        return 5.1f * MathHelper.cos(2 * MathHelper.PI * worldTime / (Time.YEAR_IN_TICKS * 18.6f));
-    }
-
-    /**
      * Calculates the visual amplitude of the moon in the skyes. This phenomena is cylic and repeats monthly.
      * The maximum amplitude depends on the lunar standstill (which varies from -5.1 degrees to +5.1 degrees)
      * and the tilt of the Earth's orbit (23.5 degrees).
@@ -146,6 +133,17 @@ public abstract class EarthHelper {
     public static float lunarMonthlyAmpl(long worldTime) {
         float amplitude = lunarStandStillAmpl(worldTime) + 23.5f;
         return amplitude * MathHelper.sin(2 * MathHelper.PI * worldTime / Time.MONTH_IN_TICKS);
+    }
+
+    /**
+     * Calculates the amplitude of the inclination of the lunar orbit. This phenomena is cyclic and repeats every 18.6 years,
+     * with maximum amplitude of 5.1 degrees.
+     *
+     * @param worldTime The time of the world, in ticks.
+     * @return A value in degrees representing the lunar orbit amplitude.
+     */
+    public static float lunarStandStillAmpl(long worldTime) {
+        return 5.1f * MathHelper.cos(2 * MathHelper.PI * worldTime / (Time.YEAR_IN_TICKS * 18.6f));
     }
 
     public static float calculateMoonAngle(long worldTime) {
@@ -165,26 +163,4 @@ public abstract class EarthHelper {
         MOON.z = moonZ;
         return MathHelper.arcCosDeg(MOON.dotProduct(ZENITH) * MOON.inverseLength() * ZENITH.inverseLength());
     }
-
-    public static float calculateAngleBetweenSunAndMoon() {
-        return MathHelper.arcCosDeg(SUN.dotProduct(MOON) * SUN.inverseLength() * MOON.inverseLength());
-    }
-
-//    public static Vec3f getFogColor(float elevationAngle) {
-//        float sunAngle = 1f;
-//        if (elevationAngle > 80) {
-//            sunAngle = -elevationAngle * elevationAngle / 784f + 10f * elevationAngle / 49f - 351f / 49f;
-//            sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
-//        }
-//        float r = 0.7529412F;
-//        r = r * (sunAngle * 0.94F + 0.06F);
-//        float g = 0.84705883F;
-//        g = g * (sunAngle * 0.94F + 0.06F);
-//        float b = 1.0F;
-//        b *= sunAngle * 0.91F + 0.09F;
-//        FOG_COLOR.x = r;
-//        FOG_COLOR.y = g;
-//        FOG_COLOR.z = b;
-//        return FOG_COLOR;
-//    }
 }
