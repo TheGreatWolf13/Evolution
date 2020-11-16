@@ -7,8 +7,6 @@ import net.minecraft.world.World;
 
 public interface IReplaceable {
 
-    ItemStack getDrops(BlockState state);
-
     boolean isReplaceable(BlockState state);
 
     boolean canBeReplacedByRope(BlockState state);
@@ -18,4 +16,6 @@ public interface IReplaceable {
     default void onReplaced(BlockState state, World worldIn, BlockPos pos) {
         BlockUtils.dropItemStack(worldIn, pos, this.getDrops(state));
     }
+
+    ItemStack getDrops(BlockState state);
 }

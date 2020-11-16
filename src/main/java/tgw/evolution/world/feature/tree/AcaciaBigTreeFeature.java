@@ -12,6 +12,7 @@ import net.minecraft.world.gen.feature.AbstractTreeFeature;
 import net.minecraft.world.gen.feature.NoFeatureConfig;
 import tgw.evolution.blocks.*;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.TreeUtils;
 
 import java.util.Random;
 import java.util.Set;
@@ -19,35 +20,14 @@ import java.util.function.Function;
 
 public class AcaciaBigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
 
-    private static final BlockState LOG = EvolutionBlocks.LOG_ACACIA.get().getDefaultState().with(BlockLog.TREE, true).with(BlockXYZAxis.AXIS, Direction.Axis.Y);
+    private static final BlockState LOG = EvolutionBlocks.LOG_ACACIA.get()
+                                                                    .getDefaultState()
+                                                                    .with(BlockLog.TREE, true)
+                                                                    .with(BlockXYZAxis.AXIS, Direction.Axis.Y);
     private static final BlockState LEAVES = EvolutionBlocks.LEAVES_ACACIA.get().getDefaultState();
 
     public AcaciaBigTreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> config, boolean doBlockNofityOnPlace) {
         super(config, doBlockNofityOnPlace);
-    }
-
-    private static boolean placeTreeOfHeight(IWorldGenerationReader worldIn, BlockPos pos, int height) {
-        int posX = pos.getX();
-        int posY = pos.getY();
-        int posZ = pos.getZ();
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
-        for (int l = 0; l <= height + 1; ++l) {
-            int i1 = 1;
-            if (l == 0) {
-                i1 = 0;
-            }
-            if (l >= height - 1) {
-                i1 = 2;
-            }
-            for (int j1 = -i1; j1 <= i1; ++j1) {
-                for (int k1 = -i1; k1 <= i1; ++k1) {
-                    if (!BlockSapling.canGrowInto(worldIn, blockpos$mutableblockpos.setPos(posX + j1, posY + l, posZ + k1))) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
     }
 
     @Override
@@ -60,7 +40,8 @@ public class AcaciaBigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         //tree within world height limit
         if (posY >= 1 && posY + trunkHeight + 1 < 256) {
             BlockPos posDown = position.down();
-            boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(posDown), (BlockSapling) EvolutionBlocks.SAPLING_ACACIA.get());
+            boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(posDown),
+                                                          (BlockSapling) EvolutionBlocks.SAPLING_ACACIA.get());
             if (!isSoil) {
                 return false;
             }
@@ -68,10 +49,10 @@ public class AcaciaBigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                 return false;
             }
             //the NW corner sapling grows first
-            this.setDirtAt(worldIn, posDown, posDown.up());
-            this.setDirtAt(worldIn, posDown.east(), posDown.up());
-            this.setDirtAt(worldIn, posDown.south(), posDown.up());
-            this.setDirtAt(worldIn, posDown.south().east(), posDown.up());
+            TreeUtils.setDirtAt(worldIn, posDown);
+            TreeUtils.setDirtAt(worldIn, posDown.east());
+            TreeUtils.setDirtAt(worldIn, posDown.south());
+            TreeUtils.setDirtAt(worldIn, posDown.south().east());
             BlockPos.MutableBlockPos trunkPos = new BlockPos.MutableBlockPos();
             for (int placingTrunks = 0; placingTrunks < trunkHeight; ++placingTrunks) {
                 //placing main trunk
@@ -331,6 +312,30 @@ public class AcaciaBigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
             return true;
         }
         return false;
+    }
+
+    private static boolean placeTreeOfHeight(IWorldGenerationReader worldIn, BlockPos pos, int height) {
+        int posX = pos.getX();
+        int posY = pos.getY();
+        int posZ = pos.getZ();
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
+        for (int l = 0; l <= height + 1; ++l) {
+            int i1 = 1;
+            if (l == 0) {
+                i1 = 0;
+            }
+            if (l >= height - 1) {
+                i1 = 2;
+            }
+            for (int j1 = -i1; j1 <= i1; ++j1) {
+                for (int k1 = -i1; k1 <= i1; ++k1) {
+                    if (!BlockSapling.canGrowInto(worldIn, blockpos$mutableblockpos.setPos(posX + j1, posY + l, posZ + k1))) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     private void placeTrunk(Set<BlockPos> changedBlocks, IWorldGenerationReader iWorld, BlockPos pos, MutableBoundingBox box) {

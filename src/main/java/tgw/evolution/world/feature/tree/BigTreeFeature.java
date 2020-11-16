@@ -17,6 +17,7 @@ import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.BlockXYZAxis;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.TreeUtils;
 
 import java.util.List;
 import java.util.Objects;
@@ -109,7 +110,12 @@ public class BigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         }
     }
 
-    private int makeLimb(Set<BlockPos> changedBlocks, IWorldGenerationReader worldIn, BlockPos p_208523_3_, BlockPos p_208523_4_, boolean p_208523_5_, MutableBoundingBox box) {
+    private int makeLimb(Set<BlockPos> changedBlocks,
+                         IWorldGenerationReader worldIn,
+                         BlockPos p_208523_3_,
+                         BlockPos p_208523_4_,
+                         boolean p_208523_5_,
+                         MutableBoundingBox box) {
         if (!p_208523_5_ && Objects.equals(p_208523_3_, p_208523_4_)) {
             return -1;
         }
@@ -121,7 +127,11 @@ public class BigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         for (int j = 0; j <= i; ++j) {
             BlockPos blockpos1 = p_208523_3_.add(0.5F + j * f, 0.5F + j * f1, 0.5F + j * f2);
             if (p_208523_5_) {
-                this.setLogState(changedBlocks, worldIn, blockpos1, LOG.with(BlockXYZAxis.AXIS, BigTreeFeature.getLoxAxis(p_208523_3_, blockpos1)), box);
+                this.setLogState(changedBlocks,
+                                 worldIn,
+                                 blockpos1,
+                                 LOG.with(BlockXYZAxis.AXIS, BigTreeFeature.getLoxAxis(p_208523_3_, blockpos1)),
+                                 box);
             }
             else if (!BlockSapling.canGrowInto(worldIn, blockpos1)) {
                 return j;
@@ -142,7 +152,12 @@ public class BigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         this.makeLimb(changedBlocks, worldIn, pos, pos.up(p_208526_4_), true, box);
     }
 
-    private void makeBranches(Set<BlockPos> changedBlocks, IWorldGenerationReader worldIn, int p_208524_3_, BlockPos pos, List<BigTreeFeature.FoliageCoordinates> list, MutableBoundingBox box) {
+    private void makeBranches(Set<BlockPos> changedBlocks,
+                              IWorldGenerationReader worldIn,
+                              int p_208524_3_,
+                              BlockPos pos,
+                              List<BigTreeFeature.FoliageCoordinates> list,
+                              MutableBoundingBox box) {
         BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         for (BigTreeFeature.FoliageCoordinates foliageCoordinates : list) {
             int i = foliageCoordinates.getBranchBase();
@@ -161,7 +176,7 @@ public class BigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         if (i == -1) {
             return false;
         }
-        this.setDirtAt(worldIn, position.down(), position);
+        TreeUtils.setDirtAt(worldIn, position.down());
         int j = (int) (i * 0.618D);
         if (j >= i) {
             j = i - 1;

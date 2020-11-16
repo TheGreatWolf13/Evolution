@@ -15,6 +15,7 @@ import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.TreeUtils;
 
 import java.util.Random;
 import java.util.Set;
@@ -29,31 +30,6 @@ public class SpruceBigTreeFeature extends HugeTreesFeature<NoFeatureConfig> {
     public SpruceBigTreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> config, boolean notify, boolean p_i45457_2_) {
         super(config, notify, 13, 15, TRUNK, LEAF);
         this.useBaseHeight = p_i45457_2_;
-    }
-
-    private static boolean isSpaceAt(IWorldGenerationReader worldIn, BlockPos leavesPos, int height) {
-        int worldHeight = worldIn instanceof IWorld ? ((IWorld) worldIn).getWorld().getHeight() : 256;
-        if (leavesPos.getY() >= 1 && leavesPos.getY() + height + 1 <= worldHeight) {
-            boolean flag = true;
-            for (int i = 0; i <= 1 + height; ++i) {
-                int j = 2;
-                if (i == 0) {
-                    j = 1;
-                }
-                else if (i >= 1 + height - 2) {
-                    j = 2;
-                }
-                for (int k = -j; k <= j && flag; ++k) {
-                    for (int l = -j; l <= j && flag; ++l) {
-                        if (leavesPos.getY() + i < 0 || leavesPos.getY() + i >= 256 || !BlockSapling.canGrowInto(worldIn, leavesPos.add(k, i, l))) {
-                            flag = false;
-                        }
-                    }
-                }
-            }
-            return flag;
-        }
-        return false;
     }
 
     @Override
@@ -86,6 +62,10 @@ public class SpruceBigTreeFeature extends HugeTreesFeature<NoFeatureConfig> {
         return true;
     }
 
+    public boolean allChecks(IWorldGenerationReader worldIn, BlockPos pos, int p_203427_3_) {
+        return isSpaceAt(worldIn, pos, p_203427_3_) && this.check(worldIn, pos);
+    }
+
     private void createCrown(IWorldGenerationReader worldIn, int x, int z, int y, int p_150541_5_, Random rand) {
         int i = rand.nextInt(5) + (this.useBaseHeight ? this.baseHeight : 3);
         int j = 0;
@@ -98,18 +78,40 @@ public class SpruceBigTreeFeature extends HugeTreesFeature<NoFeatureConfig> {
         }
     }
 
-    public boolean allChecks(IWorldGenerationReader worldIn, BlockPos pos, int p_203427_3_) {
-        return isSpaceAt(worldIn, pos, p_203427_3_) && this.check(worldIn, pos);
+    private static boolean isSpaceAt(IWorldGenerationReader worldIn, BlockPos leavesPos, int height) {
+        int worldHeight = worldIn instanceof IWorld ? ((IWorld) worldIn).getWorld().getHeight() : 256;
+        if (leavesPos.getY() >= 1 && leavesPos.getY() + height + 1 <= worldHeight) {
+            boolean flag = true;
+            for (int i = 0; i <= 1 + height; ++i) {
+                int j = 2;
+                if (i == 0) {
+                    j = 1;
+                }
+                else if (i >= 1 + height - 2) {
+                    j = 2;
+                }
+                for (int k = -j; k <= j && flag; ++k) {
+                    for (int l = -j; l <= j && flag; ++l) {
+                        if (leavesPos.getY() + i < 0 || leavesPos.getY() + i >= 256 || !BlockSapling.canGrowInto(worldIn, leavesPos.add(k, i, l))) {
+                            flag = false;
+                        }
+                    }
+                }
+            }
+            return flag;
+        }
+        return false;
     }
 
     private boolean check(IWorldGenerationReader worldIn, BlockPos pos) {
         BlockPos blockpos = pos.down();
-        boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(blockpos), (BlockSapling) EvolutionBlocks.SAPLING_SPRUCE.get());
+        boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(blockpos),
+                                                      (BlockSapling) EvolutionBlocks.SAPLING_SPRUCE.get());
         if (isSoil && pos.getY() >= 2) {
-            this.setDirtAt(worldIn, blockpos, pos);
-            this.setDirtAt(worldIn, blockpos.east(), pos);
-            this.setDirtAt(worldIn, blockpos.south(), pos);
-            this.setDirtAt(worldIn, blockpos.south().east(), pos);
+            TreeUtils.setDirtAt(worldIn, blockpos);
+            TreeUtils.setDirtAt(worldIn, blockpos.east());
+            TreeUtils.setDirtAt(worldIn, blockpos.south());
+            TreeUtils.setDirtAt(worldIn, blockpos.south().east());
             return true;
         }
         return false;

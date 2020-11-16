@@ -16,6 +16,7 @@ import net.minecraft.world.gen.feature.NoFeatureConfig;
 import net.minecraftforge.common.IPlantable;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.TreeUtils;
 
 import java.util.Random;
 import java.util.Set;
@@ -23,37 +24,22 @@ import java.util.function.Function;
 
 public class KapokBigTreeFeature extends HugeTreesFeature<NoFeatureConfig> {
 
-    public KapokBigTreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> config, boolean notify, int baseHeightIn, int extraRandomHeightIn, BlockState logState, BlockState leavesState) {
+    public KapokBigTreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> config,
+                               boolean notify,
+                               int baseHeightIn,
+                               int extraRandomHeightIn,
+                               BlockState logState,
+                               BlockState leavesState) {
         super(config, notify, baseHeightIn, extraRandomHeightIn, logState, leavesState);
         this.setSapling((IPlantable) EvolutionBlocks.SAPLING_KAPOK.get());
     }
 
-    private static boolean isSpaceAt(IWorldGenerationBaseReader worldIn, BlockPos leavesPos, int height) {
-        if (leavesPos.getY() >= 1 && leavesPos.getY() + height + 1 <= worldIn.getMaxHeight()) {
-            boolean flag = true;
-            for (int i = 0; i <= 1 + height; ++i) {
-                int j = 2;
-                if (i == 0) {
-                    j = 1;
-                }
-                else if (i >= 1 + height - 2) {
-                    j = 2;
-                }
-                for (int k = -j; k <= j && flag; ++k) {
-                    for (int l = -j; l <= j && flag; ++l) {
-                        if (leavesPos.getY() + i < 0 || leavesPos.getY() + i >= worldIn.getMaxHeight() || !func_214587_a(worldIn, leavesPos.add(k, i, l))) {
-                            flag = false;
-                        }
-                    }
-                }
-            }
-            return flag;
-        }
-        return false;
-    }
-
     @Override
-    public boolean place(Set<BlockPos> changedBlocks, IWorldGenerationReader worldIn, Random rand, BlockPos position, MutableBoundingBox p_208519_5_) {
+    public boolean place(Set<BlockPos> changedBlocks,
+                         IWorldGenerationReader worldIn,
+                         Random rand,
+                         BlockPos position,
+                         MutableBoundingBox p_208519_5_) {
         int i = this.getHeight(rand);
         if (!this.check(worldIn, position, i)) {
             return false;
@@ -114,30 +100,60 @@ public class KapokBigTreeFeature extends HugeTreesFeature<NoFeatureConfig> {
         return true;
     }
 
+    protected boolean check(IWorldGenerationReader worldIn, BlockPos pos, int height) {
+        return isSpaceAt(worldIn, pos, height) && this.otherMethod(worldIn, pos);
+    }
+
+    private void placeSomething(IWorldGenerationReader worldIn,
+                                BlockPos p_214601_2_,
+                                int p_214601_3_,
+                                MutableBoundingBox p_214601_4_,
+                                Set<BlockPos> changedBlocks) {
+        for (int j = -2; j <= 0; ++j) {
+            this.func_222839_a(worldIn, p_214601_2_.up(j), p_214601_3_ + 1 - j, p_214601_4_, changedBlocks);
+        }
+    }
+
     private void tryPlaceVines(IWorldGenerationReader worldIn, Random random, BlockPos pos, BooleanProperty sideProperty) {
         if (random.nextInt(3) > 0 && isAir(worldIn, pos)) {
             this.setBlockState(worldIn, pos, Blocks.VINE.getDefaultState().with(sideProperty, true));
         }
     }
 
-    private void placeSomething(IWorldGenerationReader worldIn, BlockPos p_214601_2_, int p_214601_3_, MutableBoundingBox p_214601_4_, Set<BlockPos> changedBlocks) {
-        for (int j = -2; j <= 0; ++j) {
-            this.func_222839_a(worldIn, p_214601_2_.up(j), p_214601_3_ + 1 - j, p_214601_4_, changedBlocks);
+    private static boolean isSpaceAt(IWorldGenerationBaseReader worldIn, BlockPos leavesPos, int height) {
+        if (leavesPos.getY() >= 1 && leavesPos.getY() + height + 1 <= worldIn.getMaxHeight()) {
+            boolean flag = true;
+            for (int i = 0; i <= 1 + height; ++i) {
+                int j = 2;
+                if (i == 0) {
+                    j = 1;
+                }
+                else if (i >= 1 + height - 2) {
+                    j = 2;
+                }
+                for (int k = -j; k <= j && flag; ++k) {
+                    for (int l = -j; l <= j && flag; ++l) {
+                        if (leavesPos.getY() + i < 0 ||
+                            leavesPos.getY() + i >= worldIn.getMaxHeight() ||
+                            !func_214587_a(worldIn, leavesPos.add(k, i, l))) {
+                            flag = false;
+                        }
+                    }
+                }
+            }
+            return flag;
         }
-    }
-
-    protected boolean check(IWorldGenerationReader worldIn, BlockPos pos, int height) {
-        return isSpaceAt(worldIn, pos, height) && this.otherMethod(worldIn, pos);
+        return false;
     }
 
     private boolean otherMethod(IWorldGenerationReader worldIn, BlockPos pos) {
         BlockPos blockpos = pos.down();
         boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(blockpos), this.sapling);
         if (isSoil && pos.getY() >= 2) {
-            this.setDirtAt(worldIn, blockpos, pos);
-            this.setDirtAt(worldIn, blockpos.east(), pos);
-            this.setDirtAt(worldIn, blockpos.south(), pos);
-            this.setDirtAt(worldIn, blockpos.south().east(), pos);
+            TreeUtils.setDirtAt(worldIn, blockpos);
+            TreeUtils.setDirtAt(worldIn, blockpos.east());
+            TreeUtils.setDirtAt(worldIn, blockpos.south());
+            TreeUtils.setDirtAt(worldIn, blockpos.south().east());
             return true;
         }
         return false;

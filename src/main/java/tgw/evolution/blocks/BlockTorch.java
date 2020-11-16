@@ -24,6 +24,7 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.util.Constants;
 import tgw.evolution.blocks.tileentities.TETorch;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
@@ -44,11 +45,6 @@ public class BlockTorch extends Block implements IReplaceable {
     }
 
     @Override
-    public boolean canBeReplacedByLiquid(BlockState state) {
-        return true;
-    }
-
-    @Override
     public boolean isReplaceable(BlockState state) {
         return true;
     }
@@ -56,6 +52,19 @@ public class BlockTorch extends Block implements IReplaceable {
     @Override
     public boolean canBeReplacedByRope(BlockState state) {
         return true;
+    }
+
+    @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return true;
+    }
+
+    @Override
+    public ItemStack getDrops(BlockState state) {
+        if (state.get(LIT)) {
+            return new ItemStack(EvolutionItems.torch.get());
+        }
+        return new ItemStack(EvolutionItems.stick.get());
     }
 
     @Override
@@ -69,31 +78,30 @@ public class BlockTorch extends Block implements IReplaceable {
     }
 
     @Override
-    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (worldIn.isRemote) {
-            return;
-        }
-        TETorch tile = (TETorch) worldIn.getTileEntity(pos);
-        tile.create();
+    public int getLightValue(BlockState state) {
+        return state.get(LIT) ? 15 : 0;
     }
 
     @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        this.onReplaced(state, worldIn, pos);
-        super.onReplaced(state, worldIn, pos, newState, isMoving);
+    public BlockState updatePostPlacement(BlockState stateIn,
+                                          Direction facing,
+                                          BlockState facingState,
+                                          IWorld worldIn,
+                                          BlockPos currentPos,
+                                          BlockPos facingPos) {
+        return facing == Direction.DOWN && !this.isValidPosition(stateIn, worldIn, currentPos) ?
+               Blocks.AIR.getDefaultState() :
+               super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    }
+
+    @Override
+    public boolean ticksRandomly(BlockState state) {
+        return state.get(LIT);
     }
 
     @Override
     public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
         return SHAPE;
-    }
-
-    @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        if (ChunkStorageCapability.contains(context.getWorld().getChunkAt(context.getPos()), EnumStorage.OXYGEN, 1)) {
-            return this.getDefaultState();
-        }
-        return this.getDefaultState().with(LIT, false);
     }
 
     @Override
@@ -114,20 +122,42 @@ public class BlockTorch extends Block implements IReplaceable {
     }
 
     @Override
-    public boolean ticksRandomly(BlockState state) {
-        return state.get(LIT);
+    @OnlyIn(Dist.CLIENT)
+    public void animateTick(BlockState stateIn, World worldIn, BlockPos pos, Random rand) {
+        if (!stateIn.get(LIT)) {
+            return;
+        }
+        double posX = pos.getX() + 0.5;
+        double posY = pos.getY() + 0.7;
+        double posZ = pos.getZ() + 0.5;
+        worldIn.addParticle(ParticleTypes.SMOKE, posX, posY, posZ, 0, 0, 0);
+        worldIn.addParticle(ParticleTypes.FLAME, posX, posY, posZ, 0, 0, 0);
     }
 
     @Override
-    public int getLightValue(BlockState state) {
-        return state.get(LIT) ? 15 : 0;
+    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (worldIn.isRemote) {
+            return;
+        }
+        TETorch tile = (TETorch) worldIn.getTileEntity(pos);
+        tile.create();
+    }
+
+    @Override
+    public BlockRenderLayer getRenderLayer() {
+        return BlockRenderLayer.CUTOUT;
+    }
+
+    @Override
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
+        return hasEnoughSolidSide(worldIn, pos.down(), Direction.UP);
     }
 
     @Override
     public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
         ItemStack stack = player.getHeldItem(handIn);
         if (stack.isEmpty() && state.get(LIT)) {
-            worldIn.setBlockState(pos, state.with(LIT, false));
+            worldIn.setBlockState(pos, state.with(LIT, false), Constants.BlockFlags.IS_MOVING);
             worldIn.removeTileEntity(pos);
             worldIn.playSound(player,
                               pos,
@@ -154,50 +184,15 @@ public class BlockTorch extends Block implements IReplaceable {
     }
 
     @Override
-    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos) {
-        return facing == Direction.DOWN && !this.isValidPosition(stateIn,
-                                                                 worldIn,
-                                                                 currentPos) ? Blocks.AIR.getDefaultState() : super.updatePostPlacement(stateIn,
-                                                                                                                                        facing,
-                                                                                                                                        facingState,
-                                                                                                                                        worldIn,
-                                                                                                                                        currentPos,
-                                                                                                                                        facingPos);
-    }
-
-    @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        return hasEnoughSolidSide(worldIn, pos.down(), Direction.UP);
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public void animateTick(BlockState stateIn, World worldIn, BlockPos pos, Random rand) {
-        if (!stateIn.get(LIT)) {
-            return;
+    public BlockState getStateForPlacement(BlockItemUseContext context) {
+        if (ChunkStorageCapability.contains(context.getWorld().getChunkAt(context.getPos()), EnumStorage.OXYGEN, 1)) {
+            return this.getDefaultState();
         }
-        double posX = pos.getX() + 0.5;
-        double posY = pos.getY() + 0.7;
-        double posZ = pos.getZ() + 0.5;
-        worldIn.addParticle(ParticleTypes.SMOKE, posX, posY, posZ, 0, 0, 0);
-        worldIn.addParticle(ParticleTypes.FLAME, posX, posY, posZ, 0, 0, 0);
-    }
-
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
+        return this.getDefaultState().with(LIT, false);
     }
 
     @Override
     protected void fillStateContainer(Builder<Block, BlockState> builder) {
         builder.add(LIT);
-    }
-
-    @Override
-    public ItemStack getDrops(BlockState state) {
-        if (state.get(LIT)) {
-            return new ItemStack(EvolutionItems.torch.get());
-        }
-        return new ItemStack(EvolutionItems.stick.get());
     }
 }	

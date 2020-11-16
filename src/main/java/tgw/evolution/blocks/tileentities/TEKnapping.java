@@ -42,6 +42,11 @@ public class TEKnapping extends TileEntity {
         }
     }
 
+    private void spawnDrops(ItemStack stack) {
+        Block.spawnAsEntity(this.world, this.pos, stack);
+        this.world.removeBlock(this.pos, true);
+    }
+
     public void setType(EnumKnapping type) {
         this.type = type;
         this.sendRenderUpdate();
@@ -50,12 +55,18 @@ public class TEKnapping extends TileEntity {
     public void sendRenderUpdate() {
         super.markDirty();
         this.hitbox = null;
-        this.world.notifyBlockUpdate(this.pos, this.world.getBlockState(this.pos), this.world.getBlockState(this.pos), Constants.BlockFlags.RERENDER_MAIN_THREAD);
+        this.world.notifyBlockUpdate(this.pos,
+                                     this.world.getBlockState(this.pos),
+                                     this.world.getBlockState(this.pos),
+                                     Constants.BlockFlags.RERENDER_MAIN_THREAD);
     }
 
-    private void spawnDrops(ItemStack stack) {
-        Block.spawnAsEntity(this.world, this.pos, stack);
-        this.world.removeBlock(this.pos, false);
+    @Override
+    public void read(CompoundNBT compound) {
+        this.encoded = compound.getInt("Parts");
+        this.type = EnumKnapping.byId(compound.getByte("Type"));
+        this.deserializeToMatrix();
+        super.read(compound);
     }
 
     @Override
@@ -67,11 +78,8 @@ public class TEKnapping extends TileEntity {
     }
 
     @Override
-    public void read(CompoundNBT compound) {
-        this.encoded = compound.getInt("Parts");
-        this.type = EnumKnapping.byId(compound.getByte("Type"));
-        this.deserializeToMatrix();
-        super.read(compound);
+    public SUpdateTileEntityPacket getUpdatePacket() {
+        return new SUpdateTileEntityPacket(this.pos, 30, this.getUpdateTag());
     }
 
     private void serializeToInt() {
@@ -83,6 +91,11 @@ public class TEKnapping extends TileEntity {
                 this.encoded |= temp;
             }
         }
+    }
+
+    @Override
+    public CompoundNBT getUpdateTag() {
+        return this.write(new CompoundNBT());
     }
 
     private void deserializeToMatrix() {
@@ -99,15 +112,5 @@ public class TEKnapping extends TileEntity {
     public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
         this.hitbox = null;
         this.handleUpdateTag(packet.getNbtCompound());
-    }
-
-    @Override
-    public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.pos, 30, this.getUpdateTag());
-    }
-
-    @Override
-    public CompoundNBT getUpdateTag() {
-        return this.write(new CompoundNBT());
     }
 }

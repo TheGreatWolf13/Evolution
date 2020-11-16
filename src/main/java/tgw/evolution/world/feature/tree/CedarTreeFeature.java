@@ -15,6 +15,7 @@ import net.minecraft.world.gen.feature.NoFeatureConfig;
 import tgw.evolution.blocks.*;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.TreeUtils;
 
 import java.util.Random;
 import java.util.Set;
@@ -61,8 +62,10 @@ public class CedarTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
             if (!flag) {
                 return false;
             }
-            if (BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(pos.down()), (BlockSapling) EvolutionBlocks.SAPLING_CEDAR.get()) && pos.getY() < ((IWorld) worldIn).getWorld().getHeight() - trunkHeight - 1) {
-                this.setDirtAt(worldIn, pos.down(), pos);
+            if (BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(pos.down()),
+                                             (BlockSapling) EvolutionBlocks.SAPLING_CEDAR.get()) &&
+                pos.getY() < ((IWorld) worldIn).getWorld().getHeight() - trunkHeight - 1) {
+                TreeUtils.setDirtAt(worldIn, pos.down());
                 int branchStart = trunkHeight - numberOfBranches;
                 for (int placingTrunks = 0; placingTrunks < trunkHeight; placingTrunks++) {
                     BlockState trunkState = ((IBlockReader) worldIn).getBlockState(pos.up(placingTrunks));
@@ -113,7 +116,13 @@ public class CedarTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         return false;
     }
 
-    private void makeBranch(IWorldGenerationReader worldIn, Direction direction, int branchSize, BlockPos pos, int height, Set<BlockPos> changedBlocks, MutableBoundingBox box) {
+    private void makeBranch(IWorldGenerationReader worldIn,
+                            Direction direction,
+                            int branchSize,
+                            BlockPos pos,
+                            int height,
+                            Set<BlockPos> changedBlocks,
+                            MutableBoundingBox box) {
         BlockState branchState = ((IBlockReader) worldIn).getBlockState(pos.up(height).offset(direction));
         Direction.Axis axis = direction == Direction.NORTH || direction == Direction.SOUTH ? Direction.Axis.Z : Direction.Axis.X;
         if (branchState.isAir((IBlockReader) worldIn, pos.up(height).offset(direction)) || branchState.getBlock() instanceof BlockLeaves) {
@@ -128,7 +137,8 @@ public class CedarTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
             }
             if (branchSize > 2) {
                 branchState = ((IBlockReader) worldIn).getBlockState(pos.up(height + 2).offset(direction, 3));
-                if (branchState.isAir((IBlockReader) worldIn, pos.up(height + 2).offset(direction, 3)) || branchState.getBlock() instanceof BlockLeaves) {
+                if (branchState.isAir((IBlockReader) worldIn, pos.up(height + 2).offset(direction, 3)) ||
+                    branchState.getBlock() instanceof BlockLeaves) {
                     this.setLogState(changedBlocks, worldIn, pos.up(height + 2).offset(direction, 3), LOG.with(BlockXYZAxis.AXIS, axis), box);
                     this.placeBranchLeaves(worldIn, pos.up(2).offset(direction, 2), height, direction);
                 }

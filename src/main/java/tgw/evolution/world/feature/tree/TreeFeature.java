@@ -15,6 +15,7 @@ import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.TreeUtils;
 
 import java.util.Random;
 import java.util.Set;
@@ -24,13 +25,7 @@ public class TreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
 
     private static final BlockState DEFAULT_TRUNK = EvolutionBlocks.LOG_OAK.get().getDefaultState().with(BlockLog.TREE, true);
     private static final BlockState DEFAULT_LEAF = EvolutionBlocks.LEAVES_OAK.get().getDefaultState();
-    /**
-     * The minimum height of a generated tree.
-     */
     protected final int minTreeHeight;
-    /**
-     * True if this tree should grow Vines.
-     */
     private final BlockState stateWood;
     private final BlockState stateLeaves;
 
@@ -38,7 +33,11 @@ public class TreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         this(configFactory, notify, 4, DEFAULT_TRUNK, DEFAULT_LEAF);
     }
 
-    public TreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> configFactory, boolean notify, int minTreeHeightIn, BlockState woodState, BlockState leavesState) {
+    public TreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> configFactory,
+                       boolean notify,
+                       int minTreeHeightIn,
+                       BlockState woodState,
+                       BlockState leavesState) {
         super(configFactory, notify);
         this.minTreeHeight = minTreeHeightIn;
         this.stateWood = woodState;
@@ -76,8 +75,9 @@ public class TreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
             if (!flag) {
                 return false;
             }
-            if (BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(position.down()), this.sapling) && position.getY() < ((IWorld) worldIn).getWorld().getHeight() - treeHeight - 1) {
-                this.setDirtAt(worldIn, position.down(), position);
+            if (BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(position.down()), this.sapling) &&
+                position.getY() < ((IWorld) worldIn).getWorld().getHeight() - treeHeight - 1) {
+                TreeUtils.setDirtAt(worldIn, position.down());
                 for (int placingLogs = 0; placingLogs < treeHeight; ++placingLogs) {
                     BlockState stateForLog = ((IBlockReader) worldIn).getBlockState(position.up(placingLogs));
                     if (stateForLog.canBeReplacedByLogs((IWorldReader) worldIn, position.up(placingLogs))) {

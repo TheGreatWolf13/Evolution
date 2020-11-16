@@ -15,6 +15,7 @@ import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.TreeUtils;
 
 import java.util.Random;
 import java.util.Set;
@@ -62,9 +63,10 @@ public class PalmTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                 return false;
             }
             //placing trunks
-            boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(pos.down()), (BlockSapling) EvolutionBlocks.SAPLING_PALM.get());
+            boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(pos.down()),
+                                                          (BlockSapling) EvolutionBlocks.SAPLING_PALM.get());
             if (isSoil && pos.getY() < ((IWorld) worldIn).getWorld().getHeight() - numLogs - 1) {
-                this.setDirtAt(worldIn, pos.down(), pos);
+                TreeUtils.setDirtAt(worldIn, pos.down());
                 Direction inclination = Direction.Plane.HORIZONTAL.random(rand);
                 int first = numLogs / 3 + rand.nextInt(2);
                 int second = rand.nextInt(numLogs / 3 + 2);

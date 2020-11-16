@@ -41,29 +41,6 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
         this.name = name;
     }
 
-    public static VoxelShape calculateHitbox(TEKnapping tile) {
-        VoxelShape shape = VoxelShapes.empty();
-        for (int i = 0; i < tile.matrix.length; i++) {
-            for (int j = 0; j < tile.matrix[i].length; j++) {
-                if (tile.matrix[i][j]) {
-                    shape = VoxelShapes.combineAndSimplify(shape, SHAPE.withOffset(3 * i / 16f, 0, 3 * j / 16f), IBooleanFunction.OR);
-                }
-            }
-        }
-        return shape;
-    }
-
-    @Override
-    public boolean canBeReplacedByLiquid(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        this.onReplaced(state, worldIn, pos);
-        super.onReplaced(state, worldIn, pos, newState, isMoving);
-    }
-
     @Override
     public EnumRockVariant getVariant() {
         return this.variant;
@@ -80,11 +57,6 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
     }
 
     @Override
-    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
-        return new ItemStack(this.variant.getRock());
-    }
-
-    @Override
     public boolean isReplaceable(BlockState state) {
         return true;
     }
@@ -95,13 +67,63 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
     }
 
     @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return true;
+    }
+
+    @Override
+    public ItemStack getDrops(BlockState state) {
+        return new ItemStack(this.variant.getRock());
+    }
+
+    @Override
     public boolean hasTileEntity(BlockState state) {
         return true;
     }
 
     @Override
+    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
+        return new TEKnapping();
+    }
+
+    @Override
+    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
+        return new ItemStack(this.variant.getRock());
+    }
+
+    @Override
+    public BlockRenderType getRenderType(BlockState state) {
+        return BlockRenderType.MODEL;
+    }
+
+    @Override
     public boolean isSolid(BlockState state) {
         return false;
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+        TEKnapping tile = (TEKnapping) worldIn.getTileEntity(pos);
+        if (tile != null) {
+            if (tile.hitbox != null) {
+                return tile.hitbox;
+            }
+            tile.hitbox = calculateHitbox(tile);
+            return tile.hitbox;
+        }
+        return FULL_SHAPE;
+    }
+
+    public static VoxelShape calculateHitbox(TEKnapping tile) {
+        VoxelShape shape = VoxelShapes.empty();
+        for (int i = 0; i < tile.matrix.length; i++) {
+            for (int j = 0; j < tile.matrix[i].length; j++) {
+                if (tile.matrix[i][j]) {
+                    shape = VoxelShapes.combineAndSimplify(shape, SHAPE.withOffset(3 * i / 16f, 0, 3 * j / 16f), IBooleanFunction.OR);
+                }
+            }
+        }
+        return shape;
     }
 
     @Override
@@ -142,29 +164,6 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
     }
 
     @Override
-    public BlockRenderType getRenderType(BlockState state) {
-        return BlockRenderType.MODEL;
-    }
-
-    @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        TEKnapping tile = (TEKnapping) worldIn.getTileEntity(pos);
-        if (tile != null) {
-            if (tile.hitbox != null) {
-                return tile.hitbox;
-            }
-            tile.hitbox = calculateHitbox(tile);
-            return tile.hitbox;
-        }
-        return FULL_SHAPE;
-    }
-
-    @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return new TEKnapping();
-    }
-
-    @Override
     public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
         if (!worldIn.isRemote) {
             if (!state.isValidPosition(worldIn, pos)) {
@@ -172,10 +171,5 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
                 worldIn.removeBlock(pos, false);
             }
         }
-    }
-
-    @Override
-    public ItemStack getDrops(BlockState state) {
-        return new ItemStack(this.variant.getRock());
     }
 }

@@ -15,6 +15,7 @@ import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.TreeUtils;
 
 import java.util.Random;
 import java.util.Set;
@@ -47,7 +48,8 @@ public class MapleTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                     for (int l1 = pos.getZ() - j1; l1 <= pos.getZ() + j1 && flag; ++l1) {
                         if (i1 >= 0 && i1 < ((IWorld) worldIn).getWorld().getHeight()) {
                             BlockState iblockstate = ((IBlockReader) worldIn).getBlockState(blockpos$mutableblockpos.setPos(k1, i1, l1));
-                            if (!iblockstate.isAir((IBlockReader) worldIn, blockpos$mutableblockpos) && !(iblockstate.getBlock() instanceof BlockLeaves)) {
+                            if (!iblockstate.isAir((IBlockReader) worldIn, blockpos$mutableblockpos) &&
+                                !(iblockstate.getBlock() instanceof BlockLeaves)) {
                                 flag = false;
                             }
                         }
@@ -60,8 +62,10 @@ public class MapleTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
             if (!flag) {
                 return false;
             }
-            if (BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(pos.down()), (BlockSapling) EvolutionBlocks.SAPLING_CEDAR.get()) && pos.getY() < ((IWorld) worldIn).getWorld().getHeight() - trunkHeight - 1) {
-                this.setDirtAt(worldIn, pos.down(), pos);
+            if (BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(pos.down()),
+                                             (BlockSapling) EvolutionBlocks.SAPLING_CEDAR.get()) &&
+                pos.getY() < ((IWorld) worldIn).getWorld().getHeight() - trunkHeight - 1) {
+                TreeUtils.setDirtAt(worldIn, pos.down());
                 for (int placingTrunks = 0; placingTrunks < trunkHeight; placingTrunks++) {
                     BlockState trunkState = ((IBlockReader) worldIn).getBlockState(pos.up(placingTrunks));
                     if (trunkState.isAir((IBlockReader) worldIn, pos.up(placingTrunks)) || trunkState.getBlock() instanceof BlockLeaves) {
@@ -91,7 +95,8 @@ public class MapleTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
                 if (Math.abs(x) != 1 || Math.abs(z) != 1) {
-                    if (((IBlockReader) worldIn).getBlockState(pos.add(x, height, z)).canBeReplacedByLeaves((IWorldReader) worldIn, pos.add(x, height, z))) {
+                    if (((IBlockReader) worldIn).getBlockState(pos.add(x, height, z))
+                                                .canBeReplacedByLeaves((IWorldReader) worldIn, pos.add(x, height, z))) {
                         this.setBlockState(worldIn, pos.add(x, height, z), LEAVES);
                     }
                 }
@@ -103,12 +108,14 @@ public class MapleTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
                 if (Math.abs(x) != 1 || Math.abs(z) != 1) {
-                    if (((IBlockReader) worldIn).getBlockState(pos.add(x, height, z)).canBeReplacedByLeaves((IWorldReader) worldIn, pos.add(x, height, z))) {
+                    if (((IBlockReader) worldIn).getBlockState(pos.add(x, height, z))
+                                                .canBeReplacedByLeaves((IWorldReader) worldIn, pos.add(x, height, z))) {
                         this.setBlockState(worldIn, pos.add(x, height, z), LEAVES);
                     }
                 }
                 else if (rand.nextBoolean()) {
-                    if (((IBlockReader) worldIn).getBlockState(pos.add(x, height, z)).canBeReplacedByLeaves((IWorldReader) worldIn, pos.add(x, height, z))) {
+                    if (((IBlockReader) worldIn).getBlockState(pos.add(x, height, z))
+                                                .canBeReplacedByLeaves((IWorldReader) worldIn, pos.add(x, height, z))) {
                         this.setBlockState(worldIn, pos.add(x, height, z), LEAVES);
                     }
                 }
@@ -120,7 +127,8 @@ public class MapleTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         for (int x = -2; x <= 2; x++) {
             for (int z = -2; z <= 2; z++) {
                 if (Math.abs(z) != 2 || Math.abs(x) != 2) {
-                    if (((IBlockReader) worldIn).getBlockState(pos.add(x, height, z)).canBeReplacedByLeaves((IWorldReader) worldIn, pos.add(x, height, z))) {
+                    if (((IBlockReader) worldIn).getBlockState(pos.add(x, height, z))
+                                                .canBeReplacedByLeaves((IWorldReader) worldIn, pos.add(x, height, z))) {
                         this.setBlockState(worldIn, pos.add(x, height, z), LEAVES);
                     }
                 }
@@ -132,7 +140,8 @@ public class MapleTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         for (int x = -3; x <= 3; x++) {
             for (int z = -3; z <= 3; z++) {
                 if ((Math.abs(x) != 3 || Math.abs(z) != 3) && (Math.abs(x) != 3 || Math.abs(z) != 2) && (Math.abs(x) != 2 || Math.abs(z) != 3)) {
-                    if (((IBlockReader) worldIn).getBlockState(pos.add(x, height, z)).canBeReplacedByLeaves((IWorldReader) worldIn, pos.add(x, height, z))) {
+                    if (((IBlockReader) worldIn).getBlockState(pos.add(x, height, z))
+                                                .canBeReplacedByLeaves((IWorldReader) worldIn, pos.add(x, height, z))) {
                         this.setBlockState(worldIn, pos.add(x, height, z), LEAVES);
                     }
                 }

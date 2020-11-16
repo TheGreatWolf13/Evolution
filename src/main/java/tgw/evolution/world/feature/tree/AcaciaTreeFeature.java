@@ -18,6 +18,7 @@ import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.OriginMutableBlockPos;
+import tgw.evolution.util.TreeUtils;
 
 import java.util.Random;
 import java.util.Set;
@@ -65,9 +66,10 @@ public class AcaciaTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                 return false;
             }
             //placing trunks
-            boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(position.down()), (BlockSapling) EvolutionBlocks.SAPLING_ACACIA.get());
+            boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(position.down()),
+                                                          (BlockSapling) EvolutionBlocks.SAPLING_ACACIA.get());
             if (isSoil && position.getY() < ((IWorld) worldIn).getWorld().getHeight() - numLogs - 1) {
-                this.setDirtAt(worldIn, position.down(), position);
+                TreeUtils.setDirtAt(worldIn, position.down());
                 Direction topInclination = Direction.Plane.HORIZONTAL.random(rand);
                 int topInclinationStartHeight = numLogs - rand.nextInt(4) - 1;
                 int inclinationLimit = 3 - rand.nextInt(3);

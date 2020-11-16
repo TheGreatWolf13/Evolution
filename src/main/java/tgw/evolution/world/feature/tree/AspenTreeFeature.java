@@ -16,6 +16,7 @@ import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.TreeUtils;
 
 import java.util.Random;
 import java.util.Set;
@@ -25,9 +26,13 @@ public class AspenTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
 
     private static BlockState LOG = EvolutionBlocks.LOG_ASPEN.get().getDefaultState().with(BlockLog.TREE, true);
     private static BlockState LEAVES = EvolutionBlocks.LEAVES_ASPEN.get().getDefaultState();
-    private int dec = 0;
+    private final int dec;
 
-    public AspenTreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> configFactoryIn, boolean notify, BlockState log, BlockState leaves, int dec) {
+    public AspenTreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> configFactoryIn,
+                            boolean notify,
+                            BlockState log,
+                            BlockState leaves,
+                            int dec) {
         super(configFactoryIn, notify);
         LOG = log;
         LEAVES = leaves;
@@ -90,13 +95,11 @@ public class AspenTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
             canGrow = true;
         }
         int k1;
-        BlockState below;
         int i12;
         BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-        BlockPos.MutableBlockPos mutablePos1 = new BlockPos.MutableBlockPos();
         for (i12 = posX; i12 <= posX && canGrow; ++i12) {
             for (k1 = posZ; k1 <= posZ && canGrow; ++k1) {
-                below = ((IBlockReader) worldIn).getBlockState(mutablePos.setPos(i12, posY - 1, k1));
+                BlockState below = ((IBlockReader) worldIn).getBlockState(mutablePos.setPos(i12, posY - 1, k1));
                 if (BlockUtils.canSustainSapling(below, (BlockSapling) EvolutionBlocks.SAPLING_ASPEN.get())) {
                     continue;
                 }
@@ -108,8 +111,7 @@ public class AspenTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         }
         for (i12 = posX; i12 <= posX; ++i12) {
             for (k1 = posZ; k1 <= posZ; ++k1) {
-                below = ((IBlockReader) worldIn).getBlockState(mutablePos.setPos(i12, posY - 1, k1));
-                below.onPlantGrow((IWorld) worldIn, mutablePos, mutablePos1.setPos(i12, posY, k1));
+                TreeUtils.setDirtAt(worldIn, mutablePos.setPos(i12, posY - 1, k1));
             }
         }
         BlockPos.MutableBlockPos leafPos = new BlockPos.MutableBlockPos(posX, leafMin, posZ);
@@ -128,7 +130,8 @@ public class AspenTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                 leafPos.setPos(posX, leafPos.getY(), posZ);
                 int length = 4 + rand.nextInt(8);
                 for (int l = 0; l < length && Math.abs(leafPos.getX() - posX) <= leafWidth && Math.abs(leafPos.getZ() - posZ) <= leafWidth; ++l) {
-                    if (((IBlockReader) worldIn).getBlockState(leafPos).canBeReplacedByLeaves((IWorldReader) worldIn, leafPos) || ((IBlockReader) worldIn).getBlockState(leafPos).getBlock() instanceof BlockLeaves) {
+                    if (((IBlockReader) worldIn).getBlockState(leafPos).canBeReplacedByLeaves((IWorldReader) worldIn, leafPos) ||
+                        ((IBlockReader) worldIn).getBlockState(leafPos).getBlock() instanceof BlockLeaves) {
                         this.placeLeafAt((IWorld) worldIn, leafPos);
                         Direction dir = Direction.byHorizontalIndex(rand.nextInt(4));
                         leafPos.move(dir);
@@ -149,14 +152,14 @@ public class AspenTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         return true;
     }
 
-    private void placeTrunkAt(Set<BlockPos> setBlockPos, IWorldGenerationReader iWorld, BlockPos pos, MutableBoundingBox box) {
-        this.setLogState(setBlockPos, iWorld, pos, LOG, box);
-    }
-
     private void placeLeafAt(IWorld worldIn, BlockPos pos) {
         BlockState iblockstate = worldIn.getBlockState(pos);
         if (iblockstate.canBeReplacedByLeaves(worldIn, pos)) {
             this.setBlockState(worldIn, pos, LEAVES);
         }
+    }
+
+    private void placeTrunkAt(Set<BlockPos> setBlockPos, IWorldGenerationReader iWorld, BlockPos pos, MutableBoundingBox box) {
+        this.setLogState(setBlockPos, iWorld, pos, LOG, box);
     }
 }

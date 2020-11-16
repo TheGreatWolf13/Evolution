@@ -14,6 +14,7 @@ import net.minecraft.world.gen.feature.AbstractTreeFeature;
 import net.minecraft.world.gen.feature.NoFeatureConfig;
 import tgw.evolution.blocks.*;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.TreeUtils;
 
 import java.util.Random;
 import java.util.Set;
@@ -47,7 +48,8 @@ public class ElmTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                     for (int l1 = pos.getZ() - j1; l1 <= pos.getZ() + j1 && flag; ++l1) {
                         if (i1 >= 0 && i1 < ((IWorld) worldIn).getWorld().getHeight()) {
                             BlockState iblockstate = ((IBlockReader) worldIn).getBlockState(blockpos$mutableblockpos.setPos(k1, i1, l1));
-                            if (!iblockstate.isAir((IBlockReader) worldIn, blockpos$mutableblockpos) && !(iblockstate.getBlock() instanceof BlockLeaves)) {
+                            if (!iblockstate.isAir((IBlockReader) worldIn, blockpos$mutableblockpos) &&
+                                !(iblockstate.getBlock() instanceof BlockLeaves)) {
                                 flag = false;
                             }
                         }
@@ -60,8 +62,9 @@ public class ElmTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
             if (!flag) {
                 return false;
             }
-            if (BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(pos.down()), (BlockSapling) EvolutionBlocks.SAPLING_ELM.get()) && pos.getY() < ((IWorld) worldIn).getWorld().getHeight() - trunkHeight - 1) {
-                this.setDirtAt(worldIn, pos.down(), pos);
+            if (BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(pos.down()), (BlockSapling) EvolutionBlocks.SAPLING_ELM.get()) &&
+                pos.getY() < ((IWorld) worldIn).getWorld().getHeight() - trunkHeight - 1) {
+                TreeUtils.setDirtAt(worldIn, pos.down());
                 BlockPos.MutableBlockPos leafPos = new BlockPos.MutableBlockPos();
                 for (int placingTrunks = 0; placingTrunks < trunkHeight; placingTrunks++) {
                     BlockState trunkState = ((IBlockReader) worldIn).getBlockState(pos.up(placingTrunks));
@@ -78,7 +81,8 @@ public class ElmTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                                     if (((IBlockReader) worldIn).getBlockState(leafPos).canBeReplacedByLeaves((IWorldReader) worldIn, leafPos)) {
                                         this.setBlockState(worldIn, leafPos, LEAVES);
                                     }
-                                    if (((IBlockReader) worldIn).getBlockState(leafPos.up()).canBeReplacedByLeaves((IWorldReader) worldIn, leafPos.up())) {
+                                    if (((IBlockReader) worldIn).getBlockState(leafPos.up())
+                                                                .canBeReplacedByLeaves((IWorldReader) worldIn, leafPos.up())) {
                                         this.setBlockState(worldIn, leafPos.up(), LEAVES);
                                     }
                                 }
@@ -107,16 +111,20 @@ public class ElmTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                                 if (trunkState.isAir((IBlockReader) worldIn, trunkPos) || trunkState.getBlock() instanceof BlockLeaves) {
                                     this.setLogState(changedBlocks, worldIn, trunkPos, LOG, box);
                                     if (j < 2) {
-                                        if (((IBlockReader) worldIn).getBlockState(trunkPos.north()).canBeReplacedByLeaves((IWorldReader) worldIn, trunkPos.north())) {
+                                        if (((IBlockReader) worldIn).getBlockState(trunkPos.north())
+                                                                    .canBeReplacedByLeaves((IWorldReader) worldIn, trunkPos.north())) {
                                             this.setBlockState(worldIn, trunkPos.north(), LEAVES);
                                         }
-                                        if (((IBlockReader) worldIn).getBlockState(trunkPos.south()).canBeReplacedByLeaves((IWorldReader) worldIn, trunkPos.south())) {
+                                        if (((IBlockReader) worldIn).getBlockState(trunkPos.south())
+                                                                    .canBeReplacedByLeaves((IWorldReader) worldIn, trunkPos.south())) {
                                             this.setBlockState(worldIn, trunkPos.south(), LEAVES);
                                         }
-                                        if (((IBlockReader) worldIn).getBlockState(trunkPos.west()).canBeReplacedByLeaves((IWorldReader) worldIn, trunkPos.west())) {
+                                        if (((IBlockReader) worldIn).getBlockState(trunkPos.west())
+                                                                    .canBeReplacedByLeaves((IWorldReader) worldIn, trunkPos.west())) {
                                             this.setBlockState(worldIn, trunkPos.west(), LEAVES);
                                         }
-                                        if (((IBlockReader) worldIn).getBlockState(trunkPos.east()).canBeReplacedByLeaves((IWorldReader) worldIn, trunkPos.east())) {
+                                        if (((IBlockReader) worldIn).getBlockState(trunkPos.east())
+                                                                    .canBeReplacedByLeaves((IWorldReader) worldIn, trunkPos.east())) {
                                             this.setBlockState(worldIn, trunkPos.east(), LEAVES);
                                         }
                                     }
@@ -137,14 +145,24 @@ public class ElmTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                     while (branchFacingF == branchFacingS) {
                         branchFacingS = Direction.byHorizontalIndex(rand.nextInt(4));
                     }
-                    if (branchState.isAir((IBlockReader) worldIn, pos.up(branchLowStart).offset(branchFacingF)) || branchState.getBlock() instanceof BlockLeaves) {
-                        this.setLogState(changedBlocks, worldIn, pos.up(branchLowStart).offset(branchFacingF), LOG.with(BlockXYZAxis.AXIS, axis), box);
+                    if (branchState.isAir((IBlockReader) worldIn, pos.up(branchLowStart).offset(branchFacingF)) ||
+                        branchState.getBlock() instanceof BlockLeaves) {
+                        this.setLogState(changedBlocks,
+                                         worldIn,
+                                         pos.up(branchLowStart).offset(branchFacingF),
+                                         LOG.with(BlockXYZAxis.AXIS, axis),
+                                         box);
                         this.branchLeaves(pos, branchLowStart, branchFacingF, worldIn);
                     }
                     branchState = ((IBlockReader) worldIn).getBlockState(pos.up(branchLowStart + 1).offset(branchFacingS));
                     axis = branchFacingS == Direction.NORTH || branchFacingS == Direction.SOUTH ? Direction.Axis.Z : Direction.Axis.X;
-                    if (branchState.isAir((IBlockReader) worldIn, pos.up(branchLowStart + 1).offset(branchFacingS)) || branchState.getBlock() instanceof BlockLeaves) {
-                        this.setLogState(changedBlocks, worldIn, pos.up(branchLowStart + 1).offset(branchFacingS), LOG.with(BlockXYZAxis.AXIS, axis), box);
+                    if (branchState.isAir((IBlockReader) worldIn, pos.up(branchLowStart + 1).offset(branchFacingS)) ||
+                        branchState.getBlock() instanceof BlockLeaves) {
+                        this.setLogState(changedBlocks,
+                                         worldIn,
+                                         pos.up(branchLowStart + 1).offset(branchFacingS),
+                                         LOG.with(BlockXYZAxis.AXIS, axis),
+                                         box);
                         this.branchLeaves(pos, branchLowStart + 1, branchFacingS, worldIn);
                     }
                     if (numberOfBranchesLower > 2) {
@@ -154,15 +172,25 @@ public class ElmTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                         }
                         axis = branchFacingT == Direction.NORTH || branchFacingT == Direction.SOUTH ? Direction.Axis.Z : Direction.Axis.X;
                         branchState = ((IBlockReader) worldIn).getBlockState(pos.up(branchLowStart - 1).offset(branchFacingT));
-                        if (branchState.isAir((IBlockReader) worldIn, pos.up(branchLowStart - 1).offset(branchFacingT)) || branchState.getBlock() instanceof BlockLeaves) {
-                            this.setLogState(changedBlocks, worldIn, pos.up(branchLowStart - 1).offset(branchFacingT), LOG.with(BlockXYZAxis.AXIS, axis), box);
+                        if (branchState.isAir((IBlockReader) worldIn, pos.up(branchLowStart - 1).offset(branchFacingT)) ||
+                            branchState.getBlock() instanceof BlockLeaves) {
+                            this.setLogState(changedBlocks,
+                                             worldIn,
+                                             pos.up(branchLowStart - 1).offset(branchFacingT),
+                                             LOG.with(BlockXYZAxis.AXIS, axis),
+                                             box);
                             this.branchLeaves(pos, branchLowStart - 1, branchFacingT, worldIn);
                         }
                     }
                 }
                 else {
-                    if (branchState.isAir((IBlockReader) worldIn, pos.up(branchLowStart).offset(branchFacingF)) || branchState.getBlock() instanceof BlockLeaves) {
-                        this.setLogState(changedBlocks, worldIn, pos.up(branchLowStart).offset(branchFacingF), LOG.with(BlockXYZAxis.AXIS, axis), box);
+                    if (branchState.isAir((IBlockReader) worldIn, pos.up(branchLowStart).offset(branchFacingF)) ||
+                        branchState.getBlock() instanceof BlockLeaves) {
+                        this.setLogState(changedBlocks,
+                                         worldIn,
+                                         pos.up(branchLowStart).offset(branchFacingF),
+                                         LOG.with(BlockXYZAxis.AXIS, axis),
+                                         box);
                         this.branchLeaves(pos, branchLowStart, branchFacingF, worldIn);
                     }
                 }
@@ -171,19 +199,6 @@ public class ElmTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
             return false;
         }
         return false;
-    }
-
-    private void branchLeaves(BlockPos pos, int height, Direction direction, IWorldGenerationReader worldIn) {
-        BlockPos[] leavesPos = {pos.up(height + 1).offset(direction),
-                                pos.up(height).offset(direction).offset(direction),
-                                pos.up(height).offset(direction).offset(direction.rotateAround(Axis.Y)),
-                                pos.up(height).offset(direction).offset(direction.rotateAround(Axis.Y).rotateAround(Axis.Y)),
-                                pos.up(height).offset(direction).offset(direction.rotateAround(Axis.Y).rotateAround(Axis.Y).rotateAround(Axis.Y)),};
-        for (BlockPos leavesPo : leavesPos) {
-            if (((IBlockReader) worldIn).getBlockState(leavesPo).canBeReplacedByLeaves((IWorldReader) worldIn, leavesPo)) {
-                this.setBlockState(worldIn, leavesPo, LEAVES);
-            }
-        }
     }
 
     private void placeLeaves(IWorldGenerationReader worldIn, BlockPos pos) {
@@ -200,6 +215,19 @@ public class ElmTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                                 pos.east().down().south(),
                                 pos.north().down().east(),
                                 pos.south().down().west(),};
+        for (BlockPos leavesPo : leavesPos) {
+            if (((IBlockReader) worldIn).getBlockState(leavesPo).canBeReplacedByLeaves((IWorldReader) worldIn, leavesPo)) {
+                this.setBlockState(worldIn, leavesPo, LEAVES);
+            }
+        }
+    }
+
+    private void branchLeaves(BlockPos pos, int height, Direction direction, IWorldGenerationReader worldIn) {
+        BlockPos[] leavesPos = {pos.up(height + 1).offset(direction),
+                                pos.up(height).offset(direction).offset(direction),
+                                pos.up(height).offset(direction).offset(direction.rotateAround(Axis.Y)),
+                                pos.up(height).offset(direction).offset(direction.rotateAround(Axis.Y).rotateAround(Axis.Y)),
+                                pos.up(height).offset(direction).offset(direction.rotateAround(Axis.Y).rotateAround(Axis.Y).rotateAround(Axis.Y)),};
         for (BlockPos leavesPo : leavesPos) {
             if (((IBlockReader) worldIn).getBlockState(leavesPo).canBeReplacedByLeaves((IWorldReader) worldIn, leavesPo)) {
                 this.setBlockState(worldIn, leavesPo, LEAVES);

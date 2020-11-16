@@ -14,6 +14,7 @@ import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.TreeUtils;
 
 import java.util.Random;
 import java.util.Set;
@@ -28,30 +29,6 @@ public class OldOakBigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         super(config, notify);
     }
 
-    private static boolean placeTreeOfHeight(IWorldGenerationReader worldIn, BlockPos pos, int height) {
-        int posX = pos.getX();
-        int posY = pos.getY();
-        int posZ = pos.getZ();
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
-        for (int l = 0; l <= height + 1; ++l) {
-            int i1 = 1;
-            if (l == 0) {
-                i1 = 0;
-            }
-            if (l >= height - 1) {
-                i1 = 2;
-            }
-            for (int j1 = -i1; j1 <= i1; ++j1) {
-                for (int k1 = -i1; k1 <= i1; ++k1) {
-                    if (!BlockSapling.canGrowInto(worldIn, blockpos$mutableblockpos.setPos(posX + j1, posY + l, posZ + k1))) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-
     @Override
     public boolean place(Set<BlockPos> changedBlocks, IWorldGenerationReader worldIn, Random rand, BlockPos position, MutableBoundingBox box) {
         int trunkHeight = rand.nextInt(3) + rand.nextInt(2) + 6;
@@ -61,7 +38,8 @@ public class OldOakBigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         //tree within world height limit
         if (posY >= 1 && posY + trunkHeight + 1 < 256) {
             BlockPos posDown = position.down();
-            boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(posDown), (BlockSapling) EvolutionBlocks.SAPLING_OLD_OAK.get());
+            boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(posDown),
+                                                          (BlockSapling) EvolutionBlocks.SAPLING_OLD_OAK.get());
             if (!isSoil) {
                 return false;
             }
@@ -69,10 +47,10 @@ public class OldOakBigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                 return false;
             }
             //the NW corner sapling grows first
-            this.setDirtAt(worldIn, posDown, posDown.up());
-            this.setDirtAt(worldIn, posDown.east(), posDown.up());
-            this.setDirtAt(worldIn, posDown.south(), posDown.up());
-            this.setDirtAt(worldIn, posDown.south().east(), posDown.up());
+            TreeUtils.setDirtAt(worldIn, posDown);
+            TreeUtils.setDirtAt(worldIn, posDown.east());
+            TreeUtils.setDirtAt(worldIn, posDown.south());
+            TreeUtils.setDirtAt(worldIn, posDown.south().east());
             Direction topInclination = Direction.Plane.HORIZONTAL.random(rand);
             int inclinationHeightStart = trunkHeight - rand.nextInt(4);
             int inclinationLimit = 2 - rand.nextInt(3);
@@ -124,7 +102,11 @@ public class OldOakBigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
             //middle leaf layer
             for (int xMiddleAdd = -3; xMiddleAdd <= 4; ++xMiddleAdd) {
                 for (int zMiddleAdd = -3; zMiddleAdd <= 4; ++zMiddleAdd) {
-                    if ((xMiddleAdd != -3 || zMiddleAdd != -3) && (xMiddleAdd != -3 || zMiddleAdd != 4) && (xMiddleAdd != 4 || zMiddleAdd != -3) && (xMiddleAdd != 4 || zMiddleAdd != 4) && (Math.abs(xMiddleAdd) < 3 || Math.abs(zMiddleAdd) < 3)) {
+                    if ((xMiddleAdd != -3 || zMiddleAdd != -3) &&
+                        (xMiddleAdd != -3 || zMiddleAdd != 4) &&
+                        (xMiddleAdd != 4 || zMiddleAdd != -3) &&
+                        (xMiddleAdd != 4 || zMiddleAdd != 4) &&
+                        (Math.abs(xMiddleAdd) < 3 || Math.abs(zMiddleAdd) < 3)) {
                         this.placeLeaves(worldIn, changedPosX + xMiddleAdd, changedPosY, changedPosZ + zMiddleAdd);
                     }
                 }
@@ -136,19 +118,28 @@ public class OldOakBigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                     if ((branchXposAdd < 0 || branchXposAdd > 1 || branchZposAdd < 0 || branchZposAdd > 1) && rand.nextInt(3) <= 0) {
                         int branchHeight = rand.nextInt(3) + 2;
                         for (int placingBranch = 0; placingBranch < branchHeight; ++placingBranch) {
-                            this.placeTrunk(changedBlocks, worldIn, mutablePos.setPos(posX + branchXposAdd, changedPosY - placingBranch - 1, posZ + branchZposAdd), box);
+                            this.placeTrunk(changedBlocks,
+                                            worldIn,
+                                            mutablePos.setPos(posX + branchXposAdd, changedPosY - placingBranch - 1, posZ + branchZposAdd),
+                                            box);
                         }
                         //placing leaves on top
                         for (int leafXAdd = -1; leafXAdd <= 1; ++leafXAdd) {
                             for (int leafZAdd = -1; leafZAdd <= 1; ++leafZAdd) {
-                                this.placeLeaves(worldIn, changedPosX + branchXposAdd + leafXAdd, changedPosY, changedPosZ + branchZposAdd + leafZAdd);
+                                this.placeLeaves(worldIn,
+                                                 changedPosX + branchXposAdd + leafXAdd,
+                                                 changedPosY,
+                                                 changedPosZ + branchZposAdd + leafZAdd);
                             }
                         }
                         //placing leaves at end
                         for (int leafXAddBottom = -2; leafXAddBottom <= 2; ++leafXAddBottom) {
                             for (int leafZAddBottom = -2; leafZAddBottom <= 2; ++leafZAddBottom) {
                                 if (Math.abs(leafXAddBottom) != 2 || Math.abs(leafZAddBottom) != 2) {
-                                    this.placeLeaves(worldIn, changedPosX + branchXposAdd + leafXAddBottom, changedPosY - 1, changedPosZ + branchZposAdd + leafZAddBottom);
+                                    this.placeLeaves(worldIn,
+                                                     changedPosX + branchXposAdd + leafXAddBottom,
+                                                     changedPosY - 1,
+                                                     changedPosZ + branchZposAdd + leafZAddBottom);
                                 }
                             }
                         }
@@ -158,6 +149,30 @@ public class OldOakBigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
             return true;
         }
         return false;
+    }
+
+    private static boolean placeTreeOfHeight(IWorldGenerationReader worldIn, BlockPos pos, int height) {
+        int posX = pos.getX();
+        int posY = pos.getY();
+        int posZ = pos.getZ();
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
+        for (int l = 0; l <= height + 1; ++l) {
+            int i1 = 1;
+            if (l == 0) {
+                i1 = 0;
+            }
+            if (l >= height - 1) {
+                i1 = 2;
+            }
+            for (int j1 = -i1; j1 <= i1; ++j1) {
+                for (int k1 = -i1; k1 <= i1; ++k1) {
+                    if (!BlockSapling.canGrowInto(worldIn, blockpos$mutableblockpos.setPos(posX + j1, posY + l, posZ + k1))) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     private void placeTrunk(Set<BlockPos> changedBlocks, IWorldGenerationReader iWorld, BlockPos pos, MutableBoundingBox box) {

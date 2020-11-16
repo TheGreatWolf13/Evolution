@@ -3,10 +3,10 @@ package tgw.evolution.util;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import tgw.evolution.blocks.BlockLog;
-import tgw.evolution.blocks.BlockUtils;
-import tgw.evolution.blocks.BlockXYZAxis;
+import net.minecraft.world.gen.IWorldGenerationReader;
+import tgw.evolution.blocks.*;
 import tgw.evolution.entities.EntityFallingTimber;
 import tgw.evolution.events.FallingEvents;
 import tgw.evolution.init.EvolutionSounds;
@@ -62,10 +62,46 @@ public class TreeUtils {
     }
 
     /**
+     * Spawns an EntityFallingTimber given the pre-calculated arguments.
+     */
+    private static void spawnFalling(World world,
+                                     BlockPos pos,
+                                     BlockPos base,
+                                     BlockState state,
+                                     BlockState newState,
+                                     Direction fallingDirection,
+                                     boolean isLog,
+                                     int delay) {
+        EntityFallingTimber entity = new EntityFallingTimber(world,
+                                                             pos.getX() + 0.5,
+                                                             pos.getY(),
+                                                             pos.getZ() + 0.5,
+                                                             state,
+                                                             newState,
+                                                             isLog,
+                                                             (pos.getY() - base.getY()) + 0.25,
+                                                             delay);
+        if (FallingEvents.sound) {
+            entity.playSound(EvolutionSounds.TREE_FALLING.get(), 0.25f, 1f);
+            FallingEvents.sound = false;
+        }
+        entity.setMotion(entity.getMotion()
+                               .add(0.25 * fallingDirection.getXOffset() * (pos.getY() - base.getY()),
+                                    0,
+                                    0.25 * fallingDirection.getZOffset() * (pos.getY() - base.getY())));
+        world.addEntity(entity);
+    }
+
+    /**
      * Spawns an EntityFallingTimber based on the location of the original block and the chopping conditions.
      * Will assume the type of leaves.
      */
-    public static void spawnFallingLeaves(World world, BlockPos.MutableBlockPos pos, BlockPos logPos, BlockPos base, BlockState state, Direction fellingDirection) {
+    public static void spawnFallingLeaves(World world,
+                                          BlockPos.MutableBlockPos pos,
+                                          BlockPos logPos,
+                                          BlockPos base,
+                                          BlockState state,
+                                          Direction fellingDirection) {
         pos.move(Direction.DOWN);
         BlockState belowState = world.getBlockState(pos);
         boolean canFall = BlockUtils.isReplaceable(belowState) || logPos.equals(pos);
@@ -76,16 +112,13 @@ public class TreeUtils {
         spawnFalling(world, pos, base, state, state, fellingDirection, false, 0);
     }
 
-    /**
-     * Spawns an EntityFallingTimber given the pre-calculated arguments.
-     */
-    private static void spawnFalling(World world, BlockPos pos, BlockPos base, BlockState state, BlockState newState, Direction fallingDirection, boolean isLog, int delay) {
-        EntityFallingTimber entity = new EntityFallingTimber(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, state, newState, isLog, (pos.getY() - base.getY()) + 0.25, delay);
-        if (FallingEvents.sound) {
-            entity.playSound(EvolutionSounds.TREE_FALLING.get(), 0.25f, 1f);
-            FallingEvents.sound = false;
+    public static void setDirtAt(IWorldGenerationReader reader, BlockPos pos) {
+        if (reader instanceof IWorld) {
+            IWorld world = (IWorld) reader;
+            BlockState state = world.getBlockState(pos);
+            if (state.getBlock() instanceof BlockGrass || state.getBlock() instanceof BlockDryGrass) {
+                world.setBlockState(pos, ((IStoneVariant) state.getBlock()).getVariant().getDirt().getDefaultState(), 16);
+            }
         }
-        entity.setMotion(entity.getMotion().add(0.25 * fallingDirection.getXOffset() * (pos.getY() - base.getY()), 0, 0.25 * fallingDirection.getZOffset() * (pos.getY() - base.getY())));
-        world.addEntity(entity);
     }
 }

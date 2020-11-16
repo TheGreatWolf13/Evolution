@@ -13,6 +13,7 @@ import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.TreeUtils;
 
 import java.util.Random;
 import java.util.Set;
@@ -27,37 +28,14 @@ public class RedwoodGiantTreeFeature extends AbstractTreeFeature<NoFeatureConfig
         super(config, doBlockNofityOnPlace);
     }
 
-    private static boolean placeTreeOfHeight(IWorldGenerationReader worldIn, BlockPos pos, int height) {
-        int posX = pos.getX();
-        int posY = pos.getY();
-        int posZ = pos.getZ();
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
-        for (int l = 0; l <= height + 1; ++l) {
-            int i1 = 1;
-            if (l == 0) {
-                i1 = 0;
-            }
-            if (l >= height - 1) {
-                i1 = 2;
-            }
-            for (int j1 = -i1; j1 <= i1; ++j1) {
-                for (int k1 = -i1; k1 <= i1; ++k1) {
-                    if (!BlockSapling.canGrowInto(worldIn, blockpos$mutableblockpos.setPos(posX + j1, posY + l, posZ + k1))) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-
     @Override
     protected boolean place(Set<BlockPos> changedBlocks, IWorldGenerationReader worldIn, Random rand, BlockPos pos, MutableBoundingBox boundsIn) {
         int trunkHeight = 7 + rand.nextInt(14);
         this.placeTrunk(changedBlocks, worldIn, pos, boundsIn);
         //tree within world height limit
         if (pos.getY() >= 1 && pos.getY() + trunkHeight + 1 < 256) {
-            boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(pos.down()), (BlockSapling) EvolutionBlocks.SAPLING_REDWOOD.get());
+            boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(pos.down()),
+                                                          (BlockSapling) EvolutionBlocks.SAPLING_REDWOOD.get());
             if (!isSoil) {
                 return false;
             }
@@ -65,15 +43,15 @@ public class RedwoodGiantTreeFeature extends AbstractTreeFeature<NoFeatureConfig
                 return false;
             }
             //the NW corner sapling grows first
-            this.setDirtAt(worldIn, pos.down(), pos);
-            this.setDirtAt(worldIn, pos.down().east(), pos);
-            this.setDirtAt(worldIn, pos.down().east(2), pos);
-            this.setDirtAt(worldIn, pos.down().south(), pos);
-            this.setDirtAt(worldIn, pos.down().south(2), pos);
-            this.setDirtAt(worldIn, pos.down().south().east(), pos);
-            this.setDirtAt(worldIn, pos.down().south(2).east(), pos);
-            this.setDirtAt(worldIn, pos.down().south().east(2), pos);
-            this.setDirtAt(worldIn, pos.down().south(2).east(2), pos);
+            TreeUtils.setDirtAt(worldIn, pos.down());
+            TreeUtils.setDirtAt(worldIn, pos.down().east());
+            TreeUtils.setDirtAt(worldIn, pos.down().east(2));
+            TreeUtils.setDirtAt(worldIn, pos.down().south());
+            TreeUtils.setDirtAt(worldIn, pos.down().south(2));
+            TreeUtils.setDirtAt(worldIn, pos.down().south().east());
+            TreeUtils.setDirtAt(worldIn, pos.down().south(2).east());
+            TreeUtils.setDirtAt(worldIn, pos.down().south().east(2));
+            TreeUtils.setDirtAt(worldIn, pos.down().south(2).east(2));
             int changedPosX = pos.getX();
             int changedPosZ = pos.getZ();
             int leavesLayer = 0;
@@ -102,7 +80,9 @@ public class RedwoodGiantTreeFeature extends AbstractTreeFeature<NoFeatureConfig
                     if (++leavesLayer % 2 == 0) {
                         for (int i = -4; i <= 4; i++) {
                             for (int j = -4; j <= 4; j++) {
-                                if ((Math.abs(i) != 4 || Math.abs(j) != 4) && (Math.abs(i) != 4 || Math.abs(j) != 3) && (Math.abs(i) != 3 || Math.abs(j) != 4)) {
+                                if ((Math.abs(i) != 4 || Math.abs(j) != 4) &&
+                                    (Math.abs(i) != 4 || Math.abs(j) != 3) &&
+                                    (Math.abs(i) != 3 || Math.abs(j) != 4)) {
                                     this.placeLeaves(worldIn, pos.east().south().getX() + i, posYForPlacement, pos.east().south().getZ() + j);
                                 }
                             }
@@ -163,19 +143,43 @@ public class RedwoodGiantTreeFeature extends AbstractTreeFeature<NoFeatureConfig
         return false;
     }
 
-    private void placeLeaves(IWorldGenerationReader iWorld, int posX, int posY, int posZ) {
-        BlockPos leafPos = new BlockPos(posX, posY, posZ);
-        if (((IBlockReader) iWorld).getBlockState(leafPos).isAir((IBlockReader) iWorld, leafPos)) {
-            this.setBlockState(iWorld, leafPos, LEAVES);
-        }
-    }
-
     private void placeTrunk(Set<BlockPos> changedBlocks, IWorldGenerationReader iWorld, BlockPos pos, MutableBoundingBox box) {
         BlockState state = ((IBlockReader) iWorld).getBlockState(pos);
         if (state.isAir((IBlockReader) iWorld, pos) || state.getBlock() instanceof BlockLeaves) {
             if (BlockSapling.canGrowInto(iWorld, pos)) {
                 this.setLogState(changedBlocks, iWorld, pos, LOG, box);
             }
+        }
+    }
+
+    private static boolean placeTreeOfHeight(IWorldGenerationReader worldIn, BlockPos pos, int height) {
+        int posX = pos.getX();
+        int posY = pos.getY();
+        int posZ = pos.getZ();
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
+        for (int l = 0; l <= height + 1; ++l) {
+            int i1 = 1;
+            if (l == 0) {
+                i1 = 0;
+            }
+            if (l >= height - 1) {
+                i1 = 2;
+            }
+            for (int j1 = -i1; j1 <= i1; ++j1) {
+                for (int k1 = -i1; k1 <= i1; ++k1) {
+                    if (!BlockSapling.canGrowInto(worldIn, blockpos$mutableblockpos.setPos(posX + j1, posY + l, posZ + k1))) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    private void placeLeaves(IWorldGenerationReader iWorld, int posX, int posY, int posZ) {
+        BlockPos leafPos = new BlockPos(posX, posY, posZ);
+        if (((IBlockReader) iWorld).getBlockState(leafPos).isAir((IBlockReader) iWorld, leafPos)) {
+            this.setBlockState(iWorld, leafPos, LEAVES);
         }
     }
 }

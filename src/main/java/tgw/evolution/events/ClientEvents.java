@@ -213,17 +213,17 @@ public class ClientEvents {
                 if (this.mc.world.dimension instanceof DimensionOverworld) {
                     this.mc.world.dimension.tick();
                 }
-                EntityRayTraceResult
-                        leftRayTrace =
-                        MathHelper.rayTraceEntityFromEyes(this.mc.player, 1f, this.mc.player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue());
+                EntityRayTraceResult leftRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player,
+                                                                                      1f,
+                                                                                      this.mc.player.getAttribute(PlayerEntity.REACH_DISTANCE)
+                                                                                                    .getValue());
                 this.leftPointedEntity = leftRayTrace == null ? null : leftRayTrace.getEntity();
                 if (this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable) {
-                    EntityRayTraceResult
-                            rightRayTrace =
-                            MathHelper.rayTraceEntityFromEyes(this.mc.player,
-                                                              1f,
-                                                              ((IOffhandAttackable) this.mc.player.getHeldItemOffhand().getItem()).getReach() +
-                                                              PlayerHelper.REACH_DISTANCE);
+                    EntityRayTraceResult rightRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player,
+                                                                                           1f,
+                                                                                           ((IOffhandAttackable) this.mc.player.getHeldItemOffhand()
+                                                                                                                               .getItem()).getReach() +
+                                                                                           PlayerHelper.REACH_DISTANCE);
                     this.rightPointedEntity = rightRayTrace == null ? null : rightRayTrace.getEntity();
                 }
                 else {
@@ -309,15 +309,11 @@ public class ClientEvents {
                 }
                 else {
                     float cooledAttackStrength = this.getRightCooledAttackStrength(this.mc.player.getHeldItemOffhand().getItem(), 1);
-                    this.rightEquipProgress +=
-                            MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength - this.rightEquipProgress,
-                                             -0.4F,
-                                             0.4F);
+                    this.rightEquipProgress += MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength -
+                                                                this.rightEquipProgress, -0.4F, 0.4F);
                     cooledAttackStrength = this.getLeftCooledAttackStrength(1);
-                    this.leftEquipProgress +=
-                            MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength - this.leftEquipProgress,
-                                             -0.4F,
-                                             0.4F);
+                    this.leftEquipProgress += MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength -
+                                                               this.leftEquipProgress, -0.4F, 0.4F);
                 }
                 ItemStack stackOffhand = this.mc.player.getHeldItemOffhand();
                 if (MathHelper.areItemStacksSufficientlyEqual(stackOffhand, this.offhandStack)) {
@@ -338,17 +334,6 @@ public class ClientEvents {
             }
         }
     }
-
-//    @SubscribeEvent
-//    public void onFogColor(EntityViewRenderEvent.FogColors event) {
-//        if (this.skyRenderer == null) {
-//            return;
-//        }
-//        Vec3f colors = EarthHelper.getFogColor(this.skyRenderer.sunElevation);
-//        event.setRed(colors.x);
-//        event.setGreen(colors.y);
-//        event.setBlue(colors.z);
-//    }
 
     public double getJumpSlowDown() {
         IAttributeInstance mass = this.mc.player.getAttribute(EvolutionAttributes.MASS);
@@ -398,13 +383,16 @@ public class ClientEvents {
         if (player != null) {
             UUID uuid = player.getUniqueID();
             boolean shouldBeProne = ClientProxy.TOGGLE_PRONE.isKeyDown() != this.proneToggle;
-            shouldBeProne =
-                    shouldBeProne && !player.isInWater() && !player.isInLava() && (!player.isOnLadder() || !this.isJumpPressed && player.onGround);
+            shouldBeProne = shouldBeProne &&
+                            !player.isInWater() &&
+                            !player.isInLava() &&
+                            (!player.isOnLadder() || !this.isJumpPressed && player.onGround);
             shouldBeProne = shouldBeProne && (!player.isOnLadder() || !this.isJumpPressed && player.onGround);
             BlockPos pos = player.getPosition().up(2);
-            shouldBeProne =
-                    shouldBeProne ||
-                    this.proneToggle && player.isOnLadder() && !player.world.getBlockState(pos).getCollisionShape(player.world, pos, null).isEmpty();
+            shouldBeProne = shouldBeProne ||
+                            this.proneToggle &&
+                            player.isOnLadder() &&
+                            !player.world.getBlockState(pos).getCollisionShape(player.world, pos, null).isEmpty();
             if (shouldBeProne != Evolution.PRONED_PLAYERS.getOrDefault(uuid, false)) {
                 EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSetProne(shouldBeProne));
             }
@@ -512,7 +500,7 @@ public class ClientEvents {
                         boolean shouldShowLeftAttackIndicator = false;
                         if (this.leftPointedEntity instanceof LivingEntity && leftCooledAttackStrength >= 1) {
                             shouldShowLeftAttackIndicator = this.mc.player.getCooldownPeriod() > 5;
-                            shouldShowLeftAttackIndicator &= this.leftPointedEntity.isAlive();
+                            shouldShowLeftAttackIndicator &= this.leftPointedEntity.canBeAttackedWithItem();
                         }
                         int x = scaledWidth / 2 - 8;
                         x = offhandValid ? x + 10 : x;
@@ -529,7 +517,7 @@ public class ClientEvents {
                             boolean shouldShowRightAttackIndicator = false;
                             float rightCooledAttackStrength = this.getRightCooledAttackStrength(this.mc.player.getHeldItemOffhand().getItem(), 0);
                             if (this.rightPointedEntity instanceof LivingEntity && rightCooledAttackStrength >= 1) {
-                                shouldShowRightAttackIndicator = this.rightPointedEntity.isAlive();
+                                shouldShowRightAttackIndicator = this.rightPointedEntity.canBeAttackedWithItem();
                             }
                             x -= 20;
                             if (shouldShowRightAttackIndicator) {

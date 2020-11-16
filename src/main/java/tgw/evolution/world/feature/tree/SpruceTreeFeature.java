@@ -15,6 +15,7 @@ import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.TreeUtils;
 
 import java.util.Random;
 import java.util.Set;
@@ -62,8 +63,10 @@ public class SpruceTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
             if (!flag) {
                 return false;
             }
-            if (BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(position.down()), (BlockSapling) EvolutionBlocks.SAPLING_SPRUCE.get()) && position.getY() < ((IWorld) worldIn).getWorld().getHeight() - trunkHeight - 1) {
-                this.setDirtAt(worldIn, position.down(), position);
+            if (BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(position.down()),
+                                             (BlockSapling) EvolutionBlocks.SAPLING_SPRUCE.get()) &&
+                position.getY() < ((IWorld) worldIn).getWorld().getHeight() - trunkHeight - 1) {
+                TreeUtils.setDirtAt(worldIn, position.down());
                 int leafRadius = rand.nextInt(2);
                 int j3 = 1;
                 int k3 = 0;

@@ -47,10 +47,6 @@ public abstract class FluidFreshWater extends ForgeFlowingFluid {
                                                                                                     .block(EvolutionBlocks.FRESH_WATER);
     }
 
-    public static int getLevelFromState(IFluidState state) {
-        return 8 - Math.min(state.getLevel(), 8) + (state.get(FALLING) ? 8 : 0);
-    }
-
     public static Fluid getFluidFlowing() {
         return EvolutionFluids.FRESH_WATER_FLOWING.get();
     }
@@ -62,6 +58,55 @@ public abstract class FluidFreshWater extends ForgeFlowingFluid {
     @Override
     protected boolean canSourcesMultiply() {
         return false;
+    }
+
+    @Override
+    protected int getSlopeFindDistance(IWorldReader world) {
+        return 4;
+    }
+
+    @Override
+    protected int getLevelDecreasePerBlock(IWorldReader world) {
+        return 1;
+    }
+
+    @Override
+    public BlockRenderLayer getRenderLayer() {
+        return BlockRenderLayer.TRANSLUCENT;
+    }
+
+    @Override
+    public Item getFilledBucket() {
+        return EvolutionItems.placeholder_item.get();
+    }
+
+    @Override
+    protected boolean canDisplace(IFluidState state, IBlockReader world, BlockPos pos, Fluid fluid, Direction direction) {
+        return false;
+    }
+
+    @Override
+    public int getTickRate(IWorldReader world) {
+        return 5;
+    }
+
+    @Override
+    protected float getExplosionResistance() {
+        return 100;
+    }
+
+    @Override
+    protected BlockState getBlockState(IFluidState state) {
+        return EvolutionBlocks.FRESH_WATER.get().getDefaultState().with(FlowingFluidBlock.LEVEL, getLevelFromState(state));
+    }
+
+    public static int getLevelFromState(IFluidState state) {
+        return 8 - Math.min(state.getLevel(), 8) + (state.get(FALLING) ? 8 : 0);
+    }
+
+    @Override
+    protected FluidAttributes createAttributes() {
+        return super.createAttributes();
     }
 
     public boolean tryFall(World world, BlockPos pos, IFluidState fluidState) {
@@ -92,54 +137,6 @@ public abstract class FluidFreshWater extends ForgeFlowingFluid {
             return true;
         }
         return false;
-    }
-
-    @Override
-    public void tick(World world, BlockPos pos, IFluidState fluidState) {
-        if (this.tryFall(world, pos, fluidState)) {
-            return;
-        }
-        AUX_LIST.clear();
-        for (Direction direction : MathHelper.DIRECTIONS_HORIZONTAL) {
-            if (BlockUtils.canBeReplacedByWater(world.getBlockState(AUX_POS.setPos(pos).move(direction)))) {
-                AUX_LIST.add(direction);
-            }
-        }
-        if (AUX_LIST.isEmpty()) {
-            this.tryToLevel(world, pos, fluidState);
-            return;
-        }
-        while (!AUX_LIST.isEmpty()) {
-            Direction direction = AUX_LIST.getRandomAndRemove(MathHelper.RANDOM);
-            AUX_POS.setPos(pos).move(direction);
-            BlockState stateAtOffset = world.getBlockState(AUX_POS);
-            int levelAlreadyAtPos = stateAtOffset.getFluidState().getLevel();
-            int currentLevel = fluidState.getLevel();
-            if (levelAlreadyAtPos >= currentLevel) {
-                continue;
-            }
-            if (levelAlreadyAtPos + 1 == currentLevel) {
-                if (BlockUtils.willFluidAllowGap(world, AUX_POS, direction, this, currentLevel)) {
-                    continue;
-                }
-            }
-            int levelForPlacement = Math.min(MathHelper.ceil((levelAlreadyAtPos + currentLevel) / 2f), 8);
-            if (levelForPlacement == 0) {
-                break;
-            }
-            int remainingLevel = currentLevel - levelForPlacement + levelAlreadyAtPos;
-            if (remainingLevel > 0) {
-                world.setBlockState(pos, getFlowingState(remainingLevel, false).getBlockState());
-            }
-            else {
-                world.setBlockState(pos, Blocks.AIR.getDefaultState());
-            }
-            if (stateAtOffset.getBlock() instanceof IReplaceable) {
-                ((IReplaceable) stateAtOffset.getBlock()).onReplaced(stateAtOffset, world, AUX_POS);
-            }
-            world.setBlockState(AUX_POS, getFlowingState(levelForPlacement, false).getBlockState());
-            break;
-        }
     }
 
     public void tryToLevel(World world, BlockPos pos, IFluidState state) {
@@ -198,48 +195,51 @@ public abstract class FluidFreshWater extends ForgeFlowingFluid {
     }
 
     @Override
-    protected FluidAttributes createAttributes() {
-        return super.createAttributes();
-    }
-
-    @Override
-    protected int getSlopeFindDistance(IWorldReader world) {
-        return 4;
-    }
-
-    @Override
-    protected int getLevelDecreasePerBlock(IWorldReader world) {
-        return 1;
-    }
-
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.TRANSLUCENT;
-    }
-
-    @Override
-    public Item getFilledBucket() {
-        return EvolutionItems.placeholder_item.get();
-    }
-
-    @Override
-    protected boolean canDisplace(IFluidState state, IBlockReader world, BlockPos pos, Fluid fluid, Direction direction) {
-        return false;
-    }
-
-    @Override
-    public int getTickRate(IWorldReader world) {
-        return 5;
-    }
-
-    @Override
-    protected float getExplosionResistance() {
-        return 100;
-    }
-
-    @Override
-    protected BlockState getBlockState(IFluidState state) {
-        return EvolutionBlocks.FRESH_WATER.get().getDefaultState().with(FlowingFluidBlock.LEVEL, getLevelFromState(state));
+    public void tick(World world, BlockPos pos, IFluidState fluidState) {
+        if (this.tryFall(world, pos, fluidState)) {
+            return;
+        }
+        AUX_LIST.clear();
+        for (Direction direction : MathHelper.DIRECTIONS_HORIZONTAL) {
+            if (BlockUtils.canBeReplacedByWater(world.getBlockState(AUX_POS.setPos(pos).move(direction)))) {
+                AUX_LIST.add(direction);
+            }
+        }
+        if (AUX_LIST.isEmpty()) {
+            this.tryToLevel(world, pos, fluidState);
+            return;
+        }
+        while (!AUX_LIST.isEmpty()) {
+            Direction direction = AUX_LIST.getRandomAndRemove(MathHelper.RANDOM);
+            AUX_POS.setPos(pos).move(direction);
+            BlockState stateAtOffset = world.getBlockState(AUX_POS);
+            int levelAlreadyAtPos = stateAtOffset.getFluidState().getLevel();
+            int currentLevel = fluidState.getLevel();
+            if (levelAlreadyAtPos >= currentLevel) {
+                continue;
+            }
+            if (levelAlreadyAtPos + 1 == currentLevel) {
+                if (BlockUtils.willFluidAllowGap(world, AUX_POS, direction, this, currentLevel)) {
+                    continue;
+                }
+            }
+            int levelForPlacement = Math.min(MathHelper.ceil((levelAlreadyAtPos + currentLevel) / 2f), 8);
+            if (levelForPlacement == 0) {
+                break;
+            }
+            int remainingLevel = currentLevel - levelForPlacement + levelAlreadyAtPos;
+            if (remainingLevel > 0) {
+                world.setBlockState(pos, getFlowingState(remainingLevel, false).getBlockState());
+            }
+            else {
+                world.setBlockState(pos, Blocks.AIR.getDefaultState());
+            }
+            if (stateAtOffset.getBlock() instanceof IReplaceable) {
+                ((IReplaceable) stateAtOffset.getBlock()).onReplaced(stateAtOffset, world, AUX_POS);
+            }
+            world.setBlockState(AUX_POS, getFlowingState(levelForPlacement, false).getBlockState());
+            break;
+        }
     }
 
     public static class Flowing extends FluidFreshWater {
@@ -255,13 +255,13 @@ public abstract class FluidFreshWater extends ForgeFlowingFluid {
         }
 
         @Override
-        public int getLevel(IFluidState state) {
-            return state.get(LEVEL_1_8);
+        public boolean isSource(IFluidState state) {
+            return false;
         }
 
         @Override
-        public boolean isSource(IFluidState state) {
-            return false;
+        public int getLevel(IFluidState state) {
+            return state.get(LEVEL_1_8);
         }
     }
 
@@ -272,13 +272,13 @@ public abstract class FluidFreshWater extends ForgeFlowingFluid {
         }
 
         @Override
-        public int getLevel(IFluidState state) {
-            return 8;
+        public boolean isSource(IFluidState state) {
+            return true;
         }
 
         @Override
-        public boolean isSource(IFluidState state) {
-            return true;
+        public int getLevel(IFluidState state) {
+            return 8;
         }
     }
 }
