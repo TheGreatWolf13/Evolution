@@ -241,7 +241,6 @@ public class LivingEntityHooks {
             }
             else {
                 //Controls water movement
-                double posY = entity.posY;
                 float depthStriderModifier = (float) EnchantmentHelper.getDepthStriderModifier(entity);
                 if (depthStriderModifier > 3F) {
                     depthStriderModifier = 3F;
