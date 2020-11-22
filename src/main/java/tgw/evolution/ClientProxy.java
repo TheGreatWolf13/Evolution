@@ -23,6 +23,11 @@ public class ClientProxy implements IProxy {
                                                                  InputMappings.Type.KEYSYM,
                                                                  GLFW.GLFW_KEY_X,
                                                                  "key.categories.movement");
+    public static final KeyBinding BUILDING_ASSIST = new KeyBinding("key.build_assist",
+                                                                    KeyConflictContext.IN_GAME,
+                                                                    InputMappings.Type.KEYSYM,
+                                                                    GLFW.GLFW_KEY_BACKSLASH,
+                                                                    "key.categories.creative");
 
     @Override
     public World getClientWorld() {
@@ -42,6 +47,7 @@ public class ClientProxy implements IProxy {
         ColorManager.registerItemColorHandlers(Minecraft.getInstance().getItemColors());
         MinecraftForge.EVENT_BUS.register(new ClientEvents(Minecraft.getInstance()));
         ClientRegistry.registerKeyBinding(TOGGLE_PRONE);
+        ClientRegistry.registerKeyBinding(BUILDING_ASSIST);
         changeWorldOrders();
     }
 

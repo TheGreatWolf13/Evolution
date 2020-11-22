@@ -97,18 +97,16 @@ public class DimensionOverworld extends Dimension {
             this.moonCelestialRadius = 100f * MathHelper.cosDeg(this.monthlyAngle);
             this.sunSeasonalOffset = -100f * MathHelper.sinDeg(this.seasonAngle);
             this.moonMonthlyOffset = -100f * MathHelper.sinDeg(this.monthlyAngle);
-            this.sunElevationAngle =
-                    EarthHelper.getSunElevation(this.sinLatitude,
-                                                this.cosLatitude,
-                                                this.sunAngle * 360,
-                                                this.sunCelestialRadius,
-                                                this.sunSeasonalOffset);
-            this.moonElevationAngle =
-                    EarthHelper.getMoonElevation(this.sinLatitude,
-                                                 this.cosLatitude,
-                                                 this.moonAngle * 360,
-                                                 this.moonCelestialRadius,
-                                                 this.moonMonthlyOffset);
+            this.sunElevationAngle = EarthHelper.getSunElevation(this.sinLatitude,
+                                                                 this.cosLatitude,
+                                                                 this.sunAngle * 360,
+                                                                 this.sunCelestialRadius,
+                                                                 this.sunSeasonalOffset);
+            this.moonElevationAngle = EarthHelper.getMoonElevation(this.sinLatitude,
+                                                                   this.cosLatitude,
+                                                                   this.moonAngle * 360,
+                                                                   this.moonCelestialRadius,
+                                                                   this.moonMonthlyOffset);
             this.fogColor = this.calculateFogColor();
             this.sunsetColors = this.sunsetColors();
             this.moonPhase = MoonPhase.byAngles(this.sunAngle * 360, this.moonAngle * 360);
@@ -127,10 +125,9 @@ public class DimensionOverworld extends Dimension {
         BiomeProviderType<OverworldBiomeProviderSettings, OverworldBiomeProvider> biomeprovidertype1 = BiomeProviderType.VANILLA_LAYERED;
         BiomeProviderType<CheckerboardBiomeProviderSettings, CheckerboardBiomeProvider> biomeprovidertype2 = BiomeProviderType.CHECKERBOARD;
         if (worldtype == WorldType.FLAT) {
-            FlatGenerationSettings
-                    flatgenerationsettings =
-                    FlatGenerationSettings.createFlatGenerator(new Dynamic<>(NBTDynamicOps.INSTANCE,
-                                                                             this.world.getWorldInfo().getGeneratorOptions()));
+            FlatGenerationSettings flatgenerationsettings = FlatGenerationSettings.createFlatGenerator(new Dynamic<>(NBTDynamicOps.INSTANCE,
+                                                                                                                     this.world.getWorldInfo()
+                                                                                                                               .getGeneratorOptions()));
             SingleBiomeProviderSettings singlebiomeprovidersettings1 = biomeprovidertype.createSettings().setBiome(flatgenerationsettings.getBiome());
             return chunkgeneratortype.create(this.world, biomeprovidertype.create(singlebiomeprovidersettings1), flatgenerationsettings);
         }
@@ -142,9 +139,9 @@ public class DimensionOverworld extends Dimension {
         }
         if (worldtype != WorldType.BUFFET) {
             OverworldGenSettings overworldgensettings = chunkgeneratortype4.createSettings();
-            OverworldBiomeProviderSettings
-                    overworldbiomeprovidersettings =
-                    biomeprovidertype1.createSettings().setWorldInfo(this.world.getWorldInfo()).setGeneratorSettings(overworldgensettings);
+            OverworldBiomeProviderSettings overworldbiomeprovidersettings = biomeprovidertype1.createSettings()
+                                                                                              .setWorldInfo(this.world.getWorldInfo())
+                                                                                              .setGeneratorSettings(overworldgensettings);
             return chunkgeneratortype4.create(this.world, biomeprovidertype1.create(overworldbiomeprovidersettings), overworldgensettings);
         }
         BiomeProvider biomeprovider = null;
@@ -152,9 +149,8 @@ public class DimensionOverworld extends Dimension {
         JsonObject jsonobject = jsonelement.getAsJsonObject();
         JsonObject jsonobject1 = jsonobject.getAsJsonObject("biome_source");
         if (jsonobject1 != null && jsonobject1.has("type") && jsonobject1.has("options")) {
-            BiomeProviderType<?, ?>
-                    biomeprovidertype3 =
-                    Registry.BIOME_SOURCE_TYPE.getOrDefault(new ResourceLocation(jsonobject1.getAsJsonPrimitive("type").getAsString()));
+            BiomeProviderType<?, ?> biomeprovidertype3 = Registry.BIOME_SOURCE_TYPE.getOrDefault(new ResourceLocation(jsonobject1.getAsJsonPrimitive(
+                    "type").getAsString()));
             JsonObject jsonobject2 = jsonobject1.getAsJsonObject("options");
             Biome[] abiome = {Biomes.OCEAN};
             if (jsonobject2.has("biomes")) {
@@ -172,15 +168,15 @@ public class DimensionOverworld extends Dimension {
             }
             if (BiomeProviderType.CHECKERBOARD == biomeprovidertype3) {
                 int j = jsonobject2.has("size") ? jsonobject2.getAsJsonPrimitive("size").getAsInt() : 2;
-                CheckerboardBiomeProviderSettings
-                        checkerboardbiomeprovidersettings =
-                        biomeprovidertype2.createSettings().setBiomes(abiome).setSize(j);
+                CheckerboardBiomeProviderSettings checkerboardbiomeprovidersettings = biomeprovidertype2.createSettings()
+                                                                                                        .setBiomes(abiome)
+                                                                                                        .setSize(j);
                 biomeprovider = biomeprovidertype2.create(checkerboardbiomeprovidersettings);
             }
             if (BiomeProviderType.VANILLA_LAYERED == biomeprovidertype3) {
-                OverworldBiomeProviderSettings
-                        overworldbiomeprovidersettings1 =
-                        biomeprovidertype1.createSettings().setGeneratorSettings(new OverworldGenSettings()).setWorldInfo(this.world.getWorldInfo());
+                OverworldBiomeProviderSettings overworldbiomeprovidersettings1 = biomeprovidertype1.createSettings()
+                                                                                                   .setGeneratorSettings(new OverworldGenSettings())
+                                                                                                   .setWorldInfo(this.world.getWorldInfo());
                 biomeprovider = biomeprovidertype1.create(overworldbiomeprovidersettings1);
             }
         }
@@ -202,9 +198,9 @@ public class DimensionOverworld extends Dimension {
             }
         }
         if (jsonobject3 != null && jsonobject3.has("type")) {
-            ChunkGeneratorType<?, ?>
-                    chunkgeneratortype5 =
-                    Registry.CHUNK_GENERATOR_TYPE.getOrDefault(new ResourceLocation(jsonobject3.getAsJsonPrimitive("type").getAsString()));
+            ChunkGeneratorType<?, ?> chunkgeneratortype5 =
+                    Registry.CHUNK_GENERATOR_TYPE.getOrDefault(new ResourceLocation(jsonobject3.getAsJsonPrimitive(
+                    "type").getAsString()));
             if (ChunkGeneratorType.CAVES == chunkgeneratortype5) {
                 NetherGenSettings nethergensettings = chunkgeneratortype2.createSettings();
                 nethergensettings.setDefaultBlock(blockstate);
@@ -340,7 +336,7 @@ public class DimensionOverworld extends Dimension {
 
     public float moonlightMult() {
         if (this.moonElevationAngle > 95) {
-            return 1f;
+            return 0.97F;
         }
         if (this.moonElevationAngle < 90) {
             return 1f - this.moonPhase.getMoonLight();

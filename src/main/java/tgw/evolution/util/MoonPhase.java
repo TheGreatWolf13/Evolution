@@ -1,7 +1,7 @@
 package tgw.evolution.util;
 
 public enum MoonPhase {
-    NEW_MOON(0f, 0f, 0f),
+    NEW_MOON(0f, 0f, 0.03f),
     WAXING_CRESCENT_1(0.2f, 0f, 0.03f),
     WAXING_CRESCENT_2(0.4f, 0f, 0.06f),
     WAXING_CRESCENT_3(0.6f, 0f, 0.09f),

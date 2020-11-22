@@ -16,7 +16,6 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.BlockItem;
@@ -51,7 +50,6 @@ import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
-import tgw.evolution.entities.EvolutionAttributes;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.IOffhandAttackable;
@@ -72,8 +70,9 @@ public class ClientEvents {
 
     private static final ResourceLocation ICONS = Evolution.location("textures/gui/icons.png");
     private static final String TWO_HANDED = "evolution.actionbar.two_handed";
+    private static final String INERTIA = "evolution.actionbar.inertia";
     private static final ITextComponent COMPONENT_TWO_HANDED = new TranslationTextComponent(TWO_HANDED).setStyle(EvolutionStyles.WHITE);
-    private static final BlockPos.MutableBlockPos AUX_POS = new BlockPos.MutableBlockPos();
+    private static final ITextComponent COMPONENT_INERTIA = new TranslationTextComponent(INERTIA).setStyle(EvolutionStyles.WHITE);
     private final Minecraft mc;
     private GameRenderer oldGameRenderer;
     private boolean inverted;
@@ -192,20 +191,6 @@ public class ClientEvents {
                 this.skyRendererBinded = true;
             }
         }
-        //Jump calculation
-        if (this.jump) {
-            PlayerEntity player = this.mc.player;
-            Vec3d motion = player.getMotion();
-            if (motion.y > 0 && !player.isOnLadder() && !player.abilities.isFlying) {
-                player.setMotion(motion.x, motion.y - this.getJumpSlowDown(), motion.z);
-            }
-            else {
-                this.jump = false;
-                if (!player.isOnLadder() && !player.abilities.isFlying) {
-                    player.setMotion(motion.x, motion.y - 0.055, motion.z);
-                }
-            }
-        }
         //Runs at the start of each tick
         if (event.phase == TickEvent.Phase.START) {
             //RayTrace entities
@@ -251,20 +236,6 @@ public class ClientEvents {
                 this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
                 ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, Integer.MAX_VALUE, "field_71429_W");
             }
-            //Handle water physics
-            if (this.mc.player.isInWater()) {
-                int levelAtPos = this.mc.world.getFluidState(AUX_POS.setPos(this.mc.player)).getLevel();
-                Vec3d motion = this.mc.player.getMotion();
-                if (!this.mc.player.isSwimming()) {
-                    this.mc.player.setMotion(motion.x * (1 + (8 - levelAtPos) * 0.01), motion.y, motion.z * (1 + (8 - levelAtPos) * 0.01));
-                }
-                //Handle water emerge
-                Vec3d motionForEmerge = this.mc.player.getMotion();
-                if (this.mc.player.collidedHorizontally && this.mc.player.isOffsetPositionInLiquid(motion.x, motion.y + 0.64, motion.z)) {
-                    double waterEmergeMotion = this.getWaterEmergeMotion(levelAtPos);
-                    this.mc.player.setMotion(motionForEmerge.x, waterEmergeMotion, motionForEmerge.z);
-                }
-            }
             //Handle Disoriented Effect
             if (this.mc.player.isPotionActive(EvolutionEffects.DISORIENTED.get())) {
                 if (!this.inverted) {
@@ -293,6 +264,20 @@ public class ClientEvents {
             }
             this.previousPressed = pressed;
             this.updateClientProneState(this.mc.player);
+            //Handle creative features
+            if (this.mc.player.isCreative() && ClientProxy.BUILDING_ASSIST.isKeyDown()) {
+                this.mc.player.sendStatusMessage(COMPONENT_INERTIA, true);
+                this.mc.player.setMotion(Vec3d.ZERO);
+                if (this.mc.player.getHeldItemMainhand().getItem() instanceof BlockItem) {
+                    if (this.mc.objectMouseOver instanceof BlockRayTraceResult) {
+                        BlockPos pos = ((BlockRayTraceResult) this.mc.objectMouseOver).getPos();
+                        if (this.mc.world.getBlockState(pos).getBlock() != Blocks.AIR) {
+                            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSChangeBlock((BlockRayTraceResult) this.mc.objectMouseOver));
+                            ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, 10, "field_71467_ac");
+                        }
+                    }
+                }
+            }
             //Handle swing
             if (!this.mc.isGamePaused()) {
                 if (this.mc.playerController.getIsHittingBlock()) {
@@ -335,40 +320,8 @@ public class ClientEvents {
         }
     }
 
-    public double getJumpSlowDown() {
-        IAttributeInstance mass = this.mc.player.getAttribute(EvolutionAttributes.MASS);
-        int baseMass = (int) mass.getBaseValue();
-        int totalMass = (int) mass.getValue();
-        int equipMass = totalMass - baseMass;
-        return 0.03 + equipMass * 0.0002;
-    }
-
     private float getLeftCooledAttackStrength(float adjustTicks) {
         return MathHelper.clamp(((float) this.leftTimeSinceLastHit + adjustTicks) / this.mc.player.getCooldownPeriod(), 0.0F, 1.0F);
-    }
-
-    private float getWaterEmergeMotion(int levelAtPos) {
-        levelAtPos = MathHelper.clamp(levelAtPos, 0, 8);
-        switch (levelAtPos) {
-            case 0:
-                return 0;
-            case 1:
-                return 0.3f;
-            case 2:
-                return this.mc.player.getSubmergedHeight() > 0.2 ? 0.28f : 0.18f;
-            case 3:
-            case 4:
-                return 0.15f;
-            case 5:
-                return 0.135f;
-            case 6:
-                return 0.12f;
-            case 7:
-                return 0.1f;
-            case 8:
-                return 0.08f;
-        }
-        throw new IllegalStateException("Invalid level " + levelAtPos);
     }
 
     private static void swapControls(Minecraft mc) {
@@ -669,16 +622,6 @@ public class ClientEvents {
     public void onModelBake(ModelBakeEvent event) {
         //        event.getModelRegistry().put(new ModelResourceLocation(EvolutionBlocks.FANCYBLOCK.get().getRegistryName(), ""), new
         //        FancyBakedModel(DefaultVertexFormats.BLOCK));
-        //        event.getModelRegistry().put(new ModelResourceLocation(EvolutionBlocks.MOLDING.get().getRegistryName(), "layers=1"), new
-        //        ModelTEMolding(DefaultVertexFormats.BLOCK));
-        //        event.getModelRegistry().put(new ModelResourceLocation(EvolutionBlocks.MOLDING.get().getRegistryName(), "layers=2"), new
-        //        ModelTEMolding(DefaultVertexFormats.BLOCK));
-        //        event.getModelRegistry().put(new ModelResourceLocation(EvolutionBlocks.MOLDING.get().getRegistryName(), "layers=3"), new
-        //        ModelTEMolding(DefaultVertexFormats.BLOCK));
-        //        event.getModelRegistry().put(new ModelResourceLocation(EvolutionBlocks.MOLDING.get().getRegistryName(), "layers=4"), new
-        //        ModelTEMolding(DefaultVertexFormats.BLOCK));
-        //        event.getModelRegistry().put(new ModelResourceLocation(EvolutionBlocks.MOLDING.get().getRegistryName(), "layers=5"), new
-        //        ModelTEMolding(DefaultVertexFormats.BLOCK));
     }
 
     @SubscribeEvent
@@ -724,16 +667,6 @@ public class ClientEvents {
 
     //Handle offhand attack
     private void onRightMouseClick() {
-        if (this.mc.player.isCreative() && this.mc.player.isSneaking() && this.mc.player.getHeldItemMainhand().getItem() instanceof BlockItem) {
-            if (this.mc.objectMouseOver instanceof BlockRayTraceResult) {
-                BlockPos pos = ((BlockRayTraceResult) this.mc.objectMouseOver).getPos();
-                if (this.mc.world.getBlockState(pos).getBlock() != Blocks.AIR) {
-                    EvolutionNetwork.INSTANCE.sendToServer(new PacketCSChangeBlock((BlockRayTraceResult) this.mc.objectMouseOver));
-                    ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, 10, "field_71467_ac");
-                }
-                return;
-            }
-        }
         Item offhandItem = this.mc.player.getHeldItemOffhand().getItem();
         if (!(offhandItem instanceof IOffhandAttackable)) {
             return;

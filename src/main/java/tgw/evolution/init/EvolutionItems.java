@@ -10,7 +10,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.client.renderer.item.RenderStackItemJavelin;
-import tgw.evolution.client.renderer.item.RenderStackTileShadowHound;
 import tgw.evolution.items.*;
 import tgw.evolution.util.EnumRockNames;
 import tgw.evolution.util.EnumWoodVariant;
@@ -425,9 +424,10 @@ public class EvolutionItems {
     public static final RegistryObject<Item> planks_spruce = ITEMS.register("planks_spruce", () -> woodBlock(PLANKS_SPRUCE));
     public static final RegistryObject<Item> planks_willow = ITEMS.register("planks_willow", () -> woodBlock(PLANKS_WILLOW));
     //Shadow Hound Block
-    public static final RegistryObject<Item> shadowhound = ITEMS.register("shadowhound",
-                                                                          () -> new ItemBlock(SHADOWHOUND.get(),
-                                                                                              propMisc().setTEISR(() -> RenderStackTileShadowHound::new)));
+//    public static final RegistryObject<Item> shadowhound = ITEMS.register("shadowhound",
+//                                                                          () -> new ItemBlock(SHADOWHOUND.get(),
+//                                                                                              propMisc().setTEISR(() ->
+//                                                                                              RenderStackTileShadowHound::new)));
     //Javelin Heads
     public static final RegistryObject<Item> javelin_head_andesite = ITEMS.register("javelin_head_andesite", EvolutionItems::stoneHeads);
     public static final RegistryObject<Item> javelin_head_basalt = ITEMS.register("javelin_head_basalt", EvolutionItems::stoneHeads);
@@ -709,24 +709,20 @@ public class EvolutionItems {
                                tier.getJavelinMass());
     }
 
-    public static Item.Properties propMisc() {
-        return new Item.Properties().group(EvolutionCreativeTabs.MISC);
+    private static Item.Properties propStoneTool() {
+        return new Item.Properties().group(EvolutionCreativeTabs.STONE_TOOLS);
     }
 
     public static Item.Properties propEgg() {
         return new Item.Properties().group(EvolutionCreativeTabs.EGGS);
     }
 
-    private static Item.Properties propStoneTool() {
-        return new Item.Properties().group(EvolutionCreativeTabs.STONE_TOOLS);
-    }
-
-    private static Item.Properties propTreesAndWood() {
-        return new Item.Properties().group(EvolutionCreativeTabs.TREES_AND_WOOD);
-    }
-
     private static Item itemBlock(RegistryObject<Block> block) {
         return new ItemBlock(block.get(), propMisc());
+    }
+
+    public static Item.Properties propMisc() {
+        return new Item.Properties().group(EvolutionCreativeTabs.MISC);
     }
 
     private static Item item() {
@@ -735,6 +731,10 @@ public class EvolutionItems {
 
     private static Item wood() {
         return new ItemEv(propTreesAndWood());
+    }
+
+    private static Item.Properties propTreesAndWood() {
+        return new Item.Properties().group(EvolutionCreativeTabs.TREES_AND_WOOD);
     }
 
     private static Item axeStone(ToolMaterials tier) {

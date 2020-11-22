@@ -159,12 +159,13 @@ public class ModelCow extends EntityModel<EntityCow> {
     @Override
     public void render(EntityCow entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale) {
         this.setRotationAngles(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
-        if (this.isChild) {
+        if (entity.isChild()) {
+            float sizeScale = 0.5f * entity.getAge() / entity.getAdultAge() + 0.5f;
+//            GlStateManager.pushMatrix();
+//            GlStateManager.translatef(0.0F, 8.0F * scale, 4.0F * scale);
+//            GlStateManager.popMatrix();
             GlStateManager.pushMatrix();
-            GlStateManager.translatef(0.0F, 8.0F * scale, 4.0F * scale);
-            GlStateManager.popMatrix();
-            GlStateManager.pushMatrix();
-            GlStateManager.scalef(0.5F, 0.5F, 0.5F);
+            GlStateManager.scalef(sizeScale, sizeScale, sizeScale);
             GlStateManager.translatef(0.0F, 24.0F * scale, 0.0F);
             this.neck.render(scale);
             this.body.render(scale);
@@ -187,7 +188,13 @@ public class ModelCow extends EntityModel<EntityCow> {
     }
 
     @Override
-    public void setRotationAngles(EntityCow entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor) {
+    public void setRotationAngles(EntityCow entityIn,
+                                  float limbSwing,
+                                  float limbSwingAmount,
+                                  float ageInTicks,
+                                  float netHeadYaw,
+                                  float headPitch,
+                                  float scaleFactor) {
         if (entityIn.isDead()) {
             this.neck.rotateAngleX = 5.585053606381854F;
             this.neck.rotateAngleY = 0.0F;

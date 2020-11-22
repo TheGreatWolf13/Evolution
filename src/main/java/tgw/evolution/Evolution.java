@@ -69,10 +69,6 @@ public class Evolution {
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    public static ResourceLocation location(String name) {
-        return new ResourceLocation(MODID, name);
-    }
-
     private void setup(FMLCommonSetupEvent event) {
         new EvWorldDefault();
         new EvWorldFlat();
@@ -88,10 +84,7 @@ public class Evolution {
         MinecraftForge.EVENT_BUS.register(new EntityEvents());
         MinecraftForge.EVENT_BUS.register(new ItemEvents());
         BiFunction<World, DimensionType, ? extends Dimension> dimensionFactory = DimensionOverworld::new;
-        ObfuscationReflectionHelper.setPrivateValue(DimensionType.class,
-                                                    DimensionType.OVERWORLD,
-                                                    dimensionFactory,
-                                                    "field_201038_g");
+        ObfuscationReflectionHelper.setPrivateValue(DimensionType.class, DimensionType.OVERWORLD, dimensionFactory, "field_201038_g");
         Evolution.LOGGER.info("Setup registries done.");
     }
 
@@ -105,5 +98,9 @@ public class Evolution {
 
     private void particleRegistry(ParticleFactoryRegisterEvent event) {
         EvolutionParticles.registerFactories(Minecraft.getInstance().particles);
+    }
+
+    public static ResourceLocation location(String name) {
+        return new ResourceLocation(MODID, name);
     }
 }

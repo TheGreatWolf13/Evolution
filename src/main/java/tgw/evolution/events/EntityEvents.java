@@ -1,6 +1,5 @@
 package tgw.evolution.events;
 
-import net.minecraft.block.AbstractButtonBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.*;
@@ -9,11 +8,11 @@ import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.merchant.villager.WanderingTraderEntity;
 import net.minecraft.entity.monster.PhantomEntity;
 import net.minecraft.entity.passive.horse.TraderLlamaEntity;
+import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.potion.Effects;
@@ -28,15 +27,12 @@ import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.TickEvent.WorldTickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.*;
-import net.minecraftforge.event.entity.living.LivingEvent.LivingJumpEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import tgw.evolution.Evolution;
@@ -53,80 +49,20 @@ import tgw.evolution.util.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.WeakHashMap;
 
 public class EntityEvents {
 
     private static final Method SET_POSE_METHOD = ObfuscationReflectionHelper.findMethod(Entity.class, "func_213301_b", Pose.class);
     private static final Random RANDOM = new Random();
-    private final Set<CreatureEntity> jumping = new HashSet<>();
     private final Map<DamageSource, Float> damageMultipliers = new WeakHashMap<>();
-
-    private static void spawnDrops(ItemStack stack, World worldIn, BlockPos pos) {
-        double xOffset = worldIn.getRandom().nextFloat() * 0.7F + 0.65F;
-        double yOffset = worldIn.getRandom().nextFloat() * 0.7F + 0.65F;
-        double zOffset = worldIn.getRandom().nextFloat() * 0.7F + 0.65F;
-        ItemEntity entity = new ItemEntity(worldIn, pos.getX() + xOffset, pos.getY() + yOffset, pos.getZ() + zOffset, stack);
-        entity.setPickupDelay(10);
-        worldIn.addEntity(entity);
-    }
-
-    private static int strangeRespawnFunc(int spawnArea) {
-        return spawnArea <= 16 ? spawnArea - 1 : 17;
-    }
-
-    public static void calculateFallDamage(Entity entity, double velocity, double distanceOfSlowDown) {
-        //Convert from m/t to m/s
-        velocity *= 20;
-        //TODO entities have a legHeight
-        double legHeight = 0.875;
-        distanceOfSlowDown += legHeight;
-        //TODO entities have a mass attribute
-        double baseMass = 70;
-        double totalMass = baseMass;
-        if (entity instanceof PlayerEntity) {
-            IAttributeInstance massAttribute = ((PlayerEntity) entity).getAttribute(EvolutionAttributes.MASS);
-            baseMass = massAttribute.getBaseValue();
-            totalMass = massAttribute.getValue();
-        }
-        double kinecticEnergy = totalMass * velocity * velocity / 2;
-        double forceOfImpact = kinecticEnergy / distanceOfSlowDown;
-        double area = entity.getWidth() * entity.getWidth();
-        double pressureOfFall = forceOfImpact / area;
-        double maxSupportedPressure = baseMass / (area * 0.035);
-        double deltaPressure = MathHelper.clampMin(pressureOfFall - maxSupportedPressure, 0);
-        float amount = (float) Math.pow(deltaPressure, 1.7) / 900000;
-        entity.attackEntityFrom(EvolutionDamage.FALL, amount);
-    }
-
-    private static float getStepHeight(PlayerEntity player) {
-        IAttributeInstance mass = player.getAttribute(EvolutionAttributes.MASS);
-        int baseMass = (int) mass.getBaseValue();
-        int totalMass = (int) mass.getValue();
-        int equipMass = totalMass - baseMass;
-        float stepHeight = 1.0625f - equipMass * 0.00114f;
-        return MathHelper.clampMin(stepHeight, 0.6f);
-    }
-
-    private static void calculateWaterFallDamage(Entity entity) {
-        if (entity instanceof ServerPlayerEntity) {
-            return;
-        }
-        BlockPos pos = entity.getPosition();
-        IFluidState fluidState = entity.world.getFluidState(pos);
-        double distanceOfSlowDown = fluidState.getLevel() * 0.0625;
-        double velocity = entity.getMotion().y;
-        if (entity instanceof ClientPlayerEntity) {
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerFall(velocity, distanceOfSlowDown));
-            return;
-        }
-        calculateFallDamage(entity, velocity, distanceOfSlowDown);
-    }
 
     @SubscribeEvent
     public void onSetAttackTarget(LivingSetAttackTargetEvent event) {
         if (event.getEntity() instanceof LivingEntity) {
-            //TODO use my own entity classes
             MobEntity entity = (MobEntity) event.getEntity();
             if (entity.getAttackTarget() != null && event.getTarget() != null) {
                 if (entity.isPotionActive(Effects.BLINDNESS)) {
@@ -143,27 +79,15 @@ public class EntityEvents {
     }
 
     @SubscribeEvent
-    public void onServerTick(WorldTickEvent event) {
-        for (Iterator<CreatureEntity> iterator = this.jumping.iterator(); iterator.hasNext(); ) {
-            CreatureEntity entity = iterator.next();
-            if (entity.getMotion().y > 0) {
-                entity.setMotion(entity.getMotion().x, entity.getMotion().y - 0.03, entity.getMotion().z);
-            }
-            else {
-                iterator.remove();
-                entity.setMotion(entity.getMotion().x, entity.getMotion().y - 0.055, entity.getMotion().z);
-            }
-        }
-    }
-
-    @SubscribeEvent
     public void onPlayerRespawns(PlayerEvent.PlayerRespawnEvent event) {
         ServerPlayerEntity player = (ServerPlayerEntity) event.getPlayer();
         ServerWorld world = (ServerWorld) player.world;
         BlockPos bedPos = player.getBedLocation(player.dimension);
-        Optional<Vec3d> optional = PlayerEntity.func_213822_a(world, bedPos, false);
-        if (optional.isPresent()) {
-            return;
+        if (bedPos != null) {
+            Optional<Vec3d> optional = PlayerEntity.func_213822_a(world, bedPos, false);
+            if (optional.isPresent()) {
+                return;
+            }
         }
         BlockPos worldSpawnPos = world.getSpawnPoint();
         if (world.dimension.hasSkyLight() && world.getWorldInfo().getGameType() != GameType.ADVENTURE) {
@@ -194,6 +118,10 @@ public class EntityEvents {
                 }
             }
         }
+    }
+
+    private static int strangeRespawnFunc(int spawnArea) {
+        return spawnArea <= 16 ? spawnArea - 1 : 17;
     }
 
     @SubscribeEvent
@@ -234,21 +162,30 @@ public class EntityEvents {
         ((LivingEntity) entity).getAttribute(LivingEntity.ENTITY_GRAVITY).setBaseValue(Gravity.gravity(entity.world.getDimension()));
         ((LivingEntity) entity).getAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).setBaseValue(1);
         if (entity instanceof PlayerEntity) {
-            ((PlayerEntity) entity).getAttributes().registerAttribute(EvolutionAttributes.MASS);
-            ((PlayerEntity) entity).getAttribute(SharedMonsterAttributes.ATTACK_SPEED).setBaseValue(PlayerHelper.ATTACK_SPEED);
-            ((PlayerEntity) entity).getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(PlayerHelper.REACH_DISTANCE);
+            PlayerEntity player = (PlayerEntity) entity;
+            player.getAttribute(SharedMonsterAttributes.ATTACK_SPEED).setBaseValue(PlayerHelper.ATTACK_SPEED);
+            player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(PlayerHelper.REACH_DISTANCE);
+            if (player.world.isRemote) {
+                player.abilities.setWalkSpeed((float) PlayerHelper.WALK_SPEED);
+            }
+            else {
+                ObfuscationReflectionHelper.setPrivateValue(PlayerAbilities.class,
+                                                            player.abilities,
+                                                            (float) PlayerHelper.WALK_SPEED,
+                                                            "field_149495_f");
+            }
+            player.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(PlayerHelper.WALK_SPEED);
         }
-        else {
-            //Makes the Living Entities able to step up one block, instead of jumping (it looks better)
-            entity.stepHeight = 1.0625F;
-        }
+//        else {
+//            //Makes the Living Entities able to step up one block, instead of jumping (it looks better)
+//            entity.stepHeight = 1.0625F;
+//        }
     }
 
     @SubscribeEvent
     public void onLivingFall(LivingFallEvent event) {
         Entity entity = event.getEntity();
-        //TODO my entities too
-        if (!(entity instanceof PlayerEntity)) {
+        if (!(entity instanceof PlayerEntity) && !(entity instanceof CreatureEntity)) {
             return;
         }
         double velocity = entity.getMotion().y;
@@ -262,17 +199,31 @@ public class EntityEvents {
         calculateFallDamage(entity, velocity, fallDistanceSlowDown);
     }
 
-    @SubscribeEvent
-    public void onBlockPlaced(BlockEvent.EntityPlaceEvent event) {
-        if (event.getEntity() instanceof PlayerEntity) {
-            PlayerEntity player = (PlayerEntity) event.getEntity();
-            if (player.isCreative() && player.isSneaking() && player.getHeldItemMainhand().getItem() instanceof BlockItem) {
-                if (event.getState().getBlock() instanceof AbstractButtonBlock) {
-                    return;
-                }
-                event.setCanceled(true);
-            }
+    public static void calculateFallDamage(Entity entity, double velocity, double distanceOfSlowDown) {
+        //Convert from m/t to m/s
+        velocity *= 20;
+        double legHeight = PlayerHelper.LEG_HEIGHT;
+        double baseMass = PlayerHelper.MASS;
+        if (entity instanceof CreatureEntity) {
+            CreatureEntity creature = (CreatureEntity) entity;
+            legHeight = creature.getLegHeight();
+            baseMass = creature.getMass();
         }
+        distanceOfSlowDown += legHeight;
+        double totalMass = baseMass;
+        if (entity instanceof PlayerEntity) {
+            IAttributeInstance massAttribute = ((PlayerEntity) entity).getAttribute(EvolutionAttributes.MASS);
+            baseMass = massAttribute.getBaseValue();
+            totalMass = massAttribute.getValue();
+        }
+        double kinecticEnergy = totalMass * velocity * velocity / 2;
+        double forceOfImpact = kinecticEnergy / distanceOfSlowDown;
+        double area = entity.getWidth() * entity.getWidth();
+        double pressureOfFall = forceOfImpact / area;
+        double maxSupportedPressure = baseMass / (area * 0.035);
+        double deltaPressure = MathHelper.clampMin(pressureOfFall - maxSupportedPressure, 0);
+        float amount = (float) Math.pow(deltaPressure, 1.7) / 900000;
+        entity.attackEntityFrom(EvolutionDamage.FALL, amount);
     }
 
     @SubscribeEvent
@@ -281,31 +232,25 @@ public class EntityEvents {
         if (!(entity instanceof PlayerEntity) && !(entity instanceof CreatureEntity)) {
             return;
         }
-        //Applies air drag on all living entities
-        double horizontalDrag = Gravity.horizontalDrag(entity.world.dimension, entity.getWidth(), entity.getHeight());
-        double verticalDrag = Gravity.verticalDrag(entity.world.dimension, entity.getWidth());
-        event.getEntityLiving().setMotion(entity.getMotion().mul(horizontalDrag, verticalDrag, horizontalDrag));
-        event.getEntityLiving().jumpMovementFactor = 0.015F;
         //Deals with water
         if (!entity.onGround && entity.isInWater()) {
             calculateWaterFallDamage(entity);
         }
-        //Reduces the speed of ladders
-        if (event.getEntityLiving().isOnLadder()) {
-            if (event.getEntityLiving() instanceof PlayerEntity && ((PlayerEntity) event.getEntityLiving()).abilities.isFlying) {
-                return;
-            }
-            Vec3d motion = event.getEntityLiving().getMotion();
-            event.getEntityLiving().setMotion(motion.x, motion.y - 0.08, motion.z);
-        }
     }
 
-    @SubscribeEvent
-    public void onEntityJump(LivingJumpEvent event) {
-        if (!(event.getEntity() instanceof CreatureEntity)) {
+    private static void calculateWaterFallDamage(Entity entity) {
+        if (entity instanceof ServerPlayerEntity) {
             return;
         }
-        this.jumping.add((CreatureEntity) event.getEntity());
+        BlockPos pos = entity.getPosition();
+        IFluidState fluidState = entity.world.getFluidState(pos);
+        double distanceOfSlowDown = fluidState.getLevel() * 0.0625;
+        double velocity = entity.getMotion().y;
+        if (entity instanceof ClientPlayerEntity) {
+            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerFall(velocity, distanceOfSlowDown));
+            return;
+        }
+        calculateFallDamage(entity, velocity, distanceOfSlowDown);
     }
 
     @SubscribeEvent
@@ -373,7 +318,8 @@ public class EntityEvents {
             //Drop contents of extended inventory if keepInventory is off
             PlayerEntity player = (PlayerEntity) event.getEntity();
             if (!player.world.getGameRules().get(GameRules.KEEP_INVENTORY).get()) {
-                ContainerExtendedHandler handler = (ContainerExtendedHandler) player.getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY)
+                ContainerExtendedHandler handler =
+                        (ContainerExtendedHandler) player.getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY)
                                                                                     .orElseThrow(IllegalStateException::new);
                 for (int i = 0; i < handler.getSlots(); i++) {
                     spawnDrops(handler.getStackInSlot(i), player.world, player.getPosition());
@@ -381,6 +327,15 @@ public class EntityEvents {
                 }
             }
         }
+    }
+
+    private static void spawnDrops(ItemStack stack, World worldIn, BlockPos pos) {
+        double xOffset = worldIn.getRandom().nextFloat() * 0.7F + 0.65F;
+        double yOffset = worldIn.getRandom().nextFloat() * 0.7F + 0.65F;
+        double zOffset = worldIn.getRandom().nextFloat() * 0.7F + 0.65F;
+        ItemEntity entity = new ItemEntity(worldIn, pos.getX() + xOffset, pos.getY() + yOffset, pos.getZ() + zOffset, stack);
+        entity.setPickupDelay(10);
+        worldIn.addEntity(entity);
     }
 
     @SubscribeEvent
@@ -459,6 +414,15 @@ public class EntityEvents {
         }
     }
 
+    private static float getStepHeight(PlayerEntity player) {
+        IAttributeInstance mass = player.getAttribute(EvolutionAttributes.MASS);
+        int baseMass = (int) mass.getBaseValue();
+        int totalMass = (int) mass.getValue();
+        int equipMass = totalMass - baseMass;
+        float stepHeight = 1.0625f - equipMass * 0.00114f;
+        return MathHelper.clampMin(stepHeight, 0.6f);
+    }
+
     @SubscribeEvent
     public void onLivingAttack(LivingAttackEvent event) {
         if (event.getEntityLiving().world.isRemote) {
@@ -469,11 +433,13 @@ public class EntityEvents {
         if (source == EvolutionDamage.FALL) {
             return;
         }
+        if (source == DamageSource.OUT_OF_WORLD) {
+            return;
+        }
         float damage = event.getAmount();
         Evolution.LOGGER.debug("amount = " + damage);
         if (source == DamageSource.FALL) {
-            //TODO cancels for my entities too when they're ready
-            if (hitEntity instanceof PlayerEntity) {
+            if (hitEntity instanceof PlayerEntity || hitEntity instanceof CreatureEntity) {
                 event.setCanceled(true);
             }
             return;

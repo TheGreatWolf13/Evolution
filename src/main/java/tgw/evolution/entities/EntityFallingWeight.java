@@ -49,15 +49,15 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     public int fallTime;
     private BlockState state = EvolutionBlocks.DESTROY_9.get().getDefaultState();
 
-    public EntityFallingWeight(EntityType<EntityFallingWeight> type, World worldIn) {
-        super(type, worldIn);
-        this.verticalDrag = Gravity.verticalDrag(this.world.getDimension(), this.getWidth());
-        this.horizontalDrag = Gravity.horizontalDrag(this.world.getDimension(), this.getWidth(), this.getHeight());
-        this.gravity = -Gravity.gravity(this.world.getDimension());
-    }
-
     public EntityFallingWeight(@SuppressWarnings("unused") FMLPlayMessages.SpawnEntity spawn, World worldIn) {
         this(EvolutionEntities.FALLING_WEIGHT.get(), worldIn);
+    }
+
+    public EntityFallingWeight(EntityType<EntityFallingWeight> type, World worldIn) {
+        super(type, worldIn);
+        this.verticalDrag = 1/*Gravity.verticalDrag(this.world.getDimension(), this.getWidth())*/;
+        this.horizontalDrag = 1/*Gravity.horizontalDrag(this.world.getDimension(), this.getWidth(), this.getHeight())*/;
+        this.gravity = -Gravity.gravity(this.world.getDimension());
     }
 
     public EntityFallingWeight(World worldIn, double x, double y, double z, BlockState state) {
@@ -72,22 +72,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    public boolean canBeAttackedWithItem() {
-        return false;
-    }
-
-    @Override
-    protected boolean canTriggerWalking() {
-        return false;
-    }
-
-    @Override
     protected void registerData() {
-    }
-
-    @Override
-    public boolean canBeCollidedWith() {
-        return true;
     }
 
     @Override
@@ -132,15 +117,12 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         boolean isInWater = this.world.getFluidState(this.mutablePos).isTagged(FluidTags.WATER);
         double d0 = this.getMotion().lengthSquared();
         if (d0 > 1.0D) {
-            BlockRayTraceResult raytraceresult = this.world.rayTraceBlocks(new RayTraceContext(new Vec3d(this.prevPosX,
-                                                                                                         this.prevPosY,
-                                                                                                         this.prevPosZ),
+            BlockRayTraceResult raytraceresult = this.world.rayTraceBlocks(new RayTraceContext(new Vec3d(this.prevPosX, this.prevPosY, this.prevPosZ),
                                                                                                new Vec3d(this.posX, this.posY, this.posZ),
                                                                                                RayTraceContext.BlockMode.COLLIDER,
                                                                                                RayTraceContext.FluidMode.SOURCE_ONLY,
                                                                                                this));
-            if (raytraceresult.getType() != RayTraceResult.Type.MISS && this.world.getFluidState(raytraceresult.getPos())
-                                                                                  .isTagged(FluidTags.WATER)) {
+            if (raytraceresult.getType() != RayTraceResult.Type.MISS && this.world.getFluidState(raytraceresult.getPos()).isTagged(FluidTags.WATER)) {
                 this.mutablePos.setPos(raytraceresult.getPos());
                 isInWater = true;
             }
@@ -196,13 +178,26 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
+    protected boolean canTriggerWalking() {
+        return false;
+    }
+
+    @Override
+    @Nullable
+    public AxisAlignedBB getCollisionBoundingBox() {
+        return this.isAlive() ? this.getBoundingBox() : null;
+    }
+
+    @Override
     public void fall(float distance, float damageMultiplier) {
         int i = MathHelper.ceil(distance - 1.0F);
         if (i > 0) {
             List<Entity> list = Lists.newArrayList(this.world.getEntitiesWithinAABBExcludingEntity(this, this.getBoundingBox()));
             boolean isRock = this.state.getMaterial() == Material.ROCK;
             boolean isWood = this.state.getMaterial() == Material.WOOD;
-            boolean isSoil = this.state.getMaterial() == Material.EARTH || this.state.getMaterial() == Material.CLAY || this.state.getMaterial() == Material.SAND;
+            boolean isSoil = this.state.getMaterial() == Material.EARTH ||
+                             this.state.getMaterial() == Material.CLAY ||
+                             this.state.getMaterial() == Material.SAND;
             DamageSource damagesource = DamageSource.FALLING_BLOCK;
             if (isRock) {
                 damagesource = EvolutionDamage.FALLING_ROCK;
@@ -220,9 +215,12 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    protected void writeAdditional(CompoundNBT compound) {
-        compound.put("BlockState", NBTUtil.writeBlockState(this.state));
-        compound.putInt("Time", this.fallTime);
+    public void applyEntityCollision(Entity entityIn) {
+    }
+
+    @Override
+    public boolean canBeCollidedWith() {
+        return true;
     }
 
     @Override
@@ -232,15 +230,14 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public boolean canRenderOnFire() {
-        return false;
+    protected void writeAdditional(CompoundNBT compound) {
+        compound.put("BlockState", NBTUtil.writeBlockState(this.state));
+        compound.putInt("Time", this.fallTime);
     }
 
     @Override
-    @Nullable
-    public AxisAlignedBB getCollisionBoundingBox() {
-        return this.isAlive() ? this.getBoundingBox() : null;
+    public boolean canBeAttackedWithItem() {
+        return false;
     }
 
     @Override
@@ -249,20 +246,22 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         category.func_71507_a("Immitating BlockState", this.state.toString());
     }
 
-    /**
-     * Returns the {@code BlockState} this entity is immitating.
-     */
-    public BlockState getBlockState() {
-        return this.state;
-    }
-
     @Override
-    public void applyEntityCollision(Entity entityIn) {
+    @OnlyIn(Dist.CLIENT)
+    public boolean canRenderOnFire() {
+        return false;
     }
 
     @Override
     public IPacket<?> createSpawnPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    /**
+     * Returns the {@code BlockState} this entity is immitating.
+     */
+    public BlockState getBlockState() {
+        return this.state;
     }
 
     @Override

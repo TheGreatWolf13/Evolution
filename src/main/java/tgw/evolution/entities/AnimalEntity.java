@@ -1,11 +1,14 @@
 package tgw.evolution.entities;
 
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.IPacket;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.Hand;
@@ -18,73 +21,158 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
+import net.minecraftforge.fml.network.NetworkHooks;
+import tgw.evolution.blocks.BlockSnowable;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.util.EnumFoodNutrients;
-import tgw.evolution.util.Feces;
-import tgw.evolution.util.FoodNutrients;
 import tgw.evolution.util.Time;
 
-public abstract class AnimalEntity extends AgeableEntity {
+public abstract class AnimalEntity extends AgeableEntity implements IEntityAdditionalSpawnData {
 
-    public final FoodNutrients food = new FoodNutrients();
-    public final Feces poo = new Feces();
-    protected int pregnancyTime;
+    private static final DataParameter<Integer> PREGNANCY_TIME = EntityDataManager.createKey(AgeableEntity.class, DataSerializers.VARINT);
+    private final AnimalFoodWaterController foodController;
     private boolean inLove;
-    private int domestication;
-    private int milkTime;
-    private boolean recentlyFed;
+    private Gender gender = Gender.MALE;
 
     protected AnimalEntity(EntityType<? extends AnimalEntity> type, World worldIn) {
         super(type, worldIn);
+        this.foodController = new AnimalFoodWaterController(this);
+        this.gender = Gender.fromBoolean(this.rand.nextBoolean());
     }
 
-    /**
-     * Checks if the parameter is an item which this animal can be fed.
-     */
-    public static boolean isEdibleItem(ItemStack stack) {
-        return stack.getItem() == Items.WHEAT;
+    @Override
+    protected void registerData() {
+        super.registerData();
+        this.dataManager.register(PREGNANCY_TIME, -Time.MONTH_IN_TICKS);
     }
 
-    /**
-     * Tries to modify the animal's food level. If amount is negative and the entity does not have
-     * that much food to lose, it will return false, otherwise will return true.
-     */
-    public boolean modifyFood(EnumFoodNutrients nutrient, int amount) {
-        if (this.food.get(nutrient) + amount < 0) {
-            return false;
+    @Override
+    public void writeAdditional(CompoundNBT compound) {
+        super.writeAdditional(compound);
+        compound.putBoolean("InLove", this.inLove);
+        compound.putInt("PregnancyTime", this.dataManager.get(PREGNANCY_TIME));
+        compound.putBoolean("Gender", this.gender.toBoolean());
+        this.foodController.writeToNBT(compound);
+        if (this instanceof IMammal) {
+            compound.putInt("LactationTime", ((IMammal) this).getLactationTime());
         }
-        this.food.add(nutrient, amount);
-        return true;
     }
 
-    /**
-     * Makes the animal consume food in order to keep itself alive or regenerate health. Will produce poo. Will return
-     * false if the animal does not have enough food.
-     */
-    public boolean consumeFood(int amount) {
-        if (this.modifyFood(EnumFoodNutrients.FOOD, -amount)) {
-            this.poo.add(EnumFoodNutrients.FOOD, amount);
-            return true;
+    @Override
+    public void readAdditional(CompoundNBT compound) {
+        super.readAdditional(compound);
+        this.inLove = compound.getBoolean("InLove");
+        this.dataManager.set(PREGNANCY_TIME, compound.getInt("PregnancyTime"));
+        this.gender = Gender.fromBoolean(compound.getBoolean("Gender"));
+        this.foodController.readFromNBT(compound);
+        if (this instanceof IMammal) {
+            ((IMammal) this).setLactationTime(compound.getInt("LactationTime"));
         }
-        return false;
     }
 
-    /**
-     * Tries to regenerate the entity's health, if it needs and has food for it. Will produce poo.
-     */
-    public void regenHealth() {
-        if (this.getMaxHealth() - this.getHealth() >= 1.0F) {
-            if (this.consumeFood(1)) {
-                this.setHealth(this.getHealth() + 1.0F);
+    @Override
+    public void livingTick() {
+        super.livingTick();
+        if (!this.isAdult() || this.isDead()) {
+            this.inLove = false;
+        }
+        if (!this.isDead()) {
+            if (this.getAge() % Time.HOUR_IN_TICKS == 0) {
+                this.foodController.tick();
+            }
+            if (this.dataManager.get(PREGNANCY_TIME) == 0) {
+                this.haveBabies();
+            }
+            if (this.dataManager.get(PREGNANCY_TIME) > -Time.MONTH_IN_TICKS) {
+                this.dataManager.set(PREGNANCY_TIME, this.dataManager.get(PREGNANCY_TIME) - 1);
+            }
+            if (this.canBeInLove()) {
+                this.inLove = true;
+            }
+            if (this.inLove) {
+                if (this.getAge() % 200 == 0) {
+                    this.showLoveHearts();
+                }
             }
         }
+    }
+
+    public void haveBabies() {
+        this.dataManager.set(PREGNANCY_TIME, -1);
+        int numberOfBabies = this.getNumberOfBabies();
+        for (int i = 0; i < numberOfBabies; i++) {
+            this.spawnBaby();
+        }
+    }
+
+    public abstract boolean canBeInLove();
+
+    public void showLoveHearts() {
+        this.world.setEntityState(this, (byte) 18);
+    }
+
+    public abstract int getNumberOfBabies();
+
+    public abstract void spawnBaby();
+
+    @Override
+    public boolean attackEntityFrom(DamageSource source, float amount) {
+        return !this.isInvulnerableTo(source) && super.attackEntityFrom(source, amount);
+    }
+
+    @Override
+    public IPacket<?> createSpawnPacket() {
+        return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    @Override
+    public void writeSpawnData(PacketBuffer buffer) {
+        buffer.writeBoolean(this.gender.toBoolean());
+    }
+
+    @Override
+    public void readSpawnData(PacketBuffer buffer) {
+        this.gender = Gender.fromBoolean(buffer.readBoolean());
     }
 
     /**
      * Returns the gestation time period of the female of the species in ticks.
      */
-    //TODO pregnancy
-    public abstract int getGestationTime();
+    public abstract int getGestationPeriod();
+
+    @Override
+    public float getBlockPathWeight(BlockPos pos, IWorldReader worldIn) {
+        return worldIn.getBlockState(pos.down()).getBlock() instanceof BlockSnowable ? 10.0F : worldIn.getBrightness(pos) - 0.5F;
+    }
+
+    @Override
+    public double getYOffset() {
+        return 0.14D;
+    }
+
+    @Override
+    public int getTalkInterval() {
+        return 120;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void handleStatusUpdate(byte id) {
+        if (id == 18) {
+            for (int i = 0; i < 7; ++i) {
+                this.world.addParticle(ParticleTypes.HEART,
+                                       this.posX + this.rand.nextFloat() * this.getWidth() * 2.0F - this.getWidth(),
+                                       this.posY + 0.5 + this.rand.nextFloat() * this.getHeight(),
+                                       this.posZ + this.rand.nextFloat() * this.getWidth() * 2.0F - this.getWidth(),
+                                       this.rand.nextGaussian() * 0.02,
+                                       this.rand.nextGaussian() * 0.02,
+                                       this.rand.nextGaussian() * 0.02);
+            }
+        }
+        else {
+            super.handleStatusUpdate(id);
+        }
+    }
 
     @Override
     protected void updateAITasks() {
@@ -95,131 +183,21 @@ public abstract class AnimalEntity extends AgeableEntity {
     }
 
     @Override
-    public void livingTick() {
-        super.livingTick();
-        if (!this.isAdult() || this.isDead()) {
-            this.inLove = false;
-            this.pregnancyTime = -Time.MONTH_IN_TICKS;
-        }
-        if (!this.isDead()) {
-            if (this.getAge() % Time.HOUR_IN_TICKS == 0) {
-                this.recentlyFed = false;
-                if (this.isChild()) {
-                    if (!this.consumeFood(1)) {
-                        this.attackEntityFrom(DamageSource.STARVE, 1.0F);
-                    }
-                    this.regenHealth();
-                }
-                else if (this.isAdult()) {
-                    if (!this.consumeFood(3)) {
-                        this.attackEntityFrom(DamageSource.STARVE, 1.0F);
-                    }
-                    this.regenHealth();
-                }
-                else {
-                    if (!this.consumeFood(3)) {
-                        this.attackEntityFrom(DamageSource.STARVE, 1.0F);
-                    }
-                }
-                //TODO shit
-            }
-            if (this.pregnancyTime > -Time.MONTH_IN_TICKS) {
-                this.pregnancyTime--;
-                //TODO have baby
-            }
-            if (this.isAdult() && this.pregnancyTime == -Time.MONTH_IN_TICKS && this.food.get(EnumFoodNutrients.FOOD) >= 200) {
-                this.inLove = true;
-            }
-            if (this.inLove) {
-                if (this.getAge() % 200 == 0) {
-                    this.setInLove();
-                }
-            }
-        }
-    }
-
-    @Override
-    public boolean attackEntityFrom(DamageSource source, float amount) {
-        return !this.isInvulnerableTo(source) && super.attackEntityFrom(source, amount);
-    }
-
-    //TODO shit
-    public void shit() {
-    }
-
-    @Override
-    public float getBlockPathWeight(BlockPos pos, IWorldReader worldIn) {
-        return worldIn.getBlockState(pos.down()).getBlock() == Blocks.GRASS_BLOCK ? 10.0F : worldIn.getBrightness(pos) - 0.5F;
-    }
-
-    @Override
-    public void writeAdditional(CompoundNBT compound) {
-        super.writeAdditional(compound);
-        compound.putBoolean("InLove", this.inLove);
-        //        compound.putIntArray("Food", new int[]{this.food.get(EnumFoodNutrients.FOOD),
-        //                                               this.food.get(EnumFoodNutrients.NITROGEN),
-        //                                               this.food.get(EnumFoodNutrients.POTASSIUM),
-        //                                               this.food.get(EnumFoodNutrients.PHOSPHORUS)});
-        compound.putInt("PregnancyTime", this.pregnancyTime);
-        compound.putByte("Domestication", (byte) this.domestication);
-        compound.putBoolean("RecentlyFed", this.recentlyFed);
-        compound.putInt("MilkTime", this.milkTime);
-        //        compound.putByteArray("Poo", new byte[]{(byte) this.poo.get(EnumFoodNutrients.FOOD),
-        //                                                (byte) this.poo.get(EnumFoodNutrients.NITROGEN),
-        //                                                (byte) this.poo.get(EnumFoodNutrients.POTASSIUM),
-        //                                                (byte) this.poo.get(EnumFoodNutrients.PHOSPHORUS)});
-    }
-
-    @Override
-    public double getYOffset() {
-        return 0.14D;
-    }
-
-    @Override
-    public void readAdditional(CompoundNBT compound) {
-        super.readAdditional(compound);
-        this.inLove = compound.getBoolean("InLove");
-        //        this.food.set(EnumFoodNutrients.FOOD, compound.getIntArray("Food")[0]);
-        //        this.food.set(EnumFoodNutrients.NITROGEN, compound.getIntArray("Food")[1]);
-        //        this.food.set(EnumFoodNutrients.POTASSIUM, compound.getIntArray("Food")[2]);
-        //        this.food.set(EnumFoodNutrients.PHOSPHORUS, compound.getIntArray("Food")[3]);
-        this.pregnancyTime = compound.getInt("PregnancyTime");
-        this.milkTime = compound.getInt("MilkTime");
-        this.domestication = compound.getByte("Domestication");
-        //        this.poo.set(EnumFoodNutrients.FOOD, compound.getByteArray("Poo")[0]);
-        //        this.poo.set(EnumFoodNutrients.NITROGEN, compound.getByteArray("Poo")[1]);
-        //        this.poo.set(EnumFoodNutrients.POTASSIUM, compound.getByteArray("Poo")[2]);
-        //        this.poo.set(EnumFoodNutrients.PHOSPHORUS, compound.getByteArray("Poo")[3]);
-    }
-
-    @Override
-    public int getTalkInterval() {
-        return 120;
-    }
-
-    @Override
-    protected int getExperiencePoints(PlayerEntity player) {
-        return 0;
-    }
-
-    @Override
     public boolean processInteract(PlayerEntity player, Hand hand) {
         ItemStack itemstack = player.getHeldItem(hand);
-        if (AnimalEntity.isEdibleItem(itemstack) && !this.isDead()) {
-            if (!this.recentlyFed) {
-                //TODO make different items to feed the animal
-                //				this.consumeItemFromStack(player, itemstack);
-                //				this.recentlyFed = true;
-                //				this.modifyFood(5);
-                //				this.domestication += 1;
-                //				this.playSound(SoundEvents.ENTITY_PLAYER_BURP, 1F, 1F);
-                return true;
-            }
-        }
-        else if (itemstack.getItem() == EvolutionItems.placeholder_item.get()) {
+        if (itemstack.getItem() == EvolutionItems.placeholder_item.get()) {
             if (!this.world.isRemote()) {
                 ITextComponent debug = new StringTextComponent("[EntityDebug]").setStyle(new Style().setColor(TextFormatting.YELLOW).setBold(true));
-                ITextComponent text = new StringTextComponent("Health = " + this.getHealth() + "/" + this.getMaxHealth() + "\n").appendText("Age = " + Time.getFormattedTime(this.getAge()) + "\n").appendText("LifeSpan = " + Time.getFormattedTime(this.getDeterminedLifeSpan()) + "\n").appendText("Food = " + this.food + "\n").appendText("RecentlyFed = " + this.recentlyFed + "\n").appendText("Poo = " + this.poo + "\n").appendText("InLove = " + this.inLove + "\n").appendText("MilkTime = " + Time.getFormattedTime(this.milkTime) + "\n").appendText("PregnancyTime = " + Time.getFormattedTime(this.pregnancyTime) + "\n").appendText("Domestication = " + this.domestication + "\n").appendText("DeathTimer = " + Time.getFormattedTime(this.getDeathTime()));
+                ITextComponent text = new StringTextComponent("Gender = " + this.gender + "\n");
+                text.appendText("Health = " + this.getHealth() + "/" + this.getMaxHealth() + "\n")
+                    .appendText("Age = " + Time.getFormattedTime(this.getAge()) + "\n")
+                    .appendText("LifeSpan =" + " " + Time.getFormattedTime(this.getLifeSpan()) + "\n")
+                    .appendText("InLove = " + this.inLove + "\n")
+                    .appendText("PregnancyTime = " + Time.getFormattedTime(this.getPregnancyTime()) + "\n")
+                    .appendText("DeathTimer" + " = " + Time.getFormattedTime(this.getDeathTime()) + "\n");
+                if (this instanceof IMammal) {
+                    text.appendText("LactationTime = " + Time.getFormattedTime(((IMammal) this).getLactationTime()));
+                }
                 player.sendMessage(debug);
                 player.sendMessage(text);
             }
@@ -227,9 +205,8 @@ public abstract class AnimalEntity extends AgeableEntity {
         return super.processInteract(player, hand);
     }
 
-    public void setInLove() {
-        this.inLove = true;
-        this.world.setEntityState(this, (byte) 18);
+    public int getPregnancyTime() {
+        return this.dataManager.get(PREGNANCY_TIME);
     }
 
     /**
@@ -247,32 +224,10 @@ public abstract class AnimalEntity extends AgeableEntity {
      * Returns true if the mob is currently able to mate with the specified mob.
      */
     public boolean canMateWith(AnimalEntity otherAnimal) {
-        return otherAnimal != this && otherAnimal.getClass() == this.getPartnerClass() && this.inLove && otherAnimal.inLove;
-    }
-
-    /**
-     * Returns the class of this entity's mate partner.
-     */
-    public abstract Class<? extends AnimalEntity> getPartnerClass();
-
-    /**
-     * Returns the class of this species that is the female.
-     */
-    public abstract Class<? extends AnimalEntity> getFemaleClass();
-
-    @OnlyIn(Dist.CLIENT)
-    @Override
-    public void handleStatusUpdate(byte id) {
-        if (id == 18) {
-            for (int i = 0; i < 7; ++i) {
-                double d0 = this.rand.nextGaussian() * 0.02D;
-                double d1 = this.rand.nextGaussian() * 0.02D;
-                double d2 = this.rand.nextGaussian() * 0.02D;
-                this.world.addParticle(ParticleTypes.HEART, this.posX + this.rand.nextFloat() * this.getWidth() * 2.0F - this.getWidth(), this.posY + 0.5D + this.rand.nextFloat() * this.getHeight(), this.posZ + this.rand.nextFloat() * this.getWidth() * 2.0F - this.getWidth(), d0, d1, d2);
-            }
-        }
-        else {
-            super.handleStatusUpdate(id);
-        }
+        return otherAnimal != this &&
+               otherAnimal.getClass() == this.getClass() &&
+               this.gender != otherAnimal.gender &&
+               this.inLove &&
+               otherAnimal.inLove;
     }
 }

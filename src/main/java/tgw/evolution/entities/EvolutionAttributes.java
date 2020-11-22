@@ -1,5 +1,6 @@
 package tgw.evolution.entities;
 
+import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttribute;
 import net.minecraft.entity.ai.attributes.RangedAttribute;
 
@@ -13,4 +14,10 @@ public class EvolutionAttributes {
     public static final UUID ATTACK_DAMAGE_MODIFIER = UUID.fromString("CB3F55D3-645C-4F38-A497-9C13A33DB5CF");
     public static final UUID ATTACK_SPEED_MODIFIER = UUID.fromString("FA233E1C-4180-4865-B01B-BCCE9785ACA3");
     public static final UUID REACH_DISTANCE_MODIFIER = UUID.fromString("449b8c5d-47b0-4c67-a90e-758b956f2d3c");
+    public static final UUID SLOW_FALLING_MODIFIER = UUID.fromString("A5B6CF2A-2F7C-31EF-9022-7C3E7D5E6ABA");
+    public static final AttributeModifier SLOW_FALLING = new AttributeModifier(SLOW_FALLING_MODIFIER,
+                                                                               "Slow falling acceleration reduction",
+                                                                               -0.07,
+                                                                               AttributeModifier.Operation.ADDITION).setSaved(false);
+
 }

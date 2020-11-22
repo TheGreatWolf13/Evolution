@@ -40,24 +40,134 @@ public class EntityHook extends AbstractArrowEntity {
     private boolean dealtDamage;
     private Direction facing = Direction.NORTH;
 
-    public EntityHook(EntityType<EntityHook> type, World worldIn) {
-        super(type, worldIn);
-        this.gravity = -Gravity.gravity(worldIn.dimension);
-        this.verticalDrag = Gravity.verticalDrag(worldIn.dimension, this.getWidth());
-        this.horizontalDrag = Gravity.horizontalDrag(worldIn.dimension, this.getWidth(), this.getHeight());
-    }
-
     public EntityHook(World worldIn, LivingEntity thrower) {
         super(EvolutionEntities.HOOK.get(), thrower, worldIn);
         this.gravity = -Gravity.gravity(worldIn.getDimension());
-        this.verticalDrag = Gravity.verticalDrag(worldIn.dimension, this.getWidth());
-        this.horizontalDrag = Gravity.horizontalDrag(worldIn.dimension, this.getWidth(), this.getHeight());
+        this.verticalDrag = 1/*Gravity.verticalDrag(worldIn.dimension, this.getWidth())*/;
+        this.horizontalDrag = 1/*Gravity.horizontalDrag(worldIn.dimension, this.getWidth(), this.getHeight())*/;
         this.facing = thrower.getHorizontalFacing();
     }
 
     @SuppressWarnings("unused")
     public EntityHook(FMLPlayMessages.SpawnEntity spawnEntity, World worldIn) {
         this(EvolutionEntities.HOOK.get(), worldIn);
+    }
+
+    public EntityHook(EntityType<EntityHook> type, World worldIn) {
+        super(type, worldIn);
+        this.gravity = -Gravity.gravity(worldIn.dimension);
+        this.verticalDrag = 1/*Gravity.verticalDrag(worldIn.dimension, this.getWidth())*/;
+        this.horizontalDrag = 1/*Gravity.horizontalDrag(worldIn.dimension, this.getWidth(), this.getHeight())*/;
+    }
+
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    public boolean isInRangeToRender3d(double x, double y, double z) {
+        return true;
+    }
+
+    @Override
+    public void tick() {
+        if (this.timeInGround > 0) {
+            this.dealtDamage = true;
+            this.tryPlaceBlock();
+            this.remove();
+        }
+        if (!this.hasNoGravity() && !this.getNoClip()) {
+            Vec3d motion = this.getMotion();
+            this.setMotion(motion.x * this.horizontalDrag, (motion.y + 0.05F + this.gravity) * this.verticalDrag, motion.z * this.horizontalDrag);
+        }
+        super.tick();
+    }
+
+    @Override
+    protected void tryDespawn() {
+    }
+
+    @Override
+    protected void onEntityHit(EntityRayTraceResult rayTraceResult) {
+        Entity entity = rayTraceResult.getEntity();
+        Entity shooter = this.getShooter();
+        DamageSource damagesource = EvolutionDamage.causeHookDamage(this, shooter == null ? this : shooter);
+        this.dealtDamage = true;
+        SoundEvent soundevent = SoundEvents.ITEM_TRIDENT_HIT;
+        float damage = MathHelper.ceil(Math.max(4 * this.getMotion().length(), 0));
+        if (entity instanceof LivingEntity && entity.canBeAttackedWithItem() && entity.attackEntityFrom(damagesource, damage)) {
+            LivingEntity livingEntity = (LivingEntity) entity;
+            this.arrowHit(livingEntity);
+        }
+        this.setMotion(this.getMotion().mul(-0.01D, -0.1D, -0.01D));
+        this.playSound(soundevent, 1.0F, 1.0F);
+    }
+
+    @Override
+    protected SoundEvent getHitEntitySound() {
+        return SoundEvents.ITEM_TRIDENT_HIT_GROUND;
+    }
+
+    @Override
+    @Nullable
+    protected EntityRayTraceResult rayTraceEntities(Vec3d startVec, Vec3d endVec) {
+        return this.dealtDamage ? null : super.rayTraceEntities(startVec, endVec);
+    }
+
+    @Override
+    public void writeAdditional(CompoundNBT compound) {
+        super.writeAdditional(compound);
+        compound.putBoolean("DealtDamage", this.dealtDamage);
+        compound.putByte("Facing", (byte) this.facing.getIndex());
+    }
+
+    @Override
+    public void readAdditional(CompoundNBT compound) {
+        super.readAdditional(compound);
+        this.dealtDamage = compound.getBoolean("DealtDamage");
+        this.facing = Direction.byIndex(compound.getByte("Facing"));
+    }
+
+    @Override
+    protected ItemStack getArrowStack() {
+        return new ItemStack(EvolutionItems.climbing_hook.get());
+    }
+
+    @Override
+    protected float getWaterDrag() {
+        return 0.8F;
+    }
+
+    @Override
+    public IPacket<?> createSpawnPacket() {
+        return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    public void tryPlaceBlock() {
+        BlockPos pos = this.getPosition();
+        BlockPos down = pos.down();
+        if (this.world.isAirBlock(pos) && Block.hasSolidSide(this.world.getBlockState(down), this.world, down, Direction.UP)) {
+            this.world.setBlockState(this.getPosition(),
+                                     EvolutionBlocks.CLIMBING_HOOK.get()
+                                                                  .getDefaultState()
+                                                                  .with(BlockClimbingHook.ROPE_DIRECTION, this.facing.getOpposite()));
+            Entity shooter = this.getShooter();
+            if (this.getShooter() instanceof PlayerEntity) {
+                ItemStack stack = ((PlayerEntity) shooter).getHeldItemOffhand();
+                if (stack.getItem() == EvolutionItems.rope.get()) {
+                    int count = stack.getCount();
+                    int placed = tryPlaceRopes(this.world, pos, this.facing, count);
+                    if (placed > 0) {
+                        stack.shrink(placed);
+                        this.world.setBlockState(this.getPosition(),
+                                                 EvolutionBlocks.CLIMBING_HOOK.get()
+                                                                              .getDefaultState()
+                                                                              .with(BlockClimbingHook.ROPE_DIRECTION, this.facing.getOpposite())
+                                                                              .with(BlockClimbingHook.ATTACHED, true));
+                    }
+                }
+            }
+        }
+        else {
+            BlockUtils.dropItemStack(this.world, pos, this.getArrowStack());
+        }
     }
 
     public static int tryPlaceRopes(World world, BlockPos pos, Direction support, int count) {
@@ -121,108 +231,5 @@ public class EntityHook extends AbstractArrowEntity {
             ropeCount++;
         }
         return ropeCount;
-    }
-
-    @Override
-    protected ItemStack getArrowStack() {
-        return new ItemStack(EvolutionItems.climbing_hook.get());
-    }
-
-    @Override
-    @Nullable
-    protected EntityRayTraceResult rayTraceEntities(Vec3d startVec, Vec3d endVec) {
-        return this.dealtDamage ? null : super.rayTraceEntities(startVec, endVec);
-    }
-
-    @Override
-    protected void onEntityHit(EntityRayTraceResult rayTraceResult) {
-        Entity entity = rayTraceResult.getEntity();
-        Entity shooter = this.getShooter();
-        DamageSource damagesource = EvolutionDamage.causeHookDamage(this, shooter == null ? this : shooter);
-        this.dealtDamage = true;
-        SoundEvent soundevent = SoundEvents.ITEM_TRIDENT_HIT;
-        float damage = MathHelper.ceil(Math.max(4 * this.getMotion().length(), 0));
-        if (entity instanceof LivingEntity && entity.canBeAttackedWithItem() && entity.attackEntityFrom(damagesource, damage)) {
-            LivingEntity livingEntity = (LivingEntity) entity;
-            this.arrowHit(livingEntity);
-        }
-        this.setMotion(this.getMotion().mul(-0.01D, -0.1D, -0.01D));
-        this.playSound(soundevent, 1.0F, 1.0F);
-    }
-
-    @Override
-    protected float getWaterDrag() {
-        return 0.8F;
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public boolean isInRangeToRender3d(double x, double y, double z) {
-        return true;
-    }
-
-    @Override
-    protected void tryDespawn() {
-    }
-
-    @Override
-    public void writeAdditional(CompoundNBT compound) {
-        super.writeAdditional(compound);
-        compound.putBoolean("DealtDamage", this.dealtDamage);
-        compound.putByte("Facing", (byte) this.facing.getIndex());
-    }
-
-    @Override
-    public void readAdditional(CompoundNBT compound) {
-        super.readAdditional(compound);
-        this.dealtDamage = compound.getBoolean("DealtDamage");
-        this.facing = Direction.byIndex(compound.getByte("Facing"));
-    }
-
-    @Override
-    protected SoundEvent getHitEntitySound() {
-        return SoundEvents.ITEM_TRIDENT_HIT_GROUND;
-    }
-
-    @Override
-    public void tick() {
-        if (this.timeInGround > 0) {
-            this.dealtDamage = true;
-            this.tryPlaceBlock();
-            this.remove();
-        }
-        if (!this.hasNoGravity() && !this.getNoClip()) {
-            Vec3d motion = this.getMotion();
-            this.setMotion(motion.x * this.horizontalDrag, (motion.y + 0.05F + this.gravity) * this.verticalDrag, motion.z * this.horizontalDrag);
-        }
-        super.tick();
-    }
-
-    @Override
-    public IPacket<?> createSpawnPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
-    }
-
-    public void tryPlaceBlock() {
-        BlockPos pos = this.getPosition();
-        BlockPos down = pos.down();
-        if (this.world.isAirBlock(pos) && Block.hasSolidSide(this.world.getBlockState(down), this.world, down, Direction.UP)) {
-            this.world.setBlockState(this.getPosition(), EvolutionBlocks.CLIMBING_HOOK.get().getDefaultState().with(BlockClimbingHook.ROPE_DIRECTION, this.facing.getOpposite()));
-            Entity shooter = this.getShooter();
-            if (this.getShooter() instanceof PlayerEntity) {
-                ItemStack stack = ((PlayerEntity) shooter).getHeldItemOffhand();
-                if (stack.getItem() == EvolutionItems.rope.get()) {
-                    int count = stack.getCount();
-                    int placed = tryPlaceRopes(this.world, pos, this.facing, count);
-                    if (placed > 0) {
-                        stack.shrink(placed);
-                        this.world.setBlockState(this.getPosition(), EvolutionBlocks.CLIMBING_HOOK.get().getDefaultState().with(BlockClimbingHook.ROPE_DIRECTION, this.facing.getOpposite()).with(BlockClimbingHook.ATTACHED, true));
-                    }
-                }
-            }
-        }
-        else {
-            BlockUtils.dropItemStack(this.world, pos, this.getArrowStack());
-        }
     }
 }

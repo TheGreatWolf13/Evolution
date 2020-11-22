@@ -9,83 +9,58 @@ import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.world.World;
 import tgw.evolution.init.EvolutionParticles;
 
-import javax.annotation.Nullable;
-
 public abstract class AgeableEntity extends CreatureEntity {
 
-    private static final DataParameter<Boolean> CHILD = EntityDataManager.createKey(AgeableEntity.class, DataSerializers.BOOLEAN);
+    private static final DataParameter<Integer> AGE = EntityDataManager.createKey(AgeableEntity.class, DataSerializers.VARINT);
     private static final DataParameter<Boolean> SLEEPING = EntityDataManager.createKey(AgeableEntity.class, DataSerializers.BOOLEAN);
-    private int age;
-    private int lifeSpan;
-    public boolean slept;
     protected int sleepTime;
+    private boolean slept;
+    private int lifeSpan;
 
     protected AgeableEntity(EntityType<? extends AgeableEntity> type, World worldIn) {
         super(type, worldIn);
+        this.lifeSpan = this.computeLifeSpan();
     }
 
     /**
-     * Sets the lifespan of the entity in ticks.
+     * Calculates this entity's lifespan in ticks. If {@code 0}, this entity lives forever and will not die of old age.
      */
-    public void setLifeSpan(int lifeSpan) {
-        this.lifeSpan = lifeSpan;
+    public abstract int computeLifeSpan();
+
+    /**
+     * @return Returns whether this entity has fulfilled its sleep quota for the day.
+     */
+    public boolean hasSlept() {
+        return this.slept;
     }
+
+    public void setSlept() {
+        this.slept = true;
+    }
+
+    /**
+     * @return The child mortally rate of this entity. Values must range from {@code 0f} to {@code 1f}.
+     */
+    public abstract float mortallyRate();
 
     /**
      * Returns the lifespan the entity will live for in ticks.
      */
-    public int getDeterminedLifeSpan() {
+    public int getLifeSpan() {
         return this.lifeSpan;
     }
-
-    /**
-     * Sets the age at which the entity is considered to be an adult in ticks.
-     */
-    public abstract int getAdultAge();
-
-    /**
-     * Sets the age at which the entity is considered to be old in ticks.
-     */
-    public abstract int getOldAge();
-
-    /**
-     * Returns the lifespan of the entity in ticks.
-     */
-    public abstract int getLifeSpan();
-
-    @Nullable
-    public abstract AgeableEntity createChild(AgeableEntity ageable);
 
     @Override
     protected void registerData() {
         super.registerData();
-        this.dataManager.register(CHILD, false);
+        this.dataManager.register(AGE, 0);
         this.dataManager.register(SLEEPING, false);
-    }
-
-    /**
-     * Returns the age of the entity in ticks.
-     */
-    public int getAge() {
-        return this.age;
-    }
-
-    /**
-     * Sets the entity age in ticks.
-     */
-    public void setAge(int age) {
-        this.age = age;
-    }
-
-    @Override
-    public boolean isSleeping() {
-        return this.dataManager.get(SLEEPING);
     }
 
     @Override
     public void writeAdditional(CompoundNBT compound) {
         super.writeAdditional(compound);
-        compound.putInt("Age", this.age);
+        compound.putInt("Age", this.dataManager.get(AGE));
         compound.putInt("LifeSpan", this.lifeSpan);
         compound.putBoolean("Sleeping", this.dataManager.get(SLEEPING));
         compound.putBoolean("Slept", this.slept);
@@ -95,7 +70,7 @@ public abstract class AgeableEntity extends CreatureEntity {
     @Override
     public void readAdditional(CompoundNBT compound) {
         super.readAdditional(compound);
-        this.age = compound.getInt("Age");
+        this.dataManager.set(AGE, compound.getInt("Age"));
         this.lifeSpan = compound.getInt("LifeSpan");
         this.setSleeping(compound.getBoolean("Sleeping"));
         this.slept = compound.getBoolean("Slept");
@@ -103,11 +78,72 @@ public abstract class AgeableEntity extends CreatureEntity {
     }
 
     @Override
+    public void livingTick() {
+        super.livingTick();
+        if (!this.isDead()) {
+            this.dataManager.set(AGE, this.dataManager.get(AGE) + 1);
+            if (this.lifeSpan > 0 && this.dataManager.get(AGE) > this.lifeSpan) {
+                this.kill();
+                return;
+            }
+            if (this.isSleeping()) {
+                if (this.world.isRemote) {
+                    if (this.ticksExisted % 100 == 0) {
+                        for (int i = 0; i < 3; i++) {
+                            this.world.addParticle(EvolutionParticles.SLEEP.get(),
+                                                   this.posX + this.rand.nextFloat() * this.getWidth() * 2.0F - this.getWidth(),
+                                                   this.posY + 0.5D + this.rand.nextFloat() * this.getHeight(),
+                                                   this.posZ + this.rand.nextFloat() * this.getWidth() * 2.0F - this.getWidth(),
+                                                   this.rand.nextGaussian() * 0.02,
+                                                   this.rand.nextGaussian() * 0.02,
+                                                   this.rand.nextGaussian() * 0.02);
+                        }
+                    }
+                }
+            }
+            if (this.world.getDayTime() % 24000 == 0) {
+                this.slept = false;
+            }
+        }
+    }
+
+    /**
+     * Returns the age of the entity in ticks.
+     */
+    public int getAge() {
+        return this.dataManager.get(AGE);
+    }
+
+    public void setAge(int age) {
+        this.dataManager.set(AGE, age);
+    }
+
+    /**
+     * Returns whether this entity is an adult or not.
+     */
+    public boolean isAdult() {
+        return !this.isChild() && !this.isOld();
+    }
+
+    /**
+     * Returns whether this entity is a child or not.
+     */
+    @Override
+    public boolean isChild() {
+        return this.getAdultAge() > this.dataManager.get(AGE);
+    }
+
+    @Override
     public void notifyDataManagerChange(DataParameter<?> key) {
-        if (CHILD.equals(key)) {
+        if (AGE.equals(key)) {
             this.recalculateSize();
         }
         super.notifyDataManagerChange(key);
+    }
+
+    @Override
+    public boolean isSleeping() {
+        return this.dataManager.get(SLEEPING);
     }
 
     public void setSleeping(boolean sleeping) {
@@ -128,52 +164,22 @@ public abstract class AgeableEntity extends CreatureEntity {
         //Override of the method because of a call in LivingEntity.class which wanted a valid bed
     }
 
-    @Override
-    public void livingTick() {
-        super.livingTick();
-        if (!this.isDead()) {
-            this.age++;
-            if (this.age > this.lifeSpan) {
-                this.dataManager.set(DEAD, true);
-                this.death();
-            }
-            if (this.isSleeping()) {
-                if (this.world.isRemote) {
-                    if (this.age % 100 == 0) {
-                        for (int i = 0; i < 3; i++) {
-                            double d0 = this.rand.nextGaussian() * 0.02D;
-                            double d1 = this.rand.nextGaussian() * 0.02D;
-                            double d2 = this.rand.nextGaussian() * 0.02D;
-                            this.world.addParticle(EvolutionParticles.SLEEP.get(), this.posX + this.rand.nextFloat() * this.getWidth() * 2.0F - this.getWidth(), this.posY + 0.5D + this.rand.nextFloat() * this.getHeight(), this.posZ + this.rand.nextFloat() * this.getWidth() * 2.0F - this.getWidth(), d0, d1, d2);
-                        }
-                    }
-                }
-            }
-            if (this.world.getDayTime() % 24000 == 0) {
-                this.slept = false;
-            }
-        }
-    }
-
-    /**
-     * Returns whether this entity is a child or not.
-     */
-    @Override
-    public boolean isChild() {
-        return this.getAdultAge() > this.age;
-    }
-
     /**
      * Returns whether this entity is old or not.
      */
     public boolean isOld() {
-        return this.age > this.getOldAge();
+        return this.dataManager.get(AGE) > this.getOldAge();
     }
 
     /**
-     * Returns whether this entity is an adult or not.
+     * Sets the age at which the entity is considered to be an adult in ticks.
      */
-    public boolean isAdult() {
-        return !this.isChild() && !this.isOld();
+    public abstract int getAdultAge();
+
+    /**
+     * Sets the age at which the entity is considered to be old in ticks.
+     */
+    public int getOldAge() {
+        return 3 * this.lifeSpan / 4;
     }
 }

@@ -34,31 +34,6 @@ public class BlockGrass extends BlockSnowable implements IStoneVariant {
         this.name = name;
     }
 
-    private static boolean canSustainGrass(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        BlockPos posUp = pos.up();
-        BlockState stateUp = worldIn.getBlockState(posUp);
-        //TODO proper snow
-        if (stateUp.getBlock() == Blocks.SNOW && stateUp.get(SnowBlock.LAYERS) == 1) {
-            return true;
-        }
-        if (stateUp.getBlock() instanceof BlockMolding || stateUp.getBlock() instanceof BlockShadowHound) {
-            return true;
-        }
-        if (stateUp.getBlock() instanceof BlockPitKiln && stateUp.get(EvolutionBlockStateProperties.LAYERS_0_16) < 9) {
-            return true;
-        }
-        if (Block.hasSolidSide(stateUp, worldIn, posUp, Direction.DOWN)) {
-            return false;
-        }
-        int i = LightEngine.func_215613_a(worldIn, state, pos, stateUp, posUp, Direction.UP, stateUp.getOpacity(worldIn, posUp));
-        return i < worldIn.getMaxLightLevel();
-    }
-
-    private static boolean canSustainGrassWater(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        BlockPos posUp = pos.up();
-        return canSustainGrass(state, worldIn, pos) && !worldIn.getFluidState(posUp).isTagged(FluidTags.WATER);
-    }
-
     @Override
     public EnumRockVariant getVariant() {
         return this.variant;
@@ -84,17 +59,20 @@ public class BlockGrass extends BlockSnowable implements IStoneVariant {
     }
 
     @Override
-    public SoundEvent fallSound() {
-        return EvolutionSounds.SOIL_COLLAPSE.get();
-    }
-
-    @Override
     public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
         super.neighborChanged(state, worldIn, pos, blockIn, fromPos, isMoving);
         if (!worldIn.isRemote) {
             if (pos.up().equals(fromPos)) {
-                if (Block.hasSolidSide(worldIn.getBlockState(fromPos), worldIn, fromPos, Direction.DOWN) && !(worldIn.getBlockState(fromPos).getBlock() instanceof BlockMolding || worldIn.getBlockState(fromPos).getBlock() instanceof BlockShadowHound) && !(worldIn.getBlockState(fromPos).getBlock() instanceof BlockPitKiln && worldIn.getBlockState(fromPos).get(EvolutionBlockStateProperties.LAYERS_0_16) < 9)) {
-                    worldIn.setBlockState(pos, this == EvolutionBlocks.GRASS_PEAT.get() ? EvolutionBlocks.PEAT.get().getDefaultState().with(BlockPeat.LAYERS, 4) : this.variant.getDirt().getDefaultState(), 3);
+                if (Block.hasSolidSide(worldIn.getBlockState(fromPos), worldIn, fromPos, Direction.DOWN) &&
+                    !(worldIn.getBlockState(fromPos)
+                             .getBlock() instanceof BlockMolding/* || worldIn.getBlockState(fromPos).getBlock() instanceof BlockShadowHound*/) &&
+                    !(worldIn.getBlockState(fromPos).getBlock() instanceof BlockPitKiln &&
+                      worldIn.getBlockState(fromPos).get(EvolutionBlockStateProperties.LAYERS_0_16) < 9)) {
+                    worldIn.setBlockState(pos,
+                                          this == EvolutionBlocks.GRASS_PEAT.get() ?
+                                          EvolutionBlocks.PEAT.get().getDefaultState().with(BlockPeat.LAYERS, 4) :
+                                          this.variant.getDirt().getDefaultState(),
+                                          3);
                     ChunkStorageCapability.addElements(worldIn.getChunkAt(pos), NutrientHelper.DECAY_GRASS_BLOCK);
                     for (Direction direction : MathHelper.DIRECTIONS_HORIZONTAL) {
                         BlockPos offset = pos.offset(direction);
@@ -109,6 +87,11 @@ public class BlockGrass extends BlockSnowable implements IStoneVariant {
     }
 
     @Override
+    public boolean isSolid(BlockState state) {
+        return true;
+    }
+
+    @Override
     public void randomTick(BlockState state, World worldIn, BlockPos pos, Random random) {
         if (!worldIn.isRemote) {
             if (!worldIn.isAreaLoaded(pos, 3)) {
@@ -116,7 +99,10 @@ public class BlockGrass extends BlockSnowable implements IStoneVariant {
             }
             if (random.nextInt(4) == 0) {
                 if (!canSustainGrass(state, worldIn, pos)) {
-                    worldIn.setBlockState(pos, this == EvolutionBlocks.GRASS_PEAT.get() ? EvolutionBlocks.PEAT.get().getDefaultState().with(BlockPeat.LAYERS, 4) : this.variant.getDirt().getDefaultState());
+                    worldIn.setBlockState(pos,
+                                          this == EvolutionBlocks.GRASS_PEAT.get() ?
+                                          EvolutionBlocks.PEAT.get().getDefaultState().with(BlockPeat.LAYERS, 4) :
+                                          this.variant.getDirt().getDefaultState());
                 }
                 else {
                     if (worldIn.getLightFor(LightType.SKY, pos.up()) >= 9) {
@@ -124,7 +110,9 @@ public class BlockGrass extends BlockSnowable implements IStoneVariant {
                         for (int i = 0; i < 4; ++i) {
                             BlockPos randomPos = pos.add(random.nextInt(3) - 1, random.nextInt(5) - 3, random.nextInt(3) - 1);
                             BlockState stateAtPos = worldIn.getBlockState(randomPos);
-                            if ((stateAtPos.getBlock() instanceof BlockDirt || stateAtPos.getBlock() instanceof BlockDryGrass || stateAtPos.getBlock() instanceof BlockPeat) && canSustainGrassWater(placeState, worldIn, randomPos)) {
+                            if ((stateAtPos.getBlock() instanceof BlockDirt ||
+                                 stateAtPos.getBlock() instanceof BlockDryGrass ||
+                                 stateAtPos.getBlock() instanceof BlockPeat) && canSustainGrassWater(placeState, worldIn, randomPos)) {
                                 if (stateAtPos.getBlock() instanceof BlockPeat) {
                                     if (stateAtPos.get(BlockPeat.LAYERS) != 4) {
                                         return;
@@ -133,11 +121,22 @@ public class BlockGrass extends BlockSnowable implements IStoneVariant {
                                 if (ChunkStorageCapability.removeElements(worldIn.getChunkAt(randomPos), NutrientHelper.GROW_GRASS_BLOCK)) {
                                     if (stateAtPos.getBlock() instanceof BlockPeat) {
                                         //TODO proper snow
-                                        worldIn.setBlockState(randomPos, EvolutionBlocks.GRASS_PEAT.get().getDefaultState().with(SNOWY, worldIn.getBlockState(randomPos.up()).getBlock() == Blocks.SNOW));
+                                        worldIn.setBlockState(randomPos,
+                                                              EvolutionBlocks.GRASS_PEAT.get()
+                                                                                        .getDefaultState()
+                                                                                        .with(SNOWY,
+                                                                                              worldIn.getBlockState(randomPos.up()).getBlock() ==
+                                                                                              Blocks.SNOW));
                                     }
                                     else {
                                         //TODO proper snow
-                                        worldIn.setBlockState(randomPos, ((IStoneVariant) stateAtPos.getBlock()).getVariant().getGrass().getDefaultState().with(SNOWY, worldIn.getBlockState(randomPos.up()).getBlock() == Blocks.SNOW));
+                                        worldIn.setBlockState(randomPos,
+                                                              ((IStoneVariant) stateAtPos.getBlock()).getVariant()
+                                                                                                     .getGrass()
+                                                                                                     .getDefaultState()
+                                                                                                     .with(SNOWY,
+                                                                                                           worldIn.getBlockState(randomPos.up())
+                                                                                                                  .getBlock() == Blocks.SNOW));
                                     }
                                 }
                             }
@@ -153,27 +152,54 @@ public class BlockGrass extends BlockSnowable implements IStoneVariant {
                 }
                 else if (worldIn.getBlockState(pos.up()).getBlock() instanceof BlockTallGrass) {
                     if (ChunkStorageCapability.removeElements(worldIn.getChunkAt(pos), NutrientHelper.GROW_TALL_GRASS_2)) {
-                        worldIn.setBlockState(pos.up(), EvolutionBlocks.TALLGRASS.get().getDefaultState().with(BlockDoublePlant.HALF, DoubleBlockHalf.LOWER), 2);
-                        worldIn.setBlockState(pos.up(2), EvolutionBlocks.TALLGRASS.get().getDefaultState().with(BlockDoublePlant.HALF, DoubleBlockHalf.UPPER), 2);
+                        worldIn.setBlockState(pos.up(),
+                                              EvolutionBlocks.TALLGRASS.get().getDefaultState().with(BlockDoublePlant.HALF, DoubleBlockHalf.LOWER),
+                                              2);
+                        worldIn.setBlockState(pos.up(2),
+                                              EvolutionBlocks.TALLGRASS.get().getDefaultState().with(BlockDoublePlant.HALF, DoubleBlockHalf.UPPER),
+                                              2);
                     }
                 }
             }
         }
     }
 
+    private static boolean canSustainGrass(BlockState state, IWorldReader worldIn, BlockPos pos) {
+        BlockPos posUp = pos.up();
+        BlockState stateUp = worldIn.getBlockState(posUp);
+        //TODO proper snow
+        if (stateUp.getBlock() == Blocks.SNOW && stateUp.get(SnowBlock.LAYERS) == 1) {
+            return true;
+        }
+        if (stateUp.getBlock() instanceof BlockMolding/* || stateUp.getBlock() instanceof BlockShadowHound*/) {
+            return true;
+        }
+        if (stateUp.getBlock() instanceof BlockPitKiln && stateUp.get(EvolutionBlockStateProperties.LAYERS_0_16) < 9) {
+            return true;
+        }
+        if (Block.hasSolidSide(stateUp, worldIn, posUp, Direction.DOWN)) {
+            return false;
+        }
+        int i = LightEngine.func_215613_a(worldIn, state, pos, stateUp, posUp, Direction.UP, stateUp.getOpacity(worldIn, posUp));
+        return i < worldIn.getMaxLightLevel();
+    }
+
+    private static boolean canSustainGrassWater(BlockState state, IWorldReader worldIn, BlockPos pos) {
+        BlockPos posUp = pos.up();
+        return canSustainGrass(state, worldIn, pos) && !worldIn.getFluidState(posUp).isTagged(FluidTags.WATER);
+    }
+
     @Override
-    public boolean isSolid(BlockState state) {
-        return true;
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (isMoving) {
+            return;
+        }
+        ChunkStorageCapability.addElements(worldIn.getChunkAt(pos), NutrientHelper.DECAY_GRASS_BLOCK);
     }
 
     @Override
     public BlockRenderLayer getRenderLayer() {
         return BlockRenderLayer.CUTOUT_MIPPED;
-    }
-
-    @Override
-    public int beamSize() {
-        return 1;
     }
 
     @Override
@@ -185,10 +211,12 @@ public class BlockGrass extends BlockSnowable implements IStoneVariant {
     }
 
     @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (isMoving) {
-            return;
-        }
-        ChunkStorageCapability.addElements(worldIn.getChunkAt(pos), NutrientHelper.DECAY_GRASS_BLOCK);
+    public SoundEvent fallSound() {
+        return EvolutionSounds.SOIL_COLLAPSE.get();
+    }
+
+    @Override
+    public int beamSize() {
+        return 1;
     }
 }

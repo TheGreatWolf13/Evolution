@@ -33,7 +33,9 @@ public class EvolutionBlocks {
     //Placeholder
     public static final RegistryObject<Block> PLACEHOLDER_BLOCK = BLOCKS.register("placeholder_block", BlockPlaceholder::new);
     //Stick
-    public static final RegistryObject<Block> STICK = BLOCKS.register("stick", () -> new BlockPlaceableItem(Block.Properties.create(Material.MISCELLANEOUS).sound(SoundType.WOOD)));
+    public static final RegistryObject<Block> STICK = BLOCKS.register("stick",
+                                                                      () -> new BlockPlaceableItem(Block.Properties.create(Material.MISCELLANEOUS)
+                                                                                                                   .sound(SoundType.WOOD)));
     //Stone
     public static final RegistryObject<Block> STONE_ANDESITE = BLOCKS.register("stone_andesite", () -> stone(ANDESITE));
     public static final RegistryObject<Block> STONE_BASALT = BLOCKS.register("stone_basalt", () -> stone(BASALT));
@@ -81,7 +83,8 @@ public class EvolutionBlocks {
     public static final RegistryObject<Block> POLISHED_STONE_BASALT = BLOCKS.register("polished_stone_basalt", () -> polishedStone(BASALT));
     public static final RegistryObject<Block> POLISHED_STONE_CHALK = BLOCKS.register("polished_stone_chalk", () -> polishedStone(CHALK));
     public static final RegistryObject<Block> POLISHED_STONE_CHERT = BLOCKS.register("polished_stone_chert", () -> polishedStone(CHERT));
-    public static final RegistryObject<Block> POLISHED_STONE_CONGLOMERATE = BLOCKS.register("polished_stone_conglomerate", () -> polishedStone(CONGLOMERATE));
+    public static final RegistryObject<Block> POLISHED_STONE_CONGLOMERATE = BLOCKS.register("polished_stone_conglomerate",
+                                                                                            () -> polishedStone(CONGLOMERATE));
     public static final RegistryObject<Block> POLISHED_STONE_DACITE = BLOCKS.register("polished_stone_dacite", () -> polishedStone(DACITE));
     public static final RegistryObject<Block> POLISHED_STONE_DIORITE = BLOCKS.register("polished_stone_diorite", () -> polishedStone(DIORITE));
     public static final RegistryObject<Block> POLISHED_STONE_DOLOMITE = BLOCKS.register("polished_stone_dolomite", () -> polishedStone(DOLOMITE));
@@ -92,7 +95,8 @@ public class EvolutionBlocks {
     public static final RegistryObject<Block> POLISHED_STONE_MARBLE = BLOCKS.register("polished_stone_marble", () -> polishedStone(MARBLE));
     public static final RegistryObject<Block> POLISHED_STONE_PHYLLITE = BLOCKS.register("polished_stone_phyllite", () -> polishedStone(PHYLLITE));
     public static final RegistryObject<Block> POLISHED_STONE_QUARTZITE = BLOCKS.register("polished_stone_quartzite", () -> polishedStone(QUARTZITE));
-    public static final RegistryObject<Block> POLISHED_STONE_RED_SANDSTONE = BLOCKS.register("polished_stone_red_sandstone", () -> polishedStone(RED_SANDSTONE));
+    public static final RegistryObject<Block> POLISHED_STONE_RED_SANDSTONE = BLOCKS.register("polished_stone_red_sandstone",
+                                                                                             () -> polishedStone(RED_SANDSTONE));
     public static final RegistryObject<Block> POLISHED_STONE_SANDSTONE = BLOCKS.register("polished_stone_sandstone", () -> polishedStone(SANDSTONE));
     public static final RegistryObject<Block> POLISHED_STONE_SCHIST = BLOCKS.register("polished_stone_schist", () -> polishedStone(SCHIST));
     public static final RegistryObject<Block> POLISHED_STONE_SHALE = BLOCKS.register("polished_stone_shale", () -> polishedStone(SHALE));
@@ -354,7 +358,7 @@ public class EvolutionBlocks {
     //Feces Block
     public static final RegistryObject<Block> FECES = BLOCKS.register("feces", BlockFeces::new);
     //Shadow Hound Block
-    public static final RegistryObject<Block> SHADOWHOUND = BLOCKS.register("shadowhound", BlockShadowHound::new);
+//    public static final RegistryObject<Block> SHADOWHOUND = BLOCKS.register("shadowhound", BlockShadowHound::new);
     //Molding Block
     public static final RegistryObject<Block> MOLDING = BLOCKS.register("molding_block", BlockMolding::new);
     public static final RegistryObject<Block> MOLD_CLAY_AXE = BLOCKS.register("mold_clay_axe", () -> new BlockMoldClay(1));
@@ -370,7 +374,8 @@ public class EvolutionBlocks {
     public static final RegistryObject<Block> MOLD_CLAY_PROSPECTING = BLOCKS.register("mold_clay_prospecting", () -> new BlockMoldClay(1));
     public static final RegistryObject<Block> MOLD_CLAY_INGOT = BLOCKS.register("mold_clay_ingot", () -> new BlockMoldClay(1));
     public static final RegistryObject<Block> MOLD_CLAY_PLATE = BLOCKS.register("mold_clay_plate", () -> new BlockMoldClay(1));
-    public static final RegistryObject<Block> BRICK_CLAY = BLOCKS.register("brick_clay", () -> new BlockMoldClay(Block.makeCuboidShape(2, 0, 5, 14, 6, 11)));
+    public static final RegistryObject<Block> BRICK_CLAY = BLOCKS.register("brick_clay",
+                                                                           () -> new BlockMoldClay(Block.makeCuboidShape(2, 0, 5, 14, 6, 11)));
     public static final RegistryObject<Block> CRUCIBLE_CLAY = BLOCKS.register("crucible_clay", () -> new BlockMoldClay(5));
     //Metal Blocks
     public static final RegistryObject<Block> BLOCK_COPPER = BLOCKS.register("block_copper", () -> metal(COPPER));
@@ -381,7 +386,8 @@ public class EvolutionBlocks {
     public static final RegistryObject<Block> CHOPPING_BLOCK_CEDAR = BLOCKS.register("chopping_block_cedar", () -> new BlockChopping(CEDAR));
     public static final RegistryObject<Block> CHOPPING_BLOCK_EBONY = BLOCKS.register("chopping_block_ebony", () -> new BlockChopping(EBONY));
     public static final RegistryObject<Block> CHOPPING_BLOCK_ELM = BLOCKS.register("chopping_block_elm", () -> new BlockChopping(ELM));
-    public static final RegistryObject<Block> CHOPPING_BLOCK_EUCALYPTUS = BLOCKS.register("chopping_block_eucalyptus", () -> new BlockChopping(EUCALYPTUS));
+    public static final RegistryObject<Block> CHOPPING_BLOCK_EUCALYPTUS = BLOCKS.register("chopping_block_eucalyptus",
+                                                                                          () -> new BlockChopping(EUCALYPTUS));
     public static final RegistryObject<Block> CHOPPING_BLOCK_FIR = BLOCKS.register("chopping_block_fir", () -> new BlockChopping(FIR));
     public static final RegistryObject<Block> CHOPPING_BLOCK_KAPOK = BLOCKS.register("chopping_block_kapok", () -> new BlockChopping(KAPOK));
     public static final RegistryObject<Block> CHOPPING_BLOCK_MANGROVE = BLOCKS.register("chopping_block_mangrove", () -> new BlockChopping(MANGROVE));
@@ -411,7 +417,8 @@ public class EvolutionBlocks {
     public static final RegistryObject<Block> STONE_BRICKS_BASALT = BLOCKS.register("stone_bricks_basalt", () -> stoneBricks(BASALT));
     public static final RegistryObject<Block> STONE_BRICKS_CHALK = BLOCKS.register("stone_bricks_chalk", () -> stoneBricks(CHALK));
     public static final RegistryObject<Block> STONE_BRICKS_CHERT = BLOCKS.register("stone_bricks_chert", () -> stoneBricks(CHERT));
-    public static final RegistryObject<Block> STONE_BRICKS_CONGLOMERATE = BLOCKS.register("stone_bricks_conglomerate", () -> stoneBricks(CONGLOMERATE));
+    public static final RegistryObject<Block> STONE_BRICKS_CONGLOMERATE = BLOCKS.register("stone_bricks_conglomerate",
+                                                                                          () -> stoneBricks(CONGLOMERATE));
     public static final RegistryObject<Block> STONE_BRICKS_DACITE = BLOCKS.register("stone_bricks_dacite", () -> stoneBricks(DACITE));
     public static final RegistryObject<Block> STONE_BRICKS_DIORITE = BLOCKS.register("stone_bricks_diorite", () -> stoneBricks(DIORITE));
     public static final RegistryObject<Block> STONE_BRICKS_DOLOMITE = BLOCKS.register("stone_bricks_dolomite", () -> stoneBricks(DOLOMITE));
@@ -422,7 +429,8 @@ public class EvolutionBlocks {
     public static final RegistryObject<Block> STONE_BRICKS_MARBLE = BLOCKS.register("stone_bricks_marble", () -> stoneBricks(MARBLE));
     public static final RegistryObject<Block> STONE_BRICKS_PHYLLITE = BLOCKS.register("stone_bricks_phyllite", () -> stoneBricks(PHYLLITE));
     public static final RegistryObject<Block> STONE_BRICKS_QUARTZITE = BLOCKS.register("stone_bricks_quartzite", () -> stoneBricks(QUARTZITE));
-    public static final RegistryObject<Block> STONE_BRICKS_RED_SANDSTONE = BLOCKS.register("stone_bricks_red_sandstone", () -> stoneBricks(RED_SANDSTONE));
+    public static final RegistryObject<Block> STONE_BRICKS_RED_SANDSTONE = BLOCKS.register("stone_bricks_red_sandstone",
+                                                                                           () -> stoneBricks(RED_SANDSTONE));
     public static final RegistryObject<Block> STONE_BRICKS_SANDSTONE = BLOCKS.register("stone_bricks_sandstone", () -> stoneBricks(SANDSTONE));
     public static final RegistryObject<Block> STONE_BRICKS_SCHIST = BLOCKS.register("stone_bricks_schist", () -> stoneBricks(SCHIST));
     public static final RegistryObject<Block> STONE_BRICKS_SHALE = BLOCKS.register("stone_bricks_shale", () -> stoneBricks(SHALE));

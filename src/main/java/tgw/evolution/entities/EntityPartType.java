@@ -2,8 +2,7 @@ package tgw.evolution.entities;
 
 public enum EntityPartType {
     HEAD("head", 10),
-    NECK("neck", 10),
-    ;
+    BODY("neck", 1);
 
     private final String name;
     private final float damageMult;

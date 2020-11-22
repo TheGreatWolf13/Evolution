@@ -37,29 +37,24 @@ public class EntitySpear extends AbstractArrowEntity implements IEntityAdditiona
     private float damage;
     private ItemStack stack;
 
-    public EntitySpear(EntityType<EntitySpear> type, World worldIn) {
-        super(type, worldIn);
-        this.gravity = -Gravity.gravity(worldIn.dimension);
-        this.verticalDrag = Gravity.verticalDrag(worldIn.dimension, this.getWidth());
-        this.horizontalDrag = Gravity.horizontalDrag(worldIn.dimension, this.getWidth(), this.getHeight());
-    }
-
     public EntitySpear(World worldIn, LivingEntity thrower, ItemStack thrownStackIn, float damage) {
         super(EvolutionEntities.SPEAR.get(), thrower, worldIn);
         this.setStack(thrownStackIn.copy());
         this.damage = damage + 4;
         this.gravity = -Gravity.gravity(worldIn.dimension);
-        this.verticalDrag = Gravity.verticalDrag(worldIn.dimension, this.getWidth());
-        this.horizontalDrag = Gravity.horizontalDrag(worldIn.dimension, this.getWidth(), this.getHeight());
+        this.verticalDrag = 1/*Gravity.verticalDrag(worldIn.dimension, this.getWidth())*/;
+        this.horizontalDrag = 1/*Gravity.horizontalDrag(worldIn.dimension, this.getWidth(), this.getHeight())*/;
     }
 
     public EntitySpear(@SuppressWarnings("unused") FMLPlayMessages.SpawnEntity spawnEntity, World worldIn) {
         this(EvolutionEntities.SPEAR.get(), worldIn);
     }
 
-    @Override
-    protected ItemStack getArrowStack() {
-        return this.stack.copy();
+    public EntitySpear(EntityType<EntitySpear> type, World worldIn) {
+        super(type, worldIn);
+        this.gravity = -Gravity.gravity(worldIn.dimension);
+        this.verticalDrag = 1/*Gravity.verticalDrag(worldIn.dimension, this.getWidth())*/;
+        this.horizontalDrag = 1/*Gravity.horizontalDrag(worldIn.dimension, this.getWidth(), this.getHeight())*/;
     }
 
     public ItemStack getStack() {
@@ -71,9 +66,38 @@ public class EntitySpear extends AbstractArrowEntity implements IEntityAdditiona
     }
 
     @Override
-    @Nullable
-    protected EntityRayTraceResult rayTraceEntities(Vec3d startVec, Vec3d endVec) {
-        return this.dealtDamage ? null : super.rayTraceEntities(startVec, endVec);
+    @OnlyIn(Dist.CLIENT)
+    public boolean isInRangeToRender3d(double x, double y, double z) {
+        return true;
+    }
+
+    public ResourceLocation getTextureName() {
+        return ((ISpear) this.stack.getItem()).getTexture();
+    }
+
+    @Override
+    public void tick() {
+        if (this.timeInGround > 4) {
+            this.dealtDamage = true;
+        }
+        if (this.stack.isEmpty() && this.timeInGround > 10) {
+            this.remove();
+        }
+        if (!this.hasNoGravity() && !this.getNoClip()) {
+            Vec3d vec3d3 = this.getMotion();
+            this.setMotion(vec3d3.x * this.horizontalDrag, (vec3d3.y + 0.05F + this.gravity) * this.verticalDrag, vec3d3.z * this.horizontalDrag);
+        }
+        if (this.inGround) {
+            this.setMotion(0, 0, 0);
+        }
+        super.tick();
+    }
+
+    @Override
+    protected void tryDespawn() {
+        if (this.pickupStatus != AbstractArrowEntity.PickupStatus.ALLOWED) {
+            super.tryDespawn();
+        }
     }
 
     @Override
@@ -92,25 +116,14 @@ public class EntitySpear extends AbstractArrowEntity implements IEntityAdditiona
     }
 
     @Override
-    protected float getWaterDrag() {
-        return 0.6F;
+    protected SoundEvent getHitEntitySound() {
+        return EvolutionSounds.JAVELIN_HIT_BLOCK.get();
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public boolean isInRangeToRender3d(double x, double y, double z) {
-        return true;
-    }
-
-    @Override
-    protected void tryDespawn() {
-        if (this.pickupStatus != AbstractArrowEntity.PickupStatus.ALLOWED) {
-            super.tryDespawn();
-        }
-    }
-
-    public ResourceLocation getTextureName() {
-        return ((ISpear) this.stack.getItem()).getTexture();
+    @Nullable
+    protected EntityRayTraceResult rayTraceEntities(Vec3d startVec, Vec3d endVec) {
+        return this.dealtDamage ? null : super.rayTraceEntities(startVec, endVec);
     }
 
     @Override
@@ -132,26 +145,13 @@ public class EntitySpear extends AbstractArrowEntity implements IEntityAdditiona
     }
 
     @Override
-    protected SoundEvent getHitEntitySound() {
-        return EvolutionSounds.JAVELIN_HIT_BLOCK.get();
+    protected ItemStack getArrowStack() {
+        return this.stack.copy();
     }
 
     @Override
-    public void tick() {
-        if (this.timeInGround > 4) {
-            this.dealtDamage = true;
-        }
-        if (this.stack.isEmpty() && this.timeInGround > 10) {
-            this.remove();
-        }
-        if (!this.hasNoGravity() && !this.getNoClip()) {
-            Vec3d vec3d3 = this.getMotion();
-            this.setMotion(vec3d3.x * this.horizontalDrag, (vec3d3.y + 0.05F + this.gravity) * this.verticalDrag, vec3d3.z * this.horizontalDrag);
-        }
-        if (this.inGround) {
-            this.setMotion(0, 0, 0);
-        }
-        super.tick();
+    protected float getWaterDrag() {
+        return 0.6F;
     }
 
     @Override

@@ -19,7 +19,8 @@ import tgw.evolution.items.ItemSpawnEgg;
 
 import java.util.function.Supplier;
 
-import static net.minecraft.entity.EntityClassification.*;
+import static net.minecraft.entity.EntityClassification.CREATURE;
+import static net.minecraft.entity.EntityClassification.MISC;
 
 @SuppressWarnings("unused")
 @EventBusSubscriber
@@ -32,8 +33,8 @@ public class EvolutionEntities {
     public static final RegistryObject<EntityType<EntityFallingTimber>> FALLING_TIMBER = register("falling_timber", EvolutionEntities::fallingTimber);
     public static final RegistryObject<EntityType<EntitySpear>> SPEAR = register("spear", EvolutionEntities::spear);
     public static final RegistryObject<EntityType<EntityCow>> COW = register("cow", EvolutionEntities::cow);
-    public static final RegistryObject<EntityType<EntityBull>> BULL = register("bull", EvolutionEntities::bull);
-    public static final RegistryObject<EntityType<EntityShadowHound>> SHADOWHOUND = register("shadowhound", EvolutionEntities::shadowHound);
+    //    public static final RegistryObject<EntityType<EntityBull>> BULL = register("bull", EvolutionEntities::bull);
+//    public static final RegistryObject<EntityType<EntityShadowHound>> SHADOWHOUND = register("shadowhound", EvolutionEntities::shadowHound);
     public static final RegistryObject<EntityType<EntitySit>> SIT = register("sit", EvolutionEntities::sit);
     public static final RegistryObject<EntityType<EntityHook>> HOOK = register("hook", EvolutionEntities::hook);
     public static final RegistryObject<EntityType<EntityTorch>> TORCH = register("torch", EvolutionEntities::torch);
@@ -41,35 +42,59 @@ public class EvolutionEntities {
     public static final DeferredRegister<Item> ITEMS = new DeferredRegister<>(ForgeRegistries.ITEMS, Evolution.MODID);
 
     public static final RegistryObject<Item> SPAWN_EGG_COW = ITEMS.register("spawn_egg_cow", () -> genEgg(COW));
-    public static final RegistryObject<Item> SPAWN_EGG_BULL = ITEMS.register("spawn_egg_bull", () -> genEgg(BULL));
-    public static final RegistryObject<Item> SPAWN_EGG_SHADOWHOUND = ITEMS.register("spawn_egg_shadowhound", () -> genEgg(SHADOWHOUND));
+    //    public static final RegistryObject<Item> SPAWN_EGG_BULL = ITEMS.register("spawn_egg_bull", () -> genEgg(BULL));
+//    public static final RegistryObject<Item> SPAWN_EGG_SHADOWHOUND = ITEMS.register("spawn_egg_shadowhound", () -> genEgg(SHADOWHOUND));
 
     private static <E extends Entity> RegistryObject<EntityType<E>> register(String name, Supplier<EntityType.Builder<E>> builder) {
         return ENTITIES.register(name, () -> builder.get().build(name));
     }
 
     private static EntityType.Builder<EntitySpear> spear() {
-        return EntityType.Builder.<EntitySpear>create(EntitySpear::new, MISC).size(0.1f, 0.1f).setTrackingRange(5).setUpdateInterval(20).setCustomClientFactory(EntitySpear::new).setShouldReceiveVelocityUpdates(true);
+        return EntityType.Builder.<EntitySpear>create(EntitySpear::new, MISC).size(0.1f, 0.1f)
+                                                                             .setTrackingRange(5)
+                                                                             .setUpdateInterval(20)
+                                                                             .setCustomClientFactory(EntitySpear::new)
+                                                                             .setShouldReceiveVelocityUpdates(true);
     }
 
     private static EntityType.Builder<EntityHook> hook() {
-        return EntityType.Builder.<EntityHook>create(EntityHook::new, MISC).size(0.5f, 0.5f).setTrackingRange(5).setUpdateInterval(20).setCustomClientFactory(EntityHook::new).setShouldReceiveVelocityUpdates(true);
+        return EntityType.Builder.<EntityHook>create(EntityHook::new, MISC).size(0.5f, 0.5f)
+                                                                           .setTrackingRange(5)
+                                                                           .setUpdateInterval(20)
+                                                                           .setCustomClientFactory(EntityHook::new)
+                                                                           .setShouldReceiveVelocityUpdates(true);
     }
 
     private static EntityType.Builder<EntityTorch> torch() {
-        return EntityType.Builder.<EntityTorch>create(EntityTorch::new, MISC).size(0.5f, 0.5f).setTrackingRange(5).setUpdateInterval(20).setCustomClientFactory(EntityTorch::new).setShouldReceiveVelocityUpdates(true);
+        return EntityType.Builder.<EntityTorch>create(EntityTorch::new, MISC).size(0.5f, 0.5f)
+                                                                             .setTrackingRange(5)
+                                                                             .setUpdateInterval(20)
+                                                                             .setCustomClientFactory(EntityTorch::new)
+                                                                             .setShouldReceiveVelocityUpdates(true);
     }
 
     private static EntityType.Builder<EntityFallingPeat> fallingPeat() {
-        return EntityType.Builder.<EntityFallingPeat>create(EntityFallingPeat::new, MISC).size(1F, 1F).setTrackingRange(10).setUpdateInterval(20).setCustomClientFactory(EntityFallingPeat::new).setShouldReceiveVelocityUpdates(true);
+        return EntityType.Builder.<EntityFallingPeat>create(EntityFallingPeat::new, MISC).size(1F, 1F)
+                                                                                         .setTrackingRange(10)
+                                                                                         .setUpdateInterval(20)
+                                                                                         .setCustomClientFactory(EntityFallingPeat::new)
+                                                                                         .setShouldReceiveVelocityUpdates(true);
     }
 
     private static EntityType.Builder<EntityFallingWeight> fallingWeight() {
-        return EntityType.Builder.<EntityFallingWeight>create(EntityFallingWeight::new, MISC).size(1F, 1F).setTrackingRange(10).setUpdateInterval(20).setCustomClientFactory(EntityFallingWeight::new).setShouldReceiveVelocityUpdates(true);
+        return EntityType.Builder.<EntityFallingWeight>create(EntityFallingWeight::new, MISC).size(1F, 1F)
+                                                                                             .setTrackingRange(10)
+                                                                                             .setUpdateInterval(20)
+                                                                                             .setCustomClientFactory(EntityFallingWeight::new)
+                                                                                             .setShouldReceiveVelocityUpdates(true);
     }
 
     private static EntityType.Builder<EntityFallingTimber> fallingTimber() {
-        return EntityType.Builder.<EntityFallingTimber>create(EntityFallingTimber::new, MISC).size(1F, 1F).setTrackingRange(10).setUpdateInterval(20).setCustomClientFactory(EntityFallingTimber::new).setShouldReceiveVelocityUpdates(true);
+        return EntityType.Builder.<EntityFallingTimber>create(EntityFallingTimber::new, MISC).size(1F, 1F)
+                                                                                             .setTrackingRange(10)
+                                                                                             .setUpdateInterval(20)
+                                                                                             .setCustomClientFactory(EntityFallingTimber::new)
+                                                                                             .setShouldReceiveVelocityUpdates(true);
     }
 
     private static EntityType.Builder<EntitySit> sit() {
@@ -80,13 +105,13 @@ public class EvolutionEntities {
         return EntityType.Builder.create(EntityCow::new, CREATURE).size(0.9f, 1.4f);
     }
 
-    private static EntityType.Builder<EntityBull> bull() {
-        return EntityType.Builder.create(EntityBull::new, CREATURE).size(0.9f, 1.4f);
-    }
+//    private static EntityType.Builder<EntityBull> bull() {
+//        return EntityType.Builder.create(EntityBull::new, CREATURE).size(0.9f, 1.4f);
+//    }
 
-    private static EntityType.Builder<EntityShadowHound> shadowHound() {
-        return EntityType.Builder.<EntityShadowHound>create(EntityShadowHound::new, MONSTER).size(0.7f, 0.8f);
-    }
+//    private static EntityType.Builder<EntityShadowHound> shadowHound() {
+//        return EntityType.Builder.<EntityShadowHound>create(EntityShadowHound::new, MONSTER).size(0.7f, 0.8f);
+//    }
 
     public static void register() {
         ENTITIES.register(FMLJavaModLoadingContext.get().getModEventBus());

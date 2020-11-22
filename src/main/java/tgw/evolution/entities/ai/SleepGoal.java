@@ -8,28 +8,23 @@ import java.util.EnumSet;
 public class SleepGoal extends Goal {
 
     private final AnimalEntity entity;
-    private final int timeDefined;
-    private final int timeRandom;
+    private final int timeFixed;
+    private final int timeMargin;
     private int sleepTimer;
 
-    public SleepGoal(AnimalEntity entity, int timeDefined, int timeRandom) {
+    public SleepGoal(AnimalEntity entity, int timeFixed, int timeMargin) {
         this.entity = entity;
-        this.timeDefined = timeDefined;
-        this.timeRandom = timeRandom;
+        this.timeFixed = timeFixed;
+        this.timeMargin = timeMargin;
         this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK, Goal.Flag.JUMP));
     }
 
     @Override
     public boolean shouldExecute() {
-        return !this.entity.isDead() && !this.entity.slept && !this.entity.world.isDaytime() && (this.chanceForSleep() || this.entity.isSleeping());
-    }
-
-    public void setSleepTime(int sleepTime) {
-        this.sleepTimer = sleepTime;
-    }
-
-    public int getSleepTimer() {
-        return this.sleepTimer;
+        return !this.entity.isDead() &&
+               !this.entity.hasSlept() &&
+               !this.entity.world.isDaytime() &&
+               (this.chanceForSleep() || this.entity.isSleeping());
     }
 
     /**
@@ -46,19 +41,26 @@ public class SleepGoal extends Goal {
 
     @Override
     public boolean shouldContinueExecuting() {
-        return this.sleepingTime();
+        return this.sleepingTick();
     }
 
     /**
      * Returns true if the entity still has time to sleep. Else, returns false.
      */
-    private boolean sleepingTime() {
+    private boolean sleepingTick() {
         if (this.sleepTimer > 0) {
             --this.sleepTimer;
             return true;
         }
-        this.entity.slept = true;
+        this.entity.setSlept();
         return false;
+    }
+
+    @Override
+    public void startExecuting() {
+        this.entity.setSleeping(true);
+        this.entity.getNavigator().clearPath();
+//        this.entity.getMoveHelper().setMoveTo(this.entity.posX, this.entity.posY, this.entity.posZ, 0.0);
     }
 
     @Override
@@ -67,24 +69,27 @@ public class SleepGoal extends Goal {
     }
 
     /**
-     * Sets the time period for which the entity will sleep.
-     */
-    public void setSleepTimer() {
-        this.sleepTimer = this.entity.getRNG().nextBoolean() ? -this.entity.getRNG().nextInt(this.timeRandom) : this.entity.getRNG().nextInt(this.timeRandom);
-        this.sleepTimer += this.timeDefined;
-    }
-
-    @Override
-    public void startExecuting() {
-        this.entity.setSleeping(true);
-        this.entity.getNavigator().clearPath();
-        this.entity.getMoveHelper().setMoveTo(this.entity.posX, this.entity.posY, this.entity.posZ, 0.0D);
-    }
-
-    /**
      * Wakes the entity up.
      */
     private void wakeUp() {
         this.entity.setSleeping(false);
+    }
+
+    public void setSleepTime(int sleepTime) {
+        this.sleepTimer = sleepTime;
+    }
+
+    public int getSleepTimer() {
+        return this.sleepTimer;
+    }
+
+    /**
+     * Sets the time period for which the entity will sleep, in ticks.
+     */
+    public void setSleepTimer() {
+        this.sleepTimer = this.entity.getRNG().nextBoolean() ?
+                          -this.entity.getRNG().nextInt(this.timeMargin) :
+                          this.entity.getRNG().nextInt(this.timeMargin);
+        this.sleepTimer += this.timeFixed;
     }
 }

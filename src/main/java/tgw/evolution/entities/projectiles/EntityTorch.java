@@ -30,18 +30,11 @@ public class EntityTorch extends AbstractArrowEntity {
     private final double verticalDrag;
     private final double horizontalDrag;
 
-    public EntityTorch(EntityType<EntityTorch> type, World worldIn) {
-        super(type, worldIn);
-        this.gravity = -Gravity.gravity(worldIn.dimension);
-        this.verticalDrag = Gravity.verticalDrag(worldIn.dimension, this.getWidth());
-        this.horizontalDrag = Gravity.horizontalDrag(worldIn.dimension, this.getWidth(), this.getHeight());
-    }
-
     public EntityTorch(World worldIn, LivingEntity shooter) {
         super(EvolutionEntities.TORCH.get(), shooter, worldIn);
         this.gravity = -Gravity.gravity(worldIn.dimension);
-        this.verticalDrag = Gravity.verticalDrag(worldIn.dimension, this.getWidth());
-        this.horizontalDrag = Gravity.horizontalDrag(worldIn.dimension, this.getWidth(), this.getHeight());
+        this.verticalDrag = 1/*Gravity.verticalDrag(worldIn.dimension, this.getWidth())*/;
+        this.horizontalDrag = 1/*Gravity.horizontalDrag(worldIn.dimension, this.getWidth(), this.getHeight())*/;
     }
 
     @SuppressWarnings("unused")
@@ -49,13 +42,11 @@ public class EntityTorch extends AbstractArrowEntity {
         this(EvolutionEntities.TORCH.get(), worldIn);
     }
 
-    @Override
-    protected ItemStack getArrowStack() {
-        return new ItemStack(EvolutionItems.torch.get());
-    }
-
-    @Override
-    protected void tryDespawn() {
+    public EntityTorch(EntityType<EntityTorch> type, World worldIn) {
+        super(type, worldIn);
+        this.gravity = -Gravity.gravity(worldIn.dimension);
+        this.verticalDrag = 1/*Gravity.verticalDrag(worldIn.dimension, this.getWidth())*/;
+        this.horizontalDrag = 1/*Gravity.horizontalDrag(worldIn.dimension, this.getWidth(), this.getHeight())*/;
     }
 
     @Override
@@ -70,7 +61,12 @@ public class EntityTorch extends AbstractArrowEntity {
         }
         if (this.isInWater()) {
             BlockPos pos = this.getPosition();
-            this.world.playSound(null, pos, SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 1F, 2.6F + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.8F);
+            this.world.playSound(null,
+                                 pos,
+                                 SoundEvents.BLOCK_FIRE_EXTINGUISH,
+                                 SoundCategory.BLOCKS,
+                                 1F,
+                                 2.6F + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.8F);
             BlockUtils.dropItemStack(this.world, pos, new ItemStack(EvolutionItems.stick.get()));
             this.remove();
             return;
@@ -79,11 +75,20 @@ public class EntityTorch extends AbstractArrowEntity {
     }
 
     @Override
+    protected void tryDespawn() {
+    }
+
+    @Override
     protected void onEntityHit(EntityRayTraceResult rayTraceResult) {
         SoundEvent soundevent = SoundEvents.ENTITY_ARROW_HIT;
         this.playSound(soundevent, 1.0F, 1.0F);
         BlockUtils.dropItemStack(this.world, this.getPosition(), this.getArrowStack());
         this.remove();
+    }
+
+    @Override
+    protected ItemStack getArrowStack() {
+        return new ItemStack(EvolutionItems.torch.get());
     }
 
     @Override

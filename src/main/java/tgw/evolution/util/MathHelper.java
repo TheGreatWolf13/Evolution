@@ -36,7 +36,11 @@ public class MathHelper {
     public static final Direction[] DIRECTIONS_HORIZONTAL = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
     public static final DirectionDiagonal[][] DIAGONALS = {{DirectionDiagonal.NORTH_WEST, DirectionDiagonal.NORTH_EAST},
                                                            {DirectionDiagonal.SOUTH_WEST, DirectionDiagonal.SOUTH_EAST}};
-    private static final Predicate<Entity> PREDICATE = EntityPredicates.CAN_AI_TARGET.and(e -> e != null && e.canBeCollidedWith() && (e instanceof LivingEntity || e instanceof HangingEntity) && !(e instanceof FakePlayer));
+    private static final Predicate<Entity> PREDICATE = EntityPredicates.CAN_AI_TARGET.and(e -> e != null &&
+                                                                                               e.canBeCollidedWith() &&
+                                                                                               (e instanceof LivingEntity ||
+                                                                                                e instanceof HangingEntity) &&
+                                                                                               !(e instanceof FakePlayer));
 
     /**
      * Converts an {@code int} value to {@code short}.
@@ -141,29 +145,65 @@ public class MathHelper {
      */
     @Nonnull
     public static String getRomanNumber(int number) {
-        switch (number) {
-            case 1:
-                return "I";
-            case 2:
-                return "II";
-            case 3:
-                return "III";
-            case 4:
-                return "IV";
-            case 5:
-                return "V";
-            case 6:
-                return "VI";
-            case 7:
-                return "VII";
-            case 8:
-                return "VIII";
-            case 9:
-                return "IX";
-            case 10:
-                return "X";
+        if (number <= 0 || number > 3999) {
+            return String.valueOf(number);
         }
-        return String.valueOf(number);
+        StringBuilder builder = new StringBuilder();
+        while (number > 0) {
+            if (number >= 1000) {
+                number -= 1000;
+                builder.append("M");
+            }
+            else if (number >= 900) {
+                number -= 900;
+                builder.append("CM");
+            }
+            else if (number >= 500) {
+                number -= 500;
+                builder.append("D");
+            }
+            else if (number >= 400) {
+                number -= 400;
+                builder.append("CD");
+            }
+            else if (number >= 100) {
+                number -= 100;
+                builder.append("C");
+            }
+            else if (number >= 90) {
+                number -= 90;
+                builder.append("XC");
+            }
+            else if (number >= 50) {
+                number -= 50;
+                builder.append("L");
+            }
+            else if (number >= 40) {
+                number -= 40;
+                builder.append("XL");
+            }
+            else if (number >= 10) {
+                number -= 10;
+                builder.append("X");
+            }
+            else if (number >= 9) {
+                number -= 9;
+                builder.append("IX");
+            }
+            else if (number >= 5) {
+                number -= 5;
+                builder.append("V");
+            }
+            else if (number >= 4) {
+                number -= 4;
+                builder.append("IV");
+            }
+            else if (number >= 1) {
+                number -= 1;
+                builder.append("I");
+            }
+        }
+        return builder.toString();
     }
 
     /**
@@ -508,7 +548,11 @@ public class MathHelper {
      * this {@link EntityRayTraceResult} will be {@code null}.
      */
     @Nullable
-    public static EntityRayTraceResult rayTraceEntities(@Nonnull Entity toExclude, Vec3d startVec, Vec3d endVec, AxisAlignedBB boundingBox, double distanceSquared) {
+    public static EntityRayTraceResult rayTraceEntities(@Nonnull Entity toExclude,
+                                                        Vec3d startVec,
+                                                        Vec3d endVec,
+                                                        AxisAlignedBB boundingBox,
+                                                        double distanceSquared) {
         World world = toExclude.world;
         double range = distanceSquared;
         Entity entity = null;
@@ -927,6 +971,16 @@ public class MathHelper {
     }
 
     /**
+     * Calculates the square root.
+     *
+     * @param value The value to calculate the square root from.
+     * @return A {@code float} value of the resulting square root.
+     */
+    public static float sqrt(double value) {
+        return (float) Math.sqrt(value);
+    }
+
+    /**
      * Iterates through a {@link List} in reverse order.
      *
      * @param list     The {@link List} to iterate.
@@ -954,5 +1008,9 @@ public class MathHelper {
         float start = middlePoint - length / 2;
         float end = middlePoint + length / 2;
         return start <= value && value <= end;
+    }
+
+    public static double wrapDegrees(double value) {
+        return net.minecraft.util.math.MathHelper.wrapDegrees(value);
     }
 }

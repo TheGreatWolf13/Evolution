@@ -60,15 +60,6 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     }
 
     @Override
-    public EntitySize getSize(Pose poseIn) {
-        return SIZES[this.layers - 1];
-    }
-
-    public BlockState getBlockState() {
-        return EvolutionBlocks.PEAT.get().getDefaultState().with(BlockPeat.LAYERS, this.layers);
-    }
-
-    @Override
     protected void registerData() {
     }
 
@@ -76,10 +67,10 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     public void tick() {
         if (!this.isSizeCorrect) {
             this.recalculateSize();
-            float width = this.getSize(null).width;
-            float height = this.getSize(null).height;
-            this.verticalDrag = Gravity.verticalDrag(this.world.getDimension(), width);
-            this.horizontalDrag = Gravity.horizontalDrag(this.world.getDimension(), width, height);
+//            float width = this.getSize(null).width;
+//            float height = this.getSize(null).height;
+            this.verticalDrag = 1/*Gravity.verticalDrag(this.world.getDimension(), width)*/;
+            this.horizontalDrag = 1/*Gravity.horizontalDrag(this.world.getDimension(), width, height)*/;
             this.gravity = -Gravity.gravity(this.world.getDimension());
             this.isSizeCorrect = true;
         }
@@ -116,6 +107,26 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
         this.setMotion(this.getMotion().mul(this.horizontalDrag, this.verticalDrag, this.horizontalDrag));
     }
 
+    public BlockState getBlockState() {
+        return EvolutionBlocks.PEAT.get().getDefaultState().with(BlockPeat.LAYERS, this.layers);
+    }
+
+    @Override
+    protected boolean canTriggerWalking() {
+        return false;
+    }
+
+    @Nullable
+    @Override
+    public AxisAlignedBB getCollisionBoundingBox() {
+        return this.isAlive() ? this.getBoundingBox() : null;
+    }
+
+    @Override
+    public boolean canBeCollidedWith() {
+        return true;
+    }
+
     @Override
     protected void readAdditional(CompoundNBT compound) {
         this.fallTime = compound.getInt("Time");
@@ -131,8 +142,8 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     }
 
     @Override
-    public boolean canBeCollidedWith() {
-        return true;
+    public boolean canBeAttackedWithItem() {
+        return false;
     }
 
     @Override
@@ -142,24 +153,13 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     }
 
     @Override
-    protected boolean canTriggerWalking() {
-        return false;
-    }
-
-    @Override
-    public boolean canBeAttackedWithItem() {
-        return false;
-    }
-
-    @Nullable
-    @Override
-    public AxisAlignedBB getCollisionBoundingBox() {
-        return this.isAlive() ? this.getBoundingBox() : null;
-    }
-
-    @Override
     public IPacket<?> createSpawnPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    @Override
+    public EntitySize getSize(Pose poseIn) {
+        return SIZES[this.layers - 1];
     }
 
     @Override
