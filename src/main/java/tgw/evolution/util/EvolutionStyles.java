@@ -6,7 +6,7 @@ import net.minecraft.util.text.TextFormatting;
 public class EvolutionStyles {
 
     public static final Style DAMAGE = new Style().setColor(TextFormatting.DARK_RED);
-    public static final Style SPEED = new Style().setColor(TextFormatting.RED);
+    public static final Style SPEED = new Style().setColor(TextFormatting.GREEN);
     public static final Style MINING = new Style().setColor(TextFormatting.AQUA);
     public static final Style REACH = new Style().setColor(TextFormatting.YELLOW);
     public static final Style WHITE = new Style().setColor(TextFormatting.WHITE);

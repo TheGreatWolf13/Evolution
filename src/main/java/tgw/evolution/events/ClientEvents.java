@@ -16,6 +16,7 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.BlockItem;
@@ -27,6 +28,7 @@ import net.minecraft.potion.Effects;
 import net.minecraft.util.Hand;
 import net.minecraft.util.MovementInput;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.text.ITextComponent;
@@ -64,6 +66,7 @@ import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.world.dimension.DimensionOverworld;
 
+import java.util.Random;
 import java.util.UUID;
 
 public class ClientEvents {
@@ -74,6 +77,7 @@ public class ClientEvents {
     private static final ITextComponent COMPONENT_TWO_HANDED = new TranslationTextComponent(TWO_HANDED).setStyle(EvolutionStyles.WHITE);
     private static final ITextComponent COMPONENT_INERTIA = new TranslationTextComponent(INERTIA).setStyle(EvolutionStyles.WHITE);
     private final Minecraft mc;
+    private final Random rand = new Random();
     private GameRenderer oldGameRenderer;
     private boolean inverted;
     private boolean skyRendererBinded;
@@ -105,6 +109,12 @@ public class ClientEvents {
     private float leftEquipProgress;
     private float leftPrevEquipProgress;
     private boolean requiresReequiping;
+    //Health variables
+    private long healthUpdateCounter;
+    private int ticks;
+    private int playerHealth;
+    private long lastSystemTime;
+    private int lastPlayerHealth;
 
     public ClientEvents(Minecraft mc) {
         this.mc = mc;
@@ -280,6 +290,7 @@ public class ClientEvents {
             }
             //Handle swing
             if (!this.mc.isGamePaused()) {
+                this.ticks++;
                 if (this.mc.playerController.getIsHittingBlock()) {
                     this.requiresReequiping = false;
                 }
@@ -414,6 +425,11 @@ public class ClientEvents {
         if (event.getType() == RenderGameOverlayEvent.ElementType.CROSSHAIRS) {
             event.setCanceled(true);
             this.renderAttackIndicator();
+            return;
+        }
+        if (event.getType() == RenderGameOverlayEvent.ElementType.HEALTH) {
+            event.setCanceled(true);
+            this.renderHealth();
         }
     }
 
@@ -487,6 +503,138 @@ public class ClientEvents {
                 }
             }
         }
+    }
+
+    private void renderHealth() {
+        this.mc.getTextureManager().bindTexture(ICONS);
+        int width = this.mc.mainWindow.getScaledWidth();
+        int height = this.mc.mainWindow.getScaledHeight();
+        this.mc.getProfiler().startSection("health");
+        GlStateManager.enableBlend();
+        PlayerEntity player = (PlayerEntity) this.mc.getRenderViewEntity();
+        int currentHealth = MathHelper.ceil(player.getHealth());
+        //The health bar flashes
+        boolean highlight = this.healthUpdateCounter > this.ticks && (this.healthUpdateCounter - this.ticks) / 3L % 2L == 1L;
+        //Take damage
+        if (currentHealth < this.playerHealth && player.hurtResistantTime > 0) {
+            this.lastSystemTime = Util.milliTime();
+            this.healthUpdateCounter = this.ticks + 20;
+        }
+        //Regen Health
+        else if (currentHealth > this.playerHealth && player.hurtResistantTime > 0) {
+            this.lastSystemTime = Util.milliTime();
+            this.healthUpdateCounter = this.ticks + 10;
+        }
+        //Update variables every 1s
+        if (Util.milliTime() - this.lastSystemTime > 1000L) {
+            this.playerHealth = currentHealth;
+            this.lastPlayerHealth = currentHealth;
+            this.lastSystemTime = Util.milliTime();
+        }
+        this.playerHealth = currentHealth;
+        int healthLast = this.lastPlayerHealth;
+        float healthMax = (float) player.getAttribute(SharedMonsterAttributes.MAX_HEALTH).getValue();
+        float absorb = MathHelper.ceil(player.getAbsorptionAmount());
+        int healthRows = MathHelper.ceil((healthMax + absorb) / 100.0F);
+        this.rand.setSeed(this.ticks * 312871);
+        int top = height - ForgeIngameGui.left_height;
+        int rowHeight = Math.max(10 - (healthRows - 2), 3);
+        ForgeIngameGui.left_height += healthRows * rowHeight;
+        if (rowHeight != 10) {
+            ForgeIngameGui.left_height += 10 - rowHeight;
+        }
+        int regen = -1;
+        if (player.isPotionActive(Effects.REGENERATION)) {
+            regen = this.ticks % 25;
+        }
+        final int heartTextureYPos = this.mc.world.getWorldInfo().isHardcore() ? 45 : 0;
+        final int heartBackgroundXPos = highlight ? 25 : 16;
+        int margin = 16;
+        if (player.isPotionActive(Effects.POISON)) {
+            margin += 72;
+        }
+        int absorbRemaining = MathHelper.ceil(absorb);
+        int left = width / 2 - 91;
+        for (int currentHeart = MathHelper.ceil((healthMax + absorb) / 10.0F) - 1; currentHeart >= 0; --currentHeart) {
+            int row = MathHelper.ceil((float) (currentHeart + 1) / 10.0F) - 1;
+            int x = left + currentHeart % 10 * 8;
+            int y = top - row * rowHeight;
+            //Shake hearts if 20% HP
+            if (currentHealth <= 20) {
+                y += this.rand.nextInt(2);
+            }
+            if (currentHeart == regen) {
+                y -= 2;
+            }
+            this.blit(x, y, heartBackgroundXPos, heartTextureYPos, 9, 9);
+            if (highlight) {
+                if (currentHeart * 10 + 8 <= healthLast) {
+                    //Faded full heart
+                    this.blit(x, y, margin + 54, heartTextureYPos, 9, 9);
+                }
+                else if (currentHeart * 10 + 6 <= healthLast) {
+                    //Faded 3/4 heart
+                    this.blit(x, y, margin + 63, heartTextureYPos, 9, 9);
+                }
+                else if (currentHeart * 10 + 3 <= healthLast) {
+                    //Faded half heart
+                    this.blit(x, y, margin + 72, heartTextureYPos, 9, 9);
+                }
+                else if (currentHeart * 10 + 1 <= healthLast) {
+                    //Faded 1/4 heart
+                    this.blit(x, y, margin + 81, heartTextureYPos, 9, 9);
+                }
+            }
+            if (absorbRemaining > 0) {
+                int absorbHeart = absorbRemaining % 10;
+                switch (absorbHeart) {
+                    case 1:
+                    case 2:
+                        this.blit(x, y, 205, heartTextureYPos, 9, 9);
+                        break;
+                    case 3:
+                    case 4:
+                    case 5:
+                        this.blit(x, y, 196, heartTextureYPos, 9, 9);
+                        break;
+                    case 6:
+                    case 7:
+                        this.blit(x, y, 187, heartTextureYPos, 9, 9);
+                        break;
+                    case 8:
+                    case 9:
+                    case 0:
+                        this.blit(x, y, 178, heartTextureYPos, 9, 9);
+                        break;
+                }
+                if (absorbHeart == 0) {
+                    absorbRemaining -= 10;
+                }
+                else {
+                    absorbRemaining -= absorbHeart;
+                }
+            }
+            else {
+                if (currentHeart * 10 + 8 <= currentHealth) {
+                    //Full heart
+                    this.blit(x, y, margin + 18, heartTextureYPos, 9, 9);
+                }
+                else if (currentHeart * 10 + 6 <= currentHealth) {
+                    //3/4 heart
+                    this.blit(x, y, margin + 27, heartTextureYPos, 9, 9);
+                }
+                else if (currentHeart * 10 + 3 <= currentHealth) {
+                    //Half heart
+                    this.blit(x, y, margin + 36, heartTextureYPos, 9, 9);
+                }
+                else if (currentHeart * 10 + 1 <= currentHealth) {
+                    //1/4 heart
+                    this.blit(x, y, margin + 45, heartTextureYPos, 9, 9);
+                }
+            }
+        }
+        GlStateManager.disableBlend();
+        this.mc.getProfiler().endSection();
     }
 
     private boolean rayTraceMouse(RayTraceResult rayTraceResult) {

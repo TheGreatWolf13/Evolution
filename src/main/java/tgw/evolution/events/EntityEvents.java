@@ -49,16 +49,21 @@ import tgw.evolution.util.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.WeakHashMap;
+import java.util.*;
 
 public class EntityEvents {
 
     private static final Method SET_POSE_METHOD = ObfuscationReflectionHelper.findMethod(Entity.class, "func_213301_b", Pose.class);
     private static final Random RANDOM = new Random();
     private final Map<DamageSource, Float> damageMultipliers = new WeakHashMap<>();
+    private final Map<UUID, Integer> playerTimeSinceLastHit = new HashMap<>();
+
+    @SubscribeEvent
+    public void onLivingHeal(LivingHealEvent event) {
+        if (event.getEntityLiving() instanceof PlayerEntity) {
+            event.setCanceled(true);
+        }
+    }
 
     @SubscribeEvent
     public void onSetAttackTarget(LivingSetAttackTargetEvent event) {
@@ -222,8 +227,10 @@ public class EntityEvents {
         double pressureOfFall = forceOfImpact / area;
         double maxSupportedPressure = baseMass / (area * 0.035);
         double deltaPressure = MathHelper.clampMin(pressureOfFall - maxSupportedPressure, 0);
-        float amount = (float) Math.pow(deltaPressure, 1.7) / 900000;
-        entity.attackEntityFrom(EvolutionDamage.FALL, amount);
+        float amount = (float) Math.pow(deltaPressure, 1.7) / 750_000;
+        if (amount >= 1) {
+            entity.attackEntityFrom(EvolutionDamage.FALL, amount);
+        }
     }
 
     @SubscribeEvent
@@ -235,6 +242,25 @@ public class EntityEvents {
         //Deals with water
         if (!entity.onGround && entity.isInWater()) {
             calculateWaterFallDamage(entity);
+        }
+        //Handles Player health regeneration
+        if (!entity.world.isRemote && entity instanceof PlayerEntity && entity.world.getGameRules().getBoolean(GameRules.NATURAL_REGENERATION)) {
+            PlayerEntity player = (PlayerEntity) entity;
+            UUID uuid = player.getUniqueID();
+            if (player.hurtTime > 0) {
+                this.playerTimeSinceLastHit.put(uuid, 0);
+            }
+            else {
+                this.playerTimeSinceLastHit.put(uuid, this.playerTimeSinceLastHit.getOrDefault(uuid, 0) + 1);
+            }
+            if (this.playerTimeSinceLastHit.get(uuid) == 80) {
+                this.playerTimeSinceLastHit.put(uuid, 0);
+                if (player.shouldHeal()) {
+                    float currentHealth = MathHelper.clampMin(player.getHealth(), 1);
+                    float healAmount = currentHealth / 100;
+                    player.setHealth(currentHealth + healAmount);
+                }
+            }
         }
     }
 
@@ -437,13 +463,13 @@ public class EntityEvents {
             return;
         }
         float damage = event.getAmount();
-        Evolution.LOGGER.debug("amount = " + damage);
         if (source == DamageSource.FALL) {
             if (hitEntity instanceof PlayerEntity || hitEntity instanceof CreatureEntity) {
                 event.setCanceled(true);
             }
             return;
         }
+        Evolution.LOGGER.debug("amount = " + damage);
         if (source instanceof IndirectEntityDamageSource && source.isProjectile()) {
             if (hitEntity instanceof PlayerEntity) {
                 EquipmentSlotType type = PlayerHelper.getPartByPosition(source.getImmediateSource().getBoundingBox().minY, (PlayerEntity) hitEntity);
