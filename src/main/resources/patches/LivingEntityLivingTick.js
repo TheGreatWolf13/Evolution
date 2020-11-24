@@ -30,7 +30,6 @@ function initializeCoreMod() {
 			"transformer": function(classNode) {
 				var methods = classNode.methods;
 				for (var i in methods) {
-				    log("krl");
 					if (patch(methods[i], LIVINGTICK, patchLivingTick)) {
 						break;
 					}

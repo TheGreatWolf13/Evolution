@@ -47,6 +47,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import org.apache.commons.lang3.tuple.Pair;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import tgw.evolution.ClientProxy;
@@ -83,19 +84,24 @@ public class ClientEvents {
     private static final String INERTIA = "evolution.actionbar.inertia";
     private static final ITextComponent COMPONENT_TWO_HANDED = new TranslationTextComponent(TWO_HANDED).setStyle(EvolutionStyles.WHITE);
     private static final ITextComponent COMPONENT_INERTIA = new TranslationTextComponent(INERTIA).setStyle(EvolutionStyles.WHITE);
+    private static final ResourceLocation DESATURATE_25 = Evolution.location("shaders/post/saturation25.json");
+    private static final ResourceLocation DESATURATE_50 = Evolution.location("shaders/post/saturation50.json");
+    private static final ResourceLocation DESATURATE_75 = Evolution.location("shaders/post/saturation75.json");
     private final Minecraft mc;
     private final Random rand = new Random();
     private GameRenderer oldGameRenderer;
     private boolean inverted;
     private boolean skyRendererBinded;
     private SkyRenderer skyRenderer;
+    private int currentShader;
+    private int currentThirdPersonView;
     //Jump variables
-    private boolean jump;
     private boolean isJumpPressed;
     //Prone variables
     private boolean proneToggle;
     private boolean previousPressed;
     //Offhand variables
+    private boolean isRightPressed;
     private Entity rightPointedEntity;
     private ItemStack offhandStack = ItemStack.EMPTY;
     private int rightTimeSinceLastHit;
@@ -106,6 +112,7 @@ public class ClientEvents {
     private float rightEquipProgress;
     private float rightPrevEquipProgress;
     //Mainhand variables
+    private boolean isLeftPressed;
     private Entity leftPointedEntity;
     private ItemStack mainhandStack = ItemStack.EMPTY;
     private int leftTimeSinceLastHit;
@@ -119,9 +126,9 @@ public class ClientEvents {
     //Health variables
     private long healthUpdateCounter;
     private int ticks;
-    private int playerHealth;
+    private float playerHealth;
     private long lastSystemTime;
-    private int lastPlayerHealth;
+    private float lastPlayerHealth;
 
     public ClientEvents(Minecraft mc) {
         this.mc = mc;
@@ -428,6 +435,49 @@ public class ClientEvents {
         }
         //Runs at the start of each tick
         if (event.phase == TickEvent.Phase.START) {
+            //Apply shaders
+            int shader;
+            if (!this.mc.player.isCreative() && !this.mc.player.isSpectator()) {
+                float health = this.mc.player.getHealth();
+                if (health <= 12.5f) {
+                    shader = 25;
+                }
+                else if (health <= 25) {
+                    shader = 50;
+                }
+                else if (health <= 50) {
+                    shader = 75;
+                }
+                else {
+                    shader = 0;
+                }
+            }
+            else {
+                shader = 0;
+            }
+            if (this.mc.gameSettings.thirdPersonView != this.currentThirdPersonView) {
+                this.currentThirdPersonView = this.mc.gameSettings.thirdPersonView;
+                this.currentShader = 0;
+            }
+            if (shader != this.currentShader) {
+                this.currentShader = shader;
+                switch (shader) {
+                    case 0:
+                        this.mc.gameRenderer.stopUseShader();
+                        break;
+                    case 25:
+                        this.mc.gameRenderer.loadShader(DESATURATE_25);
+                        break;
+                    case 50:
+                        this.mc.gameRenderer.loadShader(DESATURATE_50);
+                        break;
+                    case 75:
+                        this.mc.gameRenderer.loadShader(DESATURATE_75);
+                        break;
+                    default:
+                        Evolution.LOGGER.warn("Unregistered shader id: {}", shader);
+                }
+            }
             //RayTrace entities
             if (!this.mc.isGamePaused()) {
                 if (this.mc.world.dimension instanceof DimensionOverworld) {
@@ -492,28 +542,28 @@ public class ClientEvents {
         }
         //Runs at the end of each tick
         else if (event.phase == TickEvent.Phase.END) {
-            //Proning
-            boolean pressed = ClientProxy.TOGGLE_PRONE.isKeyDown();
-            if (pressed && !this.previousPressed) {
-                this.proneToggle = !this.proneToggle;
-            }
-            this.previousPressed = pressed;
-            this.updateClientProneState(this.mc.player);
-            //Handle creative features
-            if (this.mc.player.isCreative() && ClientProxy.BUILDING_ASSIST.isKeyDown()) {
-                this.mc.player.sendStatusMessage(COMPONENT_INERTIA, true);
-                this.mc.player.setMotion(Vec3d.ZERO);
-                if (this.mc.player.getHeldItemMainhand().getItem() instanceof BlockItem) {
-                    if (this.mc.objectMouseOver instanceof BlockRayTraceResult) {
-                        BlockPos pos = ((BlockRayTraceResult) this.mc.objectMouseOver).getPos();
-                        if (this.mc.world.getBlockState(pos).getBlock() != Blocks.AIR) {
-                            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSChangeBlock((BlockRayTraceResult) this.mc.objectMouseOver));
+            if (!this.mc.isGamePaused()) {
+                //Proning
+                boolean pressed = ClientProxy.TOGGLE_PRONE.isKeyDown();
+                if (pressed && !this.previousPressed) {
+                    this.proneToggle = !this.proneToggle;
+                }
+                this.previousPressed = pressed;
+                this.updateClientProneState(this.mc.player);
+                //Handle creative features
+                if (this.mc.player.isCreative() && ClientProxy.BUILDING_ASSIST.isKeyDown()) {
+                    this.mc.player.sendStatusMessage(COMPONENT_INERTIA, true);
+                    this.mc.player.setMotion(Vec3d.ZERO);
+                    if (this.mc.player.getHeldItemMainhand().getItem() instanceof BlockItem) {
+                        if (this.mc.objectMouseOver instanceof BlockRayTraceResult) {
+                            BlockPos pos = ((BlockRayTraceResult) this.mc.objectMouseOver).getPos();
+                            if (this.mc.world.getBlockState(pos).getBlock() != Blocks.AIR) {
+                                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSChangeBlock((BlockRayTraceResult) this.mc.objectMouseOver));
+                            }
                         }
                     }
                 }
-            }
-            //Handle swing
-            if (!this.mc.isGamePaused()) {
+                //Handle swing
                 this.ticks++;
                 if (this.mc.playerController.getIsHittingBlock()) {
                     this.requiresReequiping = false;
@@ -736,31 +786,37 @@ public class ClientEvents {
         this.mc.getProfiler().startSection("health");
         GlStateManager.enableBlend();
         PlayerEntity player = (PlayerEntity) this.mc.getRenderViewEntity();
-        int currentHealth = MathHelper.ceil(player.getHealth());
-        //The health bar flashes
-        boolean highlight = this.healthUpdateCounter > this.ticks && (this.healthUpdateCounter - this.ticks) / 3L % 2L == 1L;
+        float currentHealth = player.getHealth();
+        boolean updateHealth = false;
         //Take damage
-        if (currentHealth < this.playerHealth && player.hurtResistantTime > 0) {
+        if (currentHealth - this.playerHealth <= -2.5f && player.hurtResistantTime > 0) {
             this.lastSystemTime = Util.milliTime();
             this.healthUpdateCounter = this.ticks + 20;
+            updateHealth = true;
         }
         //Regen Health
-        else if (currentHealth > this.playerHealth && player.hurtResistantTime > 0) {
+        else if (currentHealth - this.playerHealth > 2.5f && player.hurtResistantTime > 0) {
             this.lastSystemTime = Util.milliTime();
             this.healthUpdateCounter = this.ticks + 10;
+            updateHealth = true;
         }
         //Update variables every 1s
         if (Util.milliTime() - this.lastSystemTime > 1000L) {
-            this.playerHealth = currentHealth;
             this.lastPlayerHealth = currentHealth;
             this.lastSystemTime = Util.milliTime();
         }
-        this.playerHealth = currentHealth;
-        int healthLast = this.lastPlayerHealth;
+        if (updateHealth) {
+            this.playerHealth = roundToHearts(currentHealth);
+        }
         float healthMax = (float) player.getAttribute(SharedMonsterAttributes.MAX_HEALTH).getValue();
+        if (currentHealth > healthMax - 2.5F && this.playerHealth == healthMax - 2.5F) {
+            this.playerHealth = healthMax;
+        }
+        //The health bar flashes
+        boolean highlight = this.healthUpdateCounter > this.ticks && (this.healthUpdateCounter - this.ticks) / 3L % 2L == 1L;
+        float healthLast = this.lastPlayerHealth;
         float absorb = MathHelper.ceil(player.getAbsorptionAmount());
         int healthRows = MathHelper.ceil((healthMax + absorb) / 100.0F);
-        this.rand.setSeed(this.ticks * 312871);
         int top = height - ForgeIngameGui.left_height;
         int rowHeight = Math.max(10 - (healthRows - 2), 3);
         ForgeIngameGui.left_height += healthRows * rowHeight;
@@ -784,7 +840,7 @@ public class ClientEvents {
             int x = left + currentHeart % 10 * 8;
             int y = top - row * rowHeight;
             //Shake hearts if 20% HP
-            if (currentHealth <= 20) {
+            if (currentHealth <= 20F) {
                 y += this.rand.nextInt(2);
             }
             if (currentHeart == regen) {
@@ -792,19 +848,19 @@ public class ClientEvents {
             }
             this.blit(x, y, heartBackgroundXPos, heartTextureYPos, 9, 9);
             if (highlight) {
-                if (currentHeart * 10 + 8 <= healthLast) {
+                if (currentHeart * 10F + 7.5F < healthLast) {
                     //Faded full heart
                     this.blit(x, y, margin + 54, heartTextureYPos, 9, 9);
                 }
-                else if (currentHeart * 10 + 6 <= healthLast) {
+                else if (currentHeart * 10F + 5F < healthLast) {
                     //Faded 3/4 heart
                     this.blit(x, y, margin + 63, heartTextureYPos, 9, 9);
                 }
-                else if (currentHeart * 10 + 3 <= healthLast) {
+                else if (currentHeart * 10F + 2.5F < healthLast) {
                     //Faded half heart
                     this.blit(x, y, margin + 72, heartTextureYPos, 9, 9);
                 }
-                else if (currentHeart * 10 + 1 <= healthLast) {
+                else if (currentHeart * 10F < healthLast) {
                     //Faded 1/4 heart
                     this.blit(x, y, margin + 81, heartTextureYPos, 9, 9);
                 }
@@ -839,19 +895,19 @@ public class ClientEvents {
                 }
             }
             else {
-                if (currentHeart * 10 + 8 <= currentHealth) {
+                if (currentHeart * 10F + 7.5F < currentHealth) {
                     //Full heart
                     this.blit(x, y, margin + 18, heartTextureYPos, 9, 9);
                 }
-                else if (currentHeart * 10 + 6 <= currentHealth) {
+                else if (currentHeart * 10F + 5F < currentHealth) {
                     //3/4 heart
                     this.blit(x, y, margin + 27, heartTextureYPos, 9, 9);
                 }
-                else if (currentHeart * 10 + 3 <= currentHealth) {
+                else if (currentHeart * 10F + 2.5F < currentHealth) {
                     //Half heart
                     this.blit(x, y, margin + 36, heartTextureYPos, 9, 9);
                 }
-                else if (currentHeart * 10 + 1 <= currentHealth) {
+                else if (currentHeart * 10F < currentHealth) {
                     //1/4 heart
                     this.blit(x, y, margin + 45, heartTextureYPos, 9, 9);
                 }
@@ -874,6 +930,10 @@ public class ClientEvents {
             return world.getBlockState(blockpos).getContainer(world, blockpos) != null;
         }
         return false;
+    }
+
+    private static float roundToHearts(float currentHealth) {
+        return (int) (currentHealth * 0.4F) / 0.4F;
     }
 
     public void swingArm(Hand hand) {
@@ -953,10 +1013,6 @@ public class ClientEvents {
     public void onPlayerInput(InputUpdateEvent event) {
         MovementInput movementInput = event.getMovementInput();
         this.isJumpPressed = movementInput.jump;
-        if (!this.jump && this.mc.player.onGround && this.isJumpPressed && !this.proneToggle) {
-            this.jump = true;
-            return;
-        }
         if (this.proneToggle && !this.mc.player.isOnLadder()) {
             movementInput.jump = false;
         }
@@ -999,11 +1055,27 @@ public class ClientEvents {
         }
         KeyBinding attack = this.mc.gameSettings.keyBindAttack;
         KeyBinding use = this.mc.gameSettings.keyBindUseItem;
-        if (attack.getKey().getType() == InputMappings.Type.KEYSYM && attack.getKey().getKeyCode() == event.getKey() && event.getAction() == 1) {
-            this.onLeftMouseClick();
+        if (attack.getKey().getType() == InputMappings.Type.KEYSYM) {
+            if (attack.getKey().getKeyCode() == event.getKey()) {
+                if (event.getAction() == GLFW.GLFW_PRESS && !this.isRightPressed) {
+                    this.isLeftPressed = true;
+                    this.onLeftMouseClick();
+                }
+                else {
+                    this.isLeftPressed = false;
+                }
+            }
         }
-        if (use.getKey().getType() == InputMappings.Type.KEYSYM && use.getKey().getKeyCode() == event.getKey() && event.getAction() == 1) {
-            this.onRightMouseClick();
+        if (use.getKey().getType() == InputMappings.Type.KEYSYM) {
+            if (use.getKey().getKeyCode() == event.getKey()) {
+                if (event.getAction() == GLFW.GLFW_PRESS && !this.isLeftPressed) {
+                    this.isRightPressed = true;
+                    this.onRightMouseClick();
+                }
+                else {
+                    this.isRightPressed = false;
+                }
+            }
         }
     }
 
@@ -1014,11 +1086,27 @@ public class ClientEvents {
         }
         KeyBinding attack = this.mc.gameSettings.keyBindAttack;
         KeyBinding use = this.mc.gameSettings.keyBindUseItem;
-        if (attack.getKey().getType() == InputMappings.Type.MOUSE && attack.getKey().getKeyCode() == event.getButton() && event.getAction() == 1) {
-            this.onLeftMouseClick();
+        if (attack.getKey().getType() == InputMappings.Type.MOUSE) {
+            if (attack.getKey().getKeyCode() == event.getButton()) {
+                if (event.getAction() == GLFW.GLFW_PRESS && !this.isRightPressed) {
+                    this.isLeftPressed = true;
+                    this.onLeftMouseClick();
+                }
+                else {
+                    this.isLeftPressed = false;
+                }
+            }
         }
-        if (use.getKey().getType() == InputMappings.Type.MOUSE && use.getKey().getKeyCode() == event.getButton() && event.getAction() == 1) {
-            this.onRightMouseClick();
+        if (use.getKey().getType() == InputMappings.Type.MOUSE) {
+            if (use.getKey().getKeyCode() == event.getButton()) {
+                if (event.getAction() == GLFW.GLFW_PRESS && !this.isLeftPressed) {
+                    this.isRightPressed = true;
+                    this.onRightMouseClick();
+                }
+                else {
+                    this.isRightPressed = false;
+                }
+            }
         }
     }
 
