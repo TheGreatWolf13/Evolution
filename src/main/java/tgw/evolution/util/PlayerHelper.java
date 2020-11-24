@@ -44,7 +44,7 @@ public abstract class PlayerHelper {
     /**
      * The base reach distance of the Player, in metres.
      */
-    public static final double REACH_DISTANCE = 3;
+    public static final double REACH_DISTANCE = 3.25;
     /**
      * The base Player mass. Used in various kinetic calculations.
      */

@@ -1,5 +1,6 @@
 package tgw.evolution.events;
 
+import com.google.common.collect.Multimap;
 import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.block.Blocks;
@@ -17,12 +18,14 @@ import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.UseAction;
+import net.minecraft.item.*;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.potion.EffectInstance;
+import net.minecraft.potion.EffectType;
 import net.minecraft.potion.EffectUtils;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.Hand;
@@ -32,6 +35,7 @@ import net.minecraft.util.Util;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.GameType;
 import net.minecraft.world.World;
@@ -42,6 +46,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
+import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import tgw.evolution.ClientProxy;
@@ -52,10 +57,10 @@ import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
+import tgw.evolution.entities.EvolutionAttributes;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.items.IOffhandAttackable;
-import tgw.evolution.items.ITwoHanded;
+import tgw.evolution.items.*;
 import tgw.evolution.network.PacketCSChangeBlock;
 import tgw.evolution.network.PacketCSOpenExtendedInventory;
 import tgw.evolution.network.PacketCSPlayerAttack;
@@ -66,12 +71,14 @@ import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.world.dimension.DimensionOverworld;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
 public class ClientEvents {
 
-    private static final ResourceLocation ICONS = Evolution.location("textures/gui/icons.png");
+    public static final ResourceLocation ICONS = Evolution.location("textures/gui/icons.png");
     private static final String TWO_HANDED = "evolution.actionbar.two_handed";
     private static final String INERTIA = "evolution.actionbar.inertia";
     private static final ITextComponent COMPONENT_TWO_HANDED = new TranslationTextComponent(TWO_HANDED).setStyle(EvolutionStyles.WHITE);
@@ -118,6 +125,224 @@ public class ClientEvents {
 
     public ClientEvents(Minecraft mc) {
         this.mc = mc;
+    }
+
+    @SubscribeEvent
+    public void renderTooltip(RenderTooltipEvent.PostText event) {
+        ItemStack stack = event.getStack();
+        Item item = stack.getItem();
+        if (stack.isFood()) {
+            Food food = item.getFood();
+            if (food != null) {
+                GlStateManager.pushMatrix();
+                GlStateManager.color3f(1F, 1F, 1F);
+                Minecraft mc = Minecraft.getInstance();
+                mc.getTextureManager().bindTexture(ICONS);
+                int pips = food.getHealing();
+                boolean poison = false;
+                for (Pair<EffectInstance, Float> effect : food.getEffects()) {
+                    if (effect.getLeft().getPotion().getEffectType() == EffectType.HARMFUL) {
+                        poison = true;
+                        break;
+                    }
+                }
+                int count = MathHelper.ceil((double) pips / 2);
+                int y = shiftTextByLines(event.getLines(), event.getY() + 10);
+                for (int i = 0; i < count; i++) {
+                    int x = event.getX() + i * 9 - 1;
+                    int textureX = 16;
+                    if (poison) {
+                        textureX += 117;
+                    }
+                    int textureY = 27;
+                    this.blit(x, y, textureX, textureY, 9, 9);
+                    textureX = 52;
+                    if (pips % 2 != 0 && i == 0) {
+                        textureX += 9;
+                    }
+                    if (poison) {
+                        textureX += 36;
+                    }
+                    this.blit(x, y, textureX, textureY, 9, 9);
+                }
+                GlStateManager.popMatrix();
+            }
+        }
+        else if (item instanceof IEvolutionItem) {
+            GlStateManager.pushMatrix();
+            GlStateManager.color3f(1F, 1F, 1F);
+            Minecraft mc = Minecraft.getInstance();
+            mc.getTextureManager().bindTexture(ICONS);
+            boolean hasMass = false;
+            boolean hasDamage = false;
+            boolean hasSpeed = false;
+            boolean hasReach = false;
+            for (EquipmentSlotType slot : EquipmentSlotType.values()) {
+                Multimap<String, AttributeModifier> multimap = stack.getAttributeModifiers(slot);
+                if (!multimap.isEmpty()) {
+                    for (Map.Entry<String, AttributeModifier> entry : multimap.entries()) {
+                        AttributeModifier attributemodifier = entry.getValue();
+                        if (attributemodifier.getID().compareTo(EvolutionAttributes.ATTACK_DAMAGE_MODIFIER) == 0) {
+                            hasDamage = true;
+                            continue;
+                        }
+                        if (attributemodifier.getID().compareTo(EvolutionAttributes.ATTACK_SPEED_MODIFIER) == 0) {
+                            hasSpeed = true;
+                            continue;
+                        }
+                        if (attributemodifier.getID() == EvolutionAttributes.REACH_DISTANCE_MODIFIER) {
+                            hasReach = true;
+                            continue;
+                        }
+                        if (attributemodifier.getID() == EvolutionAttributes.MASS_MODIFIER ||
+                            attributemodifier.getID() == EvolutionAttributes.MASS_MODIFIER_OFFHAND) {
+                            hasMass = true;
+                        }
+                    }
+                    break;
+                }
+            }
+            int line = 1;
+            if (item instanceof IFireAspect) {
+                line++;
+            }
+            if (item instanceof IKnockback) {
+                line++;
+            }
+            if (item instanceof ISweepAttack) {
+                line++;
+            }
+            if (stack.hasTag()) {
+                if (stack.getTag().contains("display", 10)) {
+                    CompoundNBT display = stack.getTag().getCompound("display");
+                    if (display.contains("color", 3)) {
+                        line++;
+                    }
+                    if (display.getTagId("Lore") == 9) {
+                        for (int j = 0; j < display.getList("Lore", 8).size(); ++j) {
+                            line++;
+                        }
+                    }
+                }
+            }
+            if (hasMass) {
+                line++;
+                //Mass line
+                int x = event.getX();
+                int y = shiftTextByLines(line, event.getY() + 10);
+                int textureX = 0;
+                int textureY = 247;
+                this.blit(x, y, textureX, textureY, 9, 9);
+                line++;
+            }
+            boolean hasAddedLine = false;
+            //Two Handed line
+            if (item instanceof ITwoHanded) {
+                line += 2;
+                hasAddedLine = true;
+            }
+            //Throwable line
+            if (item instanceof IThrowable) {
+                if (hasAddedLine) {
+                    line++;
+                }
+                else {
+                    line += 2;
+                }
+                hasAddedLine = true;
+            }
+            if (hasAddedLine) {
+                hasAddedLine = false;
+            }
+            else {
+                line++;
+            }
+            //Slot name
+            line++;
+            //Attack Speed
+            if (hasSpeed) {
+                int x = event.getX() + 4;
+                int y = shiftTextByLines(line, event.getY() + 10);
+                int textureX = 63;
+                int textureY = 247;
+                this.blit(x, y, textureX, textureY, 9, 9);
+                line++;
+            }
+            //Attack Damage
+            if (hasDamage) {
+                int textureX = 54;
+                if (item instanceof IMelee) {
+                    switch (((IMelee) item).getDamageType()) {
+                        case CRUSHING:
+                            textureX = 36;
+                            break;
+                        case PIERCING:
+                            textureX = 45;
+                            break;
+                        case SLASHING:
+                            textureX = 27;
+                            break;
+                    }
+                }
+                int x = event.getX() + 4;
+                int y = shiftTextByLines(line, event.getY() + 10);
+                int textureY = 247;
+                this.blit(x, y, textureX, textureY, 9, 9);
+                line++;
+            }
+            //Reach distance
+            if (hasReach) {
+                int x = event.getX() + 4;
+                int y = shiftTextByLines(line, event.getY() + 10);
+                int textureX = 18;
+                int textureY = 247;
+                this.blit(x, y, textureX, textureY, 9, 9);
+                line++;
+            }
+            //Mining Speed
+            if (item instanceof ItemTool) {
+                int x = event.getX() + 4;
+                int y = shiftTextByLines(line, event.getY() + 10);
+                int textureX = 9;
+                int textureY = 247;
+                this.blit(x, y, textureX, textureY, 9, 9);
+                line++;
+            }
+            //Unbreakable
+            if (stack.hasTag() && stack.getTag().getBoolean("Unbreakable")) {
+                line++;
+            }
+            //Durability
+            if (stack.getItem() instanceof IDurability) {
+                int x = event.getX();
+                int y = shiftTextByLines(line, event.getY() + 10);
+                int textureX = 72;
+                int textureY = 247;
+                this.blit(x, y, textureX, textureY, 9, 9);
+                line++;
+            }
+            GlStateManager.popMatrix();
+        }
+    }
+
+    public static int shiftTextByLines(List<String> lines, int y) {
+        for (int i = 1; i < lines.size(); i++) {
+            String s = lines.get(i);
+            s = TextFormatting.getTextWithoutFormattingCodes(s);
+            if (s != null && s.trim().isEmpty()) {
+                y += 10 * (i - 1) + 1;
+                return y;
+            }
+        }
+        return y;
+    }
+
+    private void blit(int x, int y, int textureX, int textureY, int sizeX, int sizeY) {
+        AbstractGui.blit(x, y, 20, (float) textureX, (float) textureY, sizeX, sizeY, 256, 256);
+    }
+
+    public static int shiftTextByLines(int desiredLine, int y) {
+        return y + 10 * (desiredLine - 1) + 1;
     }
 
     @SubscribeEvent
@@ -283,7 +508,6 @@ public class ClientEvents {
                         BlockPos pos = ((BlockRayTraceResult) this.mc.objectMouseOver).getPos();
                         if (this.mc.world.getBlockState(pos).getBlock() != Blocks.AIR) {
                             EvolutionNetwork.INSTANCE.sendToServer(new PacketCSChangeBlock((BlockRayTraceResult) this.mc.objectMouseOver));
-                            ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, 10, "field_71467_ac");
                         }
                     }
                 }
@@ -650,10 +874,6 @@ public class ClientEvents {
             return world.getBlockState(blockpos).getContainer(world, blockpos) != null;
         }
         return false;
-    }
-
-    private void blit(int x, int y, int textureX, int textureY, int sizeX, int sizeY) {
-        AbstractGui.blit(x, y, 20, (float) textureX, (float) textureY, sizeX, sizeY, 256, 256);
     }
 
     public void swingArm(Hand hand) {
