@@ -26,10 +26,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
 import net.minecraftforge.fml.network.FMLPlayMessages;
 import net.minecraftforge.fml.network.NetworkHooks;
-import tgw.evolution.blocks.BlockCobblestone;
-import tgw.evolution.blocks.BlockLeaves;
-import tgw.evolution.blocks.BlockUtils;
-import tgw.evolution.blocks.IReplaceable;
+import tgw.evolution.blocks.*;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
@@ -40,13 +37,9 @@ import java.util.List;
 
 public class EntityFallingWeight extends Entity implements IEntityAdditionalSpawnData {
 
-    private static final int FALL_HURT_MAX = 1000;
-    private static final float FALL_HURT_AMOUNT = 2.0F;
-    private final double verticalDrag;
-    private final double horizontalDrag;
-    private final double gravity;
     private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
     public int fallTime;
+    private int mass = 500;
     private BlockState state = EvolutionBlocks.DESTROY_9.get().getDefaultState();
 
     public EntityFallingWeight(@SuppressWarnings("unused") FMLPlayMessages.SpawnEntity spawn, World worldIn) {
@@ -55,14 +48,12 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
 
     public EntityFallingWeight(EntityType<EntityFallingWeight> type, World worldIn) {
         super(type, worldIn);
-        this.verticalDrag = 1/*Gravity.verticalDrag(this.world.getDimension(), this.getWidth())*/;
-        this.horizontalDrag = 1/*Gravity.horizontalDrag(this.world.getDimension(), this.getWidth(), this.getHeight())*/;
-        this.gravity = -Gravity.gravity(this.world.getDimension());
     }
 
     public EntityFallingWeight(World worldIn, double x, double y, double z, BlockState state) {
         this(EvolutionEntities.FALLING_WEIGHT.get(), worldIn);
         this.state = state;
+        this.mass = this.state.getBlock() instanceof BlockMass ? ((BlockMass) this.state.getBlock()).getMass(this.state) : 500;
         this.preventEntitySpawning = true;
         this.setPosition(x, y, z);
         this.setMotion(Vec3d.ZERO);
@@ -86,20 +77,51 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         this.prevPosZ = this.posZ;
         Block carryingBlock = this.state.getBlock();
         if (this.fallTime++ == 0) {
-            BlockPos blockpos = new BlockPos(this);
-            if (this.world.getBlockState(blockpos).getBlock() == carryingBlock) {
-                this.world.removeBlock(blockpos, false);
+            BlockPos pos = new BlockPos(this);
+            if (this.world.getBlockState(pos).getBlock() == carryingBlock) {
+                this.world.removeBlock(pos, false);
             }
             else if (!this.world.isRemote) {
                 this.remove();
                 return;
             }
         }
+        Vec3d motion = this.getMotion();
+        this.move(MoverType.SELF, motion);
+        double motionX = motion.x;
+        double motionY = motion.y;
+        double motionZ = motion.z;
+        double gravity = 0;
         if (!this.hasNoGravity()) {
-            Vec3d motion = this.getMotion();
-            this.setMotion(motion.x * this.horizontalDrag, (motion.y + this.gravity) * this.verticalDrag, motion.z * this.horizontalDrag);
+            gravity = Gravity.gravity(this.world.dimension);
         }
-        this.move(MoverType.SELF, this.getMotion());
+        double horizontalDrag = this.isInWater() ? Gravity.horizontalWaterDrag(this) / this.mass : Gravity.horizontalDrag(this) / this.mass;
+        double verticalDrag = this.isInWater() ? Gravity.verticalWaterDrag(this) / this.mass : Gravity.verticalDrag(this) / this.mass;
+        double dragX = Math.signum(motionX) * motionX * motionX * horizontalDrag;
+        if (Math.abs(dragX) > Math.abs(motionX)) {
+            dragX = motionX;
+        }
+        double dragY = Math.signum(motionY) * motionY * motionY * verticalDrag;
+        if (Math.abs(dragY) > Math.abs(motionY)) {
+            dragY = motionY;
+        }
+        double dragZ = Math.signum(motionZ) * motionZ * motionZ * horizontalDrag;
+        if (Math.abs(dragZ) > Math.abs(motionZ)) {
+            dragZ = motionZ;
+        }
+        motionX -= dragX;
+        motionY += -gravity - dragY;
+        motionZ -= dragZ;
+        if (Math.abs(motionX) < 1e-6) {
+            motionX = 0;
+        }
+        if (Math.abs(motionY) < 1e-6) {
+            motionY = 0;
+        }
+        if (Math.abs(motionZ) < 1e-6) {
+            motionZ = 0;
+        }
+        this.setMotion(motionX, motionY, motionZ);
         this.mutablePos.setPos(this.posX, this.posY, this.posZ);
         if (this.world.getBlockState(this.mutablePos.down()).getBlock() instanceof BlockLeaves) {
             if (this.state.getBlock() instanceof BlockLeaves) {
@@ -128,7 +150,8 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
             }
         }
         if (!this.onGround && !isInWater) {
-            if (this.fallTime > 100 && !this.world.isRemote && (this.mutablePos.getY() < 1 || this.mutablePos.getY() > 256) || this.fallTime > 6000) {
+            if (this.fallTime > 100 && !this.world.isRemote && (this.mutablePos.getY() < 1 || this.mutablePos.getY() > 256) ||
+                this.fallTime > 6_000) {
                 if (this.world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
                     if (carryingBlock instanceof BlockCobblestone) {
                         this.entityDropItem(new ItemStack(((BlockCobblestone) carryingBlock).getVariant().getRock(), 4));
@@ -149,7 +172,6 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
                     return;
                 }
             }
-            this.setMotion(this.getMotion().mul(0.7, 0.7, 0.7));
             if ((!isInWater || this.onGround) && state.getBlock() != Blocks.MOVING_PISTON) {
                 this.remove();
                 if (BlockUtils.isReplaceable(state)) {
@@ -190,27 +212,34 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
 
     @Override
     public void fall(float distance, float damageMultiplier) {
-        int i = MathHelper.ceil(distance - 1.0F);
-        if (i > 0) {
-            List<Entity> list = Lists.newArrayList(this.world.getEntitiesWithinAABBExcludingEntity(this, this.getBoundingBox()));
-            boolean isRock = this.state.getMaterial() == Material.ROCK;
-            boolean isWood = this.state.getMaterial() == Material.WOOD;
-            boolean isSoil = this.state.getMaterial() == Material.EARTH ||
-                             this.state.getMaterial() == Material.CLAY ||
-                             this.state.getMaterial() == Material.SAND;
-            DamageSource damagesource = DamageSource.FALLING_BLOCK;
-            if (isRock) {
-                damagesource = EvolutionDamage.FALLING_ROCK;
-            }
-            else if (isSoil) {
-                damagesource = EvolutionDamage.FALLING_SOIL;
-            }
-            else if (isWood) {
-                damagesource = EvolutionDamage.FALLING_WOOD;
-            }
-            for (Entity entity : list) {
-                entity.attackEntityFrom(damagesource, Math.min(MathHelper.floor(i * FALL_HURT_AMOUNT), FALL_HURT_MAX));
-            }
+        if (this.world.isRemote) {
+            return;
+        }
+        boolean isRock = this.state.getMaterial() == Material.ROCK;
+        boolean isWood = this.state.getMaterial() == Material.WOOD;
+        boolean isSoil = this.state.getMaterial() == Material.EARTH ||
+                         this.state.getMaterial() == Material.CLAY ||
+                         this.state.getMaterial() == Material.SAND;
+        DamageSource damagesource = DamageSource.FALLING_BLOCK;
+        if (isRock) {
+            damagesource = EvolutionDamage.FALLING_ROCK;
+        }
+        else if (isSoil) {
+            damagesource = EvolutionDamage.FALLING_SOIL;
+        }
+        else if (isWood) {
+            damagesource = EvolutionDamage.FALLING_WOOD;
+        }
+        float motionY = 20.0F * (float) this.getMotion().y;
+        List<Entity> list = Lists.newArrayList(this.world.getEntitiesWithinAABBExcludingEntity(this, this.getBoundingBox()));
+        float kinecticEnergy = this.mass * motionY * motionY / 2;
+        for (Entity entity : list) {
+            float forceOfImpact = kinecticEnergy / entity.getHeight();
+            float area = entity.getWidth() * entity.getWidth();
+            float pressure = forceOfImpact / area;
+            pressure += this.mass * Gravity.gravity(this.world.dimension) / area;
+            float damage = pressure / 344_738.0F * 100.0F;
+            entity.attackEntityFrom(damagesource, damage);
         }
     }
 

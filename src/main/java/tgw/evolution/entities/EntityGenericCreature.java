@@ -24,14 +24,14 @@ import net.minecraftforge.event.ForgeEventFactory;
 import tgw.evolution.util.EntityFlags;
 import tgw.evolution.util.MathHelper;
 
-public abstract class CreatureEntity extends net.minecraft.entity.CreatureEntity implements IEntityMass {
+public abstract class EntityGenericCreature extends CreatureEntity implements IEntityMass {
 
-    protected static final DataParameter<Boolean> DEAD = EntityDataManager.createKey(CreatureEntity.class, DataSerializers.BOOLEAN);
-    protected static final DataParameter<Boolean> SKELETON = EntityDataManager.createKey(CreatureEntity.class, DataSerializers.BOOLEAN);
+    protected static final DataParameter<Boolean> DEAD = EntityDataManager.createKey(EntityGenericCreature.class, DataSerializers.BOOLEAN);
+    protected static final DataParameter<Boolean> SKELETON = EntityDataManager.createKey(EntityGenericCreature.class, DataSerializers.BOOLEAN);
     protected int deathTimer;
     private int jumpTicks;
 
-    protected CreatureEntity(EntityType<? extends CreatureEntity> type, World worldIn) {
+    protected EntityGenericCreature(EntityType<? extends EntityGenericCreature> type, World worldIn) {
         super(type, worldIn);
     }
 
@@ -227,7 +227,7 @@ public abstract class CreatureEntity extends net.minecraft.entity.CreatureEntity
     public abstract int skeletonTime();
 
     /**
-     * @return Whether this entity becomes a skeleton after {@link CreatureEntity#skeletonTime()} ticks or simply disappears.
+     * @return Whether this entity becomes a skeleton after {@link EntityGenericCreature#skeletonTime()} ticks or simply disappears.
      */
     public abstract boolean becomesSkeleton();
 

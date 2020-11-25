@@ -27,14 +27,14 @@ import tgw.evolution.blocks.BlockSnowable;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.util.Time;
 
-public abstract class AnimalEntity extends AgeableEntity implements IEntityAdditionalSpawnData {
+public abstract class EntityGenericAnimal extends EntityGenericAgeable implements IEntityAdditionalSpawnData {
 
-    private static final DataParameter<Integer> PREGNANCY_TIME = EntityDataManager.createKey(AgeableEntity.class, DataSerializers.VARINT);
+    private static final DataParameter<Integer> PREGNANCY_TIME = EntityDataManager.createKey(EntityGenericAgeable.class, DataSerializers.VARINT);
     private final AnimalFoodWaterController foodController;
     private boolean inLove;
     private Gender gender = Gender.MALE;
 
-    protected AnimalEntity(EntityType<? extends AnimalEntity> type, World worldIn) {
+    protected EntityGenericAnimal(EntityType<? extends EntityGenericAnimal> type, World worldIn) {
         super(type, worldIn);
         this.foodController = new AnimalFoodWaterController(this);
         this.gender = Gender.fromBoolean(this.rand.nextBoolean());
@@ -43,6 +43,7 @@ public abstract class AnimalEntity extends AgeableEntity implements IEntityAddit
     @Override
     protected void registerData() {
         super.registerData();
+        //noinspection ConstantExpression
         this.dataManager.register(PREGNANCY_TIME, -Time.MONTH_IN_TICKS);
     }
 
@@ -83,6 +84,7 @@ public abstract class AnimalEntity extends AgeableEntity implements IEntityAddit
             if (this.dataManager.get(PREGNANCY_TIME) == 0) {
                 this.haveBabies();
             }
+            //noinspection ConstantExpression
             if (this.dataManager.get(PREGNANCY_TIME) > -Time.MONTH_IN_TICKS) {
                 this.dataManager.set(PREGNANCY_TIME, this.dataManager.get(PREGNANCY_TIME) - 1);
             }
@@ -223,7 +225,7 @@ public abstract class AnimalEntity extends AgeableEntity implements IEntityAddit
     /**
      * Returns true if the mob is currently able to mate with the specified mob.
      */
-    public boolean canMateWith(AnimalEntity otherAnimal) {
+    public boolean canMateWith(EntityGenericAnimal otherAnimal) {
         return otherAnimal != this &&
                otherAnimal.getClass() == this.getClass() &&
                this.gender != otherAnimal.gender &&

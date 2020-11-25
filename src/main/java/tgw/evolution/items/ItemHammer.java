@@ -15,19 +15,19 @@ public class ItemHammer extends ItemTool {
     private static final Set<Material> EFFECTIVE_MAT = Sets.newHashSet();
     private final double mass;
 
-    public ItemHammer(IItemTier tier, float attackSpeedIn, Properties builder, double mass) {
-        super(attackSpeedIn, tier, EFFECTIVE_ON, EFFECTIVE_MAT, builder.addToolType(ToolTypeEv.HAMMER, tier.getHarvestLevel()));
+    public ItemHammer(IItemTier tier, float attackSpeed, Properties builder, double mass) {
+        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MAT, builder.addToolType(ToolTypeEv.HAMMER, tier.getHarvestLevel()));
         this.mass = mass;
+    }
+
+    @Override
+    protected float setBaseDamage() {
+        return 6.0f;
     }
 
     @Override
     protected float setReach() {
         return 3;
-    }
-
-    @Override
-    protected float setBaseDamage() {
-        return 1.5f;
     }
 
     @Override

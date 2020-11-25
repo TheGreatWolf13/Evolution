@@ -17,7 +17,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.potion.Effects;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.*;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.Vec3d;
@@ -38,14 +40,21 @@ import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.inventory.PlayerInventoryCapability;
 import tgw.evolution.capabilities.inventory.PlayerInventoryCapabilityProvider;
-import tgw.evolution.entities.CreatureEntity;
+import tgw.evolution.entities.EntityGenericCreature;
 import tgw.evolution.entities.EvolutionAttributes;
+import tgw.evolution.entities.IAgressive;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.inventory.ContainerExtendedHandler;
 import tgw.evolution.network.PacketCSPlayerFall;
-import tgw.evolution.util.*;
+import tgw.evolution.util.Gravity;
+import tgw.evolution.util.HarvestLevel;
+import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.PlayerHelper;
+import tgw.evolution.util.damage.EvDamageSource;
+import tgw.evolution.util.damage.EvEntityDamageSource;
+import tgw.evolution.util.damage.EvIndirectEntityDamageSource;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -55,7 +64,14 @@ public class EntityEvents {
 
     private static final Method SET_POSE_METHOD = ObfuscationReflectionHelper.findMethod(Entity.class, "func_213301_b", Pose.class);
     private static final Random RANDOM = new Random();
-    private final Map<DamageSource, Float> damageMultipliers = new WeakHashMap<>();
+    private static final Set<DamageSource> IGNORED_DAMAGE_SOURCES = new HashSet<>();
+
+    static {
+        IGNORED_DAMAGE_SOURCES.add(EvolutionDamage.FALLING_ROCK);
+        IGNORED_DAMAGE_SOURCES.add(EvolutionDamage.FALL);
+    }
+
+    private final Map<DamageSource, EquipmentSlotType> damageMultipliers = new WeakHashMap<>();
     private final Map<UUID, Integer> playerTimeSinceLastHit = new HashMap<>();
 
     @SubscribeEvent
@@ -104,9 +120,9 @@ public class EntityEvents {
             if (worldBorder <= 1) {
                 spawnRadius = 1;
             }
-            long spawnDiameter = spawnRadius * 2 + 1;
+            long spawnDiameter = spawnRadius * 2L + 1;
             long spawnArea = spawnDiameter * spawnDiameter;
-            int spawnAreaCasted = spawnArea > 2147483647L ? Integer.MAX_VALUE : (int) spawnArea;
+            int spawnAreaCasted = spawnArea > 2_147_483_647L ? Integer.MAX_VALUE : (int) spawnArea;
             int spawnAreaClamped = strangeRespawnFunc(spawnAreaCasted);
             int randomInt = RANDOM.nextInt(spawnAreaCasted);
             for (int l1 = 0; l1 < spawnAreaCasted; ++l1) {
@@ -160,7 +176,7 @@ public class EntityEvents {
             event.setCanceled(true);
             return;
         }
-        if (!(entity instanceof PlayerEntity) && !(entity instanceof CreatureEntity)) {
+        if (!(entity instanceof PlayerEntity) && !(entity instanceof EntityGenericCreature)) {
             return;
         }
         //Sets the gravity of the Living Entities and the Player to be that of the dimension they're in
@@ -190,7 +206,7 @@ public class EntityEvents {
     @SubscribeEvent
     public void onLivingFall(LivingFallEvent event) {
         Entity entity = event.getEntity();
-        if (!(entity instanceof PlayerEntity) && !(entity instanceof CreatureEntity)) {
+        if (!(entity instanceof PlayerEntity) && !(entity instanceof EntityGenericCreature)) {
             return;
         }
         double velocity = entity.getMotion().y;
@@ -209,8 +225,8 @@ public class EntityEvents {
         velocity *= 20;
         double legHeight = PlayerHelper.LEG_HEIGHT;
         double baseMass = PlayerHelper.MASS;
-        if (entity instanceof CreatureEntity) {
-            CreatureEntity creature = (CreatureEntity) entity;
+        if (entity instanceof EntityGenericCreature) {
+            EntityGenericCreature creature = (EntityGenericCreature) entity;
             legHeight = creature.getLegHeight();
             baseMass = creature.getMass();
         }
@@ -236,8 +252,12 @@ public class EntityEvents {
     @SubscribeEvent
     public void onLivingTick(LivingUpdateEvent event) {
         Entity entity = event.getEntity();
-        if (!(entity instanceof PlayerEntity) && !(entity instanceof CreatureEntity)) {
+        if (!(entity instanceof PlayerEntity) && !(entity instanceof EntityGenericCreature)) {
             return;
+        }
+        //Deals damage inside blocks
+        if (entity.isEntityInsideOpaqueBlock()) {
+            entity.attackEntityFrom(EvolutionDamage.IN_WALL, 5.0F);
         }
         //Deals with water
         if (!entity.onGround && entity.isInWater()) {
@@ -270,7 +290,7 @@ public class EntityEvents {
         }
         BlockPos pos = entity.getPosition();
         IFluidState fluidState = entity.world.getFluidState(pos);
-        double distanceOfSlowDown = fluidState.getLevel() * 0.0625;
+        double distanceOfSlowDown = fluidState.getLevel() * 0.062_5;
         double velocity = entity.getMotion().y;
         if (entity instanceof ClientPlayerEntity) {
             EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerFall(velocity, distanceOfSlowDown));
@@ -369,23 +389,19 @@ public class EntityEvents {
         if (event.getEntityLiving().world.isRemote) {
             return;
         }
-        if (event.getSource() instanceof DamageSourceMelee) {
-            //TODO my entities damage multipliers
-            if (event.getEntityLiving() instanceof PlayerEntity) {
-                PlayerHelper.reactToDamageType((PlayerEntity) event.getEntityLiving(), ((DamageSourceMelee) event.getSource()).getType());
+        if (event.getEntityLiving() instanceof PlayerEntity) {
+            EquipmentSlotType hitPart = this.damageMultipliers.remove(event.getSource());
+            Evolution.LOGGER.debug("damage before = " + event.getAmount());
+            Evolution.LOGGER.debug("hitPart = " + hitPart);
+            EvolutionDamage.Type type = EvolutionDamage.Type.GENERIC;
+            if (event.getSource() instanceof EvDamageSource) {
+                type = ((EvDamageSource) event.getSource()).getType();
             }
+            event.setAmount(PlayerHelper.getDamage(hitPart, (PlayerEntity) event.getEntityLiving(), event.getAmount(), type));
+            Evolution.LOGGER.debug("damage after = " + event.getAmount());
         }
         if (event.getSource().getTrueSource() instanceof PlayerEntity) {
             event.getEntityLiving().hurtResistantTime = 0;
-        }
-        if (event.getEntityLiving() instanceof PlayerEntity) {
-            Float multiplier = this.damageMultipliers.remove(event.getSource());
-            Evolution.LOGGER.debug("damage before = " + event.getAmount());
-            Evolution.LOGGER.debug("multiplier = " + multiplier);
-            if (multiplier != null) {
-                event.setAmount(event.getAmount() * multiplier);
-                Evolution.LOGGER.debug("damage after = " + event.getAmount());
-            }
         }
     }
 
@@ -432,7 +448,7 @@ public class EntityEvents {
                                                      event.player.getPosition(),
                                                      SoundEvents.BLOCK_FIRE_EXTINGUISH,
                                                      SoundCategory.BLOCKS,
-                                                     1F,
+                                                     1.0F,
                                                      2.6F + (event.player.world.rand.nextFloat() - event.player.world.rand.nextFloat()) * 0.8F);
                     }
                 }
@@ -445,7 +461,7 @@ public class EntityEvents {
         int baseMass = (int) mass.getBaseValue();
         int totalMass = (int) mass.getValue();
         int equipMass = totalMass - baseMass;
-        float stepHeight = 1.0625f - equipMass * 0.00114f;
+        float stepHeight = 1.062_5f - equipMass * 0.001_14f;
         return MathHelper.clampMin(stepHeight, 0.6f);
     }
 
@@ -454,56 +470,58 @@ public class EntityEvents {
         if (event.getEntityLiving().world.isRemote) {
             return;
         }
-        LivingEntity hitEntity = event.getEntityLiving();
         DamageSource source = event.getSource();
-        if (source == EvolutionDamage.FALL) {
+        if (!(source instanceof EvDamageSource)) {
+            Evolution.LOGGER.debug("Canceling vanilla damage source: {}", source);
+            event.setCanceled(true);
             return;
         }
-        if (source == DamageSource.OUT_OF_WORLD) {
+        if (IGNORED_DAMAGE_SOURCES.contains(source)) {
             return;
         }
         float damage = event.getAmount();
-        if (source == DamageSource.FALL) {
-            if (hitEntity instanceof PlayerEntity || hitEntity instanceof CreatureEntity) {
-                event.setCanceled(true);
-            }
-            return;
-        }
         Evolution.LOGGER.debug("amount = " + damage);
-        if (source instanceof IndirectEntityDamageSource && source.isProjectile()) {
+        LivingEntity hitEntity = event.getEntityLiving();
+        //Raytracing projectile damage
+        if (source instanceof EvIndirectEntityDamageSource && source.isProjectile()) {
             if (hitEntity instanceof PlayerEntity) {
                 EquipmentSlotType type = PlayerHelper.getPartByPosition(source.getImmediateSource().getBoundingBox().minY, (PlayerEntity) hitEntity);
                 Evolution.LOGGER.debug("type ranged = {}", type);
-                this.damageMultipliers.put(source, PlayerHelper.getProjectileModifier(type));
+                this.damageMultipliers.put(source, type);
             }
             return;
         }
-        if (source instanceof EntityDamageSource) {
+        //Raytracing melee damage
+        if (source instanceof EvEntityDamageSource) {
             Entity trueSource = source.getTrueSource();
             if (trueSource instanceof PlayerEntity && !(hitEntity instanceof PlayerEntity)) {
                 return;
             }
-            if (!((EntityDamageSource) source).getIsThornsDamage()) {
-                //TODO use range
-                EntityRayTraceResult rayTrace = MathHelper.rayTraceEntityFromEyes(trueSource, 1f, 5);
-                if (rayTrace == null) {
-                    event.setCanceled(true);
-                    return;
-                }
-                Entity rayTracedEntity = rayTrace.getEntity();
-                if (hitEntity == rayTracedEntity) {
-                    if (hitEntity instanceof PlayerEntity) {
-                        EquipmentSlotType type = PlayerHelper.getPartByPosition(rayTrace.getHitVec().y, (PlayerEntity) hitEntity);
-                        Evolution.LOGGER.debug("type = {}", type);
-                        this.damageMultipliers.put(source, PlayerHelper.getHitMultiplier(type, (PlayerEntity) hitEntity, damage));
-                    }
-                }
-                else {
-                    rayTracedEntity.attackEntityFrom(source, damage);
-                    event.setCanceled(true);
-                }
+            double range = 3;
+            if (trueSource instanceof IAgressive) {
+                range = ((IAgressive) trueSource).getReach();
+            }
+            else if (trueSource instanceof PlayerEntity) {
+                range = ((PlayerEntity) trueSource).getAttribute(PlayerEntity.REACH_DISTANCE).getValue();
+            }
+            EntityRayTraceResult rayTrace = MathHelper.rayTraceEntityFromEyes(trueSource, 1.0F, range);
+            if (rayTrace == null) {
+                event.setCanceled(true);
                 return;
             }
+            Entity rayTracedEntity = rayTrace.getEntity();
+            if (hitEntity.equals(rayTracedEntity)) {
+                if (hitEntity instanceof PlayerEntity) {
+                    EquipmentSlotType type = PlayerHelper.getPartByPosition(rayTrace.getHitVec().y, (PlayerEntity) hitEntity);
+                    Evolution.LOGGER.debug("type = {}", type);
+                    this.damageMultipliers.put(source, type);
+                }
+            }
+            else {
+                rayTracedEntity.attackEntityFrom(source, damage);
+                event.setCanceled(true);
+            }
+            return;
         }
         Evolution.LOGGER.debug("Damage Source not calculated: " + source.damageType);
     }

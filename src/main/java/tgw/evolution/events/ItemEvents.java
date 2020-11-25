@@ -1,14 +1,8 @@
 package tgw.evolution.events;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.gson.JsonParseException;
-import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.command.arguments.BlockStateParser;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
@@ -18,9 +12,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.Tag;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.*;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -31,11 +22,9 @@ import tgw.evolution.items.*;
 import tgw.evolution.util.EvolutionStyles;
 import tgw.evolution.util.MathHelper;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ItemEvents {
 
@@ -54,34 +43,6 @@ public class ItemEvents {
     private static final ITextComponent COMPONENT_OFFHAND = new TranslationTextComponent(OFFHAND).setStyle(EvolutionStyles.LIGHT_GREY);
     private static final ITextComponent COMPONENT_THROWABLE = new TranslationTextComponent(THROWABLE).setStyle(EvolutionStyles.PROPERTY);
     private static final ITextComponent EMPTY = new StringTextComponent("");
-
-    private static Collection<ITextComponent> getPlacementTooltip(String stateString) {
-        try {
-            BlockStateParser blockstateparser = new BlockStateParser(new StringReader(stateString), true).parse(true);
-            BlockState blockstate = blockstateparser.getState();
-            ResourceLocation resourcelocation = blockstateparser.getTag();
-            boolean flag = blockstate != null;
-            boolean flag1 = resourcelocation != null;
-            if (flag || flag1) {
-                if (flag) {
-                    return Lists.newArrayList(blockstate.getBlock().getNameTextComponent().applyTextStyle(TextFormatting.DARK_GRAY));
-                }
-                Tag<Block> tag = BlockTags.getCollection().get(resourcelocation);
-                if (tag != null) {
-                    Collection<Block> collection = tag.getAllElements();
-                    if (!collection.isEmpty()) {
-                        return collection.stream()
-                                         .map(Block::getNameTextComponent)
-                                         .map(p_222119_0_ -> p_222119_0_.applyTextStyle(TextFormatting.DARK_GRAY))
-                                         .collect(Collectors.toList());
-                    }
-                }
-            }
-        }
-        catch (CommandSyntaxException ignored) {
-        }
-        return Lists.newArrayList(new StringTextComponent("missingno").applyTextStyle(TextFormatting.DARK_GRAY));
-    }
 
     @SubscribeEvent
     public void itemTooltipEvent(ItemTooltipEvent event) {

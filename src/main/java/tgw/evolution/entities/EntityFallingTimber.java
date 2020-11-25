@@ -38,7 +38,7 @@ import java.util.List;
 
 public class EntityFallingTimber extends Entity implements IEntityAdditionalSpawnData {
 
-    private static final int FALL_HURT_MAX = 1000;
+    private static final int FALL_HURT_MAX = 1_000;
     private static final float FALL_HURT_AMOUNT = 2.0F;
     public int fallTime;
     private BlockState state = EvolutionBlocks.DESTROY_9.get().getDefaultState();
@@ -59,7 +59,15 @@ public class EntityFallingTimber extends Entity implements IEntityAdditionalSpaw
         super(type, worldIn);
     }
 
-    public EntityFallingTimber(World worldIn, double x, double y, double z, BlockState fallingBlockState, BlockState newState, boolean isLog, double distance, int delay) {
+    public EntityFallingTimber(World worldIn,
+                               double x,
+                               double y,
+                               double z,
+                               BlockState fallingBlockState,
+                               BlockState newState,
+                               boolean isLog,
+                               double distance,
+                               int delay) {
         this(EvolutionEntities.FALLING_TIMBER.get(), worldIn);
         this.state = fallingBlockState;
         this.newState = newState;
@@ -78,22 +86,7 @@ public class EntityFallingTimber extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    public boolean canBeAttackedWithItem() {
-        return false;
-    }
-
-    @Override
-    protected boolean canTriggerWalking() {
-        return false;
-    }
-
-    @Override
     protected void registerData() {
-    }
-
-    @Override
-    public boolean canBeCollidedWith() {
-        return this.isLog;
     }
 
     @Override
@@ -122,7 +115,8 @@ public class EntityFallingTimber extends Entity implements IEntityAdditionalSpaw
             }
             this.move(MoverType.SELF, this.getMotion());
             if (!this.world.isRemote) {
-                if (!this.fixMotion && (Math.abs(this.posX - this.originalX) >= this.distance || Math.abs(this.posZ - this.originalZ) >= this.distance)) {
+                if (!this.fixMotion &&
+                    (Math.abs(this.posX - this.originalX) >= this.distance || Math.abs(this.posZ - this.originalZ) >= this.distance)) {
                     this.setMotion(0, this.getMotion().getY(), 0);
                     this.fixMotion = true;
                 }
@@ -167,7 +161,9 @@ public class EntityFallingTimber extends Entity implements IEntityAdditionalSpaw
                     }
                     if (iblockstate.getBlock() != Blocks.MOVING_PISTON) {
                         this.remove();
-                        if (BlockUtils.isReplaceable(iblockstate) && !FallingBlock.canFallThrough(this.world.getBlockState(pos.down())) && this.world.setBlockState(pos, this.state, 3)) {
+                        if (BlockUtils.isReplaceable(iblockstate) &&
+                            !FallingBlock.canFallThrough(this.world.getBlockState(pos.down())) &&
+                            this.world.setBlockState(pos, this.state, 3)) {
                             if (BlockUtils.isReplaceable(iblockstate)) {
                                 if (!(iblockstate.getBlock() instanceof BlockLeaves)) {
                                     this.entityDropItem(iblockstate.getBlock());
@@ -184,6 +180,11 @@ public class EntityFallingTimber extends Entity implements IEntityAdditionalSpaw
                 }
             }
         }
+    }
+
+    @Override
+    protected boolean canTriggerWalking() {
+        return false;
     }
 
     @Override
@@ -207,15 +208,12 @@ public class EntityFallingTimber extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    protected void writeAdditional(CompoundNBT compound) {
-        compound.put("State", NBTUtil.writeBlockState(this.state));
-        compound.put("NewState", NBTUtil.writeBlockState(this.newState));
-        compound.putInt("Time", this.fallTime);
-        compound.putBoolean("HurtEntities", this.hurtEntities);
-        compound.putDouble("Distance", this.distance);
-        compound.putDouble("OriginX", this.originalX);
-        compound.putDouble("OriginZ", this.originalZ);
-        compound.putByte("Delay", (byte) this.delay);
+    public void applyEntityCollision(Entity entityIn) {
+    }
+
+    @Override
+    public boolean canBeCollidedWith() {
+        return this.isLog;
     }
 
     @Override
@@ -232,8 +230,19 @@ public class EntityFallingTimber extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public boolean canRenderOnFire() {
+    protected void writeAdditional(CompoundNBT compound) {
+        compound.put("State", NBTUtil.writeBlockState(this.state));
+        compound.put("NewState", NBTUtil.writeBlockState(this.newState));
+        compound.putInt("Time", this.fallTime);
+        compound.putBoolean("HurtEntities", this.hurtEntities);
+        compound.putDouble("Distance", this.distance);
+        compound.putDouble("OriginX", this.originalX);
+        compound.putDouble("OriginZ", this.originalZ);
+        compound.putByte("Delay", (byte) this.delay);
+    }
+
+    @Override
+    public boolean canBeAttackedWithItem() {
         return false;
     }
 
@@ -243,8 +252,10 @@ public class EntityFallingTimber extends Entity implements IEntityAdditionalSpaw
         category.func_71507_a("Immitating BlockState", this.state.toString());
     }
 
-    public BlockState getBlockState() {
-        return this.state;
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    public boolean canRenderOnFire() {
+        return false;
     }
 
     @Override
@@ -253,12 +264,12 @@ public class EntityFallingTimber extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    public void applyEntityCollision(Entity entityIn) {
-    }
-
-    @Override
     public IPacket<?> createSpawnPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    public BlockState getBlockState() {
+        return this.state;
     }
 
     @Override

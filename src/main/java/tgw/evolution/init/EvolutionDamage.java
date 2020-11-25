@@ -3,36 +3,48 @@ package tgw.evolution.init;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.IndirectEntityDamageSource;
-import tgw.evolution.util.DamageSourceMelee;
+import tgw.evolution.entities.projectiles.EntityGenericProjectile;
+import tgw.evolution.util.damage.EvDamageSource;
+import tgw.evolution.util.damage.EvEntityDamageSource;
+import tgw.evolution.util.damage.EvIndirectEntityDamageSource;
 
 import javax.annotation.Nullable;
 
-public class EvolutionDamage {
+public final class EvolutionDamage {
 
-    public static final DamageSource FALL = new DamageSource("fall_damage").setDamageBypassesArmor();
-    public static final DamageSource FALLING_ROCK = new DamageSource("falling_rock");
-    public static final DamageSource FALLING_SOIL = new DamageSource("falling_soil");
-    public static final DamageSource FALLING_WOOD = new DamageSource("falling_wood");
-    public static final DamageSource FALLING_TREE = new DamageSource("falling_tree");
+    public static final DamageSource FALL = new EvDamageSource("fall_damage", Type.FALL).setDamageBypassesArmor();
+    public static final DamageSource FALLING_ROCK = new EvDamageSource("falling_rock", Type.CRUSHING).setDamageBypassesArmor();
+    public static final DamageSource FALLING_SOIL = new EvDamageSource("falling_soil", Type.CRUSHING).setDamageBypassesArmor();
+    public static final DamageSource FALLING_WOOD = new EvDamageSource("falling_wood", Type.CRUSHING).setDamageBypassesArmor();
+    public static final DamageSource FALLING_TREE = new EvDamageSource("falling_tree", Type.CRUSHING).setDamageBypassesArmor();
+    public static final DamageSource IN_WALL = new EvDamageSource("inWall", Type.SUFFOCATION).setDamageBypassesArmor();
 
-    public static DamageSource causeSpearDamage(Entity source, @Nullable Entity indirectEntityIn) {
-        return new IndirectEntityDamageSource("spear", source, indirectEntityIn).setProjectile();
+    private EvolutionDamage() {
     }
 
-    public static DamageSource causeHookDamage(Entity source, @Nullable Entity indirectEntityIn) {
-        return new IndirectEntityDamageSource("hook", source, indirectEntityIn).setProjectile();
+    public static DamageSource causeArrowDamage(EntityGenericProjectile arrow, @Nullable Entity trueSource) {
+        return new EvIndirectEntityDamageSource("arrow", arrow, trueSource, Type.PIERCING).setProjectile();
+    }
+
+    public static DamageSource causeSpearDamage(Entity source, @Nullable Entity trueSource) {
+        return new EvIndirectEntityDamageSource("spear", source, trueSource, Type.PIERCING).setProjectile();
+    }
+
+    public static DamageSource causeHookDamage(Entity source, @Nullable Entity trueSource) {
+        return new EvIndirectEntityDamageSource("hook", source, trueSource, Type.PIERCING).setProjectile();
     }
 
     public static DamageSource causePlayerMeleeDamage(PlayerEntity player, Type type) {
-        return new DamageSourceMelee("player", player, type);
+        return new EvEntityDamageSource("player", player, type);
     }
 
     public enum Type {
         CRUSHING("crushing"),
+        FALL("fall"),
         GENERIC("generic"),
         PIERCING("piercing"),
-        SLASHING("slashing");
+        SLASHING("slashing"),
+        SUFFOCATION("suffocation");
 
         private final String name;
         private final String translationKey;

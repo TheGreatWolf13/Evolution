@@ -6,7 +6,7 @@ import net.minecraft.entity.ai.attributes.RangedAttribute;
 
 import java.util.UUID;
 
-public class EvolutionAttributes {
+public final class EvolutionAttributes {
 
     public static final IAttribute MASS = new RangedAttribute(null, "evolution.mass", 70, 0, Integer.MAX_VALUE).setShouldWatch(true);
     public static final UUID MASS_MODIFIER = UUID.fromString("d12c48de-b027-4f50-931e-81e7184a78a2");
@@ -20,4 +20,6 @@ public class EvolutionAttributes {
                                                                                -0.07,
                                                                                AttributeModifier.Operation.ADDITION).setSaved(false);
 
+    private EvolutionAttributes() {
+    }
 }

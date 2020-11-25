@@ -92,7 +92,6 @@ public class ClientEvents {
     private GameRenderer oldGameRenderer;
     private boolean inverted;
     private boolean skyRendererBinded;
-    private SkyRenderer skyRenderer;
     private int currentShader;
     private int currentThirdPersonView;
     //Jump variables
@@ -142,7 +141,7 @@ public class ClientEvents {
             Food food = item.getFood();
             if (food != null) {
                 GlStateManager.pushMatrix();
-                GlStateManager.color3f(1F, 1F, 1F);
+                GlStateManager.color3f(1.0F, 1.0F, 1.0F);
                 Minecraft mc = Minecraft.getInstance();
                 mc.getTextureManager().bindTexture(ICONS);
                 int pips = food.getHealing();
@@ -162,7 +161,7 @@ public class ClientEvents {
                         textureX += 117;
                     }
                     int textureY = 27;
-                    this.blit(x, y, textureX, textureY, 9, 9);
+                    blit(x, y, textureX, textureY, 9, 9);
                     textureX = 52;
                     if (pips % 2 != 0 && i == 0) {
                         textureX += 9;
@@ -170,14 +169,14 @@ public class ClientEvents {
                     if (poison) {
                         textureX += 36;
                     }
-                    this.blit(x, y, textureX, textureY, 9, 9);
+                    blit(x, y, textureX, textureY, 9, 9);
                 }
                 GlStateManager.popMatrix();
             }
         }
         else if (item instanceof IEvolutionItem) {
             GlStateManager.pushMatrix();
-            GlStateManager.color3f(1F, 1F, 1F);
+            GlStateManager.color3f(1.0F, 1.0F, 1.0F);
             Minecraft mc = Minecraft.getInstance();
             mc.getTextureManager().bindTexture(ICONS);
             boolean hasMass = false;
@@ -239,7 +238,7 @@ public class ClientEvents {
                 int y = shiftTextByLines(line, event.getY() + 10);
                 int textureX = 0;
                 int textureY = 247;
-                this.blit(x, y, textureX, textureY, 9, 9);
+                blit(x, y, textureX, textureY, 9, 9);
                 line++;
             }
             boolean hasAddedLine = false;
@@ -272,7 +271,7 @@ public class ClientEvents {
                 int y = shiftTextByLines(line, event.getY() + 10);
                 int textureX = 63;
                 int textureY = 247;
-                this.blit(x, y, textureX, textureY, 9, 9);
+                blit(x, y, textureX, textureY, 9, 9);
                 line++;
             }
             //Attack Damage
@@ -294,7 +293,7 @@ public class ClientEvents {
                 int x = event.getX() + 4;
                 int y = shiftTextByLines(line, event.getY() + 10);
                 int textureY = 247;
-                this.blit(x, y, textureX, textureY, 9, 9);
+                blit(x, y, textureX, textureY, 9, 9);
                 line++;
             }
             //Reach distance
@@ -303,7 +302,7 @@ public class ClientEvents {
                 int y = shiftTextByLines(line, event.getY() + 10);
                 int textureX = 18;
                 int textureY = 247;
-                this.blit(x, y, textureX, textureY, 9, 9);
+                blit(x, y, textureX, textureY, 9, 9);
                 line++;
             }
             //Mining Speed
@@ -312,7 +311,7 @@ public class ClientEvents {
                 int y = shiftTextByLines(line, event.getY() + 10);
                 int textureX = 9;
                 int textureY = 247;
-                this.blit(x, y, textureX, textureY, 9, 9);
+                blit(x, y, textureX, textureY, 9, 9);
                 line++;
             }
             //Unbreakable
@@ -325,7 +324,7 @@ public class ClientEvents {
                 int y = shiftTextByLines(line, event.getY() + 10);
                 int textureX = 72;
                 int textureY = 247;
-                this.blit(x, y, textureX, textureY, 9, 9);
+                blit(x, y, textureX, textureY, 9, 9);
                 line++;
             }
             GlStateManager.popMatrix();
@@ -344,8 +343,8 @@ public class ClientEvents {
         return y;
     }
 
-    private void blit(int x, int y, int textureX, int textureY, int sizeX, int sizeY) {
-        AbstractGui.blit(x, y, 20, (float) textureX, (float) textureY, sizeX, sizeY, 256, 256);
+    private static void blit(int x, int y, int textureX, int textureY, int sizeX, int sizeY) {
+        AbstractGui.blit(x, y, 20, textureX, textureY, sizeX, sizeY, 256, 256);
     }
 
     public static int shiftTextByLines(int desiredLine, int y) {
@@ -367,7 +366,7 @@ public class ClientEvents {
             GlStateManager.fogStart(f1 * multiplier);
             GlStateManager.fogEnd(f1 * multiplier * 4.0F);
             if (GL.getCapabilities().GL_NV_fog_distance) {
-                GL11.glFogi(34138, 34139);
+                GL11.glFogi(34_138, 34_139);
             }
             event.setDensity(2.0F);
             event.setCanceled(true);
@@ -399,10 +398,10 @@ public class ClientEvents {
                                          GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
                                          GlStateManager.SourceFactor.ONE,
                                          GlStateManager.DestFactor.ZERO);
-        GlStateManager.lineWidth(Math.max(2.5F, this.mc.mainWindow.getFramebufferWidth() / 1920.0F * 2.5F));
+        GlStateManager.lineWidth(Math.max(2.5F, this.mc.mainWindow.getFramebufferWidth() / 1_920.0F * 2.5F));
         GlStateManager.disableTexture();
         GlStateManager.depthMask(false);
-        GlStateManager.matrixMode(5889);
+        GlStateManager.matrixMode(5_889);
         GlStateManager.pushMatrix();
         GlStateManager.scalef(1.0F, 1.0F, 0.999F);
         double projX = info.getProjectedView().x;
@@ -410,7 +409,7 @@ public class ClientEvents {
         double projZ = info.getProjectedView().z;
         WorldRenderer.drawShape(shape, pos.getX() - projX, pos.getY() - projY, pos.getZ() - projZ, 1.0F, 1.0F, 0.0F, 1.0F);
         GlStateManager.popMatrix();
-        GlStateManager.matrixMode(5888);
+        GlStateManager.matrixMode(5_888);
         GlStateManager.depthMask(true);
         GlStateManager.enableTexture();
         GlStateManager.disableBlend();
@@ -422,14 +421,12 @@ public class ClientEvents {
         this.mc.gameSettings.autoJump = false;
         if (this.mc.player == null) {
             this.skyRendererBinded = false;
-            this.skyRenderer = null;
             return;
         }
         //Bind Sky Renderer
         if (!this.skyRendererBinded) {
             if (this.mc.world.dimension.getType() == DimensionType.OVERWORLD) {
-                this.skyRenderer = new SkyRenderer(this.mc.worldRenderer);
-                this.mc.world.dimension.setSkyRenderer(this.skyRenderer);
+                this.mc.world.dimension.setSkyRenderer(new SkyRenderer(this.mc.worldRenderer));
                 this.skyRendererBinded = true;
             }
         }
@@ -484,13 +481,13 @@ public class ClientEvents {
                     this.mc.world.dimension.tick();
                 }
                 EntityRayTraceResult leftRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player,
-                                                                                      1f,
+                                                                                      1.0f,
                                                                                       this.mc.player.getAttribute(PlayerEntity.REACH_DISTANCE)
                                                                                                     .getValue());
                 this.leftPointedEntity = leftRayTrace == null ? null : leftRayTrace.getEntity();
                 if (this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable) {
                     EntityRayTraceResult rightRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player,
-                                                                                           1f,
+                                                                                           1.0f,
                                                                                            ((IOffhandAttackable) this.mc.player.getHeldItemOffhand()
                                                                                                                                .getItem()).getReach() +
                                                                                            PlayerHelper.REACH_DISTANCE);
@@ -580,10 +577,10 @@ public class ClientEvents {
                 else {
                     float cooledAttackStrength = this.getRightCooledAttackStrength(this.mc.player.getHeldItemOffhand().getItem(), 1);
                     this.rightEquipProgress += MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength -
-                                                                this.rightEquipProgress, -0.4F, 0.4F);
+                                                                this.rightEquipProgress, -0.4f, 0.4F);
                     cooledAttackStrength = this.getLeftCooledAttackStrength(1);
                     this.leftEquipProgress += MathHelper.clamp(cooledAttackStrength * cooledAttackStrength * cooledAttackStrength -
-                                                               this.leftEquipProgress, -0.4F, 0.4F);
+                                                               this.leftEquipProgress, -0.4f, 0.4F);
                 }
                 ItemStack stackOffhand = this.mc.player.getHeldItemOffhand();
                 if (MathHelper.areItemStacksSufficientlyEqual(stackOffhand, this.offhandStack)) {
@@ -606,7 +603,7 @@ public class ClientEvents {
     }
 
     private float getLeftCooledAttackStrength(float adjustTicks) {
-        return MathHelper.clamp(((float) this.leftTimeSinceLastHit + adjustTicks) / this.mc.player.getCooldownPeriod(), 0.0F, 1.0F);
+        return MathHelper.clamp((this.leftTimeSinceLastHit + adjustTicks) / this.mc.player.getCooldownPeriod(), 0.0F, 1.0F);
     }
 
     private static void swapControls(Minecraft mc) {
@@ -650,7 +647,7 @@ public class ClientEvents {
         else {
             this.rightSwingProgressInt = 0;
         }
-        this.rightSwingProgress = (float) this.rightSwingProgressInt / (float) i;
+        this.rightSwingProgress = this.rightSwingProgressInt / (float) i;
         if (this.leftIsSwingInProgress) {
             ++this.leftSwingProgressInt;
             if (this.leftSwingProgressInt >= i) {
@@ -661,14 +658,14 @@ public class ClientEvents {
         else {
             this.leftSwingProgressInt = 0;
         }
-        this.leftSwingProgress = (float) this.leftSwingProgressInt / (float) i;
+        this.leftSwingProgress = this.leftSwingProgressInt / (float) i;
     }
 
     private float getRightCooledAttackStrength(Item item, float adjustTicks) {
         if (!(item instanceof IOffhandAttackable)) {
             return 0;
         }
-        return MathHelper.clamp(((float) this.rightTimeSinceLastHit + adjustTicks) / getRightCooldownPeriod((IOffhandAttackable) item), 0.0F, 1.0F);
+        return MathHelper.clamp((this.rightTimeSinceLastHit + adjustTicks) / getRightCooldownPeriod((IOffhandAttackable) item), 0.0F, 1.0F);
     }
 
     private static void swapKeybinds(KeyBinding a, KeyBinding b) {
@@ -718,11 +715,11 @@ public class ClientEvents {
                 if (gamesettings.showDebugInfo && !gamesettings.hideGUI && !this.mc.player.hasReducedDebug() && !gamesettings.reducedDebugInfo) {
                     GlStateManager.pushMatrix();
                     int blitOffset = 0;
-                    GlStateManager.translatef((float) (scaledWidth / 2), (float) (scaledHeight / 2), (float) blitOffset);
+                    GlStateManager.translatef(scaledWidth / 2.0F, scaledHeight / 2.0F, blitOffset);
                     ActiveRenderInfo activerenderinfo = this.mc.gameRenderer.getActiveRenderInfo();
-                    GlStateManager.rotatef(activerenderinfo.getPitch(), -1.0F, 0.0F, 0.0F);
+                    GlStateManager.rotatef(activerenderinfo.getPitch(), -1.0f, 0.0F, 0.0F);
                     GlStateManager.rotatef(activerenderinfo.getYaw(), 0.0F, 1.0F, 0.0F);
-                    GlStateManager.scalef(-1.0F, -1.0F, -1.0F);
+                    GlStateManager.scalef(-1.0f, -1.0f, -1.0f);
                     GLX.renderCrosshair(10);
                     GlStateManager.popMatrix();
                 }
@@ -737,7 +734,7 @@ public class ClientEvents {
                                                      GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR,
                                                      GlStateManager.SourceFactor.ONE,
                                                      GlStateManager.DestFactor.ZERO);
-                    this.blit((scaledWidth - 15) / 2, (scaledHeight - 15) / 2, 0, 0, 15, 15);
+                    blit((scaledWidth - 15) / 2, (scaledHeight - 15) / 2, 0, 0, 15, 15);
                     if (this.mc.gameSettings.attackIndicator == AttackIndicatorStatus.CROSSHAIR) {
                         float leftCooledAttackStrength = this.getLeftCooledAttackStrength(0);
                         boolean shouldShowLeftAttackIndicator = false;
@@ -749,12 +746,12 @@ public class ClientEvents {
                         x = offhandValid ? x + 10 : x;
                         int y = scaledHeight / 2 - 7 + 16;
                         if (shouldShowLeftAttackIndicator) {
-                            this.blit(x, y, 68, 94, 16, 16);
+                            blit(x, y, 68, 94, 16, 16);
                         }
                         else if (leftCooledAttackStrength < 1.0F) {
                             int l = (int) (leftCooledAttackStrength * 17.0F);
-                            this.blit(x, y, 36, 94, 16, 4);
-                            this.blit(x, y, 52, 94, l, 4);
+                            blit(x, y, 36, 94, 16, 4);
+                            blit(x, y, 52, 94, l, 4);
                         }
                         if (offhandValid) {
                             boolean shouldShowRightAttackIndicator = false;
@@ -764,12 +761,12 @@ public class ClientEvents {
                             }
                             x -= 20;
                             if (shouldShowRightAttackIndicator) {
-                                this.blit(x, y, 68, 110, 16, 16);
+                                blit(x, y, 68, 110, 16, 16);
                             }
                             else if (rightCooledAttackStrength < 1.0F) {
                                 int l = (int) (rightCooledAttackStrength * 17.0F);
-                                this.blit(x, y, 36, 110, 16, 4);
-                                this.blit(x, y, 52, 110, l, 4);
+                                blit(x, y, 36, 110, 16, 4);
+                                blit(x, y, 52, 110, l, 4);
                             }
                         }
                         GlStateManager.disableAlphaTest();
@@ -801,7 +798,7 @@ public class ClientEvents {
             updateHealth = true;
         }
         //Update variables every 1s
-        if (Util.milliTime() - this.lastSystemTime > 1000L) {
+        if (Util.milliTime() - this.lastSystemTime > 1_000L) {
             this.lastPlayerHealth = currentHealth;
             this.lastSystemTime = Util.milliTime();
         }
@@ -813,7 +810,7 @@ public class ClientEvents {
             this.playerHealth = healthMax;
         }
         //The health bar flashes
-        boolean highlight = this.healthUpdateCounter > this.ticks && (this.healthUpdateCounter - this.ticks) / 3L % 2L == 1L;
+        boolean highlight = this.healthUpdateCounter > this.ticks && (this.healthUpdateCounter - this.ticks) / 3L % 2L != 0L;
         float healthLast = this.lastPlayerHealth;
         float absorb = MathHelper.ceil(player.getAbsorptionAmount());
         int healthRows = MathHelper.ceil((healthMax + absorb) / 100.0F);
@@ -836,33 +833,33 @@ public class ClientEvents {
         int absorbRemaining = MathHelper.ceil(absorb);
         int left = width / 2 - 91;
         for (int currentHeart = MathHelper.ceil((healthMax + absorb) / 10.0F) - 1; currentHeart >= 0; --currentHeart) {
-            int row = MathHelper.ceil((float) (currentHeart + 1) / 10.0F) - 1;
+            int row = MathHelper.ceil((currentHeart + 1) / 10.0F) - 1;
             int x = left + currentHeart % 10 * 8;
             int y = top - row * rowHeight;
             //Shake hearts if 20% HP
-            if (currentHealth <= 20F) {
+            if (currentHealth <= 20.0F) {
                 y += this.rand.nextInt(2);
             }
             if (currentHeart == regen) {
                 y -= 2;
             }
-            this.blit(x, y, heartBackgroundXPos, heartTextureYPos, 9, 9);
+            blit(x, y, heartBackgroundXPos, heartTextureYPos, 9, 9);
             if (highlight) {
-                if (currentHeart * 10F + 7.5F < healthLast) {
+                if (currentHeart * 10.0F + 7.5F < healthLast) {
                     //Faded full heart
-                    this.blit(x, y, margin + 54, heartTextureYPos, 9, 9);
+                    blit(x, y, margin + 54, heartTextureYPos, 9, 9);
                 }
-                else if (currentHeart * 10F + 5F < healthLast) {
+                else if (currentHeart * 10.0F + 5.0F < healthLast) {
                     //Faded 3/4 heart
-                    this.blit(x, y, margin + 63, heartTextureYPos, 9, 9);
+                    blit(x, y, margin + 63, heartTextureYPos, 9, 9);
                 }
-                else if (currentHeart * 10F + 2.5F < healthLast) {
+                else if (currentHeart * 10.0F + 2.5F < healthLast) {
                     //Faded half heart
-                    this.blit(x, y, margin + 72, heartTextureYPos, 9, 9);
+                    blit(x, y, margin + 72, heartTextureYPos, 9, 9);
                 }
-                else if (currentHeart * 10F < healthLast) {
+                else if (currentHeart * 10.0F < healthLast) {
                     //Faded 1/4 heart
-                    this.blit(x, y, margin + 81, heartTextureYPos, 9, 9);
+                    blit(x, y, margin + 81, heartTextureYPos, 9, 9);
                 }
             }
             if (absorbRemaining > 0) {
@@ -870,21 +867,21 @@ public class ClientEvents {
                 switch (absorbHeart) {
                     case 1:
                     case 2:
-                        this.blit(x, y, 205, heartTextureYPos, 9, 9);
+                        blit(x, y, 205, heartTextureYPos, 9, 9);
                         break;
                     case 3:
                     case 4:
                     case 5:
-                        this.blit(x, y, 196, heartTextureYPos, 9, 9);
+                        blit(x, y, 196, heartTextureYPos, 9, 9);
                         break;
                     case 6:
                     case 7:
-                        this.blit(x, y, 187, heartTextureYPos, 9, 9);
+                        blit(x, y, 187, heartTextureYPos, 9, 9);
                         break;
                     case 8:
                     case 9:
                     case 0:
-                        this.blit(x, y, 178, heartTextureYPos, 9, 9);
+                        blit(x, y, 178, heartTextureYPos, 9, 9);
                         break;
                 }
                 if (absorbHeart == 0) {
@@ -895,21 +892,21 @@ public class ClientEvents {
                 }
             }
             else {
-                if (currentHeart * 10F + 7.5F < currentHealth) {
+                if (currentHeart * 10.0F + 7.5F < currentHealth) {
                     //Full heart
-                    this.blit(x, y, margin + 18, heartTextureYPos, 9, 9);
+                    blit(x, y, margin + 18, heartTextureYPos, 9, 9);
                 }
-                else if (currentHeart * 10F + 5F < currentHealth) {
+                else if (currentHeart * 10.0F + 5.0F < currentHealth) {
                     //3/4 heart
-                    this.blit(x, y, margin + 27, heartTextureYPos, 9, 9);
+                    blit(x, y, margin + 27, heartTextureYPos, 9, 9);
                 }
-                else if (currentHeart * 10F + 2.5F < currentHealth) {
+                else if (currentHeart * 10.0F + 2.5F < currentHealth) {
                     //Half heart
-                    this.blit(x, y, margin + 36, heartTextureYPos, 9, 9);
+                    blit(x, y, margin + 36, heartTextureYPos, 9, 9);
                 }
-                else if (currentHeart * 10F < currentHealth) {
+                else if (currentHeart * 10.0F < currentHealth) {
                     //1/4 heart
-                    this.blit(x, y, margin + 45, heartTextureYPos, 9, 9);
+                    blit(x, y, margin + 45, heartTextureYPos, 9, 9);
                 }
             }
         }

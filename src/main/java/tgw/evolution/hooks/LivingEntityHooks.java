@@ -26,7 +26,10 @@ import tgw.evolution.util.Gravity;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.PlayerHelper;
 
-public class LivingEntityHooks {
+public final class LivingEntityHooks {
+
+    private LivingEntityHooks() {
+    }
 
     @EvolutionHook
     public static float getJumpUpwardsMotion() {
@@ -56,7 +59,7 @@ public class LivingEntityHooks {
         int baseMass = (int) mass.getBaseValue();
         int totalMass = (int) mass.getValue();
         int equipMass = totalMass - baseMass;
-        return equipMass * 0.0002;
+        return equipMass * 0.000_2;
     }
 
     @EvolutionHook
@@ -68,7 +71,7 @@ public class LivingEntityHooks {
                 if (!gravity.hasModifier(EvolutionAttributes.SLOW_FALLING)) {
                     gravity.applyModifier(EvolutionAttributes.SLOW_FALLING);
                 }
-                entity.fallDistance = 0F;
+                entity.fallDistance = 0.0F;
             }
             else if (gravity.hasModifier(EvolutionAttributes.SLOW_FALLING)) {
                 gravity.removeModifier(EvolutionAttributes.SLOW_FALLING);
@@ -89,7 +92,7 @@ public class LivingEntityHooks {
                         double dragY = Math.signum(motionY) * motionY * motionY * drag;
                         double dragZ = Math.signum(motionZ) * motionZ * motionZ * drag;
                         if (motionY > -0.5) {
-                            entity.fallDistance = 1F;
+                            entity.fallDistance = 1.0F;
                         }
                         Vec3d lookVec = entity.getLookVec();
                         float pitchInRad = MathHelper.degToRad(entity.rotationPitch);
@@ -104,7 +107,7 @@ public class LivingEntityHooks {
                             motionY += d3;
                             motionZ += lookVec.z * d3 / horizLookVecLength;
                         }
-                        if (pitchInRad < 0F && horizLookVecLength > 0) {
+                        if (pitchInRad < 0.0F && horizLookVecLength > 0) {
                             double d13 = horizMotionLength * -MathHelper.sin(pitchInRad) * 0.04;
                             motionX += -lookVec.x * d13 / horizLookVecLength;
                             motionY += d13 * 3.2;
@@ -123,8 +126,8 @@ public class LivingEntityHooks {
                             double d14 = Math.sqrt(Entity.horizontalMag(entity.getMotion()));
                             double d4 = horizMotionLength - d14;
                             float f4 = (float) (d4 * 10 - 3);
-                            if (f4 > 0F) {
-                                entity.playSound(getFallSound(entity, (int) f4), 1F, 1F);
+                            if (f4 > 0.0F) {
+                                entity.playSound(getFallSound(entity, (int) f4), 1.0F, 1.0F);
                                 entity.attackEntityFrom(DamageSource.FLY_INTO_WALL, f4);
                             }
                         }
@@ -139,7 +142,7 @@ public class LivingEntityHooks {
                         if (Float.compare(slipperiness, 0.6F) < 0.01F) {
                             slipperiness = 0.15F;
                         }
-                        float frictionCoef = entity.onGround ? 1F - slipperiness : 0F;
+                        float frictionCoef = entity.onGround ? 1.0F - slipperiness : 0.0F;
                         Vec3d acceleration = getAbsoluteAcceleration(entity, direction, jumpMovementFactor(entity, slipperiness));
                         isActiveWalking = acceleration.x != 0 || acceleration.z != 0;
                         entity.setMotion(handleLadderMotion(entity, entity.getMotion()));
@@ -153,7 +156,7 @@ public class LivingEntityHooks {
                         }
                         if (entity.isPotionActive(Effects.LEVITATION)) {
                             motionY += (0.05 * (entity.getActivePotionEffect(Effects.LEVITATION).getAmplifier() + 1) - motionY) * 0.2;
-                            entity.fallDistance = 0F;
+                            entity.fallDistance = 0.0F;
                         }
                         else if (!entity.hasNoGravity()) {
                             if (entity instanceof PlayerEntity && ((PlayerEntity) entity).abilities.isFlying) {
@@ -241,16 +244,16 @@ public class LivingEntityHooks {
             }
             else {
                 //Controls water movement
-                float depthStriderModifier = (float) EnchantmentHelper.getDepthStriderModifier(entity);
-                if (depthStriderModifier > 3F) {
-                    depthStriderModifier = 3F;
+                float depthStriderModifier = EnchantmentHelper.getDepthStriderModifier(entity);
+                if (depthStriderModifier > 3.0F) {
+                    depthStriderModifier = 3.0F;
                 }
                 if (!entity.onGround) {
                     depthStriderModifier *= 0.5F;
                 }
                 float waterSpeedMult = 0.04F;
-                if (depthStriderModifier > 0F) {
-                    waterSpeedMult += 0.17f * depthStriderModifier / 3F;
+                if (depthStriderModifier > 0.0F) {
+                    waterSpeedMult += 0.17f * depthStriderModifier / 3.0F;
                 }
                 waterSpeedMult *= (float) entity.getAttribute(LivingEntity.SWIM_SPEED).getValue();
                 Vec3d acceleration = getAbsoluteAcceleration(entity, direction, waterSpeedMult);
@@ -299,7 +302,7 @@ public class LivingEntityHooks {
         double deltaPosX = entity.posX - entity.prevPosX;
         double deltaPosZ = entity.posZ - entity.prevPosZ;
         double deltaPosY = entity instanceof IFlyingAnimal ? entity.posY - entity.prevPosY : 0;
-        float f8 = MathHelper.sqrt(deltaPosX * deltaPosX + deltaPosY * deltaPosY + deltaPosZ * deltaPosZ) * 4F;
+        float f8 = MathHelper.sqrt(deltaPosX * deltaPosX + deltaPosY * deltaPosY + deltaPosZ * deltaPosZ) * 4.0F;
         if (f8 > 1.0F) {
             f8 = 1.0F;
         }
@@ -376,7 +379,7 @@ public class LivingEntityHooks {
 
     private static Vec3d handleLadderMotion(LivingEntity entity, Vec3d motion) {
         if (entity.isOnLadder()) {
-            entity.fallDistance = 0F;
+            entity.fallDistance = 0.0F;
             double newX = MathHelper.clamp(motion.x, -0.15, 0.15);
             double newZ = MathHelper.clamp(motion.z, -0.15, 0.15);
             double newY = Math.max(motion.y, -0.15);

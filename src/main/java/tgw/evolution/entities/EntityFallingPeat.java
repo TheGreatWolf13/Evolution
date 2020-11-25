@@ -26,18 +26,16 @@ import javax.annotation.Nullable;
 
 public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnData {
 
-    public static final EntitySize SIZE_1 = EntitySize.flexible(1f, 0.25f);
-    public static final EntitySize SIZE_2 = EntitySize.flexible(1f, 0.5f);
-    public static final EntitySize SIZE_3 = EntitySize.flexible(1f, 0.75f);
-    public static final EntitySize SIZE_4 = EntitySize.flexible(1f, 1f);
+    public static final EntitySize SIZE_1 = EntitySize.flexible(1.0f, 0.25f);
+    public static final EntitySize SIZE_2 = EntitySize.flexible(1.0f, 0.5f);
+    public static final EntitySize SIZE_3 = EntitySize.flexible(1.0f, 0.75f);
+    public static final EntitySize SIZE_4 = EntitySize.flexible(1.0f, 1.0f);
     public static final EntitySize[] SIZES = {SIZE_1, SIZE_2, SIZE_3, SIZE_4};
     public int fallTime;
     private int layers;
+    private int mass = 289;
     private BlockPos prevPos;
-    private double verticalDrag;
-    private double horizontalDrag;
     private boolean isSizeCorrect;
-    private double gravity;
 
     public EntityFallingPeat(@SuppressWarnings("unused") FMLPlayMessages.SpawnEntity spawnEntity, World worldIn) {
         this(EvolutionEntities.FALLING_PEAT.get(), worldIn);
@@ -56,6 +54,7 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
         this.prevPosY = y;
         this.prevPosZ = z;
         this.layers = layers;
+        this.mass = 289 * this.layers;
         this.prevPos = new BlockPos(this);
     }
 
@@ -67,21 +66,48 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     public void tick() {
         if (!this.isSizeCorrect) {
             this.recalculateSize();
-//            float width = this.getSize(null).width;
-//            float height = this.getSize(null).height;
-            this.verticalDrag = 1/*Gravity.verticalDrag(this.world.getDimension(), width)*/;
-            this.horizontalDrag = 1/*Gravity.horizontalDrag(this.world.getDimension(), width, height)*/;
-            this.gravity = -Gravity.gravity(this.world.getDimension());
             this.isSizeCorrect = true;
         }
         this.prevPosX = this.posX;
         this.prevPosY = this.posY;
         this.prevPosZ = this.posZ;
         ++this.fallTime;
+        Vec3d motion = this.getMotion();
+        this.move(MoverType.SELF, motion);
+        double motionX = motion.x;
+        double motionY = motion.y;
+        double motionZ = motion.z;
+        double gravity = 0;
         if (!this.hasNoGravity()) {
-            this.setMotion(this.getMotion().add(0, this.gravity, 0));
+            gravity = Gravity.gravity(this.world.dimension);
         }
-        this.move(MoverType.SELF, this.getMotion());
+        double horizontalDrag = this.isInWater() ? Gravity.horizontalWaterDrag(this) / this.mass : Gravity.horizontalDrag(this) / this.mass;
+        double verticalDrag = this.isInWater() ? Gravity.verticalWaterDrag(this) / this.mass : Gravity.verticalDrag(this) / this.mass;
+        double dragX = Math.signum(motionX) * motionX * motionX * horizontalDrag;
+        if (Math.abs(dragX) > Math.abs(motionX)) {
+            dragX = motionX;
+        }
+        double dragY = Math.signum(motionY) * motionY * motionY * verticalDrag;
+        if (Math.abs(dragY) > Math.abs(motionY)) {
+            dragY = motionY;
+        }
+        double dragZ = Math.signum(motionZ) * motionZ * motionZ * horizontalDrag;
+        if (Math.abs(dragZ) > Math.abs(motionZ)) {
+            dragZ = motionZ;
+        }
+        motionX -= dragX;
+        motionY += -gravity - dragY;
+        motionZ -= dragZ;
+        if (Math.abs(motionX) < 1e-6) {
+            motionX = 0;
+        }
+        if (Math.abs(motionY) < 1e-6) {
+            motionY = 0;
+        }
+        if (Math.abs(motionZ) < 1e-6) {
+            motionZ = 0;
+        }
+        this.setMotion(motionX, motionY, motionZ);
         BlockPos pos = new BlockPos(this);
         if (!this.world.isRemote) {
             if (!this.onGround) {
@@ -100,11 +126,9 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
                         this.entityDropItem(((IReplaceable) state.getBlock()).getDrops(state));
                     }
                     this.remove();
-                    return;
                 }
             }
         }
-        this.setMotion(this.getMotion().mul(this.horizontalDrag, this.verticalDrag, this.horizontalDrag));
     }
 
     public BlockState getBlockState() {

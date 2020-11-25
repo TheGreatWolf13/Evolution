@@ -4,7 +4,10 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.player.PlayerEntity;
 import tgw.evolution.entities.EvolutionAttributes;
 
-public class PlayerHooks {
+public final class PlayerHooks {
+
+    private PlayerHooks() {
+    }
 
     @EvolutionHook
     public static void registerAttributes(PlayerEntity player) {

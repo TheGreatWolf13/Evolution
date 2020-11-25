@@ -7,7 +7,6 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.AbstractArrowEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.UseAction;
@@ -17,6 +16,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import tgw.evolution.Evolution;
 import tgw.evolution.entities.EvolutionAttributes;
+import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionSounds;
@@ -37,90 +37,15 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
         this.damage = damage;
         this.speed = speed;
         this.mass = mass;
-        this.addPropertyOverride(new ResourceLocation("throwing"), (stack, world, entity) -> entity != null && entity.isHandActive() && entity.getActiveItemStack() == stack ? 1.0F : 0.0F);
-    }
-
-    @Override
-    public double getAttackSpeed() {
-        return this.speed - PlayerHelper.ATTACK_SPEED;
-    }
-
-    @Override
-    public double getAttackDamage() {
-        return this.damage;
+        this.addPropertyOverride(new ResourceLocation("throwing"),
+                                 (stack, world, entity) -> entity != null && entity.isHandActive() && entity.getActiveItemStack() == stack ?
+                                                           1.0F :
+                                                           0.0F);
     }
 
     @Override
     public boolean canPlayerBreakBlockWhileHolding(BlockState state, World worldIn, BlockPos pos, PlayerEntity player) {
         return !player.isCreative();
-    }
-
-    @Override
-    public UseAction getUseAction(ItemStack stack) {
-        return UseAction.SPEAR;
-    }
-
-    @Override
-    public int getUseDuration(ItemStack stack) {
-        return 72000;
-    }
-
-    @Override
-    public boolean onBlockDestroyed(ItemStack stack, World worldIn, BlockState state, BlockPos pos, LivingEntity entityLiving) {
-        if (state.getBlockHardness(worldIn, pos) != 0.0D) {
-            stack.damageItem(2, entityLiving, entity -> entity.sendBreakAnimation(EquipmentSlotType.MAINHAND));
-        }
-        return true;
-    }
-
-    @Override
-    public Multimap<String, AttributeModifier> getAttributeModifiers(EquipmentSlotType equipmentSlot) {
-        Multimap<String, AttributeModifier> multimap = HashMultimap.create();
-        if (equipmentSlot == EquipmentSlotType.MAINHAND) {
-            multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(), new AttributeModifier(ATTACK_DAMAGE_MODIFIER, "Tool modifier", this.getAttackDamage(), AttributeModifier.Operation.ADDITION));
-            multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(), new AttributeModifier(ATTACK_SPEED_MODIFIER, "Tool modifier", this.getAttackSpeed(), AttributeModifier.Operation.ADDITION));
-            multimap.put(PlayerEntity.REACH_DISTANCE.getName(), new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER, "Reach Modifier", this.getReach(), AttributeModifier.Operation.ADDITION));
-            multimap.put(EvolutionAttributes.MASS.getName(), new AttributeModifier(EvolutionAttributes.MASS_MODIFIER, "Mass Modifier", this.mass, AttributeModifier.Operation.ADDITION));
-        }
-        else if (equipmentSlot == EquipmentSlotType.OFFHAND) {
-            multimap.put(EvolutionAttributes.MASS.getName(), new AttributeModifier(EvolutionAttributes.MASS_MODIFIER_OFFHAND, "Mass Modifier", this.mass, AttributeModifier.Operation.ADDITION));
-        }
-        return multimap;
-    }
-
-    @Override
-    public double getReach() {
-        return 5 - PlayerHelper.REACH_DISTANCE;
-    }
-
-    @Nonnull
-    @Override
-    public EvolutionDamage.Type getDamageType() {
-        return EvolutionDamage.Type.PIERCING;
-    }
-
-    @Override
-    public void onPlayerStoppedUsing(ItemStack stack, World worldIn, LivingEntity entityLiving, int timeLeft) {
-        if (entityLiving instanceof PlayerEntity) {
-            PlayerEntity player = (PlayerEntity) entityLiving;
-            int i = this.getUseDuration(stack) - timeLeft;
-            if (i >= 10) {
-                if (!worldIn.isRemote) {
-                    stack.damageItem(1, player, entity -> entity.sendBreakAnimation(entityLiving.getActiveHand()));
-                    EntitySpear spear = new EntitySpear(worldIn, player, stack, this.damage);
-                    spear.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, 0.825f, 2.5F);
-                    if (player.abilities.isCreativeMode) {
-                        spear.pickupStatus = AbstractArrowEntity.PickupStatus.CREATIVE_ONLY;
-                    }
-                    worldIn.addEntity(spear);
-                    worldIn.playMovingSound(null, spear, EvolutionSounds.JAVELIN_THROW.get(), SoundCategory.PLAYERS, 1.0F, 1.0F);
-                    if (!player.abilities.isCreativeMode) {
-                        player.inventory.deleteStack(stack);
-                    }
-                }
-                player.addStat(Stats.ITEM_USED.get(this));
-            }
-        }
     }
 
     @Override
@@ -137,6 +62,99 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
     public boolean hitEntity(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         stack.damageItem(1, attacker, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
         return true;
+    }
+
+    @Override
+    public boolean onBlockDestroyed(ItemStack stack, World worldIn, BlockState state, BlockPos pos, LivingEntity entityLiving) {
+        if (state.getBlockHardness(worldIn, pos) != 0.0D) {
+            stack.damageItem(2, entityLiving, entity -> entity.sendBreakAnimation(EquipmentSlotType.MAINHAND));
+        }
+        return true;
+    }
+
+    @Override
+    public UseAction getUseAction(ItemStack stack) {
+        return UseAction.SPEAR;
+    }
+
+    @Override
+    public int getUseDuration(ItemStack stack) {
+        return 72_000;
+    }
+
+    @Override
+    public void onPlayerStoppedUsing(ItemStack stack, World worldIn, LivingEntity entityLiving, int timeLeft) {
+        if (entityLiving instanceof PlayerEntity) {
+            PlayerEntity player = (PlayerEntity) entityLiving;
+            int i = this.getUseDuration(stack) - timeLeft;
+            if (i >= 10) {
+                if (!worldIn.isRemote) {
+                    stack.damageItem(1, player, entity -> entity.sendBreakAnimation(entityLiving.getActiveHand()));
+                    EntitySpear spear = new EntitySpear(worldIn, player, stack, this.damage, this.mass);
+                    spear.shoot(player, player.rotationPitch, player.rotationYaw, 0.825f, 2.5F);
+                    if (player.abilities.isCreativeMode) {
+                        spear.pickupStatus = EntityGenericProjectile.PickupStatus.CREATIVE_ONLY;
+                    }
+                    worldIn.addEntity(spear);
+                    worldIn.playMovingSound(null, spear, EvolutionSounds.JAVELIN_THROW.get(), SoundCategory.PLAYERS, 1.0F, 1.0F);
+                    if (!player.abilities.isCreativeMode) {
+                        player.inventory.deleteStack(stack);
+                    }
+                }
+                player.addStat(Stats.ITEM_USED.get(this));
+            }
+        }
+    }
+
+    @Override
+    public Multimap<String, AttributeModifier> getAttributeModifiers(EquipmentSlotType equipmentSlot) {
+        Multimap<String, AttributeModifier> multimap = HashMultimap.create();
+        if (equipmentSlot == EquipmentSlotType.MAINHAND) {
+            multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(),
+                         new AttributeModifier(ATTACK_DAMAGE_MODIFIER,
+                                               "Tool modifier",
+                                               this.getAttackDamage(),
+                                               AttributeModifier.Operation.ADDITION));
+            multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(),
+                         new AttributeModifier(ATTACK_SPEED_MODIFIER, "Tool modifier", this.getAttackSpeed(), AttributeModifier.Operation.ADDITION));
+            multimap.put(PlayerEntity.REACH_DISTANCE.getName(),
+                         new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER,
+                                               "Reach Modifier",
+                                               this.getReach(),
+                                               AttributeModifier.Operation.ADDITION));
+            multimap.put(EvolutionAttributes.MASS.getName(),
+                         new AttributeModifier(EvolutionAttributes.MASS_MODIFIER, "Mass Modifier", this.mass, AttributeModifier.Operation.ADDITION));
+        }
+        else if (equipmentSlot == EquipmentSlotType.OFFHAND) {
+            multimap.put(EvolutionAttributes.MASS.getName(),
+                         new AttributeModifier(EvolutionAttributes.MASS_MODIFIER_OFFHAND,
+                                               "Mass Modifier",
+                                               this.mass,
+                                               AttributeModifier.Operation.ADDITION));
+        }
+        return multimap;
+    }
+
+    @Override
+    public double getAttackSpeed() {
+        return this.speed - PlayerHelper.ATTACK_SPEED;
+    }
+
+    @Override
+    public double getAttackDamage() {
+        return this.damage;
+    }
+
+    @Override
+    public double getReach() {
+        //noinspection ConstantExpression
+        return 5 - PlayerHelper.REACH_DISTANCE;
+    }
+
+    @Nonnull
+    @Override
+    public EvolutionDamage.Type getDamageType() {
+        return EvolutionDamage.Type.PIERCING;
     }
 
     @Override

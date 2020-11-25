@@ -11,14 +11,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class NBTHelper {
+public final class NBTHelper {
 
-    public static INBT createMap(Map<INBT, INBT> map) {
-        CompoundNBT compoundNBT = new CompoundNBT();
-        for (Map.Entry<INBT, INBT> entry : map.entrySet()) {
-            compoundNBT.put(entry.getKey().getString(), entry.getValue());
-        }
-        return compoundNBT;
+    private NBTHelper() {
     }
 
     public static INBT createList(Stream<INBT> list) {
@@ -28,15 +23,15 @@ public class NBTHelper {
         }
         INBT inbt = peekingiterator.peek();
         if (inbt instanceof ByteNBT) {
-            List<Byte> list2 = Lists.newArrayList(Iterators.transform(peekingiterator, byteNbt -> ((ByteNBT) byteNbt).getByte()));
+            List<Byte> list2 = Lists.newArrayList(Iterators.transform(peekingiterator, byteNbt -> ((NumberNBT) byteNbt).getByte()));
             return new ByteArrayNBT(list2);
         }
         if (inbt instanceof IntNBT) {
-            List<Integer> list1 = Lists.newArrayList(Iterators.transform(peekingiterator, intNbt -> ((IntNBT) intNbt).getInt()));
+            List<Integer> list1 = Lists.newArrayList(Iterators.transform(peekingiterator, intNbt -> ((NumberNBT) intNbt).getInt()));
             return new IntArrayNBT(list1);
         }
         if (inbt instanceof LongNBT) {
-            List<Long> longList = Lists.newArrayList(Iterators.transform(peekingiterator, longNbt -> ((LongNBT) longNbt).getLong()));
+            List<Long> longList = Lists.newArrayList(Iterators.transform(peekingiterator, longNbt -> ((NumberNBT) longNbt).getLong()));
             return new LongArrayNBT(longList);
         }
         ListNBT listnbt = new ListNBT();
@@ -70,6 +65,14 @@ public class NBTHelper {
         return createMap(ImmutableMap.of());
     }
 
+    public static INBT createMap(Map<INBT, INBT> map) {
+        CompoundNBT compoundNBT = new CompoundNBT();
+        for (Map.Entry<INBT, INBT> entry : map.entrySet()) {
+            compoundNBT.put(entry.getKey().getString(), entry.getValue());
+        }
+        return compoundNBT;
+    }
+
     public static String asString(INBT input, String key, String defaultEntry) {
         Optional<INBT> optional = get(input, key);
         if (optional.isPresent()) {
@@ -78,8 +81,43 @@ public class NBTHelper {
         return defaultEntry;
     }
 
+    public static Optional<INBT> get(INBT input, String key) {
+        return getGeneric(input, new StringNBT(key));
+    }
+
+    public static Optional<String> getStringValue(INBT input) {
+        return input instanceof StringNBT ? Optional.of(input.getString()) : Optional.empty();
+    }
+
+    public static Optional<INBT> getGeneric(INBT input, INBT key) {
+        return getMapValues(input).flatMap(map -> Optional.ofNullable(map.get(key)));
+    }
+
+    public static Optional<Map<INBT, INBT>> getMapValues(INBT nbt) {
+        if (nbt instanceof CompoundNBT) {
+            CompoundNBT compound = (CompoundNBT) nbt;
+            return Optional.of(compound.keySet()
+                                       .stream()
+                                       .map(string -> Pair.of(new StringNBT(string), compound.get(string)))
+                                       .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
+        }
+        return Optional.empty();
+    }
+
     public static float asFloat(INBT input, String key, float defaultEntry) {
         return asNumber(input, key, defaultEntry).floatValue();
+    }
+
+    public static Number asNumber(INBT input, String key, Number defaultEntry) {
+        Optional<INBT> optional = get(input, key);
+        if (optional.isPresent()) {
+            return getNumberValue(optional.get()).orElse(defaultEntry);
+        }
+        return defaultEntry;
+    }
+
+    public static Optional<Number> getNumberValue(INBT nbt) {
+        return nbt instanceof NumberNBT ? Optional.of(((NumberNBT) nbt).getAsNumber()) : Optional.empty();
     }
 
     public static int asInt(INBT input, String key, int defaultEntry) {
@@ -98,38 +136,6 @@ public class NBTHelper {
         return asNumber(input, key, defaultEntry).byteValue();
     }
 
-    public static Number asNumber(INBT input, String key, Number defaultEntry) {
-        Optional<INBT> optional = get(input, key);
-        if (optional.isPresent()) {
-            return getNumberValue(optional.get()).orElse(defaultEntry);
-        }
-        return defaultEntry;
-    }
-
-    public static Optional<INBT> get(INBT input, String key) {
-        return getGeneric(input, new StringNBT(key));
-    }
-
-    public static Optional<INBT> getGeneric(INBT input, INBT key) {
-        return getMapValues(input).flatMap(map -> Optional.ofNullable(map.get(key)));
-    }
-
-    public static Optional<Number> getNumberValue(INBT nbt) {
-        return nbt instanceof NumberNBT ? Optional.of(((NumberNBT) nbt).getAsNumber()) : Optional.empty();
-    }
-
-    public static Optional<Map<INBT, INBT>> getMapValues(INBT nbt) {
-        if (nbt instanceof CompoundNBT) {
-            CompoundNBT compound = (CompoundNBT) nbt;
-            return Optional.of(compound.keySet().stream().map(string -> Pair.of(new StringNBT(string), compound.get(string))).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
-        }
-        return Optional.empty();
-    }
-
-    public static Optional<String> getStringValue(INBT input) {
-        return input instanceof StringNBT ? Optional.of(input.getString()) : Optional.empty();
-    }
-
     public static <U> List<U> asList(INBT nbt, String key, Function<INBT, U> deserializer) {
         Optional<INBT> optional = get(nbt, key);
         if (optional.isPresent()) {
@@ -143,7 +149,7 @@ public class NBTHelper {
     }
 
     public static Optional<Stream<INBT>> getStream(INBT nbt) {
-        return nbt instanceof CollectionNBT ? Optional.of(((CollectionNBT<?>) nbt).stream().map(p_210817_0_ -> p_210817_0_)) : Optional.empty();
+        return nbt instanceof CollectionNBT ? Optional.of(((CollectionNBT<?>) nbt).stream().map(Function.identity())) : Optional.empty();
     }
 
     public static INBT mergeInto(INBT nbt1, INBT nbt2) {

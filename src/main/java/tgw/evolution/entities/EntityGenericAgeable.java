@@ -9,15 +9,15 @@ import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.world.World;
 import tgw.evolution.init.EvolutionParticles;
 
-public abstract class AgeableEntity extends CreatureEntity {
+public abstract class EntityGenericAgeable extends EntityGenericCreature {
 
-    private static final DataParameter<Integer> AGE = EntityDataManager.createKey(AgeableEntity.class, DataSerializers.VARINT);
-    private static final DataParameter<Boolean> SLEEPING = EntityDataManager.createKey(AgeableEntity.class, DataSerializers.BOOLEAN);
+    private static final DataParameter<Integer> AGE = EntityDataManager.createKey(EntityGenericAgeable.class, DataSerializers.VARINT);
+    private static final DataParameter<Boolean> SLEEPING = EntityDataManager.createKey(EntityGenericAgeable.class, DataSerializers.BOOLEAN);
     protected int sleepTime;
     private boolean slept;
     private int lifeSpan;
 
-    protected AgeableEntity(EntityType<? extends AgeableEntity> type, World worldIn) {
+    protected EntityGenericAgeable(EntityType<? extends EntityGenericAgeable> type, World worldIn) {
         super(type, worldIn);
         this.lifeSpan = this.computeLifeSpan();
     }
@@ -101,7 +101,7 @@ public abstract class AgeableEntity extends CreatureEntity {
                     }
                 }
             }
-            if (this.world.getDayTime() % 24000 == 0) {
+            if (this.world.getDayTime() % 24_000 == 0) {
                 this.slept = false;
             }
         }

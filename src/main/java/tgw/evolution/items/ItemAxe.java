@@ -17,18 +17,18 @@ public class ItemAxe extends ItemTool implements ITwoHanded {
     private static final Set<Material> EFFECTIVE_MAT = Sets.newHashSet(Material.WOOD, Material.PLANTS);
     private final double mass;
 
-    public ItemAxe(IItemTier tier, float attackSpeedIn, Properties builder, double mass) {
-        super(attackSpeedIn, tier, EFFECTIVE_ON, EFFECTIVE_MAT, builder.addToolType(ToolType.AXE, tier.getHarvestLevel()));
+    public ItemAxe(IItemTier tier, float attackSpeed, Properties builder, double mass) {
+        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MAT, builder.addToolType(ToolType.AXE, tier.getHarvestLevel()));
         this.mass = mass;
     }
 
     @Override
-    protected float setReach() {
-        return 3;
+    protected float setBaseDamage() {
+        return 8.0f;
     }
 
     @Override
-    protected float setBaseDamage() {
+    protected float setReach() {
         return 3;
     }
 

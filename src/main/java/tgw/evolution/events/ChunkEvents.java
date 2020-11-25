@@ -16,8 +16,30 @@ public class ChunkEvents {
     private static final int RANGE = 8;
     private static int tick = 200;
 
+    @SubscribeEvent
+    public void onPlayerTick(PlayerTickEvent event) {
+        if (event.side != LogicalSide.SERVER) {
+            return;
+        }
+        if (event.phase != TickEvent.Phase.START) {
+            return;
+        }
+        if (tick-- == 0) {
+            tick = 200;
+            ChunkPos chunkPos = getRandom(new ChunkPos(event.player.chunkCoordX, event.player.chunkCoordZ), event.player.world.rand);
+            if (chunkPos == null) {
+                return;
+            }
+            if (event.player.world.getChunkProvider().isChunkLoaded(chunkPos)) {
+                doChunkActions(event.player.world, chunkPos);
+            }
+        }
+    }
+
     private static ChunkPos getRandom(ChunkPos pos, Random random) {
+        //noinspection ConstantExpression
         int i = random.nextInt(RANGE * 2 + 1) - RANGE;
+        //noinspection ConstantExpression
         int j = random.nextInt(RANGE * 2 + 1) - RANGE;
         return new ChunkPos(pos.x + i, pos.z + j);
     }
@@ -26,7 +48,7 @@ public class ChunkEvents {
         Integer[] amount = {0};
         Integer[] delta = {0};
         ChunkStorageCapability.getChunkStorage(worldIn.getChunk(chunkPos.x, chunkPos.z)).map(chunkStorages -> {
-            if (chunkStorages.getElementStored(EnumStorage.NITROGEN) < 10000) {
+            if (chunkStorages.getElementStored(EnumStorage.NITROGEN) < 10_000) {
                 if (chunkStorages.removeElement(EnumStorage.GAS_NITROGEN, 2)) {
                     chunkStorages.addElement(EnumStorage.NITROGEN, 4);
                 }
@@ -72,25 +94,5 @@ public class ChunkEvents {
                               new ChunkPos(chunkPos.x - 1, chunkPos.z),
                               new ChunkPos(chunkPos.x, chunkPos.z + 1),
                               new ChunkPos(chunkPos.x, chunkPos.z - 1)};
-    }
-
-    @SubscribeEvent
-    public void onPlayerTick(PlayerTickEvent event) {
-        if (event.side != LogicalSide.SERVER) {
-            return;
-        }
-        if (event.phase != TickEvent.Phase.START) {
-            return;
-        }
-        if (tick-- == 0) {
-            tick = 200;
-            ChunkPos chunkPos = getRandom(new ChunkPos(event.player.chunkCoordX, event.player.chunkCoordZ), event.player.world.rand);
-            if (chunkPos == null) {
-                return;
-            }
-            if (event.player.world.getChunkProvider().isChunkLoaded(chunkPos)) {
-                doChunkActions(event.player.world, chunkPos);
-            }
-        }
     }
 }

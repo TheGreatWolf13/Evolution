@@ -28,7 +28,6 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.util.NBTTypes;
 
 import javax.annotation.Nullable;
-import java.util.Objects;
 import java.util.function.Supplier;
 
 public class ItemSpawnEgg<E extends Entity> extends ItemEv {
@@ -46,61 +45,71 @@ public class ItemSpawnEgg<E extends Entity> extends ItemEv {
         if (world.isRemote) {
             return ActionResultType.SUCCESS;
         }
-        ItemStack itemstack = context.getItem();
-        BlockPos blockpos = context.getPos();
+        ItemStack stack = context.getItem();
+        BlockPos pos = context.getPos();
         Direction direction = context.getFace();
-        BlockState blockstate = world.getBlockState(blockpos);
-        Block block = blockstate.getBlock();
+        BlockState state = world.getBlockState(pos);
+        Block block = state.getBlock();
         if (block == Blocks.SPAWNER) {
-            TileEntity tileentity = world.getTileEntity(blockpos);
-            if (tileentity instanceof MobSpawnerTileEntity) {
-                AbstractSpawner abstractspawner = ((MobSpawnerTileEntity) tileentity).getSpawnerBaseLogic();
-                EntityType<?> entitytype1 = this.getType(itemstack.getTag());
-                abstractspawner.setEntityType(entitytype1);
-                tileentity.markDirty();
-                world.notifyBlockUpdate(blockpos, blockstate, blockstate, 3);
-                itemstack.shrink(1);
+            TileEntity tile = world.getTileEntity(pos);
+            if (tile instanceof MobSpawnerTileEntity) {
+                AbstractSpawner spawner = ((MobSpawnerTileEntity) tile).getSpawnerBaseLogic();
+                EntityType<?> entityType = this.getType(stack.getTag());
+                spawner.setEntityType(entityType);
+                tile.markDirty();
+                world.notifyBlockUpdate(pos, state, state, 3);
+                if (!context.getPlayer().isCreative()) {
+                    stack.shrink(1);
+                }
                 return ActionResultType.SUCCESS;
             }
         }
-        BlockPos blockpos1;
-        if (blockstate.getCollisionShape(world, blockpos).isEmpty()) {
-            blockpos1 = blockpos;
+        BlockPos movedPos;
+        if (state.getCollisionShape(world, pos).isEmpty()) {
+            movedPos = pos;
         }
         else {
-            blockpos1 = blockpos.offset(direction);
+            movedPos = pos.offset(direction);
         }
-        EntityType<?> entitytype = this.getType(itemstack.getTag());
-        if (entitytype.spawn(world, itemstack, context.getPlayer(), blockpos1, SpawnReason.SPAWN_EGG, true, !Objects.equals(blockpos, blockpos1) && direction == Direction.UP) != null) {
-            itemstack.shrink(1);
+        EntityType<?> entityType = this.getType(stack.getTag());
+        if (entityType.spawn(world,
+                             stack,
+                             context.getPlayer(),
+                             movedPos,
+                             SpawnReason.SPAWN_EGG,
+                             true,
+                             !pos.equals(movedPos) && direction == Direction.UP) != null) {
+            if (!context.getPlayer().isCreative()) {
+                stack.shrink(1);
+            }
         }
         return ActionResultType.SUCCESS;
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
-        ItemStack stack = playerIn.getHeldItem(handIn);
-        if (worldIn.isRemote) {
+    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
+        ItemStack stack = player.getHeldItem(hand);
+        if (world.isRemote) {
             return new ActionResult<>(ActionResultType.PASS, stack);
         }
-        RayTraceResult raytraceresult = rayTrace(worldIn, playerIn, RayTraceContext.FluidMode.SOURCE_ONLY);
-        if (raytraceresult.getType() != RayTraceResult.Type.BLOCK) {
+        RayTraceResult rayTrace = rayTrace(world, player, RayTraceContext.FluidMode.SOURCE_ONLY);
+        if (rayTrace.getType() != RayTraceResult.Type.BLOCK) {
             return new ActionResult<>(ActionResultType.PASS, stack);
         }
-        BlockRayTraceResult blockraytraceresult = (BlockRayTraceResult) raytraceresult;
-        BlockPos blockpos = blockraytraceresult.getPos();
-        if (!(worldIn.getBlockState(blockpos).getBlock() instanceof FlowingFluidBlock)) {
+        BlockRayTraceResult blockRayTrace = (BlockRayTraceResult) rayTrace;
+        BlockPos pos = blockRayTrace.getPos();
+        if (!(world.getBlockState(pos).getBlock() instanceof FlowingFluidBlock)) {
             return new ActionResult<>(ActionResultType.PASS, stack);
         }
-        if (worldIn.isBlockModifiable(playerIn, blockpos) && playerIn.canPlayerEdit(blockpos, blockraytraceresult.getFace(), stack)) {
-            EntityType<?> entitytype = this.getType(stack.getTag());
-            if (entitytype.spawn(worldIn, stack, playerIn, blockpos, SpawnReason.SPAWN_EGG, false, false) == null) {
+        if (world.isBlockModifiable(player, pos) && player.canPlayerEdit(pos, blockRayTrace.getFace(), stack)) {
+            EntityType<?> entityType = this.getType(stack.getTag());
+            if (entityType.spawn(world, stack, player, pos, SpawnReason.SPAWN_EGG, false, false) == null) {
                 return new ActionResult<>(ActionResultType.PASS, stack);
             }
-            if (!playerIn.abilities.isCreativeMode) {
+            if (!player.isCreative()) {
                 stack.shrink(1);
             }
-            playerIn.addStat(Stats.ITEM_USED.get(this));
+            player.addStat(Stats.ITEM_USED.get(this));
             return new ActionResult<>(ActionResultType.SUCCESS, stack);
         }
         return new ActionResult<>(ActionResultType.FAIL, stack);

@@ -12,7 +12,7 @@ import tgw.evolution.util.EntityStates;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.Time;
 
-public class EntityCow extends AnimalEntity {
+public class EntityCow extends EntityGenericAnimal {
 
     private int eatTimer;
     private int tailTimerX;

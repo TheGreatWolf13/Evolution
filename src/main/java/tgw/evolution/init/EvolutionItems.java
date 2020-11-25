@@ -20,7 +20,7 @@ import static tgw.evolution.util.EnumRockNames.*;
 
 @SuppressWarnings("unused")
 @EventBusSubscriber
-public class EvolutionItems {
+public final class EvolutionItems {
 
     public static final DeferredRegister<Item> ITEMS = new DeferredRegister<>(ForgeRegistries.ITEMS, Evolution.MODID);
     //Placeholder
@@ -697,6 +697,9 @@ public class EvolutionItems {
 
     public static final RegistryObject<Item> bucket_fresh_water = ITEMS.register("bucket_fresh_water", ItemFreshWaterBucket::new);
 
+    private EvolutionItems() {
+    }
+
     public static void register() {
         ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
     }
@@ -704,7 +707,7 @@ public class EvolutionItems {
     private static Item javelin(ToolMaterials tier) {
         return new ItemJavelin(propStoneTool().maxDamage(tier.getMaxUses()).setTEISR(() -> RenderStackItemJavelin::new),
                                tier.getAttackDamage(),
-                               MathHelper.attackSpeed(0.9F + tier.getAttackSpeedMod()),
+                               MathHelper.attackSpeed(1.1F),
                                tier.getName(),
                                tier.getJavelinMass());
     }
@@ -738,28 +741,20 @@ public class EvolutionItems {
     }
 
     private static Item axeStone(ToolMaterials tier) {
-        return new ItemAxe(tier, MathHelper.attackSpeed(1.25F + tier.getAttackSpeedMod()), propStoneTool(), tier.getAxeMass());
+        return new ItemAxe(tier, MathHelper.attackSpeed(1.25F), propStoneTool(), tier.getAxeMass());
     }
 
     private static Item pickaxe(ToolMaterials tier) {
-        return new ItemPickaxe(tier, MathHelper.attackSpeed(0.85F + tier.getAttackSpeedMod()), propMisc(), tier.getPickaxeMass());
+        return new ItemPickaxe(tier, MathHelper.attackSpeed(0.85F), propMisc(), tier.getPickaxeMass());
     }
 
     private static Item shovelStone(ToolMaterials tier) {
-        return new ItemShovel(tier, MathHelper.attackSpeed(1.0F + tier.getAttackSpeedMod()), propStoneTool(), tier.getShovelMass());
+        return new ItemShovel(tier, MathHelper.attackSpeed(1.0F), propStoneTool(), tier.getShovelMass());
     }
 
     private static Item hammerStone(ToolMaterials tier) {
-        return new ItemHammer(tier, MathHelper.attackSpeed(1.25F + tier.getAttackSpeedMod()), propStoneTool(), tier.getHammerMass());
+        return new ItemHammer(tier, MathHelper.attackSpeed(1.25F), propStoneTool(), tier.getHammerMass());
     }
-
-    //    private static Item hoe(IItemTier tier) {
-    //        return new HoeItem(tier, -1.0f, itemProp());
-    //    }
-
-    //    private static Item sword(IItemTier tier) {
-    //        return new SwordItem(tier, 0, -2.4f, itemProp());
-    //    }
 
     private static Item itemRock(RegistryObject<Block> block, EnumRockNames name) {
         return new ItemRock(block.get(), propMisc(), name);

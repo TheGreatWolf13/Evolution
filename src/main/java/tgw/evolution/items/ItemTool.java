@@ -26,12 +26,21 @@ public abstract class ItemTool extends ItemTiered implements IDurability, IMelee
     private final Set<Block> effectiveBlocks;
     private final Set<Material> effectiveMaterials;
 
-    protected ItemTool(float attackSpeedIn, IItemTier tier, Set<Block> effectiveBlocksIn, Set<Material> effectiveMaterials, Item.Properties builder) {
+    protected ItemTool(float attackSpeed, IItemTier tier, Set<Block> effectiveBlocks, Set<Material> effectiveMaterials, Item.Properties builder) {
         super(tier, builder);
-        this.effectiveBlocks = effectiveBlocksIn;
+        this.effectiveBlocks = effectiveBlocks;
         this.effectiveMaterials = effectiveMaterials;
         this.efficiency = tier.getEfficiency();
-        this.attackSpeed = attackSpeedIn;
+        this.attackSpeed = attackSpeed;
+    }
+
+    public float getEfficiency() {
+        return this.efficiency;
+    }
+
+    @Override
+    public boolean canPlayerBreakBlockWhileHolding(BlockState state, World worldIn, BlockPos pos, PlayerEntity player) {
+        return !player.isCreative();
     }
 
     @Override
@@ -40,6 +49,20 @@ public abstract class ItemTool extends ItemTiered implements IDurability, IMelee
             return this.efficiency;
         }
         return this.effectiveBlocks.contains(state.getBlock()) ? this.efficiency : 1.0F;
+    }
+
+    @Override
+    public boolean hitEntity(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        stack.damageItem(2, attacker, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
+        return true;
+    }
+
+    @Override
+    public boolean onBlockDestroyed(ItemStack stack, World world, BlockState state, BlockPos pos, LivingEntity livingEntity) {
+        if (!world.isRemote && state.getBlockHardness(world, pos) != 0.0F) {
+            stack.damageItem(1, livingEntity, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
+        }
+        return true;
     }
 
     @Override
@@ -52,46 +75,45 @@ public abstract class ItemTool extends ItemTiered implements IDurability, IMelee
     }
 
     @Override
-    public boolean hitEntity(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        stack.damageItem(2, attacker, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
-        return true;
-    }
-
-    @Override
-    public boolean onBlockDestroyed(ItemStack stack, World worldIn, BlockState state, BlockPos pos, LivingEntity entityLiving) {
-        if (!worldIn.isRemote && state.getBlockHardness(worldIn, pos) != 0.0F) {
-            stack.damageItem(1, entityLiving, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
+    public Multimap<String, AttributeModifier> getAttributeModifiers(EquipmentSlotType slot) {
+        Multimap<String, AttributeModifier> multimap = super.getAttributeModifiers(slot);
+        if (slot == EquipmentSlotType.MAINHAND) {
+            multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(),
+                         new AttributeModifier(ATTACK_DAMAGE_MODIFIER,
+                                               "Tool modifier",
+                                               this.getAttackDamage(),
+                                               AttributeModifier.Operation.ADDITION));
+            multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(),
+                         new AttributeModifier(ATTACK_SPEED_MODIFIER, "Tool modifier", this.getAttackSpeed(), AttributeModifier.Operation.ADDITION));
+            multimap.put(PlayerEntity.REACH_DISTANCE.getName(),
+                         new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER,
+                                               "Reach Modifier",
+                                               this.getReach(),
+                                               AttributeModifier.Operation.ADDITION));
+            multimap.put(EvolutionAttributes.MASS.getName(),
+                         new AttributeModifier(EvolutionAttributes.MASS_MODIFIER,
+                                               "Mass Modifier",
+                                               this.getMass(),
+                                               AttributeModifier.Operation.ADDITION));
         }
-        return true;
-    }
-
-    @Override
-    public Multimap<String, AttributeModifier> getAttributeModifiers(EquipmentSlotType equipmentSlot) {
-        Multimap<String, AttributeModifier> multimap = super.getAttributeModifiers(equipmentSlot);
-        if (equipmentSlot == EquipmentSlotType.MAINHAND) {
-            multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(), new AttributeModifier(ATTACK_DAMAGE_MODIFIER, "Tool modifier", this.getAttackDamage(), AttributeModifier.Operation.ADDITION));
-            multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(), new AttributeModifier(ATTACK_SPEED_MODIFIER, "Tool modifier", this.getAttackSpeed(), AttributeModifier.Operation.ADDITION));
-            multimap.put(PlayerEntity.REACH_DISTANCE.getName(), new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER, "Reach Modifier", this.getReach(), AttributeModifier.Operation.ADDITION));
-            multimap.put(EvolutionAttributes.MASS.getName(), new AttributeModifier(EvolutionAttributes.MASS_MODIFIER, "Mass Modifier", this.getMass(), AttributeModifier.Operation.ADDITION));
-        }
-        else if (equipmentSlot == EquipmentSlotType.OFFHAND) {
-            multimap.put(EvolutionAttributes.MASS.getName(), new AttributeModifier(EvolutionAttributes.MASS_MODIFIER_OFFHAND, "Mass Modifier", this.getMass(), AttributeModifier.Operation.ADDITION));
+        else if (slot == EquipmentSlotType.OFFHAND) {
+            multimap.put(EvolutionAttributes.MASS.getName(),
+                         new AttributeModifier(EvolutionAttributes.MASS_MODIFIER_OFFHAND,
+                                               "Mass Modifier",
+                                               this.getMass(),
+                                               AttributeModifier.Operation.ADDITION));
         }
         return multimap;
     }
 
-    protected abstract float setReach();
+    @Override
+    public double getAttackSpeed() {
+        return this.attackSpeed - PlayerHelper.ATTACK_SPEED;
+    }
 
     protected abstract float setBaseDamage();
 
-    @Override
-    public double getReach() {
-        return this.setReach() - PlayerHelper.REACH_DISTANCE;
-    }
-
-    public float getEfficiency() {
-        return this.efficiency;
-    }
+    protected abstract float setReach();
 
     @Override
     public double getAttackDamage() {
@@ -99,7 +121,7 @@ public abstract class ItemTool extends ItemTiered implements IDurability, IMelee
     }
 
     @Override
-    public double getAttackSpeed() {
-        return this.attackSpeed - PlayerHelper.ATTACK_SPEED;
+    public double getReach() {
+        return this.setReach() - PlayerHelper.REACH_DISTANCE;
     }
 }

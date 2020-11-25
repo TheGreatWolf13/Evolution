@@ -23,13 +23,13 @@ public class ItemPickaxe extends ItemTool {
     }
 
     @Override
-    protected float setReach() {
-        return 3;
+    protected float setBaseDamage() {
+        return -1.5f;
     }
 
     @Override
-    protected float setBaseDamage() {
-        return -2;
+    protected float setReach() {
+        return 3;
     }
 
     @Override

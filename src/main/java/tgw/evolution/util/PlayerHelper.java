@@ -21,9 +21,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.event.ForgeEventFactory;
-import net.minecraftforge.event.entity.player.CriticalHitEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionDamage;
@@ -60,7 +58,7 @@ public abstract class PlayerHelper {
     /**
      * Controls the loss of deceleration because of the motion of your legs.
      */
-    public static final double LEG_SLOWDOWN = 0.1136;
+    public static final double LEG_SLOWDOWN = 0.113_6;
     private static final Random RAND = new Random();
 
     public static void performAttack(PlayerEntity player, @Nullable Entity entity, Hand hand) {
@@ -130,23 +128,23 @@ public abstract class PlayerHelper {
                         ++knockbackModifier;
                         sprinting = true;
                     }
-                    boolean critical = player.fallDistance > 0.0F &&
-                                       !player.onGround &&
-                                       !player.isOnLadder() &&
-                                       !player.isInWater() &&
-                                       !player.isPotionActive(Effects.BLINDNESS) &&
-                                       !player.isPassenger() &&
-                                       targetEntity instanceof LivingEntity;
-                    critical = critical && !player.isSprinting();
-                    CriticalHitEvent hitResult = ForgeHooks.getCriticalHit(player, targetEntity, critical, critical ? 1.5F : 1.0F);
-                    critical = hitResult != null;
-                    if (critical) {
-                        damage *= hitResult.getDamageModifier();
-                    }
+//                    boolean critical = player.fallDistance > 0.0F &&
+//                                       !player.onGround &&
+//                                       !player.isOnLadder() &&
+//                                       !player.isInWater() &&
+//                                       !player.isPotionActive(Effects.BLINDNESS) &&
+//                                       !player.isPassenger() &&
+//                                       targetEntity instanceof LivingEntity;
+//                    critical = critical && !player.isSprinting();
+//                    CriticalHitEvent hitResult = ForgeHooks.getCriticalHit(player, targetEntity, critical, critical ? 1.5F : 1.0F);
+//                    critical = hitResult != null;
+//                    if (critical) {
+//                        damage *= hitResult.getDamageModifier();
+//                    }
                     /*damage += enchantmentModifier;*/
                     boolean isSweepAttack = false;
                     double distanceWalked = player.distanceWalkedModified - player.prevDistanceWalkedModified;
-                    if (!critical && !sprinting && player.onGround && distanceWalked < (double) player.getAIMoveSpeed()) {
+                    if (/*!critical && */!sprinting && player.onGround && distanceWalked < player.getAIMoveSpeed()) {
                         if (attackItem instanceof ISweepAttack) {
                             isSweepAttack = true;
                         }
@@ -174,27 +172,22 @@ public abstract class PlayerHelper {
                         if (knockbackModifier > 0) {
                             if (targetEntity instanceof LivingEntity) {
                                 ((LivingEntity) targetEntity).knockBack(player,
-                                                                        (float) knockbackModifier * 0.5F,
-                                                                        MathHelper.sin(player.rotationYaw * ((float) Math.PI / 180F)),
-                                                                        -MathHelper.cos(player.rotationYaw * ((float) Math.PI / 180F)));
+                                                                        knockbackModifier * 0.5F,
+                                                                        MathHelper.sinDeg(player.rotationYaw),
+                                                                        -MathHelper.cosDeg(player.rotationYaw));
                             }
                             else {
-                                targetEntity.addVelocity(-MathHelper.sin(player.rotationYaw * ((float) Math.PI / 180F)) *
-                                                         (float) knockbackModifier *
-                                                         0.5F,
-                                                         0.1D,
-                                                         MathHelper.cos(player.rotationYaw * ((float) Math.PI / 180F)) *
-                                                         (float) knockbackModifier *
-                                                         0.5F);
+                                targetEntity.addVelocity(-MathHelper.sinDeg(player.rotationYaw) * knockbackModifier * 0.5F,
+                                                         0.1,
+                                                         MathHelper.cosDeg(player.rotationYaw) * knockbackModifier * 0.5F);
                             }
-                            player.setMotion(player.getMotion().mul(0.6D, 1.0D, 0.6D));
+                            player.setMotion(player.getMotion().mul(0.6, 1, 0.6));
                         }
                         //Sweep Attack
                         if (isSweepAttack) {
                             float sweepingDamage = 1.0F + ((ISweepAttack) attackItem).getSweepRatio() * damage;
                             for (LivingEntity livingentity : player.world.getEntitiesWithinAABB(LivingEntity.class,
-                                                                                                targetEntity.getBoundingBox()
-                                                                                                            .grow(1.0D, 0.25D, 1.0D))) {
+                                                                                                targetEntity.getBoundingBox().grow(1, 0.25, 1))) {
                                 if (livingentity != player &&
                                     livingentity != targetEntity &&
                                     !player.isOnSameTeam(livingentity) &&
@@ -202,8 +195,8 @@ public abstract class PlayerHelper {
                                     player.getDistanceSq(livingentity) < 9.0D) {
                                     livingentity.knockBack(player,
                                                            0.4F,
-                                                           MathHelper.sin(player.rotationYaw * ((float) Math.PI / 180F)),
-                                                           -MathHelper.cos(player.rotationYaw * ((float) Math.PI / 180F)));
+                                                           MathHelper.sinDeg(player.rotationYaw),
+                                                           -MathHelper.cosDeg(player.rotationYaw));
                                     //noinspection ObjectAllocationInLoop
                                     livingentity.attackEntityFrom(DamageSource.causePlayerDamage(player), sweepingDamage);
                                 }
@@ -225,19 +218,19 @@ public abstract class PlayerHelper {
                             targetEntity.setMotion(targetMotion);
                         }
                         //Critical particles
-                        if (critical) {
-                            player.world.playSound(null,
-                                                   player.posX,
-                                                   player.posY,
-                                                   player.posZ,
-                                                   SoundEvents.ENTITY_PLAYER_ATTACK_CRIT,
-                                                   player.getSoundCategory(),
-                                                   1.0F,
-                                                   1.0F);
-                            player.onCriticalHit(targetEntity);
-                        }
+//                        if (critical) {
+//                            player.world.playSound(null,
+//                                                   player.posX,
+//                                                   player.posY,
+//                                                   player.posZ,
+//                                                   SoundEvents.ENTITY_PLAYER_ATTACK_CRIT,
+//                                                   player.getSoundCategory(),
+//                                                   1.0F,
+//                                                   1.0F);
+//                            player.onCriticalHit(targetEntity);
+//                        }
                         //Strong attack particles
-                        if (!critical && !isSweepAttack) {
+                        if (/*!critical && */!isSweepAttack) {
                             player.world.playSound(null,
                                                    player.posX,
                                                    player.posY,
@@ -272,17 +265,17 @@ public abstract class PlayerHelper {
                             if (fireAspectModifier > 0) {
                                 targetEntity.setFire(fireAspectModifier * 4);
                             }
-                            if (player.world instanceof ServerWorld && damageDealt >= 2.0F) {
-                                int heartsToSpawn = (int) ((double) damageDealt * 0.5D);
+                            if (player.world instanceof ServerWorld && damageDealt >= 10.0F) {
+                                int heartsToSpawn = (int) (damageDealt * 0.1);
                                 ((ServerWorld) player.world).spawnParticle(ParticleTypes.DAMAGE_INDICATOR,
                                                                            targetEntity.posX,
-                                                                           targetEntity.posY + (double) (targetEntity.getHeight() * 0.5F),
+                                                                           targetEntity.posY + targetEntity.getHeight() * 0.5F,
                                                                            targetEntity.posZ,
                                                                            heartsToSpawn,
-                                                                           0.1D,
-                                                                           0.0D,
-                                                                           0.1D,
-                                                                           0.2D);
+                                                                           0.1,
+                                                                           0,
+                                                                           0.1,
+                                                                           0.2);
                             }
                         }
                         player.addExhaustion(0.1F);
@@ -309,7 +302,6 @@ public abstract class PlayerHelper {
     @Nullable
     public static EquipmentSlotType getPartByPosition(double y, PlayerEntity player) {
         double yRelativistic = y - player.posY;
-        Evolution.LOGGER.debug("yRelative = {}", yRelativistic);
         if (player.isSneaking()) {
             if (yRelativistic <= 0.25) {
                 return EquipmentSlotType.FEET;
@@ -340,23 +332,14 @@ public abstract class PlayerHelper {
         return null;
     }
 
-    public static float getHitMultiplier(@Nullable EquipmentSlotType type, PlayerEntity player, float damage) {
-        switch (type) {
-            case HEAD:
-                headHit(player, damage, 1.75f);
-                return 1.75f;
-            case CHEST:
-                return 1.25f;
-            case LEGS:
-                return 1f;
-            case FEET:
-                return 0.5f;
-        }
-        return 1;
+    public static float getDamage(@Nullable EquipmentSlotType slot, PlayerEntity player, float damage, EvolutionDamage.Type type) {
+        //TODO damage calculations
+        Evolution.LOGGER.debug("{} received {}HP of {} damage on {}", player.getScoreboardName(), damage, type, slot);
+        return damage;
     }
 
-    public static void headHit(PlayerEntity player, float damage, float multiplier) {
-        float strength = MathHelper.relativize(damage * multiplier, 0, player.getMaxHealth());
+    public static void headHit(PlayerEntity player, float damage) {
+        float strength = MathHelper.relativize(damage, 0, player.getMaxHealth());
         if (RAND.nextFloat() < strength) {
             player.addPotionEffect(new EffectInstance(Effects.NAUSEA, (int) (300 * strength), 0, true, false, true));
         }
@@ -371,23 +354,5 @@ public abstract class PlayerHelper {
                                                       false,
                                                       true));
         }
-    }
-
-    public static float getProjectileModifier(@Nullable EquipmentSlotType type) {
-        switch (type) {
-            case HEAD:
-                return 2.0f;
-            case CHEST:
-                return 1.5f;
-            case LEGS:
-                return 1f;
-            case FEET:
-                return 0.75f;
-        }
-        return 1;
-    }
-
-    public static void reactToDamageType(PlayerEntity player, EvolutionDamage.Type type) {
-
     }
 }

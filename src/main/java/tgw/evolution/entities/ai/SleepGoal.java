@@ -1,18 +1,18 @@
 package tgw.evolution.entities.ai;
 
 import net.minecraft.entity.ai.goal.Goal;
-import tgw.evolution.entities.AnimalEntity;
+import tgw.evolution.entities.EntityGenericAnimal;
 
 import java.util.EnumSet;
 
 public class SleepGoal extends Goal {
 
-    private final AnimalEntity entity;
+    private final EntityGenericAnimal entity;
     private final int timeFixed;
     private final int timeMargin;
     private int sleepTimer;
 
-    public SleepGoal(AnimalEntity entity, int timeFixed, int timeMargin) {
+    public SleepGoal(EntityGenericAnimal entity, int timeFixed, int timeMargin) {
         this.entity = entity;
         this.timeFixed = timeFixed;
         this.timeMargin = timeMargin;

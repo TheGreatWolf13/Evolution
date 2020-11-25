@@ -3,7 +3,7 @@ package tgw.evolution.entities;
 import net.minecraft.nbt.CompoundNBT;
 
 public class AnimalFoodWaterController {
-    private final AnimalEntity animal;
+    private final EntityGenericAnimal animal;
     /**
      * Each unit of food represents 10 g.
      */
@@ -17,7 +17,7 @@ public class AnimalFoodWaterController {
     private short processedWater;
     private int waterConsumption;
 
-    public AnimalFoodWaterController(AnimalEntity animal) {
+    public AnimalFoodWaterController(EntityGenericAnimal animal) {
         this.animal = animal;
     }
 

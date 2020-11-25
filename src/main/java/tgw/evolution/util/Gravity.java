@@ -2,12 +2,16 @@ package tgw.evolution.util;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.world.dimension.Dimension;
+import tgw.evolution.entities.projectiles.IAerodynamicEntity;
 
-public class Gravity {
+public final class Gravity {
 
-    private static final double EARTH_GRAVITY = 0.0245;
+    private static final double EARTH_GRAVITY = 0.024_5;
     private static final double AIR_DENSITY = 1.225;
     private static final double WATER_DENSITY = 997;
+
+    private Gravity() {
+    }
 
     /**
      * Returns the gravitational acceleration of the given dimension in metres / tick^2.
@@ -27,6 +31,9 @@ public class Gravity {
     }
 
     public static double coefOfDrag(Entity entity) {
+        if (entity instanceof IAerodynamicEntity) {
+            return 0.04;
+        }
         return 1.05;
     }
 

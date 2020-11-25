@@ -7,23 +7,43 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockReader;
-import tgw.evolution.entities.AgeableEntity;
+import tgw.evolution.entities.EntityGenericAgeable;
 
 import javax.annotation.Nullable;
 import java.util.EnumSet;
 
 public class PanicGoal extends Goal {
 
-    protected final AgeableEntity creature;
+    protected final EntityGenericAgeable creature;
     protected final double speed;
     protected double randPosX;
     protected double randPosY;
     protected double randPosZ;
 
-    public PanicGoal(AgeableEntity creature, double speedIn) {
+    public PanicGoal(EntityGenericAgeable creature, double speedIn) {
         this.creature = creature;
         this.speed = speedIn;
         this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE));
+    }
+
+    @Override
+    public boolean shouldExecute() {
+        if (this.creature.isDead()) {
+            return false;
+        }
+        if (this.creature.getRevengeTarget() == null && !this.creature.isBurning()) {
+            return false;
+        }
+        if (this.creature.isBurning()) {
+            BlockPos blockpos = PanicGoal.getRandPos(this.creature.world, this.creature, 5, 4);
+            if (blockpos != null) {
+                this.randPosX = blockpos.getX();
+                this.randPosY = blockpos.getY();
+                this.randPosZ = blockpos.getZ();
+                return true;
+            }
+        }
+        return this.findRandomPosition();
     }
 
     @Nullable
@@ -53,26 +73,6 @@ public class PanicGoal extends Goal {
         return chosenPos;
     }
 
-    @Override
-    public boolean shouldExecute() {
-        if (this.creature.isDead()) {
-            return false;
-        }
-        if (this.creature.getRevengeTarget() == null && !this.creature.isBurning()) {
-            return false;
-        }
-        if (this.creature.isBurning()) {
-            BlockPos blockpos = PanicGoal.getRandPos(this.creature.world, this.creature, 5, 4);
-            if (blockpos != null) {
-                this.randPosX = blockpos.getX();
-                this.randPosY = blockpos.getY();
-                this.randPosZ = blockpos.getZ();
-                return true;
-            }
-        }
-        return this.findRandomPosition();
-    }
-
     protected boolean findRandomPosition() {
         Vec3d vec3d = RandomPositionGenerator.findRandomTarget(this.creature, 5, 4);
         if (vec3d == null) {
@@ -85,15 +85,15 @@ public class PanicGoal extends Goal {
     }
 
     @Override
-    public void startExecuting() {
-        this.creature.getNavigator().tryMoveToXYZ(this.randPosX, this.randPosY, this.randPosZ, this.speed);
-    }
-
-    @Override
     public boolean shouldContinueExecuting() {
         if (this.creature.isDead()) {
             return false;
         }
         return !this.creature.getNavigator().noPath();
+    }
+
+    @Override
+    public void startExecuting() {
+        this.creature.getNavigator().tryMoveToXYZ(this.randPosX, this.randPosY, this.randPosZ, this.speed);
     }
 }

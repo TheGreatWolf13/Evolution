@@ -1,8 +1,8 @@
 package tgw.evolution.entities;
 
 public enum EntityPartType {
-    HEAD("head", 10),
-    BODY("neck", 1);
+    HEAD("head", 1.75f),
+    BODY("body", 1.0f);
 
     private final String name;
     private final float damageMult;
