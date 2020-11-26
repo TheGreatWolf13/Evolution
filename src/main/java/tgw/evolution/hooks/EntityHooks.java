@@ -8,6 +8,9 @@ public final class EntityHooks {
     private EntityHooks() {
     }
 
+    /**
+     * Hooks from {@link Entity#dealFireDamage(int)}
+     */
     @EvolutionHook
     public static void dealFireDamage(Entity entity, int amount) {
         if (!entity.isImmuneToFire()) {
@@ -15,6 +18,9 @@ public final class EntityHooks {
         }
     }
 
+    /**
+     * Hooks from {@link Entity#baseTick()}
+     */
     @EvolutionHook
     public static void onFireDamage(Entity entity) {
         entity.attackEntityFrom(EvolutionDamage.ON_FIRE, 2.5F);

@@ -51,8 +51,6 @@ function patchTravel(instructions) {
 	instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
 	instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
 	instructions.add(new FieldInsnNode(Opcodes.GETFIELD, "net/minecraft/entity/LivingEntity", ISJUMPING, "Z"));
-	instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
-	instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/entity/LivingEntity", GETWATERSLOWDOWN, "()F", false));
 	instructions.add(new FieldInsnNode(
 	    Opcodes.GETSTATIC,
 	    "net/minecraft/entity/Entity",
@@ -63,7 +61,7 @@ function patchTravel(instructions) {
 		Opcodes.INVOKESTATIC,
 		"tgw/evolution/hooks/LivingEntityHooks",
 		"travel",
-		"(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/util/math/Vec3d;ZFLnet/minecraft/network/datasync/DataParameter;)V",
+		"(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/util/math/Vec3d;ZLnet/minecraft/network/datasync/DataParameter;)V",
 		false
 	));
 	instructions.add(new InsnNode(Opcodes.RETURN));

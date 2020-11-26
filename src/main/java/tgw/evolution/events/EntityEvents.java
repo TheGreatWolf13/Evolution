@@ -187,8 +187,6 @@ public class EntityEvents {
         ((LivingEntity) entity).getAttribute(LivingEntity.ENTITY_GRAVITY).setBaseValue(Gravity.gravity(entity.world.getDimension()));
         if (entity instanceof PlayerEntity) {
             PlayerEntity player = (PlayerEntity) entity;
-            player.getAttribute(SharedMonsterAttributes.ATTACK_SPEED).setBaseValue(PlayerHelper.ATTACK_SPEED);
-            player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(PlayerHelper.REACH_DISTANCE);
             if (player.world.isRemote) {
                 player.abilities.setWalkSpeed((float) PlayerHelper.WALK_SPEED);
             }
@@ -198,8 +196,8 @@ public class EntityEvents {
                                                             (float) PlayerHelper.WALK_SPEED,
                                                             "field_149495_f");
             }
-            player.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(PlayerHelper.WALK_SPEED);
         }
+        //TODO
 //        else {
 //            //Makes the Living Entities able to step up one block, instead of jumping (it looks better)
 //            entity.stepHeight = 1.0625F;

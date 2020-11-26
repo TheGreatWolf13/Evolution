@@ -35,6 +35,9 @@ public final class LivingEntityHooks {
     private LivingEntityHooks() {
     }
 
+    /**
+     * Hooks from {@link LivingEntity#playEquipSound(ItemStack)}
+     */
     @EvolutionHook
     public static void playEquipSound(LivingEntity entity, ItemStack stack) {
         if (!stack.isEmpty()) {
@@ -52,11 +55,17 @@ public final class LivingEntityHooks {
         }
     }
 
+    /**
+     * Hooks from {@link LivingEntity#getJumpUpwardsMotion()}
+     */
     @EvolutionHook
     public static float getJumpUpwardsMotion() {
         return 0.22f;
     }
 
+    /**
+     * Hooks from {@link LivingEntity#jump()}
+     */
     @EvolutionHook
     public static void jump(LivingEntity entity, float jumpUpwardsMotion) {
         float upMotion;
@@ -83,8 +92,11 @@ public final class LivingEntityHooks {
         return equipMass * 0.000_2;
     }
 
+    /**
+     * Hooks from {@link LivingEntity#travel(Vec3d)}
+     */
     @EvolutionHook
-    public static void travel(LivingEntity entity, Vec3d direction, boolean isJumping, float waterSlowDown, DataParameter<Byte> flags) {
+    public static void travel(LivingEntity entity, Vec3d direction, boolean isJumping, DataParameter<Byte> flags) {
         if (entity.isServerWorld() || entity.canPassengerSteer()) {
             IAttributeInstance gravity = entity.getAttribute(LivingEntity.ENTITY_GRAVITY);
             boolean falling = entity.getMotion().y <= 0;
