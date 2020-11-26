@@ -10,16 +10,16 @@ import tgw.evolution.init.EvolutionDamage;
 
 import javax.annotation.Nullable;
 
-public class EvIndirectEntityDamageSource extends DamageSourceEntity {
+public class DamageSourceEntityIndirect extends DamageSourceEntity {
     private final Entity trueSource;
     private boolean isThornsDamage;
 
-    public EvIndirectEntityDamageSource(String damage, Entity source, @Nullable Entity trueSource, EvolutionDamage.Type type) {
+    public DamageSourceEntityIndirect(String damage, Entity source, @Nullable Entity trueSource, EvolutionDamage.Type type) {
         super(damage, source, type);
         this.trueSource = trueSource;
     }
 
-    public EvIndirectEntityDamageSource setIsThornsDamage() {
+    public DamageSourceEntityIndirect setIsThornsDamage() {
         this.isThornsDamage = true;
         return this;
     }

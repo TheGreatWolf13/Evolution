@@ -54,8 +54,8 @@ import tgw.evolution.util.HarvestLevel;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.damage.DamageSourceEntity;
-import tgw.evolution.util.damage.EvDamageSource;
-import tgw.evolution.util.damage.EvIndirectEntityDamageSource;
+import tgw.evolution.util.damage.DamageSourceEntityIndirect;
+import tgw.evolution.util.damage.DamageSourceEv;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -401,14 +401,11 @@ public class EntityEvents {
         }
         if (event.getEntityLiving() instanceof PlayerEntity) {
             EquipmentSlotType hitPart = this.damageMultipliers.remove(event.getSource());
-            Evolution.LOGGER.debug("damage before = " + event.getAmount());
-            Evolution.LOGGER.debug("hitPart = " + hitPart);
             EvolutionDamage.Type type = EvolutionDamage.Type.GENERIC;
-            if (event.getSource() instanceof EvDamageSource) {
-                type = ((EvDamageSource) event.getSource()).getType();
+            if (event.getSource() instanceof DamageSourceEv) {
+                type = ((DamageSourceEv) event.getSource()).getType();
             }
             event.setAmount(PlayerHelper.getDamage(hitPart, (PlayerEntity) event.getEntityLiving(), event.getAmount(), type));
-            Evolution.LOGGER.debug("damage after = " + event.getAmount());
         }
         if (event.getSource().getTrueSource() instanceof PlayerEntity) {
             event.getEntityLiving().hurtResistantTime = 0;
@@ -496,7 +493,7 @@ public class EntityEvents {
             return;
         }
         DamageSource source = event.getSource();
-        if (!(source instanceof EvDamageSource)) {
+        if (!(source instanceof DamageSourceEv)) {
             Evolution.LOGGER.debug("Canceling vanilla damage source: {}", source.damageType);
             event.setCanceled(true);
             return;
@@ -508,7 +505,7 @@ public class EntityEvents {
         Evolution.LOGGER.debug("amount = " + damage);
         LivingEntity hitEntity = event.getEntityLiving();
         //Raytracing projectile damage
-        if (source instanceof EvIndirectEntityDamageSource && source.isProjectile()) {
+        if (source instanceof DamageSourceEntityIndirect && source.isProjectile()) {
             if (hitEntity instanceof PlayerEntity) {
                 EquipmentSlotType type = PlayerHelper.getPartByPosition(source.getImmediateSource().getBoundingBox().minY, (PlayerEntity) hitEntity);
                 Evolution.LOGGER.debug("type ranged = {}", type);
