@@ -5,6 +5,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
+import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.init.EvolutionDamage;
 
 import javax.annotation.Nullable;
@@ -44,6 +45,12 @@ public class EvIndirectEntityDamageSource extends EvEntityDamageSource {
         ITextComponent sourceComp = this.trueSource == null ? this.damageSourceEntity.getDisplayName() : this.trueSource.getDisplayName();
         ItemStack heldStack = this.trueSource instanceof LivingEntity ? ((LivingEntity) this.trueSource).getHeldItemMainhand() : ItemStack.EMPTY;
         String message = "death.attack." + this.damageType;
+        if ("spear".equals(this.damageType)) {
+            heldStack = ((EntitySpear) this.damageSourceEntity).getStack();
+            if (this.trueSource == null) {
+                return new TranslationTextComponent(message, deadEntity.getDisplayName(), heldStack);
+            }
+        }
         String messageItem = message + ".item";
         return !heldStack.isEmpty() ?
                new TranslationTextComponent(messageItem, deadEntity.getDisplayName(), sourceComp, heldStack.getTextComponent()) :
