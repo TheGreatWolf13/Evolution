@@ -10,6 +10,10 @@ import net.minecraft.entity.item.ArmorStandEntity;
 import net.minecraft.entity.monster.MonsterEntity;
 import net.minecraft.entity.passive.IFlyingAnimal;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ArmorItem;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.DamageSource;
@@ -29,6 +33,23 @@ import tgw.evolution.util.PlayerHelper;
 public final class LivingEntityHooks {
 
     private LivingEntityHooks() {
+    }
+
+    @EvolutionHook
+    public static void playEquipSound(LivingEntity entity, ItemStack stack) {
+        if (!stack.isEmpty()) {
+            SoundEvent sound = null;
+            Item item = stack.getItem();
+            if (item instanceof ArmorItem) {
+                sound = ((ArmorItem) item).getArmorMaterial().getSoundEvent();
+            }
+            else if (item == Items.ELYTRA) {
+                sound = SoundEvents.ITEM_ARMOR_EQUIP_ELYTRA;
+            }
+            if (sound != null) {
+                entity.playSound(sound, 1.0F, 1.0F);
+            }
+        }
     }
 
     @EvolutionHook
