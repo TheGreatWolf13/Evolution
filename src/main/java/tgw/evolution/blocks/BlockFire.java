@@ -327,7 +327,7 @@ public class BlockFire extends Block implements IReplaceable {
     @Override
     @OnlyIn(Dist.CLIENT)
     public void animateTick(BlockState stateIn, World worldIn, BlockPos pos, Random rand) {
-        if (rand.nextInt(24) == 0) {
+        if (rand.nextInt(8) == 0) {
             worldIn.playSound(pos.getX() + 0.5,
                               pos.getY() + 0.5,
                               pos.getZ() + 0.5,
