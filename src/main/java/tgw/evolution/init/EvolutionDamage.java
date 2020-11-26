@@ -17,7 +17,9 @@ public final class EvolutionDamage {
     public static final DamageSource FALLING_SOIL = new EvDamageSource("falling_soil", Type.CRUSHING).setDamageBypassesArmor();
     public static final DamageSource FALLING_WOOD = new EvDamageSource("falling_wood", Type.CRUSHING).setDamageBypassesArmor();
     public static final DamageSource FALLING_TREE = new EvDamageSource("falling_tree", Type.CRUSHING).setDamageBypassesArmor();
+    public static final DamageSource IN_FIRE = new EvDamageSource("inFire", Type.FIRE).setFireDamage();
     public static final DamageSource IN_WALL = new EvDamageSource("inWall", Type.SUFFOCATION).setDamageBypassesArmor();
+    public static final DamageSource ON_FIRE = new EvDamageSource("onFire", Type.FIRE).setFireDamage();
 
     private EvolutionDamage() {
     }
@@ -41,6 +43,7 @@ public final class EvolutionDamage {
     public enum Type {
         CRUSHING("crushing"),
         FALL("fall"),
+        FIRE("fire"),
         GENERIC("generic"),
         PIERCING("piercing"),
         SLASHING("slashing"),

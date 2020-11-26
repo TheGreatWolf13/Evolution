@@ -257,14 +257,19 @@ public class ClientEvents {
                 }
                 hasAddedLine = true;
             }
+            boolean hasAttributes = hasSpeed || hasDamage || hasReach;
             if (hasAddedLine) {
                 hasAddedLine = false;
             }
             else {
+                if (hasAttributes) {
+                    line++;
+                }
+            }
+            if (hasAttributes) {
+                //Slot name
                 line++;
             }
-            //Slot name
-            line++;
             //Attack Speed
             if (hasSpeed) {
                 int x = event.getX() + 4;

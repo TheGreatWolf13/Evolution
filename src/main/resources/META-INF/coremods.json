@@ -3,5 +3,6 @@
   "Evolution LivingEntityLivingTick Transformer": "patches/LivingEntityLivingTick.js",
   "Evolution LivingEntityJump Transformer": "patches/LivingEntityJump.js",
   "Evolution PlayerEntityAttributes Transformer": "patches/PlayerEntityAttributes.js",
-  "Evolution ShaderInstancePatch Transformer": "patches/ShaderInstancePatch.js"
+  "Evolution ShaderInstancePatch Transformer": "patches/ShaderInstancePatch.js",
+  "Evolution EntityDealFireDamage Transformer": "patches/EntityDealFireDamage.js"
 }

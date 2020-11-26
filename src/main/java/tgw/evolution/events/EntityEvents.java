@@ -3,6 +3,7 @@ package tgw.evolution.events;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.*;
+import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.merchant.villager.WanderingTraderEntity;
@@ -65,10 +66,13 @@ public class EntityEvents {
     private static final Method SET_POSE_METHOD = ObfuscationReflectionHelper.findMethod(Entity.class, "func_213301_b", Pose.class);
     private static final Random RANDOM = new Random();
     private static final Set<DamageSource> IGNORED_DAMAGE_SOURCES = new HashSet<>();
+    private static final Map<UUID, Double> PLAYER_MASS_MAP = new HashMap<>();
 
     static {
-        IGNORED_DAMAGE_SOURCES.add(EvolutionDamage.FALLING_ROCK);
         IGNORED_DAMAGE_SOURCES.add(EvolutionDamage.FALL);
+        IGNORED_DAMAGE_SOURCES.add(EvolutionDamage.FALLING_ROCK);
+        IGNORED_DAMAGE_SOURCES.add(EvolutionDamage.IN_FIRE);
+        IGNORED_DAMAGE_SOURCES.add(EvolutionDamage.ON_FIRE);
     }
 
     private final Map<DamageSource, EquipmentSlotType> damageMultipliers = new WeakHashMap<>();
@@ -181,7 +185,6 @@ public class EntityEvents {
         }
         //Sets the gravity of the Living Entities and the Player to be that of the dimension they're in
         ((LivingEntity) entity).getAttribute(LivingEntity.ENTITY_GRAVITY).setBaseValue(Gravity.gravity(entity.world.getDimension()));
-        ((LivingEntity) entity).getAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).setBaseValue(1);
         if (entity instanceof PlayerEntity) {
             PlayerEntity player = (PlayerEntity) entity;
             player.getAttribute(SharedMonsterAttributes.ATTACK_SPEED).setBaseValue(PlayerHelper.ATTACK_SPEED);
@@ -307,16 +310,23 @@ public class EntityEvents {
 
     @SubscribeEvent
     public void onEntityKnockedBack(LivingKnockBackEvent event) {
-        //TODO FIX THIS SHIT KNOCKBACK
         event.setCanceled(true);
-        event.getEntity().isAirBorne = true;
-        Vec3d motion = event.getEntity().getMotion();
-        double knockbackResistance = 0;
-        Vec3d knockbackVector = new Vec3d(event.getRatioX(), 0, event.getRatioZ()).normalize()
-                                                                                  .scale(2 * event.getStrength())
-                                                                                  .scale(1 - knockbackResistance);
-        event.getEntity().setMotion(motion.x - knockbackVector.x, motion.y, motion.z - knockbackVector.z);
-        event.getEntityLiving().velocityChanged = true;
+        LivingEntity entity = event.getEntityLiving();
+        double knockbackResistance = entity.getAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).getValue();
+        if (knockbackResistance == 1) {
+            return;
+        }
+        float strength = event.getStrength();
+        double xRatio = event.getRatioX();
+        double zRatio = event.getRatioZ();
+        entity.isAirBorne = true;
+        Vec3d motion = entity.getMotion();
+        Vec3d knockbackVec = new Vec3d(xRatio, 0, zRatio).normalize().scale(strength);
+        if (knockbackResistance > 0) {
+            knockbackVec = knockbackVec.scale(1 - knockbackResistance);
+        }
+        entity.setMotion(motion.x - knockbackVec.x, 0, motion.z - knockbackVec.z);
+        entity.velocityChanged = true;
     }
 
     @SubscribeEvent
@@ -407,13 +417,28 @@ public class EntityEvents {
 
     @SubscribeEvent
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.player.isCreative()) {
-            event.player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(12);
+        if (event.phase == TickEvent.Phase.START) {
+            if (event.player.isCreative()) {
+                event.player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(12);
+                event.player.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).removeModifier(EvolutionAttributes.WEIGHT_SLOWDOWN_MODIFIER);
+                PLAYER_MASS_MAP.put(event.player.getUniqueID(), 0.0);
+            }
+            else {
+                event.player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(PlayerHelper.REACH_DISTANCE);
+                double mass = event.player.getAttribute(EvolutionAttributes.MASS).getValue();
+                double oldMass = PLAYER_MASS_MAP.getOrDefault(event.player.getUniqueID(), 0.0);
+                if (mass != oldMass) {
+                    PLAYER_MASS_MAP.put(event.player.getUniqueID(), mass);
+                    IAttributeInstance speed = event.player.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED);
+                    speed.removeModifier(EvolutionAttributes.WEIGHT_SLOWDOWN_MODIFIER);
+                    speed.applyModifier(new AttributeModifier(EvolutionAttributes.WEIGHT_SLOWDOWN_MODIFIER,
+                                                              "Weight slow down",
+                                                              PlayerHelper.getSpeed(mass),
+                                                              AttributeModifier.Operation.ADDITION));
+                }
+            }
         }
-        else {
-            event.player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(PlayerHelper.REACH_DISTANCE);
-        }
-        if (event.phase == TickEvent.Phase.END) {
+        else if (event.phase == TickEvent.Phase.END) {
             if (Evolution.PRONED_PLAYERS.getOrDefault(event.player.getUniqueID(), false)) {
                 event.player.setSprinting(false);
                 event.player.stepHeight = getStepHeight(event.player);
@@ -472,7 +497,7 @@ public class EntityEvents {
         }
         DamageSource source = event.getSource();
         if (!(source instanceof EvDamageSource)) {
-            Evolution.LOGGER.debug("Canceling vanilla damage source: {}", source);
+            Evolution.LOGGER.debug("Canceling vanilla damage source: {}", source.damageType);
             event.setCanceled(true);
             return;
         }

@@ -56,10 +56,12 @@ public class BlockFire extends Block implements IReplaceable {
     private static final VoxelShape SHAPE_SOUTH = EvolutionHitBoxes.SIXTEENTH_SLAB_SOUTH_1;
     private static final Map<Direction, BooleanProperty> FACING_TO_PROPERTY_MAP = SixWayBlock.FACING_TO_PROPERTY_MAP.entrySet()
                                                                                                                     .stream()
-                                                                                                                    .filter(entry -> entry.getKey() != Direction.DOWN)
+                                                                                                                    .filter(entry -> entry.getKey() !=
+                                                                                                                                     Direction.DOWN)
                                                                                                                     .collect(Util.toMapCollector());
     private final Object2IntMap<Block> encouragements = new Object2IntOpenHashMap<>();
     private final Object2IntMap<Block> flammabilities = new Object2IntOpenHashMap<>();
+
     public BlockFire() {
         super(Properties.create(Material.FIRE).doesNotBlockMovement().tickRandomly().hardnessAndResistance(0).lightValue(15).sound(FIRE).noDrops());
         this.setDefaultState(this.getDefaultState()
@@ -193,9 +195,37 @@ public class BlockFire extends Block implements IReplaceable {
         //        fireblock.setFireInfo(Blocks.SWEET_BERRY_BUSH, 60, 100);
     }
 
+    public void setFireInfo(RegistryObject<Block> blockIn, int encouragement, int flammability) {
+        if (blockIn.get() == Blocks.AIR) {
+            throw new IllegalArgumentException("Tried to set air on fire... This is bad.");
+        }
+        this.encouragements.put(blockIn.get(), encouragement);
+        this.flammabilities.put(blockIn.get(), flammability);
+    }
+
+    private static int getNeighborEncouragement(IWorldReader worldIn, BlockPos pos) {
+        if (!worldIn.isAirBlock(pos)) {
+            return 0;
+        }
+        int i = 0;
+        for (Direction direction : Direction.values()) {
+            BlockState blockstate = worldIn.getBlockState(pos.offset(direction));
+            i = Math.max(blockstate.getFlammability(worldIn, pos.offset(direction), direction.getOpposite()), i);
+        }
+        return i;
+    }
+
     @Override
-    public boolean canBeReplacedByLiquid(BlockState state) {
-        return true;
+    public BlockState updatePostPlacement(BlockState stateIn,
+                                          Direction facing,
+                                          BlockState facingState,
+                                          IWorld worldIn,
+                                          BlockPos currentPos,
+                                          BlockPos facingPos) {
+        return this.isValidPosition(stateIn, worldIn, currentPos) &&
+               ChunkStorageCapability.contains(worldIn.getWorld().getChunkAt(currentPos), EnumStorage.OXYGEN, 1) ?
+               this.getStateForPlacement(worldIn, currentPos).with(AGE, stateIn.get(AGE)) :
+               Blocks.AIR.getDefaultState();
     }
 
     @Override
@@ -220,54 +250,6 @@ public class BlockFire extends Block implements IReplaceable {
             return SHAPE_DOWN;
         }
         return shape;
-    }
-
-    @Override
-    public boolean addDestroyEffects(BlockState state, World world, BlockPos pos, ParticleManager manager) {
-        return true;
-    }
-
-    @Override
-    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos) {
-        return this.isValidPosition(stateIn, worldIn, currentPos) && ChunkStorageCapability.contains(worldIn.getWorld().getChunkAt(currentPos),
-                                                                                                     EnumStorage.OXYGEN,
-                                                                                                     1) ? this.getStateForPlacement(worldIn,
-                                                                                                                                    currentPos)
-                                                                                                              .with(AGE,
-                                                                                                                    stateIn.get(AGE)) : Blocks.AIR.getDefaultState();
-    }
-
-    @Override
-    @Nullable
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        return this.getStateForPlacement(context.getWorld(), context.getPos());
-    }
-
-    public BlockState getStateForPlacement(IBlockReader worldIn, BlockPos pos) {
-        BlockPos posDown = pos.down();
-        BlockState stateDown = worldIn.getBlockState(posDown);
-        if (!this.canCatchFire(worldIn, pos, Direction.UP) && !Block.hasSolidSide(stateDown, worldIn, posDown, Direction.UP)) {
-            BlockState state = this.getDefaultState();
-            for (Direction direction : Direction.values()) {
-                BooleanProperty booleanProperty = FACING_TO_PROPERTY_MAP.get(direction);
-                if (booleanProperty != null) {
-                    state = state.with(booleanProperty, this.canCatchFire(worldIn, pos.offset(direction), direction.getOpposite()));
-                }
-            }
-            return state;
-        }
-        return this.getDefaultState();
-    }
-
-    @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        BlockPos blockpos = pos.down();
-        return worldIn.getBlockState(blockpos).func_224755_d(worldIn, blockpos, Direction.UP) || this.areNeighborsFlammable(worldIn, pos);
-    }
-
-    @Override
-    public int tickRate(IWorldReader worldIn) {
-        return 30;
     }
 
     @Override
@@ -323,7 +305,7 @@ public class BlockFire extends Block implements IReplaceable {
                                     k1 += (y - 1) * 100;
                                 }
                                 mutableBlockPos.setPos(pos).move(x, y, z);
-                                int l1 = this.getNeighborEncouragement(worldIn, mutableBlockPos);
+                                int l1 = getNeighborEncouragement(worldIn, mutableBlockPos);
                                 if (l1 > 0) {
                                     int i2 = (l1 + 40 + worldIn.getDifficulty().getId() * 7) / (age + 30);
                                     if (isHighHumidity) {
@@ -336,94 +318,6 @@ public class BlockFire extends Block implements IReplaceable {
                                 }
                             }
                         }
-                    }
-                }
-            }
-        }
-    }
-
-    protected boolean canDie(World worldIn, BlockPos pos) {
-        return worldIn.isRainingAt(pos) || worldIn.isRainingAt(pos.west()) || worldIn.isRainingAt(pos.east()) || worldIn.isRainingAt(pos.north()) || worldIn
-                .isRainingAt(pos.south());
-    }
-
-    @Override
-    public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        if (player.getHeldItem(handIn).getItem() == EvolutionItems.stick.get()) {
-            if (!worldIn.isRemote) {
-                player.getHeldItem(handIn).shrink(1);
-                ItemStack torch = new ItemStack(EvolutionItems.torch.get());
-                if (!player.inventory.addItemStackToInventory(torch)) {
-                    BlockUtils.dropItemStack(worldIn, player.getPosition(), torch);
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-
-    public int getActualFlammability(BlockState state) {
-        return state.has(BlockStateProperties.WATERLOGGED) && state.get(BlockStateProperties.WATERLOGGED) ? 0 : this.flammabilities.getInt(state.getBlock());
-    }
-
-    public int getActualEncouragement(BlockState state) {
-        return state.has(BlockStateProperties.WATERLOGGED) && state.get(BlockStateProperties.WATERLOGGED) ? 0 : this.encouragements.getInt(state.getBlock());
-    }
-
-    private void tryCatchFire(World worldIn, BlockPos pos, int chance, Random random, int age, Direction face) {
-        int i = worldIn.getBlockState(pos).getFlammability(worldIn, pos, face);
-        if (random.nextInt(chance) < i) {
-            BlockState state = worldIn.getBlockState(pos);
-            if (random.nextInt(age + 10) < 5 && !worldIn.isRainingAt(pos)) {
-                int j = Math.min(age + random.nextInt(5) / 4, 15);
-                worldIn.setBlockState(pos, this.getStateForPlacement(worldIn, pos).with(AGE, j), 3);
-            }
-            else {
-                worldIn.removeBlock(pos, false);
-            }
-            state.catchFire(worldIn, pos, face, null);
-        }
-    }
-
-    private boolean areNeighborsFlammable(IBlockReader worldIn, BlockPos pos) {
-        for (Direction direction : Direction.values()) {
-            if (this.canCatchFire(worldIn, pos.offset(direction), direction.getOpposite())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private int getNeighborEncouragement(IWorldReader worldIn, BlockPos pos) {
-        if (!worldIn.isAirBlock(pos)) {
-            return 0;
-        }
-        int i = 0;
-        for (Direction direction : Direction.values()) {
-            BlockState blockstate = worldIn.getBlockState(pos.offset(direction));
-            i = Math.max(blockstate.getFlammability(worldIn, pos.offset(direction), direction.getOpposite()), i);
-        }
-        return i;
-    }
-
-    @Deprecated //Forge: Use canCatchFire with more context
-    public boolean canBurn(BlockState state) {
-        return this.getActualEncouragement(state) > 0;
-    }
-
-    @Override
-    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (oldState.getBlock() != state.getBlock()) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                worldIn.removeBlock(pos, false);
-            }
-            else {
-                worldIn.getPendingBlockTicks().scheduleTick(pos, this, this.tickRate(worldIn) + worldIn.rand.nextInt(10));
-                BlockState stateDown = worldIn.getBlockState(pos.down());
-                if (stateDown.getBlock() == EvolutionBlocks.PIT_KILN.get() && stateDown.get(EvolutionBlockStateProperties.LAYERS_0_16) == 16) {
-                    if (BlockPitKiln.canBurn(worldIn.getWorld(), pos.down())) {
-                        TEPitKiln tile = (TEPitKiln) worldIn.getTileEntity(pos.down());
-                        tile.start();
                     }
                 }
             }
@@ -498,8 +392,59 @@ public class BlockFire extends Block implements IReplaceable {
     }
 
     @Override
+    public int tickRate(IWorldReader worldIn) {
+        return 30;
+    }
+
+    @Override
+    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (oldState.getBlock() != state.getBlock()) {
+            if (!state.isValidPosition(worldIn, pos)) {
+                worldIn.removeBlock(pos, false);
+            }
+            else {
+                worldIn.getPendingBlockTicks().scheduleTick(pos, this, this.tickRate(worldIn) + worldIn.rand.nextInt(10));
+                BlockState stateDown = worldIn.getBlockState(pos.down());
+                if (stateDown.getBlock() == EvolutionBlocks.PIT_KILN.get() && stateDown.get(EvolutionBlockStateProperties.LAYERS_0_16) == 16) {
+                    if (BlockPitKiln.canBurn(worldIn.getWorld(), pos.down())) {
+                        TEPitKiln tile = (TEPitKiln) worldIn.getTileEntity(pos.down());
+                        tile.start();
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
     public BlockRenderLayer getRenderLayer() {
         return BlockRenderLayer.CUTOUT;
+    }
+
+    @Override
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
+        BlockPos blockpos = pos.down();
+        return worldIn.getBlockState(blockpos).func_224755_d(worldIn, blockpos, Direction.UP) || this.areNeighborsFlammable(worldIn, pos);
+    }
+
+    @Override
+    public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+        if (player.getHeldItem(handIn).getItem() == EvolutionItems.stick.get()) {
+            if (!worldIn.isRemote) {
+                player.getHeldItem(handIn).shrink(1);
+                ItemStack torch = new ItemStack(EvolutionItems.torch.get());
+                if (!player.inventory.addItemStackToInventory(torch)) {
+                    BlockUtils.dropItemStack(worldIn, player.getPosition(), torch);
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    @Nullable
+    public BlockState getStateForPlacement(BlockItemUseContext context) {
+        return this.getStateForPlacement(context.getWorld(), context.getPos());
     }
 
     @Override
@@ -507,17 +452,29 @@ public class BlockFire extends Block implements IReplaceable {
         builder.add(AGE, NORTH, EAST, SOUTH, WEST, UP);
     }
 
-    public void setFireInfo(RegistryObject<Block> blockIn, int encouragement, int flammability) {
-        if (blockIn.get() == Blocks.AIR) {
-            throw new IllegalArgumentException("Tried to set air on fire... This is bad.");
+    public BlockState getStateForPlacement(IBlockReader worldIn, BlockPos pos) {
+        BlockPos posDown = pos.down();
+        BlockState stateDown = worldIn.getBlockState(posDown);
+        if (!this.canCatchFire(worldIn, pos, Direction.UP) && !Block.hasSolidSide(stateDown, worldIn, posDown, Direction.UP)) {
+            BlockState state = this.getDefaultState();
+            for (Direction direction : Direction.values()) {
+                BooleanProperty booleanProperty = FACING_TO_PROPERTY_MAP.get(direction);
+                if (booleanProperty != null) {
+                    state = state.with(booleanProperty, this.canCatchFire(worldIn, pos.offset(direction), direction.getOpposite()));
+                }
+            }
+            return state;
         }
-        this.encouragements.put(blockIn.get(), encouragement);
-        this.flammabilities.put(blockIn.get(), flammability);
+        return this.getDefaultState();
     }
 
-    @Override
-    public boolean isBurning(BlockState state, IBlockReader world, BlockPos pos) {
-        return true;
+    private boolean areNeighborsFlammable(IBlockReader worldIn, BlockPos pos) {
+        for (Direction direction : Direction.values()) {
+            if (this.canCatchFire(worldIn, pos.offset(direction), direction.getOpposite())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -532,9 +489,54 @@ public class BlockFire extends Block implements IReplaceable {
         return world.getBlockState(pos).isFlammable(world, pos, face);
     }
 
+    protected boolean canDie(World worldIn, BlockPos pos) {
+        return worldIn.isRainingAt(pos) ||
+               worldIn.isRainingAt(pos.west()) ||
+               worldIn.isRainingAt(pos.east()) ||
+               worldIn.isRainingAt(pos.north()) ||
+               worldIn.isRainingAt(pos.south());
+    }
+
+    public int getActualFlammability(BlockState state) {
+        return state.has(BlockStateProperties.WATERLOGGED) && state.get(BlockStateProperties.WATERLOGGED) ?
+               0 :
+               this.flammabilities.getInt(state.getBlock());
+    }
+
+    private void tryCatchFire(World worldIn, BlockPos pos, int chance, Random random, int age, Direction face) {
+        int i = worldIn.getBlockState(pos).getFlammability(worldIn, pos, face);
+        if (random.nextInt(chance) < i) {
+            BlockState state = worldIn.getBlockState(pos);
+            if (random.nextInt(age + 10) < 5 && !worldIn.isRainingAt(pos)) {
+                int j = Math.min(age + random.nextInt(5) / 4, 15);
+                worldIn.setBlockState(pos, this.getStateForPlacement(worldIn, pos).with(AGE, j), 3);
+            }
+            else {
+                worldIn.removeBlock(pos, false);
+            }
+            state.catchFire(worldIn, pos, face, null);
+        }
+    }
+
+    @Deprecated //Forge: Use canCatchFire with more context
+    public boolean canBurn(BlockState state) {
+        return this.getActualEncouragement(state) > 0;
+    }
+
+    public int getActualEncouragement(BlockState state) {
+        return state.has(BlockStateProperties.WATERLOGGED) && state.get(BlockStateProperties.WATERLOGGED) ?
+               0 :
+               this.encouragements.getInt(state.getBlock());
+    }
+
     @Override
-    public ItemStack getDrops(BlockState state) {
-        return ItemStack.EMPTY;
+    public boolean isBurning(BlockState state, IBlockReader world, BlockPos pos) {
+        return true;
+    }
+
+    @Override
+    public boolean addDestroyEffects(BlockState state, World world, BlockPos pos, ParticleManager manager) {
+        return true;
     }
 
     @Override
@@ -545,5 +547,15 @@ public class BlockFire extends Block implements IReplaceable {
     @Override
     public boolean canBeReplacedByRope(BlockState state) {
         return true;
+    }
+
+    @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return true;
+    }
+
+    @Override
+    public ItemStack getDrops(BlockState state) {
+        return ItemStack.EMPTY;
     }
 }

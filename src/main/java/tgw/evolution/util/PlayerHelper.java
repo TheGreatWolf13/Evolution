@@ -13,8 +13,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.server.SAnimateHandPacket;
 import net.minecraft.network.play.server.SEntityVelocityPacket;
 import net.minecraft.particles.ParticleTypes;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.Effects;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.Hand;
@@ -25,7 +23,6 @@ import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.*;
 import tgw.evolution.network.PacketSCHandAnimation;
@@ -178,7 +175,7 @@ public abstract class PlayerHelper {
                             }
                             else {
                                 targetEntity.addVelocity(-MathHelper.sinDeg(player.rotationYaw) * knockbackModifier * 0.5F,
-                                                         0.1,
+                                                         0,
                                                          MathHelper.cosDeg(player.rotationYaw) * knockbackModifier * 0.5F);
                             }
                             player.setMotion(player.getMotion().mul(0.6, 1, 0.6));
@@ -272,10 +269,10 @@ public abstract class PlayerHelper {
                                                                            targetEntity.posY + targetEntity.getHeight() * 0.5F,
                                                                            targetEntity.posZ,
                                                                            heartsToSpawn,
-                                                                           0.1,
+                                                                           0.5,
                                                                            0,
-                                                                           0.1,
-                                                                           0.2);
+                                                                           0.5,
+                                                                           0.1);
                             }
                         }
                         player.addExhaustion(0.1F);
@@ -297,6 +294,11 @@ public abstract class PlayerHelper {
                 }
             }
         }
+    }
+
+    public static double getSpeed(double mass) {
+        //noinspection ConstantExpression
+        return WALK_SPEED * MASS / mass - WALK_SPEED;
     }
 
     @Nullable
@@ -333,26 +335,49 @@ public abstract class PlayerHelper {
     }
 
     public static float getDamage(@Nullable EquipmentSlotType slot, PlayerEntity player, float damage, EvolutionDamage.Type type) {
-        //TODO damage calculations
+        if (slot == null) {
+            return fullHit(player, damage, type);
+        }
         Evolution.LOGGER.debug("{} received {}HP of {} damage on {}", player.getScoreboardName(), damage, type, slot);
+        switch (slot) {
+            case HEAD:
+                return headHit(player, damage, type);
+            case CHEST:
+                return chestHit(player, damage, type);
+            case LEGS:
+                return legHit(player, damage, type);
+            case FEET:
+                return footHit(player, damage, type);
+        }
         return damage;
     }
 
-    public static void headHit(PlayerEntity player, float damage) {
-        float strength = MathHelper.relativize(damage, 0, player.getMaxHealth());
-        if (RAND.nextFloat() < strength) {
-            player.addPotionEffect(new EffectInstance(Effects.NAUSEA, (int) (300 * strength), 0, true, false, true));
-        }
-        if (RAND.nextFloat() < strength) {
-            player.addPotionEffect(new EffectInstance(Effects.BLINDNESS, (int) (100 * strength), strength > 0.8f ? 1 : 0, true, false, true));
-        }
-        if (RAND.nextFloat() < strength) {
-            player.addPotionEffect(new EffectInstance(EvolutionEffects.DIZZINESS.get(),
-                                                      (int) (400 * strength),
-                                                      strength > 0.8f ? 1 : 0,
-                                                      true,
-                                                      false,
-                                                      true));
-        }
+    private static float fullHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
+        Evolution.LOGGER.debug("{} received {}HP of {} damage", player.getScoreboardName(), damage, type);
+        //TODO
+        return damage;
+    }
+
+    private static float headHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
+        damage *= 1.75f;
+        //TODO
+        return damage;
+    }
+
+    private static float chestHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
+        damage *= 1.25f;
+        //TODO
+        return damage;
+    }
+
+    private static float legHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
+        //TODO
+        return damage;
+    }
+
+    private static float footHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
+        damage *= 0.75f;
+        //TODO
+        return damage;
     }
 }

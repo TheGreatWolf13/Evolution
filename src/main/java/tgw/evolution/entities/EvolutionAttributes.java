@@ -15,6 +15,7 @@ public final class EvolutionAttributes {
     public static final UUID ATTACK_SPEED_MODIFIER = UUID.fromString("FA233E1C-4180-4865-B01B-BCCE9785ACA3");
     public static final UUID REACH_DISTANCE_MODIFIER = UUID.fromString("449b8c5d-47b0-4c67-a90e-758b956f2d3c");
     public static final UUID SLOW_FALLING_MODIFIER = UUID.fromString("A5B6CF2A-2F7C-31EF-9022-7C3E7D5E6ABA");
+    public static final UUID WEIGHT_SLOWDOWN_MODIFIER = UUID.fromString("53ee6763-e72c-4b76-80f5-0c53d0038bac");
     public static final AttributeModifier SLOW_FALLING = new AttributeModifier(SLOW_FALLING_MODIFIER,
                                                                                "Slow falling acceleration reduction",
                                                                                -0.07,
