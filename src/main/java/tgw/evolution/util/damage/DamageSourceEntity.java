@@ -11,11 +11,11 @@ import tgw.evolution.init.EvolutionDamage;
 
 import javax.annotation.Nullable;
 
-public class EvEntityDamageSource extends EvDamageSource {
+public class DamageSourceEntity extends EvDamageSource {
     @Nullable
     protected final Entity damageSourceEntity;
 
-    public EvEntityDamageSource(String damage, @Nullable Entity entity, EvolutionDamage.Type type) {
+    public DamageSourceEntity(String damage, @Nullable Entity entity, EvolutionDamage.Type type) {
         super(damage, type);
         this.damageSourceEntity = entity;
     }

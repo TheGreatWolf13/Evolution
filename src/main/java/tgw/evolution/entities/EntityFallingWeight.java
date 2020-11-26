@@ -220,15 +220,15 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         boolean isSoil = this.state.getMaterial() == Material.EARTH ||
                          this.state.getMaterial() == Material.CLAY ||
                          this.state.getMaterial() == Material.SAND;
-        DamageSource damagesource = DamageSource.FALLING_BLOCK;
+        DamageSource source = DamageSource.FALLING_BLOCK;
         if (isRock) {
-            damagesource = EvolutionDamage.FALLING_ROCK;
+            source = EvolutionDamage.FALLING_ROCK;
         }
         else if (isSoil) {
-            damagesource = EvolutionDamage.FALLING_SOIL;
+            source = EvolutionDamage.FALLING_SOIL;
         }
         else if (isWood) {
-            damagesource = EvolutionDamage.FALLING_WOOD;
+            source = EvolutionDamage.FALLING_WOOD;
         }
         float motionY = 20.0F * (float) this.getMotion().y;
         List<Entity> list = Lists.newArrayList(this.world.getEntitiesWithinAABBExcludingEntity(this, this.getBoundingBox()));
@@ -239,7 +239,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
             float pressure = forceOfImpact / area;
             pressure += this.mass * Gravity.gravity(this.world.dimension) / area;
             float damage = pressure / 344_738.0F * 100.0F;
-            entity.attackEntityFrom(damagesource, damage);
+            entity.attackEntityFrom(source, damage);
         }
     }
 

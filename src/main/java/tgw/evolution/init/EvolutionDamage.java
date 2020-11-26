@@ -3,9 +3,10 @@ package tgw.evolution.init;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.Hand;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
+import tgw.evolution.util.damage.DamageSourcePlayer;
 import tgw.evolution.util.damage.EvDamageSource;
-import tgw.evolution.util.damage.EvEntityDamageSource;
 import tgw.evolution.util.damage.EvIndirectEntityDamageSource;
 
 import javax.annotation.Nullable;
@@ -36,8 +37,8 @@ public final class EvolutionDamage {
         return new EvIndirectEntityDamageSource("hook", source, trueSource, Type.PIERCING).setProjectile();
     }
 
-    public static DamageSource causePlayerMeleeDamage(PlayerEntity player, Type type) {
-        return new EvEntityDamageSource("player", player, type);
+    public static DamageSource causePlayerMeleeDamage(PlayerEntity player, Type type, Hand hand) {
+        return new DamageSourcePlayer("player", player, type, hand);
     }
 
     public enum Type {

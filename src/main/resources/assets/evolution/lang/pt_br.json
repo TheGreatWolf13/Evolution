@@ -39,6 +39,8 @@
   "death.attack.falling_wood": "%1$s foi esmagado(a) por um pedaço de madeira caindo",
   "death.attack.hook": "%1$s foi enganchado(a) por %2$s",
   "death.attack.spear": "%1$s foi empalado(a) por %2$s",
+  "death.attack.spear.item": "%1$s foi empalado(a) por %2$s com %3$s",
+  "death.item.fists": "seus próprios punhos",
   "COMMENT_ADVANCEMENTS": "_____________________________________________________________________________________________________ADVANCEMENTS",
   "evolution.advancements.general.root.title": "Mod Evolution",
   "evolution.advancements.general.root.description": "",

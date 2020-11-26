@@ -125,23 +125,10 @@ public abstract class PlayerHelper {
                         ++knockbackModifier;
                         sprinting = true;
                     }
-//                    boolean critical = player.fallDistance > 0.0F &&
-//                                       !player.onGround &&
-//                                       !player.isOnLadder() &&
-//                                       !player.isInWater() &&
-//                                       !player.isPotionActive(Effects.BLINDNESS) &&
-//                                       !player.isPassenger() &&
-//                                       targetEntity instanceof LivingEntity;
-//                    critical = critical && !player.isSprinting();
-//                    CriticalHitEvent hitResult = ForgeHooks.getCriticalHit(player, targetEntity, critical, critical ? 1.5F : 1.0F);
-//                    critical = hitResult != null;
-//                    if (critical) {
-//                        damage *= hitResult.getDamageModifier();
-//                    }
                     /*damage += enchantmentModifier;*/
                     boolean isSweepAttack = false;
                     double distanceWalked = player.distanceWalkedModified - player.prevDistanceWalkedModified;
-                    if (/*!critical && */!sprinting && player.onGround && distanceWalked < player.getAIMoveSpeed()) {
+                    if (!sprinting && player.onGround && distanceWalked < player.getAIMoveSpeed()) {
                         if (attackItem instanceof ISweepAttack) {
                             isSweepAttack = true;
                         }
@@ -162,8 +149,8 @@ public abstract class PlayerHelper {
                         }
                     }
                     Vec3d targetMotion = targetEntity.getMotion();
-                    EvolutionDamage.Type type = attackItem instanceof IMelee ? ((IMelee) attackItem).getDamageType() : EvolutionDamage.Type.GENERIC;
-                    boolean attackSuccessfull = targetEntity.attackEntityFrom(EvolutionDamage.causePlayerMeleeDamage(player, type), damage);
+                    EvolutionDamage.Type type = attackItem instanceof IMelee ? ((IMelee) attackItem).getDamageType() : EvolutionDamage.Type.CRUSHING;
+                    boolean attackSuccessfull = targetEntity.attackEntityFrom(EvolutionDamage.causePlayerMeleeDamage(player, type, hand), damage);
                     if (attackSuccessfull) {
                         //Knockback calculations
                         if (knockbackModifier > 0) {
@@ -214,20 +201,8 @@ public abstract class PlayerHelper {
                             targetEntity.velocityChanged = false;
                             targetEntity.setMotion(targetMotion);
                         }
-                        //Critical particles
-//                        if (critical) {
-//                            player.world.playSound(null,
-//                                                   player.posX,
-//                                                   player.posY,
-//                                                   player.posZ,
-//                                                   SoundEvents.ENTITY_PLAYER_ATTACK_CRIT,
-//                                                   player.getSoundCategory(),
-//                                                   1.0F,
-//                                                   1.0F);
-//                            player.onCriticalHit(targetEntity);
-//                        }
                         //Strong attack particles
-                        if (/*!critical && */!isSweepAttack) {
+                        if (!isSweepAttack) {
                             player.world.playSound(null,
                                                    player.posX,
                                                    player.posY,

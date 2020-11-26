@@ -10,6 +10,7 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -123,7 +124,7 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
     @Override
     protected void onEntityHit(EntityRayTraceResult rayTraceResult) {
         Entity hitEntity = rayTraceResult.getEntity();
-        Entity shooter = this.getShooter();
+        LivingEntity shooter = this.getShooter();
         DamageSource source = EvolutionDamage.causeSpearDamage(this, shooter == null ? this : shooter);
         this.dealtDamage = true;
         SoundEvent soundEvent = EvolutionSounds.JAVELIN_HIT_ENTITY.get();
@@ -133,6 +134,17 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
         }
         this.setMotion(this.getMotion().mul(-0.1, -0.1, -0.1));
         this.playSound(soundEvent, 1.0F, 1.0F);
+        if (shooter != null) {
+            this.stack.damageItem(1, shooter, entity -> {
+            });
+        }
+        else {
+            this.stack.setDamage(this.stack.getDamage() + 1);
+        }
+        if (this.stack.isEmpty()) {
+            this.playSound(SoundEvents.ENTITY_ITEM_BREAK, 0.8F, 0.8F + this.world.rand.nextFloat() * 0.4F);
+            this.remove();
+        }
     }
 
     @Override

@@ -19,14 +19,15 @@ public class EntitySit extends Entity {
 
     private BlockPos source;
 
-    public EntitySit(EntityType<?> entityTypeIn, World worldIn) {
-        super(entityTypeIn, worldIn);
-        this.noClip = true;
-    }
-
     @SuppressWarnings("unused")
     public EntitySit(FMLPlayMessages.SpawnEntity spawn, World worldIn) {
         this(EvolutionEntities.SIT.get(), worldIn);
+    }
+
+    public EntitySit(EntityType<?> entityTypeIn, World worldIn) {
+        super(entityTypeIn, worldIn);
+        this.noClip = true;
+        this.preventEntitySpawning = true;
     }
 
     public EntitySit(World worldIn, BlockPos pos, double yOffset) {
@@ -36,52 +37,6 @@ public class EntitySit extends Entity {
         this.prevPosX = pos.getX() + 0.5;
         this.prevPosY = pos.getY() + yOffset;
         this.prevPosZ = pos.getZ() + 0.5;
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-        if (this.source == null) {
-            this.source = this.getPosition();
-        }
-        if (!this.world.isRemote) {
-            if (this.getPassengers().isEmpty()) {
-                this.world.setBlockState(this.source, this.world.getBlockState(this.source).with(BlockStateProperties.OCCUPIED, false));
-                this.remove();
-            }
-            if (!(this.world.getBlockState(this.source).getBlock() instanceof ISittable)) {
-                this.remove();
-            }
-        }
-    }
-
-    @Override
-    public double getMountedYOffset() {
-        return 0;
-    }
-
-    @Override
-    protected boolean canBeRidden(Entity entityIn) {
-        return true;
-    }
-
-    @Override
-    protected void registerData() {
-    }
-
-    @Override
-    protected void readAdditional(CompoundNBT compound) {
-        this.source = NBTUtil.readBlockPos(compound.getCompound("Source"));
-    }
-
-    @Override
-    protected void writeAdditional(CompoundNBT compound) {
-        compound.put("Source", NBTUtil.writeBlockPos(this.source));
-    }
-
-    @Override
-    public IPacket<?> createSpawnPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
     }
 
     public static boolean create(World world, BlockPos pos, PlayerEntity player) {
@@ -95,5 +50,51 @@ public class EntitySit extends Entity {
             return true;
         }
         return false;
+    }
+
+    @Override
+    protected void registerData() {
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (this.source == null) {
+            this.source = this.getPosition();
+        }
+        if (!this.world.isRemote) {
+            if (!(this.world.getBlockState(this.source).getBlock() instanceof ISittable)) {
+                this.remove();
+            }
+            if (this.getPassengers().isEmpty()) {
+                this.world.setBlockState(this.source, this.world.getBlockState(this.source).with(BlockStateProperties.OCCUPIED, false));
+                this.remove();
+            }
+        }
+    }
+
+    @Override
+    protected void readAdditional(CompoundNBT compound) {
+        this.source = NBTUtil.readBlockPos(compound.getCompound("Source"));
+    }
+
+    @Override
+    protected void writeAdditional(CompoundNBT compound) {
+        compound.put("Source", NBTUtil.writeBlockPos(this.source));
+    }
+
+    @Override
+    public double getMountedYOffset() {
+        return 0;
+    }
+
+    @Override
+    protected boolean canBeRidden(Entity entityIn) {
+        return true;
+    }
+
+    @Override
+    public IPacket<?> createSpawnPacket() {
+        return NetworkHooks.getEntitySpawningPacket(this);
     }
 }

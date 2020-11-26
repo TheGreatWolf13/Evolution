@@ -89,7 +89,6 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
             int i = this.getUseDuration(stack) - timeLeft;
             if (i >= 10) {
                 if (!worldIn.isRemote) {
-                    stack.damageItem(1, player, entity -> entity.sendBreakAnimation(entityLiving.getActiveHand()));
                     EntitySpear spear = new EntitySpear(worldIn, player, stack, this.damage, this.mass);
                     spear.shoot(player, player.rotationPitch, player.rotationYaw, 0.825f, 2.5F);
                     if (player.abilities.isCreativeMode) {

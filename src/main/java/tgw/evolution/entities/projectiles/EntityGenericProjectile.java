@@ -72,6 +72,7 @@ public abstract class EntityGenericProjectile extends Entity implements IProject
 
     public EntityGenericProjectile(EntityType<? extends EntityGenericProjectile> type, World worldIn) {
         super(type, worldIn);
+        this.preventEntitySpawning = true;
     }
 
     @Override
@@ -356,9 +357,9 @@ public abstract class EntityGenericProjectile extends Entity implements IProject
     }
 
     @Nullable
-    public Entity getShooter() {
+    public LivingEntity getShooter() {
         return this.shootingEntity != null && this.world instanceof ServerWorld ?
-               ((ServerWorld) this.world).getEntityByUuid(this.shootingEntity) :
+               (LivingEntity) ((ServerWorld) this.world).getEntityByUuid(this.shootingEntity) :
                null;
     }
 
@@ -413,7 +414,7 @@ public abstract class EntityGenericProjectile extends Entity implements IProject
             }
             this.piercedEntities.add(rayTracedEntity.getEntityId());
         }
-        Entity shooter = this.getShooter();
+        LivingEntity shooter = this.getShooter();
         DamageSource source;
         if (shooter == null) {
             source = EvolutionDamage.causeArrowDamage(this, this);
@@ -421,7 +422,7 @@ public abstract class EntityGenericProjectile extends Entity implements IProject
         else {
             source = EvolutionDamage.causeArrowDamage(this, shooter);
             if (shooter instanceof LivingEntity) {
-                ((LivingEntity) shooter).setLastAttackedEntity(rayTracedEntity);
+                shooter.setLastAttackedEntity(rayTracedEntity);
             }
         }
         int j = rayTracedEntity.getFireTimer();
@@ -436,7 +437,7 @@ public abstract class EntityGenericProjectile extends Entity implements IProject
                 }
                 if (!this.world.isRemote && shooter instanceof LivingEntity) {
                     EnchantmentHelper.applyThornEnchantments(livingentity, shooter);
-                    EnchantmentHelper.applyArthropodEnchantments((LivingEntity) shooter, livingentity);
+                    EnchantmentHelper.applyArthropodEnchantments(shooter, livingentity);
                 }
                 if (livingentity != shooter && livingentity instanceof PlayerEntity && shooter instanceof ServerPlayerEntity) {
                     ((ServerPlayerEntity) shooter).connection.sendPacket(new SChangeGameStatePacket(6, 0.0F));
@@ -476,10 +477,10 @@ public abstract class EntityGenericProjectile extends Entity implements IProject
 
     protected abstract ItemStack getArrowStack();
 
-    public void setShooter(@Nullable Entity entityIn) {
-        this.shootingEntity = entityIn == null ? null : entityIn.getUniqueID();
-        if (entityIn instanceof PlayerEntity) {
-            this.pickupStatus = ((PlayerEntity) entityIn).abilities.isCreativeMode ?
+    public void setShooter(@Nullable LivingEntity entity) {
+        this.shootingEntity = entity == null ? null : entity.getUniqueID();
+        if (entity instanceof PlayerEntity) {
+            this.pickupStatus = ((PlayerEntity) entity).abilities.isCreativeMode ?
                                 EntityGenericProjectile.PickupStatus.CREATIVE_ONLY :
                                 EntityGenericProjectile.PickupStatus.ALLOWED;
         }
@@ -532,7 +533,7 @@ public abstract class EntityGenericProjectile extends Entity implements IProject
     public void readSpawnData(PacketBuffer buffer) {
         int id = buffer.readInt();
         if (id != 0) {
-            this.setShooter(this.world.getEntityByID(id));
+            this.setShooter((LivingEntity) this.world.getEntityByID(id));
         }
     }
 

@@ -39,6 +39,8 @@
   "death.attack.falling_wood": "%1$s was crushed by a falling piece of wood",
   "death.attack.hook": "%1$s was hooked by %2$s",
   "death.attack.spear": "%1$s was impaled by %2$s",
+  "death.attack.spear.item": "%1$s was impaled by %2$s using %3$s",
+  "death.item.fists": "their bare fists",
   "COMMENT_ADVANCEMENTS": "_____________________________________________________________________________________________________ADVANCEMENTS",
   "evolution.advancements.general.root.title": "Evolution Mod",
   "evolution.advancements.general.root.description": "",

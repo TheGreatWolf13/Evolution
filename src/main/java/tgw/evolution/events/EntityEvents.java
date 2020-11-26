@@ -53,8 +53,8 @@ import tgw.evolution.util.Gravity;
 import tgw.evolution.util.HarvestLevel;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.PlayerHelper;
+import tgw.evolution.util.damage.DamageSourceEntity;
 import tgw.evolution.util.damage.EvDamageSource;
-import tgw.evolution.util.damage.EvEntityDamageSource;
 import tgw.evolution.util.damage.EvIndirectEntityDamageSource;
 
 import java.lang.reflect.InvocationTargetException;
@@ -266,6 +266,7 @@ public class EntityEvents {
         }
         //Handles Player health regeneration
         if (!entity.world.isRemote && entity instanceof PlayerEntity && entity.world.getGameRules().getBoolean(GameRules.NATURAL_REGENERATION)) {
+            entity.world.getProfiler().startSection("playerHealthRegen");
             PlayerEntity player = (PlayerEntity) entity;
             UUID uuid = player.getUniqueID();
             if (player.hurtTime > 0) {
@@ -274,7 +275,7 @@ public class EntityEvents {
             else {
                 this.playerTimeSinceLastHit.put(uuid, this.playerTimeSinceLastHit.getOrDefault(uuid, 0) + 1);
             }
-            if (this.playerTimeSinceLastHit.get(uuid) == 80) {
+            if (this.playerTimeSinceLastHit.get(uuid) == 100) {
                 this.playerTimeSinceLastHit.put(uuid, 0);
                 if (player.shouldHeal()) {
                     float currentHealth = MathHelper.clampMin(player.getHealth(), 1);
@@ -282,6 +283,7 @@ public class EntityEvents {
                     player.setHealth(currentHealth + healAmount);
                 }
             }
+            entity.world.getProfiler().endSection();
         }
     }
 
@@ -515,7 +517,7 @@ public class EntityEvents {
             return;
         }
         //Raytracing melee damage
-        if (source instanceof EvEntityDamageSource) {
+        if (source instanceof DamageSourceEntity) {
             Entity trueSource = source.getTrueSource();
             if (trueSource instanceof PlayerEntity && !(hitEntity instanceof PlayerEntity)) {
                 return;
