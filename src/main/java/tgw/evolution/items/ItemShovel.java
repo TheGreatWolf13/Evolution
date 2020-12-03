@@ -12,7 +12,7 @@ import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ItemShovel extends ItemTool implements IOffhandAttackable {
+public class ItemShovel extends ItemGenericTool implements IOffhandAttackable {
 
     private static final Set<Block> EFFECTIVE_ON = new HashSet<>();
     private static final Set<Material> EFFECTIVE_MATS = Sets.newHashSet(Material.EARTH,
@@ -27,14 +27,10 @@ public class ItemShovel extends ItemTool implements IOffhandAttackable {
         this.mass = mass;
     }
 
+    @Nonnull
     @Override
-    protected float setBaseDamage() {
-        return -3.0f;
-    }
-
-    @Override
-    protected float setReach() {
-        return 3.5f;
+    public EvolutionDamage.Type getDamageType() {
+        return EvolutionDamage.Type.CRUSHING;
     }
 
     @Override
@@ -42,9 +38,13 @@ public class ItemShovel extends ItemTool implements IOffhandAttackable {
         return this.mass;
     }
 
-    @Nonnull
     @Override
-    public EvolutionDamage.Type getDamageType() {
-        return EvolutionDamage.Type.CRUSHING;
+    public float setBaseDamage() {
+        return -3.0f;
+    }
+
+    @Override
+    public float setReach() {
+        return 3.5f;
     }
 }

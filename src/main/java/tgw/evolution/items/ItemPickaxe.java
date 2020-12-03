@@ -11,7 +11,7 @@ import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ItemPickaxe extends ItemTool {
+public class ItemPickaxe extends ItemGenericTool {
 
     private static final Set<Block> EFFECTIVE_ON = new HashSet<>();
     private static final Set<Material> EFFECTIVE_MAT = Sets.newHashSet(Material.ROCK, Material.IRON);
@@ -22,14 +22,10 @@ public class ItemPickaxe extends ItemTool {
         this.mass = mass;
     }
 
+    @Nonnull
     @Override
-    protected float setBaseDamage() {
-        return -1.5f;
-    }
-
-    @Override
-    protected float setReach() {
-        return 3;
+    public EvolutionDamage.Type getDamageType() {
+        return EvolutionDamage.Type.PIERCING;
     }
 
     @Override
@@ -37,9 +33,13 @@ public class ItemPickaxe extends ItemTool {
         return this.mass;
     }
 
-    @Nonnull
     @Override
-    public EvolutionDamage.Type getDamageType() {
-        return EvolutionDamage.Type.PIERCING;
+    public float setBaseDamage() {
+        return -1.5f;
+    }
+
+    @Override
+    public float setReach() {
+        return 3;
     }
 }

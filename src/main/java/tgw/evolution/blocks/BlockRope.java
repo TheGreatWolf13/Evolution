@@ -20,14 +20,13 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
-import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 
 import javax.annotation.Nullable;
 import java.util.Random;
 
-public class BlockRope extends Block implements IReplaceable {
+public class BlockRope extends Block implements IReplaceable, IClimbable {
 
     public static final EnumProperty<Direction> DIRECTION = BlockStateProperties.HORIZONTAL_FACING;
 
@@ -76,41 +75,8 @@ public class BlockRope extends Block implements IReplaceable {
     }
 
     @Override
-    public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnDrops(state, worldIn, pos);
-                worldIn.removeBlock(pos, false);
-            }
-        }
-    }
-
-    @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        return isSupported(worldIn, pos, state.get(DIRECTION));
-    }
-
-    @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            BlockPos support = pos.up().offset(state.get(DIRECTION));
-            Evolution.LOGGER.debug("support = " + support);
-            Block block = worldIn.getBlockState(support).getBlock();
-            Evolution.LOGGER.debug("block = " + block);
-            if (block instanceof IRopeSupport) {
-                worldIn.getPendingBlockTicks().scheduleTick(support, block, 2);
-            }
-        }
-    }
-
-    @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnDrops(state, worldIn, pos);
-                worldIn.removeBlock(pos, false);
-            }
-        }
+    public boolean canBeReplacedByRope(BlockState state) {
+        return false;
     }
 
     @Override
@@ -118,20 +84,19 @@ public class BlockRope extends Block implements IReplaceable {
         builder.add(DIRECTION);
     }
 
-    @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        return this.getDefaultState().with(DIRECTION, context.getPlacementHorizontalFacing());
+    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
+        return new ItemStack(EvolutionItems.rope.get());
+    }
+
+    @Override
+    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
+        return new ItemStack(EvolutionItems.rope.get());
     }
 
     @Override
     public BlockRenderLayer getRenderLayer() {
         return BlockRenderLayer.CUTOUT_MIPPED;
-    }
-
-    @Override
-    public boolean isLadder(BlockState state, IWorldReader world, BlockPos pos, LivingEntity entity) {
-        return true;
     }
 
     @Override
@@ -149,23 +114,60 @@ public class BlockRope extends Block implements IReplaceable {
         throw new IllegalStateException("Could not find shape for " + state);
     }
 
+    @Nullable
     @Override
-    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
-        return new ItemStack(EvolutionItems.rope.get());
+    public BlockState getStateForPlacement(BlockItemUseContext context) {
+        return this.getDefaultState().with(DIRECTION, context.getPlacementHorizontalFacing());
     }
 
     @Override
-    public ItemStack getDrops(BlockState state) {
-        return new ItemStack(EvolutionItems.rope.get());
+    public double getUpSpeed() {
+        return 0.05;
     }
 
     @Override
-    public boolean canBeReplacedByRope(BlockState state) {
-        return false;
+    public boolean isLadder(BlockState state, IWorldReader world, BlockPos pos, LivingEntity entity) {
+        return true;
     }
 
     @Override
     public boolean isReplaceable(BlockState state) {
         return true;
+    }
+
+    @Override
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
+        return isSupported(worldIn, pos, state.get(DIRECTION));
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+        if (!worldIn.isRemote) {
+            if (!state.isValidPosition(worldIn, pos)) {
+                spawnDrops(state, worldIn, pos);
+                worldIn.removeBlock(pos, false);
+            }
+        }
+    }
+
+    @Override
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!worldIn.isRemote) {
+            BlockPos support = pos.up().offset(state.get(DIRECTION));
+            Block block = worldIn.getBlockState(support).getBlock();
+            if (block instanceof IRopeSupport) {
+                worldIn.getPendingBlockTicks().scheduleTick(support, block, 2);
+            }
+        }
+    }
+
+    @Override
+    public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
+        if (!worldIn.isRemote) {
+            if (!state.isValidPosition(worldIn, pos)) {
+                spawnDrops(state, worldIn, pos);
+                worldIn.removeBlock(pos, false);
+            }
+        }
     }
 }

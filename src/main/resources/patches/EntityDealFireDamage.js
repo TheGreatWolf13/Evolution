@@ -12,7 +12,7 @@ var BASETICK = ASMAPI.mapMethod("func_70030_z");
 var ATTACKENTITYFROM = ASMAPI.mapMethod("func_70097_a");
 
 function log(message) {
-	print("[Evolution Entity#dealFireDamage(int) Transformer]: " + message);
+	print("[evolution/ Entity#dealFireDamage(int) Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {

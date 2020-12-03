@@ -21,58 +21,29 @@ import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.SerializableCapabilityProvider;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCUpdateChunkStorage;
+import tgw.evolution.util.InjectionUtil;
 
 import java.util.Map;
 
-public class ChunkStorageCapability {
+public final class ChunkStorageCapability {
 
     @CapabilityInject(IChunkStorages.class)
-    public static final Capability<IChunkStorages> CHUNK_STORAGE_CAPABILITY = null;
+    public static final Capability<IChunkStorages> CHUNK_STORAGE_CAPABILITY = InjectionUtil.Null();
 
     public static final Direction DEFAULT_FACING = null;
 
-    public static final int DEFAULT_CAPACITY = 1000000;
+    public static final int DEFAULT_CAPACITY = 1_000_000;
 
     private static final ResourceLocation ID = new ResourceLocation(Evolution.MODID, "storage");
 
-    public static void register() {
-        CapabilityManager.INSTANCE.register(IChunkStorages.class, new Capability.IStorage<IChunkStorages>() {
-
-            @Override
-            public INBT writeNBT(Capability<IChunkStorages> capability, IChunkStorages instance, Direction side) {
-                return new IntArrayNBT(new int[]{instance.getElementStored(EnumStorage.NITROGEN),
-                                                 instance.getElementStored(EnumStorage.PHOSPHORUS),
-                                                 instance.getElementStored(EnumStorage.POTASSIUM),
-                                                 instance.getElementStored(EnumStorage.WATER),
-                                                 instance.getElementStored(EnumStorage.CARBON_DIOXIDE),
-                                                 instance.getElementStored(EnumStorage.OXYGEN),
-                                                 instance.getElementStored(EnumStorage.GAS_NITROGEN),
-                                                 instance.getElementStored(EnumStorage.ORGANIC)});
-            }
-
-            @Override
-            public void readNBT(Capability<IChunkStorages> capability, IChunkStorages instance, Direction side, INBT nbt) {
-                if (instance == null) {
-                    throw new IllegalArgumentException("Can not deserialize to an instance that isn't the default implementation");
-                }
-                ((ChunkStorages) instance).setElement(EnumStorage.NITROGEN, ((IntArrayNBT) nbt).get(EnumStorage.NITROGEN.getId()).getInt());
-                ((ChunkStorages) instance).setElement(EnumStorage.PHOSPHORUS, ((IntArrayNBT) nbt).get(EnumStorage.PHOSPHORUS.getId()).getInt());
-                ((ChunkStorages) instance).setElement(EnumStorage.POTASSIUM, ((IntArrayNBT) nbt).get(EnumStorage.POTASSIUM.getId()).getInt());
-                ((ChunkStorages) instance).setElement(EnumStorage.WATER, ((IntArrayNBT) nbt).get(EnumStorage.WATER.getId()).getInt());
-                ((ChunkStorages) instance).setElement(EnumStorage.CARBON_DIOXIDE, ((IntArrayNBT) nbt).get(EnumStorage.CARBON_DIOXIDE.getId()).getInt());
-                ((ChunkStorages) instance).setElement(EnumStorage.OXYGEN, ((IntArrayNBT) nbt).get(EnumStorage.OXYGEN.getId()).getInt());
-                ((ChunkStorages) instance).setElement(EnumStorage.GAS_NITROGEN, ((IntArrayNBT) nbt).get(EnumStorage.GAS_NITROGEN.getId()).getInt());
-                ((ChunkStorages) instance).setElement(EnumStorage.ORGANIC, ((IntArrayNBT) nbt).get(EnumStorage.ORGANIC.getId()).getInt());
-            }
-        }, () -> null);
+    private ChunkStorageCapability() {
     }
 
-    public static LazyOptional<IChunkStorages> getChunkStorage(World world, ChunkPos chunkPos) {
-        return getChunkStorage(world.getChunk(chunkPos.x, chunkPos.z));
-    }
-
-    public static LazyOptional<IChunkStorages> getChunkStorage(Chunk chunk) {
-        return chunk.getCapability(CHUNK_STORAGE_CAPABILITY, DEFAULT_FACING);
+    public static void add(Chunk chunk, EnumStorage storage, int value) {
+        getChunkStorage(chunk).map(chunkStorages -> {
+            chunkStorages.addElement(storage, value);
+            return true;
+        }).orElseGet(() -> false);
     }
 
     public static void addElements(Chunk chunk, Map<EnumStorage, Integer> map) {
@@ -91,20 +62,46 @@ public class ChunkStorageCapability {
         return bool[0];
     }
 
-    public static void add(Chunk chunk, EnumStorage storage, int value) {
-        getChunkStorage(chunk).map(chunkStorages -> {
-            chunkStorages.addElement(storage, value);
-            return true;
-        }).orElseGet(() -> false);
+    public static LazyOptional<IChunkStorages> getChunkStorage(Chunk chunk) {
+        return chunk.getCapability(CHUNK_STORAGE_CAPABILITY, DEFAULT_FACING);
     }
 
-    public static boolean removeElements(Chunk chunk, Map<EnumStorage, Integer> map) {
-        boolean[] bool = {false};
-        getChunkStorage(chunk).map(chunkStorages -> {
-            bool[0] = chunkStorages.removeMany(map);
-            return true;
-        }).orElseGet(() -> false);
-        return bool[0];
+    public static LazyOptional<IChunkStorages> getChunkStorage(World world, ChunkPos chunkPos) {
+        return getChunkStorage(world.getChunk(chunkPos.x, chunkPos.z));
+    }
+
+    public static void register() {
+        //noinspection ReturnOfNull
+        CapabilityManager.INSTANCE.register(IChunkStorages.class, new Capability.IStorage<IChunkStorages>() {
+
+            @Override
+            public void readNBT(Capability<IChunkStorages> capability, IChunkStorages instance, Direction side, INBT nbt) {
+                if (instance == null) {
+                    throw new IllegalArgumentException("Can not deserialize to an instance that isn't the default implementation");
+                }
+                ((ChunkStorages) instance).setElement(EnumStorage.NITROGEN, ((IntArrayNBT) nbt).get(EnumStorage.NITROGEN.getId()).getInt());
+                ((ChunkStorages) instance).setElement(EnumStorage.PHOSPHORUS, ((IntArrayNBT) nbt).get(EnumStorage.PHOSPHORUS.getId()).getInt());
+                ((ChunkStorages) instance).setElement(EnumStorage.POTASSIUM, ((IntArrayNBT) nbt).get(EnumStorage.POTASSIUM.getId()).getInt());
+                ((ChunkStorages) instance).setElement(EnumStorage.WATER, ((IntArrayNBT) nbt).get(EnumStorage.WATER.getId()).getInt());
+                ((ChunkStorages) instance).setElement(EnumStorage.CARBON_DIOXIDE,
+                                                      ((IntArrayNBT) nbt).get(EnumStorage.CARBON_DIOXIDE.getId()).getInt());
+                ((ChunkStorages) instance).setElement(EnumStorage.OXYGEN, ((IntArrayNBT) nbt).get(EnumStorage.OXYGEN.getId()).getInt());
+                ((ChunkStorages) instance).setElement(EnumStorage.GAS_NITROGEN, ((IntArrayNBT) nbt).get(EnumStorage.GAS_NITROGEN.getId()).getInt());
+                ((ChunkStorages) instance).setElement(EnumStorage.ORGANIC, ((IntArrayNBT) nbt).get(EnumStorage.ORGANIC.getId()).getInt());
+            }
+
+            @Override
+            public INBT writeNBT(Capability<IChunkStorages> capability, IChunkStorages instance, Direction side) {
+                return new IntArrayNBT(new int[]{instance.getElementStored(EnumStorage.NITROGEN),
+                                                 instance.getElementStored(EnumStorage.PHOSPHORUS),
+                                                 instance.getElementStored(EnumStorage.POTASSIUM),
+                                                 instance.getElementStored(EnumStorage.WATER),
+                                                 instance.getElementStored(EnumStorage.CARBON_DIOXIDE),
+                                                 instance.getElementStored(EnumStorage.OXYGEN),
+                                                 instance.getElementStored(EnumStorage.GAS_NITROGEN),
+                                                 instance.getElementStored(EnumStorage.ORGANIC)});
+            }
+        }, () -> null);
     }
 
     public static boolean remove(Chunk chunk, EnumStorage storage, int value) {
@@ -116,13 +113,22 @@ public class ChunkStorageCapability {
         return bool[0];
     }
 
+    public static boolean removeElements(Chunk chunk, Map<EnumStorage, Integer> map) {
+        boolean[] bool = {false};
+        getChunkStorage(chunk).map(chunkStorages -> {
+            bool[0] = chunkStorages.removeMany(map);
+            return true;
+        }).orElseGet(() -> false);
+        return bool[0];
+    }
+
     @Mod.EventBusSubscriber(modid = Evolution.MODID)
-    private static class EventHandler {
+    private static final class EventHandler {
 
         @SubscribeEvent
         public static void attachChunkCapabilities(AttachCapabilitiesEvent<Chunk> event) {
             Chunk chunk = event.getObject();
-            IChunkStorages chunkStorages = new ChunkStorages(DEFAULT_CAPACITY, chunk.getWorld(), chunk.getPos(), 1000);
+            IChunkStorages chunkStorages = new ChunkStorages(DEFAULT_CAPACITY, chunk.getWorld(), chunk.getPos(), 1_000);
             event.addCapability(ID, new SerializableCapabilityProvider<>(CHUNK_STORAGE_CAPABILITY, DEFAULT_FACING, chunkStorages));
         }
 
@@ -132,7 +138,8 @@ public class ChunkStorageCapability {
             if (player == null) {
                 return;
             }
-            getChunkStorage(event.getWorld(), event.getPos()).ifPresent(chunkStorages -> EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCUpdateChunkStorage(chunkStorages)));
+            getChunkStorage(event.getWorld(), event.getPos()).ifPresent(chunkStorages -> EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(
+                    () -> player), new PacketSCUpdateChunkStorage(chunkStorages)));
         }
     }
 }

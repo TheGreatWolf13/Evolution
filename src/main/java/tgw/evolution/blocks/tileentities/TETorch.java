@@ -6,25 +6,34 @@ import tgw.evolution.init.EvolutionTileEntities;
 
 public class TETorch extends TileEntity {
 
-    public int timePlaced;
+    private long timePlaced;
 
     public TETorch() {
         super(EvolutionTileEntities.TE_TORCH.get());
     }
 
     public void create() {
-        this.timePlaced = Math.toIntExact(this.world.getDayTime());
+        this.setTimePlaced(this.world.getDayTime());
+    }
+
+    public long getTimePlaced() {
+        return this.timePlaced;
+    }
+
+    public void setTimePlaced(long timePlaced) {
+        this.timePlaced = timePlaced;
+        this.markDirty();
     }
 
     @Override
     public void read(CompoundNBT compound) {
         super.read(compound);
-        this.timePlaced = compound.getInt("TimePlaced");
+        this.setTimePlaced(compound.getLong("TimePlaced"));
     }
 
     @Override
     public CompoundNBT write(CompoundNBT compound) {
-        compound.putInt("TimePlaced", this.timePlaced);
+        compound.putLong("TimePlaced", this.timePlaced);
         return super.write(compound);
     }
 }

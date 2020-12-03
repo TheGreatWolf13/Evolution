@@ -15,9 +15,9 @@ import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import tgw.evolution.Evolution;
-import tgw.evolution.entities.EvolutionAttributes;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntitySpear;
+import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.PlayerHelper;
@@ -49,60 +49,13 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
-        ItemStack stack = playerIn.getHeldItem(handIn);
-        if (stack.getDamage() >= stack.getMaxDamage() || handIn == Hand.OFF_HAND) {
-            return new ActionResult<>(ActionResultType.FAIL, stack);
-        }
-        playerIn.setActiveHand(handIn);
-        return new ActionResult<>(ActionResultType.SUCCESS, stack);
+    public double getAttackDamage() {
+        return this.damage;
     }
 
     @Override
-    public boolean hitEntity(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        stack.damageItem(1, attacker, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
-        return true;
-    }
-
-    @Override
-    public boolean onBlockDestroyed(ItemStack stack, World worldIn, BlockState state, BlockPos pos, LivingEntity entityLiving) {
-        if (state.getBlockHardness(worldIn, pos) != 0.0D) {
-            stack.damageItem(2, entityLiving, entity -> entity.sendBreakAnimation(EquipmentSlotType.MAINHAND));
-        }
-        return true;
-    }
-
-    @Override
-    public UseAction getUseAction(ItemStack stack) {
-        return UseAction.SPEAR;
-    }
-
-    @Override
-    public int getUseDuration(ItemStack stack) {
-        return 72_000;
-    }
-
-    @Override
-    public void onPlayerStoppedUsing(ItemStack stack, World worldIn, LivingEntity entityLiving, int timeLeft) {
-        if (entityLiving instanceof PlayerEntity) {
-            PlayerEntity player = (PlayerEntity) entityLiving;
-            int i = this.getUseDuration(stack) - timeLeft;
-            if (i >= 10) {
-                if (!worldIn.isRemote) {
-                    EntitySpear spear = new EntitySpear(worldIn, player, stack, this.damage, this.mass);
-                    spear.shoot(player, player.rotationPitch, player.rotationYaw, 0.825f, 2.5F);
-                    if (player.abilities.isCreativeMode) {
-                        spear.pickupStatus = EntityGenericProjectile.PickupStatus.CREATIVE_ONLY;
-                    }
-                    worldIn.addEntity(spear);
-                    worldIn.playMovingSound(null, spear, EvolutionSounds.JAVELIN_THROW.get(), SoundCategory.PLAYERS, 1.0F, 1.0F);
-                    if (!player.abilities.isCreativeMode) {
-                        player.inventory.deleteStack(stack);
-                    }
-                }
-                player.addStat(Stats.ITEM_USED.get(this));
-            }
-        }
+    public double getAttackSpeed() {
+        return this.speed - PlayerHelper.ATTACK_SPEED;
     }
 
     @Override
@@ -134,26 +87,20 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
         return multimap;
     }
 
-    @Override
-    public double getAttackSpeed() {
-        return this.speed - PlayerHelper.ATTACK_SPEED;
-    }
-
-    @Override
-    public double getAttackDamage() {
-        return this.damage;
-    }
-
-    @Override
-    public double getReach() {
-        //noinspection ConstantExpression
-        return 5 - PlayerHelper.REACH_DISTANCE;
-    }
-
     @Nonnull
     @Override
     public EvolutionDamage.Type getDamageType() {
         return EvolutionDamage.Type.PIERCING;
+    }
+
+    @Override
+    public double getMass() {
+        return this.mass;
+    }
+
+    @Override
+    public double getReach() {
+        return 5 - PlayerHelper.REACH_DISTANCE;
     }
 
     @Override
@@ -162,7 +109,59 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
     }
 
     @Override
-    public double getMass() {
-        return this.mass;
+    public UseAction getUseAction(ItemStack stack) {
+        return UseAction.SPEAR;
+    }
+
+    @Override
+    public int getUseDuration(ItemStack stack) {
+        return 72_000;
+    }
+
+    @Override
+    public boolean hitEntity(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        stack.damageItem(1, attacker, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
+        return true;
+    }
+
+    @Override
+    public boolean onBlockDestroyed(ItemStack stack, World worldIn, BlockState state, BlockPos pos, LivingEntity entityLiving) {
+        if (state.getBlockHardness(worldIn, pos) != 0) {
+            stack.damageItem(2, entityLiving, entity -> entity.sendBreakAnimation(EquipmentSlotType.MAINHAND));
+        }
+        return true;
+    }
+
+    @Override
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
+        ItemStack stack = playerIn.getHeldItem(handIn);
+        if (stack.getDamage() >= stack.getMaxDamage() || handIn == Hand.OFF_HAND) {
+            return new ActionResult<>(ActionResultType.FAIL, stack);
+        }
+        playerIn.setActiveHand(handIn);
+        return new ActionResult<>(ActionResultType.SUCCESS, stack);
+    }
+
+    @Override
+    public void onPlayerStoppedUsing(ItemStack stack, World worldIn, LivingEntity entityLiving, int timeLeft) {
+        if (entityLiving instanceof PlayerEntity) {
+            PlayerEntity player = (PlayerEntity) entityLiving;
+            int i = this.getUseDuration(stack) - timeLeft;
+            if (i >= 10) {
+                if (!worldIn.isRemote) {
+                    EntitySpear spear = new EntitySpear(worldIn, player, stack, this.damage, this.mass);
+                    spear.shoot(player, player.rotationPitch, player.rotationYaw, 0.825f, 2.5F);
+                    if (player.abilities.isCreativeMode) {
+                        spear.pickupStatus = EntityGenericProjectile.PickupStatus.CREATIVE_ONLY;
+                    }
+                    worldIn.addEntity(spear);
+                    worldIn.playMovingSound(null, spear, EvolutionSounds.JAVELIN_THROW.get(), SoundCategory.PLAYERS, 1.0F, 1.0F);
+                    if (!player.abilities.isCreativeMode) {
+                        player.inventory.deleteStack(stack);
+                    }
+                }
+                player.addStat(Stats.ITEM_USED.get(this));
+            }
+        }
     }
 }

@@ -3,6 +3,7 @@ package tgw.evolution.blocks;
 import net.minecraft.block.BedrockBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -31,13 +32,6 @@ public class BlockMass extends Block {
         }
     }
 
-    @Override
-    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            BlockUtils.scheduleBlockTick(worldIn, pos, 2);
-        }
-    }
-
     /**
      * @param state : The current BlockState of the Block
      */
@@ -52,5 +46,17 @@ public class BlockMass extends Block {
                 updateWeight(worldIn, pos);
             }
         }
+    }
+
+    @Override
+    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!worldIn.isRemote) {
+            BlockUtils.scheduleBlockTick(worldIn, pos, 2);
+        }
+    }
+
+    @Override
+    public void onFallenUpon(World world, BlockPos pos, Entity entity, float fallDistance) {
+        entity.fall(fallDistance, this instanceof ISoftBlock ? ((ISoftBlock) this).getSlowdownTop(world.getBlockState(pos)) : 1.0f);
     }
 }

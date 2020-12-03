@@ -14,9 +14,9 @@ public class ModelHook extends Model {
         this.textureHeight = 16;
         this.bone = new RendererModel(this, 0, 0);
         this.bone.setRotationPoint(0.0F, 24.0F, 0.0F);
-        MathHelper.setRotationAngle(this.bone, -1.5708F, 0.0F, 0.0F);
+        MathHelper.setRotationAngle(this.bone, -MathHelper.PI_OVER_2, 0.0F, 0.0F);
         this.bone.cubeList.add(new ModelBox(this.bone, 8, 0, 2.5F, 2.0F, -23.0F, 1, 1, 3, 0.0F, false));
-        this.bone.cubeList.add(new ModelBox(this.bone, 8, 4, -3.5F, 2.0F, -23.0F, 1, 1, 3, 0.0F, false));
+        this.bone.cubeList.add(new ModelBox(this.bone, 8, 4, -3.5f, 2.0F, -23.0F, 1, 1, 3, 0.0F, false));
         this.bone.cubeList.add(new ModelBox(this.bone, 0, 7, 1.5F, 1.0F, -24.0F, 1, 1, 1, 0.0F, false));
         this.bone.cubeList.add(new ModelBox(this.bone, 5, 0, -2.5F, 1.0F, -24.0F, 1, 1, 1, 0.0F, false));
         this.bone.cubeList.add(new ModelBox(this.bone, 0, 5, -1.5F, 0.0F, -25.0F, 1, 1, 1, 0.0F, false));
@@ -28,6 +28,6 @@ public class ModelHook extends Model {
     }
 
     public void renderer() {
-        this.bone.render(0.0625F);
+        this.bone.render(0.062_5F);
     }
 }

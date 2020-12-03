@@ -1,5 +1,7 @@
 package tgw.evolution.inventory;
 
+import tgw.evolution.inventory.extendedinventory.ContainerExtendedHandler;
+
 public enum SlotType {
     HAT(ContainerExtendedHandler.HAT),
     BODY(ContainerExtendedHandler.BODY),
@@ -16,6 +18,10 @@ public enum SlotType {
         this.validSlots = validSlots;
     }
 
+    public int[] getValidSlots() {
+        return this.validSlots;
+    }
+
     public boolean hasSlot(int slot) {
         for (int s : this.validSlots) {
             if (s == slot) {
@@ -23,9 +29,5 @@ public enum SlotType {
             }
         }
         return false;
-    }
-
-    public int[] getValidSlots() {
-        return this.validSlots;
     }
 }

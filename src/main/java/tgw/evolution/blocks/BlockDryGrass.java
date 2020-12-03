@@ -15,13 +15,13 @@ import tgw.evolution.util.EnumRockVariant;
 
 import java.util.Random;
 
-public class BlockDryGrass extends BlockSnowable implements IStoneVariant {
+public class BlockDryGrass extends BlockGenericSlowable implements IStoneVariant {
 
     private final EnumRockNames name;
     private EnumRockVariant variant;
 
     public BlockDryGrass(EnumRockNames name) {
-        super(Block.Properties.create(Material.ORGANIC).hardnessAndResistance(3F, 0.6F).sound(SoundType.PLANT).tickRandomly(), name.getMass() / 4);
+        super(Block.Properties.create(Material.ORGANIC).hardnessAndResistance(3.0F, 0.6F).sound(SoundType.PLANT).tickRandomly(), name.getMass() / 4);
         this.name = name;
     }
 
@@ -41,23 +41,8 @@ public class BlockDryGrass extends BlockSnowable implements IStoneVariant {
     }
 
     @Override
-    public EnumRockVariant getVariant() {
-        return this.variant;
-    }
-
-    @Override
-    public void setVariant(EnumRockVariant variant) {
-        this.variant = variant;
-    }
-
-    @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
-    }
-
-    @Override
-    public boolean isSolid(BlockState state) {
-        return true;
+    public SoundEvent fallSound() {
+        return EvolutionSounds.SOIL_COLLAPSE.get();
     }
 
     @Override
@@ -71,8 +56,23 @@ public class BlockDryGrass extends BlockSnowable implements IStoneVariant {
     }
 
     @Override
-    public SoundEvent fallSound() {
-        return EvolutionSounds.SOIL_COLLAPSE.get();
+    public EnumRockNames getStoneName() {
+        return this.name;
+    }
+
+    @Override
+    public EnumRockVariant getVariant() {
+        return this.variant;
+    }
+
+    @Override
+    public void setVariant(EnumRockVariant variant) {
+        this.variant = variant;
+    }
+
+    @Override
+    public boolean isSolid(BlockState state) {
+        return true;
     }
 
     @Override
@@ -103,7 +103,12 @@ public class BlockDryGrass extends BlockSnowable implements IStoneVariant {
                         Block blockAtPos = worldIn.getBlockState(randomPos).getBlock();
                         if (blockAtPos instanceof BlockDirt && canSustainGrassWater(worldIn, randomPos)) {
                             //TODO proper snow
-                            worldIn.setBlockState(randomPos, ((IStoneVariant) blockAtPos).getVariant().getDryGrass().getDefaultState().with(SNOWY, worldIn.getBlockState(randomPos.up()).getBlock() == Blocks.SNOW));
+                            worldIn.setBlockState(randomPos,
+                                                  ((IStoneVariant) blockAtPos).getVariant()
+                                                                              .getDryGrass()
+                                                                              .getDefaultState()
+                                                                              .with(SNOWY,
+                                                                                    worldIn.getBlockState(randomPos.up()).getBlock() == Blocks.SNOW));
                         }
                     }
                 }

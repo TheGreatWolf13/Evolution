@@ -8,6 +8,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.items.IMelee;
 
 import javax.annotation.Nullable;
 
@@ -22,22 +23,29 @@ public class DamageSourceEntity extends DamageSourceEv {
 
     @Override
     @Nullable
-    public Entity getTrueSource() {
-        return this.damageSourceEntity;
+    public Vec3d getDamageLocation() {
+        return new Vec3d(this.damageSourceEntity.posX, this.damageSourceEntity.posY, this.damageSourceEntity.posZ);
     }
 
     @Override
     public ITextComponent getDeathMessage(LivingEntity deadEntity) {
-        ItemStack heldStack = this.damageSourceEntity instanceof LivingEntity ?
-                              ((LivingEntity) this.damageSourceEntity).getHeldItemMainhand() :
-                              ItemStack.EMPTY;
+        ITextComponent itemComp = this.getItemDisplay();
         String message = "death.attack." + this.damageType;
-        return !heldStack.isEmpty() ?
-               new TranslationTextComponent(message + ".item",
-                                            deadEntity.getDisplayName(),
-                                            this.damageSourceEntity.getDisplayName(),
-                                            heldStack.getTextComponent()) :
+        return itemComp != null ?
+               new TranslationTextComponent(message + ".item", deadEntity.getDisplayName(), this.damageSourceEntity.getDisplayName(), itemComp) :
                new TranslationTextComponent(message, deadEntity.getDisplayName(), this.damageSourceEntity.getDisplayName());
+    }
+
+    @Nullable
+    public ITextComponent getItemDisplay() {
+        ItemStack heldStack = ((LivingEntity) this.damageSourceEntity).getHeldItemMainhand();
+        return heldStack.getItem() instanceof IMelee ? heldStack.getTextComponent() : null;
+    }
+
+    @Override
+    @Nullable
+    public Entity getTrueSource() {
+        return this.damageSourceEntity;
     }
 
     @Override
@@ -45,11 +53,5 @@ public class DamageSourceEntity extends DamageSourceEv {
         return this.damageSourceEntity != null &&
                this.damageSourceEntity instanceof LivingEntity &&
                !(this.damageSourceEntity instanceof PlayerEntity);
-    }
-
-    @Override
-    @Nullable
-    public Vec3d getDamageLocation() {
-        return new Vec3d(this.damageSourceEntity.posX, this.damageSourceEntity.posY, this.damageSourceEntity.posZ);
     }
 }

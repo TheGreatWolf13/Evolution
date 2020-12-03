@@ -6,6 +6,7 @@ import net.minecraft.entity.Pose;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.IPacket;
 import net.minecraft.util.DamageSource;
+import tgw.evolution.entities.util.EntityPartType;
 
 public class EntityPart extends Entity {
 
@@ -22,10 +23,6 @@ public class EntityPart extends Entity {
     }
 
     @Override
-    protected void registerData() {
-    }
-
-    @Override
     public boolean attackEntityFrom(DamageSource source, float amount) {
         return !this.isInvulnerableTo(source) && this.owner.attackEntityFrom(source, amount);
     }
@@ -36,11 +33,13 @@ public class EntityPart extends Entity {
     }
 
     @Override
-    protected void readAdditional(CompoundNBT compound) {
+    public IPacket<?> createSpawnPacket() {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    protected void writeAdditional(CompoundNBT compound) {
+    public EntitySize getSize(Pose poseIn) {
+        return this.size;
     }
 
     @Override
@@ -49,12 +48,14 @@ public class EntityPart extends Entity {
     }
 
     @Override
-    public IPacket<?> createSpawnPacket() {
-        throw new UnsupportedOperationException();
+    protected void readAdditional(CompoundNBT compound) {
     }
 
     @Override
-    public EntitySize getSize(Pose poseIn) {
-        return this.size;
+    protected void registerData() {
+    }
+
+    @Override
+    protected void writeAdditional(CompoundNBT compound) {
     }
 }

@@ -12,11 +12,10 @@ import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 import tgw.evolution.blocks.tileentities.TESchematic;
-import tgw.evolution.init.EvolutionNetwork;
 
 import java.util.function.Supplier;
 
-public class PacketCSUpdateSchematicBlock extends PacketAbstract {
+public class PacketCSUpdateSchematicBlock implements IPacket {
 
     private final BlockPos tilePos;
     private final TESchematic.UpdateCommand command;
@@ -32,8 +31,19 @@ public class PacketCSUpdateSchematicBlock extends PacketAbstract {
     private final float integrity;
     private final long seed;
 
-    public PacketCSUpdateSchematicBlock(BlockPos tilePos, TESchematic.UpdateCommand command, SchematicMode mode, String name, BlockPos schematicPos, BlockPos size, Mirror mirror, Rotation rotation, boolean ignoresEntities, boolean showAir, boolean showBB, float integrity, long seed) {
-        super(LogicalSide.SERVER);
+    public PacketCSUpdateSchematicBlock(BlockPos tilePos,
+                                        TESchematic.UpdateCommand command,
+                                        SchematicMode mode,
+                                        String name,
+                                        BlockPos schematicPos,
+                                        BlockPos size,
+                                        Mirror mirror,
+                                        Rotation rotation,
+                                        boolean ignoresEntities,
+                                        boolean showAir,
+                                        boolean showBB,
+                                        float integrity,
+                                        long seed) {
         this.tilePos = tilePos;
         this.command = command;
         this.mode = mode;
@@ -47,6 +57,22 @@ public class PacketCSUpdateSchematicBlock extends PacketAbstract {
         this.showBB = showBB;
         this.integrity = integrity;
         this.seed = seed;
+    }
+
+    public static PacketCSUpdateSchematicBlock decode(PacketBuffer buffer) {
+        return new PacketCSUpdateSchematicBlock(buffer.readBlockPos(),
+                                                buffer.readEnumValue(TESchematic.UpdateCommand.class),
+                                                buffer.readEnumValue(SchematicMode.class),
+                                                buffer.readString(),
+                                                buffer.readBlockPos(),
+                                                buffer.readBlockPos(),
+                                                buffer.readEnumValue(Mirror.class),
+                                                buffer.readEnumValue(Rotation.class),
+                                                buffer.readBoolean(),
+                                                buffer.readBoolean(),
+                                                buffer.readBoolean(),
+                                                buffer.readFloat(),
+                                                buffer.readLong());
     }
 
     public static void encode(PacketCSUpdateSchematicBlock packet, PacketBuffer buffer) {
@@ -65,12 +91,8 @@ public class PacketCSUpdateSchematicBlock extends PacketAbstract {
         buffer.writeLong(packet.seed);
     }
 
-    public static PacketCSUpdateSchematicBlock decode(PacketBuffer buffer) {
-        return new PacketCSUpdateSchematicBlock(buffer.readBlockPos(), buffer.readEnumValue(TESchematic.UpdateCommand.class), buffer.readEnumValue(SchematicMode.class), buffer.readString(), buffer.readBlockPos(), buffer.readBlockPos(), buffer.readEnumValue(Mirror.class), buffer.readEnumValue(Rotation.class), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean(), buffer.readFloat(), buffer.readLong());
-    }
-
     public static void handle(PacketCSUpdateSchematicBlock packet, Supplier<NetworkEvent.Context> context) {
-        if (EvolutionNetwork.checkSide(context, packet)) {
+        if (IPacket.checkSide(packet, context)) {
             PlayerEntity player = context.get().getSender();
             if (player.canUseCommandBlock()) {
                 BlockPos tilePos = packet.tilePos;
@@ -127,5 +149,10 @@ public class PacketCSUpdateSchematicBlock extends PacketAbstract {
                 }
             }
         }
+    }
+
+    @Override
+    public LogicalSide getDestinationSide() {
+        return LogicalSide.SERVER;
     }
 }

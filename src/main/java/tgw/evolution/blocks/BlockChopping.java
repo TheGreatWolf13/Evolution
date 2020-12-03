@@ -21,7 +21,7 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import tgw.evolution.blocks.tileentities.TEChopping;
-import tgw.evolution.entities.EntitySit;
+import tgw.evolution.entities.misc.EntitySit;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.items.ItemAxe;
 import tgw.evolution.items.ItemLog;
@@ -37,7 +37,7 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable 
     private static final VoxelShape SHAPE = EvolutionHitBoxes.SLAB_LOWER;
 
     public BlockChopping(EnumWoodNames name) {
-        super(Block.Properties.create(Material.WOOD).harvestLevel(HarvestLevel.STONE).sound(SoundType.WOOD).hardnessAndResistance(8F, 2F),
+        super(Block.Properties.create(Material.WOOD).harvestLevel(HarvestLevel.STONE).sound(SoundType.WOOD).hardnessAndResistance(8.0F, 2.0F),
               name.getMass());
         this.setDefaultState(this.getDefaultState().with(OCCUPIED, false));
     }
@@ -48,8 +48,24 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable 
     }
 
     @Override
-    public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
-        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualFlammability(state);
+    public boolean canBeReplacedByRope(BlockState state) {
+        return false;
+    }
+
+    @Nullable
+    @Override
+    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
+        return new TEChopping();
+    }
+
+    @Override
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+        builder.add(OCCUPIED);
+    }
+
+    @Override
+    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
+        return new ItemStack(this);
     }
 
     @Override
@@ -58,13 +74,34 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable 
     }
 
     @Override
+    public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualFlammability(state);
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+        return SHAPE;
+    }
+
+    @Override
+    public double getYOffset() {
+        return 0.3;
+    }
+
+    @Override
+    public boolean hasTileEntity(BlockState state) {
+        return true;
+    }
+
+    @Override
     public boolean isReplaceable(BlockState state) {
         return true;
     }
 
     @Override
-    public boolean canBeReplacedByRope(BlockState state) {
-        return false;
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
+        BlockState down = worldIn.getBlockState(pos.down());
+        return Block.hasSolidSide(down, worldIn, pos.down(), Direction.UP);
     }
 
     @Override
@@ -77,47 +114,6 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable 
             }
         }
         super.neighborChanged(state, worldIn, pos, blockIn, fromPos, isMoving);
-    }
-
-    @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public double getYOffset() {
-        return 0.3;
-    }
-
-    @Nullable
-    @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return new TEChopping();
-    }
-
-    @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        BlockState down = worldIn.getBlockState(pos.down());
-        return Block.hasSolidSide(down, worldIn, pos.down(), Direction.UP);
-    }
-
-    @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        TEChopping tile = (TEChopping) worldIn.getTileEntity(pos);
-        if (tile != null) {
-            tile.onRemoved();
-            worldIn.removeTileEntity(pos);
-        }
-    }
-
-    @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        return SHAPE;
-    }
-
-    @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(OCCUPIED);
     }
 
     @Override
@@ -177,7 +173,11 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable 
     }
 
     @Override
-    public ItemStack getDrops(BlockState state) {
-        return new ItemStack(this);
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+        TEChopping tile = (TEChopping) worldIn.getTileEntity(pos);
+        if (tile != null) {
+            tile.onRemoved();
+            worldIn.removeTileEntity(pos);
+        }
     }
 }

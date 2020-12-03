@@ -9,7 +9,7 @@ import tgw.evolution.init.EvolutionDamage;
 import javax.annotation.Nonnull;
 import java.util.Set;
 
-public class ItemHammer extends ItemTool {
+public class ItemHammer extends ItemGenericTool implements IHeavyAttack {
 
     private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet();
     private static final Set<Material> EFFECTIVE_MAT = Sets.newHashSet();
@@ -21,13 +21,19 @@ public class ItemHammer extends ItemTool {
     }
 
     @Override
-    protected float setBaseDamage() {
-        return 6.0f;
+    public float getChance() {
+        return 0.2f;
+    }
+
+    @Nonnull
+    @Override
+    public EvolutionDamage.Type getDamageType() {
+        return EvolutionDamage.Type.CRUSHING;
     }
 
     @Override
-    protected float setReach() {
-        return 3;
+    public int getLevel() {
+        return 2;
     }
 
     @Override
@@ -35,9 +41,13 @@ public class ItemHammer extends ItemTool {
         return this.mass;
     }
 
-    @Nonnull
     @Override
-    public EvolutionDamage.Type getDamageType() {
-        return EvolutionDamage.Type.CRUSHING;
+    public float setBaseDamage() {
+        return 6.0f;
+    }
+
+    @Override
+    public float setReach() {
+        return 3;
     }
 }

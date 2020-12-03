@@ -22,6 +22,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.network.FMLPlayMessages;
 import net.minecraftforge.fml.network.NetworkHooks;
+import tgw.evolution.Evolution;
 import tgw.evolution.blocks.*;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
@@ -47,106 +48,6 @@ public class EntityHook extends EntityGenericProjectile {
 
     public EntityHook(EntityType<EntityHook> type, World worldIn) {
         super(type, worldIn);
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public boolean isInRangeToRender3d(double x, double y, double z) {
-        return true;
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-        if (this.timeInGround > 0) {
-            this.dealtDamage = true;
-            this.tryPlaceBlock();
-            this.remove();
-        }
-    }
-
-    @Override
-    public void readAdditional(CompoundNBT compound) {
-        super.readAdditional(compound);
-        this.dealtDamage = compound.getBoolean("DealtDamage");
-        this.facing = Direction.byIndex(compound.getByte("Facing"));
-    }
-
-    @Override
-    protected SoundEvent getHitEntitySound() {
-        return SoundEvents.ITEM_TRIDENT_HIT_GROUND;
-    }
-
-    @Override
-    public void writeAdditional(CompoundNBT compound) {
-        super.writeAdditional(compound);
-        compound.putBoolean("DealtDamage", this.dealtDamage);
-        compound.putByte("Facing", (byte) this.facing.getIndex());
-    }
-
-    @Override
-    public IPacket<?> createSpawnPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
-    }
-
-    @Override
-    protected void tryDespawn() {
-    }
-
-    @Override
-    @Nullable
-    protected EntityRayTraceResult rayTraceEntities(Vec3d startVec, Vec3d endVec) {
-        return this.dealtDamage ? null : super.rayTraceEntities(startVec, endVec);
-    }
-
-    @Override
-    protected void onEntityHit(EntityRayTraceResult rayTraceResult) {
-        Entity entity = rayTraceResult.getEntity();
-        Entity shooter = this.getShooter();
-        DamageSource source = EvolutionDamage.causeHookDamage(this, shooter == null ? this : shooter);
-        this.dealtDamage = true;
-        SoundEvent soundevent = SoundEvents.ITEM_TRIDENT_HIT;
-        float damage = MathHelper.ceil(4 * this.getMotion().length());
-        if (entity instanceof LivingEntity && entity.canBeAttackedWithItem()) {
-            entity.attackEntityFrom(source, damage);
-        }
-        this.setMotion(this.getMotion().mul(-0.1, -0.1, -0.1));
-        this.playSound(soundevent, 1.0F, 1.0F);
-    }
-
-    @Override
-    protected ItemStack getArrowStack() {
-        return new ItemStack(EvolutionItems.climbing_hook.get());
-    }
-
-    public void tryPlaceBlock() {
-        BlockPos pos = this.getPosition();
-        BlockPos down = pos.down();
-        if (this.world.isAirBlock(pos) && Block.hasSolidSide(this.world.getBlockState(down), this.world, down, Direction.UP)) {
-            this.world.setBlockState(this.getPosition(),
-                                     EvolutionBlocks.CLIMBING_HOOK.get()
-                                                                  .getDefaultState()
-                                                                  .with(BlockClimbingHook.ROPE_DIRECTION, this.facing.getOpposite()));
-            Entity shooter = this.getShooter();
-            if (this.getShooter() instanceof PlayerEntity) {
-                ItemStack stack = ((LivingEntity) shooter).getHeldItemOffhand();
-                if (stack.getItem() == EvolutionItems.rope.get()) {
-                    int count = stack.getCount();
-                    int placed = tryPlaceRopes(this.world, pos, this.facing, count);
-                    if (placed > 0) {
-                        stack.shrink(placed);
-                        this.world.setBlockState(this.getPosition(),
-                                                 EvolutionBlocks.CLIMBING_HOOK.get()
-                                                                              .getDefaultState()
-                                                                              .with(BlockClimbingHook.ROPE_DIRECTION, this.facing.getOpposite())
-                                                                              .with(BlockClimbingHook.ATTACHED, true));
-                    }
-                }
-            }
-        }
-        else {
-            BlockUtils.dropItemStack(this.world, pos, this.getArrowStack());
-        }
     }
 
     public static int tryPlaceRopes(World world, BlockPos pos, Direction support, int count) {
@@ -192,14 +93,14 @@ public class EntityHook extends EntityGenericProjectile {
                     return ropeCount;
                 }
                 if (stateTemp.getBlock() instanceof IReplaceable) {
-                    BlockUtils.dropItemStack(world, mutablePos, ((IReplaceable) stateTemp.getBlock()).getDrops(stateTemp));
+                    BlockUtils.dropItemStack(world, mutablePos, ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp));
                 }
                 world.setBlockState(mutablePos, EvolutionBlocks.ROPE.get().getDefaultState().with(BlockRope.DIRECTION, support));
                 ropeCount++;
                 continue;
             }
             if (stateTemp.getBlock() instanceof IReplaceable) {
-                BlockUtils.dropItemStack(world, mutablePos, ((IReplaceable) stateTemp.getBlock()).getDrops(stateTemp));
+                BlockUtils.dropItemStack(world, mutablePos, ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp));
             }
             if (currentMovement == Direction.DOWN) {
                 world.setBlockState(mutablePos, EvolutionBlocks.ROPE.get().getDefaultState().with(BlockRope.DIRECTION, support));
@@ -210,5 +111,106 @@ public class EntityHook extends EntityGenericProjectile {
             ropeCount++;
         }
         return ropeCount;
+    }
+
+    @Override
+    public IPacket<?> createSpawnPacket() {
+        return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    @Override
+    protected ItemStack getArrowStack() {
+        return new ItemStack(EvolutionItems.climbing_hook.get());
+    }
+
+    @Override
+    protected SoundEvent getHitEntitySound() {
+        return SoundEvents.ITEM_TRIDENT_HIT_GROUND;
+    }
+
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    public boolean isInRangeToRender3d(double x, double y, double z) {
+        return true;
+    }
+
+    @Override
+    protected void onEntityHit(EntityRayTraceResult rayTraceResult) {
+        Entity entity = rayTraceResult.getEntity();
+        Entity shooter = this.getShooter();
+        DamageSource source = EvolutionDamage.causeHookDamage(this, shooter == null ? this : shooter);
+        this.dealtDamage = true;
+        SoundEvent sound = SoundEvents.ITEM_TRIDENT_HIT;
+        float damage = MathHelper.ceil(4 * this.getMotion().length());
+        if (entity instanceof LivingEntity && entity.canBeAttackedWithItem()) {
+            entity.attackEntityFrom(source, damage);
+        }
+        this.setMotion(this.getMotion().mul(-0.1, -0.1, -0.1));
+        this.playSound(sound, 1.0F, 1.0F);
+        Evolution.usingPlaceholder(entity.world.getClosestPlayer(this, 1_000), "sound");
+    }
+
+    @Override
+    @Nullable
+    protected EntityRayTraceResult rayTraceEntities(Vec3d startVec, Vec3d endVec) {
+        return this.dealtDamage ? null : super.rayTraceEntities(startVec, endVec);
+    }
+
+    @Override
+    public void readAdditional(CompoundNBT compound) {
+        super.readAdditional(compound);
+        this.dealtDamage = compound.getBoolean("DealtDamage");
+        this.facing = Direction.byIndex(compound.getByte("Facing"));
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (this.timeInGround > 0) {
+            this.dealtDamage = true;
+            this.tryPlaceBlock();
+            this.remove();
+        }
+    }
+
+    @Override
+    protected void tryDespawn() {
+    }
+
+    public void tryPlaceBlock() {
+        BlockPos pos = this.getPosition();
+        BlockPos down = pos.down();
+        if (this.world.isAirBlock(pos) && Block.hasSolidSide(this.world.getBlockState(down), this.world, down, Direction.UP)) {
+            this.world.setBlockState(this.getPosition(),
+                                     EvolutionBlocks.CLIMBING_HOOK.get()
+                                                                  .getDefaultState()
+                                                                  .with(BlockClimbingHook.ROPE_DIRECTION, this.facing.getOpposite()));
+            LivingEntity shooter = this.getShooter();
+            if (this.getShooter() instanceof PlayerEntity) {
+                ItemStack stack = shooter.getHeldItemOffhand();
+                if (stack.getItem() == EvolutionItems.rope.get()) {
+                    int count = stack.getCount();
+                    int placed = tryPlaceRopes(this.world, pos, this.facing, count);
+                    if (placed > 0) {
+                        stack.shrink(placed);
+                        this.world.setBlockState(this.getPosition(),
+                                                 EvolutionBlocks.CLIMBING_HOOK.get()
+                                                                              .getDefaultState()
+                                                                              .with(BlockClimbingHook.ROPE_DIRECTION, this.facing.getOpposite())
+                                                                              .with(BlockClimbingHook.ATTACHED, true));
+                    }
+                }
+            }
+        }
+        else {
+            BlockUtils.dropItemStack(this.world, pos, this.getArrowStack());
+        }
+    }
+
+    @Override
+    public void writeAdditional(CompoundNBT compound) {
+        super.writeAdditional(compound);
+        compound.putBoolean("DealtDamage", this.dealtDamage);
+        compound.putByte("Facing", (byte) this.facing.getIndex());
     }
 }

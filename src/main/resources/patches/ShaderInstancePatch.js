@@ -4,7 +4,7 @@ var Opcodes = Java.type("org.objectweb.asm.Opcodes");
 var FUNC = ASMAPI.mapMethod("func_216536_h");
 
 function log(message) {
-	print("[Evolution ShaderInstance#func_216536_h() Transformer]: " + message);
+	print("[evolution/ ShaderInstance#func_216536_h() Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {

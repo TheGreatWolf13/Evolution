@@ -6,24 +6,24 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.common.util.LazyOptional;
-import tgw.evolution.inventory.ContainerExtendedHandler;
+import tgw.evolution.inventory.extendedinventory.ContainerExtendedHandler;
 
 public class PlayerInventoryCapabilityProvider implements INBTSerializable<CompoundNBT>, ICapabilityProvider {
 
-    private final LazyOptional<ContainerExtendedHandler> handler = LazyOptional.of(this::createHandler);
+    private final LazyOptional<ContainerExtendedHandler> handler = LazyOptional.of(PlayerInventoryCapabilityProvider::createHandler);
 
-    private ContainerExtendedHandler createHandler() {
+    private static ContainerExtendedHandler createHandler() {
         return new ContainerExtendedHandler();
-    }
-
-    @Override
-    public void deserializeNBT(CompoundNBT nbt) {
-        this.handler.orElse(null).deserializeNBT(nbt);
     }
 
     @Override
     public CompoundNBT serializeNBT() {
         return this.handler.orElse(null).serializeNBT();
+    }
+
+    @Override
+    public void deserializeNBT(CompoundNBT nbt) {
+        this.handler.orElse(null).deserializeNBT(nbt);
     }
 
     @Override

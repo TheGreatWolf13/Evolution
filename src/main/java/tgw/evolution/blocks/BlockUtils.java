@@ -21,12 +21,20 @@ import tgw.evolution.util.OriginMutableBlockPos;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public abstract class BlockUtils {
+public final class BlockUtils {
 
     private static final BlockPos.MutableBlockPos AUX_POS = new BlockPos.MutableBlockPos();
 
-    public static boolean hasSolidSide(World world, BlockPos pos, Direction side) {
-        return Block.hasSolidSide(world.getBlockState(pos), world, pos, side);
+    private BlockUtils() {
+    }
+
+    public static boolean canBeReplacedByWater(BlockState state) {
+        if (state.getBlock() instanceof IReplaceable) {
+            if (!((IReplaceable) state.getBlock()).canBeReplacedByLiquid(state)) {
+                return false;
+            }
+        }
+        return isReplaceable(state);
     }
 
     public static boolean canSustainSapling(BlockState state, IPlantable plantable) {
@@ -40,51 +48,26 @@ public abstract class BlockUtils {
         return false;
     }
 
-    public static boolean isTouchingWater(IWorld world, BlockPos pos) {
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-        for (Direction direction : Direction.values()) {
-            mutablePos.setPos(pos).move(direction);
-            BlockState stateAtPos = world.getBlockState(mutablePos);
-            if (stateAtPos.getFluidState().isTagged(FluidTags.WATER)) {
-                return true;
-            }
+    public static void dropItemStack(World world, BlockPos pos, @Nonnull ItemStack stack) {
+        if (world.isRemote || stack.isEmpty()) {
+            return;
         }
-        return false;
+        ItemEntity entity = new ItemEntity(world, pos.getX() + 0.5f, pos.getY() + 0.3f, pos.getZ() + 0.5f, stack);
+        Vec3d motion = entity.getMotion();
+        entity.addVelocity(-motion.x, -motion.y, -motion.z);
+        world.addEntity(entity);
     }
 
-    public static boolean willFluidAllowGap(World world, BlockPos pos, Direction direction, Fluid fluid, int currentLevel) {
-        if (currentLevel == 1) {
-            if (!world.getFluidState(AUX_POS.setPos(pos).move(Direction.DOWN)).getFluid().isEquivalentTo(fluid)) {
-                return true;
-            }
-            BlockState fluidState = world.getBlockState(AUX_POS.move(direction));
-            if (BlockUtils.canBeReplacedByWater(fluidState) && fluidState.getFluidState().getLevel() != 8) {
-                return false;
-            }
+    /**
+     * @param state The BlockState of the ladder
+     * @return The ladder up movement speed, in m/t.
+     */
+    public static double getLadderUpSpeed(BlockState state) {
+        Block block = state.getBlock();
+        if (block instanceof IClimbable) {
+            return ((IClimbable) block).getUpSpeed();
         }
-        AUX_POS.setPos(pos).move(direction);
-        if (!willFluidAllowGap(world, AUX_POS, fluid, currentLevel)) {
-            return false;
-        }
-        Direction sideOffset = Direction.byHorizontalIndex(direction.getHorizontalIndex() + 1);
-        AUX_POS.setPos(pos).move(sideOffset);
-        if (!willFluidAllowGap(world, AUX_POS, fluid, currentLevel)) {
-            return false;
-        }
-        AUX_POS.setPos(pos).move(sideOffset.getOpposite());
-        return willFluidAllowGap(world, AUX_POS, fluid, currentLevel);
-    }
-
-    private static boolean willFluidAllowGap(World world, BlockPos pos, Fluid fluid, int currentLevel) {
-        BlockState stateAtPos = world.getBlockState(pos);
-        if (BlockUtils.isReplaceable(stateAtPos)) {
-            IFluidState fluidStateAtPos = stateAtPos.getFluidState();
-            if (fluid.isEquivalentTo(fluidStateAtPos.getFluid())) {
-                int levelAtPos = fluidStateAtPos.getLevel();
-                return levelAtPos == currentLevel;
-            }
-        }
-        return true;
+        return 0.1;
     }
 
     @Nullable
@@ -108,6 +91,34 @@ public abstract class BlockUtils {
             }
         }
         return null;
+    }
+
+    public static boolean hasMass(BlockState state) {
+        return state.getBlock() instanceof BlockMass;
+    }
+
+    public static boolean hasSolidSide(World world, BlockPos pos, Direction side) {
+        return Block.hasSolidSide(world.getBlockState(pos), world, pos, side);
+    }
+
+    /**
+     * Returns whether the blockstate is considered replaceable.
+     */
+    public static boolean isReplaceable(BlockState state) {
+        return state.getMaterial().isReplaceable() ||
+               state.getBlock() instanceof IReplaceable && ((IReplaceable) state.getBlock()).isReplaceable(state);
+    }
+
+    public static boolean isTouchingWater(IWorld world, BlockPos pos) {
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        for (Direction direction : Direction.values()) {
+            mutablePos.setPos(pos).move(direction);
+            BlockState stateAtPos = world.getBlockState(mutablePos);
+            if (stateAtPos.getFluidState().isTagged(FluidTags.WATER)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -182,38 +193,42 @@ public abstract class BlockUtils {
         return state.getBlock() instanceof BlockLog && state.get(BlockLog.TREE);
     }
 
-    /**
-     * Returns whether the blockstate is considered replaceable.
-     */
-    public static boolean isReplaceable(BlockState state) {
-        return state.getMaterial().isReplaceable() || state.getBlock() instanceof IReplaceable && ((IReplaceable) state.getBlock()).isReplaceable(
-                state);
+    public static void scheduleBlockTick(World world, BlockPos pos, int tickrate) {
+        world.getPendingBlockTicks().scheduleTick(pos, world.getBlockState(pos).getBlock(), tickrate);
     }
 
-    public static boolean canBeReplacedByWater(BlockState state) {
-        if (state.getBlock() instanceof IReplaceable) {
-            if (!((IReplaceable) state.getBlock()).canBeReplacedByLiquid(state)) {
+    public static boolean willFluidAllowGap(World world, BlockPos pos, Direction direction, Fluid fluid, int currentLevel) {
+        if (currentLevel == 1) {
+            if (!world.getFluidState(AUX_POS.setPos(pos).move(Direction.DOWN)).getFluid().isEquivalentTo(fluid)) {
+                return true;
+            }
+            BlockState fluidState = world.getBlockState(AUX_POS.move(direction));
+            if (canBeReplacedByWater(fluidState) && fluidState.getFluidState().getLevel() != 8) {
                 return false;
             }
         }
-        return isReplaceable(state);
-    }
-
-    public static boolean hasMass(BlockState state) {
-        return state.getBlock() instanceof BlockMass;
-    }
-
-    public static void dropItemStack(World world, BlockPos pos, @Nonnull ItemStack stack) {
-        if (world.isRemote || stack.isEmpty()) {
-            return;
+        AUX_POS.setPos(pos).move(direction);
+        if (!willFluidAllowGap(world, AUX_POS, fluid, currentLevel)) {
+            return false;
         }
-        ItemEntity entity = new ItemEntity(world, pos.getX() + 0.5f, pos.getY() + 0.3f, pos.getZ() + 0.5f, stack);
-        Vec3d motion = entity.getMotion();
-        entity.addVelocity(-motion.x, -motion.y, -motion.z);
-        world.addEntity(entity);
+        Direction sideOffset = Direction.byHorizontalIndex(direction.getHorizontalIndex() + 1);
+        AUX_POS.setPos(pos).move(sideOffset);
+        if (!willFluidAllowGap(world, AUX_POS, fluid, currentLevel)) {
+            return false;
+        }
+        AUX_POS.setPos(pos).move(sideOffset.getOpposite());
+        return willFluidAllowGap(world, AUX_POS, fluid, currentLevel);
     }
 
-    public static void scheduleBlockTick(World world, BlockPos pos, int tickrate) {
-        world.getPendingBlockTicks().scheduleTick(pos, world.getBlockState(pos).getBlock(), tickrate);
+    private static boolean willFluidAllowGap(World world, BlockPos pos, Fluid fluid, int currentLevel) {
+        BlockState stateAtPos = world.getBlockState(pos);
+        if (isReplaceable(stateAtPos)) {
+            IFluidState fluidStateAtPos = stateAtPos.getFluidState();
+            if (fluid.isEquivalentTo(fluidStateAtPos.getFluid())) {
+                int levelAtPos = fluidStateAtPos.getLevel();
+                return levelAtPos == currentLevel;
+            }
+        }
+        return true;
     }
 }

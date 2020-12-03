@@ -34,7 +34,7 @@ public class ItemBlockMetal extends ItemBlock {
         }
         String text = "evolution.tooltip.metal.oxidation";
         float percentage = nbt.getInt("Oxidation") / 0.08F;
-        TranslationTextComponent comp = new TranslationTextComponent(text, String.format(Locale.US, "%.1f%%", percentage));
-        tooltip.add(comp.setStyle(EvolutionStyles.INFO));
+        ITextComponent comp = new TranslationTextComponent(text, String.format(Locale.US, "%.1f%%", percentage)).setStyle(EvolutionStyles.LIGHT_GREY);
+        tooltip.add(comp);
     }
 }

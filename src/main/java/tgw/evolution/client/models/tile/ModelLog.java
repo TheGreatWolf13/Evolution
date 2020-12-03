@@ -13,16 +13,10 @@ public class ModelLog extends Model {
         this.textureHeight = 8;
         this.log = new RendererModel(this, 0, 0);
         this.log.addBox(-16, 8 + 4 * y, 4 * x, 16, 4, 4);
-        setRotationAngle(this.log, 0, MathHelper.degToRad(90), 0);
+        MathHelper.setRotationAngle(this.log, 0, MathHelper.PI_OVER_2, 0);
     }
 
     public void render() {
-        this.log.render(1 / 16f);
-    }
-
-    public static void setRotationAngle(RendererModel modelRenderer, float x, float y, float z) {
-        modelRenderer.rotateAngleX = x;
-        modelRenderer.rotateAngleY = y;
-        modelRenderer.rotateAngleZ = z;
+        this.log.render(0.062_5f);
     }
 }

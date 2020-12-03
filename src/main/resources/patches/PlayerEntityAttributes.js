@@ -9,7 +9,7 @@ var VarInsnNode = Java.type("org.objectweb.asm.tree.VarInsnNode");
 var REGISTERATTRIBUTES = ASMAPI.mapMethod("func_110147_ax");
 
 function log(message) {
-	print("[Evolution PlayerEntity#registerAttributes() Transformer]: " + message);
+	print("[evolution/ PlayerEntity#registerAttributes() Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {

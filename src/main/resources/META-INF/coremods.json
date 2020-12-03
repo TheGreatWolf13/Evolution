@@ -5,5 +5,11 @@
   "Evolution PlayerEntityAttributes Transformer": "patches/PlayerEntityAttributes.js",
   "Evolution ShaderInstancePatch Transformer": "patches/ShaderInstancePatch.js",
   "Evolution EntityDealFireDamage Transformer": "patches/EntityDealFireDamage.js",
-  "Evolution LivingEntityEquipSound Transformer": "patches/LivingEntityEquipSound.js"
+  "Evolution LivingEntityEquipSound Transformer": "patches/LivingEntityEquipSound.js",
+  "Evolution PlayerEntityTravel Transformer": "patches/PlayerEntityTravel.js",
+  "Evolution ClientPlayerEntitySprint Transformer": "patches/ClientPlayerEntitySprint.js",
+  "Evolution EntityUpdateFallState Transformer": "patches/EntityUpdateFallState.js",
+  "Evolution GameRendererDrawNameplate Transformer": "patches/GameRendererDrawNameplate.js",
+  "Evolution PlayerEntityHurtSound Transformer": "patches/PlayerEntityHurtSound.js",
+  "Evolution LivingEntityHandleStatusUpdate Transformer": "patches/LivingEntityHandleStatusUpdate.js"
 }

@@ -54,8 +54,10 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
     public EnumWoodVariant variant;
 
     public BlockLogPile(EnumWoodNames name) {
-        super(Block.Properties.create(Material.WOOD).hardnessAndResistance(1000F, 2F).sound(SoundType.WOOD).harvestLevel(HarvestLevel.UNBREAKABLE),
-              name.getMass() * 16);
+        super(Block.Properties.create(Material.WOOD)
+                              .hardnessAndResistance(1_000.0F, 2.0F)
+                              .sound(SoundType.WOOD)
+                              .harvestLevel(HarvestLevel.UNBREAKABLE), name.getMass() * 16);
         this.setDefaultState(this.getDefaultState().with(LOG_COUNT, 1).with(DIRECTION, Direction.NORTH));
         this.name = name;
     }
@@ -66,18 +68,33 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
     }
 
     @Override
-    public ItemStack getDrops(BlockState state) {
+    public boolean canBeReplacedByRope(BlockState state) {
+        return false;
+    }
+
+    @Override
+    protected void fillStateContainer(Builder<Block, BlockState> builder) {
+        builder.add(LOG_COUNT, DIRECTION);
+    }
+
+    @Override
+    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
         return new ItemStack(this.variant.getLog(), state.get(LOG_COUNT));
     }
 
     @Override
-    public boolean isReplaceable(BlockState state) {
-        return state.get(LOG_COUNT) < 13;
+    public int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualEncouragement(state);
     }
 
     @Override
-    public boolean canBeReplacedByRope(BlockState state) {
-        return false;
+    public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualFlammability(state);
+    }
+
+    @Override
+    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
+        return new ItemStack(this.variant.getLog());
     }
 
     @Override
@@ -101,25 +118,51 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
     }
 
     @Override
+    public BlockState getStateForPlacement(BlockItemUseContext context) {
+        BlockState state = context.getWorld().getBlockState(context.getPos());
+        return state.getBlock() == this ?
+               state.with(LOG_COUNT, Math.min(16, state.get(LOG_COUNT) + 1)) :
+               this.getDefaultState().with(DIRECTION, context.getPlacementHorizontalFacing());
+    }
+
+    @Override
+    public boolean isReplaceable(BlockState state) {
+        return state.get(LOG_COUNT) < 13;
+    }
+
+    @Override
+    public boolean isReplaceable(BlockState state, BlockItemUseContext useContext) {
+        return useContext.getItem().getItem() == this.variant.getLog() &&
+               state.get(LOG_COUNT) < 16 &&
+               (!useContext.replacingClickedOnBlock() ||
+                (useContext.getFace() == Direction.UP || useContext.getFace() == state.get(DIRECTION).rotateY()) &&
+                useContext.getHitVec().y - useContext.getPos().getY() < 1 &&
+                useContext.getHitVec().x - useContext.getPos().getX() < 1 &&
+                useContext.getHitVec().z - useContext.getPos().getZ() < 1 &&
+                useContext.getHitVec().x - useContext.getPos().getX() > 0 &&
+                useContext.getHitVec().z - useContext.getPos().getZ() > 0);
+    }
+
+    @Override
     public boolean isSolid(BlockState state) {
         return state.get(LOG_COUNT) == 16;
     }
 
     @Override
-    public boolean isReplaceable(BlockState state, BlockItemUseContext useContext) {
-        return useContext.getItem()
-                         .getItem() == this.variant.getLog() && state.get(LOG_COUNT) < 16 && (!useContext.replacingClickedOnBlock() || (useContext.getFace() == Direction.UP || useContext
-                .getFace() == state.get(DIRECTION).rotateY()) && useContext.getHitVec().y - useContext.getPos()
-                                                                                                      .getY() < 1 && useContext.getHitVec().x - useContext
-                .getPos()
-                .getX() < 1 && useContext.getHitVec().z - useContext.getPos().getZ() < 1 && useContext.getHitVec().x - useContext.getPos()
-                                                                                                                                 .getX() > 0 && useContext
-                .getHitVec().z - useContext.getPos().getZ() > 0);
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
+        return (this.isSolid(state) || BlockUtils.isReplaceable(worldIn.getBlockState(pos.up()))) &&
+               Block.hasSolidSide(worldIn.getBlockState(pos.down()), worldIn, pos.down(), Direction.UP);
     }
 
     @Override
-    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
-        return new ItemStack(this.variant.getLog());
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+        if (!worldIn.isRemote) {
+            if (!state.isValidPosition(worldIn, pos)) {
+                spawnDrops(state, worldIn, pos);
+                worldIn.removeBlock(pos, false);
+            }
+        }
+        super.neighborChanged(state, worldIn, pos, blockIn, fromPos, isMoving);
     }
 
     @Override
@@ -127,7 +170,9 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
         if (worldIn.isRemote) {
             return;
         }
-        if (Math.abs(pos.getX() + 0.5 - player.posX) < 1.5 && Math.abs(pos.getY() - player.posY) < 1.5 && Math.abs(pos.getZ() + 0.5 - player.posZ) < 1.5) {
+        if (Math.abs(pos.getX() + 0.5 - player.posX) < 1.5 &&
+            Math.abs(pos.getY() - player.posY) < 1.5 &&
+            Math.abs(pos.getZ() + 0.5 - player.posZ) < 1.5) {
             ItemStack stack = new ItemStack(this.variant.getLog());
             if (!player.inventory.addItemStackToInventory(stack)) {
                 BlockUtils.dropItemStack(worldIn, pos, stack);
@@ -148,47 +193,5 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
             }
             worldIn.setBlockState(pos, state.with(LOG_COUNT, state.get(LOG_COUNT) - 1));
         }
-    }
-
-    @Override
-    public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
-        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualFlammability(state);
-    }
-
-    @Override
-    public int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
-        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualEncouragement(state);
-    }
-
-    @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        BlockState state = context.getWorld().getBlockState(context.getPos());
-        return state.getBlock() == this ? state.with(LOG_COUNT, Math.min(16, state.get(LOG_COUNT) + 1)) : this.getDefaultState()
-                                                                                                              .with(DIRECTION,
-                                                                                                                    context.getPlacementHorizontalFacing());
-    }
-
-    @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnDrops(state, worldIn, pos);
-                worldIn.removeBlock(pos, false);
-            }
-        }
-        super.neighborChanged(state, worldIn, pos, blockIn, fromPos, isMoving);
-    }
-
-    @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        return (this.isSolid(state) || BlockUtils.isReplaceable(worldIn.getBlockState(pos.up()))) && Block.hasSolidSide(worldIn.getBlockState(pos.down()),
-                                                                                                                        worldIn,
-                                                                                                                        pos.down(),
-                                                                                                                        Direction.UP);
-    }
-
-    @Override
-    protected void fillStateContainer(Builder<Block, BlockState> builder) {
-        builder.add(LOG_COUNT, DIRECTION);
     }
 }

@@ -9,21 +9,15 @@ import net.minecraft.util.Hand;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
 import tgw.evolution.Evolution;
-import tgw.evolution.init.EvolutionNetwork;
 
 import java.util.function.Supplier;
 
-public class PacketSCHandAnimation extends PacketAbstract {
+public class PacketSCHandAnimation implements IPacket {
 
     private final Hand hand;
 
     public PacketSCHandAnimation(Hand hand) {
-        super(LogicalSide.CLIENT);
         this.hand = hand;
-    }
-
-    public static void encode(PacketSCHandAnimation message, PacketBuffer buffer) {
-        buffer.writeBoolean(message.hand == Hand.MAIN_HAND);
     }
 
     public static PacketSCHandAnimation decode(PacketBuffer buffer) {
@@ -31,8 +25,19 @@ public class PacketSCHandAnimation extends PacketAbstract {
         return new PacketSCHandAnimation(hand);
     }
 
+    public static void encode(PacketSCHandAnimation message, PacketBuffer buffer) {
+        buffer.writeBoolean(message.hand == Hand.MAIN_HAND);
+    }
+
+    private static int getArmSwingAnimationEnd(PlayerEntity player) {
+        if (EffectUtils.hasMiningSpeedup(player)) {
+            return 6 - (1 + EffectUtils.getMiningSpeedup(player));
+        }
+        return player.isPotionActive(Effects.MINING_FATIGUE) ? 6 + (1 + player.getActivePotionEffect(Effects.MINING_FATIGUE).getAmplifier()) * 2 : 6;
+    }
+
     public static void handle(PacketSCHandAnimation packet, Supplier<NetworkEvent.Context> context) {
-        if (EvolutionNetwork.checkSide(context, packet)) {
+        if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> swing(Evolution.PROXY.getClientPlayer(), packet.hand));
             context.get().setPacketHandled(true);
         }
@@ -50,10 +55,8 @@ public class PacketSCHandAnimation extends PacketAbstract {
         }
     }
 
-    private static int getArmSwingAnimationEnd(PlayerEntity player) {
-        if (EffectUtils.hasMiningSpeedup(player)) {
-            return 6 - (1 + EffectUtils.getMiningSpeedup(player));
-        }
-        return player.isPotionActive(Effects.MINING_FATIGUE) ? 6 + (1 + player.getActivePotionEffect(Effects.MINING_FATIGUE).getAmplifier()) * 2 : 6;
+    @Override
+    public LogicalSide getDestinationSide() {
+        return LogicalSide.CLIENT;
     }
 }

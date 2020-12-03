@@ -13,14 +13,6 @@ public class RenderTileKnapping extends TileEntityRenderer<TEKnapping> {
 
     private final ModelTileKnapping knappingModel = new ModelTileKnapping();
 
-    @Override
-    public void render(TEKnapping tileEntityIn, double x, double y, double z, float partialTicks, int destroyStage) {
-        GlStateManager.pushMatrix();
-        GlStateManager.translatef((float) x, (float) y, (float) z);
-        this.getModel(tileEntityIn).renderAll(tileEntityIn.matrix);
-        GlStateManager.popMatrix();
-    }
-
     private ModelTileKnapping getModel(TEKnapping tileEntityKnapping) {
         Block block = this.getWorld().getBlockState(tileEntityKnapping.getPos()).getBlock();
         ResourceLocation resourceLocation = null;
@@ -29,5 +21,13 @@ public class RenderTileKnapping extends TileEntityRenderer<TEKnapping> {
         }
         this.bindTexture(resourceLocation);
         return this.knappingModel;
+    }
+
+    @Override
+    public void render(TEKnapping tileEntityIn, double x, double y, double z, float partialTicks, int destroyStage) {
+        GlStateManager.pushMatrix();
+        GlStateManager.translatef((float) x, (float) y, (float) z);
+        this.getModel(tileEntityIn).renderAll(tileEntityIn.matrix);
+        GlStateManager.popMatrix();
     }
 }

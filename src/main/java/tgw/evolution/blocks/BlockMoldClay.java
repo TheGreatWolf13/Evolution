@@ -29,12 +29,13 @@ public class BlockMoldClay extends Block implements IReplaceable {
                                                 EvolutionHitBoxes.MOLD_4,
                                                 EvolutionHitBoxes.MOLD_5};
     private final int layers;
+    private VoxelShape shapeEast;
     private VoxelShape shapeNorth;
     private VoxelShape shapeSouth;
-    private VoxelShape shapeEast;
     private VoxelShape shapeWest;
+
     public BlockMoldClay(int layers) {
-        super(Block.Properties.create(Material.CLAY).hardnessAndResistance(0F).sound(SoundType.GROUND));
+        super(Block.Properties.create(Material.CLAY).hardnessAndResistance(0.0F).sound(SoundType.GROUND));
         this.setDefaultState(this.getDefaultState().with(FACING, Direction.NORTH));
         this.layers = layers;
     }
@@ -53,23 +54,8 @@ public class BlockMoldClay extends Block implements IReplaceable {
     }
 
     @Override
-    public boolean isReplaceable(BlockState state) {
-        return true;
-    }
-
-    @Override
     public boolean canBeReplacedByRope(BlockState state) {
         return true;
-    }
-
-    @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnDrops(state, worldIn, pos);
-                worldIn.removeBlock(pos, false);
-            }
-        }
     }
 
     @Override
@@ -78,17 +64,8 @@ public class BlockMoldClay extends Block implements IReplaceable {
     }
 
     @Override
-    public ItemStack getDrops(BlockState state) {
+    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
         return new ItemStack(this);
-    }
-
-    @Nullable
-    @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        if (context.isPlacerSneaking()) {
-            return null;
-        }
-        return this.getDefaultState().with(FACING, context.getPlacementHorizontalFacing());
     }
 
     @Override
@@ -107,10 +84,34 @@ public class BlockMoldClay extends Block implements IReplaceable {
         return this.shapeWest;
     }
 
+    @Nullable
+    @Override
+    public BlockState getStateForPlacement(BlockItemUseContext context) {
+        if (context.isPlacerSneaking()) {
+            return null;
+        }
+        return this.getDefaultState().with(FACING, context.getPlacementHorizontalFacing());
+    }
+
+    @Override
+    public boolean isReplaceable(BlockState state) {
+        return true;
+    }
+
     @Override
     public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
         BlockState down = worldIn.getBlockState(pos.down());
         BlockState up = worldIn.getBlockState(pos.up());
         return BlockUtils.isReplaceable(up) && Block.hasSolidSide(down, worldIn, pos.down(), Direction.UP);
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+        if (!worldIn.isRemote) {
+            if (!state.isValidPosition(worldIn, pos)) {
+                spawnDrops(state, worldIn, pos);
+                worldIn.removeBlock(pos, false);
+            }
+        }
     }
 }

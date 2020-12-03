@@ -45,16 +45,18 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
     public static final BooleanProperty ROPE_DOWN = BlockStateProperties.DOWN;
     public static final Map<Direction, BooleanProperty> DIRECTION_TO_PROPERTY = SixWayBlock.FACING_TO_PROPERTY_MAP.entrySet()
                                                                                                                   .stream()
-                                                                                                                  .filter(entry -> entry.getKey() != Direction.UP)
+                                                                                                                  .filter(entry -> entry.getKey() !=
+                                                                                                                                   Direction.UP)
                                                                                                                   .collect(Util.toMapCollector());
     public static final BooleanProperty HIT = EvolutionBlockStateProperties.HIT;
     public static final DirectionProperty FACING = BlockStateProperties.FACING_EXCEPT_UP;
     public static final ITextComponent TEXT_HIT = new TranslationTextComponent("evolution.actionbar.hit_stake").setStyle(EvolutionStyles.WHITE);
     public static final ITextComponent TEXT_ROPE = new TranslationTextComponent("evolution.tooltip.rope").setStyle(EvolutionStyles.INFO);
+
     public BlockClimbingStake() {
         super(Properties.create(Material.IRON)
                         .sound(SoundType.METAL)
-                        .hardnessAndResistance(0f)
+                        .hardnessAndResistance(0.0f)
                         .doesNotBlockMovement()
                         .harvestLevel(HarvestLevel.UNBREAKABLE));
         this.setDefaultState(this.getDefaultState()
@@ -102,7 +104,17 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
     }
 
     @Override
+    public void addInformation(ItemStack stack, @Nullable IBlockReader worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+        tooltip.add(TEXT_ROPE);
+    }
+
+    @Override
     public boolean canBeReplacedByLiquid(BlockState state) {
+        return false;
+    }
+
+    @Override
+    public boolean canBeReplacedByRope(BlockState state) {
         return false;
     }
 
@@ -112,6 +124,117 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
             return false;
         }
         return state.get(DIRECTION_TO_PROPERTY.get(direction));
+    }
+
+    @Override
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+        builder.add(FACING, HIT, ROPE_DOWN, ROPE_EAST, ROPE_NORTH, ROPE_SOUTH, ROPE_WEST);
+    }
+
+    @Override
+    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
+        return new ItemStack(this);
+    }
+
+    @Override
+    public BlockRenderLayer getRenderLayer() {
+        return BlockRenderLayer.CUTOUT_MIPPED;
+    }
+
+    @Override
+    public int getRopeLength() {
+        return 12;
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+        if (state.get(FACING) != Direction.DOWN) {
+            return BlockWallTorch.SHAPES.get(state.get(FACING).getOpposite());
+        }
+        return EvolutionHitBoxes.TORCH;
+    }
+
+    @Nullable
+    @Override
+    public BlockState getStateForPlacement(BlockItemUseContext context) {
+        Direction face = context.getFace().getOpposite();
+        if (face == Direction.UP) {
+            face = Direction.DOWN;
+        }
+        return this.getDefaultState().with(FACING, face);
+    }
+
+    @Override
+    public boolean isReplaceable(BlockState state) {
+        return true;
+    }
+
+    @Override
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
+        Direction facing = state.get(FACING);
+        BlockPos posOffset = pos.offset(facing);
+        BlockState stateFace = worldIn.getBlockState(posOffset);
+        return Block.hasSolidSide(stateFace, worldIn, posOffset, facing.getOpposite());
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+        if (!worldIn.isRemote) {
+            if (!state.isValidPosition(worldIn, pos)) {
+                worldIn.destroyBlock(pos, true);
+                return;
+            }
+            checkSides(state, worldIn, pos);
+        }
+    }
+
+    @Override
+    public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+        ItemStack heldStack = player.getHeldItem(handIn);
+        if (heldStack.getItem() == EvolutionItems.rope.get()) {
+            if (!state.get(HIT)) {
+                player.sendStatusMessage(TEXT_HIT, true);
+                return false;
+            }
+            int count = heldStack.getCount();
+            Direction movement = state.get(FACING) != Direction.DOWN ? Direction.DOWN : player.getHorizontalFacing();
+            Direction support = state.get(FACING) == Direction.DOWN ? player.getHorizontalFacing().getOpposite() : state.get(FACING);
+            Direction ropeDir = movement == Direction.DOWN ? Direction.DOWN : player.getHorizontalFacing();
+            boolean before = state.get(DIRECTION_TO_PROPERTY.get(ropeDir));
+            worldIn.setBlockState(pos, state.with(DIRECTION_TO_PROPERTY.get(ropeDir), true));
+            int shrink = this.tryPlaceRopes(worldIn, pos, movement, support, count);
+            heldStack.shrink(shrink);
+            if (shrink > 0) {
+                return true;
+            }
+            worldIn.setBlockState(pos, state.with(DIRECTION_TO_PROPERTY.get(ropeDir), before));
+            return false;
+        }
+        return false;
+    }
+
+    @Override
+    public void onBlockClicked(BlockState state, World world, BlockPos pos, PlayerEntity player) {
+        if (player.onGround && player.getHeldItemMainhand().getItem() instanceof ItemHammer) {
+            if (!state.get(HIT)) {
+                world.playSound(player, pos, SoundEvents.BLOCK_ANVIL_HIT, SoundCategory.BLOCKS, 1.0f, 1.0f);
+                world.setBlockState(pos, state.with(HIT, true));
+                player.getHeldItemMainhand().damageItem(1, player, playerEntity -> playerEntity.sendBreakAnimation(Hand.MAIN_HAND));
+            }
+            return;
+        }
+        if (!world.isRemote) {
+            int rope = this.removeRope(state, world, pos);
+            while (rope > 64) {
+                //noinspection ObjectAllocationInLoop
+                BlockUtils.dropItemStack(world, pos, new ItemStack(EvolutionItems.rope.get(), 64));
+                rope -= 64;
+            }
+            BlockUtils.dropItemStack(world, pos, new ItemStack(EvolutionItems.rope.get(), rope));
+        }
+        world.removeBlock(pos, true);
+        spawnDrops(state, world, pos);
+        world.playSound(player, pos, SoundEvents.BLOCK_METAL_BREAK, SoundCategory.BLOCKS, 1.0f, 1.0f);
     }
 
     @Override
@@ -195,44 +318,10 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
     }
 
     @Override
-    public int getRopeLength() {
-        return 12;
-    }
-
-    @Override
-    public void onBlockClicked(BlockState state, World worldIn, BlockPos pos, PlayerEntity player) {
-        if (player.onGround && player.getHeldItemMainhand().getItem() instanceof ItemHammer) {
-            if (!state.get(HIT)) {
-                worldIn.playSound(player, pos, SoundEvents.BLOCK_ANVIL_HIT, SoundCategory.BLOCKS, 1f, 1f);
-                worldIn.setBlockState(pos, state.with(HIT, true));
-                player.getHeldItemMainhand().damageItem(1, player, playerEntity -> playerEntity.sendBreakAnimation(Hand.MAIN_HAND));
-            }
-            return;
-        }
-        if (!worldIn.isRemote) {
-            int rope = this.removeRope(state, worldIn, pos);
-            while (rope > 64) {
-                //noinspection ObjectAllocationInLoop
-                BlockUtils.dropItemStack(worldIn, pos, new ItemStack(EvolutionItems.rope.get(), 64));
-                rope -= 64;
-            }
-            BlockUtils.dropItemStack(worldIn, pos, new ItemStack(EvolutionItems.rope.get(), rope));
-        }
-        worldIn.removeBlock(pos, true);
-        spawnDrops(state, worldIn, pos);
-        worldIn.playSound(player, pos, SoundEvents.BLOCK_METAL_BREAK, SoundCategory.BLOCKS, 1f, 1f);
-    }
-
-    @Override
     public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
         if (!worldIn.isRemote) {
             checkSides(state, worldIn, pos);
         }
-    }
-
-    @Override
-    public boolean canBeReplacedByRope(BlockState state) {
-        return false;
     }
 
     public int tryPlaceRopes(World world, BlockPos pos, Direction movement, Direction support, int count) {
@@ -278,14 +367,14 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
                     return ropeCount;
                 }
                 if (stateTemp.getBlock() instanceof IReplaceable) {
-                    BlockUtils.dropItemStack(world, mutablePos, ((IReplaceable) stateTemp.getBlock()).getDrops(stateTemp));
+                    BlockUtils.dropItemStack(world, mutablePos, ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp));
                 }
                 world.setBlockState(mutablePos, EvolutionBlocks.ROPE.get().getDefaultState().with(BlockRope.DIRECTION, support));
                 ropeCount++;
                 continue;
             }
             if (stateTemp.getBlock() instanceof IReplaceable) {
-                BlockUtils.dropItemStack(world, mutablePos, ((IReplaceable) stateTemp.getBlock()).getDrops(stateTemp));
+                BlockUtils.dropItemStack(world, mutablePos, ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp));
             }
             if (currentMovement == Direction.DOWN) {
                 world.setBlockState(mutablePos, EvolutionBlocks.ROPE.get().getDefaultState().with(BlockRope.DIRECTION, support));
@@ -296,92 +385,5 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
             ropeCount++;
         }
         return ropeCount;
-    }
-
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT_MIPPED;
-    }
-
-    @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        if (state.get(FACING) != Direction.DOWN) {
-            return BlockWallTorch.SHAPES.get(state.get(FACING).getOpposite());
-        }
-        return EvolutionHitBoxes.TORCH;
-    }
-
-    @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(FACING, HIT, ROPE_DOWN, ROPE_EAST, ROPE_NORTH, ROPE_SOUTH, ROPE_WEST);
-    }
-
-    @Override
-    public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        ItemStack heldStack = player.getHeldItem(handIn);
-        if (heldStack.getItem() == EvolutionItems.rope.get()) {
-            if (!state.get(HIT)) {
-                player.sendStatusMessage(TEXT_HIT, true);
-                return false;
-            }
-            int count = heldStack.getCount();
-            Direction movement = state.get(FACING) != Direction.DOWN ? Direction.DOWN : player.getHorizontalFacing();
-            Direction support = state.get(FACING) == Direction.DOWN ? player.getHorizontalFacing().getOpposite() : state.get(FACING);
-            Direction ropeDir = movement == Direction.DOWN ? Direction.DOWN : player.getHorizontalFacing();
-            boolean before = state.get(DIRECTION_TO_PROPERTY.get(ropeDir));
-            worldIn.setBlockState(pos, state.with(DIRECTION_TO_PROPERTY.get(ropeDir), true));
-            int shrink = this.tryPlaceRopes(worldIn, pos, movement, support, count);
-            heldStack.shrink(shrink);
-            if (shrink > 0) {
-                return true;
-            }
-            worldIn.setBlockState(pos, state.with(DIRECTION_TO_PROPERTY.get(ropeDir), before));
-            return false;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        Direction facing = state.get(FACING);
-        BlockPos posOffset = pos.offset(facing);
-        BlockState stateFace = worldIn.getBlockState(posOffset);
-        return Block.hasSolidSide(stateFace, worldIn, posOffset, facing.getOpposite());
-    }
-
-    @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                worldIn.destroyBlock(pos, true);
-                return;
-            }
-            checkSides(state, worldIn, pos);
-        }
-    }
-
-    @Override
-    public ItemStack getDrops(BlockState state) {
-        return new ItemStack(this);
-    }
-
-    @Override
-    public boolean isReplaceable(BlockState state) {
-        return true;
-    }
-
-    @Nullable
-    @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        Direction face = context.getFace().getOpposite();
-        if (face == Direction.UP) {
-            face = Direction.DOWN;
-        }
-        return this.getDefaultState().with(FACING, face);
-    }
-
-    @Override
-    public void addInformation(ItemStack stack, @Nullable IBlockReader worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
-        tooltip.add(TEXT_ROPE);
     }
 }

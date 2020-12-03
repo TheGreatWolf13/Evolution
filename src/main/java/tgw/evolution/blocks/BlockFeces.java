@@ -6,7 +6,9 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
+import net.minecraft.world.World;
 import tgw.evolution.blocks.tileentities.TEFeces;
 
 public class BlockFeces extends Block implements IReplaceable {
@@ -21,8 +23,18 @@ public class BlockFeces extends Block implements IReplaceable {
     }
 
     @Override
+    public boolean canBeReplacedByRope(BlockState state) {
+        return true;
+    }
+
+    @Override
     public TileEntity createTileEntity(BlockState state, IBlockReader world) {
         return new TEFeces();
+    }
+
+    @Override
+    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
+        return new ItemStack(this);
     }
 
     @Override
@@ -33,15 +45,5 @@ public class BlockFeces extends Block implements IReplaceable {
     @Override
     public boolean isReplaceable(BlockState state) {
         return true;
-    }
-
-    @Override
-    public boolean canBeReplacedByRope(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public ItemStack getDrops(BlockState state) {
-        return new ItemStack(this);
     }
 }

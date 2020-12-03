@@ -42,7 +42,7 @@ public class BlockRopeGround extends Block implements IReplaceable {
                 return ((IRopeSupport) currentState.getBlock()).getRopeLength() >= ropeCount;
             }
             if (currentState.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
-                if (currentState.get(BlockRopeGround.ORIGIN) == facing) {
+                if (currentState.get(ORIGIN) == facing) {
                     continue;
                 }
                 return false;
@@ -58,18 +58,8 @@ public class BlockRopeGround extends Block implements IReplaceable {
     }
 
     @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!(worldIn.getBlockState(pos.offset(state.get(ORIGIN).getOpposite())).getBlock() == this)) {
-                BlockPos offsetPos = pos.down().offset(state.get(ORIGIN).getOpposite());
-                worldIn.getPendingBlockTicks().scheduleTick(offsetPos, worldIn.getBlockState(offsetPos).getBlock(), 2);
-            }
-        }
-    }
-
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT_MIPPED;
+    public boolean canBeReplacedByRope(BlockState state) {
+        return false;
     }
 
     @Override
@@ -78,8 +68,28 @@ public class BlockRopeGround extends Block implements IReplaceable {
     }
 
     @Override
+    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
+        return new ItemStack(EvolutionItems.rope.get());
+    }
+
+    @Override
+    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
+        return new ItemStack(EvolutionItems.rope.get());
+    }
+
+    @Override
+    public BlockRenderLayer getRenderLayer() {
+        return BlockRenderLayer.CUTOUT_MIPPED;
+    }
+
+    @Override
     public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
         return state.get(ORIGIN).getAxis() == Direction.Axis.X ? EvolutionHitBoxes.ROPE_GROUND_X : EvolutionHitBoxes.ROPE_GROUND_Z;
+    }
+
+    @Override
+    public boolean isReplaceable(BlockState state) {
+        return true;
     }
 
     @Override
@@ -101,22 +111,12 @@ public class BlockRopeGround extends Block implements IReplaceable {
     }
 
     @Override
-    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
-        return new ItemStack(EvolutionItems.rope.get());
-    }
-
-    @Override
-    public ItemStack getDrops(BlockState state) {
-        return new ItemStack(EvolutionItems.rope.get());
-    }
-
-    @Override
-    public boolean canBeReplacedByRope(BlockState state) {
-        return false;
-    }
-
-    @Override
-    public boolean isReplaceable(BlockState state) {
-        return true;
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!worldIn.isRemote) {
+            if (!(worldIn.getBlockState(pos.offset(state.get(ORIGIN).getOpposite())).getBlock() == this)) {
+                BlockPos offsetPos = pos.down().offset(state.get(ORIGIN).getOpposite());
+                worldIn.getPendingBlockTicks().scheduleTick(offsetPos, worldIn.getBlockState(offsetPos).getBlock(), 2);
+            }
+        }
     }
 }

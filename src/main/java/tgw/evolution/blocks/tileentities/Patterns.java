@@ -2,7 +2,7 @@ package tgw.evolution.blocks.tileentities;
 
 import tgw.evolution.util.MathHelper;
 
-public abstract class Patterns {
+public final class Patterns {
 
     public static final boolean[] FALSE_ARRAY = {false, false, false, false, false};
     public static final boolean[] TRUE_ARRAY = {true, true, true, true, true};
@@ -55,4 +55,7 @@ public abstract class Patterns {
                                                  {true, false, false, false, true},
                                                  {true, false, false, false, true},
                                                  TRUE_ARRAY};
+
+    private Patterns() {
+    }
 }

@@ -9,19 +9,21 @@ import net.minecraftforge.fml.network.NetworkEvent;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.EnumKnapping;
 import tgw.evolution.blocks.tileentities.TEKnapping;
-import tgw.evolution.init.EvolutionNetwork;
 
 import java.util.function.Supplier;
 
-public class PacketCSSetKnappingType extends PacketAbstract {
+public class PacketCSSetKnappingType implements IPacket {
 
     private final BlockPos pos;
     private final EnumKnapping type;
 
     public PacketCSSetKnappingType(BlockPos pos, EnumKnapping type) {
-        super(LogicalSide.SERVER);
         this.pos = pos;
         this.type = type;
+    }
+
+    public static PacketCSSetKnappingType decode(PacketBuffer buffer) {
+        return new PacketCSSetKnappingType(buffer.readBlockPos(), EnumKnapping.byId(buffer.readByte()));
     }
 
     public static void encode(PacketCSSetKnappingType packet, PacketBuffer buffer) {
@@ -29,12 +31,8 @@ public class PacketCSSetKnappingType extends PacketAbstract {
         buffer.writeByte(packet.type.getId());
     }
 
-    public static PacketCSSetKnappingType decode(PacketBuffer buffer) {
-        return new PacketCSSetKnappingType(buffer.readBlockPos(), EnumKnapping.byId(buffer.readByte()));
-    }
-
     public static void handle(PacketCSSetKnappingType packet, Supplier<NetworkEvent.Context> context) {
-        if (EvolutionNetwork.checkSide(context, packet)) {
+        if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
                 World world = context.get().getSender().world;
                 TileEntity tile = world.getTileEntity(packet.pos);
@@ -46,5 +44,10 @@ public class PacketCSSetKnappingType extends PacketAbstract {
             });
             context.get().setPacketHandled(true);
         }
+    }
+
+    @Override
+    public LogicalSide getDestinationSide() {
+        return LogicalSide.SERVER;
     }
 }

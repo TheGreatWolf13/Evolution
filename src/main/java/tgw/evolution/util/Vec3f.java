@@ -11,10 +11,6 @@ public class Vec3f {
         this.z = z;
     }
 
-    public float dotProduct(Vec3f vec) {
-        return this.x * vec.x + this.y * vec.y + this.z * vec.z;
-    }
-
     public Vec3f crossProduct(Vec3f vec1, Vec3f vec2) {
         this.x = vec1.y * vec2.z - vec1.z * vec2.y;
         this.y = vec1.z * vec2.x - vec1.x * vec2.z;
@@ -22,11 +18,15 @@ public class Vec3f {
         return this;
     }
 
-    public float length() {
-        return MathHelper.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    public float dotProduct(Vec3f vec) {
+        return this.x * vec.x + this.y * vec.y + this.z * vec.z;
     }
 
     public float inverseLength() {
         return (float) net.minecraft.util.math.MathHelper.fastInvSqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    }
+
+    public float length() {
+        return MathHelper.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
     }
 }

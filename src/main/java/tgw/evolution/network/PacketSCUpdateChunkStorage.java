@@ -10,18 +10,13 @@ import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorages;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.capabilities.chunkstorage.IChunkStorages;
-import tgw.evolution.init.EvolutionNetwork;
 
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class PacketSCUpdateChunkStorage extends PacketAbstract {
+public class PacketSCUpdateChunkStorage implements IPacket {
 
     private final ChunkPos chunkPos;
-
-    /**
-     * The new nutrient value.
-     */
     private final int nitrogen;
     private final int phosphorus;
     private final int potassium;
@@ -31,7 +26,6 @@ public class PacketSCUpdateChunkStorage extends PacketAbstract {
     private final int gasNitrogen;
 
     public PacketSCUpdateChunkStorage(IChunkStorages chunkStorage) {
-        super(LogicalSide.CLIENT);
         this.chunkPos = chunkStorage.getChunkPos();
         this.nitrogen = chunkStorage.getElementStored(EnumStorage.NITROGEN);
         this.phosphorus = chunkStorage.getElementStored(EnumStorage.PHOSPHORUS);
@@ -42,8 +36,14 @@ public class PacketSCUpdateChunkStorage extends PacketAbstract {
         this.gasNitrogen = chunkStorage.getElementStored(EnumStorage.GAS_NITROGEN);
     }
 
-    private PacketSCUpdateChunkStorage(ChunkPos chunkPos, int nitrogen, int phosphorus, int potassium, int water, int carbonDioxide, int oxygen, int gasNitrogen) {
-        super(LogicalSide.CLIENT);
+    private PacketSCUpdateChunkStorage(ChunkPos chunkPos,
+                                       int nitrogen,
+                                       int phosphorus,
+                                       int potassium,
+                                       int water,
+                                       int carbonDioxide,
+                                       int oxygen,
+                                       int gasNitrogen) {
         this.chunkPos = chunkPos;
         this.nitrogen = nitrogen;
         this.phosphorus = phosphorus;
@@ -55,7 +55,14 @@ public class PacketSCUpdateChunkStorage extends PacketAbstract {
     }
 
     public static PacketSCUpdateChunkStorage decode(PacketBuffer buffer) {
-        return new PacketSCUpdateChunkStorage(new ChunkPos(buffer.readInt(), buffer.readInt()), buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt());
+        return new PacketSCUpdateChunkStorage(new ChunkPos(buffer.readInt(), buffer.readInt()),
+                                              buffer.readInt(),
+                                              buffer.readInt(),
+                                              buffer.readInt(),
+                                              buffer.readInt(),
+                                              buffer.readInt(),
+                                              buffer.readInt(),
+                                              buffer.readInt());
     }
 
     public static void encode(PacketSCUpdateChunkStorage message, PacketBuffer buffer) {
@@ -71,7 +78,7 @@ public class PacketSCUpdateChunkStorage extends PacketAbstract {
     }
 
     public static void handle(PacketSCUpdateChunkStorage packet, Supplier<NetworkEvent.Context> context) {
-        if (EvolutionNetwork.checkSide(context, packet)) {
+        if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
                 Optional<World> optionalWorld = LogicalSidedProvider.CLIENTWORLD.get(context.get().getDirection().getReceptionSide());
                 optionalWorld.ifPresent(world -> ChunkStorageCapability.getChunkStorage(world, packet.chunkPos).ifPresent(chunkStorage -> {
@@ -89,5 +96,10 @@ public class PacketSCUpdateChunkStorage extends PacketAbstract {
             });
             context.get().setPacketHandled(true);
         }
+    }
+
+    @Override
+    public LogicalSide getDestinationSide() {
+        return LogicalSide.CLIENT;
     }
 }

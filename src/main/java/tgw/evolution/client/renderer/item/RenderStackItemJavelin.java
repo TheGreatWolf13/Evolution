@@ -18,7 +18,7 @@ public class RenderStackItemJavelin extends ItemStackTileEntityRenderer {
             Minecraft.getInstance().getTextureManager().bindTexture(((ISpear) stack.getItem()).getTexture());
             GlStateManager.pushMatrix();
             GlStateManager.scalef(1.0F, -1.0F, -1.0F);
-            GlStateManager.translatef(0f, -0.1f, 0);
+            GlStateManager.translatef(0.0f, -0.1f, 0.0f);
             GlStateManager.rotatef(180.0F, 0.0F, 0.0F, 1.0F);
             this.spear.render();
             GlStateManager.popMatrix();

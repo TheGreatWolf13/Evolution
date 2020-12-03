@@ -37,7 +37,7 @@ public class BlockClimbingHook extends Block implements IReplaceable, IRopeSuppo
     public BlockClimbingHook() {
         super(Properties.create(Material.IRON)
                         .sound(SoundType.METAL)
-                        .hardnessAndResistance(0f)
+                        .hardnessAndResistance(0.0f)
                         .doesNotBlockMovement()
                         .harvestLevel(HarvestLevel.UNBREAKABLE));
         this.setDefaultState(this.getDefaultState().with(ROPE_DIRECTION, Direction.NORTH).with(ATTACHED, false));
@@ -68,6 +68,36 @@ public class BlockClimbingHook extends Block implements IReplaceable, IRopeSuppo
     }
 
     @Override
+    public boolean canBeReplacedByRope(BlockState state) {
+        return false;
+    }
+
+    @Override
+    public boolean canSupport(BlockState state, Direction direction) {
+        return state.get(ROPE_DIRECTION) == direction;
+    }
+
+    @Override
+    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+        builder.add(ROPE_DIRECTION, ATTACHED);
+    }
+
+    @Override
+    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
+        return new ItemStack(EvolutionItems.climbing_hook.get());
+    }
+
+    @Override
+    public BlockRenderLayer getRenderLayer() {
+        return BlockRenderLayer.CUTOUT;
+    }
+
+    @Override
+    public int getRopeLength() {
+        return 5;
+    }
+
+    @Override
     public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
         switch (state.get(ROPE_DIRECTION)) {
             case NORTH:
@@ -80,6 +110,47 @@ public class BlockClimbingHook extends Block implements IReplaceable, IRopeSuppo
                 return EvolutionHitBoxes.HOOK_WEST;
         }
         throw new IllegalStateException("Invalid horizontal direction " + state.get(ROPE_DIRECTION));
+    }
+
+    @Override
+    public boolean isReplaceable(BlockState state) {
+        return true;
+    }
+
+    @Override
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
+        BlockPos posOffset = pos.offset(Direction.DOWN);
+        BlockState stateFace = worldIn.getBlockState(posOffset);
+        return Block.hasSolidSide(stateFace, worldIn, posOffset, Direction.UP);
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+        if (!worldIn.isRemote) {
+            if (!state.isValidPosition(worldIn, pos)) {
+                spawnDrops(state, worldIn, pos);
+                worldIn.removeBlock(pos, false);
+            }
+            checkSides(state, worldIn, pos);
+        }
+    }
+
+    @Override
+    public void onBlockClicked(BlockState state, World worldIn, BlockPos pos, PlayerEntity player) {
+        if (!worldIn.isRemote) {
+            int rope = this.removeRope(state, worldIn, pos);
+            BlockUtils.dropItemStack(worldIn, pos, new ItemStack(EvolutionItems.rope.get(), rope));
+        }
+        worldIn.removeBlock(pos, true);
+        spawnDrops(state, worldIn, pos);
+        worldIn.playSound(player, pos, SoundEvents.BLOCK_METAL_BREAK, SoundCategory.BLOCKS, 1.0f, 1.0f);
+    }
+
+    @Override
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!worldIn.isRemote && !isMoving && state.getBlock() != newState.getBlock()) {
+            BlockUtils.scheduleBlockTick(worldIn, pos.down().offset(state.get(ROPE_DIRECTION)), 2);
+        }
     }
 
     public int removeRope(BlockState state, World world, BlockPos pos) {
@@ -127,80 +198,9 @@ public class BlockClimbingHook extends Block implements IReplaceable, IRopeSuppo
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        BlockPos posOffset = pos.offset(Direction.DOWN);
-        BlockState stateFace = worldIn.getBlockState(posOffset);
-        return Block.hasSolidSide(stateFace, worldIn, posOffset, Direction.UP);
-    }
-
-    @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!worldIn.isRemote && !isMoving && state.getBlock() != newState.getBlock()) {
-            BlockUtils.scheduleBlockTick(worldIn, pos.down().offset(state.get(ROPE_DIRECTION)), 2);
-        }
-    }
-
-    @Override
     public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
         if (!worldIn.isRemote) {
             checkSides(state, worldIn, pos);
         }
-    }
-
-    @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnDrops(state, worldIn, pos);
-                worldIn.removeBlock(pos, false);
-            }
-            checkSides(state, worldIn, pos);
-        }
-    }
-
-    @Override
-    public void onBlockClicked(BlockState state, World worldIn, BlockPos pos, PlayerEntity player) {
-        if (!worldIn.isRemote) {
-            int rope = this.removeRope(state, worldIn, pos);
-            BlockUtils.dropItemStack(worldIn, pos, new ItemStack(EvolutionItems.rope.get(), rope));
-        }
-        worldIn.removeBlock(pos, true);
-        spawnDrops(state, worldIn, pos);
-        worldIn.playSound(player, pos, SoundEvents.BLOCK_METAL_BREAK, SoundCategory.BLOCKS, 1f, 1f);
-    }
-
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
-    }
-
-    @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(ROPE_DIRECTION, ATTACHED);
-    }
-
-    @Override
-    public ItemStack getDrops(BlockState state) {
-        return new ItemStack(EvolutionItems.climbing_hook.get());
-    }
-
-    @Override
-    public boolean isReplaceable(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public int getRopeLength() {
-        return 5;
-    }
-
-    @Override
-    public boolean canSupport(BlockState state, Direction direction) {
-        return state.get(ROPE_DIRECTION) == direction;
-    }
-
-    @Override
-    public boolean canBeReplacedByRope(BlockState state) {
-        return false;
     }
 }

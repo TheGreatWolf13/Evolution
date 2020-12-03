@@ -18,20 +18,10 @@ import tgw.evolution.util.EvolutionStyles;
 
 import java.util.List;
 
-public class ItemClay extends ItemPlaceable {
+public class ItemClay extends ItemGenericPlaceable {
 
     public ItemClay() {
         super(EvolutionItems.propMisc());
-    }
-
-    @Override
-    public BlockState getSneakingState(BlockItemUseContext context) {
-        return EvolutionBlocks.MOLDING.get().getDefaultState();
-    }
-
-    @Override
-    public boolean customCondition(Block block) {
-        return false;
     }
 
     @Override
@@ -41,12 +31,23 @@ public class ItemClay extends ItemPlaceable {
     }
 
     @Override
+    public boolean customCondition(Block block) {
+        return false;
+    }
+
+    @Override
     public BlockState getCustomState(BlockItemUseContext context) {
         return null;
     }
 
     @Override
+    public BlockState getSneakingState(BlockItemUseContext context) {
+        return EvolutionBlocks.MOLDING.get().getDefaultState();
+    }
+
+    @Override
     public void sucessPlaceLogic(BlockItemUseContext context) {
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) context.getPlayer()), new PacketSCOpenMoldingGui(context.getPos()));
+        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) context.getPlayer()),
+                                       new PacketSCOpenMoldingGui(context.getPos()));
     }
 }

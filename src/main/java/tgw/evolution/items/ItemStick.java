@@ -6,14 +6,17 @@ import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUseContext;
+import net.minecraft.stats.Stats;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
-import tgw.evolution.blocks.BlockTorch;
+import net.minecraft.world.chunk.Chunk;
 import tgw.evolution.blocks.BlockUtils;
+import tgw.evolution.blocks.IFireSource;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.init.EvolutionItems;
@@ -28,36 +31,33 @@ public class ItemStick extends ItemBlock {
     }
 
     @Override
+    public void addInformation(ItemStack stack, World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+        String text = "evolution.tooltip.stick.lit";
+        tooltip.add(new TranslationTextComponent(text).setStyle(EvolutionStyles.INFO));
+    }
+
+    @Override
     public ActionResultType onItemUse(ItemUseContext context) {
-        BlockState state = context.getWorld().getBlockState(context.getPos());
-        if (state.getBlock() instanceof BlockTorch && state.get(BlockTorch.LIT)) {
-            boolean[] bool = {false};
-            ChunkStorageCapability.getChunkStorage(context.getWorld().getChunkAt(context.getPos())).map(chunkStorage -> {
-                if (chunkStorage.getElementStored(EnumStorage.OXYGEN) > 0) {
-                    bool[0] = true;
-                    chunkStorage.removeElement(EnumStorage.OXYGEN, 1);
-                    chunkStorage.addElement(EnumStorage.CARBON_DIOXIDE, 1);
-                }
-                return true;
-            }).orElseGet(() -> false);
-            if (bool[0]) {
+        World world = context.getWorld();
+        BlockPos pos = context.getPos();
+        BlockState state = world.getBlockState(pos);
+        Block block = state.getBlock();
+        if (block instanceof IFireSource && ((IFireSource) block).isFireSource(state)) {
+            Chunk chunk = world.getChunkAt(pos);
+            if (ChunkStorageCapability.remove(chunk, EnumStorage.OXYGEN, 1)) {
+                ChunkStorageCapability.add(chunk, EnumStorage.CARBON_DIOXIDE, 1);
                 PlayerEntity player = context.getPlayer();
                 context.getItem().shrink(1);
-                ItemStack stack = new ItemStack(EvolutionItems.torch.get());
+                ItemStack stack = ItemTorch.createStack(world, 1);
                 if (!player.inventory.addItemStackToInventory(stack)) {
-                    BlockUtils.dropItemStack(context.getWorld(), context.getPos(), stack);
+                    BlockUtils.dropItemStack(world, pos, stack);
                 }
-                context.getWorld().playSound(player, context.getPos(), SoundEvents.BLOCK_FIRE_AMBIENT, SoundCategory.PLAYERS, 1.0F, context.getWorld().rand.nextFloat() * 0.7F + 0.3F);
+                world.playSound(player, pos, SoundEvents.BLOCK_FIRE_AMBIENT, SoundCategory.PLAYERS, 1.0F, world.rand.nextFloat() * 0.7F + 0.3F);
+                player.addStat(Stats.ITEM_CRAFTED.get(EvolutionItems.torch.get()));
                 return ActionResultType.SUCCESS;
             }
             return ActionResultType.FAIL;
         }
         return super.onItemUse(context);
-    }
-
-    @Override
-    public void addInformation(ItemStack stack, World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
-        String text = "evolution.tooltip.stick.lit";
-        tooltip.add(new TranslationTextComponent(text).setStyle(EvolutionStyles.INFO));
     }
 }

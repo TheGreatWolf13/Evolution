@@ -19,13 +19,20 @@ public class DamageSourceEntityIndirect extends DamageSourceEntity {
         this.trueSource = trueSource;
     }
 
-    public DamageSourceEntityIndirect setIsThornsDamage() {
-        this.isThornsDamage = true;
-        return this;
-    }
-
-    public boolean getIsThornsDamage() {
-        return this.isThornsDamage;
+    @Override
+    public ITextComponent getDeathMessage(LivingEntity deadEntity) {
+        ITextComponent sourceComp = this.trueSource == null ? this.damageSourceEntity.getDisplayName() : this.trueSource.getDisplayName();
+        ITextComponent itemComp = this.getItemDisplay();
+        String message = "death.attack." + this.damageType;
+        if ("spear".equals(this.damageType)) {
+            if (this.trueSource == null && itemComp != null) {
+                return new TranslationTextComponent(message, deadEntity.getDisplayName(), itemComp);
+            }
+        }
+        String messageItem = message + ".item";
+        return itemComp != null ?
+               new TranslationTextComponent(messageItem, deadEntity.getDisplayName(), sourceComp, itemComp) :
+               new TranslationTextComponent(message, deadEntity.getDisplayName(), sourceComp);
     }
 
     @Override
@@ -34,26 +41,28 @@ public class DamageSourceEntityIndirect extends DamageSourceEntity {
         return this.damageSourceEntity;
     }
 
+    public boolean getIsThornsDamage() {
+        return this.isThornsDamage;
+    }
+
+    @Override
+    @Nullable
+    public ITextComponent getItemDisplay() {
+        ItemStack heldStack = this.trueSource instanceof LivingEntity ? ((LivingEntity) this.trueSource).getHeldItemMainhand() : ItemStack.EMPTY;
+        if ("spear".equals(this.damageType)) {
+            heldStack = ((EntitySpear) this.damageSourceEntity).getStack();
+        }
+        return heldStack.isEmpty() ? null : heldStack.getTextComponent();
+    }
+
     @Override
     @Nullable
     public Entity getTrueSource() {
         return this.trueSource;
     }
 
-    @Override
-    public ITextComponent getDeathMessage(LivingEntity deadEntity) {
-        ITextComponent sourceComp = this.trueSource == null ? this.damageSourceEntity.getDisplayName() : this.trueSource.getDisplayName();
-        ItemStack heldStack = this.trueSource instanceof LivingEntity ? ((LivingEntity) this.trueSource).getHeldItemMainhand() : ItemStack.EMPTY;
-        String message = "death.attack." + this.damageType;
-        if ("spear".equals(this.damageType)) {
-            heldStack = ((EntitySpear) this.damageSourceEntity).getStack();
-            if (this.trueSource == null) {
-                return new TranslationTextComponent(message, deadEntity.getDisplayName(), heldStack);
-            }
-        }
-        String messageItem = message + ".item";
-        return !heldStack.isEmpty() ?
-               new TranslationTextComponent(messageItem, deadEntity.getDisplayName(), sourceComp, heldStack.getTextComponent()) :
-               new TranslationTextComponent(message, deadEntity.getDisplayName(), sourceComp);
+    public DamageSourceEntityIndirect setIsThornsDamage() {
+        this.isThornsDamage = true;
+        return this;
     }
 }

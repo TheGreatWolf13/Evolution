@@ -21,7 +21,7 @@ import tgw.evolution.util.EnumRockVariant;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class ItemRock extends ItemBlockPlaceable implements IStoneVariant {
+public class ItemRock extends ItemGenericBlockPlaceable implements IStoneVariant {
 
     private final EnumRockNames name;
     private EnumRockVariant variant;
@@ -42,11 +42,6 @@ public class ItemRock extends ItemBlockPlaceable implements IStoneVariant {
     }
 
     @Override
-    public BlockState getSneakingState(BlockItemUseContext context) {
-        return this.variant.getKnapping().getDefaultState();
-    }
-
-    @Override
     public boolean customCondition(Block block) {
         return false;
     }
@@ -58,8 +53,13 @@ public class ItemRock extends ItemBlockPlaceable implements IStoneVariant {
     }
 
     @Override
-    public void sneakingAction(BlockItemUseContext context) {
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) context.getPlayer()), new PacketSCOpenKnappingGui(context.getPos(), this.variant));
+    public BlockState getSneakingState(BlockItemUseContext context) {
+        return this.variant.getKnapping().getDefaultState();
+    }
+
+    @Override
+    public EnumRockNames getStoneName() {
+        return this.name;
     }
 
     @Override
@@ -73,7 +73,8 @@ public class ItemRock extends ItemBlockPlaceable implements IStoneVariant {
     }
 
     @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
+    public void sneakingAction(BlockItemUseContext context) {
+        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) context.getPlayer()),
+                                       new PacketSCOpenKnappingGui(context.getPos(), this.variant));
     }
 }

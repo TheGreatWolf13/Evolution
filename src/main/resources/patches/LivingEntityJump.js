@@ -9,7 +9,7 @@ var JUMP = ASMAPI.mapMethod("func_70664_aZ");
 var GETJUMPUPWARDSMOTION = ASMAPI.mapMethod("func_175134_bD");
 
 function log(message) {
-	print("[Evolution LivingEntity#jump() Transformer]: " + message);
+	print("[evolution/ LivingEntity#jump() Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {

@@ -1,6 +1,12 @@
 package tgw.evolution.items;
 
+/**
+ * Melee weapons that implement this interface will have increased knockback.
+ */
 public interface IKnockback {
 
-    int getModifier();
+    /**
+     * @return The level of the Knockback.
+     */
+    int getLevel();
 }

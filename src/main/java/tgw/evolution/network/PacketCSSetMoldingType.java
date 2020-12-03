@@ -9,19 +9,21 @@ import net.minecraftforge.fml.network.NetworkEvent;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.EnumMolding;
 import tgw.evolution.blocks.tileentities.TEMolding;
-import tgw.evolution.init.EvolutionNetwork;
 
 import java.util.function.Supplier;
 
-public class PacketCSSetMoldingType extends PacketAbstract {
+public class PacketCSSetMoldingType implements IPacket {
 
     private final BlockPos pos;
     private final EnumMolding molding;
 
     public PacketCSSetMoldingType(BlockPos pos, EnumMolding molding) {
-        super(LogicalSide.SERVER);
         this.pos = pos;
         this.molding = molding;
+    }
+
+    public static PacketCSSetMoldingType decode(PacketBuffer buffer) {
+        return new PacketCSSetMoldingType(buffer.readBlockPos(), EnumMolding.byId(buffer.readByte()));
     }
 
     public static void encode(PacketCSSetMoldingType packet, PacketBuffer buffer) {
@@ -29,12 +31,8 @@ public class PacketCSSetMoldingType extends PacketAbstract {
         buffer.writeByte(packet.molding.getId());
     }
 
-    public static PacketCSSetMoldingType decode(PacketBuffer buffer) {
-        return new PacketCSSetMoldingType(buffer.readBlockPos(), EnumMolding.byId(buffer.readByte()));
-    }
-
     public static void handle(PacketCSSetMoldingType packet, Supplier<NetworkEvent.Context> context) {
-        if (EvolutionNetwork.checkSide(context, packet)) {
+        if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
                 World world = context.get().getSender().world;
                 TileEntity tile = world.getTileEntity(packet.pos);
@@ -46,5 +44,10 @@ public class PacketCSSetMoldingType extends PacketAbstract {
             });
             context.get().setPacketHandled(true);
         }
+    }
+
+    @Override
+    public LogicalSide getDestinationSide() {
+        return LogicalSide.SERVER;
     }
 }

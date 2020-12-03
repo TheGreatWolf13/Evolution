@@ -3,22 +3,26 @@ package tgw.evolution.util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.client.ForgeHooksClient;
+import tgw.evolution.config.EvolutionConfig;
 
-import javax.annotation.Nullable;
+public final class EarthHelper {
 
-public abstract class EarthHelper {
-
-    public static final long NORTH_POLE = 100_000;
-    private static final float RADIUS = 100f;
+    public static final long NORTH_POLE = 100_000L;
+    private static final float RADIUS = 100.0f;
     private static final Vec3f ZENITH = new Vec3f(0, RADIUS, 0);
     private static final Vec3f SUN = new Vec3f(0, 0, 0);
     private static final Vec3f MOON = new Vec3f(0, 0, 0);
-    private static final float[] SUNSET_COLORS = new float[4];
     private static final Vec3f SKY_COLOR = new Vec3f(0, 0, 0);
+    private static final Vec3f NEXT_COLOR = new Vec3f(0, 0, 0);
+    private static final Vec3f CURRENT_COLOR = new Vec3f(0, 0, 0);
     public static float sunX;
     public static float sunZ;
     public static float moonX;
     public static float moonZ;
+    private static int tick;
+
+    private EarthHelper() {
+    }
 
     /**
      * Calculates the current latitude of the position, given in degrees.
@@ -32,15 +36,10 @@ public abstract class EarthHelper {
         return 90 - MathHelper.radToDeg((float) MathHelper.atan2(side, posZ));
     }
 
-    /**
-     * The current visual inclination of the Sun based on the seasons, given in degrees.
-     *
-     * @param worldTime The time of the world, in ticks.
-     * @return A {@code float} value representing the Sun inclination angle in degrees.
-     */
-    public static float sunSeasonalInclination(long worldTime) {
-        worldTime = worldTime / Time.DAY_IN_TICKS + Date.DAYS_SINCE_MARCH_EQUINOX;
-        return 23.5f * MathHelper.sin(2 * MathHelper.PI * worldTime / Time.DAYS_IN_A_YEAR);
+    public static float calculateMoonAngle(long worldTime) {
+        worldTime += 20 * Time.HOUR_IN_TICKS;
+        worldTime %= 25_200;
+        return (float) worldTime / 25_200;
     }
 
     public static float calculateSunAngle(long worldTime) {
@@ -49,30 +48,47 @@ public abstract class EarthHelper {
         return (float) worldTime / Time.DAY_IN_TICKS;
     }
 
-    public static float getSunElevation(float sinLatitude, float cosLatitude, float celestialAngle, float celestialRadius, float seasonOffset) {
+    public static float getMoonElevation(float sinLatitude, float cosLatitude, float celestialAngle, float celestialRadius, float monthlyOffset) {
         celestialAngle -= 90;
-        sunX = celestialRadius * MathHelper.cosDeg(celestialAngle);
+        moonX = celestialRadius * MathHelper.cosDeg(celestialAngle);
         float sinCelestialAngle = MathHelper.sinDeg(celestialAngle);
-        SUN.x = sunX;
+        MOON.x = moonX;
         float yt = celestialRadius * sinCelestialAngle;
-        SUN.y = yt * cosLatitude + seasonOffset * sinLatitude;
-        sunZ = seasonOffset * cosLatitude - celestialRadius * sinCelestialAngle * sinLatitude;
-        SUN.z = sunZ;
-        return MathHelper.arcCosDeg(SUN.dotProduct(ZENITH) * SUN.inverseLength() * ZENITH.inverseLength());
+        MOON.y = yt * cosLatitude + monthlyOffset * sinLatitude;
+        moonZ = monthlyOffset * cosLatitude - celestialRadius * sinCelestialAngle * sinLatitude;
+        MOON.z = moonZ;
+        return MathHelper.arcCosDeg(MOON.dotProduct(ZENITH) * MOON.inverseLength() * ZENITH.inverseLength());
     }
 
     public static Vec3f getSkyColor(World world, BlockPos pos, float partialTick, float elevationAngle) {
-        float sunAngle = 1f;
+        if (EvolutionConfig.CLIENT.crazyMode.get()) {
+            int partial = tick % 20;
+            if (partial == 0) {
+                CURRENT_COLOR.x = NEXT_COLOR.x;
+                CURRENT_COLOR.y = NEXT_COLOR.y;
+                CURRENT_COLOR.z = NEXT_COLOR.z;
+                NEXT_COLOR.x = MathHelper.RANDOM.nextFloat();
+                NEXT_COLOR.y = MathHelper.RANDOM.nextFloat();
+                NEXT_COLOR.z = MathHelper.RANDOM.nextFloat();
+            }
+            float interp = partial / 20.0f;
+            SKY_COLOR.x = MathHelper.lerp(interp, CURRENT_COLOR.x, NEXT_COLOR.x);
+            SKY_COLOR.y = MathHelper.lerp(interp, CURRENT_COLOR.y, NEXT_COLOR.y);
+            SKY_COLOR.z = MathHelper.lerp(interp, CURRENT_COLOR.z, NEXT_COLOR.z);
+            tick++;
+            return SKY_COLOR;
+        }
+        float sunAngle = 1.0f;
         if (elevationAngle > 80) {
-            sunAngle = -elevationAngle * elevationAngle / 784f + 10f * elevationAngle / 49f - 351f / 49f;
+            sunAngle = -elevationAngle * elevationAngle / 784.0f + 10.0f * elevationAngle / 49.0f - 7.163_265f;
             sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
         }
         int i = ForgeHooksClient.getSkyBlendColour(world, pos);
-        float f3 = (float) (i >> 16 & 255) / 255.0F;
-        float f4 = (float) (i >> 8 & 255) / 255.0F;
-        float f5 = (float) (i & 255) / 255.0F;
+        float f3 = (i >> 16 & 255) / 255.0F;
         f3 *= sunAngle;
+        float f4 = (i >> 8 & 255) / 255.0F;
         f4 *= sunAngle;
+        float f5 = (i & 255) / 255.0F;
         f5 *= sunAngle;
         float f6 = world.getRainStrength(partialTick);
         if (f6 > 0.0F) {
@@ -91,7 +107,7 @@ public abstract class EarthHelper {
             f5 = f5 * f9 + f11 * (1.0F - f9);
         }
         if (world.getLastLightningBolt() > 0) {
-            float lastLightningBolt = (float) world.getLastLightningBolt() - partialTick;
+            float lastLightningBolt = world.getLastLightningBolt() - partialTick;
             if (lastLightningBolt > 1.0F) {
                 lastLightningBolt = 1.0F;
             }
@@ -106,20 +122,16 @@ public abstract class EarthHelper {
         return SKY_COLOR;
     }
 
-    @Nullable
-    public static float[] calcSunriseSunsetColors(float elevationAngle) {
-        if (elevationAngle >= 66F && elevationAngle <= 98F) {
-            float cosElevation = MathHelper.cosDeg(elevationAngle);
-            float f3 = cosElevation / 0.4F * 0.5F + 0.5F;
-            float f4 = 1.0F - (1.0F - MathHelper.sin(f3 * MathHelper.PI)) * 0.99F;
-            f4 *= f4;
-            SUNSET_COLORS[0] = f3 * 0.3F + 0.7F;
-            SUNSET_COLORS[1] = f3 * f3 * 0.7F + 0.2F;
-            SUNSET_COLORS[2] = f3 * f3 * 0.0F + 0.2F;
-            SUNSET_COLORS[3] = f4;
-            return SUNSET_COLORS;
-        }
-        return null;
+    public static float getSunElevation(float sinLatitude, float cosLatitude, float celestialAngle, float celestialRadius, float seasonOffset) {
+        celestialAngle -= 90;
+        sunX = celestialRadius * MathHelper.cosDeg(celestialAngle);
+        float sinCelestialAngle = MathHelper.sinDeg(celestialAngle);
+        SUN.x = sunX;
+        float yt = celestialRadius * sinCelestialAngle;
+        SUN.y = yt * cosLatitude + seasonOffset * sinLatitude;
+        sunZ = seasonOffset * cosLatitude - celestialRadius * sinCelestialAngle * sinLatitude;
+        SUN.z = sunZ;
+        return MathHelper.arcCosDeg(SUN.dotProduct(ZENITH) * SUN.inverseLength() * ZENITH.inverseLength());
     }
 
     /**
@@ -132,7 +144,7 @@ public abstract class EarthHelper {
      */
     public static float lunarMonthlyAmpl(long worldTime) {
         float amplitude = lunarStandStillAmpl(worldTime) + 23.5f;
-        return amplitude * MathHelper.sin(2 * MathHelper.PI * worldTime / Time.MONTH_IN_TICKS);
+        return amplitude * MathHelper.sin(MathHelper.TAU * worldTime / Time.MONTH_IN_TICKS);
     }
 
     /**
@@ -143,24 +155,17 @@ public abstract class EarthHelper {
      * @return A value in degrees representing the lunar orbit amplitude.
      */
     public static float lunarStandStillAmpl(long worldTime) {
-        return 5.1f * MathHelper.cos(2 * MathHelper.PI * worldTime / (Time.YEAR_IN_TICKS * 18.6f));
+        return 5.1f * MathHelper.cos(MathHelper.TAU * worldTime / (Time.YEAR_IN_TICKS * 18.6f));
     }
 
-    public static float calculateMoonAngle(long worldTime) {
-        worldTime += 20 * Time.HOUR_IN_TICKS;
-        worldTime %= 25_200;
-        return (float) worldTime / 25_200;
-    }
-
-    public static float getMoonElevation(float sinLatitude, float cosLatitude, float celestialAngle, float celestialRadius, float monthlyOffset) {
-        celestialAngle -= 90;
-        moonX = celestialRadius * MathHelper.cosDeg(celestialAngle);
-        float sinCelestialAngle = MathHelper.sinDeg(celestialAngle);
-        MOON.x = moonX;
-        float yt = celestialRadius * sinCelestialAngle;
-        MOON.y = yt * cosLatitude + monthlyOffset * sinLatitude;
-        moonZ = monthlyOffset * cosLatitude - celestialRadius * sinCelestialAngle * sinLatitude;
-        MOON.z = moonZ;
-        return MathHelper.arcCosDeg(MOON.dotProduct(ZENITH) * MOON.inverseLength() * ZENITH.inverseLength());
+    /**
+     * The current visual inclination of the Sun based on the seasons, given in degrees.
+     *
+     * @param worldTime The time of the world, in ticks.
+     * @return A {@code float} value representing the Sun inclination angle in degrees.
+     */
+    public static float sunSeasonalInclination(long worldTime) {
+        worldTime = worldTime / Time.DAY_IN_TICKS + Date.DAYS_SINCE_MARCH_EQUINOX;
+        return 23.5f * MathHelper.sin(MathHelper.TAU * worldTime / Time.DAYS_IN_A_YEAR);
     }
 }

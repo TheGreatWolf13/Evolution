@@ -24,14 +24,67 @@ import tgw.evolution.util.NutrientHelper;
 
 import java.util.Random;
 
-public class BlockGrass extends BlockSnowable implements IStoneVariant {
+public class BlockGrass extends BlockGenericSlowable implements IStoneVariant {
 
     private final EnumRockNames name;
     private EnumRockVariant variant;
 
     public BlockGrass(EnumRockNames name) {
-        super(Block.Properties.create(Material.ORGANIC).hardnessAndResistance(3F, 0.6F).sound(SoundType.PLANT).tickRandomly(), name.getMass() / 4);
+        super(Block.Properties.create(Material.ORGANIC).hardnessAndResistance(3.0F, 0.6F).sound(SoundType.PLANT).tickRandomly(), name.getMass() / 4);
         this.name = name;
+    }
+
+    private static boolean canSustainGrass(BlockState state, IWorldReader worldIn, BlockPos pos) {
+        BlockPos posUp = pos.up();
+        BlockState stateUp = worldIn.getBlockState(posUp);
+        //TODO proper snow
+        if (stateUp.getBlock() == Blocks.SNOW && stateUp.get(SnowBlock.LAYERS) == 1) {
+            return true;
+        }
+        if (stateUp.getBlock() instanceof BlockMolding/* || stateUp.getBlock() instanceof BlockShadowHound*/) {
+            return true;
+        }
+        if (stateUp.getBlock() instanceof BlockPitKiln && stateUp.get(EvolutionBlockStateProperties.LAYERS_0_16) < 9) {
+            return true;
+        }
+        if (Block.hasSolidSide(stateUp, worldIn, posUp, Direction.DOWN)) {
+            return false;
+        }
+        int i = LightEngine.func_215613_a(worldIn, state, pos, stateUp, posUp, Direction.UP, stateUp.getOpacity(worldIn, posUp));
+        return i < worldIn.getMaxLightLevel();
+    }
+
+    private static boolean canSustainGrassWater(BlockState state, IWorldReader worldIn, BlockPos pos) {
+        BlockPos posUp = pos.up();
+        return canSustainGrass(state, worldIn, pos) && !worldIn.getFluidState(posUp).isTagged(FluidTags.WATER);
+    }
+
+    @Override
+    public int beamSize() {
+        return 1;
+    }
+
+    @Override
+    public SoundEvent fallSound() {
+        return EvolutionSounds.SOIL_COLLAPSE.get();
+    }
+
+    @Override
+    public BlockRenderLayer getRenderLayer() {
+        return BlockRenderLayer.CUTOUT_MIPPED;
+    }
+
+    @Override
+    public BlockState getStateForFalling(BlockState state) {
+        if (this == EvolutionBlocks.GRASS_PEAT.get()) {
+            return EvolutionBlocks.PEAT.get().getDefaultState().with(BlockPeat.LAYERS, 4);
+        }
+        return this.variant.getDirt().getDefaultState();
+    }
+
+    @Override
+    public EnumRockNames getStoneName() {
+        return this.name;
     }
 
     @Override
@@ -45,16 +98,7 @@ public class BlockGrass extends BlockSnowable implements IStoneVariant {
     }
 
     @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
-    }
-
-    @Override
-    public boolean removedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player, boolean willHarvest, IFluidState fluid) {
-        if (this != EvolutionBlocks.GRASS_PEAT.get() || player.isCreative()) {
-            return super.removedByPlayer(state, world, pos, player, willHarvest, fluid);
-        }
-        world.setBlockState(pos, EvolutionBlocks.PEAT.get().getDefaultState().with(BlockPeat.LAYERS, 3));
+    public boolean isSolid(BlockState state) {
         return true;
     }
 
@@ -87,8 +131,11 @@ public class BlockGrass extends BlockSnowable implements IStoneVariant {
     }
 
     @Override
-    public boolean isSolid(BlockState state) {
-        return true;
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (isMoving) {
+            return;
+        }
+        ChunkStorageCapability.addElements(worldIn.getChunkAt(pos), NutrientHelper.DECAY_GRASS_BLOCK);
     }
 
     @Override
@@ -164,59 +211,12 @@ public class BlockGrass extends BlockSnowable implements IStoneVariant {
         }
     }
 
-    private static boolean canSustainGrass(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        BlockPos posUp = pos.up();
-        BlockState stateUp = worldIn.getBlockState(posUp);
-        //TODO proper snow
-        if (stateUp.getBlock() == Blocks.SNOW && stateUp.get(SnowBlock.LAYERS) == 1) {
-            return true;
-        }
-        if (stateUp.getBlock() instanceof BlockMolding/* || stateUp.getBlock() instanceof BlockShadowHound*/) {
-            return true;
-        }
-        if (stateUp.getBlock() instanceof BlockPitKiln && stateUp.get(EvolutionBlockStateProperties.LAYERS_0_16) < 9) {
-            return true;
-        }
-        if (Block.hasSolidSide(stateUp, worldIn, posUp, Direction.DOWN)) {
-            return false;
-        }
-        int i = LightEngine.func_215613_a(worldIn, state, pos, stateUp, posUp, Direction.UP, stateUp.getOpacity(worldIn, posUp));
-        return i < worldIn.getMaxLightLevel();
-    }
-
-    private static boolean canSustainGrassWater(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        BlockPos posUp = pos.up();
-        return canSustainGrass(state, worldIn, pos) && !worldIn.getFluidState(posUp).isTagged(FluidTags.WATER);
-    }
-
     @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (isMoving) {
-            return;
+    public boolean removedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player, boolean willHarvest, IFluidState fluid) {
+        if (this != EvolutionBlocks.GRASS_PEAT.get() || player.isCreative()) {
+            return super.removedByPlayer(state, world, pos, player, willHarvest, fluid);
         }
-        ChunkStorageCapability.addElements(worldIn.getChunkAt(pos), NutrientHelper.DECAY_GRASS_BLOCK);
-    }
-
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT_MIPPED;
-    }
-
-    @Override
-    public BlockState getStateForFalling(BlockState state) {
-        if (this == EvolutionBlocks.GRASS_PEAT.get()) {
-            return EvolutionBlocks.PEAT.get().getDefaultState().with(BlockPeat.LAYERS, 4);
-        }
-        return this.variant.getDirt().getDefaultState();
-    }
-
-    @Override
-    public SoundEvent fallSound() {
-        return EvolutionSounds.SOIL_COLLAPSE.get();
-    }
-
-    @Override
-    public int beamSize() {
-        return 1;
+        world.setBlockState(pos, EvolutionBlocks.PEAT.get().getDefaultState().with(BlockPeat.LAYERS, 3));
+        return true;
     }
 }

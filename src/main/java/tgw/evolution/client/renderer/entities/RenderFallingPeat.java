@@ -14,7 +14,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import tgw.evolution.entities.EntityFallingPeat;
+import tgw.evolution.entities.misc.EntityFallingPeat;
 import tgw.evolution.util.MathHelper;
 
 @OnlyIn(Dist.CLIENT)
@@ -37,9 +37,17 @@ public class RenderFallingPeat extends EntityRenderer<EntityFallingPeat> {
         BufferBuilder bufferbuilder = tessellator.getBuffer();
         bufferbuilder.begin(7, DefaultVertexFormats.BLOCK);
         MUTABLE_POS.setPos(entity.posX, entity.getBoundingBox().maxY, entity.posZ);
-        GlStateManager.translatef((float) (x - MUTABLE_POS.getX() - 0.5D), (float) (y - MUTABLE_POS.getY()), (float) (z - MUTABLE_POS.getZ() - 0.5D));
+        GlStateManager.translatef((float) (x - MUTABLE_POS.getX() - 0.5), (float) (y - MUTABLE_POS.getY()), (float) (z - MUTABLE_POS.getZ() - 0.5));
         BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
-        blockrendererdispatcher.getBlockModelRenderer().renderModel(entity.world, blockrendererdispatcher.getModelForState(state), state, MUTABLE_POS, bufferbuilder, false, MathHelper.RANDOM, MathHelper.getPositionRandom(MUTABLE_POS));
+        blockrendererdispatcher.getBlockModelRenderer()
+                               .renderModel(entity.world,
+                                            blockrendererdispatcher.getModelForState(state),
+                                            state,
+                                            MUTABLE_POS,
+                                            bufferbuilder,
+                                            false,
+                                            MathHelper.RANDOM,
+                                            MathHelper.getPositionRandom(MUTABLE_POS));
         tessellator.draw();
         GlStateManager.enableLighting();
         GlStateManager.popMatrix();

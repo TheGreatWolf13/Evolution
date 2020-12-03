@@ -8,11 +8,11 @@ var FieldInsnNode = Java.type("org.objectweb.asm.tree.FieldInsnNode");
 
 var TRAVEL = ASMAPI.mapMethod("func_213352_e");
 var ISJUMPING = ASMAPI.mapField("field_70703_bu");
-var GETWATERSLOWDOWN = ASMAPI.mapMethod("func_189749_co");
+var JUMPTICKS = ASMAPI.mapField("field_70773_bE");
 var FLAGS = ASMAPI.mapField("field_184240_ax");
 
 function log(message) {
-	print("[Evolution LivingEntity#travel(Vec3d) Transformer]: " + message);
+	print("[evolution/ LivingEntity#travel(Vec3d) Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {
@@ -51,6 +51,8 @@ function patchTravel(instructions) {
 	instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
 	instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
 	instructions.add(new FieldInsnNode(Opcodes.GETFIELD, "net/minecraft/entity/LivingEntity", ISJUMPING, "Z"));
+	instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+	instructions.add(new FieldInsnNode(Opcodes.GETFIELD, "net/minecraft/entity/LivingEntity", JUMPTICKS, "I"));
 	instructions.add(new FieldInsnNode(
 	    Opcodes.GETSTATIC,
 	    "net/minecraft/entity/Entity",
@@ -61,7 +63,7 @@ function patchTravel(instructions) {
 		Opcodes.INVOKESTATIC,
 		"tgw/evolution/hooks/LivingEntityHooks",
 		"travel",
-		"(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/util/math/Vec3d;ZLnet/minecraft/network/datasync/DataParameter;)V",
+		"(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/util/math/Vec3d;ZILnet/minecraft/network/datasync/DataParameter;)V",
 		false
 	));
 	instructions.add(new InsnNode(Opcodes.RETURN));

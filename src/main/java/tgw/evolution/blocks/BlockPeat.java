@@ -19,7 +19,7 @@ import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import tgw.evolution.entities.EntityFallingPeat;
+import tgw.evolution.entities.misc.EntityFallingPeat;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionSounds;
@@ -40,70 +40,11 @@ public class BlockPeat extends BlockMass implements IReplaceable {
         this.setDefaultState(this.getDefaultState().with(LAYERS, 1));
     }
 
-    public static void placeLayersOn(World world, BlockPos pos, int layers) {
-        BlockState state = world.getBlockState(pos);
-        if (state.getBlock() == EvolutionBlocks.PEAT.get()) {
-            for (int i = 1; i <= 4; i++) {
-                if (state == EvolutionBlocks.PEAT.get().getDefaultState().with(LAYERS, i)) {
-                    if (i + layers > 4) {
-                        int remain = i + layers - 4;
-                        world.setBlockState(pos, EvolutionBlocks.PEAT.get().getDefaultState().with(LAYERS, 4), 3);
-                        world.setBlockState(pos.up(), EvolutionBlocks.PEAT.get().getDefaultState().with(LAYERS, remain), 3);
-                        return;
-                    }
-                    world.setBlockState(pos, EvolutionBlocks.PEAT.get().getDefaultState().with(LAYERS, i + layers), 3);
-                    return;
-                }
-            }
+    private static boolean canFallThrough(BlockState state, World worldIn, BlockPos pos) {
+        if (!BlockGravity.canFallThrough(state)) {
+            return false;
         }
-        if (state.getMaterial().isReplaceable()) {
-            world.setBlockState(pos, EvolutionBlocks.PEAT.get().getDefaultState().with(LAYERS, layers), 3);
-            return;
-        }
-        if (state.getBlock() instanceof IReplaceable) {
-            world.setBlockState(pos, EvolutionBlocks.PEAT.get().getDefaultState().with(LAYERS, layers), 3);
-        }
-    }
-
-    @Override
-    public BlockState updatePostPlacement(BlockState stateIn,
-                                          Direction facing,
-                                          BlockState facingState,
-                                          IWorld worldIn,
-                                          BlockPos currentPos,
-                                          BlockPos facingPos) {
-        return !stateIn.isValidPosition(worldIn, currentPos) ?
-               Blocks.AIR.getDefaultState() :
-               super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
-    }
-
-    @Override
-    public boolean isReplaceable(BlockState state, BlockItemUseContext useContext) {
-        if (useContext.getItem().getItem() == this.asItem() && state.get(LAYERS) < 4) {
-            if (useContext.replacingClickedOnBlock()) {
-                return useContext.getFace() == Direction.UP;
-            }
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean isSolid(BlockState state) {
-        return state.get(LAYERS) == 4;
-    }
-
-    @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        return SHAPES[state.get(LAYERS)];
-
-    }
-
-    @Override
-    public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
-        if (!worldIn.isRemote) {
-            checkFallable(worldIn, pos, state);
-        }
+        return state.getCollisionShape(worldIn, pos).isEmpty();
     }
 
     public static void checkFallable(World worldIn, BlockPos pos, BlockState state) {
@@ -145,11 +86,60 @@ public class BlockPeat extends BlockMass implements IReplaceable {
         worldIn.setBlockState(blockpos.up(), state);
     }
 
-    private static boolean canFallThrough(BlockState state, World worldIn, BlockPos pos) {
-        if (!BlockGravity.canFallThrough(state)) {
-            return false;
+    public static void placeLayersOn(World world, BlockPos pos, int layers) {
+        BlockState state = world.getBlockState(pos);
+        if (state.getBlock() == EvolutionBlocks.PEAT.get()) {
+            for (int i = 1; i <= 4; i++) {
+                if (state == EvolutionBlocks.PEAT.get().getDefaultState().with(LAYERS, i)) {
+                    if (i + layers > 4) {
+                        int remain = i + layers - 4;
+                        world.setBlockState(pos, EvolutionBlocks.PEAT.get().getDefaultState().with(LAYERS, 4), 3);
+                        world.setBlockState(pos.up(), EvolutionBlocks.PEAT.get().getDefaultState().with(LAYERS, remain), 3);
+                        return;
+                    }
+                    world.setBlockState(pos, EvolutionBlocks.PEAT.get().getDefaultState().with(LAYERS, i + layers), 3);
+                    return;
+                }
+            }
         }
-        return state.getCollisionShape(worldIn, pos) == null;
+        if (state.getMaterial().isReplaceable()) {
+            world.setBlockState(pos, EvolutionBlocks.PEAT.get().getDefaultState().with(LAYERS, layers), 3);
+            return;
+        }
+        if (state.getBlock() instanceof IReplaceable) {
+            world.setBlockState(pos, EvolutionBlocks.PEAT.get().getDefaultState().with(LAYERS, layers), 3);
+        }
+    }
+
+    @Override
+    public boolean canBeReplacedByLiquid(BlockState state) {
+        return false;
+    }
+
+    @Override
+    public boolean canBeReplacedByRope(BlockState state) {
+        return false;
+    }
+
+    @Override
+    protected void fillStateContainer(Builder<Block, BlockState> builder) {
+        builder.add(LAYERS);
+    }
+
+    @Override
+    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
+        return new ItemStack(EvolutionItems.peat.get(), state.get(LAYERS));
+    }
+
+    @Override
+    public int getMass(BlockState state) {
+        return state.get(LAYERS) * super.getMass(state) / 4;
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+        return SHAPES[state.get(LAYERS)];
+
     }
 
     @Override
@@ -163,14 +153,30 @@ public class BlockPeat extends BlockMass implements IReplaceable {
     }
 
     @Override
-    public void onBlockHarvested(World worldIn, BlockPos pos, BlockState state, PlayerEntity player) {
-        worldIn.getPendingBlockTicks().scheduleTick(pos.up(), worldIn.getBlockState(pos.up()).getBlock(), 2);
-        super.onBlockHarvested(worldIn, pos, state, player);
+    public boolean isReplaceable(BlockState state, BlockItemUseContext useContext) {
+        if (useContext.getItem().getItem() == this.asItem() && state.get(LAYERS) < 4) {
+            if (useContext.replacingClickedOnBlock()) {
+                return useContext.getFace() == Direction.UP;
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override
-    protected void fillStateContainer(Builder<Block, BlockState> builder) {
-        builder.add(LAYERS);
+    public boolean isReplaceable(BlockState state) {
+        return state.get(LAYERS) != 4;
+    }
+
+    @Override
+    public boolean isSolid(BlockState state) {
+        return state.get(LAYERS) == 4;
+    }
+
+    @Override
+    public void onBlockHarvested(World worldIn, BlockPos pos, BlockState state, PlayerEntity player) {
+        worldIn.getPendingBlockTicks().scheduleTick(pos.up(), worldIn.getBlockState(pos.up()).getBlock(), 2);
+        super.onBlockHarvested(worldIn, pos, state, player);
     }
 
     @Override
@@ -186,27 +192,21 @@ public class BlockPeat extends BlockMass implements IReplaceable {
     }
 
     @Override
-    public int getMass(BlockState state) {
-        return state.get(LAYERS) * super.getMass(state) / 4;
+    public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
+        if (!worldIn.isRemote) {
+            checkFallable(worldIn, pos, state);
+        }
     }
 
     @Override
-    public boolean isReplaceable(BlockState state) {
-        return state.get(LAYERS) != 4;
-    }
-
-    @Override
-    public boolean canBeReplacedByRope(BlockState state) {
-        return false;
-    }
-
-    @Override
-    public boolean canBeReplacedByLiquid(BlockState state) {
-        return false;
-    }
-
-    @Override
-    public ItemStack getDrops(BlockState state) {
-        return new ItemStack(EvolutionItems.peat.get(), state.get(LAYERS));
+    public BlockState updatePostPlacement(BlockState stateIn,
+                                          Direction facing,
+                                          BlockState facingState,
+                                          IWorld worldIn,
+                                          BlockPos currentPos,
+                                          BlockPos facingPos) {
+        return !stateIn.isValidPosition(worldIn, currentPos) ?
+               Blocks.AIR.getDefaultState() :
+               super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
     }
 }

@@ -25,8 +25,7 @@ public class SkyRenderer implements IRenderHandler {
     private static final ResourceLocation MOON_PHASES_TEXTURES = Evolution.location("textures/environment/moon_phases.png");
     private static final ResourceLocation MOONLIGHT_TEXTURES = Evolution.location("textures/environment/moonlight_phases.png");
     private static final ResourceLocation SUN_TEXTURES = new ResourceLocation("textures/environment/sun.png");
-    private static final float SCALE_OF_CELESTIAL = 20f;
-    private final WorldRenderer worldRenderer;
+    private static final float SCALE_OF_CELESTIAL = 20.0f;
     private final boolean vboEnabled;
     private final VertexBuffer skyVBO;
     private final VertexBuffer starVBO;
@@ -37,14 +36,13 @@ public class SkyRenderer implements IRenderHandler {
     private final DimensionOverworld dimension;
 
     public SkyRenderer(WorldRenderer worldRenderer) {
-        this.worldRenderer = worldRenderer;
         this.vboEnabled = GLX.useVbo();
-        this.skyVBO = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, this.worldRenderer, "field_175012_t");
-        this.starVBO = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, this.worldRenderer, "field_175013_s");
-        this.sky2VBO = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, this.worldRenderer, "field_175011_u");
-        this.glSkyList = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, this.worldRenderer, "field_72771_w");
-        this.glSkyList2 = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, this.worldRenderer, "field_72781_x");
-        this.starGLCallList = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, this.worldRenderer, "field_72772_v");
+        this.skyVBO = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, worldRenderer, "field_175012_t");
+        this.starVBO = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, worldRenderer, "field_175013_s");
+        this.sky2VBO = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, worldRenderer, "field_175011_u");
+        this.glSkyList = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, worldRenderer, "field_72771_w");
+        this.glSkyList2 = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, worldRenderer, "field_72781_x");
+        this.starGLCallList = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, worldRenderer, "field_72772_v");
         this.dimension = (DimensionOverworld) Minecraft.getInstance().world.dimension;
     }
 
@@ -65,11 +63,11 @@ public class SkyRenderer implements IRenderHandler {
         GlStateManager.color3f(skyColor.x, skyColor.y, skyColor.z);
         if (this.vboEnabled) {
             this.skyVBO.bindBuffer();
-            GlStateManager.enableClientState(32884);
-            GlStateManager.vertexPointer(3, 5126, 12, 0);
+            GlStateManager.enableClientState(32_884);
+            GlStateManager.vertexPointer(3, 5_126, 12, 0);
             this.skyVBO.drawArrays(7);
             VertexBuffer.unbindBuffer();
-            GlStateManager.disableClientState(32884);
+            GlStateManager.disableClientState(32_884);
         }
         else {
             GlStateManager.callList(this.glSkyList);
@@ -85,26 +83,26 @@ public class SkyRenderer implements IRenderHandler {
         float[] sunriseColors = this.dimension.calcSunriseSunsetColors(0, 0);
         if (sunriseColors != null) {
             GlStateManager.disableTexture();
-            GlStateManager.shadeModel(7425);
+            GlStateManager.shadeModel(7_425);
             //Pushed matrix to draw sunrise / sunset
             GlStateManager.pushMatrix();
-            GlStateManager.rotatef(-90.0F, 1.0F, 0.0F, 0.0F);
+            GlStateManager.rotatef(-90.0f, 1.0F, 0.0F, 0.0F);
             float sunAzimuth = MathHelper.radToDeg((float) MathHelper.atan2(EarthHelper.sunX, EarthHelper.sunZ)) + 180;
             GlStateManager.rotatef(sunAzimuth, 0.0F, 0.0F, 1.0F);
             bufferBuilder.begin(6, DefaultVertexFormats.POSITION_COLOR);
-            bufferBuilder.pos(0.0D, 100.0D, 0.0D).color(sunriseColors[0], sunriseColors[1], sunriseColors[2], sunriseColors[3]).endVertex();
+            bufferBuilder.pos(0, 100, 0).color(sunriseColors[0], sunriseColors[1], sunriseColors[2], sunriseColors[3]).endVertex();
             for (int j = 0; j <= 16; ++j) {
-                float f6 = j * MathHelper.PI * 2F / 16.0F;
+                float f6 = j * MathHelper.TAU / 16.0F;
                 float f7 = MathHelper.sin(f6);
                 float f8 = MathHelper.cos(f6);
-                bufferBuilder.pos(f7 * 120.0F, f8 * 120.0F, -f8 * 40.0F * sunriseColors[3])
+                bufferBuilder.pos(f7 * 120.0F, f8 * 120.0F, -f8 * 80.0F * sunriseColors[3])
                              .color(sunriseColors[0], sunriseColors[1], sunriseColors[2], 0.0F)
                              .endVertex();
             }
             tessellator.draw();
             GlStateManager.popMatrix();
             //Popped matrix of sunrise / sunset
-            GlStateManager.shadeModel(7424);
+            GlStateManager.shadeModel(7_424);
         }
         GlStateManager.enableTexture();
         GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
@@ -115,11 +113,11 @@ public class SkyRenderer implements IRenderHandler {
         GlStateManager.pushMatrix();
         float rainStrength = 1.0F - world.getRainStrength(partialTicks);
         GlStateManager.color4f(1.0F, 1.0F, 1.0F, rainStrength);
-        GlStateManager.rotatef(-90.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotatef(-90.0f, 0.0F, 1.0F, 0.0F);
         //Translate the sun in the sky based on season.
-        GlStateManager.rotatef(latitude, 0f, 0f, 1f);
+        GlStateManager.rotatef(latitude, 0.0f, 0.0f, 1.0f);
         GlStateManager.translatef(sunSeasonalOffset, 0, 0);
-        GlStateManager.rotatef(360f * sunAngle + 180, 1.0F, 0.0F, 0.0F);
+        GlStateManager.rotatef(360.0f * sunAngle + 180, 1.0F, 0.0F, 0.0F);
         //Draw the sun
         mc.textureManager.bindTexture(SUN_TEXTURES);
         bufferBuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
@@ -128,7 +126,7 @@ public class SkyRenderer implements IRenderHandler {
         bufferBuilder.pos(SCALE_OF_CELESTIAL, sunCelestialRadius, SCALE_OF_CELESTIAL).tex(1, 1).endVertex();
         bufferBuilder.pos(-SCALE_OF_CELESTIAL, sunCelestialRadius, SCALE_OF_CELESTIAL).tex(0, 1).endVertex();
         tessellator.draw();
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1F);
+        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.disableBlend();
         GlStateManager.enableAlphaTest();
         GlStateManager.enableFog();
@@ -137,26 +135,26 @@ public class SkyRenderer implements IRenderHandler {
         //Poped matrix of the sun
         //Pushed the matrix to draw the moon and stars
         GlStateManager.pushMatrix();
-        GlStateManager.rotatef(-90.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotatef(-90.0f, 0.0F, 1.0F, 0.0F);
         //Translate the moon in the sky based on monthly amplitude.
-        GlStateManager.rotatef(latitude, 0f, 0f, 1f);
+        GlStateManager.rotatef(latitude, 0.0f, 0.0f, 1.0f);
         float moonMonthlyOffset = this.dimension.getMoonMonthlyOffset();
         float moonAngle = this.dimension.calculateMoonAngle();
         float moonCelestialRadius = this.dimension.getMoonCelestialRadius();
         GlStateManager.translatef(moonMonthlyOffset, 0, 0);
-        GlStateManager.rotatef(360f * moonAngle + 180, 1.0F, 0.0F, 0.0F);
+        GlStateManager.rotatef(360.0f * moonAngle + 180, 1.0F, 0.0F, 0.0F);
         //Draw stars
         GlStateManager.disableTexture();
         float starBrightness = 1 - this.dimension.getSunBrightnessPure(partialTicks) * rainStrength;
         if (starBrightness > 0.0F) {
-            GlStateManager.color4f(1f, 1f, 1f, starBrightness);
+            GlStateManager.color4f(1.0f, 1.0f, 1.0f, starBrightness);
             if (this.vboEnabled) {
                 this.starVBO.bindBuffer();
-                GlStateManager.enableClientState(32884);
-                GlStateManager.vertexPointer(3, 5126, 12, 0);
+                GlStateManager.enableClientState(32_884);
+                GlStateManager.vertexPointer(3, 5_126, 12, 0);
                 this.starVBO.drawArrays(7);
                 VertexBuffer.unbindBuffer();
-                GlStateManager.disableClientState(32884);
+                GlStateManager.disableClientState(32_884);
             }
             else {
                 GlStateManager.callList(this.starGLCallList);
@@ -172,14 +170,14 @@ public class SkyRenderer implements IRenderHandler {
         float textureX1 = textureX0 + 0.2f;
         float textureY1 = textureY0 + 0.25f;
         float skyColorSum = skyColor.x + skyColor.y + skyColor.z;
-        if (skyColorSum == 0f) {
-            GlStateManager.color4f(1f, 1f, 1f, rainStrength);
+        if (skyColorSum == 0.0f) {
+            GlStateManager.color4f(1.0f, 1.0f, 1.0f, rainStrength);
             mc.textureManager.bindTexture(MOONLIGHT_TEXTURES);
             bufferBuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-            bufferBuilder.pos(20, moonCelestialRadius, -20).tex(textureX0, textureY0).endVertex();
-            bufferBuilder.pos(20, moonCelestialRadius, 20).tex(textureX1, textureY0).endVertex();
-            bufferBuilder.pos(-20, moonCelestialRadius, 20).tex(textureX1, textureY1).endVertex();
-            bufferBuilder.pos(-20, moonCelestialRadius, -20).tex(textureX0, textureY1).endVertex();
+            bufferBuilder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY0).endVertex();
+            bufferBuilder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(textureX1, textureY0).endVertex();
+            bufferBuilder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(textureX1, textureY1).endVertex();
+            bufferBuilder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY1).endVertex();
             tessellator.draw();
         }
         GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
@@ -189,10 +187,10 @@ public class SkyRenderer implements IRenderHandler {
         GlStateManager.color4f(1.0F, 1.0F, 1.0F, rainStrength);
         mc.textureManager.bindTexture(MOON_PHASES_TEXTURES);
         bufferBuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-        bufferBuilder.pos(20, moonCelestialRadius, -20).tex(textureX0, textureY0).endVertex();
-        bufferBuilder.pos(20, moonCelestialRadius, 20).tex(textureX1, textureY0).endVertex();
-        bufferBuilder.pos(-20, moonCelestialRadius, 20).tex(textureX1, textureY1).endVertex();
-        bufferBuilder.pos(-20, moonCelestialRadius, -20).tex(textureX0, textureY1).endVertex();
+        bufferBuilder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY0).endVertex();
+        bufferBuilder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(textureX1, textureY0).endVertex();
+        bufferBuilder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(textureX1, textureY1).endVertex();
+        bufferBuilder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY1).endVertex();
         tessellator.draw();
         //Finish drawing moon
         GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -210,11 +208,11 @@ public class SkyRenderer implements IRenderHandler {
             GlStateManager.translatef(0.0F, 12.0F, 0.0F);
             if (this.vboEnabled) {
                 this.sky2VBO.bindBuffer();
-                GlStateManager.enableClientState(32884);
-                GlStateManager.vertexPointer(3, 5126, 12, 0);
+                GlStateManager.enableClientState(32_884);
+                GlStateManager.vertexPointer(3, 5_126, 12, 0);
                 this.sky2VBO.drawArrays(7);
                 VertexBuffer.unbindBuffer();
-                GlStateManager.disableClientState(32884);
+                GlStateManager.disableClientState(32_884);
             }
             else {
                 GlStateManager.callList(this.glSkyList2);

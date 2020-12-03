@@ -30,7 +30,7 @@ import tgw.evolution.network.PacketSCHandAnimation;
 import javax.annotation.Nullable;
 import java.util.Random;
 
-public abstract class PlayerHelper {
+public final class PlayerHelper {
 
     /**
      * The base attack speed of the Player, in attacks / s.
@@ -53,39 +53,15 @@ public abstract class PlayerHelper {
      */
     public static final double WALK_SPEED = 0.025;
     /**
-     * Controls the loss of deceleration because of the motion of your legs.
+     * Controls the deceleration because of the motion of your legs.
      */
-    public static final double LEG_SLOWDOWN = 0.113_6;
+    public static final double LEG_SLOWDOWN = 5.455;
     private static final Random RAND = new Random();
 
-    public static void performAttack(PlayerEntity player, @Nullable Entity entity, Hand hand) {
-        if (hand == Hand.OFF_HAND) {
-            Item offhandItem = player.getHeldItemOffhand().getItem();
-            if (!(offhandItem instanceof IOffhandAttackable)) {
-                return;
-            }
-        }
-        swingArm(player, hand);
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new PacketSCHandAnimation(hand));
-        if (entity != null) {
-            attackEntity(player, entity, hand);
-        }
+    private PlayerHelper() {
     }
 
-    private static void swingArm(PlayerEntity player, Hand hand) {
-        ItemStack stack = player.getHeldItem(hand);
-        if (!stack.isEmpty() && stack.onEntitySwing(player)) {
-            return;
-        }
-        player.swingProgressInt = -1;
-        player.isSwingInProgress = true;
-        player.swingingHand = hand;
-        if (player.world instanceof ServerWorld) {
-            ((ServerWorld) player.world).getChunkProvider().sendToAllTracking(player, new SAnimateHandPacket(player, hand == Hand.MAIN_HAND ? 0 : 3));
-        }
-    }
-
-    private static void attackEntity(PlayerEntity player, Entity targetEntity, Hand hand) {
+    private static void attackEntity(PlayerEntity player, Entity targetEntity, Hand hand, double rayTraceHeight) {
         ItemStack attackStack = player.getHeldItem(hand);
         Item attackItem = attackStack.getItem();
         if (!(attackStack.isEmpty() || !attackItem.onLeftClickEntity(attackStack, player, targetEntity))) {
@@ -98,19 +74,10 @@ public abstract class PlayerHelper {
                     damage = (float) (((IOffhandAttackable) attackItem).getAttackDamage() +
                                       player.getAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getBaseValue());
                 }
-                //                float enchantmentModifier;
-                //                //TODO damage enchantments
-                //                if (targetEntity instanceof LivingEntity) {
-                //                    enchantmentModifier = EnchantmentHelper.getModifierForCreature(attackStack, ((LivingEntity) targetEntity)
-                //                    .getCreatureAttribute());
-                //                }
-                //                else {
-                //                    enchantmentModifier = EnchantmentHelper.getModifierForCreature(attackStack, CreatureAttribute.UNDEFINED);
-                //                }
-                if (damage > 0.0F /*|| enchantmentModifier > 0.0F*/) {
+                if (damage > 0.0F) {
                     int knockbackModifier = 0;
                     if (attackItem instanceof IKnockback) {
-                        knockbackModifier += ((IKnockback) attackItem).getModifier();
+                        knockbackModifier += ((IKnockback) attackItem).getLevel();
                     }
                     boolean sprinting = false;
                     if (player.isSprinting()) {
@@ -125,7 +92,31 @@ public abstract class PlayerHelper {
                         ++knockbackModifier;
                         sprinting = true;
                     }
-                    /*damage += enchantmentModifier;*/
+                    int heavyModifier = 0;
+                    if (attackItem instanceof IHeavyAttack) {
+                        float heavyChance = ((IHeavyAttack) attackItem).getChance();
+                        if (sprinting) {
+                            heavyChance *= 2;
+                        }
+                        if (RAND.nextFloat() < heavyChance) {
+                            heavyModifier = ((IHeavyAttack) attackItem).getLevel();
+                            if (sprinting) {
+                                heavyModifier *= 2;
+                            }
+                            if (player.world instanceof ServerWorld) {
+                                ((ServerWorld) player.world).spawnParticle(ParticleTypes.ENCHANTED_HIT,
+                                                                           targetEntity.posX,
+                                                                           targetEntity.posY + targetEntity.getHeight() * 0.5F,
+                                                                           targetEntity.posZ,
+                                                                           10,
+                                                                           0.5,
+                                                                           0,
+                                                                           0.5,
+                                                                           0.1);
+                            }
+                        }
+                    }
+                    damage *= 1 + heavyModifier / 10.0f;
                     boolean isSweepAttack = false;
                     double distanceWalked = player.distanceWalkedModified - player.prevDistanceWalkedModified;
                     if (!sprinting && player.onGround && distanceWalked < player.getAIMoveSpeed()) {
@@ -136,7 +127,7 @@ public abstract class PlayerHelper {
                     int fireAspectModifier = 0;
                     if (attackItem instanceof IFireAspect) {
                         if (RAND.nextFloat() < ((IFireAspect) attackItem).getChance()) {
-                            fireAspectModifier = ((IFireAspect) attackItem).getModifier();
+                            fireAspectModifier = ((IFireAspect) attackItem).getLevel();
                         }
                     }
                     float oldHealth = 0.0F;
@@ -150,7 +141,18 @@ public abstract class PlayerHelper {
                     }
                     Vec3d targetMotion = targetEntity.getMotion();
                     EvolutionDamage.Type type = attackItem instanceof IMelee ? ((IMelee) attackItem).getDamageType() : EvolutionDamage.Type.CRUSHING;
-                    boolean attackSuccessfull = targetEntity.attackEntityFrom(EvolutionDamage.causePlayerMeleeDamage(player, type, hand), damage);
+                    DamageSource source;
+                    if (targetEntity instanceof PlayerEntity) {
+                        EquipmentSlotType slot = EquipmentSlotType.LEGS;
+                        if (!Double.isNaN(rayTraceHeight)) {
+                            slot = getPartByPosition(rayTraceHeight, (PlayerEntity) targetEntity);
+                        }
+                        source = EvolutionDamage.causePVPMeleeDamage(player, type, hand, slot);
+                    }
+                    else {
+                        source = EvolutionDamage.causePlayerMeleeDamage(player, type, hand);
+                    }
+                    boolean attackSuccessfull = targetEntity.attackEntityFrom(source, damage);
                     if (attackSuccessfull) {
                         //Knockback calculations
                         if (knockbackModifier > 0) {
@@ -170,19 +172,26 @@ public abstract class PlayerHelper {
                         //Sweep Attack
                         if (isSweepAttack) {
                             float sweepingDamage = 1.0F + ((ISweepAttack) attackItem).getSweepRatio() * damage;
-                            for (LivingEntity livingentity : player.world.getEntitiesWithinAABB(LivingEntity.class,
+                            for (LivingEntity livingEntity : player.world.getEntitiesWithinAABB(LivingEntity.class,
                                                                                                 targetEntity.getBoundingBox().grow(1, 0.25, 1))) {
-                                if (livingentity != player &&
-                                    livingentity != targetEntity &&
-                                    !player.isOnSameTeam(livingentity) &&
-                                    (!(livingentity instanceof ArmorStandEntity) || !((ArmorStandEntity) livingentity).hasMarker()) &&
-                                    player.getDistanceSq(livingentity) < 9.0D) {
-                                    livingentity.knockBack(player,
+                                if (livingEntity != player &&
+                                    livingEntity != targetEntity &&
+                                    !player.isOnSameTeam(livingEntity) &&
+                                    (!(livingEntity instanceof ArmorStandEntity) || !((ArmorStandEntity) livingEntity).hasMarker()) &&
+                                    player.getDistanceSq(livingEntity) < 9) {
+                                    livingEntity.knockBack(player,
                                                            0.4F,
                                                            MathHelper.sinDeg(player.rotationYaw),
                                                            -MathHelper.cosDeg(player.rotationYaw));
-                                    //noinspection ObjectAllocationInLoop
-                                    livingentity.attackEntityFrom(DamageSource.causePlayerDamage(player), sweepingDamage);
+                                    if (livingEntity instanceof PlayerEntity) {
+                                        //noinspection ObjectAllocationInLoop
+                                        livingEntity.attackEntityFrom(EvolutionDamage.causePVPMeleeDamage(player, type, hand, EquipmentSlotType.LEGS),
+                                                                      sweepingDamage);
+                                    }
+                                    else {
+                                        //noinspection ObjectAllocationInLoop
+                                        livingEntity.attackEntityFrom(EvolutionDamage.causePlayerMeleeDamage(player, type, hand), sweepingDamage);
+                                    }
                                 }
                             }
                             player.world.playSound(null,
@@ -212,9 +221,6 @@ public abstract class PlayerHelper {
                                                    1.0F,
                                                    1.0F);
                         }
-                        /*if (enchantmentModifier > 0.0F) {
-                            player.onEnchantmentCritical(targetEntity);
-                        }*/
                         player.setLastAttackedEntity(targetEntity);
                         //Entity parts
                         Entity entity = targetEntity;
@@ -271,45 +277,26 @@ public abstract class PlayerHelper {
         }
     }
 
-    public static double getSpeed(double mass) {
-        //noinspection ConstantExpression
-        return WALK_SPEED * MASS / mass - WALK_SPEED;
+    private static float chestHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
+        damage *= 1.25f;
+        //TODO
+        return damage;
     }
 
-    @Nullable
-    public static EquipmentSlotType getPartByPosition(double y, PlayerEntity player) {
-        double yRelativistic = y - player.posY;
-        if (player.isSneaking()) {
-            if (yRelativistic <= 0.25) {
-                return EquipmentSlotType.FEET;
-            }
-            if (MathHelper.rangeInclusive(yRelativistic, 0.25, 0.625)) {
-                return EquipmentSlotType.LEGS;
-            }
-            if (MathHelper.rangeInclusive(yRelativistic, 0.625, 1.125)) {
-                return EquipmentSlotType.CHEST;
-            }
-            if (yRelativistic >= 1.125) {
-                return EquipmentSlotType.HEAD;
-            }
-            return null;
-        }
-        if (yRelativistic <= 0.375) {
-            return EquipmentSlotType.FEET;
-        }
-        if (MathHelper.rangeInclusive(yRelativistic, 0.375, 0.89)) {
-            return EquipmentSlotType.LEGS;
-        }
-        if (MathHelper.rangeInclusive(yRelativistic, 0.89, 1.415)) {
-            return EquipmentSlotType.CHEST;
-        }
-        if (yRelativistic >= 1.415) {
-            return EquipmentSlotType.HEAD;
-        }
-        return null;
+    private static float footHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
+        damage *= 0.75f;
+        //TODO
+        return damage;
+    }
+
+    private static float fullHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
+        Evolution.LOGGER.debug("{} received {}HP of {} damage", player.getScoreboardName(), damage, type);
+        //TODO
+        return damage;
     }
 
     public static float getDamage(@Nullable EquipmentSlotType slot, PlayerEntity player, float damage, EvolutionDamage.Type type) {
+//        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new PacketSCUpdateCameraTilt(player));
         if (slot == null) {
             return fullHit(player, damage, type);
         }
@@ -327,20 +314,54 @@ public abstract class PlayerHelper {
         return damage;
     }
 
-    private static float fullHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
-        Evolution.LOGGER.debug("{} received {}HP of {} damage", player.getScoreboardName(), damage, type);
-        //TODO
-        return damage;
+    @Nullable
+    public static EquipmentSlotType getPartByPosition(double y, PlayerEntity player) {
+        double yRelativistic = y - player.posY;
+        switch (player.getPose()) {
+            case SNEAKING:
+                if (yRelativistic <= 0.25) {
+                    return EquipmentSlotType.FEET;
+                }
+                if (MathHelper.rangeInclusive(yRelativistic, 0.25, 0.625)) {
+                    return EquipmentSlotType.LEGS;
+                }
+                if (MathHelper.rangeInclusive(yRelativistic, 0.625, 1.125)) {
+                    return EquipmentSlotType.CHEST;
+                }
+                if (yRelativistic >= 1.125) {
+                    return EquipmentSlotType.HEAD;
+                }
+                return null;
+            case DYING:
+                return null;
+            case FALL_FLYING:
+            case SLEEPING:
+            case SPIN_ATTACK:
+            case SWIMMING:
+                return EquipmentSlotType.LEGS;
+            default:
+                if (yRelativistic <= 0.375) {
+                    return EquipmentSlotType.FEET;
+                }
+                if (MathHelper.rangeInclusive(yRelativistic, 0.375, 0.89)) {
+                    return EquipmentSlotType.LEGS;
+                }
+                if (MathHelper.rangeInclusive(yRelativistic, 0.89, 1.415)) {
+                    return EquipmentSlotType.CHEST;
+                }
+                if (yRelativistic >= 1.415) {
+                    return EquipmentSlotType.HEAD;
+                }
+                return null;
+        }
+    }
+
+    public static double getSpeed(double mass) {
+        return WALK_SPEED * MASS / mass - WALK_SPEED;
     }
 
     private static float headHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
         damage *= 1.75f;
-        //TODO
-        return damage;
-    }
-
-    private static float chestHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
-        damage *= 1.25f;
         //TODO
         return damage;
     }
@@ -350,9 +371,30 @@ public abstract class PlayerHelper {
         return damage;
     }
 
-    private static float footHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
-        damage *= 0.75f;
-        //TODO
-        return damage;
+    public static void performAttack(PlayerEntity player, @Nullable Entity entity, Hand hand, double rayTraceHeight) {
+        if (hand == Hand.OFF_HAND) {
+            Item offhandItem = player.getHeldItemOffhand().getItem();
+            if (!(offhandItem instanceof IOffhandAttackable)) {
+                return;
+            }
+        }
+        swingArm(player, hand);
+        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new PacketSCHandAnimation(hand));
+        if (entity != null) {
+            attackEntity(player, entity, hand, rayTraceHeight);
+        }
+    }
+
+    private static void swingArm(PlayerEntity player, Hand hand) {
+        ItemStack stack = player.getHeldItem(hand);
+        if (!stack.isEmpty() && stack.onEntitySwing(player)) {
+            return;
+        }
+        player.swingProgressInt = -1;
+        player.isSwingInProgress = true;
+        player.swingingHand = hand;
+        if (player.world instanceof ServerWorld) {
+            ((ServerWorld) player.world).getChunkProvider().sendToAllTracking(player, new SAnimateHandPacket(player, hand == Hand.MAIN_HAND ? 0 : 3));
+        }
     }
 }

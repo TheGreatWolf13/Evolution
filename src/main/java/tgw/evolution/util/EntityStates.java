@@ -1,6 +1,6 @@
 package tgw.evolution.util;
 
-public class EntityStates {
+public final class EntityStates {
     public static final byte ARROW_COLOR = 0;
     public static final byte RABBIT_JUMP = 1;
     public static final byte GENERIC_HIT_SOUND = 2;
@@ -52,4 +52,7 @@ public class EntityStates {
     public static final byte CHEST_BREAK_ANIM = 50;
     public static final byte LEGS_BREAK_ANIM = 51;
     public static final byte FEET_BREAK_ANIM = 52;
+
+    private EntityStates() {
+    }
 }

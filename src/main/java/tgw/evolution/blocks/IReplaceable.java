@@ -7,15 +7,15 @@ import net.minecraft.world.World;
 
 public interface IReplaceable {
 
-    boolean isReplaceable(BlockState state);
+    boolean canBeReplacedByLiquid(BlockState state);
 
     boolean canBeReplacedByRope(BlockState state);
 
-    boolean canBeReplacedByLiquid(BlockState state);
+    ItemStack getDrops(World world, BlockPos pos, BlockState state);
 
-    default void onReplaced(BlockState state, World worldIn, BlockPos pos) {
-        BlockUtils.dropItemStack(worldIn, pos, this.getDrops(state));
+    boolean isReplaceable(BlockState state);
+
+    default void onReplaced(BlockState state, World world, BlockPos pos) {
+        BlockUtils.dropItemStack(world, pos, this.getDrops(world, pos, state));
     }
-
-    ItemStack getDrops(BlockState state);
 }

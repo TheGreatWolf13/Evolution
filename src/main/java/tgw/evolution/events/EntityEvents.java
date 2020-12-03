@@ -1,7 +1,7 @@
 package tgw.evolution.events;
 
+import com.google.common.collect.Sets;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
@@ -21,6 +21,7 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.Vec3d;
@@ -38,24 +39,25 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.inventory.PlayerInventoryCapability;
 import tgw.evolution.capabilities.inventory.PlayerInventoryCapabilityProvider;
 import tgw.evolution.entities.EntityGenericCreature;
-import tgw.evolution.entities.EvolutionAttributes;
 import tgw.evolution.entities.IAgressive;
+import tgw.evolution.entities.misc.EntityPlayerCorpse;
+import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.inventory.ContainerExtendedHandler;
+import tgw.evolution.inventory.extendedinventory.ContainerExtendedHandler;
 import tgw.evolution.network.PacketCSPlayerFall;
+import tgw.evolution.network.PacketSCUpdateCameraTilt;
 import tgw.evolution.util.Gravity;
 import tgw.evolution.util.HarvestLevel;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.PlayerHelper;
-import tgw.evolution.util.damage.DamageSourceEntity;
-import tgw.evolution.util.damage.DamageSourceEntityIndirect;
-import tgw.evolution.util.damage.DamageSourceEv;
+import tgw.evolution.util.damage.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -65,18 +67,314 @@ public class EntityEvents {
 
     private static final Method SET_POSE_METHOD = ObfuscationReflectionHelper.findMethod(Entity.class, "func_213301_b", Pose.class);
     private static final Random RANDOM = new Random();
-    private static final Set<DamageSource> IGNORED_DAMAGE_SOURCES = new HashSet<>();
+    private static final Set<DamageSource> IGNORED_DAMAGE_SOURCES = Util.make(Sets.newHashSet(), set -> {
+        set.add(EvolutionDamage.DROWN);
+        set.add(EvolutionDamage.FALL);
+        set.add(EvolutionDamage.FALLING_ROCK);
+        set.add(EvolutionDamage.IN_FIRE);
+        set.add(EvolutionDamage.IN_WALL);
+        set.add(EvolutionDamage.ON_FIRE);
+        set.add(EvolutionDamage.VOID);
+        set.add(EvolutionDamage.WALL_IMPACT);
+        set.add(EvolutionDamage.WATER_IMPACT);
+    });
+    private static final Set<DamageSource> IGNORED_VANILLA_SOURCES = Util.make(Sets.newHashSet(), set -> {
+        set.add(DamageSource.DROWN);
+        set.add(DamageSource.FALL);
+        set.add(DamageSource.IN_WALL);
+        set.add(DamageSource.OUT_OF_WORLD);
+    });
     private static final Map<UUID, Double> PLAYER_MASS_MAP = new HashMap<>();
-
-    static {
-        IGNORED_DAMAGE_SOURCES.add(EvolutionDamage.FALL);
-        IGNORED_DAMAGE_SOURCES.add(EvolutionDamage.FALLING_ROCK);
-        IGNORED_DAMAGE_SOURCES.add(EvolutionDamage.IN_FIRE);
-        IGNORED_DAMAGE_SOURCES.add(EvolutionDamage.ON_FIRE);
-    }
-
     private final Map<DamageSource, EquipmentSlotType> damageMultipliers = new WeakHashMap<>();
     private final Map<UUID, Integer> playerTimeSinceLastHit = new HashMap<>();
+
+    public static void calculateFallDamage(Entity entity, double velocity, double distanceOfSlowDown, boolean isWater) {
+        //Convert from m/t to m/s
+        velocity *= 20;
+        double legHeight = PlayerHelper.LEG_HEIGHT;
+        double baseMass = PlayerHelper.MASS;
+        if (entity instanceof EntityGenericCreature) {
+            EntityGenericCreature creature = (EntityGenericCreature) entity;
+            legHeight = creature.getLegHeight();
+            baseMass = creature.getMass();
+        }
+        distanceOfSlowDown += legHeight;
+        double totalMass = baseMass;
+        if (entity instanceof PlayerEntity) {
+            IAttributeInstance massAttribute = ((PlayerEntity) entity).getAttribute(EvolutionAttributes.MASS);
+            baseMass = massAttribute.getBaseValue();
+            totalMass = massAttribute.getValue();
+        }
+        double kineticEnergy = totalMass * velocity * velocity / 2;
+        double forceOfImpact = kineticEnergy / distanceOfSlowDown;
+        double area = entity.getWidth() * entity.getWidth();
+        double pressureOfFall = forceOfImpact / area;
+        double maxSupportedPressure = baseMass / (area * 0.035);
+        double deltaPressure = MathHelper.clampMin(pressureOfFall - maxSupportedPressure, 0);
+        float amount = (float) Math.pow(deltaPressure, 1.7) / 750_000;
+        if (amount >= 1) {
+            if (isWater) {
+                entity.attackEntityFrom(EvolutionDamage.WATER_IMPACT, amount);
+            }
+            else {
+                entity.attackEntityFrom(EvolutionDamage.FALL, amount);
+            }
+        }
+    }
+
+    public static void calculateWaterFallDamage(Entity entity) {
+        BlockPos pos = entity.getPosition();
+        IFluidState fluidState = entity.world.getFluidState(pos);
+        IFluidState fluidStateDown = entity.world.getFluidState(pos.down());
+        double distanceOfSlowDown = fluidState.getLevel() * 0.062_5;
+        if (!fluidStateDown.isEmpty()) {
+            distanceOfSlowDown += 1;
+            IFluidState fluidStateDown2 = entity.world.getFluidState(pos.down(2));
+            if (!fluidStateDown2.isEmpty()) {
+                distanceOfSlowDown += 1;
+            }
+        }
+        double velocity = entity.getMotion().y;
+        calculateFallDamage(entity, velocity, distanceOfSlowDown, true);
+    }
+
+    private static float getStepHeight(PlayerEntity player) {
+        IAttributeInstance mass = player.getAttribute(EvolutionAttributes.MASS);
+        int baseMass = (int) mass.getBaseValue();
+        int totalMass = (int) mass.getValue();
+        int equipMass = totalMass - baseMass;
+        float stepHeight = 1.062_5f - equipMass * 0.001_14f;
+        return MathHelper.clampMin(stepHeight, 0.6f);
+    }
+
+    private static void spawnDrops(ItemStack stack, World worldIn, BlockPos pos) {
+        double xOffset = worldIn.getRandom().nextFloat() * 0.7F + 0.65F;
+        double yOffset = worldIn.getRandom().nextFloat() * 0.7F + 0.65F;
+        double zOffset = worldIn.getRandom().nextFloat() * 0.7F + 0.65F;
+        ItemEntity entity = new ItemEntity(worldIn, pos.getX() + xOffset, pos.getY() + yOffset, pos.getZ() + zOffset, stack);
+        entity.setPickupDelay(10);
+        worldIn.addEntity(entity);
+    }
+
+    private static int strangeRespawnFunc(int spawnArea) {
+        return spawnArea <= 16 ? spawnArea - 1 : 17;
+    }
+
+    @SubscribeEvent
+    public void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {
+        if (event.getObject() instanceof PlayerEntity) {
+            event.addCapability(Evolution.location("extended_inventory"), new PlayerInventoryCapabilityProvider());
+        }
+    }
+
+    @SubscribeEvent
+    public void cloneCapabilitiesEvent(PlayerEvent.Clone event) {
+        try {
+            ContainerExtendedHandler handler = (ContainerExtendedHandler) event.getOriginal()
+                                                                               .getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY)
+                                                                               .orElseThrow(IllegalStateException::new);
+            CompoundNBT nbt = handler.serializeNBT();
+            ContainerExtendedHandler handlerClone = (ContainerExtendedHandler) event.getPlayer()
+                                                                                    .getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY)
+                                                                                    .orElseThrow(IllegalStateException::new);
+            handlerClone.deserializeNBT(nbt);
+        }
+        catch (Exception e) {
+            Evolution.LOGGER.error("Could not clone player [" + event.getOriginal().getName() + "] extended inventory when changing dimensions");
+        }
+    }
+
+    @SubscribeEvent
+    public void onEntityCreated(EntityJoinWorldEvent event) {
+        Entity entity = event.getEntity();
+        //Prevents Phantoms, Trader Llamas and Wandering Traders from spawning
+        if (entity instanceof PhantomEntity || entity instanceof TraderLlamaEntity || entity instanceof WanderingTraderEntity) {
+            event.setCanceled(true);
+            return;
+        }
+        if (!(entity instanceof PlayerEntity) && !(entity instanceof EntityGenericCreature)) {
+            return;
+        }
+        LivingEntity living = (LivingEntity) entity;
+        //Changes the combat tracker
+        ObfuscationReflectionHelper.setPrivateValue(LivingEntity.class, living, new CombatTrackerEv(living), "field_94063_bt");
+        //Sets the gravity of the Living Entities and the Player to be that of the dimension they're in
+        living.getAttribute(LivingEntity.ENTITY_GRAVITY).setBaseValue(Gravity.gravity(living.world.getDimension()));
+        if (living instanceof PlayerEntity) {
+            PlayerEntity player = (PlayerEntity) living;
+            if (player.world.isRemote) {
+                player.abilities.setWalkSpeed((float) PlayerHelper.WALK_SPEED);
+            }
+            else {
+                ObfuscationReflectionHelper.setPrivateValue(PlayerAbilities.class,
+                                                            player.abilities,
+                                                            (float) PlayerHelper.WALK_SPEED,
+                                                            "field_149495_f");
+            }
+        }
+        //TODO
+//        else {
+//            //Makes the Living Entities able to step up one block, instead of jumping (it looks better)
+//            entity.stepHeight = 1.0625F;
+//        }
+    }
+
+    @SubscribeEvent
+    public void onEntityDeath(LivingDeathEvent event) {
+        if (event.getEntity().world.isRemote) {
+            return;
+        }
+        if (event.getEntity() instanceof PlayerEntity) {
+            //Drop contents of extended inventory if keepInventory is off
+            PlayerEntity player = (PlayerEntity) event.getEntity();
+            if (!player.world.getGameRules().get(GameRules.KEEP_INVENTORY).get()) {
+                ContainerExtendedHandler handler =
+                        (ContainerExtendedHandler) player.getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY)
+                                                                                    .orElseThrow(IllegalStateException::new);
+                for (int i = 0; i < handler.getSlots(); i++) {
+                    spawnDrops(handler.getStackInSlot(i), player.world, player.getPosition());
+                    handler.setStackInSlot(i, ItemStack.EMPTY);
+                }
+            }
+            //Spawn corpse
+            EntityPlayerCorpse corpse = new EntityPlayerCorpse(player);
+            player.world.addEntity(corpse);
+        }
+    }
+
+    @SubscribeEvent
+    public void onEntityKnockedBack(LivingKnockBackEvent event) {
+        event.setCanceled(true);
+        LivingEntity entity = event.getEntityLiving();
+        double knockbackResistance = entity.getAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).getValue();
+        if (knockbackResistance == 1) {
+            return;
+        }
+        float strength = event.getStrength();
+        double xRatio = event.getRatioX();
+        double zRatio = event.getRatioZ();
+        entity.isAirBorne = true;
+        Vec3d motion = entity.getMotion();
+        Vec3d knockbackVec = new Vec3d(xRatio, 0, zRatio).normalize().scale(strength);
+        if (knockbackResistance > 0) {
+            knockbackVec = knockbackVec.scale(1 - knockbackResistance);
+        }
+        entity.setMotion(motion.x - knockbackVec.x, 0, motion.z - knockbackVec.z);
+        entity.velocityChanged = true;
+        if (entity instanceof ServerPlayerEntity) {
+            ServerPlayerEntity player = (ServerPlayerEntity) entity;
+            //noinspection VariableNotUsedInsideIf
+            if (player.connection != null) {
+                EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCUpdateCameraTilt(player));
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onLeftClick(PlayerInteractEvent.LeftClickBlock event) {
+        if (event.getWorld().isRemote) {
+            return;
+        }
+        PlayerEntity player = event.getEntityPlayer();
+        if (player == null) {
+            return;
+        }
+        //Makes players able to hit through non-collidable blocks
+        BlockState state = event.getWorld().getBlockState(event.getPos());
+        if (!state.getCollisionShape(event.getWorld(), event.getPos()).isEmpty()) {
+            return;
+        }
+        EntityRayTraceResult rayTraceResult = MathHelper.rayTraceEntityFromEyes(player,
+                                                                                1,
+                                                                                player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue());
+        if (rayTraceResult != null) {
+            player.attackTargetEntityWithCurrentItem(rayTraceResult.getEntity());
+            player.resetCooldown();
+        }
+    }
+
+    @SubscribeEvent
+    public void onLivingAttack(LivingAttackEvent event) {
+        if (event.getEntityLiving().world.isRemote) {
+            return;
+        }
+        LivingEntity hitEntity = event.getEntityLiving();
+        DamageSource source = event.getSource();
+        if (!(source instanceof DamageSourceEv)) {
+            if (!IGNORED_VANILLA_SOURCES.contains(source)) {
+                Evolution.LOGGER.debug("Canceling vanilla damage source: {}", source.damageType);
+            }
+            if (source == DamageSource.OUT_OF_WORLD) {
+                hitEntity.attackEntityFrom(EvolutionDamage.VOID, event.getAmount() * 5.0f);
+            }
+            else if (source == DamageSource.DROWN) {
+                hitEntity.attackEntityFrom(EvolutionDamage.DROWN, 10.0f);
+            }
+            event.setCanceled(true);
+            return;
+        }
+        if (IGNORED_DAMAGE_SOURCES.contains(source)) {
+            return;
+        }
+        float damage = event.getAmount();
+        Evolution.LOGGER.debug("amount = " + damage);
+        //Raytracing projectile damage
+        if (source instanceof DamageSourceEntityIndirect && source.isProjectile()) {
+            if (hitEntity instanceof PlayerEntity) {
+                EquipmentSlotType type = PlayerHelper.getPartByPosition(source.getImmediateSource().getBoundingBox().minY, (PlayerEntity) hitEntity);
+                Evolution.LOGGER.debug("type ranged = {}", type);
+                this.damageMultipliers.put(source, type);
+            }
+            return;
+        }
+        //Raytracing melee damage
+        if (source instanceof DamageSourceEntity) {
+            Entity trueSource = source.getTrueSource();
+            if (trueSource instanceof PlayerEntity) {
+                return;
+            }
+            double range = 3;
+            if (trueSource instanceof IAgressive) {
+                range = ((IAgressive) trueSource).getReach();
+            }
+            EntityRayTraceResult rayTrace = MathHelper.rayTraceEntityFromEyes(trueSource, 1.0F, range);
+            if (rayTrace == null) {
+                event.setCanceled(true);
+                return;
+            }
+            Entity rayTracedEntity = rayTrace.getEntity();
+            if (hitEntity.equals(rayTracedEntity)) {
+                if (hitEntity instanceof PlayerEntity) {
+                    EquipmentSlotType type = PlayerHelper.getPartByPosition(rayTrace.getHitVec().y, (PlayerEntity) hitEntity);
+                    Evolution.LOGGER.debug("type = {}", type);
+                    this.damageMultipliers.put(source, type);
+                }
+            }
+            else {
+                rayTracedEntity.attackEntityFrom(source, damage);
+                event.setCanceled(true);
+            }
+            return;
+        }
+        Evolution.LOGGER.debug("Damage Source not calculated: " + source.damageType);
+    }
+
+    @SubscribeEvent
+    public void onLivingFall(LivingFallEvent event) {
+        Entity entity = event.getEntity();
+        if (!(entity instanceof PlayerEntity) && !(entity instanceof EntityGenericCreature)) {
+            return;
+        }
+        double velocity = entity.getMotion().y;
+        double fallDistanceSlowDown = 1 - event.getDamageMultiplier();
+        if (entity instanceof PlayerEntity) {
+            if (entity.world.isRemote) {
+                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerFall(velocity, fallDistanceSlowDown));
+            }
+            return;
+        }
+        calculateFallDamage(entity, velocity, fallDistanceSlowDown, false);
+    }
 
     @SubscribeEvent
     public void onLivingHeal(LivingHealEvent event) {
@@ -86,28 +384,74 @@ public class EntityEvents {
     }
 
     @SubscribeEvent
-    public void onSetAttackTarget(LivingSetAttackTargetEvent event) {
-        if (event.getEntity() instanceof LivingEntity) {
-            MobEntity entity = (MobEntity) event.getEntity();
-            if (entity.getAttackTarget() != null && event.getTarget() != null) {
-                if (entity.isPotionActive(Effects.BLINDNESS)) {
-                    int effectLevel = 3 - entity.getActivePotionEffect(Effects.BLINDNESS).getAmplifier();
-                    if (effectLevel < 0) {
-                        effectLevel = 0;
-                    }
-                    if (entity.getDistance(event.getTarget()) > effectLevel) {
-                        entity.setAttackTarget(null);
-                    }
-                }
+    public void onLivingHurt(LivingHurtEvent event) {
+        if (event.getEntityLiving().world.isRemote) {
+            return;
+        }
+        DamageSource source = event.getSource();
+        if (event.getEntityLiving() instanceof PlayerEntity) {
+            EquipmentSlotType hitPart = this.damageMultipliers.remove(source);
+            if (source instanceof DamageSourcePVP) {
+                hitPart = ((DamageSourcePVP) source).getHitLocation();
             }
+            EvolutionDamage.Type type = EvolutionDamage.Type.GENERIC;
+            if (source instanceof DamageSourceEv) {
+                type = ((DamageSourceEv) source).getType();
+            }
+            event.setAmount(PlayerHelper.getDamage(hitPart, (PlayerEntity) event.getEntityLiving(), event.getAmount(), type));
+        }
+        if (source.getTrueSource() instanceof PlayerEntity) {
+            event.getEntityLiving().hurtResistantTime = 0;
+        }
+    }
+
+    @SubscribeEvent
+    public void onLivingTick(LivingUpdateEvent event) {
+        LivingEntity entity = event.getEntityLiving();
+        if (!(entity instanceof PlayerEntity) && !(entity instanceof EntityGenericCreature)) {
+            return;
+        }
+        //Sets the combat tracker
+        CombatTrackerEv combatTracker = (CombatTrackerEv) entity.getCombatTracker();
+        if (entity.isOnLadder()) {
+            combatTracker.setFallSuffixBlock(entity.world.getBlockState(new BlockPos(entity.posX, entity.getBoundingBox().minY, entity.posZ))
+                                                         .getBlock());
+        }
+        else if (entity.onGround) {
+            combatTracker.setFallSuffixBlock(null);
+        }
+        //Deals damage inside blocks
+        if (entity.isEntityInsideOpaqueBlock()) {
+            entity.attackEntityFrom(EvolutionDamage.IN_WALL, 5.0F);
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerAttack(AttackEntityEvent event) {
+        //Cancels the default player attack. Attack is calculated in PlayerHelper.performAttack(PlayerEntity, Entity, Hand)
+        event.setCanceled(true);
+    }
+
+    @SubscribeEvent
+    public void onPlayerBreakBlock(PlayerEvent.BreakSpeed event) {
+        //If the block is breakable by hand, do nothing
+        if (event.getState().getHarvestLevel() <= HarvestLevel.HAND) {
+            return;
+        }
+        //Prevents players from breaking blocks if their tool cannot harvest the block
+        if (!event.getPlayer().getHeldItemMainhand().canHarvestBlock(event.getState())) {
+            event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
     public void onPlayerRespawns(PlayerEvent.PlayerRespawnEvent event) {
         ServerPlayerEntity player = (ServerPlayerEntity) event.getPlayer();
+        player.clearElytraFlying();
+        player.extinguish();
         ServerWorld world = (ServerWorld) player.world;
         BlockPos bedPos = player.getBedLocation(player.dimension);
+        //noinspection ConstantConditions
         if (bedPos != null) {
             Optional<Vec3d> optional = PlayerEntity.func_213822_a(world, bedPos, false);
             if (optional.isPresent()) {
@@ -145,288 +489,23 @@ public class EntityEvents {
         }
     }
 
-    private static int strangeRespawnFunc(int spawnArea) {
-        return spawnArea <= 16 ? spawnArea - 1 : 17;
-    }
-
-    @SubscribeEvent
-    public void onLeftClick(PlayerInteractEvent.LeftClickBlock event) {
-        if (event.getWorld().isRemote) {
-            return;
-        }
-        PlayerEntity player = event.getEntityPlayer();
-        if (player == null) {
-            return;
-        }
-        //Makes players able to hit through non-collidable blocks
-        BlockState state = event.getWorld().getBlockState(event.getPos());
-        if (!state.getCollisionShape(event.getWorld(), event.getPos()).isEmpty()) {
-            return;
-        }
-        EntityRayTraceResult rayTraceResult = MathHelper.rayTraceEntityFromEyes(player,
-                                                                                1,
-                                                                                player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue());
-        if (rayTraceResult != null) {
-            player.attackTargetEntityWithCurrentItem(rayTraceResult.getEntity());
-            player.resetCooldown();
-        }
-    }
-
-    @SubscribeEvent
-    public void onEntityCreated(EntityJoinWorldEvent event) {
-        Entity entity = event.getEntity();
-        //Prevents Phantoms, Trader Llamas and Wandering Traders from spawning
-        if (entity instanceof PhantomEntity || entity instanceof TraderLlamaEntity || entity instanceof WanderingTraderEntity) {
-            event.setCanceled(true);
-            return;
-        }
-        if (!(entity instanceof PlayerEntity) && !(entity instanceof EntityGenericCreature)) {
-            return;
-        }
-        //Sets the gravity of the Living Entities and the Player to be that of the dimension they're in
-        ((LivingEntity) entity).getAttribute(LivingEntity.ENTITY_GRAVITY).setBaseValue(Gravity.gravity(entity.world.getDimension()));
-        if (entity instanceof PlayerEntity) {
-            PlayerEntity player = (PlayerEntity) entity;
-            if (player.world.isRemote) {
-                player.abilities.setWalkSpeed((float) PlayerHelper.WALK_SPEED);
-            }
-            else {
-                ObfuscationReflectionHelper.setPrivateValue(PlayerAbilities.class,
-                                                            player.abilities,
-                                                            (float) PlayerHelper.WALK_SPEED,
-                                                            "field_149495_f");
-            }
-        }
-        //TODO
-//        else {
-//            //Makes the Living Entities able to step up one block, instead of jumping (it looks better)
-//            entity.stepHeight = 1.0625F;
-//        }
-    }
-
-    @SubscribeEvent
-    public void onLivingFall(LivingFallEvent event) {
-        Entity entity = event.getEntity();
-        if (!(entity instanceof PlayerEntity) && !(entity instanceof EntityGenericCreature)) {
-            return;
-        }
-        double velocity = entity.getMotion().y;
-        double fallDistanceSlowDown = 1 - event.getDamageMultiplier();
-        if (entity instanceof PlayerEntity) {
-            if (entity.world.isRemote) {
-                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerFall(velocity, fallDistanceSlowDown));
-            }
-            return;
-        }
-        calculateFallDamage(entity, velocity, fallDistanceSlowDown);
-    }
-
-    public static void calculateFallDamage(Entity entity, double velocity, double distanceOfSlowDown) {
-        //Convert from m/t to m/s
-        velocity *= 20;
-        double legHeight = PlayerHelper.LEG_HEIGHT;
-        double baseMass = PlayerHelper.MASS;
-        if (entity instanceof EntityGenericCreature) {
-            EntityGenericCreature creature = (EntityGenericCreature) entity;
-            legHeight = creature.getLegHeight();
-            baseMass = creature.getMass();
-        }
-        distanceOfSlowDown += legHeight;
-        double totalMass = baseMass;
-        if (entity instanceof PlayerEntity) {
-            IAttributeInstance massAttribute = ((PlayerEntity) entity).getAttribute(EvolutionAttributes.MASS);
-            baseMass = massAttribute.getBaseValue();
-            totalMass = massAttribute.getValue();
-        }
-        double kinecticEnergy = totalMass * velocity * velocity / 2;
-        double forceOfImpact = kinecticEnergy / distanceOfSlowDown;
-        double area = entity.getWidth() * entity.getWidth();
-        double pressureOfFall = forceOfImpact / area;
-        double maxSupportedPressure = baseMass / (area * 0.035);
-        double deltaPressure = MathHelper.clampMin(pressureOfFall - maxSupportedPressure, 0);
-        float amount = (float) Math.pow(deltaPressure, 1.7) / 750_000;
-        if (amount >= 1) {
-            entity.attackEntityFrom(EvolutionDamage.FALL, amount);
-        }
-    }
-
-    @SubscribeEvent
-    public void onLivingTick(LivingUpdateEvent event) {
-        Entity entity = event.getEntity();
-        if (!(entity instanceof PlayerEntity) && !(entity instanceof EntityGenericCreature)) {
-            return;
-        }
-        //Deals damage inside blocks
-        if (entity.isEntityInsideOpaqueBlock()) {
-            entity.attackEntityFrom(EvolutionDamage.IN_WALL, 5.0F);
-        }
-        //Deals with water
-        if (!entity.onGround && entity.isInWater()) {
-            calculateWaterFallDamage(entity);
-        }
-        //Handles Player health regeneration
-        if (!entity.world.isRemote && entity instanceof PlayerEntity && entity.world.getGameRules().getBoolean(GameRules.NATURAL_REGENERATION)) {
-            entity.world.getProfiler().startSection("playerHealthRegen");
-            PlayerEntity player = (PlayerEntity) entity;
-            UUID uuid = player.getUniqueID();
-            if (player.hurtTime > 0) {
-                this.playerTimeSinceLastHit.put(uuid, 0);
-            }
-            else {
-                this.playerTimeSinceLastHit.put(uuid, this.playerTimeSinceLastHit.getOrDefault(uuid, 0) + 1);
-            }
-            if (this.playerTimeSinceLastHit.get(uuid) == 100) {
-                this.playerTimeSinceLastHit.put(uuid, 0);
-                if (player.shouldHeal()) {
-                    float currentHealth = MathHelper.clampMin(player.getHealth(), 1);
-                    float healAmount = currentHealth / 100;
-                    player.setHealth(currentHealth + healAmount);
-                }
-            }
-            entity.world.getProfiler().endSection();
-        }
-    }
-
-    private static void calculateWaterFallDamage(Entity entity) {
-        if (entity instanceof ServerPlayerEntity) {
-            return;
-        }
-        BlockPos pos = entity.getPosition();
-        IFluidState fluidState = entity.world.getFluidState(pos);
-        double distanceOfSlowDown = fluidState.getLevel() * 0.062_5;
-        double velocity = entity.getMotion().y;
-        if (entity instanceof ClientPlayerEntity) {
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerFall(velocity, distanceOfSlowDown));
-            return;
-        }
-        calculateFallDamage(entity, velocity, distanceOfSlowDown);
-    }
-
-    @SubscribeEvent
-    public void onPlayerAttack(AttackEntityEvent event) {
-        //Cancels the default player attack. Attack is calculated in PlayerHelper.performAttack(PlayerEntity, Entity, Hand)
-        event.setCanceled(true);
-    }
-
-    @SubscribeEvent
-    public void onEntityKnockedBack(LivingKnockBackEvent event) {
-        event.setCanceled(true);
-        LivingEntity entity = event.getEntityLiving();
-        double knockbackResistance = entity.getAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).getValue();
-        if (knockbackResistance == 1) {
-            return;
-        }
-        float strength = event.getStrength();
-        double xRatio = event.getRatioX();
-        double zRatio = event.getRatioZ();
-        entity.isAirBorne = true;
-        Vec3d motion = entity.getMotion();
-        Vec3d knockbackVec = new Vec3d(xRatio, 0, zRatio).normalize().scale(strength);
-        if (knockbackResistance > 0) {
-            knockbackVec = knockbackVec.scale(1 - knockbackResistance);
-        }
-        entity.setMotion(motion.x - knockbackVec.x, 0, motion.z - knockbackVec.z);
-        entity.velocityChanged = true;
-    }
-
-    @SubscribeEvent
-    public void onPlayerBreakBlock(PlayerEvent.BreakSpeed event) {
-        //If the block is breakable by hand, do nothing
-        if (event.getState().getHarvestLevel() <= HarvestLevel.HAND) {
-            return;
-        }
-        //Prevents players from breaking blocks if their tool cannot harvest the block
-        if (!event.getPlayer().getHeldItemMainhand().canHarvestBlock(event.getState())) {
-            event.setCanceled(true);
-        }
-    }
-
-    @SubscribeEvent
-    public void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {
-        if (event.getObject() instanceof PlayerEntity) {
-            event.addCapability(Evolution.location("extended_inventory"), new PlayerInventoryCapabilityProvider());
-        }
-    }
-
-    @SubscribeEvent
-    public void cloneCapabilitiesEvent(PlayerEvent.Clone event) {
-        try {
-            ContainerExtendedHandler handler = (ContainerExtendedHandler) event.getOriginal()
-                                                                               .getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY)
-                                                                               .orElseThrow(IllegalStateException::new);
-            CompoundNBT nbt = handler.serializeNBT();
-            ContainerExtendedHandler handlerClone = (ContainerExtendedHandler) event.getPlayer()
-                                                                                    .getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY)
-                                                                                    .orElseThrow(IllegalStateException::new);
-            handlerClone.deserializeNBT(nbt);
-        }
-        catch (Exception e) {
-            Evolution.LOGGER.error("Could not clone player [" + event.getOriginal().getName() + "] extended inventory when changing dimensions");
-        }
-    }
-
-    @SubscribeEvent
-    public void onEntityDeath(LivingDeathEvent event) {
-        if (event.getEntity().world.isRemote) {
-            return;
-        }
-        if (event.getEntity() instanceof PlayerEntity) {
-            //Drop contents of extended inventory if keepInventory is off
-            PlayerEntity player = (PlayerEntity) event.getEntity();
-            if (!player.world.getGameRules().get(GameRules.KEEP_INVENTORY).get()) {
-                ContainerExtendedHandler handler =
-                        (ContainerExtendedHandler) player.getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY)
-                                                                                    .orElseThrow(IllegalStateException::new);
-                for (int i = 0; i < handler.getSlots(); i++) {
-                    spawnDrops(handler.getStackInSlot(i), player.world, player.getPosition());
-                    handler.setStackInSlot(i, ItemStack.EMPTY);
-                }
-            }
-        }
-    }
-
-    private static void spawnDrops(ItemStack stack, World worldIn, BlockPos pos) {
-        double xOffset = worldIn.getRandom().nextFloat() * 0.7F + 0.65F;
-        double yOffset = worldIn.getRandom().nextFloat() * 0.7F + 0.65F;
-        double zOffset = worldIn.getRandom().nextFloat() * 0.7F + 0.65F;
-        ItemEntity entity = new ItemEntity(worldIn, pos.getX() + xOffset, pos.getY() + yOffset, pos.getZ() + zOffset, stack);
-        entity.setPickupDelay(10);
-        worldIn.addEntity(entity);
-    }
-
-    @SubscribeEvent
-    public void onLivingHurt(LivingHurtEvent event) {
-        if (event.getEntityLiving().world.isRemote) {
-            return;
-        }
-        if (event.getEntityLiving() instanceof PlayerEntity) {
-            EquipmentSlotType hitPart = this.damageMultipliers.remove(event.getSource());
-            EvolutionDamage.Type type = EvolutionDamage.Type.GENERIC;
-            if (event.getSource() instanceof DamageSourceEv) {
-                type = ((DamageSourceEv) event.getSource()).getType();
-            }
-            event.setAmount(PlayerHelper.getDamage(hitPart, (PlayerEntity) event.getEntityLiving(), event.getAmount(), type));
-        }
-        if (event.getSource().getTrueSource() instanceof PlayerEntity) {
-            event.getEntityLiving().hurtResistantTime = 0;
-        }
-    }
-
     @SubscribeEvent
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        PlayerEntity player = event.player;
         if (event.phase == TickEvent.Phase.START) {
-            if (event.player.isCreative()) {
-                event.player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(12);
-                event.player.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).removeModifier(EvolutionAttributes.WEIGHT_SLOWDOWN_MODIFIER);
-                PLAYER_MASS_MAP.put(event.player.getUniqueID(), 0.0);
+            player.getFoodStats().setFoodLevel(20);
+            if (player.isCreative()) {
+                player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(12);
+                player.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).removeModifier(EvolutionAttributes.WEIGHT_SLOWDOWN_MODIFIER);
+                PLAYER_MASS_MAP.put(player.getUniqueID(), 0.0);
             }
             else {
-                event.player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(PlayerHelper.REACH_DISTANCE);
-                double mass = event.player.getAttribute(EvolutionAttributes.MASS).getValue();
-                double oldMass = PLAYER_MASS_MAP.getOrDefault(event.player.getUniqueID(), 0.0);
+                player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(PlayerHelper.REACH_DISTANCE);
+                double mass = player.getAttribute(EvolutionAttributes.MASS).getValue();
+                double oldMass = PLAYER_MASS_MAP.getOrDefault(player.getUniqueID(), 0.0);
                 if (mass != oldMass) {
-                    PLAYER_MASS_MAP.put(event.player.getUniqueID(), mass);
-                    IAttributeInstance speed = event.player.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED);
+                    PLAYER_MASS_MAP.put(player.getUniqueID(), mass);
+                    IAttributeInstance speed = player.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED);
                     speed.removeModifier(EvolutionAttributes.WEIGHT_SLOWDOWN_MODIFIER);
                     speed.applyModifier(new AttributeModifier(EvolutionAttributes.WEIGHT_SLOWDOWN_MODIFIER,
                                                               "Weight slow down",
@@ -434,117 +513,86 @@ public class EntityEvents {
                                                               AttributeModifier.Operation.ADDITION));
                 }
             }
+            //Handles Player health regeneration
+            if (!player.world.isRemote && player.world.getGameRules().getBoolean(GameRules.NATURAL_REGENERATION)) {
+                UUID uuid = player.getUniqueID();
+                if (player.hurtTime > 0) {
+                    this.playerTimeSinceLastHit.put(uuid, 0);
+                }
+                else {
+                    this.playerTimeSinceLastHit.put(uuid, this.playerTimeSinceLastHit.getOrDefault(uuid, 0) + 1);
+                }
+                if (this.playerTimeSinceLastHit.get(uuid) == 100) {
+                    this.playerTimeSinceLastHit.put(uuid, 0);
+                    if (player.shouldHeal()) {
+                        float currentHealth = MathHelper.clampMin(player.getHealth(), 1);
+                        float healAmount = currentHealth / 100;
+                        player.setHealth(currentHealth + healAmount);
+                    }
+                }
+            }
         }
         else if (event.phase == TickEvent.Phase.END) {
-            if (Evolution.PRONED_PLAYERS.getOrDefault(event.player.getUniqueID(), false)) {
-                event.player.setSprinting(false);
-                event.player.stepHeight = getStepHeight(event.player);
+            if (player.isSneaking()) {
+                player.setSprinting(false);
+            }
+            if (Evolution.PRONED_PLAYERS.getOrDefault(player.getUniqueID(), false)) {
+                player.setSprinting(false);
+                player.stepHeight = getStepHeight(player);
                 try {
-                    SET_POSE_METHOD.invoke(event.player, Pose.SWIMMING);
+                    SET_POSE_METHOD.invoke(player, Pose.SWIMMING);
                 }
                 catch (IllegalAccessException | InvocationTargetException e) {
-                    Evolution.LOGGER.error("Error when setting player {} to prone: {}", event.player.getDisplayNameAndUUID(), e);
+                    Evolution.LOGGER.error("Error when setting player {} to prone: {}", player.getDisplayNameAndUUID(), e);
                 }
             }
             else {
-                event.player.stepHeight = 0.6f;
+                player.stepHeight = 0.6f;
             }
-            if (!event.player.world.isRemote) {
+            if (!player.world.isRemote) {
                 //Put off torches in Water
-                if (event.player.areEyesInFluid(FluidTags.WATER)) {
-                    ItemStack mainHand = event.player.getHeldItemMainhand();
-                    ItemStack offHand = event.player.getHeldItemOffhand();
+                if (player.areEyesInFluid(FluidTags.WATER)) {
+                    ItemStack mainHand = player.getHeldItemMainhand();
+                    ItemStack offHand = player.getHeldItemOffhand();
                     boolean torch = false;
                     if (mainHand.getItem() == EvolutionItems.torch.get()) {
                         int count = mainHand.getCount();
-                        event.player.setItemStackToSlot(EquipmentSlotType.MAINHAND, new ItemStack(EvolutionItems.stick.get(), count));
+                        player.setItemStackToSlot(EquipmentSlotType.MAINHAND, new ItemStack(EvolutionItems.stick.get(), count));
                         torch = true;
                     }
                     if (offHand.getItem() == EvolutionItems.torch.get()) {
                         int count = offHand.getCount();
-                        event.player.setItemStackToSlot(EquipmentSlotType.OFFHAND, new ItemStack(EvolutionItems.stick.get(), count));
+                        player.setItemStackToSlot(EquipmentSlotType.OFFHAND, new ItemStack(EvolutionItems.stick.get(), count));
                         torch = true;
                     }
                     if (torch) {
-                        event.player.world.playSound(null,
-                                                     event.player.getPosition(),
-                                                     SoundEvents.BLOCK_FIRE_EXTINGUISH,
-                                                     SoundCategory.BLOCKS,
-                                                     1.0F,
-                                                     2.6F + (event.player.world.rand.nextFloat() - event.player.world.rand.nextFloat()) * 0.8F);
+                        player.world.playSound(null,
+                                               player.getPosition(),
+                                               SoundEvents.BLOCK_FIRE_EXTINGUISH,
+                                               SoundCategory.BLOCKS,
+                                               1.0F,
+                                               2.6F + (player.world.rand.nextFloat() - player.world.rand.nextFloat()) * 0.8F);
                     }
                 }
             }
         }
     }
 
-    private static float getStepHeight(PlayerEntity player) {
-        IAttributeInstance mass = player.getAttribute(EvolutionAttributes.MASS);
-        int baseMass = (int) mass.getBaseValue();
-        int totalMass = (int) mass.getValue();
-        int equipMass = totalMass - baseMass;
-        float stepHeight = 1.062_5f - equipMass * 0.001_14f;
-        return MathHelper.clampMin(stepHeight, 0.6f);
-    }
-
     @SubscribeEvent
-    public void onLivingAttack(LivingAttackEvent event) {
-        if (event.getEntityLiving().world.isRemote) {
-            return;
-        }
-        DamageSource source = event.getSource();
-        if (!(source instanceof DamageSourceEv)) {
-            Evolution.LOGGER.debug("Canceling vanilla damage source: {}", source.damageType);
-            event.setCanceled(true);
-            return;
-        }
-        if (IGNORED_DAMAGE_SOURCES.contains(source)) {
-            return;
-        }
-        float damage = event.getAmount();
-        Evolution.LOGGER.debug("amount = " + damage);
-        LivingEntity hitEntity = event.getEntityLiving();
-        //Raytracing projectile damage
-        if (source instanceof DamageSourceEntityIndirect && source.isProjectile()) {
-            if (hitEntity instanceof PlayerEntity) {
-                EquipmentSlotType type = PlayerHelper.getPartByPosition(source.getImmediateSource().getBoundingBox().minY, (PlayerEntity) hitEntity);
-                Evolution.LOGGER.debug("type ranged = {}", type);
-                this.damageMultipliers.put(source, type);
-            }
-            return;
-        }
-        //Raytracing melee damage
-        if (source instanceof DamageSourceEntity) {
-            Entity trueSource = source.getTrueSource();
-            if (trueSource instanceof PlayerEntity && !(hitEntity instanceof PlayerEntity)) {
-                return;
-            }
-            double range = 3;
-            if (trueSource instanceof IAgressive) {
-                range = ((IAgressive) trueSource).getReach();
-            }
-            else if (trueSource instanceof PlayerEntity) {
-                range = ((PlayerEntity) trueSource).getAttribute(PlayerEntity.REACH_DISTANCE).getValue();
-            }
-            EntityRayTraceResult rayTrace = MathHelper.rayTraceEntityFromEyes(trueSource, 1.0F, range);
-            if (rayTrace == null) {
-                event.setCanceled(true);
-                return;
-            }
-            Entity rayTracedEntity = rayTrace.getEntity();
-            if (hitEntity.equals(rayTracedEntity)) {
-                if (hitEntity instanceof PlayerEntity) {
-                    EquipmentSlotType type = PlayerHelper.getPartByPosition(rayTrace.getHitVec().y, (PlayerEntity) hitEntity);
-                    Evolution.LOGGER.debug("type = {}", type);
-                    this.damageMultipliers.put(source, type);
+    public void onSetAttackTarget(LivingSetAttackTargetEvent event) {
+        if (event.getEntity() instanceof LivingEntity) {
+            MobEntity entity = (MobEntity) event.getEntity();
+            if (entity.getAttackTarget() != null && event.getTarget() != null) {
+                if (entity.isPotionActive(Effects.BLINDNESS)) {
+                    int effectLevel = 3 - entity.getActivePotionEffect(Effects.BLINDNESS).getAmplifier();
+                    if (effectLevel < 0) {
+                        effectLevel = 0;
+                    }
+                    if (entity.getDistance(event.getTarget()) > effectLevel) {
+                        entity.setAttackTarget(null);
+                    }
                 }
             }
-            else {
-                rayTracedEntity.attackEntityFrom(source, damage);
-                event.setCanceled(true);
-            }
-            return;
         }
-        Evolution.LOGGER.debug("Damage Source not calculated: " + source.damageType);
     }
 }

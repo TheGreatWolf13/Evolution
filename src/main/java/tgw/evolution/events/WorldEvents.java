@@ -1,6 +1,7 @@
 package tgw.evolution.events;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.GameType;
@@ -10,7 +11,9 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.Heightmap;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
 import tgw.evolution.blocks.BlockUtils;
+import tgw.evolution.entities.misc.EntityPlayerCorpse;
 
 import javax.annotation.Nullable;
 
@@ -48,5 +51,12 @@ public class WorldEvents {
         if (event.getWorld().getWorld().getWorldInfo().getGameType() != GameType.CREATIVE) {
             event.getWorld().getWorld().getGameRules().get(GameRules.REDUCED_DEBUG_INFO).set(true, event.getWorld().getWorld().getServer());
         }
+    }
+
+    @SubscribeEvent
+    public void serverStart(FMLServerAboutToStartEvent event) {
+        MinecraftServer server = event.getServer();
+        EntityPlayerCorpse.setProfileCache(server.getPlayerProfileCache());
+        EntityPlayerCorpse.setSessionService(server.getMinecraftSessionService());
     }
 }

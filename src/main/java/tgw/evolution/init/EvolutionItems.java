@@ -521,7 +521,8 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> hammer_head_shale = ITEMS.register("hammer_head_shale", EvolutionItems::stoneHeads);
     public static final RegistryObject<Item> hammer_head_slate = ITEMS.register("hammer_head_slate", EvolutionItems::stoneHeads);
     //Torch
-    public static final RegistryObject<Item> torch = ITEMS.register("torch", () -> new ItemTorch(TORCH.get(), WALL_TORCH.get(), propMisc()));
+    public static final RegistryObject<Item> torch = ITEMS.register("torch", () -> new ItemTorch(propMisc()));
+    public static final RegistryObject<Item> torch_unlit = ITEMS.register("torch_unlit", () -> new ItemTorchUnlit(propMisc()));
     //Clothes
     public static final RegistryObject<Item> hat = ITEMS.register("temp_hat", () -> new ItemHat(propMisc()));
     public static final RegistryObject<Item> shirt = ITEMS.register("temp_shirt", () -> new ItemShirt(propMisc()));
@@ -700,8 +701,28 @@ public final class EvolutionItems {
     private EvolutionItems() {
     }
 
-    public static void register() {
-        ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
+    private static Item axeStone(ToolMaterials tier) {
+        return new ItemAxe(tier, MathHelper.attackSpeed(1.25F), propStoneTool(), tier.getAxeMass());
+    }
+
+    private static Item hammerStone(ToolMaterials tier) {
+        return new ItemHammer(tier, MathHelper.attackSpeed(1.25F), propStoneTool(), tier.getHammerMass());
+    }
+
+    private static Item item() {
+        return new ItemEv(propMisc());
+    }
+
+    private static Item itemBlock(RegistryObject<Block> block) {
+        return new ItemBlock(block.get(), propMisc());
+    }
+
+    private static Item itemLog(RegistryObject<Block> block) {
+        return new ItemLog(block.get(), propTreesAndWood().maxStackSize(16));
+    }
+
+    private static Item itemRock(RegistryObject<Block> block, EnumRockNames name) {
+        return new ItemRock(block.get(), propMisc(), name);
     }
 
     private static Item javelin(ToolMaterials tier) {
@@ -712,64 +733,28 @@ public final class EvolutionItems {
                                tier.getJavelinMass());
     }
 
-    private static Item.Properties propStoneTool() {
-        return new Item.Properties().group(EvolutionCreativeTabs.STONE_TOOLS);
+    private static Item pickaxe(ToolMaterials tier) {
+        return new ItemPickaxe(tier, MathHelper.attackSpeed(0.85F), propMisc(), tier.getPickaxeMass());
     }
 
     public static Item.Properties propEgg() {
         return new Item.Properties().group(EvolutionCreativeTabs.EGGS);
     }
 
-    private static Item itemBlock(RegistryObject<Block> block) {
-        return new ItemBlock(block.get(), propMisc());
-    }
-
     public static Item.Properties propMisc() {
         return new Item.Properties().group(EvolutionCreativeTabs.MISC);
     }
 
-    private static Item item() {
-        return new ItemEv(propMisc());
-    }
-
-    private static Item wood() {
-        return new ItemEv(propTreesAndWood());
+    private static Item.Properties propStoneTool() {
+        return new Item.Properties().group(EvolutionCreativeTabs.STONE_TOOLS);
     }
 
     private static Item.Properties propTreesAndWood() {
         return new Item.Properties().group(EvolutionCreativeTabs.TREES_AND_WOOD);
     }
 
-    private static Item axeStone(ToolMaterials tier) {
-        return new ItemAxe(tier, MathHelper.attackSpeed(1.25F), propStoneTool(), tier.getAxeMass());
-    }
-
-    private static Item pickaxe(ToolMaterials tier) {
-        return new ItemPickaxe(tier, MathHelper.attackSpeed(0.85F), propMisc(), tier.getPickaxeMass());
-    }
-
-    private static Item shovelStone(ToolMaterials tier) {
-        return new ItemShovel(tier, MathHelper.attackSpeed(1.0F), propStoneTool(), tier.getShovelMass());
-    }
-
-    private static Item hammerStone(ToolMaterials tier) {
-        return new ItemHammer(tier, MathHelper.attackSpeed(1.25F), propStoneTool(), tier.getHammerMass());
-    }
-
-    private static Item itemRock(RegistryObject<Block> block, EnumRockNames name) {
-        return new ItemRock(block.get(), propMisc(), name);
-    }
-
-    private static Item stoneHeads() {
-        return new ItemEv(propStoneTool().maxStackSize(16));
-    }
-
-    private static Item itemLog(RegistryObject<Block> block) {
-        return new ItemLog(block.get(), propTreesAndWood().maxStackSize(16));
-    }
-
-    private static Item woodBlock(RegistryObject<Block> block) {
-        return new ItemBlock(block.get(), propTreesAndWood());
+    public static void register() {
+        ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
     }
 
     public static void setupVariants() {
@@ -791,5 +776,21 @@ public final class EvolutionItems {
         ((ItemLog) log_redwood.get()).variant = EnumWoodVariant.REDWOOD;
         ((ItemLog) log_spruce.get()).variant = EnumWoodVariant.SPRUCE;
         ((ItemLog) log_willow.get()).variant = EnumWoodVariant.WILLOW;
+    }
+
+    private static Item shovelStone(ToolMaterials tier) {
+        return new ItemShovel(tier, MathHelper.attackSpeed(1.0F), propStoneTool(), tier.getShovelMass());
+    }
+
+    private static Item stoneHeads() {
+        return new ItemEv(propStoneTool().maxStackSize(16));
+    }
+
+    private static Item wood() {
+        return new ItemEv(propTreesAndWood());
+    }
+
+    private static Item woodBlock(RegistryObject<Block> block) {
+        return new ItemBlock(block.get(), propTreesAndWood());
     }
 }

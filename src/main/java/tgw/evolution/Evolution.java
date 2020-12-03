@@ -2,7 +2,9 @@ package tgw.evolution;
 
 import com.google.common.collect.Maps;
 import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionType;
@@ -12,11 +14,9 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
-import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import tgw.evolution.blocks.BlockFire;
@@ -39,7 +39,7 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 
 @Mod("evolution")
-public class Evolution {
+public final class Evolution {
 
     public static final String MODID = "evolution";
     public static final Logger LOGGER = LogManager.getLogger(MODID);
@@ -49,8 +49,7 @@ public class Evolution {
 
     public Evolution() {
         instance = this;
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, EvolutionConfig.COMMON_CONFIG, "evolution-common.toml");
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, EvolutionConfig.CLIENT_CONFIG, "evolution-client.toml");
+        EvolutionConfig.register(ModLoadingContext.get());
         EvolutionBlocks.register();
         EvolutionItems.register();
         EvolutionFluids.register();
@@ -63,18 +62,32 @@ public class Evolution {
         EvolutionParticles.register();
         EvolutionEffects.register();
         EvolutionBiomes.register();
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::loadComplete);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::particleRegistry);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::setup);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::loadComplete);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::particleRegistry);
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    private void setup(FMLCommonSetupEvent event) {
+    private static void loadComplete(FMLLoadCompleteEvent event) {
+        EvolutionBlocks.setupVariants();
+        EvolutionItems.setupVariants();
+        EvolutionBiomes.registerBiomes();
+        EvolutionEntities.registerEntityWorldSpawns();
+        BlockFire.init();
+    }
+
+    public static ResourceLocation location(String name) {
+        return new ResourceLocation(MODID, name);
+    }
+
+    private static void particleRegistry(ParticleFactoryRegisterEvent event) {
+        EvolutionParticles.registerFactories(Minecraft.getInstance().particles);
+    }
+
+    private static void setup(FMLCommonSetupEvent event) {
         new EvWorldDefault();
         new EvWorldFlat();
         PROXY.init();
-        EvolutionConfig.loadConfig(EvolutionConfig.CLIENT_CONFIG, FMLPaths.CONFIGDIR.get().resolve("evolution-client.toml").toString());
-        EvolutionConfig.loadConfig(EvolutionConfig.COMMON_CONFIG, FMLPaths.CONFIGDIR.get().resolve("evolution-common.toml").toString());
         EvolutionNetwork.registerMessages();
         ChunkStorageCapability.register();
         PlayerInventoryCapability.register();
@@ -85,22 +98,10 @@ public class Evolution {
         MinecraftForge.EVENT_BUS.register(new ItemEvents());
         BiFunction<World, DimensionType, ? extends Dimension> dimensionFactory = DimensionOverworld::new;
         ObfuscationReflectionHelper.setPrivateValue(DimensionType.class, DimensionType.OVERWORLD, dimensionFactory, "field_201038_g");
-        Evolution.LOGGER.info("Setup registries done.");
+        LOGGER.info("Setup registries done.");
     }
 
-    private void loadComplete(FMLLoadCompleteEvent event) {
-        EvolutionBlocks.setupVariants();
-        EvolutionItems.setupVariants();
-        EvolutionBiomes.registerBiomes();
-        EvolutionEntities.registerEntityWorldSpawns();
-        BlockFire.init();
-    }
-
-    private void particleRegistry(ParticleFactoryRegisterEvent event) {
-        EvolutionParticles.registerFactories(Minecraft.getInstance().particles);
-    }
-
-    public static ResourceLocation location(String name) {
-        return new ResourceLocation(MODID, name);
+    public static void usingPlaceholder(PlayerEntity player, String obj) {
+        player.sendStatusMessage(new StringTextComponent("[DEBUG] Using placeholder " + obj + "!"), false);
     }
 }

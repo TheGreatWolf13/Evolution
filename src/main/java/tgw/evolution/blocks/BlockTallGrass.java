@@ -25,6 +25,26 @@ public class BlockTallGrass extends BlockBush implements IShearable {
     }
 
     @Override
+    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualEncouragement(state);
+    }
+
+    @Override
+    public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualFlammability(state);
+    }
+
+    @Override
+    public Block.OffsetType getOffsetType() {
+        return Block.OffsetType.XYZ;
+    }
+
+    @Override
     public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
         return SHAPE;
     }
@@ -35,25 +55,5 @@ public class BlockTallGrass extends BlockBush implements IShearable {
             chunkStorages.addMany(NutrientHelper.DECAY_TALL_GRASS);
             return true;
         }).orElseGet(() -> false);
-    }
-
-    @Override
-    public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
-        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualFlammability(state);
-    }
-
-    @Override
-    public int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
-        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualEncouragement(state);
-    }
-
-    @Override
-    public Block.OffsetType getOffsetType() {
-        return Block.OffsetType.XYZ;
-    }
-
-    @Override
-    public ItemStack getDrops(BlockState state) {
-        return ItemStack.EMPTY;
     }
 }

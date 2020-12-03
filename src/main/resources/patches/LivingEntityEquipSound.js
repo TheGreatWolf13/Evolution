@@ -8,7 +8,7 @@ var VarInsnNode = Java.type("org.objectweb.asm.tree.VarInsnNode");
 var PLAYEQUIPSOUND = ASMAPI.mapMethod("func_184606_a_");
 
 function log(message) {
-	print("[Evolution LivingEntity#playEquipSound(ItemStack) Transformer]: " + message);
+	print("[evolution/ LivingEntity#playEquipSound(ItemStack) Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {

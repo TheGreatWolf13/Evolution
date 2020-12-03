@@ -26,6 +26,21 @@ public class BlockPlaceableItem extends Block implements IReplaceable {
     }
 
     @Override
+    public boolean canBeReplacedByRope(BlockState state) {
+        return true;
+    }
+
+    @Override
+    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
+        return new ItemStack(this);
+    }
+
+    @Override
+    public OffsetType getOffsetType() {
+        return OffsetType.XZ;
+    }
+
+    @Override
     public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
         Vec3d vec3d = state.getOffset(worldIn, pos);
         return SHAPE.withOffset(vec3d.x, vec3d.y, vec3d.z);
@@ -34,16 +49,6 @@ public class BlockPlaceableItem extends Block implements IReplaceable {
     @Override
     public boolean isReplaceable(BlockState state) {
         return true;
-    }
-
-    @Override
-    public boolean canBeReplacedByRope(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public OffsetType getOffsetType() {
-        return OffsetType.XZ;
     }
 
     @Override
@@ -66,10 +71,5 @@ public class BlockPlaceableItem extends Block implements IReplaceable {
                 worldIn.removeBlock(pos, false);
             }
         }
-    }
-
-    @Override
-    public ItemStack getDrops(BlockState state) {
-        return new ItemStack(this);
     }
 }	

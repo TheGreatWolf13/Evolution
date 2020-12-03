@@ -77,8 +77,10 @@ public class BlockPitKiln extends Block implements IReplaceable {
     }
 
     private static boolean manageStack(TEPitKiln tile, ItemStack handStack, PlayerEntity player, DirectionDiagonal direction) {
-        if (tile.getStack(direction)
-                .isEmpty() && !tile.single && handStack.getItem() instanceof ItemClayMolded && !((ItemClayMolded) handStack.getItem()).single) {
+        if (tile.getStack(direction).isEmpty() &&
+            !tile.single &&
+            handStack.getItem() instanceof ItemClayMolded &&
+            !((ItemClayMolded) handStack.getItem()).single) {
             tile.setStack(handStack, direction);
             tile.markDirty();
             return true;
@@ -101,8 +103,133 @@ public class BlockPitKiln extends Block implements IReplaceable {
     }
 
     @Override
+    public boolean canBeReplacedByRope(BlockState state) {
+        return false;
+    }
+
+    @Nullable
+    @Override
+    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
+        return new TEPitKiln();
+    }
+
+    @Override
     protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
         builder.add(LAYERS);
+    }
+
+    @Override
+    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
+        return new ItemStack(EvolutionItems.straw.get(), MathHelper.clamp(state.get(LAYERS), 0, 8));
+    }
+
+    @Override
+    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
+        return new ItemStack(EvolutionItems.straw.get());
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+        return SHAPE[state.get(LAYERS)];
+    }
+
+    @Override
+    public SoundType getSoundType(BlockState state, IWorldReader world, BlockPos pos, @Nullable Entity entity) {
+        if (state.get(LAYERS) == 0) {
+            return SoundType.STONE;
+        }
+        if (state.get(LAYERS) <= 8) {
+            return SoundType.PLANT;
+        }
+        return SoundType.WOOD;
+    }
+
+    @Override
+    public boolean hasTileEntity(BlockState state) {
+        return true;
+    }
+
+    @Override
+    public boolean isFireSource(BlockState state, IBlockReader world, BlockPos pos, Direction side) {
+        return side == Direction.UP && state.get(LAYERS) == 16;
+    }
+
+    @Override
+    public boolean isReplaceable(BlockState state) {
+        return state.get(LAYERS) < 13;
+    }
+
+    @Override
+    public boolean isSolid(BlockState state) {
+        if (state.get(LAYERS) == 0 || state.get(LAYERS) == 16) {
+            return false;
+        }
+        return super.isSolid(state);
+    }
+
+    @Override
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
+        BlockPos posDown = pos.down();
+        BlockState down = worldIn.getBlockState(posDown);
+        return Block.hasSolidSide(down, worldIn, posDown, Direction.UP);
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!world.isRemote) {
+            if (!state.isValidPosition(world, pos)) {
+                BlockUtils.dropItemStack(world, pos, this.getDrops(world, pos, state));
+                world.removeBlock(pos, false);
+            }
+        }
+    }
+
+    @Override
+    public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+        int layers = state.get(LAYERS);
+        TEPitKiln tile = (TEPitKiln) worldIn.getTileEntity(pos);
+        if (tile == null) {
+            return false;
+        }
+        ItemStack stack = player.getHeldItem(handIn);
+        if (layers == 0) {
+            if (stack.getItem() == EvolutionItems.straw.get() && !tile.finished) {
+                worldIn.setBlockState(pos, state.with(LAYERS, 1));
+                if (!player.isCreative()) {
+                    stack.shrink(1);
+                }
+                worldIn.playSound(player, pos, SoundEvents.BLOCK_COMPOSTER_FILL_SUCCESS, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                return true;
+            }
+            if (tile.single) {
+                return manageStack(tile, stack, player, DirectionDiagonal.NORTH_WEST);
+            }
+            int x = MathHelper.getIndex(2, 0, 16, (hit.getHitVec().x - pos.getX()) * 16);
+            int z = MathHelper.getIndex(2, 0, 16, (hit.getHitVec().z - pos.getZ()) * 16);
+            return manageStack(tile, stack, player, MathHelper.DIAGONALS[z][x]);
+        }
+        if (layers < 8) {
+            if (stack.getItem() == EvolutionItems.straw.get()) {
+                worldIn.setBlockState(pos, state.with(LAYERS, layers + 1));
+                if (!player.isCreative()) {
+                    stack.shrink(1);
+                }
+                worldIn.playSound(player, pos, SoundEvents.BLOCK_COMPOSTER_FILL_SUCCESS, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                return true;
+            }
+            return false;
+        }
+        if (layers != 16 && stack.getItem() instanceof ItemLog) {
+            worldIn.setBlockState(pos, state.with(LAYERS, layers + 1));
+            tile.logs[layers - 8] = ((ItemLog) stack.getItem()).variant.getId();
+            tile.markDirty();
+            if (!player.isCreative()) {
+                stack.shrink(1);
+            }
+            worldIn.playSound(player, pos, SoundEvents.BLOCK_WOOD_PLACE, SoundCategory.BLOCKS, 1.0F, 0.75F);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -133,6 +260,14 @@ public class BlockPitKiln extends Block implements IReplaceable {
     }
 
     @Override
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (state.getBlock() != newState.getBlock()) {
+            ((TEPitKiln) worldIn.getTileEntity(pos)).onRemoved();
+        }
+        super.onReplaced(state, worldIn, pos, newState, isMoving);
+    }
+
+    @Override
     public void randomTick(BlockState state, World worldIn, BlockPos pos, Random random) {
         if (worldIn.isRemote) {
             return;
@@ -152,138 +287,5 @@ public class BlockPitKiln extends Block implements IReplaceable {
     @Override
     public boolean ticksRandomly(BlockState state) {
         return state.get(LAYERS) == 16;
-    }
-
-    @Nullable
-    @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return new TEPitKiln();
-    }
-
-    @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public boolean isFireSource(BlockState state, IBlockReader world, BlockPos pos, Direction side) {
-        return side == Direction.UP && state.get(LAYERS) == 16;
-    }
-
-    @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        return SHAPE[state.get(LAYERS)];
-    }
-
-    @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                BlockUtils.dropItemStack(worldIn, pos, this.getDrops(state));
-                worldIn.removeBlock(pos, false);
-            }
-        }
-    }
-
-    @Override
-    public boolean isReplaceable(BlockState state) {
-        return state.get(LAYERS) < 13;
-    }
-
-    @Override
-    public boolean canBeReplacedByRope(BlockState state) {
-        return false;
-    }
-
-    @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        BlockPos posDown = pos.down();
-        BlockState down = worldIn.getBlockState(posDown);
-        return Block.hasSolidSide(down, worldIn, posDown, Direction.UP);
-    }
-
-    @Override
-    public boolean isSolid(BlockState state) {
-        if (state.get(LAYERS) == 0 || state.get(LAYERS) == 16) {
-            return false;
-        }
-        return super.isSolid(state);
-    }
-
-    @Override
-    public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        int layers = state.get(LAYERS);
-        TEPitKiln tile = (TEPitKiln) worldIn.getTileEntity(pos);
-        if (tile == null) {
-            return false;
-        }
-        ItemStack stack = player.getHeldItem(handIn);
-        if (layers == 0) {
-            if (stack.getItem() == EvolutionItems.straw.get() && !tile.finished) {
-                worldIn.setBlockState(pos, state.with(LAYERS, 1));
-                if (!player.isCreative()) {
-                    stack.shrink(1);
-                }
-                worldIn.playSound(player, pos, SoundEvents.BLOCK_COMPOSTER_FILL_SUCCESS, SoundCategory.BLOCKS, 1F, 1F);
-                return true;
-            }
-            if (tile.single) {
-                return manageStack(tile, stack, player, DirectionDiagonal.NORTH_WEST);
-            }
-            int x = MathHelper.getIndex(2, 0, 16, (hit.getHitVec().x - pos.getX()) * 16);
-            int z = MathHelper.getIndex(2, 0, 16, (hit.getHitVec().z - pos.getZ()) * 16);
-            return manageStack(tile, stack, player, MathHelper.DIAGONALS[z][x]);
-        }
-        if (layers < 8) {
-            if (stack.getItem() == EvolutionItems.straw.get()) {
-                worldIn.setBlockState(pos, state.with(LAYERS, layers + 1));
-                if (!player.isCreative()) {
-                    stack.shrink(1);
-                }
-                worldIn.playSound(player, pos, SoundEvents.BLOCK_COMPOSTER_FILL_SUCCESS, SoundCategory.BLOCKS, 1F, 1F);
-                return true;
-            }
-            return false;
-        }
-        if (layers != 16 && stack.getItem() instanceof ItemLog) {
-            worldIn.setBlockState(pos, state.with(LAYERS, layers + 1));
-            tile.logs[layers - 8] = ((ItemLog) stack.getItem()).variant.getId();
-            tile.markDirty();
-            if (!player.isCreative()) {
-                stack.shrink(1);
-            }
-            worldIn.playSound(player, pos, SoundEvents.BLOCK_WOOD_PLACE, SoundCategory.BLOCKS, 1F, 0.75F);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public SoundType getSoundType(BlockState state, IWorldReader world, BlockPos pos, @Nullable Entity entity) {
-        if (state.get(LAYERS) == 0) {
-            return SoundType.STONE;
-        }
-        if (state.get(LAYERS) <= 8) {
-            return SoundType.PLANT;
-        }
-        return SoundType.WOOD;
-    }
-
-    @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (state.getBlock() != newState.getBlock()) {
-            ((TEPitKiln) worldIn.getTileEntity(pos)).onRemoved();
-        }
-        super.onReplaced(state, worldIn, pos, newState, isMoving);
-    }
-
-    @Override
-    public ItemStack getDrops(BlockState state) {
-        return new ItemStack(EvolutionItems.straw.get(), MathHelper.clamp(state.get(LAYERS), 0, 8));
-    }
-
-    @Override
-    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
-        return new ItemStack(EvolutionItems.straw.get());
     }
 }

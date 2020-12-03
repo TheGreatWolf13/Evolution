@@ -22,16 +22,13 @@ public class DamageSourcePlayer extends DamageSourceEntity {
 
     @Override
     public ITextComponent getDeathMessage(LivingEntity deadEntity) {
-        ItemStack heldStack = ((LivingEntity) this.damageSourceEntity).getHeldItem(this.hand);
         String message = "death.attack." + this.damageType + ".item";
-        if (!(heldStack.getItem() instanceof IMelee)) {
-            heldStack = ItemStack.EMPTY;
-        }
-        return !heldStack.isEmpty() ?
-               new TranslationTextComponent(message,
-                                            deadEntity.getDisplayName(),
-                                            this.damageSourceEntity.getDisplayName(),
-                                            heldStack.getTextComponent()) :
-               new TranslationTextComponent(message, deadEntity.getDisplayName(), this.damageSourceEntity.getDisplayName(), FISTS);
+        return new TranslationTextComponent(message, deadEntity.getDisplayName(), this.damageSourceEntity.getDisplayName(), this.getItemDisplay());
+    }
+
+    @Override
+    public ITextComponent getItemDisplay() {
+        ItemStack heldStack = ((LivingEntity) this.damageSourceEntity).getHeldItem(this.hand);
+        return heldStack.getItem() instanceof IMelee ? heldStack.getTextComponent() : FISTS;
     }
 }

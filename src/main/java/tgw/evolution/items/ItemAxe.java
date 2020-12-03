@@ -11,7 +11,7 @@ import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ItemAxe extends ItemTool implements ITwoHanded {
+public class ItemAxe extends ItemGenericTool implements ITwoHanded, IHeavyAttack {
 
     private static final Set<Block> EFFECTIVE_ON = new HashSet<>();
     private static final Set<Material> EFFECTIVE_MAT = Sets.newHashSet(Material.WOOD, Material.PLANTS);
@@ -23,13 +23,19 @@ public class ItemAxe extends ItemTool implements ITwoHanded {
     }
 
     @Override
-    protected float setBaseDamage() {
-        return 8.0f;
+    public float getChance() {
+        return 0.25f;
+    }
+
+    @Nonnull
+    @Override
+    public EvolutionDamage.Type getDamageType() {
+        return EvolutionDamage.Type.SLASHING;
     }
 
     @Override
-    protected float setReach() {
-        return 3;
+    public int getLevel() {
+        return 2;
     }
 
     @Override
@@ -37,9 +43,13 @@ public class ItemAxe extends ItemTool implements ITwoHanded {
         return this.mass;
     }
 
-    @Nonnull
     @Override
-    public EvolutionDamage.Type getDamageType() {
-        return EvolutionDamage.Type.SLASHING;
+    public float setBaseDamage() {
+        return 8.0f;
+    }
+
+    @Override
+    public float setReach() {
+        return 3;
     }
 }

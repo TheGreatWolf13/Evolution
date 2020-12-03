@@ -44,8 +44,9 @@ public class BlockMolding extends Block implements IReplaceable {
     private static final VoxelShape BASE_E = VoxelShapes.create(15.5 / 16, 0, 0, 1, 3 / 16.0, 1);
     private static final VoxelShape TOTAL_BASE = VoxelShapes.or(BASE, BASE_N, BASE_S, BASE_W, BASE_E);
     private static final VoxelShape SHAPE = Block.makeCuboidShape(0.5, 0, 0.5, 3.5, 3, 3.5);
+
     public BlockMolding() {
-        super(Block.Properties.create(Material.CLAY).hardnessAndResistance(0F).sound(SoundType.GROUND));
+        super(Block.Properties.create(Material.CLAY).hardnessAndResistance(0.0F).sound(SoundType.GROUND));
         this.setDefaultState(this.getDefaultState().with(LAYERS, 1));
     }
 
@@ -64,7 +65,7 @@ public class BlockMolding extends Block implements IReplaceable {
             for (int i = 0; i < tile.matrices[enc].length; i++) {
                 for (int j = 0; j < tile.matrices[enc][i].length; j++) {
                     if (tile.matrices[enc][i][j]) {
-                        shape = VoxelShapes.combine(shape, SHAPE.withOffset(3 * i / 16f, 3 * enc / 16f, 3 * j / 16f), IBooleanFunction.OR);
+                        shape = VoxelShapes.combine(shape, SHAPE.withOffset(3 * i / 16.0f, 3 * enc / 16.0f, 3 * j / 16.0f), IBooleanFunction.OR);
                     }
                 }
             }
@@ -85,24 +86,33 @@ public class BlockMolding extends Block implements IReplaceable {
     }
 
     @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!state.equals(newState)) {
-            TEMolding tile = (TEMolding) worldIn.getTileEntity(pos);
-            if (tile != null) {
-                tile.sendRenderUpdate();
-            }
-        }
-        super.onReplaced(state, worldIn, pos, newState, isMoving);
-    }
-
-    @Override
-    public boolean isReplaceable(BlockState state) {
-        return true;
-    }
-
-    @Override
     public boolean canBeReplacedByRope(BlockState state) {
         return true;
+    }
+
+    @Override
+    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
+        return new TEMolding();
+    }
+
+    @Override
+    protected void fillStateContainer(Builder<Block, BlockState> builder) {
+        builder.add(LAYERS);
+    }
+
+    @Override
+    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
+        return new ItemStack(EvolutionItems.clay.get(), state.get(LAYERS));
+    }
+
+    @Override
+    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
+        return new ItemStack(EvolutionItems.clayball.get());
+    }
+
+    @Override
+    public BlockRenderType getRenderType(BlockState state) {
+        return BlockRenderType.MODEL;
     }
 
     @Override
@@ -124,6 +134,11 @@ public class BlockMolding extends Block implements IReplaceable {
     }
 
     @Override
+    public boolean isReplaceable(BlockState state) {
+        return true;
+    }
+
+    @Override
     public boolean isSolid(BlockState state) {
         return false;
     }
@@ -137,13 +152,13 @@ public class BlockMolding extends Block implements IReplaceable {
     }
 
     @Override
-    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
-        return new ItemStack(EvolutionItems.clayball.get());
-    }
-
-    @Override
-    public BlockRenderType getRenderType(BlockState state) {
-        return BlockRenderType.MODEL;
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+        if (!worldIn.isRemote) {
+            if (!state.isValidPosition(worldIn, pos)) {
+                spawnDrops(state, worldIn, pos);
+                worldIn.removeBlock(pos, false);
+            }
+        }
     }
 
     @Override
@@ -207,27 +222,13 @@ public class BlockMolding extends Block implements IReplaceable {
     }
 
     @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return new TEMolding();
-    }
-
-    @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnDrops(state, worldIn, pos);
-                worldIn.removeBlock(pos, false);
+    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.equals(newState)) {
+            TEMolding tile = (TEMolding) worldIn.getTileEntity(pos);
+            if (tile != null) {
+                tile.sendRenderUpdate();
             }
         }
-    }
-
-    @Override
-    protected void fillStateContainer(Builder<Block, BlockState> builder) {
-        builder.add(LAYERS);
-    }
-
-    @Override
-    public ItemStack getDrops(BlockState state) {
-        return new ItemStack(EvolutionItems.clay.get(), state.get(LAYERS));
+        super.onReplaced(state, worldIn, pos, newState, isMoving);
     }
 }

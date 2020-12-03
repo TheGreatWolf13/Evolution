@@ -9,6 +9,7 @@ import net.minecraft.util.*;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
+import tgw.evolution.Evolution;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntityHook;
 import tgw.evolution.init.EvolutionItems;
@@ -21,6 +22,16 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
 
     public ItemClimbingHook() {
         super(EvolutionItems.propMisc().maxStackSize(1));
+    }
+
+    @Override
+    public UseAction getUseAction(ItemStack stack) {
+        return UseAction.BOW;
+    }
+
+    @Override
+    public int getUseDuration(ItemStack stack) {
+        return 72_000;
     }
 
     @Override
@@ -38,17 +49,7 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
     }
 
     @Override
-    public UseAction getUseAction(ItemStack stack) {
-        return UseAction.BOW;
-    }
-
-    @Override
-    public int getUseDuration(ItemStack stack) {
-        return 72_000;
-    }
-
-    @Override
-    public void onPlayerStoppedUsing(ItemStack stack, World worldIn, LivingEntity entityLiving, int timeLeft) {
+    public void onPlayerStoppedUsing(ItemStack stack, World world, LivingEntity entityLiving, int timeLeft) {
         if (entityLiving instanceof PlayerEntity) {
             PlayerEntity player = (PlayerEntity) entityLiving;
             int charge = this.getUseDuration(stack) - timeLeft;
@@ -59,12 +60,13 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
             if (strength < 0.1) {
                 return;
             }
-            if (!worldIn.isRemote) {
-                EntityHook hook = new EntityHook(worldIn, player);
+            if (!world.isRemote) {
+                EntityHook hook = new EntityHook(world, player);
                 hook.shoot(player, player.rotationPitch, player.rotationYaw, 0.5f * strength, 1.0F);
                 hook.pickupStatus = EntityGenericProjectile.PickupStatus.CREATIVE_ONLY;
-                worldIn.addEntity(hook);
-                worldIn.playMovingSound(null, hook, SoundEvents.ITEM_TRIDENT_THROW, SoundCategory.PLAYERS, 1.0F, 1.0F);
+                world.addEntity(hook);
+                world.playMovingSound(null, hook, SoundEvents.ITEM_TRIDENT_THROW, SoundCategory.PLAYERS, 1.0F, 1.0F);
+                Evolution.usingPlaceholder(player, "sound");
                 if (!player.abilities.isCreativeMode) {
                     player.inventory.deleteStack(stack);
                 }

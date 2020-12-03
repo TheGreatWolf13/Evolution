@@ -24,9 +24,8 @@ import static tgw.evolution.util.EnumMetalNames.COPPER;
 import static tgw.evolution.util.EnumRockNames.*;
 import static tgw.evolution.util.EnumWoodNames.*;
 
-@SuppressWarnings("unused")
 @EventBusSubscriber
-public class EvolutionBlocks {
+public final class EvolutionBlocks {
 
     public static final DeferredRegister<Block> BLOCKS = new DeferredRegister<>(ForgeRegistries.BLOCKS, Evolution.MODID);
 
@@ -441,68 +440,63 @@ public class EvolutionBlocks {
 
     public static final RegistryObject<FlowingFluidBlock> FRESH_WATER = BLOCKS.register("fresh_water", BlockFreshWater::new);
 
-    public static void register() {
-        BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
-    }
-
-    private static Block metal(EnumMetalNames variant) {
-        return new BlockMetal(variant);
-    }
-
-    private static Block stone(EnumRockNames variant) {
-        return new BlockStone(variant);
-    }
-
-    private static Block polishedStone(EnumRockNames variant) {
-        return new BlockPolishedStone(variant);
-    }
-
-    private static Block stoneBricks(EnumRockNames variant) {
-        return new BlockStoneBricks(variant);
+    private EvolutionBlocks() {
     }
 
     private static Block cobblestone(EnumRockNames variant) {
         return new BlockCobblestone(variant);
     }
 
-    private static Block sand(EnumRockNames variant) {
-        return new BlockSand(variant);
-    }
-
     private static Block dirt(EnumRockNames variant) {
         return new BlockDirt(variant);
-    }
-
-    private static Block gravel(EnumRockNames variant) {
-        return new BlockGravel(variant);
-    }
-
-    private static Block grass(EnumRockNames variant) {
-        return new BlockGrass(variant);
     }
 
     private static Block dryGrass(EnumRockNames variant) {
         return new BlockDryGrass(variant);
     }
 
-    private static Block log(EnumWoodNames variant) {
-        return new BlockLog(variant);
+    private static Block grass(EnumRockNames variant) {
+        return new BlockGrass(variant);
     }
 
-    private static Block sapling(Tree tree) {
-        return new BlockSapling(tree);
+    private static Block gravel(EnumRockNames variant) {
+        return new BlockGravel(variant);
     }
 
     private static Block knapping(EnumRockNames variant) {
         return new BlockKnapping(variant, variant.getMass() / 4);
     }
 
-    private static Block planks(EnumWoodNames variant) {
-        return new BlockPlanks(variant);
+    private static Block log(EnumWoodNames variant) {
+        return new BlockLog(variant);
     }
 
     private static Block logPile(EnumWoodNames variant) {
         return new BlockLogPile(variant);
+    }
+
+    private static Block metal(EnumMetalNames variant) {
+        return new BlockMetal(variant);
+    }
+
+    private static Block planks(EnumWoodNames variant) {
+        return new BlockPlanks(variant);
+    }
+
+    private static Block polishedStone(EnumRockNames variant) {
+        return new BlockPolishedStone(variant);
+    }
+
+    public static void register() {
+        BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
+    }
+
+    private static Block sand(EnumRockNames variant) {
+        return new BlockSand(variant);
+    }
+
+    private static Block sapling(Tree tree) {
+        return new BlockSapling(tree);
     }
 
     public static void setupVariants() {
@@ -651,5 +645,13 @@ public class EvolutionBlocks {
                     break;
             }
         }
+    }
+
+    private static Block stone(EnumRockNames variant) {
+        return new BlockStone(variant);
+    }
+
+    private static Block stoneBricks(EnumRockNames variant) {
+        return new BlockStoneBricks(variant);
     }
 }	

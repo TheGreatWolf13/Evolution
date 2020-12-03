@@ -5,24 +5,27 @@ import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.CapabilityManager;
-import tgw.evolution.inventory.IExtendedItemHandler;
+import tgw.evolution.inventory.extendedinventory.IExtendedItemHandler;
 import tgw.evolution.util.InjectionUtil;
 
-public class PlayerInventoryCapability {
+public final class PlayerInventoryCapability {
 
     @CapabilityInject(IExtendedItemHandler.class)
     public static final Capability<IExtendedItemHandler> CAPABILITY_EXTENDED_INVENTORY = InjectionUtil.Null();
+
+    private PlayerInventoryCapability() {
+    }
 
     public static void register() {
         CapabilityManager.INSTANCE.register(IExtendedItemHandler.class, new Capability.IStorage<IExtendedItemHandler>() {
 
             @Override
-            public void readNBT(Capability<IExtendedItemHandler> capability, IExtendedItemHandler instance, Direction facing, INBT nbt) {
+            public INBT writeNBT(Capability<IExtendedItemHandler> capability, IExtendedItemHandler instance, Direction facing) {
+                return null;
             }
 
             @Override
-            public INBT writeNBT(Capability<IExtendedItemHandler> capability, IExtendedItemHandler instance, Direction facing) {
-                return null;
+            public void readNBT(Capability<IExtendedItemHandler> capability, IExtendedItemHandler instance, Direction facing, INBT nbt) {
             }
 
         }, () -> {

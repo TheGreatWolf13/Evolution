@@ -14,7 +14,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.Dimension;
-import tgw.evolution.entities.EntityFallingWeight;
+import net.minecraftforge.common.util.Constants;
+import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.DirectionList;
 import tgw.evolution.util.DirectionToIntMap;
@@ -38,37 +39,63 @@ public class BlockGravity extends BlockMass {
         return state.isAir() || material.isLiquid() || material.isReplaceable() || block instanceof IReplaceable;
     }
 
-    @Override
-    public void onBlockHarvested(World worldIn, BlockPos pos, BlockState state, PlayerEntity player) {
-        BlockPos up = pos.up();
-        BlockUtils.scheduleBlockTick(worldIn, up, 2);
-        if (this.canSlope()) {
-            for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
-                BlockUtils.scheduleBlockTick(worldIn, up.offset(dir), 2);
+    public boolean beamCondition(BlockState checkingState, BlockState state) {
+        return true;
+    }
+
+    /**
+     * @param state : The current BlockState of the Block
+     */
+    public Direction[] beamDirections(BlockState state) {
+        return MathHelper.DIRECTIONS_HORIZONTAL;
+    }
+
+    public int beamSize() {
+        return 0;
+    }
+
+    public SoundEvent breakSound() {
+        return EvolutionSounds.STONE_BREAK.get();
+    }
+
+    public boolean canSlope() {
+        return false;
+    }
+
+    public boolean canSlopeFail() {
+        return false;
+    }
+
+    protected boolean canSustainWeight(BlockState state) {
+        return this.getShearStrength() != 0;
+    }
+
+    public final DirectionToIntMap checkBeams(World worldIn, BlockPos pos, boolean nested) {
+        DirectionToIntMap map = new DirectionToIntMap();
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos(pos);
+        for (Direction direction : this.beamDirections(worldIn.getBlockState(pos))) {
+            mutablePos.setPos(pos);
+            for (int i = 1; i <= this.beamSize(); i++) {
+                BlockState check = worldIn.getBlockState(mutablePos.move(direction));
+                if (check.getBlock() == this) {
+                    if (this.isPillar(check, worldIn, mutablePos, nested)) {
+                        map.put(direction, i);
+                        break;
+                    }
+                    if (!this.beamCondition(check, worldIn.getBlockState(pos))) {
+                        break;
+                    }
+                }
+                else if (this.supportCheck(check)) {
+                    map.put(direction, i);
+                    break;
+                }
+                else {
+                    break;
+                }
             }
         }
-        else if (this.hasBeams()) {
-            for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
-                BlockUtils.scheduleBlockTick(worldIn, pos.offset(dir), 2);
-            }
-        }
-        super.onBlockHarvested(worldIn, pos, state, player);
-    }
-
-    public boolean shouldFall(World worldIn, BlockPos pos) {
-        return canFallThrough(worldIn.getBlockState(pos.down())) && pos.getY() >= 0 && worldIn.isAreaLoaded(pos.add(-32, -32, -32), pos.add(32, 32, 32));
-    }
-
-    @Override
-    public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
-        if (!worldIn.isRemote) {
-            this.checkPhysics(worldIn, pos);
-        }
-    }
-
-    @Override
-    public final int tickRate(IWorldReader worldIn) {
-        return 2;
+        return map;
     }
 
     protected final void checkPhysics(World worldIn, BlockPos pos) {
@@ -125,7 +152,8 @@ public class BlockGravity extends BlockMass {
                     }
                     Direction slopeDirection = slopePossibility.getRandomAndRemove(this.RANDOM);
                     //noinspection ObjectAllocationInLoop
-                    if (worldIn.isAreaLoaded(pos.add(-32, -32, -32), pos.add(32, 32, 32)) && worldIn.getEntitiesWithinAABB(EntityFallingWeight.class, new AxisAlignedBB(pos.offset(slopeDirection))).isEmpty()) {
+                    if (worldIn.isAreaLoaded(pos.add(-32, -32, -32), pos.add(32, 32, 32)) &&
+                        worldIn.getEntitiesWithinAABB(EntityFallingWeight.class, new AxisAlignedBB(pos.offset(slopeDirection))).isEmpty()) {
                         this.slope(worldIn, pos, slopeDirection);
                         return;
                     }
@@ -135,23 +163,6 @@ public class BlockGravity extends BlockMass {
                 }
             }
         }
-    }
-
-    /**
-     * @param worldIn : The World
-     * @param pos     : The BlockPos where the slope is being calculated
-     */
-    public boolean preventSlope(World worldIn, BlockPos pos) {
-        return false;
-    }
-
-    /**
-     * @param worldIn : The World
-     * @param pos     : The BlockPos where physics is being calculated.
-     *                Used by stone blocks to sustain blocks under a beam.
-     */
-    public boolean specialCondition(World worldIn, BlockPos pos) {
-        return false;
     }
 
     public void checkWeight(World worldIn, BlockPos pos, DirectionToIntMap map, Axis axis, boolean fallBelow) {
@@ -182,7 +193,11 @@ public class BlockGravity extends BlockMass {
      * Executes when the block is determined to fall.
      */
     public void fall(World worldIn, BlockPos pos) {
-        EntityFallingWeight entity = new EntityFallingWeight(worldIn, pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, this.getStateForFalling(worldIn.getBlockState(pos)));
+        EntityFallingWeight entity = new EntityFallingWeight(worldIn,
+                                                             pos.getX() + 0.5D,
+                                                             pos.getY(),
+                                                             pos.getZ() + 0.5D,
+                                                             this.getStateForFalling(worldIn.getBlockState(pos)));
         worldIn.setBlockState(pos, Blocks.AIR.getDefaultState(), 67);
         entity.fallTime = 1;
         worldIn.addEntity(entity);
@@ -192,24 +207,6 @@ public class BlockGravity extends BlockMass {
         }
     }
 
-    public void slope(World worldIn, BlockPos pos, Direction offset) {
-        EntityFallingWeight entity = new EntityFallingWeight(worldIn, pos.getX() + offset.getXOffset() + 0.5D, pos.getY(), pos.getZ() + offset.getZOffset() + 0.5D, this.getStateForFalling(worldIn.getBlockState(pos)));
-        worldIn.setBlockState(pos, Blocks.AIR.getDefaultState(), 67);
-        entity.fallTime = 1;
-        worldIn.addEntity(entity);
-        entity.playSound(this.fallSound(), 0.125F, 1.0F);
-        BlockUtils.scheduleBlockTick(worldIn, pos.down(), 2);
-        BlockPos up = pos.up();
-        BlockUtils.scheduleBlockTick(worldIn, up, 2);
-        for (Direction dir : Direction.Plane.HORIZONTAL) {
-            BlockUtils.scheduleBlockTick(worldIn, up.offset(dir), 2);
-        }
-    }
-
-    public BlockState getStateForFalling(BlockState state) {
-        return state;
-    }
-
     /**
      * The SoundEvent to play when the block falls.
      */
@@ -217,20 +214,75 @@ public class BlockGravity extends BlockMass {
         return EvolutionSounds.STONE_COLLAPSE.get();
     }
 
-    public SoundEvent breakSound() {
-        return EvolutionSounds.STONE_BREAK.get();
+    public int getShearStrength() {
+        return 0;
     }
 
-    public boolean canSlopeFail() {
+    public BlockState getStateForFalling(BlockState state) {
+        return state;
+    }
+
+    private boolean hasBeams() {
+        return this.beamSize() > 0;
+    }
+
+    public boolean isPillar(BlockState state, World worldIn, BlockPos pos, boolean nested) {
+        return !canFallThrough(worldIn.getBlockState(pos.down()));
+    }
+
+    @Override
+    public void onBlockHarvested(World worldIn, BlockPos pos, BlockState state, PlayerEntity player) {
+        BlockPos up = pos.up();
+        BlockUtils.scheduleBlockTick(worldIn, up, 2);
+        if (this.canSlope()) {
+            for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
+                BlockUtils.scheduleBlockTick(worldIn, up.offset(dir), 2);
+            }
+        }
+        else if (this.hasBeams()) {
+            for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
+                BlockUtils.scheduleBlockTick(worldIn, pos.offset(dir), 2);
+            }
+        }
+        super.onBlockHarvested(worldIn, pos, state, player);
+    }
+
+    /**
+     * @param worldIn : The World
+     * @param pos     : The BlockPos where the slope is being calculated
+     */
+    public boolean preventSlope(World worldIn, BlockPos pos) {
         return false;
     }
 
-    protected boolean canSustainWeight(BlockState state) {
-        return this.getShearStrength() != 0;
+    protected final int shearStrength(Dimension dim) {
+        return (int) (this.getShearStrength() / (Gravity.gravity(dim) * 400));
     }
 
-    public int beamSize() {
-        return 0;
+    public boolean shouldFall(World worldIn, BlockPos pos) {
+        return canFallThrough(worldIn.getBlockState(pos.down())) &&
+               pos.getY() >= 0 &&
+               worldIn.isAreaLoaded(pos.add(-32, -32, -32), pos.add(32, 32, 32));
+    }
+
+    public void slope(World world, BlockPos pos, Direction offset) {
+        EntityFallingWeight entity = new EntityFallingWeight(world,
+                                                             pos.getX() + offset.getXOffset() + 0.5D,
+                                                             pos.getY(),
+                                                             pos.getZ() + offset.getZOffset() + 0.5D,
+                                                             this.getStateForFalling(world.getBlockState(pos)));
+        world.setBlockState(pos,
+                            Blocks.AIR.getDefaultState(),
+                            Constants.BlockFlags.IS_MOVING + Constants.BlockFlags.BLOCK_UPDATE + Constants.BlockFlags.NOTIFY_NEIGHBORS);
+        entity.fallTime = 1;
+        world.addEntity(entity);
+        entity.playSound(this.fallSound(), 0.125F, 1.0F);
+        BlockUtils.scheduleBlockTick(world, pos.down(), 2);
+        BlockPos up = pos.up();
+        BlockUtils.scheduleBlockTick(world, up, 2);
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            BlockUtils.scheduleBlockTick(world, up.offset(dir), 2);
+        }
     }
 
     /**
@@ -240,66 +292,28 @@ public class BlockGravity extends BlockMass {
         return 1;
     }
 
-    protected final int shearStrength(Dimension dim) {
-        return (int) (this.getShearStrength() / (Gravity.gravity(dim) * 400));
-    }
-
-    private boolean hasBeams() {
-        return this.beamSize() > 0;
-    }
-
-    public int getShearStrength() {
-        return 0;
-    }
-
-    public final DirectionToIntMap checkBeams(World worldIn, BlockPos pos, boolean nested) {
-        DirectionToIntMap map = new DirectionToIntMap();
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos(pos);
-        for (Direction direction : this.beamDirections(worldIn.getBlockState(pos))) {
-            mutablePos.setPos(pos);
-            for (int i = 1; i <= this.beamSize(); i++) {
-                BlockState check = worldIn.getBlockState(mutablePos.move(direction));
-                if (check.getBlock() == this) {
-                    if (this.isPillar(check, worldIn, mutablePos, nested)) {
-                        map.put(direction, i);
-                        break;
-                    }
-                    if (!this.beamCondition(check, worldIn.getBlockState(pos))) {
-                        break;
-                    }
-                }
-                else if (this.supportCheck(check)) {
-                    map.put(direction, i);
-                    break;
-                }
-                else {
-                    break;
-                }
-            }
-        }
-        return map;
+    /**
+     * @param worldIn : The World
+     * @param pos     : The BlockPos where physics is being calculated.
+     *                Used by stone blocks to sustain blocks under a beam.
+     */
+    public boolean specialCondition(World worldIn, BlockPos pos) {
+        return false;
     }
 
     public boolean supportCheck(BlockState state) {
         return false;
     }
 
-    public boolean beamCondition(BlockState checkingState, BlockState state) {
-        return true;
+    @Override
+    public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
+        if (!worldIn.isRemote) {
+            this.checkPhysics(worldIn, pos);
+        }
     }
 
-    /**
-     * @param state : The current BlockState of the Block
-     */
-    public Direction[] beamDirections(BlockState state) {
-        return MathHelper.DIRECTIONS_HORIZONTAL;
-    }
-
-    public boolean isPillar(BlockState state, World worldIn, BlockPos pos, boolean nested) {
-        return !canFallThrough(worldIn.getBlockState(pos.down()));
-    }
-
-    public boolean canSlope() {
-        return false;
+    @Override
+    public final int tickRate(IWorldReader worldIn) {
+        return 2;
     }
 }

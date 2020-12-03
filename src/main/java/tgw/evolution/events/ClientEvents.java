@@ -1,12 +1,14 @@
 package tgw.evolution.events;
 
 import com.google.common.collect.Multimap;
+import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
+import net.minecraft.client.gui.screen.DeathScreen;
 import net.minecraft.client.gui.screen.inventory.InventoryScreen;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.FirstPersonRenderer;
@@ -28,6 +30,8 @@ import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.EffectType;
 import net.minecraft.potion.EffectUtils;
 import net.minecraft.potion.Effects;
+import net.minecraft.server.management.PlayerProfileCache;
+import net.minecraft.tileentity.SkullTileEntity;
 import net.minecraft.util.Hand;
 import net.minecraft.util.MovementInput;
 import net.minecraft.util.ResourceLocation;
@@ -58,7 +62,8 @@ import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
-import tgw.evolution.entities.EvolutionAttributes;
+import tgw.evolution.entities.misc.EntityPlayerCorpse;
+import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.*;
@@ -72,6 +77,8 @@ import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.world.dimension.DimensionOverworld;
 
+import javax.annotation.Nullable;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -87,253 +94,77 @@ public class ClientEvents {
     private static final ResourceLocation DESATURATE_25 = Evolution.location("shaders/post/saturation25.json");
     private static final ResourceLocation DESATURATE_50 = Evolution.location("shaders/post/saturation50.json");
     private static final ResourceLocation DESATURATE_75 = Evolution.location("shaders/post/saturation75.json");
+    private static ClientEvents instance;
     private final Minecraft mc;
     private final Random rand = new Random();
-    private GameRenderer oldGameRenderer;
-    private boolean inverted;
-    private boolean skyRendererBinded;
+    public int jumpTicks;
     private int currentShader;
     private int currentThirdPersonView;
-    //Jump variables
-    private boolean isJumpPressed;
-    //Prone variables
-    private boolean proneToggle;
-    private boolean previousPressed;
-    //Offhand variables
-    private boolean isRightPressed;
-    private Entity rightPointedEntity;
-    private ItemStack offhandStack = ItemStack.EMPTY;
-    private int rightTimeSinceLastHit;
-    private float rightSwingProgress;
-    private float rightPrevSwingProgress;
-    private int rightSwingProgressInt;
-    private boolean rightIsSwingInProgress;
-    private float rightEquipProgress;
-    private float rightPrevEquipProgress;
-    //Mainhand variables
-    private boolean isLeftPressed;
-    private Entity leftPointedEntity;
-    private ItemStack mainhandStack = ItemStack.EMPTY;
-    private int leftTimeSinceLastHit;
-    private float leftSwingProgress;
-    private float leftPrevSwingProgress;
-    private int leftSwingProgressInt;
-    private boolean leftIsSwingInProgress;
-    private float leftEquipProgress;
-    private float leftPrevEquipProgress;
-    private boolean requiresReequiping;
     //Health variables
     private long healthUpdateCounter;
-    private int ticks;
-    private float playerHealth;
-    private long lastSystemTime;
+    private boolean inverted;
+    //Jump variables
+    private boolean isJumpPressed;
+    //Mainhand variables
+    private boolean isLeftPressed;
+    //Offhand variables
+    private boolean isRightPressed;
+    private boolean isSneakPressed;
     private float lastPlayerHealth;
+    private long lastSystemTime;
+    private float leftEquipProgress;
+    private boolean leftIsSwingInProgress;
+    @Nullable
+    private Entity leftPointedEntity;
+    private float leftPrevEquipProgress;
+    private float leftPrevSwingProgress;
+    private EntityRayTraceResult leftRayTrace;
+    private float leftSwingProgress;
+    private int leftSwingProgressInt;
+    private int leftTimeSinceLastHit;
+    private ItemStack mainhandStack = ItemStack.EMPTY;
+    private ItemStack offhandStack = ItemStack.EMPTY;
+    private GameRenderer oldGameRenderer;
+    private float playerHealth;
+    private boolean previousPressed;
+    //Prone variables
+    private boolean proneToggle;
+    private boolean requiresReequiping;
+    private float rightEquipProgress;
+    private boolean rightIsSwingInProgress;
+    @Nullable
+    private Entity rightPointedEntity;
+    private float rightPrevEquipProgress;
+    private float rightPrevSwingProgress;
+    private EntityRayTraceResult rightRayTrace;
+    private float rightSwingProgress;
+    private int rightSwingProgressInt;
+    private int rightTimeSinceLastHit;
+    private boolean skinsLoaded;
+    private boolean skyRendererBinded;
+    private boolean sneakpreviousPressed;
+    private int ticks;
 
     public ClientEvents(Minecraft mc) {
         this.mc = mc;
+        instance = this;
     }
 
-    @SubscribeEvent
-    public void renderTooltip(RenderTooltipEvent.PostText event) {
-        ItemStack stack = event.getStack();
-        Item item = stack.getItem();
-        if (stack.isFood()) {
-            Food food = item.getFood();
-            if (food != null) {
-                GlStateManager.pushMatrix();
-                GlStateManager.color3f(1.0F, 1.0F, 1.0F);
-                Minecraft mc = Minecraft.getInstance();
-                mc.getTextureManager().bindTexture(ICONS);
-                int pips = food.getHealing();
-                boolean poison = false;
-                for (Pair<EffectInstance, Float> effect : food.getEffects()) {
-                    if (effect.getLeft().getPotion().getEffectType() == EffectType.HARMFUL) {
-                        poison = true;
-                        break;
-                    }
-                }
-                int count = MathHelper.ceil((double) pips / 2);
-                int y = shiftTextByLines(event.getLines(), event.getY() + 10);
-                for (int i = 0; i < count; i++) {
-                    int x = event.getX() + i * 9 - 1;
-                    int textureX = 16;
-                    if (poison) {
-                        textureX += 117;
-                    }
-                    int textureY = 27;
-                    blit(x, y, textureX, textureY, 9, 9);
-                    textureX = 52;
-                    if (pips % 2 != 0 && i == 0) {
-                        textureX += 9;
-                    }
-                    if (poison) {
-                        textureX += 36;
-                    }
-                    blit(x, y, textureX, textureY, 9, 9);
-                }
-                GlStateManager.popMatrix();
-            }
-        }
-        else if (item instanceof IEvolutionItem) {
-            GlStateManager.pushMatrix();
-            GlStateManager.color3f(1.0F, 1.0F, 1.0F);
-            Minecraft mc = Minecraft.getInstance();
-            mc.getTextureManager().bindTexture(ICONS);
-            boolean hasMass = false;
-            boolean hasDamage = false;
-            boolean hasSpeed = false;
-            boolean hasReach = false;
-            for (EquipmentSlotType slot : EquipmentSlotType.values()) {
-                Multimap<String, AttributeModifier> multimap = stack.getAttributeModifiers(slot);
-                if (!multimap.isEmpty()) {
-                    for (Map.Entry<String, AttributeModifier> entry : multimap.entries()) {
-                        AttributeModifier attributemodifier = entry.getValue();
-                        if (attributemodifier.getID().compareTo(EvolutionAttributes.ATTACK_DAMAGE_MODIFIER) == 0) {
-                            hasDamage = true;
-                            continue;
-                        }
-                        if (attributemodifier.getID().compareTo(EvolutionAttributes.ATTACK_SPEED_MODIFIER) == 0) {
-                            hasSpeed = true;
-                            continue;
-                        }
-                        if (attributemodifier.getID() == EvolutionAttributes.REACH_DISTANCE_MODIFIER) {
-                            hasReach = true;
-                            continue;
-                        }
-                        if (attributemodifier.getID() == EvolutionAttributes.MASS_MODIFIER ||
-                            attributemodifier.getID() == EvolutionAttributes.MASS_MODIFIER_OFFHAND) {
-                            hasMass = true;
-                        }
-                    }
-                    break;
-                }
-            }
-            int line = 1;
-            if (item instanceof IFireAspect) {
-                line++;
-            }
-            if (item instanceof IKnockback) {
-                line++;
-            }
-            if (item instanceof ISweepAttack) {
-                line++;
-            }
-            if (stack.hasTag()) {
-                if (stack.getTag().contains("display", 10)) {
-                    CompoundNBT display = stack.getTag().getCompound("display");
-                    if (display.contains("color", 3)) {
-                        line++;
-                    }
-                    if (display.getTagId("Lore") == 9) {
-                        for (int j = 0; j < display.getList("Lore", 8).size(); ++j) {
-                            line++;
-                        }
-                    }
-                }
-            }
-            if (hasMass) {
-                line++;
-                //Mass line
-                int x = event.getX();
-                int y = shiftTextByLines(line, event.getY() + 10);
-                int textureX = 0;
-                int textureY = 247;
-                blit(x, y, textureX, textureY, 9, 9);
-                line++;
-            }
-            boolean hasAddedLine = false;
-            //Two Handed line
-            if (item instanceof ITwoHanded) {
-                line += 2;
-                hasAddedLine = true;
-            }
-            //Throwable line
-            if (item instanceof IThrowable) {
-                if (hasAddedLine) {
-                    line++;
-                }
-                else {
-                    line += 2;
-                }
-                hasAddedLine = true;
-            }
-            boolean hasAttributes = hasSpeed || hasDamage || hasReach;
-            if (hasAddedLine) {
-                hasAddedLine = false;
-            }
-            else {
-                if (hasAttributes) {
-                    line++;
-                }
-            }
-            if (hasAttributes) {
-                //Slot name
-                line++;
-            }
-            //Attack Speed
-            if (hasSpeed) {
-                int x = event.getX() + 4;
-                int y = shiftTextByLines(line, event.getY() + 10);
-                int textureX = 63;
-                int textureY = 247;
-                blit(x, y, textureX, textureY, 9, 9);
-                line++;
-            }
-            //Attack Damage
-            if (hasDamage) {
-                int textureX = 54;
-                if (item instanceof IMelee) {
-                    switch (((IMelee) item).getDamageType()) {
-                        case CRUSHING:
-                            textureX = 36;
-                            break;
-                        case PIERCING:
-                            textureX = 45;
-                            break;
-                        case SLASHING:
-                            textureX = 27;
-                            break;
-                    }
-                }
-                int x = event.getX() + 4;
-                int y = shiftTextByLines(line, event.getY() + 10);
-                int textureY = 247;
-                blit(x, y, textureX, textureY, 9, 9);
-                line++;
-            }
-            //Reach distance
-            if (hasReach) {
-                int x = event.getX() + 4;
-                int y = shiftTextByLines(line, event.getY() + 10);
-                int textureX = 18;
-                int textureY = 247;
-                blit(x, y, textureX, textureY, 9, 9);
-                line++;
-            }
-            //Mining Speed
-            if (item instanceof ItemTool) {
-                int x = event.getX() + 4;
-                int y = shiftTextByLines(line, event.getY() + 10);
-                int textureX = 9;
-                int textureY = 247;
-                blit(x, y, textureX, textureY, 9, 9);
-                line++;
-            }
-            //Unbreakable
-            if (stack.hasTag() && stack.getTag().getBoolean("Unbreakable")) {
-                line++;
-            }
-            //Durability
-            if (stack.getItem() instanceof IDurability) {
-                int x = event.getX();
-                int y = shiftTextByLines(line, event.getY() + 10);
-                int textureX = 72;
-                int textureY = 247;
-                blit(x, y, textureX, textureY, 9, 9);
-                line++;
-            }
-            GlStateManager.popMatrix();
-        }
+    private static void blit(int x, int y, int textureX, int textureY, int sizeX, int sizeY) {
+        AbstractGui.blit(x, y, 20, textureX, textureY, sizeX, sizeY, 256, 256);
+    }
+
+    public static ClientEvents getInstance() {
+        return instance;
+    }
+
+    private static float getRightCooldownPeriod(IOffhandAttackable item) {
+        double attackSpeed = item.getAttackSpeed() + PlayerHelper.ATTACK_SPEED;
+        return (float) (1 / attackSpeed * 20);
+    }
+
+    private static float roundToHearts(float currentHealth) {
+        return MathHelper.floor(currentHealth * 0.4F) / 0.4F;
     }
 
     public static int shiftTextByLines(List<String> lines, int y) {
@@ -348,76 +179,58 @@ public class ClientEvents {
         return y;
     }
 
-    private static void blit(int x, int y, int textureX, int textureY, int sizeX, int sizeY) {
-        AbstractGui.blit(x, y, 20, textureX, textureY, sizeX, sizeY, 256, 256);
-    }
-
     public static int shiftTextByLines(int desiredLine, int y) {
         return y + 10 * (desiredLine - 1) + 1;
     }
 
-    @SubscribeEvent
-    public void onFogRender(EntityViewRenderEvent.FogDensity event) {
-        //Render Blindness fog
-        if (this.mc.player != null && this.mc.player.isPotionActive(Effects.BLINDNESS)) {
-            float f1 = 5.0F;
-            int duration = this.mc.player.getActivePotionEffect(Effects.BLINDNESS).getDuration();
-            int amplifier = this.mc.player.getActivePotionEffect(Effects.BLINDNESS).getAmplifier() + 1;
-            if (duration < 20) {
-                f1 = 5.0F + (this.mc.gameSettings.renderDistanceChunks * 16 - 5.0F) * (1.0F - duration / 20.0F);
-            }
-            GlStateManager.fogMode(GlStateManager.FogMode.LINEAR);
-            float multiplier = 0.25F / amplifier;
-            GlStateManager.fogStart(f1 * multiplier);
-            GlStateManager.fogEnd(f1 * multiplier * 4.0F);
-            if (GL.getCapabilities().GL_NV_fog_distance) {
-                GL11.glFogi(34_138, 34_139);
-            }
-            event.setDensity(2.0F);
-            event.setCanceled(true);
-        }
+    private static void swapControls(Minecraft mc) {
+        swapKeybinds(mc.gameSettings.keyBindJump, mc.gameSettings.keyBindSneak);
+        swapKeybinds(mc.gameSettings.keyBindForward, mc.gameSettings.keyBindBack);
+        swapKeybinds(mc.gameSettings.keyBindLeft, mc.gameSettings.keyBindRight);
+        mc.gameSettings.saveOptions();
+        mc.gameSettings.loadOptions();
     }
 
-    @SubscribeEvent
-    public void onRenderOutlines(DrawBlockHighlightEvent event) {
-        if (event.getTarget().getType() == RayTraceResult.Type.BLOCK) {
-            BlockPos hitPos = ((BlockRayTraceResult) event.getTarget()).getPos();
-            if (!this.mc.world.getWorldBorder().contains(hitPos)) {
-                return;
-            }
-            if (this.mc.world.getBlockState(hitPos).getBlock() instanceof BlockKnapping) {
-                TEKnapping tile = (TEKnapping) this.mc.world.getTileEntity(hitPos);
-                this.renderOutlines(tile.type.getShape(), event.getInfo(), hitPos);
-                return;
-            }
-            if (this.mc.world.getBlockState(hitPos).getBlock() instanceof BlockMolding) {
-                TEMolding tile = (TEMolding) this.mc.world.getTileEntity(hitPos);
-                this.renderOutlines(tile.molding.getShape(), event.getInfo(), hitPos);
-            }
-        }
+    private static void swapKeybinds(KeyBinding a, KeyBinding b) {
+        InputMappings.Input temp = a.getKey();
+        a.bind(b.getKey());
+        b.bind(temp);
     }
 
-    private void renderOutlines(VoxelShape shape, ActiveRenderInfo info, BlockPos pos) {
-        GlStateManager.enableBlend();
-        GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-                                         GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                                         GlStateManager.SourceFactor.ONE,
-                                         GlStateManager.DestFactor.ZERO);
-        GlStateManager.lineWidth(Math.max(2.5F, this.mc.mainWindow.getFramebufferWidth() / 1_920.0F * 2.5F));
-        GlStateManager.disableTexture();
-        GlStateManager.depthMask(false);
-        GlStateManager.matrixMode(5_889);
-        GlStateManager.pushMatrix();
-        GlStateManager.scalef(1.0F, 1.0F, 0.999F);
-        double projX = info.getProjectedView().x;
-        double projY = info.getProjectedView().y;
-        double projZ = info.getProjectedView().z;
-        WorldRenderer.drawShape(shape, pos.getX() - projX, pos.getY() - projY, pos.getZ() - projZ, 1.0F, 1.0F, 0.0F, 1.0F);
-        GlStateManager.popMatrix();
-        GlStateManager.matrixMode(5_888);
-        GlStateManager.depthMask(true);
-        GlStateManager.enableTexture();
-        GlStateManager.disableBlend();
+    private int getArmSwingAnimationEnd() {
+        if (EffectUtils.hasMiningSpeedup(this.mc.player)) {
+            return 6 - (1 + EffectUtils.getMiningSpeedup(this.mc.player));
+        }
+        return this.mc.player.isPotionActive(Effects.MINING_FATIGUE) ?
+               6 + (1 + this.mc.player.getActivePotionEffect(Effects.MINING_FATIGUE).getAmplifier()) * 2 :
+               6;
+    }
+
+    private float getLeftCooledAttackStrength(float adjustTicks) {
+        return MathHelper.clamp((this.leftTimeSinceLastHit + adjustTicks) / this.mc.player.getCooldownPeriod(), 0.0F, 1.0F);
+    }
+
+    private float getLeftSwingProgress(float partialTickTime) {
+        float f = this.leftSwingProgress - this.leftPrevSwingProgress;
+        if (f < 0.0F) {
+            ++f;
+        }
+        return this.leftPrevSwingProgress + f * partialTickTime;
+    }
+
+    private float getRightCooledAttackStrength(Item item, float adjustTicks) {
+        if (!(item instanceof IOffhandAttackable)) {
+            return 0;
+        }
+        return MathHelper.clamp((this.rightTimeSinceLastHit + adjustTicks) / getRightCooldownPeriod((IOffhandAttackable) item), 0.0F, 1.0F);
+    }
+
+    private float getRightSwingProgress(float partialTickTime) {
+        float f = this.rightSwingProgress - this.rightPrevSwingProgress;
+        if (f < 0.0F) {
+            ++f;
+        }
+        return this.rightPrevSwingProgress + f * partialTickTime;
     }
 
     @SubscribeEvent
@@ -426,6 +239,7 @@ public class ClientEvents {
         this.mc.gameSettings.autoJump = false;
         if (this.mc.player == null) {
             this.skyRendererBinded = false;
+            this.skinsLoaded = false;
             return;
         }
         //Bind Sky Renderer
@@ -435,8 +249,32 @@ public class ClientEvents {
                 this.skyRendererBinded = true;
             }
         }
+        //Load skin for corpses
+        if (!this.skinsLoaded) {
+            try {
+                Field playerProfField = ObfuscationReflectionHelper.findField(SkullTileEntity.class, "field_184298_j");
+                Field sessionField = ObfuscationReflectionHelper.findField(SkullTileEntity.class, "field_184299_k");
+                PlayerProfileCache playerProfile = (PlayerProfileCache) playerProfField.get(null);
+                MinecraftSessionService session = (MinecraftSessionService) sessionField.get(null);
+                if (playerProfile != null && session != null) {
+                    EntityPlayerCorpse.setProfileCache(playerProfile);
+                    EntityPlayerCorpse.setSessionService(session);
+                    this.skinsLoaded = true;
+                }
+            }
+            catch (IllegalStateException | IllegalAccessException e) {
+                Evolution.LOGGER.warn("Error while trying to load skins: ", e);
+            }
+        }
         //Runs at the start of each tick
         if (event.phase == TickEvent.Phase.START) {
+            //Jump
+            if (this.jumpTicks > 0) {
+                this.jumpTicks--;
+            }
+            if (this.mc.player.onGround) {
+                this.jumpTicks = 0;
+            }
             //Apply shaders
             int shader;
             if (!this.mc.player.isCreative() && !this.mc.player.isSpectator()) {
@@ -485,18 +323,17 @@ public class ClientEvents {
                 if (this.mc.world.dimension instanceof DimensionOverworld) {
                     this.mc.world.dimension.tick();
                 }
-                EntityRayTraceResult leftRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player,
-                                                                                      1.0f,
-                                                                                      this.mc.player.getAttribute(PlayerEntity.REACH_DISTANCE)
-                                                                                                    .getValue());
-                this.leftPointedEntity = leftRayTrace == null ? null : leftRayTrace.getEntity();
+                this.leftRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player,
+                                                                      1.0f,
+                                                                      this.mc.player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue());
+                this.leftPointedEntity = this.leftRayTrace == null ? null : this.leftRayTrace.getEntity();
                 if (this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable) {
-                    EntityRayTraceResult rightRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player,
-                                                                                           1.0f,
-                                                                                           ((IOffhandAttackable) this.mc.player.getHeldItemOffhand()
-                                                                                                                               .getItem()).getReach() +
-                                                                                           PlayerHelper.REACH_DISTANCE);
-                    this.rightPointedEntity = rightRayTrace == null ? null : rightRayTrace.getEntity();
+                    this.rightRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player,
+                                                                           1.0f,
+                                                                           ((IOffhandAttackable) this.mc.player.getHeldItemOffhand()
+                                                                                                               .getItem()).getReach() +
+                                                                           PlayerHelper.REACH_DISTANCE);
+                    this.rightPointedEntity = this.rightRayTrace == null ? null : this.rightRayTrace.getEntity();
                 }
                 else {
                     this.rightPointedEntity = null;
@@ -552,6 +389,13 @@ public class ClientEvents {
                 }
                 this.previousPressed = pressed;
                 this.updateClientProneState(this.mc.player);
+                //Sneak on ladders
+                if (this.mc.player.isOnLadder()) {
+                    if (this.isSneakPressed && !this.sneakpreviousPressed) {
+                        this.sneakpreviousPressed = true;
+                        this.mc.player.setMotion(Vec3d.ZERO);
+                    }
+                }
                 //Handle creative features
                 if (this.mc.player.isCreative() && ClientProxy.BUILDING_ASSIST.isKeyDown()) {
                     this.mc.player.sendStatusMessage(COMPONENT_INERTIA, true);
@@ -607,90 +451,131 @@ public class ClientEvents {
         }
     }
 
-    private float getLeftCooledAttackStrength(float adjustTicks) {
-        return MathHelper.clamp((this.leftTimeSinceLastHit + adjustTicks) / this.mc.player.getCooldownPeriod(), 0.0F, 1.0F);
-    }
-
-    private static void swapControls(Minecraft mc) {
-        swapKeybinds(mc.gameSettings.keyBindJump, mc.gameSettings.keyBindSneak);
-        swapKeybinds(mc.gameSettings.keyBindForward, mc.gameSettings.keyBindBack);
-        swapKeybinds(mc.gameSettings.keyBindLeft, mc.gameSettings.keyBindRight);
-        mc.gameSettings.saveOptions();
-        mc.gameSettings.loadOptions();
-    }
-
-    private void updateClientProneState(PlayerEntity player) {
-        if (player != null) {
-            UUID uuid = player.getUniqueID();
-            boolean shouldBeProne = ClientProxy.TOGGLE_PRONE.isKeyDown() != this.proneToggle;
-            shouldBeProne = shouldBeProne &&
-                            !player.isInWater() &&
-                            !player.isInLava() &&
-                            (!player.isOnLadder() || !this.isJumpPressed && player.onGround);
-            shouldBeProne = shouldBeProne && (!player.isOnLadder() || !this.isJumpPressed && player.onGround);
-            BlockPos pos = player.getPosition().up(2);
-            shouldBeProne = shouldBeProne ||
-                            this.proneToggle &&
-                            player.isOnLadder() &&
-                            !player.world.getBlockState(pos).getCollisionShape(player.world, pos, null).isEmpty();
-            if (shouldBeProne != Evolution.PRONED_PLAYERS.getOrDefault(uuid, false)) {
-                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSetProne(shouldBeProne));
+    @SubscribeEvent
+    public void onFogRender(EntityViewRenderEvent.FogDensity event) {
+        //Render Blindness fog
+        if (this.mc.player != null && this.mc.player.isPotionActive(Effects.BLINDNESS)) {
+            float f1 = 5.0F;
+            int duration = this.mc.player.getActivePotionEffect(Effects.BLINDNESS).getDuration();
+            int amplifier = this.mc.player.getActivePotionEffect(Effects.BLINDNESS).getAmplifier() + 1;
+            if (duration < 20) {
+                f1 = 5.0F + (this.mc.gameSettings.renderDistanceChunks * 16 - 5.0F) * (1.0F - duration / 20.0F);
             }
-            Evolution.PRONED_PLAYERS.put(uuid, shouldBeProne);
+            GlStateManager.fogMode(GlStateManager.FogMode.LINEAR);
+            float multiplier = 0.25F / amplifier;
+            GlStateManager.fogStart(f1 * multiplier);
+            GlStateManager.fogEnd(f1 * multiplier * 4.0F);
+            if (GL.getCapabilities().GL_NV_fog_distance) {
+                GL11.glFogi(34_138, 34_139);
+            }
+            event.setDensity(2.0F);
+            event.setCanceled(true);
         }
     }
 
-    private void updateArmSwingProgress() {
-        int i = this.getArmSwingAnimationEnd();
-        if (this.rightIsSwingInProgress) {
-            ++this.rightSwingProgressInt;
-            if (this.rightSwingProgressInt >= i) {
-                this.rightSwingProgressInt = 0;
-                this.rightIsSwingInProgress = false;
+    @SubscribeEvent
+    public void onGUIOpen(GuiOpenEvent event) {
+        if (event.getGui() instanceof InventoryScreen) {
+            event.setCanceled(true);
+            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSOpenExtendedInventory());
+        }
+        //Auto-Respawn for debugging purposes only
+        else if (event.getGui() instanceof DeathScreen) {
+            this.mc.player.respawnPlayer();
+        }
+    }
+
+    @SubscribeEvent
+    public void onKeyboardEvent(InputEvent.KeyInputEvent event) {
+        if (this.mc.currentScreen != null || this.mc.player == null) {
+            return;
+        }
+        KeyBinding attack = this.mc.gameSettings.keyBindAttack;
+        KeyBinding use = this.mc.gameSettings.keyBindUseItem;
+        if (attack.getKey().getType() == InputMappings.Type.KEYSYM) {
+            if (attack.getKey().getKeyCode() == event.getKey()) {
+                if (event.getAction() == GLFW.GLFW_PRESS && !this.isRightPressed) {
+                    this.isLeftPressed = true;
+                    this.onLeftMouseClick();
+                }
+                else {
+                    this.isLeftPressed = false;
+                }
             }
         }
-        else {
-            this.rightSwingProgressInt = 0;
-        }
-        this.rightSwingProgress = this.rightSwingProgressInt / (float) i;
-        if (this.leftIsSwingInProgress) {
-            ++this.leftSwingProgressInt;
-            if (this.leftSwingProgressInt >= i) {
-                this.leftSwingProgressInt = 0;
-                this.leftIsSwingInProgress = false;
+        if (use.getKey().getType() == InputMappings.Type.KEYSYM) {
+            if (use.getKey().getKeyCode() == event.getKey()) {
+                if (event.getAction() == GLFW.GLFW_PRESS && !this.isLeftPressed) {
+                    this.isRightPressed = true;
+                    this.onRightMouseClick();
+                }
+                else {
+                    this.isRightPressed = false;
+                }
             }
         }
-        else {
-            this.leftSwingProgressInt = 0;
+    }
+
+    //Handle mainhand attack
+    private void onLeftMouseClick() {
+        float cooldown = this.mc.player.getCooldownPeriod();
+        if (this.leftTimeSinceLastHit >= cooldown && this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
+            this.requiresReequiping = true;
+            this.leftTimeSinceLastHit = 0;
+            double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getHitVec().y : Double.NaN;
+            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.leftPointedEntity, Hand.MAIN_HAND, rayTraceY));
+            this.swingArm(Hand.MAIN_HAND);
         }
-        this.leftSwingProgress = this.leftSwingProgressInt / (float) i;
     }
 
-    private float getRightCooledAttackStrength(Item item, float adjustTicks) {
-        if (!(item instanceof IOffhandAttackable)) {
-            return 0;
+    @SubscribeEvent
+    public void onModelBake(ModelBakeEvent event) {
+        //        event.getModelRegistry().put(new ModelResourceLocation(EvolutionBlocks.FANCYBLOCK.get().getRegistryName(), ""), new
+        //        FancyBakedModel(DefaultVertexFormats.BLOCK));
+    }
+
+    @SubscribeEvent
+    public void onMouseEvent(InputEvent.MouseInputEvent event) {
+        if (this.mc.currentScreen != null || this.mc.player == null) {
+            return;
         }
-        return MathHelper.clamp((this.rightTimeSinceLastHit + adjustTicks) / getRightCooldownPeriod((IOffhandAttackable) item), 0.0F, 1.0F);
-    }
-
-    private static void swapKeybinds(KeyBinding a, KeyBinding b) {
-        InputMappings.Input temp = a.getKey();
-        a.bind(b.getKey());
-        b.bind(temp);
-    }
-
-    private int getArmSwingAnimationEnd() {
-        if (EffectUtils.hasMiningSpeedup(this.mc.player)) {
-            return 6 - (1 + EffectUtils.getMiningSpeedup(this.mc.player));
+        KeyBinding attack = this.mc.gameSettings.keyBindAttack;
+        KeyBinding use = this.mc.gameSettings.keyBindUseItem;
+        if (attack.getKey().getType() == InputMappings.Type.MOUSE) {
+            if (attack.getKey().getKeyCode() == event.getButton()) {
+                if (event.getAction() == GLFW.GLFW_PRESS && !this.isRightPressed) {
+                    this.isLeftPressed = true;
+                    this.onLeftMouseClick();
+                }
+                else {
+                    this.isLeftPressed = false;
+                }
+            }
         }
-        return this.mc.player.isPotionActive(Effects.MINING_FATIGUE) ?
-               6 + (1 + this.mc.player.getActivePotionEffect(Effects.MINING_FATIGUE).getAmplifier()) * 2 :
-               6;
+        if (use.getKey().getType() == InputMappings.Type.MOUSE) {
+            if (use.getKey().getKeyCode() == event.getButton()) {
+                if (event.getAction() == GLFW.GLFW_PRESS && !this.isLeftPressed) {
+                    this.isRightPressed = true;
+                    this.onRightMouseClick();
+                }
+                else {
+                    this.isRightPressed = false;
+                }
+            }
+        }
     }
 
-    private static float getRightCooldownPeriod(IOffhandAttackable item) {
-        double attackSpeed = item.getAttackSpeed() + PlayerHelper.ATTACK_SPEED;
-        return (float) (1 / attackSpeed * 20);
+    @SubscribeEvent
+    public void onPlayerInput(InputUpdateEvent event) {
+        MovementInput movementInput = event.getMovementInput();
+        this.isJumpPressed = movementInput.jump;
+        this.isSneakPressed = movementInput.sneak;
+        if (!this.isSneakPressed) {
+            this.sneakpreviousPressed = false;
+        }
+        if (this.proneToggle && !this.mc.player.isOnLadder()) {
+            movementInput.jump = false;
+        }
     }
 
     @SubscribeEvent
@@ -707,6 +592,104 @@ public class ClientEvents {
             event.setCanceled(true);
             this.renderHealth();
         }
+    }
+
+    @SubscribeEvent
+    public void onRenderHand(RenderSpecificHandEvent event) {
+        if (event.getHand() == Hand.OFF_HAND && this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable) {
+            event.setCanceled(true);
+            float partialTicks = event.getPartialTicks();
+            float pitch = event.getInterpolatedPitch();
+            float rightSwingProgress = this.getRightSwingProgress(partialTicks);
+            FirstPersonRenderer renderer = this.mc.getFirstPersonRenderer();
+            float rightEquipProgress = 1.0F - MathHelper.lerp(partialTicks, this.rightPrevEquipProgress, this.rightEquipProgress);
+            renderer.renderItemInFirstPerson(this.mc.player,
+                                             partialTicks,
+                                             pitch,
+                                             Hand.OFF_HAND,
+                                             rightSwingProgress,
+                                             this.mc.player.getHeldItemOffhand(),
+                                             rightEquipProgress);
+            return;
+        }
+        if (event.getHand() == Hand.MAIN_HAND && this.requiresReequiping) {
+            event.setCanceled(true);
+            float partialTicks = event.getPartialTicks();
+            float pitch = event.getInterpolatedPitch();
+            float leftSwingProgress = this.getLeftSwingProgress(partialTicks);
+            FirstPersonRenderer renderer = this.mc.getFirstPersonRenderer();
+            float leftEquipProgress = 1.0F - MathHelper.lerp(partialTicks, this.leftPrevEquipProgress, this.leftEquipProgress);
+            if (this.leftEquipProgress == 1 && this.leftPrevEquipProgress == 1 && this.leftTimeSinceLastHit != 0) {
+                this.requiresReequiping = false;
+            }
+            renderer.renderItemInFirstPerson(this.mc.player,
+                                             partialTicks,
+                                             pitch,
+                                             Hand.MAIN_HAND,
+                                             leftSwingProgress,
+                                             this.mc.player.getHeldItemMainhand(),
+                                             leftEquipProgress);
+        }
+    }
+
+    @SubscribeEvent
+    public void onRenderOutlines(DrawBlockHighlightEvent event) {
+        if (event.getTarget().getType() == RayTraceResult.Type.BLOCK) {
+            BlockPos hitPos = ((BlockRayTraceResult) event.getTarget()).getPos();
+            if (!this.mc.world.getWorldBorder().contains(hitPos)) {
+                return;
+            }
+            if (this.mc.world.getBlockState(hitPos).getBlock() instanceof BlockKnapping) {
+                TEKnapping tile = (TEKnapping) this.mc.world.getTileEntity(hitPos);
+                this.renderOutlines(tile.type.getShape(), event.getInfo(), hitPos);
+                return;
+            }
+            if (this.mc.world.getBlockState(hitPos).getBlock() instanceof BlockMolding) {
+                TEMolding tile = (TEMolding) this.mc.world.getTileEntity(hitPos);
+                this.renderOutlines(tile.molding.getShape(), event.getInfo(), hitPos);
+            }
+        }
+    }
+
+    //Handle offhand attack
+    private void onRightMouseClick() {
+        Item offhandItem = this.mc.player.getHeldItemOffhand().getItem();
+        if (!(offhandItem instanceof IOffhandAttackable)) {
+            return;
+        }
+        ItemStack mainHandStack = this.mc.player.getHeldItemMainhand();
+        float cooldown = getRightCooldownPeriod((IOffhandAttackable) offhandItem);
+        if (this.rightTimeSinceLastHit >= cooldown &&
+            mainHandStack.getUseAction() == UseAction.NONE &&
+            this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
+            this.rightTimeSinceLastHit = 0;
+            double rayTraceY = this.rightRayTrace != null ? this.rightRayTrace.getHitVec().y : Double.NaN;
+            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.rightPointedEntity, Hand.OFF_HAND, rayTraceY));
+            this.swingArm(Hand.OFF_HAND);
+        }
+    }
+
+    @SubscribeEvent
+    public void onTextureStitch(TextureStitchEvent.Pre event) {
+        //        if (!event.getMap().getBasePath().equals("textures")) {
+        //            return;
+        //        }
+        //        event.addSprite(new ResourceLocation(Evolution.MODID, "block/clay"));
+    }
+
+    private boolean rayTraceMouse(RayTraceResult rayTraceResult) {
+        if (rayTraceResult == null) {
+            return false;
+        }
+        if (rayTraceResult.getType() == RayTraceResult.Type.ENTITY) {
+            return ((EntityRayTraceResult) rayTraceResult).getEntity() instanceof INamedContainerProvider;
+        }
+        if (rayTraceResult.getType() == RayTraceResult.Type.BLOCK) {
+            BlockPos blockpos = ((BlockRayTraceResult) rayTraceResult).getPos();
+            World world = this.mc.world;
+            return world.getBlockState(blockpos).getContainer(world, blockpos) != null;
+        }
+        return false;
     }
 
     private void renderAttackIndicator() {
@@ -746,6 +729,9 @@ public class ClientEvents {
                         if (this.leftPointedEntity instanceof LivingEntity && leftCooledAttackStrength >= 1) {
                             shouldShowLeftAttackIndicator = this.mc.player.getCooldownPeriod() > 5;
                             shouldShowLeftAttackIndicator &= this.leftPointedEntity.canBeAttackedWithItem();
+                            if (this.mc.objectMouseOver.getType() == RayTraceResult.Type.BLOCK) {
+                                shouldShowLeftAttackIndicator = false;
+                            }
                         }
                         int x = scaledWidth / 2 - 8;
                         x = offhandValid ? x + 10 : x;
@@ -763,6 +749,9 @@ public class ClientEvents {
                             float rightCooledAttackStrength = this.getRightCooledAttackStrength(this.mc.player.getHeldItemOffhand().getItem(), 0);
                             if (this.rightPointedEntity instanceof LivingEntity && rightCooledAttackStrength >= 1) {
                                 shouldShowRightAttackIndicator = this.rightPointedEntity.canBeAttackedWithItem();
+                                if (this.mc.objectMouseOver.getType() == RayTraceResult.Type.BLOCK) {
+                                    shouldShowRightAttackIndicator = false;
+                                }
                             }
                             x -= 20;
                             if (shouldShowRightAttackIndicator) {
@@ -919,23 +908,237 @@ public class ClientEvents {
         this.mc.getProfiler().endSection();
     }
 
-    private boolean rayTraceMouse(RayTraceResult rayTraceResult) {
-        if (rayTraceResult == null) {
-            return false;
-        }
-        if (rayTraceResult.getType() == RayTraceResult.Type.ENTITY) {
-            return ((EntityRayTraceResult) rayTraceResult).getEntity() instanceof INamedContainerProvider;
-        }
-        if (rayTraceResult.getType() == RayTraceResult.Type.BLOCK) {
-            BlockPos blockpos = ((BlockRayTraceResult) rayTraceResult).getPos();
-            World world = this.mc.world;
-            return world.getBlockState(blockpos).getContainer(world, blockpos) != null;
-        }
-        return false;
+    private void renderOutlines(VoxelShape shape, ActiveRenderInfo info, BlockPos pos) {
+        GlStateManager.enableBlend();
+        GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
+                                         GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                                         GlStateManager.SourceFactor.ONE,
+                                         GlStateManager.DestFactor.ZERO);
+        GlStateManager.lineWidth(Math.max(2.5F, this.mc.mainWindow.getFramebufferWidth() / 1_920.0F * 2.5F));
+        GlStateManager.disableTexture();
+        GlStateManager.depthMask(false);
+        GlStateManager.matrixMode(5_889);
+        GlStateManager.pushMatrix();
+        GlStateManager.scalef(1.0F, 1.0F, 0.999F);
+        double projX = info.getProjectedView().x;
+        double projY = info.getProjectedView().y;
+        double projZ = info.getProjectedView().z;
+        WorldRenderer.drawShape(shape, pos.getX() - projX, pos.getY() - projY, pos.getZ() - projZ, 1.0F, 1.0F, 0.0F, 1.0F);
+        GlStateManager.popMatrix();
+        GlStateManager.matrixMode(5_888);
+        GlStateManager.depthMask(true);
+        GlStateManager.enableTexture();
+        GlStateManager.disableBlend();
     }
 
-    private static float roundToHearts(float currentHealth) {
-        return (int) (currentHealth * 0.4F) / 0.4F;
+    @SubscribeEvent
+    public void renderTooltip(RenderTooltipEvent.PostText event) {
+        ItemStack stack = event.getStack();
+        Item item = stack.getItem();
+        if (stack.isFood()) {
+            Food food = item.getFood();
+            if (food != null) {
+                GlStateManager.pushMatrix();
+                GlStateManager.color3f(1.0F, 1.0F, 1.0F);
+                Minecraft mc = Minecraft.getInstance();
+                mc.getTextureManager().bindTexture(ICONS);
+                int pips = food.getHealing();
+                boolean poison = false;
+                for (Pair<EffectInstance, Float> effect : food.getEffects()) {
+                    if (effect.getLeft().getPotion().getEffectType() == EffectType.HARMFUL) {
+                        poison = true;
+                        break;
+                    }
+                }
+                int count = MathHelper.ceil((double) pips / 2);
+                int y = shiftTextByLines(event.getLines(), event.getY() + 10);
+                for (int i = 0; i < count; i++) {
+                    int x = event.getX() + i * 9 - 1;
+                    int textureX = 16;
+                    if (poison) {
+                        textureX += 117;
+                    }
+                    int textureY = 27;
+                    blit(x, y, textureX, textureY, 9, 9);
+                    textureX = 52;
+                    if (pips % 2 != 0 && i == 0) {
+                        textureX += 9;
+                    }
+                    if (poison) {
+                        textureX += 36;
+                    }
+                    blit(x, y, textureX, textureY, 9, 9);
+                }
+                GlStateManager.popMatrix();
+            }
+        }
+        else if (item instanceof IEvolutionItem) {
+            GlStateManager.pushMatrix();
+            GlStateManager.color3f(1.0F, 1.0F, 1.0F);
+            Minecraft mc = Minecraft.getInstance();
+            mc.getTextureManager().bindTexture(ICONS);
+            boolean hasMass = false;
+            boolean hasDamage = false;
+            boolean hasSpeed = false;
+            boolean hasReach = false;
+            for (EquipmentSlotType slot : EquipmentSlotType.values()) {
+                Multimap<String, AttributeModifier> multimap = stack.getAttributeModifiers(slot);
+                if (!multimap.isEmpty()) {
+                    for (Map.Entry<String, AttributeModifier> entry : multimap.entries()) {
+                        AttributeModifier attributemodifier = entry.getValue();
+                        if (attributemodifier.getID().compareTo(EvolutionAttributes.ATTACK_DAMAGE_MODIFIER) == 0) {
+                            hasDamage = true;
+                            continue;
+                        }
+                        if (attributemodifier.getID().compareTo(EvolutionAttributes.ATTACK_SPEED_MODIFIER) == 0) {
+                            hasSpeed = true;
+                            continue;
+                        }
+                        if (attributemodifier.getID() == EvolutionAttributes.REACH_DISTANCE_MODIFIER) {
+                            hasReach = true;
+                            continue;
+                        }
+                        if (attributemodifier.getID() == EvolutionAttributes.MASS_MODIFIER ||
+                            attributemodifier.getID() == EvolutionAttributes.MASS_MODIFIER_OFFHAND) {
+                            hasMass = true;
+                        }
+                    }
+                    break;
+                }
+            }
+            int line = 1;
+            if (item instanceof IFireAspect) {
+                line++;
+            }
+            if (item instanceof IHeavyAttack) {
+                line++;
+            }
+            if (item instanceof IKnockback) {
+                line++;
+            }
+            if (item instanceof ISweepAttack) {
+                line++;
+            }
+            if (stack.hasTag()) {
+                if (stack.getTag().contains("display", 10)) {
+                    CompoundNBT display = stack.getTag().getCompound("display");
+                    if (display.contains("color", 3)) {
+                        line++;
+                    }
+                    if (display.getTagId("Lore") == 9) {
+                        for (int j = 0; j < display.getList("Lore", 8).size(); ++j) {
+                            line++;
+                        }
+                    }
+                }
+            }
+            if (hasMass) {
+                line++;
+                //Mass line
+                int x = event.getX();
+                int y = shiftTextByLines(line, event.getY() + 10);
+                int textureX = 0;
+                int textureY = 247;
+                blit(x, y, textureX, textureY, 9, 9);
+                line++;
+            }
+            boolean hasAddedLine = false;
+            //Two Handed line
+            if (item instanceof ITwoHanded) {
+                line += 2;
+                hasAddedLine = true;
+            }
+            //Throwable line
+            if (item instanceof IThrowable) {
+                if (hasAddedLine) {
+                    line++;
+                }
+                else {
+                    line += 2;
+                }
+                hasAddedLine = true;
+            }
+            boolean hasAttributes = hasSpeed || hasDamage || hasReach;
+            if (!hasAddedLine) {
+                if (hasAttributes) {
+                    line++;
+                }
+            }
+            if (hasAttributes) {
+                //Slot name
+                line++;
+            }
+            //Attack Speed
+            if (hasSpeed) {
+                int x = event.getX() + 4;
+                int y = shiftTextByLines(line, event.getY() + 10);
+                int textureX = 63;
+                int textureY = 247;
+                blit(x, y, textureX, textureY, 9, 9);
+                line++;
+            }
+            //Attack Damage
+            if (hasDamage) {
+                int textureX = 54;
+                if (item instanceof IMelee) {
+                    switch (((IMelee) item).getDamageType()) {
+                        case CRUSHING:
+                            textureX = 36;
+                            break;
+                        case PIERCING:
+                            textureX = 45;
+                            break;
+                        case SLASHING:
+                            textureX = 27;
+                            break;
+                    }
+                }
+                int x = event.getX() + 4;
+                int y = shiftTextByLines(line, event.getY() + 10);
+                int textureY = 247;
+                blit(x, y, textureX, textureY, 9, 9);
+                line++;
+            }
+            //Reach distance
+            if (hasReach) {
+                int x = event.getX() + 4;
+                int y = shiftTextByLines(line, event.getY() + 10);
+                int textureX = 18;
+                int textureY = 247;
+                blit(x, y, textureX, textureY, 9, 9);
+                line++;
+            }
+            //Mining Speed
+            if (item instanceof ItemGenericTool) {
+                int x = event.getX() + 4;
+                int y = shiftTextByLines(line, event.getY() + 10);
+                int textureX = 9;
+                int textureY = 247;
+                blit(x, y, textureX, textureY, 9, 9);
+                line++;
+            }
+            //Unbreakable
+            if (stack.hasTag() && stack.getTag().getBoolean("Unbreakable")) {
+                line++;
+            }
+            //Durability
+            if (stack.getItem() instanceof IDurability) {
+                int x = event.getX();
+                int y = shiftTextByLines(line, event.getY() + 10);
+                int textureX = 72;
+                int textureY = 247;
+                blit(x, y, textureX, textureY, 9, 9);
+            }
+            GlStateManager.popMatrix();
+        }
+    }
+
+    @SubscribeEvent
+    public void shutDownInternalServer(FMLServerStoppedEvent event) {
+        if (this.inverted) {
+            this.inverted = false;
+            swapControls(this.mc);
+        }
     }
 
     public void swingArm(Hand hand) {
@@ -957,187 +1160,51 @@ public class ClientEvents {
         }
     }
 
-    @SubscribeEvent
-    public void onRenderHand(RenderSpecificHandEvent event) {
-        if (event.getHand() == Hand.OFF_HAND && this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable) {
-            event.setCanceled(true);
-            float partialTicks = event.getPartialTicks();
-            float pitch = event.getInterpolatedPitch();
-            float rightSwingProgress = this.getRightSwingProgress(partialTicks);
-            FirstPersonRenderer renderer = this.mc.getFirstPersonRenderer();
-            float rightEquipProgress = 1.0F - MathHelper.lerp(partialTicks, this.rightPrevEquipProgress, this.rightEquipProgress);
-            renderer.renderItemInFirstPerson(this.mc.player,
-                                             partialTicks,
-                                             pitch,
-                                             Hand.OFF_HAND,
-                                             rightSwingProgress,
-                                             this.mc.player.getHeldItemOffhand(),
-                                             rightEquipProgress);
-            return;
-        }
-        if (event.getHand() == Hand.MAIN_HAND && this.requiresReequiping) {
-            event.setCanceled(true);
-            float partialTicks = event.getPartialTicks();
-            float pitch = event.getInterpolatedPitch();
-            float leftSwingProgress = this.getLeftSwingProgress(partialTicks);
-            FirstPersonRenderer renderer = this.mc.getFirstPersonRenderer();
-            float leftEquipProgress = 1.0F - MathHelper.lerp(partialTicks, this.leftPrevEquipProgress, this.leftEquipProgress);
-            if (this.leftEquipProgress == 1 && this.leftPrevEquipProgress == 1 && this.leftTimeSinceLastHit != 0) {
-                this.requiresReequiping = false;
-            }
-            renderer.renderItemInFirstPerson(this.mc.player,
-                                             partialTicks,
-                                             pitch,
-                                             Hand.MAIN_HAND,
-                                             leftSwingProgress,
-                                             this.mc.player.getHeldItemMainhand(),
-                                             leftEquipProgress);
-        }
-    }
-
-    private float getRightSwingProgress(float partialTickTime) {
-        float f = this.rightSwingProgress - this.rightPrevSwingProgress;
-        if (f < 0.0F) {
-            ++f;
-        }
-        return this.rightPrevSwingProgress + f * partialTickTime;
-    }
-
-    private float getLeftSwingProgress(float partialTickTime) {
-        float f = this.leftSwingProgress - this.leftPrevSwingProgress;
-        if (f < 0.0F) {
-            ++f;
-        }
-        return this.leftPrevSwingProgress + f * partialTickTime;
-    }
-
-    @SubscribeEvent
-    public void onPlayerInput(InputUpdateEvent event) {
-        MovementInput movementInput = event.getMovementInput();
-        this.isJumpPressed = movementInput.jump;
-        if (this.proneToggle && !this.mc.player.isOnLadder()) {
-            movementInput.jump = false;
-        }
-    }
-
-    @SubscribeEvent
-    public void shutDownInternalServer(FMLServerStoppedEvent event) {
-        if (this.inverted) {
-            this.inverted = false;
-            swapControls(this.mc);
-        }
-    }
-
-    @SubscribeEvent
-    public void onGUIOpen(GuiOpenEvent event) {
-        if (event.getGui() instanceof InventoryScreen) {
-            event.setCanceled(true);
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSOpenExtendedInventory());
-        }
-    }
-
-    @SubscribeEvent
-    public void onTextureStitch(TextureStitchEvent.Pre event) {
-        //        if (!event.getMap().getBasePath().equals("textures")) {
-        //            return;
-        //        }
-        //        event.addSprite(new ResourceLocation(Evolution.MODID, "block/clay"));
-    }
-
-    @SubscribeEvent
-    public void onModelBake(ModelBakeEvent event) {
-        //        event.getModelRegistry().put(new ModelResourceLocation(EvolutionBlocks.FANCYBLOCK.get().getRegistryName(), ""), new
-        //        FancyBakedModel(DefaultVertexFormats.BLOCK));
-    }
-
-    @SubscribeEvent
-    public void onKeyboardEvent(InputEvent.KeyInputEvent event) {
-        if (this.mc.currentScreen != null || this.mc.player == null) {
-            return;
-        }
-        KeyBinding attack = this.mc.gameSettings.keyBindAttack;
-        KeyBinding use = this.mc.gameSettings.keyBindUseItem;
-        if (attack.getKey().getType() == InputMappings.Type.KEYSYM) {
-            if (attack.getKey().getKeyCode() == event.getKey()) {
-                if (event.getAction() == GLFW.GLFW_PRESS && !this.isRightPressed) {
-                    this.isLeftPressed = true;
-                    this.onLeftMouseClick();
-                }
-                else {
-                    this.isLeftPressed = false;
-                }
+    private void updateArmSwingProgress() {
+        int i = this.getArmSwingAnimationEnd();
+        if (this.rightIsSwingInProgress) {
+            ++this.rightSwingProgressInt;
+            if (this.rightSwingProgressInt >= i) {
+                this.rightSwingProgressInt = 0;
+                this.rightIsSwingInProgress = false;
             }
         }
-        if (use.getKey().getType() == InputMappings.Type.KEYSYM) {
-            if (use.getKey().getKeyCode() == event.getKey()) {
-                if (event.getAction() == GLFW.GLFW_PRESS && !this.isLeftPressed) {
-                    this.isRightPressed = true;
-                    this.onRightMouseClick();
-                }
-                else {
-                    this.isRightPressed = false;
-                }
+        else {
+            this.rightSwingProgressInt = 0;
+        }
+        this.rightSwingProgress = this.rightSwingProgressInt / (float) i;
+        if (this.leftIsSwingInProgress) {
+            ++this.leftSwingProgressInt;
+            if (this.leftSwingProgressInt >= i) {
+                this.leftSwingProgressInt = 0;
+                this.leftIsSwingInProgress = false;
             }
         }
+        else {
+            this.leftSwingProgressInt = 0;
+        }
+        this.leftSwingProgress = this.leftSwingProgressInt / (float) i;
     }
 
-    @SubscribeEvent
-    public void onMouseEvent(InputEvent.MouseInputEvent event) {
-        if (this.mc.currentScreen != null || this.mc.player == null) {
-            return;
-        }
-        KeyBinding attack = this.mc.gameSettings.keyBindAttack;
-        KeyBinding use = this.mc.gameSettings.keyBindUseItem;
-        if (attack.getKey().getType() == InputMappings.Type.MOUSE) {
-            if (attack.getKey().getKeyCode() == event.getButton()) {
-                if (event.getAction() == GLFW.GLFW_PRESS && !this.isRightPressed) {
-                    this.isLeftPressed = true;
-                    this.onLeftMouseClick();
-                }
-                else {
-                    this.isLeftPressed = false;
-                }
+    private void updateClientProneState(PlayerEntity player) {
+        if (player != null) {
+            UUID uuid = player.getUniqueID();
+            boolean shouldBeProne = ClientProxy.TOGGLE_PRONE.isKeyDown() != this.proneToggle;
+            shouldBeProne = shouldBeProne &&
+                            !player.isInWater() &&
+                            !player.isInLava() &&
+                            (!player.isOnLadder() || !this.isJumpPressed && player.onGround);
+            shouldBeProne = shouldBeProne && (!player.isOnLadder() || !this.isJumpPressed && player.onGround);
+            BlockPos pos = player.getPosition().up(2);
+            //noinspection ConstantConditions
+            shouldBeProne = shouldBeProne ||
+                            this.proneToggle &&
+                            player.isOnLadder() &&
+                            !player.world.getBlockState(pos).getCollisionShape(player.world, pos, null).isEmpty();
+            if (shouldBeProne != Evolution.PRONED_PLAYERS.getOrDefault(uuid, false)) {
+                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSetProne(shouldBeProne));
             }
-        }
-        if (use.getKey().getType() == InputMappings.Type.MOUSE) {
-            if (use.getKey().getKeyCode() == event.getButton()) {
-                if (event.getAction() == GLFW.GLFW_PRESS && !this.isLeftPressed) {
-                    this.isRightPressed = true;
-                    this.onRightMouseClick();
-                }
-                else {
-                    this.isRightPressed = false;
-                }
-            }
-        }
-    }
-
-    //Handle mainhand attack
-    private void onLeftMouseClick() {
-        float cooldown = this.mc.player.getCooldownPeriod();
-        if (this.leftTimeSinceLastHit >= cooldown && this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
-            this.requiresReequiping = true;
-            this.leftTimeSinceLastHit = 0;
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.leftPointedEntity, Hand.MAIN_HAND));
-            this.swingArm(Hand.MAIN_HAND);
-        }
-    }
-
-    //Handle offhand attack
-    private void onRightMouseClick() {
-        Item offhandItem = this.mc.player.getHeldItemOffhand().getItem();
-        if (!(offhandItem instanceof IOffhandAttackable)) {
-            return;
-        }
-        ItemStack mainHandStack = this.mc.player.getHeldItemMainhand();
-        float cooldown = getRightCooldownPeriod((IOffhandAttackable) offhandItem);
-        if (offhandItem instanceof IOffhandAttackable &&
-            this.rightTimeSinceLastHit >= cooldown &&
-            mainHandStack.getUseAction() == UseAction.NONE &&
-            this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
-            this.rightTimeSinceLastHit = 0;
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.rightPointedEntity, Hand.OFF_HAND));
-            this.swingArm(Hand.OFF_HAND);
+            Evolution.PRONED_PLAYERS.put(uuid, shouldBeProne);
         }
     }
 }

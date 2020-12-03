@@ -36,41 +36,21 @@ import javax.annotation.Nullable;
 public class DimensionOverworld extends Dimension {
 
     private static final float[] SUNSET_COLORS = new float[4];
-    private float sunElevationAngle;
-    private float moonElevationAngle;
-    private float latitude;
-    private float sinLatitude;
-    private float cosLatitude;
-    private float sunSeasonalOffset;
-    private float moonMonthlyOffset;
-    private float seasonAngle;
-    private float monthlyAngle;
-    private float sunCelestialRadius;
-    private float moonCelestialRadius;
-    private float sunAngle;
-    private float moonAngle;
     private Vec3d fogColor = Vec3d.ZERO;
-    private float[] sunsetColors;
+    private float latitude;
+    private float moonAngle;
+    private float moonCelestialRadius;
+    private float moonElevationAngle;
+    private float moonMonthlyOffset;
     private MoonPhase moonPhase = MoonPhase.NEW_MOON;
+    private float sunAngle;
+    private float sunCelestialRadius;
+    private float sunElevationAngle;
+    private float sunSeasonalOffset;
+    private float[] sunsetColors;
 
     public DimensionOverworld(World world, DimensionType type) {
         super(world, type);
-    }
-
-    public float calculateMoonAngle() {
-        return this.moonAngle;
-    }
-
-    public MoonPhase getMoonPhase() {
-        return this.moonPhase;
-    }
-
-    @Override
-    protected void generateLightBrightnessTable() {
-        for (int lightLevel = 0; lightLevel <= 15; ++lightLevel) {
-            float f1 = 1.0F - (float) lightLevel / 15.0F;
-            this.lightBrightnessTable[lightLevel] = (1.0F - f1) / (f1 * 3.0F + 1.0F) * 1.0F;
-        }
     }
 
     @Nullable
@@ -84,33 +64,32 @@ public class DimensionOverworld extends Dimension {
     }
 
     @Override
-    public void tick() {
-        this.sunAngle = EarthHelper.calculateSunAngle(this.world.getDayTime());
-        if (this.world.isRemote) {
-            this.moonAngle = EarthHelper.calculateMoonAngle(this.world.getDayTime());
-            this.seasonAngle = EarthHelper.sunSeasonalInclination(this.world.getDayTime());
-            this.monthlyAngle = EarthHelper.lunarMonthlyAmpl(this.world.getDayTime());
-            this.latitude = EarthHelper.calculateLatitude(Evolution.PROXY.getClientPlayer().posZ);
-            this.sinLatitude = MathHelper.sinDeg(this.latitude);
-            this.cosLatitude = MathHelper.cosDeg(this.latitude);
-            this.sunCelestialRadius = 100f * MathHelper.cosDeg(this.seasonAngle);
-            this.moonCelestialRadius = 100f * MathHelper.cosDeg(this.monthlyAngle);
-            this.sunSeasonalOffset = -100f * MathHelper.sinDeg(this.seasonAngle);
-            this.moonMonthlyOffset = -100f * MathHelper.sinDeg(this.monthlyAngle);
-            this.sunElevationAngle = EarthHelper.getSunElevation(this.sinLatitude,
-                                                                 this.cosLatitude,
-                                                                 this.sunAngle * 360,
-                                                                 this.sunCelestialRadius,
-                                                                 this.sunSeasonalOffset);
-            this.moonElevationAngle = EarthHelper.getMoonElevation(this.sinLatitude,
-                                                                   this.cosLatitude,
-                                                                   this.moonAngle * 360,
-                                                                   this.moonCelestialRadius,
-                                                                   this.moonMonthlyOffset);
-            this.fogColor = this.calculateFogColor();
-            this.sunsetColors = this.sunsetColors();
-            this.moonPhase = MoonPhase.byAngles(this.sunAngle * 360, this.moonAngle * 360);
+    public float calculateCelestialAngle(long worldTime, float partialTicks) {
+        return this.sunAngle;
+    }
+
+    private Vec3d calculateFogColor() {
+        float sunAngle = 1.0f;
+        if (this.sunElevationAngle > 80) {
+            sunAngle = -this.sunElevationAngle * this.sunElevationAngle / 784.0f + 10.0f * this.sunElevationAngle / 49.0f - 7.163_265f;
+            sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
         }
+        float r = 0.752_941_2F;
+        r *= sunAngle;
+        float g = 0.847_058_83F;
+        g *= sunAngle;
+        float b = 1.0F;
+        b *= sunAngle;
+        return new Vec3d(r, g, b);
+    }
+
+    public float calculateMoonAngle() {
+        return this.moonAngle;
+    }
+
+    @Override
+    public boolean canRespawnHere() {
+        return true;
     }
 
     @Override
@@ -221,6 +200,12 @@ public class DimensionOverworld extends Dimension {
         return chunkgeneratortype4.create(this.world, biomeprovider, overworldgensettings1);
     }
 
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public boolean doesXZShowFog(int x, int z) {
+        return false;
+    }
+
     @Nullable
     @Override
     public BlockPos findSpawn(ChunkPos chunkPos, boolean checkValid) {
@@ -266,13 +251,11 @@ public class DimensionOverworld extends Dimension {
     }
 
     @Override
-    public float calculateCelestialAngle(long worldTime, float partialTicks) {
-        return this.sunAngle;
-    }
-
-    @Override
-    public boolean isSurfaceWorld() {
-        return true;
+    protected void generateLightBrightnessTable() {
+        for (int lightLevel = 0; lightLevel <= 15; ++lightLevel) {
+            float f1 = 1.0F - lightLevel / 15.0F;
+            this.lightBrightnessTable[lightLevel] = (1.0F - f1) / (f1 * 3.0F + 1.0F) * 1.0F;
+        }
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -281,92 +264,41 @@ public class DimensionOverworld extends Dimension {
         return this.fogColor;
     }
 
-    @Override
-    public boolean canRespawnHere() {
-        return true;
+    @OnlyIn(Dist.CLIENT)
+    public float getLatitude() {
+        return this.latitude;
+    }
+
+    public float getMoonCelestialRadius() {
+        return this.moonCelestialRadius;
     }
 
     @OnlyIn(Dist.CLIENT)
-    @Override
-    public boolean doesXZShowFog(int x, int z) {
-        return false;
+    public float getMoonElevationAngle() {
+        return this.moonElevationAngle;
     }
 
-    private Vec3d calculateFogColor() {
-        float sunAngle = 1f;
-        if (this.sunElevationAngle > 80) {
-            sunAngle = -this.sunElevationAngle * this.sunElevationAngle / 784f + 10f * this.sunElevationAngle / 49f - 351f / 49f;
-            sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
-        }
-        float r = 0.7529412F;
-        r *= sunAngle;
-        float g = 0.84705883F;
-        g *= sunAngle;
-        float b = 1.0F;
-        b *= sunAngle;
-        return new Vec3d(r, g, b);
+    public float getMoonMonthlyOffset() {
+        return this.moonMonthlyOffset;
     }
 
-    @Nullable
-    private float[] sunsetColors() {
-        if (this.sunElevationAngle >= 66F && this.sunElevationAngle <= 98F) {
-            float cosElevation = MathHelper.cosDeg(this.sunElevationAngle);
-            float div = this.sunElevationAngle > 90 ? 0.14f : 0.4f;
-            float f3 = cosElevation / div * 0.5F + 0.5F;
-            float f4 = 1.0F - (1.0F - MathHelper.sin(f3 * MathHelper.PI)) * 0.99F;
-            f4 *= f4;
-            SUNSET_COLORS[0] = f3 * 0.3F + 0.7F;
-            SUNSET_COLORS[1] = f3 * f3 * 0.7F + 0.2F;
-            SUNSET_COLORS[2] = f3 * f3 * 0.0F + 0.2F;
-            SUNSET_COLORS[3] = f4;
-            return SUNSET_COLORS;
-        }
-        return null;
-    }
-
-    @Override
-    public float getSunBrightness(float partialTicks) {
-        if (!this.world.isRemote) {
-            return this.world.getSunBrightness(partialTicks);
-        }
-        float moonlightMult = this.moonlightMult();
-        float moonlightMin = 1 - moonlightMult;
-        return this.getSunBrightnessPure(partialTicks) * moonlightMult + moonlightMin;
-    }
-
-    public float moonlightMult() {
-        if (this.moonElevationAngle > 95) {
-            return 0.97F;
-        }
-        if (this.moonElevationAngle < 90) {
-            return 1f - this.moonPhase.getMoonLight();
-        }
-        float mult = 1f - (this.moonElevationAngle - 90) / 5f;
-        return 1f - this.moonPhase.getMoonLight() * mult;
-    }
-
-    public float getSunBrightnessPure(float partialTicks) {
-        float skyBrightness = 1.0F - (MathHelper.cosDeg(this.sunElevationAngle) * 2.0F + 0.62F);
-        skyBrightness = MathHelper.clamp(skyBrightness, 0.0F, 1.0F);
-        skyBrightness = 1.0F - skyBrightness;
-        skyBrightness *= 1f - this.world.getRainStrength(partialTicks) * 5.0F / 16f;
-        skyBrightness *= 1f - this.world.getThunderStrength(partialTicks) * 5.0F / 16f;
-        return skyBrightness;
+    public MoonPhase getMoonPhase() {
+        return this.moonPhase;
     }
 
     @Override
     public Vec3d getSkyColor(BlockPos pos, float partialTick) {
-        float sunAngle = 1f;
+        float sunAngle = 1.0f;
         if (this.sunElevationAngle > 80) {
-            sunAngle = -this.sunElevationAngle * this.sunElevationAngle / 784f + 10f * this.sunElevationAngle / 49f - 351f / 49f;
+            sunAngle = -this.sunElevationAngle * this.sunElevationAngle / 784.0f + 10.0f * this.sunElevationAngle / 49.0f - 7.163_265f;
             sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
         }
         int i = ForgeHooksClient.getSkyBlendColour(this.world, pos);
-        float f3 = (float) (i >> 16 & 255) / 255.0F;
-        float f4 = (float) (i >> 8 & 255) / 255.0F;
-        float f5 = (float) (i & 255) / 255.0F;
+        float f3 = (i >> 16 & 255) / 255.0F;
         f3 *= sunAngle;
+        float f4 = (i >> 8 & 255) / 255.0F;
         f4 *= sunAngle;
+        float f5 = (i & 255) / 255.0F;
         f5 *= sunAngle;
         float f6 = this.world.getRainStrength(partialTick);
         if (f6 > 0.0F) {
@@ -385,7 +317,7 @@ public class DimensionOverworld extends Dimension {
             f5 = f5 * f9 + f11 * (1.0F - f9);
         }
         if (this.world.getLastLightningBolt() > 0) {
-            float lastLightningBolt = (float) this.world.getLastLightningBolt() - partialTick;
+            float lastLightningBolt = this.world.getLastLightningBolt() - partialTick;
             if (lastLightningBolt > 1.0F) {
                 lastLightningBolt = 1.0F;
             }
@@ -405,25 +337,27 @@ public class DimensionOverworld extends Dimension {
         return f1 * f1 * 0.5F;
     }
 
-    @OnlyIn(Dist.CLIENT)
-    public float getLatitude() {
-        return this.latitude;
+    @Override
+    public float getSunBrightness(float partialTicks) {
+        if (!this.world.isRemote) {
+            return this.world.getSunBrightness(partialTicks);
+        }
+        float moonlightMult = this.moonlightMult();
+        float moonlightMin = 1 - moonlightMult;
+        return this.getSunBrightnessPure(partialTicks) * moonlightMult + moonlightMin;
+    }
+
+    public float getSunBrightnessPure(float partialTicks) {
+        float skyBrightness = 1.0F - (MathHelper.cosDeg(this.sunElevationAngle) * 2.0F + 0.62F);
+        skyBrightness = MathHelper.clamp(skyBrightness, 0.0F, 1.0F);
+        skyBrightness = 1.0F - skyBrightness;
+        skyBrightness *= 1.0f - this.world.getRainStrength(partialTicks) * 0.312_5f;
+        skyBrightness *= 1.0f - this.world.getThunderStrength(partialTicks) * 0.312_5f;
+        return skyBrightness;
     }
 
     public float getSunCelestialRadius() {
         return this.sunCelestialRadius;
-    }
-
-    public float getMoonCelestialRadius() {
-        return this.moonCelestialRadius;
-    }
-
-    public float getSunSeasonalOffset() {
-        return this.sunSeasonalOffset;
-    }
-
-    public float getMoonMonthlyOffset() {
-        return this.moonMonthlyOffset;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -431,8 +365,70 @@ public class DimensionOverworld extends Dimension {
         return this.sunElevationAngle;
     }
 
-    @OnlyIn(Dist.CLIENT)
-    public float getMoonElevationAngle() {
-        return this.moonElevationAngle;
+    public float getSunSeasonalOffset() {
+        return this.sunSeasonalOffset;
+    }
+
+    @Override
+    public boolean isSurfaceWorld() {
+        return true;
+    }
+
+    public float moonlightMult() {
+        if (this.moonElevationAngle > 96) {
+            return 0.97F;
+        }
+        if (this.moonElevationAngle < 90) {
+            return 1.0f - this.moonPhase.getMoonLight();
+        }
+        float mult = 1.0f - (this.moonElevationAngle - 90) / 5.0f;
+        return 0.97f - (this.moonPhase.getMoonLight() - 0.03f) * mult;
+    }
+
+    @Nullable
+    private float[] sunsetColors() {
+        if (this.sunElevationAngle >= 66.0F && this.sunElevationAngle <= 107.5F) {
+            float cosElevation = MathHelper.cosDeg(this.sunElevationAngle);
+            float mult = this.sunElevationAngle > 90 ? 1.5f : 1.1f;
+            float f3 = cosElevation * mult + 0.5F;
+            float f4 = 1.0F - (1.0F - MathHelper.sin(f3 * MathHelper.PI)) * 0.99F;
+            f4 *= f4;
+            SUNSET_COLORS[0] = f3 * 0.3F + 0.7F;
+            SUNSET_COLORS[1] = f3 * f3 * 0.7F + 0.2F;
+            SUNSET_COLORS[2] = 0.2F;
+            SUNSET_COLORS[3] = f4;
+            return SUNSET_COLORS;
+        }
+        return null;
+    }
+
+    @Override
+    public void tick() {
+        this.sunAngle = EarthHelper.calculateSunAngle(this.world.getDayTime());
+        if (this.world.isRemote) {
+            this.moonAngle = EarthHelper.calculateMoonAngle(this.world.getDayTime());
+            float seasonAngle = EarthHelper.sunSeasonalInclination(this.world.getDayTime());
+            float monthlyAngle = EarthHelper.lunarMonthlyAmpl(this.world.getDayTime());
+            this.latitude = EarthHelper.calculateLatitude(Evolution.PROXY.getClientPlayer().posZ);
+            float sinLatitude = MathHelper.sinDeg(this.latitude);
+            float cosLatitude = MathHelper.cosDeg(this.latitude);
+            this.sunCelestialRadius = 100.0f * MathHelper.cosDeg(seasonAngle);
+            this.moonCelestialRadius = 100.0f * MathHelper.cosDeg(monthlyAngle);
+            this.sunSeasonalOffset = -100.0f * MathHelper.sinDeg(seasonAngle);
+            this.moonMonthlyOffset = -100.0f * MathHelper.sinDeg(monthlyAngle);
+            this.sunElevationAngle = EarthHelper.getSunElevation(sinLatitude,
+                                                                 cosLatitude,
+                                                                 this.sunAngle * 360,
+                                                                 this.sunCelestialRadius,
+                                                                 this.sunSeasonalOffset);
+            this.moonElevationAngle = EarthHelper.getMoonElevation(sinLatitude,
+                                                                   cosLatitude,
+                                                                   this.moonAngle * 360,
+                                                                   this.moonCelestialRadius,
+                                                                   this.moonMonthlyOffset);
+            this.fogColor = this.calculateFogColor();
+            this.sunsetColors = this.sunsetColors();
+            this.moonPhase = MoonPhase.byAngles(this.sunAngle * 360, this.moonAngle * 360);
+        }
     }
 }

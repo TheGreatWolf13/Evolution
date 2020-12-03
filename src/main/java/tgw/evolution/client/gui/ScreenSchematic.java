@@ -23,33 +23,33 @@ public class ScreenSchematic extends Screen {
 
     private final TESchematic tile;
     private final DecimalFormat decimalFormat = new DecimalFormat("0.0###");
-    private Mirror mirror = Mirror.NONE;
-    private Rotation rotation = Rotation.NONE;
-    private SchematicMode mode = SchematicMode.SAVE;
+    private Button detectSizeButton;
     private boolean ignoreEntities;
-    private boolean showAir;
-    private boolean showBoundingBox;
+    private TextFieldWidget integrityEdit;
+    private Button loadButton;
+    private Mirror mirror = Mirror.NONE;
+    private Button mirrorButton;
+    private SchematicMode mode = SchematicMode.SAVE;
+    private Button modeButton;
     private TextFieldWidget nameEdit;
     private TextFieldWidget posXEdit;
     private TextFieldWidget posYEdit;
     private TextFieldWidget posZEdit;
+    private Button rotate180DegreesButton;
+    private Button rotate270DegressButton;
+    private Button rotateNinetyDegreesButton;
+    private Button rotateZeroDegreesButton;
+    private Rotation rotation = Rotation.NONE;
+    private Button saveButton;
+    private TextFieldWidget seedEdit;
+    private boolean showAir;
+    private Button showAirButton;
+    private boolean showBoundingBox;
+    private Button showBoundingBoxButton;
+    private Button showEntitiesButton;
     private TextFieldWidget sizeXEdit;
     private TextFieldWidget sizeYEdit;
     private TextFieldWidget sizeZEdit;
-    private TextFieldWidget integrityEdit;
-    private TextFieldWidget seedEdit;
-    private Button saveButton;
-    private Button loadButton;
-    private Button rotateZeroDegreesButton;
-    private Button rotateNinetyDegreesButton;
-    private Button rotate180DegreesButton;
-    private Button rotate270DegressButton;
-    private Button modeButton;
-    private Button detectSizeButton;
-    private Button showEntitiesButton;
-    private Button mirrorButton;
-    private Button showAirButton;
-    private Button showBoundingBoxButton;
 
     public ScreenSchematic(TESchematic tile) {
         super(new TranslationTextComponent(EvolutionBlocks.SCHEMATIC_BLOCK.get().getTranslationKey()));
@@ -61,22 +61,30 @@ public class ScreenSchematic extends Screen {
         Minecraft.getInstance().displayGuiScreen(new ScreenSchematic(tile));
     }
 
-    @Override
-    public void tick() {
-        this.nameEdit.tick();
-        this.posXEdit.tick();
-        this.posYEdit.tick();
-        this.posZEdit.tick();
-        this.sizeXEdit.tick();
-        this.sizeYEdit.tick();
-        this.sizeZEdit.tick();
-        this.integrityEdit.tick();
-        this.seedEdit.tick();
+    private static int parseCoordinate(String coordinates) {
+        try {
+            return Integer.parseInt(coordinates);
+        }
+        catch (NumberFormatException exception) {
+            return 0;
+        }
     }
 
-    private void done() {
-        if (this.sendUpdates(TESchematic.UpdateCommand.UPDATE_DATA)) {
-            this.minecraft.displayGuiScreen(null);
+    private static float parseIntegrity(String integrity) {
+        try {
+            return Float.parseFloat(integrity);
+        }
+        catch (NumberFormatException exception) {
+            return 1.0F;
+        }
+    }
+
+    private static long parseSeed(String seed) {
+        try {
+            return Long.parseLong(seed);
+        }
+        catch (NumberFormatException exception) {
+            return 0L;
         }
     }
 
@@ -88,6 +96,12 @@ public class ScreenSchematic extends Screen {
         this.tile.setShowAir(this.showAir);
         this.tile.setShowBoundingBox(this.showBoundingBox);
         this.minecraft.displayGuiScreen(null);
+    }
+
+    private void done() {
+        if (this.sendUpdates(TESchematic.UpdateCommand.UPDATE_DATA)) {
+            this.minecraft.displayGuiScreen(null);
+        }
     }
 
     @Override
@@ -111,12 +125,17 @@ public class ScreenSchematic extends Screen {
             this.tile.nextMode();
             this.updateMode();
         }));
-        this.detectSizeButton = this.addButton(new Button(this.width / 2 + 4 + 100, 120, 50, 20, I18n.format("structure_block.button.detect_size"), button -> {
-            if (this.tile.getMode() == SchematicMode.SAVE) {
-                this.sendUpdates(TESchematic.UpdateCommand.SCAN_AREA);
-                this.minecraft.displayGuiScreen(null);
-            }
-        }));
+        this.detectSizeButton = this.addButton(new Button(this.width / 2 + 4 + 100,
+                                                          120,
+                                                          50,
+                                                          20,
+                                                          I18n.format("structure_block.button.detect_size"),
+                                                          button -> {
+                                                              if (this.tile.getMode() == SchematicMode.SAVE) {
+                                                                  this.sendUpdates(TESchematic.UpdateCommand.SCAN_AREA);
+                                                                  this.minecraft.displayGuiScreen(null);
+                                                              }
+                                                          }));
         this.showEntitiesButton = this.addButton(new Button(this.width / 2 + 4 + 100, 160, 50, 20, "ENTITIES", button -> {
             this.tile.setIgnoresEntities(!this.tile.ignoresEntities());
             this.updateEntitiesButton();
@@ -161,7 +180,8 @@ public class ScreenSchematic extends Screen {
         this.nameEdit = new TextFieldWidget(this.font, this.width / 2 - 152, 40, 300, 20, I18n.format("structure_block.structure_name")) {
             @Override
             public boolean charTyped(char p_charTyped_1_, int p_charTyped_2_) {
-                return ScreenSchematic.this.isValidCharacterForName(this.getText(), p_charTyped_1_, this.getCursorPosition()) && super.charTyped(p_charTyped_1_, p_charTyped_2_);
+                return ScreenSchematic.this.isValidCharacterForName(this.getText(), p_charTyped_1_, this.getCursorPosition()) &&
+                       super.charTyped(p_charTyped_1_, p_charTyped_2_);
             }
         };
         this.nameEdit.setMaxStringLength(64);
@@ -217,6 +237,74 @@ public class ScreenSchematic extends Screen {
     }
 
     @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
+
+    @Override
+    public boolean keyPressed(int p_keyPressed_1_, int p_keyPressed_2_, int p_keyPressed_3_) {
+        if (super.keyPressed(p_keyPressed_1_, p_keyPressed_2_, p_keyPressed_3_)) {
+            return true;
+        }
+        if (p_keyPressed_1_ != 257 && p_keyPressed_1_ != 335) {
+            return false;
+        }
+        this.done();
+        return true;
+    }
+
+    @Override
+    public void onClose() {
+        this.cancel();
+    }
+
+    @Override
+    public void removed() {
+        this.minecraft.keyboardListener.enableRepeatEvents(false);
+    }
+
+    @Override
+    public void render(int mouseX, int mouseY, float partialTicks) {
+        this.renderBackground();
+        SchematicMode structuremode = this.tile.getMode();
+        this.drawCenteredString(this.font, this.title.getFormattedText(), this.width / 2, 10, 0xa0_a0a0);
+        this.drawString(this.font, I18n.format("structure_block.structure_name"), this.width / 2 - 153, 30, 0xa0_a0a0);
+        this.nameEdit.render(mouseX, mouseY, partialTicks);
+        if (structuremode == SchematicMode.LOAD || structuremode == SchematicMode.SAVE) {
+            this.drawString(this.font, I18n.format("structure_block.position"), this.width / 2 - 153, 70, 0xa0_a0a0);
+            this.posXEdit.render(mouseX, mouseY, partialTicks);
+            this.posYEdit.render(mouseX, mouseY, partialTicks);
+            this.posZEdit.render(mouseX, mouseY, partialTicks);
+            String s = I18n.format("structure_block.include_entities");
+            int i = this.font.getStringWidth(s);
+            this.drawString(this.font, s, this.width / 2 + 154 - i, 150, 0xa0_a0a0);
+        }
+        if (structuremode == SchematicMode.SAVE) {
+            this.drawString(this.font, I18n.format("structure_block.size"), this.width / 2 - 153, 110, 0xa0_a0a0);
+            this.sizeXEdit.render(mouseX, mouseY, partialTicks);
+            this.sizeYEdit.render(mouseX, mouseY, partialTicks);
+            this.sizeZEdit.render(mouseX, mouseY, partialTicks);
+            String s2 = I18n.format("structure_block.detect_size");
+            int k = this.font.getStringWidth(s2);
+            this.drawString(this.font, s2, this.width / 2 + 154 - k, 110, 0xa0_a0a0);
+            String s1 = I18n.format("structure_block.show_air");
+            int j = this.font.getStringWidth(s1);
+            this.drawString(this.font, s1, this.width / 2 + 154 - j, 70, 0xa0_a0a0);
+        }
+        if (structuremode == SchematicMode.LOAD) {
+            this.drawString(this.font, I18n.format("structure_block.integrity"), this.width / 2 - 153, 110, 0xa0_a0a0);
+            this.integrityEdit.render(mouseX, mouseY, partialTicks);
+            this.seedEdit.render(mouseX, mouseY, partialTicks);
+            String s3 = I18n.format("structure_block.show_boundingbox");
+            int l = this.font.getStringWidth(s3);
+            this.drawString(this.font, s3, this.width / 2 + 154 - l, 70, 0xa0_a0a0);
+        }
+        String s4 = "structure_block.mode_info." + structuremode.getName();
+        this.drawString(this.font, I18n.format(s4), this.width / 2 - 153, 174, 0xa0_a0a0);
+        super.render(mouseX, mouseY, partialTicks);
+    }
+
+    @Override
     public void resize(Minecraft p_resize_1_, int p_resize_2_, int p_resize_3_) {
         String s = this.nameEdit.getText();
         String s1 = this.posXEdit.getText();
@@ -239,57 +327,42 @@ public class ScreenSchematic extends Screen {
         this.seedEdit.setText(s8);
     }
 
+    private boolean sendUpdates(TESchematic.UpdateCommand command) {
+        BlockPos pos = new BlockPos(parseCoordinate(this.posXEdit.getText()),
+                                    parseCoordinate(this.posYEdit.getText()),
+                                    parseCoordinate(this.posZEdit.getText()));
+        BlockPos size = new BlockPos(parseCoordinate(this.sizeXEdit.getText()),
+                                     parseCoordinate(this.sizeYEdit.getText()),
+                                     parseCoordinate(this.sizeZEdit.getText()));
+        float integrity = parseIntegrity(this.integrityEdit.getText());
+        long seed = parseSeed(this.seedEdit.getText());
+        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateSchematicBlock(this.tile.getPos(),
+                                                                                command,
+                                                                                this.tile.getMode(),
+                                                                                this.nameEdit.getText(),
+                                                                                pos,
+                                                                                size,
+                                                                                this.tile.getMirror(),
+                                                                                this.tile.getRotation(),
+                                                                                this.tile.ignoresEntities(),
+                                                                                this.tile.showsAir(),
+                                                                                this.tile.showsBoundingBox(),
+                                                                                integrity,
+                                                                                seed));
+        return true;
+    }
+
     @Override
-    public void removed() {
-        this.minecraft.keyboardListener.enableRepeatEvents(false);
-    }
-
-    private void updateEntitiesButton() {
-        boolean flag = !this.tile.ignoresEntities();
-        if (flag) {
-            this.showEntitiesButton.setMessage(I18n.format("options.on"));
-        }
-        else {
-            this.showEntitiesButton.setMessage(I18n.format("options.off"));
-        }
-
-    }
-
-    private void updateToggleAirButton() {
-        boolean flag = this.tile.showsAir();
-        if (flag) {
-            this.showAirButton.setMessage(I18n.format("options.on"));
-        }
-        else {
-            this.showAirButton.setMessage(I18n.format("options.off"));
-        }
-
-    }
-
-    private void updateToggleBoundingBox() {
-        boolean flag = this.tile.showsBoundingBox();
-        if (flag) {
-            this.showBoundingBoxButton.setMessage(I18n.format("options.on"));
-        }
-        else {
-            this.showBoundingBoxButton.setMessage(I18n.format("options.off"));
-        }
-
-    }
-
-    private void updateMirrorButton() {
-        Mirror mirror = this.tile.getMirror();
-        switch (mirror) {
-            case NONE:
-                this.mirrorButton.setMessage("|");
-                break;
-            case LEFT_RIGHT:
-                this.mirrorButton.setMessage("< >");
-                break;
-            case FRONT_BACK:
-                this.mirrorButton.setMessage("^ v");
-        }
-
+    public void tick() {
+        this.nameEdit.tick();
+        this.posXEdit.tick();
+        this.posYEdit.tick();
+        this.posZEdit.tick();
+        this.sizeXEdit.tick();
+        this.sizeYEdit.tick();
+        this.sizeZEdit.tick();
+        this.integrityEdit.tick();
+        this.seedEdit.tick();
     }
 
     private void updateDirectionButtons() {
@@ -309,6 +382,32 @@ public class ScreenSchematic extends Screen {
                 break;
             case CLOCKWISE_90:
                 this.rotateNinetyDegreesButton.active = false;
+        }
+
+    }
+
+    private void updateEntitiesButton() {
+        boolean flag = !this.tile.ignoresEntities();
+        if (flag) {
+            this.showEntitiesButton.setMessage(I18n.format("options.on"));
+        }
+        else {
+            this.showEntitiesButton.setMessage(I18n.format("options.off"));
+        }
+
+    }
+
+    private void updateMirrorButton() {
+        Mirror mirror = this.tile.getMirror();
+        switch (mirror) {
+            case NONE:
+                this.mirrorButton.setMessage("|");
+                break;
+            case LEFT_RIGHT:
+                this.mirrorButton.setMessage("< >");
+                break;
+            case FRONT_BACK:
+                this.mirrorButton.setMessage("^ v");
         }
 
     }
@@ -372,104 +471,25 @@ public class ScreenSchematic extends Screen {
         this.modeButton.setMessage(I18n.format("structure_block.mode." + this.tile.getMode().getName()));
     }
 
-    private boolean sendUpdates(TESchematic.UpdateCommand command) {
-        BlockPos blockpos = new BlockPos(this.parseCoordinate(this.posXEdit.getText()), this.parseCoordinate(this.posYEdit.getText()), this.parseCoordinate(this.posZEdit.getText()));
-        BlockPos blockpos1 = new BlockPos(this.parseCoordinate(this.sizeXEdit.getText()), this.parseCoordinate(this.sizeYEdit.getText()), this.parseCoordinate(this.sizeZEdit.getText()));
-        float f = this.parseIntegrity(this.integrityEdit.getText());
-        long i = this.parseSeed(this.seedEdit.getText());
-        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateSchematicBlock(this.tile.getPos(), command, this.tile.getMode(), this.nameEdit.getText(), blockpos, blockpos1, this.tile.getMirror(), this.tile.getRotation(), this.tile.ignoresEntities(), this.tile.showsAir(), this.tile.showsBoundingBox(), f, i));
-        return true;
+    private void updateToggleAirButton() {
+        boolean flag = this.tile.showsAir();
+        if (flag) {
+            this.showAirButton.setMessage(I18n.format("options.on"));
+        }
+        else {
+            this.showAirButton.setMessage(I18n.format("options.off"));
+        }
+
     }
 
-    private long parseSeed(String seed) {
-        try {
-            return Long.parseLong(seed);
+    private void updateToggleBoundingBox() {
+        boolean flag = this.tile.showsBoundingBox();
+        if (flag) {
+            this.showBoundingBoxButton.setMessage(I18n.format("options.on"));
         }
-        catch (NumberFormatException exception) {
-            return 0L;
+        else {
+            this.showBoundingBoxButton.setMessage(I18n.format("options.off"));
         }
-    }
 
-    private float parseIntegrity(String integrity) {
-        try {
-            return Float.parseFloat(integrity);
-        }
-        catch (NumberFormatException exception) {
-            return 1.0F;
-        }
-    }
-
-    private int parseCoordinate(String coordinates) {
-        try {
-            return Integer.parseInt(coordinates);
-        }
-        catch (NumberFormatException exception) {
-            return 0;
-        }
-    }
-
-    @Override
-    public void onClose() {
-        this.cancel();
-    }
-
-    @Override
-    public boolean keyPressed(int p_keyPressed_1_, int p_keyPressed_2_, int p_keyPressed_3_) {
-        if (super.keyPressed(p_keyPressed_1_, p_keyPressed_2_, p_keyPressed_3_)) {
-            return true;
-        }
-        if (p_keyPressed_1_ != 257 && p_keyPressed_1_ != 335) {
-            return false;
-        }
-        this.done();
-        return true;
-    }
-
-    @Override
-    public void render(int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground();
-        SchematicMode structuremode = this.tile.getMode();
-        this.drawCenteredString(this.font, this.title.getFormattedText(), this.width / 2, 10, 16777215);
-        if (true) {
-            this.drawString(this.font, I18n.format("structure_block.structure_name"), this.width / 2 - 153, 30, 10526880);
-            this.nameEdit.render(mouseX, mouseY, partialTicks);
-        }
-        if (structuremode == SchematicMode.LOAD || structuremode == SchematicMode.SAVE) {
-            this.drawString(this.font, I18n.format("structure_block.position"), this.width / 2 - 153, 70, 10526880);
-            this.posXEdit.render(mouseX, mouseY, partialTicks);
-            this.posYEdit.render(mouseX, mouseY, partialTicks);
-            this.posZEdit.render(mouseX, mouseY, partialTicks);
-            String s = I18n.format("structure_block.include_entities");
-            int i = this.font.getStringWidth(s);
-            this.drawString(this.font, s, this.width / 2 + 154 - i, 150, 10526880);
-        }
-        if (structuremode == SchematicMode.SAVE) {
-            this.drawString(this.font, I18n.format("structure_block.size"), this.width / 2 - 153, 110, 10526880);
-            this.sizeXEdit.render(mouseX, mouseY, partialTicks);
-            this.sizeYEdit.render(mouseX, mouseY, partialTicks);
-            this.sizeZEdit.render(mouseX, mouseY, partialTicks);
-            String s2 = I18n.format("structure_block.detect_size");
-            int k = this.font.getStringWidth(s2);
-            this.drawString(this.font, s2, this.width / 2 + 154 - k, 110, 10526880);
-            String s1 = I18n.format("structure_block.show_air");
-            int j = this.font.getStringWidth(s1);
-            this.drawString(this.font, s1, this.width / 2 + 154 - j, 70, 10526880);
-        }
-        if (structuremode == SchematicMode.LOAD) {
-            this.drawString(this.font, I18n.format("structure_block.integrity"), this.width / 2 - 153, 110, 10526880);
-            this.integrityEdit.render(mouseX, mouseY, partialTicks);
-            this.seedEdit.render(mouseX, mouseY, partialTicks);
-            String s3 = I18n.format("structure_block.show_boundingbox");
-            int l = this.font.getStringWidth(s3);
-            this.drawString(this.font, s3, this.width / 2 + 154 - l, 70, 10526880);
-        }
-        String s4 = "structure_block.mode_info." + structuremode.getName();
-        this.drawString(this.font, I18n.format(s4), this.width / 2 - 153, 174, 10526880);
-        super.render(mouseX, mouseY, partialTicks);
-    }
-
-    @Override
-    public boolean isPauseScreen() {
-        return false;
     }
 }

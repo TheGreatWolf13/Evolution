@@ -8,15 +8,19 @@ import tgw.evolution.blocks.tileentities.*;
 import tgw.evolution.client.renderer.entities.*;
 import tgw.evolution.client.renderer.tile.*;
 import tgw.evolution.entities.EntityCow;
-import tgw.evolution.entities.EntityFallingPeat;
-import tgw.evolution.entities.EntityFallingTimber;
-import tgw.evolution.entities.EntityFallingWeight;
+import tgw.evolution.entities.misc.EntityFallingPeat;
+import tgw.evolution.entities.misc.EntityFallingTimber;
+import tgw.evolution.entities.misc.EntityFallingWeight;
+import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.entities.projectiles.EntityHook;
 import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.entities.projectiles.EntityTorch;
 
 @OnlyIn(Dist.CLIENT)
-public class EvolutionRenderer {
+public final class EvolutionRenderer {
+
+    private EvolutionRenderer() {
+    }
 
     public static void registryEntityRenders() {
         RenderingRegistry.registerEntityRenderingHandler(EntityCow.class, RenderCow::new);
@@ -28,6 +32,7 @@ public class EvolutionRenderer {
         RenderingRegistry.registerEntityRenderingHandler(EntitySpear.class, RenderSpear::new);
         RenderingRegistry.registerEntityRenderingHandler(EntityHook.class, RenderHook::new);
         RenderingRegistry.registerEntityRenderingHandler(EntityTorch.class, RenderTorch::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntityPlayerCorpse.class, RenderPlayerCorpse::new);
         ClientRegistry.bindTileEntitySpecialRenderer(TEKnapping.class, new RenderTileKnapping());
 //        ClientRegistry.bindTileEntitySpecialRenderer(TEShadowHound.class, new RenderTileShadowHound());
         ClientRegistry.bindTileEntitySpecialRenderer(TEMolding.class, new RenderTileMolding());

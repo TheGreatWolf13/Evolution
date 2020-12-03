@@ -46,6 +46,21 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
         super(type, worldIn);
     }
 
+    @Override
+    public IPacket<?> createSpawnPacket() {
+        return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    @Override
+    protected ItemStack getArrowStack() {
+        return this.stack.copy();
+    }
+
+    @Override
+    protected SoundEvent getHitEntitySound() {
+        return EvolutionSounds.JAVELIN_HIT_BLOCK.get();
+    }
+
     public ItemStack getStack() {
         return this.stack;
     }
@@ -55,70 +70,14 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
         this.texture = ((ISpear) this.stack.getItem()).getTexture();
     }
 
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public boolean isInRangeToRender3d(double x, double y, double z) {
-        return true;
-    }
-
     public ResourceLocation getTextureName() {
         return this.texture;
     }
 
     @Override
-    public void tick() {
-        super.tick();
-        if (this.timeInGround > 10) {
-            this.dealtDamage = true;
-        }
-        if (this.ticksInAir > 10) {
-            this.dealtDamage = false;
-        }
-        if (this.stack.isEmpty() && this.timeInGround > 10) {
-            this.remove();
-        }
-        if (this.inGround) {
-            this.setMotion(0, 0, 0);
-        }
-    }
-
-    @Override
-    public void readAdditional(CompoundNBT compound) {
-        super.readAdditional(compound);
-        if (compound.contains("Spear", NBTTypes.COMPOUND_NBT.getId())) {
-            this.setStack(ItemStack.read(compound.getCompound("Spear")));
-        }
-        this.dealtDamage = compound.getBoolean("DealtDamage");
-    }
-
-    @Override
-    protected SoundEvent getHitEntitySound() {
-        return EvolutionSounds.JAVELIN_HIT_BLOCK.get();
-    }
-
-    @Override
-    public void writeAdditional(CompoundNBT compound) {
-        super.writeAdditional(compound);
-        compound.put("Spear", this.stack.serializeNBT());
-        compound.putBoolean("DealtDamage", this.dealtDamage);
-    }
-
-    @Override
-    public IPacket<?> createSpawnPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
-    }
-
-    @Override
-    protected void tryDespawn() {
-        if (this.pickupStatus != PickupStatus.ALLOWED) {
-            super.tryDespawn();
-        }
-    }
-
-    @Override
-    @Nullable
-    protected EntityRayTraceResult rayTraceEntities(Vec3d startVec, Vec3d endVec) {
-        return this.dealtDamage ? null : super.rayTraceEntities(startVec, endVec);
+    @OnlyIn(Dist.CLIENT)
+    public boolean isInRangeToRender3d(double x, double y, double z) {
+        return true;
     }
 
     @Override
@@ -148,19 +107,60 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
     }
 
     @Override
-    protected ItemStack getArrowStack() {
-        return this.stack.copy();
+    @Nullable
+    protected EntityRayTraceResult rayTraceEntities(Vec3d startVec, Vec3d endVec) {
+        return this.dealtDamage ? null : super.rayTraceEntities(startVec, endVec);
     }
 
     @Override
-    public void writeSpawnData(PacketBuffer buffer) {
-        super.writeSpawnData(buffer);
-        buffer.writeCompoundTag(this.stack.serializeNBT());
+    public void readAdditional(CompoundNBT compound) {
+        super.readAdditional(compound);
+        if (compound.contains("Spear", NBTTypes.COMPOUND_NBT.getId())) {
+            this.setStack(ItemStack.read(compound.getCompound("Spear")));
+        }
+        this.dealtDamage = compound.getBoolean("DealtDamage");
     }
 
     @Override
     public void readSpawnData(PacketBuffer buffer) {
         super.readSpawnData(buffer);
         this.setStack(ItemStack.read(buffer.readCompoundTag()));
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (this.timeInGround > 10) {
+            this.dealtDamage = true;
+        }
+        if (this.ticksInAir > 10) {
+            this.dealtDamage = false;
+        }
+        if (this.stack.isEmpty() && this.timeInGround > 10) {
+            this.remove();
+        }
+        if (this.inGround) {
+            this.setMotion(0, 0, 0);
+        }
+    }
+
+    @Override
+    protected void tryDespawn() {
+        if (this.pickupStatus != PickupStatus.ALLOWED) {
+            super.tryDespawn();
+        }
+    }
+
+    @Override
+    public void writeAdditional(CompoundNBT compound) {
+        super.writeAdditional(compound);
+        compound.put("Spear", this.stack.serializeNBT());
+        compound.putBoolean("DealtDamage", this.dealtDamage);
+    }
+
+    @Override
+    public void writeSpawnData(PacketBuffer buffer) {
+        super.writeSpawnData(buffer);
+        buffer.writeCompoundTag(this.stack.serializeNBT());
     }
 }

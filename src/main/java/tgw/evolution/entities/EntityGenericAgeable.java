@@ -14,8 +14,8 @@ public abstract class EntityGenericAgeable extends EntityGenericCreature {
     private static final DataParameter<Integer> AGE = EntityDataManager.createKey(EntityGenericAgeable.class, DataSerializers.VARINT);
     private static final DataParameter<Boolean> SLEEPING = EntityDataManager.createKey(EntityGenericAgeable.class, DataSerializers.BOOLEAN);
     protected int sleepTime;
-    private boolean slept;
     private int lifeSpan;
+    private boolean slept;
 
     protected EntityGenericAgeable(EntityType<? extends EntityGenericAgeable> type, World worldIn) {
         super(type, worldIn);
@@ -28,20 +28,20 @@ public abstract class EntityGenericAgeable extends EntityGenericCreature {
     public abstract int computeLifeSpan();
 
     /**
-     * @return Returns whether this entity has fulfilled its sleep quota for the day.
+     * Sets the age at which the entity is considered to be an adult in ticks.
      */
-    public boolean hasSlept() {
-        return this.slept;
-    }
-
-    public void setSlept() {
-        this.slept = true;
-    }
+    public abstract int getAdultAge();
 
     /**
-     * @return The child mortally rate of this entity. Values must range from {@code 0f} to {@code 1f}.
+     * Returns the age of the entity in ticks.
      */
-    public abstract float mortallyRate();
+    public int getAge() {
+        return this.dataManager.get(AGE);
+    }
+
+    public void setAge(int age) {
+        this.dataManager.set(AGE, age);
+    }
 
     /**
      * Returns the lifespan the entity will live for in ticks.
@@ -50,31 +50,58 @@ public abstract class EntityGenericAgeable extends EntityGenericCreature {
         return this.lifeSpan;
     }
 
+    /**
+     * Sets the age at which the entity is considered to be old in ticks.
+     */
+    public int getOldAge() {
+        return 3 * this.lifeSpan / 4;
+    }
+
+    /**
+     * @return Returns whether this entity has fulfilled its sleep quota for the day.
+     */
+    public boolean hasSlept() {
+        return this.slept;
+    }
+
+    /**
+     * Returns whether this entity is an adult or not.
+     */
+    public boolean isAdult() {
+        return !this.isChild() && !this.isOld();
+    }
+
+    /**
+     * Returns whether this entity is a child or not.
+     */
     @Override
-    protected void registerData() {
-        super.registerData();
-        this.dataManager.register(AGE, 0);
-        this.dataManager.register(SLEEPING, false);
+    public boolean isChild() {
+        return this.getAdultAge() > this.dataManager.get(AGE);
+    }
+
+    /**
+     * Returns whether this entity is old or not.
+     */
+    public boolean isOld() {
+        return this.dataManager.get(AGE) > this.getOldAge();
     }
 
     @Override
-    public void writeAdditional(CompoundNBT compound) {
-        super.writeAdditional(compound);
-        compound.putInt("Age", this.dataManager.get(AGE));
-        compound.putInt("LifeSpan", this.lifeSpan);
-        compound.putBoolean("Sleeping", this.dataManager.get(SLEEPING));
-        compound.putBoolean("Slept", this.slept);
-        compound.putInt("SleepTime", this.sleepTime);
+    public boolean isSleeping() {
+        return this.dataManager.get(SLEEPING);
     }
 
-    @Override
-    public void readAdditional(CompoundNBT compound) {
-        super.readAdditional(compound);
-        this.dataManager.set(AGE, compound.getInt("Age"));
-        this.lifeSpan = compound.getInt("LifeSpan");
-        this.setSleeping(compound.getBoolean("Sleeping"));
-        this.slept = compound.getBoolean("Slept");
-        this.sleepTime = compound.getInt("SleepTime");
+    public void setSleeping(boolean sleeping) {
+        this.dataManager.set(SLEEPING, sleeping);
+        if (this.isDead()) {
+            this.setPose(Pose.DYING);
+        }
+        else if (sleeping) {
+            this.setPose(Pose.SLEEPING);
+        }
+        else {
+            this.setPose(Pose.STANDING);
+        }
     }
 
     @Override
@@ -108,30 +135,9 @@ public abstract class EntityGenericAgeable extends EntityGenericCreature {
     }
 
     /**
-     * Returns the age of the entity in ticks.
+     * @return The child mortally rate of this entity. Values must range from {@code 0f} to {@code 1f}.
      */
-    public int getAge() {
-        return this.dataManager.get(AGE);
-    }
-
-    public void setAge(int age) {
-        this.dataManager.set(AGE, age);
-    }
-
-    /**
-     * Returns whether this entity is an adult or not.
-     */
-    public boolean isAdult() {
-        return !this.isChild() && !this.isOld();
-    }
-
-    /**
-     * Returns whether this entity is a child or not.
-     */
-    @Override
-    public boolean isChild() {
-        return this.getAdultAge() > this.dataManager.get(AGE);
-    }
+    public abstract float mortallyRate();
 
     @Override
     public void notifyDataManagerChange(DataParameter<?> key) {
@@ -142,21 +148,24 @@ public abstract class EntityGenericAgeable extends EntityGenericCreature {
     }
 
     @Override
-    public boolean isSleeping() {
-        return this.dataManager.get(SLEEPING);
+    public void readAdditional(CompoundNBT compound) {
+        super.readAdditional(compound);
+        this.dataManager.set(AGE, compound.getInt("Age"));
+        this.lifeSpan = compound.getInt("LifeSpan");
+        this.setSleeping(compound.getBoolean("Sleeping"));
+        this.slept = compound.getBoolean("Slept");
+        this.sleepTime = compound.getInt("SleepTime");
     }
 
-    public void setSleeping(boolean sleeping) {
-        this.dataManager.set(SLEEPING, sleeping);
-        if (this.isDead()) {
-            this.setPose(Pose.DYING);
-        }
-        else if (sleeping) {
-            this.setPose(Pose.SLEEPING);
-        }
-        else {
-            this.setPose(Pose.STANDING);
-        }
+    @Override
+    protected void registerData() {
+        super.registerData();
+        this.dataManager.register(AGE, 0);
+        this.dataManager.register(SLEEPING, false);
+    }
+
+    public void setSlept() {
+        this.slept = true;
     }
 
     @Override
@@ -164,22 +173,13 @@ public abstract class EntityGenericAgeable extends EntityGenericCreature {
         //Override of the method because of a call in LivingEntity.class which wanted a valid bed
     }
 
-    /**
-     * Returns whether this entity is old or not.
-     */
-    public boolean isOld() {
-        return this.dataManager.get(AGE) > this.getOldAge();
-    }
-
-    /**
-     * Sets the age at which the entity is considered to be an adult in ticks.
-     */
-    public abstract int getAdultAge();
-
-    /**
-     * Sets the age at which the entity is considered to be old in ticks.
-     */
-    public int getOldAge() {
-        return 3 * this.lifeSpan / 4;
+    @Override
+    public void writeAdditional(CompoundNBT compound) {
+        super.writeAdditional(compound);
+        compound.putInt("Age", this.dataManager.get(AGE));
+        compound.putInt("LifeSpan", this.lifeSpan);
+        compound.putBoolean("Sleeping", this.dataManager.get(SLEEPING));
+        compound.putBoolean("Slept", this.slept);
+        compound.putInt("SleepTime", this.sleepTime);
     }
 }

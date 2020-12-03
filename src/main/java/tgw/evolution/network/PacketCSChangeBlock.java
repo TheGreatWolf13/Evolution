@@ -16,11 +16,10 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
-import tgw.evolution.init.EvolutionNetwork;
 
 import java.util.function.Supplier;
 
-public class PacketCSChangeBlock extends PacketAbstract {
+public class PacketCSChangeBlock implements IPacket {
 
     private final BlockPos pos;
     private final Vec3d vec;
@@ -28,11 +27,17 @@ public class PacketCSChangeBlock extends PacketAbstract {
     private final boolean isInside;
 
     public PacketCSChangeBlock(BlockRayTraceResult result) {
-        super(LogicalSide.SERVER);
         this.pos = result.getPos();
         this.vec = result.getHitVec();
         this.direction = result.getFace();
         this.isInside = result.isInside();
+    }
+
+    public static PacketCSChangeBlock decode(PacketBuffer buffer) {
+        return new PacketCSChangeBlock(new BlockRayTraceResult(new Vec3d(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()),
+                                                               buffer.readEnumValue(Direction.class),
+                                                               buffer.readBlockPos(),
+                                                               buffer.readBoolean()));
     }
 
     public static void encode(PacketCSChangeBlock packet, PacketBuffer buffer) {
@@ -44,15 +49,8 @@ public class PacketCSChangeBlock extends PacketAbstract {
         buffer.writeBoolean(packet.isInside);
     }
 
-    public static PacketCSChangeBlock decode(PacketBuffer buffer) {
-        return new PacketCSChangeBlock(new BlockRayTraceResult(new Vec3d(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()),
-                                                               buffer.readEnumValue(Direction.class),
-                                                               buffer.readBlockPos(),
-                                                               buffer.readBoolean()));
-    }
-
     public static void handle(PacketCSChangeBlock packet, Supplier<NetworkEvent.Context> context) {
-        if (EvolutionNetwork.checkSide(context, packet)) {
+        if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
                 PlayerEntity player = context.get().getSender();
                 Item item = player.getHeldItemMainhand().getItem();
@@ -70,5 +68,10 @@ public class PacketCSChangeBlock extends PacketAbstract {
             });
             context.get().setPacketHandled(true);
         }
+    }
+
+    @Override
+    public LogicalSide getDestinationSide() {
+        return LogicalSide.SERVER;
     }
 }

@@ -7,7 +7,7 @@ import javax.annotation.Nonnull;
 
 import static tgw.evolution.blocks.tileentities.Patterns.*;
 
-public abstract class MoldingPatterns {
+public final class MoldingPatterns {
 
     public static final boolean[][][] NULL = FALSE_TENSOR;
     public static final boolean[][][] AXE = {AXE_FALSE, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX};
@@ -76,8 +76,7 @@ public abstract class MoldingPatterns {
     private static final boolean[][][] BRICK4 = {BRICK_LAYER4, BRICK_LAYER4};
     public static final boolean[][][][] BRICK = {BRICK1, BRICK2, BRICK3, BRICK4};
 
-    public static void load() {
-        Evolution.LOGGER.info("Molding patterns loaded");
+    private MoldingPatterns() {
     }
 
     public static boolean comparePatternsOneLayer(@Nonnull boolean[][] matrix, @Nonnull boolean[][][] pattern) {
@@ -98,5 +97,9 @@ public abstract class MoldingPatterns {
             }
         }
         return false;
+    }
+
+    public static void load() {
+        Evolution.LOGGER.info("Molding patterns loaded");
     }
 }

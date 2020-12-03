@@ -30,23 +30,42 @@ import java.util.Random;
 public class BlockWallTorch extends BlockTorch {
 
     public static final DirectionProperty HORIZONTAL_FACING = HorizontalBlock.HORIZONTAL_FACING;
-    public static final Map<Direction, VoxelShape> SHAPES = Maps.newEnumMap(ImmutableMap.of(Direction.NORTH, EvolutionHitBoxes.TORCH_NORTH, Direction.SOUTH, EvolutionHitBoxes.TORCH_SOUTH, Direction.WEST, EvolutionHitBoxes.TORCH_WEST, Direction.EAST, EvolutionHitBoxes.TORCH_EAST));
+    public static final Map<Direction, VoxelShape> SHAPES = Maps.newEnumMap(ImmutableMap.of(Direction.NORTH,
+                                                                                            EvolutionHitBoxes.TORCH_NORTH,
+                                                                                            Direction.SOUTH,
+                                                                                            EvolutionHitBoxes.TORCH_SOUTH,
+                                                                                            Direction.WEST,
+                                                                                            EvolutionHitBoxes.TORCH_WEST,
+                                                                                            Direction.EAST,
+                                                                                            EvolutionHitBoxes.TORCH_EAST));
 
     public BlockWallTorch() {
         this.setDefaultState(this.getDefaultState().with(HORIZONTAL_FACING, Direction.NORTH).with(LIT, true));
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        return SHAPES.get(state.get(HORIZONTAL_FACING));
+    @OnlyIn(Dist.CLIENT)
+    public void animateTick(BlockState stateIn, World worldIn, BlockPos pos, Random rand) {
+        if (!stateIn.get(LIT)) {
+            return;
+        }
+        double dx = pos.getX() + 0.5;
+        double dy = pos.getY() + 0.7;
+        double dz = pos.getZ() + 0.5;
+        Direction direction = stateIn.get(HORIZONTAL_FACING).getOpposite();
+        worldIn.addParticle(ParticleTypes.SMOKE, dx + 0.27 * direction.getXOffset(), dy + 0.22, dz + 0.27 * direction.getZOffset(), 0, 0, 0);
+        worldIn.addParticle(ParticleTypes.FLAME, dx + 0.27 * direction.getXOffset(), dy + 0.22, dz + 0.27 * direction.getZOffset(), 0, 0, 0);
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        Direction direction = state.get(HORIZONTAL_FACING);
-        BlockPos blockpos = pos.offset(direction.getOpposite());
-        BlockState blockstate = worldIn.getBlockState(blockpos);
-        return blockstate.func_224755_d(worldIn, blockpos, direction);
+    public void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+        builder.add(HORIZONTAL_FACING);
+        super.fillStateContainer(builder);
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+        return SHAPES.get(state.get(HORIZONTAL_FACING));
     }
 
     @Override
@@ -68,27 +87,11 @@ public class BlockWallTorch extends BlockTorch {
     }
 
     @Override
-    public BlockState updatePostPlacement(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos) {
-        return facing.getOpposite() == stateIn.get(HORIZONTAL_FACING) && !stateIn.isValidPosition(worldIn, currentPos) ? Blocks.AIR.getDefaultState() : stateIn;
-    }
-
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public void animateTick(BlockState stateIn, World worldIn, BlockPos pos, Random rand) {
-        if (!stateIn.get(LIT)) {
-            return;
-        }
-        double dx = pos.getX() + 0.5;
-        double dy = pos.getY() + 0.7;
-        double dz = pos.getZ() + 0.5;
-        Direction direction = stateIn.get(HORIZONTAL_FACING).getOpposite();
-        worldIn.addParticle(ParticleTypes.SMOKE, dx + 0.27 * direction.getXOffset(), dy + 0.22, dz + 0.27 * direction.getZOffset(), 0, 0, 0);
-        worldIn.addParticle(ParticleTypes.FLAME, dx + 0.27 * direction.getXOffset(), dy + 0.22, dz + 0.27 * direction.getZOffset(), 0, 0, 0);
-    }
-
-    @Override
-    public BlockState rotate(BlockState state, Rotation rot) {
-        return state.with(HORIZONTAL_FACING, rot.rotate(state.get(HORIZONTAL_FACING)));
+    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
+        Direction direction = state.get(HORIZONTAL_FACING);
+        BlockPos blockpos = pos.offset(direction.getOpposite());
+        BlockState blockstate = world.getBlockState(blockpos);
+        return blockstate.func_224755_d(world, blockpos, direction);
     }
 
     @Override
@@ -97,8 +100,19 @@ public class BlockWallTorch extends BlockTorch {
     }
 
     @Override
-    public void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(HORIZONTAL_FACING);
-        super.fillStateContainer(builder);
+    public BlockState rotate(BlockState state, Rotation rot) {
+        return state.with(HORIZONTAL_FACING, rot.rotate(state.get(HORIZONTAL_FACING)));
+    }
+
+    @Override
+    public BlockState updatePostPlacement(BlockState stateIn,
+                                          Direction facing,
+                                          BlockState facingState,
+                                          IWorld worldIn,
+                                          BlockPos currentPos,
+                                          BlockPos facingPos) {
+        return facing.getOpposite() == stateIn.get(HORIZONTAL_FACING) && !stateIn.isValidPosition(worldIn, currentPos) ?
+               Blocks.AIR.getDefaultState() :
+               stateIn;
     }
 }

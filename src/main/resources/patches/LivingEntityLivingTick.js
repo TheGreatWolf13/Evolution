@@ -8,7 +8,7 @@ var SETMOTIONDOUBLE = ASMAPI.mapMethod("func_213317_d");
 var GETMOTION = ASMAPI.mapMethod("func_213322_ci");
 
 function log(message) {
-	print("[Evolution LivingEntity#livingTick() Transformer]: " + message);
+	print("[evolution/ LivingEntity#livingTick() Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {

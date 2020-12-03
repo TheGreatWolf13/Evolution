@@ -2,14 +2,13 @@ package tgw.evolution.util;
 
 import net.minecraft.util.text.TranslationTextComponent;
 
-@SuppressWarnings("EqualsAndHashcode")
 public class Date {
 
-    public static final Date STARTING_DATE = new Date(Month.JUNE, 1, 1000);
+    public static final Date STARTING_DATE = new Date(Month.JUNE, 1, 1_000);
     public static final int DAYS_SINCE_MARCH_EQUINOX = 2 * Time.DAYS_IN_A_MONTH + 1;
-    private int day;
-    private Month month;
-    private int year;
+    private final int day;
+    private final Month month;
+    private final int year;
 
     public Date(int year, Month month, int day) {
         if (day > Time.DAYS_IN_A_MONTH || day < 1) {
@@ -19,7 +18,14 @@ public class Date {
         this.month = month;
         this.day = day;
         if (this.isBefore(STARTING_DATE)) {
-            throw new IllegalStateException("Date cannot be before starting date " + STARTING_DATE + ": day = " + this.day + " month = " + this.month + " year = " + this.year);
+            throw new IllegalStateException("Date cannot be before starting date " +
+                                            STARTING_DATE +
+                                            ": day = " +
+                                            this.day +
+                                            " month = " +
+                                            this.month +
+                                            " year = " +
+                                            this.year);
         }
     }
 
@@ -32,13 +38,13 @@ public class Date {
         this.day = day;
     }
 
-    public Date(int ticks) {
-        ticks += 6000;
-        int y = ticks / Time.YEAR_IN_TICKS;
+    public Date(long ticks) {
+        ticks += 6_000;
+        long y = ticks / Time.YEAR_IN_TICKS;
         ticks -= Time.YEAR_IN_TICKS * y;
-        int m = ticks / Time.MONTH_IN_TICKS;
+        long m = ticks / Time.MONTH_IN_TICKS;
         ticks -= Time.MONTH_IN_TICKS * m;
-        int d = ticks / Time.DAY_IN_TICKS;
+        long d = ticks / Time.DAY_IN_TICKS;
         d += STARTING_DATE.day;
         m += STARTING_DATE.month.numerical;
         y += STARTING_DATE.year;
@@ -50,9 +56,9 @@ public class Date {
             m -= Time.MONTHS_IN_A_YEAR;
             y++;
         }
-        this.year = y;
-        this.month = Month.byNumerical(m);
-        this.day = d;
+        this.year = (int) y;
+        this.month = Month.byNumerical((int) m);
+        this.day = (int) d;
     }
 
     public static String getConnector() {
@@ -82,35 +88,6 @@ public class Date {
         return new Date(y, Month.byNumerical(m), d);
     }
 
-    public Date addAndSet(int days, int months, int years) {
-        int d = this.day + days;
-        int m = this.month.getNumerical() + months;
-        int y = this.year + years;
-        while (d > Time.DAYS_IN_A_MONTH) {
-            m++;
-            d -= Time.DAYS_IN_A_MONTH;
-        }
-        while (d < 1) {
-            m--;
-            d += Time.DAYS_IN_A_MONTH;
-        }
-        while (m > 12) {
-            y++;
-            m -= 12;
-        }
-        while (m < 1) {
-            y--;
-            m += 12;
-        }
-        this.day = d;
-        this.month = Month.byNumerical(m);
-        this.year = y;
-        if (this.isBefore(STARTING_DATE)) {
-            throw new IllegalStateException("Date cannot be before starting date " + STARTING_DATE + ": day = " + this.day + " month = " + this.month + " year = " + this.year);
-        }
-        return this;
-    }
-
     @Override
     public boolean equals(Object obj) {
         if (obj == this) {
@@ -123,24 +100,8 @@ public class Date {
         return this.year == date.year && this.month == date.month && this.day == date.day;
     }
 
-    /**
-     * Returns whether this date happened before the argument date.
-     */
-    public boolean isBefore(Date date) {
-        return this.year <= date.year && (this.year != date.year || this.month.getNumerical() <= date.month.getNumerical()) && (this.year != date.year || this.month
-                .getNumerical() != date.month.getNumerical() || this.day < date.day);
-    }
-
-    /**
-     * Returns whether this date happened after the argument date.
-     */
-    public boolean isAfter(Date date) {
-        return !this.isBefore(date) && !this.equals(date);
-    }
-
-    @Override
-    public String toString() {
-        return String.format("%02d", this.day) + "/" + String.format("%02d", this.month.getNumerical()) + "/" + this.year;
+    public int getDay() {
+        return this.day;
     }
 
     public String getDayTranslation() {
@@ -152,23 +113,48 @@ public class Date {
         return this.getDayTranslation() + " " + getConnector() + space + this.month.getTranslatedName() + " " + getConnector() + space + this.year;
     }
 
-    public int getYear() {
-        return this.year;
-    }
-
-    public int getDay() {
-        return this.day;
-    }
-
     public Month getMonth() {
         return this.month;
     }
 
-    public int toTicks() {
-        int temp = (this.year - STARTING_DATE.year) * Time.YEAR_IN_TICKS;
-        temp += (this.month.getNumerical() - STARTING_DATE.month.getNumerical()) * Time.MONTH_IN_TICKS;
-        temp += (this.day - STARTING_DATE.day) * Time.DAY_IN_TICKS;
-        temp -= 6000;
+    public int getYear() {
+        return this.year;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = this.day;
+        hash = hash * 31 + this.month.hashCode();
+        hash = hash * 31 + this.year;
+        return hash;
+    }
+
+    /**
+     * Returns whether this date happened after the argument date.
+     */
+    public boolean isAfter(Date date) {
+        return !this.isBefore(date) && !this.equals(date);
+    }
+
+    /**
+     * Returns whether this date happened before the argument date.
+     */
+    public boolean isBefore(Date date) {
+        return this.year <= date.year &&
+               (this.year != date.year || this.month.getNumerical() <= date.month.getNumerical()) &&
+               (this.year != date.year || this.month.getNumerical() != date.month.getNumerical() || this.day < date.day);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%02d", this.day) + "/" + String.format("%02d", this.month.getNumerical()) + "/" + this.year;
+    }
+
+    public long toTicks() {
+        long temp = (long) (this.year - STARTING_DATE.year) * Time.YEAR_IN_TICKS;
+        temp += (long) (this.month.getNumerical() - STARTING_DATE.month.getNumerical()) * Time.MONTH_IN_TICKS;
+        temp += (long) (this.day - STARTING_DATE.day) * Time.DAY_IN_TICKS;
+        temp -= 6_000;
         return Math.max(temp, 0);
     }
 
@@ -198,7 +184,7 @@ public class Date {
 
         public static Month byIndex(int index) {
             index %= 12;
-            for (Month month : Month.values()) {
+            for (Month month : values()) {
                 if (month.index == index) {
                     return month;
                 }
@@ -236,20 +222,12 @@ public class Date {
             throw new IllegalStateException("Invalid month number: " + number);
         }
 
-        public String getName() {
-            return this.name;
-        }
-
-        public String getTranslatedName() {
-            return new TranslationTextComponent("evolution.calendar.month." + this.name).getFormattedText();
-        }
-
         public int getIndex() {
             return this.index;
         }
 
-        public int getNumerical() {
-            return this.numerical;
+        public String getName() {
+            return this.name;
         }
 
         public Month getNext() {
@@ -259,6 +237,14 @@ public class Date {
         public Month getNext(int n) {
             int index = (this.index + n) % 12;
             return byIndex(index);
+        }
+
+        public int getNumerical() {
+            return this.numerical;
+        }
+
+        public String getTranslatedName() {
+            return new TranslationTextComponent("evolution.calendar.month." + this.name).getFormattedText();
         }
     }
 }

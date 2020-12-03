@@ -11,7 +11,7 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import tgw.evolution.blocks.BlockLog;
-import tgw.evolution.entities.EntityFallingTimber;
+import tgw.evolution.entities.misc.EntityFallingTimber;
 
 public class FallingEvents {
 
@@ -33,24 +33,17 @@ public class FallingEvents {
     }
 
     @SubscribeEvent
-    public void tick(TickEvent.WorldTickEvent event) {
-        if (event.side != LogicalSide.SERVER) {
+    public void chopEvent(BlockEvent.BreakEvent event) {
+        if (!(event.getState().getBlock() instanceof BlockLog)) {
             return;
         }
-        if (event.phase != TickEvent.Phase.START) {
+        if (!event.getState().get(BlockLog.TREE)) {
             return;
         }
-        FallingManager fallingManager = FallingManager.fallingManagers.get(event.world);
-        if (fallingManager == null) {
-            return;
-        }
-        fallingManager.tick();
-        if (!fallingManager.isEmpty()) {
-            return;
-        }
-        FallingManager.fallingManagers.remove(event.world);
-        isFalling = false;
-        sound = true;
+        isFalling = true;
+        Direction fallingDirection = event.getPlayer().getHorizontalFacing();
+        IWorld worldIn = event.getWorld();
+        FallingManager.fallingManagers.computeIfAbsent(worldIn, FallingManager::new).onChop(event.getPos(), fallingDirection);
     }
 
     @SubscribeEvent
@@ -74,16 +67,23 @@ public class FallingEvents {
     }
 
     @SubscribeEvent
-    public void chopEvent(BlockEvent.BreakEvent event) {
-        if (!(event.getState().getBlock() instanceof BlockLog)) {
+    public void tick(TickEvent.WorldTickEvent event) {
+        if (event.side != LogicalSide.SERVER) {
             return;
         }
-        if (!event.getState().get(BlockLog.TREE)) {
+        if (event.phase != TickEvent.Phase.START) {
             return;
         }
-        isFalling = true;
-        Direction fallingDirection = event.getPlayer().getHorizontalFacing();
-        IWorld worldIn = event.getWorld();
-        FallingManager.fallingManagers.computeIfAbsent(worldIn, FallingManager::new).onChop(event.getPos(), fallingDirection);
+        FallingManager fallingManager = FallingManager.fallingManagers.get(event.world);
+        if (fallingManager == null) {
+            return;
+        }
+        fallingManager.tick();
+        if (!fallingManager.isEmpty()) {
+            return;
+        }
+        FallingManager.fallingManagers.remove(event.world);
+        isFalling = false;
+        sound = true;
     }
 }

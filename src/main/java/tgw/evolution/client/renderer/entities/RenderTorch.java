@@ -11,7 +11,6 @@ import tgw.evolution.entities.projectiles.EntityTorch;
 
 import javax.annotation.Nullable;
 
-
 public class RenderTorch extends EntityRenderer<EntityTorch> {
 
     public static final ResourceLocation TORCH = Evolution.location("textures/entity/torch.png");

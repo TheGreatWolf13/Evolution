@@ -41,23 +41,20 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
         this.name = name;
     }
 
-    @Override
-    public EnumRockVariant getVariant() {
-        return this.variant;
+    public static VoxelShape calculateHitbox(TEKnapping tile) {
+        VoxelShape shape = VoxelShapes.empty();
+        for (int i = 0; i < tile.matrix.length; i++) {
+            for (int j = 0; j < tile.matrix[i].length; j++) {
+                if (tile.matrix[i][j]) {
+                    shape = VoxelShapes.combineAndSimplify(shape, SHAPE.withOffset(3 * i / 16.0f, 0, 3 * j / 16.0f), IBooleanFunction.OR);
+                }
+            }
+        }
+        return shape;
     }
 
     @Override
-    public void setVariant(EnumRockVariant variant) {
-        this.variant = variant;
-    }
-
-    @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
-    }
-
-    @Override
-    public boolean isReplaceable(BlockState state) {
+    public boolean canBeReplacedByLiquid(BlockState state) {
         return true;
     }
 
@@ -67,23 +64,13 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
     }
 
     @Override
-    public boolean canBeReplacedByLiquid(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public ItemStack getDrops(BlockState state) {
-        return new ItemStack(this.variant.getRock());
-    }
-
-    @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
-    }
-
-    @Override
     public TileEntity createTileEntity(BlockState state, IBlockReader world) {
         return new TEKnapping();
+    }
+
+    @Override
+    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
+        return new ItemStack(this.variant.getRock());
     }
 
     @Override
@@ -94,11 +81,6 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
     @Override
     public BlockRenderType getRenderType(BlockState state) {
         return BlockRenderType.MODEL;
-    }
-
-    @Override
-    public boolean isSolid(BlockState state) {
-        return false;
     }
 
     @Override
@@ -114,16 +96,34 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
         return FULL_SHAPE;
     }
 
-    public static VoxelShape calculateHitbox(TEKnapping tile) {
-        VoxelShape shape = VoxelShapes.empty();
-        for (int i = 0; i < tile.matrix.length; i++) {
-            for (int j = 0; j < tile.matrix[i].length; j++) {
-                if (tile.matrix[i][j]) {
-                    shape = VoxelShapes.combineAndSimplify(shape, SHAPE.withOffset(3 * i / 16f, 0, 3 * j / 16f), IBooleanFunction.OR);
-                }
-            }
-        }
-        return shape;
+    @Override
+    public EnumRockNames getStoneName() {
+        return this.name;
+    }
+
+    @Override
+    public EnumRockVariant getVariant() {
+        return this.variant;
+    }
+
+    @Override
+    public void setVariant(EnumRockVariant variant) {
+        this.variant = variant;
+    }
+
+    @Override
+    public boolean hasTileEntity(BlockState state) {
+        return true;
+    }
+
+    @Override
+    public boolean isReplaceable(BlockState state) {
+        return true;
+    }
+
+    @Override
+    public boolean isSolid(BlockState state) {
+        return false;
     }
 
     @Override
@@ -135,6 +135,16 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
             return false;
         }
         return Block.hasSolidSide(down, worldIn, posDown, Direction.UP);
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+        if (!worldIn.isRemote) {
+            if (!state.isValidPosition(worldIn, pos)) {
+                spawnDrops(state, worldIn, pos);
+                worldIn.removeBlock(pos, false);
+            }
+        }
     }
 
     @Override
@@ -156,20 +166,10 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
         if (!tileEntity.matrix[x][z] || tileEntity.type.getPattern()[x][z]) {
             return false;
         }
-        worldIn.playSound(player, pos, SoundEvents.BLOCK_STONE_BREAK, SoundCategory.BLOCKS, 1F, 0.75F);
+        worldIn.playSound(player, pos, SoundEvents.BLOCK_STONE_BREAK, SoundCategory.BLOCKS, 1.0F, 0.75F);
         tileEntity.matrix[x][z] = false;
         tileEntity.sendRenderUpdate();
         tileEntity.checkParts();
         return true;
-    }
-
-    @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnDrops(state, worldIn, pos);
-                worldIn.removeBlock(pos, false);
-            }
-        }
     }
 }

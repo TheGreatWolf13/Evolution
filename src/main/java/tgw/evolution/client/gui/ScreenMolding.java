@@ -14,6 +14,7 @@ import tgw.evolution.blocks.tileentities.EnumMolding;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketCSSetMoldingType;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,9 +44,18 @@ public class ScreenMolding extends Screen {
         Minecraft.getInstance().displayGuiScreen(new ScreenMolding(pos));
     }
 
-    @Override
-    public boolean isPauseScreen() {
-        return false;
+    private void drawItemStack(ItemStack stack, int x, int y, @Nullable String altText) {
+        GlStateManager.translatef(0.0F, 0.0F, 32.0F);
+        RenderHelper.enableGUIStandardItemLighting();
+        GlStateManager.disableLighting();
+        this.blitOffset = 200;
+        this.itemRenderer.zLevel = 200.0F;
+        this.itemRenderer.renderItemAndEffectIntoGUI(stack, x, y);
+        this.itemRenderer.renderItemOverlayIntoGUI(this.font, stack, x, y, altText);
+        this.blitOffset = 0;
+        this.itemRenderer.zLevel = 0.0F;
+        GlStateManager.enableLighting();
+        RenderHelper.disableStandardItemLighting();
     }
 
     @Override
@@ -63,23 +73,9 @@ public class ScreenMolding extends Screen {
         }
     }
 
-    private void drawItemStack(ItemStack stack, int x, int y, String altText) {
-        GlStateManager.translatef(0.0F, 0.0F, 32.0F);
-        RenderHelper.enableGUIStandardItemLighting();
-        GlStateManager.disableLighting();
-        this.blitOffset = 200;
-        this.itemRenderer.zLevel = 200.0F;
-        this.itemRenderer.renderItemAndEffectIntoGUI(stack, x, y);
-        this.itemRenderer.renderItemOverlayIntoGUI(this.font, stack, x, y, altText);
-        this.blitOffset = 0;
-        this.itemRenderer.zLevel = 0.0F;
-        GlStateManager.enableLighting();
-        RenderHelper.disableStandardItemLighting();
-    }
-
-    private void setTile(EnumMolding type) {
-        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSetMoldingType(this.pos, type));
-        this.minecraft.displayGuiScreen(null);
+    @Override
+    public boolean isPauseScreen() {
+        return false;
     }
 
     @Override
@@ -95,7 +91,7 @@ public class ScreenMolding extends Screen {
         int relX = (this.width - xSize) / 2;
         int relY = (this.height - 20) / 2;
         int textX = (this.width - this.font.getStringWidth(this.title.getFormattedText())) / 2;
-        this.font.drawString(this.title.getFormattedText(), textX, cornerY + 5, 0x404040);
+        this.font.drawString(this.title.getFormattedText(), textX, cornerY + 5, 0x40_4040);
         super.render(mouseX, mouseY, partialTicks);
         for (int i = 0; i < STACKS.length; i++) {
             this.drawItemStack(STACKS[i], 2 + relX + 25 * i, 2 + relY, null);
@@ -105,5 +101,10 @@ public class ScreenMolding extends Screen {
                 this.renderTooltip(entry.getValue(), mouseX, mouseY);
             }
         }
+    }
+
+    private void setTile(EnumMolding type) {
+        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSetMoldingType(this.pos, type));
+        this.minecraft.displayGuiScreen(null);
     }
 }
