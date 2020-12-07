@@ -6,10 +6,10 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.LogicalSidedProvider;
 import net.minecraftforge.fml.network.NetworkEvent;
+import tgw.evolution.capabilities.chunkstorage.ChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
-import tgw.evolution.capabilities.chunkstorage.ChunkStorages;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
-import tgw.evolution.capabilities.chunkstorage.IChunkStorages;
+import tgw.evolution.capabilities.chunkstorage.IChunkStorage;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -25,7 +25,7 @@ public class PacketSCUpdateChunkStorage implements IPacket {
     private final int oxygen;
     private final int gasNitrogen;
 
-    public PacketSCUpdateChunkStorage(IChunkStorages chunkStorage) {
+    public PacketSCUpdateChunkStorage(IChunkStorage chunkStorage) {
         this.chunkPos = chunkStorage.getChunkPos();
         this.nitrogen = chunkStorage.getElementStored(EnumStorage.NITROGEN);
         this.phosphorus = chunkStorage.getElementStored(EnumStorage.PHOSPHORUS);
@@ -82,16 +82,16 @@ public class PacketSCUpdateChunkStorage implements IPacket {
             context.get().enqueueWork(() -> {
                 Optional<World> optionalWorld = LogicalSidedProvider.CLIENTWORLD.get(context.get().getDirection().getReceptionSide());
                 optionalWorld.ifPresent(world -> ChunkStorageCapability.getChunkStorage(world, packet.chunkPos).ifPresent(chunkStorage -> {
-                    if (!(chunkStorage instanceof ChunkStorages)) {
+                    if (!(chunkStorage instanceof ChunkStorage)) {
                         return;
                     }
-                    ((ChunkStorages) chunkStorage).setElement(EnumStorage.NITROGEN, packet.nitrogen);
-                    ((ChunkStorages) chunkStorage).setElement(EnumStorage.PHOSPHORUS, packet.phosphorus);
-                    ((ChunkStorages) chunkStorage).setElement(EnumStorage.POTASSIUM, packet.potassium);
-                    ((ChunkStorages) chunkStorage).setElement(EnumStorage.WATER, packet.water);
-                    ((ChunkStorages) chunkStorage).setElement(EnumStorage.CARBON_DIOXIDE, packet.carbonDioxide);
-                    ((ChunkStorages) chunkStorage).setElement(EnumStorage.OXYGEN, packet.oxygen);
-                    ((ChunkStorages) chunkStorage).setElement(EnumStorage.GAS_NITROGEN, packet.gasNitrogen);
+                    ((ChunkStorage) chunkStorage).setElement(EnumStorage.NITROGEN, packet.nitrogen);
+                    ((ChunkStorage) chunkStorage).setElement(EnumStorage.PHOSPHORUS, packet.phosphorus);
+                    ((ChunkStorage) chunkStorage).setElement(EnumStorage.POTASSIUM, packet.potassium);
+                    ((ChunkStorage) chunkStorage).setElement(EnumStorage.WATER, packet.water);
+                    ((ChunkStorage) chunkStorage).setElement(EnumStorage.CARBON_DIOXIDE, packet.carbonDioxide);
+                    ((ChunkStorage) chunkStorage).setElement(EnumStorage.OXYGEN, packet.oxygen);
+                    ((ChunkStorage) chunkStorage).setElement(EnumStorage.GAS_NITROGEN, packet.gasNitrogen);
                 }));
             });
             context.get().setPacketHandled(true);

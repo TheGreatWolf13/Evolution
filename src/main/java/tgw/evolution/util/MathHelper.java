@@ -320,7 +320,7 @@ public final class MathHelper {
     public static int getIndex(int maxIndex, double min, double max, double value) {
         value = clamp(value, min, max);
         double size = (max - min) / maxIndex;
-        int i = (int) (value / size);
+        int i = (int) ((value - min) / size);
         return clamp(i, 0, maxIndex - 1);
     }
 

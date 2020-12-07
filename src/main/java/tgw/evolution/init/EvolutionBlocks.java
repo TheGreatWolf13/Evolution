@@ -1,7 +1,6 @@
 package tgw.evolution.init;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.FlowingFluidBlock;
 import net.minecraft.block.GlassBlock;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
@@ -14,6 +13,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.*;
 import tgw.evolution.blocks.fluids.BlockFreshWater;
+import tgw.evolution.blocks.fluids.BlockGenericFluid;
 import tgw.evolution.blocks.trees.*;
 import tgw.evolution.util.*;
 
@@ -438,7 +438,7 @@ public final class EvolutionBlocks {
     public static final RegistryObject<Block> PUZZLE = BLOCKS.register("puzzle", BlockPuzzle::new);
     public static final RegistryObject<Block> SCHEMATIC_BLOCK = BLOCKS.register("schematic_block", BlockSchematic::new);
 
-    public static final RegistryObject<FlowingFluidBlock> FRESH_WATER = BLOCKS.register("fresh_water", BlockFreshWater::new);
+    public static final RegistryObject<BlockGenericFluid> FRESH_WATER = BLOCKS.register("fresh_water", BlockFreshWater::new);
 
     private EvolutionBlocks() {
     }

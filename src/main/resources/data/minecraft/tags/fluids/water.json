@@ -1,9 +1,8 @@
 {
-  "replace": false,
-  "values": [
-    "minecraft:water",
-    "minecraft:flowing_water",
-	"evolution:fresh_water",
-	"evolution:fresh_water_flowing"
-  ]
+	"replace": false,
+	"values": [
+		"minecraft:water",
+		"minecraft:flowing_water",
+		"evolution:fresh_water"
+	]
 }

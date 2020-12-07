@@ -1,6 +1,8 @@
 package tgw.evolution.init;
 
 import net.minecraft.block.Block;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.item.Item;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -14,6 +16,8 @@ import tgw.evolution.items.*;
 import tgw.evolution.util.EnumRockNames;
 import tgw.evolution.util.EnumWoodVariant;
 import tgw.evolution.util.MathHelper;
+
+import java.util.function.Supplier;
 
 import static tgw.evolution.init.EvolutionBlocks.*;
 import static tgw.evolution.util.EnumRockNames.*;
@@ -695,14 +699,20 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> stone_bricks_schist = ITEMS.register("stone_bricks_schist", () -> itemBlock(STONE_BRICKS_SCHIST));
     public static final RegistryObject<Item> stone_bricks_shale = ITEMS.register("stone_bricks_shale", () -> itemBlock(STONE_BRICKS_SHALE));
     public static final RegistryObject<Item> stone_bricks_slate = ITEMS.register("stone_bricks_slate", () -> itemBlock(STONE_BRICKS_SLATE));
-
-    public static final RegistryObject<Item> bucket_fresh_water = ITEMS.register("bucket_fresh_water", ItemFreshWaterBucket::new);
+    //buckets
+    public static final RegistryObject<Item> bucket_ceramic_empty = ITEMS.register("bucket_ceramic_empty", () -> bucketCeramic(() -> Fluids.EMPTY));
+    public static final RegistryObject<Item> bucket_ceramic_fresh_water = ITEMS.register("bucket_ceramic_fresh_water",
+                                                                                         () -> bucketCeramic(EvolutionFluids.FRESH_WATER));
 
     private EvolutionItems() {
     }
 
     private static Item axeStone(ToolMaterials tier) {
         return new ItemAxe(tier, MathHelper.attackSpeed(1.25F), propStoneTool(), tier.getAxeMass());
+    }
+
+    private static Item bucketCeramic(Supplier<? extends Fluid> fluid) {
+        return new ItemBucketCeramic(fluid, propLiquid().maxStackSize(fluid.get() == Fluids.EMPTY ? 16 : 1));
     }
 
     private static Item hammerStone(ToolMaterials tier) {
@@ -739,6 +749,10 @@ public final class EvolutionItems {
 
     public static Item.Properties propEgg() {
         return new Item.Properties().group(EvolutionCreativeTabs.EGGS);
+    }
+
+    public static Item.Properties propLiquid() {
+        return new Item.Properties().group(EvolutionCreativeTabs.LIQUIDS);
     }
 
     public static Item.Properties propMisc() {

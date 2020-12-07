@@ -16,6 +16,7 @@ import net.minecraft.util.text.*;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.registries.ForgeRegistries;
+import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.items.*;
@@ -40,10 +41,14 @@ public class ItemEvents {
     private static final String SWEEP = "evolution.tooltip.sweep";
     private static final String MASS = "evolution.tooltip.mass";
     private static final String HEAVY_ATTACK = "evolution.tooltip.heavy_attack";
+    private static final String EMPTY_COMPONENT = "evolution.tooltip.container.empty";
+    private static final String CAPACITY = "evolution.tooltip.container.capacity";
+    private static final String CONTAINER = "evolution.tooltop.container.amount";
     private static final ITextComponent COMPONENT_TWO_HANDED = new TranslationTextComponent(TWO_HANDED).setStyle(EvolutionStyles.PROPERTY);
     private static final ITextComponent COMPONENT_OFFHAND = new TranslationTextComponent(OFFHAND).setStyle(EvolutionStyles.LIGHT_GREY);
     private static final ITextComponent COMPONENT_THROWABLE = new TranslationTextComponent(THROWABLE).setStyle(EvolutionStyles.PROPERTY);
     private static final ITextComponent EMPTY = new StringTextComponent("");
+    private static final ITextComponent COMPONENT_EMPTY_CONTAINER = new TranslationTextComponent(EMPTY_COMPONENT).setStyle(EvolutionStyles.INFO);
 
     private static void addEffectsTooltips(List<ITextComponent> tooltip, ItemStack stack) {
         Item item = stack.getItem();
@@ -64,13 +69,28 @@ public class ItemEvents {
                                                                                 .setStyle(EvolutionStyles.EFFECTS));
         }
         if (item instanceof IKnockback) {
-            tooltip.add(new TranslationTextComponent(KNOCKBACK,
-                                                     String.format(Locale.ENGLISH, "%s", MathHelper.getRomanNumber(((IKnockback) item).getLevel()))));
+            tooltip.add(new TranslationTextComponent(KNOCKBACK, MathHelper.getRomanNumber(((IKnockback) item).getLevel())));
         }
         if (item instanceof ISweepAttack) {
             tooltip.add(new TranslationTextComponent(SWEEP,
                                                      String.format(Locale.ENGLISH, "%d%%", (int) ((ISweepAttack) item).getSweepRatio() * 100)));
         }
+    }
+
+    private static void addFluidInfo(List<ITextComponent> tooltip, ItemStack stack) {
+        IItemFluidContainer container = (IItemFluidContainer) stack.getItem();
+        if (container.isEmpty(stack)) {
+            tooltip.add(COMPONENT_EMPTY_CONTAINER);
+        }
+        else {
+            tooltip.add(new TranslationTextComponent(CONTAINER,
+                                                     ItemStack.DECIMALFORMAT.format(container.getAmount(stack) / 100.0f),
+                                                     container.getFluid() instanceof FluidGeneric ?
+                                                     ((FluidGeneric) container.getFluid()).getTextComp() :
+                                                     "null").setStyle(EvolutionStyles.INFO));
+        }
+        tooltip.add(new TranslationTextComponent(CAPACITY,
+                                                 ItemStack.DECIMALFORMAT.format(container.getMaxAmount() / 100.0f)).setStyle(EvolutionStyles.INFO));
     }
 
     public static void makeEvolutionTooltip(ItemStack stack, List<ITextComponent> tooltip, PlayerEntity playerIn, ITooltipFlag advanced) {
@@ -82,6 +102,9 @@ public class ItemEvents {
         tooltip.add(component);
         //Item specific information
         stack.getItem().addInformation(stack, playerIn == null ? null : playerIn.world, tooltip, advanced);
+        if (stack.getItem() instanceof IItemFluidContainer) {
+            addFluidInfo(tooltip, stack);
+        }
         //Effects
         addEffectsTooltips(tooltip, stack);
         if (stack.hasTag()) {

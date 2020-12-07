@@ -9,17 +9,34 @@ public class DirectionList {
     private final Direction[] values = new Direction[6];
     private int current;
 
-    public void fillHorizontal() {
-        System.arraycopy(MathHelper.DIRECTIONS_HORIZONTAL, 0, this.values, 0, 4);
-        this.current = 4;
-    }
-
     public void add(Direction direction) {
         if (this.current == 6) {
             throw new ArrayIndexOutOfBoundsException("List is full");
         }
         this.values[this.current] = direction;
         this.current++;
+    }
+
+    public void clear() {
+        this.current = 0;
+    }
+
+    public void fillHorizontal() {
+        System.arraycopy(MathHelper.DIRECTIONS_HORIZONTAL, 0, this.values, 0, 4);
+        this.current = 4;
+    }
+
+    public Direction getRandomAndRemove(Random random) {
+        if (this.current == 0) {
+            throw new IllegalStateException("List is empty, cannot get a random Direction");
+        }
+        int index = random.nextInt(this.current);
+        Direction direction = this.values[index];
+        this.current--;
+        if (index != 5) {
+            System.arraycopy(this.values, index + 1, this.values, index, 5 - index);
+        }
+        return direction;
     }
 
     public boolean isEmpty() {
@@ -41,29 +58,5 @@ public class DirectionList {
 
     public int size() {
         return this.current;
-    }
-
-    public Direction getRandom(Random random) {
-        if (this.current == 0) {
-            throw new IllegalStateException("List is empty, cannot get a random Direction");
-        }
-        return this.values[random.nextInt(this.current)];
-    }
-
-    public Direction getRandomAndRemove(Random random) {
-        if (this.current == 0) {
-            throw new IllegalStateException("List is empty, cannot get a random Direction");
-        }
-        int index = random.nextInt(this.current);
-        Direction direction = this.values[index];
-        this.current--;
-        if (index != 5) {
-            System.arraycopy(this.values, index + 1, this.values, index, 5 - index);
-        }
-        return direction;
-    }
-
-    public void clear() {
-        this.current = 0;
     }
 }

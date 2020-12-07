@@ -11,7 +11,8 @@ import tgw.evolution.blocks.tileentities.*;
 
 import static tgw.evolution.init.EvolutionBlocks.*;
 
-public class EvolutionTileEntities {
+@SuppressWarnings("ConstantConditions")
+public final class EvolutionTileEntities {
 
     public static final DeferredRegister<TileEntityType<?>> TILES = new DeferredRegister<>(ForgeRegistries.TILE_ENTITIES, Evolution.MODID);
 
@@ -42,7 +43,8 @@ public class EvolutionTileEntities {
     public static final RegistryObject<TileEntityType<?>> TE_MOLDING = TILES.register("te_molding",
                                                                                       () -> Builder.create(TEMolding::new, MOLDING.get())
                                                                                                    .build(null));
-    //    public static final RegistryObject<TileEntityType<?>> TE_SHADOWHOUND = TILES.register("te_shadowhound", () -> Builder.create(TEShadowHound::new, SHADOWHOUND.get()).build(null));
+    //    public static final RegistryObject<TileEntityType<?>> TE_SHADOWHOUND = TILES.register("te_shadowhound", () -> Builder.create
+    //    (TEShadowHound::new, SHADOWHOUND.get()).build(null));
     public static final RegistryObject<TileEntityType<?>> TE_TORCH = TILES.register("te_torch",
                                                                                     () -> Builder.create(TETorch::new, WALL_TORCH.get(), TORCH.get())
                                                                                                  .build(null));
@@ -77,6 +79,12 @@ public class EvolutionTileEntities {
     public static final RegistryObject<TileEntityType<?>> TE_SCHEMATIC = TILES.register("te_schematic",
                                                                                         () -> Builder.create(TESchematic::new, SCHEMATIC_BLOCK.get())
                                                                                                      .build(null));
+    public static final RegistryObject<TileEntityType<?>> TE_LIQUID = TILES.register("te_liquid",
+                                                                                     () -> Builder.create(TELiquid::new, FRESH_WATER.get())
+                                                                                                  .build(null));
+
+    private EvolutionTileEntities() {
+    }
 
     public static void register() {
         TILES.register(FMLJavaModLoadingContext.get().getModEventBus());

@@ -266,7 +266,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         }
         else {
             BlockState state = this.world.getBlockState(this.mutablePos);
-            BlockPos posDown = new BlockPos(this.posX, this.posY - 0.01f, this.posZ);
+            BlockPos posDown = new BlockPos(this.posX, this.posY - 0.01, this.posZ);
             if (this.world.isAirBlock(posDown)) {
                 if (!isInWater && FallingBlock.canFallThrough(this.world.getBlockState(posDown))) {
                     this.onGround = false;

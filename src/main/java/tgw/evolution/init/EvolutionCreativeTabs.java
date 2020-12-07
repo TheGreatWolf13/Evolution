@@ -3,7 +3,7 @@ package tgw.evolution.init;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 
-public class EvolutionCreativeTabs {
+public final class EvolutionCreativeTabs {
 
     public static final ItemGroup MISC = new ItemGroup("evolution.misc") {
         @Override
@@ -32,4 +32,14 @@ public class EvolutionCreativeTabs {
             return new ItemStack(EvolutionEntities.SPAWN_EGG_COW.get());
         }
     };
+
+    public static final ItemGroup LIQUIDS = new ItemGroup("evolution.liquids") {
+        @Override
+        public ItemStack createIcon() {
+            return new ItemStack(EvolutionItems.bucket_ceramic_empty.get());
+        }
+    };
+
+    private EvolutionCreativeTabs() {
+    }
 }

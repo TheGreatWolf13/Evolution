@@ -17,13 +17,8 @@ public class PlayerInventoryCapabilityProvider implements INBTSerializable<Compo
     }
 
     @Override
-    public CompoundNBT serializeNBT() {
-        return this.handler.orElse(null).serializeNBT();
-    }
-
-    @Override
     public void deserializeNBT(CompoundNBT nbt) {
-        this.handler.orElse(null).deserializeNBT(nbt);
+        this.handler.orElseThrow(IllegalStateException::new).deserializeNBT(nbt);
     }
 
     @Override
@@ -32,5 +27,10 @@ public class PlayerInventoryCapabilityProvider implements INBTSerializable<Compo
             return this.handler.cast();
         }
         throw new IllegalStateException("Wrong capability: " + capability);
+    }
+
+    @Override
+    public CompoundNBT serializeNBT() {
+        return this.handler.orElseThrow(IllegalStateException::new).serializeNBT();
     }
 }
