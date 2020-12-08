@@ -18,10 +18,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.potion.Effects;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.Util;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.Vec3d;
@@ -38,7 +35,7 @@ import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.inventory.PlayerInventoryCapability;
@@ -53,19 +50,19 @@ import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.inventory.extendedinventory.ContainerExtendedHandler;
 import tgw.evolution.network.PacketCSPlayerFall;
 import tgw.evolution.network.PacketSCUpdateCameraTilt;
-import tgw.evolution.util.Gravity;
-import tgw.evolution.util.HarvestLevel;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.PlayerHelper;
+import tgw.evolution.util.*;
 import tgw.evolution.util.damage.*;
+import tgw.evolution.util.reflection.FieldHandler;
+import tgw.evolution.util.reflection.MethodHandler;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 
 public class EntityEvents {
 
-    private static final Method SET_POSE_METHOD = ObfuscationReflectionHelper.findMethod(Entity.class, "func_213301_b", Pose.class);
+    public static final WindVector WIND = new WindVector();
+    private static final MethodHandler<Entity, Void> SET_POSE_METHOD = new MethodHandler<>(Entity.class, "func_213301_b", Pose.class);
+    private static final FieldHandler<LivingEntity, CombatTracker> COMBAT_TRACKER_FIELD = new FieldHandler<>(LivingEntity.class, "field_94063_bt");
+    private static final FieldHandler<PlayerAbilities, Float> PLAYER_SPEED_FIELD = new FieldHandler<>(PlayerAbilities.class, "field_149495_f");
     private static final Random RANDOM = new Random();
     private static final Set<DamageSource> IGNORED_DAMAGE_SOURCES = Util.make(Sets.newHashSet(), set -> {
         set.add(EvolutionDamage.DROWN);
@@ -197,7 +194,7 @@ public class EntityEvents {
         }
         LivingEntity living = (LivingEntity) entity;
         //Changes the combat tracker
-        ObfuscationReflectionHelper.setPrivateValue(LivingEntity.class, living, new CombatTrackerEv(living), "field_94063_bt");
+        COMBAT_TRACKER_FIELD.set(living, new CombatTrackerEv(living));
         //Sets the gravity of the Living Entities and the Player to be that of the dimension they're in
         living.getAttribute(LivingEntity.ENTITY_GRAVITY).setBaseValue(Gravity.gravity(living.world.getDimension()));
         if (living instanceof PlayerEntity) {
@@ -206,10 +203,7 @@ public class EntityEvents {
                 player.abilities.setWalkSpeed((float) PlayerHelper.WALK_SPEED);
             }
             else {
-                ObfuscationReflectionHelper.setPrivateValue(PlayerAbilities.class,
-                                                            player.abilities,
-                                                            (float) PlayerHelper.WALK_SPEED,
-                                                            "field_149495_f");
+                PLAYER_SPEED_FIELD.set(player.abilities, (float) PlayerHelper.WALK_SPEED);
             }
         }
         //TODO
@@ -539,12 +533,7 @@ public class EntityEvents {
             if (Evolution.PRONED_PLAYERS.getOrDefault(player.getUniqueID(), false)) {
                 player.setSprinting(false);
                 player.stepHeight = getStepHeight(player);
-                try {
-                    SET_POSE_METHOD.invoke(player, Pose.SWIMMING);
-                }
-                catch (IllegalAccessException | InvocationTargetException e) {
-                    Evolution.LOGGER.error("Error when setting player {} to prone: {}", player.getDisplayNameAndUUID(), e);
-                }
+                SET_POSE_METHOD.call(player, Pose.SWIMMING);
             }
             else {
                 player.stepHeight = 0.6f;
@@ -557,12 +546,12 @@ public class EntityEvents {
                     boolean torch = false;
                     if (mainHand.getItem() == EvolutionItems.torch.get()) {
                         int count = mainHand.getCount();
-                        player.setItemStackToSlot(EquipmentSlotType.MAINHAND, new ItemStack(EvolutionItems.stick.get(), count));
+                        player.setItemStackToSlot(EquipmentSlotType.MAINHAND, new ItemStack(EvolutionItems.torch_unlit.get(), count));
                         torch = true;
                     }
                     if (offHand.getItem() == EvolutionItems.torch.get()) {
                         int count = offHand.getCount();
-                        player.setItemStackToSlot(EquipmentSlotType.OFFHAND, new ItemStack(EvolutionItems.stick.get(), count));
+                        player.setItemStackToSlot(EquipmentSlotType.OFFHAND, new ItemStack(EvolutionItems.torch_unlit.get(), count));
                         torch = true;
                     }
                     if (torch) {
@@ -594,5 +583,16 @@ public class EntityEvents {
                 }
             }
         }
+    }
+
+    @SubscribeEvent
+    public void tick(TickEvent.WorldTickEvent event) {
+        if (event.side != LogicalSide.SERVER) {
+            return;
+        }
+        if (event.phase != TickEvent.Phase.START) {
+            return;
+        }
+
     }
 }

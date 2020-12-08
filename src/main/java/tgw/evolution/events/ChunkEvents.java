@@ -16,34 +16,6 @@ public class ChunkEvents {
     private static final int RANGE = 8;
     private static int tick = 200;
 
-    @SubscribeEvent
-    public void onPlayerTick(PlayerTickEvent event) {
-        if (event.side != LogicalSide.SERVER) {
-            return;
-        }
-        if (event.phase != TickEvent.Phase.START) {
-            return;
-        }
-        if (tick-- == 0) {
-            tick = 200;
-            ChunkPos chunkPos = getRandom(new ChunkPos(event.player.chunkCoordX, event.player.chunkCoordZ), event.player.world.rand);
-            if (chunkPos == null) {
-                return;
-            }
-            if (event.player.world.getChunkProvider().isChunkLoaded(chunkPos)) {
-                doChunkActions(event.player.world, chunkPos);
-            }
-        }
-    }
-
-    private static ChunkPos getRandom(ChunkPos pos, Random random) {
-        //noinspection ConstantExpression
-        int i = random.nextInt(RANGE * 2 + 1) - RANGE;
-        //noinspection ConstantExpression
-        int j = random.nextInt(RANGE * 2 + 1) - RANGE;
-        return new ChunkPos(pos.x + i, pos.z + j);
-    }
-
     private static void doChunkActions(World worldIn, ChunkPos chunkPos) {
         Integer[] amount = {0};
         Integer[] delta = {0};
@@ -94,5 +66,28 @@ public class ChunkEvents {
                               new ChunkPos(chunkPos.x - 1, chunkPos.z),
                               new ChunkPos(chunkPos.x, chunkPos.z + 1),
                               new ChunkPos(chunkPos.x, chunkPos.z - 1)};
+    }
+
+    private static ChunkPos getRandom(int chunkX, int chunkZ, Random random) {
+        int i = random.nextInt(RANGE * 2 + 1) - RANGE;
+        int j = random.nextInt(RANGE * 2 + 1) - RANGE;
+        return new ChunkPos(chunkX + i, chunkZ + j);
+    }
+
+    @SubscribeEvent
+    public void onPlayerTick(PlayerTickEvent event) {
+        if (event.side != LogicalSide.SERVER) {
+            return;
+        }
+        if (event.phase != TickEvent.Phase.START) {
+            return;
+        }
+        if (tick-- == 0) {
+            tick = 200;
+            ChunkPos chunkPos = getRandom(event.player.chunkCoordX, event.player.chunkCoordZ, event.player.world.rand);
+            if (event.player.world.getChunkProvider().isChunkLoaded(chunkPos)) {
+                doChunkActions(event.player.world, chunkPos);
+            }
+        }
     }
 }

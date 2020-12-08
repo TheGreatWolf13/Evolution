@@ -10,10 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.screen.DeathScreen;
 import net.minecraft.client.gui.screen.inventory.InventoryScreen;
-import net.minecraft.client.renderer.ActiveRenderInfo;
-import net.minecraft.client.renderer.FirstPersonRenderer;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.settings.AttackIndicatorStatus;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
@@ -48,7 +45,6 @@ import net.minecraftforge.client.ForgeIngameGui;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.glfw.GLFW;
@@ -75,10 +71,11 @@ import tgw.evolution.potion.EffectDizziness;
 import tgw.evolution.util.EvolutionStyles;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.PlayerHelper;
+import tgw.evolution.util.reflection.FieldHandler;
+import tgw.evolution.util.reflection.StaticFieldHandler;
 import tgw.evolution.world.dimension.DimensionOverworld;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -94,6 +91,11 @@ public class ClientEvents {
     private static final ResourceLocation DESATURATE_25 = Evolution.location("shaders/post/saturation25.json");
     private static final ResourceLocation DESATURATE_50 = Evolution.location("shaders/post/saturation50.json");
     private static final ResourceLocation DESATURATE_75 = Evolution.location("shaders/post/saturation75.json");
+    private static final StaticFieldHandler<PlayerProfileCache> PLAYER_PROF_FIELD = new StaticFieldHandler<>(SkullTileEntity.class, "field_184298_j");
+    private static final StaticFieldHandler<MinecraftSessionService> SESSION_FIELD = new StaticFieldHandler<>(SkullTileEntity.class,
+                                                                                                              "field_184299_k");
+    private static final FieldHandler<GameRenderer, LightTexture> LIGHTMAP_FIELD = new FieldHandler<>(GameRenderer.class, "field_78513_d");
+    private static final FieldHandler<Minecraft, Integer> LEFT_COUNTER_FIELD = new FieldHandler<>(Minecraft.class, "field_71429_W");
     private static ClientEvents instance;
     private final Minecraft mc;
     private final Random rand = new Random();
@@ -251,19 +253,12 @@ public class ClientEvents {
         }
         //Load skin for corpses
         if (!this.skinsLoaded) {
-            try {
-                Field playerProfField = ObfuscationReflectionHelper.findField(SkullTileEntity.class, "field_184298_j");
-                Field sessionField = ObfuscationReflectionHelper.findField(SkullTileEntity.class, "field_184299_k");
-                PlayerProfileCache playerProfile = (PlayerProfileCache) playerProfField.get(null);
-                MinecraftSessionService session = (MinecraftSessionService) sessionField.get(null);
-                if (playerProfile != null && session != null) {
-                    EntityPlayerCorpse.setProfileCache(playerProfile);
-                    EntityPlayerCorpse.setSessionService(session);
-                    this.skinsLoaded = true;
-                }
-            }
-            catch (IllegalStateException | IllegalAccessException e) {
-                Evolution.LOGGER.warn("Error while trying to load skins: ", e);
+            PlayerProfileCache playerProfile = PLAYER_PROF_FIELD.get();
+            MinecraftSessionService session = SESSION_FIELD.get();
+            if (playerProfile != null && session != null) {
+                EntityPlayerCorpse.setProfileCache(playerProfile);
+                EntityPlayerCorpse.setSessionService(session);
+                this.skinsLoaded = true;
             }
         }
         //Runs at the start of each tick
@@ -342,23 +337,20 @@ public class ClientEvents {
             GameRenderer gameRenderer = this.mc.gameRenderer;
             if (gameRenderer != this.oldGameRenderer) {
                 this.oldGameRenderer = gameRenderer;
-                ObfuscationReflectionHelper.setPrivateValue(GameRenderer.class,
-                                                            this.oldGameRenderer,
-                                                            new LightTextureEv(this.oldGameRenderer),
-                                                            "field_78513_d");
+                LIGHTMAP_FIELD.set(this.oldGameRenderer, new LightTextureEv(this.oldGameRenderer));
             }
             //Handle two-handed items
             if (this.mc.player.getHeldItemMainhand().getItem() instanceof ITwoHanded && !this.mc.player.getHeldItemOffhand().isEmpty()) {
                 this.leftTimeSinceLastHit = 0;
                 this.requiresReequiping = true;
-                ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, Integer.MAX_VALUE, "field_71429_W");
+                LEFT_COUNTER_FIELD.set(this.mc, Integer.MAX_VALUE);
                 this.mc.player.sendStatusMessage(COMPONENT_TWO_HANDED, true);
             }
             //Prevents the player from attacking if on cooldown
             if (this.getLeftCooledAttackStrength(0) != 1 &&
                 this.mc.objectMouseOver != null &&
                 this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
-                ObfuscationReflectionHelper.setPrivateValue(Minecraft.class, this.mc, Integer.MAX_VALUE, "field_71429_W");
+                LEFT_COUNTER_FIELD.set(this.mc, Integer.MAX_VALUE);
             }
             //Handle Disoriented Effect
             if (this.mc.player.isPotionActive(EvolutionEffects.DISORIENTED.get())) {

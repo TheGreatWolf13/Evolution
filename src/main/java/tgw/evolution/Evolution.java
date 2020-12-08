@@ -13,7 +13,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -28,6 +27,7 @@ import tgw.evolution.events.EntityEvents;
 import tgw.evolution.events.ItemEvents;
 import tgw.evolution.events.WorldEvents;
 import tgw.evolution.init.*;
+import tgw.evolution.util.reflection.FieldHandler;
 import tgw.evolution.world.EvWorldDefault;
 import tgw.evolution.world.EvWorldFlat;
 import tgw.evolution.world.dimension.DimensionOverworld;
@@ -45,6 +45,10 @@ public final class Evolution {
     public static final Logger LOGGER = LogManager.getLogger(MODID);
     public static final IProxy PROXY = DistExecutor.runForDist(() -> ClientProxy::new, () -> ServerProxy::new);
     public static final Map<UUID, Boolean> PRONED_PLAYERS = Maps.newConcurrentMap();
+    private static final FieldHandler<DimensionType, BiFunction<World, DimensionType, ? extends Dimension>> DIMENSION_FACTORY_FIELD =
+            new FieldHandler<>(
+            DimensionType.class,
+            "field_201038_g");
     public static Evolution instance;
 
     public Evolution() {
@@ -97,7 +101,7 @@ public final class Evolution {
         MinecraftForge.EVENT_BUS.register(new EntityEvents());
         MinecraftForge.EVENT_BUS.register(new ItemEvents());
         BiFunction<World, DimensionType, ? extends Dimension> dimensionFactory = DimensionOverworld::new;
-        ObfuscationReflectionHelper.setPrivateValue(DimensionType.class, DimensionType.OVERWORLD, dimensionFactory, "field_201038_g");
+        DIMENSION_FACTORY_FIELD.set(DimensionType.OVERWORLD, dimensionFactory);
         LOGGER.info("Setup registries done.");
     }
 

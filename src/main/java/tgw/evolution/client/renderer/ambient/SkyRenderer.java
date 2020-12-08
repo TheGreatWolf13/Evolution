@@ -12,16 +12,22 @@ import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.IRenderHandler;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import tgw.evolution.Evolution;
 import tgw.evolution.util.EarthHelper;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.MoonPhase;
 import tgw.evolution.util.Vec3f;
+import tgw.evolution.util.reflection.FieldHandler;
 import tgw.evolution.world.dimension.DimensionOverworld;
 
 public class SkyRenderer implements IRenderHandler {
 
+    private static final FieldHandler<WorldRenderer, VertexBuffer> SKYVBO_FIELD = new FieldHandler<>(WorldRenderer.class, "field_175012_t");
+    private static final FieldHandler<WorldRenderer, VertexBuffer> STARVBO_FIELD = new FieldHandler<>(WorldRenderer.class, "field_175013_s");
+    private static final FieldHandler<WorldRenderer, VertexBuffer> SKY2VBO_FIELD = new FieldHandler<>(WorldRenderer.class, "field_175011_u");
+    private static final FieldHandler<WorldRenderer, Integer> GLSKYLIST_FIELD = new FieldHandler<>(WorldRenderer.class, "field_72771_w");
+    private static final FieldHandler<WorldRenderer, Integer> GLSKYLIST2_FIELD = new FieldHandler<>(WorldRenderer.class, "field_72781_x");
+    private static final FieldHandler<WorldRenderer, Integer> STARGLCALLLIST_FIELD = new FieldHandler<>(WorldRenderer.class, "field_72772_v");
     private static final ResourceLocation MOON_PHASES_TEXTURES = Evolution.location("textures/environment/moon_phases.png");
     private static final ResourceLocation MOONLIGHT_TEXTURES = Evolution.location("textures/environment/moonlight_phases.png");
     private static final ResourceLocation SUN_TEXTURES = new ResourceLocation("textures/environment/sun.png");
@@ -37,12 +43,12 @@ public class SkyRenderer implements IRenderHandler {
 
     public SkyRenderer(WorldRenderer worldRenderer) {
         this.vboEnabled = GLX.useVbo();
-        this.skyVBO = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, worldRenderer, "field_175012_t");
-        this.starVBO = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, worldRenderer, "field_175013_s");
-        this.sky2VBO = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, worldRenderer, "field_175011_u");
-        this.glSkyList = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, worldRenderer, "field_72771_w");
-        this.glSkyList2 = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, worldRenderer, "field_72781_x");
-        this.starGLCallList = ObfuscationReflectionHelper.getPrivateValue(WorldRenderer.class, worldRenderer, "field_72772_v");
+        this.skyVBO = SKYVBO_FIELD.get(worldRenderer);
+        this.starVBO = STARVBO_FIELD.get(worldRenderer);
+        this.sky2VBO = SKY2VBO_FIELD.get(worldRenderer);
+        this.glSkyList = GLSKYLIST_FIELD.get(worldRenderer);
+        this.glSkyList2 = GLSKYLIST2_FIELD.get(worldRenderer);
+        this.starGLCallList = STARGLCALLLIST_FIELD.get(worldRenderer);
         this.dimension = (DimensionOverworld) Minecraft.getInstance().world.dimension;
     }
 
