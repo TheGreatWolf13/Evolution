@@ -1,5 +1,6 @@
 package tgw.evolution.hooks;
 
+import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionNetwork;
@@ -19,6 +20,10 @@ public final class TickrateChanger {
         return currentTickrate;
     }
 
+    /**
+     * Hooks from {@link MinecraftServer#run()}
+     */
+    @EvolutionHook
     public static long getMSPT() {
         return mspt;
     }
