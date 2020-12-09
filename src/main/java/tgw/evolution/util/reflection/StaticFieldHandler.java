@@ -5,13 +5,13 @@ import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 
-public class StaticFieldHandler<Type> implements IReflectionHandler {
+public class StaticFieldHandler<Owner, Type> implements IReflectionHandler {
 
-    private final Class<?> fieldOwner;
+    private final Class<Owner> fieldOwner;
     private final String fieldName;
     private Field fieldAccess;
 
-    public StaticFieldHandler(Class<?> fieldOwner, String fieldName) {
+    public StaticFieldHandler(Class<Owner> fieldOwner, String fieldName) {
         this.fieldName = fieldName;
         this.fieldOwner = fieldOwner;
     }

@@ -11,5 +11,6 @@
   "Evolution EntityUpdateFallState Transformer": "patches/EntityUpdateFallState.js",
   "Evolution GameRendererDrawNameplate Transformer": "patches/GameRendererDrawNameplate.js",
   "Evolution PlayerEntityHurtSound Transformer": "patches/PlayerEntityHurtSound.js",
-  "Evolution LivingEntityHandleStatusUpdate Transformer": "patches/LivingEntityHandleStatusUpdate.js"
+  "Evolution LivingEntityHandleStatusUpdate Transformer": "patches/LivingEntityHandleStatusUpdate.js",
+  "Evolution TickrateChanger Transformer": "patches/TickrateChanger.js"
 }

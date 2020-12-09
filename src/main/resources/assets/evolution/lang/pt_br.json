@@ -8,6 +8,8 @@
   "itemGroup.evolution.stone_tools": "Ferramentas de Pedra",
   "itemGroup.evolution.trees_and_wood": "Árvores e Madeira",
   "itemGroup.evolution.liquids": "Líquidos e Recipientes",
+  "COMMENT_COMMANDS": "_____________________________________________________________________________________________________________COMMANDS",
+  "command.evolution.tickrate": "A tickrate do jogo foi mudada para %1$s TPS",
   "COMMENT_KEYS": "_____________________________________________________________________________________________________________________KEYS",
   "key.prone.toggle": "Alternar rastejar",
   "key.build_assist": "Assistente de construção",

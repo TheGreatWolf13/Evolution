@@ -29,10 +29,7 @@ import net.minecraft.potion.EffectUtils;
 import net.minecraft.potion.Effects;
 import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.tileentity.SkullTileEntity;
-import net.minecraft.util.Hand;
-import net.minecraft.util.MovementInput;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Util;
+import net.minecraft.util.*;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.text.ITextComponent;
@@ -59,6 +56,7 @@ import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
+import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
@@ -91,25 +89,24 @@ public class ClientEvents {
     private static final ResourceLocation DESATURATE_25 = Evolution.location("shaders/post/saturation25.json");
     private static final ResourceLocation DESATURATE_50 = Evolution.location("shaders/post/saturation50.json");
     private static final ResourceLocation DESATURATE_75 = Evolution.location("shaders/post/saturation75.json");
-    private static final StaticFieldHandler<PlayerProfileCache> PLAYER_PROF_FIELD = new StaticFieldHandler<>(SkullTileEntity.class, "field_184298_j");
-    private static final StaticFieldHandler<MinecraftSessionService> SESSION_FIELD = new StaticFieldHandler<>(SkullTileEntity.class,
-                                                                                                              "field_184299_k");
+    private static final StaticFieldHandler<SkullTileEntity, PlayerProfileCache> PLAYER_PROF_FIELD = new StaticFieldHandler<>(SkullTileEntity.class,
+                                                                                                                              "field_184298_j");
+    private static final StaticFieldHandler<SkullTileEntity, MinecraftSessionService> SESSION_FIELD = new StaticFieldHandler<>(SkullTileEntity.class,
+                                                                                                                               "field_184299_k");
     private static final FieldHandler<GameRenderer, LightTexture> LIGHTMAP_FIELD = new FieldHandler<>(GameRenderer.class, "field_78513_d");
     private static final FieldHandler<Minecraft, Integer> LEFT_COUNTER_FIELD = new FieldHandler<>(Minecraft.class, "field_71429_W");
+    private static final FieldHandler<Minecraft, Timer> TIMER_FIELD = new FieldHandler<>(Minecraft.class, "field_71428_T");
+    private static final FieldHandler<Timer, Float> TICKRATE_FIELD = new FieldHandler<>(Timer.class, "field_194149_e");
     private static ClientEvents instance;
     private final Minecraft mc;
     private final Random rand = new Random();
     public int jumpTicks;
     private int currentShader;
     private int currentThirdPersonView;
-    //Health variables
     private long healthUpdateCounter;
     private boolean inverted;
-    //Jump variables
     private boolean isJumpPressed;
-    //Mainhand variables
     private boolean isLeftPressed;
-    //Offhand variables
     private boolean isRightPressed;
     private boolean isSneakPressed;
     private float lastPlayerHealth;
@@ -129,7 +126,6 @@ public class ClientEvents {
     private GameRenderer oldGameRenderer;
     private float playerHealth;
     private boolean previousPressed;
-    //Prone variables
     private boolean proneToggle;
     private boolean requiresReequiping;
     private float rightEquipProgress;
@@ -146,6 +142,7 @@ public class ClientEvents {
     private boolean skyRendererBinded;
     private boolean sneakpreviousPressed;
     private int ticks;
+    private float tps = 20.0f;
 
     public ClientEvents(Minecraft mc) {
         this.mc = mc;
@@ -243,6 +240,9 @@ public class ClientEvents {
             this.skyRendererBinded = false;
             this.skinsLoaded = false;
             return;
+        }
+        if (this.mc.world == null) {
+            this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
         }
         //Bind Sky Renderer
         if (!this.skyRendererBinded) {
@@ -1198,5 +1198,15 @@ public class ClientEvents {
             }
             Evolution.PRONED_PLAYERS.put(uuid, shouldBeProne);
         }
+    }
+
+    public void updateClientTickrate(float tickrate) {
+        if (this.tps == tickrate) {
+            return;
+        }
+        Evolution.LOGGER.info("Updating client tickrate to " + tickrate);
+        this.tps = tickrate;
+        Timer timer = TIMER_FIELD.get(this.mc);
+        TICKRATE_FIELD.set(timer, 1_000.0F / tickrate);
     }
 }

@@ -181,6 +181,9 @@ public class BlockMolding extends Block implements IReplaceable {
             return false;
         }
         TEMolding tile = (TEMolding) worldIn.getTileEntity(pos);
+        if (tile == null) {
+            return false;
+        }
         double hitX = (hit.getHitVec().x - pos.getX()) * 16;
         if (!MathHelper.rangeInclusive(hitX, 0.5, 15.5)) {
             return false;

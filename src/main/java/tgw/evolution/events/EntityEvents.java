@@ -35,7 +35,7 @@ import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.inventory.PlayerInventoryCapability;
@@ -43,12 +43,11 @@ import tgw.evolution.capabilities.inventory.PlayerInventoryCapabilityProvider;
 import tgw.evolution.entities.EntityGenericCreature;
 import tgw.evolution.entities.IAgressive;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
-import tgw.evolution.init.EvolutionAttributes;
-import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.init.EvolutionNetwork;
+import tgw.evolution.hooks.TickrateChanger;
+import tgw.evolution.init.*;
 import tgw.evolution.inventory.extendedinventory.ContainerExtendedHandler;
 import tgw.evolution.network.PacketCSPlayerFall;
+import tgw.evolution.network.PacketSCChangeTickrate;
 import tgw.evolution.network.PacketSCUpdateCameraTilt;
 import tgw.evolution.util.*;
 import tgw.evolution.util.damage.*;
@@ -439,6 +438,12 @@ public class EntityEvents {
     }
 
     @SubscribeEvent
+    public void onPlayerLogIn(PlayerEvent.PlayerLoggedInEvent event) {
+        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) event.getPlayer()),
+                                       new PacketSCChangeTickrate(TickrateChanger.getCurrentTickrate()));
+    }
+
+    @SubscribeEvent
     public void onPlayerRespawns(PlayerEvent.PlayerRespawnEvent event) {
         ServerPlayerEntity player = (ServerPlayerEntity) event.getPlayer();
         player.clearElytraFlying();
@@ -568,6 +573,11 @@ public class EntityEvents {
     }
 
     @SubscribeEvent
+    public void onServerStart(FMLServerStartingEvent event) {
+        EvolutionCommands.register(event.getCommandDispatcher());
+    }
+
+    @SubscribeEvent
     public void onSetAttackTarget(LivingSetAttackTargetEvent event) {
         if (event.getEntity() instanceof LivingEntity) {
             MobEntity entity = (MobEntity) event.getEntity();
@@ -583,16 +593,5 @@ public class EntityEvents {
                 }
             }
         }
-    }
-
-    @SubscribeEvent
-    public void tick(TickEvent.WorldTickEvent event) {
-        if (event.side != LogicalSide.SERVER) {
-            return;
-        }
-        if (event.phase != TickEvent.Phase.START) {
-            return;
-        }
-
     }
 }

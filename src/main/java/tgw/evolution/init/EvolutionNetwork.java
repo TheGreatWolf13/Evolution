@@ -96,5 +96,10 @@ public final class EvolutionNetwork {
                                  PacketSCUpdateCameraTilt::encode,
                                  PacketSCUpdateCameraTilt::decode,
                                  PacketSCUpdateCameraTilt::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCChangeTickrate.class,
+                                 PacketSCChangeTickrate::encode,
+                                 PacketSCChangeTickrate::decode,
+                                 PacketSCChangeTickrate::handle);
     }
 }

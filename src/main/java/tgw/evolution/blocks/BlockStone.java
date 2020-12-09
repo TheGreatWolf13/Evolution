@@ -21,51 +21,11 @@ public class BlockStone extends BlockGravity implements IStoneVariant {
     private EnumRockVariant variant;
 
     public BlockStone(EnumRockNames name) {
-        super(Block.Properties.create(Material.ROCK).hardnessAndResistance(name.getRockType().getHardness() / 2F, 6F).sound(SoundType.STONE).harvestLevel(HarvestLevel.COPPER), name.getMass());
+        super(Block.Properties.create(Material.ROCK)
+                              .hardnessAndResistance(name.getRockType().getHardness() / 2.0F, 6.0F)
+                              .sound(SoundType.STONE)
+                              .harvestLevel(HarvestLevel.COPPER), name.getMass());
         this.name = name;
-    }
-
-    @Override
-    public EnumRockVariant getVariant() {
-        return this.variant;
-    }
-
-    @Override
-    public void setVariant(EnumRockVariant variant) {
-        this.variant = variant;
-    }
-
-    @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
-    }
-
-    @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-        for (Direction dir : Direction.values()) {
-            mutablePos.setPos(pos).move(dir);
-            if (Block.hasSolidSide(worldIn.getBlockState(mutablePos), worldIn, mutablePos, dir.getOpposite())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnAsEntity(worldIn, pos, new ItemStack(this));
-                worldIn.removeBlock(pos, false);
-            }
-        }
-        super.neighborChanged(state, worldIn, pos, blockIn, fromPos, isMoving);
-    }
-
-    @Override
-    public BlockState getStateForFalling(BlockState state) {
-        return this.variant.getCobble().getDefaultState();
     }
 
     @Override
@@ -76,6 +36,26 @@ public class BlockStone extends BlockGravity implements IStoneVariant {
     @Override
     public int getShearStrength() {
         return this.name.getShearStrength();
+    }
+
+    @Override
+    public BlockState getStateForFalling(BlockState state) {
+        return this.variant.getCobble().getDefaultState();
+    }
+
+    @Override
+    public EnumRockNames getStoneName() {
+        return this.name;
+    }
+
+    @Override
+    public EnumRockVariant getVariant() {
+        return this.variant;
+    }
+
+    @Override
+    public void setVariant(EnumRockVariant variant) {
+        this.variant = variant;
     }
 
     @Override
@@ -99,6 +79,29 @@ public class BlockStone extends BlockGravity implements IStoneVariant {
             this.checkWeight(worldIn, down, map, axis, false);
         }
         return true;
+    }
+
+    @Override
+    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        for (Direction dir : Direction.values()) {
+            mutablePos.setPos(pos).move(dir);
+            if (Block.hasSolidSide(worldIn.getBlockState(mutablePos), worldIn, mutablePos, dir.getOpposite())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+        if (!worldIn.isRemote) {
+            if (!state.isValidPosition(worldIn, pos)) {
+                spawnAsEntity(worldIn, pos, new ItemStack(this));
+                worldIn.removeBlock(pos, false);
+            }
+        }
+        super.neighborChanged(state, worldIn, pos, blockIn, fromPos, isMoving);
     }
 
     @Override
