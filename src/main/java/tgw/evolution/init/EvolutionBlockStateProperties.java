@@ -1,4 +1,4 @@
-package tgw.evolution.blocks;
+package tgw.evolution.init;
 
 import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.IntegerProperty;

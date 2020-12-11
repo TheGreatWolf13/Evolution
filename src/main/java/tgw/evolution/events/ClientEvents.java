@@ -60,13 +60,13 @@ import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
+import tgw.evolution.init.EvolutionStyles;
 import tgw.evolution.items.*;
 import tgw.evolution.network.PacketCSChangeBlock;
 import tgw.evolution.network.PacketCSOpenExtendedInventory;
 import tgw.evolution.network.PacketCSPlayerAttack;
 import tgw.evolution.network.PacketCSSetProne;
 import tgw.evolution.potion.EffectDizziness;
-import tgw.evolution.util.EvolutionStyles;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.reflection.FieldHandler;
@@ -521,12 +521,6 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
-    public void onModelBake(ModelBakeEvent event) {
-        //        event.getModelRegistry().put(new ModelResourceLocation(EvolutionBlocks.FANCYBLOCK.get().getRegistryName(), ""), new
-        //        FancyBakedModel(DefaultVertexFormats.BLOCK));
-    }
-
-    @SubscribeEvent
     public void onMouseEvent(InputEvent.MouseInputEvent event) {
         if (this.mc.currentScreen != null || this.mc.player == null) {
             return;
@@ -659,14 +653,6 @@ public class ClientEvents {
             EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.rightPointedEntity, Hand.OFF_HAND, rayTraceY));
             this.swingArm(Hand.OFF_HAND);
         }
-    }
-
-    @SubscribeEvent
-    public void onTextureStitch(TextureStitchEvent.Pre event) {
-        //        if (!event.getMap().getBasePath().equals("textures")) {
-        //            return;
-        //        }
-        //        event.addSprite(new ResourceLocation(Evolution.MODID, "block/clay"));
     }
 
     private boolean rayTraceMouse(RayTraceResult rayTraceResult) {

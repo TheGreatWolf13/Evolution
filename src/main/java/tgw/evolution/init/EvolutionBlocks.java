@@ -581,67 +581,67 @@ public final class EvolutionBlocks {
                     break;
             }
         }
-        Set<Block> WOOD_VARIANT = new HashSet<>();
+        Set<BlockLogPile> WOOD_VARIANT = new HashSet<>();
         BLOCKS.getEntries().forEach(blockRegistryObject -> {
             if (blockRegistryObject.get() instanceof BlockLogPile) {
-                WOOD_VARIANT.add(blockRegistryObject.get());
+                WOOD_VARIANT.add((BlockLogPile) blockRegistryObject.get());
             }
         });
-        for (Block block : WOOD_VARIANT) {
-            switch (((BlockLogPile) block).name) {
+        for (BlockLogPile block : WOOD_VARIANT) {
+            switch (block.name) {
                 case ACACIA:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.ACACIA;
+                    block.variant = EnumWoodVariant.ACACIA;
                     break;
                 case ASPEN:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.ASPEN;
+                    block.variant = EnumWoodVariant.ASPEN;
                     break;
                 case BIRCH:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.BIRCH;
+                    block.variant = EnumWoodVariant.BIRCH;
                     break;
                 case CEDAR:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.CEDAR;
+                    block.variant = EnumWoodVariant.CEDAR;
                     break;
                 case EBONY:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.EBONY;
+                    block.variant = EnumWoodVariant.EBONY;
                     break;
                 case ELM:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.ELM;
+                    block.variant = EnumWoodVariant.ELM;
                     break;
                 case EUCALYPTUS:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.EUCALYPTUS;
+                    block.variant = EnumWoodVariant.EUCALYPTUS;
                     break;
                 case FIR:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.FIR;
+                    block.variant = EnumWoodVariant.FIR;
                     break;
                 case KAPOK:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.KAPOK;
+                    block.variant = EnumWoodVariant.KAPOK;
                     break;
                 case MANGROVE:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.MANGROVE;
+                    block.variant = EnumWoodVariant.MANGROVE;
                     break;
                 case MAPLE:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.MAPLE;
+                    block.variant = EnumWoodVariant.MAPLE;
                     break;
                 case OAK:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.OAK;
+                    block.variant = EnumWoodVariant.OAK;
                     break;
                 case OLD_OAK:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.OLD_OAK;
+                    block.variant = EnumWoodVariant.OLD_OAK;
                     break;
                 case PALM:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.PALM;
+                    block.variant = EnumWoodVariant.PALM;
                     break;
                 case PINE:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.PINE;
+                    block.variant = EnumWoodVariant.PINE;
                     break;
                 case REDWOOD:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.REDWOOD;
+                    block.variant = EnumWoodVariant.REDWOOD;
                     break;
                 case SPRUCE:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.SPRUCE;
+                    block.variant = EnumWoodVariant.SPRUCE;
                     break;
                 case WILLOW:
-                    ((BlockLogPile) block).variant = EnumWoodVariant.WILLOW;
+                    block.variant = EnumWoodVariant.WILLOW;
                     break;
             }
         }

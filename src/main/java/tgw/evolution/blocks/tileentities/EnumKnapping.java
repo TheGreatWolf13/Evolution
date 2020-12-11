@@ -3,7 +3,7 @@ package tgw.evolution.blocks.tileentities;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import tgw.evolution.Evolution;
-import tgw.evolution.blocks.EvolutionHitBoxes;
+import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.util.MathHelper;
 
 public enum EnumKnapping {
@@ -39,11 +39,11 @@ public enum EnumKnapping {
         return this.id;
     }
 
-    public VoxelShape getShape() {
-        return this.shape;
-    }
-
     public boolean[][] getPattern() {
         return this.pattern;
+    }
+
+    public VoxelShape getShape() {
+        return this.shape;
     }
 }

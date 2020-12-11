@@ -24,7 +24,7 @@ import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntityTorch;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.util.EvolutionStyles;
+import tgw.evolution.init.EvolutionStyles;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.Time;
 
@@ -132,8 +132,13 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     @Override
     protected boolean onBlockPlaced(BlockPos pos, World world, @Nullable PlayerEntity player, ItemStack stack, BlockState state) {
         TileEntity tile = world.getTileEntity(pos);
-        if (tile instanceof TETorch && stack.hasTag()) {
-            ((TETorch) tile).setTimePlaced(stack.getTag().getLong("TimeCreated"));
+        if (tile instanceof TETorch) {
+            if (stack.hasTag()) {
+                ((TETorch) tile).setTimePlaced(stack.getTag().getLong("TimeCreated"));
+            }
+            else {
+                ((TETorch) tile).setTimePlaced(world.getDayTime());
+            }
         }
         return super.onBlockPlaced(pos, world, player, stack, state);
     }

@@ -1,4 +1,4 @@
-package tgw.evolution.blocks;
+package tgw.evolution.init;
 
 import net.minecraft.block.Block;
 import net.minecraft.util.Direction;
@@ -6,7 +6,7 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import tgw.evolution.util.MathHelper;
 
-public abstract class EvolutionHitBoxes {
+public final class EvolutionHitBoxes {
 
     public static final VoxelShape TORCH = Block.makeCuboidShape(6, 0, 6, 10, 10, 10);
     public static final VoxelShape SLAB_LOWER = Block.makeCuboidShape(0, 0, 0, 16, 8, 16);
@@ -97,4 +97,7 @@ public abstract class EvolutionHitBoxes {
     private static final VoxelShape KNIFE3 = Block.makeCuboidShape(9.5, 0, 0.5, 12.5, 1, 15.5);
     private static final VoxelShape KNIFE4 = Block.makeCuboidShape(12.5, 0, 3.5, 15.5, 1, 15.5);
     public static final VoxelShape KNIFE = VoxelShapes.or(KNIFE1, KNIFE2, KNIFE3, KNIFE4);
+
+    private EvolutionHitBoxes() {
+    }
 }

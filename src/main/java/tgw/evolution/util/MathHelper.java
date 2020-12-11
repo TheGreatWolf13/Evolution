@@ -270,6 +270,20 @@ public final class MathHelper {
     }
 
     /**
+     * Calculates the entity between two entities in euclidian space, squared.
+     *
+     * @param entity1 The first entity.
+     * @param entity2 The second entity.
+     * @return The square of the distance between the entities.
+     */
+    public static double distanceSquared(Entity entity1, Entity entity2) {
+        double deltaX = entity1.posX - entity2.posX;
+        double deltaY = entity1.posY - entity2.posY;
+        double deltaZ = entity1.posZ - entity2.posZ;
+        return deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+    }
+
+    /**
      * Fills a {@link Nonnull} {@code boolean} matrix with {@code true}.
      *
      * @param matrix The matrix to fill.

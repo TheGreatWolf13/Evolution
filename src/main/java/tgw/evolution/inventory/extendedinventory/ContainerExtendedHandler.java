@@ -7,15 +7,6 @@ import tgw.evolution.items.IAdditionalEquipment;
 
 public class ContainerExtendedHandler extends ItemStackHandler implements IExtendedItemHandler {
 
-    public static final int HAT = 0;
-    public static final int BODY = 1;
-    public static final int LEGS = 2;
-    public static final int FEET = 3;
-    public static final int CLOAK = 4;
-    public static final int MASK = 5;
-    public static final int BACK = 6;
-    public static final int TACTICAL = 7;
-
     private static final int CLOTH_SLOTS = 8;
     private boolean[] changed = new boolean[CLOTH_SLOTS];
 

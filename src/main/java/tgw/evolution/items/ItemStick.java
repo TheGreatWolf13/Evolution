@@ -20,7 +20,7 @@ import tgw.evolution.blocks.IFireSource;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.util.EvolutionStyles;
+import tgw.evolution.init.EvolutionStyles;
 
 import java.util.List;
 

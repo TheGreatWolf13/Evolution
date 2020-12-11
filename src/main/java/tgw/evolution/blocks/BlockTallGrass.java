@@ -14,6 +14,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.IShearable;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.util.NutrientHelper;
 
 public class BlockTallGrass extends BlockBush implements IShearable {

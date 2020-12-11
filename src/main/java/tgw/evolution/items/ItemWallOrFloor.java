@@ -22,28 +22,28 @@ public class ItemWallOrFloor extends ItemBlock {
     }
 
     @Override
+    public void addToBlockToItemMap(Map<Block, Item> blockToItemMap, Item itemIn) {
+        super.addToBlockToItemMap(blockToItemMap, itemIn);
+        blockToItemMap.put(this.wallBlock, itemIn);
+    }
+
+    @Override
     @Nullable
     protected BlockState getStateForPlacement(BlockItemUseContext context) {
         BlockState wallState = this.wallBlock.getStateForPlacement(context);
         BlockState stateForPlacement = null;
-        IWorldReader worldIn = context.getWorld();
+        IWorldReader world = context.getWorld();
         BlockPos blockpos = context.getPos();
         for (Direction direction : context.getNearestLookingDirections()) {
             if (direction != Direction.UP) {
                 BlockState floorState = direction == Direction.DOWN ? this.getBlock().getStateForPlacement(context) : wallState;
-                if (floorState != null && floorState.isValidPosition(worldIn, blockpos)) {
+                if (floorState != null && floorState.isValidPosition(world, blockpos)) {
                     stateForPlacement = floorState;
                     break;
                 }
             }
         }
-        return stateForPlacement != null && worldIn.func_217350_a(stateForPlacement, blockpos, ISelectionContext.dummy()) ? stateForPlacement : null;
-    }
-
-    @Override
-    public void addToBlockToItemMap(Map<Block, Item> blockToItemMap, Item itemIn) {
-        super.addToBlockToItemMap(blockToItemMap, itemIn);
-        blockToItemMap.put(this.wallBlock, itemIn);
+        return stateForPlacement != null && world.func_217350_a(stateForPlacement, blockpos, ISelectionContext.dummy()) ? stateForPlacement : null;
     }
 
     @Override

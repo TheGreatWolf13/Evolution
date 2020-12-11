@@ -13,6 +13,7 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.IWorldGenerationReader;
+import tgw.evolution.init.EvolutionHitBoxes;
 
 import java.util.Random;
 
@@ -30,32 +31,14 @@ public class BlockSapling extends BlockBush implements IGrowable {
 
     public static boolean canGrowInto(IWorldGenerationReader worldIn, BlockPos pos) {
         BlockState state = ((IBlockReader) worldIn).getBlockState(pos); //TODO proper vine
-        return state.isAir((IBlockReader) worldIn, pos) || state.getBlock() instanceof BlockLeaves || state.getBlock() instanceof BlockGrass || state.getBlock() instanceof BlockDirt || state.getBlock() instanceof BlockLog || state.getBlock() instanceof BlockSapling || state.getBlock() == Blocks.VINE || state.getBlock() instanceof BlockDryGrass;
-    }
-
-    @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        return SHAPE;
-    }
-
-    @Override
-    public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
-        super.tick(state, worldIn, pos, random);
-        if (!worldIn.isAreaLoaded(pos, 1)) {
-            return; // Forge: prevent loading unloaded chunks when checking neighbor's light
-        }
-        if (worldIn.getLight(pos.up()) >= 9 && random.nextInt(7) == 0) {
-            this.grow(worldIn, pos, state, random);
-        }
-    }
-
-    public void grow(IWorld worldIn, BlockPos pos, BlockState state, Random rand) {
-        if (state.get(STAGE) == 0) {
-            worldIn.setBlockState(pos, state.with(STAGE, 1), 4);
-            return;
-        }
-        this.tree.spawn(worldIn, pos, state, rand);
-
+        return state.isAir((IBlockReader) worldIn, pos) ||
+               state.getBlock() instanceof BlockLeaves ||
+               state.getBlock() instanceof BlockGrass ||
+               state.getBlock() instanceof BlockDirt ||
+               state.getBlock() instanceof BlockLog ||
+               state.getBlock() instanceof BlockSapling ||
+               state.getBlock() == Blocks.VINE ||
+               state.getBlock() instanceof BlockDryGrass;
     }
 
     @Override
@@ -69,12 +52,37 @@ public class BlockSapling extends BlockBush implements IGrowable {
     }
 
     @Override
+    protected void fillStateContainer(Builder<Block, BlockState> builder) {
+        builder.add(STAGE);
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+        return SHAPE;
+    }
+
+    @Override
     public void grow(World worldIn, Random rand, BlockPos pos, BlockState state) {
         this.grow(worldIn, pos, state, rand);
     }
 
+    public void grow(IWorld worldIn, BlockPos pos, BlockState state, Random rand) {
+        if (state.get(STAGE) == 0) {
+            worldIn.setBlockState(pos, state.with(STAGE, 1), 4);
+            return;
+        }
+        this.tree.spawn(worldIn, pos, state, rand);
+
+    }
+
     @Override
-    protected void fillStateContainer(Builder<Block, BlockState> builder) {
-        builder.add(STAGE);
+    public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
+        super.tick(state, worldIn, pos, random);
+        if (!worldIn.isAreaLoaded(pos, 1)) {
+            return; // Forge: prevent loading unloaded chunks when checking neighbor's light
+        }
+        if (worldIn.getLight(pos.up()) >= 9 && random.nextInt(7) == 0) {
+            this.grow(worldIn, pos, state, random);
+        }
     }
 }

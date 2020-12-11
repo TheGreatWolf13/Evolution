@@ -1,4 +1,4 @@
-package tgw.evolution.client.renderer;
+package tgw.evolution.init;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;

@@ -21,7 +21,6 @@ import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.IBlockFluidContainer;
 import tgw.evolution.blocks.fluids.BlockGenericFluid;
@@ -210,7 +209,6 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
             return 0;
         }
         BlockState stateAtPos = world.getBlockState(pos);
-        Evolution.LOGGER.debug("stateAtPos = {}", stateAtPos);
         Material materialAtPos = stateAtPos.getMaterial();
         boolean isReplaceable = BlockUtils.canBeReplacedByWater(stateAtPos);
         if (world.isAirBlock(pos) || isReplaceable) {
@@ -230,12 +228,12 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
                     world.addParticle(ParticleTypes.LARGE_SMOKE, posX + Math.random(), posY + Math.random(), posZ + Math.random(), 0, 0, 0);
                 }
             }
-            else if (stateAtPos.getBlock() instanceof BlockGenericFluid) {
-                placed = ((BlockGenericFluid) stateAtPos.getBlock()).receiveFluid(world,
-                                                                                  pos,
-                                                                                  stateAtPos,
-                                                                                  this.getFluid(),
-                                                                                  this.getAmount(stackInHand));
+            else if (stateAtPos.getBlock() instanceof IBlockFluidContainer) {
+                placed = ((IBlockFluidContainer) stateAtPos.getBlock()).receiveFluid(world,
+                                                                                     pos,
+                                                                                     stateAtPos,
+                                                                                     this.getFluid(),
+                                                                                     this.getAmount(stackInHand));
                 if (placed > 0) {
                     this.playEmptySound(player, world, pos);
                 }

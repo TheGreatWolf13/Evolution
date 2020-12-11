@@ -11,6 +11,7 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
+import tgw.evolution.init.EvolutionHitBoxes;
 
 public class BlockPlaceableItem extends Block implements IReplaceable {
 

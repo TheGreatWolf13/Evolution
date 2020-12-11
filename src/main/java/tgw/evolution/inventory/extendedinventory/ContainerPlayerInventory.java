@@ -22,9 +22,9 @@ import net.minecraft.network.play.server.SSetSlotPacket;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.util.LazyOptional;
 import tgw.evolution.capabilities.inventory.PlayerInventoryCapability;
 import tgw.evolution.init.EvolutionContainers;
+import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.ServerRecipePlacerEv;
 import tgw.evolution.inventory.SlotExtended;
 import tgw.evolution.items.IAdditionalEquipment;
@@ -35,15 +35,11 @@ import java.util.Optional;
 
 public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInventory> {
 
-    private static final String[] ARMOR_SLOT_TEXTURES = {"item/empty_armor_slot_boots",
-                                                         "item/empty_armor_slot_leggings",
-                                                         "item/empty_armor_slot_chestplate",
-                                                         "item/empty_armor_slot_helmet"};
     private static final EquipmentSlotType[] VALID_EQUIPMENT_SLOTS = {EquipmentSlotType.HEAD,
                                                                       EquipmentSlotType.CHEST,
                                                                       EquipmentSlotType.LEGS,
                                                                       EquipmentSlotType.FEET};
-    public final LazyOptional<IExtendedItemHandler> handler;
+    public final IExtendedItemHandler handler;
     public final boolean isLocalWorld;
     private final CraftingInventory craftingInventory = new CraftingInventory(this, 2, 2);
     private final CraftResultInventory craftingResult = new CraftResultInventory();
@@ -53,7 +49,7 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
         super(EvolutionContainers.EXTENDED_INVENTORY.get(), windowId);
         this.player = inventory.player;
         this.isLocalWorld = this.player.world.isRemote;
-        this.handler = this.player.getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY);
+        this.handler = this.player.getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY).orElseThrow(IllegalStateException::new);
         //Crafting result slot
         this.addSlot(new CraftingResultSlot(inventory.player, this.craftingInventory, this.craftingResult, 0, 161, 62));
         //Crafting slots
@@ -72,9 +68,7 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
                 @Override
                 public boolean canTakeStack(PlayerEntity playerIn) {
                     if (equipmentslottype == EquipmentSlotType.CHEST) {
-                        return ContainerPlayerInventory.this.handler.orElseThrow(IllegalStateException::new)
-                                                                    .getStackInSlot(ContainerExtendedHandler.CLOAK)
-                                                                    .isEmpty();
+                        return ContainerPlayerInventory.this.handler.getStackInSlot(EvolutionResources.CLOAK).isEmpty();
                     }
                     ItemStack stack = this.getStack();
                     return !stack.isEmpty();
@@ -88,11 +82,16 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
                 @Override
                 @OnlyIn(Dist.CLIENT)
                 public String getSlotTexture() {
-                    return ARMOR_SLOT_TEXTURES[equipmentslottype.getIndex()];
+                    return EvolutionResources.SLOT_ARMOR[equipmentslottype.getIndex()];
                 }
 
                 @Override
                 public boolean isItemValid(ItemStack stack) {
+                    if (equipmentslottype == EquipmentSlotType.CHEST) {
+                        if (!ContainerPlayerInventory.this.handler.getStackInSlot(EvolutionResources.CLOAK).isEmpty()) {
+                            return false;
+                        }
+                    }
                     return stack.canEquip(equipmentslottype, ContainerPlayerInventory.this.player);
                 }
             });
@@ -115,17 +114,17 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
             @Override
             @OnlyIn(Dist.CLIENT)
             public String getSlotTexture() {
-                return "item/empty_armor_slot_shield";
+                return EvolutionResources.SLOT_SHIELD;
             }
         });
-        this.addSlot(new SlotExtended(this.player, this.handler.orElseThrow(IllegalStateException::new), ContainerExtendedHandler.HAT, 44, 8));
-        this.addSlot(new SlotExtended(this.player, this.handler.orElseThrow(IllegalStateException::new), ContainerExtendedHandler.BODY, 44, 26));
-        this.addSlot(new SlotExtended(this.player, this.handler.orElseThrow(IllegalStateException::new), ContainerExtendedHandler.LEGS, 44, 44));
-        this.addSlot(new SlotExtended(this.player, this.handler.orElseThrow(IllegalStateException::new), ContainerExtendedHandler.FEET, 44, 62));
-        this.addSlot(new SlotExtended(this.player, this.handler.orElseThrow(IllegalStateException::new), ContainerExtendedHandler.CLOAK, 8, 26));
-        this.addSlot(new SlotExtended(this.player, this.handler.orElseThrow(IllegalStateException::new), ContainerExtendedHandler.MASK, 116, 8));
-        this.addSlot(new SlotExtended(this.player, this.handler.orElseThrow(IllegalStateException::new), ContainerExtendedHandler.BACK, 116, 26));
-        this.addSlot(new SlotExtended(this.player, this.handler.orElseThrow(IllegalStateException::new), ContainerExtendedHandler.TACTICAL, 116, 44));
+        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.HAT, 44, 8));
+        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.BODY, 44, 26));
+        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.LEGS, 44, 44));
+        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.FEET, 44, 62));
+        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.CLOAK, 8, 26));
+        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.MASK, 116, 8));
+        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.BACK, 116, 26));
+        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.TACTICAL, 116, 44));
     }
 
     protected static void func_217066_a(int window,
@@ -149,13 +148,13 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
     }
 
     @Override
-    public boolean canInteractWith(PlayerEntity playerIn) {
+    public boolean canInteractWith(PlayerEntity player) {
         return true;
     }
 
     @Override
-    public boolean canMergeSlot(ItemStack stack, Slot slotIn) {
-        return slotIn.inventory != this.craftingResult && super.canMergeSlot(stack, slotIn);
+    public boolean canMergeSlot(ItemStack stack, Slot slot) {
+        return slot.inventory != this.craftingResult && super.canMergeSlot(stack, slot);
     }
 
     @Override
@@ -224,7 +223,7 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
     }
 
     @Override
-    public ItemStack transferStackInSlot(PlayerEntity playerIn, int index) {
+    public ItemStack transferStackInSlot(PlayerEntity player, int index) {
         ItemStack stack = ItemStack.EMPTY;
         Slot slot = this.inventorySlots.get(index);
         if (slot != null && slot.getHasStack()) {
@@ -287,9 +286,9 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
             if (stackInSlot.getCount() == stack.getCount()) {
                 return ItemStack.EMPTY;
             }
-            ItemStack itemstack2 = slot.onTake(playerIn, stackInSlot);
+            ItemStack itemstack2 = slot.onTake(player, stackInSlot);
             if (index == 0) {
-                playerIn.dropItem(itemstack2, false);
+                player.dropItem(itemstack2, false);
             }
         }
         return stack;

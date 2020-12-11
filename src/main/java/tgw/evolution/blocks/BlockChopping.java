@@ -23,6 +23,7 @@ import net.minecraft.world.World;
 import tgw.evolution.blocks.tileentities.TEChopping;
 import tgw.evolution.entities.misc.EntitySit;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.items.ItemAxe;
 import tgw.evolution.items.ItemLog;
 import tgw.evolution.util.EnumWoodNames;

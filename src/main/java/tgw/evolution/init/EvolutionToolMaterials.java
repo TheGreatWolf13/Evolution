@@ -8,7 +8,7 @@ import tgw.evolution.util.HarvestLevel;
 
 import static tgw.evolution.init.EvolutionItems.*;
 
-public enum ToolMaterials implements IItemTier {
+public enum EvolutionToolMaterials implements IItemTier {
     //Stone
     STONE_ANDESITE("andesite", 13.2f, 4.4f, 45, HarvestLevel.STONE, stone_andesite, 2_565),
     STONE_BASALT("basalt", 11.6f, 4.4f, 45, HarvestLevel.STONE, stone_basalt, 2_768),
@@ -41,13 +41,13 @@ public enum ToolMaterials implements IItemTier {
     private final String name;
     private final int density;
 
-    ToolMaterials(String name,
-                  float attackDamage,
-                  float miningSpeed,
-                  int durability,
-                  int harvestLevel,
-                  RegistryObject<Item> repairMaterial,
-                  int density) {
+    EvolutionToolMaterials(String name,
+                           float attackDamage,
+                           float miningSpeed,
+                           int durability,
+                           int harvestLevel,
+                           RegistryObject<Item> repairMaterial,
+                           int density) {
         this.attackDamage = attackDamage;
         this.miningSpeed = miningSpeed;
         this.durability = durability;
@@ -58,8 +58,12 @@ public enum ToolMaterials implements IItemTier {
     }
 
     @Override
-    public int getMaxUses() {
-        return this.durability;
+    public float getAttackDamage() {
+        return this.attackDamage;
+    }
+
+    public double getAxeMass() {
+        return this.density / 1_500.0;
     }
 
     @Override
@@ -68,8 +72,12 @@ public enum ToolMaterials implements IItemTier {
     }
 
     @Override
-    public float getAttackDamage() {
-        return this.attackDamage;
+    public int getEnchantability() {
+        return 0;
+    }
+
+    public double getHammerMass() {
+        return this.density / 1_500.0;
     }
 
     @Override
@@ -77,9 +85,21 @@ public enum ToolMaterials implements IItemTier {
         return this.harvestLevel;
     }
 
+    public double getJavelinMass() {
+        return this.density / 2_000.0;
+    }
+
     @Override
-    public int getEnchantability() {
-        return 0;
+    public int getMaxUses() {
+        return this.durability;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public double getPickaxeMass() {
+        return this.density / 2_000.0;
     }
 
     @Override
@@ -87,27 +107,7 @@ public enum ToolMaterials implements IItemTier {
         return Ingredient.fromItems(this.repairMaterial);
     }
 
-    public String getName() {
-        return this.name;
-    }
-
-    public double getJavelinMass() {
-        return this.density / 2_000.0;
-    }
-
-    public double getAxeMass() {
-        return this.density / 1_500.0;
-    }
-
-    public double getPickaxeMass() {
-        return this.density / 2_000.0;
-    }
-
     public double getShovelMass() {
         return this.density / 2_000.0;
-    }
-
-    public double getHammerMass() {
-        return this.density / 1_500.0;
     }
 }

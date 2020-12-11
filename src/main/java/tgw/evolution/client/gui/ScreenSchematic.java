@@ -9,6 +9,7 @@ import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TranslationTextComponent;
+import org.lwjgl.glfw.GLFW;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 import tgw.evolution.blocks.tileentities.TESchematic;
 import tgw.evolution.init.EvolutionBlocks;
@@ -246,7 +247,7 @@ public class ScreenSchematic extends Screen {
         if (super.keyPressed(p_keyPressed_1_, p_keyPressed_2_, p_keyPressed_3_)) {
             return true;
         }
-        if (p_keyPressed_1_ != 257 && p_keyPressed_1_ != 335) {
+        if (p_keyPressed_1_ != GLFW.GLFW_KEY_ENTER && p_keyPressed_1_ != GLFW.GLFW_KEY_KP_ENTER) {
             return false;
         }
         this.done();

@@ -31,12 +31,12 @@ import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.ForgeEventFactory;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockUtils;
-import tgw.evolution.blocks.EvolutionBlockStateProperties;
 import tgw.evolution.blocks.IBlockFluidContainer;
 import tgw.evolution.blocks.IReplaceable;
 import tgw.evolution.blocks.tileentities.TELiquid;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
+import tgw.evolution.init.EvolutionBlockStateProperties;
 import tgw.evolution.util.DirectionList;
 import tgw.evolution.util.MathHelper;
 
@@ -359,6 +359,7 @@ public abstract class BlockGenericFluid extends Block implements IBlockFluidCont
         return true;
     }
 
+    @Override
     public int receiveFluid(World world, BlockPos pos, BlockState originalState, Fluid fluid, int amount) {
         IFluidState stateAtPos = originalState.getFluidState();
         FluidGeneric fluidAtPos = this.getFluid();

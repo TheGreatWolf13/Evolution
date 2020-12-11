@@ -16,6 +16,7 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
+import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.util.MathHelper;
 
 import javax.annotation.Nullable;

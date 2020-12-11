@@ -20,9 +20,7 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import tgw.evolution.entities.misc.EntityFallingPeat;
-import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.init.EvolutionSounds;
+import tgw.evolution.init.*;
 
 import java.util.Random;
 

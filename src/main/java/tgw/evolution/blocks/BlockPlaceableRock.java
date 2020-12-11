@@ -9,6 +9,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
+import tgw.evolution.init.EvolutionHitBoxes;
 
 public class BlockPlaceableRock extends BlockPlaceableItem {
 

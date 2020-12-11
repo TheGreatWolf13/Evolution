@@ -1,4 +1,4 @@
-package tgw.evolution.util;
+package tgw.evolution.init;
 
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;

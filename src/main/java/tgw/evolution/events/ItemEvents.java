@@ -19,8 +19,8 @@ import net.minecraftforge.registries.ForgeRegistries;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.init.EvolutionStyles;
 import tgw.evolution.items.*;
-import tgw.evolution.util.EvolutionStyles;
 import tgw.evolution.util.MathHelper;
 
 import java.util.List;

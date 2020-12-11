@@ -15,6 +15,7 @@ import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 import net.minecraft.world.lighting.LightEngine;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
+import tgw.evolution.init.EvolutionBlockStateProperties;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.EnumRockNames;

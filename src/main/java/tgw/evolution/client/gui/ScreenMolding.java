@@ -90,8 +90,7 @@ public class ScreenMolding extends Screen {
         int xSize = 20 * nButtons + 5 * (nButtons - 1);
         int relX = (this.width - xSize) / 2;
         int relY = (this.height - 20) / 2;
-        int textX = (this.width - this.font.getStringWidth(this.title.getFormattedText())) / 2;
-        this.font.drawString(this.title.getFormattedText(), textX, cornerY + 5, 0x40_4040);
+        GUIUtils.drawCenteredString(this.font, this.title.getFormattedText(), this.width, cornerY + 5);
         super.render(mouseX, mouseY, partialTicks);
         for (int i = 0; i < STACKS.length; i++) {
             this.drawItemStack(STACKS[i], 2 + relX + 25 * i, 2 + relY, null);

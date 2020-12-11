@@ -32,6 +32,7 @@ import tgw.evolution.blocks.tileentities.TETorch;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.config.EvolutionConfig;
+import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.ItemTorch;
 import tgw.evolution.util.Time;

@@ -13,7 +13,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntityHook;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.util.EvolutionStyles;
+import tgw.evolution.init.EvolutionStyles;
 import tgw.evolution.util.MathHelper;
 
 public class ItemClimbingHook extends ItemEv implements IThrowable {

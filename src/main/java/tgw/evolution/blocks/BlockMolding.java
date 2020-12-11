@@ -28,6 +28,8 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import tgw.evolution.blocks.tileentities.TEMolding;
+import tgw.evolution.init.EvolutionBlockStateProperties;
+import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.util.MathHelper;
 

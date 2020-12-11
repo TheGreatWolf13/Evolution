@@ -10,16 +10,13 @@ import net.minecraft.client.gui.widget.button.ImageButton;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.ClickType;
 import net.minecraft.inventory.container.Slot;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
-import tgw.evolution.Evolution;
+import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.extendedinventory.ContainerPlayerInventory;
 
 public class ScreenInventoryExtended extends DisplayEffectsScreen<ContainerPlayerInventory> implements IRecipeShownListener {
 
-    private static final ResourceLocation RECIPE_BUTTON_TEXTURE = new ResourceLocation("textures/gui/recipe_button.png");
-    private static final ResourceLocation INVENTORY_TEXTURE = Evolution.location("textures/gui/inventory.png");
-    private final RecipeBookGui recipeBookGui = new RecipeBookGui();
+    private final GuiRecipeBook recipeBookGui = new GuiRecipeBook();
     private boolean buttonClicked;
     private float oldMouseX;
     private float oldMouseY;
@@ -35,28 +32,31 @@ public class ScreenInventoryExtended extends DisplayEffectsScreen<ContainerPlaye
     @Override
     protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
         GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.minecraft.getTextureManager().bindTexture(INVENTORY_TEXTURE);
+        this.minecraft.getTextureManager().bindTexture(EvolutionResources.GUI_INVENTORY);
         int i = this.guiLeft;
         int j = this.guiTop;
         this.blit(i, j, 0, 0, this.xSize, this.ySize);
-        if (!this.playerInventory.armorInventory.get(3).isEmpty()) {
+        if (!this.playerInventory.armorInventory.get(EvolutionResources.HELMET).isEmpty()) {
             this.blit(i + 43, j + 7, 212, 0, 18, 18);
         }
-        if (!this.playerInventory.armorInventory.get(2).isEmpty()) {
+        if (!this.playerInventory.armorInventory.get(EvolutionResources.CHESTPLATE).isEmpty()) {
             this.blit(i + 43, j + 25, 212, 0, 18, 18);
         }
-        if (!this.playerInventory.armorInventory.get(1).isEmpty()) {
+        if (!this.playerInventory.armorInventory.get(EvolutionResources.LEGGINGS).isEmpty()) {
             this.blit(i + 43, j + 43, 212, 0, 18, 18);
         }
-        if (!this.playerInventory.armorInventory.get(0).isEmpty()) {
+        if (!this.playerInventory.armorInventory.get(EvolutionResources.BOOTS).isEmpty()) {
             this.blit(i + 43, j + 61, 212, 0, 18, 18);
+        }
+        if (!this.container.handler.getStackInSlot(EvolutionResources.CLOAK).isEmpty()) {
+            this.blit(i + 43, j + 25, 212, 0, 18, 18);
+            this.blit(i + 25, j + 25, 212, 0, 18, 18);
         }
         InventoryScreen.drawEntityOnScreen(i + 88, j + 75, 30, i + 88 - this.oldMouseX, j + 75 - 50 - this.oldMouseY, this.minecraft.player);
     }
 
     @Override
     protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-        this.font.drawString(this.title.getFormattedText(), 97.0F, 8.0F, 4_210_752);
     }
 
     @Override
@@ -65,9 +65,9 @@ public class ScreenInventoryExtended extends DisplayEffectsScreen<ContainerPlaye
     }
 
     @Override
-    protected void handleMouseClick(Slot slotIn, int slotId, int mouseButton, ClickType type) {
-        super.handleMouseClick(slotIn, slotId, mouseButton, type);
-        this.recipeBookGui.slotClicked(slotIn);
+    protected void handleMouseClick(Slot slot, int slotId, int mouseButton, ClickType type) {
+        super.handleMouseClick(slot, slotId, mouseButton, type);
+        this.recipeBookGui.slotClicked(slot);
     }
 
     @Override
@@ -89,13 +89,21 @@ public class ScreenInventoryExtended extends DisplayEffectsScreen<ContainerPlaye
             this.guiLeft = this.recipeBookGui.updateScreenPosition(this.widthTooNarrow, this.width, this.xSize);
             this.children.add(this.recipeBookGui);
             this.setFocusedDefault(this.recipeBookGui);
-            this.addButton(new ImageButton(this.guiLeft + 137, this.height / 2 - 31, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE, p_214086_1_ -> {
-                this.recipeBookGui.initSearchBar(this.widthTooNarrow);
-                this.recipeBookGui.toggleVisibility();
-                this.guiLeft = this.recipeBookGui.updateScreenPosition(this.widthTooNarrow, this.width, this.xSize);
-                ((ImageButton) p_214086_1_).setPosition(this.guiLeft + 137, this.height / 2 - 31);
-                this.buttonClicked = true;
-            }));
+            this.addButton(new ImageButton(this.guiLeft + 137,
+                                           this.height / 2 - 31,
+                                           20,
+                                           18,
+                                           0,
+                                           0,
+                                           19,
+                                           EvolutionResources.BUTTON_RECIPE_BOOK,
+                                           button -> {
+                                               this.recipeBookGui.initSearchBar(this.widthTooNarrow);
+                                               this.recipeBookGui.toggleVisibility();
+                                               this.guiLeft = this.recipeBookGui.updateScreenPosition(this.widthTooNarrow, this.width, this.xSize);
+                                               ((ImageButton) button).setPosition(this.guiLeft + 137, this.height / 2 - 31);
+                                               this.buttonClicked = true;
+                                           }));
         }
     }
 
@@ -147,7 +155,7 @@ public class ScreenInventoryExtended extends DisplayEffectsScreen<ContainerPlaye
             this.recipeBookGui.renderGhostRecipe(this.guiLeft, this.guiTop, false, partialTicks);
         }
         this.recipeBookGui.render(mouseX, mouseY, partialTicks);
-        this.recipeBookGui.renderTooltip(this.guiLeft + 18, this.guiTop, mouseX, mouseY);
+        this.recipeBookGui.renderTooltip(this.guiLeft, this.guiTop, mouseX, mouseY);
         this.func_212932_b(this.recipeBookGui);
         this.renderHoveredToolTip(mouseX, mouseY);
         this.oldMouseX = mouseX;

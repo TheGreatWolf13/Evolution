@@ -14,6 +14,7 @@ import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.loot.LootContext;
+import tgw.evolution.init.EvolutionBlockStateProperties;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.util.EnumMetalNames;
 import tgw.evolution.util.MathHelper;
@@ -27,23 +28,21 @@ public class BlockMetal extends BlockGravity {
     public static final IntegerProperty OXIDATION = EvolutionBlockStateProperties.OXIDATION;
 
     public BlockMetal(EnumMetalNames name) {
-        super(Block.Properties.create(Material.IRON).harvestLevel(name.getHarvestLevel()).sound(SoundType.METAL).hardnessAndResistance(name.getHardness(), name.getResistance()), name.getDensity());
+        super(Block.Properties.create(Material.IRON)
+                              .harvestLevel(name.getHarvestLevel())
+                              .sound(SoundType.METAL)
+                              .hardnessAndResistance(name.getHardness(), name.getResistance()), name.getDensity());
         this.setDefaultState(this.getDefaultState().with(OXIDATION, 0));
-    }
-
-    @Override
-    protected void fillStateContainer(Builder<Block, BlockState> builder) {
-        builder.add(OXIDATION);
-    }
-
-    @Override
-    public void randomTick(BlockState state, World worldIn, BlockPos pos, Random rand) {
-        //TODO oxidation
     }
 
     @Override
     public SoundEvent fallSound() {
         return SoundEvents.BLOCK_ANVIL_LAND;
+    }
+
+    @Override
+    protected void fillStateContainer(Builder<Block, BlockState> builder) {
+        builder.add(OXIDATION);
     }
 
     @Override
@@ -66,5 +65,10 @@ public class BlockMetal extends BlockGravity {
             return this.getDefaultState();
         }
         return this.getDefaultState().with(OXIDATION, nbt.getInt("Oxidation"));
+    }
+
+    @Override
+    public void randomTick(BlockState state, World worldIn, BlockPos pos, Random rand) {
+        //TODO oxidation
     }
 }

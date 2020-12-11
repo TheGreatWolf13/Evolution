@@ -13,8 +13,8 @@ import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionNetwork;
+import tgw.evolution.init.EvolutionStyles;
 import tgw.evolution.network.PacketSCOpenMoldingGui;
-import tgw.evolution.util.EvolutionStyles;
 
 import java.util.List;
 

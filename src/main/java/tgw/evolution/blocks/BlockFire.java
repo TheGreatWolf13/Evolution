@@ -25,7 +25,9 @@ import net.minecraftforge.fml.RegistryObject;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
+import tgw.evolution.init.EvolutionBlockStateProperties;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.init.EvolutionHitBoxes;
 
 import javax.annotation.Nullable;
 import java.util.Map;

@@ -23,10 +23,8 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
-import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.*;
 import tgw.evolution.items.ItemHammer;
-import tgw.evolution.util.EvolutionStyles;
 import tgw.evolution.util.HarvestLevel;
 import tgw.evolution.util.MathHelper;
 
