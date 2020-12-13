@@ -444,7 +444,7 @@ public final class LivingEntityHooks {
     public static void jump(LivingEntity entity, float jumpUpwardsMotion) {
         float upMotion;
         if (entity.isPotionActive(Effects.JUMP_BOOST)) {
-            upMotion = jumpUpwardsMotion + 0.1F * (entity.getActivePotionEffect(Effects.JUMP_BOOST).getAmplifier() + 1);
+            upMotion = jumpUpwardsMotion * (1.0F + (entity.getActivePotionEffect(Effects.JUMP_BOOST).getAmplifier() + 1) / 10.0f);
         }
         else {
             upMotion = jumpUpwardsMotion;

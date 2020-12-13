@@ -1,6 +1,7 @@
 package tgw.evolution.events;
 
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Ordering;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -9,8 +10,12 @@ import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.screen.DeathScreen;
+import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.screen.inventory.InventoryScreen;
 import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.texture.AtlasTexture;
+import net.minecraft.client.renderer.texture.PotionSpriteUploader;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.settings.AttackIndicatorStatus;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
@@ -23,12 +28,10 @@ import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.*;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.EffectType;
-import net.minecraft.potion.EffectUtils;
-import net.minecraft.potion.Effects;
+import net.minecraft.potion.*;
 import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.tileentity.SkullTileEntity;
+import net.minecraft.util.Timer;
 import net.minecraft.util.*;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.shapes.VoxelShape;
@@ -41,6 +44,7 @@ import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.client.ForgeIngameGui;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import org.apache.commons.lang3.tuple.Pair;
@@ -74,10 +78,7 @@ import tgw.evolution.util.reflection.StaticFieldHandler;
 import tgw.evolution.world.dimension.DimensionOverworld;
 
 import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 public class ClientEvents {
 
@@ -97,12 +98,17 @@ public class ClientEvents {
     private static final FieldHandler<Minecraft, Integer> LEFT_COUNTER_FIELD = new FieldHandler<>(Minecraft.class, "field_71429_W");
     private static final FieldHandler<Minecraft, Timer> TIMER_FIELD = new FieldHandler<>(Minecraft.class, "field_71428_T");
     private static final FieldHandler<Timer, Float> TICKRATE_FIELD = new FieldHandler<>(Timer.class, "field_194149_e");
+    private static final FieldHandler<EffectInstance, Integer> DURATION_FIELD = new FieldHandler<>(EffectInstance.class, "field_149431_d");
+    private static final List<EffectInstance> EFFECTS = new ArrayList<>();
+    private static final List<EffectInstance> EFFECTS_TO_ADD = new ArrayList<>();
+    private static final List<EffectInstance> EFFECTS_TO_TICK = new ArrayList<>();
     private static ClientEvents instance;
     private final Minecraft mc;
     private final Random rand = new Random();
     public int jumpTicks;
     private int currentShader;
     private int currentThirdPersonView;
+    private int effectToAddTicks;
     private long healthUpdateCounter;
     private boolean inverted;
     private boolean isJumpPressed;
@@ -138,6 +144,7 @@ public class ClientEvents {
     private float rightSwingProgress;
     private int rightSwingProgressInt;
     private int rightTimeSinceLastHit;
+    private boolean shouldPassEffectTick;
     private boolean skinsLoaded;
     private boolean skyRendererBinded;
     private boolean sneakpreviousPressed;
@@ -153,6 +160,10 @@ public class ClientEvents {
         AbstractGui.blit(x, y, 20, textureX, textureY, sizeX, sizeY, 256, 256);
     }
 
+    private static void blit(int x, int y, int textureX, int textureY, int sizeX, int sizeY, int blitOffset) {
+        AbstractGui.blit(x, y, blitOffset, textureX, textureY, sizeX, sizeY, 256, 256);
+    }
+
     public static ClientEvents getInstance() {
         return instance;
     }
@@ -162,8 +173,28 @@ public class ClientEvents {
         return (float) (1 / attackSpeed * 20);
     }
 
+    private static void removeEffect(List<EffectInstance> list, Effect effect) {
+        Iterator<EffectInstance> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            if (iterator.next().getPotion() == effect) {
+                iterator.remove();
+                break;
+            }
+        }
+    }
+
+    public static void removePotionEffect(Effect effect) {
+        removeEffect(EFFECTS, effect);
+        removeEffect(EFFECTS_TO_ADD, effect);
+        removeEffect(EFFECTS_TO_TICK, effect);
+    }
+
     private static float roundToHearts(float currentHealth) {
         return MathHelper.floor(currentHealth * 0.4F) / 0.4F;
+    }
+
+    public static int shiftTextByLines(int desiredLine, int y) {
+        return y + 10 * (desiredLine - 1) + 1;
     }
 
     public static int shiftTextByLines(List<String> lines, int y) {
@@ -176,10 +207,6 @@ public class ClientEvents {
             }
         }
         return y;
-    }
-
-    public static int shiftTextByLines(int desiredLine, int y) {
-        return y + 10 * (desiredLine - 1) + 1;
     }
 
     private static void swapControls(Minecraft mc) {
@@ -239,6 +266,9 @@ public class ClientEvents {
         if (this.mc.player == null) {
             this.skyRendererBinded = false;
             this.skinsLoaded = false;
+            EFFECTS.clear();
+            EFFECTS_TO_ADD.clear();
+            EFFECTS_TO_TICK.clear();
             return;
         }
         if (this.mc.world == null) {
@@ -313,11 +343,11 @@ public class ClientEvents {
                         Evolution.LOGGER.warn("Unregistered shader id: {}", shader);
                 }
             }
-            //RayTrace entities
             if (!this.mc.isGamePaused()) {
                 if (this.mc.world.dimension instanceof DimensionOverworld) {
                     this.mc.world.dimension.tick();
                 }
+                //RayTrace entities
                 this.leftRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player,
                                                                       1.0f,
                                                                       this.mc.player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue());
@@ -374,6 +404,30 @@ public class ClientEvents {
         //Runs at the end of each tick
         else if (event.phase == TickEvent.Phase.END) {
             if (!this.mc.isGamePaused()) {
+                //Remove inactive effects
+                if (!EFFECTS.isEmpty() || !EFFECTS_TO_TICK.isEmpty()) {
+                    Iterator<EffectInstance> iterator = EFFECTS.iterator();
+                    while (iterator.hasNext()) {
+                        Effect effect = iterator.next().getPotion();
+                        if (!this.mc.player.isPotionActive(effect)) {
+                            iterator.remove();
+                        }
+                    }
+                    iterator = EFFECTS_TO_TICK.iterator();
+                    while (iterator.hasNext()) {
+                        Effect effect = iterator.next().getPotion();
+                        if (!this.mc.player.isPotionActive(effect)) {
+                            iterator.remove();
+                        }
+                    }
+                    for (EffectInstance effect : EFFECTS_TO_TICK) {
+                        DURATION_FIELD.set(effect, effect.getDuration() - 1);
+                    }
+                }
+                if (this.shouldPassEffectTick) {
+                    this.effectToAddTicks++;
+                    this.shouldPassEffectTick = false;
+                }
                 //Proning
                 boolean pressed = ClientProxy.TOGGLE_PRONE.isKeyDown();
                 if (pressed && !this.previousPressed) {
@@ -565,6 +619,28 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
+    public void onPotionAdded(PotionEvent.PotionAddedEvent event) {
+        if (!event.getEntityLiving().world.isRemote) {
+            return;
+        }
+        if (event.getEntityLiving() != this.mc.player) {
+            return;
+        }
+        if (event.getOldPotionEffect() == null) {
+            EFFECTS_TO_ADD.add(event.getPotionEffect());
+        }
+        else {
+            removeEffect(EFFECTS, event.getOldPotionEffect().getPotion());
+            removeEffect(EFFECTS_TO_TICK, event.getOldPotionEffect().getPotion());
+            removeEffect(EFFECTS_TO_ADD, event.getOldPotionEffect().getPotion());
+            EffectInstance newEffect = new EffectInstance(event.getOldPotionEffect());
+            newEffect.combine(event.getPotionEffect());
+            EFFECTS.add(newEffect);
+            EFFECTS_TO_TICK.add(newEffect);
+        }
+    }
+
+    @SubscribeEvent
     public void onRenderGameOverlay(RenderGameOverlayEvent.Pre event) {
         if (this.mc.player.getRidingEntity() != null) {
             ForgeIngameGui.renderFood = true;
@@ -577,6 +653,11 @@ public class ClientEvents {
         if (event.getType() == RenderGameOverlayEvent.ElementType.HEALTH) {
             event.setCanceled(true);
             this.renderHealth();
+            return;
+        }
+        if (event.getType() == RenderGameOverlayEvent.ElementType.POTION_ICONS) {
+            event.setCanceled(true);
+            this.renderPotionIcons();
         }
     }
 
@@ -907,6 +988,107 @@ public class ClientEvents {
         GlStateManager.depthMask(true);
         GlStateManager.enableTexture();
         GlStateManager.disableBlend();
+    }
+
+    public void renderPotionIcons() {
+        PotionSpriteUploader potionSpriteUploader = this.mc.getPotionSpriteUploader();
+        while (!EFFECTS_TO_ADD.isEmpty()) {
+            EffectInstance addingInstance = EFFECTS_TO_ADD.get(0);
+            Effect addingEffect = addingInstance.getPotion();
+            if (!addingEffect.shouldRenderHUD(addingInstance)) {
+                EFFECTS_TO_ADD.remove(addingInstance);
+                EFFECTS.add(addingInstance);
+                this.effectToAddTicks = 0;
+                continue;
+            }
+            float alpha;
+            int x0 = (this.mc.mainWindow.getScaledWidth() - 24) / 2;
+            int y0 = (this.mc.mainWindow.getScaledHeight() - 24) / 3;
+            int x = x0;
+            int y = y0;
+            if (this.effectToAddTicks < 5) {
+                alpha = this.effectToAddTicks / 5.0f;
+            }
+            else if (this.effectToAddTicks < 15) {
+                alpha = 1.0f;
+            }
+            else {
+                alpha = 1.0f;
+                int x1 = this.mc.mainWindow.getScaledWidth() - 25;
+                float t = (this.effectToAddTicks - 15) / 6.0f;
+                x = (int) ((x1 - x0) * t + x0);
+                int y1 = addingEffect.isBeneficial() ? 1 : 26;
+                y = (int) ((y1 - y0) * t + y0);
+            }
+            this.mc.getTextureManager().bindTexture(ContainerScreen.INVENTORY_BACKGROUND);
+            GlStateManager.color4f(1.0F, 1.0F, 1.0F, alpha);
+            if (addingInstance.isAmbient()) {
+                blit(x, y, 165, 166, 24, 24, -90);
+            }
+            else {
+                blit(x, y, 141, 166, 24, 24, -90);
+            }
+            TextureAtlasSprite potionSprites = potionSpriteUploader.getSprite(addingEffect);
+            this.mc.getTextureManager().bindTexture(AtlasTexture.LOCATION_EFFECTS_TEXTURE);
+            GlStateManager.color4f(1.0F, 1.0F, 1.0F, alpha);
+            AbstractGui.blit(x + 3, y + 3, 1, 18, 18, potionSprites);
+            this.shouldPassEffectTick = true;
+            if (this.effectToAddTicks == 20) {
+                this.effectToAddTicks = 0;
+                EFFECTS_TO_ADD.remove(addingInstance);
+                EFFECTS.add(addingInstance);
+            }
+            break;
+        }
+        if (!EFFECTS.isEmpty()) {
+            GlStateManager.enableBlend();
+            int beneficalCount = 0;
+            int harmfulCount = 0;
+            for (EffectInstance effectInstance : Ordering.natural().reverse().sortedCopy(EFFECTS)) {
+                Effect effect = effectInstance.getPotion();
+                if (!effect.shouldRenderHUD(effectInstance)) {
+                    continue;
+                }
+                if (effectInstance.isShowIcon()) {
+                    int x = this.mc.mainWindow.getScaledWidth();
+                    int y = 1;
+                    if (this.mc.isDemo()) {
+                        y += 15;
+                    }
+                    if (effect.isBeneficial()) {
+                        beneficalCount++;
+                        x -= 25 * beneficalCount;
+                    }
+                    else {
+                        harmfulCount++;
+                        x -= 25 * harmfulCount;
+                        y += 26;
+                    }
+                    this.mc.getTextureManager().bindTexture(ContainerScreen.INVENTORY_BACKGROUND);
+                    GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+                    float alpha = 1.0F;
+                    if (effectInstance.isAmbient()) {
+                        blit(x, y, 165, 166, 24, 24, -90);
+                    }
+                    else {
+                        blit(x, y, 141, 166, 24, 24, -90);
+                        if (effectInstance.getDuration() <= 200) {
+                            int remainingSeconds = 10 - effectInstance.getDuration() / 20;
+                            alpha = MathHelper.clamp(effectInstance.getDuration() / 100.0F, 0.0F, 0.5F) +
+                                    MathHelper.cos(effectInstance.getDuration() * MathHelper.PI / 5.0F) *
+                                    MathHelper.clamp(remainingSeconds / 40.0F, 0.0F, 0.25F);
+                        }
+                    }
+                    int finalX = x;
+                    int finalY = y;
+                    float finalAlpha = alpha;
+                    TextureAtlasSprite potionSprites = potionSpriteUploader.getSprite(effect);
+                    this.mc.getTextureManager().bindTexture(AtlasTexture.LOCATION_EFFECTS_TEXTURE);
+                    GlStateManager.color4f(1.0F, 1.0F, 1.0F, finalAlpha);
+                    AbstractGui.blit(finalX + 3, finalY + 3, -90, 18, 18, potionSprites);
+                }
+            }
+        }
     }
 
     @SubscribeEvent

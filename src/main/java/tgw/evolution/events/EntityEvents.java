@@ -51,6 +51,7 @@ import tgw.evolution.inventory.extendedinventory.ContainerExtendedHandler;
 import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.network.PacketCSPlayerFall;
 import tgw.evolution.network.PacketSCChangeTickrate;
+import tgw.evolution.network.PacketSCRemoveEffect;
 import tgw.evolution.network.PacketSCUpdateCameraTilt;
 import tgw.evolution.util.*;
 import tgw.evolution.util.damage.*;
@@ -391,9 +392,6 @@ public class EntityEvents {
             }
             event.setAmount(PlayerHelper.getDamage(hitPart, (PlayerEntity) event.getEntityLiving(), event.getAmount(), type));
         }
-        if (source.getTrueSource() instanceof PlayerEntity) {
-            event.getEntityLiving().hurtResistantTime = 0;
-        }
     }
 
     @SubscribeEvent
@@ -402,6 +400,8 @@ public class EntityEvents {
         if (!(entity instanceof PlayerEntity) && !(entity instanceof EntityGenericCreature)) {
             return;
         }
+        //Removes damage immunity
+        entity.hurtResistantTime = 0;
         //Sets the combat tracker
         CombatTrackerEv combatTracker = (CombatTrackerEv) entity.getCombatTracker();
         if (entity.isOnLadder()) {
@@ -568,6 +568,24 @@ public class EntityEvents {
                 }
             }
         }
+    }
+
+    @SubscribeEvent
+    public void onPotionExpired(PotionEvent.PotionExpiryEvent event) {
+        if (!(event.getEntityLiving() instanceof ServerPlayerEntity)) {
+            return;
+        }
+        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) event.getEntityLiving()),
+                                       new PacketSCRemoveEffect(event.getPotionEffect().getPotion()));
+    }
+
+    @SubscribeEvent
+    public void onPotionRemoved(PotionEvent.PotionRemoveEvent event) {
+        if (!(event.getEntityLiving() instanceof ServerPlayerEntity)) {
+            return;
+        }
+        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) event.getEntityLiving()),
+                                       new PacketSCRemoveEffect(event.getPotionEffect().getPotion()));
     }
 
     @SubscribeEvent

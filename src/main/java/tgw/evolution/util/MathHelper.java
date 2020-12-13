@@ -538,6 +538,13 @@ public final class MathHelper {
         return start <= value && value <= end;
     }
 
+    public static boolean isMouseInsideBox(int mouseX, int mouseY, int x0, int y0, int x1, int y1) {
+        if (x0 <= mouseX && mouseX <= x1) {
+            return y0 <= mouseY && mouseY <= y1;
+        }
+        return false;
+    }
+
     /**
      * Calculates if a {@link VoxelShape} is totally inside another one.
      *

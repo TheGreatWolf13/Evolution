@@ -101,5 +101,10 @@ public final class EvolutionNetwork {
                                  PacketSCChangeTickrate::encode,
                                  PacketSCChangeTickrate::decode,
                                  PacketSCChangeTickrate::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCRemoveEffect.class,
+                                 PacketSCRemoveEffect::encode,
+                                 PacketSCRemoveEffect::decode,
+                                 PacketSCRemoveEffect::handle);
     }
 }

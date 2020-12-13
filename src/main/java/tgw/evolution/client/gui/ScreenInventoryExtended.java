@@ -1,7 +1,6 @@
 package tgw.evolution.client.gui;
 
 import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.client.gui.DisplayEffectsScreen;
 import net.minecraft.client.gui.recipebook.IRecipeShownListener;
 import net.minecraft.client.gui.recipebook.RecipeBookGui;
 import net.minecraft.client.gui.screen.inventory.CreativeScreen;
@@ -14,7 +13,7 @@ import net.minecraft.util.text.ITextComponent;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.extendedinventory.ContainerPlayerInventory;
 
-public class ScreenInventoryExtended extends DisplayEffectsScreen<ContainerPlayerInventory> implements IRecipeShownListener {
+public class ScreenInventoryExtended extends ScreenDisplayEffects<ContainerPlayerInventory> implements IRecipeShownListener {
 
     private final GuiRecipeBook recipeBookGui = new GuiRecipeBook();
     private boolean buttonClicked;
@@ -146,16 +145,21 @@ public class ScreenInventoryExtended extends DisplayEffectsScreen<ContainerPlaye
     @Override
     public void render(int mouseX, int mouseY, float partialTicks) {
         this.renderBackground();
-        this.hasActivePotionEffects = !this.recipeBookGui.isVisible();
         if (this.recipeBookGui.isVisible() && this.widthTooNarrow) {
-            this.drawGuiContainerBackgroundLayer(partialTicks, mouseX, mouseY);
+            this.recipeBookGui.toggleVisibility();
+            super.render(mouseX, mouseY, partialTicks);
         }
         else {
             super.render(mouseX, mouseY, partialTicks);
             this.recipeBookGui.renderGhostRecipe(this.guiLeft, this.guiTop, false, partialTicks);
+            this.recipeBookGui.render(mouseX, mouseY, partialTicks);
+            this.recipeBookGui.renderTooltip(this.guiLeft, this.guiTop, mouseX, mouseY);
         }
-        this.recipeBookGui.render(mouseX, mouseY, partialTicks);
-        this.recipeBookGui.renderTooltip(this.guiLeft, this.guiTop, mouseX, mouseY);
+        super.drawActivePotionEffectsTooltips(mouseX,
+                                              mouseY,
+                                              this.recipeBookGui.isVisible() ?
+                                              (this.width - 181 - 60) / 2 - (this.widthTooNarrow ? 0 : 86) :
+                                              this.guiLeft);
         this.func_212932_b(this.recipeBookGui);
         this.renderHoveredToolTip(mouseX, mouseY);
         this.oldMouseX = mouseX;
