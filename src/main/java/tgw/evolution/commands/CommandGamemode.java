@@ -14,7 +14,7 @@ import net.minecraft.world.GameType;
 
 public class CommandGamemode implements Command<CommandSource> {
 
-    private static final CommandTickrate CMD = new CommandTickrate();
+    private static final CommandGamemode CMD = new CommandGamemode();
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.register(Commands.literal("gm")
