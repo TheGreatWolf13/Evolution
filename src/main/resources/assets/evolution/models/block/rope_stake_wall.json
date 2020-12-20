@@ -1,0 +1,19 @@
+{
+	"textures": {
+		"0": "evolution:block/rope",
+		"particle": "evolution:block/rope"
+	},
+	"ambientocclusion": false,
+	"elements": [
+		{
+			"from": [6.2, -2.5, 4.5],
+			"to": [9.8, 7.5, 4.5],
+			"shade": false,
+			"rotation": {"angle": 22.5, "axis": "x", "origin": [8, 8, 8]},
+			"faces": {
+				"north": {"uv": [0.25, 13, 3.75, 3], "texture": "#0"},
+				"south": {"uv": [3.75, 13, 0.25, 3], "texture": "#0"}
+			}
+		}
+	]
+}
