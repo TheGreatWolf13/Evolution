@@ -16,7 +16,6 @@ import tgw.evolution.potion.EffectGeneric;
 import java.util.Arrays;
 import java.util.List;
 
-@SuppressWarnings("unused")
 public final class EvolutionEffects {
 
     public static final DeferredRegister<Effect> EFFECTS = new DeferredRegister<>(ForgeRegistries.POTIONS, Evolution.MODID);

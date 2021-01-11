@@ -59,6 +59,7 @@ import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.blocks.BlockMolding;
 import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.blocks.tileentities.TEMolding;
+import tgw.evolution.client.MovementInputEvolution;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
@@ -203,18 +204,8 @@ public class ClientEvents {
         return y;
     }
 
-    private static void swapControls(Minecraft mc) {
-        swapKeybinds(mc.gameSettings.keyBindJump, mc.gameSettings.keyBindSneak);
-        swapKeybinds(mc.gameSettings.keyBindForward, mc.gameSettings.keyBindBack);
-        swapKeybinds(mc.gameSettings.keyBindLeft, mc.gameSettings.keyBindRight);
-        mc.gameSettings.saveOptions();
-        mc.gameSettings.loadOptions();
-    }
-
-    private static void swapKeybinds(KeyBinding a, KeyBinding b) {
-        InputMappings.Input temp = a.getKey();
-        a.bind(b.getKey());
-        b.bind(temp);
+    public boolean areControlsInverted() {
+        return this.inverted;
     }
 
     private int getArmSwingAnimationEnd() {
@@ -263,6 +254,7 @@ public class ClientEvents {
             EFFECTS.clear();
             EFFECTS_TO_ADD.clear();
             EFFECTS_TO_TICK.clear();
+            this.inverted = false;
             return;
         }
         if (this.mc.world == null) {
@@ -379,14 +371,13 @@ public class ClientEvents {
             //Handle Disoriented Effect
             if (this.mc.player.isPotionActive(EvolutionEffects.DISORIENTED.get())) {
                 if (!this.inverted) {
+                    this.mc.player.movementInput = new MovementInputEvolution(this.mc.gameSettings);
                     this.inverted = true;
-                    swapControls(this.mc);
                 }
             }
             else {
                 if (this.inverted) {
                     this.inverted = false;
-                    swapControls(this.mc);
                 }
             }
             //Handle Dizziness Effect
@@ -493,10 +484,9 @@ public class ClientEvents {
 
     @SubscribeEvent
     public void onEntityCreated(EntityJoinWorldEvent event) {
-        if (event.getEntity() instanceof ClientPlayerEntity) {
-            ClientPlayerEntity player = (ClientPlayerEntity) event.getEntity();
-            player.abilities.setWalkSpeed((float) PlayerHelper.WALK_SPEED);
-            RECIPE_BOOK_FIELD.set(player, new EvolutionRecipeBook(player.world.getRecipeManager()));
+        if (event.getEntity() instanceof ClientPlayerEntity && event.getEntity().equals(this.mc.player)) {
+            this.mc.player.abilities.setWalkSpeed((float) PlayerHelper.WALK_SPEED);
+            RECIPE_BOOK_FIELD.set(this.mc.player, new EvolutionRecipeBook(this.mc.player.world.getRecipeManager()));
         }
     }
 
@@ -1312,7 +1302,6 @@ public class ClientEvents {
     public void shutDownInternalServer(FMLServerStoppedEvent event) {
         if (this.inverted) {
             this.inverted = false;
-            swapControls(this.mc);
         }
     }
 

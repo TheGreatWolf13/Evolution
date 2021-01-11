@@ -5,9 +5,9 @@ import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectType;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.tuple.Pair;
+import tgw.evolution.util.MathHelper;
 
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -15,11 +15,11 @@ import java.util.WeakHashMap;
 public class EffectDizziness extends Effect {
 
     private static final Map<LivingEntity, Pair<Integer, Vec3d>> AFFECTED = new WeakHashMap<>();
-    public static int tick;
     public static Vec3d lastMotion = Vec3d.ZERO;
+    public static int tick;
 
     public EffectDizziness() {
-        super(EffectType.HARMFUL, 0x3a5785);
+        super(EffectType.HARMFUL, 0x3a_5785);
     }
 
     @Override
@@ -33,7 +33,7 @@ public class EffectDizziness extends Effect {
             if (entity instanceof PlayerEntity) {
                 Vec3d orthogonal = Vec3d.ZERO;
                 if (entity.onGround) {
-                    float amplitude = (float) (2 * Math.PI * 0.8f / (160 >> amplifier) * MathHelper.cos((float) (tick * 2 * Math.PI / (160 >> amplifier))));
+                    float amplitude = MathHelper.TAU * 0.8f / (160 >> amplifier) * MathHelper.cos(tick * MathHelper.TAU / (160 >> amplifier));
                     Vec3d motion = entity.getMotion();
                     orthogonal = new Vec3d(motion.z - lastMotion.z, 0, -motion.x + lastMotion.x).normalize().mul(amplitude, 0, amplitude);
                     entity.setMotion(motion.x + orthogonal.x, motion.y, motion.z + orthogonal.z);
@@ -57,7 +57,7 @@ public class EffectDizziness extends Effect {
         }
         Vec3d orthogonal = Vec3d.ZERO;
         if (entity.onGround) {
-            float amplitude = (float) (2 * Math.PI * 0.8f / (160 >> amplifier) * MathHelper.cos((float) (tick * 2 * Math.PI / (160 >> amplifier))));
+            float amplitude = MathHelper.TAU * 0.8f / (160 >> amplifier) * MathHelper.cos(tick * MathHelper.TAU / (160 >> amplifier));
             Vec3d motion = entity.getMotion();
             orthogonal = new Vec3d(motion.z - lastMotion.z, 0, -motion.x + lastMotion.x).normalize().mul(amplitude, 0, amplitude);
             entity.setMotion(motion.x + orthogonal.x, motion.y, motion.z + orthogonal.z);
