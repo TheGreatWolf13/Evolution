@@ -19,28 +19,9 @@ public class BlockPlanks extends BlockGravity {
     private final EnumWoodNames variant;
 
     public BlockPlanks(EnumWoodNames variant) {
-        super(Block.Properties.create(Material.WOOD).hardnessAndResistance(6f, 2f).sound(SoundType.WOOD).harvestLevel(HarvestLevel.STONE), variant.getMass() / 4);
+        super(Block.Properties.create(Material.WOOD).hardnessAndResistance(6.0f, 2.0f).sound(SoundType.WOOD).harvestLevel(HarvestLevel.STONE),
+              variant.getMass() / 4);
         this.variant = variant;
-    }
-
-    @Override
-    public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
-        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualFlammability(state);
-    }
-
-    @Override
-    public int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
-        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualEncouragement(state);
-    }
-
-    @Override
-    public boolean supportCheck(BlockState state) {
-        return state.getBlock() instanceof BlockLog;
-    }
-
-    @Override
-    public int getShearStrength() {
-        return this.variant.getShearStrength() / 4;
     }
 
     @Override
@@ -56,5 +37,25 @@ public class BlockPlanks extends BlockGravity {
     @Override
     public SoundEvent fallSound() {
         return EvolutionSounds.WOOD_COLLAPSE.get();
+    }
+
+    @Override
+    public int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+        return EvolutionBlocks.FIRE.get().getActualEncouragement(state);
+    }
+
+    @Override
+    public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+        return EvolutionBlocks.FIRE.get().getActualFlammability(state);
+    }
+
+    @Override
+    public int getShearStrength() {
+        return this.variant.getShearStrength() / 4;
+    }
+
+    @Override
+    public boolean supportCheck(BlockState state) {
+        return state.getBlock() instanceof BlockLog;
     }
 }

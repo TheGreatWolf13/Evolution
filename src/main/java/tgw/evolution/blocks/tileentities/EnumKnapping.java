@@ -16,8 +16,8 @@ public enum EnumKnapping {
     KNIFE(6, EvolutionHitBoxes.KNIFE, KnappingPatterns.KNIFE);
 
     private final byte id;
-    private final VoxelShape shape;
     private final boolean[][] pattern;
+    private final VoxelShape shape;
 
     EnumKnapping(int id, VoxelShape shape, boolean[][] pattern) {
         this.id = MathHelper.toByteExact(id);
@@ -26,7 +26,7 @@ public enum EnumKnapping {
     }
 
     public static EnumKnapping byId(int id) {
-        for (EnumKnapping knapping : EnumKnapping.values()) {
+        for (EnumKnapping knapping : values()) {
             if (knapping.id == id) {
                 return knapping;
             }

@@ -13,6 +13,9 @@ import tgw.evolution.init.EvolutionSounds;
 
 import java.util.function.Consumer;
 
+import static tgw.evolution.init.EvolutionBStates.AXIS;
+import static tgw.evolution.init.EvolutionBStates.TREE;
+
 public final class TreeUtils {
 
     private TreeUtils() {
@@ -101,26 +104,26 @@ public final class TreeUtils {
         if (!(world.getBlockState(logPos).getBlock() instanceof BlockLog)) {
             return;
         }
-        if (!world.getBlockState(logPos).get(BlockLog.TREE)) {
+        if (!world.getBlockState(logPos).get(TREE)) {
             return;
         }
         int delay = 0;
         if (world.getBlockState(logPos.offset(fallingDirection)).getBlock() instanceof BlockLog) {
             delay = 10;
         }
-        BlockState state = world.getBlockState(logPos).with(BlockLog.TREE, false);
+        BlockState state = world.getBlockState(logPos).with(TREE, false);
         BlockState newState = state;
-        if (state.get(BlockXYZAxis.AXIS) == Direction.Axis.Y && fallingDirection.getAxis() == Direction.Axis.X) {
-            newState = newState.with(BlockXYZAxis.AXIS, Direction.Axis.X);
+        if (state.get(AXIS) == Direction.Axis.Y && fallingDirection.getAxis() == Direction.Axis.X) {
+            newState = newState.with(AXIS, Direction.Axis.X);
         }
-        else if (state.get(BlockXYZAxis.AXIS) == Direction.Axis.Y && fallingDirection.getAxis() == Direction.Axis.Z) {
-            newState = newState.with(BlockXYZAxis.AXIS, Direction.Axis.Z);
+        else if (state.get(AXIS) == Direction.Axis.Y && fallingDirection.getAxis() == Direction.Axis.Z) {
+            newState = newState.with(AXIS, Direction.Axis.Z);
         }
-        else if (state.get(BlockXYZAxis.AXIS) == Direction.Axis.X && fallingDirection.getAxis() == Direction.Axis.X && logPos.getY() != base.getY()) {
-            newState = newState.with(BlockXYZAxis.AXIS, Direction.Axis.Y);
+        else if (state.get(AXIS) == Direction.Axis.X && fallingDirection.getAxis() == Direction.Axis.X && logPos.getY() != base.getY()) {
+            newState = newState.with(AXIS, Direction.Axis.Y);
         }
-        else if (state.get(BlockXYZAxis.AXIS) == Direction.Axis.Z && fallingDirection.getAxis() == Direction.Axis.Z && logPos.getY() != base.getY()) {
-            newState = newState.with(BlockXYZAxis.AXIS, Direction.Axis.Y);
+        else if (state.get(AXIS) == Direction.Axis.Z && fallingDirection.getAxis() == Direction.Axis.Z && logPos.getY() != base.getY()) {
+            newState = newState.with(AXIS, Direction.Axis.Y);
         }
         spawnFalling(world, logPos, base, state, newState, fallingDirection, true, delay);
     }

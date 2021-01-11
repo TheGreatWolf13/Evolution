@@ -15,6 +15,8 @@ import tgw.evolution.util.TreeUtils;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import static tgw.evolution.init.EvolutionBStates.TREE;
+
 public class FallingManager {
 
     public static final Map<IWorld, FallingManager> fallingManagers;
@@ -34,6 +36,12 @@ public class FallingManager {
         return this.fellQueue.isEmpty();
     }
 
+    public void onChop(BlockPos pos, Direction fellingDirection) {
+        Tree tree = new Tree(this, pos, fellingDirection);
+        tree.buildTree();
+        tree.queueForFelling();
+    }
+
     void tick() {
         this.fellQueue.removeIf(tree -> !tree.hasLogsToFell());
         this.fellQueue.forEach(tree -> {
@@ -48,18 +56,12 @@ public class FallingManager {
         });
     }
 
-    public void onChop(BlockPos pos, Direction fellingDirection) {
-        Tree tree = new Tree(this, pos, fellingDirection);
-        tree.buildTree();
-        tree.queueForFelling();
-    }
-
     private class Branch {
 
         final FallingManager instance;
         private final Set<BlockPos> logs = new HashSet<>();
-        private final Tree tree;
         private final BlockPos start;
+        private final Tree tree;
         private boolean hasLeaves;
         private boolean rooted;
 
@@ -68,14 +70,6 @@ public class FallingManager {
             this.tree = tree;
             this.start = startPos;
             this.addLog(new BlockPos.MutableBlockPos(startPos));
-        }
-
-        private void scan() {
-            this.expandLogs(this.start);
-            if (this.rooted) {
-                return;
-            }
-            this.tree.addLogsToFell(this.logs);
         }
 
         private BlockPos addLog(BlockPos.MutableBlockPos targetPos) {
@@ -108,7 +102,7 @@ public class FallingManager {
                         return;
                     }
                     BlockState targetState = this.instance.world.getBlockState(targetPos);
-                    if (targetState.getBlock() instanceof BlockLog && targetState.get(BlockLog.TREE)) {
+                    if (targetState.getBlock() instanceof BlockLog && targetState.get(TREE)) {
                         logsToExpand.addLast(this.addLog(targetPos));
                         return;
                     }
@@ -118,17 +112,25 @@ public class FallingManager {
                 });
             }
         }
+
+        private void scan() {
+            this.expandLogs(this.start);
+            if (this.rooted) {
+                return;
+            }
+            this.tree.addLogsToFell(this.logs);
+        }
     }
 
     private class Tree {
 
         final FallingManager instance;
         private final Collection<Branch> branches = new ConcurrentLinkedQueue<>();
+        private final BlockPos choppedBlock;
+        private final Direction fellingDirection;
         private final Set<BlockPos> logs = new HashSet<>();
         private final List<BlockPos> logsToFell = new LinkedList<>();
         private final List<BlockPos> newLogsToFell = new LinkedList<>();
-        private final BlockPos choppedBlock;
-        private final Direction fellingDirection;
         private Vec3d centroid = Vec3d.ZERO;
 
         Tree(FallingManager fallingManager, BlockPos choppedBlockPos, Direction fallingDirection) {
@@ -138,12 +140,61 @@ public class FallingManager {
             this.makeBranch(choppedBlockPos);
         }
 
+        void addLogsToFell(Collection<BlockPos> logs) {
+            this.newLogsToFell.addAll(logs);
+        }
+
+        private void buildTree() {
+            TreeUtils.iterateBlocks(1, this.choppedBlock, targetPos -> {
+                if (this.contains(targetPos)) {
+                    return;
+                }
+                BlockState targetState = this.instance.world.getBlockState(targetPos);
+                if (!(targetState.getBlock() instanceof BlockLog)) {
+                    return;
+                }
+                if (!targetState.get(TREE)) {
+                    return;
+                }
+                this.scanNewBranch(targetPos.toImmutable());
+            });
+        }
+
         boolean contains(BlockPos pos) {
             return this.logs.contains(pos);
         }
 
-        void addLogsToFell(Collection<BlockPos> logs) {
-            this.newLogsToFell.addAll(logs);
+        private void fellLog(BlockPos logPos) {
+            TreeUtils.spawnFallingLog((World) this.instance.world, logPos, this.choppedBlock, this.fellingDirection);
+            TreeUtils.iterateBlocks(4, logPos, targetPos -> {
+                BlockState targetState = this.instance.world.getBlockState(targetPos);
+                if (targetState.getBlock() instanceof BlockLeaves) {
+                    TreeUtils.spawnFallingLeaves((World) this.instance.world,
+                                                 targetPos,
+                                                 logPos,
+                                                 this.choppedBlock,
+                                                 targetState,
+                                                 this.fellingDirection);
+                    return;
+                }
+                if (!(targetState.getBlock() instanceof BlockLog)) {
+                    return;
+                }
+                if (this.contains(targetPos)) {
+                    return;
+                }
+                this.scanNewBranch(targetPos.toImmutable());
+            });
+        }
+
+        boolean hasLogsToFell() {
+            return !this.logsToFell.isEmpty() || !this.newLogsToFell.isEmpty();
+        }
+
+        Branch makeBranch(BlockPos pos) {
+            Branch branch = new Branch(this.instance, this, pos);
+            this.branches.add(branch);
+            return branch;
         }
 
         void prepForFelling() {
@@ -157,13 +208,26 @@ public class FallingManager {
                 if (yCompare != 0) {
                     return yCompare;
                 }
-                int distCompare = Double.compare(this.centroid.squareDistanceTo(o2.getX(), o2.getY(), o2.getZ()), this.centroid.squareDistanceTo(o1.getX(), o1.getY(), o1.getZ()));
+                int distCompare = Double.compare(this.centroid.squareDistanceTo(o2.getX(), o2.getY(), o2.getZ()),
+                                                 this.centroid.squareDistanceTo(o1.getX(), o1.getY(), o1.getZ()));
                 if (distCompare == 0) {
                     return o1.compareTo(o2);
                 }
                 return distCompare;
             });
             this.newLogsToFell.clear();
+        }
+
+        private void queueForFelling() {
+            if (!this.hasLogsToFell()) {
+                return;
+            }
+            this.instance.fellQueue.add(this);
+        }
+
+        private void scanNewBranch(BlockPos pos) {
+            Branch branch = this.makeBranch(pos);
+            branch.scan();
         }
 
         void updateCentroid() {
@@ -182,62 +246,6 @@ public class FallingManager {
                 y += pos.getY();
                 z += pos.getZ();
             }
-        }
-
-        boolean hasLogsToFell() {
-            return !this.logsToFell.isEmpty() || !this.newLogsToFell.isEmpty();
-        }
-
-        Branch makeBranch(BlockPos pos) {
-            Branch branch = new Branch(this.instance, this, pos);
-            this.branches.add(branch);
-            return branch;
-        }
-
-        private void buildTree() {
-            TreeUtils.iterateBlocks(1, this.choppedBlock, targetPos -> {
-                if (this.contains(targetPos)) {
-                    return;
-                }
-                BlockState targetState = this.instance.world.getBlockState(targetPos);
-                if (!(targetState.getBlock() instanceof BlockLog)) {
-                    return;
-                }
-                if (!targetState.get(BlockLog.TREE)) {
-                    return;
-                }
-                this.scanNewBranch(targetPos.toImmutable());
-            });
-        }
-
-        private void scanNewBranch(BlockPos pos) {
-            Branch branch = this.makeBranch(pos);
-            branch.scan();
-        }
-
-        private void queueForFelling() {
-            if (!this.hasLogsToFell()) {
-                return;
-            }
-            this.instance.fellQueue.add(this);
-        }
-
-        private void fellLog(BlockPos logPos) {
-            TreeUtils.spawnFallingLog((World) this.instance.world, logPos, this.choppedBlock, this.fellingDirection);
-            TreeUtils.iterateBlocks(4, logPos, targetPos -> {
-                BlockState targetState = this.instance.world.getBlockState(targetPos);
-                if (targetState.getBlock() instanceof BlockLeaves) {
-                    TreeUtils.spawnFallingLeaves((World) this.instance.world, targetPos, logPos, this.choppedBlock, targetState, this.fellingDirection);
-                    return;
-                }
-                if (!(targetState.getBlock() instanceof BlockLog)) {
-                    return;
-                }
-                if (this.contains(targetPos)) {
-                    return;
-                }
-                this.scanNewBranch(targetPos.toImmutable());
-            });
         }
     }
 }

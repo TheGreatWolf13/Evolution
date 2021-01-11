@@ -14,6 +14,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.blocks.*;
 import tgw.evolution.blocks.fluids.BlockFreshWater;
 import tgw.evolution.blocks.fluids.BlockGenericFluid;
+import tgw.evolution.blocks.fluids.BlockSaltWater;
 import tgw.evolution.blocks.trees.*;
 import tgw.evolution.util.*;
 
@@ -292,24 +293,24 @@ public final class EvolutionBlocks {
     public static final RegistryObject<Block> LEAVES_SPRUCE = BLOCKS.register("leaves_spruce", BlockLeaves::new);
     public static final RegistryObject<Block> LEAVES_WILLOW = BLOCKS.register("leaves_willow", BlockLeaves::new);
     //Sapling
-    public static final RegistryObject<Block> SAPLING_ACACIA = BLOCKS.register("sapling_acacia", () -> sapling(new AcaciaTree()));
-    public static final RegistryObject<Block> SAPLING_ASPEN = BLOCKS.register("sapling_aspen", () -> sapling(new AspenTree()));
-    public static final RegistryObject<Block> SAPLING_BIRCH = BLOCKS.register("sapling_birch", () -> sapling(new BirchTree()));
-    public static final RegistryObject<Block> SAPLING_CEDAR = BLOCKS.register("sapling_cedar", () -> sapling(new CedarTree()));
-    public static final RegistryObject<Block> SAPLING_EBONY = BLOCKS.register("sapling_ebony", () -> sapling(new NullTree()));
-    public static final RegistryObject<Block> SAPLING_ELM = BLOCKS.register("sapling_elm", () -> sapling(new ElmTree()));
-    public static final RegistryObject<Block> SAPLING_EUCALYPTUS = BLOCKS.register("sapling_eucalyptus", () -> sapling(new NullTree()));
-    public static final RegistryObject<Block> SAPLING_FIR = BLOCKS.register("sapling_fir", () -> sapling(new NullTree()));
-    public static final RegistryObject<Block> SAPLING_KAPOK = BLOCKS.register("sapling_kapok", () -> sapling(new KapokTree()));
-    public static final RegistryObject<Block> SAPLING_MANGROVE = BLOCKS.register("sapling_mangrove", () -> sapling(new NullTree()));
-    public static final RegistryObject<Block> SAPLING_MAPLE = BLOCKS.register("sapling_maple", () -> sapling(new MapleTree()));
-    public static final RegistryObject<Block> SAPLING_OAK = BLOCKS.register("sapling_oak", () -> sapling(new OakTree()));
-    public static final RegistryObject<Block> SAPLING_OLD_OAK = BLOCKS.register("sapling_old_oak", () -> sapling(new OldOakTree()));
-    public static final RegistryObject<Block> SAPLING_PALM = BLOCKS.register("sapling_palm", () -> sapling(new PalmTree()));
-    public static final RegistryObject<Block> SAPLING_PINE = BLOCKS.register("sapling_pine", () -> sapling(new NullTree()));
-    public static final RegistryObject<Block> SAPLING_REDWOOD = BLOCKS.register("sapling_redwood", () -> sapling(new RedwoodTree()));
-    public static final RegistryObject<Block> SAPLING_SPRUCE = BLOCKS.register("sapling_spruce", () -> sapling(new SpruceTree()));
-    public static final RegistryObject<Block> SAPLING_WILLOW = BLOCKS.register("sapling_willow", () -> sapling(new WillowTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_ACACIA = BLOCKS.register("sapling_acacia", () -> sapling(new AcaciaTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_ASPEN = BLOCKS.register("sapling_aspen", () -> sapling(new AspenTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_BIRCH = BLOCKS.register("sapling_birch", () -> sapling(new BirchTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_CEDAR = BLOCKS.register("sapling_cedar", () -> sapling(new CedarTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_EBONY = BLOCKS.register("sapling_ebony", () -> sapling(new NullTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_ELM = BLOCKS.register("sapling_elm", () -> sapling(new ElmTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_EUCALYPTUS = BLOCKS.register("sapling_eucalyptus", () -> sapling(new NullTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_FIR = BLOCKS.register("sapling_fir", () -> sapling(new NullTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_KAPOK = BLOCKS.register("sapling_kapok", () -> sapling(new KapokTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_MANGROVE = BLOCKS.register("sapling_mangrove", () -> sapling(new NullTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_MAPLE = BLOCKS.register("sapling_maple", () -> sapling(new MapleTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_OAK = BLOCKS.register("sapling_oak", () -> sapling(new OakTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_OLD_OAK = BLOCKS.register("sapling_old_oak", () -> sapling(new OldOakTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_PALM = BLOCKS.register("sapling_palm", () -> sapling(new PalmTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_PINE = BLOCKS.register("sapling_pine", () -> sapling(new NullTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_REDWOOD = BLOCKS.register("sapling_redwood", () -> sapling(new RedwoodTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_SPRUCE = BLOCKS.register("sapling_spruce", () -> sapling(new SpruceTree()));
+    public static final RegistryObject<BlockSapling> SAPLING_WILLOW = BLOCKS.register("sapling_willow", () -> sapling(new WillowTree()));
     //Planks
     public static final RegistryObject<Block> PLANKS_ACACIA = BLOCKS.register("planks_acacia", () -> planks(ACACIA));
     public static final RegistryObject<Block> PLANKS_ASPEN = BLOCKS.register("planks_aspen", () -> planks(ASPEN));
@@ -405,7 +406,7 @@ public final class EvolutionBlocks {
 
     public static final RegistryObject<Block> PIT_KILN = BLOCKS.register("pit_kiln", BlockPitKiln::new);
 
-    public static final RegistryObject<Block> FIRE = BLOCKS.register("fire", BlockFire::new);
+    public static final RegistryObject<BlockFire> FIRE = BLOCKS.register("fire", BlockFire::new);
     //Rope
     public static final RegistryObject<Block> ROPE = BLOCKS.register("rope", BlockRope::new);
     public static final RegistryObject<Block> GROUND_ROPE = BLOCKS.register("ground_rope", BlockRopeGround::new);
@@ -439,6 +440,7 @@ public final class EvolutionBlocks {
     public static final RegistryObject<Block> SCHEMATIC_BLOCK = BLOCKS.register("schematic_block", BlockSchematic::new);
 
     public static final RegistryObject<BlockGenericFluid> FRESH_WATER = BLOCKS.register("fresh_water", BlockFreshWater::new);
+    public static final RegistryObject<BlockGenericFluid> SALT_WATER = BLOCKS.register("salt_water", BlockSaltWater::new);
 
     private EvolutionBlocks() {
     }
@@ -495,7 +497,7 @@ public final class EvolutionBlocks {
         return new BlockSand(variant);
     }
 
-    private static Block sapling(Tree tree) {
+    private static BlockSapling sapling(Tree tree) {
         return new BlockSapling(tree);
     }
 

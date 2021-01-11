@@ -14,17 +14,17 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
+import net.minecraftforge.common.util.Constants;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.TETorch;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntityTorch;
+import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.init.EvolutionStyles;
+import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.Time;
 
@@ -77,11 +77,8 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
         if (!stack.hasTag()) {
             return;
         }
-        String text = "evolution.tooltip.torch.time";
         int remainingTime = getRemainingTime(world, stack);
-        ITextComponent comp = new StringTextComponent(" ").appendSibling(new TranslationTextComponent(text,
-                                                                                                      remainingTime).setStyle(EvolutionStyles.INFO));
-        tooltip.add(comp);
+        tooltip.add(EvolutionTexts.torch(remainingTime));
     }
 
     @Override
@@ -131,6 +128,9 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
 
     @Override
     protected boolean onBlockPlaced(BlockPos pos, World world, @Nullable PlayerEntity player, ItemStack stack, BlockState state) {
+        if (!state.get(EvolutionBStates.LIT)) {
+            world.playEvent(Constants.WorldEvents.FIRE_EXTINGUISH_SOUND, pos, 0);
+        }
         TileEntity tile = world.getTileEntity(pos);
         if (tile instanceof TETorch) {
             if (stack.hasTag()) {

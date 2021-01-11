@@ -15,27 +15,23 @@ import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-import tgw.evolution.blocks.BlockTorch;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.IFireSource;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.init.EvolutionStyles;
+import tgw.evolution.init.EvolutionTexts;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
+import static tgw.evolution.init.EvolutionBStates.LIT;
+
 public class ItemTorchUnlit extends ItemWallOrFloor {
-    public static final ITextComponent RELIT = new StringTextComponent(" ").appendSibling(new TranslationTextComponent("evolution.tooltip.torch" +
-                                                                                                                       ".relit").setStyle(
-            EvolutionStyles.INFO));
 
     public ItemTorchUnlit(Properties properties) {
         super(EvolutionBlocks.TORCH.get(), EvolutionBlocks.WALL_TORCH.get(), properties);
@@ -43,7 +39,7 @@ public class ItemTorchUnlit extends ItemWallOrFloor {
 
     @Override
     public void addInformation(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
-        tooltip.add(RELIT);
+        tooltip.add(EvolutionTexts.TOOLTIP_TORCH_RELIT);
     }
 
     @Nullable
@@ -57,7 +53,7 @@ public class ItemTorchUnlit extends ItemWallOrFloor {
             if (direction != Direction.UP) {
                 BlockState floorState = direction == Direction.DOWN ? this.getBlock().getStateForPlacement(context) : wallState;
                 if (floorState != null && floorState.isValidPosition(worldIn, blockpos)) {
-                    stateForPlacement = floorState.with(BlockTorch.LIT, false);
+                    stateForPlacement = floorState.with(LIT, false);
                     break;
                 }
             }

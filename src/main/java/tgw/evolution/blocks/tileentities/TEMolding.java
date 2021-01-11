@@ -1,6 +1,7 @@
 package tgw.evolution.blocks.tileentities;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -8,128 +9,39 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraftforge.common.util.Constants;
+import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraftforge.fml.RegistryObject;
-import tgw.evolution.blocks.BlockMolding;
+import tgw.evolution.init.EvolutionBStates;
+import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTileEntities;
+import tgw.evolution.util.BlockFlags;
 import tgw.evolution.util.MathHelper;
 
 import javax.annotation.Nullable;
 
 public class TEMolding extends TileEntity {
 
-    private final int[] encoded = {0x1FFFFFF, -1, -1, -1, -1};
+    private final int[] encoded = {0x1FF_FFFF, -1, -1, -1, -1};
     public boolean[][][] matrices = {{{true, true, true, true, true},
                                       {true, true, true, true, true},
                                       {true, true, true, true, true},
                                       {true, true, true, true, true},
                                       {true, true, true, true, true}}, null, null, null, null};
-    @Nullable
-    public VoxelShape hitbox;
     public EnumMolding molding = EnumMolding.NULL;
+    @Nullable
+    private VoxelShape hitbox;
 
     public TEMolding() {
         super(EvolutionTileEntities.TE_MOLDING.get());
     }
 
-    @Override
-    public CompoundNBT write(CompoundNBT compound) {
-        this.serializeToInts();
-        compound.putInt("Part1", this.encoded[0]);
-        compound.putInt("Part2", this.encoded[1]);
-        compound.putInt("Part3", this.encoded[2]);
-        compound.putInt("Part4", this.encoded[3]);
-        compound.putInt("Part5", this.encoded[4]);
-        compound.putByte("Type", this.molding.getId());
-        return super.write(compound);
-    }
-
-    private void serializeToInts() {
-        int temp = 0;
-        for (int enc = 0; enc < this.encoded.length; enc++) {
-            if (this.matrices[enc] == null) {
-                MathHelper.resetTensor(this.matrices, enc);
-                MathHelper.resetArray(this.encoded, enc);
-                return;
-            }
-            this.encoded[enc] = 0;
-            for (int i = 0; i < 5; i++) {
-                for (int j = 0; j < 5; j++) {
-                    temp = (this.matrices[enc][i][j] ? 1 : 0) << 24 - 5 * i - j;
-                    this.encoded[enc] |= temp;
-                }
-            }
-        }
-    }
-
-    public void sendRenderUpdate() {
-        super.markDirty();
-        this.hitbox = null;
-        this.world.notifyBlockUpdate(this.pos, this.world.getBlockState(this.pos), this.world.getBlockState(this.pos), Constants.BlockFlags.RERENDER_MAIN_THREAD);
-    }
-
-    @Override
-    public void read(CompoundNBT compound) {
-        this.molding = EnumMolding.byId(compound.getByte("Type"));
-        this.encoded[0] = compound.getInt("Part1");
-        this.encoded[1] = compound.getInt("Part2");
-        this.encoded[2] = compound.getInt("Part3");
-        this.encoded[3] = compound.getInt("Part4");
-        this.encoded[4] = compound.getInt("Part5");
-        this.deserializeToMatrices();
-        super.read(compound);
-    }
-
-    @Override
-    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
-        this.hitbox = null;
-        this.handleUpdateTag(packet.getNbtCompound());
-    }
-
-    @Override
-    public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.pos, 1, this.getUpdateTag());
-    }
-
-    @Override
-    public CompoundNBT getUpdateTag() {
-        return this.write(new CompoundNBT());
-    }
-
-    private void deserializeToMatrices() {
-        int temp = 0x1000000;
-        for (int enc = 0; enc < this.encoded.length; enc++) {
-            if (this.encoded[enc] == -1) {
-                MathHelper.resetArray(this.encoded, enc);
-                MathHelper.resetTensor(this.matrices, enc);
-                return;
-            }
-            temp = 0x1000000;
-            if (this.matrices[enc] == null) {
-                //noinspection ObjectAllocationInLoop
-                this.matrices[enc] = new boolean[5][5];
-            }
-            for (int i = 0; i < 5; i++) {
-                for (int j = 0; j < 5; j++) {
-                    this.matrices[enc][i][j] = (temp & this.encoded[enc]) != 0;
-                    temp >>= 1;
-                }
-            }
-        }
-    }
-
     public void addLayer(int layer) {
-        this.encoded[layer] = 0x1FFFFFF;
+        this.encoded[layer] = 0x1FF_FFFF;
         if (this.matrices[layer] == null) {
             this.matrices[layer] = new boolean[5][5];
         }
         MathHelper.fillBooleanMatrix(this.matrices[layer]);
-        this.sendRenderUpdate();
-    }
-
-    public void setType(EnumMolding molding) {
-        this.molding = molding;
         this.sendRenderUpdate();
     }
 
@@ -145,7 +57,7 @@ public class TEMolding extends TileEntity {
 
     public void checkPatterns() {
         if (!this.world.isRemote()) {
-            int layers = this.world.getBlockState(this.pos).get(BlockMolding.LAYERS);
+            int layers = this.world.getBlockState(this.pos).get(EvolutionBStates.LAYERS_1_5);
             if (layers == 1) {
                 if (MoldingPatterns.comparePatternsOneLayer(this.matrices[0], MoldingPatterns.AXE)) {
                     this.spawnDrops(EvolutionItems.mold_clay_axe);
@@ -200,6 +112,113 @@ public class TEMolding extends TileEntity {
         }
     }
 
+    public void computeHitbox(BlockState state) {
+        VoxelShape shape = VoxelShapes.empty();
+        if (state.get(EvolutionBStates.LAYERS_1_5) == 1) {
+            shape = EvolutionHitBoxes.MOLD_TOTAL_BASE;
+        }
+        for (int enc = 0; enc < this.matrices.length; enc++) {
+            if (this.matrices[enc] == null) {
+                this.hitbox = shape;
+                return;
+            }
+            for (int i = 0; i < this.matrices[enc].length; i++) {
+                for (int j = 0; j < this.matrices[enc][i].length; j++) {
+                    if (this.matrices[enc][i][j]) {
+                        shape = MathHelper.union(shape, EvolutionHitBoxes.MOLD_PART.withOffset(3 * i / 16.0f, 3 * enc / 16.0f, 3 * j / 16.0f));
+                    }
+                }
+            }
+        }
+        this.hitbox = shape;
+    }
+
+    private void deserializeToMatrices() {
+        int temp = 0x100_0000;
+        for (int enc = 0; enc < this.encoded.length; enc++) {
+            if (this.encoded[enc] == -1) {
+                MathHelper.resetArray(this.encoded, enc);
+                MathHelper.resetTensor(this.matrices, enc);
+                return;
+            }
+            temp = 0x100_0000;
+            if (this.matrices[enc] == null) {
+                //noinspection ObjectAllocationInLoop
+                this.matrices[enc] = new boolean[5][5];
+            }
+            for (int i = 0; i < 5; i++) {
+                for (int j = 0; j < 5; j++) {
+                    this.matrices[enc][i][j] = (temp & this.encoded[enc]) != 0;
+                    temp >>= 1;
+                }
+            }
+        }
+    }
+
+    public VoxelShape getHitbox(BlockState state) {
+        if (this.hitbox == null) {
+            this.computeHitbox(state);
+        }
+        return this.hitbox;
+    }
+
+    @Override
+    public SUpdateTileEntityPacket getUpdatePacket() {
+        return new SUpdateTileEntityPacket(this.pos, 1, this.getUpdateTag());
+    }
+
+    @Override
+    public CompoundNBT getUpdateTag() {
+        return this.write(new CompoundNBT());
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
+        this.hitbox = null;
+        this.handleUpdateTag(packet.getNbtCompound());
+    }
+
+    @Override
+    public void read(CompoundNBT compound) {
+        this.molding = EnumMolding.byId(compound.getByte("Type"));
+        this.encoded[0] = compound.getInt("Part1");
+        this.encoded[1] = compound.getInt("Part2");
+        this.encoded[2] = compound.getInt("Part3");
+        this.encoded[3] = compound.getInt("Part4");
+        this.encoded[4] = compound.getInt("Part5");
+        this.deserializeToMatrices();
+        super.read(compound);
+    }
+
+    public void sendRenderUpdate() {
+        super.markDirty();
+        this.hitbox = null;
+        this.world.notifyBlockUpdate(this.pos, this.world.getBlockState(this.pos), this.world.getBlockState(this.pos), BlockFlags.RERENDER);
+    }
+
+    private void serializeToInts() {
+        int temp = 0;
+        for (int enc = 0; enc < this.encoded.length; enc++) {
+            if (this.matrices[enc] == null) {
+                MathHelper.resetTensor(this.matrices, enc);
+                MathHelper.resetArray(this.encoded, enc);
+                return;
+            }
+            this.encoded[enc] = 0;
+            for (int i = 0; i < 5; i++) {
+                for (int j = 0; j < 5; j++) {
+                    temp = (this.matrices[enc][i][j] ? 1 : 0) << 24 - 5 * i - j;
+                    this.encoded[enc] |= temp;
+                }
+            }
+        }
+    }
+
+    public void setType(EnumMolding molding) {
+        this.molding = molding;
+        this.sendRenderUpdate();
+    }
+
     private void spawnDrops(RegistryObject<Item> item) {
         this.spawnDrops(item, 1);
     }
@@ -207,5 +226,17 @@ public class TEMolding extends TileEntity {
     private void spawnDrops(RegistryObject<Item> item, int count) {
         Block.spawnAsEntity(this.world, this.pos, new ItemStack(item.get(), count));
         this.world.removeBlock(this.pos, false);
+    }
+
+    @Override
+    public CompoundNBT write(CompoundNBT compound) {
+        this.serializeToInts();
+        compound.putInt("Part1", this.encoded[0]);
+        compound.putInt("Part2", this.encoded[1]);
+        compound.putInt("Part3", this.encoded[2]);
+        compound.putInt("Part4", this.encoded[3]);
+        compound.putInt("Part5", this.encoded[4]);
+        compound.putByte("Type", this.molding.getId());
+        return super.write(compound);
     }
 }

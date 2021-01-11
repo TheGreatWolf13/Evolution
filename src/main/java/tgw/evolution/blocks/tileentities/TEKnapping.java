@@ -7,9 +7,10 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraftforge.common.util.Constants;
-import tgw.evolution.blocks.BlockKnapping;
+import tgw.evolution.Evolution;
+import tgw.evolution.blocks.IStoneVariant;
 import tgw.evolution.init.EvolutionTileEntities;
+import tgw.evolution.util.BlockFlags;
 import tgw.evolution.util.MathHelper;
 
 import javax.annotation.Nullable;
@@ -21,10 +22,10 @@ public class TEKnapping extends TileEntity {
                                        {true, true, true, true, true},
                                        {true, true, true, true, true},
                                        {true, true, true, true, true}};
-    public EnumKnapping type = EnumKnapping.NULL;
     @Nullable
     public VoxelShape hitbox;
-    private int encoded = 0x1FFFFFF;
+    public EnumKnapping type = EnumKnapping.NULL;
+    private int encoded = 0x1FF_FFFF;
 
     public TEKnapping() {
         super(EvolutionTileEntities.TE_KNAPPING.get());
@@ -32,7 +33,7 @@ public class TEKnapping extends TileEntity {
 
     public void checkParts() {
         if (!this.world.isRemote()) {
-            BlockKnapping block = (BlockKnapping) this.world.getBlockState(this.pos).getBlock();
+            IStoneVariant block = (IStoneVariant) this.world.getBlockState(this.pos).getBlock();
             for (EnumKnapping knapping : EnumKnapping.values()) {
                 if (MathHelper.matricesEqual(this.matrix, knapping.getPattern())) {
                     this.spawnDrops(block.getVariant().getKnappedStack(knapping));
@@ -42,23 +43,31 @@ public class TEKnapping extends TileEntity {
         }
     }
 
-    private void spawnDrops(ItemStack stack) {
-        Block.spawnAsEntity(this.world, this.pos, stack);
-        this.world.removeBlock(this.pos, true);
+    private void deserializeToMatrix() {
+        int temp = 0x100_0000;
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                this.matrix[i][j] = (temp & this.encoded) != 0;
+                temp >>= 1;
+            }
+        }
     }
 
-    public void setType(EnumKnapping type) {
-        this.type = type;
-        this.sendRenderUpdate();
+    @Override
+    public SUpdateTileEntityPacket getUpdatePacket() {
+        return new SUpdateTileEntityPacket(this.pos, 30, this.getUpdateTag());
     }
 
-    public void sendRenderUpdate() {
-        super.markDirty();
+    @Override
+    public CompoundNBT getUpdateTag() {
+        return this.write(new CompoundNBT());
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
+        Evolution.LOGGER.debug("on data knapping plz work ;-;");
         this.hitbox = null;
-        this.world.notifyBlockUpdate(this.pos,
-                                     this.world.getBlockState(this.pos),
-                                     this.world.getBlockState(this.pos),
-                                     Constants.BlockFlags.RERENDER_MAIN_THREAD);
+        this.handleUpdateTag(packet.getNbtCompound());
     }
 
     @Override
@@ -69,17 +78,10 @@ public class TEKnapping extends TileEntity {
         super.read(compound);
     }
 
-    @Override
-    public CompoundNBT write(CompoundNBT compound) {
-        this.serializeToInt();
-        compound.putInt("Parts", this.encoded);
-        compound.putByte("Type", this.type.getId());
-        return super.write(compound);
-    }
-
-    @Override
-    public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.pos, 30, this.getUpdateTag());
+    public void sendRenderUpdate() {
+        super.markDirty();
+        this.hitbox = null;
+        this.world.notifyBlockUpdate(this.pos, this.world.getBlockState(this.pos), this.world.getBlockState(this.pos), BlockFlags.RERENDER);
     }
 
     private void serializeToInt() {
@@ -93,24 +95,21 @@ public class TEKnapping extends TileEntity {
         }
     }
 
-    @Override
-    public CompoundNBT getUpdateTag() {
-        return this.write(new CompoundNBT());
+    public void setType(EnumKnapping type) {
+        this.type = type;
+        this.sendRenderUpdate();
     }
 
-    private void deserializeToMatrix() {
-        int temp = 0x1000000;
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 5; j++) {
-                this.matrix[i][j] = (temp & this.encoded) != 0;
-                temp >>= 1;
-            }
-        }
+    private void spawnDrops(ItemStack stack) {
+        Block.spawnAsEntity(this.world, this.pos, stack);
+        this.world.removeBlock(this.pos, true);
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
-        this.hitbox = null;
-        this.handleUpdateTag(packet.getNbtCompound());
+    public CompoundNBT write(CompoundNBT compound) {
+        this.serializeToInt();
+        compound.putInt("Parts", this.encoded);
+        compound.putByte("Type", this.type.getId());
+        return super.write(compound);
     }
 }

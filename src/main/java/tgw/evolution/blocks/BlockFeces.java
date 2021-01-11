@@ -18,7 +18,7 @@ public class BlockFeces extends Block implements IReplaceable {
     }
 
     @Override
-    public boolean canBeReplacedByLiquid(BlockState state) {
+    public boolean canBeReplacedByFluid(BlockState state) {
         return true;
     }
 

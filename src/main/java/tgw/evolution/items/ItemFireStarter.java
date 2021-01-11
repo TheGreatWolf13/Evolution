@@ -16,7 +16,6 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import tgw.evolution.blocks.BlockFire;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.util.MathHelper;
@@ -25,6 +24,68 @@ public class ItemFireStarter extends ItemEv implements IDurability {
 
     public ItemFireStarter() {
         super(EvolutionItems.propMisc().maxDamage(10));
+    }
+
+    public static boolean canSetFire(IWorld world, BlockPos pos) {
+        BlockState state = world.getBlockState(pos);
+        BlockState fireState = EvolutionBlocks.FIRE.get().getStateForPlacement(world, pos);
+        return state.isAir() && fireState.isValidPosition(world, pos);
+    }
+
+    @Override
+    public UseAction getUseAction(ItemStack stack) {
+        return UseAction.BOW;
+    }
+
+    @Override
+    public int getUseDuration(ItemStack stack) {
+        return 16;
+    }
+
+    @Override
+    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
+        float distance = (float) player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue();
+        BlockRayTraceResult rayTrace = MathHelper.rayTraceBlocksFromEyes(player, 1, distance, false);
+        if (rayTrace.getType() == RayTraceResult.Type.BLOCK && canSetFire(world, rayTrace.getPos().offset(rayTrace.getFace()))) {
+            player.setActiveHand(hand);
+            return new ActionResult<>(ActionResultType.SUCCESS, player.getHeldItem(hand));
+        }
+        return new ActionResult<>(ActionResultType.FAIL, player.getHeldItem(hand));
+    }
+
+    @Override
+    public ActionResultType onItemUse(ItemUseContext context) {
+        if (canSetFire(context.getWorld(), context.getPos().offset(context.getFace()))) {
+            return ActionResultType.PASS;
+        }
+        return ActionResultType.FAIL;
+    }
+
+    @Override
+    public ItemStack onItemUseFinish(ItemStack stack, World world, LivingEntity livingEntity) {
+        if (world.isRemote) {
+            return stack;
+        }
+        float distance = 3.0F;
+        if (livingEntity instanceof PlayerEntity) {
+            distance = (float) livingEntity.getAttribute(PlayerEntity.REACH_DISTANCE).getValue();
+        }
+        BlockRayTraceResult rayTrace = MathHelper.rayTraceBlocksFromEyes(livingEntity, 1, distance, false);
+        BlockPos pos = rayTrace.getPos();
+        BlockPos facingPos = pos.offset(rayTrace.getFace());
+        if (rayTrace.getType() == RayTraceResult.Type.BLOCK && canSetFire(world, facingPos)) {
+            if (random.nextInt(3) == 0) {
+                world.playSound(null, facingPos, SoundEvents.ITEM_FLINTANDSTEEL_USE, SoundCategory.BLOCKS, 1.0F, random.nextFloat() * 0.4F + 0.8F);
+                BlockState state = EvolutionBlocks.FIRE.get().getStateForPlacement(world, facingPos);
+                world.setBlockState(facingPos, state);
+            }
+            if (livingEntity instanceof ServerPlayerEntity) {
+                CriteriaTriggers.PLACED_BLOCK.trigger((ServerPlayerEntity) livingEntity, facingPos, stack);
+                stack.damageItem(1, livingEntity, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
+            }
+            return stack;
+        }
+        return stack;
     }
 
     @Override
@@ -65,67 +126,5 @@ public class ItemFireStarter extends ItemEv implements IDurability {
                                                        0,
                                                        0.01);
         }
-    }
-
-    @Override
-    public ActionResultType onItemUse(ItemUseContext context) {
-        if (canSetFire(context.getWorld(), context.getPos().offset(context.getFace()))) {
-            return ActionResultType.PASS;
-        }
-        return ActionResultType.FAIL;
-    }
-
-    @Override
-    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity player, Hand handIn) {
-        float distance = (float) player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue();
-        BlockRayTraceResult rayTrace = MathHelper.rayTraceBlocksFromEyes(player, 1, distance, false);
-        if (rayTrace.getType() == RayTraceResult.Type.BLOCK && canSetFire(worldIn, rayTrace.getPos().offset(rayTrace.getFace()))) {
-            player.setActiveHand(handIn);
-            return new ActionResult<>(ActionResultType.SUCCESS, player.getHeldItem(handIn));
-        }
-        return new ActionResult<>(ActionResultType.FAIL, player.getHeldItem(handIn));
-    }
-
-    @Override
-    public ItemStack onItemUseFinish(ItemStack stack, World world, LivingEntity livingEntity) {
-        if (world.isRemote) {
-            return stack;
-        }
-        float distance = 3.0F;
-        if (livingEntity instanceof PlayerEntity) {
-            distance = (float) livingEntity.getAttribute(PlayerEntity.REACH_DISTANCE).getValue();
-        }
-        BlockRayTraceResult rayTrace = MathHelper.rayTraceBlocksFromEyes(livingEntity, 1, distance, false);
-        BlockPos pos = rayTrace.getPos();
-        BlockPos facingPos = pos.offset(rayTrace.getFace());
-        if (rayTrace.getType() == RayTraceResult.Type.BLOCK && canSetFire(world, facingPos)) {
-            if (random.nextInt(3) == 0) {
-                world.playSound(null, facingPos, SoundEvents.ITEM_FLINTANDSTEEL_USE, SoundCategory.BLOCKS, 1.0F, random.nextFloat() * 0.4F + 0.8F);
-                BlockState state = ((BlockFire) EvolutionBlocks.FIRE.get()).getStateForPlacement(world, facingPos);
-                world.setBlockState(facingPos, state);
-            }
-            if (livingEntity instanceof ServerPlayerEntity) {
-                CriteriaTriggers.PLACED_BLOCK.trigger((ServerPlayerEntity) livingEntity, facingPos, stack);
-                stack.damageItem(1, livingEntity, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
-            }
-            return stack;
-        }
-        return stack;
-    }
-
-    @Override
-    public UseAction getUseAction(ItemStack stack) {
-        return UseAction.BOW;
-    }
-
-    @Override
-    public int getUseDuration(ItemStack stack) {
-        return 16;
-    }
-
-    public static boolean canSetFire(IWorld worldIn, BlockPos pos) {
-        BlockState state = worldIn.getBlockState(pos);
-        BlockState fireState = ((BlockFire) EvolutionBlocks.FIRE.get()).getStateForPlacement(worldIn, pos);
-        return state.isAir() && fireState.isValidPosition(worldIn, pos);
     }
 }

@@ -106,5 +106,11 @@ public final class EvolutionNetwork {
                                  PacketSCRemoveEffect::encode,
                                  PacketSCRemoveEffect::decode,
                                  PacketSCRemoveEffect::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCRenderUpdate.class,
+                                 PacketSCRenderUpdate::encode,
+                                 PacketSCRenderUpdate::decode,
+                                 PacketSCRenderUpdate::handle);
+        INSTANCE.registerMessage(increaseId(), PacketSCUpdateTE.class, PacketSCUpdateTE::encode, PacketSCUpdateTE::decode, PacketSCUpdateTE::handle);
     }
 }

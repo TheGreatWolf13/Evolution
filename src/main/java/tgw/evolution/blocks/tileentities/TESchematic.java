@@ -19,7 +19,6 @@ import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.extensions.IForgeTileEntity;
-import tgw.evolution.blocks.BlockSchematic;
 import tgw.evolution.client.gui.ScreenSchematic;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionTileEntities;
@@ -30,6 +29,8 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static tgw.evolution.init.EvolutionBStates.SCHEMATIC_MODE;
 
 public class TESchematic extends TileEntity {
 
@@ -148,7 +149,7 @@ public class TESchematic extends TileEntity {
         this.mode = modeIn;
         BlockState blockstate = this.world.getBlockState(this.getPos());
         if (blockstate.getBlock() == EvolutionBlocks.SCHEMATIC_BLOCK.get()) {
-            this.world.setBlockState(this.getPos(), blockstate.with(BlockSchematic.MODE, modeIn), 2);
+            this.world.setBlockState(this.getPos(), blockstate.with(SCHEMATIC_MODE, modeIn), 2);
         }
     }
 
@@ -407,7 +408,7 @@ public class TESchematic extends TileEntity {
             BlockPos pos = this.getPos();
             BlockState state = this.world.getBlockState(pos);
             if (state.getBlock() == EvolutionBlocks.SCHEMATIC_BLOCK.get()) {
-                this.world.setBlockState(pos, state.with(BlockSchematic.MODE, this.mode), 2);
+                this.world.setBlockState(pos, state.with(SCHEMATIC_MODE, this.mode), 2);
             }
         }
     }

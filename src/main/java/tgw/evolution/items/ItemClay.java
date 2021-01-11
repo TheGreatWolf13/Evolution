@@ -7,13 +7,12 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.init.EvolutionStyles;
+import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketSCOpenMoldingGui;
 
 import java.util.List;
@@ -26,8 +25,7 @@ public class ItemClay extends ItemGenericPlaceable {
 
     @Override
     public void addInformation(ItemStack stack, World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
-        String text = "evolution.tooltip.clay.mold";
-        tooltip.add(new TranslationTextComponent(text).setStyle(EvolutionStyles.INFO));
+        tooltip.add(EvolutionTexts.TOOLTIP_CLAY_MOLD);
     }
 
     @Override

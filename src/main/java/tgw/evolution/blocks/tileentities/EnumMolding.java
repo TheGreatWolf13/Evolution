@@ -20,8 +20,8 @@ public enum EnumMolding {
             new ItemStack(EvolutionItems.mold_clay_pickaxe.get()));
 
     private final byte id;
-    private final VoxelShape shape;
     private final boolean[][][] pattern;
+    private final VoxelShape shape;
     private final ItemStack stack;
 
     EnumMolding(int id, VoxelShape shape, boolean[][][] pattern, ItemStack stack) {

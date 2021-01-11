@@ -19,10 +19,8 @@ import tgw.evolution.util.NutrientHelper;
 
 public class BlockTallGrass extends BlockBush implements IShearable {
 
-    protected static final VoxelShape SHAPE = EvolutionHitBoxes.GRASS;
-
     public BlockTallGrass() {
-        super(Block.Properties.create(Material.TALL_PLANTS).doesNotBlockMovement().hardnessAndResistance(0F).sound(SoundType.PLANT));
+        super(Block.Properties.create(Material.TALL_PLANTS).doesNotBlockMovement().hardnessAndResistance(0.0F).sound(SoundType.PLANT));
     }
 
     @Override
@@ -32,12 +30,12 @@ public class BlockTallGrass extends BlockBush implements IShearable {
 
     @Override
     public int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
-        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualEncouragement(state);
+        return EvolutionBlocks.FIRE.get().getActualEncouragement(state);
     }
 
     @Override
     public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
-        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualFlammability(state);
+        return EvolutionBlocks.FIRE.get().getActualFlammability(state);
     }
 
     @Override
@@ -47,7 +45,7 @@ public class BlockTallGrass extends BlockBush implements IShearable {
 
     @Override
     public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        return SHAPE;
+        return EvolutionHitBoxes.GRASS;
     }
 
     @Override

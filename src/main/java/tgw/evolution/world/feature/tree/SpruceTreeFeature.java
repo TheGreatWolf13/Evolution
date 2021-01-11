@@ -11,8 +11,6 @@ import net.minecraft.world.gen.IWorldGenerationReader;
 import net.minecraft.world.gen.feature.AbstractTreeFeature;
 import net.minecraft.world.gen.feature.NoFeatureConfig;
 import tgw.evolution.blocks.BlockLeaves;
-import tgw.evolution.blocks.BlockLog;
-import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.TreeUtils;
@@ -21,9 +19,11 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 
+import static tgw.evolution.init.EvolutionBStates.TREE;
+
 public class SpruceTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
 
-    private static final BlockState TRUNK = EvolutionBlocks.LOG_SPRUCE.get().getDefaultState().with(BlockLog.TREE, true);
+    private static final BlockState TRUNK = EvolutionBlocks.LOG_SPRUCE.get().getDefaultState().with(TREE, true);
     private static final BlockState LEAF = EvolutionBlocks.LEAVES_SPRUCE.get().getDefaultState();
 
     public SpruceTreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> config, boolean notify) {
@@ -31,11 +31,11 @@ public class SpruceTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
     }
 
     @Override
-    public boolean place(Set<BlockPos> changedBlocks, IWorldGenerationReader worldIn, Random rand, BlockPos position, MutableBoundingBox box) {
+    public boolean place(Set<BlockPos> changedBlocks, IWorldGenerationReader world, Random rand, BlockPos position, MutableBoundingBox box) {
         int trunkHeight = rand.nextInt(4) + 6;
         int j = 1 + rand.nextInt(2);
         int maximumLeafRadius = 2 + rand.nextInt(2);
-        if (position.getY() >= 1 && position.getY() + trunkHeight + 1 <= ((IWorld) worldIn).getWorld().getHeight()) {
+        if (position.getY() >= 1 && position.getY() + trunkHeight + 1 <= ((IWorld) world).getWorld().getHeight()) {
             boolean flag = true;
             BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
             for (int i1 = position.getY(); i1 <= position.getY() + 1 + trunkHeight && flag; ++i1) {
@@ -48,9 +48,9 @@ public class SpruceTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                 }
                 for (int k1 = position.getX() - j1; k1 <= position.getX() + j1 && flag; ++k1) {
                     for (int l1 = position.getZ() - j1; l1 <= position.getZ() + j1 && flag; ++l1) {
-                        if (i1 >= 0 && i1 < ((IWorld) worldIn).getWorld().getHeight()) {
-                            BlockState iblockstate = ((IBlockReader) worldIn).getBlockState(mutablePos.setPos(k1, i1, l1));
-                            if (!iblockstate.isAir((IBlockReader) worldIn, mutablePos) && !(iblockstate.getBlock() instanceof BlockLeaves)) {
+                        if (i1 >= 0 && i1 < ((IWorld) world).getWorld().getHeight()) {
+                            BlockState iblockstate = ((IBlockReader) world).getBlockState(mutablePos.setPos(k1, i1, l1));
+                            if (!iblockstate.isAir((IBlockReader) world, mutablePos) && !(iblockstate.getBlock() instanceof BlockLeaves)) {
                                 flag = false;
                             }
                         }
@@ -63,10 +63,9 @@ public class SpruceTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
             if (!flag) {
                 return false;
             }
-            if (BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(position.down()),
-                                             (BlockSapling) EvolutionBlocks.SAPLING_SPRUCE.get()) &&
-                position.getY() < ((IWorld) worldIn).getWorld().getHeight() - trunkHeight - 1) {
-                TreeUtils.setDirtAt(worldIn, position.down());
+            if (BlockUtils.canSustainSapling(((IBlockReader) world).getBlockState(position.down()), EvolutionBlocks.SAPLING_SPRUCE.get()) &&
+                position.getY() < ((IWorld) world).getWorld().getHeight() - trunkHeight - 1) {
+                TreeUtils.setDirtAt(world, position.down());
                 int leafRadius = rand.nextInt(2);
                 int j3 = 1;
                 int k3 = 0;
@@ -80,8 +79,8 @@ public class SpruceTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                             int cornerZ = leafZ - position.getZ();
                             if (Math.abs(cornerX) != leafRadius || Math.abs(cornerZ) != leafRadius || leafRadius <= 0) {
                                 leafPos.setPos(leafX, leafY, leafZ);
-                                if (((IBlockReader) worldIn).getBlockState(leafPos).canBeReplacedByLeaves((IWorldReader) worldIn, leafPos)) {
-                                    this.setBlockState(worldIn, leafPos, LEAF);
+                                if (((IBlockReader) world).getBlockState(leafPos).canBeReplacedByLeaves((IWorldReader) world, leafPos)) {
+                                    this.setBlockState(world, leafPos, LEAF);
                                 }
                             }
                         }
@@ -100,9 +99,9 @@ public class SpruceTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                 }
                 int trunkReduction = rand.nextInt(3);
                 for (int placingTrunks = 0; placingTrunks < trunkHeight - trunkReduction; ++placingTrunks) {
-                    BlockState trunkState = ((IBlockReader) worldIn).getBlockState(position.up(placingTrunks));
-                    if (trunkState.isAir((IBlockReader) worldIn, position.up(placingTrunks)) || trunkState.getBlock() instanceof BlockLeaves) {
-                        this.setLogState(changedBlocks, worldIn, position.up(placingTrunks), TRUNK, box);
+                    BlockState trunkState = ((IBlockReader) world).getBlockState(position.up(placingTrunks));
+                    if (trunkState.isAir((IBlockReader) world, position.up(placingTrunks)) || trunkState.getBlock() instanceof BlockLeaves) {
+                        this.setLogState(changedBlocks, world, position.up(placingTrunks), TRUNK, box);
                     }
                 }
                 return true;

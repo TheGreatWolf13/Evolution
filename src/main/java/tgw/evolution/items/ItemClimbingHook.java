@@ -6,19 +6,15 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.UseAction;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.*;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import tgw.evolution.Evolution;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntityHook;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.init.EvolutionStyles;
+import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.MathHelper;
 
 public class ItemClimbingHook extends ItemEv implements IThrowable {
-
-    public static final ITextComponent TEXT_ACTION = new TranslationTextComponent("evolution.actionbar.hook").setStyle(EvolutionStyles.WHITE);
 
     public ItemClimbingHook() {
         super(EvolutionItems.propMisc().maxStackSize(1));
@@ -41,7 +37,7 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
             return new ActionResult<>(ActionResultType.FAIL, stack);
         }
         if (playerIn.getHeldItemOffhand().getItem() != EvolutionItems.rope.get()) {
-            playerIn.sendStatusMessage(TEXT_ACTION, true);
+            playerIn.sendStatusMessage(EvolutionTexts.ACTION_HOOK, true);
             return new ActionResult<>(ActionResultType.FAIL, stack);
         }
         playerIn.setActiveHand(handIn);

@@ -16,14 +16,14 @@ public class BlockMass extends Block {
         this.mass = mass;
     }
 
-    public static void updateWeight(World worldIn, BlockPos pos) {
+    public static void updateWeight(World world, BlockPos pos) {
         BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos(pos);
         for (int i = pos.getY() - 1; i >= 0; i--) {
             mutablePos.setY(i);
-            BlockState down = worldIn.getBlockState(mutablePos);
+            BlockState down = world.getBlockState(mutablePos);
             if (BlockUtils.isReplaceable(down)) {
-                BlockUtils.scheduleBlockTick(worldIn, mutablePos.up(), 10);
-                BlockUtils.scheduleBlockTick(worldIn, mutablePos, 10);
+                BlockUtils.scheduleBlockTick(world, mutablePos.up(), 10);
+                BlockUtils.scheduleBlockTick(world, mutablePos, 10);
                 return;
             }
             if (down.getBlock() instanceof BlockStone || down.getBlock() instanceof BedrockBlock) {
@@ -32,26 +32,31 @@ public class BlockMass extends Block {
         }
     }
 
-    /**
-     * @param state : The current BlockState of the Block
-     */
+    public int getBaseMass() {
+        return this.mass;
+    }
+
     public int getMass(BlockState state) {
         return this.mass;
     }
 
+    public int getMass(World world, BlockPos pos, BlockState state) {
+        return this.getMass(state);
+    }
+
     @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
+    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!world.isRemote) {
             if (pos.up().equals(fromPos)) {
-                updateWeight(worldIn, pos);
+                updateWeight(world, pos);
             }
         }
     }
 
     @Override
-    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            BlockUtils.scheduleBlockTick(worldIn, pos, 2);
+    public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!world.isRemote) {
+            BlockUtils.scheduleBlockTick(world, pos, 2);
         }
     }
 

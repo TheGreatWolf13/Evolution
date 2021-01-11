@@ -22,7 +22,7 @@ public enum EnumVanillaRockVariant {
 
     @Nullable
     public static EnumVanillaRockVariant fromBlock(Block block) {
-        for (EnumVanillaRockVariant vanilla : EnumVanillaRockVariant.values()) {
+        for (EnumVanillaRockVariant vanilla : values()) {
             if (vanilla.vanillaBlock == block) {
                 return vanilla;
             }

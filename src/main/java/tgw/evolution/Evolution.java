@@ -1,14 +1,12 @@
 package tgw.evolution;
 
 import com.google.common.collect.Maps;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionType;
-import net.minecraftforge.client.event.ParticleFactoryRegisterEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -24,7 +22,6 @@ import tgw.evolution.capabilities.inventory.PlayerInventoryCapability;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ChunkEvents;
 import tgw.evolution.events.EntityEvents;
-import tgw.evolution.events.ItemEvents;
 import tgw.evolution.events.WorldEvents;
 import tgw.evolution.init.*;
 import tgw.evolution.util.reflection.FieldHandler;
@@ -63,12 +60,10 @@ public final class Evolution {
         EvolutionTileEntities.register();
         EvolutionSounds.register();
         EvolutionContainers.register();
-        EvolutionParticles.register();
         EvolutionEffects.register();
         EvolutionBiomes.register();
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::setup);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::loadComplete);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::particleRegistry);
         MinecraftForge.EVENT_BUS.register(this);
     }
 
@@ -84,10 +79,6 @@ public final class Evolution {
         return new ResourceLocation(MODID, name);
     }
 
-    private static void particleRegistry(ParticleFactoryRegisterEvent event) {
-        EvolutionParticles.registerFactories(Minecraft.getInstance().particles);
-    }
-
     private static void setup(FMLCommonSetupEvent event) {
         new EvWorldDefault();
         new EvWorldFlat();
@@ -99,7 +90,6 @@ public final class Evolution {
         //        MinecraftForge.EVENT_BUS.register(new FallingEvents());
         MinecraftForge.EVENT_BUS.register(new ChunkEvents());
         MinecraftForge.EVENT_BUS.register(new EntityEvents());
-        MinecraftForge.EVENT_BUS.register(new ItemEvents());
         BiFunction<World, DimensionType, ? extends Dimension> dimensionFactory = DimensionOverworld::new;
         DIMENSION_FACTORY_FIELD.set(DimensionType.OVERWORLD, dimensionFactory);
         LOGGER.info("Setup registries done.");

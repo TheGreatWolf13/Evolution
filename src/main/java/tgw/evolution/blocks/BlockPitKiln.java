@@ -7,7 +7,6 @@ import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.state.IntegerProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
@@ -19,68 +18,48 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
-import tgw.evolution.init.EvolutionBlockStateProperties;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.ItemClayMolded;
 import tgw.evolution.items.ItemLog;
-import tgw.evolution.util.*;
+import tgw.evolution.util.DirectionDiagonal;
+import tgw.evolution.util.HarvestLevel;
+import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.Time;
 
 import javax.annotation.Nullable;
 import java.util.Random;
 
-public class BlockPitKiln extends Block implements IReplaceable {
+import static tgw.evolution.init.EvolutionBStates.LAYERS_0_16;
 
-    public static final IntegerProperty LAYERS = EvolutionBlockStateProperties.LAYERS_0_16;
-    private static final VoxelShape[] SHAPE = {EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_1,
-                                               EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_1,
-                                               EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_2,
-                                               EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_3,
-                                               EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_4,
-                                               EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_5,
-                                               EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_6,
-                                               EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_7,
-                                               EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_8,
-                                               VoxelShapes.or(EvolutionHitBoxes.SINGLE_LOG_3, EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_8),
-                                               VoxelShapes.or(EvolutionHitBoxes.DOUBLE_LOG_3, EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_8),
-                                               VoxelShapes.or(EvolutionHitBoxes.TRIPLE_LOG_3, EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_8),
-                                               EvolutionHitBoxes.QUARTER_SLAB_LOWER_3,
-                                               VoxelShapes.or(EvolutionHitBoxes.SINGLE_LOG_4, EvolutionHitBoxes.QUARTER_SLAB_LOWER_3),
-                                               VoxelShapes.or(EvolutionHitBoxes.DOUBLE_LOG_4, EvolutionHitBoxes.QUARTER_SLAB_LOWER_3),
-                                               VoxelShapes.or(EvolutionHitBoxes.TRIPLE_LOG_4, EvolutionHitBoxes.QUARTER_SLAB_LOWER_3),
-                                               VoxelShapes.fullCube()};
+public class BlockPitKiln extends Block implements IReplaceable {
 
     public BlockPitKiln() {
         super(Block.Properties.create(Material.ORGANIC).harvestLevel(HarvestLevel.UNBREAKABLE).tickRandomly());
-        this.setDefaultState(this.getDefaultState().with(LAYERS, 0));
+        this.setDefaultState(this.getDefaultState().with(LAYERS_0_16, 0));
     }
 
-    public static boolean canBurn(World worldIn, BlockPos pos) {
-        if (checkDirection(worldIn, pos, Direction.NORTH)) {
-            if (checkDirection(worldIn, pos, Direction.SOUTH)) {
-                if (checkDirection(worldIn, pos, Direction.WEST)) {
-                    if (checkDirection(worldIn, pos, Direction.EAST)) {
-                        return worldIn.getBlockState(pos.up()).getBlock() == EvolutionBlocks.FIRE.get();
-                    }
-                }
+    public static boolean canBurn(World world, BlockPos pos) {
+        for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
+            if (!checkDirection(world, pos, dir)) {
+                return false;
             }
         }
-        return false;
+        return world.getBlockState(pos.up()).getBlock() == EvolutionBlocks.FIRE.get();
     }
 
-    private static boolean checkDirection(World worldIn, BlockPos pos, Direction direction) {
-        return Block.hasSolidSide(worldIn.getBlockState(pos.offset(direction)), worldIn, pos.offset(direction), direction.getOpposite());
+    private static boolean checkDirection(World world, BlockPos pos, Direction direction) {
+        return Block.hasSolidSide(world.getBlockState(pos.offset(direction)), world, pos.offset(direction), direction.getOpposite());
     }
 
     private static boolean manageStack(TEPitKiln tile, ItemStack handStack, PlayerEntity player, DirectionDiagonal direction) {
         if (tile.getStack(direction).isEmpty() &&
-            !tile.single &&
+            !tile.isSingle() &&
             handStack.getItem() instanceof ItemClayMolded &&
             !((ItemClayMolded) handStack.getItem()).single) {
             tile.setStack(handStack, direction);
@@ -100,7 +79,7 @@ public class BlockPitKiln extends Block implements IReplaceable {
     }
 
     @Override
-    public boolean canBeReplacedByLiquid(BlockState state) {
+    public boolean canBeReplacedByFluid(BlockState state) {
         return true;
     }
 
@@ -117,12 +96,12 @@ public class BlockPitKiln extends Block implements IReplaceable {
 
     @Override
     protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(LAYERS);
+        builder.add(LAYERS_0_16);
     }
 
     @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return new ItemStack(EvolutionItems.straw.get(), MathHelper.clamp(state.get(LAYERS), 0, 8));
+        return new ItemStack(EvolutionItems.straw.get(), MathHelper.clamp(state.get(LAYERS_0_16), 0, 8));
     }
 
     @Override
@@ -132,15 +111,15 @@ public class BlockPitKiln extends Block implements IReplaceable {
 
     @Override
     public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        return SHAPE[state.get(LAYERS)];
+        return EvolutionHitBoxes.PIT_KILN[state.get(LAYERS_0_16)];
     }
 
     @Override
     public SoundType getSoundType(BlockState state, IWorldReader world, BlockPos pos, @Nullable Entity entity) {
-        if (state.get(LAYERS) == 0) {
+        if (state.get(LAYERS_0_16) == 0) {
             return SoundType.STONE;
         }
-        if (state.get(LAYERS) <= 8) {
+        if (state.get(LAYERS_0_16) <= 8) {
             return SoundType.PLANT;
         }
         return SoundType.WOOD;
@@ -153,17 +132,17 @@ public class BlockPitKiln extends Block implements IReplaceable {
 
     @Override
     public boolean isFireSource(BlockState state, IBlockReader world, BlockPos pos, Direction side) {
-        return side == Direction.UP && state.get(LAYERS) == 16;
+        return side == Direction.UP && state.get(LAYERS_0_16) == 16;
     }
 
     @Override
     public boolean isReplaceable(BlockState state) {
-        return state.get(LAYERS) < 13;
+        return state.get(LAYERS_0_16) < 13;
     }
 
     @Override
     public boolean isSolid(BlockState state) {
-        if (state.get(LAYERS) == 0 || state.get(LAYERS) == 16) {
+        if (state.get(LAYERS_0_16) == 0 || state.get(LAYERS_0_16) == 16) {
             return false;
         }
         return super.isSolid(state);
@@ -187,23 +166,23 @@ public class BlockPitKiln extends Block implements IReplaceable {
     }
 
     @Override
-    public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        int layers = state.get(LAYERS);
-        TEPitKiln tile = (TEPitKiln) worldIn.getTileEntity(pos);
+    public boolean onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+        int layers = state.get(LAYERS_0_16);
+        TEPitKiln tile = (TEPitKiln) world.getTileEntity(pos);
         if (tile == null) {
             return false;
         }
         ItemStack stack = player.getHeldItem(handIn);
         if (layers == 0) {
-            if (stack.getItem() == EvolutionItems.straw.get() && !tile.finished) {
-                worldIn.setBlockState(pos, state.with(LAYERS, 1));
+            if (stack.getItem() == EvolutionItems.straw.get() && !tile.hasFinished()) {
+                world.setBlockState(pos, state.with(LAYERS_0_16, 1));
                 if (!player.isCreative()) {
                     stack.shrink(1);
                 }
-                worldIn.playSound(player, pos, SoundEvents.BLOCK_COMPOSTER_FILL_SUCCESS, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                world.playSound(player, pos, SoundEvents.BLOCK_COMPOSTER_FILL_SUCCESS, SoundCategory.BLOCKS, 1.0F, 1.0F);
                 return true;
             }
-            if (tile.single) {
+            if (tile.isSingle()) {
                 return manageStack(tile, stack, player, DirectionDiagonal.NORTH_WEST);
             }
             int x = MathHelper.getIndex(2, 0, 16, (hit.getHitVec().x - pos.getX()) * 16);
@@ -212,23 +191,22 @@ public class BlockPitKiln extends Block implements IReplaceable {
         }
         if (layers < 8) {
             if (stack.getItem() == EvolutionItems.straw.get()) {
-                worldIn.setBlockState(pos, state.with(LAYERS, layers + 1));
+                world.setBlockState(pos, state.with(LAYERS_0_16, layers + 1));
                 if (!player.isCreative()) {
                     stack.shrink(1);
                 }
-                worldIn.playSound(player, pos, SoundEvents.BLOCK_COMPOSTER_FILL_SUCCESS, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                world.playSound(player, pos, SoundEvents.BLOCK_COMPOSTER_FILL_SUCCESS, SoundCategory.BLOCKS, 1.0F, 1.0F);
                 return true;
             }
             return false;
         }
         if (layers != 16 && stack.getItem() instanceof ItemLog) {
-            worldIn.setBlockState(pos, state.with(LAYERS, layers + 1));
-            tile.logs[layers - 8] = ((ItemLog) stack.getItem()).variant.getId();
-            tile.markDirty();
+            world.setBlockState(pos, state.with(LAYERS_0_16, layers + 1));
+            tile.setLog(layers - 8, ((ItemLog) stack.getItem()).variant.getId());
             if (!player.isCreative()) {
                 stack.shrink(1);
             }
-            worldIn.playSound(player, pos, SoundEvents.BLOCK_WOOD_PLACE, SoundCategory.BLOCKS, 1.0F, 0.75F);
+            world.playSound(player, pos, SoundEvents.BLOCK_WOOD_PLACE, SoundCategory.BLOCKS, 1.0F, 0.75F);
             return true;
         }
         return false;
@@ -239,12 +217,12 @@ public class BlockPitKiln extends Block implements IReplaceable {
         if (worldIn.isRemote) {
             return;
         }
-        int layers = state.get(LAYERS);
+        int layers = state.get(LAYERS_0_16);
         if (layers == 0) {
             return;
         }
         if (layers <= 8) {
-            worldIn.setBlockState(pos, state.with(LAYERS, layers - 1));
+            worldIn.setBlockState(pos, state.with(LAYERS_0_16, layers - 1));
             ItemStack stack = new ItemStack(EvolutionItems.straw.get());
             if (!player.inventory.addItemStackToInventory(stack)) {
                 BlockUtils.dropItemStack(worldIn, pos, stack);
@@ -252,9 +230,9 @@ public class BlockPitKiln extends Block implements IReplaceable {
             return;
         }
         TEPitKiln tile = (TEPitKiln) worldIn.getTileEntity(pos);
-        worldIn.setBlockState(pos, state.with(LAYERS, layers - 1));
-        ItemStack stack = new ItemStack(EnumWoodVariant.byId(tile.logs[layers - 9]).getLog());
-        tile.logs[layers - 9] = -1;
+        worldIn.setBlockState(pos, state.with(LAYERS_0_16, layers - 1));
+        ItemStack stack = tile.getLogStack(layers - 9);
+        tile.setLog(layers - 9, (byte) -1);
         tile.markDirty();
         if (!player.inventory.addItemStackToInventory(stack)) {
             BlockUtils.dropItemStack(worldIn, pos, stack);
@@ -276,8 +254,8 @@ public class BlockPitKiln extends Block implements IReplaceable {
         }
         TEPitKiln tile = (TEPitKiln) worldIn.getTileEntity(pos);
         if (canBurn(worldIn, pos)) {
-            if (worldIn.getDayTime() > tile.timeStart + 8 * Time.HOUR_IN_TICKS) {
-                worldIn.setBlockState(pos, state.with(LAYERS, 0));
+            if (worldIn.getDayTime() > tile.getTimeStart() + 8 * Time.HOUR_IN_TICKS) {
+                worldIn.setBlockState(pos, state.with(LAYERS_0_16, 0));
                 tile.finish();
             }
         }
@@ -288,6 +266,6 @@ public class BlockPitKiln extends Block implements IReplaceable {
 
     @Override
     public boolean ticksRandomly(BlockState state) {
-        return state.get(LAYERS) == 16;
+        return state.get(LAYERS_0_16) == 16;
     }
 }

@@ -11,7 +11,6 @@ import net.minecraft.world.gen.IWorldGenerationReader;
 import net.minecraft.world.gen.feature.AbstractTreeFeature;
 import net.minecraft.world.gen.feature.NoFeatureConfig;
 import net.minecraftforge.common.IPlantable;
-import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
@@ -21,13 +20,15 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 
+import static tgw.evolution.init.EvolutionBStates.TREE;
+
 public class TreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
 
-    private static final BlockState DEFAULT_TRUNK = EvolutionBlocks.LOG_OAK.get().getDefaultState().with(BlockLog.TREE, true);
+    private static final BlockState DEFAULT_TRUNK = EvolutionBlocks.LOG_OAK.get().getDefaultState().with(TREE, true);
     private static final BlockState DEFAULT_LEAF = EvolutionBlocks.LEAVES_OAK.get().getDefaultState();
     protected final int minTreeHeight;
-    private final BlockState stateWood;
     private final BlockState stateLeaves;
+    private final BlockState stateWood;
 
     public TreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> configFactory, boolean notify) {
         this(configFactory, notify, 4, DEFAULT_TRUNK, DEFAULT_LEAF);
@@ -42,13 +43,13 @@ public class TreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         this.minTreeHeight = minTreeHeightIn;
         this.stateWood = woodState;
         this.stateLeaves = leavesState;
-        this.sapling = (IPlantable) EvolutionBlocks.SAPLING_OAK.get();
+        this.sapling = EvolutionBlocks.SAPLING_OAK.get();
     }
 
     @Override
-    public boolean place(Set<BlockPos> changedBlocks, IWorldGenerationReader worldIn, Random rand, BlockPos position, MutableBoundingBox box) {
+    public boolean place(Set<BlockPos> changedBlocks, IWorldGenerationReader world, Random rand, BlockPos position, MutableBoundingBox box) {
         int treeHeight = this.treeHeight(rand);
-        if (position.getY() >= 1 && position.getY() + treeHeight + 1 <= ((IWorld) worldIn).getWorld().getHeight()) {
+        if (position.getY() >= 1 && position.getY() + treeHeight + 1 <= ((IWorld) world).getWorld().getHeight()) {
             boolean flag = true;
             BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
             for (int j = position.getY(); j <= position.getY() + 1 + treeHeight; ++j) {
@@ -61,8 +62,8 @@ public class TreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                 }
                 for (int l = position.getX() - k; l <= position.getX() + k && flag; ++l) {
                     for (int i1 = position.getZ() - k; i1 <= position.getZ() + k && flag; ++i1) {
-                        if (j >= 0 && j < ((IWorld) worldIn).getWorld().getHeight()) {
-                            if (!BlockSapling.canGrowInto(worldIn, mutablePos.setPos(l, j, i1))) {
+                        if (j >= 0 && j < ((IWorld) world).getWorld().getHeight()) {
+                            if (!BlockSapling.canGrowInto(world, mutablePos.setPos(l, j, i1))) {
                                 flag = false;
                             }
                         }
@@ -75,13 +76,13 @@ public class TreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
             if (!flag) {
                 return false;
             }
-            if (BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(position.down()), this.sapling) &&
-                position.getY() < ((IWorld) worldIn).getWorld().getHeight() - treeHeight - 1) {
-                TreeUtils.setDirtAt(worldIn, position.down());
+            if (BlockUtils.canSustainSapling(((IBlockReader) world).getBlockState(position.down()), this.sapling) &&
+                position.getY() < ((IWorld) world).getWorld().getHeight() - treeHeight - 1) {
+                TreeUtils.setDirtAt(world, position.down());
                 for (int placingLogs = 0; placingLogs < treeHeight; ++placingLogs) {
-                    BlockState stateForLog = ((IBlockReader) worldIn).getBlockState(position.up(placingLogs));
-                    if (stateForLog.canBeReplacedByLogs((IWorldReader) worldIn, position.up(placingLogs))) {
-                        this.setLogState(changedBlocks, worldIn, position.up(placingLogs), this.stateWood, box);
+                    BlockState stateForLog = ((IBlockReader) world).getBlockState(position.up(placingLogs));
+                    if (stateForLog.canBeReplacedByLogs((IWorldReader) world, position.up(placingLogs))) {
+                        this.setLogState(changedBlocks, world, position.up(placingLogs), this.stateWood, box);
                     }
                 }
                 BlockPos.MutableBlockPos leafPos = new BlockPos.MutableBlockPos();
@@ -93,9 +94,9 @@ public class TreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                         for (int leafZ = position.getZ() - j1; leafZ <= position.getZ() + j1; ++leafZ) {
                             int j2 = leafZ - position.getZ();
                             if (Math.abs(l1) != j1 || Math.abs(j2) != j1 || rand.nextInt(2) != 0 && i4 != 0) {
-                                BlockState stateForLeaf = ((IBlockReader) worldIn).getBlockState(leafPos.setPos(leafX, leafY, leafZ));
-                                if (stateForLeaf.canBeReplacedByLeaves((IWorldReader) worldIn, leafPos)) {
-                                    this.setBlockState(worldIn, leafPos, this.stateLeaves);
+                                BlockState stateForLeaf = ((IBlockReader) world).getBlockState(leafPos.setPos(leafX, leafY, leafZ));
+                                if (stateForLeaf.canBeReplacedByLeaves((IWorldReader) world, leafPos)) {
+                                    this.setBlockState(world, leafPos, this.stateLeaves);
                                 }
                             }
                         }
@@ -108,13 +109,13 @@ public class TreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         return false;
     }
 
-    protected int treeHeight(Random rand) {
-        return this.minTreeHeight + rand.nextInt(3);
-    }
-
     @Override
     public TreeFeature setSapling(IPlantable sapling) {
         this.sapling = sapling;
         return this;
+    }
+
+    protected int treeHeight(Random rand) {
+        return this.minTreeHeight + rand.nextInt(3);
     }
 }

@@ -9,16 +9,16 @@ import tgw.evolution.init.EvolutionSounds;
 public class BlockClay extends BlockGravity {
 
     public BlockClay() {
-        super(Block.Properties.create(Material.CLAY).hardnessAndResistance(2F, 0.6F).sound(SoundType.GROUND), 2067);
-    }
-
-    @Override
-    public SoundEvent fallSound() {
-        return EvolutionSounds.SOIL_COLLAPSE.get();
+        super(Block.Properties.create(Material.CLAY).hardnessAndResistance(2.0F, 0.6F).sound(SoundType.GROUND), 2_067);
     }
 
     @Override
     public int beamSize() {
         return 1;
+    }
+
+    @Override
+    public SoundEvent fallSound() {
+        return EvolutionSounds.SOIL_COLLAPSE.get();
     }
 }

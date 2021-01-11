@@ -14,23 +14,8 @@ public class BlockSand extends BlockGravity implements IStoneVariant {
     private EnumRockVariant variant;
 
     public BlockSand(EnumRockNames name) {
-        super(Block.Properties.create(Material.SAND).hardnessAndResistance(1F, 0.5F).sound(SoundType.SAND), name.getMass() / 8);
+        super(Block.Properties.create(Material.SAND).hardnessAndResistance(1.0F, 0.5F).sound(SoundType.SAND), name.getMass() / 8);
         this.name = name;
-    }
-
-    @Override
-    public EnumRockVariant getVariant() {
-        return this.variant;
-    }
-
-    @Override
-    public void setVariant(EnumRockVariant variant) {
-        this.variant = variant;
-    }
-
-    @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
     }
 
     @Override
@@ -41,5 +26,20 @@ public class BlockSand extends BlockGravity implements IStoneVariant {
     @Override
     public SoundEvent fallSound() {
         return EvolutionSounds.SOIL_COLLAPSE.get();
+    }
+
+    @Override
+    public EnumRockNames getStoneName() {
+        return this.name;
+    }
+
+    @Override
+    public EnumRockVariant getVariant() {
+        return this.variant;
+    }
+
+    @Override
+    public void setVariant(EnumRockVariant variant) {
+        this.variant = variant;
     }
 }

@@ -5,7 +5,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.StateContainer.Builder;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Direction.Axis;
@@ -15,23 +14,21 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
-import tgw.evolution.init.EvolutionBlockStateProperties;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.EnumWoodNames;
-import tgw.evolution.util.HarvestLevel;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.OriginMutableBlockPos;
+import tgw.evolution.util.*;
 
 import java.util.Random;
 
+import static tgw.evolution.init.EvolutionBStates.AXIS;
+import static tgw.evolution.init.EvolutionBStates.TREE;
+
 public class BlockLog extends BlockXYZAxis {
 
-    public static final BooleanProperty TREE = EvolutionBlockStateProperties.TREE;
     private final EnumWoodNames variant;
 
     public BlockLog(EnumWoodNames variant) {
-        super(Block.Properties.create(Material.WOOD).hardnessAndResistance(8F, 2F).sound(SoundType.WOOD).harvestLevel(HarvestLevel.STONE),
+        super(Block.Properties.create(Material.WOOD).hardnessAndResistance(8.0F, 2.0F).sound(SoundType.WOOD).harvestLevel(HarvestLevel.STONE),
               variant.getMass());
         this.variant = variant;
         this.setDefaultState(this.getDefaultState().with(TREE, false));
@@ -75,12 +72,12 @@ public class BlockLog extends BlockXYZAxis {
 
     @Override
     public int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
-        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualEncouragement(state);
+        return EvolutionBlocks.FIRE.get().getActualEncouragement(state);
     }
 
     @Override
     public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
-        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualFlammability(state);
+        return EvolutionBlocks.FIRE.get().getActualFlammability(state);
     }
 
     @Override
@@ -94,36 +91,36 @@ public class BlockLog extends BlockXYZAxis {
     }
 
     @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         if (state.get(TREE)) {
             BlockPos up = pos.up();
             for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
-                state.updateNeighbors(worldIn, up.offset(dir), 3);
+                state.updateNeighbors(world, up.offset(dir), BlockFlags.NOTIFY_AND_UPDATE);
             }
         }
-        super.neighborChanged(state, worldIn, pos, blockIn, fromPos, isMoving);
+        super.neighborChanged(state, world, pos, block, fromPos, isMoving);
     }
 
     @Override
-    public void onExplosionDestroy(World worldIn, BlockPos pos, Explosion explosionIn) {
-        //        if (!worldIn.isRemote) {
-        //            if (worldIn.getBlockState(pos.up()).getBlock() instanceof BlockLog && worldIn.getBlockState(pos.up()).get(TREE)) {
-        //                PlayerEntity player = worldIn.getClosestPlayer(pos.getX(), pos.getY(), pos.getZ(), 25, false);
-        //                Direction direction = Direction.byHorizontalIndex(worldIn.getRandom().nextInt(4));
+    public void onExplosionDestroy(World world, BlockPos pos, Explosion explosion) {
+        //        if (!world.isRemote) {
+        //            if (world.getBlockState(pos.up()).getBlock() instanceof BlockLog && world.getBlockState(pos.up()).get(TREE)) {
+        //                PlayerEntity player = world.getClosestPlayer(pos.getX(), pos.getY(), pos.getZ(), 25, false);
+        //                Direction direction = Direction.byHorizontalIndex(world.getRandom().nextInt(4));
         //                if (player != null) {
         //                    direction = player.getHorizontalFacing();
         //                }
-        //                FallingEvents.chopEvent(worldIn, worldIn.getBlockState(pos.up()), pos.up(), direction);
+        //                FallingEvents.chopEvent(world, world.getBlockState(pos.up()), pos.up(), direction);
         //            }
         //        }
     }
 
     @Override
-    public void tick(BlockState state, World worldIn, BlockPos blockPos, Random random) {
+    public void tick(BlockState state, World world, BlockPos blockPos, Random random) {
         OriginMutableBlockPos pos = new OriginMutableBlockPos(blockPos);
-        if (!worldIn.isRemote) {
+        if (!world.isRemote) {
             if (!state.get(TREE)) {
-                super.tick(state, worldIn, blockPos, random);
+                super.tick(state, world, blockPos, random);
             }
             else {
                 //                if (!BlockUtils.isTrunkSustained(worldIn, pos)) {
@@ -136,14 +133,14 @@ public class BlockLog extends BlockXYZAxis {
                 //                    FallingEvents.chopEvent(worldIn, worldIn.getBlockState(pos.up().getPos()), pos.getPos(), direction);
                 //                }
                 pos.reset();
-                if (worldIn.getBlockState(pos.down().getPos()).getBlock() instanceof BlockLog && !worldIn.getBlockState(pos.getPos()).get(TREE)) {
-                    worldIn.setBlockState(pos.reset().getPos(), state.with(TREE, false), 3);
+                if (world.getBlockState(pos.down().getPos()).getBlock() instanceof BlockLog && !world.getBlockState(pos.getPos()).get(TREE)) {
+                    world.setBlockState(pos.reset().getPos(), state.with(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
                 }
-                else if (worldIn.getBlockState(pos.up().getPos()).getBlock() instanceof BlockLog && !worldIn.getBlockState(pos.getPos()).get(TREE)) {
-                    worldIn.setBlockState(pos.reset().getPos(), state.with(TREE, false), 3);
+                else if (world.getBlockState(pos.up().getPos()).getBlock() instanceof BlockLog && !world.getBlockState(pos.getPos()).get(TREE)) {
+                    world.setBlockState(pos.reset().getPos(), state.with(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
                 }
-                else if (!BlockUtils.isTrunkSustained(worldIn, pos) && BlockUtils.isReplaceable(worldIn.getBlockState(pos.up().getPos()))) {
-                    worldIn.setBlockState(pos.reset().getPos(), state.with(TREE, false), 3);
+                else if (!BlockUtils.isTrunkSustained(world, pos) && BlockUtils.isReplaceable(world.getBlockState(pos.up().getPos()))) {
+                    world.setBlockState(pos.reset().getPos(), state.with(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
                 }
             }
         }

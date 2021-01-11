@@ -13,23 +13,11 @@ public class BlockPolishedStone extends BlockGravity implements IStoneVariant {
     private EnumRockVariant variant;
 
     public BlockPolishedStone(EnumRockNames name) {
-        super(Block.Properties.create(Material.ROCK).hardnessAndResistance(name.getRockType().getHardness() / 2F, 6F).sound(SoundType.STONE).harvestLevel(HarvestLevel.STONE), name.getMass());
+        super(Block.Properties.create(Material.ROCK)
+                              .hardnessAndResistance(name.getRockType().getHardness() / 2.0F, 6.0F)
+                              .sound(SoundType.STONE)
+                              .harvestLevel(HarvestLevel.STONE), name.getMass());
         this.name = name;
-    }
-
-    @Override
-    public EnumRockVariant getVariant() {
-        return this.variant;
-    }
-
-    @Override
-    public void setVariant(EnumRockVariant variant) {
-        this.variant = variant;
-    }
-
-    @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
     }
 
     @Override
@@ -40,5 +28,20 @@ public class BlockPolishedStone extends BlockGravity implements IStoneVariant {
     @Override
     public int getShearStrength() {
         return this.name.getShearStrength();
+    }
+
+    @Override
+    public EnumRockNames getStoneName() {
+        return this.name;
+    }
+
+    @Override
+    public EnumRockVariant getVariant() {
+        return this.variant;
+    }
+
+    @Override
+    public void setVariant(EnumRockVariant variant) {
+        this.variant = variant;
     }
 }

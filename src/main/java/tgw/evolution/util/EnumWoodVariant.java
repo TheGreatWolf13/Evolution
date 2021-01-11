@@ -3,6 +3,7 @@ package tgw.evolution.util;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraftforge.fml.RegistryObject;
+import tgw.evolution.items.ItemLog;
 
 import static tgw.evolution.init.EvolutionBlocks.*;
 import static tgw.evolution.init.EvolutionItems.*;
@@ -27,13 +28,13 @@ public enum EnumWoodVariant {
     SPRUCE("spruce", log_spruce, LOG_PILE_SPRUCE, 16, plank_spruce),
     WILLOW("willow", log_willow, LOG_PILE_WILLOW, 17, plank_willow);
 
-    private final String name;
+    private final byte id;
     private final Item log;
+    private final String name;
     private final Block pile;
     private final Item plank;
-    private final byte id;
 
-    EnumWoodVariant(String name, RegistryObject<Item> log, RegistryObject<Block> pile, int id, RegistryObject<Item> plank) {
+    EnumWoodVariant(String name, RegistryObject<ItemLog> log, RegistryObject<Block> pile, int id, RegistryObject<Item> plank) {
         this.name = name;
         this.log = log.get();
         this.pile = pile.get();
@@ -62,11 +63,11 @@ public enum EnumWoodVariant {
         return this.name;
     }
 
-    public Item getPlank() {
-        return this.plank;
-    }
-
     public Block getPile() {
         return this.pile;
+    }
+
+    public Item getPlank() {
+        return this.plank;
     }
 }

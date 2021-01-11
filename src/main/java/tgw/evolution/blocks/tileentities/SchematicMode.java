@@ -8,8 +8,8 @@ public enum SchematicMode implements IStringSerializable {
     LOAD(1, "load"),
     CORNER(2, "corner");
 
-    private final String name;
     private final byte id;
+    private final String name;
 
     SchematicMode(int id, String name) {
         this.name = name;
@@ -25,12 +25,12 @@ public enum SchematicMode implements IStringSerializable {
         throw new IllegalStateException("Unknown SchematicMode " + id);
     }
 
+    public byte getId() {
+        return this.id;
+    }
+
     @Override
     public String getName() {
         return this.name;
-    }
-
-    public byte getId() {
-        return this.id;
     }
 }

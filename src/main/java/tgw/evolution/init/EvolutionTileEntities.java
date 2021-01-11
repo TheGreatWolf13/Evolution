@@ -80,8 +80,33 @@ public final class EvolutionTileEntities {
                                                                                         () -> Builder.create(TESchematic::new, SCHEMATIC_BLOCK.get())
                                                                                                      .build(null));
     public static final RegistryObject<TileEntityType<?>> TE_LIQUID = TILES.register("te_liquid",
-                                                                                     () -> Builder.create(TELiquid::new, FRESH_WATER.get())
-                                                                                                  .build(null));
+                                                                                     () -> Builder.create(TELiquid::new,
+                                                                                                          FRESH_WATER.get(),
+                                                                                                          SALT_WATER.get()).build(null));
+    public static final RegistryObject<TileEntityType<?>> TE_LOGGABLE = TILES.register("te_loggable",
+                                                                                       () -> Builder.create(TELoggable::new,
+                                                                                                            PEAT.get(),
+                                                                                                            STICK.get(),
+                                                                                                            ROCK_ANDESITE.get(),
+                                                                                                            ROCK_BASALT.get(),
+                                                                                                            ROCK_CHALK.get(),
+                                                                                                            ROCK_CHERT.get(),
+                                                                                                            ROCK_CONGLOMERATE.get(),
+                                                                                                            ROCK_DACITE.get(),
+                                                                                                            ROCK_DIORITE.get(),
+                                                                                                            ROCK_DOLOMITE.get(),
+                                                                                                            ROCK_GABBRO.get(),
+                                                                                                            ROCK_GNEISS.get(),
+                                                                                                            ROCK_GRANITE.get(),
+                                                                                                            ROCK_LIMESTONE.get(),
+                                                                                                            ROCK_MARBLE.get(),
+                                                                                                            ROCK_PHYLLITE.get(),
+                                                                                                            ROCK_QUARTZITE.get(),
+                                                                                                            ROCK_RED_SANDSTONE.get(),
+                                                                                                            ROCK_SANDSTONE.get(),
+                                                                                                            ROCK_SCHIST.get(),
+                                                                                                            ROCK_SHALE.get(),
+                                                                                                            ROCK_SLATE.get()).build(null));
 
     private EvolutionTileEntities() {
     }

@@ -133,7 +133,7 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
             //The bucket is empty
             if (this.getFluid() == Fluids.EMPTY) {
                 if (stateAtPos.getBlock() instanceof IBlockFluidContainer) {
-                    Fluid fluid = ((IBlockFluidContainer) stateAtPos.getBlock()).getFluid();
+                    Fluid fluid = ((IBlockFluidContainer) stateAtPos.getBlock()).getFluid(world, pos);
                     if (fluid != Fluids.EMPTY) {
                         int amount = ((IBlockFluidContainer) stateAtPos.getBlock()).getAmountRemoved(world, pos, this.getMaxAmount());
                         if (amount > 0) {
@@ -156,7 +156,7 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
             //The bucket is not full, but has fluid
             if (!this.isFull(stackInHand) &&
                 stateAtPos.getBlock() instanceof IBlockFluidContainer &&
-                this.getFluid() == ((IBlockFluidContainer) stateAtPos.getBlock()).getFluid()) {
+                this.getFluid() == ((IBlockFluidContainer) stateAtPos.getBlock()).getFluid(world, pos)) {
                 int amount = ((IBlockFluidContainer) stateAtPos.getBlock()).getAmountRemoved(world, pos, this.getMissingAmount(stackInHand));
                 if (amount > 0) {
                     player.addStat(Stats.ITEM_USED.get(this));
@@ -173,7 +173,7 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
                 }
             }
             BlockPos movedPos = stateAtPos.getBlock() instanceof IBlockFluidContainer &&
-                                this.getFluid() == ((IBlockFluidContainer) stateAtPos.getBlock()).getFluid() ?
+                                this.getFluid() == ((IBlockFluidContainer) stateAtPos.getBlock()).getFluid(world, pos) ?
                                 pos :
                                 blockRayTrace.getPos().offset(blockRayTrace.getFace());
             int placed = this.tryPlaceContainedLiquid(player, world, movedPos, blockRayTrace, stackInHand);
@@ -210,7 +210,7 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
         }
         BlockState stateAtPos = world.getBlockState(pos);
         Material materialAtPos = stateAtPos.getMaterial();
-        boolean isReplaceable = BlockUtils.canBeReplacedByWater(stateAtPos);
+        boolean isReplaceable = BlockUtils.canBeReplacedByFluid(stateAtPos);
         if (world.isAirBlock(pos) || isReplaceable) {
             int placed = 0;
             if (this.getFluid().isIn(FluidTags.WATER) && world.dimension.doesWaterVaporize()) {
@@ -232,7 +232,7 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
                 placed = ((IBlockFluidContainer) stateAtPos.getBlock()).receiveFluid(world,
                                                                                      pos,
                                                                                      stateAtPos,
-                                                                                     this.getFluid(),
+                                                                                     (FluidGeneric) this.getFluid(),
                                                                                      this.getAmount(stackInHand));
                 if (placed > 0) {
                     this.playEmptySound(player, world, pos);

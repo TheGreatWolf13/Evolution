@@ -7,12 +7,12 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.network.IPacket;
-import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.FMLPlayMessages;
 import net.minecraftforge.fml.network.NetworkHooks;
 import tgw.evolution.blocks.ISittable;
+import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionEntities;
 
 public class EntitySit extends Entity {
@@ -20,18 +20,18 @@ public class EntitySit extends Entity {
     private BlockPos source;
 
     @SuppressWarnings("unused")
-    public EntitySit(FMLPlayMessages.SpawnEntity spawn, World worldIn) {
-        this(EvolutionEntities.SIT.get(), worldIn);
+    public EntitySit(FMLPlayMessages.SpawnEntity spawn, World world) {
+        this(EvolutionEntities.SIT.get(), world);
     }
 
-    public EntitySit(EntityType<?> entityTypeIn, World worldIn) {
-        super(entityTypeIn, worldIn);
+    public EntitySit(EntityType<?> entityType, World world) {
+        super(entityType, world);
         this.noClip = true;
         this.preventEntitySpawning = true;
     }
 
-    public EntitySit(World worldIn, BlockPos pos, double yOffset) {
-        this(EvolutionEntities.SIT.get(), worldIn);
+    public EntitySit(World world, BlockPos pos, double yOffset) {
+        this(EvolutionEntities.SIT.get(), world);
         this.setPosition(pos.getX() + 0.5, pos.getY() + yOffset, pos.getZ() + 0.5);
         this.source = pos;
         this.prevPosX = pos.getX() + 0.5;
@@ -87,7 +87,7 @@ public class EntitySit extends Entity {
                 this.remove();
             }
             if (this.getPassengers().isEmpty()) {
-                this.world.setBlockState(this.source, this.world.getBlockState(this.source).with(BlockStateProperties.OCCUPIED, false));
+                this.world.setBlockState(this.source, this.world.getBlockState(this.source).with(EvolutionBStates.OCCUPIED, false));
                 this.remove();
             }
         }

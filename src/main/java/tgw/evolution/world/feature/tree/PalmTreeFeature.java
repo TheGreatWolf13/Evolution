@@ -11,7 +11,6 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.gen.IWorldGenerationReader;
 import net.minecraft.world.gen.feature.AbstractTreeFeature;
 import net.minecraft.world.gen.feature.NoFeatureConfig;
-import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
@@ -21,13 +20,47 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 
+import static tgw.evolution.init.EvolutionBStates.TREE;
+
 public class PalmTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
 
-    private static final BlockState TRUNK = EvolutionBlocks.LOG_PALM.get().getDefaultState().with(BlockLog.TREE, true);
+    private static final BlockState TRUNK = EvolutionBlocks.LOG_PALM.get().getDefaultState().with(TREE, true);
     private static final BlockState LEAF = EvolutionBlocks.LEAVES_PALM.get().getDefaultState();
 
     public PalmTreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> config, boolean doBlockNotify) {
         super(config, doBlockNotify);
+    }
+
+    private void makeCanopy(IWorldGenerationReader worldIn, BlockPos pos) {
+        for (int i = -2; i <= 2; i++) {
+            for (int j = -2; j <= 2; j++) {
+                this.placeLeafAt(worldIn, pos.add(i, 0, j));
+            }
+        }
+        BlockPos[] leavesPos = {pos.up(),
+                                pos.up().north(),
+                                pos.up().south(),
+                                pos.up().west(),
+                                pos.up().east(),
+                                pos.north(3),
+                                pos.north(3).down(),
+                                pos.north(4).down(),
+                                pos.south(3),
+                                pos.south(3).down(),
+                                pos.south(4).down(),
+                                pos.west(3),
+                                pos.west(3).down(),
+                                pos.west(4).down(),
+                                pos.east(3),
+                                pos.east(3).down(),
+                                pos.east(4).down(),
+                                pos.north(2).west(2).down(),
+                                pos.north(2).east(2).down(),
+                                pos.south(2).west(2).down(),
+                                pos.south(2).east(2).down(),};
+        for (BlockPos leavesPo : leavesPos) {
+            this.placeLeafAt(worldIn, leavesPo);
+        }
     }
 
     @Override
@@ -63,8 +96,7 @@ public class PalmTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                 return false;
             }
             //placing trunks
-            boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(pos.down()),
-                                                          (BlockSapling) EvolutionBlocks.SAPLING_PALM.get());
+            boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(pos.down()), EvolutionBlocks.SAPLING_PALM.get());
             if (isSoil && pos.getY() < ((IWorld) worldIn).getWorld().getHeight() - numLogs - 1) {
                 TreeUtils.setDirtAt(worldIn, pos.down());
                 Direction inclination = Direction.Plane.HORIZONTAL.random(rand);
@@ -90,46 +122,14 @@ public class PalmTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         return false;
     }
 
-    private void placeTrunkAt(Set<BlockPos> setBlockPos, IWorldGenerationReader iWorld, BlockPos pos, MutableBoundingBox box) {
-        this.setLogState(setBlockPos, iWorld, pos, TRUNK, box);
-    }
-
-    private void makeCanopy(IWorldGenerationReader worldIn, BlockPos pos) {
-        for (int i = -2; i <= 2; i++) {
-            for (int j = -2; j <= 2; j++) {
-                this.placeLeafAt(worldIn, pos.add(i, 0, j));
-            }
-        }
-        BlockPos[] leavesPos = {pos.up(),
-                                pos.up().north(),
-                                pos.up().south(),
-                                pos.up().west(),
-                                pos.up().east(),
-                                pos.north(3),
-                                pos.north(3).down(),
-                                pos.north(4).down(),
-                                pos.south(3),
-                                pos.south(3).down(),
-                                pos.south(4).down(),
-                                pos.west(3),
-                                pos.west(3).down(),
-                                pos.west(4).down(),
-                                pos.east(3),
-                                pos.east(3).down(),
-                                pos.east(4).down(),
-                                pos.north(2).west(2).down(),
-                                pos.north(2).east(2).down(),
-                                pos.south(2).west(2).down(),
-                                pos.south(2).east(2).down(),};
-        for (BlockPos leavesPo : leavesPos) {
-            this.placeLeafAt(worldIn, leavesPo);
-        }
-    }
-
     private void placeLeafAt(IWorldGenerationReader worldIn, BlockPos pos) {
         BlockState iblockstate = ((IBlockReader) worldIn).getBlockState(pos);
         if (iblockstate.canBeReplacedByLeaves((IWorldReader) worldIn, pos)) {
             this.setBlockState(worldIn, pos, LEAF);
         }
+    }
+
+    private void placeTrunkAt(Set<BlockPos> setBlockPos, IWorldGenerationReader iWorld, BlockPos pos, MutableBoundingBox box) {
+        this.setLogState(setBlockPos, iWorld, pos, TRUNK, box);
     }
 }

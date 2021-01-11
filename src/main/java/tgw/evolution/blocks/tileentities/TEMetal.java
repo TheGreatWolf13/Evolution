@@ -6,8 +6,8 @@ import tgw.evolution.init.EvolutionTileEntities;
 
 public class TEMetal extends TileEntity {
 
-    public int timePlaced;
     public boolean exposed;
+    public int timePlaced;
 
     public TEMetal() {
         super(EvolutionTileEntities.TE_METAL.get());

@@ -12,8 +12,6 @@ import net.minecraft.world.gen.IWorldGenerationReader;
 import net.minecraft.world.gen.feature.AbstractTreeFeature;
 import net.minecraft.world.gen.feature.NoFeatureConfig;
 import tgw.evolution.blocks.BlockLeaves;
-import tgw.evolution.blocks.BlockLog;
-import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.TreeUtils;
@@ -22,9 +20,11 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 
+import static tgw.evolution.init.EvolutionBStates.TREE;
+
 public class AspenTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
 
-    private static BlockState LOG = EvolutionBlocks.LOG_ASPEN.get().getDefaultState().with(BlockLog.TREE, true);
+    private static BlockState LOG = EvolutionBlocks.LOG_ASPEN.get().getDefaultState().with(TREE, true);
     private static BlockState LEAVES = EvolutionBlocks.LEAVES_ASPEN.get().getDefaultState();
     private final int dec;
 
@@ -41,7 +41,7 @@ public class AspenTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
 
     public AspenTreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> configFactoryIn, boolean notify) {
         super(configFactoryIn, notify);
-        LOG = EvolutionBlocks.LOG_ASPEN.get().getDefaultState().with(BlockLog.TREE, true);
+        LOG = EvolutionBlocks.LOG_ASPEN.get().getDefaultState().with(TREE, true);
         LEAVES = EvolutionBlocks.LEAVES_ASPEN.get().getDefaultState();
         this.dec = 0;
     }
@@ -100,7 +100,7 @@ public class AspenTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         for (i12 = posX; i12 <= posX && canGrow; ++i12) {
             for (k1 = posZ; k1 <= posZ && canGrow; ++k1) {
                 BlockState below = ((IBlockReader) worldIn).getBlockState(mutablePos.setPos(i12, posY - 1, k1));
-                if (BlockUtils.canSustainSapling(below, (BlockSapling) EvolutionBlocks.SAPLING_ASPEN.get())) {
+                if (BlockUtils.canSustainSapling(below, EvolutionBlocks.SAPLING_ASPEN.get())) {
                     continue;
                 }
                 canGrow = false;
@@ -142,9 +142,7 @@ public class AspenTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                 }
                 ++b;
             }
-            if (!(b < branches)) {
-                leafPos.move(Direction.UP);
-            }
+            leafPos.move(Direction.UP);
         }
         for (int i = posY; i < posY + height; i++) {
             this.placeTrunkAt(changedBlocks, worldIn, mutablePos.setPos(posX, i, posZ), box);

@@ -15,7 +15,6 @@ import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
@@ -23,15 +22,13 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import tgw.evolution.blocks.tileentities.TEKnapping;
+import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.items.ItemRock;
 import tgw.evolution.util.EnumRockNames;
 import tgw.evolution.util.EnumRockVariant;
 import tgw.evolution.util.MathHelper;
 
 public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneVariant {
-
-    private static final VoxelShape FULL_SHAPE = Block.makeCuboidShape(0.5, 0, 0.5, 15.5, 1, 15.5);
-    private static final VoxelShape SHAPE = Block.makeCuboidShape(0.5, 0, 0.5, 3.5, 1, 3.5);
 
     private final EnumRockNames name;
     private EnumRockVariant variant;
@@ -46,7 +43,7 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
         for (int i = 0; i < tile.matrix.length; i++) {
             for (int j = 0; j < tile.matrix[i].length; j++) {
                 if (tile.matrix[i][j]) {
-                    shape = VoxelShapes.combineAndSimplify(shape, SHAPE.withOffset(3 * i / 16.0f, 0, 3 * j / 16.0f), IBooleanFunction.OR);
+                    shape = MathHelper.union(shape, EvolutionHitBoxes.KNAPPING_PART.withOffset(3 * i / 16.0f, 0, 3 * j / 16.0f));
                 }
             }
         }
@@ -54,7 +51,7 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
     }
 
     @Override
-    public boolean canBeReplacedByLiquid(BlockState state) {
+    public boolean canBeReplacedByFluid(BlockState state) {
         return true;
     }
 
@@ -84,8 +81,8 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        TEKnapping tile = (TEKnapping) worldIn.getTileEntity(pos);
+    public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
+        TEKnapping tile = (TEKnapping) world.getTileEntity(pos);
         if (tile != null) {
             if (tile.hitbox != null) {
                 return tile.hitbox;
@@ -93,7 +90,7 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
             tile.hitbox = calculateHitbox(tile);
             return tile.hitbox;
         }
-        return FULL_SHAPE;
+        return EvolutionHitBoxes.KNAPPING_FULL;
     }
 
     @Override
@@ -127,29 +124,29 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
+    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
         BlockPos posDown = pos.down();
-        BlockState down = worldIn.getBlockState(posDown);
-        BlockState up = worldIn.getBlockState(pos.up());
+        BlockState down = world.getBlockState(posDown);
+        BlockState up = world.getBlockState(pos.up());
         if (!BlockUtils.isReplaceable(up)) {
             return false;
         }
-        return Block.hasSolidSide(down, worldIn, posDown, Direction.UP);
+        return Block.hasSolidSide(down, world, posDown, Direction.UP);
     }
 
     @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnDrops(state, worldIn, pos);
-                worldIn.removeBlock(pos, false);
+    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!world.isRemote) {
+            if (!state.isValidPosition(world, pos)) {
+                spawnDrops(state, world, pos);
+                world.removeBlock(pos, false);
             }
         }
     }
 
     @Override
-    public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        if (!(player.getHeldItem(handIn).getItem() instanceof ItemRock)) {
+    public boolean onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
+        if (!(player.getHeldItem(hand).getItem() instanceof ItemRock)) {
             return false;
         }
         double hitX = (hit.getHitVec().x - pos.getX()) * 16;
@@ -160,13 +157,13 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
         if (!MathHelper.rangeInclusive(hitZ, 0.5, 15.5)) {
             return false;
         }
-        TEKnapping tileEntity = (TEKnapping) worldIn.getTileEntity(pos);
+        TEKnapping tileEntity = (TEKnapping) world.getTileEntity(pos);
         int x = MathHelper.getIndex(5, 0.5, 15.5, hitX);
         int z = MathHelper.getIndex(5, 0.5, 15.5, hitZ);
         if (!tileEntity.matrix[x][z] || tileEntity.type.getPattern()[x][z]) {
             return false;
         }
-        worldIn.playSound(player, pos, SoundEvents.BLOCK_STONE_BREAK, SoundCategory.BLOCKS, 1.0F, 0.75F);
+        world.playSound(player, pos, SoundEvents.BLOCK_STONE_BREAK, SoundCategory.BLOCKS, 1.0F, 0.75F);
         tileEntity.matrix[x][z] = false;
         tileEntity.sendRenderUpdate();
         tileEntity.checkParts();

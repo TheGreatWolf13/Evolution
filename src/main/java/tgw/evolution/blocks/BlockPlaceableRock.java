@@ -13,15 +13,13 @@ import tgw.evolution.init.EvolutionHitBoxes;
 
 public class BlockPlaceableRock extends BlockPlaceableItem {
 
-    private static final VoxelShape SHAPE = EvolutionHitBoxes.GROUND_ROCK;
-
     public BlockPlaceableRock() {
         super(Block.Properties.create(Material.MISCELLANEOUS).sound(SoundType.STONE));
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        Vec3d vec3d = state.getOffset(worldIn, pos);
-        return SHAPE.withOffset(vec3d.x, vec3d.y, vec3d.z);
+    public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
+        Vec3d vec3d = state.getOffset(world, pos);
+        return EvolutionHitBoxes.GROUND_ROCK.withOffset(vec3d.x, vec3d.y, vec3d.z);
     }
 }

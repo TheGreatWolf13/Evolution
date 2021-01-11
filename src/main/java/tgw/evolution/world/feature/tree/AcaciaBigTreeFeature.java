@@ -10,7 +10,9 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.gen.IWorldGenerationReader;
 import net.minecraft.world.gen.feature.AbstractTreeFeature;
 import net.minecraft.world.gen.feature.NoFeatureConfig;
-import tgw.evolution.blocks.*;
+import tgw.evolution.blocks.BlockLeaves;
+import tgw.evolution.blocks.BlockSapling;
+import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.TreeUtils;
 
@@ -18,16 +20,82 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 
+import static tgw.evolution.init.EvolutionBStates.AXIS;
+import static tgw.evolution.init.EvolutionBStates.TREE;
+
 public class AcaciaBigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
 
-    private static final BlockState LOG = EvolutionBlocks.LOG_ACACIA.get()
-                                                                    .getDefaultState()
-                                                                    .with(BlockLog.TREE, true)
-                                                                    .with(BlockXYZAxis.AXIS, Direction.Axis.Y);
+    private static final BlockState LOG = EvolutionBlocks.LOG_ACACIA.get().getDefaultState().with(TREE, true).with(AXIS, Direction.Axis.Y);
     private static final BlockState LEAVES = EvolutionBlocks.LEAVES_ACACIA.get().getDefaultState();
 
     public AcaciaBigTreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> config, boolean doBlockNofityOnPlace) {
         super(config, doBlockNofityOnPlace);
+    }
+
+    private static boolean placeTreeOfHeight(IWorldGenerationReader worldIn, BlockPos pos, int height) {
+        int posX = pos.getX();
+        int posY = pos.getY();
+        int posZ = pos.getZ();
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
+        for (int l = 0; l <= height + 1; ++l) {
+            int i1 = 1;
+            if (l == 0) {
+                i1 = 0;
+            }
+            if (l >= height - 1) {
+                i1 = 2;
+            }
+            for (int j1 = -i1; j1 <= i1; ++j1) {
+                for (int k1 = -i1; k1 <= i1; ++k1) {
+                    if (!BlockSapling.canGrowInto(worldIn, blockpos$mutableblockpos.setPos(posX + j1, posY + l, posZ + k1))) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    private void makeCanopy(IWorldGenerationReader worldIn, BlockPos pos) {
+        int posX = pos.getX();
+        int posY = pos.getY();
+        int posZ = pos.getZ();
+        for (int i = -3; i <= 3; i++) {
+            for (int j = -3; j <= 3; j++) {
+                if ((Math.abs(i) != 3 || Math.abs(j) != 3) && (Math.abs(i) != 3 || Math.abs(j) != 2) && (Math.abs(i) != 2 || Math.abs(j) != 3)) {
+                    this.placeLeaves(worldIn, posX + i, posY, posZ + j);
+                }
+            }
+        }
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                this.placeLeaves(worldIn, posX + i, posY + 1, posZ + j);
+            }
+        }
+        this.placeLeaves(worldIn, posX - 2, posY + 1, posZ);
+        this.placeLeaves(worldIn, posX + 2, posY + 1, posZ);
+        this.placeLeaves(worldIn, posX, posY + 1, posZ + 2);
+        this.placeLeaves(worldIn, posX, posY + 1, posZ - 2);
+    }
+
+    private void makeTopCanopy(IWorldGenerationReader worldIn, BlockPos pos) {
+        int posX = pos.getX();
+        int posY = pos.getY();
+        int posZ = pos.getZ();
+        for (int i = -3; i <= 3; i++) {
+            for (int j = -3; j <= 3; j++) {
+                if (Math.abs(i) != 3 || Math.abs(j) != 3) {
+                    this.placeLeaves(worldIn, posX + i, posY, posZ + j);
+                }
+            }
+        }
+        for (int i = -2; i <= 2; i++) {
+            for (int j = -2; j <= 2; j++) {
+                if (Math.abs(i) != 2 || Math.abs(j) != 2) {
+                    this.placeLeaves(worldIn, posX + i, posY + 1, posZ + j);
+                }
+            }
+        }
     }
 
     @Override
@@ -40,12 +108,11 @@ public class AcaciaBigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         //tree within world height limit
         if (posY >= 1 && posY + trunkHeight + 1 < 256) {
             BlockPos posDown = position.down();
-            boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(posDown),
-                                                          (BlockSapling) EvolutionBlocks.SAPLING_ACACIA.get());
+            boolean isSoil = BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(posDown), EvolutionBlocks.SAPLING_ACACIA.get());
             if (!isSoil) {
                 return false;
             }
-            if (!AcaciaBigTreeFeature.placeTreeOfHeight(worldIn, position, trunkHeight)) {
+            if (!placeTreeOfHeight(worldIn, position, trunkHeight)) {
                 return false;
             }
             //the NW corner sapling grows first
@@ -161,7 +228,7 @@ public class AcaciaBigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                     smallStartPos = smallStartPos.west();
                 }
             }
-            else if (chooseTrunkToShorten == 3) {
+            else {
                 shortenTrunk = shortenTrunk.east().south();
                 if (rand.nextBoolean()) {
                     smallMainInc = Direction.SOUTH;
@@ -314,85 +381,19 @@ public class AcaciaBigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         return false;
     }
 
-    private static boolean placeTreeOfHeight(IWorldGenerationReader worldIn, BlockPos pos, int height) {
-        int posX = pos.getX();
-        int posY = pos.getY();
-        int posZ = pos.getZ();
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
-        for (int l = 0; l <= height + 1; ++l) {
-            int i1 = 1;
-            if (l == 0) {
-                i1 = 0;
-            }
-            if (l >= height - 1) {
-                i1 = 2;
-            }
-            for (int j1 = -i1; j1 <= i1; ++j1) {
-                for (int k1 = -i1; k1 <= i1; ++k1) {
-                    if (!BlockSapling.canGrowInto(worldIn, blockpos$mutableblockpos.setPos(posX + j1, posY + l, posZ + k1))) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-
-    private void placeTrunk(Set<BlockPos> changedBlocks, IWorldGenerationReader iWorld, BlockPos pos, MutableBoundingBox box) {
-        BlockState state = ((IBlockReader) iWorld).getBlockState(pos);
-        if (state.isAir((IBlockReader) iWorld, pos) || state.getBlock() instanceof BlockLeaves) {
-            if (BlockSapling.canGrowInto(iWorld, pos)) {
-                this.setLogState(changedBlocks, iWorld, pos, LOG, box);
-            }
-        }
-    }
-
-    private void makeCanopy(IWorldGenerationReader worldIn, BlockPos pos) {
-        int posX = pos.getX();
-        int posY = pos.getY();
-        int posZ = pos.getZ();
-        for (int i = -3; i <= 3; i++) {
-            for (int j = -3; j <= 3; j++) {
-                if ((Math.abs(i) != 3 || Math.abs(j) != 3) && (Math.abs(i) != 3 || Math.abs(j) != 2) && (Math.abs(i) != 2 || Math.abs(j) != 3)) {
-                    this.placeLeaves(worldIn, posX + i, posY, posZ + j);
-                }
-            }
-        }
-        for (int i = -1; i <= 1; i++) {
-            for (int j = -1; j <= 1; j++) {
-                this.placeLeaves(worldIn, posX + i, posY + 1, posZ + j);
-            }
-        }
-        this.placeLeaves(worldIn, posX - 2, posY + 1, posZ);
-        this.placeLeaves(worldIn, posX + 2, posY + 1, posZ);
-        this.placeLeaves(worldIn, posX, posY + 1, posZ + 2);
-        this.placeLeaves(worldIn, posX, posY + 1, posZ - 2);
-    }
-
-    private void makeTopCanopy(IWorldGenerationReader worldIn, BlockPos pos) {
-        int posX = pos.getX();
-        int posY = pos.getY();
-        int posZ = pos.getZ();
-        for (int i = -3; i <= 3; i++) {
-            for (int j = -3; j <= 3; j++) {
-                if (Math.abs(i) != 3 || Math.abs(j) != 3) {
-                    this.placeLeaves(worldIn, posX + i, posY, posZ + j);
-                }
-            }
-        }
-        for (int i = -2; i <= 2; i++) {
-            for (int j = -2; j <= 2; j++) {
-                if (Math.abs(i) != 2 || Math.abs(j) != 2) {
-                    this.placeLeaves(worldIn, posX + i, posY + 1, posZ + j);
-                }
-            }
-        }
-    }
-
-    private void placeLeaves(IWorldGenerationReader iWorld, int posX, int posY, int posZ) {
+    private void placeLeaves(IWorldGenerationReader world, int posX, int posY, int posZ) {
         BlockPos leafPos = new BlockPos(posX, posY, posZ);
-        if (((IBlockReader) iWorld).getBlockState(leafPos).isAir((IBlockReader) iWorld, leafPos)) {
-            this.setBlockState(iWorld, leafPos, LEAVES);
+        if (((IBlockReader) world).getBlockState(leafPos).isAir((IBlockReader) world, leafPos)) {
+            this.setBlockState(world, leafPos, LEAVES);
+        }
+    }
+
+    private void placeTrunk(Set<BlockPos> changedBlocks, IWorldGenerationReader world, BlockPos pos, MutableBoundingBox box) {
+        BlockState state = ((IBlockReader) world).getBlockState(pos);
+        if (state.isAir((IBlockReader) world, pos) || state.getBlock() instanceof BlockLeaves) {
+            if (BlockSapling.canGrowInto(world, pos)) {
+                this.setLogState(changedBlocks, world, pos, LOG, box);
+            }
         }
     }
 }

@@ -42,6 +42,23 @@ public class DirectionDiagonalList {
         }
     }
 
+    public void clear() {
+        this.current = 0;
+    }
+
+    public DirectionDiagonal getRandomAndRemove(Random random) {
+        if (this.current == 0) {
+            throw new IllegalStateException("List is empty, cannot get a random Direction");
+        }
+        int index = random.nextInt(this.current);
+        DirectionDiagonal diagonal = this.values[index];
+        this.current--;
+        if (index != 3) {
+            System.arraycopy(this.values, index + 1, this.values, index, 3 - index);
+        }
+        return diagonal;
+    }
+
     public boolean isEmpty() {
         return this.current == 0;
     }
@@ -61,29 +78,5 @@ public class DirectionDiagonalList {
 
     public int size() {
         return this.current;
-    }
-
-    public DirectionDiagonal getRandom(Random random) {
-        if (this.current == 0) {
-            throw new IllegalStateException("List is empty, cannot get a random Direction");
-        }
-        return this.values[random.nextInt(this.current)];
-    }
-
-    public DirectionDiagonal getRandomAndRemove(Random random) {
-        if (this.current == 0) {
-            throw new IllegalStateException("List is empty, cannot get a random Direction");
-        }
-        int index = random.nextInt(this.current);
-        DirectionDiagonal diagonal = this.values[index];
-        this.current--;
-        if (index != 3) {
-            System.arraycopy(this.values, index + 1, this.values, index, 3 - index);
-        }
-        return diagonal;
-    }
-
-    public void clear() {
-        this.current = 0;
     }
 }

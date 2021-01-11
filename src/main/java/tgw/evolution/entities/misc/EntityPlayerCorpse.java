@@ -361,6 +361,9 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     }
 
     public void tryDespawn() {
+        if (!this.playersInteracting.isEmpty()) {
+            return;
+        }
         for (int i = 0; i < this.itemHandler.getSlots(); i++) {
             if (!this.itemHandler.getStackInSlot(i).isEmpty()) {
                 return;

@@ -23,13 +23,18 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.network.FMLPlayMessages;
 import net.minecraftforge.fml.network.NetworkHooks;
 import tgw.evolution.Evolution;
-import tgw.evolution.blocks.*;
+import tgw.evolution.blocks.BlockClimbingStake;
+import tgw.evolution.blocks.BlockUtils;
+import tgw.evolution.blocks.IReplaceable;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionItems;
 
 import javax.annotation.Nullable;
+
+import static tgw.evolution.init.EvolutionBStates.ATTACHED;
+import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
 public class EntityHook extends EntityGenericProjectile {
 
@@ -64,7 +69,7 @@ public class EntityHook extends EntityGenericProjectile {
                 return ropeCount;
             }
             if (currentMovement == Direction.DOWN && stateTemp.getBlock() == EvolutionBlocks.ROPE.get()) {
-                if (stateTemp.get(BlockRope.DIRECTION) == support) {
+                if (stateTemp.get(DIRECTION_HORIZONTAL) == support) {
                     continue;
                 }
                 return ropeCount;
@@ -75,7 +80,7 @@ public class EntityHook extends EntityGenericProjectile {
                 }
             }
             if (currentMovement != Direction.DOWN && stateTemp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
-                if (stateTemp.get(BlockRopeGround.ORIGIN) == support) {
+                if (stateTemp.get(DIRECTION_HORIZONTAL) == support) {
                     continue;
                 }
                 return ropeCount;
@@ -84,7 +89,7 @@ public class EntityHook extends EntityGenericProjectile {
                 currentMovement = Direction.DOWN;
                 stateTemp = world.getBlockState(mutablePos.move(Direction.DOWN));
                 if (stateTemp.getBlock() == EvolutionBlocks.ROPE.get()) {
-                    if (stateTemp.get(BlockRope.DIRECTION) == support) {
+                    if (stateTemp.get(DIRECTION_HORIZONTAL) == support) {
                         continue;
                     }
                     return ropeCount;
@@ -95,7 +100,7 @@ public class EntityHook extends EntityGenericProjectile {
                 if (stateTemp.getBlock() instanceof IReplaceable) {
                     BlockUtils.dropItemStack(world, mutablePos, ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp));
                 }
-                world.setBlockState(mutablePos, EvolutionBlocks.ROPE.get().getDefaultState().with(BlockRope.DIRECTION, support));
+                world.setBlockState(mutablePos, EvolutionBlocks.ROPE.get().getDefaultState().with(DIRECTION_HORIZONTAL, support));
                 ropeCount++;
                 continue;
             }
@@ -103,11 +108,11 @@ public class EntityHook extends EntityGenericProjectile {
                 BlockUtils.dropItemStack(world, mutablePos, ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp));
             }
             if (currentMovement == Direction.DOWN) {
-                world.setBlockState(mutablePos, EvolutionBlocks.ROPE.get().getDefaultState().with(BlockRope.DIRECTION, support));
+                world.setBlockState(mutablePos, EvolutionBlocks.ROPE.get().getDefaultState().with(DIRECTION_HORIZONTAL, support));
                 ropeCount++;
                 continue;
             }
-            world.setBlockState(mutablePos, EvolutionBlocks.GROUND_ROPE.get().getDefaultState().with(BlockRopeGround.ORIGIN, support));
+            world.setBlockState(mutablePos, EvolutionBlocks.GROUND_ROPE.get().getDefaultState().with(DIRECTION_HORIZONTAL, support));
             ropeCount++;
         }
         return ropeCount;
@@ -171,6 +176,9 @@ public class EntityHook extends EntityGenericProjectile {
             this.tryPlaceBlock();
             this.remove();
         }
+        if (this.ticksInAir > 10) {
+            this.dealtDamage = false;
+        }
     }
 
     @Override
@@ -182,9 +190,7 @@ public class EntityHook extends EntityGenericProjectile {
         BlockPos down = pos.down();
         if (this.world.isAirBlock(pos) && Block.hasSolidSide(this.world.getBlockState(down), this.world, down, Direction.UP)) {
             this.world.setBlockState(this.getPosition(),
-                                     EvolutionBlocks.CLIMBING_HOOK.get()
-                                                                  .getDefaultState()
-                                                                  .with(BlockClimbingHook.ROPE_DIRECTION, this.facing.getOpposite()));
+                                     EvolutionBlocks.CLIMBING_HOOK.get().getDefaultState().with(DIRECTION_HORIZONTAL, this.facing.getOpposite()));
             LivingEntity shooter = this.getShooter();
             if (this.getShooter() instanceof PlayerEntity) {
                 ItemStack stack = shooter.getHeldItemOffhand();
@@ -196,8 +202,8 @@ public class EntityHook extends EntityGenericProjectile {
                         this.world.setBlockState(this.getPosition(),
                                                  EvolutionBlocks.CLIMBING_HOOK.get()
                                                                               .getDefaultState()
-                                                                              .with(BlockClimbingHook.ROPE_DIRECTION, this.facing.getOpposite())
-                                                                              .with(BlockClimbingHook.ATTACHED, true));
+                                                                              .with(DIRECTION_HORIZONTAL, this.facing.getOpposite())
+                                                                              .with(ATTACHED, true));
                     }
                 }
             }

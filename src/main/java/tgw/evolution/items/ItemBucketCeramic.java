@@ -27,13 +27,14 @@ public class ItemBucketCeramic extends ItemGenericBucket {
         return stack.getTag().getInt("Amount");
     }
 
-    @SuppressWarnings("SwitchStatementWithTooFewBranches")
     @Override
     public Item getFullBucket(Fluid fluid) {
         if (fluid instanceof FluidGeneric) {
             switch (((FluidGeneric) fluid).getId()) {
                 case FluidGeneric.FRESH_WATER:
                     return EvolutionItems.bucket_ceramic_fresh_water.get();
+                case FluidGeneric.SALT_WATER:
+                    return EvolutionItems.bucket_ceramic_salt_water.get();
             }
         }
         return EvolutionItems.bucket_ceramic_empty.get();

@@ -4,17 +4,15 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.StateContainer.Builder;
-import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
 
-public abstract class BlockGenericSlowable extends BlockGravity implements ISoftBlock {
+import static tgw.evolution.init.EvolutionBStates.SNOWY;
 
-    public static final BooleanProperty SNOWY = BlockStateProperties.SNOWY;
+public abstract class BlockGenericSlowable extends BlockGravity implements ISoftBlock {
 
     protected BlockGenericSlowable(Block.Properties builder, int mass) {
         super(builder, mass);
@@ -57,17 +55,17 @@ public abstract class BlockGenericSlowable extends BlockGravity implements ISoft
     }
 
     @Override
-    public BlockState updatePostPlacement(BlockState stateIn,
+    public BlockState updatePostPlacement(BlockState state,
                                           Direction facing,
                                           BlockState facingState,
-                                          IWorld worldIn,
+                                          IWorld world,
                                           BlockPos currentPos,
                                           BlockPos facingPos) {
         if (facing != Direction.UP) {
-            return super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+            return super.updatePostPlacement(state, facing, facingState, world, currentPos, facingPos);
         }
         Block block = facingState.getBlock();
         //TODO proper snow
-        return stateIn.with(SNOWY, block == Blocks.SNOW_BLOCK || block == Blocks.SNOW);
+        return state.with(SNOWY, block == Blocks.SNOW_BLOCK || block == Blocks.SNOW);
     }
 }

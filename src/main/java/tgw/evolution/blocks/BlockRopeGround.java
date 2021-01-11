@@ -6,11 +6,11 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.state.DirectionProperty;
 import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
+import net.minecraft.util.Mirror;
+import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.shapes.ISelectionContext;
@@ -22,13 +22,13 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 
-public class BlockRopeGround extends Block implements IReplaceable {
+import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
-    public static final DirectionProperty ORIGIN = BlockStateProperties.HORIZONTAL_FACING;
+public class BlockRopeGround extends Block implements IReplaceable {
 
     public BlockRopeGround() {
         super(Properties.create(Material.MISCELLANEOUS).hardnessAndResistance(0).sound(SoundType.CLOTH).doesNotBlockMovement());
-        this.setDefaultState(this.getDefaultState().with(ORIGIN, Direction.NORTH));
+        this.setDefaultState(this.getDefaultState().with(DIRECTION_HORIZONTAL, Direction.NORTH));
     }
 
     public static boolean isSupported(IWorldReader world, BlockPos pos, Direction facing) {
@@ -43,7 +43,7 @@ public class BlockRopeGround extends Block implements IReplaceable {
                 return ((IRopeSupport) currentState.getBlock()).getRopeLength() >= ropeCount;
             }
             if (currentState.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
-                if (currentState.get(ORIGIN) == facing) {
+                if (currentState.get(DIRECTION_HORIZONTAL) == facing) {
                     continue;
                 }
                 return false;
@@ -54,7 +54,7 @@ public class BlockRopeGround extends Block implements IReplaceable {
     }
 
     @Override
-    public boolean canBeReplacedByLiquid(BlockState state) {
+    public boolean canBeReplacedByFluid(BlockState state) {
         return true;
     }
 
@@ -65,7 +65,7 @@ public class BlockRopeGround extends Block implements IReplaceable {
 
     @Override
     protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(ORIGIN);
+        builder.add(DIRECTION_HORIZONTAL);
     }
 
     @Override
@@ -84,8 +84,8 @@ public class BlockRopeGround extends Block implements IReplaceable {
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        return state.get(ORIGIN).getAxis() == Direction.Axis.X ? EvolutionHitBoxes.ROPE_GROUND_X : EvolutionHitBoxes.ROPE_GROUND_Z;
+    public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
+        return state.get(DIRECTION_HORIZONTAL).getAxis() == Direction.Axis.X ? EvolutionHitBoxes.ROPE_GROUND_X : EvolutionHitBoxes.ROPE_GROUND_Z;
     }
 
     @Override
@@ -94,30 +94,40 @@ public class BlockRopeGround extends Block implements IReplaceable {
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        if (!isSupported(worldIn, pos, state.get(ORIGIN))) {
+    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
+        if (!isSupported(world, pos, state.get(DIRECTION_HORIZONTAL))) {
             return false;
         }
-        return !worldIn.isAirBlock(pos.down());
+        return !world.isAirBlock(pos.down());
     }
 
     @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnDrops(state, worldIn, pos);
-                worldIn.removeBlock(pos, false);
+    public BlockState mirror(BlockState state, Mirror mirror) {
+        return state.with(DIRECTION_HORIZONTAL, mirror.mirror(state.get(DIRECTION_HORIZONTAL)));
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!world.isRemote) {
+            if (!state.isValidPosition(world, pos)) {
+                spawnDrops(state, world, pos);
+                world.removeBlock(pos, false);
             }
         }
     }
 
     @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!(worldIn.getBlockState(pos.offset(state.get(ORIGIN).getOpposite())).getBlock() == this)) {
-                BlockPos offsetPos = pos.down().offset(state.get(ORIGIN).getOpposite());
-                worldIn.getPendingBlockTicks().scheduleTick(offsetPos, worldIn.getBlockState(offsetPos).getBlock(), 2);
+    public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!world.isRemote) {
+            Direction opposite = state.get(DIRECTION_HORIZONTAL).getOpposite();
+            if (!(world.getBlockState(pos.offset(opposite)).getBlock() == this)) {
+                BlockUtils.scheduleBlockTick(world, pos.down().offset(opposite), 2);
             }
         }
+    }
+
+    @Override
+    public BlockState rotate(BlockState state, Rotation rot) {
+        return state.with(DIRECTION_HORIZONTAL, rot.rotate(state.get(DIRECTION_HORIZONTAL)));
     }
 }

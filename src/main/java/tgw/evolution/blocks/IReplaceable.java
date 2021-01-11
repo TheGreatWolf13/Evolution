@@ -7,7 +7,7 @@ import net.minecraft.world.World;
 
 public interface IReplaceable {
 
-    boolean canBeReplacedByLiquid(BlockState state);
+    boolean canBeReplacedByFluid(BlockState state);
 
     boolean canBeReplacedByRope(BlockState state);
 

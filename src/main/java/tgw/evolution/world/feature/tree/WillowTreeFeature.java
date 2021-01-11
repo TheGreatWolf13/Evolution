@@ -13,23 +13,37 @@ import net.minecraft.world.gen.IWorldGenerationReader;
 import net.minecraft.world.gen.feature.AbstractTreeFeature;
 import net.minecraft.world.gen.feature.NoFeatureConfig;
 import tgw.evolution.blocks.BlockLeaves;
-import tgw.evolution.blocks.BlockLog;
-import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 
+import static tgw.evolution.init.EvolutionBStates.TREE;
+
 public class WillowTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
 
-    private final BlockState LOG = EvolutionBlocks.LOG_WILLOW.get().getDefaultState().with(BlockLog.TREE, true);
     private final BlockState LEAVES = EvolutionBlocks.LEAVES_WILLOW.get().getDefaultState();
+    private final BlockState LOG = EvolutionBlocks.LOG_WILLOW.get().getDefaultState().with(TREE, true);
 
     public WillowTreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> config, boolean notify) {
         super(config, notify);
+    }
+
+    private void growVines(IWorldGenerationReader worldIn, Random rand, BlockPos pos, BooleanProperty direction) {
+        this.setBlockState(worldIn, pos, Blocks.VINE.getDefaultState().with(direction, true));
+        int vines = 0;
+        while (((IBlockReader) worldIn).getBlockState(pos.down()).isAir((IBlockReader) worldIn, pos.down())) {
+            if (vines >= 2 + rand.nextInt(4)) {
+                return;
+            }
+            this.setBlockState(worldIn, pos, Blocks.VINE.getDefaultState().with(direction, true));
+            ++vines;
+            pos = pos.down();
+        }
     }
 
     @Override
@@ -38,7 +52,7 @@ public class WillowTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         int j1 = pos.getY();
         BlockState below = ((IBlockReader) worldIn).getBlockState(pos.down());
         boolean flag = true;
-        if (!(pos.getY() >= 1 && height + 1 <= 256)) {
+        if (!(pos.getY() >= 1)) {
             flag = false;
         }
         int k1;
@@ -69,13 +83,13 @@ public class WillowTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                 ++j1;
             }
         }
-        if (!BlockUtils.canSustainSapling(below, (BlockSapling) EvolutionBlocks.SAPLING_WILLOW.get())) {
+        if (!BlockUtils.canSustainSapling(below, EvolutionBlocks.SAPLING_WILLOW.get())) {
             return false;
         }
         if (!flag) {
             return false;
         }
-        ArrayList<BlockPos> vineGrows = new ArrayList<>();
+        List<BlockPos> vineGrows = new ArrayList<>();
         int angle = 0;
         BlockPos.MutableBlockPos vinePos = new BlockPos.MutableBlockPos();
         BlockPos.MutableBlockPos basePos = new BlockPos.MutableBlockPos();
@@ -155,7 +169,9 @@ public class WillowTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                     BlockState state = ((IBlockReader) worldIn).getBlockState(leafPos);
                     int taxicab = Math.abs(i2) + Math.abs(j2) + Math.abs(k2);
                     int dist = i2 * i2 + j2 * j2 + k2 * k2;
-                    if (dist >= leafRangeSqLess && (dist >= leafRangeSq || rand.nextInt(3) != 0) || taxicab > 4 || !BlockUtils.isReplaceable(state) && !(state.getBlock() instanceof BlockLeaves)) {
+                    if (dist >= leafRangeSqLess && (dist >= leafRangeSq || rand.nextInt(3) != 0) ||
+                        taxicab > 4 ||
+                        !BlockUtils.isReplaceable(state) && !(state.getBlock() instanceof BlockLeaves)) {
                         continue;
                     }
                     this.setBlockState(worldIn, leafPos, this.LEAVES);
@@ -207,19 +223,6 @@ public class WillowTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                 }
             }
             ++i1;
-        }
-    }
-
-    private void growVines(IWorldGenerationReader worldIn, Random rand, BlockPos pos, BooleanProperty direction) {
-        this.setBlockState(worldIn, pos, Blocks.VINE.getDefaultState().with(direction, true));
-        int vines = 0;
-        while (((IBlockReader) worldIn).getBlockState(pos.down()).isAir((IBlockReader) worldIn, pos.down())) {
-            if (vines >= 2 + rand.nextInt(4)) {
-                return;
-            }
-            this.setBlockState(worldIn, pos, Blocks.VINE.getDefaultState().with(direction, true));
-            ++vines;
-            pos = pos.down();
         }
     }
 }

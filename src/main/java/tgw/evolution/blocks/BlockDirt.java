@@ -16,23 +16,8 @@ public class BlockDirt extends BlockGravity implements IStoneVariant {
     private EnumRockVariant variant;
 
     public BlockDirt(EnumRockNames name) {
-        super(Block.Properties.create(Material.EARTH).hardnessAndResistance(2F, 0.5F).sound(SoundType.GROUND), name.getMass() / 4);
+        super(Block.Properties.create(Material.EARTH).hardnessAndResistance(2.0F, 0.5F).sound(SoundType.GROUND), name.getMass() / 4);
         this.name = name;
-    }
-
-    @Override
-    public EnumRockVariant getVariant() {
-        return this.variant;
-    }
-
-    @Override
-    public void setVariant(EnumRockVariant variant) {
-        this.variant = variant;
-    }
-
-    @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
     }
 
     @Override
@@ -46,11 +31,26 @@ public class BlockDirt extends BlockGravity implements IStoneVariant {
     }
 
     @Override
-    public boolean preventSlope(World worldIn, BlockPos pos) {
+    public EnumRockNames getStoneName() {
+        return this.name;
+    }
+
+    @Override
+    public EnumRockVariant getVariant() {
+        return this.variant;
+    }
+
+    @Override
+    public void setVariant(EnumRockVariant variant) {
+        this.variant = variant;
+    }
+
+    @Override
+    public boolean preventSlope(World world, BlockPos pos) {
         BlockPos up = pos.up();
-        if (worldIn.getBlockState(up).getBlock() == this.variant.getGrass()) {
+        if (world.getBlockState(up).getBlock() == this.variant.getGrass()) {
             return true;
         }
-        return worldIn.getBlockState(up).getBlock() == this && worldIn.getBlockState(pos.up(2)).getBlock() == this.variant.getGrass();
+        return world.getBlockState(up).getBlock() == this && world.getBlockState(pos.up(2)).getBlock() == this.variant.getGrass();
     }
 }

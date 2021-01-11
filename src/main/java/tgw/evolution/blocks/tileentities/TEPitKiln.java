@@ -5,7 +5,6 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraftforge.common.util.Constants;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionTileEntities;
 import tgw.evolution.util.DirectionDiagonal;
@@ -15,15 +14,15 @@ import javax.annotation.Nullable;
 
 public class TEPitKiln extends TileEntity {
 
-    public boolean burning;
-    public boolean finished;
-    public byte[] logs = {-1, -1, -1, -1, -1, -1, -1, -1};
-    public ItemStack neStack = ItemStack.EMPTY;
-    public ItemStack nwStack = ItemStack.EMPTY;
-    public ItemStack seStack = ItemStack.EMPTY;
-    public boolean single;
-    public ItemStack swStack = ItemStack.EMPTY;
-    public long timeStart = -1;
+    private boolean burning;
+    private boolean finished;
+    private byte[] logs = {-1, -1, -1, -1, -1, -1, -1, -1};
+    private ItemStack neStack = ItemStack.EMPTY;
+    private ItemStack nwStack = ItemStack.EMPTY;
+    private ItemStack seStack = ItemStack.EMPTY;
+    private boolean single;
+    private ItemStack swStack = ItemStack.EMPTY;
+    private long timeStart = -1;
 
     public TEPitKiln() {
         super(EvolutionTileEntities.TE_PIT_KILN.get());
@@ -53,6 +52,14 @@ public class TEPitKiln extends TileEntity {
         this.markDirty();
     }
 
+    public ItemStack getLogStack(int index) {
+        return new ItemStack(EnumWoodVariant.byId(this.logs[index]).getLog());
+    }
+
+    public byte[] getLogs() {
+        return this.logs;
+    }
+
     public ItemStack getStack(DirectionDiagonal direction) {
         switch (direction) {
             case NORTH_EAST:
@@ -67,6 +74,10 @@ public class TEPitKiln extends TileEntity {
         throw new IllegalStateException("This enum does not exist: " + direction);
     }
 
+    public long getTimeStart() {
+        return this.timeStart;
+    }
+
     @Nullable
     @Override
     public SUpdateTileEntityPacket getUpdatePacket() {
@@ -76,6 +87,18 @@ public class TEPitKiln extends TileEntity {
     @Override
     public CompoundNBT getUpdateTag() {
         return this.write(new CompoundNBT());
+    }
+
+    public boolean hasFinished() {
+        return this.finished;
+    }
+
+    public boolean isSingle() {
+        return this.single;
+    }
+
+    public void setSingle(boolean single) {
+        this.single = single;
     }
 
     @Override
@@ -125,53 +148,50 @@ public class TEPitKiln extends TileEntity {
         this.markDirty();
     }
 
-    public void sendRenderUpdate() {
-        super.markDirty();
-        this.world.notifyBlockUpdate(this.pos,
-                                     this.world.getBlockState(this.pos),
-                                     this.world.getBlockState(this.pos),
-                                     Constants.BlockFlags.RERENDER_MAIN_THREAD);
+    public void setLog(int index, byte id) {
+        this.logs[index] = id;
+        TEUtils.sendRenderUpdate(this);
     }
 
-    public void setNeStack(ItemStack stack) {
+    public void setNEStack(ItemStack stack) {
         this.neStack = stack.copy();
         this.neStack.setCount(1);
         stack.shrink(1);
     }
 
-    public void setNwStack(ItemStack stack) {
+    public void setNWStack(ItemStack stack) {
         this.nwStack = stack.copy();
         this.nwStack.setCount(1);
         stack.shrink(1);
     }
 
-    public void setSeStack(ItemStack stack) {
+    public void setSEStack(ItemStack stack) {
         this.seStack = stack.copy();
         this.seStack.setCount(1);
+        stack.shrink(1);
+    }
+
+    public void setSWStack(ItemStack stack) {
+        this.swStack = stack.copy();
+        this.swStack.setCount(1);
         stack.shrink(1);
     }
 
     public void setStack(ItemStack stack, DirectionDiagonal diagonal) {
         switch (diagonal) {
             case NORTH_WEST:
-                this.setNwStack(stack);
+                this.setNWStack(stack);
                 break;
             case NORTH_EAST:
-                this.setNeStack(stack);
+                this.setNEStack(stack);
                 break;
             case SOUTH_WEST:
-                this.setSwStack(stack);
+                this.setSWStack(stack);
                 break;
             case SOUTH_EAST:
-                this.setSeStack(stack);
+                this.setSEStack(stack);
                 break;
         }
-    }
-
-    public void setSwStack(ItemStack stack) {
-        this.swStack = stack.copy();
-        this.swStack.setCount(1);
-        stack.shrink(1);
     }
 
     public void start() {

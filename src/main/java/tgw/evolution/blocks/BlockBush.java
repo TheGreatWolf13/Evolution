@@ -28,7 +28,7 @@ public class BlockBush extends Block implements IPlantable, IReplaceable {
     }
 
     @Override
-    public boolean canBeReplacedByLiquid(BlockState state) {
+    public boolean canBeReplacedByFluid(BlockState state) {
         return true;
     }
 
@@ -43,7 +43,7 @@ public class BlockBush extends Block implements IPlantable, IReplaceable {
     }
 
     @Override
-    public int getOpacity(BlockState state, IBlockReader worldIn, BlockPos pos) {
+    public int getOpacity(BlockState state, IBlockReader world, BlockPos pos) {
         return 0;
     }
 
@@ -72,23 +72,23 @@ public class BlockBush extends Block implements IPlantable, IReplaceable {
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
+    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
         BlockPos blockpos = pos.down();
         if (state.getBlock() == this) {
-            return BlockUtils.canSustainSapling(worldIn.getBlockState(blockpos), this);
+            return BlockUtils.canSustainSapling(world.getBlockState(blockpos), this);
         }
-        return isValidGround(worldIn.getBlockState(blockpos));
+        return isValidGround(world.getBlockState(blockpos));
     }
 
     @Override
-    public BlockState updatePostPlacement(BlockState stateIn,
+    public BlockState updatePostPlacement(BlockState state,
                                           Direction facing,
                                           BlockState facingState,
                                           IWorld worldIn,
                                           BlockPos currentPos,
                                           BlockPos facingPos) {
-        return !stateIn.isValidPosition(worldIn, currentPos) ?
+        return !state.isValidPosition(worldIn, currentPos) ?
                Blocks.AIR.getDefaultState() :
-               super.updatePostPlacement(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+               super.updatePostPlacement(state, facing, facingState, worldIn, currentPos, facingPos);
     }
 }

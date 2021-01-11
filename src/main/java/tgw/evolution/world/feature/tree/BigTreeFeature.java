@@ -12,10 +12,8 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.gen.IWorldGenerationReader;
 import net.minecraft.world.gen.feature.AbstractTreeFeature;
 import net.minecraft.world.gen.feature.NoFeatureConfig;
-import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.blocks.BlockSapling;
 import tgw.evolution.blocks.BlockUtils;
-import tgw.evolution.blocks.BlockXYZAxis;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.TreeUtils;
 
@@ -25,29 +23,16 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 
+import static tgw.evolution.init.EvolutionBStates.AXIS;
+import static tgw.evolution.init.EvolutionBStates.TREE;
+
 public class BigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
 
-    private static final BlockState LOG = EvolutionBlocks.LOG_OAK.get().getDefaultState().with(BlockLog.TREE, true);
+    private static final BlockState LOG = EvolutionBlocks.LOG_OAK.get().getDefaultState().with(TREE, true);
     private static final BlockState LEAVES = EvolutionBlocks.LEAVES_OAK.get().getDefaultState();
 
     public BigTreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> configFactory, boolean notify) {
         super(configFactory, notify);
-    }
-
-    private static float treeShape(int p_208527_1_, int p_208527_2_) {
-        if (p_208527_2_ < p_208527_1_ * 0.3F) {
-            return -1.0F;
-        }
-        float f = p_208527_1_ / 2.0F;
-        float f1 = f - p_208527_2_;
-        float f2 = MathHelper.sqrt(f * f - f1 * f1);
-        if (f1 == 0.0F) {
-            f2 = f;
-        }
-        else if (Math.abs(f1) >= f) {
-            return 0.0F;
-        }
-        return f2 * 0.5F;
     }
 
     private static float foliageShape(int y) {
@@ -70,23 +55,48 @@ public class BigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         return Math.max(j, i);
     }
 
-    private static Direction.Axis getLoxAxis(BlockPos p_197170_1_, BlockPos p_197170_2_) {
-        int i = Math.abs(p_197170_2_.getX() - p_197170_1_.getX());
-        int j = Math.abs(p_197170_2_.getZ() - p_197170_1_.getZ());
-        int k = Math.max(i, j);
-        if (k > 0) {
-            if (i == k) {
+    private static Direction.Axis getLoxAxis(BlockPos pos0, BlockPos pos1) {
+        int deltaX = Math.abs(pos1.getX() - pos0.getX());
+        int deltaZ = Math.abs(pos1.getZ() - pos0.getZ());
+        int maxDelta = Math.max(deltaX, deltaZ);
+        if (maxDelta > 0) {
+            if (deltaX == maxDelta) {
                 return Direction.Axis.X;
             }
-            if (j == k) {
-                return Direction.Axis.Z;
-            }
+            return Direction.Axis.Z;
         }
         return Direction.Axis.Y;
     }
 
+    private static float treeShape(int p_208527_1_, int p_208527_2_) {
+        if (p_208527_2_ < p_208527_1_ * 0.3F) {
+            return -1.0F;
+        }
+        float f = p_208527_1_ / 2.0F;
+        float f1 = f - p_208527_2_;
+        float f2 = MathHelper.sqrt(f * f - f1 * f1);
+        if (f1 == 0.0F) {
+            f2 = f;
+        }
+        else if (Math.abs(f1) >= f) {
+            return 0.0F;
+        }
+        return f2 * 0.5F;
+    }
+
     private static boolean trimBranches(int p_208522_1_, int p_208522_2_) {
         return p_208522_2_ >= p_208522_1_ * 0.2D;
+    }
+
+    private int checkLocation(Set<BlockPos> changedBlocks, IWorldGenerationReader worldIn, BlockPos pos, int p_208528_4_, MutableBoundingBox box) {
+        if (!BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(pos.down()), EvolutionBlocks.SAPLING_OAK.get())) {
+            return -1;
+        }
+        int i = this.makeLimb(changedBlocks, worldIn, pos, pos.up(p_208528_4_ - 1), false, box);
+        if (i == -1) {
+            return p_208528_4_;
+        }
+        return i < 6 ? -1 : i;
     }
 
     private void crossSection(IWorldGenerationReader worldIn, BlockPos pos, float p_208529_3_) {
@@ -106,7 +116,32 @@ public class BigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
 
     private void foliageCluster(IWorldGenerationReader worldIn, BlockPos p_202393_2_) {
         for (int i = 0; i < 5; ++i) {
-            this.crossSection(worldIn, p_202393_2_.up(i), BigTreeFeature.foliageShape(i));
+            this.crossSection(worldIn, p_202393_2_.up(i), foliageShape(i));
+        }
+    }
+
+    private void makeBranches(Set<BlockPos> changedBlocks,
+                              IWorldGenerationReader world,
+                              int p_208524_3_,
+                              BlockPos pos,
+                              List<BigTreeFeature.FoliageCoordinates> list,
+                              MutableBoundingBox box) {
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        for (BigTreeFeature.FoliageCoordinates foliageCoordinates : list) {
+            int i = foliageCoordinates.getBranchBase();
+            mutablePos.setPos(pos.getX(), i, pos.getZ());
+            //noinspection EqualsBetweenInconvertibleTypes
+            if (!mutablePos.equals(foliageCoordinates) && trimBranches(p_208524_3_, i - pos.getY())) {
+                this.makeLimb(changedBlocks, world, mutablePos, foliageCoordinates, true, box);
+            }
+        }
+    }
+
+    private void makeFoliage(IWorldGenerationReader worldIn, int p_208525_2_, BlockPos pos, List<BigTreeFeature.FoliageCoordinates> list) {
+        for (BigTreeFeature.FoliageCoordinates bigtreefeature$foliagecoordinates : list) {
+            if (trimBranches(p_208525_2_, bigtreefeature$foliagecoordinates.getBranchBase() - pos.getY())) {
+                this.foliageCluster(worldIn, bigtreefeature$foliagecoordinates);
+            }
         }
     }
 
@@ -120,18 +155,14 @@ public class BigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
             return -1;
         }
         BlockPos blockpos = p_208523_4_.add(-p_208523_3_.getX(), -p_208523_3_.getY(), -p_208523_3_.getZ());
-        int i = BigTreeFeature.getGreatestDistance(blockpos);
-        float f = (float) blockpos.getX() / (float) i;
-        float f1 = (float) blockpos.getY() / (float) i;
-        float f2 = (float) blockpos.getZ() / (float) i;
+        int i = getGreatestDistance(blockpos);
+        float f = (float) blockpos.getX() / i;
+        float f1 = (float) blockpos.getY() / i;
+        float f2 = (float) blockpos.getZ() / i;
         for (int j = 0; j <= i; ++j) {
             BlockPos blockpos1 = p_208523_3_.add(0.5F + j * f, 0.5F + j * f1, 0.5F + j * f2);
             if (p_208523_5_) {
-                this.setLogState(changedBlocks,
-                                 worldIn,
-                                 blockpos1,
-                                 LOG.with(BlockXYZAxis.AXIS, BigTreeFeature.getLoxAxis(p_208523_3_, blockpos1)),
-                                 box);
+                this.setLogState(changedBlocks, worldIn, blockpos1, LOG.with(AXIS, getLoxAxis(p_208523_3_, blockpos1)), box);
             }
             else if (!BlockSapling.canGrowInto(worldIn, blockpos1)) {
                 return j;
@@ -140,33 +171,8 @@ public class BigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         return -1;
     }
 
-    private void makeFoliage(IWorldGenerationReader worldIn, int p_208525_2_, BlockPos pos, List<BigTreeFeature.FoliageCoordinates> list) {
-        for (BigTreeFeature.FoliageCoordinates bigtreefeature$foliagecoordinates : list) {
-            if (BigTreeFeature.trimBranches(p_208525_2_, bigtreefeature$foliagecoordinates.getBranchBase() - pos.getY())) {
-                this.foliageCluster(worldIn, bigtreefeature$foliagecoordinates);
-            }
-        }
-    }
-
     private void makeTrunk(Set<BlockPos> changedBlocks, IWorldGenerationReader worldIn, BlockPos pos, int p_208526_4_, MutableBoundingBox box) {
         this.makeLimb(changedBlocks, worldIn, pos, pos.up(p_208526_4_), true, box);
-    }
-
-    private void makeBranches(Set<BlockPos> changedBlocks,
-                              IWorldGenerationReader worldIn,
-                              int p_208524_3_,
-                              BlockPos pos,
-                              List<BigTreeFeature.FoliageCoordinates> list,
-                              MutableBoundingBox box) {
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-        for (BigTreeFeature.FoliageCoordinates foliageCoordinates : list) {
-            int i = foliageCoordinates.getBranchBase();
-            mutablePos.setPos(pos.getX(), i, pos.getZ());
-            //noinspection EqualsBetweenInconvertibleTypes
-            if (!mutablePos.equals(foliageCoordinates) && BigTreeFeature.trimBranches(p_208524_3_, i - pos.getY())) {
-                this.makeLimb(changedBlocks, worldIn, mutablePos, foliageCoordinates, true, box);
-            }
-        }
     }
 
     @Override
@@ -193,7 +199,7 @@ public class BigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         BlockPos.MutableBlockPos mutablePos2 = new BlockPos.MutableBlockPos();
         BlockPos.MutableBlockPos mutablePos3 = new BlockPos.MutableBlockPos();
         for (; i1 >= 0; --i1) {
-            float f = BigTreeFeature.treeShape(i, i1);
+            float f = treeShape(i, i1);
             if (!(f < 0.0F)) {
                 for (int j1 = 0; j1 < k; ++j1) {
                     double d2 = 1.0D * f * (random.nextFloat() + 0.328D);
@@ -220,17 +226,6 @@ public class BigTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
         this.makeTrunk(changedBlocks, worldIn, position, j, box);
         this.makeBranches(changedBlocks, worldIn, i, position, list, box);
         return true;
-    }
-
-    private int checkLocation(Set<BlockPos> changedBlocks, IWorldGenerationReader worldIn, BlockPos pos, int p_208528_4_, MutableBoundingBox box) {
-        if (!BlockUtils.canSustainSapling(((IBlockReader) worldIn).getBlockState(pos.down()), (BlockSapling) EvolutionBlocks.SAPLING_OAK.get())) {
-            return -1;
-        }
-        int i = this.makeLimb(changedBlocks, worldIn, pos, pos.up(p_208528_4_ - 1), false, box);
-        if (i == -1) {
-            return p_208528_4_;
-        }
-        return i < 6 ? -1 : i;
     }
 
     static class FoliageCoordinates extends BlockPos {

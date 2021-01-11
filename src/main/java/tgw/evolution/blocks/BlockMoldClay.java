@@ -6,9 +6,7 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.state.DirectionProperty;
 import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
@@ -21,14 +19,10 @@ import tgw.evolution.util.MathHelper;
 
 import javax.annotation.Nullable;
 
+import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
+
 public class BlockMoldClay extends Block implements IReplaceable {
 
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    private static final VoxelShape[] SHAPES = {EvolutionHitBoxes.MOLD_1,
-                                                EvolutionHitBoxes.MOLD_2,
-                                                EvolutionHitBoxes.MOLD_3,
-                                                EvolutionHitBoxes.MOLD_4,
-                                                EvolutionHitBoxes.MOLD_5};
     private final int layers;
     private VoxelShape shapeEast;
     private VoxelShape shapeNorth;
@@ -37,7 +31,7 @@ public class BlockMoldClay extends Block implements IReplaceable {
 
     public BlockMoldClay(int layers) {
         super(Block.Properties.create(Material.CLAY).hardnessAndResistance(0.0F).sound(SoundType.GROUND));
-        this.setDefaultState(this.getDefaultState().with(FACING, Direction.NORTH));
+        this.setDefaultState(this.getDefaultState().with(DIRECTION_HORIZONTAL, Direction.NORTH));
         this.layers = layers;
     }
 
@@ -50,7 +44,7 @@ public class BlockMoldClay extends Block implements IReplaceable {
     }
 
     @Override
-    public boolean canBeReplacedByLiquid(BlockState state) {
+    public boolean canBeReplacedByFluid(BlockState state) {
         return true;
     }
 
@@ -61,7 +55,7 @@ public class BlockMoldClay extends Block implements IReplaceable {
 
     @Override
     protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(DIRECTION_HORIZONTAL);
     }
 
     @Override
@@ -70,11 +64,11 @@ public class BlockMoldClay extends Block implements IReplaceable {
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+    public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
         if (this.layers != 0) {
-            return SHAPES[this.layers - 1];
+            return EvolutionHitBoxes.MOLD_CLAY[this.layers - 1];
         }
-        switch (state.get(FACING)) {
+        switch (state.get(DIRECTION_HORIZONTAL)) {
             case NORTH:
                 return this.shapeNorth;
             case SOUTH:
@@ -91,7 +85,7 @@ public class BlockMoldClay extends Block implements IReplaceable {
         if (context.isPlacerSneaking()) {
             return null;
         }
-        return this.getDefaultState().with(FACING, context.getPlacementHorizontalFacing());
+        return this.getDefaultState().with(DIRECTION_HORIZONTAL, context.getPlacementHorizontalFacing());
     }
 
     @Override
@@ -100,18 +94,18 @@ public class BlockMoldClay extends Block implements IReplaceable {
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        BlockState down = worldIn.getBlockState(pos.down());
-        BlockState up = worldIn.getBlockState(pos.up());
-        return BlockUtils.isReplaceable(up) && Block.hasSolidSide(down, worldIn, pos.down(), Direction.UP);
+    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
+        BlockState down = world.getBlockState(pos.down());
+        BlockState up = world.getBlockState(pos.up());
+        return BlockUtils.isReplaceable(up) && Block.hasSolidSide(down, world, pos.down(), Direction.UP);
     }
 
     @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnDrops(state, worldIn, pos);
-                worldIn.removeBlock(pos, false);
+    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!world.isRemote) {
+            if (!state.isValidPosition(world, pos)) {
+                spawnDrops(state, world, pos);
+                world.removeBlock(pos, false);
             }
         }
     }

@@ -65,6 +65,54 @@ public final class EvolutionHitBoxes {
     public static final VoxelShape HOOK_NORTH = MathHelper.rotateShape(Direction.SOUTH, Direction.NORTH, HOOK_SOUTH);
     public static final VoxelShape HOOK_EAST = MathHelper.rotateShape(Direction.SOUTH, Direction.EAST, HOOK_SOUTH);
     public static final VoxelShape HOOK_WEST = MathHelper.rotateShape(Direction.SOUTH, Direction.WEST, HOOK_SOUTH);
+    public static final VoxelShape KNAPPING_FULL = Block.makeCuboidShape(0.5, 0, 0.5, 15.5, 1, 15.5);
+    public static final VoxelShape KNAPPING_PART = Block.makeCuboidShape(0.5, 0, 0.5, 3.5, 1, 3.5);
+    public static final VoxelShape[] LOG_PILE = {VoxelShapes.empty(),
+                                                 SINGLE_LOG_1,
+                                                 DOUBLE_LOG_1,
+                                                 TRIPLE_LOG_1,
+                                                 QUARTER_SLAB_LOWER_1,
+                                                 SINGLE_LOG_2,
+                                                 DOUBLE_LOG_2,
+                                                 TRIPLE_LOG_2,
+                                                 SLAB_LOWER,
+                                                 SINGLE_LOG_3,
+                                                 DOUBLE_LOG_3,
+                                                 TRIPLE_LOG_3,
+                                                 QUARTER_SLAB_LOWER_3,
+                                                 SINGLE_LOG_4,
+                                                 DOUBLE_LOG_4,
+                                                 TRIPLE_LOG_4};
+    public static final VoxelShape[] MOLD_CLAY = {MOLD_1, MOLD_2, MOLD_3, MOLD_4, MOLD_5};
+    public static final VoxelShape MOLD_PART = Block.makeCuboidShape(0.5, 0, 0.5, 3.5, 3, 3.5);
+    public static final VoxelShape[] PEAT = {VoxelShapes.empty(),
+                                             QUARTER_SLAB_LOWER_1,
+                                             QUARTER_SLAB_LOWER_2,
+                                             QUARTER_SLAB_LOWER_3,
+                                             VoxelShapes.fullCube()};
+    public static final VoxelShape[] PIT_KILN = {SIXTEENTH_SLAB_LOWER_1,
+                                                 SIXTEENTH_SLAB_LOWER_1,
+                                                 SIXTEENTH_SLAB_LOWER_2,
+                                                 SIXTEENTH_SLAB_LOWER_3,
+                                                 SIXTEENTH_SLAB_LOWER_4,
+                                                 SIXTEENTH_SLAB_LOWER_5,
+                                                 SIXTEENTH_SLAB_LOWER_6,
+                                                 SIXTEENTH_SLAB_LOWER_7,
+                                                 SIXTEENTH_SLAB_LOWER_8,
+                                                 MathHelper.union(SINGLE_LOG_3, SIXTEENTH_SLAB_LOWER_8),
+                                                 MathHelper.union(DOUBLE_LOG_3, SIXTEENTH_SLAB_LOWER_8),
+                                                 MathHelper.union(TRIPLE_LOG_3, SIXTEENTH_SLAB_LOWER_8),
+                                                 QUARTER_SLAB_LOWER_3,
+                                                 MathHelper.union(SINGLE_LOG_4, QUARTER_SLAB_LOWER_3),
+                                                 MathHelper.union(DOUBLE_LOG_4, QUARTER_SLAB_LOWER_3),
+                                                 MathHelper.union(TRIPLE_LOG_4, QUARTER_SLAB_LOWER_3),
+                                                 VoxelShapes.fullCube()};
+    private static final VoxelShape MOLD_BASE = VoxelShapes.create(0, 0, 0, 1, 0.5 / 16, 1);
+    private static final VoxelShape MOLD_BASE_N = VoxelShapes.create(0, 0, 0, 1, 3 / 16.0, 0.5 / 16);
+    private static final VoxelShape MOLD_BASE_S = VoxelShapes.create(0, 0, 15.5 / 16, 1, 3 / 16.0, 1);
+    private static final VoxelShape MOLD_BASE_W = VoxelShapes.create(0, 0, 0, 0.5 / 16, 3 / 16.0, 1);
+    private static final VoxelShape MOLD_BASE_E = VoxelShapes.create(15.5 / 16, 0, 0, 1, 3 / 16.0, 1);
+    public static final VoxelShape MOLD_TOTAL_BASE = VoxelShapes.or(MOLD_BASE, MOLD_BASE_N, MOLD_BASE_S, MOLD_BASE_W, MOLD_BASE_E);
     private static final VoxelShape PICKAXE1_THICK = Block.makeCuboidShape(3.5, 0.5, 3.5, 12.5, 3, 6.5);
     private static final VoxelShape PICKAXE2_THICK = Block.makeCuboidShape(0.5, 0.5, 6.5, 3.5, 3, 9.5);
     private static final VoxelShape PICKAXE3_THICK = Block.makeCuboidShape(12.5, 0.5, 6.5, 15.5, 3, 9.5);

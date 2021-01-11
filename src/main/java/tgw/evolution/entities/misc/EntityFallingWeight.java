@@ -43,16 +43,16 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     private int mass = 500;
     private BlockState state = EvolutionBlocks.DESTROY_9.get().getDefaultState();
 
-    public EntityFallingWeight(@SuppressWarnings("unused") FMLPlayMessages.SpawnEntity spawn, World worldIn) {
-        this(EvolutionEntities.FALLING_WEIGHT.get(), worldIn);
+    public EntityFallingWeight(@SuppressWarnings("unused") FMLPlayMessages.SpawnEntity spawn, World world) {
+        this(EvolutionEntities.FALLING_WEIGHT.get(), world);
     }
 
-    public EntityFallingWeight(EntityType<EntityFallingWeight> type, World worldIn) {
-        super(type, worldIn);
+    public EntityFallingWeight(EntityType<EntityFallingWeight> type, World world) {
+        super(type, world);
     }
 
-    public EntityFallingWeight(World worldIn, double x, double y, double z, BlockState state) {
-        this(EvolutionEntities.FALLING_WEIGHT.get(), worldIn);
+    public EntityFallingWeight(World world, double x, double y, double z, BlockState state) {
+        this(EvolutionEntities.FALLING_WEIGHT.get(), world);
         this.state = state;
         this.mass = this.state.getBlock() instanceof BlockMass ? ((BlockMass) this.state.getBlock()).getMass(this.state) : 500;
         this.preventEntitySpawning = true;
@@ -64,7 +64,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    public void applyEntityCollision(Entity entityIn) {
+    public void applyEntityCollision(Entity entity) {
     }
 
     @Override

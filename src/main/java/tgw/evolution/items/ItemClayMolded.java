@@ -35,7 +35,9 @@ public class ItemClayMolded extends ItemBlock {
             if (!Block.hasSolidSide(context.getWorld().getBlockState(context.getPos().down()), context.getWorld(), context.getPos(), Direction.UP)) {
                 return ActionResultType.FAIL;
             }
-            ISelectionContext iselectioncontext = context.getPlayer() == null ? ISelectionContext.dummy() : ISelectionContext.forEntity(context.getPlayer());
+            ISelectionContext iselectioncontext = context.getPlayer() == null ?
+                                                  ISelectionContext.dummy() :
+                                                  ISelectionContext.forEntity(context.getPlayer());
             if (!context.getWorld().func_217350_a(EvolutionBlocks.PIT_KILN.get().getDefaultState(), context.getPos(), iselectioncontext)) {
                 return ActionResultType.FAIL;
             }
@@ -44,30 +46,34 @@ public class ItemClayMolded extends ItemBlock {
             }
             TEPitKiln tile = (TEPitKiln) context.getWorld().getTileEntity(context.getPos());
             if (this.single) {
-                tile.setNwStack(context.getItem());
-                tile.single = true;
-                context.getWorld().playSound(context.getPlayer(), context.getPos(), SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1F, 0.75F);
+                tile.setNWStack(context.getItem());
+                tile.setSingle(true);
+                context.getWorld()
+                       .playSound(context.getPlayer(), context.getPos(), SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0F, 0.75F);
                 return ActionResultType.SUCCESS;
             }
             int x = MathHelper.getIndex(2, 0, 16, (context.getHitVec().x - context.getPos().getX()) * 16);
             int z = MathHelper.getIndex(2, 0, 16, (context.getHitVec().z - context.getPos().getZ()) * 16);
             if (x == 0) {
                 if (z == 0) {
-                    tile.setNwStack(context.getItem());
-                    context.getWorld().playSound(context.getPlayer(), context.getPos(), SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1F, 0.75F);
+                    tile.setNWStack(context.getItem());
+                    context.getWorld()
+                           .playSound(context.getPlayer(), context.getPos(), SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0F, 0.75F);
                     return ActionResultType.SUCCESS;
                 }
-                tile.setSwStack(context.getItem());
-                context.getWorld().playSound(context.getPlayer(), context.getPos(), SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1F, 0.75F);
+                tile.setSWStack(context.getItem());
+                context.getWorld()
+                       .playSound(context.getPlayer(), context.getPos(), SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0F, 0.75F);
                 return ActionResultType.SUCCESS;
             }
             if (z == 0) {
-                tile.setNeStack(context.getItem());
-                context.getWorld().playSound(context.getPlayer(), context.getPos(), SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1F, 0.75F);
+                tile.setNEStack(context.getItem());
+                context.getWorld()
+                       .playSound(context.getPlayer(), context.getPos(), SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0F, 0.75F);
                 return ActionResultType.SUCCESS;
             }
-            tile.setSeStack(context.getItem());
-            context.getWorld().playSound(context.getPlayer(), context.getPos(), SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1F, 0.75F);
+            tile.setSEStack(context.getItem());
+            context.getWorld().playSound(context.getPlayer(), context.getPos(), SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0F, 0.75F);
             return ActionResultType.SUCCESS;
         }
         return super.tryPlace(context);

@@ -12,7 +12,6 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import tgw.evolution.blocks.BlockUtils;
@@ -20,7 +19,7 @@ import tgw.evolution.blocks.IFireSource;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.init.EvolutionStyles;
+import tgw.evolution.init.EvolutionTexts;
 
 import java.util.List;
 
@@ -31,9 +30,8 @@ public class ItemStick extends ItemBlock {
     }
 
     @Override
-    public void addInformation(ItemStack stack, World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
-        String text = "evolution.tooltip.stick.lit";
-        tooltip.add(new TranslationTextComponent(text).setStyle(EvolutionStyles.INFO));
+    public void addInformation(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+        tooltip.add(EvolutionTexts.TOOLTIP_STICK_LIT);
     }
 
     @Override

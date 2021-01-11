@@ -5,17 +5,17 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
-import tgw.evolution.Evolution;
+import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTileEntities;
 
 import javax.annotation.Nullable;
 
 public class TEPuzzle extends TileEntity {
 
-    private ResourceLocation attachmentType = Evolution.location("empty");
-    private ResourceLocation targetPool = Evolution.location("empty");
-    private String finalState = "minecraft:air";
+    private ResourceLocation attachmentType = EvolutionResources.EMPTY;
     private boolean checkBB = true;
+    private String finalState = "minecraft:air";
+    private ResourceLocation targetPool = EvolutionResources.EMPTY;
 
     public TEPuzzle() {
         super(EvolutionTileEntities.TE_PUZZLE.get());
@@ -27,14 +27,6 @@ public class TEPuzzle extends TileEntity {
 
     public void setAttachmentType(ResourceLocation attachmentType) {
         this.attachmentType = attachmentType;
-    }
-
-    public ResourceLocation getTargetPool() {
-        return this.targetPool;
-    }
-
-    public void setTargetPool(ResourceLocation targetPool) {
-        this.targetPool = targetPool;
     }
 
     public boolean getCheckBB() {
@@ -53,14 +45,28 @@ public class TEPuzzle extends TileEntity {
         this.finalState = finalState;
     }
 
+    public ResourceLocation getTargetPool() {
+        return this.targetPool;
+    }
+
+    public void setTargetPool(ResourceLocation targetPool) {
+        this.targetPool = targetPool;
+    }
+
     @Override
-    public CompoundNBT write(CompoundNBT compound) {
-        super.write(compound);
-        compound.putString("AttachementType", this.attachmentType.toString());
-        compound.putString("TargetPool", this.targetPool.toString());
-        compound.putString("FinalState", this.finalState);
-        compound.putBoolean("CheckBB", this.checkBB);
-        return compound;
+    @Nullable
+    public SUpdateTileEntityPacket getUpdatePacket() {
+        return new SUpdateTileEntityPacket(this.pos, 12, this.getUpdateTag());
+    }
+
+    @Override
+    public CompoundNBT getUpdateTag() {
+        return this.write(new CompoundNBT());
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
+        this.handleUpdateTag(pkt.getNbtCompound());
     }
 
     @Override
@@ -73,18 +79,12 @@ public class TEPuzzle extends TileEntity {
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-        this.handleUpdateTag(pkt.getNbtCompound());
-    }
-
-    @Override
-    @Nullable
-    public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.pos, 12, this.getUpdateTag());
-    }
-
-    @Override
-    public CompoundNBT getUpdateTag() {
-        return this.write(new CompoundNBT());
+    public CompoundNBT write(CompoundNBT compound) {
+        super.write(compound);
+        compound.putString("AttachementType", this.attachmentType.toString());
+        compound.putString("TargetPool", this.targetPool.toString());
+        compound.putString("FinalState", this.finalState);
+        compound.putBoolean("CheckBB", this.checkBB);
+        return compound;
     }
 }

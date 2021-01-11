@@ -17,6 +17,7 @@ import net.minecraftforge.fml.network.FMLPlayMessages;
 import net.minecraftforge.fml.network.NetworkHooks;
 import tgw.evolution.blocks.BlockPeat;
 import tgw.evolution.blocks.IReplaceable;
+import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.util.Gravity;
@@ -85,7 +86,7 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     }
 
     public BlockState getBlockState() {
-        return EvolutionBlocks.PEAT.get().getDefaultState().with(BlockPeat.LAYERS, this.layers);
+        return EvolutionBlocks.PEAT.get().getDefaultState().with(EvolutionBStates.LAYERS_1_4, this.layers);
     }
 
     @Nullable

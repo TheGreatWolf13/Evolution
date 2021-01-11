@@ -13,6 +13,8 @@ import net.minecraftforge.fml.LogicalSide;
 import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.entities.misc.EntityFallingTimber;
 
+import static tgw.evolution.init.EvolutionBStates.TREE;
+
 public class FallingEvents {
 
     public static boolean isFalling;
@@ -25,7 +27,7 @@ public class FallingEvents {
         if (!(state.getBlock() instanceof BlockLog)) {
             return;
         }
-        if (!state.get(BlockLog.TREE)) {
+        if (!state.get(TREE)) {
             return;
         }
         isFalling = true;
@@ -37,7 +39,7 @@ public class FallingEvents {
         if (!(event.getState().getBlock() instanceof BlockLog)) {
             return;
         }
-        if (!event.getState().get(BlockLog.TREE)) {
+        if (!event.getState().get(TREE)) {
             return;
         }
         isFalling = true;

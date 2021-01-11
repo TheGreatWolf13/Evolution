@@ -15,6 +15,8 @@ import tgw.evolution.util.EnumRockVariant;
 
 import java.util.Random;
 
+import static tgw.evolution.init.EvolutionBStates.SNOWY;
+
 public class BlockDryGrass extends BlockGenericSlowable implements IStoneVariant {
 
     private final EnumRockNames name;
@@ -35,9 +37,9 @@ public class BlockDryGrass extends BlockGenericSlowable implements IStoneVariant
         return !hasSolidSide(stateUp, worldIn, posUp, Direction.DOWN);
     }
 
-    private static boolean canSustainGrassWater(IWorldReader worldIn, BlockPos pos) {
+    private static boolean canSustainGrassWater(IWorldReader world, BlockPos pos) {
         BlockPos posUp = pos.up();
-        return canSustainGrass(worldIn, pos) && !worldIn.getFluidState(posUp).isTagged(FluidTags.WATER);
+        return canSustainGrass(world, pos) && !world.getFluidState(posUp).isTagged(FluidTags.WATER);
     }
 
     @Override
@@ -76,39 +78,39 @@ public class BlockDryGrass extends BlockGenericSlowable implements IStoneVariant
     }
 
     @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        super.neighborChanged(state, worldIn, pos, blockIn, fromPos, isMoving);
-        if (!worldIn.isRemote) {
+    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        super.neighborChanged(state, world, pos, block, fromPos, isMoving);
+        if (!world.isRemote) {
             if (pos.up().equals(fromPos)) {
-                if (Block.hasSolidSide(worldIn.getBlockState(fromPos), worldIn, fromPos, Direction.DOWN)) {
-                    worldIn.setBlockState(pos, this.variant.getDirt().getDefaultState(), 3);
+                if (Block.hasSolidSide(world.getBlockState(fromPos), world, fromPos, Direction.DOWN)) {
+                    world.setBlockState(pos, this.variant.getDirt().getDefaultState(), 3);
                 }
             }
         }
     }
 
     @Override
-    public void randomTick(BlockState state, World worldIn, BlockPos pos, Random random) {
-        if (!worldIn.isRemote) {
-            if (!worldIn.isAreaLoaded(pos, 3)) {
+    public void randomTick(BlockState state, World world, BlockPos pos, Random random) {
+        if (!world.isRemote) {
+            if (!world.isAreaLoaded(pos, 3)) {
                 return;
             }
             if (random.nextInt(2) == 0) {
-                if (!canSustainGrass(worldIn, pos)) {
-                    worldIn.setBlockState(pos, this.variant.getDirt().getDefaultState());
+                if (!canSustainGrass(world, pos)) {
+                    world.setBlockState(pos, this.variant.getDirt().getDefaultState());
                 }
                 else {
                     for (int i = 0; i < 4; ++i) {
                         BlockPos randomPos = pos.add(random.nextInt(3) - 1, random.nextInt(5) - 3, random.nextInt(3) - 1);
-                        Block blockAtPos = worldIn.getBlockState(randomPos).getBlock();
-                        if (blockAtPos instanceof BlockDirt && canSustainGrassWater(worldIn, randomPos)) {
+                        Block blockAtPos = world.getBlockState(randomPos).getBlock();
+                        if (blockAtPos instanceof BlockDirt && canSustainGrassWater(world, randomPos)) {
                             //TODO proper snow
-                            worldIn.setBlockState(randomPos,
-                                                  ((IStoneVariant) blockAtPos).getVariant()
-                                                                              .getDryGrass()
-                                                                              .getDefaultState()
-                                                                              .with(SNOWY,
-                                                                                    worldIn.getBlockState(randomPos.up()).getBlock() == Blocks.SNOW));
+                            world.setBlockState(randomPos,
+                                                ((IStoneVariant) blockAtPos).getVariant()
+                                                                            .getDryGrass()
+                                                                            .getDefaultState()
+                                                                            .with(SNOWY,
+                                                                                  world.getBlockState(randomPos.up()).getBlock() == Blocks.SNOW));
                         }
                     }
                 }

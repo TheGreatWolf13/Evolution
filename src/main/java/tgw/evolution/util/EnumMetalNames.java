@@ -1,7 +1,7 @@
 package tgw.evolution.util;
 
 public enum EnumMetalNames {
-    COPPER(8920, HarvestLevel.COPPER, 30F, 10F);
+    COPPER(8_920, HarvestLevel.COPPER, 30.0F, 10.0F);
     private final int density;
     private final int harvestLevel;
     private final float hardness;
@@ -18,12 +18,12 @@ public enum EnumMetalNames {
         return this.density;
     }
 
-    public int getHarvestLevel() {
-        return this.harvestLevel;
-    }
-
     public float getHardness() {
         return this.hardness;
+    }
+
+    public int getHarvestLevel() {
+        return this.harvestLevel;
     }
 
     public float getResistance() {

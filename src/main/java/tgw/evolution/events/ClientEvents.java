@@ -5,9 +5,9 @@ import com.google.common.collect.Ordering;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.block.Blocks;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.screen.DeathScreen;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
@@ -18,6 +18,7 @@ import net.minecraft.client.renderer.texture.PotionSpriteUploader;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.settings.AttackIndicatorStatus;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.client.util.ClientRecipeBook;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -31,19 +32,20 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.potion.*;
 import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.tileentity.SkullTileEntity;
+import net.minecraft.util.Hand;
+import net.minecraft.util.MovementInput;
 import net.minecraft.util.Timer;
-import net.minecraft.util.*;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.GameType;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.client.ForgeIngameGui;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
@@ -61,10 +63,8 @@ import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.hooks.TickrateChanger;
-import tgw.evolution.init.EvolutionAttributes;
-import tgw.evolution.init.EvolutionEffects;
-import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.init.EvolutionStyles;
+import tgw.evolution.init.*;
+import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.items.*;
 import tgw.evolution.network.PacketCSChangeBlock;
 import tgw.evolution.network.PacketCSOpenExtendedInventory;
@@ -82,14 +82,6 @@ import java.util.*;
 
 public class ClientEvents {
 
-    public static final ResourceLocation ICONS = Evolution.location("textures/gui/icons.png");
-    private static final String TWO_HANDED = "evolution.actionbar.two_handed";
-    private static final String INERTIA = "evolution.actionbar.inertia";
-    private static final ITextComponent COMPONENT_TWO_HANDED = new TranslationTextComponent(TWO_HANDED).setStyle(EvolutionStyles.WHITE);
-    private static final ITextComponent COMPONENT_INERTIA = new TranslationTextComponent(INERTIA).setStyle(EvolutionStyles.WHITE);
-    private static final ResourceLocation DESATURATE_25 = Evolution.location("shaders/post/saturation25.json");
-    private static final ResourceLocation DESATURATE_50 = Evolution.location("shaders/post/saturation50.json");
-    private static final ResourceLocation DESATURATE_75 = Evolution.location("shaders/post/saturation75.json");
     private static final StaticFieldHandler<SkullTileEntity, PlayerProfileCache> PLAYER_PROF_FIELD = new StaticFieldHandler<>(SkullTileEntity.class,
                                                                                                                               "field_184298_j");
     private static final StaticFieldHandler<SkullTileEntity, MinecraftSessionService> SESSION_FIELD = new StaticFieldHandler<>(SkullTileEntity.class,
@@ -99,6 +91,8 @@ public class ClientEvents {
     private static final FieldHandler<Minecraft, Timer> TIMER_FIELD = new FieldHandler<>(Minecraft.class, "field_71428_T");
     private static final FieldHandler<Timer, Float> TICKRATE_FIELD = new FieldHandler<>(Timer.class, "field_194149_e");
     private static final FieldHandler<EffectInstance, Integer> DURATION_FIELD = new FieldHandler<>(EffectInstance.class, "field_149431_d");
+    private static final FieldHandler<ClientPlayerEntity, ClientRecipeBook> RECIPE_BOOK_FIELD = new FieldHandler<>(ClientPlayerEntity.class,
+                                                                                                                   "field_192036_cb");
     private static final List<EffectInstance> EFFECTS = new ArrayList<>();
     private static final List<EffectInstance> EFFECTS_TO_ADD = new ArrayList<>();
     private static final List<EffectInstance> EFFECTS_TO_TICK = new ArrayList<>();
@@ -331,13 +325,13 @@ public class ClientEvents {
                         this.mc.gameRenderer.stopUseShader();
                         break;
                     case 25:
-                        this.mc.gameRenderer.loadShader(DESATURATE_25);
+                        this.mc.gameRenderer.loadShader(EvolutionResources.SHADER_DESATURATE_25);
                         break;
                     case 50:
-                        this.mc.gameRenderer.loadShader(DESATURATE_50);
+                        this.mc.gameRenderer.loadShader(EvolutionResources.SHADER_DESATURATE_50);
                         break;
                     case 75:
-                        this.mc.gameRenderer.loadShader(DESATURATE_75);
+                        this.mc.gameRenderer.loadShader(EvolutionResources.SHADER_DESATURATE_75);
                         break;
                     default:
                         Evolution.LOGGER.warn("Unregistered shader id: {}", shader);
@@ -374,7 +368,7 @@ public class ClientEvents {
                 this.leftTimeSinceLastHit = 0;
                 this.requiresReequiping = true;
                 LEFT_COUNTER_FIELD.set(this.mc, Integer.MAX_VALUE);
-                this.mc.player.sendStatusMessage(COMPONENT_TWO_HANDED, true);
+                this.mc.player.sendStatusMessage(EvolutionTexts.ACTION_TWO_HANDED, true);
             }
             //Prevents the player from attacking if on cooldown
             if (this.getLeftCooledAttackStrength(0) != 1 &&
@@ -444,12 +438,12 @@ public class ClientEvents {
                 }
                 //Handle creative features
                 if (this.mc.player.isCreative() && ClientProxy.BUILDING_ASSIST.isKeyDown()) {
-                    this.mc.player.sendStatusMessage(COMPONENT_INERTIA, true);
+                    this.mc.player.sendStatusMessage(EvolutionTexts.ACTION_INERTIA, true);
                     this.mc.player.setMotion(Vec3d.ZERO);
                     if (this.mc.player.getHeldItemMainhand().getItem() instanceof BlockItem) {
                         if (this.mc.objectMouseOver instanceof BlockRayTraceResult) {
                             BlockPos pos = ((BlockRayTraceResult) this.mc.objectMouseOver).getPos();
-                            if (this.mc.world.getBlockState(pos).getBlock() != Blocks.AIR) {
+                            if (!this.mc.world.getBlockState(pos).isAir(this.mc.world, pos)) {
                                 EvolutionNetwork.INSTANCE.sendToServer(new PacketCSChangeBlock((BlockRayTraceResult) this.mc.objectMouseOver));
                             }
                         }
@@ -498,6 +492,15 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
+    public void onEntityCreated(EntityJoinWorldEvent event) {
+        if (event.getEntity() instanceof ClientPlayerEntity) {
+            ClientPlayerEntity player = (ClientPlayerEntity) event.getEntity();
+            player.abilities.setWalkSpeed((float) PlayerHelper.WALK_SPEED);
+            RECIPE_BOOK_FIELD.set(player, new EvolutionRecipeBook(player.world.getRecipeManager()));
+        }
+    }
+
+    @SubscribeEvent
     public void onFogRender(EntityViewRenderEvent.FogDensity event) {
         //Render Blindness fog
         if (this.mc.player != null && this.mc.player.isPotionActive(Effects.BLINDNESS)) {
@@ -534,15 +537,19 @@ public class ClientEvents {
     @SubscribeEvent
     public void onKeyboardEvent(InputEvent.KeyInputEvent event) {
         if (this.mc.currentScreen != null || this.mc.player == null) {
+            this.isLeftPressed = false;
+            this.isRightPressed = false;
             return;
         }
         KeyBinding attack = this.mc.gameSettings.keyBindAttack;
         KeyBinding use = this.mc.gameSettings.keyBindUseItem;
         if (attack.getKey().getType() == InputMappings.Type.KEYSYM) {
             if (attack.getKey().getKeyCode() == event.getKey()) {
-                if (event.getAction() == GLFW.GLFW_PRESS && !this.isRightPressed) {
+                if (event.getAction() == GLFW.GLFW_PRESS) {
                     this.isLeftPressed = true;
-                    this.onLeftMouseClick();
+                    if (!this.isRightPressed) {
+                        this.onLeftMouseClick();
+                    }
                 }
                 else {
                     this.isLeftPressed = false;
@@ -551,9 +558,11 @@ public class ClientEvents {
         }
         if (use.getKey().getType() == InputMappings.Type.KEYSYM) {
             if (use.getKey().getKeyCode() == event.getKey()) {
-                if (event.getAction() == GLFW.GLFW_PRESS && !this.isLeftPressed) {
+                if (event.getAction() == GLFW.GLFW_PRESS) {
                     this.isRightPressed = true;
-                    this.onRightMouseClick();
+                    if (!this.isLeftPressed) {
+                        this.onRightMouseClick();
+                    }
                 }
                 else {
                     this.isRightPressed = false;
@@ -564,26 +573,30 @@ public class ClientEvents {
 
     //Handle mainhand attack
     private void onLeftMouseClick() {
-        float cooldown = this.mc.player.getCooldownPeriod();
-        if (this.leftTimeSinceLastHit >= cooldown && this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
-            this.requiresReequiping = true;
-            this.leftTimeSinceLastHit = 0;
-            double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getHitVec().y : Double.NaN;
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.leftPointedEntity, Hand.MAIN_HAND, rayTraceY));
-            this.swingArm(Hand.MAIN_HAND);
+        if (!this.isRightPressed) {
+            float cooldown = this.mc.player.getCooldownPeriod();
+            if (this.leftTimeSinceLastHit >= cooldown && this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
+                this.requiresReequiping = true;
+                this.leftTimeSinceLastHit = 0;
+                double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getHitVec().y : Double.NaN;
+                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.leftPointedEntity, Hand.MAIN_HAND, rayTraceY));
+                this.swingArm(Hand.MAIN_HAND);
+            }
         }
     }
 
     @SubscribeEvent
     public void onMouseEvent(InputEvent.MouseInputEvent event) {
         if (this.mc.currentScreen != null || this.mc.player == null) {
+            this.isLeftPressed = false;
+            this.isRightPressed = false;
             return;
         }
         KeyBinding attack = this.mc.gameSettings.keyBindAttack;
         KeyBinding use = this.mc.gameSettings.keyBindUseItem;
         if (attack.getKey().getType() == InputMappings.Type.MOUSE) {
             if (attack.getKey().getKeyCode() == event.getButton()) {
-                if (event.getAction() == GLFW.GLFW_PRESS && !this.isRightPressed) {
+                if (event.getAction() == GLFW.GLFW_PRESS) {
                     this.isLeftPressed = true;
                     this.onLeftMouseClick();
                 }
@@ -594,7 +607,7 @@ public class ClientEvents {
         }
         if (use.getKey().getType() == InputMappings.Type.MOUSE) {
             if (use.getKey().getKeyCode() == event.getButton()) {
-                if (event.getAction() == GLFW.GLFW_PRESS && !this.isLeftPressed) {
+                if (event.getAction() == GLFW.GLFW_PRESS) {
                     this.isRightPressed = true;
                     this.onRightMouseClick();
                 }
@@ -724,15 +737,17 @@ public class ClientEvents {
         if (!(offhandItem instanceof IOffhandAttackable)) {
             return;
         }
-        ItemStack mainHandStack = this.mc.player.getHeldItemMainhand();
-        float cooldown = getRightCooldownPeriod((IOffhandAttackable) offhandItem);
-        if (this.rightTimeSinceLastHit >= cooldown &&
-            mainHandStack.getUseAction() == UseAction.NONE &&
-            this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
-            this.rightTimeSinceLastHit = 0;
-            double rayTraceY = this.rightRayTrace != null ? this.rightRayTrace.getHitVec().y : Double.NaN;
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.rightPointedEntity, Hand.OFF_HAND, rayTraceY));
-            this.swingArm(Hand.OFF_HAND);
+        if (!this.isLeftPressed) {
+            ItemStack mainHandStack = this.mc.player.getHeldItemMainhand();
+            float cooldown = getRightCooldownPeriod((IOffhandAttackable) offhandItem);
+            if (this.rightTimeSinceLastHit >= cooldown &&
+                mainHandStack.getUseAction() == UseAction.NONE &&
+                this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
+                this.rightTimeSinceLastHit = 0;
+                double rayTraceY = this.rightRayTrace != null ? this.rightRayTrace.getHitVec().y : Double.NaN;
+                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.rightPointedEntity, Hand.OFF_HAND, rayTraceY));
+                this.swingArm(Hand.OFF_HAND);
+            }
         }
     }
 
@@ -754,7 +769,7 @@ public class ClientEvents {
     private void renderAttackIndicator() {
         GameSettings gamesettings = this.mc.gameSettings;
         boolean offhandValid = this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable;
-        this.mc.getTextureManager().bindTexture(ICONS);
+        this.mc.getTextureManager().bindTexture(EvolutionResources.GUI_ICONS);
         int scaledWidth = this.mc.mainWindow.getScaledWidth();
         int scaledHeight = this.mc.mainWindow.getScaledHeight();
         if (gamesettings.thirdPersonView == 0) {
@@ -830,7 +845,7 @@ public class ClientEvents {
     }
 
     private void renderHealth() {
-        this.mc.getTextureManager().bindTexture(ICONS);
+        this.mc.getTextureManager().bindTexture(EvolutionResources.GUI_ICONS);
         int width = this.mc.mainWindow.getScaledWidth();
         int height = this.mc.mainWindow.getScaledHeight();
         this.mc.getProfiler().startSection("health");
@@ -1101,7 +1116,7 @@ public class ClientEvents {
                 GlStateManager.pushMatrix();
                 GlStateManager.color3f(1.0F, 1.0F, 1.0F);
                 Minecraft mc = Minecraft.getInstance();
-                mc.getTextureManager().bindTexture(ICONS);
+                mc.getTextureManager().bindTexture(EvolutionResources.GUI_ICONS);
                 int pips = food.getHealing();
                 boolean poison = false;
                 for (Pair<EffectInstance, Float> effect : food.getEffects()) {
@@ -1136,7 +1151,7 @@ public class ClientEvents {
             GlStateManager.pushMatrix();
             GlStateManager.color3f(1.0F, 1.0F, 1.0F);
             Minecraft mc = Minecraft.getInstance();
-            mc.getTextureManager().bindTexture(ICONS);
+            mc.getTextureManager().bindTexture(EvolutionResources.GUI_ICONS);
             boolean hasMass = false;
             boolean hasDamage = false;
             boolean hasSpeed = false;

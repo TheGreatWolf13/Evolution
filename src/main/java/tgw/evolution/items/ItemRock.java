@@ -7,13 +7,11 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.blocks.IStoneVariant;
 import tgw.evolution.init.EvolutionNetwork;
+import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketSCOpenKnappingGui;
 import tgw.evolution.util.EnumRockNames;
 import tgw.evolution.util.EnumRockVariant;
@@ -26,19 +24,28 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IStoneVariant
     private final EnumRockNames name;
     private EnumRockVariant variant;
 
-    public ItemRock(Block blockIn, Properties builder, EnumRockNames name) {
-        super(blockIn, builder);
+    public ItemRock(Block block, Properties builder, EnumRockNames name) {
+        super(block, builder);
         this.name = name;
     }
 
     @Override
     public void addInformation(ItemStack stack, World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
-        String key = "evolution.tooltip.rock_type." + this.name.getRockType().getName();
-        String knap = "evolution.tooltip.rock.knap";
-        ITextComponent textType = new TranslationTextComponent(key).setStyle(new Style().setColor(TextFormatting.GRAY));
-        ITextComponent textKnap = new TranslationTextComponent(knap).setStyle(new Style().setColor(TextFormatting.BLUE));
-        tooltip.add(textType);
-        tooltip.add(textKnap);
+        switch (this.name.getRockType()) {
+            case IGNEOUS_EXTRUSIVE:
+                tooltip.add(EvolutionTexts.TOOLTIP_ROCK_TYPE_IGEXTRUSIVE);
+                break;
+            case IGNEOUS_INTRUSIVE:
+                tooltip.add(EvolutionTexts.TOOLTIP_ROCK_TYPE_IGINTRUSIVE);
+                break;
+            case METAMORPHIC:
+                tooltip.add(EvolutionTexts.TOOLTIP_ROCK_TYPE_METAMORPHIC);
+                break;
+            case SEDIMENTARY:
+                tooltip.add(EvolutionTexts.TOOLTIP_ROCK_TYPE_SEDIMENTARY);
+                break;
+        }
+        tooltip.add(EvolutionTexts.TOOLTIP_ROCK_KNAP);
     }
 
     @Override

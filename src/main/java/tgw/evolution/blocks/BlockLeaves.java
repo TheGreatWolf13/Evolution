@@ -11,10 +11,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particles.ParticleTypes;
-import net.minecraft.state.BooleanProperty;
-import net.minecraft.state.IntegerProperty;
 import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
@@ -26,7 +23,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.IShearable;
 import tgw.evolution.entities.misc.EntityFallingWeight;
-import tgw.evolution.init.EvolutionBlockStateProperties;
 import tgw.evolution.init.EvolutionBlocks;
 
 import javax.annotation.Nullable;
@@ -34,15 +30,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import static tgw.evolution.init.EvolutionBStates.DISTANCE_0_7;
+import static tgw.evolution.init.EvolutionBStates.TREE;
+
 public class BlockLeaves extends Block implements IShearable, IReplaceable {
 
-    public static final IntegerProperty DISTANCE = BlockStateProperties.DISTANCE_0_7;
-    public static final BooleanProperty TREE = EvolutionBlockStateProperties.TREE;
     private static final Vec3d MOTION_MULTIPLIER = new Vec3d(0.5, 1, 0.5);
 
     public BlockLeaves() {
         super(Block.Properties.create(Material.LEAVES).hardnessAndResistance(0.2F, 0.2F).sound(SoundType.PLANT).doesNotBlockMovement());
-        this.setDefaultState(this.stateContainer.getBaseState().with(DISTANCE, 0).with(TREE, true));
+        this.setDefaultState(this.getDefaultState().with(DISTANCE_0_7, 0).with(TREE, true));
     }
 
     /**
@@ -69,7 +66,7 @@ public class BlockLeaves extends Block implements IShearable, IReplaceable {
         if (neighbor.getBlock() instanceof BlockLog) {
             return 0;
         }
-        return neighbor.getBlock() instanceof BlockLeaves ? neighbor.get(DISTANCE) : 7;
+        return neighbor.getBlock() instanceof BlockLeaves ? neighbor.get(DISTANCE_0_7) : 7;
     }
 
     /**
@@ -86,7 +83,7 @@ public class BlockLeaves extends Block implements IShearable, IReplaceable {
                 }
             }
         }
-        return state.with(DISTANCE, i);
+        return state.with(DISTANCE_0_7, i);
     }
 
     @Override
@@ -101,7 +98,7 @@ public class BlockLeaves extends Block implements IShearable, IReplaceable {
     }
 
     @Override
-    public boolean canBeReplacedByLiquid(BlockState state) {
+    public boolean canBeReplacedByFluid(BlockState state) {
         return false;
     }
 
@@ -144,7 +141,7 @@ public class BlockLeaves extends Block implements IShearable, IReplaceable {
 
     @Override
     protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(DISTANCE, TREE);
+        builder.add(DISTANCE_0_7, TREE);
     }
 
     @Nullable
@@ -155,12 +152,12 @@ public class BlockLeaves extends Block implements IShearable, IReplaceable {
 
     @Override
     public int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
-        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualEncouragement(state);
+        return EvolutionBlocks.FIRE.get().getActualEncouragement(state);
     }
 
     @Override
     public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
-        return ((BlockFire) EvolutionBlocks.FIRE.get()).getActualFlammability(state);
+        return EvolutionBlocks.FIRE.get().getActualFlammability(state);
     }
 
     @Override
@@ -213,7 +210,7 @@ public class BlockLeaves extends Block implements IShearable, IReplaceable {
 
     @Override
     public void randomTick(BlockState state, World worldIn, BlockPos pos, Random random) {
-        if (state.get(TREE) && state.get(DISTANCE) == 7) {
+        if (state.get(TREE) && state.get(DISTANCE_0_7) == 7) {
             spawnDrops(state, worldIn, pos);
             worldIn.removeBlock(pos, false);
         }
@@ -223,7 +220,7 @@ public class BlockLeaves extends Block implements IShearable, IReplaceable {
     public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
         worldIn.setBlockState(pos, updateDistance(state, worldIn, pos), 3);
         if (!worldIn.isRemote) {
-            if (!state.get(TREE) && state.get(DISTANCE) == 7) {
+            if (!state.get(TREE) && state.get(DISTANCE_0_7) == 7) {
                 this.checkFallable(worldIn, pos);
             }
         }
@@ -231,7 +228,7 @@ public class BlockLeaves extends Block implements IShearable, IReplaceable {
 
     @Override
     public boolean ticksRandomly(BlockState state) {
-        return state.get(TREE) && (state.get(DISTANCE) == 0 || state.get(DISTANCE) == 7);
+        return state.get(TREE) && (state.get(DISTANCE_0_7) == 0 || state.get(DISTANCE_0_7) == 7);
     }
 
     @Override
@@ -242,7 +239,7 @@ public class BlockLeaves extends Block implements IShearable, IReplaceable {
                                           BlockPos currentPos,
                                           BlockPos facingPos) {
         int i = getDistance(facingState) + 1;
-        if (i != 1 || stateIn.get(DISTANCE) != i) {
+        if (i != 1 || stateIn.get(DISTANCE_0_7) != i) {
             worldIn.getPendingBlockTicks().scheduleTick(currentPos, this, 1);
         }
         return stateIn;

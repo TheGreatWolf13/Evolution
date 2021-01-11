@@ -31,6 +31,11 @@ public class TELiquid extends TileEntity {
     }
 
     @Override
+    public String toString() {
+        return "TELiquid{" + "missingLiquid=" + this.missingLiquid + '}';
+    }
+
+    @Override
     public CompoundNBT write(CompoundNBT compound) {
         compound.putInt("MissingLiquid", this.missingLiquid);
         return super.write(compound);

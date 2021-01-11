@@ -16,84 +16,46 @@ import net.minecraft.util.text.*;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.registries.ForgeRegistries;
-import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStyles;
+import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.*;
 import tgw.evolution.util.MathHelper;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public class ItemEvents {
 
-    private static final String SPEED = "evolution.tooltip.speed";
-    private static final String DISTANCE = "evolution.tooltip.distance";
-    private static final String MINING = "evolution.tooltip.mining";
-    private static final String DURABILITY = "evolution.tooltip.durability";
-    private static final String TWO_HANDED = "evolution.tooltip.two_handed";
-    private static final String OFFHAND = "evolution.tooltip.offhand";
-    private static final String THROWABLE = "evolution.tooltip.throwable";
-    private static final String FIRE_ASPECT = "evolution.tooltip.fire_aspect";
-    private static final String KNOCKBACK = "evolution.tooltip.knockback";
-    private static final String SWEEP = "evolution.tooltip.sweep";
-    private static final String MASS = "evolution.tooltip.mass";
-    private static final String HEAVY_ATTACK = "evolution.tooltip.heavy_attack";
-    private static final String EMPTY_COMPONENT = "evolution.tooltip.container.empty";
-    private static final String CAPACITY = "evolution.tooltip.container.capacity";
-    private static final String CONTAINER = "evolution.tooltop.container.amount";
-    private static final ITextComponent COMPONENT_TWO_HANDED = new TranslationTextComponent(TWO_HANDED).setStyle(EvolutionStyles.PROPERTY);
-    private static final ITextComponent COMPONENT_OFFHAND = new TranslationTextComponent(OFFHAND).setStyle(EvolutionStyles.LIGHT_GREY);
-    private static final ITextComponent COMPONENT_THROWABLE = new TranslationTextComponent(THROWABLE).setStyle(EvolutionStyles.PROPERTY);
-    private static final ITextComponent EMPTY = new StringTextComponent("");
-    private static final ITextComponent COMPONENT_EMPTY_CONTAINER = new TranslationTextComponent(EMPTY_COMPONENT).setStyle(EvolutionStyles.INFO);
-
     private static void addEffectsTooltips(List<ITextComponent> tooltip, ItemStack stack) {
         Item item = stack.getItem();
         if (item instanceof IFireAspect) {
-            tooltip.add(new TranslationTextComponent(FIRE_ASPECT,
-                                                     String.format(Locale.ENGLISH,
-                                                                   "%d%%",
-                                                                   (int) (((IFireAspect) item).getChance() *
-                                                                          100))).appendText(MathHelper.getRomanNumber(((IFireAspect) item).getLevel()))
-                                                                                .setStyle(EvolutionStyles.EFFECTS));
+            tooltip.add(EvolutionTexts.fireAspect((IFireAspect) item));
         }
         if (item instanceof IHeavyAttack) {
-            tooltip.add(new TranslationTextComponent(HEAVY_ATTACK,
-                                                     String.format(Locale.ENGLISH,
-                                                                   "%d%%",
-                                                                   (int) (((IHeavyAttack) item).getChance() *
-                                                                          100))).appendText(MathHelper.getRomanNumber(((IHeavyAttack) item).getLevel()))
-                                                                                .setStyle(EvolutionStyles.EFFECTS));
+            tooltip.add(EvolutionTexts.heavyAttack((IHeavyAttack) item));
         }
         if (item instanceof IKnockback) {
-            tooltip.add(new TranslationTextComponent(KNOCKBACK, MathHelper.getRomanNumber(((IKnockback) item).getLevel())));
+            tooltip.add(EvolutionTexts.knockback((IKnockback) item));
         }
         if (item instanceof ISweepAttack) {
-            tooltip.add(new TranslationTextComponent(SWEEP,
-                                                     String.format(Locale.ENGLISH, "%d%%", (int) ((ISweepAttack) item).getSweepRatio() * 100)));
+            tooltip.add(EvolutionTexts.sweep((ISweepAttack) item));
         }
     }
 
     private static void addFluidInfo(List<ITextComponent> tooltip, ItemStack stack) {
         IItemFluidContainer container = (IItemFluidContainer) stack.getItem();
         if (container.isEmpty(stack)) {
-            tooltip.add(COMPONENT_EMPTY_CONTAINER);
+            tooltip.add(EvolutionTexts.TOOLTIP_EMPTY_CONTAINER);
         }
         else {
-            tooltip.add(new TranslationTextComponent(CONTAINER,
-                                                     ItemStack.DECIMALFORMAT.format(container.getAmount(stack) / 100.0f),
-                                                     container.getFluid() instanceof FluidGeneric ?
-                                                     ((FluidGeneric) container.getFluid()).getTextComp() :
-                                                     "null").setStyle(EvolutionStyles.INFO));
+            tooltip.add(EvolutionTexts.container(container, stack));
         }
-        tooltip.add(new TranslationTextComponent(CAPACITY,
-                                                 ItemStack.DECIMALFORMAT.format(container.getMaxAmount() / 100.0f)).setStyle(EvolutionStyles.INFO));
+        tooltip.add(EvolutionTexts.capacity(container));
     }
 
-    public static void makeEvolutionTooltip(ItemStack stack, List<ITextComponent> tooltip, PlayerEntity playerIn, ITooltipFlag advanced) {
+    public static void makeEvolutionTooltip(ItemStack stack, List<ITextComponent> tooltip, PlayerEntity player, ITooltipFlag advanced) {
         //Name
         ITextComponent component = stack.getDisplayName().applyTextStyle(stack.getRarity().color);
         if (stack.hasDisplayName()) {
@@ -101,7 +63,7 @@ public class ItemEvents {
         }
         tooltip.add(component);
         //Item specific information
-        stack.getItem().addInformation(stack, playerIn == null ? null : playerIn.world, tooltip, advanced);
+        stack.getItem().addInformation(stack, player == null ? null : player.world, tooltip, advanced);
         if (stack.getItem() instanceof IItemFluidContainer) {
             addFluidInfo(tooltip, stack);
         }
@@ -142,15 +104,15 @@ public class ItemEvents {
         int sizeForMass = tooltip.size();
         boolean hasAddedLine = false;
         if (stack.getItem() instanceof ITwoHanded) {
-            tooltip.add(EMPTY);
-            tooltip.add(COMPONENT_TWO_HANDED);
+            tooltip.add(EvolutionTexts.EMPTY);
+            tooltip.add(EvolutionTexts.TOOLTIP_TWO_HANDED);
             hasAddedLine = true;
         }
         if (stack.getItem() instanceof IThrowable) {
             if (!hasAddedLine) {
-                tooltip.add(EMPTY);
+                tooltip.add(EvolutionTexts.EMPTY);
             }
-            tooltip.add(COMPONENT_THROWABLE);
+            tooltip.add(EvolutionTexts.TOOLTIP_THROWABLE);
             hasAddedLine = true;
         }
         //Attributes
@@ -162,10 +124,10 @@ public class ItemEvents {
                     hasAddedLine = false;
                 }
                 else {
-                    tooltip.add(EMPTY);
+                    tooltip.add(EvolutionTexts.EMPTY);
                 }
                 if (slot == EquipmentSlotType.MAINHAND && stack.getItem() instanceof IOffhandAttackable) {
-                    tooltip.add(COMPONENT_OFFHAND);
+                    tooltip.add(EvolutionTexts.TOOLTIP_OFFHAND);
                 }
                 else {
                     //noinspection ObjectAllocationInLoop
@@ -176,29 +138,23 @@ public class ItemEvents {
                     AttributeModifier attributemodifier = entry.getValue();
                     double amount = attributemodifier.getAmount();
                     if (attributemodifier.getID().compareTo(EvolutionAttributes.ATTACK_DAMAGE_MODIFIER) == 0) {
-                        amount += playerIn.getAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getBaseValue();
+                        amount += player.getAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getBaseValue();
                         String damage = stack.getItem() instanceof IMelee ?
                                         ((IMelee) stack.getItem()).getDamageType().getTranslationKey() :
                                         EvolutionDamage.Type.GENERIC.getTranslationKey();
-                        tooltip.add(new StringTextComponent("    ").appendSibling(new TranslationTextComponent(damage,
-                                                                                                               ItemStack.DECIMALFORMAT.format(amount))
-                                                                                          .setStyle(EvolutionStyles.DAMAGE)));
+                        tooltip.add(EvolutionTexts.damage(damage, amount));
                         isMassUnique = false;
                         continue;
                     }
                     if (attributemodifier.getID().compareTo(EvolutionAttributes.ATTACK_SPEED_MODIFIER) == 0) {
-                        amount += playerIn.getAttribute(SharedMonsterAttributes.ATTACK_SPEED).getBaseValue();
-                        tooltip.add(new StringTextComponent("    ").appendSibling(new TranslationTextComponent(SPEED,
-                                                                                                               ItemStack.DECIMALFORMAT.format(amount))
-                                                                                          .setStyle(EvolutionStyles.SPEED)));
+                        amount += player.getAttribute(SharedMonsterAttributes.ATTACK_SPEED).getBaseValue();
+                        tooltip.add(EvolutionTexts.speed(amount));
                         isMassUnique = false;
                         continue;
                     }
                     if (attributemodifier.getID() == EvolutionAttributes.REACH_DISTANCE_MODIFIER) {
-                        amount += playerIn.getAttribute(PlayerEntity.REACH_DISTANCE).getBaseValue();
-                        tooltip.add(new StringTextComponent("    ").appendSibling(new TranslationTextComponent(DISTANCE,
-                                                                                                               ItemStack.DECIMALFORMAT.format(amount))
-                                                                                          .setStyle(EvolutionStyles.REACH)));
+                        amount += player.getAttribute(PlayerEntity.REACH_DISTANCE).getBaseValue();
+                        tooltip.add(EvolutionTexts.distance(amount));
                         isMassUnique = false;
                         continue;
                     }
@@ -208,11 +164,8 @@ public class ItemEvents {
                             continue;
                         }
                         hasMass = true;
-                        tooltip.add(sizeForMass, EMPTY);
-                        tooltip.add(sizeForMass + 1,
-                                    new StringTextComponent("   ").appendSibling(new TranslationTextComponent(MASS,
-                                                                                                              ItemStack.DECIMALFORMAT.format(amount)).setStyle(
-                                            EvolutionStyles.MASS)));
+                        tooltip.add(sizeForMass, EvolutionTexts.EMPTY);
+                        tooltip.add(sizeForMass + 1, EvolutionTexts.mass(amount));
                         continue;
                     }
                     double d1;
@@ -243,10 +196,7 @@ public class ItemEvents {
                 }
                 if (slot == EquipmentSlotType.MAINHAND && stack.getItem() instanceof ItemGenericTool) {
                     float miningSpeed = ((ItemGenericTool) stack.getItem()).getEfficiency();
-                    //noinspection ObjectAllocationInLoop
-                    tooltip.add(new StringTextComponent("    ").appendSibling(new TranslationTextComponent(MINING,
-                                                                                                           ItemStack.DECIMALFORMAT.format(miningSpeed))
-                                                                                      .setStyle(EvolutionStyles.MINING)));
+                    tooltip.add(EvolutionTexts.mining(miningSpeed));
                     isMassUnique = false;
                 }
                 if (hasMass && isMassUnique) {
@@ -261,9 +211,7 @@ public class ItemEvents {
         }
         //Durability
         if (stack.getItem() instanceof IDurability) {
-            tooltip.add(new StringTextComponent("   ").appendSibling(new TranslationTextComponent(DURABILITY,
-                                                                                                  ((IDurability) stack.getItem()).displayDurability(
-                                                                                                          stack)).setStyle(EvolutionStyles.DURABILITY)));
+            tooltip.add(EvolutionTexts.durability(stack));
         }
         //Advanced (registry name + nbt)
         if (advanced.isAdvanced()) {
@@ -277,6 +225,9 @@ public class ItemEvents {
     @SubscribeEvent
     public void itemTooltipEvent(ItemTooltipEvent event) {
         if (event.getPlayer() == null) {
+            return;
+        }
+        if (!event.getPlayer().world.isRemote) {
             return;
         }
         if (event.getItemStack().isFood()) {

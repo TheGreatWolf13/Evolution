@@ -8,11 +8,13 @@ import net.minecraftforge.registries.ForgeRegistries;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.fluids.FluidFreshWater;
 import tgw.evolution.blocks.fluids.FluidGeneric;
+import tgw.evolution.blocks.fluids.FluidSaltWater;
 
 public final class EvolutionFluids {
 
     public static final DeferredRegister<Fluid> FLUIDS = new DeferredRegister<>(ForgeRegistries.FLUIDS, Evolution.MODID);
     public static final RegistryObject<FluidGeneric> FRESH_WATER = FLUIDS.register("fresh_water", FluidFreshWater.Source::new);
+    public static final RegistryObject<FluidGeneric> SALT_WATER = FLUIDS.register("salt_water", FluidSaltWater.Source::new);
 
     private EvolutionFluids() {
     }

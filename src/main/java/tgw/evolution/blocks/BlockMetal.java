@@ -7,14 +7,12 @@ import net.minecraft.block.material.Material;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.state.IntegerProperty;
 import net.minecraft.state.StateContainer.Builder;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.loot.LootContext;
-import tgw.evolution.init.EvolutionBlockStateProperties;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.util.EnumMetalNames;
 import tgw.evolution.util.MathHelper;
@@ -23,9 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class BlockMetal extends BlockGravity {
+import static tgw.evolution.init.EvolutionBStates.OXIDATION;
 
-    public static final IntegerProperty OXIDATION = EvolutionBlockStateProperties.OXIDATION;
+public class BlockMetal extends BlockGravity {
 
     public BlockMetal(EnumMetalNames name) {
         super(Block.Properties.create(Material.IRON)
@@ -68,7 +66,7 @@ public class BlockMetal extends BlockGravity {
     }
 
     @Override
-    public void randomTick(BlockState state, World worldIn, BlockPos pos, Random rand) {
+    public void randomTick(BlockState state, World world, BlockPos pos, Random rand) {
         //TODO oxidation
     }
 }

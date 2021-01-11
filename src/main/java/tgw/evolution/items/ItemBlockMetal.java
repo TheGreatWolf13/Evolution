@@ -6,12 +6,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
-import tgw.evolution.init.EvolutionStyles;
+import tgw.evolution.init.EvolutionTexts;
 
 import java.util.List;
-import java.util.Locale;
 
 public class ItemBlockMetal extends ItemBlock {
 
@@ -32,9 +30,7 @@ public class ItemBlockMetal extends ItemBlock {
         if (nbt == null) {
             return;
         }
-        String text = "evolution.tooltip.metal.oxidation";
-        float percentage = nbt.getInt("Oxidation") / 0.08F;
-        ITextComponent comp = new TranslationTextComponent(text, String.format(Locale.US, "%.1f%%", percentage)).setStyle(EvolutionStyles.LIGHT_GREY);
-        tooltip.add(comp);
+        float oxydation = nbt.getInt("Oxidation") / 0.08F;
+        tooltip.add(EvolutionTexts.oxydation(oxydation));
     }
 }

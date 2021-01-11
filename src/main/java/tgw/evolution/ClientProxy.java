@@ -9,14 +9,18 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldType;
+import net.minecraftforge.client.event.ParticleFactoryRegisterEvent;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.ScreenCorpse;
 import tgw.evolution.client.gui.ScreenInventoryExtended;
 import tgw.evolution.events.ClientEvents;
+import tgw.evolution.events.ItemEvents;
 import tgw.evolution.init.EvolutionContainers;
+import tgw.evolution.init.EvolutionParticles;
 import tgw.evolution.init.EvolutionRenderer;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.util.reflection.StaticFieldHandler;
@@ -59,6 +63,10 @@ public class ClientProxy implements IProxy {
         WorldType.WORLD_TYPES[0] = evWorld;
     }
 
+    private static void particleRegistry(ParticleFactoryRegisterEvent event) {
+        EvolutionParticles.registerFactories(Minecraft.getInstance().particles);
+    }
+
     @Override
     public PlayerEntity getClientPlayer() {
         return Minecraft.getInstance().player;
@@ -71,6 +79,7 @@ public class ClientProxy implements IProxy {
 
     @Override
     public void init() {
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(ClientProxy::particleRegistry);
         EvolutionRenderer.registryEntityRenders();
         addTextures();
         ScreenManager.registerFactory(EvolutionContainers.EXTENDED_INVENTORY.get(), ScreenInventoryExtended::new);
@@ -78,8 +87,10 @@ public class ClientProxy implements IProxy {
         ColorManager.registerBlockColorHandlers(Minecraft.getInstance().getBlockColors());
         ColorManager.registerItemColorHandlers(Minecraft.getInstance().getItemColors());
         MinecraftForge.EVENT_BUS.register(new ClientEvents(Minecraft.getInstance()));
+        MinecraftForge.EVENT_BUS.register(new ItemEvents());
         ClientRegistry.registerKeyBinding(TOGGLE_PRONE);
         ClientRegistry.registerKeyBinding(BUILDING_ASSIST);
         changeWorldOrders();
+        EvolutionParticles.register();
     }
 }

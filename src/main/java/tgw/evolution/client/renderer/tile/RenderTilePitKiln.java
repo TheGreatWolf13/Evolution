@@ -5,52 +5,16 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
-import net.minecraft.util.ResourceLocation;
-import tgw.evolution.Evolution;
-import tgw.evolution.blocks.BlockPitKiln;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
 import tgw.evolution.client.models.tile.ModelLog;
 import tgw.evolution.client.models.tile.ModelTilePitKiln;
+import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.util.DirectionDiagonal;
+
+import static tgw.evolution.init.EvolutionBStates.LAYERS_0_16;
 
 public class RenderTilePitKiln extends TileEntityRenderer<TEPitKiln> {
 
-    public static final ResourceLocation PIT_KILN = Evolution.location("textures/block/pit_kiln.png");
-    public static final ResourceLocation LOG_ACACIA = Evolution.location("textures/block/pit_acacia.png");
-    public static final ResourceLocation LOG_ASPEN = Evolution.location("textures/block/pit_aspen.png");
-    public static final ResourceLocation LOG_BIRCH = Evolution.location("textures/block/pit_birch.png");
-    public static final ResourceLocation LOG_CEDAR = Evolution.location("textures/block/pit_cedar.png");
-    public static final ResourceLocation LOG_EBONY = Evolution.location("textures/block/pit_ebony.png");
-    public static final ResourceLocation LOG_ELM = Evolution.location("textures/block/pit_elm.png");
-    public static final ResourceLocation LOG_EUCALYPTUS = Evolution.location("textures/block/pit_eucalyptus.png");
-    public static final ResourceLocation LOG_FIR = Evolution.location("textures/block/pit_fir.png");
-    public static final ResourceLocation LOG_KAPOK = Evolution.location("textures/block/pit_kapok.png");
-    public static final ResourceLocation LOG_MANGROVE = Evolution.location("textures/block/pit_mangrove.png");
-    public static final ResourceLocation LOG_MAPLE = Evolution.location("textures/block/pit_maple.png");
-    public static final ResourceLocation LOG_OAK = Evolution.location("textures/block/pit_oak.png");
-    public static final ResourceLocation LOG_OLD_OAK = Evolution.location("textures/block/pit_old_oak.png");
-    public static final ResourceLocation LOG_PALM = Evolution.location("textures/block/pit_palm.png");
-    public static final ResourceLocation LOG_PINE = Evolution.location("textures/block/pit_pine.png");
-    public static final ResourceLocation LOG_REDWOOD = Evolution.location("textures/block/pit_redwood.png");
-    public static final ResourceLocation LOG_SPRUCE = Evolution.location("textures/block/pit_spruce.png");
-    public static final ResourceLocation LOG_WILLOW = Evolution.location("textures/block/pit_willow.png");
-    private static final ResourceLocation[] LOGS = {LOG_ACACIA,
-                                                    LOG_ASPEN,
-                                                    LOG_BIRCH,
-                                                    LOG_CEDAR,
-                                                    LOG_EBONY,
-                                                    LOG_ELM,
-                                                    LOG_EUCALYPTUS,
-                                                    LOG_FIR,
-                                                    LOG_KAPOK,
-                                                    LOG_MANGROVE,
-                                                    LOG_MAPLE,
-                                                    LOG_OAK,
-                                                    LOG_OLD_OAK,
-                                                    LOG_PALM,
-                                                    LOG_PINE,
-                                                    LOG_REDWOOD,
-                                                    LOG_SPRUCE,
-                                                    LOG_WILLOW};
     public final ModelTilePitKiln model = new ModelTilePitKiln();
     private final ItemRenderer itemRenderer;
     private final ModelLog log1 = new ModelLog(0, 0);
@@ -68,44 +32,44 @@ public class RenderTilePitKiln extends TileEntityRenderer<TEPitKiln> {
     }
 
     @Override
-    public void render(TEPitKiln tileEntityIn, double x, double y, double z, float partialTicks, int destroyStage) {
+    public void render(TEPitKiln tile, double x, double y, double z, float partialTicks, int destroyStage) {
         GlStateManager.pushMatrix();
-        if (tileEntityIn.single) {
+        if (tile.isSingle()) {
             GlStateManager.pushMatrix();
             GlStateManager.translatef((float) x + 0.5f, (float) y - 0.005f, (float) z + 0.5f);
             GlStateManager.scalef(1.7f, 1.7f, 1.7f);
-            this.itemRenderer.renderItem(tileEntityIn.nwStack, ItemCameraTransforms.TransformType.GROUND);
+            this.itemRenderer.renderItem(tile.getStack(DirectionDiagonal.NORTH_WEST), ItemCameraTransforms.TransformType.GROUND);
             GlStateManager.popMatrix();
         }
         else {
             GlStateManager.pushMatrix();
             GlStateManager.translatef((float) x + 0.25f, (float) y - 0.005f, (float) z + 0.25f);
-            this.itemRenderer.renderItem(tileEntityIn.nwStack, ItemCameraTransforms.TransformType.GROUND);
+            this.itemRenderer.renderItem(tile.getStack(DirectionDiagonal.NORTH_WEST), ItemCameraTransforms.TransformType.GROUND);
             GlStateManager.popMatrix();
             GlStateManager.pushMatrix();
             GlStateManager.translatef((float) x + 0.75f, (float) y - 0.005f, (float) z + 0.25f);
-            this.itemRenderer.renderItem(tileEntityIn.neStack, ItemCameraTransforms.TransformType.GROUND);
+            this.itemRenderer.renderItem(tile.getStack(DirectionDiagonal.NORTH_EAST), ItemCameraTransforms.TransformType.GROUND);
             GlStateManager.popMatrix();
             GlStateManager.pushMatrix();
             GlStateManager.translatef((float) x + 0.75f, (float) y - 0.005f, (float) z + 0.75f);
-            this.itemRenderer.renderItem(tileEntityIn.seStack, ItemCameraTransforms.TransformType.GROUND);
+            this.itemRenderer.renderItem(tile.getStack(DirectionDiagonal.SOUTH_EAST), ItemCameraTransforms.TransformType.GROUND);
             GlStateManager.popMatrix();
             GlStateManager.pushMatrix();
             GlStateManager.translatef((float) x + 0.25f, (float) y - 0.005f, (float) z + 0.75f);
-            this.itemRenderer.renderItem(tileEntityIn.swStack, ItemCameraTransforms.TransformType.GROUND);
+            this.itemRenderer.renderItem(tile.getStack(DirectionDiagonal.SOUTH_WEST), ItemCameraTransforms.TransformType.GROUND);
             GlStateManager.popMatrix();
         }
         GlStateManager.translatef((float) x, (float) y, (float) z);
-        int layers = tileEntityIn.getWorld().getBlockState(tileEntityIn.getPos()).get(BlockPitKiln.LAYERS);
-        this.bindTexture(PIT_KILN);
+        int layers = tile.getWorld().getBlockState(tile.getPos()).get(LAYERS_0_16);
+        this.bindTexture(EvolutionResources.PIT_KILN);
         this.model.render(layers);
-        this.renderLogs(layers, tileEntityIn.logs);
+        this.renderLogs(layers, tile.getLogs());
         GlStateManager.popMatrix();
     }
 
     private void renderLogs(int layers, byte[] logs) {
         for (int i = 8; i < layers && logs[i - 8] != -1; i++) {
-            this.bindTexture(LOGS[logs[i - 8]]);
+            this.bindTexture(EvolutionResources.PIT_LOGS[logs[i - 8]]);
             this.logs[i - 8].render();
         }
     }

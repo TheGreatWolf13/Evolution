@@ -8,11 +8,11 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.state.EnumProperty;
 import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
+import net.minecraft.util.Mirror;
+import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.shapes.ISelectionContext;
@@ -27,13 +27,13 @@ import tgw.evolution.init.EvolutionItems;
 import javax.annotation.Nullable;
 import java.util.Random;
 
-public class BlockRope extends Block implements IReplaceable, IClimbable {
+import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
-    public static final EnumProperty<Direction> DIRECTION = BlockStateProperties.HORIZONTAL_FACING;
+public class BlockRope extends Block implements IReplaceable, IClimbable {
 
     public BlockRope() {
         super(Properties.create(Material.WOOL).hardnessAndResistance(0).sound(SoundType.CLOTH).doesNotBlockMovement());
-        this.setDefaultState(this.getDefaultState().with(DIRECTION, Direction.NORTH));
+        this.setDefaultState(this.getDefaultState().with(DIRECTION_HORIZONTAL, Direction.NORTH));
     }
 
     public static boolean isSupported(IWorldReader world, BlockPos pos, Direction facing) {
@@ -49,7 +49,7 @@ public class BlockRope extends Block implements IReplaceable, IClimbable {
                 return ((IRopeSupport) currentState.getBlock()).getRopeLength() >= ropeCount;
             }
             if (currentDirection == Direction.UP && currentState.getBlock() == EvolutionBlocks.ROPE.get()) {
-                if (currentState.get(DIRECTION) == facing) {
+                if (currentState.get(DIRECTION_HORIZONTAL) == facing) {
                     continue;
                 }
                 return false;
@@ -60,7 +60,7 @@ public class BlockRope extends Block implements IReplaceable, IClimbable {
                 continue;
             }
             if (currentState.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
-                if (currentState.get(BlockRopeGround.ORIGIN) == facing) {
+                if (currentState.get(DIRECTION_HORIZONTAL) == facing) {
                     continue;
                 }
                 return false;
@@ -71,7 +71,7 @@ public class BlockRope extends Block implements IReplaceable, IClimbable {
     }
 
     @Override
-    public boolean canBeReplacedByLiquid(BlockState state) {
+    public boolean canBeReplacedByFluid(BlockState state) {
         return true;
     }
 
@@ -82,7 +82,7 @@ public class BlockRope extends Block implements IReplaceable, IClimbable {
 
     @Override
     protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(DIRECTION);
+        builder.add(DIRECTION_HORIZONTAL);
     }
 
     @Override
@@ -101,8 +101,8 @@ public class BlockRope extends Block implements IReplaceable, IClimbable {
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        switch (state.get(DIRECTION)) {
+    public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
+        switch (state.get(DIRECTION_HORIZONTAL)) {
             case NORTH:
                 return EvolutionHitBoxes.ROPE_WALL_NORTH;
             case EAST:
@@ -118,7 +118,7 @@ public class BlockRope extends Block implements IReplaceable, IClimbable {
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
-        return this.getDefaultState().with(DIRECTION, context.getPlacementHorizontalFacing());
+        return this.getDefaultState().with(DIRECTION_HORIZONTAL, context.getPlacementHorizontalFacing());
     }
 
     @Override
@@ -137,37 +137,47 @@ public class BlockRope extends Block implements IReplaceable, IClimbable {
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        return isSupported(worldIn, pos, state.get(DIRECTION));
+    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
+        return isSupported(world, pos, state.get(DIRECTION_HORIZONTAL));
     }
 
     @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnDrops(state, worldIn, pos);
-                worldIn.removeBlock(pos, false);
+    public BlockState mirror(BlockState state, Mirror mirror) {
+        return state.with(DIRECTION_HORIZONTAL, mirror.mirror(state.get(DIRECTION_HORIZONTAL)));
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!world.isRemote) {
+            if (!state.isValidPosition(world, pos)) {
+                spawnDrops(state, world, pos);
+                world.removeBlock(pos, false);
             }
         }
     }
 
     @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            BlockPos support = pos.up().offset(state.get(DIRECTION));
-            Block block = worldIn.getBlockState(support).getBlock();
+    public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!world.isRemote) {
+            BlockPos support = pos.up().offset(state.get(DIRECTION_HORIZONTAL));
+            Block block = world.getBlockState(support).getBlock();
             if (block instanceof IRopeSupport) {
-                worldIn.getPendingBlockTicks().scheduleTick(support, block, 2);
+                world.getPendingBlockTicks().scheduleTick(support, block, 2);
             }
         }
     }
 
     @Override
-    public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnDrops(state, worldIn, pos);
-                worldIn.removeBlock(pos, false);
+    public BlockState rotate(BlockState state, Rotation rot) {
+        return state.with(DIRECTION_HORIZONTAL, rot.rotate(state.get(DIRECTION_HORIZONTAL)));
+    }
+
+    @Override
+    public void tick(BlockState state, World world, BlockPos pos, Random random) {
+        if (!world.isRemote) {
+            if (!state.isValidPosition(world, pos)) {
+                spawnDrops(state, world, pos);
+                world.removeBlock(pos, false);
             }
         }
     }

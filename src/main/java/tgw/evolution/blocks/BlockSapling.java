@@ -3,9 +3,7 @@ package tgw.evolution.blocks;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.trees.Tree;
-import net.minecraft.state.IntegerProperty;
 import net.minecraft.state.StateContainer.Builder;
-import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
@@ -17,16 +15,20 @@ import tgw.evolution.init.EvolutionHitBoxes;
 
 import java.util.Random;
 
+import static tgw.evolution.init.EvolutionBStates.STAGE_0_1;
+
 public class BlockSapling extends BlockBush implements IGrowable {
 
-    public static final IntegerProperty STAGE = BlockStateProperties.STAGE_0_1;
-    protected static final VoxelShape SHAPE = EvolutionHitBoxes.SAPLING;
     private final Tree tree;
 
     public BlockSapling(Tree tree) {
-        super(Block.Properties.create(Material.PLANTS).doesNotBlockMovement().tickRandomly().hardnessAndResistance(0F, 0F).sound(SoundType.PLANT));
+        super(Block.Properties.create(Material.PLANTS)
+                              .doesNotBlockMovement()
+                              .tickRandomly()
+                              .hardnessAndResistance(0.0F, 0.0F)
+                              .sound(SoundType.PLANT));
         this.tree = tree;
-        this.setDefaultState(this.stateContainer.getBaseState().with(STAGE, 0));
+        this.setDefaultState(this.getDefaultState().with(STAGE_0_1, 0));
     }
 
     public static boolean canGrowInto(IWorldGenerationReader worldIn, BlockPos pos) {
@@ -53,12 +55,12 @@ public class BlockSapling extends BlockBush implements IGrowable {
 
     @Override
     protected void fillStateContainer(Builder<Block, BlockState> builder) {
-        builder.add(STAGE);
+        builder.add(STAGE_0_1);
     }
 
     @Override
     public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        return SHAPE;
+        return EvolutionHitBoxes.SAPLING;
     }
 
     @Override
@@ -67,8 +69,8 @@ public class BlockSapling extends BlockBush implements IGrowable {
     }
 
     public void grow(IWorld worldIn, BlockPos pos, BlockState state, Random rand) {
-        if (state.get(STAGE) == 0) {
-            worldIn.setBlockState(pos, state.with(STAGE, 1), 4);
+        if (state.get(STAGE_0_1) == 0) {
+            worldIn.setBlockState(pos, state.with(STAGE_0_1, 1), 4);
             return;
         }
         this.tree.spawn(worldIn, pos, state, rand);
@@ -76,13 +78,13 @@ public class BlockSapling extends BlockBush implements IGrowable {
     }
 
     @Override
-    public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
-        super.tick(state, worldIn, pos, random);
-        if (!worldIn.isAreaLoaded(pos, 1)) {
+    public void tick(BlockState state, World world, BlockPos pos, Random random) {
+        super.tick(state, world, pos, random);
+        if (!world.isAreaLoaded(pos, 1)) {
             return; // Forge: prevent loading unloaded chunks when checking neighbor's light
         }
-        if (worldIn.getLight(pos.up()) >= 9 && random.nextInt(7) == 0) {
-            this.grow(worldIn, pos, state, random);
+        if (world.getLight(pos.up()) >= 9 && random.nextInt(7) == 0) {
+            this.grow(world, pos, state, random);
         }
     }
 }

@@ -32,6 +32,31 @@ public final class EvolutionResources {
     public static final ResourceLocation BUTTON_RECIPE_BOOK = new ResourceLocation("textures/gui/recipe_button.png");
     public static final ResourceLocation GUI_CORPSE = Evolution.location("textures/gui/corpse.png");
     public static final ResourceLocation GUI_INVENTORY = Evolution.location("textures/gui/inventory.png");
+    public static final ResourceLocation PIT_KILN = Evolution.location("textures/block/pit_kiln.png");
+    public static final ResourceLocation[] PIT_LOGS = {Evolution.location("textures/block/pit_acacia.png"),
+                                                       Evolution.location("textures/block/pit_aspen.png"),
+                                                       Evolution.location("textures/block/pit_birch.png"),
+                                                       Evolution.location("textures/block/pit_cedar.png"),
+                                                       Evolution.location("textures/block/pit_ebony.png"),
+                                                       Evolution.location("textures/block/pit_elm.png"),
+                                                       Evolution.location("textures/block/pit_eucalyptus.png"),
+                                                       Evolution.location("textures/block/pit_fir.png"),
+                                                       Evolution.location("textures/block/pit_kapok.png"),
+                                                       Evolution.location("textures/block/pit_mangrove.png"),
+                                                       Evolution.location("textures/block/pit_maple.png"),
+                                                       Evolution.location("textures/block/pit_oak.png"),
+                                                       Evolution.location("textures/block/pit_old_oak.png"),
+                                                       Evolution.location("textures/block/pit_palm.png"),
+                                                       Evolution.location("textures/block/pit_pine.png"),
+                                                       Evolution.location("textures/block/pit_redwood.png"),
+                                                       Evolution.location("textures/block/pit_spruce.png"),
+                                                       Evolution.location("textures/block/pit_willow.png")};
+    public static final ResourceLocation GUI_ICONS = Evolution.location("textures/gui/icons.png");
+    public static final ResourceLocation SHADER_DESATURATE_25 = Evolution.location("shaders/post/saturation25.json");
+    public static final ResourceLocation SHADER_DESATURATE_50 = Evolution.location("shaders/post/saturation50.json");
+    public static final ResourceLocation SHADER_DESATURATE_75 = Evolution.location("shaders/post/saturation75.json");
+    public static final ResourceLocation FRESH_WATER = Evolution.location("block/fluid/fresh_water");
+    public static final ResourceLocation EMPTY = Evolution.location("empty");
 
     private EvolutionResources() {
     }

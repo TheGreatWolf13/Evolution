@@ -2,8 +2,6 @@ package tgw.evolution.events;
 
 import com.google.common.collect.Sets;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.util.ClientRecipeBook;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
@@ -48,7 +46,6 @@ import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.*;
 import tgw.evolution.inventory.extendedinventory.ContainerExtendedHandler;
-import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.network.PacketCSPlayerFall;
 import tgw.evolution.network.PacketSCChangeTickrate;
 import tgw.evolution.network.PacketSCRemoveEffect;
@@ -66,8 +63,6 @@ public class EntityEvents {
     private static final MethodHandler<Entity, Void> SET_POSE_METHOD = new MethodHandler<>(Entity.class, "func_213301_b", Pose.class);
     private static final FieldHandler<LivingEntity, CombatTracker> COMBAT_TRACKER_FIELD = new FieldHandler<>(LivingEntity.class, "field_94063_bt");
     private static final FieldHandler<PlayerAbilities, Float> PLAYER_SPEED_FIELD = new FieldHandler<>(PlayerAbilities.class, "field_149495_f");
-    private static final FieldHandler<ClientPlayerEntity, ClientRecipeBook> RECIPE_BOOK_FIELD = new FieldHandler<>(ClientPlayerEntity.class,
-                                                                                                                   "field_192036_cb");
     private static final Random RANDOM = new Random();
     private static final Set<DamageSource> IGNORED_DAMAGE_SOURCES = Util.make(Sets.newHashSet(), set -> {
         set.add(EvolutionDamage.DROWN);
@@ -204,13 +199,7 @@ public class EntityEvents {
         living.getAttribute(LivingEntity.ENTITY_GRAVITY).setBaseValue(Gravity.gravity(living.world.getDimension()));
         if (living instanceof PlayerEntity) {
             PlayerEntity player = (PlayerEntity) living;
-            if (player.world.isRemote) {
-                player.abilities.setWalkSpeed((float) PlayerHelper.WALK_SPEED);
-                RECIPE_BOOK_FIELD.set((ClientPlayerEntity) player, new EvolutionRecipeBook(player.world.getRecipeManager()));
-            }
-            else {
-                PLAYER_SPEED_FIELD.set(player.abilities, (float) PlayerHelper.WALK_SPEED);
-            }
+            PLAYER_SPEED_FIELD.set(player.abilities, (float) PlayerHelper.WALK_SPEED);
         }
         //TODO
 //        else {

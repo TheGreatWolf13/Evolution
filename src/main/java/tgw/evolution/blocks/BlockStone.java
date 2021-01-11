@@ -59,16 +59,16 @@ public class BlockStone extends BlockGravity implements IStoneVariant {
     }
 
     @Override
-    public boolean isPillar(BlockState state, World worldIn, BlockPos pos, boolean nested) {
+    public boolean isPillar(BlockState state, World world, BlockPos pos, boolean nested) {
         BlockPos down = pos.down();
-        if (canFallThrough(worldIn.getBlockState(down))) {
+        if (canFallThrough(world.getBlockState(down))) {
             return false;
         }
-        if (canFallThrough(worldIn.getBlockState(pos.down(2)))) {
+        if (canFallThrough(world.getBlockState(pos.down(2)))) {
             if (nested) {
                 return false;
             }
-            DirectionToIntMap map = this.checkBeams(worldIn, down, true);
+            DirectionToIntMap map = this.checkBeams(world, down, true);
             if (map.isEmpty()) {
                 return false;
             }
@@ -76,17 +76,17 @@ public class BlockStone extends BlockGravity implements IStoneVariant {
             if (axis == null) {
                 return false;
             }
-            this.checkWeight(worldIn, down, map, axis, false);
+            this.checkWeight(world, down, map, axis, false);
         }
         return true;
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
+    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
         BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         for (Direction dir : Direction.values()) {
             mutablePos.setPos(pos).move(dir);
-            if (Block.hasSolidSide(worldIn.getBlockState(mutablePos), worldIn, mutablePos, dir.getOpposite())) {
+            if (Block.hasSolidSide(world.getBlockState(mutablePos), world, mutablePos, dir.getOpposite())) {
                 return true;
             }
         }
@@ -94,21 +94,21 @@ public class BlockStone extends BlockGravity implements IStoneVariant {
     }
 
     @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnAsEntity(worldIn, pos, new ItemStack(this));
-                worldIn.removeBlock(pos, false);
+    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!world.isRemote) {
+            if (!state.isValidPosition(world, pos)) {
+                spawnAsEntity(world, pos, new ItemStack(this));
+                world.removeBlock(pos, false);
             }
         }
-        super.neighborChanged(state, worldIn, pos, blockIn, fromPos, isMoving);
+        super.neighborChanged(state, world, pos, block, fromPos, isMoving);
     }
 
     @Override
-    public boolean specialCondition(World worldIn, BlockPos pos) {
+    public boolean specialCondition(World world, BlockPos pos) {
         BlockPos up = pos.up();
-        if (worldIn.getBlockState(up).getBlock() == this) {
-            DirectionToIntMap map = this.checkBeams(worldIn, up, true);
+        if (world.getBlockState(up).getBlock() == this) {
+            DirectionToIntMap map = this.checkBeams(world, up, true);
             if (map.isEmpty()) {
                 return false;
             }
@@ -116,7 +116,7 @@ public class BlockStone extends BlockGravity implements IStoneVariant {
             if (axis == null) {
                 return false;
             }
-            this.checkWeight(worldIn, up, map, axis, true);
+            this.checkWeight(world, up, map, axis, true);
             return true;
         }
         return false;
