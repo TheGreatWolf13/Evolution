@@ -249,13 +249,15 @@ public final class LivingEntityHooks {
             double newZ;
             if (!entity.onGround) {
                 newX = MathHelper.clamp(x, -0.025, 0.025);
+                newX *= 0.8;
                 newZ = MathHelper.clamp(z, -0.025, 0.025);
+                newZ *= 0.8;
             }
             else {
                 newX = x;
                 newZ = z;
             }
-            double newY = Math.max(y, -0.15);
+            double newY = Math.max(y, entity.isSneaking() ? 0 : -0.15);
             if (newY < 0 && entity.getBlockState().getBlock() != Blocks.SCAFFOLDING && entity.isSneaking() && entity instanceof PlayerEntity) {
                 newY = 0;
             }
