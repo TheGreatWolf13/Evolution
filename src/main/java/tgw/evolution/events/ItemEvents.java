@@ -28,6 +28,38 @@ import java.util.Map;
 
 public class ItemEvents {
 
+    private static void addEasterEggs(List<ITextComponent> tooltip, ItemStack stack) {
+        ClientEvents client = ClientEvents.getInstance();
+        if (client == null) {
+            return;
+        }
+        if (client.hasShiftDown()) {
+            Item item = stack.getItem();
+            if (item instanceof ItemRock) {
+                switch (((ItemRock) item).getStoneName()) {
+                    case CHERT:
+                        tooltip.add(EvolutionTexts.EMPTY);
+                        addMultiLineComp(EvolutionTexts.EASTER_CHERT, tooltip);
+                        return;
+                    case GABBRO:
+                        tooltip.add(EvolutionTexts.EMPTY);
+                        addMultiLineComp(EvolutionTexts.EASTER_GABBRO, tooltip);
+                        return;
+                    case GNEISS:
+                        tooltip.add(EvolutionTexts.EMPTY);
+                        addMultiLineComp(EvolutionTexts.EASTER_GNEISS, tooltip);
+                        return;
+                    case SLATE:
+                        tooltip.add(EvolutionTexts.EMPTY);
+                        addMultiLineComp(EvolutionTexts.EASTER_SLATE, tooltip);
+                        return;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+
     private static void addEffectsTooltips(List<ITextComponent> tooltip, ItemStack stack) {
         Item item = stack.getItem();
         if (item instanceof IFireAspect) {
@@ -53,6 +85,14 @@ public class ItemEvents {
             tooltip.add(EvolutionTexts.container(container, stack));
         }
         tooltip.add(EvolutionTexts.capacity(container));
+    }
+
+    private static void addMultiLineComp(ITextComponent comp, List<ITextComponent> tooltip) {
+        Style style = comp.getStyle();
+        for (String str : comp.getFormattedText().split("\n")) {
+            //noinspection ObjectAllocationInLoop
+            tooltip.add(new StringTextComponent(" " + str).setStyle(style));
+        }
     }
 
     public static void makeEvolutionTooltip(ItemStack stack, List<ITextComponent> tooltip, PlayerEntity player, ITooltipFlag advanced) {
@@ -213,6 +253,7 @@ public class ItemEvents {
         if (stack.getItem() instanceof IDurability) {
             tooltip.add(EvolutionTexts.durability(stack));
         }
+        addEasterEggs(tooltip, stack);
         //Advanced (registry name + nbt)
         if (advanced.isAdvanced()) {
             tooltip.add(new StringTextComponent(ForgeRegistries.ITEMS.getKey(stack.getItem()).toString()).applyTextStyle(TextFormatting.DARK_GRAY));

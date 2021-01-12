@@ -16,7 +16,7 @@
 		"hidden": false
 	},
 	"criteria": {
-		"andesite": {
+		"rock_andesite": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -26,7 +26,7 @@
 				]
 			}
 		},
-		"basalt": {
+		"rock_basalt": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -36,7 +36,7 @@
 				]
 			}
 		},
-		"chalk": {
+		"rock_chalk": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -46,7 +46,7 @@
 				]
 			}
 		},
-		"chert": {
+		"rock_chert": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -56,7 +56,7 @@
 				]
 			}
 		},
-		"conglomerate": {
+		"rock_conglomerate": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -66,7 +66,7 @@
 				]
 			}
 		},
-		"dacite": {
+		"rock_dacite": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -76,7 +76,7 @@
 				]
 			}
 		},
-		"diorite": {
+		"rock_diorite": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -86,7 +86,7 @@
 				]
 			}
 		},
-		"dolomite": {
+		"rock_dolomite": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -96,7 +96,7 @@
 				]
 			}
 		},
-		"gabbro": {
+		"rock_gabbro": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -106,7 +106,7 @@
 				]
 			}
 		},
-		"gneiss": {
+		"rock_gneiss": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -116,7 +116,7 @@
 				]
 			}
 		},
-		"granite": {
+		"rock_granite": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -126,7 +126,7 @@
 				]
 			}
 		},
-		"limestone": {
+		"rock_limestone": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -136,7 +136,7 @@
 				]
 			}
 		},
-		"marble": {
+		"rock_marble": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -146,7 +146,7 @@
 				]
 			}
 		},
-		"phyllite": {
+		"rock_phyllite": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -156,7 +156,7 @@
 				]
 			}
 		},
-		"quartzite": {
+		"rock_quartzite": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -166,7 +166,7 @@
 				]
 			}
 		},
-		"red_sandstone": {
+		"rock_red_sandstone": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -176,7 +176,7 @@
 				]
 			}
 		},
-		"sandstone": {
+		"rock_sandstone": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -186,7 +186,7 @@
 				]
 			}
 		},
-		"schist": {
+		"rock_schist": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -196,7 +196,7 @@
 				]
 			}
 		},
-		"shale": {
+		"rock_shale": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -206,7 +206,7 @@
 				]
 			}
 		},
-		"slate": {
+		"rock_slate": {
 			"trigger": "minecraft:inventory_changed",
 			"conditions": {
 				"items": [
@@ -219,26 +219,26 @@
 	},
 	"requirements": [
 		[
-			"andesite",
-			"basalt",
-			"chalk",
-			"chert",
-			"conglomerate",
-			"dacite",
-			"diorite",
-			"dolomite",
-			"gabbro",
-			"gneiss",
-			"granite",
-			"limestone",
-			"marble",
-			"phyllite",
-			"quartzite",
-			"red_sandstone",
-			"sandstone",
-			"schist",
-			"shale",
-			"slate"
+			"rock_andesite",
+			"rock_basalt",
+			"rock_chalk",
+			"rock_chert",
+			"rock_conglomerate",
+			"rock_dacite",
+			"rock_diorite",
+			"rock_dolomite",
+			"rock_gabbro",
+			"rock_gneiss",
+			"rock_granite",
+			"rock_limestone",
+			"rock_marble",
+			"rock_phyllite",
+			"rock_quartzite",
+			"rock_red_sandstone",
+			"rock_sandstone",
+			"rock_schist",
+			"rock_shale",
+			"rock_slate"
 		]
 	]
 }													

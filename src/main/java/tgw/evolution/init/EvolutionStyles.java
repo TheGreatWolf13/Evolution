@@ -15,7 +15,7 @@ public final class EvolutionStyles {
     public static final Style PROPERTY = new Style().setColor(TextFormatting.GOLD);
     public static final Style LIGHT_GREY = new Style().setColor(TextFormatting.GRAY);
     public static final Style MASS = new Style().setColor(TextFormatting.DARK_GREEN);
-    public static final Style LORE = new Style().setColor(TextFormatting.DARK_PURPLE).setItalic(true);
+    public static final Style LORE = new Style().setColor(TextFormatting.LIGHT_PURPLE).setItalic(true);
     public static final Style EFFECTS = new Style().setColor(TextFormatting.DARK_AQUA);
 
     private EvolutionStyles() {

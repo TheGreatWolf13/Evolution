@@ -31,7 +31,11 @@ public final class EvolutionResources {
     public static final int TACTICAL = 7;
     public static final ResourceLocation BUTTON_RECIPE_BOOK = new ResourceLocation("textures/gui/recipe_button.png");
     public static final ResourceLocation GUI_CORPSE = Evolution.location("textures/gui/corpse.png");
+    public static final ResourceLocation GUI_ICONS = Evolution.location("textures/gui/icons.png");
     public static final ResourceLocation GUI_INVENTORY = Evolution.location("textures/gui/inventory.png");
+    public static final ResourceLocation GUI_TABS = Evolution.location("textures/gui/tabs.png");
+    public static final ResourceLocation GUI_WIDGETS = Evolution.location("textures/gui/widgets.png");
+    public static final ResourceLocation GUI_WINDOW = Evolution.location("textures/gui/window.png");
     public static final ResourceLocation PIT_KILN = Evolution.location("textures/block/pit_kiln.png");
     public static final ResourceLocation[] PIT_LOGS = {Evolution.location("textures/block/pit_acacia.png"),
                                                        Evolution.location("textures/block/pit_aspen.png"),
@@ -51,7 +55,6 @@ public final class EvolutionResources {
                                                        Evolution.location("textures/block/pit_redwood.png"),
                                                        Evolution.location("textures/block/pit_spruce.png"),
                                                        Evolution.location("textures/block/pit_willow.png")};
-    public static final ResourceLocation GUI_ICONS = Evolution.location("textures/gui/icons.png");
     public static final ResourceLocation SHADER_DESATURATE_25 = Evolution.location("shaders/post/saturation25.json");
     public static final ResourceLocation SHADER_DESATURATE_50 = Evolution.location("shaders/post/saturation50.json");
     public static final ResourceLocation SHADER_DESATURATE_75 = Evolution.location("shaders/post/saturation75.json");

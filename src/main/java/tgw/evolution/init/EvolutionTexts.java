@@ -20,6 +20,10 @@ public final class EvolutionTexts {
     public static final ITextComponent ACTION_HOOK = transl("evolution.actionbar.hook").setStyle(WHITE);
     public static final ITextComponent ACTION_INERTIA = transl("evolution.actionbar.inertia").setStyle(WHITE);
     public static final ITextComponent ACTION_TWO_HANDED = transl("evolution.actionbar.two_handed").setStyle(WHITE);
+    public static final ITextComponent EASTER_CHERT = transl("evolution.easter.chert").setStyle(LORE);
+    public static final ITextComponent EASTER_GABBRO = transl("evolution.easter.gabbro").setStyle(LORE);
+    public static final ITextComponent EASTER_GNEISS = transl("evolution.easter.gneiss").setStyle(LORE);
+    public static final ITextComponent EASTER_SLATE = transl("evolution.easter.slate").setStyle(LORE);
     public static final ITextComponent EMPTY = new StringTextComponent("");
     public static final ITextComponent FLUID_FRESH_WATER = transl("evolution.fluid.fresh_water");
     public static final ITextComponent FLUID_SALT_WATER = transl("evolution.fluid.salt_water");
@@ -126,6 +130,10 @@ public final class EvolutionTexts {
 
     public static ITextComponent oxydation(double oxydation) {
         return new TranslationTextComponent("evolution.tooltip.metal.oxidation", PERCENT_ONE_PLACE.format(oxydation)).setStyle(LIGHT_GREY);
+    }
+
+    public static ITextComponent remaining(int number) {
+        return new TranslationTextComponent("evolution.tooltip.advancements.remain", number);
     }
 
     public static ITextComponent speed(double amount) {

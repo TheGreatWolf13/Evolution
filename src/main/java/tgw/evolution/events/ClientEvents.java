@@ -9,7 +9,8 @@ import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.gui.screen.DeathScreen;
+import net.minecraft.client.gui.advancements.AdvancementsScreen;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.screen.inventory.InventoryScreen;
 import net.minecraft.client.renderer.*;
@@ -60,6 +61,7 @@ import tgw.evolution.blocks.BlockMolding;
 import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.client.MovementInputEvolution;
+import tgw.evolution.client.gui.advancements.ScreenAdvancements;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
@@ -228,7 +230,7 @@ public class ClientEvents {
         }
         return this.leftPrevSwingProgress + f * partialTickTime;
     }
-
+    
     private float getRightCooledAttackStrength(Item item, float adjustTicks) {
         if (!(item instanceof IOffhandAttackable)) {
             return 0;
@@ -242,6 +244,10 @@ public class ClientEvents {
             ++f;
         }
         return this.rightPrevSwingProgress + f * partialTickTime;
+    }
+
+    public boolean hasShiftDown() {
+        return Screen.hasShiftDown();
     }
 
     @SubscribeEvent
@@ -518,9 +524,9 @@ public class ClientEvents {
             event.setCanceled(true);
             EvolutionNetwork.INSTANCE.sendToServer(new PacketCSOpenExtendedInventory());
         }
-        //Auto-Respawn for debugging purposes only
-        else if (event.getGui() instanceof DeathScreen) {
-            this.mc.player.respawnPlayer();
+        else if (event.getGui() instanceof AdvancementsScreen) {
+            event.setCanceled(true);
+            this.mc.displayGuiScreen(new ScreenAdvancements(this.mc.getConnection().getAdvancementManager()));
         }
     }
 
