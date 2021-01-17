@@ -34,12 +34,12 @@ public enum EvolutionToolMaterials implements IItemTier {
     COPPER("copper", 20.0f, 10.0f, 500, HarvestLevel.COPPER, ingot_copper, 8_920);
 
     private final float attackDamage;
-    private final float miningSpeed;
+    private final int density;
     private final int durability;
     private final int harvestLevel;
-    private final Item repairMaterial;
+    private final float miningSpeed;
     private final String name;
-    private final int density;
+    private final Item repairMaterial;
 
     EvolutionToolMaterials(String name,
                            float attackDamage,
@@ -108,6 +108,10 @@ public enum EvolutionToolMaterials implements IItemTier {
     }
 
     public double getShovelMass() {
+        return this.density / 2_000.0;
+    }
+
+    public double getSwordMass() {
         return this.density / 2_000.0;
     }
 }

@@ -60,6 +60,7 @@ public final class EvolutionResources {
     public static final ResourceLocation SHADER_DESATURATE_75 = Evolution.location("shaders/post/saturation75.json");
     public static final ResourceLocation FRESH_WATER = Evolution.location("block/fluid/fresh_water");
     public static final ResourceLocation EMPTY = Evolution.location("empty");
+    public static final ResourceLocation RES_MAP_BACKGROUND = new ResourceLocation("textures/map/map_background.png");
 
     private EvolutionResources() {
     }

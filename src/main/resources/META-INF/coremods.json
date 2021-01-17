@@ -14,5 +14,8 @@
   "Evolution LivingEntityHandleStatusUpdate Transformer": "patches/LivingEntityHandleStatusUpdate.js",
   "Evolution TickrateChanger Transformer": "patches/TickrateChanger.js",
   "Evolution Chunk Transformer": "patches/ChunkPatches.js",
-  "Evolution World Transformer": "patches/WorldPatches.js"
+  "Evolution World Transformer": "patches/WorldPatches.js",
+  "Evolution InputHooks Transformer": "patches/InputHooks.js",
+  "Evolution PlayerModel Transformer": "patches/PlayerModelHooks.js",
+  "Evolution PlayerRenderer Transformer": "patches/PlayerRendererHooks.js"
 }

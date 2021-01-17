@@ -40,6 +40,7 @@ public final class MathHelper {
                                                            {DirectionDiagonal.SOUTH_WEST, DirectionDiagonal.SOUTH_EAST}};
     public static final Direction[] DIRECTIONS_X = {Direction.WEST, Direction.EAST};
     public static final Direction[] DIRECTIONS_Z = {Direction.NORTH, Direction.SOUTH};
+    public static final Hand[] HANDS_LEFT_PRIORITY = {Hand.OFF_HAND, Hand.MAIN_HAND};
     private static final Predicate<Entity> PREDICATE = EntityPredicates.CAN_AI_TARGET.and(e -> e != null &&
                                                                                                e.canBeCollidedWith() &&
                                                                                                (e instanceof LivingEntity ||
@@ -86,6 +87,9 @@ public final class MathHelper {
     public static boolean areItemStacksSufficientlyEqual(ItemStack a, ItemStack b) {
         if (a.isEmpty() && b.isEmpty()) {
             return true;
+        }
+        if (a.getCount() != b.getCount()) {
+            return false;
         }
         return a.getItem() == b.getItem();
     }

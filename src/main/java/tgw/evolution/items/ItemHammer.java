@@ -16,13 +16,23 @@ public class ItemHammer extends ItemGenericTool implements IHeavyAttack {
     private final double mass;
 
     public ItemHammer(IItemTier tier, float attackSpeed, Properties builder, double mass) {
-        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MAT, builder.addToolType(ToolTypeEv.HAMMER, tier.getHarvestLevel()));
+        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MAT, builder, ToolTypeEv.HAMMER);
         this.mass = mass;
     }
 
     @Override
-    public float getChance() {
-        return 0.2f;
+    public float baseDamage() {
+        return 6.0f;
+    }
+
+    @Override
+    public int blockDurabilityDamage() {
+        return 1;
+    }
+
+    @Override
+    public int entityDurabilityDamage() {
+        return 2;
     }
 
     @Nonnull
@@ -32,7 +42,12 @@ public class ItemHammer extends ItemGenericTool implements IHeavyAttack {
     }
 
     @Override
-    public int getLevel() {
+    public float getHeavyAttackChance() {
+        return 0.2f;
+    }
+
+    @Override
+    public int getHeavyAttackLevel() {
         return 2;
     }
 
@@ -42,12 +57,7 @@ public class ItemHammer extends ItemGenericTool implements IHeavyAttack {
     }
 
     @Override
-    public float setBaseDamage() {
-        return 6.0f;
-    }
-
-    @Override
-    public float setReach() {
+    public float reach() {
         return 3;
     }
 }

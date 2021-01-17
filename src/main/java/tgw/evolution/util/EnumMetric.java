@@ -1,29 +1,29 @@
 package tgw.evolution.util;
 
 public enum EnumMetric {
-    UNDER_METRIC("Underflow", "under", 0.000_000_000_000_000_000_000_000_001),
-    YOCTO("Yocto", "y", 0.000_000_000_000_000_000_000_001),
-    ZEPTO("Zepto", "z", 0.000_000_000_000_000_000_001),
-    ATTO("Atto", "a", 0.000_000_000_000_000_001),
-    FEMTO("Femto", "f", 0.000_000_000_000_001),
-    PICO("Pico", "p", 0.000_000_000_001),
-    NANO("Nano", "n", 0.000_000_001),
-    MICRO("Micro", "\u03bc", 0.000_001),
-    MILLI("Milli", "m", 0.001),
+    UNDER_METRIC("Underflow", "under", 1E-27),
+    YOCTO("Yocto", "y", 1E-24),
+    ZEPTO("Zepto", "z", 1E-21),
+    ATTO("Atto", "a", 1E-18),
+    FEMTO("Femto", "f", 1E-15),
+    PICO("Pico", "p", 1E-12),
+    NANO("Nano", "n", 1E-9),
+    MICRO("Micro", "\u03bc", 1E-6),
+    MILLI("Milli", "m", 1E-3),
     NONE("", "", 1),
-    KILO("Kilo", "k", 1_000),
-    MEGA("Mega", "M", 1_000_000),
-    GIGA("Giga", "G", 1_000_000_000),
-    TERA("Tera", "T", 1_000_000_000_000.0),
-    PETA("Peta", "P", 1_000_000_000_000_000.0),
-    EXA("Exa", "E", 1_000_000_000_000_000_000.0),
-    ZETTA("Zetta", "Z", 1_000_000_000_000_000_000_000.0),
-    YOTTA("Yotta", "Y", 1_000_000_000_000_000_000_000_000.0),
-    OVER_METRIC("Overflow", "over", 1_000_000_000_000_000_000_000_000_000.0);
+    KILO("Kilo", "k", 1E3),
+    MEGA("Mega", "M", 1E6),
+    GIGA("Giga", "G", 1E9),
+    TERA("Tera", "T", 1E12),
+    PETA("Peta", "P", 1E15),
+    EXA("Exa", "E", 1E18),
+    ZETTA("Zetta", "Z", 1E21),
+    YOTTA("Yotta", "Y", 1E24),
+    OVER_METRIC("Overflow", "over", 1E27);
 
     private final String fullName;
-    private final String prefix;
     private final double inNumber;
+    private final String prefix;
 
     EnumMetric(String fullName, String prefix, double inNumber) {
         this.fullName = fullName;
@@ -35,15 +35,15 @@ public enum EnumMetric {
         return value * metric.inNumber;
     }
 
-    public String getPrefix() {
-        return this.prefix;
-    }
-
     public String getFullName() {
         return this.fullName;
     }
 
     public double getInNumber() {
         return this.inNumber;
+    }
+
+    public String getPrefix() {
+        return this.prefix;
     }
 }

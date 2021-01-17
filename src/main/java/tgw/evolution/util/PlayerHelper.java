@@ -94,12 +94,12 @@ public final class PlayerHelper {
                     }
                     int heavyModifier = 0;
                     if (attackItem instanceof IHeavyAttack) {
-                        float heavyChance = ((IHeavyAttack) attackItem).getChance();
+                        float heavyChance = ((IHeavyAttack) attackItem).getHeavyAttackChance();
                         if (sprinting) {
                             heavyChance *= 2;
                         }
                         if (RAND.nextFloat() < heavyChance) {
-                            heavyModifier = ((IHeavyAttack) attackItem).getLevel();
+                            heavyModifier = ((IHeavyAttack) attackItem).getHeavyAttackLevel();
                             if (sprinting) {
                                 heavyModifier *= 2;
                             }
@@ -118,8 +118,7 @@ public final class PlayerHelper {
                     }
                     damage *= 1 + heavyModifier / 10.0f;
                     boolean isSweepAttack = false;
-                    double distanceWalked = player.distanceWalkedModified - player.prevDistanceWalkedModified;
-                    if (!sprinting && player.onGround && distanceWalked < player.getAIMoveSpeed()) {
+                    if (!sprinting && player.onGround) {
                         if (attackItem instanceof ISweepAttack) {
                             isSweepAttack = true;
                         }
@@ -170,6 +169,7 @@ public final class PlayerHelper {
                             player.setMotion(player.getMotion().mul(0.6, 1, 0.6));
                         }
                         //Sweep Attack
+                        int entitiesHit = 1;
                         if (isSweepAttack) {
                             float sweepingDamage = 1.0F + ((ISweepAttack) attackItem).getSweepRatio() * damage;
                             for (LivingEntity livingEntity : player.world.getEntitiesWithinAABB(LivingEntity.class,
@@ -192,6 +192,7 @@ public final class PlayerHelper {
                                         //noinspection ObjectAllocationInLoop
                                         livingEntity.attackEntityFrom(EvolutionDamage.causePlayerMeleeDamage(player, type, hand), sweepingDamage);
                                     }
+                                    entitiesHit++;
                                 }
                             }
                             player.world.playSound(null,
@@ -230,10 +231,13 @@ public final class PlayerHelper {
                         //Item damage calculation
                         if (!player.world.isRemote && !attackStack.isEmpty() && entity instanceof LivingEntity) {
                             ItemStack copy = attackStack.copy();
-                            attackStack.hitEntity((LivingEntity) entity, player);
-                            if (attackStack.isEmpty()) {
-                                ForgeEventFactory.onPlayerDestroyItem(player, copy, hand);
-                                player.setHeldItem(hand, ItemStack.EMPTY);
+                            for (int i = 0; i < entitiesHit; i++) {
+                                attackStack.hitEntity((LivingEntity) entity, player);
+                                if (attackStack.isEmpty()) {
+                                    ForgeEventFactory.onPlayerDestroyItem(player, copy, hand);
+                                    player.setHeldItem(hand, ItemStack.EMPTY);
+                                    break;
+                                }
                             }
                         }
                         //Stats and Heart particles
@@ -296,7 +300,6 @@ public final class PlayerHelper {
     }
 
     public static float getDamage(@Nullable EquipmentSlotType slot, PlayerEntity player, float damage, EvolutionDamage.Type type) {
-//        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new PacketSCUpdateCameraTilt(player));
         if (slot == null) {
             return fullHit(player, damage, type);
         }
@@ -371,6 +374,152 @@ public final class PlayerHelper {
         return damage;
     }
 
+    private static void lungeEntity(PlayerEntity player,
+                                    Entity targetEntity,
+                                    Hand hand,
+                                    double rayTraceHeight,
+                                    ItemStack lungeStack,
+                                    float strength) {
+        Item lungeItem = lungeStack.getItem();
+        if (targetEntity.canBeAttackedWithItem()) {
+            if (!targetEntity.hitByEntity(player)) {
+                float damage = (float) player.getAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getBaseValue();
+                if (lungeItem instanceof IMelee) {
+                    damage += ((IMelee) lungeItem).getAttackDamage();
+                }
+                damage *= 1.2;
+                damage *= strength;
+                if (damage > 0.0F) {
+                    int knockbackModifier = 0;
+                    if (lungeItem instanceof IKnockback) {
+                        knockbackModifier += ((IKnockback) lungeItem).getLevel();
+                    }
+                    if (player.isSprinting()) {
+                        player.world.playSound(null,
+                                               player.posX,
+                                               player.posY,
+                                               player.posZ,
+                                               SoundEvents.ENTITY_PLAYER_ATTACK_KNOCKBACK,
+                                               player.getSoundCategory(),
+                                               1.0F,
+                                               1.0F);
+                        ++knockbackModifier;
+                    }
+                    int fireAspectModifier = 0;
+                    if (lungeItem instanceof IFireAspect) {
+                        if (RAND.nextFloat() < ((IFireAspect) lungeItem).getChance()) {
+                            fireAspectModifier = ((IFireAspect) lungeItem).getLevel();
+                        }
+                    }
+                    float oldHealth = 0.0F;
+                    boolean fireAspect = false;
+                    if (targetEntity instanceof LivingEntity) {
+                        oldHealth = ((LivingEntity) targetEntity).getHealth();
+                        if (fireAspectModifier > 0 && !targetEntity.isBurning()) {
+                            fireAspect = true;
+                            targetEntity.setFire(1);
+                        }
+                    }
+                    Vec3d targetMotion = targetEntity.getMotion();
+                    EvolutionDamage.Type type = EvolutionDamage.Type.PIERCING;
+                    DamageSource source;
+                    if (targetEntity instanceof PlayerEntity) {
+                        EquipmentSlotType slot = EquipmentSlotType.LEGS;
+                        if (!Double.isNaN(rayTraceHeight)) {
+                            slot = getPartByPosition(rayTraceHeight, (PlayerEntity) targetEntity);
+                        }
+                        source = EvolutionDamage.causePVPMeleeDamage(player, type, hand, slot);
+                    }
+                    else {
+                        source = EvolutionDamage.causePlayerMeleeDamage(player, type, hand);
+                    }
+                    boolean attackSuccessfull = targetEntity.attackEntityFrom(source, damage);
+                    if (attackSuccessfull) {
+                        //Knockback calculations
+                        if (knockbackModifier > 0) {
+                            if (targetEntity instanceof LivingEntity) {
+                                ((LivingEntity) targetEntity).knockBack(player,
+                                                                        knockbackModifier * 0.5F,
+                                                                        MathHelper.sinDeg(player.rotationYaw),
+                                                                        -MathHelper.cosDeg(player.rotationYaw));
+                            }
+                            else {
+                                targetEntity.addVelocity(-MathHelper.sinDeg(player.rotationYaw) * knockbackModifier * 0.5F,
+                                                         0,
+                                                         MathHelper.cosDeg(player.rotationYaw) * knockbackModifier * 0.5F);
+                            }
+                            player.setMotion(player.getMotion().mul(0.6, 1, 0.6));
+                        }
+                        //Calculated velocity changed
+                        if (targetEntity instanceof ServerPlayerEntity && targetEntity.velocityChanged) {
+                            ((ServerPlayerEntity) targetEntity).connection.sendPacket(new SEntityVelocityPacket(targetEntity));
+                            targetEntity.velocityChanged = false;
+                            targetEntity.setMotion(targetMotion);
+                        }
+                        //Strong attack particles
+                        player.world.playSound(null,
+                                               player.posX,
+                                               player.posY,
+                                               player.posZ,
+                                               SoundEvents.ENTITY_PLAYER_ATTACK_STRONG,
+                                               player.getSoundCategory(),
+                                               1.0F,
+                                               1.0F);
+                        player.setLastAttackedEntity(targetEntity);
+                        //Entity parts
+                        Entity entity = targetEntity;
+                        if (targetEntity instanceof EnderDragonPartEntity) {
+                            entity = ((EnderDragonPartEntity) targetEntity).dragon;
+                        }
+                        //Item damage calculation
+                        if (!player.world.isRemote && !lungeStack.isEmpty() && entity instanceof LivingEntity) {
+                            ItemStack copy = lungeStack.copy();
+                            lungeStack.hitEntity((LivingEntity) entity, player);
+                            if (lungeStack.isEmpty()) {
+                                ForgeEventFactory.onPlayerDestroyItem(player, copy, hand);
+                            }
+                        }
+                        //Stats and Heart particles
+                        if (targetEntity instanceof LivingEntity) {
+                            float damageDealt = oldHealth - ((LivingEntity) targetEntity).getHealth();
+                            player.addStat(Stats.DAMAGE_DEALT, Math.round(damageDealt * 10.0F));
+                            if (fireAspectModifier > 0) {
+                                targetEntity.setFire(fireAspectModifier * 4);
+                            }
+                            if (player.world instanceof ServerWorld && damageDealt >= 10.0F) {
+                                int heartsToSpawn = (int) (damageDealt * 0.1);
+                                ((ServerWorld) player.world).spawnParticle(ParticleTypes.DAMAGE_INDICATOR,
+                                                                           targetEntity.posX,
+                                                                           targetEntity.posY + targetEntity.getHeight() * 0.5F,
+                                                                           targetEntity.posZ,
+                                                                           heartsToSpawn,
+                                                                           0.5,
+                                                                           0,
+                                                                           0.5,
+                                                                           0.1);
+                            }
+                        }
+                        player.addExhaustion(0.1F);
+                    }
+                    //Attack fail
+                    else {
+                        player.world.playSound(null,
+                                               player.posX,
+                                               player.posY,
+                                               player.posZ,
+                                               SoundEvents.ENTITY_PLAYER_ATTACK_NODAMAGE,
+                                               player.getSoundCategory(),
+                                               1.0F,
+                                               1.0F);
+                        if (fireAspect) {
+                            targetEntity.extinguish();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public static void performAttack(PlayerEntity player, @Nullable Entity entity, Hand hand, double rayTraceHeight) {
         if (hand == Hand.OFF_HAND) {
             Item offhandItem = player.getHeldItemOffhand().getItem();
@@ -382,6 +531,17 @@ public final class PlayerHelper {
         EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new PacketSCHandAnimation(hand));
         if (entity != null) {
             attackEntity(player, entity, hand, rayTraceHeight);
+        }
+    }
+
+    public static void performLunge(PlayerEntity player,
+                                    @Nullable Entity entity,
+                                    Hand hand,
+                                    double rayTraceHeight,
+                                    ItemStack lungeStack,
+                                    float strength) {
+        if (entity != null && lungeStack.getItem() instanceof ILunge) {
+            lungeEntity(player, entity, hand, rayTraceHeight, lungeStack, strength);
         }
     }
 

@@ -734,6 +734,12 @@ public final class EvolutionItems {
                                                                                           () -> bucketCreative(EvolutionFluids.FRESH_WATER));
     public static final RegistryObject<Item> bucket_creative_salt_water = ITEMS.register("bucket_creative_salt_water",
                                                                                          () -> bucketCreative(EvolutionFluids.SALT_WATER));
+    public static final RegistryObject<Item> sword_dev = ITEMS.register("sword_dev",
+                                                                        () -> new ItemSword(MathHelper.attackSpeed(0.7f),
+                                                                                            EvolutionToolMaterials.COPPER,
+                                                                                            propMisc(),
+                                                                                            EvolutionToolMaterials.COPPER.getSwordMass()));
+    public static final RegistryObject<Item> shield_dev = ITEMS.register("shield_dev", () -> new ItemShield(propMisc().maxDamage(400)));
 
     private EvolutionItems() {
     }
@@ -771,11 +777,12 @@ public final class EvolutionItems {
     }
 
     private static Item javelin(EvolutionToolMaterials tier) {
-        return new ItemJavelin(propStoneTool().maxDamage(tier.getMaxUses()).setTEISR(() -> RenderStackItemJavelin::new),
+        return new ItemJavelin(MathHelper.attackSpeed(1.15f),
+                               tier,
+                               propStoneTool().maxDamage(tier.getMaxUses()).setTEISR(() -> RenderStackItemJavelin::new),
                                tier.getAttackDamage(),
-                               MathHelper.attackSpeed(1.1F),
-                               tier.getName(),
-                               tier.getJavelinMass());
+                               tier.getJavelinMass(),
+                               tier.getName());
     }
 
     private static Item pickaxe(EvolutionToolMaterials tier) {

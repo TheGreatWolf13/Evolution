@@ -9,7 +9,7 @@ public interface IHeavyAttack {
     /**
      * @return The chance that the attack will be a Heavy Attack, given in a float from 0 to 1f. Sprinting doubles this chance.
      */
-    float getChance();
+    float getHeavyAttackChance();
 
     /**
      * @return The level of the Heavy Attack.
@@ -17,5 +17,5 @@ public interface IHeavyAttack {
      * Each level increases the default 4s of shield disabled by 1s.
      * Each level increases damage by 10%.
      */
-    int getLevel();
+    int getHeavyAttackLevel();
 }

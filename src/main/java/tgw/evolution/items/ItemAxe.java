@@ -8,23 +8,32 @@ import net.minecraftforge.common.ToolType;
 import tgw.evolution.init.EvolutionDamage;
 
 import javax.annotation.Nonnull;
-import java.util.HashSet;
 import java.util.Set;
 
 public class ItemAxe extends ItemGenericTool implements ITwoHanded, IHeavyAttack {
 
-    private static final Set<Block> EFFECTIVE_ON = new HashSet<>();
+    private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet();
     private static final Set<Material> EFFECTIVE_MAT = Sets.newHashSet(Material.WOOD, Material.PLANTS);
     private final double mass;
 
     public ItemAxe(IItemTier tier, float attackSpeed, Properties builder, double mass) {
-        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MAT, builder.addToolType(ToolType.AXE, tier.getHarvestLevel()));
+        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MAT, builder, ToolType.AXE);
         this.mass = mass;
     }
 
     @Override
-    public float getChance() {
-        return 0.25f;
+    public float baseDamage() {
+        return 8.0f;
+    }
+
+    @Override
+    public int blockDurabilityDamage() {
+        return 1;
+    }
+
+    @Override
+    public int entityDurabilityDamage() {
+        return 1;
     }
 
     @Nonnull
@@ -34,7 +43,12 @@ public class ItemAxe extends ItemGenericTool implements ITwoHanded, IHeavyAttack
     }
 
     @Override
-    public int getLevel() {
+    public float getHeavyAttackChance() {
+        return 0.25f;
+    }
+
+    @Override
+    public int getHeavyAttackLevel() {
         return 2;
     }
 
@@ -44,12 +58,7 @@ public class ItemAxe extends ItemGenericTool implements ITwoHanded, IHeavyAttack
     }
 
     @Override
-    public float setBaseDamage() {
-        return 8.0f;
-    }
-
-    @Override
-    public float setReach() {
+    public float reach() {
         return 3;
     }
 }

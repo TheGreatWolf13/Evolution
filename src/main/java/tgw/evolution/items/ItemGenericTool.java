@@ -14,6 +14,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ToolType;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.util.PlayerHelper;
 
@@ -22,8 +23,8 @@ import java.util.Set;
 
 public abstract class ItemGenericTool extends ItemTiered implements IDurability, IMelee, IMass {
 
-    protected final float efficiency;
     protected final float attackSpeed;
+    protected final float efficiency;
     private final Set<Block> effectiveBlocks;
     private final Set<Material> effectiveMaterials;
 
@@ -31,19 +32,23 @@ public abstract class ItemGenericTool extends ItemTiered implements IDurability,
                               IItemTier tier,
                               Set<Block> effectiveBlocks,
                               Set<Material> effectiveMaterials,
-                              Item.Properties builder) {
-        super(tier, builder);
+                              Item.Properties builder,
+                              ToolType tool) {
+        super(tier, builder.addToolType(tool, tier.getHarvestLevel()));
         this.effectiveBlocks = effectiveBlocks;
         this.effectiveMaterials = effectiveMaterials;
         this.efficiency = tier.getEfficiency();
         this.attackSpeed = attackSpeed;
     }
 
+    public abstract float baseDamage();
+
+    public abstract int blockDurabilityDamage();
+
     @Override
     public boolean canHarvestBlock(BlockState state) {
-        int i = this.getTier().getHarvestLevel();
         if (this.effectiveMaterials.contains(state.getMaterial())) {
-            return i >= state.getHarvestLevel();
+            return this.getTier().getHarvestLevel() >= state.getHarvestLevel();
         }
         return false;
     }
@@ -53,9 +58,11 @@ public abstract class ItemGenericTool extends ItemTiered implements IDurability,
         return !player.isCreative();
     }
 
+    public abstract int entityDurabilityDamage();
+
     @Override
     public double getAttackDamage() {
-        return this.setBaseDamage() + this.getTier().getAttackDamage();
+        return this.baseDamage() + this.getTier().getAttackDamage();
     }
 
     @Override
@@ -69,7 +76,7 @@ public abstract class ItemGenericTool extends ItemTiered implements IDurability,
         if (slot == EquipmentSlotType.MAINHAND) {
             multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(),
                          new AttributeModifier(ATTACK_DAMAGE_MODIFIER,
-                                               "Tool modifier",
+                                               "Damage modifier",
                                                this.getAttackDamage(),
                                                AttributeModifier.Operation.ADDITION));
             multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(),
@@ -109,24 +116,22 @@ public abstract class ItemGenericTool extends ItemTiered implements IDurability,
 
     @Override
     public double getReach() {
-        return this.setReach() - PlayerHelper.REACH_DISTANCE;
+        return this.reach() - PlayerHelper.REACH_DISTANCE;
     }
 
     @Override
     public boolean hitEntity(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        stack.damageItem(2, attacker, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
+        stack.damageItem(this.entityDurabilityDamage(), attacker, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
         return true;
     }
 
     @Override
     public boolean onBlockDestroyed(ItemStack stack, @Nonnull World world, BlockState state, BlockPos pos, LivingEntity livingEntity) {
         if (!world.isRemote && state.getBlockHardness(world, pos) != 0.0F) {
-            stack.damageItem(1, livingEntity, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
+            stack.damageItem(this.blockDurabilityDamage(), livingEntity, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
         }
         return true;
     }
 
-    public abstract float setBaseDamage();
-
-    public abstract float setReach();
+    public abstract float reach();
 }

@@ -2,12 +2,15 @@ package tgw.evolution.util;
 
 import java.util.Locale;
 
-public class Metrics {
+public final class Metrics {
 
     public static final int SECONDS_IN_A_MINUTE = 60;
     public static final int SECONDS_IN_AN_HOUR = 60 * SECONDS_IN_A_MINUTE;
     public static final int SECONDS_IN_A_DAY = 24 * SECONDS_IN_AN_HOUR;
     public static final int SECONDS_IN_A_YEAR = 365 * SECONDS_IN_A_DAY + 6 * SECONDS_IN_AN_HOUR;
+
+    private Metrics() {
+    }
 
     public static String metric(double value, String unit, int decimalPlaces, boolean full) {
         int magnitude = Math.floorDiv(MathHelper.floor(Math.log10(Math.abs(value))), 3);

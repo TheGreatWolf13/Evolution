@@ -1,42 +1,38 @@
 package tgw.evolution.items;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import net.minecraft.block.BlockState;
+import com.google.common.collect.Sets;
+import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.IItemTier;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.UseAction;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import tgw.evolution.Evolution;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntitySpear;
-import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.PlayerHelper;
 
 import javax.annotation.Nonnull;
+import java.util.Set;
 
-public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpear, IMelee, IMass {
+public class ItemJavelin extends ItemGenericTool implements IThrowable, ISpear {
 
+    private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet();
+    private static final Set<Material> EFFECTIVE_MATS = Sets.newHashSet();
     private final float damage;
-    private final float speed;
     private final double mass;
     private final ResourceLocation modelTexture;
 
-    public ItemJavelin(Properties builder, float damage, float speed, String name, double mass) {
-        super(builder);
-        this.modelTexture = Evolution.location("textures/entity/javelin/javelin_" + name + ".png");
+    public ItemJavelin(float attackSpeed, IItemTier tier, Properties builder, float damage, double mass, String name) {
+        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MATS, builder, ToolTypeEv.SPEAR);
         this.damage = damage;
-        this.speed = speed;
         this.mass = mass;
+        this.modelTexture = Evolution.location("textures/entity/javelin/javelin_" + name + ".png");
         this.addPropertyOverride(new ResourceLocation("throwing"),
                                  (stack, world, entity) -> entity != null && entity.isHandActive() && entity.getActiveItemStack() == stack ?
                                                            1.0F :
@@ -44,47 +40,18 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
     }
 
     @Override
-    public boolean canPlayerBreakBlockWhileHolding(BlockState state, World worldIn, BlockPos pos, PlayerEntity player) {
-        return !player.isCreative();
+    public float baseDamage() {
+        return 0;
     }
 
     @Override
-    public double getAttackDamage() {
-        return this.damage;
+    public int blockDurabilityDamage() {
+        return 2;
     }
 
     @Override
-    public double getAttackSpeed() {
-        return this.speed - PlayerHelper.ATTACK_SPEED;
-    }
-
-    @Override
-    public Multimap<String, AttributeModifier> getAttributeModifiers(EquipmentSlotType equipmentSlot) {
-        Multimap<String, AttributeModifier> multimap = HashMultimap.create();
-        if (equipmentSlot == EquipmentSlotType.MAINHAND) {
-            multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(),
-                         new AttributeModifier(ATTACK_DAMAGE_MODIFIER,
-                                               "Tool modifier",
-                                               this.getAttackDamage(),
-                                               AttributeModifier.Operation.ADDITION));
-            multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(),
-                         new AttributeModifier(ATTACK_SPEED_MODIFIER, "Tool modifier", this.getAttackSpeed(), AttributeModifier.Operation.ADDITION));
-            multimap.put(PlayerEntity.REACH_DISTANCE.getName(),
-                         new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER,
-                                               "Reach Modifier",
-                                               this.getReach(),
-                                               AttributeModifier.Operation.ADDITION));
-            multimap.put(EvolutionAttributes.MASS.getName(),
-                         new AttributeModifier(EvolutionAttributes.MASS_MODIFIER, "Mass Modifier", this.mass, AttributeModifier.Operation.ADDITION));
-        }
-        else if (equipmentSlot == EquipmentSlotType.OFFHAND) {
-            multimap.put(EvolutionAttributes.MASS.getName(),
-                         new AttributeModifier(EvolutionAttributes.MASS_MODIFIER_OFFHAND,
-                                               "Mass Modifier",
-                                               this.mass,
-                                               AttributeModifier.Operation.ADDITION));
-        }
-        return multimap;
+    public int entityDurabilityDamage() {
+        return 1;
     }
 
     @Nonnull
@@ -96,11 +63,6 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
     @Override
     public double getMass() {
         return this.mass;
-    }
-
-    @Override
-    public double getReach() {
-        return 5 - PlayerHelper.REACH_DISTANCE;
     }
 
     @Override
@@ -116,20 +78,6 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
     @Override
     public int getUseDuration(ItemStack stack) {
         return 72_000;
-    }
-
-    @Override
-    public boolean hitEntity(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        stack.damageItem(1, attacker, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
-        return true;
-    }
-
-    @Override
-    public boolean onBlockDestroyed(ItemStack stack, World worldIn, BlockState state, BlockPos pos, LivingEntity entityLiving) {
-        if (state.getBlockHardness(worldIn, pos) != 0) {
-            stack.damageItem(2, entityLiving, entity -> entity.sendBreakAnimation(EquipmentSlotType.MAINHAND));
-        }
-        return true;
     }
 
     @Override
@@ -163,5 +111,10 @@ public class ItemJavelin extends ItemEv implements IDurability, IThrowable, ISpe
                 player.addStat(Stats.ITEM_USED.get(this));
             }
         }
+    }
+
+    @Override
+    public float reach() {
+        return 5.0f;
     }
 }

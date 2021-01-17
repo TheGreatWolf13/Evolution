@@ -29,6 +29,7 @@ public final class EvolutionTexts {
     public static final ITextComponent FLUID_SALT_WATER = transl("evolution.fluid.salt_water");
     public static final ITextComponent TOOLTIP_CLAY_MOLD = transl("evolution.tooltip.clay.mold").setStyle(INFO);
     public static final ITextComponent TOOLTIP_EMPTY_CONTAINER = transl("evolution.tooltip.container.empty").setStyle(INFO);
+    public static final ITextComponent TOOLTIP_LUNGE = transl("evolution.tooltip.lunge").setStyle(PROPERTY);
     public static final ITextComponent TOOLTIP_OFFHAND = transl("evolution.tooltip.offhand").setStyle(LIGHT_GREY);
     public static final ITextComponent TOOLTIP_ROCK_KNAP = transl("evolution.tooltip.rock.knap").setStyle(INFO);
     public static final ITextComponent TOOLTIP_ROCK_TYPE_IGEXTRUSIVE = transl("evolution.tooltip.rock_type.igneous_extrusive").setStyle(LIGHT_GREY);
@@ -58,6 +59,7 @@ public final class EvolutionTexts {
     private static final String KNOCKBACK = "evolution.tooltip.knockback";
     private static final String MASS = "evolution.tooltip.mass";
     private static final String MINING = "evolution.tooltip.mining";
+    private static final String PARRY = "evolution.tooltip.parry";
     private static final String SPEED = "evolution.tooltip.speed";
     private static final String SWEEP = "evolution.tooltip.sweep";
 
@@ -105,7 +107,7 @@ public final class EvolutionTexts {
     }
 
     public static ITextComponent heavyAttack(IHeavyAttack item) {
-        return chanceAndLevel(HEAVY_ATTACK, item.getChance(), item.getLevel()).setStyle(EFFECTS);
+        return chanceAndLevel(HEAVY_ATTACK, item.getHeavyAttackChance(), item.getHeavyAttackLevel()).setStyle(EFFECTS);
     }
 
     private static DecimalFormat initFormat(String pattern) {
@@ -115,7 +117,7 @@ public final class EvolutionTexts {
     }
 
     public static ITextComponent knockback(IKnockback item) {
-        return new TranslationTextComponent(KNOCKBACK, MathHelper.getRomanNumber(item.getLevel()));
+        return new TranslationTextComponent(KNOCKBACK, MathHelper.getRomanNumber(item.getLevel())).setStyle(EFFECTS);
     }
 
     public static ITextComponent mass(double amount) {
@@ -132,6 +134,10 @@ public final class EvolutionTexts {
         return new TranslationTextComponent("evolution.tooltip.metal.oxidation", PERCENT_ONE_PLACE.format(oxydation)).setStyle(LIGHT_GREY);
     }
 
+    public static ITextComponent parry(IParry item, ItemStack stack) {
+        return new TranslationTextComponent(PARRY, PERCENT_ONE_PLACE.format(item.getParryPercentage(stack))).setStyle(EFFECTS);
+    }
+
     public static ITextComponent remaining(int number) {
         return new TranslationTextComponent("evolution.tooltip.advancements.remain", number);
     }
@@ -142,7 +148,7 @@ public final class EvolutionTexts {
     }
 
     public static ITextComponent sweep(ISweepAttack item) {
-        return new TranslationTextComponent(SWEEP, PERCENT_ONE_PLACE.format(item.getSweepRatio()));
+        return new TranslationTextComponent(SWEEP, PERCENT_ONE_PLACE.format(item.getSweepRatio())).setStyle(EFFECTS);
     }
 
     public static ITextComponent torch(int timeRemaining) {

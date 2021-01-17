@@ -18,8 +18,23 @@ public class ItemPickaxe extends ItemGenericTool {
     private final double mass;
 
     public ItemPickaxe(IItemTier tier, float attackSpeed, Properties builder, double mass) {
-        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MAT, builder.addToolType(ToolType.PICKAXE, tier.getHarvestLevel()));
+        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MAT, builder, ToolType.PICKAXE);
         this.mass = mass;
+    }
+
+    @Override
+    public float baseDamage() {
+        return -1.5f;
+    }
+
+    @Override
+    public int blockDurabilityDamage() {
+        return 1;
+    }
+
+    @Override
+    public int entityDurabilityDamage() {
+        return 2;
     }
 
     @Nonnull
@@ -34,12 +49,7 @@ public class ItemPickaxe extends ItemGenericTool {
     }
 
     @Override
-    public float setBaseDamage() {
-        return -1.5f;
-    }
-
-    @Override
-    public float setReach() {
+    public float reach() {
         return 3;
     }
 }

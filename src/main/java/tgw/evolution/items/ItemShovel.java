@@ -4,17 +4,15 @@ import com.google.common.collect.Sets;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.item.IItemTier;
-import net.minecraft.item.Item;
 import net.minecraftforge.common.ToolType;
 import tgw.evolution.init.EvolutionDamage;
 
 import javax.annotation.Nonnull;
-import java.util.HashSet;
 import java.util.Set;
 
 public class ItemShovel extends ItemGenericTool implements IOffhandAttackable {
 
-    private static final Set<Block> EFFECTIVE_ON = new HashSet<>();
+    private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet();
     private static final Set<Material> EFFECTIVE_MATS = Sets.newHashSet(Material.EARTH,
                                                                         Material.ORGANIC,
                                                                         Material.SAND,
@@ -22,9 +20,24 @@ public class ItemShovel extends ItemGenericTool implements IOffhandAttackable {
                                                                         Material.SNOW);
     private final double mass;
 
-    public ItemShovel(IItemTier tier, float attackSpeed, Item.Properties builder, double mass) {
-        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MATS, builder.addToolType(ToolType.SHOVEL, tier.getHarvestLevel()));
+    public ItemShovel(IItemTier tier, float attackSpeed, Properties builder, double mass) {
+        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MATS, builder, ToolType.SHOVEL);
         this.mass = mass;
+    }
+
+    @Override
+    public float baseDamage() {
+        return -3.0f;
+    }
+
+    @Override
+    public int blockDurabilityDamage() {
+        return 1;
+    }
+
+    @Override
+    public int entityDurabilityDamage() {
+        return 2;
     }
 
     @Nonnull
@@ -39,12 +52,7 @@ public class ItemShovel extends ItemGenericTool implements IOffhandAttackable {
     }
 
     @Override
-    public float setBaseDamage() {
-        return -3.0f;
-    }
-
-    @Override
-    public float setReach() {
+    public float reach() {
         return 3.5f;
     }
 }

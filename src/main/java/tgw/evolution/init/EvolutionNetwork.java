@@ -112,5 +112,26 @@ public final class EvolutionNetwork {
                                  PacketSCRenderUpdate::decode,
                                  PacketSCRenderUpdate::handle);
         INSTANCE.registerMessage(increaseId(), PacketSCUpdateTE.class, PacketSCUpdateTE::encode, PacketSCUpdateTE::decode, PacketSCUpdateTE::handle);
+        INSTANCE.registerMessage(increaseId(), PacketCSLunge.class, PacketCSLunge::encode, PacketCSLunge::decode, PacketCSLunge::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketCSStartLunge.class,
+                                 PacketCSStartLunge::encode,
+                                 PacketCSStartLunge::decode,
+                                 PacketCSStartLunge::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCStartLunge.class,
+                                 PacketSCStartLunge::encode,
+                                 PacketSCStartLunge::decode,
+                                 PacketSCStartLunge::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketCSLungeAnim.class,
+                                 PacketCSLungeAnim::encode,
+                                 PacketCSLungeAnim::decode,
+                                 PacketCSLungeAnim::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCLungeAnim.class,
+                                 PacketSCLungeAnim::encode,
+                                 PacketSCLungeAnim::decode,
+                                 PacketSCLungeAnim::handle);
     }
 }

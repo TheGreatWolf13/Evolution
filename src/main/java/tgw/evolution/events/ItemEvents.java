@@ -71,6 +71,9 @@ public class ItemEvents {
         if (item instanceof IKnockback) {
             tooltip.add(EvolutionTexts.knockback((IKnockback) item));
         }
+        if (item instanceof IParry) {
+            tooltip.add(EvolutionTexts.parry((IParry) item, stack));
+        }
         if (item instanceof ISweepAttack) {
             tooltip.add(EvolutionTexts.sweep((ISweepAttack) item));
         }
@@ -103,8 +106,9 @@ public class ItemEvents {
         }
         tooltip.add(component);
         //Item specific information
-        stack.getItem().addInformation(stack, player == null ? null : player.world, tooltip, advanced);
-        if (stack.getItem() instanceof IItemFluidContainer) {
+        Item item = stack.getItem();
+        item.addInformation(stack, player == null ? null : player.world, tooltip, advanced);
+        if (item instanceof IItemFluidContainer) {
             addFluidInfo(tooltip, stack);
         }
         //Effects
@@ -143,16 +147,23 @@ public class ItemEvents {
         //Properties
         int sizeForMass = tooltip.size();
         boolean hasAddedLine = false;
-        if (stack.getItem() instanceof ITwoHanded) {
+        if (item instanceof ITwoHanded) {
             tooltip.add(EvolutionTexts.EMPTY);
             tooltip.add(EvolutionTexts.TOOLTIP_TWO_HANDED);
             hasAddedLine = true;
         }
-        if (stack.getItem() instanceof IThrowable) {
+        if (item instanceof IThrowable) {
             if (!hasAddedLine) {
                 tooltip.add(EvolutionTexts.EMPTY);
             }
             tooltip.add(EvolutionTexts.TOOLTIP_THROWABLE);
+            hasAddedLine = true;
+        }
+        if (item instanceof ILunge) {
+            if (!hasAddedLine) {
+                tooltip.add(EvolutionTexts.EMPTY);
+            }
+            tooltip.add(EvolutionTexts.TOOLTIP_LUNGE);
             hasAddedLine = true;
         }
         //Attributes
@@ -236,8 +247,10 @@ public class ItemEvents {
                 }
                 if (slot == EquipmentSlotType.MAINHAND && stack.getItem() instanceof ItemGenericTool) {
                     float miningSpeed = ((ItemGenericTool) stack.getItem()).getEfficiency();
-                    tooltip.add(EvolutionTexts.mining(miningSpeed));
-                    isMassUnique = false;
+                    if (miningSpeed > 0) {
+                        tooltip.add(EvolutionTexts.mining(miningSpeed));
+                        isMassUnique = false;
+                    }
                 }
                 if (hasMass && isMassUnique) {
                     tooltip.remove(tooltip.size() - 1);
