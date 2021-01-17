@@ -12,13 +12,24 @@ import net.minecraftforge.fml.RegistryObject;
 
 import static tgw.evolution.init.EvolutionBlocks.*;
 
-public class ColorManager {
+public final class ColorManager {
+
+    private ColorManager() {
+    }
+
+    private static void register(BlockColors colors, IBlockColor color, RegistryObject<Block> block) {
+        colors.register(color, block.get());
+    }
+
+    private static void register(ItemColors colors, IItemColor color, RegistryObject<Block> block) {
+        colors.register(color, block.get());
+    }
 
     public static void registerBlockColorHandlers(BlockColors colors) {
         IBlockColor grass = (state, blockReader, pos, color) -> BiomeColors.getGrassColor(blockReader, pos);
         IBlockColor spruce = (state, blockReader, pos, color) -> FoliageColors.getSpruce();
         IBlockColor birch = (state, blockReader, pos, color) -> FoliageColors.getBirch();
-        IBlockColor aspen = (state, blockReader, pos, color) -> 16776192;
+        IBlockColor aspen = (state, blockReader, pos, color) -> 16_776_192;
         IBlockColor leaves = (state, blockReader, pos, color) -> blockReader != null && pos != null ?
                                                                  BiomeColors.getFoliageColor(blockReader, pos) :
                                                                  FoliageColors.getDefault();
@@ -87,16 +98,12 @@ public class ColorManager {
         register(colors, leaves, LEAVES_WILLOW);
     }
 
-    private static void register(BlockColors colors, IBlockColor color, RegistryObject<Block> block) {
-        colors.register(color, block.get());
-    }
-
     public static void registerItemColorHandlers(ItemColors colors) {
         IItemColor grass = (itemStack, color) -> GrassColors.get(0.5, 1.0);
         IItemColor spruce = (itemStack, color) -> FoliageColors.getSpruce();
         IItemColor birch = (itemStack, color) -> FoliageColors.getBirch();
         IItemColor leaves = (itemStack, color) -> FoliageColors.getDefault();
-        IItemColor aspen = (stack, color) -> 16776192;
+        IItemColor aspen = (stack, color) -> 16_776_192;
         //Grass
         register(colors, grass, GRASS_ANDESITE);
         register(colors, grass, GRASS_BASALT);
@@ -158,9 +165,5 @@ public class ColorManager {
         register(colors, leaves, LEAVES_REDWOOD);
         register(colors, spruce, LEAVES_SPRUCE);
         register(colors, leaves, LEAVES_WILLOW);
-    }
-
-    private static void register(ItemColors colors, IItemColor color, RegistryObject<Block> block) {
-        colors.register(color, block.get());
     }
 }
