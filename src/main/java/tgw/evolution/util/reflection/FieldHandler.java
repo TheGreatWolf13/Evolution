@@ -7,8 +7,8 @@ import java.lang.reflect.Field;
 
 public class FieldHandler<Owner, Type> implements IReflectionHandler {
 
-    private final Class<Owner> fieldOwner;
     private final String fieldName;
+    private final Class<Owner> fieldOwner;
     private Field fieldAccess;
 
     public FieldHandler(Class<Owner> fieldOwner, String fieldName) {

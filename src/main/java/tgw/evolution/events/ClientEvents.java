@@ -5,6 +5,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.advancements.AdvancementsScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.inventory.ContainerScreen;
+import net.minecraft.client.gui.screen.inventory.CreativeScreen;
 import net.minecraft.client.gui.screen.inventory.InventoryScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
@@ -12,6 +14,7 @@ import net.minecraft.client.util.ClientRecipeBook;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -41,6 +44,10 @@ import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.client.LungeAttackInfo;
 import tgw.evolution.client.LungeChargeInfo;
 import tgw.evolution.client.MovementInputEvolution;
+import tgw.evolution.client.gui.GuiContainerCreativeHandler;
+import tgw.evolution.client.gui.GuiContainerHandler;
+import tgw.evolution.client.gui.IGuiScreenHandler;
+import tgw.evolution.client.gui.MouseButton;
 import tgw.evolution.client.gui.advancements.ScreenAdvancements;
 import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
@@ -84,6 +91,14 @@ public class ClientEvents {
                                                                                                                    "field_192036_cb");
     private static final List<EffectInstance> EFFECTS_TO_TICK = new ArrayList<>();
     private static ClientEvents instance;
+    @Nullable
+    private static IGuiScreenHandler handler;
+    private static boolean disableWheelForThisContainer;
+    @Nullable
+    private static Slot oldSelectedSlot;
+    private static double accumulatedScrollDelta;
+    private static boolean canDoLMBDrag;
+    private static boolean canDoRMBDrag;
     private final Minecraft mc;
     private final ClientRenderer renderer;
     public int effectToAddTicks;
@@ -118,6 +133,21 @@ public class ClientEvents {
         this.renderer = new ClientRenderer(mc, this);
     }
 
+    private static boolean areStacksCompatible(ItemStack a, ItemStack b) {
+        return a.isEmpty() || b.isEmpty() || a.isItemEqual(b) && ItemStack.areItemStackTagsEqual(a, b);
+    }
+
+    @Nullable
+    private static IGuiScreenHandler findHandler(Screen currentScreen) {
+        if (currentScreen instanceof CreativeScreen) {
+            return new GuiContainerCreativeHandler((CreativeScreen) currentScreen);
+        }
+        if (currentScreen instanceof ContainerScreen) {
+            return new GuiContainerHandler((ContainerScreen<?>) currentScreen);
+        }
+        return null;
+    }
+
     public static ClientEvents getInstance() {
         return instance;
     }
@@ -125,6 +155,25 @@ public class ClientEvents {
     private static float getRightCooldownPeriod(IOffhandAttackable item) {
         double attackSpeed = item.getAttackSpeed() + PlayerHelper.ATTACK_SPEED;
         return (float) (1 / attackSpeed * 20);
+    }
+
+    public static void onGuiOpen(Screen newScreen) {
+        handler = null;
+        oldSelectedSlot = null;
+        accumulatedScrollDelta = 0;
+        canDoLMBDrag = false;
+        canDoRMBDrag = false;
+        if (newScreen != null) {
+            handler = findHandler(newScreen);
+            if (handler == null) {
+                return;
+            }
+            boolean disableForThisContainer = handler.isMouseTweaksDisabled();
+            disableWheelForThisContainer = handler.isWheelTweakDisabled();
+            if (disableForThisContainer) {
+                handler = null;
+            }
+        }
     }
 
     private static void removeEffect(List<EffectInstance> list, Effect effect) {
@@ -143,8 +192,97 @@ public class ClientEvents {
         removeEffect(EFFECTS_TO_TICK, effect);
     }
 
+    private static void rmbTweakNewSlot(Slot selectedSlot, ItemStack stackOnMouse) {
+        assert selectedSlot != null;
+        assert !stackOnMouse.isEmpty();
+        if (handler.isIgnored(selectedSlot)) {
+            return;
+        }
+        if (handler.isCraftingOutput(selectedSlot)) {
+            return;
+        }
+        ItemStack selectedSlotStack = selectedSlot.getStack();
+        if (!areStacksCompatible(selectedSlotStack, stackOnMouse)) {
+            return;
+        }
+        if (selectedSlotStack.getCount() == selectedSlotStack.getMaxStackSize()) {
+            return;
+        }
+        handler.clickSlot(selectedSlot, MouseButton.RIGHT, false);
+    }
+
     public boolean areControlsInverted() {
         return this.inverted;
+    }
+
+    @Nullable
+    private Slot findPullSlot(List<Slot> slots, Slot selectedSlot) {
+        int startIndex = 0;
+        int endIndex = slots.size();
+        int direction = 1;
+        ItemStack selectedSlotStack = selectedSlot.getStack();
+        boolean findInPlayerInventory = selectedSlot.inventory != this.mc.player.inventory;
+        for (int i = startIndex; i != endIndex; i += direction) {
+            Slot slot = slots.get(i);
+            if (handler.isIgnored(slot)) {
+                continue;
+            }
+            boolean slotInPlayerInventory = slot.inventory == this.mc.player.inventory;
+            if (findInPlayerInventory != slotInPlayerInventory) {
+                continue;
+            }
+            ItemStack stack = slot.getStack();
+            if (stack.isEmpty()) {
+                continue;
+            }
+            if (!areStacksCompatible(selectedSlotStack, stack)) {
+                continue;
+            }
+            return slot;
+        }
+        return null;
+    }
+
+    @Nullable
+    private List<Slot> findPushSlots(List<Slot> slots, Slot selectedSlot, int itemCount, boolean mustDistributeAll) {
+        ItemStack selectedSlotStack = selectedSlot.getStack();
+        boolean findInPlayerInventory = selectedSlot.inventory != this.mc.player.inventory;
+        List<Slot> rv = new ArrayList<>();
+        List<Slot> goodEmptySlots = new ArrayList<>();
+        for (int i = 0; i != slots.size() && itemCount > 0; i++) {
+            Slot slot = slots.get(i);
+            if (handler.isIgnored(slot)) {
+                continue;
+            }
+            boolean slotInPlayerInventory = slot.inventory == this.mc.player.inventory;
+            if (findInPlayerInventory != slotInPlayerInventory) {
+                continue;
+            }
+            if (handler.isCraftingOutput(slot)) {
+                continue;
+            }
+            ItemStack stack = slot.getStack();
+            if (stack.isEmpty()) {
+                if (slot.isItemValid(selectedSlotStack)) {
+                    goodEmptySlots.add(slot);
+                }
+            }
+            else {
+                if (areStacksCompatible(selectedSlotStack, stack) && stack.getCount() < stack.getMaxStackSize()) {
+                    rv.add(slot);
+                    itemCount -= Math.min(itemCount, stack.getMaxStackSize() - stack.getCount());
+                }
+            }
+        }
+        for (int i = 0; i != goodEmptySlots.size() && itemCount > 0; i++) {
+            Slot slot = goodEmptySlots.get(i);
+            rv.add(slot);
+            itemCount -= Math.min(itemCount, slot.getStack().getMaxStackSize() - slot.getStack().getCount());
+        }
+        if (mustDistributeAll && itemCount > 0) {
+            return null;
+        }
+        return rv;
     }
 
     public float getMainhandCooledAttackStrength(float partialTicks) {
@@ -414,6 +552,275 @@ public class ClientEvents {
             event.setCanceled(true);
             this.mc.displayGuiScreen(new ScreenAdvancements(this.mc.getConnection().getAdvancementManager()));
         }
+        if (!event.isCanceled()) {
+            onGuiOpen(event.getGui());
+        }
+    }
+
+    @SubscribeEvent
+    public void onGuiMouseClickedPre(GuiScreenEvent.MouseClickedEvent.Pre event) {
+        MouseButton button = MouseButton.fromGLFW(event.getButton());
+        if (button != null) {
+            if (this.onMouseClicked(event.getMouseX(), event.getMouseY(), button)) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onGuiMouseDragPre(GuiScreenEvent.MouseDragEvent.Pre event) {
+        MouseButton button = MouseButton.fromGLFW(event.getMouseButton());
+        if (button != null) {
+            if (this.onMouseDrag(event.getMouseX(), event.getMouseY(), button)) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onGuiMouseReleasedPre(GuiScreenEvent.MouseReleasedEvent.Pre event) {
+        MouseButton button = MouseButton.fromGLFW(event.getButton());
+        if (button != null) {
+            if (this.onMouseReleased(button)) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onGuiMouseScrollPost(GuiScreenEvent.MouseScrollEvent.Post event) {
+        if (this.onMouseScrolled(event.getMouseX(), event.getMouseY(), event.getScrollDelta())) {
+            event.setCanceled(true);
+        }
+    }
+
+    public boolean onMouseClicked(double x, double y, MouseButton button) {
+        if (handler == null) {
+            return false;
+        }
+        Slot selectedSlot = handler.getSlotUnderMouse(x, y);
+        oldSelectedSlot = selectedSlot;
+        ItemStack stackOnMouse = this.mc.player.inventory.getItemStack();
+        if (button == MouseButton.LEFT) {
+            if (stackOnMouse.isEmpty()) {
+                canDoLMBDrag = true;
+            }
+        }
+        else if (button == MouseButton.RIGHT) {
+            if (stackOnMouse.isEmpty()) {
+                return false;
+            }
+            canDoRMBDrag = true;
+            if (selectedSlot != null) {
+                rmbTweakNewSlot(selectedSlot, stackOnMouse);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public boolean onMouseDrag(double x, double y, MouseButton button) {
+        if (handler == null) {
+            return false;
+        }
+        Slot selectedSlot = handler.getSlotUnderMouse(x, y);
+        if (selectedSlot == oldSelectedSlot) {
+            return false;
+        }
+        oldSelectedSlot = selectedSlot;
+        if (selectedSlot == null) {
+            return false;
+        }
+        if (handler.isIgnored(selectedSlot)) {
+            return false;
+        }
+        ItemStack stackOnMouse = this.mc.player.inventory.getItemStack();
+        if (button == MouseButton.LEFT) {
+            if (!canDoLMBDrag) {
+                return false;
+            }
+            ItemStack selectedSlotStack = selectedSlot.getStack();
+            if (selectedSlotStack.isEmpty()) {
+                return false;
+            }
+            boolean shiftIsDown = this.hasShiftDown();
+            if (stackOnMouse.isEmpty()) {
+                if (!shiftIsDown) {
+                    return false;
+                }
+                handler.clickSlot(selectedSlot, MouseButton.LEFT, true);
+            }
+            else {
+                if (!areStacksCompatible(selectedSlotStack, stackOnMouse)) {
+                    return false;
+                }
+                if (shiftIsDown) {
+                    handler.clickSlot(selectedSlot, MouseButton.LEFT, true);
+                }
+                else {
+                    if (stackOnMouse.getCount() + selectedSlotStack.getCount() > stackOnMouse.getMaxStackSize()) {
+                        return false;
+                    }
+                    handler.clickSlot(selectedSlot, MouseButton.LEFT, false);
+                    if (!handler.isCraftingOutput(selectedSlot)) {
+                        handler.clickSlot(selectedSlot, MouseButton.LEFT, false);
+                    }
+                }
+            }
+        }
+        else if (button == MouseButton.RIGHT) {
+            if (!canDoRMBDrag) {
+                return false;
+            }
+            if (stackOnMouse.isEmpty()) {
+                return false;
+            }
+            rmbTweakNewSlot(selectedSlot, stackOnMouse);
+        }
+        return false;
+    }
+
+    public boolean onMouseReleased(MouseButton button) {
+        if (handler == null) {
+            return false;
+        }
+        if (button == MouseButton.LEFT) {
+            canDoLMBDrag = false;
+        }
+        else if (button == MouseButton.RIGHT) {
+            if (canDoRMBDrag) {
+                canDoRMBDrag = false;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean onMouseScrolled(double x, double y, double scrollDelta) {
+        if (handler == null || disableWheelForThisContainer) {
+            return false;
+        }
+        Slot selectedSlot = handler.getSlotUnderMouse(x, y);
+        if (selectedSlot == null || handler.isIgnored(selectedSlot)) {
+            return false;
+        }
+        double scaledDelta = Math.signum(scrollDelta);
+        if (accumulatedScrollDelta != 0 && scaledDelta != Math.signum(accumulatedScrollDelta)) {
+            accumulatedScrollDelta = 0;
+        }
+        accumulatedScrollDelta += scaledDelta;
+        int delta = (int) accumulatedScrollDelta;
+        accumulatedScrollDelta -= delta;
+        if (delta == 0) {
+            return true;
+        }
+        List<Slot> slots = handler.getSlots();
+        ItemStack selectedSlotStack = selectedSlot.getStack();
+        if (selectedSlotStack.isEmpty()) {
+            return true;
+        }
+        ItemStack stackOnMouse = this.mc.player.inventory.getItemStack();
+        int numItemsToMove = Math.abs(delta);
+        boolean pushItems = delta < 0;
+        if (handler.isCraftingOutput(selectedSlot)) {
+            if (!areStacksCompatible(selectedSlotStack, stackOnMouse)) {
+                return true;
+            }
+            if (stackOnMouse.isEmpty()) {
+                if (!pushItems) {
+                    return true;
+                }
+                while (numItemsToMove-- > 0) {
+                    List<Slot> targetSlots = this.findPushSlots(slots, selectedSlot, selectedSlotStack.getCount(), true);
+                    if (targetSlots == null) {
+                        break;
+                    }
+                    handler.clickSlot(selectedSlot, MouseButton.LEFT, false);
+                    for (int i = 0; i < targetSlots.size(); i++) {
+                        Slot slot = targetSlots.get(i);
+                        if (i == targetSlots.size() - 1) {
+                            handler.clickSlot(slot, MouseButton.LEFT, false);
+                        }
+                        else {
+                            int clickTimes = slot.getStack().getMaxStackSize() - slot.getStack().getCount();
+                            while (clickTimes-- > 0) {
+                                handler.clickSlot(slot, MouseButton.RIGHT, false);
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                while (numItemsToMove-- > 0) {
+                    handler.clickSlot(selectedSlot, MouseButton.LEFT, false);
+                }
+            }
+            return true;
+        }
+        if (!stackOnMouse.isEmpty() && areStacksCompatible(selectedSlotStack, stackOnMouse)) {
+            return true;
+        }
+        if (pushItems) {
+            if (!stackOnMouse.isEmpty() && !selectedSlot.isItemValid(stackOnMouse)) {
+                return true;
+            }
+            numItemsToMove = Math.min(numItemsToMove, selectedSlotStack.getCount());
+            List<Slot> targetSlots = this.findPushSlots(slots, selectedSlot, numItemsToMove, false);
+            assert targetSlots != null;
+            if (targetSlots.isEmpty()) {
+                return true;
+            }
+            handler.clickSlot(selectedSlot, MouseButton.LEFT, false);
+            for (Slot slot : targetSlots) {
+                int clickTimes = slot.getStack().getMaxStackSize() - slot.getStack().getCount();
+                clickTimes = Math.min(clickTimes, numItemsToMove);
+                numItemsToMove -= clickTimes;
+                while (clickTimes-- > 0) {
+                    handler.clickSlot(slot, MouseButton.RIGHT, false);
+                }
+            }
+            handler.clickSlot(selectedSlot, MouseButton.LEFT, false);
+            return true;
+        }
+        int maxItemsToMove = selectedSlotStack.getMaxStackSize() - selectedSlotStack.getCount();
+        numItemsToMove = Math.min(numItemsToMove, maxItemsToMove);
+        while (numItemsToMove > 0) {
+            Slot targetSlot = this.findPullSlot(slots, selectedSlot);
+            if (targetSlot == null) {
+                break;
+            }
+            int numItemsInTargetSlot = targetSlot.getStack().getCount();
+            if (handler.isCraftingOutput(targetSlot)) {
+                if (maxItemsToMove < numItemsInTargetSlot) {
+                    break;
+                }
+                maxItemsToMove -= numItemsInTargetSlot;
+                if (!stackOnMouse.isEmpty() && !selectedSlot.isItemValid(stackOnMouse)) {
+                    break;
+                }
+                handler.clickSlot(selectedSlot, MouseButton.LEFT, false);
+                handler.clickSlot(targetSlot, MouseButton.LEFT, false);
+                handler.clickSlot(selectedSlot, MouseButton.LEFT, false);
+                continue;
+            }
+            int numItemsToMoveFromTargetSlot = Math.min(numItemsToMove, numItemsInTargetSlot);
+            maxItemsToMove -= numItemsToMoveFromTargetSlot;
+            numItemsToMove -= numItemsToMoveFromTargetSlot;
+            if (!stackOnMouse.isEmpty() && !targetSlot.isItemValid(stackOnMouse)) {
+                break;
+            }
+            handler.clickSlot(targetSlot, MouseButton.LEFT, false);
+            if (numItemsToMoveFromTargetSlot == numItemsInTargetSlot) {
+                handler.clickSlot(selectedSlot, MouseButton.LEFT, false);
+            }
+            else {
+                for (int i = 0; i < numItemsToMoveFromTargetSlot; i++) {
+                    handler.clickSlot(selectedSlot, MouseButton.RIGHT, false);
+                }
+            }
+            handler.clickSlot(targetSlot, MouseButton.LEFT, false);
+        }
+        return true;
     }
 
     @SubscribeEvent
@@ -428,90 +835,6 @@ public class ClientEvents {
             movementInput.jump = false;
         }
     }
-
-//    @SubscribeEvent
-//    public void onKeyboardEvent(InputEvent.KeyInputEvent event) {
-//        if (this.mc.currentScreen != null || this.mc.player == null) {
-//            this.isLeftPressed = false;
-//            this.isRightPressed = false;
-//            return;
-//        }
-//        KeyBinding attack = this.mc.gameSettings.keyBindAttack;
-//        KeyBinding use = this.mc.gameSettings.keyBindUseItem;
-//        if (attack.getKey().getType() == InputMappings.Type.KEYSYM) {
-//            if (attack.getKey().getKeyCode() == event.getKey()) {
-//                if (event.getAction() == GLFW.GLFW_PRESS) {
-//                    this.isLeftPressed = true;
-//                    if (!this.isRightPressed) {
-//                        this.onLeftMouseClick();
-//                    }
-//                }
-//                else {
-//                    this.isLeftPressed = false;
-//                }
-//            }
-//        }
-//        if (use.getKey().getType() == InputMappings.Type.KEYSYM) {
-//            if (use.getKey().getKeyCode() == event.getKey()) {
-//                if (event.getAction() == GLFW.GLFW_PRESS) {
-//                    this.isRightPressed = true;
-//                    if (!this.isLeftPressed) {
-//                        this.onRightMouseClick();
-//                    }
-//                }
-//                else {
-//                    this.isRightPressed = false;
-//                }
-//            }
-//        }
-//    }
-
-//    //Handle mainhand attack
-//    private void onLeftMouseClick() {
-//        if (!this.isRightPressed) {
-//            float cooldown = this.mc.player.getCooldownPeriod();
-//            if (this.mainhandTimeSinceLastHit >= cooldown && this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
-//                this.requiresReequiping = true;
-//                this.mainhandTimeSinceLastHit = 0;
-//                double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getHitVec().y : Double.NaN;
-//                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.leftPointedEntity, Hand.MAIN_HAND, rayTraceY));
-//                this.swingArm(Hand.MAIN_HAND);
-//            }
-//        }
-//    }
-
-//    @SubscribeEvent
-//    public void onMouseEvent(InputEvent.MouseInputEvent event) {
-//        if (this.mc.currentScreen != null || this.mc.player == null) {
-//            this.isLeftPressed = false;
-//            this.isRightPressed = false;
-//            return;
-//        }
-//        KeyBinding attack = this.mc.gameSettings.keyBindAttack;
-//        KeyBinding use = this.mc.gameSettings.keyBindUseItem;
-//        if (attack.getKey().getType() == InputMappings.Type.MOUSE) {
-//            if (attack.getKey().getKeyCode() == event.getButton()) {
-//                if (event.getAction() == GLFW.GLFW_PRESS) {
-//                    this.isLeftPressed = true;
-//                    this.onLeftMouseClick();
-//                }
-//                else {
-//                    this.isLeftPressed = false;
-//                }
-//            }
-//        }
-//        if (use.getKey().getType() == InputMappings.Type.MOUSE) {
-//            if (use.getKey().getKeyCode() == event.getButton()) {
-//                if (event.getAction() == GLFW.GLFW_PRESS) {
-//                    this.isRightPressed = true;
-//                    this.onRightMouseClick();
-//                }
-//                else {
-//                    this.isRightPressed = false;
-//                }
-//            }
-//        }
-//    }
 
     @SubscribeEvent
     public void onPotionAdded(PotionEvent.PotionAddedEvent event) {
@@ -604,7 +927,6 @@ public class ClientEvents {
         this.mainhandTimeSinceLastHit = 0;
         this.renderer.resetFullEquipProgress(Hand.MAIN_HAND);
         double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getHitVec().y : Double.NaN;
-        Evolution.LOGGER.debug("lunged with {}", mainhandStack);
         int slot = Integer.MIN_VALUE;
         for (int i = 0; i < this.mc.player.inventory.mainInventory.size(); i++) {
             if (this.mc.player.inventory.mainInventory.get(i).equals(mainhandStack, false)) {
@@ -629,7 +951,6 @@ public class ClientEvents {
         this.offhandTimeSinceLastHit = 0;
         this.renderer.resetFullEquipProgress(Hand.OFF_HAND);
         double rayTraceY = this.rightRayTrace != null ? this.rightRayTrace.getHitVec().y : Double.NaN;
-        Evolution.LOGGER.debug("lunged with {}", offhandStack);
         int slot = Integer.MIN_VALUE;
         if (this.mc.player.inventory.offHandInventory.get(0).equals(offhandStack, false)) {
             slot = -1;
@@ -654,26 +975,6 @@ public class ClientEvents {
     public void renderTooltip(RenderTooltipEvent.PostText event) {
         this.renderer.renderTooltip(event);
     }
-
-//    //Handle offhand attack
-//    private void onRightMouseClick() {
-//        Item offhandItem = this.mc.player.getHeldItemOffhand().getItem();
-//        if (!(offhandItem instanceof IOffhandAttackable)) {
-//            return;
-//        }
-//        if (!this.isLeftPressed) {
-//            ItemStack mainHandStack = this.mc.player.getHeldItemMainhand();
-//            float cooldown = getRightCooldownPeriod((IOffhandAttackable) offhandItem);
-//            if (this.offhandTimeSinceLastHit >= cooldown &&
-//                mainHandStack.getUseAction() == UseAction.NONE &&
-//                this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
-//                this.offhandTimeSinceLastHit = 0;
-//                double rayTraceY = this.rightRayTrace != null ? this.rightRayTrace.getHitVec().y : Double.NaN;
-//                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.rightPointedEntity, Hand.OFF_HAND, rayTraceY));
-//                this.swingArm(Hand.OFF_HAND);
-//            }
-//        }
-//    }
 
     public void rightMouseClick(IOffhandAttackable item) {
         float cooldown = getRightCooldownPeriod(item);
