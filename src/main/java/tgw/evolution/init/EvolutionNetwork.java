@@ -133,5 +133,10 @@ public final class EvolutionNetwork {
                                  PacketSCLungeAnim::encode,
                                  PacketSCLungeAnim::decode,
                                  PacketSCLungeAnim::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCParrySound.class,
+                                 PacketSCParrySound::encode,
+                                 PacketSCParrySound::decode,
+                                 PacketSCParrySound::handle);
     }
 }

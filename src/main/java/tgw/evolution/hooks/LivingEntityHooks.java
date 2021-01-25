@@ -1,27 +1,30 @@
 package tgw.evolution.hooks;
 
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MoverType;
+import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.passive.IFlyingAnimal;
+import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.entity.projectile.AbstractArrowEntity;
 import net.minecraft.fluid.IFluidState;
-import net.minecraft.item.ArmorItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.*;
 import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.SoundEvents;
+import net.minecraft.stats.Stats;
+import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.ISoftBlock;
@@ -32,24 +35,217 @@ import tgw.evolution.events.EntityEvents;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionNetwork;
+import tgw.evolution.init.EvolutionSounds;
+import tgw.evolution.items.IEvolutionItem;
 import tgw.evolution.network.PacketCSImpactDamage;
-import tgw.evolution.util.EntityFlags;
-import tgw.evolution.util.Gravity;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.PlayerHelper;
+import tgw.evolution.network.PacketSCParrySound;
+import tgw.evolution.util.*;
+import tgw.evolution.util.reflection.FieldHandler;
+import tgw.evolution.util.reflection.MethodHandler;
 
 public final class LivingEntityHooks {
 
+    private static final FieldHandler<LivingEntity, PlayerEntity> ATTACKING_PLAYER = new FieldHandler<>(LivingEntity.class, "field_70717_bb");
+    private static final FieldHandler<LivingEntity, Integer> RECENTLY_HIT = new FieldHandler<>(LivingEntity.class, "field_70718_bc");
+    private static final MethodHandler<LivingEntity, SoundEvent> GET_DEATH_SOUND = new MethodHandler<>(LivingEntity.class, "func_184615_bR");
+    private static final MethodHandler<LivingEntity, Float> GET_SOUND_VOLUME = new MethodHandler<>(LivingEntity.class, "func_70599_aP");
+    private static final MethodHandler<LivingEntity, Float> GET_SOUND_PITCH = new MethodHandler<>(LivingEntity.class, "func_70647_i");
+    private static final MethodHandler<LivingEntity, Void> PLAY_HURT_SOUND = new MethodHandler<>(LivingEntity.class,
+                                                                                                 "func_184581_c",
+                                                                                                 DamageSource.class);
+    private static final FieldHandler<LivingEntity, DamageSource> LAST_DAMAGE_SOURCE = new FieldHandler<>(LivingEntity.class, "field_189750_bF");
+    private static final FieldHandler<LivingEntity, Long> LAST_DAMAGE_STAMP = new FieldHandler<>(LivingEntity.class, "field_189751_bG");
+
     private LivingEntityHooks() {
+    }
+
+    /**
+     * Hooks from {@link LivingEntity#attackEntityFrom(DamageSource, float)}
+     */
+    @EvolutionHook
+    public static boolean attackEntityFrom(LivingEntity entity, DamageSource source, float amount) {
+        if (!ForgeHooks.onLivingAttack(entity, source, amount)) {
+            return false;
+        }
+        if (entity.isInvulnerableTo(source)) {
+            return false;
+        }
+        if (entity.world.isRemote) {
+            return false;
+        }
+        if (entity.getHealth() <= 0.0F) {
+            return false;
+        }
+        if (source.isFireDamage() && entity.isPotionActive(Effects.FIRE_RESISTANCE)) {
+            return false;
+        }
+        if (entity.isSleeping() && !entity.world.isRemote) {
+            entity.wakeUp();
+        }
+        entity.setIdleTime(0);
+        float f = amount;
+        if ((source == DamageSource.ANVIL || source == DamageSource.FALLING_BLOCK) &&
+            !entity.getItemStackFromSlot(EquipmentSlotType.HEAD).isEmpty()) {
+            entity.getItemStackFromSlot(EquipmentSlotType.HEAD)
+                  .damageItem((int) (amount * 4.0F + entity.getRNG().nextFloat() * amount * 2.0F),
+                              entity,
+                              breaker -> breaker.sendBreakAnimation(EquipmentSlotType.HEAD));
+            amount *= 0.75F;
+        }
+        boolean damageBlocked = false;
+        boolean parry = false;
+        boolean parrySuccess = false;
+        float amountBlocked = 0.0F;
+        if (amount > 0.0F && canBlockDamageSource(entity, source)) {
+            damageShield(entity, amount);
+            amountBlocked = amount;
+            amount = 0.0F;
+            if (!source.isProjectile()) {
+                Entity immediateSource = source.getImmediateSource();
+                if (immediateSource instanceof LivingEntity) {
+                    blockUsingShield(entity, (LivingEntity) immediateSource);
+                }
+            }
+            damageBlocked = true;
+            entity.world.setEntityState(entity, EntityStates.SHIELD_BLOCK_SOUND);
+        }
+        else if (amount > 0.0f && canParryDamageSource(entity, source)) {
+            parry = true;
+            int parryTime = getParryTime(entity);
+            Evolution.LOGGER.debug("Parry time = {}", parryTime);
+            if (parryTime >= 0 && parryTime <= 5) {
+                amountBlocked = amount;
+                amount = 0.0f;
+                if (!source.isProjectile()) {
+                    Entity immediateSource = source.getImmediateSource();
+                    if (immediateSource instanceof LivingEntity) {
+                        blockUsingShield(entity, (LivingEntity) immediateSource);
+                    }
+                }
+                damageBlocked = true;
+                parrySuccess = true;
+            }
+            else {
+                amount *= 0.9f;
+            }
+        }
+        entity.limbSwingAmount = 1.5F;
+        damageEntity(entity, source, amount);
+        entity.maxHurtTime = 10;
+        entity.hurtTime = entity.maxHurtTime;
+        entity.attackedAtYaw = 0.0F;
+        Entity trueSource = source.getTrueSource();
+        if (trueSource != null) {
+            if (trueSource instanceof LivingEntity) {
+                entity.setRevengeTarget((LivingEntity) trueSource);
+            }
+            if (trueSource instanceof PlayerEntity) {
+                RECENTLY_HIT.set(entity, 100);
+                ATTACKING_PLAYER.set(entity, (PlayerEntity) trueSource);
+            }
+            else if (trueSource instanceof TameableEntity) {
+                TameableEntity wolf = (TameableEntity) trueSource;
+                if (wolf.isTamed()) {
+                    RECENTLY_HIT.set(entity, 100);
+                    LivingEntity owner = wolf.getOwner();
+                    if (owner != null && owner.getType() == EntityType.PLAYER) {
+                        ATTACKING_PLAYER.set(entity, (PlayerEntity) owner);
+                    }
+                    else {
+                        ATTACKING_PLAYER.set(entity, null);
+                    }
+                }
+            }
+        }
+        if (parry) {
+            SoundEvent sound;
+            if (parrySuccess) {
+                sound = EvolutionSounds.PARRY_SUCCESS.get();
+            }
+            else {
+                sound = EvolutionSounds.PARRY_FAIL.get();
+            }
+            entity.playSound(sound, 0.4f, 0.8F + entity.world.rand.nextFloat() * 0.4F);
+            if (entity instanceof ServerPlayerEntity) {
+                EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) entity),
+                                               new PacketSCParrySound(parrySuccess));
+            }
+        }
+        else if (!damageBlocked && source instanceof EntityDamageSource && ((EntityDamageSource) source).getIsThornsDamage()) {
+            entity.world.setEntityState(entity, EntityStates.THORNS_HIT_SOUND);
+        }
+        else {
+            byte hitSound;
+            if (source == EvolutionDamage.DROWN) {
+                hitSound = EntityStates.DROWN_HIT_SOUND;
+            }
+            else if (source.isFireDamage()) {
+                hitSound = EntityStates.FIRE_HIT_SOUND;
+            }
+            else if (source == DamageSource.SWEET_BERRY_BUSH) {
+                hitSound = EntityStates.SWEET_BERRY_BUSH_HIT_SOUND;
+            }
+            else {
+                hitSound = EntityStates.GENERIC_HIT_SOUND;
+            }
+            entity.world.setEntityState(entity, hitSound);
+        }
+        if (source != EvolutionDamage.DROWN && !damageBlocked) {
+            entity.velocityChanged = entity.getRNG().nextDouble() >= entity.getAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).getValue();
+        }
+        if (trueSource != null) {
+            double d1 = trueSource.posX - entity.posX;
+            double d0;
+            for (d0 = trueSource.posZ - entity.posZ; d1 * d1 + d0 * d0 < 1.0E-4D; d0 = (Math.random() - Math.random()) * 0.01D) {
+                d1 = (Math.random() - Math.random()) * 0.01D;
+            }
+            entity.attackedAtYaw = MathHelper.radToDeg((float) MathHelper.atan2(d0, d1)) - entity.rotationYaw;
+            entity.knockBack(trueSource, 0.4F, d1, d0);
+        }
+        else {
+            entity.attackedAtYaw = (int) (Math.random() * 2) * 180;
+        }
+        if (entity.getHealth() <= 0.0F) {
+            if (!checkTotemDeathProtection(entity, source)) {
+                SoundEvent deathSound = GET_DEATH_SOUND.call(entity);
+                if (deathSound != null) {
+                    entity.playSound(deathSound, GET_SOUND_VOLUME.call(entity), GET_SOUND_PITCH.call(entity));
+                }
+                entity.onDeath(source);
+            }
+        }
+        else {
+            PLAY_HURT_SOUND.call(entity, source);
+        }
+        boolean damageNotBlocked = !damageBlocked;
+        if (damageNotBlocked) {
+            LAST_DAMAGE_SOURCE.set(entity, source);
+            LAST_DAMAGE_STAMP.set(entity, entity.world.getGameTime());
+        }
+        if (entity instanceof ServerPlayerEntity) {
+            CriteriaTriggers.ENTITY_HURT_PLAYER.trigger((ServerPlayerEntity) entity, source, f, amount, damageBlocked);
+            if (amountBlocked > 0.0F && amountBlocked < Float.MAX_VALUE) {
+                ((ServerPlayerEntity) entity).addStat(Stats.DAMAGE_BLOCKED_BY_SHIELD, Math.round(amountBlocked * 10.0F));
+            }
+        }
+        if (trueSource instanceof ServerPlayerEntity) {
+            CriteriaTriggers.PLAYER_HURT_ENTITY.trigger((ServerPlayerEntity) trueSource, entity, source, f, amount, damageBlocked);
+        }
+        return damageNotBlocked;
+    }
+
+    private static void blockUsingShield(LivingEntity blocking, LivingEntity blocked) {
+        constructKnockBackVector(blocked, blocking);
     }
 
     private static void calculateWallImpact(LivingEntity entity, double motionX, double motionZ, double mass) {
         double motionXPost = entity.getMotion().x;
         double motionZPost = entity.getMotion().z;
         double deltaSpeedX = Math.abs(motionX) - Math.abs(motionXPost);
+        deltaSpeedX *= 20;
         float damage = 0;
-        if (deltaSpeedX >= 0.3) {
-            deltaSpeedX *= 20;
+        if (deltaSpeedX >= 6) {
+            Evolution.LOGGER.debug("x speed = {} m/s", deltaSpeedX);
             double kineticEnergy = 0.5 * deltaSpeedX * deltaSpeedX * mass;
             AxisAlignedBB bb = entity.getBoundingBox();
             double xCoord = motionX >= 0 ? bb.maxX + 0.01 : bb.minX - 0.01;
@@ -86,11 +282,12 @@ public final class LivingEntityHooks {
             double forceOfImpact = kineticEnergy / distanceOfSlowdown;
             float area = entity.getHeight() * entity.getWidth();
             double pressure = forceOfImpact / area;
-            damage += (float) Math.pow(pressure, 1.7) / 1_750_000;
+            damage += (float) Math.pow(pressure, 1.6) / 1_750_000;
         }
         double deltaSpeedZ = Math.abs(motionZ) - Math.abs(motionZPost);
-        if (deltaSpeedZ >= 0.3) {
-            deltaSpeedZ *= 20;
+        deltaSpeedZ *= 20;
+        if (deltaSpeedZ >= 6) {
+            Evolution.LOGGER.debug("z speed = {} m/s", deltaSpeedZ);
             double kineticEnergy = 0.5 * deltaSpeedZ * deltaSpeedZ * mass;
             AxisAlignedBB bb = entity.getBoundingBox();
             double zCoord = motionZ >= 0 ? bb.maxZ + 0.01 : bb.minZ - 0.01;
@@ -127,7 +324,7 @@ public final class LivingEntityHooks {
             double forceOfImpact = kineticEnergy / distanceOfSlowdown;
             float area = entity.getHeight() * entity.getWidth();
             double pressure = forceOfImpact / area;
-            damage += (float) Math.pow(pressure, 1.7) / 1_500_000;
+            damage += (float) Math.pow(pressure, 1.6) / 1_500_000;
         }
         if (damage >= 1.0f) {
             if (!entity.world.isRemote) {
@@ -135,6 +332,136 @@ public final class LivingEntityHooks {
             }
             else if (entity instanceof PlayerEntity) {
                 EvolutionNetwork.INSTANCE.sendToServer(new PacketCSImpactDamage(damage));
+            }
+        }
+    }
+
+    private static boolean canBlockDamageSource(LivingEntity entity, DamageSource source) {
+        Entity immediateSource = source.getImmediateSource();
+        boolean piercing = false;
+        if (immediateSource instanceof AbstractArrowEntity) {
+            AbstractArrowEntity arrowEntity = (AbstractArrowEntity) immediateSource;
+            if (arrowEntity.getPierceLevel() > 0) {
+                piercing = true;
+            }
+        }
+        if (!piercing && !source.isUnblockable() && isActiveItemStackBlocking(entity)) {
+            Vec3d damageLocation = source.getDamageLocation();
+            if (damageLocation != null) {
+                Vec3d look = entity.getLook(1.0F);
+                Vec3d damageVec = damageLocation.subtractReverse(new Vec3d(entity.posX, entity.posY + entity.getEyeHeight(), entity.posZ))
+                                                .normalize();
+                return damageVec.dotProduct(look) < 0;
+            }
+        }
+        return false;
+    }
+
+    private static boolean canParryDamageSource(LivingEntity entity, DamageSource source) {
+        Entity immediateSource = source.getImmediateSource();
+        boolean piercing = false;
+        if (immediateSource instanceof AbstractArrowEntity) {
+            AbstractArrowEntity arrowEntity = (AbstractArrowEntity) immediateSource;
+            if (arrowEntity.getPierceLevel() > 0) {
+                piercing = true;
+            }
+        }
+        if (!piercing && !source.isUnblockable() && isActiveItemStackParrying(entity)) {
+            Vec3d damageLocation = source.getDamageLocation();
+            if (damageLocation != null) {
+                Vec3d look = entity.getLook(1.0F);
+                Vec3d damageVec = damageLocation.subtractReverse(new Vec3d(entity.posX, entity.posY + entity.getEyeHeight(), entity.posZ))
+                                                .normalize();
+                return damageVec.dotProduct(look) < -MathHelper.SQRT_2_OVER_2;
+            }
+        }
+        return false;
+    }
+
+    private static boolean checkTotemDeathProtection(LivingEntity entity, DamageSource source) {
+        if (source.canHarmInCreative()) {
+            return false;
+        }
+        ItemStack stack = null;
+        for (Hand hand : Hand.values()) {
+            ItemStack stackInHand = entity.getHeldItem(hand);
+            if (stackInHand.getItem() == Items.TOTEM_OF_UNDYING) {
+                stack = stackInHand.copy();
+                stackInHand.shrink(1);
+                break;
+            }
+        }
+        if (stack != null) {
+            if (entity instanceof ServerPlayerEntity) {
+                ServerPlayerEntity player = (ServerPlayerEntity) entity;
+                player.addStat(Stats.ITEM_USED.get(Items.TOTEM_OF_UNDYING));
+                CriteriaTriggers.USED_TOTEM.trigger(player, stack);
+            }
+            entity.setHealth(1.0F);
+            entity.clearActivePotions();
+            entity.addPotionEffect(new EffectInstance(Effects.REGENERATION, 900, 1));
+            entity.addPotionEffect(new EffectInstance(Effects.ABSORPTION, 100, 1));
+            entity.world.setEntityState(entity, EntityStates.TOTEM_OF_UNDYING_SOUND);
+        }
+        return stack != null;
+    }
+
+    private static void constructKnockBackVector(LivingEntity blocked, LivingEntity blocking) {
+        blocking.knockBack(blocked, 0.5F, blocking.posX - blocked.posX, blocking.posZ - blocked.posZ);
+    }
+
+    private static void damageEntity(LivingEntity entity, DamageSource source, float amount) {
+        if (!entity.isInvulnerableTo(source)) {
+            amount = ForgeHooks.onLivingHurt(entity, source, amount);
+            if (amount <= 0) {
+                return;
+            }
+            //TODO
+//            amount = entity.applyArmorCalculations(source, amount);
+//            amount = entity.applyPotionDamageCalculations(source, amount);
+            float totalAmount = amount;
+            amount = Math.max(amount - entity.getAbsorptionAmount(), 0.0F);
+            entity.setAbsorptionAmount(entity.getAbsorptionAmount() - (totalAmount - amount));
+            float absorbedDamage = totalAmount - amount;
+            if (absorbedDamage > 0.0F && absorbedDamage < Float.MAX_VALUE && source.getTrueSource() instanceof ServerPlayerEntity) {
+                ((PlayerEntity) source.getTrueSource()).addStat(Stats.DAMAGE_DEALT_ABSORBED, Math.round(absorbedDamage * 10.0F));
+            }
+            if (absorbedDamage > 0.0F && absorbedDamage < Float.MAX_VALUE && entity instanceof ServerPlayerEntity) {
+                ((ServerPlayerEntity) entity).addStat(Stats.DAMAGE_ABSORBED, Math.round(absorbedDamage * 10.0F));
+            }
+            amount = ForgeHooks.onLivingDamage(entity, source, amount);
+            if (amount != 0.0F) {
+                float f2 = entity.getHealth();
+                entity.getCombatTracker().trackDamage(source, f2, amount);
+                entity.setHealth(f2 - amount);
+                entity.setAbsorptionAmount(entity.getAbsorptionAmount() - amount);
+                if (amount < Float.MAX_VALUE && entity instanceof ServerPlayerEntity) {
+                    ((ServerPlayerEntity) entity).addStat(Stats.DAMAGE_TAKEN, Math.round(amount * 10.0F));
+                }
+            }
+        }
+    }
+
+    private static void damageShield(LivingEntity entity, float damage) {
+        if (!(entity instanceof PlayerEntity)) {
+            return;
+        }
+        PlayerEntity player = (PlayerEntity) entity;
+        if (damage >= 3.0F && entity.getActiveItemStack().isShield(entity)) {
+            int i = 1 + MathHelper.floor(damage);
+            Hand hand = entity.getActiveHand();
+            entity.getActiveItemStack().damageItem(i, entity, livingEntity -> {
+                livingEntity.sendBreakAnimation(hand);
+                ForgeEventFactory.onPlayerDestroyItem(player, entity.getActiveItemStack(), hand);
+            });
+            if (entity.getActiveItemStack().isEmpty()) {
+                if (hand == Hand.MAIN_HAND) {
+                    entity.setItemStackToSlot(EquipmentSlotType.MAINHAND, ItemStack.EMPTY);
+                }
+                else {
+                    entity.setItemStackToSlot(EquipmentSlotType.OFFHAND, ItemStack.EMPTY);
+                }
+                entity.playSound(SoundEvents.ITEM_SHIELD_BREAK, 0.8F, 0.8F + entity.world.rand.nextFloat() * 0.4F);
             }
         }
     }
@@ -152,6 +479,12 @@ public final class LivingEntityHooks {
         if (entity instanceof PlayerEntity) {
             if (Evolution.PRONED_PLAYERS.getOrDefault(entity.getUniqueID(), false)) {
                 magnitude *= 0.3;
+            }
+        }
+        if (entity.isHandActive()) {
+            Item activeItem = entity.getActiveItemStack().getItem();
+            if (activeItem instanceof IEvolutionItem) {
+                magnitude *= ((IEvolutionItem) activeItem).useItemSlowDownRate();
             }
         }
         Vec3d acceleration = direction.normalize();
@@ -191,6 +524,14 @@ public final class LivingEntityHooks {
             return massAttribute.getValue();
         }
         return 1;
+    }
+
+    private static int getParryTime(LivingEntity entity) {
+        ItemStack stack = entity.getActiveItemStack();
+        if (stack.isEmpty()) {
+            return -1;
+        }
+        return stack.getItem().getUseDuration(stack) - entity.getItemInUseCount();
     }
 
     private static void handleElytraMovement(LivingEntity entity, double gravityAcceleration, DataParameter<Byte> flags) {
@@ -437,6 +778,33 @@ public final class LivingEntityHooks {
         motionZ += acceleration.z - dragZ;
         entity.setMotion(motionX, motionY, motionZ);
         entity.move(MoverType.SELF, entity.getMotion());
+    }
+
+    private static boolean isActiveItemStackBlocking(LivingEntity entity) {
+        ItemStack stack = entity.getActiveItemStack();
+        if (entity.isHandActive() && !stack.isEmpty()) {
+            Item item = stack.getItem();
+            if (!item.isShield(stack, entity)) {
+                return false;
+            }
+            if (item.getUseAction(stack) != UseAction.BLOCK) {
+                return false;
+            }
+            return item.getUseDuration(stack) - entity.getItemInUseCount() >= 2;
+        }
+        return false;
+    }
+
+    private static boolean isActiveItemStackParrying(LivingEntity entity) {
+        ItemStack stack = entity.getActiveItemStack();
+        if (entity.isHandActive() && !stack.isEmpty()) {
+            Item item = stack.getItem();
+            if (item.getUseAction(stack) != UseAction.BLOCK) {
+                return false;
+            }
+            return item.getUseDuration(stack) - entity.getItemInUseCount() >= 0;
+        }
+        return false;
     }
 
     /**

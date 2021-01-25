@@ -32,6 +32,8 @@ public final class MathHelper {
     public static final float PI = (float) Math.PI;
     public static final float TAU = 2.0f * PI;
     public static final float PI_OVER_2 = PI / 2.0f;
+    public static final float SQRT_2 = sqrt(2.0f);
+    public static final float SQRT_2_OVER_2 = SQRT_2 / 2.0f;
     public static final Random RANDOM = new Random();
     public static final Direction[] DIRECTIONS_EXCEPT_DOWN = {Direction.UP, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
     public static final Direction[] DIRECTIONS_EXCEPT_UP = {Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
@@ -58,6 +60,7 @@ public final class MathHelper {
      * @param value The arc cosine argument.
      * @return The angle represented by this arc, in radians.
      */
+    @Radian
     public static double arcCos(double value) {
         double a = -0.939_115_566_365_855;
         double b = 0.921_784_152_891_457_3;
@@ -74,6 +77,7 @@ public final class MathHelper {
      * @param value The arc cosine argument.
      * @return The angle represented by this arc, in degrees.
      */
+    @Degree
     public static float arcCosDeg(double value) {
         return (float) (arcCos(value) * 180 / Math.PI);
     }
@@ -115,6 +119,7 @@ public final class MathHelper {
      * @param x The x component of the vector.
      * @return The angle between the vector and the X axis, given in radians.
      */
+    @Radian
     public static double atan2(double y, double x) {
         return net.minecraft.util.math.MathHelper.atan2(y, x);
     }
@@ -235,7 +240,7 @@ public final class MathHelper {
      * @return An approximation of the cosine of the given argument.
      * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
      */
-    public static float cos(float rad) {
+    public static float cos(@Radian float rad) {
         return net.minecraft.util.math.MathHelper.cos(rad);
     }
 
@@ -246,7 +251,7 @@ public final class MathHelper {
      * @return An approximation of the cosine of the given argument.
      * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
      */
-    public static float cosDeg(float deg) {
+    public static float cosDeg(@Degree float deg) {
         return net.minecraft.util.math.MathHelper.cos(degToRad(deg));
     }
 
@@ -256,7 +261,8 @@ public final class MathHelper {
      * @param degrees The value in degrees.
      * @return the corresponding value in radians.
      */
-    public static float degToRad(float degrees) {
+    @Radian
+    public static float degToRad(@Degree float degrees) {
         return degrees * PI / 180;
     }
 
@@ -650,7 +656,8 @@ public final class MathHelper {
      * @param radians The value in radians.
      * @return the corresponding value in degrees.
      */
-    public static float radToDeg(float radians) {
+    @Degree
+    public static float radToDeg(@Radian float radians) {
         return radians * 180 / PI;
     }
 
@@ -947,7 +954,7 @@ public final class MathHelper {
      * @return An approximation of the sine of the given argument.
      * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
      */
-    public static float sin(float rad) {
+    public static float sin(@Radian float rad) {
         return net.minecraft.util.math.MathHelper.sin(rad);
     }
 
@@ -958,7 +965,7 @@ public final class MathHelper {
      * @return An approximation of the sine of the given argument.
      * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
      */
-    public static float sinDeg(float deg) {
+    public static float sinDeg(@Degree float deg) {
         return net.minecraft.util.math.MathHelper.sin(degToRad(deg));
     }
 
@@ -1001,7 +1008,7 @@ public final class MathHelper {
      * @return An approximation of the tangent of the given argument.
      * The returned value will be between {@link Float#NEGATIVE_INFINITY} and {@link Float#POSITIVE_INFINITY}.
      */
-    public static float tan(float rad) {
+    public static float tan(@Radian float rad) {
         return net.minecraft.util.math.MathHelper.sin(rad) / net.minecraft.util.math.MathHelper.cos(rad);
     }
 
@@ -1081,7 +1088,7 @@ public final class MathHelper {
         return VoxelShapes.combine(A, B, IBooleanFunction.OR);
     }
 
-    public static double wrapDegrees(double value) {
+    public static double wrapDegrees(@Degree double value) {
         return net.minecraft.util.math.MathHelper.wrapDegrees(value);
     }
 }

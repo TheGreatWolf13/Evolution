@@ -1,5 +1,6 @@
 package tgw.evolution.items;
 
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
@@ -36,6 +37,11 @@ public class ItemShield extends ItemEv implements IDurability {
     @Override
     public int getUseDuration(ItemStack stack) {
         return 72_000;
+    }
+
+    @Override
+    public boolean isShield(ItemStack stack, @Nullable LivingEntity entity) {
+        return true;
     }
 
     @Override

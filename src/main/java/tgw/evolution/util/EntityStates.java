@@ -35,6 +35,7 @@ public final class EntityStates {
     public static final byte ARMOR_STAND_HIT_SOUND = 32;
     public static final byte THORNS_HIT_SOUND = 33;
     public static final byte STOP_HOLD_ROSE = 34;
+    public static final byte TOTEM_OF_UNDYING_SOUND = 35;
     public static final byte DROWN_HIT_SOUND = 36;
     public static final byte FIRE_HIT_SOUND = 37;
     public static final byte HAPPY_PARTICLE = 38;

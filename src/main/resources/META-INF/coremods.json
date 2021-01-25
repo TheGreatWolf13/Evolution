@@ -17,5 +17,6 @@
   "Evolution World Transformer": "patches/WorldPatches.js",
   "Evolution InputHooks Transformer": "patches/InputHooks.js",
   "Evolution PlayerModel Transformer": "patches/PlayerModelHooks.js",
-  "Evolution PlayerRenderer Transformer": "patches/PlayerRendererHooks.js"
+  "Evolution PlayerRenderer Transformer": "patches/PlayerRendererHooks.js",
+  "Evolution LivingEntityAttackFrom Transformer": "patches/LivingEntityAttackFrom.js"
 }

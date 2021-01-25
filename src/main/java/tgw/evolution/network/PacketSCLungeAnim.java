@@ -4,7 +4,6 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.Hand;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
-import tgw.evolution.client.LungeAttackInfo;
 import tgw.evolution.events.ClientEvents;
 
 import java.util.function.Supplier;
@@ -30,15 +29,7 @@ public class PacketSCLungeAnim implements IPacket {
 
     public static void handle(PacketSCLungeAnim packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
-                LungeAttackInfo lunge = ClientEvents.LUNGING_PLAYERS.get(packet.entityId);
-                if (lunge == null) {
-                    ClientEvents.LUNGING_PLAYERS.put(packet.entityId, new LungeAttackInfo(packet.hand));
-                }
-                else {
-                    lunge.addInfo(packet.hand);
-                }
-            });
+            context.get().enqueueWork(() -> ClientEvents.addLungingPlayer(packet.entityId, packet.hand));
             context.get().setPacketHandled(true);
         }
     }

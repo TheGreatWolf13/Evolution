@@ -291,7 +291,7 @@ public class EntityEvents {
             else if (source == DamageSource.DROWN) {
                 hitEntity.attackEntityFrom(EvolutionDamage.DROWN, 10.0f);
             }
-            event.setCanceled(true);
+//            event.setCanceled(true);
             return;
         }
         if (IGNORED_DAMAGE_SOURCES.contains(source)) {
@@ -302,9 +302,10 @@ public class EntityEvents {
         //Raytracing projectile damage
         if (source instanceof DamageSourceEntityIndirect && source.isProjectile()) {
             if (hitEntity instanceof PlayerEntity) {
-                EquipmentSlotType type = PlayerHelper.getPartByPosition(source.getImmediateSource().getBoundingBox().minY, (PlayerEntity) hitEntity);
-                Evolution.LOGGER.debug("type ranged = {}", type);
-                this.damageMultipliers.put(source, type);
+                EquipmentSlotType hitLocation = PlayerHelper.getPartByPosition(source.getImmediateSource().getBoundingBox().minY,
+                                                                               (PlayerEntity) hitEntity);
+                ((DamageSourceEntityIndirect) source).setHitLocation(hitLocation);
+                Evolution.LOGGER.debug("hitLocation ranged = {}", hitLocation);
             }
             return;
         }
@@ -372,8 +373,8 @@ public class EntityEvents {
         DamageSource source = event.getSource();
         if (event.getEntityLiving() instanceof PlayerEntity) {
             EquipmentSlotType hitPart = this.damageMultipliers.remove(source);
-            if (source instanceof DamageSourcePVP) {
-                hitPart = ((DamageSourcePVP) source).getHitLocation();
+            if (source instanceof IHitLocation) {
+                hitPart = ((IHitLocation) source).getHitLocation();
             }
             EvolutionDamage.Type type = EvolutionDamage.Type.GENERIC;
             if (source instanceof DamageSourceEv) {
@@ -406,9 +407,11 @@ public class EntityEvents {
         }
     }
 
+    /**
+     * Cancels the default player attack. Attack is calculated in {@link PlayerHelper#performAttack(PlayerEntity, Entity, Hand, double)}
+     */
     @SubscribeEvent
     public void onPlayerAttack(AttackEntityEvent event) {
-        //Cancels the default player attack. Attack is calculated in PlayerHelper.performAttack(PlayerEntity, Entity, Hand)
         event.setCanceled(true);
     }
 

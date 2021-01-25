@@ -20,6 +20,7 @@ public final class EvolutionTexts {
     public static final ITextComponent ACTION_HOOK = transl("evolution.actionbar.hook").setStyle(WHITE);
     public static final ITextComponent ACTION_INERTIA = transl("evolution.actionbar.inertia").setStyle(WHITE);
     public static final ITextComponent ACTION_TWO_HANDED = transl("evolution.actionbar.two_handed").setStyle(WHITE);
+    public static final ITextComponent DEATH_FISTS = transl("death.item.fists");
     public static final ITextComponent EASTER_CHERT = transl("evolution.easter.chert").setStyle(LORE);
     public static final ITextComponent EASTER_GABBRO = transl("evolution.easter.gabbro").setStyle(LORE);
     public static final ITextComponent EASTER_GNEISS = transl("evolution.easter.gneiss").setStyle(LORE);
@@ -31,6 +32,7 @@ public final class EvolutionTexts {
     public static final ITextComponent TOOLTIP_EMPTY_CONTAINER = transl("evolution.tooltip.container.empty").setStyle(INFO);
     public static final ITextComponent TOOLTIP_LUNGE = transl("evolution.tooltip.lunge").setStyle(PROPERTY);
     public static final ITextComponent TOOLTIP_OFFHAND = transl("evolution.tooltip.offhand").setStyle(LIGHT_GREY);
+    public static final ITextComponent TOOLTIP_PARRY = transl("evolution.tooltip.parry").setStyle(PROPERTY);
     public static final ITextComponent TOOLTIP_ROCK_KNAP = transl("evolution.tooltip.rock.knap").setStyle(INFO);
     public static final ITextComponent TOOLTIP_ROCK_TYPE_IGEXTRUSIVE = transl("evolution.tooltip.rock_type.igneous_extrusive").setStyle(LIGHT_GREY);
     public static final ITextComponent TOOLTIP_ROCK_TYPE_IGINTRUSIVE = transl("evolution.tooltip.rock_type.igneous_intrusive").setStyle(LIGHT_GREY);
@@ -132,10 +134,6 @@ public final class EvolutionTexts {
 
     public static ITextComponent oxydation(double oxydation) {
         return new TranslationTextComponent("evolution.tooltip.metal.oxidation", PERCENT_ONE_PLACE.format(oxydation)).setStyle(LIGHT_GREY);
-    }
-
-    public static ITextComponent parry(IParry item, ItemStack stack) {
-        return new TranslationTextComponent(PARRY, PERCENT_ONE_PLACE.format(item.getParryPercentage(stack))).setStyle(EFFECTS);
     }
 
     public static ITextComponent remaining(int number) {

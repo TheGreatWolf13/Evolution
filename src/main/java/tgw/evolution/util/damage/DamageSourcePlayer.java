@@ -7,11 +7,10 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.IMelee;
 
 public class DamageSourcePlayer extends DamageSourceEntity {
-
-    private static final ITextComponent FISTS = new TranslationTextComponent("death.item.fists");
 
     private final Hand hand;
 
@@ -29,6 +28,6 @@ public class DamageSourcePlayer extends DamageSourceEntity {
     @Override
     public ITextComponent getItemDisplay() {
         ItemStack heldStack = ((LivingEntity) this.damageSourceEntity).getHeldItem(this.hand);
-        return heldStack.getItem() instanceof IMelee ? heldStack.getTextComponent() : FISTS;
+        return heldStack.getItem() instanceof IMelee ? heldStack.getTextComponent() : EvolutionTexts.DEATH_FISTS;
     }
 }

@@ -20,6 +20,20 @@
 			"evolution:javelin/javelin_throw"
 		]
 	},
+	"parry_fail": {
+		"category": "player",
+		"subtitle": "evolution.subtitle.parry_fail",
+		"sounds": [
+			"evolution:parry_fail"
+		]
+	},
+	"parry_success": {
+		"category": "player",
+		"subtitle": "evolution.subtitle.parry_success",
+		"sounds": [
+			"evolution:parry_success"
+		]
+	},
 	"soil_collapse": {
 		"category": "block",
 		"subtitle": "evolution.subtitle.soil_collapse",

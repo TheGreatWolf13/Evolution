@@ -71,9 +71,6 @@ public class ItemEvents {
         if (item instanceof IKnockback) {
             tooltip.add(EvolutionTexts.knockback((IKnockback) item));
         }
-        if (item instanceof IParry) {
-            tooltip.add(EvolutionTexts.parry((IParry) item, stack));
-        }
         if (item instanceof ISweepAttack) {
             tooltip.add(EvolutionTexts.sweep((ISweepAttack) item));
         }
@@ -164,6 +161,13 @@ public class ItemEvents {
                 tooltip.add(EvolutionTexts.EMPTY);
             }
             tooltip.add(EvolutionTexts.TOOLTIP_LUNGE);
+            hasAddedLine = true;
+        }
+        if (item instanceof IParry) {
+            if (!hasAddedLine) {
+                tooltip.add(EvolutionTexts.EMPTY);
+            }
+            tooltip.add(EvolutionTexts.TOOLTIP_PARRY);
             hasAddedLine = true;
         }
         //Attributes

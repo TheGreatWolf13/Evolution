@@ -5,16 +5,17 @@ import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.util.Hand;
 import tgw.evolution.init.EvolutionDamage;
 
-public class DamageSourcePVP extends DamageSourcePlayer {
+public class DamageSourcePVP extends DamageSourcePlayer implements IHitLocation {
 
-    private final EquipmentSlotType slot;
+    private final EquipmentSlotType hitLocation;
 
-    public DamageSourcePVP(String damage, PlayerEntity entity, EvolutionDamage.Type type, Hand hand, EquipmentSlotType slot) {
+    public DamageSourcePVP(String damage, PlayerEntity entity, EvolutionDamage.Type type, Hand hand, EquipmentSlotType hitLocation) {
         super(damage, entity, type, hand);
-        this.slot = slot;
+        this.hitLocation = hitLocation;
     }
 
+    @Override
     public EquipmentSlotType getHitLocation() {
-        return this.slot;
+        return this.hitLocation;
     }
 }

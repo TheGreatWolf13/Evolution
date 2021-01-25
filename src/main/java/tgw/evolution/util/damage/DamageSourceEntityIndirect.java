@@ -2,6 +2,7 @@ package tgw.evolution.util.damage;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -10,9 +11,10 @@ import tgw.evolution.init.EvolutionDamage;
 
 import javax.annotation.Nullable;
 
-public class DamageSourceEntityIndirect extends DamageSourceEntity {
+public class DamageSourceEntityIndirect extends DamageSourceEntity implements IHitLocation {
     private final Entity trueSource;
-    private boolean isThornsDamage;
+    @Nullable
+    private EquipmentSlotType hitLocation;
 
     public DamageSourceEntityIndirect(String damage, Entity source, @Nullable Entity trueSource, EvolutionDamage.Type type) {
         super(damage, source, type);
@@ -37,12 +39,18 @@ public class DamageSourceEntityIndirect extends DamageSourceEntity {
 
     @Override
     @Nullable
-    public Entity getImmediateSource() {
-        return this.damageSourceEntity;
+    public EquipmentSlotType getHitLocation() {
+        return this.hitLocation;
     }
 
-    public boolean getIsThornsDamage() {
-        return this.isThornsDamage;
+    public void setHitLocation(@Nullable EquipmentSlotType hitLocation) {
+        this.hitLocation = hitLocation;
+    }
+
+    @Override
+    @Nullable
+    public Entity getImmediateSource() {
+        return this.damageSourceEntity;
     }
 
     @Override
@@ -59,10 +67,5 @@ public class DamageSourceEntityIndirect extends DamageSourceEntity {
     @Nullable
     public Entity getTrueSource() {
         return this.trueSource;
-    }
-
-    public DamageSourceEntityIndirect setIsThornsDamage() {
-        this.isThornsDamage = true;
-        return this;
     }
 }

@@ -1056,9 +1056,6 @@ public class ClientRenderer {
             if (item instanceof IKnockback) {
                 line++;
             }
-            if (item instanceof IParry) {
-                line++;
-            }
             if (item instanceof ISweepAttack) {
                 line++;
             }
@@ -1103,6 +1100,16 @@ public class ClientRenderer {
             }
             //Lunge line
             if (item instanceof ILunge) {
+                if (hasAddedLine) {
+                    line++;
+                }
+                else {
+                    line += 2;
+                }
+                hasAddedLine = true;
+            }
+            //Parry line
+            if (item instanceof IParry) {
                 if (hasAddedLine) {
                     line++;
                 }

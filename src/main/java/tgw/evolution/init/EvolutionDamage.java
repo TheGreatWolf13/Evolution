@@ -22,9 +22,9 @@ public final class EvolutionDamage {
     public static final DamageSource FALLING_SOIL = new DamageSourceEv("falling_soil", Type.CRUSHING).setDamageBypassesArmor();
     public static final DamageSource FALLING_WOOD = new DamageSourceEv("falling_wood", Type.CRUSHING).setDamageBypassesArmor();
     public static final DamageSource FALLING_TREE = new DamageSourceEv("falling_tree", Type.CRUSHING).setDamageBypassesArmor();
-    public static final DamageSource IN_FIRE = new DamageSourceEv("inFire", Type.FIRE).setFireDamage();
+    public static final DamageSource IN_FIRE = new DamageSourceEv("inFire", Type.FIRE).setFireDamage().setDamageBypassesArmor();
     public static final DamageSource IN_WALL = new DamageSourceEv("inWall", Type.SUFFOCATION).setDamageBypassesArmor();
-    public static final DamageSource ON_FIRE = new DamageSourceEv("onFire", Type.FIRE).setFireDamage();
+    public static final DamageSource ON_FIRE = new DamageSourceEv("onFire", Type.FIRE).setFireDamage().setDamageBypassesArmor();
     public static final DamageSource VOID = new DamageSourceEv("outOfWorld", Type.VOID).setDamageBypassesArmor().setDamageAllowedInCreativeMode();
     public static final DamageSource WALL_IMPACT = new DamageSourceEv("wall_impact", Type.IMPACT).setDamageBypassesArmor();
     public static final DamageSource WATER_IMPACT = new DamageSourceEv("water_impact", Type.IMPACT).setDamageBypassesArmor();

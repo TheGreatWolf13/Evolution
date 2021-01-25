@@ -63,6 +63,15 @@ public class LungeChargeInfo {
         return !this.offhandStack.isEmpty();
     }
 
+    public void resetHand(Hand hand) {
+        if (hand == Hand.MAIN_HAND) {
+            this.mainhandStack = ItemStack.EMPTY;
+        }
+        else {
+            this.offhandStack = ItemStack.EMPTY;
+        }
+    }
+
     public boolean shouldBeRemoved() {
         if (this.mainhandStack.isEmpty()) {
             return this.offhandStack.isEmpty();

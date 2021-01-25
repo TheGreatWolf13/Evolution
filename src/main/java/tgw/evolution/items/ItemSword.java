@@ -99,4 +99,9 @@ public class ItemSword extends ItemGenericTool implements IOffhandAttackable, IS
     public float reach() {
         return 4.0f;
     }
+
+    @Override
+    public double useItemSlowDownRate() {
+        return 0.7;
+    }
 }

@@ -53,6 +53,7 @@ import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
+import tgw.evolution.hooks.InputHooks;
 import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
@@ -131,6 +132,20 @@ public class ClientEvents {
         this.mc = mc;
         instance = this;
         this.renderer = new ClientRenderer(mc, this);
+    }
+
+    public static void addLungingPlayer(int entityId, Hand hand) {
+        LungeChargeInfo lungeCharge = ABOUT_TO_LUNGE_PLAYERS.get(entityId);
+        if (lungeCharge != null) {
+            lungeCharge.resetHand(hand);
+        }
+        LungeAttackInfo lungeAttack = LUNGING_PLAYERS.get(entityId);
+        if (lungeAttack == null) {
+            LUNGING_PLAYERS.put(entityId, new LungeAttackInfo(hand));
+        }
+        else {
+            lungeAttack.addInfo(hand);
+        }
     }
 
     private static boolean areStacksCompatible(ItemStack a, ItemStack b) {
@@ -429,6 +444,7 @@ public class ClientEvents {
                 ABOUT_TO_LUNGE_PLAYERS.forEach((key, value) -> value.tick());
                 LUNGING_PLAYERS.entrySet().removeIf(entry -> entry.getValue().shouldBeRemoved());
                 LUNGING_PLAYERS.forEach((key, value) -> value.tick());
+                InputHooks.parryCooldownTick();
             }
             GameRenderer gameRenderer = this.mc.gameRenderer;
             if (gameRenderer != this.oldGameRenderer) {

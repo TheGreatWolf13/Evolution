@@ -12,14 +12,13 @@ import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.common.ForgeHooks;
 import tgw.evolution.Evolution;
-import tgw.evolution.client.LungeAttackInfo;
 import tgw.evolution.client.LungeChargeInfo;
 import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.ILunge;
 import tgw.evolution.items.IOffhandAttackable;
-import tgw.evolution.items.ItemSword;
+import tgw.evolution.items.IParry;
 import tgw.evolution.network.PacketCSLungeAnim;
 import tgw.evolution.network.PacketCSStartLunge;
 import tgw.evolution.util.MathHelper;
@@ -40,6 +39,7 @@ public final class InputHooks {
     private static int useKeyDownTicks;
     private static boolean attackKeyReleased = true;
     private static boolean useKeyReleased = true;
+    private static int parryCooldown;
 
     private InputHooks() {
     }
@@ -82,19 +82,19 @@ public final class InputHooks {
         isMainhandLunging = true;
         lastMainhandLungeStrength = MathHelper.relativize(attackKeyDownTicks, minTime, fullTime);
         mainhandLungingStack = mc.player.getHeldItemMainhand();
-        LungeAttackInfo lungeAttack = ClientEvents.LUNGING_PLAYERS.get(mc.player.getEntityId());
-        if (lungeAttack == null) {
-            ClientEvents.LUNGING_PLAYERS.put(mc.player.getEntityId(), new LungeAttackInfo(Hand.MAIN_HAND));
-        }
-        else {
-            lungeAttack.addInfo(Hand.MAIN_HAND);
-        }
+        ClientEvents.addLungingPlayer(mc.player.getEntityId(), Hand.MAIN_HAND);
         EvolutionNetwork.INSTANCE.sendToServer(new PacketCSLungeAnim(Hand.MAIN_HAND));
     }
 
     public static void middleClickMouse(Minecraft mc) {
         if (mc.objectMouseOver != null && mc.objectMouseOver.getType() != RayTraceResult.Type.MISS) {
             ForgeHooks.onPickBlock(mc.objectMouseOver, mc.player, mc.world);
+        }
+    }
+
+    public static void parryCooldownTick() {
+        if (parryCooldown > 0) {
+            parryCooldown--;
         }
     }
 
@@ -278,19 +278,28 @@ public final class InputHooks {
                     ClientEvents.getInstance().rightMouseClick((IOffhandAttackable) itemOffhand);
                     return;
                 }
+                boolean isLungingMainhand = isMainhandLungeInProgress || isMainhandLunging;
+                boolean isOffhandShield = mc.player.getHeldItemOffhand().isShield(mc.player);
                 for (Hand hand : MathHelper.HANDS_LEFT_PRIORITY) {
                     ItemStack stack = mc.player.getHeldItem(hand);
                     if (stack.isEmpty() && (mc.objectMouseOver == null || mc.objectMouseOver.getType() == RayTraceResult.Type.MISS)) {
                         ForgeHooks.onEmptyClick(mc.player, hand);
                     }
-                    if (stack.getItem() instanceof ItemSword) {
-                        if (ClientEvents.getInstance().getMainhandCooledAttackStrength(1.0F) < 1.0F ||
-                            isMainhandLungeInProgress ||
-                            isMainhandLunging) {
+                    if (hand == Hand.MAIN_HAND && (isLungingMainhand || ClientEvents.getInstance().getMainhandCooledAttackStrength(0.0f) < 1.0f)) {
+                        return;
+                    }
+                    if (isLungingMainhand && isOffhandShield) {
+                        return;
+                    }
+                    if (stack.getItem() instanceof IParry) {
+                        if (parryCooldown > 0) {
                             return;
                         }
                     }
                     if (!stack.isEmpty() && mc.playerController.processRightClick(mc.player, mc.world, hand) == ActionResultType.SUCCESS) {
+                        if (stack.getItem() instanceof IParry) {
+                            parryCooldown = 6;
+                        }
                         return;
                     }
                 }
@@ -303,13 +312,7 @@ public final class InputHooks {
         isOffhandLunging = true;
         lastOffhandLungeStrength = MathHelper.relativize(useKeyDownTicks, minTime, fullTime);
         offhandLungingStack = mc.player.getHeldItemOffhand();
-        LungeAttackInfo lungeAttack = ClientEvents.LUNGING_PLAYERS.get(mc.player.getEntityId());
-        if (lungeAttack == null) {
-            ClientEvents.LUNGING_PLAYERS.put(mc.player.getEntityId(), new LungeAttackInfo(Hand.OFF_HAND));
-        }
-        else {
-            lungeAttack.addInfo(Hand.OFF_HAND);
-        }
+        ClientEvents.addLungingPlayer(mc.player.getEntityId(), Hand.OFF_HAND);
         EvolutionNetwork.INSTANCE.sendToServer(new PacketCSLungeAnim(Hand.OFF_HAND));
     }
 }

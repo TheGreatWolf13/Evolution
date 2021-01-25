@@ -5,4 +5,10 @@ package tgw.evolution.items;
  */
 public interface IEvolutionItem {
 
+    /**
+     * @return The slow down rate of this item when it's being used. {@code 1.0} means no slow down, while {@code 0.0} means full totally stopped.
+     */
+    default double useItemSlowDownRate() {
+        return 1.0;
+    }
 }
