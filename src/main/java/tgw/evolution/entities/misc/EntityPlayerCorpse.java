@@ -136,7 +136,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
 
     @Override
     public boolean canBeCollidedWith() {
-        return true;
+        return !this.removed;
     }
 
     @Override
