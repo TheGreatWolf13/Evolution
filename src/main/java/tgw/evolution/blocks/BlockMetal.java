@@ -14,8 +14,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.loot.LootContext;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.util.EnumMetalNames;
 import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.MetalVariant;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +25,7 @@ import static tgw.evolution.init.EvolutionBStates.OXIDATION;
 
 public class BlockMetal extends BlockGravity {
 
-    public BlockMetal(EnumMetalNames name) {
+    public BlockMetal(MetalVariant name) {
         super(Block.Properties.create(Material.IRON)
                               .harvestLevel(name.getHarvestLevel())
                               .sound(SoundType.METAL)

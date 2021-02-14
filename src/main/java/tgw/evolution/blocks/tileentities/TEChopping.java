@@ -14,7 +14,7 @@ import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.init.EvolutionTileEntities;
 import tgw.evolution.items.ItemLog;
-import tgw.evolution.util.EnumWoodVariant;
+import tgw.evolution.util.WoodVariant;
 
 import javax.annotation.Nullable;
 
@@ -32,7 +32,7 @@ public class TEChopping extends TileEntity implements ILoggable {
 
     public void breakLog(PlayerEntity player) {
         if (!this.world.isRemote) {
-            ItemStack stack = new ItemStack(EnumWoodVariant.byId(this.id).getPlank(), 8);
+            ItemStack stack = new ItemStack(WoodVariant.byId(this.id).getPlank(), 8);
             BlockUtils.dropItemStack(this.world, this.pos, stack);
             player.getHeldItemMainhand().damageItem(1, player, playerEntity -> playerEntity.sendBreakAnimation(EquipmentSlotType.MAINHAND));
         }
@@ -71,7 +71,7 @@ public class TEChopping extends TileEntity implements ILoggable {
     }
 
     public ItemStack getItemStack() {
-        return new ItemStack(EnumWoodVariant.byId(this.id).getLog());
+        return new ItemStack(WoodVariant.byId(this.id).getLogItem());
     }
 
     @Override

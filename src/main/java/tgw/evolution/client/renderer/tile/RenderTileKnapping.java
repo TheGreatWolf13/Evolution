@@ -17,7 +17,7 @@ public class RenderTileKnapping extends TileEntityRenderer<TEKnapping> {
         Block block = this.getWorld().getBlockState(tileEntityKnapping.getPos()).getBlock();
         ResourceLocation resourceLocation = null;
         if (block instanceof BlockKnapping) {
-            resourceLocation = Evolution.location("textures/block/knapping_" + ((BlockKnapping) block).getStoneName().getName() + ".png");
+            resourceLocation = Evolution.location("textures/block/knapping_" + ((BlockKnapping) block).getVariant().getName() + ".png");
         }
         this.bindTexture(resourceLocation);
         return this.knappingModel;

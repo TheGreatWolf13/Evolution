@@ -3,15 +3,17 @@ package tgw.evolution.items;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.item.BlockItemUseContext;
+import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.blocks.BlockLogPile;
-import tgw.evolution.util.EnumWoodVariant;
+import tgw.evolution.util.WoodVariant;
 
 public class ItemLog extends ItemGenericBlockPlaceable {
 
-    public EnumWoodVariant variant;
+    public final WoodVariant variant;
 
-    public ItemLog(Block blockIn, Properties builder) {
-        super(blockIn, builder);
+    public ItemLog(WoodVariant variant, BlockLog block, Properties builder) {
+        super(block, builder);
+        this.variant = variant;
     }
 
     @Override

@@ -16,15 +16,15 @@ import tgw.evolution.blocks.fluids.BlockFreshWater;
 import tgw.evolution.blocks.fluids.BlockGenericFluid;
 import tgw.evolution.blocks.fluids.BlockSaltWater;
 import tgw.evolution.blocks.trees.*;
-import tgw.evolution.util.*;
+import tgw.evolution.util.MetalVariant;
+import tgw.evolution.util.RockVariant;
+import tgw.evolution.util.WoodVariant;
 
-import java.util.HashSet;
-import java.util.Set;
+import static tgw.evolution.util.MetalVariant.COPPER;
+import static tgw.evolution.util.RockVariant.*;
+import static tgw.evolution.util.WoodVariant.*;
 
-import static tgw.evolution.util.EnumMetalNames.COPPER;
-import static tgw.evolution.util.EnumRockNames.*;
-import static tgw.evolution.util.EnumWoodNames.*;
-
+@SuppressWarnings("unused")
 @EventBusSubscriber
 public final class EvolutionBlocks {
 
@@ -229,10 +229,10 @@ public final class EvolutionBlocks {
     public static final RegistryObject<Block> GRASS_SLATE = BLOCKS.register("grass_slate", () -> grass(SLATE));
     //Clay
     public static final RegistryObject<Block> CLAY = BLOCKS.register("clay", BlockClay::new);
-    public static final RegistryObject<Block> GRASS_CLAY = BLOCKS.register("grass_clay", () -> grass(EnumRockNames.CLAY));
+    public static final RegistryObject<Block> GRASS_CLAY = BLOCKS.register("grass_clay", () -> grass(RockVariant.CLAY));
     //Peat
     public static final RegistryObject<Block> PEAT = BLOCKS.register("peat", BlockPeat::new);
-    public static final RegistryObject<Block> GRASS_PEAT = BLOCKS.register("grass_peat", () -> grass(EnumRockNames.PEAT));
+    public static final RegistryObject<Block> GRASS_PEAT = BLOCKS.register("grass_peat", () -> grass(RockVariant.PEAT));
     //Dry Grass
     public static final RegistryObject<Block> DRY_GRASS_ANDESITE = BLOCKS.register("dry_grass_andesite", () -> dryGrass(ANDESITE));
     public static final RegistryObject<Block> DRY_GRASS_BASALT = BLOCKS.register("dry_grass_basalt", () -> dryGrass(BASALT));
@@ -255,24 +255,24 @@ public final class EvolutionBlocks {
     public static final RegistryObject<Block> DRY_GRASS_SHALE = BLOCKS.register("dry_grass_shale", () -> dryGrass(SHALE));
     public static final RegistryObject<Block> DRY_GRASS_SLATE = BLOCKS.register("dry_grass_slate", () -> dryGrass(SLATE));
     //Log
-    public static final RegistryObject<Block> LOG_ACACIA = BLOCKS.register("log_acacia", () -> log(ACACIA));
-    public static final RegistryObject<Block> LOG_ASPEN = BLOCKS.register("log_aspen", () -> log(ASPEN));
-    public static final RegistryObject<Block> LOG_BIRCH = BLOCKS.register("log_birch", () -> log(BIRCH));
-    public static final RegistryObject<Block> LOG_CEDAR = BLOCKS.register("log_cedar", () -> log(CEDAR));
-    public static final RegistryObject<Block> LOG_EBONY = BLOCKS.register("log_ebony", () -> log(EBONY));
-    public static final RegistryObject<Block> LOG_ELM = BLOCKS.register("log_elm", () -> log(ELM));
-    public static final RegistryObject<Block> LOG_EUCALYPTUS = BLOCKS.register("log_eucalyptus", () -> log(EUCALYPTUS));
-    public static final RegistryObject<Block> LOG_FIR = BLOCKS.register("log_fir", () -> log(FIR));
-    public static final RegistryObject<Block> LOG_KAPOK = BLOCKS.register("log_kapok", () -> log(KAPOK));
-    public static final RegistryObject<Block> LOG_MANGROVE = BLOCKS.register("log_mangrove", () -> log(MANGROVE));
-    public static final RegistryObject<Block> LOG_MAPLE = BLOCKS.register("log_maple", () -> log(MAPLE));
-    public static final RegistryObject<Block> LOG_OAK = BLOCKS.register("log_oak", () -> log(OAK));
-    public static final RegistryObject<Block> LOG_OLD_OAK = BLOCKS.register("log_old_oak", () -> log(OLD_OAK));
-    public static final RegistryObject<Block> LOG_PALM = BLOCKS.register("log_palm", () -> log(PALM));
-    public static final RegistryObject<Block> LOG_PINE = BLOCKS.register("log_pine", () -> log(PINE));
-    public static final RegistryObject<Block> LOG_REDWOOD = BLOCKS.register("log_redwood", () -> log(REDWOOD));
-    public static final RegistryObject<Block> LOG_SPRUCE = BLOCKS.register("log_spruce", () -> log(SPRUCE));
-    public static final RegistryObject<Block> LOG_WILLOW = BLOCKS.register("log_willow", () -> log(WILLOW));
+    public static final RegistryObject<BlockLog> LOG_ACACIA = BLOCKS.register("log_acacia", () -> log(ACACIA));
+    public static final RegistryObject<BlockLog> LOG_ASPEN = BLOCKS.register("log_aspen", () -> log(ASPEN));
+    public static final RegistryObject<BlockLog> LOG_BIRCH = BLOCKS.register("log_birch", () -> log(BIRCH));
+    public static final RegistryObject<BlockLog> LOG_CEDAR = BLOCKS.register("log_cedar", () -> log(CEDAR));
+    public static final RegistryObject<BlockLog> LOG_EBONY = BLOCKS.register("log_ebony", () -> log(EBONY));
+    public static final RegistryObject<BlockLog> LOG_ELM = BLOCKS.register("log_elm", () -> log(ELM));
+    public static final RegistryObject<BlockLog> LOG_EUCALYPTUS = BLOCKS.register("log_eucalyptus", () -> log(EUCALYPTUS));
+    public static final RegistryObject<BlockLog> LOG_FIR = BLOCKS.register("log_fir", () -> log(FIR));
+    public static final RegistryObject<BlockLog> LOG_KAPOK = BLOCKS.register("log_kapok", () -> log(KAPOK));
+    public static final RegistryObject<BlockLog> LOG_MANGROVE = BLOCKS.register("log_mangrove", () -> log(MANGROVE));
+    public static final RegistryObject<BlockLog> LOG_MAPLE = BLOCKS.register("log_maple", () -> log(MAPLE));
+    public static final RegistryObject<BlockLog> LOG_OAK = BLOCKS.register("log_oak", () -> log(OAK));
+    public static final RegistryObject<BlockLog> LOG_OLD_OAK = BLOCKS.register("log_old_oak", () -> log(OLD_OAK));
+    public static final RegistryObject<BlockLog> LOG_PALM = BLOCKS.register("log_palm", () -> log(PALM));
+    public static final RegistryObject<BlockLog> LOG_PINE = BLOCKS.register("log_pine", () -> log(PINE));
+    public static final RegistryObject<BlockLog> LOG_REDWOOD = BLOCKS.register("log_redwood", () -> log(REDWOOD));
+    public static final RegistryObject<BlockLog> LOG_SPRUCE = BLOCKS.register("log_spruce", () -> log(SPRUCE));
+    public static final RegistryObject<BlockLog> LOG_WILLOW = BLOCKS.register("log_willow", () -> log(WILLOW));
     //Leaves
     public static final RegistryObject<Block> LEAVES_ACACIA = BLOCKS.register("leaves_acacia", BlockLeaves::new);
     public static final RegistryObject<Block> LEAVES_ASPEN = BLOCKS.register("leaves_aspen", BlockLeaves::new);
@@ -445,47 +445,47 @@ public final class EvolutionBlocks {
     private EvolutionBlocks() {
     }
 
-    private static Block cobblestone(EnumRockNames variant) {
+    private static Block cobblestone(RockVariant variant) {
         return new BlockCobblestone(variant);
     }
 
-    private static Block dirt(EnumRockNames variant) {
+    private static Block dirt(RockVariant variant) {
         return new BlockDirt(variant);
     }
 
-    private static Block dryGrass(EnumRockNames variant) {
+    private static Block dryGrass(RockVariant variant) {
         return new BlockDryGrass(variant);
     }
 
-    private static Block grass(EnumRockNames variant) {
+    private static Block grass(RockVariant variant) {
         return new BlockGrass(variant);
     }
 
-    private static Block gravel(EnumRockNames variant) {
+    private static Block gravel(RockVariant variant) {
         return new BlockGravel(variant);
     }
 
-    private static Block knapping(EnumRockNames variant) {
+    private static Block knapping(RockVariant variant) {
         return new BlockKnapping(variant, variant.getMass() / 4);
     }
 
-    private static Block log(EnumWoodNames variant) {
+    private static BlockLog log(WoodVariant variant) {
         return new BlockLog(variant);
     }
 
-    private static Block logPile(EnumWoodNames variant) {
+    private static Block logPile(WoodVariant variant) {
         return new BlockLogPile(variant);
     }
 
-    private static Block metal(EnumMetalNames variant) {
+    private static Block metal(MetalVariant variant) {
         return new BlockMetal(variant);
     }
 
-    private static Block planks(EnumWoodNames variant) {
+    private static Block planks(WoodVariant variant) {
         return new BlockPlanks(variant);
     }
 
-    private static Block polishedStone(EnumRockNames variant) {
+    private static Block polishedStone(RockVariant variant) {
         return new BlockPolishedStone(variant);
     }
 
@@ -493,7 +493,7 @@ public final class EvolutionBlocks {
         BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
     }
 
-    private static Block sand(EnumRockNames variant) {
+    private static Block sand(RockVariant variant) {
         return new BlockSand(variant);
     }
 
@@ -501,159 +501,11 @@ public final class EvolutionBlocks {
         return new BlockSapling(tree);
     }
 
-    public static void setupVariants() {
-        Set<IStoneVariant> STONE_VARIANT = new HashSet<>();
-        BLOCKS.getEntries().forEach(blockRegistryObject -> {
-            if (blockRegistryObject.get() instanceof IStoneVariant) {
-                STONE_VARIANT.add((IStoneVariant) blockRegistryObject.get());
-            }
-        });
-        EvolutionItems.ITEMS.getEntries().forEach(itemRegistryObject -> {
-            if (itemRegistryObject.get() instanceof IStoneVariant) {
-                STONE_VARIANT.add((IStoneVariant) itemRegistryObject.get());
-            }
-        });
-        for (IStoneVariant value : STONE_VARIANT) {
-            switch (value.getStoneName()) {
-                case ANDESITE:
-                    value.setVariant(EnumRockVariant.ANDESITE);
-                    break;
-                case BASALT:
-                    value.setVariant(EnumRockVariant.BASALT);
-                    break;
-                case CHALK:
-                    value.setVariant(EnumRockVariant.CHALK);
-                    break;
-                case CLAY:
-                    value.setVariant(EnumRockVariant.CLAY);
-                    break;
-                case CHERT:
-                    value.setVariant(EnumRockVariant.CHERT);
-                    break;
-                case CONGLOMERATE:
-                    value.setVariant(EnumRockVariant.CONGLOMERATE);
-                    break;
-                case DACITE:
-                    value.setVariant(EnumRockVariant.DACITE);
-                    break;
-                case DIORITE:
-                    value.setVariant(EnumRockVariant.DIORITE);
-                    break;
-                case DOLOMITE:
-                    value.setVariant(EnumRockVariant.DOLOMITE);
-                    break;
-                case GABBRO:
-                    value.setVariant(EnumRockVariant.GABBRO);
-                    break;
-                case GNEISS:
-                    value.setVariant(EnumRockVariant.GNEISS);
-                    break;
-                case GRANITE:
-                    value.setVariant(EnumRockVariant.GRANITE);
-                    break;
-                case LIMESTONE:
-                    value.setVariant(EnumRockVariant.LIMESTONE);
-                    break;
-                case MARBLE:
-                    value.setVariant(EnumRockVariant.MARBLE);
-                    break;
-                case PEAT:
-                    value.setVariant(EnumRockVariant.PEAT);
-                    break;
-                case PHYLLITE:
-                    value.setVariant(EnumRockVariant.PHYLLITE);
-                    break;
-                case QUARTZITE:
-                    value.setVariant(EnumRockVariant.QUARTZITE);
-                    break;
-                case RED_SANDSTONE:
-                    value.setVariant(EnumRockVariant.RED_SANDSTONE);
-                    break;
-                case SANDSTONE:
-                    value.setVariant(EnumRockVariant.SANDSTONE);
-                    break;
-                case SCHIST:
-                    value.setVariant(EnumRockVariant.SCHIST);
-                    break;
-                case SHALE:
-                    value.setVariant(EnumRockVariant.SHALE);
-                    break;
-                case SLATE:
-                    value.setVariant(EnumRockVariant.SLATE);
-                    break;
-            }
-        }
-        Set<BlockLogPile> WOOD_VARIANT = new HashSet<>();
-        BLOCKS.getEntries().forEach(blockRegistryObject -> {
-            if (blockRegistryObject.get() instanceof BlockLogPile) {
-                WOOD_VARIANT.add((BlockLogPile) blockRegistryObject.get());
-            }
-        });
-        for (BlockLogPile block : WOOD_VARIANT) {
-            switch (block.name) {
-                case ACACIA:
-                    block.variant = EnumWoodVariant.ACACIA;
-                    break;
-                case ASPEN:
-                    block.variant = EnumWoodVariant.ASPEN;
-                    break;
-                case BIRCH:
-                    block.variant = EnumWoodVariant.BIRCH;
-                    break;
-                case CEDAR:
-                    block.variant = EnumWoodVariant.CEDAR;
-                    break;
-                case EBONY:
-                    block.variant = EnumWoodVariant.EBONY;
-                    break;
-                case ELM:
-                    block.variant = EnumWoodVariant.ELM;
-                    break;
-                case EUCALYPTUS:
-                    block.variant = EnumWoodVariant.EUCALYPTUS;
-                    break;
-                case FIR:
-                    block.variant = EnumWoodVariant.FIR;
-                    break;
-                case KAPOK:
-                    block.variant = EnumWoodVariant.KAPOK;
-                    break;
-                case MANGROVE:
-                    block.variant = EnumWoodVariant.MANGROVE;
-                    break;
-                case MAPLE:
-                    block.variant = EnumWoodVariant.MAPLE;
-                    break;
-                case OAK:
-                    block.variant = EnumWoodVariant.OAK;
-                    break;
-                case OLD_OAK:
-                    block.variant = EnumWoodVariant.OLD_OAK;
-                    break;
-                case PALM:
-                    block.variant = EnumWoodVariant.PALM;
-                    break;
-                case PINE:
-                    block.variant = EnumWoodVariant.PINE;
-                    break;
-                case REDWOOD:
-                    block.variant = EnumWoodVariant.REDWOOD;
-                    break;
-                case SPRUCE:
-                    block.variant = EnumWoodVariant.SPRUCE;
-                    break;
-                case WILLOW:
-                    block.variant = EnumWoodVariant.WILLOW;
-                    break;
-            }
-        }
-    }
-
-    private static Block stone(EnumRockNames variant) {
+    private static Block stone(RockVariant variant) {
         return new BlockStone(variant);
     }
 
-    private static Block stoneBricks(EnumRockNames variant) {
+    private static Block stoneBricks(RockVariant variant) {
         return new BlockStoneBricks(variant);
     }
 }	

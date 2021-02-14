@@ -16,7 +16,7 @@ import tgw.evolution.init.EvolutionDamage;
 import javax.annotation.Nonnull;
 import java.util.Set;
 
-public class ItemSword extends ItemGenericTool implements IOffhandAttackable, ISweepAttack, IParry, ILunge {
+public class ItemSword extends ItemGenericTool implements IOffhandAttackable, ISweepAttack, IParry, ILunge, IBeltWeapon {
 
     private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet();
     private static final Set<Material> EFFECTIVE_MATS = Sets.newHashSet();
@@ -71,6 +71,11 @@ public class ItemSword extends ItemGenericTool implements IOffhandAttackable, IS
     @Override
     public float getParryPercentage(ItemStack stack) {
         return 0.1F;
+    }
+
+    @Override
+    public int getPriority() {
+        return 0;
     }
 
     @Override

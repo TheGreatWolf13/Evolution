@@ -9,7 +9,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.EffectUtils;
+import net.minecraft.util.StringUtils;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -34,6 +34,14 @@ public abstract class ScreenDisplayEffects<T extends Container> extends Containe
 
     public ScreenDisplayEffects(T screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
+    }
+
+    private static String getPotionDurationString(EffectInstance effect, float durationFactor) {
+        if (effect.getIsPotionDurationMax()) {
+            return "\u221E";
+        }
+        int i = MathHelper.floor(effect.getDuration() * durationFactor);
+        return StringUtils.ticksToElapsedTime(i);
     }
 
     private void drawActivePotionEffects() {
@@ -98,7 +106,7 @@ public abstract class ScreenDisplayEffects<T extends Container> extends Containe
                 builder.append(MathHelper.getRomanNumber(effect.getAmplifier() + 1));
             }
             this.font.drawStringWithShadow(builder.toString(), X + 28, i + 6, 0xff_ffff);
-            this.font.drawStringWithShadow(EffectUtils.getPotionDurationString(effect, 1.0F), X + 28, i + 16, 0x7f_7f7f);
+            this.font.drawStringWithShadow(getPotionDurationString(effect, 1.0F), X + 28, i + 16, 0x7f_7f7f);
             i += this.effectHeight;
         }
     }

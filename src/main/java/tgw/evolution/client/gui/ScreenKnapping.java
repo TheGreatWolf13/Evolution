@@ -12,7 +12,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.EnumKnapping;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketCSSetKnappingType;
-import tgw.evolution.util.EnumRockVariant;
+import tgw.evolution.util.RockVariant;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -23,11 +23,11 @@ public class ScreenKnapping extends Screen {
     private static final int WIDTH = 190;
     private static final int HEIGHT = 78;
     private static final ResourceLocation GUI = Evolution.location("textures/gui/knapping.png");
+    private final Map<Button, ItemStack> buttons = new HashMap<>();
     private final BlockPos pos;
     private final ItemStack[] stacks = new ItemStack[EnumKnapping.values().length - 1];
-    private final Map<Button, ItemStack> buttons = new HashMap<>();
 
-    public ScreenKnapping(BlockPos pos, EnumRockVariant variant) {
+    public ScreenKnapping(BlockPos pos, RockVariant variant) {
         super(new TranslationTextComponent("evolution.gui.knapping"));
         this.pos = pos;
         EnumKnapping[] values = EnumKnapping.values();
@@ -37,7 +37,7 @@ public class ScreenKnapping extends Screen {
         }
     }
 
-    public static void open(BlockPos pos, EnumRockVariant variant) {
+    public static void open(BlockPos pos, RockVariant variant) {
         Minecraft.getInstance().displayGuiScreen(new ScreenKnapping(pos, variant));
     }
 

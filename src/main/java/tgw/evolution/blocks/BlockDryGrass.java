@@ -10,8 +10,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.EnumRockNames;
-import tgw.evolution.util.EnumRockVariant;
+import tgw.evolution.util.RockVariant;
 
 import java.util.Random;
 
@@ -19,12 +18,12 @@ import static tgw.evolution.init.EvolutionBStates.SNOWY;
 
 public class BlockDryGrass extends BlockGenericSlowable implements IStoneVariant {
 
-    private final EnumRockNames name;
-    private EnumRockVariant variant;
+    private final RockVariant variant;
 
-    public BlockDryGrass(EnumRockNames name) {
-        super(Block.Properties.create(Material.ORGANIC).hardnessAndResistance(3.0F, 0.6F).sound(SoundType.PLANT).tickRandomly(), name.getMass() / 4);
-        this.name = name;
+    public BlockDryGrass(RockVariant variant) {
+        super(Block.Properties.create(Material.ORGANIC).hardnessAndResistance(3.0F, 0.6F).sound(SoundType.PLANT).tickRandomly(),
+              variant.getMass() / 4);
+        this.variant = variant;
     }
 
     private static boolean canSustainGrass(IWorldReader worldIn, BlockPos pos) {
@@ -58,18 +57,8 @@ public class BlockDryGrass extends BlockGenericSlowable implements IStoneVariant
     }
 
     @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
-    }
-
-    @Override
-    public EnumRockVariant getVariant() {
+    public RockVariant getVariant() {
         return this.variant;
-    }
-
-    @Override
-    public void setVariant(EnumRockVariant variant) {
-        this.variant = variant;
     }
 
     @Override

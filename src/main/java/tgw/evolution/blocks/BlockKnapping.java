@@ -24,18 +24,16 @@ import net.minecraft.world.World;
 import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.items.ItemRock;
-import tgw.evolution.util.EnumRockNames;
-import tgw.evolution.util.EnumRockVariant;
 import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.RockVariant;
 
 public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneVariant {
 
-    private final EnumRockNames name;
-    private EnumRockVariant variant;
+    private final RockVariant variant;
 
-    public BlockKnapping(EnumRockNames name, int mass) {
+    public BlockKnapping(RockVariant variant, int mass) {
         super(Block.Properties.create(Material.MISCELLANEOUS).sound(SoundType.STONE), mass);
-        this.name = name;
+        this.variant = variant;
     }
 
     public static VoxelShape calculateHitbox(TEKnapping tile) {
@@ -94,18 +92,8 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
     }
 
     @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
-    }
-
-    @Override
-    public EnumRockVariant getVariant() {
+    public RockVariant getVariant() {
         return this.variant;
-    }
-
-    @Override
-    public void setVariant(EnumRockVariant variant) {
-        this.variant = variant;
     }
 
     @Override

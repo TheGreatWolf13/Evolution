@@ -11,7 +11,7 @@ import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ItemPickaxe extends ItemGenericTool {
+public class ItemPickaxe extends ItemGenericTool implements IBackWeapon {
 
     private static final Set<Block> EFFECTIVE_ON = new HashSet<>();
     private static final Set<Material> EFFECTIVE_MAT = Sets.newHashSet(Material.ROCK, Material.IRON);
@@ -46,6 +46,11 @@ public class ItemPickaxe extends ItemGenericTool {
     @Override
     public double getMass() {
         return this.mass;
+    }
+
+    @Override
+    public int getPriority() {
+        return 3;
     }
 
     @Override

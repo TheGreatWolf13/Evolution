@@ -1,6 +1,6 @@
 package tgw.evolution.util;
 
-public enum EnumRockType {
+public enum RockType {
     SEDIMENTARY(14.0F, 4),
     METAMORPHIC(15.0F, 5),
     IGNEOUS_INTRUSIVE(16.0F, 6),
@@ -9,7 +9,7 @@ public enum EnumRockType {
     private final float hardness;
     private final int rangeStone;
 
-    EnumRockType(float hardness, int rangeStone) {
+    RockType(float hardness, int rangeStone) {
         this.hardness = hardness;
         this.rangeStone = rangeStone;
     }

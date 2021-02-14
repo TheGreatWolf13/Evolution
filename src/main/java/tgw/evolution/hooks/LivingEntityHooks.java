@@ -584,7 +584,8 @@ public final class LivingEntityHooks {
     }
 
     private static Vec3d handleLadderMotion(LivingEntity entity, double x, double y, double z) {
-        if (entity.isOnLadder()) {
+        boolean isCreativeFlying = entity instanceof PlayerEntity && ((PlayerEntity) entity).abilities.isFlying;
+        if (entity.isOnLadder() && !isCreativeFlying) {
             entity.fallDistance = 0.0F;
             double newX;
             double newZ;
@@ -598,7 +599,7 @@ public final class LivingEntityHooks {
                 newX = x;
                 newZ = z;
             }
-            double newY = Math.max(y, entity.isSneaking() ? 0 : -0.15);
+            double newY = y < -0.3 ? y : Math.max(y, entity.isSneaking() ? 0 : -0.15);
             if (newY < 0 && entity.getBlockState().getBlock() != Blocks.SCAFFOLDING && entity.isSneaking() && entity instanceof PlayerEntity) {
                 newY = 0;
             }

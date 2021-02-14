@@ -10,7 +10,7 @@ import tgw.evolution.init.EvolutionDamage;
 import javax.annotation.Nonnull;
 import java.util.Set;
 
-public class ItemAxe extends ItemGenericTool implements ITwoHanded, IHeavyAttack {
+public class ItemAxe extends ItemGenericTool implements ITwoHanded, IHeavyAttack, IBackWeapon {
 
     private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet();
     private static final Set<Material> EFFECTIVE_MAT = Sets.newHashSet(Material.WOOD, Material.PLANTS);
@@ -55,6 +55,11 @@ public class ItemAxe extends ItemGenericTool implements ITwoHanded, IHeavyAttack
     @Override
     public double getMass() {
         return this.mass;
+    }
+
+    @Override
+    public int getPriority() {
+        return 2;
     }
 
     @Override

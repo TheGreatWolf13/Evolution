@@ -25,9 +25,9 @@ import static tgw.evolution.init.EvolutionBStates.TREE;
 
 public class BlockLog extends BlockXYZAxis {
 
-    private final EnumWoodNames variant;
+    private final WoodVariant variant;
 
-    public BlockLog(EnumWoodNames variant) {
+    public BlockLog(WoodVariant variant) {
         super(Block.Properties.create(Material.WOOD).hardnessAndResistance(8.0F, 2.0F).sound(SoundType.WOOD).harvestLevel(HarvestLevel.STONE),
               variant.getMass());
         this.variant = variant;

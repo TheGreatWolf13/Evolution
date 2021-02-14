@@ -17,7 +17,10 @@ import net.minecraft.world.lighting.LightEngine;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.*;
+import tgw.evolution.util.BlockFlags;
+import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.NutrientHelper;
+import tgw.evolution.util.RockVariant;
 
 import java.util.Random;
 
@@ -25,12 +28,12 @@ import static tgw.evolution.init.EvolutionBStates.*;
 
 public class BlockGrass extends BlockGenericSlowable implements IStoneVariant {
 
-    private final EnumRockNames name;
-    private EnumRockVariant variant;
+    private final RockVariant variant;
 
-    public BlockGrass(EnumRockNames name) {
-        super(Block.Properties.create(Material.ORGANIC).hardnessAndResistance(3.0F, 0.6F).sound(SoundType.PLANT).tickRandomly(), name.getMass() / 4);
-        this.name = name;
+    public BlockGrass(RockVariant variant) {
+        super(Block.Properties.create(Material.ORGANIC).hardnessAndResistance(3.0F, 0.6F).sound(SoundType.PLANT).tickRandomly(),
+              variant.getMass() / 4);
+        this.variant = variant;
     }
 
     private static boolean canSustainGrass(BlockState state, IWorldReader world, BlockPos pos) {
@@ -82,18 +85,8 @@ public class BlockGrass extends BlockGenericSlowable implements IStoneVariant {
     }
 
     @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
-    }
-
-    @Override
-    public EnumRockVariant getVariant() {
+    public RockVariant getVariant() {
         return this.variant;
-    }
-
-    @Override
-    public void setVariant(EnumRockVariant variant) {
-        this.variant = variant;
     }
 
     @Override

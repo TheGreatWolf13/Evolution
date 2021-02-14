@@ -19,26 +19,24 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
-import tgw.evolution.util.EnumWoodNames;
-import tgw.evolution.util.EnumWoodVariant;
 import tgw.evolution.util.HarvestLevel;
 import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.WoodVariant;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 import static tgw.evolution.init.EvolutionBStates.LOG_COUNT;
 
 public class BlockLogPile extends BlockMass implements IReplaceable {
 
-    public final EnumWoodNames name;
-    public EnumWoodVariant variant;
+    public final WoodVariant variant;
 
-    public BlockLogPile(EnumWoodNames name) {
+    public BlockLogPile(WoodVariant variant) {
         super(Block.Properties.create(Material.WOOD)
                               .hardnessAndResistance(1_000.0F, 2.0F)
                               .sound(SoundType.WOOD)
-                              .harvestLevel(HarvestLevel.UNBREAKABLE), name.getMass());
+                              .harvestLevel(HarvestLevel.UNBREAKABLE), variant.getMass());
         this.setDefaultState(this.getDefaultState().with(LOG_COUNT, 1).with(DIRECTION_HORIZONTAL, Direction.NORTH));
-        this.name = name;
+        this.variant = variant;
     }
 
     @Override
@@ -58,7 +56,7 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
 
     @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return new ItemStack(this.variant.getLog(), state.get(LOG_COUNT));
+        return new ItemStack(this.variant.getLogItem(), state.get(LOG_COUNT));
     }
 
     @Override
@@ -78,7 +76,7 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
 
     @Override
     public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
-        return new ItemStack(this.variant.getLog());
+        return new ItemStack(this.variant.getLogItem());
     }
 
     @Override
@@ -116,7 +114,7 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
 
     @Override
     public boolean isReplaceable(BlockState state, BlockItemUseContext useContext) {
-        return useContext.getItem().getItem() == this.variant.getLog() &&
+        return useContext.getItem().getItem() == this.variant.getLogItem() &&
                state.get(LOG_COUNT) < 16 &&
                (!useContext.replacingClickedOnBlock() ||
                 (useContext.getFace() == Direction.UP || useContext.getFace() == state.get(DIRECTION_HORIZONTAL).rotateY()) &&
@@ -162,7 +160,7 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
         if (Math.abs(pos.getX() + 0.5 - player.posX) < 1.5 &&
             Math.abs(pos.getY() - player.posY) < 1.5 &&
             Math.abs(pos.getZ() + 0.5 - player.posZ) < 1.5) {
-            ItemStack stack = new ItemStack(this.variant.getLog());
+            ItemStack stack = new ItemStack(this.variant.getLogItem());
             if (!player.inventory.addItemStackToInventory(stack)) {
                 BlockUtils.dropItemStack(world, pos, stack);
             }

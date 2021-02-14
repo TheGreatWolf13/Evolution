@@ -8,7 +8,7 @@ import net.minecraft.tileentity.TileEntity;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionTileEntities;
 import tgw.evolution.util.DirectionDiagonal;
-import tgw.evolution.util.EnumWoodVariant;
+import tgw.evolution.util.WoodVariant;
 
 import javax.annotation.Nullable;
 
@@ -53,7 +53,7 @@ public class TEPitKiln extends TileEntity {
     }
 
     public ItemStack getLogStack(int index) {
-        return new ItemStack(EnumWoodVariant.byId(this.logs[index]).getLog());
+        return new ItemStack(WoodVariant.byId(this.logs[index]).getLogItem());
     }
 
     public byte[] getLogs() {
@@ -115,7 +115,7 @@ public class TEPitKiln extends TileEntity {
             for (int i = 0; i < 8; i++) {
                 if (this.logs[i] != -1) {
                     //noinspection ObjectAllocationInLoop
-                    BlockUtils.dropItemStack(this.world, this.pos, new ItemStack(EnumWoodVariant.byId(this.logs[i]).getLog()));
+                    BlockUtils.dropItemStack(this.world, this.pos, new ItemStack(WoodVariant.byId(this.logs[i]).getLogItem()));
                 }
                 else {
                     break;

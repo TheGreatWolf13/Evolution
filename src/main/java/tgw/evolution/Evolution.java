@@ -68,8 +68,6 @@ public final class Evolution {
     }
 
     private static void loadComplete(FMLLoadCompleteEvent event) {
-        EvolutionBlocks.setupVariants();
-        EvolutionItems.setupVariants();
         EvolutionBiomes.registerBiomes();
         EvolutionEntities.registerEntityWorldSpawns();
         BlockFire.init();

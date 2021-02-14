@@ -14,58 +14,58 @@ public final class Metrics {
 
     public static String metric(double value, String unit, int decimalPlaces, boolean full) {
         int magnitude = Math.floorDiv(MathHelper.floor(Math.log10(Math.abs(value))), 3);
-        EnumMetric metric = magnitude > 0 ? EnumMetric.OVER_METRIC : EnumMetric.UNDER_METRIC;
+        Metric metric = magnitude > 0 ? Metric.OVER_METRIC : Metric.UNDER_METRIC;
         switch (magnitude) {
             case -8:
-                metric = EnumMetric.YOCTO;
+                metric = Metric.YOCTO;
                 break;
             case -7:
-                metric = EnumMetric.ZEPTO;
+                metric = Metric.ZEPTO;
                 break;
             case -6:
-                metric = EnumMetric.ATTO;
+                metric = Metric.ATTO;
                 break;
             case -5:
-                metric = EnumMetric.FEMTO;
+                metric = Metric.FEMTO;
                 break;
             case -4:
-                metric = EnumMetric.PICO;
+                metric = Metric.PICO;
                 break;
             case -3:
-                metric = EnumMetric.NANO;
+                metric = Metric.NANO;
                 break;
             case -2:
-                metric = EnumMetric.MICRO;
+                metric = Metric.MICRO;
                 break;
             case -1:
-                metric = EnumMetric.MILLI;
+                metric = Metric.MILLI;
                 break;
             case 0:
-                metric = EnumMetric.NONE;
+                metric = Metric.NONE;
                 break;
             case 1:
-                metric = EnumMetric.KILO;
+                metric = Metric.KILO;
                 break;
             case 2:
-                metric = EnumMetric.MEGA;
+                metric = Metric.MEGA;
                 break;
             case 3:
-                metric = EnumMetric.GIGA;
+                metric = Metric.GIGA;
                 break;
             case 4:
-                metric = EnumMetric.TERA;
+                metric = Metric.TERA;
                 break;
             case 5:
-                metric = EnumMetric.PETA;
+                metric = Metric.PETA;
                 break;
             case 6:
-                metric = EnumMetric.EXA;
+                metric = Metric.EXA;
                 break;
             case 7:
-                metric = EnumMetric.ZETTA;
+                metric = Metric.ZETTA;
                 break;
             case 8:
-                metric = EnumMetric.YOTTA;
+                metric = Metric.YOTTA;
                 break;
         }
         value /= metric.getInNumber();
@@ -79,35 +79,35 @@ public final class Metrics {
         if (magnitude < -8) {
             return timeInSeconds + (full ? " Seconds" : " s");
         }
-        EnumMetric metric = EnumMetric.NONE;
+        Metric metric = Metric.NONE;
         switch (magnitude) {
             case -8:
-                metric = EnumMetric.YOCTO;
+                metric = Metric.YOCTO;
                 break;
             case -7:
-                metric = EnumMetric.ZEPTO;
+                metric = Metric.ZEPTO;
                 break;
             case -6:
-                metric = EnumMetric.ATTO;
+                metric = Metric.ATTO;
                 break;
             case -5:
-                metric = EnumMetric.FEMTO;
+                metric = Metric.FEMTO;
                 break;
             case -4:
-                metric = EnumMetric.PICO;
+                metric = Metric.PICO;
                 break;
             case -3:
-                metric = EnumMetric.NANO;
+                metric = Metric.NANO;
                 break;
             case -2:
-                metric = EnumMetric.MICRO;
+                metric = Metric.MICRO;
                 break;
             case -1:
-                metric = EnumMetric.MILLI;
+                metric = Metric.MILLI;
                 break;
         }
         String format = "%." + decimalPlaces + "f";
-        if (metric != EnumMetric.NONE) {
+        if (metric != Metric.NONE) {
             String changedValue = String.format(Locale.ENGLISH, format, timeInSeconds / metric.getInNumber());
             return changedValue + " " + (full ? metric.getFullName() + "seconds" : metric.getPrefix() + "s");
         }
@@ -142,36 +142,36 @@ public final class Metrics {
         }
         timeInSeconds /= SECONDS_IN_A_YEAR;
         magnitude = MathHelper.floor(Math.log10(Math.abs(timeInSeconds))) / 3;
-        metric = EnumMetric.OVER_METRIC;
+        metric = Metric.OVER_METRIC;
         String post = full ? "annum" : "a";
         switch (magnitude) {
             case 0:
-                metric = EnumMetric.NONE;
+                metric = Metric.NONE;
                 post = full ? "Annum" : "a";
                 break;
             case 1:
-                metric = EnumMetric.KILO;
+                metric = Metric.KILO;
                 break;
             case 2:
-                metric = EnumMetric.MEGA;
+                metric = Metric.MEGA;
                 break;
             case 3:
-                metric = EnumMetric.GIGA;
+                metric = Metric.GIGA;
                 break;
             case 4:
-                metric = EnumMetric.TERA;
+                metric = Metric.TERA;
                 break;
             case 5:
-                metric = EnumMetric.PETA;
+                metric = Metric.PETA;
                 break;
             case 6:
-                metric = EnumMetric.EXA;
+                metric = Metric.EXA;
                 break;
             case 7:
-                metric = EnumMetric.ZETTA;
+                metric = Metric.ZETTA;
                 break;
             case 8:
-                metric = EnumMetric.YOTTA;
+                metric = Metric.YOTTA;
                 break;
         }
         String changedValue = String.format(Locale.ENGLISH, format, timeInSeconds / metric.getInNumber());

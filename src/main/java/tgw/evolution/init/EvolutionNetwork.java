@@ -138,5 +138,15 @@ public final class EvolutionNetwork {
                                  PacketSCParrySound::encode,
                                  PacketSCParrySound::decode,
                                  PacketSCParrySound::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketCSUpdateBeltBackItem.class,
+                                 PacketCSUpdateBeltBackItem::encode,
+                                 PacketCSUpdateBeltBackItem::decode,
+                                 PacketCSUpdateBeltBackItem::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCUpdateBeltBackItem.class,
+                                 PacketSCUpdateBeltBackItem::encode,
+                                 PacketSCUpdateBeltBackItem::decode,
+                                 PacketSCUpdateBeltBackItem::handle);
     }
 }

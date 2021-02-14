@@ -11,14 +11,14 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.EnumWoodNames;
 import tgw.evolution.util.HarvestLevel;
+import tgw.evolution.util.WoodVariant;
 
 public class BlockPlanks extends BlockGravity {
 
-    private final EnumWoodNames variant;
+    private final WoodVariant variant;
 
-    public BlockPlanks(EnumWoodNames variant) {
+    public BlockPlanks(WoodVariant variant) {
         super(Block.Properties.create(Material.WOOD).hardnessAndResistance(6.0f, 2.0f).sound(SoundType.WOOD).harvestLevel(HarvestLevel.STONE),
               variant.getMass() / 4);
         this.variant = variant;

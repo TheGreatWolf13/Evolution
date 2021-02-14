@@ -13,25 +13,23 @@ import tgw.evolution.blocks.IStoneVariant;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketSCOpenKnappingGui;
-import tgw.evolution.util.EnumRockNames;
-import tgw.evolution.util.EnumRockVariant;
+import tgw.evolution.util.RockVariant;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
 public class ItemRock extends ItemGenericBlockPlaceable implements IStoneVariant {
 
-    private final EnumRockNames name;
-    private EnumRockVariant variant;
+    private final RockVariant variant;
 
-    public ItemRock(Block block, Properties builder, EnumRockNames name) {
+    public ItemRock(Block block, Properties builder, RockVariant variant) {
         super(block, builder);
-        this.name = name;
+        this.variant = variant;
     }
 
     @Override
     public void addInformation(ItemStack stack, World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
-        switch (this.name.getRockType()) {
+        switch (this.variant.getRockType()) {
             case IGNEOUS_EXTRUSIVE:
                 tooltip.add(EvolutionTexts.TOOLTIP_ROCK_TYPE_IGEXTRUSIVE);
                 break;
@@ -65,18 +63,8 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IStoneVariant
     }
 
     @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
-    }
-
-    @Override
-    public EnumRockVariant getVariant() {
+    public RockVariant getVariant() {
         return this.variant;
-    }
-
-    @Override
-    public void setVariant(EnumRockVariant variant) {
-        this.variant = variant;
     }
 
     @Override

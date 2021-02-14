@@ -29,9 +29,9 @@ import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.items.ItemAxe;
 import tgw.evolution.items.ItemLog;
 import tgw.evolution.util.BlockFlags;
-import tgw.evolution.util.EnumWoodNames;
 import tgw.evolution.util.HarvestLevel;
 import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.WoodVariant;
 
 import javax.annotation.Nullable;
 
@@ -40,7 +40,7 @@ import static tgw.evolution.init.EvolutionBStates.OCCUPIED;
 
 public class BlockChopping extends BlockMass implements IReplaceable, ISittable, IFluidLoggable {
 
-    public BlockChopping(EnumWoodNames name) {
+    public BlockChopping(WoodVariant name) {
         super(Block.Properties.create(Material.WOOD).harvestLevel(HarvestLevel.STONE).sound(SoundType.WOOD).hardnessAndResistance(8.0F, 2.0F),
               name.getMass() / 2);
         this.setDefaultState(this.getDefaultState().with(OCCUPIED, false).with(FLUIDLOGGED, false));

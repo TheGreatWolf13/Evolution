@@ -10,17 +10,19 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import tgw.evolution.Evolution;
+import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.client.renderer.item.RenderStackItemJavelin;
 import tgw.evolution.items.*;
-import tgw.evolution.util.EnumRockNames;
-import tgw.evolution.util.EnumWoodVariant;
 import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.RockVariant;
+import tgw.evolution.util.WoodVariant;
 
 import java.util.function.Supplier;
 
 import static tgw.evolution.init.EvolutionBlocks.*;
-import static tgw.evolution.util.EnumRockNames.*;
+import static tgw.evolution.util.RockVariant.*;
+import static tgw.evolution.util.WoodVariant.*;
 
 @SuppressWarnings("unused")
 @EventBusSubscriber
@@ -241,24 +243,24 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> dry_grass_shale = ITEMS.register("dry_grass_shale", () -> itemBlock(DRY_GRASS_SHALE));
     public static final RegistryObject<Item> dry_grass_slate = ITEMS.register("dry_grass_slate", () -> itemBlock(DRY_GRASS_SLATE));
     //Log
-    public static final RegistryObject<ItemLog> log_acacia = ITEMS.register("log_acacia", () -> itemLog(LOG_ACACIA));
-    public static final RegistryObject<ItemLog> log_aspen = ITEMS.register("log_aspen", () -> itemLog(LOG_ASPEN));
-    public static final RegistryObject<ItemLog> log_birch = ITEMS.register("log_birch", () -> itemLog(LOG_BIRCH));
-    public static final RegistryObject<ItemLog> log_cedar = ITEMS.register("log_cedar", () -> itemLog(LOG_CEDAR));
-    public static final RegistryObject<ItemLog> log_ebony = ITEMS.register("log_ebony", () -> itemLog(LOG_EBONY));
-    public static final RegistryObject<ItemLog> log_elm = ITEMS.register("log_elm", () -> itemLog(LOG_ELM));
-    public static final RegistryObject<ItemLog> log_eucalyptus = ITEMS.register("log_eucalyptus", () -> itemLog(LOG_EUCALYPTUS));
-    public static final RegistryObject<ItemLog> log_fir = ITEMS.register("log_fir", () -> itemLog(LOG_FIR));
-    public static final RegistryObject<ItemLog> log_kapok = ITEMS.register("log_kapok", () -> itemLog(LOG_KAPOK));
-    public static final RegistryObject<ItemLog> log_mangrove = ITEMS.register("log_mangrove", () -> itemLog(LOG_MANGROVE));
-    public static final RegistryObject<ItemLog> log_maple = ITEMS.register("log_maple", () -> itemLog(LOG_MAPLE));
-    public static final RegistryObject<ItemLog> log_oak = ITEMS.register("log_oak", () -> itemLog(LOG_OAK));
-    public static final RegistryObject<ItemLog> log_old_oak = ITEMS.register("log_old_oak", () -> itemLog(LOG_OLD_OAK));
-    public static final RegistryObject<ItemLog> log_palm = ITEMS.register("log_palm", () -> itemLog(LOG_PALM));
-    public static final RegistryObject<ItemLog> log_pine = ITEMS.register("log_pine", () -> itemLog(LOG_PINE));
-    public static final RegistryObject<ItemLog> log_redwood = ITEMS.register("log_redwood", () -> itemLog(LOG_REDWOOD));
-    public static final RegistryObject<ItemLog> log_spruce = ITEMS.register("log_spruce", () -> itemLog(LOG_SPRUCE));
-    public static final RegistryObject<ItemLog> log_willow = ITEMS.register("log_willow", () -> itemLog(LOG_WILLOW));
+    public static final RegistryObject<ItemLog> log_acacia = ITEMS.register("log_acacia", () -> itemLog(ACACIA, LOG_ACACIA));
+    public static final RegistryObject<ItemLog> log_aspen = ITEMS.register("log_aspen", () -> itemLog(ASPEN, LOG_ASPEN));
+    public static final RegistryObject<ItemLog> log_birch = ITEMS.register("log_birch", () -> itemLog(BIRCH, LOG_BIRCH));
+    public static final RegistryObject<ItemLog> log_cedar = ITEMS.register("log_cedar", () -> itemLog(CEDAR, LOG_CEDAR));
+    public static final RegistryObject<ItemLog> log_ebony = ITEMS.register("log_ebony", () -> itemLog(EBONY, LOG_EBONY));
+    public static final RegistryObject<ItemLog> log_elm = ITEMS.register("log_elm", () -> itemLog(ELM, LOG_ELM));
+    public static final RegistryObject<ItemLog> log_eucalyptus = ITEMS.register("log_eucalyptus", () -> itemLog(EUCALYPTUS, LOG_EUCALYPTUS));
+    public static final RegistryObject<ItemLog> log_fir = ITEMS.register("log_fir", () -> itemLog(FIR, LOG_FIR));
+    public static final RegistryObject<ItemLog> log_kapok = ITEMS.register("log_kapok", () -> itemLog(KAPOK, LOG_KAPOK));
+    public static final RegistryObject<ItemLog> log_mangrove = ITEMS.register("log_mangrove", () -> itemLog(MANGROVE, LOG_MANGROVE));
+    public static final RegistryObject<ItemLog> log_maple = ITEMS.register("log_maple", () -> itemLog(MAPLE, LOG_MAPLE));
+    public static final RegistryObject<ItemLog> log_oak = ITEMS.register("log_oak", () -> itemLog(OAK, LOG_OAK));
+    public static final RegistryObject<ItemLog> log_old_oak = ITEMS.register("log_old_oak", () -> itemLog(OLD_OAK, LOG_OLD_OAK));
+    public static final RegistryObject<ItemLog> log_palm = ITEMS.register("log_palm", () -> itemLog(PALM, LOG_PALM));
+    public static final RegistryObject<ItemLog> log_pine = ITEMS.register("log_pine", () -> itemLog(PINE, LOG_PINE));
+    public static final RegistryObject<ItemLog> log_redwood = ITEMS.register("log_redwood", () -> itemLog(REDWOOD, LOG_REDWOOD));
+    public static final RegistryObject<ItemLog> log_spruce = ITEMS.register("log_spruce", () -> itemLog(SPRUCE, LOG_SPRUCE));
+    public static final RegistryObject<ItemLog> log_willow = ITEMS.register("log_willow", () -> itemLog(WILLOW, LOG_WILLOW));
     //Leaves
     public static final RegistryObject<Item> leaves_acacia = ITEMS.register("leaves_acacia", () -> woodBlock(LEAVES_ACACIA));
     public static final RegistryObject<Item> leaves_aspen = ITEMS.register("leaves_aspen", () -> woodBlock(LEAVES_ASPEN));
@@ -768,11 +770,11 @@ public final class EvolutionItems {
         return new ItemBlock(block.get(), propMisc());
     }
 
-    private static ItemLog itemLog(RegistryObject<Block> block) {
-        return new ItemLog(block.get(), propTreesAndWood().maxStackSize(16));
+    private static ItemLog itemLog(WoodVariant variant, RegistryObject<BlockLog> block) {
+        return new ItemLog(variant, block.get(), propTreesAndWood().maxStackSize(16));
     }
 
-    private static Item itemRock(RegistryObject<Block> block, EnumRockNames name) {
+    private static Item itemRock(RegistryObject<Block> block, RockVariant name) {
         return new ItemRock(block.get(), propMisc(), name);
     }
 
@@ -811,27 +813,6 @@ public final class EvolutionItems {
 
     public static void register() {
         ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
-    }
-
-    public static void setupVariants() {
-        log_acacia.get().variant = EnumWoodVariant.ACACIA;
-        log_aspen.get().variant = EnumWoodVariant.ASPEN;
-        log_birch.get().variant = EnumWoodVariant.BIRCH;
-        log_cedar.get().variant = EnumWoodVariant.CEDAR;
-        log_ebony.get().variant = EnumWoodVariant.EBONY;
-        log_elm.get().variant = EnumWoodVariant.ELM;
-        log_eucalyptus.get().variant = EnumWoodVariant.EUCALYPTUS;
-        log_fir.get().variant = EnumWoodVariant.FIR;
-        log_kapok.get().variant = EnumWoodVariant.KAPOK;
-        log_mangrove.get().variant = EnumWoodVariant.MANGROVE;
-        log_maple.get().variant = EnumWoodVariant.MAPLE;
-        log_oak.get().variant = EnumWoodVariant.OAK;
-        log_old_oak.get().variant = EnumWoodVariant.OLD_OAK;
-        log_palm.get().variant = EnumWoodVariant.PALM;
-        log_pine.get().variant = EnumWoodVariant.PINE;
-        log_redwood.get().variant = EnumWoodVariant.REDWOOD;
-        log_spruce.get().variant = EnumWoodVariant.SPRUCE;
-        log_willow.get().variant = EnumWoodVariant.WILLOW;
     }
 
     private static Item shovelStone(EvolutionToolMaterials tier) {

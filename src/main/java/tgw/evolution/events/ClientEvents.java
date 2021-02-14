@@ -10,6 +10,7 @@ import net.minecraft.client.gui.screen.inventory.CreativeScreen;
 import net.minecraft.client.gui.screen.inventory.InventoryScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.entity.PlayerRenderer;
 import net.minecraft.client.util.ClientRecipeBook;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -49,6 +50,8 @@ import tgw.evolution.client.gui.GuiContainerHandler;
 import tgw.evolution.client.gui.IGuiScreenHandler;
 import tgw.evolution.client.gui.MouseButton;
 import tgw.evolution.client.gui.advancements.ScreenAdvancements;
+import tgw.evolution.client.layers.LayerBack;
+import tgw.evolution.client.layers.LayerBelt;
 import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
@@ -60,6 +63,8 @@ import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
+import tgw.evolution.items.IBackWeapon;
+import tgw.evolution.items.IBeltWeapon;
 import tgw.evolution.items.IOffhandAttackable;
 import tgw.evolution.items.ITwoHanded;
 import tgw.evolution.network.*;
@@ -80,6 +85,9 @@ public class ClientEvents {
     public static final List<EffectInstance> EFFECTS = new ArrayList<>();
     public static final Map<Integer, LungeChargeInfo> ABOUT_TO_LUNGE_PLAYERS = new HashMap<>();
     public static final Map<Integer, LungeAttackInfo> LUNGING_PLAYERS = new HashMap<>();
+    public static final Map<Integer, ItemStack> BELT_ITEMS = new HashMap<>();
+    public static final Map<Integer, ItemStack> BACK_ITEMS = new HashMap<>();
+    private static final Map<PlayerRenderer, Object> INJECTED_PLAYER_RENDERERS = new WeakHashMap<>();
     private static final StaticFieldHandler<SkullTileEntity, PlayerProfileCache> PLAYER_PROF_FIELD = new StaticFieldHandler<>(SkullTileEntity.class,
                                                                                                                               "field_184298_j");
     private static final StaticFieldHandler<SkullTileEntity, MinecraftSessionService> SESSION_FIELD = new StaticFieldHandler<>(SkullTileEntity.class,
@@ -445,6 +453,8 @@ public class ClientEvents {
                 LUNGING_PLAYERS.entrySet().removeIf(entry -> entry.getValue().shouldBeRemoved());
                 LUNGING_PLAYERS.forEach((key, value) -> value.tick());
                 InputHooks.parryCooldownTick();
+                this.updateBeltItem();
+                this.updateBackItem();
             }
             GameRenderer gameRenderer = this.mc.gameRenderer;
             if (gameRenderer != this.oldGameRenderer) {
@@ -853,6 +863,16 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
+    public void onPlayerRenderPre(RenderPlayerEvent.Pre event) {
+        PlayerRenderer renderer = event.getRenderer();
+        if (renderer != null && !INJECTED_PLAYER_RENDERERS.containsKey(renderer)) {
+            renderer.addLayer(new LayerBelt(renderer));
+            renderer.addLayer(new LayerBack(renderer));
+            INJECTED_PLAYER_RENDERERS.put(renderer, null);
+        }
+    }
+
+    @SubscribeEvent
     public void onPotionAdded(PotionEvent.PotionAddedEvent event) {
         if (!event.getEntityLiving().world.isRemote) {
             return;
@@ -1015,6 +1035,56 @@ public class ClientEvents {
             return;
         }
         this.renderer.swingArm(hand);
+    }
+
+    private void updateBackItem() {
+        ItemStack backStack = ItemStack.EMPTY;
+        int priority = Integer.MAX_VALUE;
+        int chosen = -1;
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = this.mc.player.inventory.mainInventory.get(i);
+            if (stack.getItem() instanceof IBackWeapon) {
+                int stackPriority = ((IBackWeapon) stack.getItem()).getPriority();
+                if (priority > stackPriority) {
+                    backStack = stack;
+                    priority = stackPriority;
+                    chosen = i;
+                    if (priority == 0) {
+                        break;
+                    }
+                }
+            }
+        }
+        if (chosen == this.mc.player.inventory.currentItem) {
+            backStack = ItemStack.EMPTY;
+        }
+        BACK_ITEMS.put(this.mc.player.getEntityId(), backStack);
+        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateBeltBackItem(backStack, true));
+    }
+
+    private void updateBeltItem() {
+        ItemStack beltStack = ItemStack.EMPTY;
+        int priority = Integer.MAX_VALUE;
+        int chosen = -1;
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = this.mc.player.inventory.mainInventory.get(i);
+            if (stack.getItem() instanceof IBeltWeapon) {
+                int stackPriority = ((IBeltWeapon) stack.getItem()).getPriority();
+                if (priority > stackPriority) {
+                    beltStack = stack;
+                    priority = stackPriority;
+                    chosen = i;
+                    if (priority == 0) {
+                        break;
+                    }
+                }
+            }
+        }
+        if (chosen == this.mc.player.inventory.currentItem) {
+            beltStack = ItemStack.EMPTY;
+        }
+        BELT_ITEMS.put(this.mc.player.getEntityId(), beltStack);
+        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateBeltBackItem(beltStack, false));
     }
 
     private void updateClientProneState(PlayerEntity player) {

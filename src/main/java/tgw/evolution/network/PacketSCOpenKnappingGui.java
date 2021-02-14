@@ -5,22 +5,22 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
 import tgw.evolution.client.gui.ScreenKnapping;
-import tgw.evolution.util.EnumRockVariant;
+import tgw.evolution.util.RockVariant;
 
 import java.util.function.Supplier;
 
 public class PacketSCOpenKnappingGui implements IPacket {
 
-    private final EnumRockVariant variant;
     private final BlockPos pos;
+    private final RockVariant variant;
 
-    public PacketSCOpenKnappingGui(BlockPos pos, EnumRockVariant variant) {
+    public PacketSCOpenKnappingGui(BlockPos pos, RockVariant variant) {
         this.pos = pos;
         this.variant = variant;
     }
 
     public static PacketSCOpenKnappingGui decode(PacketBuffer buffer) {
-        return new PacketSCOpenKnappingGui(buffer.readBlockPos(), EnumRockVariant.fromId(buffer.readByte()));
+        return new PacketSCOpenKnappingGui(buffer.readBlockPos(), RockVariant.fromId(buffer.readByte()));
     }
 
     public static void encode(PacketSCOpenKnappingGui packet, PacketBuffer buffer) {

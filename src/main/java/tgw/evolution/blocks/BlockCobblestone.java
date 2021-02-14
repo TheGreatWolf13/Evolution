@@ -3,21 +3,19 @@ package tgw.evolution.blocks;
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
-import tgw.evolution.util.EnumRockNames;
-import tgw.evolution.util.EnumRockVariant;
 import tgw.evolution.util.HarvestLevel;
+import tgw.evolution.util.RockVariant;
 
 public class BlockCobblestone extends BlockGravity implements IStoneVariant {
 
-    private final EnumRockNames name;
-    private EnumRockVariant variant;
+    private final RockVariant variant;
 
-    public BlockCobblestone(EnumRockNames name) {
+    public BlockCobblestone(RockVariant variant) {
         super(Block.Properties.create(Material.ROCK)
-                              .hardnessAndResistance(name.getRockType().getHardness(), 6.0F)
+                              .hardnessAndResistance(variant.getRockType().getHardness(), 6.0F)
                               .sound(SoundType.STONE)
-                              .harvestLevel(HarvestLevel.STONE), name.getMass());
-        this.name = name;
+                              .harvestLevel(HarvestLevel.STONE), variant.getMass());
+        this.variant = variant;
     }
 
     @Override
@@ -31,18 +29,8 @@ public class BlockCobblestone extends BlockGravity implements IStoneVariant {
     }
 
     @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
-    }
-
-    @Override
-    public EnumRockVariant getVariant() {
+    public RockVariant getVariant() {
         return this.variant;
-    }
-
-    @Override
-    public void setVariant(EnumRockVariant variant) {
-        this.variant = variant;
     }
 
     @Override

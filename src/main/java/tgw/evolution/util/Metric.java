@@ -1,6 +1,6 @@
 package tgw.evolution.util;
 
-public enum EnumMetric {
+public enum Metric {
     UNDER_METRIC("Underflow", "under", 1E-27),
     YOCTO("Yocto", "y", 1E-24),
     ZEPTO("Zepto", "z", 1E-21),
@@ -25,13 +25,13 @@ public enum EnumMetric {
     private final double inNumber;
     private final String prefix;
 
-    EnumMetric(String fullName, String prefix, double inNumber) {
+    Metric(String fullName, String prefix, double inNumber) {
         this.fullName = fullName;
         this.prefix = prefix;
         this.inNumber = inNumber;
     }
 
-    public static double fromMetric(double value, EnumMetric metric) {
+    public static double fromMetric(double value, Metric metric) {
         return value * metric.inNumber;
     }
 

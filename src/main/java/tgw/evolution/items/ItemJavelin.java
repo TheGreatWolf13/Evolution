@@ -20,7 +20,7 @@ import tgw.evolution.init.EvolutionSounds;
 import javax.annotation.Nonnull;
 import java.util.Set;
 
-public class ItemJavelin extends ItemGenericTool implements IThrowable, ISpear {
+public class ItemJavelin extends ItemGenericTool implements IThrowable, ISpear, IBackWeapon {
 
     private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet();
     private static final Set<Material> EFFECTIVE_MATS = Sets.newHashSet();
@@ -61,8 +61,18 @@ public class ItemJavelin extends ItemGenericTool implements IThrowable, ISpear {
     }
 
     @Override
+    public float getEfficiency() {
+        return 0;
+    }
+
+    @Override
     public double getMass() {
         return this.mass;
+    }
+
+    @Override
+    public int getPriority() {
+        return 1;
     }
 
     @Override

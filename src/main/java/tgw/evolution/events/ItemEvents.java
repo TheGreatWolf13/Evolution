@@ -36,7 +36,7 @@ public class ItemEvents {
         if (client.hasShiftDown()) {
             Item item = stack.getItem();
             if (item instanceof ItemRock) {
-                switch (((ItemRock) item).getStoneName()) {
+                switch (((ItemRock) item).getVariant()) {
                     case CHERT:
                         tooltip.add(EvolutionTexts.EMPTY);
                         addMultiLineComp(EvolutionTexts.EASTER_CHERT, tooltip);

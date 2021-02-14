@@ -10,7 +10,7 @@ import tgw.evolution.init.EvolutionDamage;
 import javax.annotation.Nonnull;
 import java.util.Set;
 
-public class ItemShovel extends ItemGenericTool implements IOffhandAttackable {
+public class ItemShovel extends ItemGenericTool implements IBackWeapon {
 
     private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet();
     private static final Set<Material> EFFECTIVE_MATS = Sets.newHashSet(Material.EARTH,
@@ -49,6 +49,11 @@ public class ItemShovel extends ItemGenericTool implements IOffhandAttackable {
     @Override
     public double getMass() {
         return this.mass;
+    }
+
+    @Override
+    public int getPriority() {
+        return 4;
     }
 
     @Override

@@ -5,7 +5,7 @@ import net.minecraft.block.Blocks;
 
 import javax.annotation.Nullable;
 
-public enum EnumVanillaRockVariant {
+public enum VanillaRockVariant {
     STONE(Blocks.STONE),
     DIRT(Blocks.DIRT),
     GRASS_BLOCK(Blocks.GRASS_BLOCK),
@@ -16,13 +16,13 @@ public enum EnumVanillaRockVariant {
 
     private final Block vanillaBlock;
 
-    EnumVanillaRockVariant(Block vanillaBlock) {
+    VanillaRockVariant(Block vanillaBlock) {
         this.vanillaBlock = vanillaBlock;
     }
 
     @Nullable
-    public static EnumVanillaRockVariant fromBlock(Block block) {
-        for (EnumVanillaRockVariant vanilla : values()) {
+    public static VanillaRockVariant fromBlock(Block block) {
+        for (VanillaRockVariant vanilla : values()) {
             if (vanilla.vanillaBlock == block) {
                 return vanilla;
             }

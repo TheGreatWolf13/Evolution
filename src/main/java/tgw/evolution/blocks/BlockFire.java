@@ -422,12 +422,12 @@ public class BlockFire extends Block implements IReplaceable, IFireSource {
         }
     }
 
-    public void setFireInfo(RegistryObject<Block> blockIn, int encouragement, int flammability) {
-        if (blockIn.get() == Blocks.AIR) {
+    public void setFireInfo(RegistryObject<? extends Block> block, int encouragement, int flammability) {
+        if (block.get() == Blocks.AIR) {
             throw new IllegalArgumentException("Tried to set air on fire... This is bad.");
         }
-        this.encouragements.put(blockIn.get(), encouragement);
-        this.flammabilities.put(blockIn.get(), flammability);
+        this.encouragements.put(block.get(), encouragement);
+        this.flammabilities.put(block.get(), flammability);
     }
 
     @Override

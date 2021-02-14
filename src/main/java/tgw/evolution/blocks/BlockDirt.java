@@ -7,17 +7,15 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.EnumRockNames;
-import tgw.evolution.util.EnumRockVariant;
+import tgw.evolution.util.RockVariant;
 
 public class BlockDirt extends BlockGravity implements IStoneVariant {
 
-    private final EnumRockNames name;
-    private EnumRockVariant variant;
+    private final RockVariant variant;
 
-    public BlockDirt(EnumRockNames name) {
-        super(Block.Properties.create(Material.EARTH).hardnessAndResistance(2.0F, 0.5F).sound(SoundType.GROUND), name.getMass() / 4);
-        this.name = name;
+    public BlockDirt(RockVariant variant) {
+        super(Block.Properties.create(Material.EARTH).hardnessAndResistance(2.0F, 0.5F).sound(SoundType.GROUND), variant.getMass() / 4);
+        this.variant = variant;
     }
 
     @Override
@@ -31,18 +29,8 @@ public class BlockDirt extends BlockGravity implements IStoneVariant {
     }
 
     @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
-    }
-
-    @Override
-    public EnumRockVariant getVariant() {
+    public RockVariant getVariant() {
         return this.variant;
-    }
-
-    @Override
-    public void setVariant(EnumRockVariant variant) {
-        this.variant = variant;
     }
 
     @Override

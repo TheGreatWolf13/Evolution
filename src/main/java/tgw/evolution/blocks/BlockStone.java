@@ -11,31 +11,29 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import tgw.evolution.util.DirectionToIntMap;
-import tgw.evolution.util.EnumRockNames;
-import tgw.evolution.util.EnumRockVariant;
 import tgw.evolution.util.HarvestLevel;
+import tgw.evolution.util.RockVariant;
 
 public class BlockStone extends BlockGravity implements IStoneVariant {
 
-    private final EnumRockNames name;
-    private EnumRockVariant variant;
+    private final RockVariant variant;
 
-    public BlockStone(EnumRockNames name) {
+    public BlockStone(RockVariant variant) {
         super(Block.Properties.create(Material.ROCK)
-                              .hardnessAndResistance(name.getRockType().getHardness() / 2.0F, 6.0F)
+                              .hardnessAndResistance(variant.getRockType().getHardness() / 2.0F, 6.0F)
                               .sound(SoundType.STONE)
-                              .harvestLevel(HarvestLevel.COPPER), name.getMass());
-        this.name = name;
+                              .harvestLevel(HarvestLevel.COPPER), variant.getMass());
+        this.variant = variant;
     }
 
     @Override
     public int beamSize() {
-        return this.name.getRockType().getRangeStone();
+        return this.variant.getRockType().getRangeStone();
     }
 
     @Override
     public int getShearStrength() {
-        return this.name.getShearStrength();
+        return this.variant.getShearStrength();
     }
 
     @Override
@@ -44,18 +42,8 @@ public class BlockStone extends BlockGravity implements IStoneVariant {
     }
 
     @Override
-    public EnumRockNames getStoneName() {
-        return this.name;
-    }
-
-    @Override
-    public EnumRockVariant getVariant() {
+    public RockVariant getVariant() {
         return this.variant;
-    }
-
-    @Override
-    public void setVariant(EnumRockVariant variant) {
-        this.variant = variant;
     }
 
     @Override
