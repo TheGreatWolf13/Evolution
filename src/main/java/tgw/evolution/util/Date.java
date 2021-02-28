@@ -61,10 +61,6 @@ public class Date {
         this.day = (int) d;
     }
 
-    public static String getConnector() {
-        return new TranslationTextComponent("evolution.calendar.connector").getFormattedText();
-    }
-
     public Date add(int days, int months, int years) {
         int d = this.day + days;
         int m = this.month.getNumerical() + months;
@@ -109,8 +105,10 @@ public class Date {
     }
 
     public String getFullString() {
-        String space = getConnector().isEmpty() ? "" : " ";
-        return this.getDayTranslation() + " " + getConnector() + space + this.month.getTranslatedName() + " " + getConnector() + space + this.year;
+        return new TranslationTextComponent("evolution.calendar.full_date",
+                                            this.getDayTranslation(),
+                                            this.month.getTranslatedName(),
+                                            this.year).getFormattedText();
     }
 
     public Month getMonth() {
@@ -172,9 +170,9 @@ public class Date {
         NOVEMBER("november", 11, 10),
         DECEMBER("december", 12, 11);
 
+        private final int index;
         private final String name;
         private final int numerical;
-        private final int index;
 
         Month(String name, int numerical, int index) {
             this.name = name;
