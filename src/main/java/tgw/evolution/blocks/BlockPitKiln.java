@@ -37,7 +37,7 @@ import java.util.Random;
 
 import static tgw.evolution.init.EvolutionBStates.LAYERS_0_16;
 
-public class BlockPitKiln extends Block implements IReplaceable {
+public class BlockPitKiln extends BlockEvolution implements IReplaceable {
 
     public BlockPitKiln() {
         super(Block.Properties.create(Material.ORGANIC).harvestLevel(HarvestLevel.UNBREAKABLE).tickRandomly());
@@ -102,6 +102,11 @@ public class BlockPitKiln extends Block implements IReplaceable {
     @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
         return new ItemStack(EvolutionItems.straw.get(), MathHelper.clamp(state.get(LAYERS_0_16), 0, 8));
+    }
+
+    @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0.26f;
     }
 
     @Override

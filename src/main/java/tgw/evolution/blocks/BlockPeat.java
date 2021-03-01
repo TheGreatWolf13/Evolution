@@ -145,6 +145,11 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
     }
 
     @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0.55f;
+    }
+
+    @Override
     public int getInitialAmount(BlockState state) {
         return state.get(LAYERS_1_4) * 25_000;
     }

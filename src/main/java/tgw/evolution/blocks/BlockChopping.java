@@ -93,6 +93,11 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
     }
 
     @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0.62F;
+    }
+
+    @Override
     public int getInitialAmount(BlockState state) {
         return 50_000;
     }

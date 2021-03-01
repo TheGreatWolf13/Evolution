@@ -28,7 +28,7 @@ import java.util.Random;
 import static tgw.evolution.init.EvolutionBStates.ATTACHED;
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
-public class BlockClimbingHook extends Block implements IReplaceable, IRopeSupport {
+public class BlockClimbingHook extends BlockEvolution implements IReplaceable, IRopeSupport {
 
     public BlockClimbingHook() {
         super(Properties.create(Material.IRON)
@@ -81,6 +81,11 @@ public class BlockClimbingHook extends Block implements IReplaceable, IRopeSuppo
     @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
         return new ItemStack(EvolutionItems.climbing_hook.get());
+    }
+
+    @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0;
     }
 
     @Override

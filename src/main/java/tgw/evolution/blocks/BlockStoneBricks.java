@@ -1,6 +1,7 @@
 package tgw.evolution.blocks;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import tgw.evolution.util.HarvestLevel;
@@ -21,6 +22,11 @@ public class BlockStoneBricks extends BlockGravity implements IStoneVariant {
     @Override
     public int beamSize() {
         return this.variant.getRockType().getRangeStone() + 4;
+    }
+
+    @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 1.0f;
     }
 
     @Override

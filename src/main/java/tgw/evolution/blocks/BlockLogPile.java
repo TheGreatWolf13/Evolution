@@ -70,6 +70,11 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
     }
 
     @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0.62f;
+    }
+
+    @Override
     public int getMass(BlockState state) {
         return state.get(LOG_COUNT) * this.getBaseMass() / 16;
     }

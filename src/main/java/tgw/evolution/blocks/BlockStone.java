@@ -32,6 +32,11 @@ public class BlockStone extends BlockGravity implements IStoneVariant {
     }
 
     @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 1.0f;
+    }
+
+    @Override
     public int getShearStrength() {
         return this.variant.getShearStrength();
     }

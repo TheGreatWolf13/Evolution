@@ -13,7 +13,7 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IPlantable;
 
-public class BlockBush extends Block implements IPlantable, IReplaceable {
+public class BlockBush extends BlockEvolution implements IPlantable, IReplaceable {
 
     protected BlockBush(Properties builder) {
         super(builder);
@@ -40,6 +40,11 @@ public class BlockBush extends Block implements IPlantable, IReplaceable {
     @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
         return new ItemStack(this);
+    }
+
+    @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0;
     }
 
     @Override

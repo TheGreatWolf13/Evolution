@@ -69,6 +69,11 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
     }
 
     @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 1.0F;
+    }
+
+    @Override
     public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
         return new ItemStack(this.variant.getRock());
     }

@@ -33,7 +33,7 @@ import javax.annotation.Nonnull;
 
 import static tgw.evolution.init.EvolutionBStates.LAYERS_1_5;
 
-public class BlockMolding extends Block implements IReplaceable {
+public class BlockMolding extends BlockEvolution implements IReplaceable {
 
     public BlockMolding() {
         super(Block.Properties.create(Material.CLAY).hardnessAndResistance(0.0F).sound(SoundType.GROUND));
@@ -70,6 +70,11 @@ public class BlockMolding extends Block implements IReplaceable {
     @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
         return new ItemStack(EvolutionItems.clay.get(), state.get(LAYERS_1_5));
+    }
+
+    @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0.45F;
     }
 
     @Override

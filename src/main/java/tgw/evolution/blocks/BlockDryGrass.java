@@ -47,6 +47,11 @@ public class BlockDryGrass extends BlockGenericSlowable implements IStoneVariant
     }
 
     @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0.45f;
+    }
+
+    @Override
     public BlockRenderLayer getRenderLayer() {
         return BlockRenderLayer.CUTOUT_MIPPED;
     }

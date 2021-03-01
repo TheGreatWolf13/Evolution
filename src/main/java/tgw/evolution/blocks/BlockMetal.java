@@ -25,11 +25,14 @@ import static tgw.evolution.init.EvolutionBStates.OXIDATION;
 
 public class BlockMetal extends BlockGravity {
 
-    public BlockMetal(MetalVariant name) {
+    private final MetalVariant variant;
+
+    public BlockMetal(MetalVariant variant) {
         super(Block.Properties.create(Material.IRON)
-                              .harvestLevel(name.getHarvestLevel())
+                              .harvestLevel(variant.getHarvestLevel())
                               .sound(SoundType.METAL)
-                              .hardnessAndResistance(name.getHardness(), name.getResistance()), name.getDensity());
+                              .hardnessAndResistance(variant.getHardness(), variant.getResistance()), variant.getDensity());
+        this.variant = variant;
         this.setDefaultState(this.getDefaultState().with(OXIDATION, 0));
     }
 
@@ -54,6 +57,11 @@ public class BlockMetal extends BlockGravity {
         List<ItemStack> list = new ArrayList<>(1);
         list.add(stack);
         return list;
+    }
+
+    @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return this.variant.getFrictionCoefficient();
     }
 
     @Override

@@ -51,11 +51,11 @@ public final class PlayerHelper {
     /**
      * An acceleration value in m/t^2 that will result in a maximum speed of 4.32 m/s
      */
-    public static final double WALK_SPEED = 0.025;
+    public static final double WALK_SPEED = 0.05;
     /**
      * Controls the deceleration because of the motion of your legs.
      */
-    public static final double LEG_SLOWDOWN = 5.455;
+    public static final double LEG_SLOWDOWN = 11.002_735;
     private static final Random RAND = new Random();
 
     private PlayerHelper() {

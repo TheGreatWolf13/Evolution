@@ -1,6 +1,7 @@
 package tgw.evolution.blocks;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.util.SoundEvent;
@@ -20,5 +21,10 @@ public class BlockClay extends BlockGravity {
     @Override
     public SoundEvent fallSound() {
         return EvolutionSounds.SOIL_COLLAPSE.get();
+    }
+
+    @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0.45F;
     }
 }

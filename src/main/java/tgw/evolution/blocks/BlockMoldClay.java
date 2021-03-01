@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
-public class BlockMoldClay extends Block implements IReplaceable {
+public class BlockMoldClay extends BlockEvolution implements IReplaceable {
 
     private final int layers;
     private VoxelShape shapeEast;
@@ -61,6 +61,11 @@ public class BlockMoldClay extends Block implements IReplaceable {
     @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
         return new ItemStack(this);
+    }
+
+    @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0.45f;
     }
 
     @Override

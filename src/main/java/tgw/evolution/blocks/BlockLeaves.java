@@ -33,7 +33,7 @@ import java.util.Random;
 import static tgw.evolution.init.EvolutionBStates.DISTANCE_0_7;
 import static tgw.evolution.init.EvolutionBStates.TREE;
 
-public class BlockLeaves extends Block implements IShearable, IReplaceable {
+public class BlockLeaves extends BlockEvolution implements IShearable, IReplaceable {
 
     private static final Vec3d MOTION_MULTIPLIER = new Vec3d(0.5, 1, 0.5);
 
@@ -158,6 +158,11 @@ public class BlockLeaves extends Block implements IShearable, IReplaceable {
     @Override
     public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
         return EvolutionBlocks.FIRE.get().getActualFlammability(state);
+    }
+
+    @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0.2f;
     }
 
     @Override

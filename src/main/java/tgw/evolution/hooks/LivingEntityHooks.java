@@ -4,6 +4,7 @@ import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.passive.IFlyingAnimal;
@@ -27,6 +28,7 @@ import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockUtils;
+import tgw.evolution.blocks.IFriction;
 import tgw.evolution.blocks.ISoftBlock;
 import tgw.evolution.entities.EntityGenericCreature;
 import tgw.evolution.entities.IEntityMass;
@@ -245,7 +247,6 @@ public final class LivingEntityHooks {
         deltaSpeedX *= 20;
         float damage = 0;
         if (deltaSpeedX >= 6) {
-            Evolution.LOGGER.debug("x speed = {} m/s", deltaSpeedX);
             double kineticEnergy = 0.5 * deltaSpeedX * deltaSpeedX * mass;
             AxisAlignedBB bb = entity.getBoundingBox();
             double xCoord = motionX >= 0 ? bb.maxX + 0.01 : bb.minX - 0.01;
@@ -287,7 +288,6 @@ public final class LivingEntityHooks {
         double deltaSpeedZ = Math.abs(motionZ) - Math.abs(motionZPost);
         deltaSpeedZ *= 20;
         if (deltaSpeedZ >= 6) {
-            Evolution.LOGGER.debug("z speed = {} m/s", deltaSpeedZ);
             double kineticEnergy = 0.5 * deltaSpeedZ * deltaSpeedZ * mass;
             AxisAlignedBB bb = entity.getBoundingBox();
             double zCoord = motionZ >= 0 ? bb.maxZ + 0.01 : bb.minZ - 0.01;
@@ -632,16 +632,47 @@ public final class LivingEntityHooks {
                                              int jumpTicks,
                                              boolean isPlayerFlying,
                                              float slowdown) {
-        BlockPos blockBelow = new BlockPos(entity.posX, entity.getBoundingBox().minY - 1, entity.posZ);
-        float slipperiness = entity.world.getBlockState(blockBelow).getSlipperiness(entity.world, blockBelow, entity);
-        if (Float.compare(slipperiness, 0.6F) < 0.01F) {
-            slipperiness = 0.15F;
+        if (entity instanceof ClientPlayerEntity) {
+            Evolution.LOGGER.debug("x speed = {} m/s", 20 * entity.getMotion().x);
+            Evolution.LOGGER.debug("z speed = {} m/s", 20 * entity.getMotion().z);
+        }
+        AxisAlignedBB aabb = entity.getBoundingBox();
+        BlockPos blockBelow = new BlockPos(entity.posX, aabb.minY - 0.001, entity.posZ);
+        BlockState state = entity.world.getBlockState(blockBelow);
+        if (entity.onGround && state.isAir(entity.world, blockBelow)) {
+            outer:
+            for (int i = 0; i < 2; i++) {
+                for (int j = 0; j < 2; j++) {
+                    //noinspection ObjectAllocationInLoop
+                    blockBelow = new BlockPos(i == 0 ? aabb.minX : aabb.maxX, aabb.minY - 0.001, j == 0 ? aabb.minZ : aabb.maxZ);
+                    state = entity.world.getBlockState(blockBelow);
+                    if (!state.isAir(entity.world, blockBelow)) {
+                        break outer;
+                    }
+                }
+            }
+        }
+        Block block = state.getBlock();
+        if (entity instanceof ClientPlayerEntity) {
+            Evolution.LOGGER.debug("block below = {}", block);
+        }
+        float frictionCoef = 0.85F;
+        if (block.isAir(state, entity.world, blockBelow)) {
+            frictionCoef = 0.0f;
+        }
+        else if (block instanceof IFriction) {
+            frictionCoef = ((IFriction) block).getFrictionCoefficient(state);
         }
         if (entity.getSubmergedHeight() > 0) {
-            slipperiness += 0.1f;
+            frictionCoef -= 0.1f;
+            if (frictionCoef < 0.01F) {
+                frictionCoef = 0.01F;
+            }
         }
-        float frictionCoef = entity.onGround ? 1.0F - slipperiness : 0.0F;
-        Vec3d acceleration = getAbsoluteAcceleration(entity, direction, slowdown * jumpMovementFactor(entity, slipperiness, jumpTicks));
+        Vec3d acceleration = getAbsoluteAcceleration(entity, direction, slowdown * jumpMovementFactor(entity, frictionCoef, jumpTicks));
+        if (!entity.onGround) {
+            frictionCoef = 0.0F;
+        }
         boolean isActiveWalking = acceleration.x != 0 || acceleration.z != 0;
         Vec3d motion = entity.getMotion();
         double motionX = motion.x;
@@ -666,8 +697,10 @@ public final class LivingEntityHooks {
             else {
                 legSlowDown *= gravityAcceleration * 0.85;
             }
+
             legSlowDownX = motionX * legSlowDown;
             legSlowDownZ = motionZ * legSlowDown;
+
         }
         double mass = getMass(entity);
         double horizontalDrag = Gravity.horizontalDrag(entity) / mass;
@@ -834,16 +867,16 @@ public final class LivingEntityHooks {
         ForgeHooks.onLivingJump(entity);
     }
 
-    private static float jumpMovementFactor(LivingEntity entity, float slipperiness, int jumpTicks) {
+    private static float jumpMovementFactor(LivingEntity entity, float frictionCoef, int jumpTicks) {
         if (entity instanceof PlayerEntity) {
             if (!((PlayerEntity) entity).abilities.isFlying) {
                 if (entity.onGround || entity.isOnLadder()) {
-                    return entity.getAIMoveSpeed() * (0.15F / slipperiness);
+                    return entity.getAIMoveSpeed() * frictionCoef / 0.85f;
                 }
-                return jumpTicks > 3 ? 0.075f * entity.getAIMoveSpeed() * (0.15F / slipperiness) : 0;
+                return jumpTicks > 3 ? 0.075f * entity.getAIMoveSpeed() : 0;
             }
         }
-        return entity.onGround ? entity.getAIMoveSpeed() * (0.15F / slipperiness) : entity.jumpMovementFactor;
+        return entity.onGround ? entity.getAIMoveSpeed() * frictionCoef / 0.85f : entity.jumpMovementFactor;
     }
 
     private static double legSlowDown(LivingEntity entity) {

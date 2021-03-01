@@ -81,6 +81,11 @@ public class BlockLog extends BlockXYZAxis {
     }
 
     @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0.62f;
+    }
+
+    @Override
     public int getShearStrength() {
         return this.variant.getShearStrength();
     }

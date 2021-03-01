@@ -24,7 +24,7 @@ import tgw.evolution.init.EvolutionItems;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
-public class BlockRopeGround extends Block implements IReplaceable {
+public class BlockRopeGround extends BlockEvolution implements IReplaceable {
 
     public BlockRopeGround() {
         super(Properties.create(Material.MISCELLANEOUS).hardnessAndResistance(0).sound(SoundType.CLOTH).doesNotBlockMovement());
@@ -71,6 +71,11 @@ public class BlockRopeGround extends Block implements IReplaceable {
     @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
         return new ItemStack(EvolutionItems.rope.get());
+    }
+
+    @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0.5f;
     }
 
     @Override

@@ -127,6 +127,11 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
     }
 
     @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0;
+    }
+
+    @Override
     public int getInitialAmount(BlockState state) {
         return 0;
     }

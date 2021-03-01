@@ -7,7 +7,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class BlockMass extends Block {
+public class BlockMass extends BlockEvolution {
 
     private final int mass;
 
@@ -34,6 +34,11 @@ public class BlockMass extends Block {
 
     public int getBaseMass() {
         return this.mass;
+    }
+
+    @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0.85F;
     }
 
     public int getMass(BlockState state) {

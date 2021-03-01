@@ -29,7 +29,7 @@ import java.util.Random;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
-public class BlockRope extends Block implements IReplaceable, IClimbable {
+public class BlockRope extends BlockEvolution implements IReplaceable, IClimbable {
 
     public BlockRope() {
         super(Properties.create(Material.WOOL).hardnessAndResistance(0).sound(SoundType.CLOTH).doesNotBlockMovement());
@@ -88,6 +88,11 @@ public class BlockRope extends Block implements IReplaceable, IClimbable {
     @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
         return new ItemStack(EvolutionItems.rope.get());
+    }
+
+    @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0.5f;
     }
 
     @Override

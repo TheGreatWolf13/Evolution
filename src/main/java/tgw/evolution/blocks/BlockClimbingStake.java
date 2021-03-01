@@ -33,7 +33,7 @@ import java.util.Random;
 
 import static tgw.evolution.init.EvolutionBStates.*;
 
-public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupport {
+public class BlockClimbingStake extends BlockEvolution implements IReplaceable, IRopeSupport {
 
     public BlockClimbingStake() {
         super(Properties.create(Material.IRON)
@@ -115,6 +115,11 @@ public class BlockClimbingStake extends Block implements IReplaceable, IRopeSupp
     @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
         return new ItemStack(this);
+    }
+
+    @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0;
     }
 
     @Override

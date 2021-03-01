@@ -39,7 +39,7 @@ import java.util.Random;
 
 import static tgw.evolution.init.EvolutionBStates.*;
 
-public class BlockFire extends Block implements IReplaceable, IFireSource {
+public class BlockFire extends BlockEvolution implements IReplaceable, IFireSource {
 
     public static final SoundType FIRE = new SoundType(0.5f,
                                                        2.6f,
@@ -329,6 +329,11 @@ public class BlockFire extends Block implements IReplaceable, IFireSource {
     @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
         return ItemStack.EMPTY;
+    }
+
+    @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 0;
     }
 
     @Override
