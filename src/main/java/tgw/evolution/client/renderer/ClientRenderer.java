@@ -51,6 +51,7 @@ import net.minecraftforge.client.event.RenderTooltipEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
+import tgw.evolution.Evolution;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.InputHooks;
 import tgw.evolution.init.EvolutionAttributes;
@@ -92,7 +93,7 @@ public class ClientRenderer {
     private ItemStack offhandStack = ItemStack.EMPTY;
     private float offhandSwingProgress;
     private int offhandSwingProgressInt;
-    private float playerHealth;
+    private float playerDisplayedHealth;
 
     public ClientRenderer(Minecraft mc, ClientEvents client) {
         instance = this;
@@ -126,7 +127,7 @@ public class ClientRenderer {
     }
 
     private static float roundToHearts(float currentHealth) {
-        return MathHelper.floor(currentHealth * 0.4F) / 0.4F;
+        return MathHelper.ceil(currentHealth * 0.4F) / 0.4F;
     }
 
     private static int shiftTextByLines(int desiredLine, int y) {
@@ -418,16 +419,18 @@ public class ClientRenderer {
         float currentHealth = player.getHealth();
         boolean updateHealth = false;
         //Take damage
-        if (currentHealth - this.playerHealth <= -2.5f && player.hurtResistantTime > 0) {
+        if (roundToHearts(currentHealth) - this.playerDisplayedHealth <= -2.5f/* && player.hurtTime > 0*/) {
             this.lastSystemTime = Util.milliTime();
             this.healthUpdateCounter = this.client.getTickCount() + 20;
             updateHealth = true;
+            Evolution.LOGGER.debug("damage was taken");
         }
         //Regen Health
-        else if (currentHealth - this.playerHealth > 2.5f && player.hurtResistantTime > 0) {
+        else if (roundToHearts(currentHealth) - this.playerDisplayedHealth >= 2.5f/* && player.hurtResistantTime > 0*/) {
             this.lastSystemTime = Util.milliTime();
             this.healthUpdateCounter = this.client.getTickCount() + 10;
             updateHealth = true;
+            Evolution.LOGGER.debug("health regen");
         }
         //Update variables every 1s
         if (Util.milliTime() - this.lastSystemTime > 1_000L) {
@@ -435,12 +438,9 @@ public class ClientRenderer {
             this.lastSystemTime = Util.milliTime();
         }
         if (updateHealth) {
-            this.playerHealth = roundToHearts(currentHealth);
+            this.playerDisplayedHealth = roundToHearts(currentHealth);
         }
         float healthMax = (float) player.getAttribute(SharedMonsterAttributes.MAX_HEALTH).getValue();
-        if (currentHealth > healthMax - 2.5F && this.playerHealth == healthMax - 2.5F) {
-            this.playerHealth = healthMax;
-        }
         //The health bar flashes
         boolean highlight = this.healthUpdateCounter > this.client.getTickCount() &&
                             (this.healthUpdateCounter - this.client.getTickCount()) / 3L % 2L != 0L;
