@@ -254,7 +254,7 @@ public class DimensionOverworld extends Dimension {
     protected void generateLightBrightnessTable() {
         for (int lightLevel = 0; lightLevel <= 15; ++lightLevel) {
             float f1 = 1.0F - lightLevel / 15.0F;
-            this.lightBrightnessTable[lightLevel] = (1.0F - f1) / (f1 * 3.0F + 1.0F) * 1.0F;
+            this.lightBrightnessTable[lightLevel] = (1.0F - f1) / (f1 * 3.0F + 1.0F);
         }
     }
 
@@ -324,7 +324,7 @@ public class DimensionOverworld extends Dimension {
             lastLightningBolt *= 0.45F;
             f3 = f3 * (1.0F - lastLightningBolt) + 0.8F * lastLightningBolt;
             f4 = f4 * (1.0F - lastLightningBolt) + 0.8F * lastLightningBolt;
-            f5 = f5 * (1.0F - lastLightningBolt) + 1.0F * lastLightningBolt;
+            f5 = f5 * (1.0F - lastLightningBolt) + lastLightningBolt;
         }
         return new Vec3d(f3, f4, f5);
     }

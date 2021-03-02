@@ -4,7 +4,6 @@ import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.passive.IFlyingAnimal;
@@ -632,10 +631,6 @@ public final class LivingEntityHooks {
                                              int jumpTicks,
                                              boolean isPlayerFlying,
                                              float slowdown) {
-        if (entity instanceof ClientPlayerEntity) {
-            Evolution.LOGGER.debug("x speed = {} m/s", 20 * entity.getMotion().x);
-            Evolution.LOGGER.debug("z speed = {} m/s", 20 * entity.getMotion().z);
-        }
         AxisAlignedBB aabb = entity.getBoundingBox();
         BlockPos blockBelow = new BlockPos(entity.posX, aabb.minY - 0.001, entity.posZ);
         BlockState state = entity.world.getBlockState(blockBelow);
@@ -653,9 +648,6 @@ public final class LivingEntityHooks {
             }
         }
         Block block = state.getBlock();
-        if (entity instanceof ClientPlayerEntity) {
-            Evolution.LOGGER.debug("block below = {}", block);
-        }
         float frictionCoef = 0.85F;
         if (block.isAir(state, entity.world, blockBelow)) {
             frictionCoef = 0.0f;
