@@ -888,7 +888,7 @@ public class ClientRenderer {
             int x = x0;
             int y = y0;
             if (this.client.effectToAddTicks < 5) {
-                alpha = this.client.effectToAddTicks / 5.0f;
+                alpha = (this.client.effectToAddTicks + partialTicks) / 5.0f;
             }
             else if (this.client.effectToAddTicks < 15) {
                 alpha = 1.0f;
@@ -896,7 +896,8 @@ public class ClientRenderer {
             else {
                 alpha = 1.0f;
                 int x1 = this.mc.mainWindow.getScaledWidth() - 25;
-                float t = (this.client.effectToAddTicks - 15 + partialTicks) / 6.0f;
+                float t = (this.client.effectToAddTicks - 15 + partialTicks) / 5.0f;
+                t = MathHelper.clamp(t, 0, 1);
                 x = (int) ((x1 - x0) * t + x0);
                 int y1 = addingEffect.isBeneficial() ? 1 : 26;
                 y = (int) ((y1 - y0) * t + y0);
