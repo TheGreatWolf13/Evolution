@@ -1,13 +1,16 @@
 package tgw.evolution;
 
 import com.google.common.collect.Maps;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionType;
+import net.minecraftforge.client.event.ParticleFactoryRegisterEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -62,9 +65,11 @@ public final class Evolution {
         EvolutionContainers.register();
         EvolutionEffects.register();
         EvolutionBiomes.register();
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::registerParticleFactories);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::setup);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::loadComplete);
         MinecraftForge.EVENT_BUS.register(this);
+        EvolutionParticles.register();
     }
 
     private static void loadComplete(FMLLoadCompleteEvent event) {
@@ -75,6 +80,12 @@ public final class Evolution {
 
     public static ResourceLocation location(String name) {
         return new ResourceLocation(MODID, name);
+    }
+
+    @SubscribeEvent
+    public static void registerParticleFactories(ParticleFactoryRegisterEvent event) {
+        LOGGER.debug("--------------------------registering particle factories");
+        EvolutionParticles.registerFactories(Minecraft.getInstance().particles);
     }
 
     private static void setup(FMLCommonSetupEvent event) {

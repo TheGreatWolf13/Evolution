@@ -4,7 +4,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
 import tgw.evolution.blocks.tileentities.KnappingPatterns;
 import tgw.evolution.blocks.tileentities.MoldingPatterns;
-import tgw.evolution.init.EvolutionParticles;
 
 public class ServerProxy implements IProxy {
 
@@ -22,6 +21,5 @@ public class ServerProxy implements IProxy {
     public void init() {
         KnappingPatterns.load();
         MoldingPatterns.load();
-        EvolutionParticles.register();
     }
 }

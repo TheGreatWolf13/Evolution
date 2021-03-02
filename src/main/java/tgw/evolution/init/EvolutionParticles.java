@@ -18,12 +18,13 @@ public final class EvolutionParticles {
 
     public static final DeferredRegister<ParticleType<?>> PARTICLES = new DeferredRegister<>(ForgeRegistries.PARTICLE_TYPES, Evolution.MODID);
 
-    public static final RegistryObject<BasicParticleType> SLEEP = PARTICLES.register("sleep_particle", () -> register(false));
+    public static final RegistryObject<BasicParticleType> SLEEP = PARTICLES.register("sleep_particle", () -> register(true));
 
     private EvolutionParticles() {
     }
 
     public static void register() {
+        Evolution.LOGGER.debug("--------------------------registering particles");
         PARTICLES.register(FMLJavaModLoadingContext.get().getModEventBus());
     }
 
