@@ -351,6 +351,9 @@ public class ClientEvents {
             this.inverted = false;
             ABOUT_TO_LUNGE_PLAYERS.clear();
             LUNGING_PLAYERS.clear();
+            if (this.mc.world == null) {
+                this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
+            }
             return;
         }
         if (this.mc.world == null) {
