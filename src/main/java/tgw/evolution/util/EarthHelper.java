@@ -4,6 +4,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.client.ForgeHooksClient;
 import tgw.evolution.config.EvolutionConfig;
+import tgw.evolution.world.dimension.DimensionOverworld;
 
 public final class EarthHelper {
 
@@ -15,10 +16,10 @@ public final class EarthHelper {
     private static final Vec3f SKY_COLOR = new Vec3f(0, 0, 0);
     private static final Vec3f NEXT_COLOR = new Vec3f(0, 0, 0);
     private static final Vec3f CURRENT_COLOR = new Vec3f(0, 0, 0);
-    public static float sunX;
-    public static float sunZ;
     public static float moonX;
     public static float moonZ;
+    public static float sunX;
+    public static float sunZ;
     private static int tick;
 
     private EarthHelper() {
@@ -60,7 +61,7 @@ public final class EarthHelper {
         return MathHelper.arcCosDeg(MOON.dotProduct(ZENITH) * MOON.inverseLength() * ZENITH.inverseLength());
     }
 
-    public static Vec3f getSkyColor(World world, BlockPos pos, float partialTick, float elevationAngle) {
+    public static Vec3f getSkyColor(World world, BlockPos pos, float partialTick, DimensionOverworld dimension) {
         if (EvolutionConfig.CLIENT.crazyMode.get()) {
             int partial = tick % 20;
             if (partial == 0) {
@@ -79,9 +80,16 @@ public final class EarthHelper {
             return SKY_COLOR;
         }
         float sunAngle = 1.0f;
+        float elevationAngle = dimension.getSunElevationAngle();
         if (elevationAngle > 80) {
             sunAngle = -elevationAngle * elevationAngle / 784.0f + 10.0f * elevationAngle / 49.0f - 7.163_265f;
             sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
+        }
+        if (dimension.isInSolarEclipse()) {
+            float intensity = 1.0F - dimension.getEclipseIntensity();
+            if (intensity < sunAngle) {
+                sunAngle = intensity;
+            }
         }
         int i = ForgeHooksClient.getSkyBlendColour(world, pos);
         float f3 = (i >> 16 & 255) / 255.0F;
@@ -114,12 +122,22 @@ public final class EarthHelper {
             lastLightningBolt *= 0.45F;
             f3 = f3 * (1.0F - lastLightningBolt) + 0.8F * lastLightningBolt;
             f4 = f4 * (1.0F - lastLightningBolt) + 0.8F * lastLightningBolt;
-            f5 = f5 * (1.0F - lastLightningBolt) + 1.0F * lastLightningBolt;
+            f5 = f5 * (1.0F - lastLightningBolt) + lastLightningBolt;
         }
         SKY_COLOR.x = f3;
         SKY_COLOR.y = f4;
         SKY_COLOR.z = f5;
         return SKY_COLOR;
+    }
+
+    /**
+     * The current intensity of the eclipse, where negative means it's going to happen, 0 is full, and positive means it's already happened.
+     *
+     * @param angle The angle between sun and moon.
+     * @return A float, from -9 to 9.
+     */
+    public static float getSolarEclipseAmount(float angle) {
+        return angle * 9.0f / 7.0F;
     }
 
     public static float getSunElevation(float sinLatitude, float cosLatitude, float celestialAngle, float celestialRadius, float seasonOffset) {
@@ -135,12 +153,12 @@ public final class EarthHelper {
     }
 
     /**
-     * Calculates the visual amplitude of the moon in the skyes. This phenomena is cylic and repeats monthly.
+     * Calculates the visual amplitude of the moon in the skies. This phenomena is cylic and repeats monthly.
      * The maximum amplitude depends on the lunar standstill (which varies from -5.1 degrees to +5.1 degrees)
      * and the tilt of the Earth's orbit (23.5 degrees).
      *
      * @param worldTime The time of the world, in ticks.
-     * @return A value in degrees representing the visual lunar amplitude in the skyes.
+     * @return A value in degrees representing the visual lunar amplitude in the skies.
      */
     public static float lunarMonthlyAmpl(long worldTime) {
         float amplitude = lunarStandStillAmpl(worldTime) + 23.5f;
@@ -155,7 +173,7 @@ public final class EarthHelper {
      * @return A value in degrees representing the lunar orbit amplitude.
      */
     public static float lunarStandStillAmpl(long worldTime) {
-        return 5.1f * MathHelper.cos(MathHelper.TAU * worldTime / (Time.YEAR_IN_TICKS * 18.6f));
+        return 5.1f * MathHelper.cos(MathHelper.TAU * worldTime / (Time.MONTH_IN_TICKS * 223));
     }
 
     /**

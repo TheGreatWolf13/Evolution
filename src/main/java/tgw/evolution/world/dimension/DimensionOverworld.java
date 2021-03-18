@@ -24,12 +24,12 @@ import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.*;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.ForgeHooksClient;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.util.EarthHelper;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.MoonPhase;
+import tgw.evolution.util.Vec3f;
 
 import javax.annotation.Nullable;
 
@@ -37,12 +37,15 @@ public class DimensionOverworld extends Dimension {
 
     private static final float[] SUNSET_COLORS = new float[4];
     private Vec3d fogColor = Vec3d.ZERO;
+    private boolean isInSolarEclipse;
     private float latitude;
     private float moonAngle;
     private float moonCelestialRadius;
     private float moonElevationAngle;
     private float moonMonthlyOffset;
     private MoonPhase moonPhase = MoonPhase.NEW_MOON;
+    private float solarEclipseAmplitude;
+    private float solarEclipseAngle;
     private float sunAngle;
     private float sunCelestialRadius;
     private float sunElevationAngle;
@@ -73,6 +76,12 @@ public class DimensionOverworld extends Dimension {
         if (this.sunElevationAngle > 80) {
             sunAngle = -this.sunElevationAngle * this.sunElevationAngle / 784.0f + 10.0f * this.sunElevationAngle / 49.0f - 7.163_265f;
             sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
+        }
+        if (this.isInSolarEclipse) {
+            float intensity = 1.0F - this.getEclipseIntensity();
+            if (intensity < sunAngle) {
+                sunAngle = intensity;
+            }
         }
         float r = 0.752_941_2F;
         r *= sunAngle;
@@ -258,6 +267,12 @@ public class DimensionOverworld extends Dimension {
         }
     }
 
+    public float getEclipseIntensity() {
+        float angleMod = 9.0F - Math.abs(this.solarEclipseAngle);
+        float amplitudeMod = 9.0F - Math.abs(this.solarEclipseAmplitude);
+        return angleMod * amplitudeMod / 81.0F;
+    }
+
     @OnlyIn(Dist.CLIENT)
     @Override
     public Vec3d getFogColor(float celestialAngle, float partialTicks) {
@@ -288,45 +303,16 @@ public class DimensionOverworld extends Dimension {
 
     @Override
     public Vec3d getSkyColor(BlockPos pos, float partialTick) {
-        float sunAngle = 1.0f;
-        if (this.sunElevationAngle > 80) {
-            sunAngle = -this.sunElevationAngle * this.sunElevationAngle / 784.0f + 10.0f * this.sunElevationAngle / 49.0f - 7.163_265f;
-            sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
-        }
-        int i = ForgeHooksClient.getSkyBlendColour(this.world, pos);
-        float f3 = (i >> 16 & 255) / 255.0F;
-        f3 *= sunAngle;
-        float f4 = (i >> 8 & 255) / 255.0F;
-        f4 *= sunAngle;
-        float f5 = (i & 255) / 255.0F;
-        f5 *= sunAngle;
-        float f6 = this.world.getRainStrength(partialTick);
-        if (f6 > 0.0F) {
-            float f7 = (f3 * 0.3F + f4 * 0.59F + f5 * 0.11F) * 0.6F;
-            float f8 = 1.0F - f6 * 0.75F;
-            f3 = f3 * f8 + f7 * (1.0F - f8);
-            f4 = f4 * f8 + f7 * (1.0F - f8);
-            f5 = f5 * f8 + f7 * (1.0F - f8);
-        }
-        float f10 = this.world.getThunderStrength(partialTick);
-        if (f10 > 0.0F) {
-            float f11 = (f3 * 0.3F + f4 * 0.59F + f5 * 0.11F) * 0.2F;
-            float f9 = 1.0F - f10 * 0.75F;
-            f3 = f3 * f9 + f11 * (1.0F - f9);
-            f4 = f4 * f9 + f11 * (1.0F - f9);
-            f5 = f5 * f9 + f11 * (1.0F - f9);
-        }
-        if (this.world.getLastLightningBolt() > 0) {
-            float lastLightningBolt = this.world.getLastLightningBolt() - partialTick;
-            if (lastLightningBolt > 1.0F) {
-                lastLightningBolt = 1.0F;
-            }
-            lastLightningBolt *= 0.45F;
-            f3 = f3 * (1.0F - lastLightningBolt) + 0.8F * lastLightningBolt;
-            f4 = f4 * (1.0F - lastLightningBolt) + 0.8F * lastLightningBolt;
-            f5 = f5 * (1.0F - lastLightningBolt) + lastLightningBolt;
-        }
-        return new Vec3d(f3, f4, f5);
+        Vec3f skyColor = EarthHelper.getSkyColor(this.world, pos, partialTick, this);
+        return new Vec3d(skyColor.x, skyColor.y, skyColor.z);
+    }
+
+    public int getSolarEclipseAmplitudeIndex() {
+        return Math.round(this.solarEclipseAmplitude);
+    }
+
+    public int getSolarEclipseAngleIndex() {
+        return Math.round(this.solarEclipseAngle);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -350,6 +336,12 @@ public class DimensionOverworld extends Dimension {
     public float getSunBrightnessPure(float partialTicks) {
         float skyBrightness = 1.0F - (MathHelper.cosDeg(this.sunElevationAngle) * 2.0F + 0.62F);
         skyBrightness = MathHelper.clamp(skyBrightness, 0.0F, 1.0F);
+        if (this.isInSolarEclipse) {
+            float intensity = MathHelper.clampMax(this.getEclipseIntensity(), 0.9F);
+            if (skyBrightness < intensity) {
+                skyBrightness = intensity;
+            }
+        }
         skyBrightness = 1.0F - skyBrightness;
         skyBrightness *= 1.0f - this.world.getRainStrength(partialTicks) * 0.312_5f;
         skyBrightness *= 1.0f - this.world.getThunderStrength(partialTicks) * 0.312_5f;
@@ -367,6 +359,10 @@ public class DimensionOverworld extends Dimension {
 
     public float getSunSeasonalOffset() {
         return this.sunSeasonalOffset;
+    }
+
+    public boolean isInSolarEclipse() {
+        return this.isInSolarEclipse;
     }
 
     @Override
@@ -409,6 +405,28 @@ public class DimensionOverworld extends Dimension {
             this.moonAngle = EarthHelper.calculateMoonAngle(this.world.getDayTime());
             float seasonAngle = EarthHelper.sunSeasonalInclination(this.world.getDayTime());
             float monthlyAngle = EarthHelper.lunarMonthlyAmpl(this.world.getDayTime());
+            float eclipseAngle = 360 * (this.sunAngle - this.moonAngle);
+            if (eclipseAngle > 300) {
+                eclipseAngle = 360 - eclipseAngle;
+            }
+            else if (eclipseAngle < -300) {
+                eclipseAngle += 360;
+            }
+            this.isInSolarEclipse = false;
+            if (Math.abs(eclipseAngle) <= 7.0f) {
+                float eclipseAmplitude = seasonAngle - monthlyAngle;
+                if (eclipseAmplitude > 300) {
+                    eclipseAmplitude = 360 - eclipseAmplitude;
+                }
+                else if (eclipseAmplitude < -300) {
+                    eclipseAmplitude += 360;
+                }
+                if (Math.abs(eclipseAmplitude) <= 7.0f) {
+                    this.isInSolarEclipse = true;
+                    this.solarEclipseAngle = EarthHelper.getSolarEclipseAmount(eclipseAngle);
+                    this.solarEclipseAmplitude = EarthHelper.getSolarEclipseAmount(eclipseAmplitude);
+                }
+            }
             this.latitude = EarthHelper.calculateLatitude(Evolution.PROXY.getClientPlayer().posZ);
             float sinLatitude = MathHelper.sinDeg(this.latitude);
             float cosLatitude = MathHelper.cosDeg(this.latitude);

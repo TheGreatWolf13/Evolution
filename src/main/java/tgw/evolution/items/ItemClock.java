@@ -16,11 +16,11 @@ public class ItemClock extends ItemEv {
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
-        ItemStack stack = playerIn.getHeldItem(handIn);
-        if (!worldIn.isRemote) {
-            FullDate date = new FullDate(worldIn.getDayTime());
-            playerIn.sendMessage(new StringTextComponent(date.getFullString()));
+    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
+        ItemStack stack = player.getHeldItem(hand);
+        if (!world.isRemote) {
+            FullDate date = new FullDate(world.getDayTime());
+            player.sendStatusMessage(new StringTextComponent(date.getFullString()), true);
         }
         return new ActionResult<>(ActionResultType.SUCCESS, stack);
     }

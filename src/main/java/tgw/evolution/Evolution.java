@@ -84,7 +84,6 @@ public final class Evolution {
 
     @SubscribeEvent
     public static void registerParticleFactories(ParticleFactoryRegisterEvent event) {
-        LOGGER.debug("--------------------------registering particle factories");
         EvolutionParticles.registerFactories(Minecraft.getInstance().particles);
     }
 

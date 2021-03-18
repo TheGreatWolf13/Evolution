@@ -201,6 +201,17 @@ public final class MathHelper {
     }
 
     /**
+     * Caps the upper limit of a value.
+     *
+     * @param value The value to cap.
+     * @param max   The upper limit.
+     * @return The original value, if it is not greater than the {@code max}, otherwise returns the {@code max}.
+     */
+    public static float clampMax(float value, float max) {
+        return Math.min(value, max);
+    }
+
+    /**
      * Caps the lower limit of a value.
      *
      * @param value The value to cap.
