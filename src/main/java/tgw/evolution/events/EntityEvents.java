@@ -62,7 +62,7 @@ public class EntityEvents {
     public static final WindVector WIND = new WindVector();
     private static final MethodHandler<Entity, Void> SET_POSE_METHOD = new MethodHandler<>(Entity.class, "func_213301_b", Pose.class);
     private static final FieldHandler<LivingEntity, CombatTracker> COMBAT_TRACKER_FIELD = new FieldHandler<>(LivingEntity.class, "field_94063_bt");
-    private static final FieldHandler<PlayerAbilities, Float> PLAYER_SPEED_FIELD = new FieldHandler<>(PlayerAbilities.class, "field_149495_f");
+    private static final FieldHandler<PlayerAbilities, Float> PLAYER_SPEED_FIELD = new FieldHandler<>(PlayerAbilities.class, "field_75097_g");
     private static final Random RANDOM = new Random();
     private static final Set<DamageSource> IGNORED_DAMAGE_SOURCES = Util.make(Sets.newHashSet(), set -> {
         set.add(EvolutionDamage.DROWN);
@@ -198,6 +198,7 @@ public class EntityEvents {
         //Sets the gravity of the Living Entities and the Player to be that of the dimension they're in
         living.getAttribute(LivingEntity.ENTITY_GRAVITY).setBaseValue(Gravity.gravity(living.world.getDimension()));
         if (living instanceof PlayerEntity) {
+            Evolution.LOGGER.debug("Entity joining world is a player = {}", living);
             PlayerEntity player = (PlayerEntity) living;
             PLAYER_SPEED_FIELD.set(player.abilities, (float) PlayerHelper.WALK_SPEED);
         }
