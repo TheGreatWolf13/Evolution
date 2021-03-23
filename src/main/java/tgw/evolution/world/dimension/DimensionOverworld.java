@@ -1,7 +1,6 @@
 package tgw.evolution.world.dimension;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.datafixers.Dynamic;
 import com.mojang.datafixers.types.JsonOps;
@@ -37,6 +36,7 @@ public class DimensionOverworld extends Dimension {
 
     private static final float[] SUNSET_COLORS = new float[4];
     private Vec3d fogColor = Vec3d.ZERO;
+    private boolean isInLunarEclipse;
     private boolean isInSolarEclipse;
     private float latitude;
     private float moonAngle;
@@ -103,110 +103,102 @@ public class DimensionOverworld extends Dimension {
 
     @Override
     public ChunkGenerator<? extends GenerationSettings> createChunkGenerator() {
-        WorldType worldtype = this.world.getWorldInfo().getGenerator();
-        ChunkGeneratorType<FlatGenerationSettings, FlatChunkGenerator> chunkgeneratortype = ChunkGeneratorType.FLAT;
-        ChunkGeneratorType<DebugGenerationSettings, DebugChunkGenerator> chunkgeneratortype1 = ChunkGeneratorType.DEBUG;
-        ChunkGeneratorType<NetherGenSettings, NetherChunkGenerator> chunkgeneratortype2 = ChunkGeneratorType.CAVES;
-        ChunkGeneratorType<EndGenerationSettings, EndChunkGenerator> chunkgeneratortype3 = ChunkGeneratorType.FLOATING_ISLANDS;
-        ChunkGeneratorType<OverworldGenSettings, OverworldChunkGenerator> chunkgeneratortype4 = ChunkGeneratorType.SURFACE;
-        BiomeProviderType<SingleBiomeProviderSettings, SingleBiomeProvider> biomeprovidertype = BiomeProviderType.FIXED;
-        BiomeProviderType<OverworldBiomeProviderSettings, OverworldBiomeProvider> biomeprovidertype1 = BiomeProviderType.VANILLA_LAYERED;
-        BiomeProviderType<CheckerboardBiomeProviderSettings, CheckerboardBiomeProvider> biomeprovidertype2 = BiomeProviderType.CHECKERBOARD;
-        if (worldtype == WorldType.FLAT) {
-            FlatGenerationSettings flatgenerationsettings = FlatGenerationSettings.createFlatGenerator(new Dynamic<>(NBTDynamicOps.INSTANCE,
-                                                                                                                     this.world.getWorldInfo()
-                                                                                                                               .getGeneratorOptions()));
-            SingleBiomeProviderSettings singlebiomeprovidersettings1 = biomeprovidertype.createSettings().setBiome(flatgenerationsettings.getBiome());
-            return chunkgeneratortype.create(this.world, biomeprovidertype.create(singlebiomeprovidersettings1), flatgenerationsettings);
+        WorldType worldType = this.world.getWorldInfo().getGenerator();
+        if (worldType == WorldType.FLAT) {
+            FlatGenerationSettings settings = FlatGenerationSettings.createFlatGenerator(new Dynamic<>(NBTDynamicOps.INSTANCE,
+                                                                                                       this.world.getWorldInfo()
+                                                                                                                 .getGeneratorOptions()));
+            SingleBiomeProviderSettings biomeProviderSettings = BiomeProviderType.FIXED.createSettings().setBiome(settings.getBiome());
+            return ChunkGeneratorType.FLAT.create(this.world, BiomeProviderType.FIXED.create(biomeProviderSettings), settings);
         }
-        if (worldtype == WorldType.DEBUG_ALL_BLOCK_STATES) {
-            SingleBiomeProviderSettings singlebiomeprovidersettings = biomeprovidertype.createSettings().setBiome(Biomes.PLAINS);
-            return chunkgeneratortype1.create(this.world,
-                                              biomeprovidertype.create(singlebiomeprovidersettings),
-                                              chunkgeneratortype1.createSettings());
+        if (worldType == WorldType.DEBUG_ALL_BLOCK_STATES) {
+            SingleBiomeProviderSettings biomeProviderSettings = BiomeProviderType.FIXED.createSettings().setBiome(Biomes.PLAINS);
+            return ChunkGeneratorType.DEBUG.create(this.world,
+                                                   BiomeProviderType.FIXED.create(biomeProviderSettings),
+                                                   ChunkGeneratorType.DEBUG.createSettings());
         }
-        if (worldtype != WorldType.BUFFET) {
-            OverworldGenSettings overworldgensettings = chunkgeneratortype4.createSettings();
-            OverworldBiomeProviderSettings overworldbiomeprovidersettings = biomeprovidertype1.createSettings()
-                                                                                              .setWorldInfo(this.world.getWorldInfo())
-                                                                                              .setGeneratorSettings(overworldgensettings);
-            return chunkgeneratortype4.create(this.world, biomeprovidertype1.create(overworldbiomeprovidersettings), overworldgensettings);
+        if (worldType != WorldType.BUFFET) {
+            OverworldGenSettings settings = ChunkGeneratorType.SURFACE.createSettings();
+            OverworldBiomeProviderSettings biomeProviderSettings = BiomeProviderType.VANILLA_LAYERED.createSettings()
+                                                                                                    .setWorldInfo(this.world.getWorldInfo())
+                                                                                                    .setGeneratorSettings(settings);
+            return ChunkGeneratorType.SURFACE.create(this.world, BiomeProviderType.VANILLA_LAYERED.create(biomeProviderSettings), settings);
         }
-        BiomeProvider biomeprovider = null;
-        JsonElement jsonelement = Dynamic.convert(NBTDynamicOps.INSTANCE, JsonOps.INSTANCE, this.world.getWorldInfo().getGeneratorOptions());
-        JsonObject jsonobject = jsonelement.getAsJsonObject();
-        JsonObject jsonobject1 = jsonobject.getAsJsonObject("biome_source");
-        if (jsonobject1 != null && jsonobject1.has("type") && jsonobject1.has("options")) {
-            BiomeProviderType<?, ?> biomeprovidertype3 = Registry.BIOME_SOURCE_TYPE.getOrDefault(new ResourceLocation(jsonobject1.getAsJsonPrimitive(
+        BiomeProvider biomeProvider = null;
+        JsonObject generatorOptions = Dynamic.convert(NBTDynamicOps.INSTANCE, JsonOps.INSTANCE, this.world.getWorldInfo().getGeneratorOptions())
+                                             .getAsJsonObject();
+        JsonObject biomeSource = generatorOptions.getAsJsonObject("biome_source");
+        if (biomeSource != null && biomeSource.has("type") && biomeSource.has("options")) {
+            BiomeProviderType<?, ?> biomeProviderType = Registry.BIOME_SOURCE_TYPE.getOrDefault(new ResourceLocation(biomeSource.getAsJsonPrimitive(
                     "type").getAsString()));
-            JsonObject jsonobject2 = jsonobject1.getAsJsonObject("options");
-            Biome[] abiome = {Biomes.OCEAN};
-            if (jsonobject2.has("biomes")) {
-                JsonArray jsonarray = jsonobject2.getAsJsonArray("biomes");
-                abiome = jsonarray.size() > 0 ? new Biome[jsonarray.size()] : new Biome[]{Biomes.OCEAN};
-
-                for (int i = 0; i < jsonarray.size(); ++i) {
-                    //noinspection ObjectAllocationInLoop
-                    abiome[i] = Registry.BIOME.getValue(new ResourceLocation(jsonarray.get(i).getAsString())).orElse(Biomes.OCEAN);
+            JsonObject options = biomeSource.getAsJsonObject("options");
+            Biome[] biomeArray = {Biomes.OCEAN};
+            if (options.has("biomes")) {
+                JsonArray biomes = options.getAsJsonArray("biomes");
+                if (biomes.size() > 0) {
+                    biomeArray = new Biome[biomes.size()];
+                    for (int i = 0; i < biomes.size(); i++) {
+                        //noinspection ObjectAllocationInLoop
+                        biomeArray[i] = Registry.BIOME.getValue(new ResourceLocation(biomes.get(i).getAsString())).orElse(Biomes.OCEAN);
+                    }
                 }
             }
-            if (BiomeProviderType.FIXED == biomeprovidertype3) {
-                SingleBiomeProviderSettings singlebiomeprovidersettings2 = biomeprovidertype.createSettings().setBiome(abiome[0]);
-                biomeprovider = biomeprovidertype.create(singlebiomeprovidersettings2);
+            if (BiomeProviderType.FIXED == biomeProviderType) {
+                biomeProvider = BiomeProviderType.FIXED.create(BiomeProviderType.FIXED.createSettings().setBiome(biomeArray[0]));
             }
-            if (BiomeProviderType.CHECKERBOARD == biomeprovidertype3) {
-                int j = jsonobject2.has("size") ? jsonobject2.getAsJsonPrimitive("size").getAsInt() : 2;
-                CheckerboardBiomeProviderSettings checkerboardbiomeprovidersettings = biomeprovidertype2.createSettings()
-                                                                                                        .setBiomes(abiome)
-                                                                                                        .setSize(j);
-                biomeprovider = biomeprovidertype2.create(checkerboardbiomeprovidersettings);
+            else if (BiomeProviderType.CHECKERBOARD == biomeProviderType) {
+                int size = options.has("size") ? options.getAsJsonPrimitive("size").getAsInt() : 2;
+                CheckerboardBiomeProviderSettings biomeProviderSettings = BiomeProviderType.CHECKERBOARD.createSettings()
+                                                                                                        .setBiomes(biomeArray)
+                                                                                                        .setSize(size);
+                biomeProvider = BiomeProviderType.CHECKERBOARD.create(biomeProviderSettings);
             }
-            if (BiomeProviderType.VANILLA_LAYERED == biomeprovidertype3) {
-                OverworldBiomeProviderSettings overworldbiomeprovidersettings1 = biomeprovidertype1.createSettings()
-                                                                                                   .setGeneratorSettings(new OverworldGenSettings())
-                                                                                                   .setWorldInfo(this.world.getWorldInfo());
-                biomeprovider = biomeprovidertype1.create(overworldbiomeprovidersettings1);
-            }
-        }
-        if (biomeprovider == null) {
-            biomeprovider = biomeprovidertype.create(biomeprovidertype.createSettings().setBiome(Biomes.OCEAN));
-        }
-        BlockState blockstate = Blocks.STONE.getDefaultState();
-        BlockState blockstate1 = Blocks.WATER.getDefaultState();
-        JsonObject jsonobject3 = jsonobject.getAsJsonObject("chunk_generator");
-        if (jsonobject3 != null && jsonobject3.has("options")) {
-            JsonObject jsonobject4 = jsonobject3.getAsJsonObject("options");
-            if (jsonobject4.has("default_block")) {
-                String s = jsonobject4.getAsJsonPrimitive("default_block").getAsString();
-                blockstate = Registry.BLOCK.getOrDefault(new ResourceLocation(s)).getDefaultState();
-            }
-            if (jsonobject4.has("default_fluid")) {
-                String s1 = jsonobject4.getAsJsonPrimitive("default_fluid").getAsString();
-                blockstate1 = Registry.BLOCK.getOrDefault(new ResourceLocation(s1)).getDefaultState();
+            else if (BiomeProviderType.VANILLA_LAYERED == biomeProviderType) {
+                OverworldBiomeProviderSettings biomeProviderSettings = BiomeProviderType.VANILLA_LAYERED.createSettings()
+                                                                                                        .setGeneratorSettings(new OverworldGenSettings())
+                                                                                                        .setWorldInfo(this.world.getWorldInfo());
+                biomeProvider = BiomeProviderType.VANILLA_LAYERED.create(biomeProviderSettings);
             }
         }
-        if (jsonobject3 != null && jsonobject3.has("type")) {
-            ChunkGeneratorType<?, ?> chunkgeneratortype5 =
-                    Registry.CHUNK_GENERATOR_TYPE.getOrDefault(new ResourceLocation(jsonobject3.getAsJsonPrimitive(
+        if (biomeProvider == null) {
+            biomeProvider = BiomeProviderType.FIXED.create(BiomeProviderType.FIXED.createSettings().setBiome(Biomes.OCEAN));
+        }
+        BlockState primaryState = Blocks.STONE.getDefaultState();
+        BlockState fluidState = Blocks.WATER.getDefaultState();
+        JsonObject chunkGenerator = generatorOptions.getAsJsonObject("chunk_generator");
+        if (chunkGenerator != null && chunkGenerator.has("options")) {
+            JsonObject options = chunkGenerator.getAsJsonObject("options");
+            if (options.has("default_block")) {
+                String defaultBlock = options.getAsJsonPrimitive("default_block").getAsString();
+                primaryState = Registry.BLOCK.getOrDefault(new ResourceLocation(defaultBlock)).getDefaultState();
+            }
+            if (options.has("default_fluid")) {
+                String defaultFluid = options.getAsJsonPrimitive("default_fluid").getAsString();
+                fluidState = Registry.BLOCK.getOrDefault(new ResourceLocation(defaultFluid)).getDefaultState();
+            }
+        }
+        if (chunkGenerator != null && chunkGenerator.has("type")) {
+            ChunkGeneratorType<?, ?> chunkGeneratorType =
+                    Registry.CHUNK_GENERATOR_TYPE.getOrDefault(new ResourceLocation(chunkGenerator.getAsJsonPrimitive(
                     "type").getAsString()));
-            if (ChunkGeneratorType.CAVES == chunkgeneratortype5) {
-                NetherGenSettings nethergensettings = chunkgeneratortype2.createSettings();
-                nethergensettings.setDefaultBlock(blockstate);
-                nethergensettings.setDefaultFluid(blockstate1);
-                return chunkgeneratortype2.create(this.world, biomeprovider, nethergensettings);
+            if (ChunkGeneratorType.CAVES == chunkGeneratorType) {
+                NetherGenSettings settings = ChunkGeneratorType.CAVES.createSettings();
+                settings.setDefaultBlock(primaryState);
+                settings.setDefaultFluid(fluidState);
+                return ChunkGeneratorType.CAVES.create(this.world, biomeProvider, settings);
             }
-            if (ChunkGeneratorType.FLOATING_ISLANDS == chunkgeneratortype5) {
-                EndGenerationSettings endgenerationsettings = chunkgeneratortype3.createSettings();
-                endgenerationsettings.setSpawnPos(new BlockPos(0, 64, 0));
-                endgenerationsettings.setDefaultBlock(blockstate);
-                endgenerationsettings.setDefaultFluid(blockstate1);
-                return chunkgeneratortype3.create(this.world, biomeprovider, endgenerationsettings);
+            if (ChunkGeneratorType.FLOATING_ISLANDS == chunkGeneratorType) {
+                EndGenerationSettings settings = ChunkGeneratorType.FLOATING_ISLANDS.createSettings();
+                settings.setSpawnPos(new BlockPos(0, 64, 0));
+                settings.setDefaultBlock(primaryState);
+                settings.setDefaultFluid(fluidState);
+                return ChunkGeneratorType.FLOATING_ISLANDS.create(this.world, biomeProvider, settings);
             }
         }
-        OverworldGenSettings overworldgensettings1 = chunkgeneratortype4.createSettings();
-        overworldgensettings1.setDefaultBlock(blockstate);
-        overworldgensettings1.setDefaultFluid(blockstate1);
-        return chunkgeneratortype4.create(this.world, biomeprovider, overworldgensettings1);
+        OverworldGenSettings settings = ChunkGeneratorType.SURFACE.createSettings();
+        settings.setDefaultBlock(primaryState);
+        settings.setDefaultFluid(fluidState);
+        return ChunkGeneratorType.SURFACE.create(this.world, biomeProvider, settings);
     }
 
     @OnlyIn(Dist.CLIENT)
