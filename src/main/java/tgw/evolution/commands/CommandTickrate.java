@@ -12,10 +12,10 @@ import tgw.evolution.hooks.TickrateChanger;
 public class CommandTickrate implements Command<CommandSource> {
 
     private static final CommandTickrate CMD = new CommandTickrate();
-    private static final FloatArgumentType ARG = FloatArgumentType.floatArg(TickrateChanger.MIN_TICKRATE, TickrateChanger.MAX_TICKRATE);
+    private static final FloatArgumentType TPS = FloatArgumentType.floatArg(TickrateChanger.MIN_TICKRATE, TickrateChanger.MAX_TICKRATE);
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
-        dispatcher.register(Commands.literal("tickrate").requires(cs -> cs.hasPermissionLevel(3)).then(Commands.argument("tps", ARG).executes(CMD)));
+        dispatcher.register(Commands.literal("tickrate").requires(cs -> cs.hasPermissionLevel(3)).then(Commands.argument("tps", TPS).executes(CMD)));
     }
 
     @Override

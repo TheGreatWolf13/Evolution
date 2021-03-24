@@ -1,6 +1,7 @@
 package tgw.evolution.util;
 
 public class Hour {
+    public static final Hour START_TIME = new Hour(6);
     private final int hour;
     private final int minute;
 

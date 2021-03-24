@@ -9,6 +9,8 @@
   "itemGroup.evolution.trees_and_wood": "Trees and Wood",
   "itemGroup.evolution.liquids": "Liquids and Containers",
   "COMMENT_COMMANDS": "_____________________________________________________________________________________________________________COMMANDS",
+  "command.evolution.date.error": "The date cannot be set before %1$s at %2$s",
+  "command.evolution.date.success": "The date has been changed to %1$s",
   "command.evolution.tickrate": "The game tickrate was changed to %1$s TPS",
   "COMMENT_KEYS": "_____________________________________________________________________________________________________________________KEYS",
   "key.prone.toggle": "Toggle Prone",
