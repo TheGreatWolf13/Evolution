@@ -57,13 +57,13 @@ public class CommandDate implements Command<CommandSource> {
             for (ServerWorld serverWorld : context.getSource().getServer().getWorlds()) {
                 serverWorld.setDayTime(ticks);
             }
-            context.getSource().sendFeedback(new TranslationTextComponent("command.evolution.date.success", fullDate), true);
+            context.getSource().sendFeedback(new TranslationTextComponent("command.evolution.date.success", fullDate.getFullString()), true);
             return SINGLE_SUCCESS;
         }
         catch (IllegalStateException e) {
             context.getSource()
                    .sendErrorMessage(new TranslationTextComponent("command.evolution.date.error",
-                                                                  Date.STARTING_DATE.getDayTranslation(),
+                                                                  Date.STARTING_DATE.getFullString(),
                                                                   Hour.START_TIME));
             return 0;
         }
