@@ -51,7 +51,6 @@ import net.minecraftforge.client.event.RenderTooltipEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
-import tgw.evolution.Evolution;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.InputHooks;
 import tgw.evolution.init.EvolutionAttributes;
@@ -419,18 +418,16 @@ public class ClientRenderer {
         float currentHealth = player.getHealth();
         boolean updateHealth = false;
         //Take damage
-        if (roundToHearts(currentHealth) - this.playerDisplayedHealth <= -2.5f/* && player.hurtTime > 0*/) {
+        if (roundToHearts(currentHealth) - this.playerDisplayedHealth <= -2.5f) {
             this.lastSystemTime = Util.milliTime();
             this.healthUpdateCounter = this.client.getTickCount() + 20;
             updateHealth = true;
-            Evolution.LOGGER.debug("damage was taken");
         }
         //Regen Health
-        else if (roundToHearts(currentHealth) - this.playerDisplayedHealth >= 2.5f/* && player.hurtResistantTime > 0*/) {
+        else if (roundToHearts(currentHealth) - this.playerDisplayedHealth >= 2.5f) {
             this.lastSystemTime = Util.milliTime();
             this.healthUpdateCounter = this.client.getTickCount() + 10;
             updateHealth = true;
-            Evolution.LOGGER.debug("health regen");
         }
         //Update variables every 1s
         if (Util.milliTime() - this.lastSystemTime > 1_000L) {

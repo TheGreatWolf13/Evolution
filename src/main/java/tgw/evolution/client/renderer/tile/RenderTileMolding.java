@@ -2,21 +2,19 @@ package tgw.evolution.client.renderer.tile;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
-import net.minecraft.util.ResourceLocation;
-import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.client.models.tile.ModelTileMolding;
+import tgw.evolution.init.EvolutionResources;
 
 public class RenderTileMolding extends TileEntityRenderer<TEMolding> {
 
-    private static final ResourceLocation TEXTURE = Evolution.location("textures/block/molding_block.png");
     private final ModelTileMolding model = new ModelTileMolding();
 
     @Override
     public void render(TEMolding tile, double x, double y, double z, float partialTicks, int destroyStage) {
         GlStateManager.pushMatrix();
         GlStateManager.translatef((float) x, (float) y, (float) z);
-        this.bindTexture(TEXTURE);
+        this.bindTexture(EvolutionResources.MOLDING);
         if (tile.matrices[1] == null) {
             this.model.renderBase();
         }

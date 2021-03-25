@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
+import org.lwjgl.opengl.GL11;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 import tgw.evolution.blocks.tileentities.TESchematic;
 
@@ -28,7 +29,7 @@ public class RenderTileSchematic extends TileEntityRenderer<TESchematic> {
                                   int colorGrey,
                                   int colorAxis) {
         GlStateManager.lineWidth(2.0F);
-        bufferBuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
+        bufferBuilder.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
         bufferBuilder.pos(startX, startY, startZ).color(colorGrey, colorGrey, colorGrey, 0.0F).endVertex();
         bufferBuilder.pos(startX, startY, startZ).color(colorGrey, colorGrey, colorGrey, colorAlpha).endVertex();
         bufferBuilder.pos(endX, startY, startZ).color(colorGrey, colorAxis, colorAxis, colorAlpha).endVertex();
@@ -60,7 +61,7 @@ public class RenderTileSchematic extends TileEntityRenderer<TESchematic> {
                                               BufferBuilder bufferBuilder,
                                               boolean bool) {
         GlStateManager.lineWidth(bool ? 3.0F : 1.0F);
-        bufferBuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
+        bufferBuilder.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
         IBlockReader iblockreader = tile.getWorld();
         BlockPos blockpos = tile.getPos();
         BlockPos blockpos1 = blockpos.add(schematicPos);

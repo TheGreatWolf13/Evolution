@@ -2,6 +2,7 @@ package tgw.evolution.init;
 
 import net.minecraft.util.ResourceLocation;
 import tgw.evolution.Evolution;
+import tgw.evolution.util.RockVariant;
 
 public final class EvolutionResources {
     public static final String[] SLOT_ARMOR = {"item/empty_armor_slot_boots",
@@ -55,6 +56,8 @@ public final class EvolutionResources {
                                                        Evolution.location("textures/block/pit_redwood.png"),
                                                        Evolution.location("textures/block/pit_spruce.png"),
                                                        Evolution.location("textures/block/pit_willow.png")};
+    public static final ResourceLocation[] KNAPPING = new ResourceLocation[RockVariant.values().length];
+    public static final ResourceLocation MOLDING = Evolution.location("textures/block/molding_block.png");
     public static final ResourceLocation SHADER_DESATURATE_25 = Evolution.location("shaders/post/saturation25.json");
     public static final ResourceLocation SHADER_DESATURATE_50 = Evolution.location("shaders/post/saturation50.json");
     public static final ResourceLocation SHADER_DESATURATE_75 = Evolution.location("shaders/post/saturation75.json");
@@ -66,6 +69,15 @@ public final class EvolutionResources {
     public static final ResourceLocation SUN = Evolution.location("textures/environment/sun.png");
     public static final ResourceLocation SOLAR_ECLIPSE = Evolution.location("textures/environment/solar_eclipse.png");
     public static final ResourceLocation LUNAR_ECLIPSE = Evolution.location("textures/environment/lunar_eclipse.png");
+
+    static {
+        for (RockVariant variant : RockVariant.values()) {
+            if (variant != RockVariant.CLAY && variant != RockVariant.PEAT) {
+                //noinspection ObjectAllocationInLoop
+                KNAPPING[variant.getId()] = Evolution.location("textures/block/knapping_" + variant.getName() + ".png");
+            }
+        }
+    }
 
     private EvolutionResources() {
     }
