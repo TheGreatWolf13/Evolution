@@ -1102,4 +1102,8 @@ public final class MathHelper {
     public static double wrapDegrees(@Degree double value) {
         return net.minecraft.util.math.MathHelper.wrapDegrees(value);
     }
+
+    public static float wrapDegrees(@Degree float value) {
+        return net.minecraft.util.math.MathHelper.wrapDegrees(value);
+    }
 }

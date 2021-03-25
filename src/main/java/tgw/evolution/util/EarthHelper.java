@@ -38,7 +38,7 @@ public final class EarthHelper {
     }
 
     public static float calculateMoonAngle(long worldTime) {
-        worldTime += 20 * Time.HOUR_IN_TICKS;
+        worldTime += 19.8 * Time.HOUR_IN_TICKS;
         worldTime %= 25_200;
         return (float) worldTime / 25_200;
     }
@@ -47,6 +47,16 @@ public final class EarthHelper {
         worldTime += 6 * Time.HOUR_IN_TICKS;
         worldTime %= Time.DAY_IN_TICKS;
         return (float) worldTime / Time.DAY_IN_TICKS;
+    }
+
+    /**
+     * The current intensity of the eclipse, where negative means it's going to happen, 0 is full, and positive means it's already happened.
+     *
+     * @param angle The angle of the eclipse.
+     * @return A float, from -9 to 9.
+     */
+    public static float getEclipseAmount(float angle) {
+        return angle * 9.0f / 7.0F;
     }
 
     public static float getMoonElevation(float sinLatitude, float cosLatitude, float celestialAngle, float celestialRadius, float monthlyOffset) {
@@ -86,7 +96,7 @@ public final class EarthHelper {
             sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
         }
         if (dimension.isInSolarEclipse()) {
-            float intensity = 1.0F - dimension.getEclipseIntensity();
+            float intensity = 1.0F - dimension.getSolarEclipseIntensity();
             if (intensity < sunAngle) {
                 sunAngle = intensity;
             }
@@ -130,16 +140,6 @@ public final class EarthHelper {
         return SKY_COLOR;
     }
 
-    /**
-     * The current intensity of the eclipse, where negative means it's going to happen, 0 is full, and positive means it's already happened.
-     *
-     * @param angle The angle between sun and moon.
-     * @return A float, from -9 to 9.
-     */
-    public static float getSolarEclipseAmount(float angle) {
-        return angle * 9.0f / 7.0F;
-    }
-
     public static float getSunElevation(float sinLatitude, float cosLatitude, float celestialAngle, float celestialRadius, float seasonOffset) {
         celestialAngle -= 90;
         sunX = celestialRadius * MathHelper.cosDeg(celestialAngle);
@@ -173,7 +173,41 @@ public final class EarthHelper {
      * @return A value in degrees representing the lunar orbit amplitude.
      */
     public static float lunarStandStillAmpl(long worldTime) {
-        return 5.1f * MathHelper.cos(MathHelper.TAU * worldTime / (Time.MONTH_IN_TICKS * 223));
+        return 5.1f * MathHelper.cos(MathHelper.TAU * worldTime / (Time.YEAR_IN_TICKS * 18.6f));
+    }
+
+    public static MoonPhase phaseByEclipseIntensity(int angle, int amplitude) {
+        int angleMod = 9 - Math.abs(angle);
+        int amplitudeMod = 9 - Math.abs(amplitude);
+        float intensity = angleMod * amplitudeMod / 81.0F;
+        if (intensity < 0.111_111f) {
+            return MoonPhase.WAXING_GIBBOUS_4;
+        }
+        if (intensity < 0.222_222f) {
+            return MoonPhase.WAXING_GIBBOUS_3;
+        }
+        if (intensity < 0.333_333f) {
+            return MoonPhase.WAXING_GIBBOUS_2;
+        }
+        if (intensity < 0.444_444f) {
+            return MoonPhase.WAXING_GIBBOUS_1;
+        }
+        if (intensity < 0.555_556f) {
+            return MoonPhase.FIRST_QUARTER;
+        }
+        if (intensity < 0.666_667f) {
+            return MoonPhase.WAXING_CRESCENT_4;
+        }
+        if (intensity < 0.777_778f) {
+            return MoonPhase.WAXING_CRESCENT_3;
+        }
+        if (intensity < 0.888_889f) {
+            return MoonPhase.WAXING_CRESCENT_2;
+        }
+        if (intensity < 1.0f) {
+            return MoonPhase.WAXING_CRESCENT_1;
+        }
+        return MoonPhase.NEW_MOON;
     }
 
     /**

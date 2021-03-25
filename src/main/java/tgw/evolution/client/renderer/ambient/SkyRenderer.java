@@ -47,24 +47,34 @@ public class SkyRenderer implements IRenderHandler {
         this.generateStars();
     }
 
-    private static void drawSun(Minecraft mc, Tessellator tessellator, BufferBuilder bufferBuilder, float sunCelestialRadius) {
-        mc.textureManager.bindTexture(EvolutionResources.SUN);
-        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        bufferBuilder.pos(-SCALE_OF_CELESTIAL, sunCelestialRadius, -SCALE_OF_CELESTIAL).tex(0, 0).endVertex();
-        bufferBuilder.pos(SCALE_OF_CELESTIAL, sunCelestialRadius, -SCALE_OF_CELESTIAL).tex(1, 0).endVertex();
-        bufferBuilder.pos(SCALE_OF_CELESTIAL, sunCelestialRadius, SCALE_OF_CELESTIAL).tex(1, 1).endVertex();
-        bufferBuilder.pos(-SCALE_OF_CELESTIAL, sunCelestialRadius, SCALE_OF_CELESTIAL).tex(0, 1).endVertex();
+    private static void drawMoonlight(Minecraft mc,
+                                      BufferBuilder builder,
+                                      Tessellator tessellator,
+                                      float rainStrength,
+                                      float moonCelestialRadius,
+                                      float x0,
+                                      float y0,
+                                      float x1,
+                                      float y1) {
+        Blending.DEFAULT.apply();
+        GlStateManager.color4f(1.0f, 1.0f, 1.0f, rainStrength);
+        mc.textureManager.bindTexture(EvolutionResources.MOONLIGHT);
+        builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        builder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(x0, y0).endVertex();
+        builder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(x1, y0).endVertex();
+        builder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(x1, y1).endVertex();
+        builder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(x0, y1).endVertex();
         tessellator.draw();
     }
 
-    private static void drawSunEclipse(Minecraft mc,
-                                       ClientWorld world,
-                                       float partialTicks,
-                                       Tessellator tessellator,
-                                       BufferBuilder buffer,
-                                       float radius,
-                                       DimensionOverworld dimension) {
-        float intensity = dimension.getEclipseIntensity();
+    private static void drawSolarEclipse(Minecraft mc,
+                                         ClientWorld world,
+                                         float partialTicks,
+                                         Tessellator tessellator,
+                                         BufferBuilder buffer,
+                                         float radius,
+                                         DimensionOverworld dimension) {
+        float intensity = dimension.getSolarEclipseIntensity();
         if (intensity <= 1.0F / 81.0F) {
             drawSun(mc, tessellator, buffer, radius);
             float rainStrength = 1.0F - world.getRainStrength(partialTicks);
@@ -102,6 +112,16 @@ public class SkyRenderer implements IRenderHandler {
         buffer.pos(SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).tex(textureX1, textureY0).endVertex();
         buffer.pos(SCALE_OF_CELESTIAL, radius, SCALE_OF_CELESTIAL).tex(textureX1, textureY1).endVertex();
         buffer.pos(-SCALE_OF_CELESTIAL, radius, SCALE_OF_CELESTIAL).tex(textureX0, textureY1).endVertex();
+        tessellator.draw();
+    }
+
+    private static void drawSun(Minecraft mc, Tessellator tessellator, BufferBuilder bufferBuilder, float sunCelestialRadius) {
+        mc.textureManager.bindTexture(EvolutionResources.SUN);
+        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        bufferBuilder.pos(-SCALE_OF_CELESTIAL, sunCelestialRadius, -SCALE_OF_CELESTIAL).tex(0, 0).endVertex();
+        bufferBuilder.pos(SCALE_OF_CELESTIAL, sunCelestialRadius, -SCALE_OF_CELESTIAL).tex(1, 0).endVertex();
+        bufferBuilder.pos(SCALE_OF_CELESTIAL, sunCelestialRadius, SCALE_OF_CELESTIAL).tex(1, 1).endVertex();
+        bufferBuilder.pos(-SCALE_OF_CELESTIAL, sunCelestialRadius, SCALE_OF_CELESTIAL).tex(0, 1).endVertex();
         tessellator.draw();
     }
 
@@ -149,6 +169,68 @@ public class SkyRenderer implements IRenderHandler {
                 }
             }
         }
+    }
+
+    private void drawLunarEclipse(Minecraft mc, ClientWorld world, float partialTicks, Tessellator tessellator, BufferBuilder buffer, float radius) {
+        MoonPhase phase = this.dimension.getEclipsePhase();
+        float textureX0 = phase.getTextureX();
+        float textureY0 = phase.getTextureY();
+        float textureX1 = textureX0 + 0.2f;
+        float textureY1 = textureY0 + 0.25f;
+        drawMoonlight(mc, buffer, tessellator, 1.0F - world.getRainStrength(partialTicks), radius, textureX0, textureY0, textureX1, textureY1);
+        Blending.DEFAULT.apply();
+        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F - world.getRainStrength(partialTicks));
+        mc.textureManager.bindTexture(EvolutionResources.LUNAR_ECLIPSE);
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        int amplitudeIndex = this.dimension.getLunarEclipseAmplitudeIndex();
+        int angleIndex = this.dimension.getLunarEclipseAngleIndex();
+        boolean invertX = false;
+        if (amplitudeIndex > 0) {
+            invertX = true;
+            amplitudeIndex = -amplitudeIndex;
+        }
+        boolean invertY = false;
+        if (angleIndex > 0) {
+            invertY = true;
+            angleIndex = -angleIndex;
+        }
+        textureX0 = (amplitudeIndex + 9) / 10.0F;
+        textureY0 = (angleIndex + 9) / 10.0F;
+        textureX1 = (amplitudeIndex + 10) / 10.0F;
+        textureY1 = (angleIndex + 10) / 10.0F;
+        if (invertX) {
+            float temp = textureX0;
+            textureX0 = textureX1;
+            textureX1 = temp;
+        }
+        if (invertY) {
+            float temp = textureY0;
+            textureY0 = textureY1;
+            textureY1 = temp;
+        }
+        buffer.pos(-SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY0).endVertex();
+        buffer.pos(SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).tex(textureX1, textureY0).endVertex();
+        buffer.pos(SCALE_OF_CELESTIAL, radius, SCALE_OF_CELESTIAL).tex(textureX1, textureY1).endVertex();
+        buffer.pos(-SCALE_OF_CELESTIAL, radius, SCALE_OF_CELESTIAL).tex(textureX0, textureY1).endVertex();
+        tessellator.draw();
+    }
+
+    private void drawMoon(Minecraft mc, BufferBuilder bufferBuilder, Tessellator tessellator, float rainStrength, float moonCelestialRadius) {
+        MoonPhase phase = this.dimension.getMoonPhase();
+        float textureX0 = phase.getTextureX();
+        float textureY0 = phase.getTextureY();
+        float textureX1 = textureX0 + 0.2f;
+        float textureY1 = textureY0 + 0.25f;
+        drawMoonlight(mc, bufferBuilder, tessellator, rainStrength, moonCelestialRadius, textureX0, textureY0, textureX1, textureY1);
+        Blending.DEFAULT.apply();
+        GlStateManager.color4f(1.0F, 1.0F, 1.0F, rainStrength);
+        mc.textureManager.bindTexture(EvolutionResources.MOON_PHASES);
+        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        bufferBuilder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY0).endVertex();
+        bufferBuilder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(textureX1, textureY0).endVertex();
+        bufferBuilder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(textureX1, textureY1).endVertex();
+        bufferBuilder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY1).endVertex();
+        tessellator.draw();
     }
 
     private void generateStars() {
@@ -229,7 +311,7 @@ public class SkyRenderer implements IRenderHandler {
         GlStateManager.rotatef(360.0f * sunAngle + 180, 1.0F, 0.0F, 0.0F);
         //Draw the sun
         if (this.dimension.isInSolarEclipse()) {
-            drawSunEclipse(mc, world, partialTicks, tessellator, bufferBuilder, sunCelestialRadius, this.dimension);
+            drawSolarEclipse(mc, world, partialTicks, tessellator, bufferBuilder, sunCelestialRadius, this.dimension);
         }
         else {
             drawSun(mc, tessellator, bufferBuilder, sunCelestialRadius);
@@ -265,30 +347,13 @@ public class SkyRenderer implements IRenderHandler {
         }
         //Finish drawing stars
         GlStateManager.enableTexture();
-        Blending.DEFAULT.apply();
         //Draw the moon
-        MoonPhase phase = this.dimension.getMoonPhase();
-        float textureX0 = phase.getTextureX();
-        float textureY0 = phase.getTextureY();
-        GlStateManager.color4f(1.0f, 1.0f, 1.0f, rainStrength);
-        mc.textureManager.bindTexture(EvolutionResources.MOONLIGHT);
-        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        bufferBuilder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY0).endVertex();
-        float textureX1 = textureX0 + 0.2f;
-        bufferBuilder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(textureX1, textureY0).endVertex();
-        float textureY1 = textureY0 + 0.25f;
-        bufferBuilder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(textureX1, textureY1).endVertex();
-        bufferBuilder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY1).endVertex();
-        tessellator.draw();
-        Blending.DEFAULT.apply();
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, rainStrength);
-        mc.textureManager.bindTexture(EvolutionResources.MOON_PHASES);
-        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        bufferBuilder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY0).endVertex();
-        bufferBuilder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(textureX1, textureY0).endVertex();
-        bufferBuilder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(textureX1, textureY1).endVertex();
-        bufferBuilder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY1).endVertex();
-        tessellator.draw();
+        if (this.dimension.isInLunarEclipse()) {
+            this.drawLunarEclipse(mc, world, partialTicks, tessellator, bufferBuilder, moonCelestialRadius);
+        }
+        else {
+            this.drawMoon(mc, bufferBuilder, tessellator, rainStrength, moonCelestialRadius);
+        }
         //Finish drawing moon
         GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.disableBlend();

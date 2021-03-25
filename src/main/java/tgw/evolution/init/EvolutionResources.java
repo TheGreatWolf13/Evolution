@@ -61,6 +61,11 @@ public final class EvolutionResources {
     public static final ResourceLocation FRESH_WATER = Evolution.location("block/fluid/fresh_water");
     public static final ResourceLocation EMPTY = Evolution.location("empty");
     public static final ResourceLocation RES_MAP_BACKGROUND = new ResourceLocation("textures/map/map_background.png");
+    public static final ResourceLocation MOON_PHASES = Evolution.location("textures/environment/moon_phases.png");
+    public static final ResourceLocation MOONLIGHT = Evolution.location("textures/environment/moonlight_phases.png");
+    public static final ResourceLocation SUN = Evolution.location("textures/environment/sun.png");
+    public static final ResourceLocation SOLAR_ECLIPSE = Evolution.location("textures/environment/solar_eclipse.png");
+    public static final ResourceLocation LUNAR_ECLIPSE = Evolution.location("textures/environment/lunar_eclipse.png");
 
     private EvolutionResources() {
     }
