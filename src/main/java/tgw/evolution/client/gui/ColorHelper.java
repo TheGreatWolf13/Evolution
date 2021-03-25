@@ -37,7 +37,7 @@ public final class ColorHelper {
      * @return the int colour value or an {@link java.lang.IllegalArgumentException} if a mal formed input is given
      */
     public static int RGB(String colour) {
-        if (!colour.startsWith("#") || !(colour.length() == 7)) {
+        if (!colour.startsWith("#") || colour.length() != 7) {
             throw new IllegalArgumentException("Use #RRGGBB format");
         }
         return RGB(Integer.parseInt(colour.substring(1, 3), 16),
