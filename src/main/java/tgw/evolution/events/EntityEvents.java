@@ -494,14 +494,17 @@ public class EntityEvents {
                     this.playerTimeSinceLastHit.put(uuid, 0);
                 }
                 else {
-                    this.playerTimeSinceLastHit.put(uuid, this.playerTimeSinceLastHit.getOrDefault(uuid, 0) + 1);
-                }
-                if (this.playerTimeSinceLastHit.get(uuid) == 100) {
-                    this.playerTimeSinceLastHit.put(uuid, 0);
-                    if (player.shouldHeal()) {
-                        float currentHealth = MathHelper.clampMin(player.getHealth(), 1);
-                        float healAmount = currentHealth / 100;
-                        player.setHealth(currentHealth + healAmount);
+                    int time = this.playerTimeSinceLastHit.getOrDefault(uuid, 0) + 1;
+                    if (time == 100) {
+                        this.playerTimeSinceLastHit.put(uuid, 0);
+                        if (player.shouldHeal()) {
+                            float currentHealth = MathHelper.clampMin(player.getHealth(), 1);
+                            float healAmount = currentHealth / 100;
+                            player.setHealth(currentHealth + healAmount);
+                        }
+                    }
+                    else {
+                        this.playerTimeSinceLastHit.put(uuid, time);
                     }
                 }
             }
