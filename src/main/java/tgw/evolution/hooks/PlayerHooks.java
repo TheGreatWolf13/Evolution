@@ -41,11 +41,12 @@ public final class PlayerHooks {
     @EvolutionHook
     public static void registerAttributes(PlayerEntity player) {
         player.getAttributes().registerAttribute(EvolutionAttributes.MASS);
+        player.getAttributes().registerAttribute(EvolutionAttributes.FRICTION);
         player.getAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(100);
         player.getAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(2.5);
         player.getAttribute(SharedMonsterAttributes.ATTACK_SPEED).setBaseValue(PlayerHelper.ATTACK_SPEED);
         player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(PlayerHelper.REACH_DISTANCE);
-        player.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(PlayerHelper.WALK_SPEED);
+        player.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(PlayerHelper.WALK_FORCE);
     }
 
     private static void setFlag(LivingEntity entity, DataParameter<Byte> flags, int flag, boolean set) {

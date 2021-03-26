@@ -50,7 +50,7 @@ public abstract class EntityGenericCreature extends CreatureEntity implements IE
 
     public abstract float getBaseHealth();
 
-    public abstract float getBaseMovementSpeed();
+    public abstract float getBaseWalkForce();
 
     @Override
     public Direction getBedDirection() {
@@ -68,6 +68,8 @@ public abstract class EntityGenericCreature extends CreatureEntity implements IE
     protected int getExperiencePoints(PlayerEntity player) {
         return 0;
     }
+
+    public abstract float getFrictionModifier();
 
     /**
      * @return The leg height of the entity in m.
@@ -187,7 +189,7 @@ public abstract class EntityGenericCreature extends CreatureEntity implements IE
     protected void registerAttributes() {
         super.registerAttributes();
         this.getAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(this.getBaseHealth());
-        this.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(this.getBaseMovementSpeed());
+        this.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(this.getBaseWalkForce());
     }
 
     @Override

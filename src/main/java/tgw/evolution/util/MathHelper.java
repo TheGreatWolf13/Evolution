@@ -245,6 +245,36 @@ public final class MathHelper {
     }
 
     /**
+     * Converts the given acceleration to Minecraft values.
+     *
+     * @param mPerSSq The acceleration in metres / second^2.
+     * @return The acceleration in metres / tick^2.
+     */
+    public static double convertAcceleration(double mPerSSq) {
+        return mPerSSq / 400;
+    }
+
+    /**
+     * Converts the given force to Minecraft values.
+     *
+     * @param newtons The force in newtons (kg * m/s^2).
+     * @return The force in kg * m/t^2.
+     */
+    public static double convertForce(double newtons) {
+        return newtons / 400;
+    }
+
+    /**
+     * Converts the given speed to Minecraft values.
+     *
+     * @param mPerS The speed in metres / second.
+     * @return The speed in metres / tick.
+     */
+    public static double convertSpeed(double mPerS) {
+        return mPerS / 20;
+    }
+
+    /**
      * Approximates the trigonometric function cosine.
      *
      * @param rad The argument of the cosine, given in radians.
@@ -1099,10 +1129,22 @@ public final class MathHelper {
         return VoxelShapes.combine(A, B, IBooleanFunction.OR);
     }
 
+    /**
+     * Wraps the angle given in degrees in the range [-180º; 180º)
+     *
+     * @param value The angle value in degrees.
+     * @return The equivalent angle value wrapped.
+     */
     public static double wrapDegrees(@Degree double value) {
         return net.minecraft.util.math.MathHelper.wrapDegrees(value);
     }
 
+    /**
+     * Wraps the angle given in degrees in the range [-180º; 180º)
+     *
+     * @param value The angle value in degrees.
+     * @return The equivalent angle value wrapped.
+     */
     public static float wrapDegrees(@Degree float value) {
         return net.minecraft.util.math.MathHelper.wrapDegrees(value);
     }

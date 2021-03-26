@@ -6,28 +6,20 @@ import tgw.evolution.entities.projectiles.IAerodynamicEntity;
 
 public final class Gravity {
 
-    private static final double EARTH_GRAVITY = 0.024_5;
+    /**
+     * The average gravity acceleration at the surface of Earth, in m/s^2.
+     */
+    private static final double EARTH_GRAVITY = MathHelper.convertAcceleration(9.8);
+    /**
+     * The average air density in the atmosphere, in kg/m^3.
+     */
     private static final double AIR_DENSITY = 1.225;
+    /**
+     * The density of water, in kg/m^3.
+     */
     private static final double WATER_DENSITY = 997;
 
     private Gravity() {
-    }
-
-    /**
-     * Returns the gravitational acceleration of the given dimension in metres / tick^2.
-     */
-    public static double gravity(Dimension dimension) {
-        return EARTH_GRAVITY;
-    }
-
-    /**
-     * Returns the vertical drag due to air resistance in the given dimension, based on the area of the body.
-     */
-    public static double verticalDrag(Entity entity) {
-        if (entity.getEntityWorld().getDimension().isSurfaceWorld()) {
-            return 0.5 * AIR_DENSITY * entity.getWidth() * entity.getWidth() * coefOfDrag(entity);
-        }
-        return 0;
     }
 
     public static double coefOfDrag(Entity entity) {
@@ -35,6 +27,13 @@ public final class Gravity {
             return 0.04;
         }
         return 1.05;
+    }
+
+    /**
+     * Returns the gravitational acceleration of the given dimension in metres / tick^2.
+     */
+    public static double gravity(Dimension dimension) {
+        return EARTH_GRAVITY;
     }
 
     /**
@@ -49,6 +48,16 @@ public final class Gravity {
 
     public static double horizontalWaterDrag(Entity entity) {
         return 0.5 * WATER_DENSITY * entity.getWidth() * entity.getHeight() * coefOfDrag(entity);
+    }
+
+    /**
+     * Returns the vertical drag due to air resistance in the given dimension, based on the area of the body.
+     */
+    public static double verticalDrag(Entity entity) {
+        if (entity.getEntityWorld().getDimension().isSurfaceWorld()) {
+            return 0.5 * AIR_DENSITY * entity.getWidth() * entity.getWidth() * coefOfDrag(entity);
+        }
+        return 0;
     }
 
     public static double verticalWaterDrag(Entity entity) {

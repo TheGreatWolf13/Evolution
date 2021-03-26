@@ -59,9 +59,14 @@ public class EntityCow extends EntityGenericAnimal {
     }
 
     @Override
-    public float getBaseMovementSpeed() {
+    public float getBaseWalkForce() {
         //TODO implementation
         return 0.025f;
+    }
+
+    @Override
+    public float getFrictionModifier() {
+        return 2.0f;
     }
 
     @Override

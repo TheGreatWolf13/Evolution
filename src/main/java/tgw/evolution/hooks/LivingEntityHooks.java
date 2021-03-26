@@ -495,6 +495,22 @@ public final class LivingEntityHooks {
         return new Vec3d(accX * cosFacing - accZ * sinFacing, accY, accZ * cosFacing + accX * sinFacing);
     }
 
+    private static float getEntityAcceleration(LivingEntity entity) {
+        float force = entity.getAIMoveSpeed();
+        float mass = (float) getMass(entity);
+        return force / mass;
+    }
+
+    private static float getFrictionModifier(LivingEntity entity) {
+        if (entity instanceof PlayerEntity) {
+            return (float) entity.getAttribute(EvolutionAttributes.FRICTION).getValue();
+        }
+        if (entity instanceof EntityGenericCreature) {
+            return ((EntityGenericCreature) entity).getFrictionModifier();
+        }
+        return 2.0f;
+    }
+
     public static double getJumpSlowDown(PlayerEntity player) {
         if (player.isCreative()) {
             return 0;
@@ -670,6 +686,11 @@ public final class LivingEntityHooks {
         double motionX = motion.x;
         double motionY = motion.y;
         double motionZ = motion.z;
+        if (entity.world.isRemote) {
+            Evolution.LOGGER.debug("horizontal speed = {}    friction coeff = {}",
+                                   20 * MathHelper.sqrt(motionX * motionX + motionZ * motionZ),
+                                   frictionCoef);
+        }
         if ((entity.collidedHorizontally || isJumping) && entity.isOnLadder()) {
             motionY = BlockUtils.getLadderUpSpeed(entity.getBlockState());
         }
@@ -684,15 +705,13 @@ public final class LivingEntityHooks {
         if (entity.onGround || isPlayerFlying && isActiveWalking) {
             double legSlowDown = legSlowDown(entity);
             if (frictionAcc != 0) {
-                legSlowDown *= frictionAcc;
+                legSlowDown *= frictionAcc * getFrictionModifier(entity);
             }
             else {
-                legSlowDown *= gravityAcceleration * 0.85;
+                legSlowDown *= gravityAcceleration * 0.85 * getFrictionModifier(entity);
             }
-
             legSlowDownX = motionX * legSlowDown;
             legSlowDownZ = motionZ * legSlowDown;
-
         }
         double mass = getMass(entity);
         double horizontalDrag = Gravity.horizontalDrag(entity) / mass;
@@ -863,12 +882,12 @@ public final class LivingEntityHooks {
         if (entity instanceof PlayerEntity) {
             if (!((PlayerEntity) entity).abilities.isFlying) {
                 if (entity.onGround || entity.isOnLadder()) {
-                    return entity.getAIMoveSpeed() * frictionCoef / 0.85f;
+                    return getEntityAcceleration(entity) * frictionCoef * getFrictionModifier(entity);
                 }
-                return jumpTicks > 3 ? 0.075f * entity.getAIMoveSpeed() : 0;
+                return jumpTicks > 3 ? 0.075f * getEntityAcceleration(entity) : 0;
             }
         }
-        return entity.onGround ? entity.getAIMoveSpeed() * frictionCoef / 0.85f : entity.jumpMovementFactor;
+        return entity.onGround ? getEntityAcceleration(entity) * frictionCoef * getFrictionModifier(entity) : entity.jumpMovementFactor;
     }
 
     private static double legSlowDown(LivingEntity entity) {
@@ -878,7 +897,7 @@ public final class LivingEntityHooks {
         if (entity instanceof EntityGenericCreature) {
             return ((EntityGenericCreature) entity).getLegSlowDown();
         }
-        return 5.455;
+        return 1;
     }
 
     /**

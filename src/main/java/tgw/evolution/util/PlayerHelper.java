@@ -41,21 +41,21 @@ public final class PlayerHelper {
      */
     public static final double REACH_DISTANCE = 3.25;
     /**
-     * The base Player mass. Used in various kinetic calculations.
+     * The base Player mass in kg. Used in various kinetic calculations.
      */
     public static final double MASS = 70;
     /**
-     * The height of the Player legs. Used to calculate fall damage.
+     * The height of the Player legs in m. Used to calculate fall damage.
      */
     public static final double LEG_HEIGHT = 0.875;
     /**
-     * An acceleration value in m/t^2 that will result in a maximum speed of 4.32 m/s
+     * The force the player uses to push its feet against the ground.
      */
-    public static final double WALK_SPEED = 0.05;
+    public static final double WALK_FORCE = MathHelper.convertForce(1_000);
     /**
      * Controls the deceleration because of the motion of your legs.
      */
-    public static final double LEG_SLOWDOWN = 11.002_735;
+    public static final double LEG_SLOWDOWN = WALK_FORCE * 2.75;
     private static final Random RAND = new Random();
 
     private PlayerHelper() {
@@ -359,9 +359,9 @@ public final class PlayerHelper {
         }
     }
 
-    public static double getSpeed(double mass) {
-        return WALK_SPEED * MASS / mass - WALK_SPEED;
-    }
+//    public static double getSpeed(double mass) {
+//        return WALK_SPEED * MASS / mass - WALK_SPEED;
+//    }
 
     private static float headHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
         damage *= 1.75f;

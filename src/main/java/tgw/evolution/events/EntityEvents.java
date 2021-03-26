@@ -3,7 +3,6 @@ package tgw.evolution.events;
 import com.google.common.collect.Sets;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.*;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.merchant.villager.WanderingTraderEntity;
@@ -81,7 +80,6 @@ public class EntityEvents {
         set.add(DamageSource.IN_WALL);
         set.add(DamageSource.OUT_OF_WORLD);
     });
-    private static final Map<UUID, Double> PLAYER_MASS_MAP = new HashMap<>();
     private final Map<DamageSource, EquipmentSlotType> damageMultipliers = new WeakHashMap<>();
     private final Map<UUID, Integer> playerTimeSinceLastHit = new HashMap<>();
 
@@ -198,9 +196,8 @@ public class EntityEvents {
         //Sets the gravity of the Living Entities and the Player to be that of the dimension they're in
         living.getAttribute(LivingEntity.ENTITY_GRAVITY).setBaseValue(Gravity.gravity(living.world.getDimension()));
         if (living instanceof PlayerEntity) {
-            Evolution.LOGGER.debug("Entity joining world is a player = {}", living);
             PlayerEntity player = (PlayerEntity) living;
-            PLAYER_SPEED_FIELD.set(player.abilities, (float) PlayerHelper.WALK_SPEED);
+            PLAYER_SPEED_FIELD.set(player.abilities, (float) PlayerHelper.WALK_FORCE);
         }
         //TODO
 //        else {
@@ -486,22 +483,9 @@ public class EntityEvents {
             player.getFoodStats().setFoodLevel(20);
             if (player.isCreative()) {
                 player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(12);
-                player.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).removeModifier(EvolutionAttributes.WEIGHT_SLOWDOWN_MODIFIER);
-                PLAYER_MASS_MAP.put(player.getUniqueID(), 0.0);
             }
             else {
                 player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(PlayerHelper.REACH_DISTANCE);
-                double mass = player.getAttribute(EvolutionAttributes.MASS).getValue();
-                double oldMass = PLAYER_MASS_MAP.getOrDefault(player.getUniqueID(), 0.0);
-                if (mass != oldMass) {
-                    PLAYER_MASS_MAP.put(player.getUniqueID(), mass);
-                    IAttributeInstance speed = player.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED);
-                    speed.removeModifier(EvolutionAttributes.WEIGHT_SLOWDOWN_MODIFIER);
-                    speed.applyModifier(new AttributeModifier(EvolutionAttributes.WEIGHT_SLOWDOWN_MODIFIER,
-                                                              "Weight slow down",
-                                                              PlayerHelper.getSpeed(mass),
-                                                              AttributeModifier.Operation.ADDITION));
-                }
             }
             //Handles Player health regeneration
             if (!player.world.isRemote && player.world.getGameRules().getBoolean(GameRules.NATURAL_REGENERATION)) {
