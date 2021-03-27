@@ -29,6 +29,10 @@ public final class EvolutionSounds {
                                                                                  () -> new SoundEvent(Evolution.location("stone_break")));
     public static final RegistryObject<SoundEvent> STONE_COLLAPSE = SOUNDS.register("stone_collapse",
                                                                                     () -> new SoundEvent(Evolution.location("stone_collapse")));
+    public static final RegistryObject<SoundEvent> SWORD_SHEATH = SOUNDS.register("sword_sheath",
+                                                                                  () -> new SoundEvent(Evolution.location("sword_sheath")));
+    public static final RegistryObject<SoundEvent> SWORD_UNSHEATH = SOUNDS.register("sword_unsheath",
+                                                                                    () -> new SoundEvent(Evolution.location("sword_unsheath")));
     public static final RegistryObject<SoundEvent> TREE_FALLING = SOUNDS.register("tree_falling",
                                                                                   () -> new SoundEvent(Evolution.location("tree_falling")));
     public static final RegistryObject<SoundEvent> WOOD_COLLAPSE = SOUNDS.register("wood_collapse",

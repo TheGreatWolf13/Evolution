@@ -30,10 +30,7 @@ import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.*;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.potion.*;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.Hand;
-import net.minecraft.util.HandSide;
-import net.minecraft.util.Util;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
@@ -51,11 +48,15 @@ import net.minecraftforge.client.event.RenderTooltipEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
+import tgw.evolution.client.audio.SoundEntityEmitted;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.InputHooks;
 import tgw.evolution.init.EvolutionAttributes;
+import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.items.*;
+import tgw.evolution.network.PacketCSPlaySoundEntityEmitted;
 import tgw.evolution.util.MathHelper;
 
 import javax.annotation.Nonnull;
@@ -73,6 +74,8 @@ public class ClientRenderer {
     private final Minecraft mc;
     private final Random rand = new Random();
     private final EntityRendererManager renderManager;
+    private ItemStack currentMainhandItem = ItemStack.EMPTY;
+    private ItemStack currentOffhandItem = ItemStack.EMPTY;
     private long healthUpdateCounter;
     private float lastPlayerHealth;
     private long lastSystemTime;
@@ -1264,16 +1267,40 @@ public class ClientRenderer {
             boolean requipO = shouldCauseReequipAnimation(this.offhandStack, offhandStack, -1);
             if (requipM) {
                 this.client.mainhandTimeSinceLastHit = 0;
+                if (!ItemStack.areItemStacksEqual(this.currentMainhandItem, mainhandStack)) {
+                    this.currentMainhandItem = mainhandStack;
+                    if (this.currentMainhandItem.getItem() instanceof ItemSword) {
+                        this.mc.getSoundHandler()
+                               .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATH.get(), SoundCategory.PLAYERS, 0.8f, 1.0f));
+                        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlaySoundEntityEmitted(this.mc.player,
+                                                                                                  EvolutionSounds.SWORD_UNSHEATH.get(),
+                                                                                                  SoundCategory.PLAYERS,
+                                                                                                  0.8f,
+                                                                                                  1.0f));
+                    }
+                }
             }
             else {
-                this.mainHandStack = mainhandStack;
+                this.mainHandStack = mainhandStack.copy();
                 this.client.mainhandTimeSinceLastHit++;
             }
             if (requipO) {
                 this.client.offhandTimeSinceLastHit = 0;
+                if (!ItemStack.areItemStacksEqual(this.currentOffhandItem, offhandStack)) {
+                    this.currentOffhandItem = offhandStack;
+                    if (this.currentOffhandItem.getItem() instanceof ItemSword) {
+                        this.mc.getSoundHandler()
+                               .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATH.get(), SoundCategory.PLAYERS, 0.8f, 1.0f));
+                        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlaySoundEntityEmitted(this.mc.player,
+                                                                                                  EvolutionSounds.SWORD_UNSHEATH.get(),
+                                                                                                  SoundCategory.PLAYERS,
+                                                                                                  0.8f,
+                                                                                                  1.0f));
+                    }
+                }
             }
             else {
-                this.offhandStack = offhandStack;
+                this.offhandStack = offhandStack.copy();
                 this.client.offhandTimeSinceLastHit++;
             }
             float cooledAttackStrength = this.client.getOffhandCooledAttackStrength(this.mc.player.getHeldItemOffhand().getItem(), 1.0F);
@@ -1285,10 +1312,10 @@ public class ClientRenderer {
 
         }
         if (this.mainhandEquipProgress < 0.1F && !InputHooks.isMainhandLunging) {
-            this.mainHandStack = mainhandStack;
+            this.mainHandStack = mainhandStack.copy();
         }
         if (this.offhandEquipProgress < 0.1F && !InputHooks.isOffhandLunging) {
-            this.offhandStack = offhandStack;
+            this.offhandStack = offhandStack.copy();
         }
         if (InputHooks.isMainhandLunging) {
             ClientEvents.LEFT_COUNTER_FIELD.set(this.mc, 1);

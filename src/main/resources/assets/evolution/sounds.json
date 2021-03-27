@@ -1,74 +1,88 @@
 {
-	"javelin_hit_block": {
-		"category": "player",
-		"subtitle": "evolution.subtitle.javelin_hit_block",
-		"sounds": [
-			"evolution:javelin/javelin_hit_block"
-		]
-	},
-	"javelin_hit_entity": {
-		"category": "player",
-		"subtitle": "evolution.subtitle.javelin_hit_entity",
-		"sounds": [
-			"evolution:javelin/javelin_hit_entity"
-		]
-	},
-	"javelin_throw": {
-		"category": "player",
-		"subtitle": "evolution.subtitle.javelin_throw",
-		"sounds": [
-			"evolution:javelin/javelin_throw"
-		]
-	},
-	"parry_fail": {
-		"category": "player",
-		"subtitle": "evolution.subtitle.parry_fail",
-		"sounds": [
-			"evolution:parry_fail"
-		]
-	},
-	"parry_success": {
-		"category": "player",
-		"subtitle": "evolution.subtitle.parry_success",
-		"sounds": [
-			"evolution:parry_success"
-		]
-	},
-	"soil_collapse": {
-		"category": "block",
-		"subtitle": "evolution.subtitle.soil_collapse",
-		"sounds": [
-			"evolution:events/soil_collapse_1",
-			"evolution:events/soil_collapse_2"
-		]
-	},
-	"stone_break": {
-		"category": "block",
-		"subtitle": "evolution.subtitle.stone_break",
-		"sounds": [
-			"evolution:events/stone_break"
-		]
-	},
-	"stone_collapse": {
-		"category": "block",
-		"subtitle": "evolution.subtitle.stone_collapse",
-		"sounds": [
-			"evolution:events/stone_collapse_1",
-			"evolution:events/stone_collapse_2"
-		]
-	},
-	"tree_falling": {
-		"category": "block",
-		"subtitle": "evolution.subtitle.tree_falling",
-		"sounds": [
-			"evolution:events/tree_falling"
-		]
-	},
-	"wood_collapse": {
-		"category": "block",
-		"subtitle": "evolution.subtitle.wood_collapse",
-		"sounds": [
-			"evolution:events/wood_collapse"
-		]
-	}
+  "javelin_hit_block": {
+    "category": "player",
+    "subtitle": "evolution.subtitle.javelin_hit_block",
+    "sounds": [
+      "evolution:javelin/javelin_hit_block"
+    ]
+  },
+  "javelin_hit_entity": {
+    "category": "player",
+    "subtitle": "evolution.subtitle.javelin_hit_entity",
+    "sounds": [
+      "evolution:javelin/javelin_hit_entity"
+    ]
+  },
+  "javelin_throw": {
+    "category": "player",
+    "subtitle": "evolution.subtitle.javelin_throw",
+    "sounds": [
+      "evolution:javelin/javelin_throw"
+    ]
+  },
+  "parry_fail": {
+    "category": "player",
+    "subtitle": "evolution.subtitle.parry_fail",
+    "sounds": [
+      "evolution:parry_fail"
+    ]
+  },
+  "parry_success": {
+    "category": "player",
+    "subtitle": "evolution.subtitle.parry_success",
+    "sounds": [
+      "evolution:parry_success"
+    ]
+  },
+  "soil_collapse": {
+    "category": "block",
+    "subtitle": "evolution.subtitle.soil_collapse",
+    "sounds": [
+      "evolution:events/soil_collapse_1",
+      "evolution:events/soil_collapse_2"
+    ]
+  },
+  "stone_break": {
+    "category": "block",
+    "subtitle": "evolution.subtitle.stone_break",
+    "sounds": [
+      "evolution:events/stone_break"
+    ]
+  },
+  "stone_collapse": {
+    "category": "block",
+    "subtitle": "evolution.subtitle.stone_collapse",
+    "sounds": [
+      "evolution:events/stone_collapse_1",
+      "evolution:events/stone_collapse_2"
+    ]
+  },
+  "sword_sheath": {
+    "category": "player",
+    "subtitle": "evolution.subtitle.sword_sheath",
+    "sounds": [
+      "evolution:sword_sheath"
+    ]
+  },
+  "sword_unsheath": {
+    "category": "player",
+    "subtitle": "evolution.subtitle.sword_unsheath",
+    "sounds": [
+      "evolution:sword_unsheath"
+    ]
+  },
+  "tree_falling": {
+    "category": "block",
+    "subtitle": "evolution.subtitle.tree_falling",
+    "sounds": [
+      "evolution:events/tree_falling"
+    ]
+  },
+  "wood_collapse": {
+    "category": "block",
+    "subtitle": "evolution.subtitle.wood_collapse",
+    "sounds": [
+      "evolution:events/wood_collapse"
+    ]
+  }
 }

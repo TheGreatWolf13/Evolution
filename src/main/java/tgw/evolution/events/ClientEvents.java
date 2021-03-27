@@ -25,6 +25,7 @@ import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.tileentity.SkullTileEntity;
 import net.minecraft.util.Hand;
 import net.minecraft.util.MovementInput;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.Timer;
 import net.minecraft.util.math.*;
 import net.minecraft.world.GameType;
@@ -45,6 +46,7 @@ import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.client.LungeAttackInfo;
 import tgw.evolution.client.LungeChargeInfo;
 import tgw.evolution.client.MovementInputEvolution;
+import tgw.evolution.client.audio.SoundEntityEmitted;
 import tgw.evolution.client.gui.GuiContainerCreativeHandler;
 import tgw.evolution.client.gui.GuiContainerHandler;
 import tgw.evolution.client.gui.IGuiScreenHandler;
@@ -58,15 +60,9 @@ import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.hooks.InputHooks;
 import tgw.evolution.hooks.TickrateChanger;
-import tgw.evolution.init.EvolutionEffects;
-import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.init.*;
 import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
-import tgw.evolution.items.IBackWeapon;
-import tgw.evolution.items.IBeltWeapon;
-import tgw.evolution.items.IOffhandAttackable;
-import tgw.evolution.items.ITwoHanded;
+import tgw.evolution.items.*;
 import tgw.evolution.network.*;
 import tgw.evolution.potion.EffectDizziness;
 import tgw.evolution.util.MathHelper;
@@ -1066,6 +1062,7 @@ public class ClientEvents {
     }
 
     private void updateBeltItem() {
+        ItemStack oldStack = BELT_ITEMS.getOrDefault(this.mc.player.getEntityId(), ItemStack.EMPTY);
         ItemStack beltStack = ItemStack.EMPTY;
         int priority = Integer.MAX_VALUE;
         int chosen = -1;
@@ -1086,8 +1083,19 @@ public class ClientEvents {
         if (chosen == this.mc.player.inventory.currentItem) {
             beltStack = ItemStack.EMPTY;
         }
-        BELT_ITEMS.put(this.mc.player.getEntityId(), beltStack);
-        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateBeltBackItem(beltStack, false));
+        if (!ItemStack.areItemStacksEqual(beltStack, oldStack)) {
+            if (beltStack.getItem() instanceof ItemSword) {
+                this.mc.getSoundHandler()
+                       .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATH.get(), SoundCategory.PLAYERS, 0.8f, 1.0f));
+                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlaySoundEntityEmitted(this.mc.player,
+                                                                                          EvolutionSounds.SWORD_SHEATH.get(),
+                                                                                          SoundCategory.PLAYERS,
+                                                                                          0.8f,
+                                                                                          1.0f));
+            }
+            BELT_ITEMS.put(this.mc.player.getEntityId(), beltStack.copy());
+            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateBeltBackItem(beltStack, false));
+        }
     }
 
     private void updateClientProneState(PlayerEntity player) {
