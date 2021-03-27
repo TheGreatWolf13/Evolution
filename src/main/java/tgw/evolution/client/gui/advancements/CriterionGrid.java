@@ -4,10 +4,15 @@ import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.entity.EntityType;
+import net.minecraft.item.Item;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.biome.Biome;
+import net.minecraftforge.registries.ForgeRegistries;
 import tgw.evolution.init.EvolutionTexts;
 
 import java.util.ArrayList;
@@ -65,8 +70,7 @@ public class CriterionGrid {
                     //noinspection ObjectAllocationInLoop
                     ITextComponent text = new StringTextComponent(" + ");
                     text.getStyle().setColor(TextFormatting.GREEN);
-                    //noinspection ObjectAllocationInLoop
-                    ITextComponent text2 = new TranslationTextComponent("advancements.criteria." + criterion);
+                    ITextComponent text2 = getCriteriaTranslated(criterion);
                     text2.getStyle().setColor(TextFormatting.WHITE);
                     text.appendSibling(text2);
                     cellContents.add(text.getFormattedText());
@@ -78,8 +82,7 @@ public class CriterionGrid {
                     //noinspection ObjectAllocationInLoop
                     ITextComponent text = new StringTextComponent(" x ");
                     text.getStyle().setColor(TextFormatting.DARK_RED);
-                    //noinspection ObjectAllocationInLoop
-                    ITextComponent text2 = new StringTextComponent(criterion);
+                    ITextComponent text2 = getCriteriaTranslated(criterion);
                     text2.getStyle().setColor(TextFormatting.WHITE);
                     text.appendSibling(text2);
                     cellContents.add(text.getFormattedText());
@@ -115,6 +118,28 @@ public class CriterionGrid {
             currGrid = newGrid;
         } while (numCols <= cellContents.size() && currGrid.width <= maxWidth);
         return prevGrid != null ? prevGrid : currGrid;
+    }
+
+    private static ITextComponent getCriteriaTranslated(String criterion) {
+        int endIndex = criterion.indexOf(':');
+        String type = criterion.substring(0, endIndex == -1 ? 0 : endIndex);
+        if (type.isEmpty()) {
+            return new StringTextComponent(criterion);
+        }
+        switch (type) {
+            case "item":
+                Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(criterion.substring(criterion.indexOf(':') + 1)));
+                return new TranslationTextComponent(item.getTranslationKey());
+            case "entity":
+                EntityType<?> entity = ForgeRegistries.ENTITIES.getValue(new ResourceLocation(criterion.substring(criterion.indexOf(':') + 1)));
+                return entity.getName();
+            case "biome":
+                Biome biome = ForgeRegistries.BIOMES.getValue(new ResourceLocation(criterion.substring(criterion.indexOf(':') + 1)));
+                return biome.getDisplayName();
+            case "minecraft":
+                return new StringTextComponent(criterion);
+        }
+        throw new IllegalStateException("Unknown type: " + type);
     }
 
     public void init() {

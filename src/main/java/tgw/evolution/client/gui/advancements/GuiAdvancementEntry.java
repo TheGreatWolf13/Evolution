@@ -72,24 +72,41 @@ public class GuiAdvancementEntry extends AbstractGui {
     public void draw(int scrollX, int scrollY) {
         if (!this.displayInfo.isHidden() || this.advancementProgress != null && this.advancementProgress.isDone()) {
             float f = this.advancementProgress == null ? 0.0F : this.advancementProgress.getPercent();
-            AdvancementState advancementState;
-            if (f >= 1.0F) {
-                advancementState = AdvancementState.OBTAINED;
-            }
-            else {
-                advancementState = AdvancementState.UNOBTAINED;
-            }
+            AdvancementState advancementState = f >= 1.0f ? AdvancementState.OBTAINED : AdvancementState.UNOBTAINED;
             this.minecraft.getTextureManager().bindTexture(EvolutionResources.GUI_WIDGETS);
             GUIUtils.setColor(this.betterDisplayInfo.getIconColor(advancementState));
             GlStateManager.enableBlend();
+            this.blitOffset = 1;
             this.blit(scrollX + this.x + 3,
                       scrollY + this.y,
                       this.displayInfo.getFrame().getIcon(),
                       ICON_OFFSET + ICON_SIZE * this.betterDisplayInfo.getIconYMultiplier(advancementState),
                       ICON_SIZE,
                       ICON_SIZE);
+            this.blitOffset = 0;
             RenderHelper.enableGUIStandardItemLighting();
             this.minecraft.getItemRenderer().renderItemAndEffectIntoGUI(null, this.displayInfo.getIcon(), scrollX + this.x + 8, scrollY + this.y + 5);
+        }
+        else if (this.displayInfo.isHidden()) {
+            this.minecraft.getTextureManager().bindTexture(EvolutionResources.GUI_WIDGETS);
+            GlStateManager.enableBlend();
+            this.blitOffset = 1;
+            this.blit(scrollX + this.x + 3,
+                      scrollY + this.y,
+                      this.displayInfo.getFrame().getIcon(),
+                      ICON_OFFSET + ICON_SIZE * 3,
+                      ICON_SIZE,
+                      ICON_SIZE);
+            this.blitOffset = 0;
+            RenderHelper.enableGUIStandardItemLighting();
+            GlStateManager.pushMatrix();
+            GlStateManager.color4f(0.0f, 1.0f, 1.0f, 1.0f);
+            GUIUtils.renderItemAndEffectIntoGUIGreyscaled(this.minecraft.getItemRenderer(),
+                                                          null,
+                                                          this.displayInfo.getIcon(),
+                                                          scrollX + this.x + 8,
+                                                          scrollY + this.y + 5);
+            GlStateManager.popMatrix();
         }
         for (GuiAdvancementEntry advancementEntry : this.children) {
             advancementEntry.draw(scrollX, scrollY);
@@ -101,9 +118,8 @@ public class GuiAdvancementEntry extends AbstractGui {
      */
     @SuppressWarnings("IntegerDivisionInFloatingPointContext")
     public void drawConnection(GuiAdvancementEntry parent, int scrollX, int scrollY, boolean drawInside) {
-        int innerLineColor = this.advancementProgress != null && this.advancementProgress.isDone() ?
-                             this.betterDisplayInfo.getCompletedLineColor() :
-                             this.betterDisplayInfo.getUnCompletedLineColor();
+        boolean isCompleted = this.advancementProgress != null && this.advancementProgress.isDone();
+        int innerLineColor = isCompleted ? this.betterDisplayInfo.getCompletedLineColor() : this.betterDisplayInfo.getUnCompletedLineColor();
         int borderLineColor = 0xFF00_0000;
         if (this.betterDisplayInfo.drawDirectLines()) {
             double x1 = scrollX + this.x + ADVANCEMENT_SIZE / 2 + 3;
@@ -139,7 +155,7 @@ public class GuiAdvancementEntry extends AbstractGui {
                     GUIUtils.drawRect(x1 - 0.75, y1 - 0.75, x2 - 0.75, y2 - 0.75, width, borderLineColor);
                 }
                 else {
-                    GUIUtils.drawRect(x1, y1, x2, y2, width, innerLineColor);
+                    GUIUtils.drawRect(x1, y1, x2, y2, width, innerLineColor, isCompleted);
                 }
             }
             else {
@@ -148,7 +164,7 @@ public class GuiAdvancementEntry extends AbstractGui {
                     GUIUtils.drawRect(x1 - 1, y1 - 1, x2 - 1, y2 - 1, width, borderLineColor);
                 }
                 else {
-                    GUIUtils.drawRect(x1, y1, x2, y2, width, innerLineColor);
+                    GUIUtils.drawRect(x1, y1, x2, y2, width, innerLineColor, isCompleted);
                 }
             }
         }
@@ -169,9 +185,9 @@ public class GuiAdvancementEntry extends AbstractGui {
                 this.vLine(endXHalf + 1, endY, startY, borderLineColor);
             }
             else {
-                this.hLine(endXHalf, startX, startY, innerLineColor);
-                this.hLine(endX, endXHalf, endY, innerLineColor);
-                this.vLine(endXHalf, endY, startY, innerLineColor);
+                GUIUtils.hLine(endXHalf, startX, startY, innerLineColor, isCompleted);
+                GUIUtils.hLine(endX, endXHalf, endY, innerLineColor, isCompleted);
+                GUIUtils.vLine(endXHalf, endY, startY, innerLineColor, isCompleted);
             }
         }
     }
@@ -184,18 +200,6 @@ public class GuiAdvancementEntry extends AbstractGui {
 
                 this.drawConnection(this.parent, scrollX, scrollY, drawInside);
             }
-//            //Create and post event to get extra connections
-//            final AdvancementDrawConnectionsEvent event = new AdvancementDrawConnectionsEvent(this.advancement);
-//            MinecraftForge.EVENT_BUS.post(event);
-//
-//            //Draw extra connections from event
-//            for (Advancement parent : event.getExtraConnections()) {
-//                final BetterAdvancementEntryGui parentGui = this.betterAdvancementTabGui.getAdvancementGui(parent);
-//
-//                if (parentGui != null) {
-//                    this.drawConnection(parentGui, scrollX, scrollY, drawInside);
-//                }
-//            }
         }
         //Draw child connections
         for (GuiAdvancementEntry advancementEntry : this.children) {

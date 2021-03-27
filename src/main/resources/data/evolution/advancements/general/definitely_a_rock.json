@@ -1,244 +1,244 @@
 {
-	"parent": "evolution:general/root",
-	"display": {
-		"icon": {
-			"item": "evolution:rock_andesite"
-		},
-		"title": {
-			"translate": "evolution.advancements.general.definitely_a_rock.title"
-		},
-		"description": {
-			"translate": "evolution.advancements.general.definitely_a_rock.description"
-		},
-		"frame": "task",
-		"show_toast": true,
-		"announce_to_chat": true,
-		"hidden": false
-	},
-	"criteria": {
-		"rock_andesite": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_andesite"
-					}
-				]
-			}
-		},
-		"rock_basalt": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_basalt"
-					}
-				]
-			}
-		},
-		"rock_chalk": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_chalk"
-					}
-				]
-			}
-		},
-		"rock_chert": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_chert"
-					}
-				]
-			}
-		},
-		"rock_conglomerate": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_conglomerate"
-					}
-				]
-			}
-		},
-		"rock_dacite": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_dacite"
-					}
-				]
-			}
-		},
-		"rock_diorite": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_diorite"
-					}
-				]
-			}
-		},
-		"rock_dolomite": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_dolomite"
-					}
-				]
-			}
-		},
-		"rock_gabbro": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_gabbro"
-					}
-				]
-			}
-		},
-		"rock_gneiss": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_gneiss"
-					}
-				]
-			}
-		},
-		"rock_granite": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_granite"
-					}
-				]
-			}
-		},
-		"rock_limestone": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_limestone"
-					}
-				]
-			}
-		},
-		"rock_marble": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_marble"
-					}
-				]
-			}
-		},
-		"rock_phyllite": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_phyllite"
-					}
-				]
-			}
-		},
-		"rock_quartzite": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_quartzite"
-					}
-				]
-			}
-		},
-		"rock_red_sandstone": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_red_sandstone"
-					}
-				]
-			}
-		},
-		"rock_sandstone": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_sandstone"
-					}
-				]
-			}
-		},
-		"rock_schist": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_schist"
-					}
-				]
-			}
-		},
-		"rock_shale": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_shale"
-					}
-				]
-			}
-		},
-		"rock_slate": {
-			"trigger": "minecraft:inventory_changed",
-			"conditions": {
-				"items": [
-					{
-						"item": "evolution:rock_slate"
-					}
-				]
-			}
-		}
-	},
-	"requirements": [
-		[
-			"rock_andesite",
-			"rock_basalt",
-			"rock_chalk",
-			"rock_chert",
-			"rock_conglomerate",
-			"rock_dacite",
-			"rock_diorite",
-			"rock_dolomite",
-			"rock_gabbro",
-			"rock_gneiss",
-			"rock_granite",
-			"rock_limestone",
-			"rock_marble",
-			"rock_phyllite",
-			"rock_quartzite",
-			"rock_red_sandstone",
-			"rock_sandstone",
-			"rock_schist",
-			"rock_shale",
-			"rock_slate"
-		]
-	]
+  "parent": "evolution:general/root",
+  "display": {
+    "icon": {
+      "item": "evolution:rock_andesite"
+    },
+    "title": {
+      "translate": "evolution.advancements.general.definitely_a_rock.title"
+    },
+    "description": {
+      "translate": "evolution.advancements.general.definitely_a_rock.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "item:evolution:rock_andesite": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_andesite"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_basalt": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_basalt"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_chalk": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_chalk"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_chert": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_chert"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_conglomerate": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_conglomerate"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_dacite": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_dacite"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_diorite": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_diorite"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_dolomite": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_dolomite"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_gabbro": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_gabbro"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_gneiss": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_gneiss"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_granite": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_granite"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_limestone": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_limestone"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_marble": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_marble"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_phyllite": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_phyllite"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_quartzite": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_quartzite"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_red_sandstone": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_red_sandstone"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_sandstone": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_sandstone"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_schist": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_schist"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_shale": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_shale"
+          }
+        ]
+      }
+    },
+    "item:evolution:rock_slate": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "evolution:rock_slate"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "item:evolution:rock_andesite",
+      "item:evolution:rock_basalt",
+      "item:evolution:rock_chalk",
+      "item:evolution:rock_chert",
+      "item:evolution:rock_conglomerate",
+      "item:evolution:rock_dacite",
+      "item:evolution:rock_diorite",
+      "item:evolution:rock_dolomite",
+      "item:evolution:rock_gabbro",
+      "item:evolution:rock_gneiss",
+      "item:evolution:rock_granite",
+      "item:evolution:rock_limestone",
+      "item:evolution:rock_marble",
+      "item:evolution:rock_phyllite",
+      "item:evolution:rock_quartzite",
+      "item:evolution:rock_red_sandstone",
+      "item:evolution:rock_sandstone",
+      "item:evolution:rock_schist",
+      "item:evolution:rock_shale",
+      "item:evolution:rock_slate"
+    ]
+  ]
 }													
