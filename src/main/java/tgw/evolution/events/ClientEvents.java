@@ -117,6 +117,7 @@ public class ClientEvents {
     public boolean shouldPassEffectTick;
     private int currentShader;
     private int currentThirdPersonView;
+    private boolean initialized;
     private boolean inverted;
     private boolean isJumpPressed;
     private boolean isSneakPressed;
@@ -126,8 +127,6 @@ public class ClientEvents {
     private boolean previousPressed;
     private boolean proneToggle;
     private EntityRayTraceResult rightRayTrace;
-    private boolean skinsLoaded;
-    private boolean skyRendererBinded;
     private boolean sneakpreviousPressed;
     private int ticks;
     private float tps = 20.0f;
@@ -234,6 +233,18 @@ public class ClientEvents {
         return this.inverted;
     }
 
+    public void clearMemory() {
+        EFFECTS.clear();
+        EFFECTS_TO_ADD.clear();
+        EFFECTS_TO_TICK.clear();
+        this.inverted = false;
+        ABOUT_TO_LUNGE_PLAYERS.clear();
+        LUNGING_PLAYERS.clear();
+        if (this.mc.world == null) {
+            this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
+        }
+    }
+
     @Nullable
     private Slot findPullSlot(List<Slot> slots, Slot selectedSlot) {
         int startIndex = 0;
@@ -324,6 +335,29 @@ public class ClientEvents {
         return Screen.hasShiftDown();
     }
 
+    public void init() {
+        //Bind Sky Renderer
+        if (this.mc.world.dimension.getType() == DimensionType.OVERWORLD) {
+            this.mc.world.dimension.setSkyRenderer(new SkyRenderer(this.mc.worldRenderer));
+        }
+        //Load skin for corpses
+        PlayerProfileCache playerProfile = PLAYER_PROF_FIELD.get();
+        MinecraftSessionService session = SESSION_FIELD.get();
+        if (playerProfile != null && session != null) {
+            EntityPlayerCorpse.setProfileCache(playerProfile);
+            EntityPlayerCorpse.setSessionService(session);
+        }
+        //Replace MovementInput
+        this.mc.player.movementInput = new MovementInputEvolution(this.mc.gameSettings);
+    }
+
+//    public boolean isPlayerDizzy() {
+//        if (this.mc.player != null) {
+//            return this.mc.player.isPotionActive(EvolutionEffects.DIZZINESS.get());
+//        }
+//        return false;
+//    }
+
     public void leftMouseClick() {
         float cooldown = this.mc.player.getCooldownPeriod();
         if (this.mainhandTimeSinceLastHit >= cooldown) {
@@ -339,17 +373,8 @@ public class ClientEvents {
         //Turn auto-jump off
         this.mc.gameSettings.autoJump = false;
         if (this.mc.player == null) {
-            this.skyRendererBinded = false;
-            this.skinsLoaded = false;
-            EFFECTS.clear();
-            EFFECTS_TO_ADD.clear();
-            EFFECTS_TO_TICK.clear();
-            this.inverted = false;
-            ABOUT_TO_LUNGE_PLAYERS.clear();
-            LUNGING_PLAYERS.clear();
-            if (this.mc.world == null) {
-                this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
-            }
+            this.initialized = false;
+            this.clearMemory();
             return;
         }
         if (this.mc.world == null) {
@@ -357,22 +382,9 @@ public class ClientEvents {
             ABOUT_TO_LUNGE_PLAYERS.clear();
             LUNGING_PLAYERS.clear();
         }
-        //Bind Sky Renderer
-        if (!this.skyRendererBinded) {
-            if (this.mc.world.dimension.getType() == DimensionType.OVERWORLD) {
-                this.mc.world.dimension.setSkyRenderer(new SkyRenderer(this.mc.worldRenderer));
-                this.skyRendererBinded = true;
-            }
-        }
-        //Load skin for corpses
-        if (!this.skinsLoaded) {
-            PlayerProfileCache playerProfile = PLAYER_PROF_FIELD.get();
-            MinecraftSessionService session = SESSION_FIELD.get();
-            if (playerProfile != null && session != null) {
-                EntityPlayerCorpse.setProfileCache(playerProfile);
-                EntityPlayerCorpse.setSessionService(session);
-                this.skinsLoaded = true;
-            }
+        if (!this.initialized) {
+            this.init();
+            this.initialized = true;
         }
         //Runs at the start of each tick
         if (event.phase == TickEvent.Phase.START) {
@@ -475,7 +487,6 @@ public class ClientEvents {
             //Handle Disoriented Effect
             if (this.mc.player.isPotionActive(EvolutionEffects.DISORIENTED.get())) {
                 if (!this.inverted) {
-                    this.mc.player.movementInput = new MovementInputEvolution(this.mc.gameSettings);
                     this.inverted = true;
                 }
             }
