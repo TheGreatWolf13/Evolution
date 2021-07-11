@@ -19,5 +19,6 @@
   "Evolution PlayerModel Transformer": "patches/PlayerModelHooks.js",
   "Evolution PlayerRenderer Transformer": "patches/PlayerRendererHooks.js",
   "Evolution LivingEntityAttackFrom Transformer": "patches/LivingEntityAttackFrom.js",
-  "Evolution PlayerAdvancementsPatch Transformer": "patches/PlayerAdvancementsPatch.js"
+  "Evolution PlayerAdvancementsPatch Transformer": "patches/PlayerAdvancementsPatch.js",
+  "Evolution EffectInstance Transformer": "patches/EffectInstance.js"
 }

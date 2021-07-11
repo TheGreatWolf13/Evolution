@@ -39,6 +39,7 @@ import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.inventory.PlayerInventoryCapability;
 import tgw.evolution.capabilities.inventory.PlayerInventoryCapabilityProvider;
+import tgw.evolution.capabilities.thirst.PlayerThirstCapabilityProvider;
 import tgw.evolution.entities.EntityGenericCreature;
 import tgw.evolution.entities.IAgressive;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
@@ -159,7 +160,7 @@ public class EntityEvents {
     public void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof PlayerEntity) {
             event.addCapability(Evolution.getResource("extended_inventory"), new PlayerInventoryCapabilityProvider());
-//            event.addCapability(Evolution.getResource("thirst"), new PlayerThirstCapabilityProvider());
+            event.addCapability(Evolution.getResource("thirst"), new PlayerThirstCapabilityProvider());
         }
     }
 

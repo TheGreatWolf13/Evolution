@@ -315,6 +315,13 @@ public class ClientEvents {
         return rv;
     }
 
+    public short getDizzinessAmplifier() {
+        if (this.isPlayerDizzy()) {
+            return (short) this.mc.player.getActivePotionEffect(EvolutionEffects.DIZZINESS.get()).getAmplifier();
+        }
+        return 0;
+    }
+
     public float getMainhandCooledAttackStrength(float partialTicks) {
         return MathHelper.clamp((this.mainhandTimeSinceLastHit + partialTicks) / this.mc.player.getCooldownPeriod(), 0.0F, 1.0F);
     }
@@ -351,12 +358,12 @@ public class ClientEvents {
         this.mc.player.movementInput = new MovementInputEvolution(this.mc.gameSettings);
     }
 
-//    public boolean isPlayerDizzy() {
-//        if (this.mc.player != null) {
-//            return this.mc.player.isPotionActive(EvolutionEffects.DIZZINESS.get());
-//        }
-//        return false;
-//    }
+    public boolean isPlayerDizzy() {
+        if (this.mc.player != null) {
+            return this.mc.player.isPotionActive(EvolutionEffects.DIZZINESS.get());
+        }
+        return false;
+    }
 
     public void leftMouseClick() {
         float cooldown = this.mc.player.getCooldownPeriod();
@@ -496,9 +503,8 @@ public class ClientEvents {
                 }
             }
             //Handle Dizziness Effect
-            if (!this.mc.player.isPotionActive(EvolutionEffects.DIZZINESS.get())) {
-                EffectDizziness.lastMotion = Vec3d.ZERO;
-                EffectDizziness.tick = 0;
+            if (this.isPlayerDizzy()) {
+                this.mc.player.setSprinting(false);
             }
         }
         //Runs at the end of each tick
