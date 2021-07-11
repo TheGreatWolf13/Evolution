@@ -16,6 +16,7 @@ import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.World;
+import net.minecraft.world.gen.Heightmap;
 import net.minecraftforge.common.util.FakePlayer;
 
 import javax.annotation.Nonnull;
@@ -132,6 +133,20 @@ public final class MathHelper {
      */
     public static float attackSpeed(float chargeTimeInSec) {
         return 1.0F / chargeTimeInSec;
+    }
+
+    /**
+     * Checks whether it can rain at the specified position, meaning that the block can see the sky and there is no physical obstruction to it.
+     *
+     * @param world The world being checked.
+     * @param pos   The position being checked.
+     * @return Whether rain can happen at that location.
+     */
+    public static boolean canRainAt(World world, BlockPos pos) {
+        if (!world.isSkyLightMax(pos)) {
+            return false;
+        }
+        return world.getHeight(Heightmap.Type.MOTION_BLOCKING, pos).getY() <= pos.getY();
     }
 
     /**
