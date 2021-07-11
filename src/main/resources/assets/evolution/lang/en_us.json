@@ -25,7 +25,7 @@
   "effect.evolution.disoriented": "Disoriented",
   "effect.evolution.dizziness": "Dizziness",
   "effect.evolution.water_intoxication": "Water Intoxication",
-  "effect.evolution.water_intoxication.desc": "Your excessive water intake pushed the normal balance of electrolytes in the body outside safe limits, potentially disturbing brain functions.",
+  "effect.evolution.water_intoxication.desc": "Your excessive water intake pushed the normal balance of electrolytes in the body outside safe limits, potentially disturbing brain functions.\n\nMay cause:\n ► Nausea\n ► Weakness",
   "effect.minecraft.absorption.desc": "Grants 4HP of additional health per level. Additional health cannot be regenerated.",
   "effect.minecraft.bad_luck.desc": "Decreases your luck by 1 per level.\nDo you believe in luck?",
   "effect.minecraft.bad_omen.desc": "You have a feeling that something bad is coming.",

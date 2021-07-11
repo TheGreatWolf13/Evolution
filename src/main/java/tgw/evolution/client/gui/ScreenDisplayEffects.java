@@ -51,7 +51,8 @@ public abstract class ScreenDisplayEffects<T extends Container> extends Containe
             GlStateManager.disableLighting();
             this.effectHeight = 33;
             this.effects = collection.stream()
-                                     .filter(effectInstance -> effectInstance.getPotion().shouldRender(effectInstance))
+                                     .filter(effectInstance -> effectInstance.getPotion().shouldRender(effectInstance) &&
+                                                               effectInstance.getDuration() > 0)
                                      .sorted()
                                      .collect(Collectors.toList());
             int totalEffectHeight = 0;

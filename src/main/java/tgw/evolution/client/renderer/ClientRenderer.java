@@ -876,7 +876,7 @@ public class ClientRenderer {
         while (!ClientEvents.EFFECTS_TO_ADD.isEmpty()) {
             EffectInstance addingInstance = ClientEvents.EFFECTS_TO_ADD.get(0);
             Effect addingEffect = addingInstance.getPotion();
-            if (!addingEffect.shouldRenderHUD(addingInstance)) {
+            if (!addingInstance.isShowIcon()) {
                 ClientEvents.EFFECTS_TO_ADD.remove(addingInstance);
                 ClientEvents.EFFECTS.add(addingInstance);
                 this.client.effectToAddTicks = 0;
