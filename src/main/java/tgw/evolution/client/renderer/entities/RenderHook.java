@@ -13,7 +13,7 @@ import javax.annotation.Nullable;
 
 public class RenderHook extends EntityRenderer<EntityHook> {
 
-    public static final ResourceLocation HOOK = Evolution.location("textures/entity/climbing_hook.png");
+    public static final ResourceLocation HOOK = Evolution.getResource("textures/entity/climbing_hook.png");
     private final ModelHook model = new ModelHook();
 
     public RenderHook(EntityRendererManager renderManager) {

@@ -22,7 +22,7 @@ public class ScreenKnapping extends Screen {
 
     private static final int WIDTH = 190;
     private static final int HEIGHT = 78;
-    private static final ResourceLocation GUI = Evolution.location("textures/gui/knapping.png");
+    private static final ResourceLocation GUI = Evolution.getResource("textures/gui/knapping.png");
     private final Map<Button, ItemStack> buttons = new HashMap<>();
     private final BlockPos pos;
     private final ItemStack[] stacks = new ItemStack[EnumKnapping.values().length - 1];

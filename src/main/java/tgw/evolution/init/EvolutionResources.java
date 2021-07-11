@@ -31,50 +31,50 @@ public final class EvolutionResources {
     public static final int BACK = 6;
     public static final int TACTICAL = 7;
     public static final ResourceLocation BUTTON_RECIPE_BOOK = new ResourceLocation("textures/gui/recipe_button.png");
-    public static final ResourceLocation GUI_CORPSE = Evolution.location("textures/gui/corpse.png");
-    public static final ResourceLocation GUI_ICONS = Evolution.location("textures/gui/icons.png");
-    public static final ResourceLocation GUI_INVENTORY = Evolution.location("textures/gui/inventory.png");
-    public static final ResourceLocation GUI_TABS = Evolution.location("textures/gui/tabs.png");
-    public static final ResourceLocation GUI_WIDGETS = Evolution.location("textures/gui/widgets.png");
-    public static final ResourceLocation GUI_WINDOW = Evolution.location("textures/gui/window.png");
-    public static final ResourceLocation PIT_KILN = Evolution.location("textures/block/pit_kiln.png");
-    public static final ResourceLocation[] PIT_LOGS = {Evolution.location("textures/block/pit_acacia.png"),
-                                                       Evolution.location("textures/block/pit_aspen.png"),
-                                                       Evolution.location("textures/block/pit_birch.png"),
-                                                       Evolution.location("textures/block/pit_cedar.png"),
-                                                       Evolution.location("textures/block/pit_ebony.png"),
-                                                       Evolution.location("textures/block/pit_elm.png"),
-                                                       Evolution.location("textures/block/pit_eucalyptus.png"),
-                                                       Evolution.location("textures/block/pit_fir.png"),
-                                                       Evolution.location("textures/block/pit_kapok.png"),
-                                                       Evolution.location("textures/block/pit_mangrove.png"),
-                                                       Evolution.location("textures/block/pit_maple.png"),
-                                                       Evolution.location("textures/block/pit_oak.png"),
-                                                       Evolution.location("textures/block/pit_old_oak.png"),
-                                                       Evolution.location("textures/block/pit_palm.png"),
-                                                       Evolution.location("textures/block/pit_pine.png"),
-                                                       Evolution.location("textures/block/pit_redwood.png"),
-                                                       Evolution.location("textures/block/pit_spruce.png"),
-                                                       Evolution.location("textures/block/pit_willow.png")};
+    public static final ResourceLocation GUI_CORPSE = Evolution.getResource("textures/gui/corpse.png");
+    public static final ResourceLocation GUI_ICONS = Evolution.getResource("textures/gui/icons.png");
+    public static final ResourceLocation GUI_INVENTORY = Evolution.getResource("textures/gui/inventory.png");
+    public static final ResourceLocation GUI_TABS = Evolution.getResource("textures/gui/tabs.png");
+    public static final ResourceLocation GUI_WIDGETS = Evolution.getResource("textures/gui/widgets.png");
+    public static final ResourceLocation GUI_WINDOW = Evolution.getResource("textures/gui/window.png");
+    public static final ResourceLocation PIT_KILN = Evolution.getResource("textures/block/pit_kiln.png");
+    public static final ResourceLocation[] PIT_LOGS = {Evolution.getResource("textures/block/pit_acacia.png"),
+                                                       Evolution.getResource("textures/block/pit_aspen.png"),
+                                                       Evolution.getResource("textures/block/pit_birch.png"),
+                                                       Evolution.getResource("textures/block/pit_cedar.png"),
+                                                       Evolution.getResource("textures/block/pit_ebony.png"),
+                                                       Evolution.getResource("textures/block/pit_elm.png"),
+                                                       Evolution.getResource("textures/block/pit_eucalyptus.png"),
+                                                       Evolution.getResource("textures/block/pit_fir.png"),
+                                                       Evolution.getResource("textures/block/pit_kapok.png"),
+                                                       Evolution.getResource("textures/block/pit_mangrove.png"),
+                                                       Evolution.getResource("textures/block/pit_maple.png"),
+                                                       Evolution.getResource("textures/block/pit_oak.png"),
+                                                       Evolution.getResource("textures/block/pit_old_oak.png"),
+                                                       Evolution.getResource("textures/block/pit_palm.png"),
+                                                       Evolution.getResource("textures/block/pit_pine.png"),
+                                                       Evolution.getResource("textures/block/pit_redwood.png"),
+                                                       Evolution.getResource("textures/block/pit_spruce.png"),
+                                                       Evolution.getResource("textures/block/pit_willow.png")};
     public static final ResourceLocation[] KNAPPING = new ResourceLocation[RockVariant.values().length];
-    public static final ResourceLocation MOLDING = Evolution.location("textures/block/molding_block.png");
-    public static final ResourceLocation SHADER_DESATURATE_25 = Evolution.location("shaders/post/saturation25.json");
-    public static final ResourceLocation SHADER_DESATURATE_50 = Evolution.location("shaders/post/saturation50.json");
-    public static final ResourceLocation SHADER_DESATURATE_75 = Evolution.location("shaders/post/saturation75.json");
-    public static final ResourceLocation FRESH_WATER = Evolution.location("block/fluid/fresh_water");
-    public static final ResourceLocation EMPTY = Evolution.location("empty");
+    public static final ResourceLocation MOLDING = Evolution.getResource("textures/block/molding_block.png");
+    public static final ResourceLocation SHADER_DESATURATE_25 = Evolution.getResource("shaders/post/saturation25.json");
+    public static final ResourceLocation SHADER_DESATURATE_50 = Evolution.getResource("shaders/post/saturation50.json");
+    public static final ResourceLocation SHADER_DESATURATE_75 = Evolution.getResource("shaders/post/saturation75.json");
+    public static final ResourceLocation FRESH_WATER = Evolution.getResource("block/fluid/fresh_water");
+    public static final ResourceLocation EMPTY = Evolution.getResource("empty");
     public static final ResourceLocation RES_MAP_BACKGROUND = new ResourceLocation("textures/map/map_background.png");
-    public static final ResourceLocation MOON_PHASES = Evolution.location("textures/environment/moon_phases.png");
-    public static final ResourceLocation MOONLIGHT = Evolution.location("textures/environment/moonlight_phases.png");
-    public static final ResourceLocation SUN = Evolution.location("textures/environment/sun.png");
-    public static final ResourceLocation SOLAR_ECLIPSE = Evolution.location("textures/environment/solar_eclipse.png");
-    public static final ResourceLocation LUNAR_ECLIPSE = Evolution.location("textures/environment/lunar_eclipse.png");
+    public static final ResourceLocation MOON_PHASES = Evolution.getResource("textures/environment/moon_phases.png");
+    public static final ResourceLocation MOONLIGHT = Evolution.getResource("textures/environment/moonlight_phases.png");
+    public static final ResourceLocation SUN = Evolution.getResource("textures/environment/sun.png");
+    public static final ResourceLocation SOLAR_ECLIPSE = Evolution.getResource("textures/environment/solar_eclipse.png");
+    public static final ResourceLocation LUNAR_ECLIPSE = Evolution.getResource("textures/environment/lunar_eclipse.png");
 
     static {
         for (RockVariant variant : RockVariant.values()) {
             if (variant != RockVariant.CLAY && variant != RockVariant.PEAT) {
                 //noinspection ObjectAllocationInLoop
-                KNAPPING[variant.getId()] = Evolution.location("textures/block/knapping_" + variant.getName() + ".png");
+                KNAPPING[variant.getId()] = Evolution.getResource("textures/block/knapping_" + variant.getName() + ".png");
             }
         }
     }

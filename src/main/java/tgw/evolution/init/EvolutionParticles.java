@@ -24,7 +24,6 @@ public final class EvolutionParticles {
     }
 
     public static void register() {
-        Evolution.LOGGER.debug("--------------------------registering particles");
         PARTICLES.register(FMLJavaModLoadingContext.get().getModEventBus());
     }
 

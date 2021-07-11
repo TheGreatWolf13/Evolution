@@ -158,7 +158,8 @@ public class EntityEvents {
     @SubscribeEvent
     public void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof PlayerEntity) {
-            event.addCapability(Evolution.location("extended_inventory"), new PlayerInventoryCapabilityProvider());
+            event.addCapability(Evolution.getResource("extended_inventory"), new PlayerInventoryCapabilityProvider());
+//            event.addCapability(Evolution.getResource("thirst"), new PlayerThirstCapabilityProvider());
         }
     }
 
@@ -289,7 +290,7 @@ public class EntityEvents {
             else if (source == DamageSource.DROWN) {
                 hitEntity.attackEntityFrom(EvolutionDamage.DROWN, 10.0f);
             }
-//            event.setCanceled(true);
+            event.setCanceled(true);
             return;
         }
         if (IGNORED_DAMAGE_SOURCES.contains(source)) {

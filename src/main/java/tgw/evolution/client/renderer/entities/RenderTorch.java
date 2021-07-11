@@ -13,7 +13,7 @@ import javax.annotation.Nullable;
 
 public class RenderTorch extends EntityRenderer<EntityTorch> {
 
-    public static final ResourceLocation TORCH = Evolution.location("textures/entity/torch.png");
+    public static final ResourceLocation TORCH = Evolution.getResource("textures/entity/torch.png");
     private final ModelTorch model = new ModelTorch();
 
     public RenderTorch(EntityRendererManager renderManager) {

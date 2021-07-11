@@ -22,7 +22,7 @@ public class ScreenMolding extends Screen {
 
     private static final int WIDTH = 190;
     private static final int HEIGHT = 78;
-    private static final ResourceLocation GUI = Evolution.location("textures/gui/molding.png");
+    private static final ResourceLocation GUI = Evolution.getResource("textures/gui/molding.png");
     private static final ItemStack[] STACKS = new ItemStack[EnumMolding.values().length - 1];
     private static final Map<Button, ItemStack> BUTTONS = new HashMap<>();
 

@@ -15,10 +15,10 @@ import tgw.evolution.util.MathHelper;
 public class RenderCow extends MobRenderer<EntityCow, ModelCow> {
 
     private static final ModelCow MODEL = new ModelCow();
-    private static final ResourceLocation DEFAULT = Evolution.location("textures/entity/cattle/cow.png");
-    private static final ResourceLocation SLEEPING = Evolution.location("textures/entity/cattle/cow_sleeping.png");
-    private static final ResourceLocation DEAD = Evolution.location("textures/entity/cattle/cow_dead.png");
-    private static final ResourceLocation SKELETON = Evolution.location("textures/entity/cattle/cow_skeleton.png");
+    private static final ResourceLocation DEFAULT = Evolution.getResource("textures/entity/cattle/cow.png");
+    private static final ResourceLocation SLEEPING = Evolution.getResource("textures/entity/cattle/cow_sleeping.png");
+    private static final ResourceLocation DEAD = Evolution.getResource("textures/entity/cattle/cow_dead.png");
+    private static final ResourceLocation SKELETON = Evolution.getResource("textures/entity/cattle/cow_skeleton.png");
 
     public RenderCow(EntityRendererManager manager) {
         super(manager, MODEL, 0.7F);

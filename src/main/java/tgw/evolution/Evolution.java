@@ -72,14 +72,14 @@ public final class Evolution {
         EvolutionParticles.register();
     }
 
+    public static ResourceLocation getResource(String name) {
+        return new ResourceLocation(MODID, name);
+    }
+
     private static void loadComplete(FMLLoadCompleteEvent event) {
         EvolutionBiomes.registerBiomes();
         EvolutionEntities.registerEntityWorldSpawns();
         BlockFire.init();
-    }
-
-    public static ResourceLocation location(String name) {
-        return new ResourceLocation(MODID, name);
     }
 
     @SubscribeEvent

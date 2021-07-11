@@ -32,7 +32,7 @@ public class ItemJavelin extends ItemGenericTool implements IThrowable, ISpear, 
         super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MATS, builder, ToolTypeEv.SPEAR);
         this.damage = damage;
         this.mass = mass;
-        this.modelTexture = Evolution.location("textures/entity/javelin/javelin_" + name + ".png");
+        this.modelTexture = Evolution.getResource("textures/entity/javelin/javelin_" + name + ".png");
         this.addPropertyOverride(new ResourceLocation("throwing"),
                                  (stack, world, entity) -> entity != null && entity.isHandActive() && entity.getActiveItemStack() == stack ?
                                                            1.0F :

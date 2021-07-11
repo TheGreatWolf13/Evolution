@@ -21,7 +21,7 @@ public class RenderPlayerCorpse extends EntityRenderer<EntityPlayerCorpse> {
     private static final ModelPlayerCorpse ALEX = new ModelPlayerCorpse(true);
     private static final ModelPlayerCorpse STEVE = new ModelPlayerCorpse(false);
     private static final ModelPlayerCorpse SKELETON = new ModelPlayerCorpse();
-    private static final ResourceLocation SKELETON_TEXTURE = Evolution.location("textures/entity/skeleton.png");
+    private static final ResourceLocation SKELETON_TEXTURE = Evolution.getResource("textures/entity/skeleton.png");
 
     public RenderPlayerCorpse(EntityRendererManager renderManager) {
         super(renderManager);

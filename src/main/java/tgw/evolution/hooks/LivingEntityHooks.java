@@ -686,11 +686,11 @@ public final class LivingEntityHooks {
         double motionX = motion.x;
         double motionY = motion.y;
         double motionZ = motion.z;
-        if (entity.world.isRemote) {
-            Evolution.LOGGER.debug("horizontal speed = {}    friction coeff = {}",
-                                   20 * MathHelper.sqrt(motionX * motionX + motionZ * motionZ),
-                                   frictionCoef);
-        }
+//        if (entity.world.isRemote) {
+//            Evolution.LOGGER.debug("horizontal speed = {}    friction coeff = {}",
+//                                   20 * MathHelper.sqrt(motionX * motionX + motionZ * motionZ),
+//                                   frictionCoef);
+//        }
         if ((entity.collidedHorizontally || isJumping) && entity.isOnLadder()) {
             motionY = BlockUtils.getLadderUpSpeed(entity.getBlockState());
         }

@@ -31,7 +31,7 @@ public final class ChunkStorageCapability {
     public static final Capability<IChunkStorage> CHUNK_STORAGE_CAPABILITY = InjectionUtil.Null();
     public static final Direction DEFAULT_FACING = null;
     public static final int DEFAULT_CAPACITY = 1_000_000;
-    private static final ResourceLocation ID = Evolution.location("storage");
+    private static final ResourceLocation ID = Evolution.getResource("storage");
 
     private ChunkStorageCapability() {
     }
