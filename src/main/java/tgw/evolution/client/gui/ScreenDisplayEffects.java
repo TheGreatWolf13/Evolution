@@ -68,6 +68,9 @@ public abstract class ScreenDisplayEffects<T extends Container> extends Containe
             this.drawActivePotionEffectsIcons();
             this.drawActivePotionEffectsNames();
         }
+        else {
+            this.effects.clear();
+        }
     }
 
     private void drawActivePotionEffectsBackgrounds() {
