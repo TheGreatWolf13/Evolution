@@ -192,7 +192,7 @@ public class BlockGravity extends BlockMass {
                                                              pos.getY(),
                                                              pos.getZ() + 0.5,
                                                              this.getStateForFalling(world.getBlockState(pos)));
-        world.setBlockState(pos, Blocks.AIR.getDefaultState(), BlockFlags.IS_MOVING + BlockFlags.NOTIFY_AND_UPDATE);
+        world.removeBlock(pos, true);
         entity.fallTime = 1;
         world.addEntity(entity);
         entity.playSound(this.fallSound(), 0.25F, 1.0F);

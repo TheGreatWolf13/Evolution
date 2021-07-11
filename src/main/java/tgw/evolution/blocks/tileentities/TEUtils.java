@@ -24,7 +24,7 @@ public final class TEUtils {
         try {
             consumer.accept((T) tile);
         }
-        catch (ClassCastException ignored) {
+        catch (Throwable ignored) {
             if (showError) {
                 Evolution.LOGGER.warn("Error while invoking method on {} as it has failed the instance test", tile);
             }
@@ -35,7 +35,7 @@ public final class TEUtils {
         try {
             return function.apply((T) tile);
         }
-        catch (ClassCastException ignored) {
+        catch (Throwable ignored) {
             return orElse;
         }
     }
