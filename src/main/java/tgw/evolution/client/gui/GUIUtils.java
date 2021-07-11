@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.Tessellator;
@@ -21,11 +22,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.common.ForgeConfig;
+import net.minecraftforge.fml.client.config.GuiUtils;
 import org.lwjgl.opengl.GL11;
 import tgw.evolution.init.EvolutionResources;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.List;
 import java.util.Random;
 
 public final class GUIUtils {
@@ -83,10 +86,7 @@ public final class GUIUtils {
                                          GlStateManager.DestFactor.ZERO);
         setColor(color);
         bufferbuilder.begin(7, DefaultVertexFormats.POSITION);
-        boolean xHigh = false;
-        if (x < x2) {
-            xHigh = true;
-        }
+        boolean xHigh = x < x2;
         bufferbuilder.pos(x, xHigh ? y + width : y, over ? 1 : 0).endVertex();
         bufferbuilder.pos(x2, xHigh ? y2 + width : y2, over ? 1 : 0).endVertex();
         bufferbuilder.pos(x2 + width, xHigh ? y2 : y2 + width, over ? 1 : 0).endVertex();
@@ -255,6 +255,14 @@ public final class GUIUtils {
                 abstractGui.blit(drawX, drawY, textureX, textureY, drawWidth, drawHeight);
             }
         }
+    }
+
+    public static void renderTooltip(Screen screen, List<String> tooltips, int mouseX, int mouseY) {
+        GuiUtils.drawHoveringText(tooltips, mouseX, mouseY, screen.width, screen.height, -1, Minecraft.getInstance().fontRenderer);
+    }
+
+    public static void renderTooltip(Screen screen, List<String> tooltips, int mouseX, int mouseY, int textLimit) {
+        GuiUtils.drawHoveringText(tooltips, mouseX, mouseY, screen.width, screen.height, textLimit, Minecraft.getInstance().fontRenderer);
     }
 
     public static void setColor(int color) {

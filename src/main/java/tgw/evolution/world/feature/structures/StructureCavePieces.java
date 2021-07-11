@@ -28,13 +28,13 @@ import tgw.evolution.world.puzzle.pieces.config.PlacementType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StructureCavePieces {
+public final class StructureCavePieces {
 
-    public static final ResourceLocation GEN_SUP = Evolution.location("gen_sup");
-    public static final ResourceLocation GEN_UND = Evolution.location("gen_und");
-    public static final ResourceLocation SUP = Evolution.location("sup");
-    public static final ResourceLocation CAV = Evolution.location("cav");
-    public static final ResourceLocation TERM = Evolution.location("term");
+    public static final ResourceLocation GEN_SUP = Evolution.getResource("gen_sup");
+    public static final ResourceLocation GEN_UND = Evolution.getResource("gen_und");
+    public static final ResourceLocation SUP = Evolution.getResource("sup");
+    public static final ResourceLocation CAV = Evolution.getResource("cav");
+    public static final ResourceLocation TERM = Evolution.getResource("term");
     //
     private static final List<Pair<PuzzlePiece, Integer>> CAV_LIST = new ArrayList<>();
     private static final List<Pair<PuzzlePiece, Integer>> TERM_LIST = new ArrayList<>();
@@ -98,11 +98,20 @@ public class StructureCavePieces {
             add(CAV_LIST, piece.getFirst(), 4);
         }
         //--//--//--//
-        PuzzleManager.REGISTRY.register(new PuzzlePattern(GEN_SUP, Evolution.location("empty"), ImmutableList.of(Pair.of(new SinglePuzzlePiece("evolution:caves/gen_sup/gen_sup"), 1)), PlacementType.RIGID));
-        PuzzleManager.REGISTRY.register(new PuzzlePattern(GEN_UND, Evolution.location("empty"), ImmutableList.of(Pair.of(new SinglePuzzlePiece("evolution:caves/gen_und/gen_und"), 1)), PlacementType.RIGID));
-        PuzzleManager.REGISTRY.register(new PuzzlePattern(SUP, Evolution.location("empty"), SUP_LIST, PlacementType.RIGID));
+        PuzzleManager.REGISTRY.register(new PuzzlePattern(GEN_SUP,
+                                                          Evolution.getResource("empty"),
+                                                          ImmutableList.of(Pair.of(new SinglePuzzlePiece("evolution:caves/gen_sup/gen_sup"), 1)),
+                                                          PlacementType.RIGID));
+        PuzzleManager.REGISTRY.register(new PuzzlePattern(GEN_UND,
+                                                          Evolution.getResource("empty"),
+                                                          ImmutableList.of(Pair.of(new SinglePuzzlePiece("evolution:caves/gen_und/gen_und"), 1)),
+                                                          PlacementType.RIGID));
+        PuzzleManager.REGISTRY.register(new PuzzlePattern(SUP, Evolution.getResource("empty"), SUP_LIST, PlacementType.RIGID));
         PuzzleManager.REGISTRY.register(new PuzzlePattern(CAV, TERM, CAV_LIST, PlacementType.RIGID));
-        PuzzleManager.REGISTRY.register(new PuzzlePattern(TERM, Evolution.location("empty"), TERM_LIST, PlacementType.RIGID));
+        PuzzleManager.REGISTRY.register(new PuzzlePattern(TERM, Evolution.getResource("empty"), TERM_LIST, PlacementType.RIGID));
+    }
+
+    private StructureCavePieces() {
     }
 
     private static void add(List<Pair<PuzzlePiece, Integer>> list, String local, int weight, CaveConfigPuzzle caveConfig) {
@@ -113,7 +122,12 @@ public class StructureCavePieces {
         list.add(Pair.of(piece, weight));
     }
 
-    public static void start(ChunkGenerator<?> generator, TemplateManager manager, BlockPos pos, List<StructurePiece> pieces, SharedSeedRandom random, IConfigStruct config) {
+    public static void start(ChunkGenerator<?> generator,
+                             TemplateManager manager,
+                             BlockPos pos,
+                             List<StructurePiece> pieces,
+                             SharedSeedRandom random,
+                             IConfigStruct config) {
         int size = 10;
         if (((ConfigStructCave) config).hasEntrance()) {
             PuzzleManager.startGeneration(GEN_SUP, size, StructureCavePieces.Piece::new, generator, manager, pos, pieces, random, config);
@@ -125,7 +139,12 @@ public class StructureCavePieces {
 
     public static class Piece extends StructurePuzzlePiece {
 
-        public Piece(TemplateManager templateManagerIn, PuzzlePiece jigsawPieceIn, BlockPos posIn, int groundLevelDelta, Rotation rotationIn, MutableBoundingBox boundsIn) {
+        public Piece(TemplateManager templateManagerIn,
+                     PuzzlePiece jigsawPieceIn,
+                     BlockPos posIn,
+                     int groundLevelDelta,
+                     Rotation rotationIn,
+                     MutableBoundingBox boundsIn) {
             super(EvolutionFeatures.PIECE_CAVE, templateManagerIn, jigsawPieceIn, posIn, groundLevelDelta, rotationIn, boundsIn);
         }
 

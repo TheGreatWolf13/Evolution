@@ -12,6 +12,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import tgw.evolution.Evolution;
 import tgw.evolution.potion.EffectDizziness;
 import tgw.evolution.potion.EffectGeneric;
+import tgw.evolution.potion.EffectWaterIntoxication;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,8 +20,9 @@ import java.util.List;
 public final class EvolutionEffects {
 
     public static final DeferredRegister<Effect> EFFECTS = new DeferredRegister<>(ForgeRegistries.POTIONS, Evolution.MODID);
-    public static final RegistryObject<Effect> DIZZINESS = EFFECTS.register("dizziness", EffectDizziness::new);
     public static final RegistryObject<Effect> DISORIENTED = EFFECTS.register("disoriented", () -> new EffectGeneric(EffectType.HARMFUL, 0xed_a677));
+    public static final RegistryObject<Effect> DIZZINESS = EFFECTS.register("dizziness", EffectDizziness::new);
+    public static final RegistryObject<Effect> WATER_INTOXICATION = EFFECTS.register("water_intoxication", EffectWaterIntoxication::new);
 
     private EvolutionEffects() {
     }

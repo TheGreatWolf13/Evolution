@@ -15,6 +15,7 @@ import javax.annotation.Nullable;
 
 public final class EvolutionDamage {
 
+    public static final DamageSource DEHYDRATION = new DamageSourceEv("dehydration", Type.SICKNESS).setDamageBypassesArmor().setDamageIsAbsolute();
     public static final DamageSource DROWN = new DamageSourceEv("drown", Type.DROWNING).setDamageBypassesArmor();
     public static final DamageSource FALL = new DamageSourceEv("fall_damage", Type.IMPACT).setDamageBypassesArmor();
     public static final DamageSource FALLING_METAL = new DamageSourceEv("falling_metal", Type.CRUSHING).setDamageBypassesArmor();
@@ -28,6 +29,8 @@ public final class EvolutionDamage {
     public static final DamageSource VOID = new DamageSourceEv("outOfWorld", Type.VOID).setDamageBypassesArmor().setDamageAllowedInCreativeMode();
     public static final DamageSource WALL_IMPACT = new DamageSourceEv("wall_impact", Type.IMPACT).setDamageBypassesArmor();
     public static final DamageSource WATER_IMPACT = new DamageSourceEv("water_impact", Type.IMPACT).setDamageBypassesArmor();
+    public static final DamageSource WATER_INTOXICATION = new DamageSourceEv("water_intoxication", Type.SICKNESS).setDamageBypassesArmor()
+                                                                                                                 .setDamageIsAbsolute();
 
     private EvolutionDamage() {
     }
@@ -59,6 +62,7 @@ public final class EvolutionDamage {
         GENERIC("generic"),
         IMPACT("impact"),
         PIERCING("piercing"),
+        SICKNESS("sickness"),
         SLASHING("slashing"),
         SUFFOCATION("suffocation"),
         VOID("void");

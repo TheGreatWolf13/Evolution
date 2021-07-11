@@ -136,7 +136,7 @@ public abstract class ScreenDisplayEffects<T extends Container> extends Containe
                                                                                        .getFormattedText());
                 TOOLTIPS.add("");
                 EvolutionEffects.getEffectDescription(TOOLTIPS, effect.getPotion(), effect.getAmplifier());
-                this.renderTooltip(TOOLTIPS, mouseX, mouseY);
+                GUIUtils.renderTooltip(this, TOOLTIPS, mouseX, mouseY, 250);
                 break;
             }
             i += this.effectHeight;
