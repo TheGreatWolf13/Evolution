@@ -1104,13 +1104,15 @@ public class ClientRenderer {
             this.mc.getTextureManager().bindTexture(AtlasTexture.LOCATION_EFFECTS_TEXTURE);
             GlStateManager.color4f(1.0F, 1.0F, 1.0F, alpha);
             AbstractGui.blit(x + 3, y + 3, 0, 18, 18, potionSprites);
-            GlStateManager.pushMatrix();
-            GlStateManager.scalef(0.5f, 0.5f, 0.5f);
-            this.mc.fontRenderer.drawStringWithShadow(MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(addingInstance) + 1),
-                                                      (x + 3) * 2,
-                                                      (y + 17) * 2,
-                                                      0xff_ffff);
-            GlStateManager.popMatrix();
+            if (addingInstance.getAmplifier() != 0) {
+                GlStateManager.pushMatrix();
+                GlStateManager.scalef(0.5f, 0.5f, 0.5f);
+                this.mc.fontRenderer.drawStringWithShadow(MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(addingInstance) + 1),
+                                                          (x + 3) * 2,
+                                                          (y + 17) * 2,
+                                                          0xff_ffff);
+                GlStateManager.popMatrix();
+            }
             this.client.shouldPassEffectTick = true;
             if (this.client.effectToAddTicks == 20) {
                 this.client.effectToAddTicks = 0;
@@ -1164,13 +1166,13 @@ public class ClientRenderer {
                     this.mc.getTextureManager().bindTexture(AtlasTexture.LOCATION_EFFECTS_TEXTURE);
                     GlStateManager.color4f(1.0F, 1.0F, 1.0F, finalAlpha);
                     AbstractGui.blit(x + 3, y + 3, -90, 18, 18, potionSprites);
-                    GlStateManager.pushMatrix();
-                    GlStateManager.scalef(0.5f, 0.5f, 0.5f);
-                    this.mc.fontRenderer.drawStringWithShadow(MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(effectInstance) + 1),
-                                                              (x + 3) * 2,
-                                                              (y + 17) * 2,
-                                                              0xff_ffff);
-                    GlStateManager.popMatrix();
+                    if (effectInstance.getAmplifier() != 0) {
+                        GlStateManager.pushMatrix();
+                        GlStateManager.scalef(0.5f, 0.5f, 0.5f);
+                        this.mc.fontRenderer.drawStringWithShadow(MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(effectInstance) +
+                                                                                            1), (x + 3) * 2, (y + 17) * 2, 0xff_ffff);
+                        GlStateManager.popMatrix();
+                    }
                 }
             }
         }
