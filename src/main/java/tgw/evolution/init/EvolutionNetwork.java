@@ -158,5 +158,10 @@ public final class EvolutionNetwork {
                                  PacketSCPlaySoundEntityEmitted::encode,
                                  PacketSCPlaySoundEntityEmitted::decode,
                                  PacketSCPlaySoundEntityEmitted::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCThirstData.class,
+                                 PacketSCThirstData::encode,
+                                 PacketSCThirstData::decode,
+                                 PacketSCThirstData::handle);
     }
 }

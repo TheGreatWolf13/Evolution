@@ -12,7 +12,7 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
+import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 
 public class ItemChunkStorageGetter extends ItemEv {
@@ -29,8 +29,13 @@ public class ItemChunkStorageGetter extends ItemEv {
         if (!worldIn.isRemote) {
             Chunk chunk = worldIn.getChunkAt(new BlockPos(playerIn));
             ChunkPos chunkPos = chunk.getPos();
-            ChunkStorageCapability.getChunkStorage(chunk).map(chunkStorages -> {
-                playerIn.sendMessage(new TranslationTextComponent("Chunk " + chunkPos + " contains " + chunkStorages.getElementStored(this.element) + " " + this.element.getName()));
+            CapabilityChunkStorage.getChunkStorage(chunk).map(chunkStorages -> {
+                playerIn.sendMessage(new TranslationTextComponent("Chunk " +
+                                                                  chunkPos +
+                                                                  " contains " +
+                                                                  chunkStorages.getElementStored(this.element) +
+                                                                  " " +
+                                                                  this.element.getName()));
                 return true;
             }).orElseGet(() -> {
                 playerIn.sendMessage(new StringTextComponent("No chunk storage found for chunk " + chunkPos));

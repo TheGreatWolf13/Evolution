@@ -1,6 +1,41 @@
 package tgw.evolution.util;
 
 public enum PlayerNutrients {
+
+    //Daily recommendations:
+    //      Protein: 64g/day
+    //      Fiber: 30g/day
+    //      Vitamin A: 900µg/day
+    //      Iron: 8mg/day
+    //      Sodium: 690mg/day
+    //      Potassium: 3.8g/day
+    //      Zinc: 14mg/day
+    //      Magnesium: 400mg/day
+    //      Iodine: 150µg/day
+    //      Calcium: 1g/day
+    //      Vitamin C: 45mg/day
+    //      Vitamin B9 (Folate): 400µg/day
+    //      Vitamin B12: 2.4µg/day
+    //      Vitamin B6: 1.3mg/day
+    //      Vitamin B3 (Niacin): 16mg/day
+    //      Vitamin B2 (Riboflavin): 1.3mg/day
+    //      Vitamin B1 (Thiamin): 1.2mg/day
+
+    //
+    //Base data:
+    //      Volume of blood in human body: 5L
+    //      Stored Calories in player hunger bar: 3000kcal
+    //      Base consumption per day (sedentary): 2500kcal
+    //      Each hunger drumstick represents 300kcal and each half drumstick represents 150kcal
+    //      Water consumption: 2.5L/day
+    //
+    //Nutrient
+    //      Mineral
+    //          Iron
+    //              Consumption: 12 mg/day
+    //              Absorption: 5 ~ 10%
+    //
+
     //Alcohol               //Calories = 7kcal/g (29kJ/g)
     //Carbohydrates         //Calories = 4kcal/g (17kJ/g)       130g/day
     //Fat                   //Calories = 9kcal/g (37kJ/g), cold resistance              65g/day (???)
@@ -9,7 +44,7 @@ public enum PlayerNutrients {
     //Minerals
     //      Calcium         //Muscles, Circulatory, Digestive, BONES
     //      Iodine          //Thyroid hormones
-    //      Iron            //Hemoglobin                        14.8mg/day
+    //      Iron            //Hemoglobin                        15 mg/day
     //      Magnesium       //Catalyst for DNA and RNA making
     //      Phosphorus      //Bones, energy, DNA, RNA
     //      Potassium       //Electrolyte (nerves and heart)
@@ -37,12 +72,12 @@ public enum PlayerNutrients {
     //    VITAMIN_D(14, "vitamin_d", 1f),
     //    VITAMIN_K(15, "vitamin_k", 1f),
     ;
-    private final String name;
-    private final int id;
     private final float baseAdherence;
+    private final int id;
     private final int lowerLimit;
-    private final int upperLimit;
+    private final String name;
     private final String unit;
+    private final int upperLimit;
 
     PlayerNutrients(int id, String name, float baseAdherence, int lowerLimit, int upperLimit, String unit) {
         this.id = id;
@@ -53,27 +88,27 @@ public enum PlayerNutrients {
         this.unit = unit;
     }
 
-    public String getName() {
-        return this.name;
+    public float getBaseAdherence() {
+        return this.baseAdherence;
     }
 
     public int getId() {
         return this.id;
     }
 
-    public float getBaseAdherence() {
-        return this.baseAdherence;
-    }
-
     public int getLowerLimit() {
         return this.lowerLimit;
     }
 
-    public int getUpperLimit() {
-        return this.upperLimit;
+    public String getName() {
+        return this.name;
     }
 
     public String getUnit() {
         return this.unit;
+    }
+
+    public int getUpperLimit() {
+        return this.upperLimit;
     }
 }

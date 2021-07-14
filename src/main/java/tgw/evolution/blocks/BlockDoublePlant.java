@@ -22,7 +22,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.util.Constants;
-import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
+import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.BlockFlags;
 import tgw.evolution.util.NutrientHelper;
@@ -123,7 +123,7 @@ public class BlockDoublePlant extends BlockBush {
 
     @Override
     public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
-        ChunkStorageCapability.addElements(world.getChunkAt(pos), NutrientHelper.DECAY_TALL_GRASS);
+        CapabilityChunkStorage.addElements(world.getChunkAt(pos), NutrientHelper.DECAY_TALL_GRASS);
     }
 
     @Override

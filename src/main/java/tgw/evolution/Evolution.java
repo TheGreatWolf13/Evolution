@@ -20,8 +20,6 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import tgw.evolution.blocks.BlockFire;
-import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
-import tgw.evolution.capabilities.inventory.PlayerInventoryCapability;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ChunkEvents;
 import tgw.evolution.events.EntityEvents;
@@ -92,8 +90,7 @@ public final class Evolution {
         new EvWorldFlat();
         PROXY.init();
         EvolutionNetwork.registerMessages();
-        ChunkStorageCapability.register();
-        PlayerInventoryCapability.register();
+        EvolutionCapabilities.register();
         MinecraftForge.EVENT_BUS.register(new WorldEvents());
         //        MinecraftForge.EVENT_BUS.register(new FallingEvents());
         MinecraftForge.EVENT_BUS.register(new ChunkEvents());

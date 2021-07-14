@@ -32,7 +32,7 @@ import net.minecraftforge.event.ForgeEventFactory;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.*;
 import tgw.evolution.blocks.tileentities.TELiquid;
-import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
+import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.util.DirectionList;
@@ -285,7 +285,7 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
         if (currentAmount == 0) {
             return;
         }
-        ChunkStorageCapability.add(world.getChunkAt(pos), EnumStorage.WATER, currentAmount);
+        CapabilityChunkStorage.add(world.getChunkAt(pos), EnumStorage.WATER, currentAmount);
     }
 
     @Override

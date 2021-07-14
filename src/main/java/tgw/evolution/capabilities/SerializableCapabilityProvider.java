@@ -20,27 +20,27 @@ public class SerializableCapabilityProvider<HANDLER> extends SimpleCapabilityPro
         super(capability, facing, instance);
     }
 
-    @Nullable
-    @Override
-    public INBT serializeNBT() {
-        HANDLER instance = this.getInstance();
-
-        if (instance == null) {
-            return null;
-        }
-
-        return this.getCapability().writeNBT(instance, this.getFacing());
+    public SerializableCapabilityProvider(Capability<HANDLER> capability, @Nullable HANDLER instance) {
+        super(capability, null, instance);
     }
 
     @Override
     public void deserializeNBT(INBT nbt) {
-        HANDLER instance = this.getInstance();
-
+        HANDLER instance = this.getHandler();
         if (instance == null) {
             return;
         }
-
         this.getCapability().readNBT(instance, this.getFacing(), nbt);
+    }
+
+    @Nullable
+    @Override
+    public INBT serializeNBT() {
+        HANDLER instance = this.getHandler();
+        if (instance == null) {
+            return null;
+        }
+        return this.getCapability().writeNBT(instance, this.getFacing());
     }
 
 }

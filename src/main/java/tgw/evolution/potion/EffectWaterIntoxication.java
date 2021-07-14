@@ -29,11 +29,11 @@ public class EffectWaterIntoxication extends Effect {
     public void performEffect(LivingEntity entity, int amplifier) {
         if (amplifier > 0) {
             entity.attackEntityFrom(EvolutionDamage.WATER_INTOXICATION, amplifier);
-            if (!entity.isPotionActive(Effects.NAUSEA) && RANDOM.nextFloat() < 0.15) {
-                entity.addPotionEffect(new EffectInstance(Effects.NAUSEA, 400, 1, true, false, false));
+            if (!entity.isPotionActive(Effects.NAUSEA) && RANDOM.nextFloat() < 0.15 * amplifier) {
+                entity.addPotionEffect(new EffectInstance(Effects.NAUSEA, 400 * amplifier, amplifier, true, false, false));
             }
-            if (!entity.isPotionActive(Effects.WEAKNESS) && RANDOM.nextFloat() < 0.15) {
-                entity.addPotionEffect(new EffectInstance(Effects.WEAKNESS, 400, 1, true, false, false));
+            if (!entity.isPotionActive(Effects.WEAKNESS) && RANDOM.nextFloat() < 0.15 * amplifier) {
+                entity.addPotionEffect(new EffectInstance(Effects.WEAKNESS, 400 * amplifier, amplifier, true, false, false));
             }
         }
         else {

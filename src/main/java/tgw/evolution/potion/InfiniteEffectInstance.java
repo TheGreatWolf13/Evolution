@@ -6,12 +6,13 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
-import net.minecraftforge.common.util.Constants;
 import tgw.evolution.Evolution;
 import tgw.evolution.hooks.EvolutionHook;
+import tgw.evolution.util.NBTTypes;
 import tgw.evolution.util.reflection.FieldHandler;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class InfiniteEffectInstance extends EffectInstance {
@@ -45,6 +46,19 @@ public class InfiniteEffectInstance extends EffectInstance {
         this.tick = tick;
     }
 
+    public InfiniteEffectInstance(EffectInstance other) {
+        super(other.getPotion(),
+              other instanceof InfiniteEffectInstance && ((InfiniteEffectInstance) other).infinite ? Integer.MAX_VALUE : other.getDuration(),
+              other.getAmplifier(),
+              other.isAmbient(),
+              other.doesShowParticles(),
+              other.isShowIcon());
+        this.infinite = other instanceof InfiniteEffectInstance && ((InfiniteEffectInstance) other).infinite;
+        if (this.infinite) {
+            this.tick = ((InfiniteEffectInstance) other).tick;
+        }
+    }
+
     @Nullable
     @EvolutionHook
     public static EffectInstance read(CompoundNBT nbt) {
@@ -57,11 +71,11 @@ public class InfiniteEffectInstance extends EffectInstance {
         int duration = nbt.getInt("Duration");
         boolean ambient = nbt.getBoolean("Ambient");
         boolean showParticles = true;
-        if (nbt.contains("ShowParticles", 1)) {
+        if (nbt.contains("ShowParticles", NBTTypes.BOOLEAN)) {
             showParticles = nbt.getBoolean("ShowParticles");
         }
         boolean showIcon = showParticles;
-        if (nbt.contains("ShowIcon", 1)) {
+        if (nbt.contains("ShowIcon", NBTTypes.BOOLEAN)) {
             showIcon = nbt.getBoolean("ShowIcon");
         }
         if (nbt.getBoolean("Infinite")) {
@@ -72,9 +86,9 @@ public class InfiniteEffectInstance extends EffectInstance {
     }
 
     private static EffectInstance readCurativeItems(EffectInstance effect, CompoundNBT nbt) {
-        if (nbt.contains("CurativeItems", Constants.NBT.TAG_LIST)) {
-            List<ItemStack> items = new java.util.ArrayList<>();
-            ListNBT list = nbt.getList("CurativeItems", Constants.NBT.TAG_COMPOUND);
+        if (nbt.contains("CurativeItems", NBTTypes.LIST_NBT)) {
+            List<ItemStack> items = new ArrayList<>();
+            ListNBT list = nbt.getList("CurativeItems", NBTTypes.COMPOUND_NBT);
             for (int i = 0; i < list.size(); i++) {
                 items.add(ItemStack.read(list.getCompound(i)));
             }

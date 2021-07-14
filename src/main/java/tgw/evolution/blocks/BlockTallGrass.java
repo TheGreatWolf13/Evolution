@@ -12,7 +12,7 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IShearable;
-import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
+import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.util.NutrientHelper;
@@ -50,7 +50,7 @@ public class BlockTallGrass extends BlockBush implements IShearable {
 
     @Override
     public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        ChunkStorageCapability.getChunkStorage(worldIn, worldIn.getChunk(pos).getPos()).map(chunkStorages -> {
+        CapabilityChunkStorage.getChunkStorage(worldIn, worldIn.getChunk(pos).getPos()).map(chunkStorages -> {
             chunkStorages.addMany(NutrientHelper.DECAY_TALL_GRASS);
             return true;
         }).orElseGet(() -> false);

@@ -103,7 +103,7 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     @Override
     protected void readAdditional(CompoundNBT compound) {
         this.fallTime = compound.getInt("Time");
-        if (compound.contains("Layers", NBTTypes.BYTE.getId())) {
+        if (compound.contains("Layers", NBTTypes.BYTE)) {
             this.layers = compound.getByte("Layers");
         }
     }

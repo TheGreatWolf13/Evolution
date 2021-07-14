@@ -6,8 +6,8 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.LogicalSidedProvider;
 import net.minecraftforge.fml.network.NetworkEvent;
+import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorage;
-import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.capabilities.chunkstorage.IChunkStorage;
 
@@ -16,14 +16,14 @@ import java.util.function.Supplier;
 
 public class PacketSCUpdateChunkStorage implements IPacket {
 
+    private final int carbonDioxide;
     private final ChunkPos chunkPos;
+    private final int gasNitrogen;
     private final int nitrogen;
+    private final int oxygen;
     private final int phosphorus;
     private final int potassium;
     private final int water;
-    private final int carbonDioxide;
-    private final int oxygen;
-    private final int gasNitrogen;
 
     public PacketSCUpdateChunkStorage(IChunkStorage chunkStorage) {
         this.chunkPos = chunkStorage.getChunkPos();
@@ -81,7 +81,7 @@ public class PacketSCUpdateChunkStorage implements IPacket {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
                 Optional<World> optionalWorld = LogicalSidedProvider.CLIENTWORLD.get(context.get().getDirection().getReceptionSide());
-                optionalWorld.ifPresent(world -> ChunkStorageCapability.getChunkStorage(world, packet.chunkPos).ifPresent(chunkStorage -> {
+                optionalWorld.ifPresent(world -> CapabilityChunkStorage.getChunkStorage(world, packet.chunkPos).ifPresent(chunkStorage -> {
                     if (!(chunkStorage instanceof ChunkStorage)) {
                         return;
                     }

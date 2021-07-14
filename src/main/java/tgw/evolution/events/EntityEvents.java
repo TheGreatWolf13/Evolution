@@ -15,6 +15,7 @@ import net.minecraft.fluid.IFluidState;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.*;
@@ -37,9 +38,11 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
-import tgw.evolution.capabilities.inventory.PlayerInventoryCapability;
-import tgw.evolution.capabilities.inventory.PlayerInventoryCapabilityProvider;
-import tgw.evolution.capabilities.thirst.PlayerThirstCapabilityProvider;
+import tgw.evolution.capabilities.SerializableCapabilityProvider;
+import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
+import tgw.evolution.capabilities.thirst.CapabilityThirst;
+import tgw.evolution.capabilities.thirst.IThirst;
+import tgw.evolution.capabilities.thirst.ThirstStats;
 import tgw.evolution.entities.EntityGenericCreature;
 import tgw.evolution.entities.IAgressive;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
@@ -159,25 +162,40 @@ public class EntityEvents {
     @SubscribeEvent
     public void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof PlayerEntity) {
-            event.addCapability(Evolution.getResource("extended_inventory"), new PlayerInventoryCapabilityProvider());
-            event.addCapability(Evolution.getResource("thirst"), new PlayerThirstCapabilityProvider());
+            event.addCapability(Evolution.getResource("extended_inventory"),
+                                new SerializableCapabilityProvider<>(CapabilityExtendedInventory.INSTANCE, new ContainerExtendedHandler()));
+            event.addCapability(Evolution.getResource("thirst"), new SerializableCapabilityProvider<>(CapabilityThirst.INSTANCE, new ThirstStats()));
         }
     }
 
     @SubscribeEvent
     public void cloneCapabilitiesEvent(PlayerEvent.Clone event) {
+        if (event.getOriginal().world.isRemote) {
+            return;
+        }
         try {
             ContainerExtendedHandler handler = (ContainerExtendedHandler) event.getOriginal()
-                                                                               .getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY)
+                                                                               .getCapability(CapabilityExtendedInventory.INSTANCE)
                                                                                .orElseThrow(IllegalStateException::new);
             CompoundNBT nbt = handler.serializeNBT();
             ContainerExtendedHandler handlerClone = (ContainerExtendedHandler) event.getPlayer()
-                                                                                    .getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY)
+                                                                                    .getCapability(CapabilityExtendedInventory.INSTANCE)
                                                                                     .orElseThrow(IllegalStateException::new);
             handlerClone.deserializeNBT(nbt);
         }
         catch (Exception e) {
             Evolution.LOGGER.error("Could not clone player [" + event.getOriginal().getName() + "] extended inventory when changing dimensions");
+        }
+        try {
+            ThirstStats handler = (ThirstStats) event.getOriginal().getCapability(CapabilityThirst.INSTANCE).orElseThrow(IllegalStateException::new);
+            CompoundNBT nbt = handler.serializeNBT();
+            ThirstStats handlerClone = (ThirstStats) event.getPlayer()
+                                                          .getCapability(CapabilityThirst.INSTANCE)
+                                                          .orElseThrow(IllegalStateException::new);
+            handlerClone.deserializeNBT(nbt);
+        }
+        catch (Exception e) {
+            Evolution.LOGGER.error("Could not clone player [" + event.getOriginal().getName() + "] thirst data when changing dimensions");
         }
     }
 
@@ -489,25 +507,43 @@ public class EntityEvents {
             else {
                 player.getAttribute(PlayerEntity.REACH_DISTANCE).setBaseValue(PlayerHelper.REACH_DISTANCE);
             }
-            //Handles Player health regeneration
-            if (!player.world.isRemote && player.world.getGameRules().getBoolean(GameRules.NATURAL_REGENERATION)) {
-                UUID uuid = player.getUniqueID();
-                if (player.hurtTime > 0) {
-                    this.playerTimeSinceLastHit.put(uuid, 0);
-                }
-                else {
-                    int time = this.playerTimeSinceLastHit.getOrDefault(uuid, 0) + 1;
-                    if (time == 100) {
+            //Handles Status Updates
+            if (!player.world.isRemote) {
+                //Handles Player health regeneration
+                if (player.world.getGameRules().getBoolean(GameRules.NATURAL_REGENERATION)) {
+                    UUID uuid = player.getUniqueID();
+                    if (player.hurtTime > 0) {
                         this.playerTimeSinceLastHit.put(uuid, 0);
-                        if (player.shouldHeal()) {
-                            float currentHealth = MathHelper.clampMin(player.getHealth(), 1);
-                            float healAmount = currentHealth / 100;
-                            player.setHealth(currentHealth + healAmount);
-                        }
                     }
                     else {
-                        this.playerTimeSinceLastHit.put(uuid, time);
+                        int time = this.playerTimeSinceLastHit.getOrDefault(uuid, 0) + 1;
+                        if (time == 100) {
+                            this.playerTimeSinceLastHit.put(uuid, 0);
+                            if (player.shouldHeal()) {
+                                float currentHealth = MathHelper.clampMin(player.getHealth(), 1);
+                                float healAmount = currentHealth / 100;
+                                player.setHealth(player.getHealth() + healAmount);
+                            }
+                        }
+                        else {
+                            this.playerTimeSinceLastHit.put(uuid, time);
+                        }
                     }
+                }
+                if (player.shouldHeal() && player.isPotionActive(Effects.REGENERATION)) {
+                    EffectInstance instance = player.getActivePotionEffect(Effects.REGENERATION);
+                    int timer = 50 >> instance.getAmplifier();
+                    if (timer < 1) {
+                        timer = 1;
+                    }
+                    if (instance.getDuration() % timer == 0) {
+                        player.setHealth(player.getHealth() + 1);
+                    }
+                }
+                //Ticks Player Thirst system
+                if (!player.isCreative() && !player.isSpectator()) {
+                    IThirst thirst = player.getCapability(CapabilityThirst.INSTANCE).orElseThrow(IllegalStateException::new);
+                    thirst.tick((ServerPlayerEntity) player);
                 }
             }
         }

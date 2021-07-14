@@ -25,15 +25,15 @@ import tgw.evolution.util.InjectionUtil;
 
 import java.util.Map;
 
-public final class ChunkStorageCapability {
+public final class CapabilityChunkStorage {
 
     @CapabilityInject(IChunkStorage.class)
-    public static final Capability<IChunkStorage> CHUNK_STORAGE_CAPABILITY = InjectionUtil.Null();
+    public static final Capability<IChunkStorage> INSTANCE = InjectionUtil.Null();
     public static final Direction DEFAULT_FACING = null;
     public static final int DEFAULT_CAPACITY = 1_000_000;
     private static final ResourceLocation ID = Evolution.getResource("storage");
 
-    private ChunkStorageCapability() {
+    private CapabilityChunkStorage() {
     }
 
     public static void add(Chunk chunk, EnumStorage storage, int value) {
@@ -60,7 +60,7 @@ public final class ChunkStorageCapability {
     }
 
     public static LazyOptional<IChunkStorage> getChunkStorage(Chunk chunk) {
-        return chunk.getCapability(CHUNK_STORAGE_CAPABILITY, DEFAULT_FACING);
+        return chunk.getCapability(INSTANCE, DEFAULT_FACING);
     }
 
     public static LazyOptional<IChunkStorage> getChunkStorage(World world, ChunkPos chunkPos) {
@@ -98,7 +98,7 @@ public final class ChunkStorageCapability {
                                                  instance.getElementStored(EnumStorage.ORGANIC)});
             }
         }, () -> {
-            throw new IllegalStateException("Could not register Capability ChunkStorage");
+            throw new IllegalStateException("Could not register CapabilityChunkStorage");
         });
     }
 
@@ -127,7 +127,7 @@ public final class ChunkStorageCapability {
         public static void attachChunkCapabilities(AttachCapabilitiesEvent<Chunk> event) {
             Chunk chunk = event.getObject();
             IChunkStorage chunkStorages = new ChunkStorage(DEFAULT_CAPACITY, chunk.getWorld(), chunk.getPos());
-            event.addCapability(ID, new SerializableCapabilityProvider<>(CHUNK_STORAGE_CAPABILITY, DEFAULT_FACING, chunkStorages));
+            event.addCapability(ID, new SerializableCapabilityProvider<>(INSTANCE, DEFAULT_FACING, chunkStorages));
         }
 
         @SubscribeEvent

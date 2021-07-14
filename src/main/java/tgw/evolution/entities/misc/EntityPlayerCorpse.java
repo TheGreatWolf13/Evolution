@@ -34,7 +34,7 @@ import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
-import tgw.evolution.capabilities.inventory.PlayerInventoryCapability;
+import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.corpse.ContainerCorpseProvider;
@@ -209,7 +209,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         if (compound.hasUniqueId("PlayerUUID")) {
             this.playerUUID = compound.getUniqueId("PlayerUUID");
         }
-        if (compound.contains("PlayerName", NBTTypes.STRING.getId())) {
+        if (compound.contains("PlayerName", NBTTypes.STRING)) {
             this.playerName = compound.getString("PlayerName");
         }
         this.setPlayerProfile(new GameProfile(this.playerUUID, this.playerName));
@@ -251,8 +251,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
             this.itemHandler.setStackInSlot(4 + i, stack);
             inv.set(i, ItemStack.EMPTY);
         }
-        IExtendedItemHandler handler = player.getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY)
-                                             .orElseThrow(IllegalStateException::new);
+        IExtendedItemHandler handler = player.getCapability(CapabilityExtendedInventory.INSTANCE).orElseThrow(IllegalStateException::new);
         for (int i = 0; i < handler.getSlots(); i++) {
             ItemStack stack = handler.getStackInSlot(i);
             handler.setStackInSlot(i, ItemStack.EMPTY);

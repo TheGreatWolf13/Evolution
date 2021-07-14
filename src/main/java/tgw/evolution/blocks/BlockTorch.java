@@ -33,7 +33,7 @@ import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.blocks.tileentities.ILoggable;
 import tgw.evolution.blocks.tileentities.TETorch;
 import tgw.evolution.blocks.tileentities.TEUtils;
-import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
+import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.init.EvolutionHitBoxes;
@@ -172,7 +172,7 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
         if (!world.getFluidState(pos).isEmpty()) {
             return this.getDefaultState().with(LIT, false);
         }
-        if (ChunkStorageCapability.contains(world.getChunkAt(pos), EnumStorage.OXYGEN, 1)) {
+        if (CapabilityChunkStorage.contains(world.getChunkAt(pos), EnumStorage.OXYGEN, 1)) {
             return this.getDefaultState();
         }
         return this.getDefaultState().with(LIT, false);
@@ -216,8 +216,8 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
             return true;
         }
         if (stack.getItem() == EvolutionItems.torch.get() && !state.get(LIT)) {
-            if (ChunkStorageCapability.remove(world.getChunkAt(pos), EnumStorage.OXYGEN, 1)) {
-                ChunkStorageCapability.add(world.getChunkAt(pos), EnumStorage.CARBON_DIOXIDE, 1);
+            if (CapabilityChunkStorage.remove(world.getChunkAt(pos), EnumStorage.OXYGEN, 1)) {
+                CapabilityChunkStorage.add(world.getChunkAt(pos), EnumStorage.CARBON_DIOXIDE, 1);
                 world.setBlockState(pos, state.with(LIT, true));
                 world.playSound(player, pos, SoundEvents.BLOCK_FIRE_AMBIENT, SoundCategory.BLOCKS, 1.0F, world.rand.nextFloat() * 0.7F + 0.3F);
                 if (!world.isRemote) {

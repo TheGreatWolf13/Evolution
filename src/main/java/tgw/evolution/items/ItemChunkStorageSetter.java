@@ -12,7 +12,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
+import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 
 public class ItemChunkStorageSetter extends ItemEv {
@@ -34,16 +34,30 @@ public class ItemChunkStorageSetter extends ItemEv {
     private void addRemoveChunkStorage(World world, PlayerEntity player, int amount) {
         Chunk chunk = world.getChunkAt(new BlockPos(player));
         ChunkPos chunkPos = chunk.getPos();
-        ChunkStorageCapability.getChunkStorage(chunk).map(chunkStorages -> {
+        CapabilityChunkStorage.getChunkStorage(chunk).map(chunkStorages -> {
             if (player.isSneaking()) {
                 boolean elementRemoved = chunkStorages.removeElement(this.element, amount);
                 if (elementRemoved) {
-                    player.sendMessage(new StringTextComponent("Removed " + amount + " " + this.element.getName() + " from chunk " + chunkPos + ": " + chunkStorages.getElementStored(this.element)));
+                    player.sendMessage(new StringTextComponent("Removed " +
+                                                               amount +
+                                                               " " +
+                                                               this.element.getName() +
+                                                               " from chunk " +
+                                                               chunkPos +
+                                                               ": " +
+                                                               chunkStorages.getElementStored(this.element)));
                 }
             }
             else {
                 int elementAdded = chunkStorages.addElement(this.element, amount);
-                player.sendMessage(new StringTextComponent("Added " + elementAdded + " " + this.element.getName() + " to chunk " + chunkPos + ": " + chunkStorages.getElementStored(this.element)));
+                player.sendMessage(new StringTextComponent("Added " +
+                                                           elementAdded +
+                                                           " " +
+                                                           this.element.getName() +
+                                                           " to chunk " +
+                                                           chunkPos +
+                                                           ": " +
+                                                           chunkStorages.getElementStored(this.element)));
             }
             return true;
         }).orElseGet(() -> {
@@ -53,19 +67,19 @@ public class ItemChunkStorageSetter extends ItemEv {
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
-        if (!worldIn.isRemote) {
-            this.addRemoveChunkStorage(worldIn, playerIn, 1);
-        }
-        return new ActionResult<>(ActionResultType.SUCCESS, playerIn.getHeldItem(handIn));
-    }
-
-    @Override
     public boolean onEntitySwing(ItemStack stack, LivingEntity entity) {
         World world = entity.getEntityWorld();
         if (!world.isRemote && entity instanceof PlayerEntity) {
             this.addRemoveChunkStorage(world, (PlayerEntity) entity, 100);
         }
         return false;
+    }
+
+    @Override
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
+        if (!worldIn.isRemote) {
+            this.addRemoveChunkStorage(worldIn, playerIn, 1);
+        }
+        return new ActionResult<>(ActionResultType.SUCCESS, playerIn.getHeldItem(handIn));
     }
 }

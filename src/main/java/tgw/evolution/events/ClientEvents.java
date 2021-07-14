@@ -11,6 +11,8 @@ import net.minecraft.client.gui.screen.inventory.InventoryScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.entity.PlayerRenderer;
+import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.model.ModelResourceLocation;
 import net.minecraft.client.util.ClientRecipeBook;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -64,7 +66,8 @@ import tgw.evolution.init.*;
 import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.items.*;
 import tgw.evolution.network.*;
-import tgw.evolution.potion.EffectDizziness;
+import tgw.evolution.potion.InfiniteEffectInstance;
+import tgw.evolution.test.ChessboardModel;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.reflection.FieldHandler;
@@ -194,7 +197,26 @@ public class ClientEvents {
         }
     }
 
-    private static void removeEffect(List<EffectInstance> list, Effect effect) {
+    @SubscribeEvent
+    public static void onModelBakeEvent(ModelBakeEvent event) {
+        // Find the existing model for ChessBoard - it will have been added automatically by vanilla due to our registration of
+        //   of the item in StartupCommon.
+        // Replace the mapping with our custom ChessboardModel.
+        ModelResourceLocation itemModelResourceLocation = ChessboardModel.MODEL_RESOURCE_LOCATION;
+        IBakedModel existingModel = event.getModelRegistry().get(itemModelResourceLocation);
+        if (existingModel == null) {
+            Evolution.LOGGER.warn("Did not find the expected vanilla baked model for ChessboardModel in registry");
+        }
+        else if (existingModel instanceof ChessboardModel) {
+            Evolution.LOGGER.warn("Tried to replace ChessboardModel twice");
+        }
+        else {
+            IBakedModel customModel = new ChessboardModel(existingModel);
+            event.getModelRegistry().put(itemModelResourceLocation, customModel);
+        }
+    }
+
+    public static void removeEffect(List<EffectInstance> list, Effect effect) {
         Iterator<EffectInstance> iterator = list.iterator();
         while (iterator.hasNext()) {
             if (iterator.next().getPotion() == effect) {
@@ -465,7 +487,7 @@ public class ClientEvents {
                 else {
                     this.rightPointedEntity = null;
                 }
-                this.renderer.tick();
+                this.renderer.startTick();
                 ABOUT_TO_LUNGE_PLAYERS.entrySet().removeIf(entry -> entry.getValue().shouldBeRemoved());
                 ABOUT_TO_LUNGE_PLAYERS.forEach((key, value) -> value.tick());
                 LUNGING_PLAYERS.entrySet().removeIf(entry -> entry.getValue().shouldBeRemoved());
@@ -567,6 +589,8 @@ public class ClientEvents {
                     this.swingArm(Hand.MAIN_HAND);
                 }
                 this.lunging = false;
+                //Ticks renderer
+                this.renderer.endTick();
             }
         }
     }
@@ -897,15 +921,25 @@ public class ClientEvents {
             return;
         }
         if (event.getOldPotionEffect() == null) {
-            EFFECTS_TO_ADD.add(event.getPotionEffect());
+            EffectInstance toAdd = new InfiniteEffectInstance(event.getPotionEffect());
+            EFFECTS_TO_ADD.add(toAdd);
+            EFFECTS_TO_TICK.add(toAdd);
         }
         else {
-            removeEffect(EFFECTS, event.getOldPotionEffect().getPotion());
+            boolean isSame = event.getOldPotionEffect().getAmplifier() == event.getPotionEffect().getAmplifier();
+            if (isSame) {
+                removeEffect(EFFECTS, event.getOldPotionEffect().getPotion());
+            }
             removeEffect(EFFECTS_TO_TICK, event.getOldPotionEffect().getPotion());
             removeEffect(EFFECTS_TO_ADD, event.getOldPotionEffect().getPotion());
-            EffectInstance newEffect = new EffectInstance(event.getOldPotionEffect());
+            InfiniteEffectInstance newEffect = new InfiniteEffectInstance(event.getOldPotionEffect());
             newEffect.combine(event.getPotionEffect());
-            EFFECTS.add(newEffect);
+            if (isSame) {
+                EFFECTS.add(newEffect);
+            }
+            else {
+                EFFECTS_TO_ADD.add(newEffect);
+            }
             EFFECTS_TO_TICK.add(newEffect);
         }
     }
@@ -928,6 +962,11 @@ public class ClientEvents {
         if (event.getType() == RenderGameOverlayEvent.ElementType.POTION_ICONS) {
             event.setCanceled(true);
             this.renderer.renderPotionIcons(event.getPartialTicks());
+            return;
+        }
+        if (event.getType() == RenderGameOverlayEvent.ElementType.FOOD) {
+            event.setCanceled(true);
+            this.renderer.renderFoodAndThirst();
         }
     }
 

@@ -8,7 +8,7 @@
 //import net.minecraft.world.World;
 //import tgw.evolution.blocks.BlockGrass;
 //import tgw.evolution.blocks.BlockTallGrass;
-//import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
+//import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 //import tgw.evolution.entities.AnimalEntity;
 //import tgw.evolution.init.EvolutionBlocks;
 //import tgw.evolution.util.EnumFoodNutrients;
@@ -93,7 +93,7 @@
 //            if (IS_GRASS.test(this.world.getBlockState(posIn))) {
 //                this.world.destroyBlock(posIn, false);
 //                if (this.world.getBlockState(posIn).getBlock() instanceof BlockTallGrass) {
-//                    ChunkStorageCapability.getChunkStorage(this.world, this.world.getChunkAt(posIn).getPos()).map(chunkStorage -> {
+//                    CapabilityChunkStorage.getChunkStorage(this.world, this.world.getChunkAt(posIn).getPos()).map(chunkStorage -> {
 //                        chunkStorage.removeMany(NutrientHelper.DECAY_TALL_GRASS);
 //                        return true;
 //                    }).orElseGet(() -> false);
@@ -103,7 +103,7 @@
 //                    this.entity.food.add(EnumFoodNutrients.NITROGEN, 1);
 //                }
 //                else {
-//                    ChunkStorageCapability.getChunkStorage(this.world, this.world.getChunkAt(posIn).getPos()).map(chunkStorage -> {
+//                    CapabilityChunkStorage.getChunkStorage(this.world, this.world.getChunkAt(posIn).getPos()).map(chunkStorage -> {
 //                        chunkStorage.removeMany(NutrientHelper.DECAY_TALL_GRASS);
 //                        chunkStorage.removeMany(NutrientHelper.DECAY_TALL_GRASS);
 //                        return true;
@@ -121,7 +121,7 @@
 //                    BlockGrass grassBlock = (BlockGrass) this.world.getBlockState(posDown).getBlock();
 //                    this.world.playEvent(2001, posDown, Block.getStateId(this.world.getBlockState(posDown)));
 //                    this.world.setBlockState(posDown, grassBlock.getVariant().getDirt().getDefaultState(), 2);
-//                    ChunkStorageCapability.getChunkStorage(this.world, this.world.getChunkAt(posIn).getPos()).map(chunkStorage -> {
+//                    CapabilityChunkStorage.getChunkStorage(this.world, this.world.getChunkAt(posIn).getPos()).map(chunkStorage -> {
 //                        chunkStorage.removeMany(NutrientHelper.DECAY_GRASS_BLOCK);
 //                        return true;
 //                    }).orElseGet(() -> false);

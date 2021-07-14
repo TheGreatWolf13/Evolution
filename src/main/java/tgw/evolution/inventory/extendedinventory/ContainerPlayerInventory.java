@@ -22,7 +22,7 @@ import net.minecraft.network.play.server.SSetSlotPacket;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import tgw.evolution.capabilities.inventory.PlayerInventoryCapability;
+import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
 import tgw.evolution.init.EvolutionContainers;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.ServerRecipePlacerEv;
@@ -49,7 +49,7 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
         super(EvolutionContainers.EXTENDED_INVENTORY.get(), windowId);
         this.player = inventory.player;
         this.isLocalWorld = this.player.world.isRemote;
-        this.handler = this.player.getCapability(PlayerInventoryCapability.CAPABILITY_EXTENDED_INVENTORY).orElseThrow(IllegalStateException::new);
+        this.handler = this.player.getCapability(CapabilityExtendedInventory.INSTANCE).orElseThrow(IllegalStateException::new);
         //Crafting result slot
         this.addSlot(new CraftingResultSlot(inventory.player, this.craftingInventory, this.craftingResult, 0, 161, 62));
         //Crafting slots

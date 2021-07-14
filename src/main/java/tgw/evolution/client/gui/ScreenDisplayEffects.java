@@ -36,6 +36,13 @@ public abstract class ScreenDisplayEffects<T extends Container> extends Containe
         super(screenContainer, inv, titleIn);
     }
 
+    public static int getFixedAmplifier(EffectInstance effect) {
+        if (effect.getAmplifier() >= 0) {
+            return effect.getAmplifier();
+        }
+        return Byte.toUnsignedInt((byte) effect.getAmplifier());
+    }
+
     private static String getPotionDurationString(EffectInstance effect, float durationFactor) {
         if (effect.getIsPotionDurationMax()) {
             return "\u221E";
@@ -105,9 +112,9 @@ public abstract class ScreenDisplayEffects<T extends Container> extends Containe
             }
             builder.setLength(0);
             builder.append(I18n.format(effect.getPotion().getName()));
-            if (effect.getAmplifier() >= 1 && effect.getAmplifier() <= 9) {
+            if (getFixedAmplifier(effect) >= 1) {
                 builder.append(' ');
-                builder.append(MathHelper.getRomanNumber(effect.getAmplifier() + 1));
+                builder.append(MathHelper.getRomanNumber(getFixedAmplifier(effect) + 1));
             }
             this.font.drawStringWithShadow(builder.toString(), X + 28, i + 6, 0xff_ffff);
             this.font.drawStringWithShadow(getPotionDurationString(effect, 1.0F), X + 28, i + 16, 0x7f_7f7f);
@@ -131,12 +138,12 @@ public abstract class ScreenDisplayEffects<T extends Container> extends Containe
             }
             if (MathHelper.isMouseInsideBox(mouseX, mouseY, X, i, MathHelper.clampMax(X + 140, leftOffset), i + h)) {
                 TOOLTIPS.clear();
-                String amp = effect.getAmplifier() > 0 ? " " + MathHelper.getRomanNumber(effect.getAmplifier() + 1) : "";
+                String amp = getFixedAmplifier(effect) > 0 ? " " + MathHelper.getRomanNumber(getFixedAmplifier(effect) + 1) : "";
                 TOOLTIPS.add(new TranslationTextComponent(effect.getPotion().getName()).appendSibling(new StringTextComponent(amp))
                                                                                        .setStyle(EvolutionStyles.EFFECTS)
                                                                                        .getFormattedText());
                 TOOLTIPS.add("");
-                EvolutionEffects.getEffectDescription(TOOLTIPS, effect.getPotion(), effect.getAmplifier());
+                EvolutionEffects.getEffectDescription(TOOLTIPS, effect.getPotion(), getFixedAmplifier(effect));
                 GUIUtils.renderTooltip(this, TOOLTIPS, mouseX, mouseY, 250);
                 break;
             }

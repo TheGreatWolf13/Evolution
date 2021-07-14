@@ -39,6 +39,45 @@ public class ItemSpawnEgg<E extends Entity> extends ItemEv {
         this.type = type;
     }
 
+    public EntityType<?> getType(@Nullable CompoundNBT nbt) {
+        if (nbt != null && nbt.contains("EntityTag", NBTTypes.COMPOUND_NBT)) {
+            CompoundNBT entityTag = nbt.getCompound("EntityTag");
+            if (entityTag.contains("id", NBTTypes.STRING)) {
+                return EntityType.byKey(entityTag.getString("id")).orElseGet(this.type);
+            }
+        }
+        return this.type.get();
+    }
+
+    @Override
+    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
+        ItemStack stack = player.getHeldItem(hand);
+        if (world.isRemote) {
+            return new ActionResult<>(ActionResultType.PASS, stack);
+        }
+        RayTraceResult rayTrace = rayTrace(world, player, RayTraceContext.FluidMode.SOURCE_ONLY);
+        if (rayTrace.getType() != RayTraceResult.Type.BLOCK) {
+            return new ActionResult<>(ActionResultType.PASS, stack);
+        }
+        BlockRayTraceResult blockRayTrace = (BlockRayTraceResult) rayTrace;
+        BlockPos pos = blockRayTrace.getPos();
+        if (!(world.getBlockState(pos).getBlock() instanceof FlowingFluidBlock)) {
+            return new ActionResult<>(ActionResultType.PASS, stack);
+        }
+        if (world.isBlockModifiable(player, pos) && player.canPlayerEdit(pos, blockRayTrace.getFace(), stack)) {
+            EntityType<?> entityType = this.getType(stack.getTag());
+            if (entityType.spawn(world, stack, player, pos, SpawnReason.SPAWN_EGG, false, false) == null) {
+                return new ActionResult<>(ActionResultType.PASS, stack);
+            }
+            if (!player.isCreative()) {
+                stack.shrink(1);
+            }
+            player.addStat(Stats.ITEM_USED.get(this));
+            return new ActionResult<>(ActionResultType.SUCCESS, stack);
+        }
+        return new ActionResult<>(ActionResultType.FAIL, stack);
+    }
+
     @Override
     public ActionResultType onItemUse(ItemUseContext context) {
         World world = context.getWorld();
@@ -84,44 +123,5 @@ public class ItemSpawnEgg<E extends Entity> extends ItemEv {
             }
         }
         return ActionResultType.SUCCESS;
-    }
-
-    @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
-        ItemStack stack = player.getHeldItem(hand);
-        if (world.isRemote) {
-            return new ActionResult<>(ActionResultType.PASS, stack);
-        }
-        RayTraceResult rayTrace = rayTrace(world, player, RayTraceContext.FluidMode.SOURCE_ONLY);
-        if (rayTrace.getType() != RayTraceResult.Type.BLOCK) {
-            return new ActionResult<>(ActionResultType.PASS, stack);
-        }
-        BlockRayTraceResult blockRayTrace = (BlockRayTraceResult) rayTrace;
-        BlockPos pos = blockRayTrace.getPos();
-        if (!(world.getBlockState(pos).getBlock() instanceof FlowingFluidBlock)) {
-            return new ActionResult<>(ActionResultType.PASS, stack);
-        }
-        if (world.isBlockModifiable(player, pos) && player.canPlayerEdit(pos, blockRayTrace.getFace(), stack)) {
-            EntityType<?> entityType = this.getType(stack.getTag());
-            if (entityType.spawn(world, stack, player, pos, SpawnReason.SPAWN_EGG, false, false) == null) {
-                return new ActionResult<>(ActionResultType.PASS, stack);
-            }
-            if (!player.isCreative()) {
-                stack.shrink(1);
-            }
-            player.addStat(Stats.ITEM_USED.get(this));
-            return new ActionResult<>(ActionResultType.SUCCESS, stack);
-        }
-        return new ActionResult<>(ActionResultType.FAIL, stack);
-    }
-
-    public EntityType<?> getType(@Nullable CompoundNBT nbt) {
-        if (nbt != null && nbt.contains("EntityTag", NBTTypes.COMPOUND_NBT.getId())) {
-            CompoundNBT entityTag = nbt.getCompound("EntityTag");
-            if (entityTag.contains("id", NBTTypes.STRING.getId())) {
-                return EntityType.byKey(entityTag.getString("id")).orElseGet(this.type);
-            }
-        }
-        return this.type.get();
     }
 }

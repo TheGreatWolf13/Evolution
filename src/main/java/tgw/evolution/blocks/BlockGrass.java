@@ -14,7 +14,7 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 import net.minecraft.world.lighting.LightEngine;
-import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
+import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.BlockFlags;
@@ -116,7 +116,7 @@ public class BlockGrass extends BlockGenericSlowable implements IStoneVariant {
                                         EvolutionBlocks.PEAT.get().getDefaultState().with(LAYERS_1_4, 4) :
                                         this.variant.getDirt().getDefaultState(),
                                         3);
-                    ChunkStorageCapability.addElements(world.getChunkAt(pos), NutrientHelper.DECAY_GRASS_BLOCK);
+                    CapabilityChunkStorage.addElements(world.getChunkAt(pos), NutrientHelper.DECAY_GRASS_BLOCK);
                     for (Direction direction : MathHelper.DIRECTIONS_HORIZONTAL) {
                         BlockPos offset = pos.offset(direction);
                         Block block = world.getBlockState(offset).getBlock();
@@ -134,7 +134,7 @@ public class BlockGrass extends BlockGenericSlowable implements IStoneVariant {
         if (isMoving) {
             return;
         }
-        ChunkStorageCapability.addElements(worldIn.getChunkAt(pos), NutrientHelper.DECAY_GRASS_BLOCK);
+        CapabilityChunkStorage.addElements(worldIn.getChunkAt(pos), NutrientHelper.DECAY_GRASS_BLOCK);
     }
 
     @Override
@@ -164,7 +164,7 @@ public class BlockGrass extends BlockGenericSlowable implements IStoneVariant {
                                         return;
                                     }
                                 }
-                                if (ChunkStorageCapability.removeElements(world.getChunkAt(randomPos), NutrientHelper.GROW_GRASS_BLOCK)) {
+                                if (CapabilityChunkStorage.removeElements(world.getChunkAt(randomPos), NutrientHelper.GROW_GRASS_BLOCK)) {
                                     if (stateAtPos.getBlock() instanceof BlockPeat) {
                                         //TODO proper snow
                                         world.setBlockState(randomPos,
@@ -192,12 +192,12 @@ public class BlockGrass extends BlockGenericSlowable implements IStoneVariant {
             }
             if (random.nextInt(200) == 0) {
                 if (world.getBlockState(pos.up()).isAir()) {
-                    if (ChunkStorageCapability.removeElements(world.getChunkAt(pos), NutrientHelper.GROW_TALL_GRASS)) {
+                    if (CapabilityChunkStorage.removeElements(world.getChunkAt(pos), NutrientHelper.GROW_TALL_GRASS)) {
                         world.setBlockState(pos.up(), EvolutionBlocks.GRASS.get().getDefaultState(), BlockFlags.BLOCK_UPDATE);
                     }
                 }
                 else if (world.getBlockState(pos.up()).getBlock() instanceof BlockTallGrass) {
-                    if (ChunkStorageCapability.removeElements(world.getChunkAt(pos), NutrientHelper.GROW_TALL_GRASS_2)) {
+                    if (CapabilityChunkStorage.removeElements(world.getChunkAt(pos), NutrientHelper.GROW_TALL_GRASS_2)) {
                         world.setBlockState(pos.up(),
                                             EvolutionBlocks.TALLGRASS.get().getDefaultState().with(HALF, DoubleBlockHalf.LOWER),
                                             BlockFlags.BLOCK_UPDATE);

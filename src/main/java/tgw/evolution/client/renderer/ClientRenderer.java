@@ -29,7 +29,10 @@ import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.*;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.potion.*;
+import net.minecraft.potion.Effect;
+import net.minecraft.potion.EffectInstance;
+import net.minecraft.potion.EffectUtils;
+import net.minecraft.potion.Effects;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -45,16 +48,15 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ForgeIngameGui;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.client.event.RenderTooltipEvent;
-import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
+import tgw.evolution.capabilities.thirst.IThirst;
+import tgw.evolution.capabilities.thirst.ThirstStats;
 import tgw.evolution.client.audio.SoundEntityEmitted;
+import tgw.evolution.client.gui.ScreenDisplayEffects;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.InputHooks;
-import tgw.evolution.init.EvolutionAttributes;
-import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.init.EvolutionSounds;
+import tgw.evolution.init.*;
 import tgw.evolution.items.*;
 import tgw.evolution.network.PacketCSPlaySoundEntityEmitted;
 import tgw.evolution.util.MathHelper;
@@ -74,8 +76,11 @@ public class ClientRenderer {
     private final Minecraft mc;
     private final Random rand = new Random();
     private final EntityRendererManager renderManager;
+    private final byte[] thirstShakeAligment = new byte[10];
+    private byte alphaDir = 1;
     private ItemStack currentMainhandItem = ItemStack.EMPTY;
     private ItemStack currentOffhandItem = ItemStack.EMPTY;
+    private float flashAlpha;
     private long healthUpdateCounter;
     private float lastPlayerHealth;
     private long lastSystemTime;
@@ -111,6 +116,23 @@ public class ClientRenderer {
 
     private static void blit(int x, int y, int textureX, int textureY, int sizeX, int sizeY, int blitOffset) {
         AbstractGui.blit(x, y, blitOffset, textureX, textureY, sizeX, sizeY, 256, 256);
+    }
+
+    public static void disableAlpha(float alpha) {
+        GlStateManager.disableBlend();
+        if (alpha == 1.0f) {
+            return;
+        }
+        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    public static void enableAlpha(float alpha) {
+        GlStateManager.enableBlend();
+        if (alpha == 1.0f) {
+            return;
+        }
+        GlStateManager.color4f(1.0F, 1.0F, 1.0F, alpha);
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     private static float getMapAngleFromPitch(float pitch) {
@@ -207,6 +229,85 @@ public class ClientRenderer {
         GlStateManager.rotatef(-102.25F, 1.0F, 0.0F, 0.0F);
         GlStateManager.rotatef(sideOffset * 13.365F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotatef(sideOffset * 78.05F, 0.0F, 0.0F, 1.0F);
+    }
+
+    public void drawHydrationOverlay(int hydrationGained, int hydrationLevel, int left, int top, float alpha) {
+        for (int j = 0; j < 3; j++) {
+            if (hydrationLevel + hydrationGained <= 0) {
+                return;
+            }
+            int startBar = hydrationGained != 0 ? hydrationLevel / (int) ThirstStats.HYDRATION_SCALE : 0;
+            int endBar = MathHelper.ceil(MathHelper.clampMax(ThirstStats.INTOXICATION, hydrationLevel + hydrationGained) /
+                                         ThirstStats.HYDRATION_SCALE);
+            enableAlpha(alpha);
+            int barsNeeded = endBar - startBar;
+            for (int i = startBar; i < startBar + barsNeeded; i++) {
+                int x = left - i * 8 - 9;
+                int y = top + this.thirstShakeAligment[i];
+                float effectiveSaturationOfBar = (hydrationLevel + hydrationGained) / ThirstStats.HYDRATION_SCALE - i;
+                if (effectiveSaturationOfBar > 0.75) {
+                    blit(x, y, 169 + 36 * j, 54, 9, 9);
+                }
+                else if (effectiveSaturationOfBar > 0.5) {
+                    blit(x, y, 160 + 36 * j, 54, 9, 9);
+                }
+                else if (effectiveSaturationOfBar > 0.25) {
+                    blit(x, y, 151 + 36 * j, 54, 9, 9);
+                }
+                else if (effectiveSaturationOfBar > 0) {
+                    blit(x, y, 142 + 36 * j, 54, 9, 9);
+                }
+            }
+            if (hydrationLevel >= 1_000) {
+                hydrationLevel -= 1_000;
+            }
+            else {
+                hydrationGained -= 1_000 - hydrationLevel;
+                if (hydrationGained < 0) {
+                    hydrationGained = 0;
+                }
+                hydrationLevel = 0;
+            }
+            disableAlpha(alpha);
+        }
+    }
+
+    public void drawThirstOverlay(int thirstRestored, int thirstLevel, int left, int top, float alpha) {
+        if (thirstRestored == 0) {
+            return;
+        }
+        int endBar = MathHelper.ceil(MathHelper.clampMax(ThirstStats.THIRST_CAPACITY, thirstLevel + thirstRestored) / ThirstStats.THIRST_SCALE);
+        enableAlpha(alpha);
+        int startBar = thirstLevel / (int) ThirstStats.THIRST_SCALE;
+        int barsNeeded = endBar - startBar;
+        for (int i = startBar; i < startBar + barsNeeded; i++) {
+            int idx = i * 2 + 1;
+            int x = left - i * 8 - 9;
+            int y = top + this.thirstShakeAligment[i];
+            int icon = 16;
+            if (this.mc.player.isPotionActive(EvolutionEffects.THIRST.get())) {
+                icon += 36;
+            }
+            if (idx < thirstLevel + thirstRestored) {
+                blit(x, y, icon + 36, 54, 9, 9);
+            }
+            else if (idx == thirstLevel + thirstRestored) {
+                blit(x, y, icon + 45, 54, 9, 9);
+            }
+        }
+        disableAlpha(alpha);
+    }
+
+    public void endTick() {
+        this.flashAlpha += this.alphaDir * 0.125f;
+        if (this.flashAlpha >= 1.5f) {
+            this.flashAlpha = 1.0f;
+            this.alphaDir = -1;
+        }
+        else if (this.flashAlpha <= -0.5f) {
+            this.flashAlpha = 0.0f;
+            this.alphaDir = 1;
+        }
     }
 
     private int getArmSwingAnimationEnd() {
@@ -411,11 +512,97 @@ public class ClientRenderer {
         }
     }
 
+    public void renderFoodAndThirst() {
+        this.mc.getProfiler().startSection("food");
+        PlayerEntity player = (PlayerEntity) this.mc.getRenderViewEntity();
+        GlStateManager.enableBlend();
+        final int width = this.mc.mainWindow.getScaledWidth();
+        final int height = this.mc.mainWindow.getScaledHeight();
+        int top = height - ForgeIngameGui.right_height;
+        ForgeIngameGui.right_height += 10;
+        FoodStats stats = this.mc.player.getFoodStats();
+        int level = stats.getFoodLevel();
+        int left = width / 2 + 91;
+        for (int i = 0; i < 10; ++i) {
+            int idx = i * 2 + 1;
+            int x = left - i * 8 - 9;
+            int icon = 16;
+            byte background = 0;
+            if (this.mc.player.isPotionActive(Effects.HUNGER)) {
+                icon += 36;
+                background = 13;
+            }
+            int y = top;
+            if (player.getFoodStats().getSaturationLevel() <= 0.0F && this.client.getTickCount() % (level * 3 + 1) == 0) {
+                y = top + this.rand.nextInt(3) - 1;
+            }
+            blit(x, y, 16 + background * 9, 27, 9, 9);
+            if (idx < level) {
+                blit(x, y, icon + 36, 27, 9, 9);
+            }
+            else if (idx == level) {
+                blit(x, y, icon + 45, 27, 9, 9);
+            }
+        }
+        this.mc.getProfiler().endSection();
+        this.mc.getProfiler().startSection("thirst");
+        IThirst thirst = ThirstStats.CLIENT_INSTANCE;
+        top = height - ForgeIngameGui.right_height;
+        level = MathHelper.ceil(thirst.getThirstLevel() / (ThirstStats.THIRST_SCALE / 2));
+        left = width / 2 + 91;
+        for (int i = 0; i < 10; i++) {
+            int idx = i * 2 + 1;
+            int x = left - i * 8 - 9;
+            int icon = 16;
+            byte background = 0;
+            if (this.mc.player.isPotionActive(EvolutionEffects.THIRST.get())) {
+                icon += 36;
+                background = 13;
+            }
+            if (this.client.getTickCount() % (level * 5 + 1) == 0) {
+                int shake = this.rand.nextInt(3) - 1;
+                this.thirstShakeAligment[i] = (byte) shake;
+            }
+            else {
+                this.thirstShakeAligment[i] = 0;
+            }
+            int y = top + this.thirstShakeAligment[i];
+            blit(x, y, 16 + background * 9, 54, 9, 9);
+            if (idx < level) {
+                blit(x, y, icon + 36, 54, 9, 9);
+            }
+            else if (idx == level) {
+                blit(x, y, icon + 45, 54, 9, 9);
+            }
+        }
+        //Hydration
+        ItemStack heldStack = player.getHeldItemMainhand();
+        if (!(heldStack.getItem() instanceof IDrink)) {
+            heldStack = player.getHeldItemOffhand();
+        }
+        left = width / 2 + 91;
+        top = height - ForgeIngameGui.right_height;
+        ForgeIngameGui.right_height += 10;
+        //Hydration overlay
+        this.drawHydrationOverlay(0, thirst.getHydrationLevel(), left, top, 1.0f);
+        if (heldStack.isEmpty() || !(heldStack.getItem() instanceof IDrink)) {
+            this.flashAlpha = 0;
+            this.alphaDir = 1;
+            return;
+        }
+        //Restored thirst/hydration overlay while holding drink
+        IDrink drink = (IDrink) heldStack.getItem();
+        this.drawThirstOverlay(drink.getThirst(), thirst.getThirstLevel(), left, top, this.flashAlpha);
+        this.drawHydrationOverlay(drink.getThirst(), thirst.getHydrationLevel(), left, top, this.flashAlpha);
+        GlStateManager.disableBlend();
+        this.mc.getProfiler().endSection();
+    }
+
     public void renderHealth() {
+        this.mc.getProfiler().startSection("health");
         this.mc.getTextureManager().bindTexture(EvolutionResources.GUI_ICONS);
         int width = this.mc.mainWindow.getScaledWidth();
         int height = this.mc.mainWindow.getScaledHeight();
-        this.mc.getProfiler().startSection("health");
         GlStateManager.enableBlend();
         PlayerEntity player = (PlayerEntity) this.mc.getRenderViewEntity();
         float currentHealth = player.getHealth();
@@ -458,12 +645,15 @@ public class ClientRenderer {
             regen = this.client.getTickCount() % 25;
         }
         final int heartTextureYPos = this.mc.world.getWorldInfo().isHardcore() ? 45 : 0;
+        final int absorbHeartTextureYPos = this.mc.world.getWorldInfo().isHardcore() ? 36 : 9;
         final int heartBackgroundXPos = highlight ? 25 : 16;
         int margin = 16;
         if (player.isPotionActive(Effects.POISON)) {
             margin += 72;
         }
+        //TODO anaemia
         int absorbRemaining = MathHelper.ceil(absorb);
+        this.rand.setSeed(312_871L * this.client.getTickCount());
         int left = width / 2 - 91;
         for (int currentHeart = MathHelper.ceil((healthMax + absorb) / 10.0F) - 1; currentHeart >= 0; --currentHeart) {
             int row = MathHelper.ceil((currentHeart + 1) / 10.0F) - 1;
@@ -500,21 +690,21 @@ public class ClientRenderer {
                 switch (absorbHeart) {
                     case 1:
                     case 2:
-                        blit(x, y, 205, heartTextureYPos, 9, 9);
+                        blit(x, y, 169, absorbHeartTextureYPos, 9, 9);
                         break;
                     case 3:
                     case 4:
                     case 5:
-                        blit(x, y, 196, heartTextureYPos, 9, 9);
+                        blit(x, y, 160, absorbHeartTextureYPos, 9, 9);
                         break;
                     case 6:
                     case 7:
-                        blit(x, y, 187, heartTextureYPos, 9, 9);
+                        blit(x, y, 151, absorbHeartTextureYPos, 9, 9);
                         break;
                     case 8:
                     case 9:
                     case 0:
-                        blit(x, y, 178, heartTextureYPos, 9, 9);
+                        blit(x, y, 142, absorbHeartTextureYPos, 9, 9);
                         break;
                 }
                 if (absorbHeart == 0) {
@@ -913,10 +1103,18 @@ public class ClientRenderer {
             TextureAtlasSprite potionSprites = potionSpriteUploader.getSprite(addingEffect);
             this.mc.getTextureManager().bindTexture(AtlasTexture.LOCATION_EFFECTS_TEXTURE);
             GlStateManager.color4f(1.0F, 1.0F, 1.0F, alpha);
-            AbstractGui.blit(x + 3, y + 3, 1, 18, 18, potionSprites);
+            AbstractGui.blit(x + 3, y + 3, 0, 18, 18, potionSprites);
+            GlStateManager.pushMatrix();
+            GlStateManager.scalef(0.5f, 0.5f, 0.5f);
+            this.mc.fontRenderer.drawStringWithShadow(MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(addingInstance) + 1),
+                                                      (x + 3) * 2,
+                                                      (y + 17) * 2,
+                                                      0xff_ffff);
+            GlStateManager.popMatrix();
             this.client.shouldPassEffectTick = true;
             if (this.client.effectToAddTicks == 20) {
                 this.client.effectToAddTicks = 0;
+                ClientEvents.removeEffect(ClientEvents.EFFECTS, addingEffect.getEffect());
                 ClientEvents.EFFECTS_TO_ADD.remove(addingInstance);
                 ClientEvents.EFFECTS.add(addingInstance);
             }
@@ -961,13 +1159,18 @@ public class ClientRenderer {
                                     MathHelper.clamp(remainingSeconds / 40.0F, 0.0F, 0.25F);
                         }
                     }
-                    int finalX = x;
-                    int finalY = y;
                     float finalAlpha = alpha;
                     TextureAtlasSprite potionSprites = potionSpriteUploader.getSprite(effect);
                     this.mc.getTextureManager().bindTexture(AtlasTexture.LOCATION_EFFECTS_TEXTURE);
                     GlStateManager.color4f(1.0F, 1.0F, 1.0F, finalAlpha);
-                    AbstractGui.blit(finalX + 3, finalY + 3, -90, 18, 18, potionSprites);
+                    AbstractGui.blit(x + 3, y + 3, -90, 18, 18, potionSprites);
+                    GlStateManager.pushMatrix();
+                    GlStateManager.scalef(0.5f, 0.5f, 0.5f);
+                    this.mc.fontRenderer.drawStringWithShadow(MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(effectInstance) + 1),
+                                                              (x + 3) * 2,
+                                                              (y + 17) * 2,
+                                                              0xff_ffff);
+                    GlStateManager.popMatrix();
                 }
             }
         }
@@ -976,44 +1179,7 @@ public class ClientRenderer {
     public void renderTooltip(RenderTooltipEvent.PostText event) {
         ItemStack stack = event.getStack();
         Item item = stack.getItem();
-        if (stack.isFood()) {
-            Food food = item.getFood();
-            if (food != null) {
-                GlStateManager.pushMatrix();
-                GlStateManager.color3f(1.0F, 1.0F, 1.0F);
-                Minecraft mc = Minecraft.getInstance();
-                mc.getTextureManager().bindTexture(EvolutionResources.GUI_ICONS);
-                int pips = food.getHealing();
-                boolean poison = false;
-                for (Pair<EffectInstance, Float> effect : food.getEffects()) {
-                    if (effect.getLeft().getPotion().getEffectType() == EffectType.HARMFUL) {
-                        poison = true;
-                        break;
-                    }
-                }
-                int count = MathHelper.ceil((double) pips / 2);
-                int y = shiftTextByLines(event.getLines(), event.getY() + 10);
-                for (int i = 0; i < count; i++) {
-                    int x = event.getX() + i * 9 - 1;
-                    int textureX = 16;
-                    if (poison) {
-                        textureX += 117;
-                    }
-                    int textureY = 27;
-                    blit(x, y, textureX, textureY, 9, 9);
-                    textureX = 52;
-                    if (pips % 2 != 0 && i == 0) {
-                        textureX += 9;
-                    }
-                    if (poison) {
-                        textureX += 36;
-                    }
-                    blit(x, y, textureX, textureY, 9, 9);
-                }
-                GlStateManager.popMatrix();
-            }
-        }
-        else if (item instanceof IEvolutionItem) {
+        if (item instanceof IEvolutionItem) {
             GlStateManager.pushMatrix();
             GlStateManager.color3f(1.0F, 1.0F, 1.0F);
             Minecraft mc = Minecraft.getInstance();
@@ -1119,6 +1285,33 @@ public class ClientRenderer {
                 }
                 hasAddedLine = true;
             }
+            //Consumable
+            if (item instanceof IConsumable) {
+                if (hasAddedLine) {
+                    line++;
+                }
+                else {
+                    line += 2;
+                }
+                hasAddedLine = true;
+                if (item instanceof IFood) {
+                    int x = event.getX() + 4;
+                    int y = shiftTextByLines(line, event.getY() + 10);
+                    int textureX = 81;
+                    int textureY = 247;
+                    blit(x, y, textureX, textureY, 9, 9);
+                    line++;
+                }
+                if (item instanceof IDrink) {
+                    int x = event.getX() + 4;
+                    int y = shiftTextByLines(line, event.getY() + 10);
+                    int textureX = 90;
+                    int textureY = 247;
+                    blit(x, y, textureX, textureY, 9, 9);
+                    line++;
+                }
+            }
+            //Attributes
             boolean hasAttributes = hasSpeed || hasDamage || hasReach;
             if (!hasAddedLine) {
                 if (hasAttributes) {
@@ -1230,26 +1423,7 @@ public class ClientRenderer {
         GLX.glMultiTexCoord2f(GLX.GL_TEXTURE1, f, f1);
     }
 
-    public void swingArm(Hand hand) {
-        if (hand == Hand.OFF_HAND) {
-            if (!this.offhandIsSwingInProgress ||
-                this.offhandSwingProgressInt >= this.getArmSwingAnimationEnd() / 2 ||
-                this.offhandSwingProgressInt < 0) {
-                this.offhandSwingProgressInt = -1;
-                this.offhandIsSwingInProgress = true;
-            }
-        }
-        else {
-            if (!this.mainhandIsSwingInProgress ||
-                this.mainhandSwingProgressInt >= this.getArmSwingAnimationEnd() / 2 ||
-                this.mainhandSwingProgressInt < 0) {
-                this.mainhandSwingProgressInt = -1;
-                this.mainhandIsSwingInProgress = true;
-            }
-        }
-    }
-
-    public void tick() {
+    public void startTick() {
         this.mainhandPrevEquipProgress = this.mainhandEquipProgress;
         this.offhandPrevEquipProgress = this.offhandEquipProgress;
         this.mainhandPrevSwingProgress = this.mainhandSwingProgress;
@@ -1341,6 +1515,25 @@ public class ClientRenderer {
         }
         else {
             this.offhandLungingTicks = 0;
+        }
+    }
+
+    public void swingArm(Hand hand) {
+        if (hand == Hand.OFF_HAND) {
+            if (!this.offhandIsSwingInProgress ||
+                this.offhandSwingProgressInt >= this.getArmSwingAnimationEnd() / 2 ||
+                this.offhandSwingProgressInt < 0) {
+                this.offhandSwingProgressInt = -1;
+                this.offhandIsSwingInProgress = true;
+            }
+        }
+        else {
+            if (!this.mainhandIsSwingInProgress ||
+                this.mainhandSwingProgressInt >= this.getArmSwingAnimationEnd() / 2 ||
+                this.mainhandSwingProgressInt < 0) {
+                this.mainhandSwingProgressInt = -1;
+                this.mainhandIsSwingInProgress = true;
+            }
         }
     }
 

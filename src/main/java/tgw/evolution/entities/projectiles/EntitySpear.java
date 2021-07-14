@@ -115,7 +115,7 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
     @Override
     public void readAdditional(CompoundNBT compound) {
         super.readAdditional(compound);
-        if (compound.contains("Spear", NBTTypes.COMPOUND_NBT.getId())) {
+        if (compound.contains("Spear", NBTTypes.COMPOUND_NBT)) {
             this.setStack(ItemStack.read(compound.getCompound("Spear")));
         }
         this.dealtDamage = compound.getBoolean("DealtDamage");

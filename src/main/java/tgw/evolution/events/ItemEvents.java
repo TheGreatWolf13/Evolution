@@ -7,7 +7,6 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.Food;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -21,7 +20,6 @@ import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStyles;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.*;
-import tgw.evolution.util.MathHelper;
 
 import java.util.List;
 import java.util.Map;
@@ -170,6 +168,23 @@ public class ItemEvents {
             tooltip.add(EvolutionTexts.TOOLTIP_PARRY);
             hasAddedLine = true;
         }
+        //Consumable
+        if (item instanceof IConsumable) {
+            if (!hasAddedLine) {
+                tooltip.add(EvolutionTexts.EMPTY);
+            }
+            tooltip.add(EvolutionTexts.TOOLTIP_CONSUMABLE);
+            hasAddedLine = true;
+            if (item instanceof IFood) {
+                tooltip.add(EvolutionTexts.food(((IFood) item).getHunger()));
+            }
+            if (item instanceof IDrink) {
+                tooltip.add(EvolutionTexts.drink(((IDrink) item).getThirst()));
+            }
+            if (item instanceof INutrient) {
+                //TODO make nutrient tooltip if even
+            }
+        }
         //Attributes
         boolean hasMass = false;
         for (EquipmentSlotType slot : EquipmentSlotType.values()) {
@@ -282,30 +297,14 @@ public class ItemEvents {
 
     @SubscribeEvent
     public void itemTooltipEvent(ItemTooltipEvent event) {
+        if (event.isCanceled()) {
+            return;
+        }
         if (event.getPlayer() == null) {
             return;
         }
         if (!event.getPlayer().world.isRemote) {
             return;
-        }
-        if (event.getItemStack().isFood()) {
-            Food food = event.getItemStack().getItem().getFood();
-            if (food != null) {
-                int pips = food.getHealing();
-                int len = MathHelper.ceil((double) pips / 2);
-                StringBuilder s = new StringBuilder(" ");
-                for (int i = 0; i < len; i++) {
-                    s.append("  ");
-                }
-                ITextComponent spaces = new StringTextComponent(s.toString());
-                List<ITextComponent> tooltip = event.getToolTip();
-                if (tooltip.isEmpty()) {
-                    tooltip.add(spaces);
-                }
-                else {
-                    tooltip.add(1, spaces);
-                }
-            }
         }
         Item item = event.getItemStack().getItem();
         if (!(item instanceof IEvolutionItem)) {

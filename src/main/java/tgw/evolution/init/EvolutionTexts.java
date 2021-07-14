@@ -29,6 +29,7 @@ public final class EvolutionTexts {
     public static final ITextComponent FLUID_FRESH_WATER = transl("evolution.fluid.fresh_water");
     public static final ITextComponent FLUID_SALT_WATER = transl("evolution.fluid.salt_water");
     public static final ITextComponent TOOLTIP_CLAY_MOLD = transl("evolution.tooltip.clay.mold").setStyle(INFO);
+    public static final ITextComponent TOOLTIP_CONSUMABLE = transl("evolution.tooltip.consumable").setStyle(LIGHT_GREY);
     public static final ITextComponent TOOLTIP_EMPTY_CONTAINER = transl("evolution.tooltip.container.empty").setStyle(INFO);
     public static final ITextComponent TOOLTIP_LUNGE = transl("evolution.tooltip.lunge").setStyle(PROPERTY);
     public static final ITextComponent TOOLTIP_OFFHAND = transl("evolution.tooltip.offhand").setStyle(LIGHT_GREY);
@@ -46,6 +47,8 @@ public final class EvolutionTexts {
 
     private static final DecimalFormatSymbols SYMBOLS = getSymbols();
 
+    public static final DecimalFormat DRINK_FORMAT = initFormat(",##0 mL");
+    public static final DecimalFormat FOOD_FORMAT = initFormat(",##0 kcal");
     public static final DecimalFormat HOUR_FORMAT = initFormat(",##0 h");
     public static final DecimalFormat LITER_FORMAT = initFormat(",##0.## L");
     public static final DecimalFormat MASS_FORMAT = initFormat(",##0.## kg");
@@ -92,6 +95,10 @@ public final class EvolutionTexts {
         return new StringTextComponent("    ").appendSibling(new TranslationTextComponent(DISTANCE, TWO_PLACES.format(amount)).setStyle(REACH));
     }
 
+    public static ITextComponent drink(int amount) {
+        return new StringTextComponent("    " + DRINK_FORMAT.format(amount));
+    }
+
     public static ITextComponent durability(ItemStack stack) {
         return new StringTextComponent("   ").appendSibling(new TranslationTextComponent(DURABILITY,
                                                                                          ((IDurability) stack.getItem()).displayDurability(stack)).setStyle(
@@ -100,6 +107,10 @@ public final class EvolutionTexts {
 
     public static ITextComponent fireAspect(IFireAspect item) {
         return chanceAndLevel(FIRE_ASPECT, item.getChance(), item.getLevel()).setStyle(EFFECTS);
+    }
+
+    public static ITextComponent food(int amount) {
+        return new StringTextComponent("    " + FOOD_FORMAT.format(amount));
     }
 
     private static DecimalFormatSymbols getSymbols() {

@@ -18,7 +18,7 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
+import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.init.EvolutionHitBoxes;
 
@@ -90,7 +90,7 @@ public class BlockWallTorch extends BlockTorch {
                     if (!lit) {
                         return state.with(LIT, false);
                     }
-                    boolean oxygen = ChunkStorageCapability.contains(context.getWorld().getChunkAt(context.getPos()), EnumStorage.OXYGEN, 1);
+                    boolean oxygen = CapabilityChunkStorage.contains(context.getWorld().getChunkAt(context.getPos()), EnumStorage.OXYGEN, 1);
                     return state.with(LIT, oxygen);
                 }
             }

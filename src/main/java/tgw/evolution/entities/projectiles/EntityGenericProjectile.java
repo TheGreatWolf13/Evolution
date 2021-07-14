@@ -271,7 +271,7 @@ public abstract class EntityGenericProjectile extends Entity implements IProject
     @Override
     public void readAdditional(CompoundNBT compound) {
         this.ticksInGround = compound.getShort("life");
-        if (compound.contains("inBlockState", NBTTypes.COMPOUND_NBT.getId())) {
+        if (compound.contains("inBlockState", NBTTypes.COMPOUND_NBT)) {
             this.inBlockState = NBTUtil.readBlockState(compound.getCompound("inBlockState"));
         }
         this.arrowShake = compound.getByte("shake");
@@ -283,7 +283,7 @@ public abstract class EntityGenericProjectile extends Entity implements IProject
         if (compound.hasUniqueId("OwnerUUID")) {
             this.shootingEntity = compound.getUniqueId("OwnerUUID");
         }
-        if (compound.contains("SoundEvent", NBTTypes.STRING.getId())) {
+        if (compound.contains("SoundEvent", NBTTypes.STRING)) {
             this.hitSound = Registry.SOUND_EVENT.getValue(new ResourceLocation(compound.getString("SoundEvent"))).orElseGet(this::getHitEntitySound);
         }
     }

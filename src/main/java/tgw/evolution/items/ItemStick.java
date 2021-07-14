@@ -16,7 +16,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.IFireSource;
-import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
+import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
@@ -42,8 +42,8 @@ public class ItemStick extends ItemBlock {
         Block block = state.getBlock();
         if (block instanceof IFireSource && ((IFireSource) block).isFireSource(state)) {
             Chunk chunk = world.getChunkAt(pos);
-            if (ChunkStorageCapability.remove(chunk, EnumStorage.OXYGEN, 1)) {
-                ChunkStorageCapability.add(chunk, EnumStorage.CARBON_DIOXIDE, 1);
+            if (CapabilityChunkStorage.remove(chunk, EnumStorage.OXYGEN, 1)) {
+                CapabilityChunkStorage.add(chunk, EnumStorage.CARBON_DIOXIDE, 1);
                 PlayerEntity player = context.getPlayer();
                 context.getItem().shrink(1);
                 ItemStack stack = ItemTorch.createStack(world, 1);

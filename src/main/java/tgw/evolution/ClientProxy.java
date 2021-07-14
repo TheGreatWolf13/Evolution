@@ -12,6 +12,7 @@ import net.minecraft.world.WorldType;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.ScreenCorpse;
 import tgw.evolution.client.gui.ScreenInventoryExtended;
@@ -79,6 +80,7 @@ public class ClientProxy implements IProxy {
         ScreenManager.registerFactory(EvolutionContainers.CORPSE.get(), ScreenCorpse::new);
         ColorManager.registerBlockColorHandlers(Minecraft.getInstance().getBlockColors());
         ColorManager.registerItemColorHandlers(Minecraft.getInstance().getItemColors());
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(ClientEvents::onModelBakeEvent);
         MinecraftForge.EVENT_BUS.register(new ClientEvents(Minecraft.getInstance()));
         MinecraftForge.EVENT_BUS.register(new ItemEvents());
         ClientRegistry.registerKeyBinding(TOGGLE_PRONE);

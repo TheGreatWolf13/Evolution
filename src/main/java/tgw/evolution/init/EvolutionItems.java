@@ -14,6 +14,7 @@ import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.client.renderer.item.RenderStackItemJavelin;
 import tgw.evolution.items.*;
+import tgw.evolution.test.ItemChessboard;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.RockVariant;
 import tgw.evolution.util.WoodVariant;
@@ -30,6 +31,8 @@ public final class EvolutionItems {
 
     public static final DeferredRegister<Item> ITEMS = new DeferredRegister<>(ForgeRegistries.ITEMS, Evolution.MODID);
     //Placeholder
+    public static final RegistryObject<Item> dev_drink = ITEMS.register("dev_drink", () -> new ItemDevDrink(propMisc()));
+    public static final RegistryObject<Item> chessboard = ITEMS.register("mbe15_item_chessboard_registry_name", ItemChessboard::new);
     public static final RegistryObject<Item> placeholder_item = ITEMS.register("placeholder_item", EvolutionItems::item);
     public static final RegistryObject<Item> placeholder_block = ITEMS.register("placeholder_block", () -> itemBlock(PLACEHOLDER_BLOCK));
     //Stick

@@ -93,9 +93,9 @@ public final class MathHelper {
         if (a.isEmpty() && b.isEmpty()) {
             return true;
         }
-        if (a.getCount() != b.getCount()) {
-            return false;
-        }
+//        if (a.getCount() != b.getCount()) {
+//            return false;
+//        }
         return a.getItem() == b.getItem();
     }
 

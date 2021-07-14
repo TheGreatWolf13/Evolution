@@ -27,7 +27,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.RegistryObject;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
-import tgw.evolution.capabilities.chunkstorage.ChunkStorageCapability;
+import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
@@ -537,7 +537,7 @@ public class BlockFire extends BlockEvolution implements IReplaceable, IFireSour
                                           BlockPos currentPos,
                                           BlockPos facingPos) {
         return this.isValidPosition(state, world, currentPos) &&
-               ChunkStorageCapability.contains(world.getWorld().getChunkAt(currentPos), EnumStorage.OXYGEN, 1) ?
+               CapabilityChunkStorage.contains(world.getWorld().getChunkAt(currentPos), EnumStorage.OXYGEN, 1) ?
                this.getStateForPlacement(world, currentPos).with(AGE_0_15, state.get(AGE_0_15)) :
                Blocks.AIR.getDefaultState();
     }

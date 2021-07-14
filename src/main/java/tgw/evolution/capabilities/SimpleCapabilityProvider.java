@@ -22,21 +22,19 @@ public class SimpleCapabilityProvider<HANDLER> implements ICapabilityProvider {
     /**
      * The handler instance to provide.
      */
-    protected final HANDLER instance;
+    protected final HANDLER handler;
 
     /**
      * A lazy optional containing handler instance to provide.
      */
     protected final LazyOptional<HANDLER> lazyOptional;
 
-    public SimpleCapabilityProvider(Capability<HANDLER> capability, @Nullable Direction facing, @Nullable HANDLER instance) {
+    public SimpleCapabilityProvider(Capability<HANDLER> capability, @Nullable Direction facing, @Nullable HANDLER handler) {
         this.capability = capability;
         this.facing = facing;
-
-        this.instance = instance;
-
-        if (this.instance != null) {
-            this.lazyOptional = LazyOptional.of(() -> this.instance);
+        this.handler = handler;
+        if (this.handler != null) {
+            this.lazyOptional = LazyOptional.of(() -> this.handler);
         }
         else {
             this.lazyOptional = LazyOptional.empty();
@@ -83,7 +81,7 @@ public class SimpleCapabilityProvider<HANDLER> implements ICapabilityProvider {
      * @return A lazy optional containing the handler instance
      */
     @Nullable
-    public final HANDLER getInstance() {
-        return this.instance;
+    public final HANDLER getHandler() {
+        return this.handler;
     }
 }
