@@ -398,6 +398,11 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
+    public void onChatRender(RenderGameOverlayEvent.Chat event) {
+        event.setPosY(event.getPosY() - 10);
+    }
+
+    @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
         //Turn auto-jump off
         this.mc.gameSettings.autoJump = false;
