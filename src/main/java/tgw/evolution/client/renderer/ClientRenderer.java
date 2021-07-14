@@ -1161,10 +1161,9 @@ public class ClientRenderer {
                                     MathHelper.clamp(remainingSeconds / 40.0F, 0.0F, 0.25F);
                         }
                     }
-                    float finalAlpha = alpha;
                     TextureAtlasSprite potionSprites = potionSpriteUploader.getSprite(effect);
                     this.mc.getTextureManager().bindTexture(AtlasTexture.LOCATION_EFFECTS_TEXTURE);
-                    GlStateManager.color4f(1.0F, 1.0F, 1.0F, finalAlpha);
+                    GlStateManager.color4f(1.0F, 1.0F, 1.0F, alpha);
                     AbstractGui.blit(x + 3, y + 3, -90, 18, 18, potionSprites);
                     if (effectInstance.getAmplifier() != 0) {
                         GlStateManager.pushMatrix();
