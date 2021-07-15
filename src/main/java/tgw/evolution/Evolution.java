@@ -80,6 +80,12 @@ public final class Evolution {
         BlockFire.init();
     }
 
+    public static void log(boolean log, String message, Object... args) {
+        if (log) {
+            LOGGER.debug(message, args);
+        }
+    }
+
     @SubscribeEvent
     public static void registerParticleFactories(ParticleFactoryRegisterEvent event) {
         EvolutionParticles.registerFactories(Minecraft.getInstance().particles);
