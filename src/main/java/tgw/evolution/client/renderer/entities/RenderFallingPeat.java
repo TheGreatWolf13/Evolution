@@ -14,6 +14,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.lwjgl.opengl.GL11;
 import tgw.evolution.entities.misc.EntityFallingPeat;
 import tgw.evolution.util.MathHelper;
 
@@ -35,7 +36,7 @@ public class RenderFallingPeat extends EntityRenderer<EntityFallingPeat> {
         GlStateManager.disableLighting();
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(7, DefaultVertexFormats.BLOCK);
+        bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
         MUTABLE_POS.setPos(entity.posX, entity.getBoundingBox().maxY, entity.posZ);
         GlStateManager.translatef((float) (x - MUTABLE_POS.getX() - 0.5), (float) (y - MUTABLE_POS.getY()), (float) (z - MUTABLE_POS.getZ() - 0.5));
         BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();

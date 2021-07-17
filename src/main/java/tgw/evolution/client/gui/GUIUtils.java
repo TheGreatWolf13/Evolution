@@ -85,7 +85,7 @@ public final class GUIUtils {
                                          GlStateManager.SourceFactor.ONE,
                                          GlStateManager.DestFactor.ZERO);
         setColor(color);
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION);
+        bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
         boolean xHigh = x < x2;
         bufferbuilder.pos(x, xHigh ? y + width : y, over ? 1 : 0).endVertex();
         bufferbuilder.pos(x2, xHigh ? y2 + width : y2, over ? 1 : 0).endVertex();

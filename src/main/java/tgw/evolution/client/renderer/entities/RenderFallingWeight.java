@@ -16,6 +16,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.lwjgl.opengl.GL11;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.util.MathHelper;
 
@@ -39,7 +40,7 @@ public class RenderFallingWeight extends EntityRenderer<EntityFallingWeight> {
             GlStateManager.disableLighting();
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder bufferbuilder = tessellator.getBuffer();
-            bufferbuilder.begin(7, DefaultVertexFormats.BLOCK);
+            bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
             MUTABLE_POS.setPos(entity.posX, entity.getBoundingBox().maxY, entity.posZ);
             GlStateManager.translatef((float) (x - MUTABLE_POS.getX() - 0.5),
                                       (float) (y - (int) entity.getBoundingBox().maxY),

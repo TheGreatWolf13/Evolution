@@ -283,7 +283,7 @@ public class SkyRenderer implements IRenderHandler {
             GlStateManager.rotatef(-90.0f, 1.0F, 0.0F, 0.0F);
             float sunAzimuth = MathHelper.radToDeg((float) MathHelper.atan2(EarthHelper.sunX, EarthHelper.sunZ)) + 180;
             GlStateManager.rotatef(sunAzimuth, 0.0F, 0.0F, 1.0F);
-            bufferBuilder.begin(6, DefaultVertexFormats.POSITION_COLOR);
+            bufferBuilder.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
             bufferBuilder.pos(0, 100, 0).color(sunriseColors[0], sunriseColors[1], sunriseColors[2], sunriseColors[3]).endVertex();
             for (int j = 0; j <= 16; ++j) {
                 float f6 = j * MathHelper.TAU / 16.0F;

@@ -6,6 +6,7 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import org.lwjgl.opengl.GL11;
 
 public final class GameRendererHooks {
 
@@ -39,7 +40,7 @@ public final class GameRendererHooks {
         GlStateManager.disableTexture();
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder builder = tessellator.getBuffer();
-        builder.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
         float acessibilityTextBackground = Minecraft.getInstance().gameSettings.func_216840_a(0.25F);
         builder.pos(-nameMiddle - 1, -1 + verticalShift, 0.0D).color(0.0F, 0.0F, 0.0F, acessibilityTextBackground).endVertex();
         builder.pos(-nameMiddle - 1, 8 + verticalShift, 0.0D).color(0.0F, 0.0F, 0.0F, acessibilityTextBackground).endVertex();
