@@ -25,6 +25,9 @@ import tgw.evolution.events.ChunkEvents;
 import tgw.evolution.events.EntityEvents;
 import tgw.evolution.events.WorldEvents;
 import tgw.evolution.init.*;
+import tgw.evolution.network.IPacketHandler;
+import tgw.evolution.network.PacketHandlerClient;
+import tgw.evolution.network.PacketHandlerDummy;
 import tgw.evolution.util.reflection.FieldHandler;
 import tgw.evolution.world.EvWorldDefault;
 import tgw.evolution.world.EvWorldFlat;
@@ -42,6 +45,7 @@ public final class Evolution {
     public static final String MODID = "evolution";
     public static final Logger LOGGER = LogManager.getLogger(MODID);
     public static final IProxy PROXY = DistExecutor.runForDist(() -> ClientProxy::new, () -> ServerProxy::new);
+    public static final IPacketHandler PACKET_HANDLER = DistExecutor.runForDist(() -> PacketHandlerClient::new, () -> PacketHandlerDummy::new);
     public static final Map<UUID, Boolean> PRONED_PLAYERS = Maps.newConcurrentMap();
     private static final FieldHandler<DimensionType, BiFunction<World, DimensionType, ? extends Dimension>> DIMENSION_FACTORY_FIELD =
             new FieldHandler<>(

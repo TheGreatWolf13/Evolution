@@ -1,27 +1,22 @@
 package tgw.evolution.network;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
-import net.minecraftforge.registries.ForgeRegistries;
-import tgw.evolution.client.audio.SoundEntityEmitted;
+import tgw.evolution.Evolution;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
 
 public class PacketSCPlaySoundEntityEmitted implements IPacket {
     @Nonnull
-    private final SoundCategory category;
-    private final int entityId;
-    private final float pitch;
+    protected final SoundCategory category;
+    protected final int entityId;
+    protected final float pitch;
     @Nonnull
-    private final String sound;
-    private final float volume;
+    protected final String sound;
+    protected final float volume;
 
     public PacketSCPlaySoundEntityEmitted(int entityId, @Nonnull String sound, @Nonnull SoundCategory category, float volume, float pitch) {
         this.entityId = entityId;
@@ -50,16 +45,7 @@ public class PacketSCPlaySoundEntityEmitted implements IPacket {
 
     public static void handle(PacketSCPlaySoundEntityEmitted packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
-                Minecraft mc = Minecraft.getInstance();
-                Entity entity = mc.world.getEntityByID(packet.entityId);
-                SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(packet.sound));
-                if (entity != null && sound != null) {
-                    Minecraft.getInstance()
-                             .getSoundHandler()
-                             .play(new SoundEntityEmitted(entity, sound, packet.category, packet.volume, packet.pitch));
-                }
-            });
+            Evolution.PACKET_HANDLER.handlePlaySoundEntityEmitted(packet, context);
             context.get().setPacketHandled(true);
         }
     }
