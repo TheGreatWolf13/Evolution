@@ -35,10 +35,6 @@ public class MovementInputEvolution extends MovementInputFromOptions {
         this.moveStrafe = MathHelper.clamp(this.moveStrafe, -1, 1);
         this.jump = inverted ? this.gameSettings.keyBindSneak.isKeyDown() : this.gameSettings.keyBindJump.isKeyDown();
         this.sneak = inverted ? this.gameSettings.keyBindJump.isKeyDown() : this.gameSettings.keyBindSneak.isKeyDown();
-        if (!noDampening && (this.sneak || slow)) {
-            this.moveStrafe *= 0.3;
-            this.moveForward *= 0.3;
-        }
         if (!dizziness) {
             this.tick = 0;
         }
