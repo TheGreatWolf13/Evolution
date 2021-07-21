@@ -49,10 +49,7 @@ import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.*;
 import tgw.evolution.inventory.extendedinventory.ContainerExtendedHandler;
-import tgw.evolution.network.PacketCSPlayerFall;
-import tgw.evolution.network.PacketSCChangeTickrate;
-import tgw.evolution.network.PacketSCRemoveEffect;
-import tgw.evolution.network.PacketSCUpdateCameraTilt;
+import tgw.evolution.network.*;
 import tgw.evolution.util.*;
 import tgw.evolution.util.damage.*;
 import tgw.evolution.util.reflection.FieldHandler;
@@ -63,6 +60,7 @@ import java.util.*;
 public class EntityEvents {
 
     public static final WindVector WIND = new WindVector();
+    public static final Map<UUID, SkinType> SKIN_TYPE = new HashMap<>();
     private static final MethodHandler<Entity, Void> SET_POSE_METHOD = new MethodHandler<>(Entity.class, "func_213301_b", Pose.class);
     private static final FieldHandler<LivingEntity, CombatTracker> COMBAT_TRACKER_FIELD = new FieldHandler<>(LivingEntity.class, "field_94063_bt");
     private static final FieldHandler<PlayerAbilities, Float> PLAYER_SPEED_FIELD = new FieldHandler<>(PlayerAbilities.class, "field_75097_g");
@@ -218,6 +216,11 @@ public class EntityEvents {
         if (living instanceof PlayerEntity) {
             PlayerEntity player = (PlayerEntity) living;
             PLAYER_SPEED_FIELD.set(player.abilities, (float) PlayerHelper.WALK_FORCE);
+            if (player.world.isRemote) {
+                if (player.equals(Evolution.PROXY.getClientPlayer())) {
+                    EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSkinType());
+                }
+            }
         }
         //TODO
 //        else {
@@ -548,7 +551,7 @@ public class EntityEvents {
             }
         }
         else if (event.phase == TickEvent.Phase.END) {
-            if (player.isSneaking()) {
+            if (player.getPose() == Pose.SNEAKING) {
                 player.setSprinting(false);
             }
             if (Evolution.PRONED_PLAYERS.getOrDefault(player.getUniqueID(), false)) {
