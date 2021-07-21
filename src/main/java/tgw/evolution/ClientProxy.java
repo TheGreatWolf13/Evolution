@@ -1,6 +1,7 @@
 package tgw.evolution;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.client.renderer.model.ModelBakery;
 import net.minecraft.client.settings.KeyBinding;
@@ -22,6 +23,7 @@ import tgw.evolution.init.EvolutionContainers;
 import tgw.evolution.init.EvolutionParticles;
 import tgw.evolution.init.EvolutionRenderer;
 import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.util.SkinType;
 import tgw.evolution.util.reflection.StaticFieldHandler;
 
 import java.util.Set;
@@ -70,6 +72,11 @@ public class ClientProxy implements IProxy {
     @Override
     public World getClientWorld() {
         return Minecraft.getInstance().world;
+    }
+
+    @Override
+    public SkinType getSkinType() {
+        return "default".equals(((AbstractClientPlayerEntity) this.getClientPlayer()).getSkinType()) ? SkinType.STEVE : SkinType.ALEX;
     }
 
     @Override
