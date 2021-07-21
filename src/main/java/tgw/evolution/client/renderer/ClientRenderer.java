@@ -412,7 +412,7 @@ public class ClientRenderer {
         }
     }
 
-    public void renderAttackIndicator() {
+    public void renderAttackIndicator(float partialTicks) {
         GameSettings gamesettings = this.mc.gameSettings;
         boolean offhandValid = this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable;
         this.mc.getTextureManager().bindTexture(EvolutionResources.GUI_ICONS);
@@ -444,7 +444,7 @@ public class ClientRenderer {
                                                      GlStateManager.DestFactor.ZERO);
                     blit((scaledWidth - 15) / 2, (scaledHeight - 15) / 2, 0, 0, 15, 15);
                     if (this.mc.gameSettings.attackIndicator == AttackIndicatorStatus.CROSSHAIR) {
-                        float leftCooledAttackStrength = this.client.getMainhandCooledAttackStrength(0);
+                        float leftCooledAttackStrength = this.client.getMainhandCooledAttackStrength(partialTicks);
                         boolean shouldShowLeftAttackIndicator = false;
                         if (this.client.leftPointedEntity instanceof LivingEntity && leftCooledAttackStrength >= 1) {
                             shouldShowLeftAttackIndicator = this.mc.player.getCooldownPeriod() > 5;
@@ -468,7 +468,7 @@ public class ClientRenderer {
                         if (offhandValid) {
                             boolean shouldShowRightAttackIndicator = false;
                             float rightCooledAttackStrength = this.client.getOffhandCooledAttackStrength(this.mc.player.getHeldItemOffhand()
-                                                                                                                       .getItem(), 0);
+                                                                                                                       .getItem(), partialTicks);
                             if (this.client.rightPointedEntity instanceof LivingEntity && rightCooledAttackStrength >= 1) {
                                 shouldShowRightAttackIndicator = this.client.rightPointedEntity.canBeAttackedWithItem();
                                 if (this.mc.objectMouseOver.getType() == RayTraceResult.Type.BLOCK) {
