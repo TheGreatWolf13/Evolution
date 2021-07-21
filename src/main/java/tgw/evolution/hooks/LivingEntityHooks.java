@@ -976,6 +976,10 @@ public final class LivingEntityHooks {
             f8 = 1.0F;
         }
         entity.limbSwingAmount += (f8 - entity.limbSwingAmount) * 0.4F;
+        if (entity.limbSwingAmount < 1E-9) {
+            entity.limbSwingAmount = 0;
+            entity.limbSwing = 0;
+        }
         entity.limbSwing += entity.limbSwingAmount;
     }
 }
