@@ -1,16 +1,22 @@
 package tgw.evolution.util;
 
+import net.minecraft.block.BlockState;
+import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
 import net.minecraft.client.renderer.entity.model.RendererModel;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.item.HangingEntity;
+import net.minecraft.entity.monster.CreeperEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.CrossbowItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.item.UseAction;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.Direction.AxisDirection;
-import net.minecraft.util.EntityPredicates;
 import net.minecraft.util.Hand;
+import net.minecraft.util.HandSide;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.VoxelShape;
@@ -44,11 +50,9 @@ public final class MathHelper {
     public static final Direction[] DIRECTIONS_X = {Direction.WEST, Direction.EAST};
     public static final Direction[] DIRECTIONS_Z = {Direction.NORTH, Direction.SOUTH};
     public static final Hand[] HANDS_LEFT_PRIORITY = {Hand.OFF_HAND, Hand.MAIN_HAND};
-    private static final Predicate<Entity> PREDICATE = EntityPredicates.CAN_AI_TARGET.and(e -> e != null &&
-                                                                                               e.canBeCollidedWith() &&
-                                                                                               (e instanceof LivingEntity ||
-                                                                                                e instanceof HangingEntity) &&
-                                                                                               !(e instanceof FakePlayer));
+    private static final Predicate<Entity> PREDICATE = e -> e != null && !e.isSpectator() && e.canBeCollidedWith();
+    private static final FieldHandler<LivingEntity, Float> LAST_SWIM = new FieldHandler<>(LivingEntity.class, "field_205018_bM");
+    private static final FieldHandler<LivingEntity, Float> SWIM = new FieldHandler<>(LivingEntity.class, "field_205017_bL");
 
     private MathHelper() {
     }
@@ -93,9 +97,6 @@ public final class MathHelper {
         if (a.isEmpty() && b.isEmpty()) {
             return true;
         }
-//        if (a.getCount() != b.getCount()) {
-//            return false;
-//        }
         return a.getItem() == b.getItem();
     }
 
@@ -297,7 +298,7 @@ public final class MathHelper {
      * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
      */
     public static float cos(@Radian float rad) {
-        return net.minecraft.util.math.MathHelper.cos(rad);
+        return net.minecraft.util.math.MathHelper.cos(wrapRadians(rad));
     }
 
     /**
@@ -308,7 +309,7 @@ public final class MathHelper {
      * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
      */
     public static float cosDeg(@Degree float deg) {
-        return net.minecraft.util.math.MathHelper.cos(degToRad(deg));
+        return net.minecraft.util.math.MathHelper.cos(degToRad(wrapDegrees(deg)));
     }
 
     /**
@@ -405,6 +406,19 @@ public final class MathHelper {
         double size = (max - min) / maxIndex;
         int i = (int) ((value - min) / size);
         return clamp(i, 0, maxIndex - 1);
+    }
+
+    public static float getLimbSwing(LivingEntity entity, float partialTicks) {
+        float limbSwing = entity.limbSwing - entity.limbSwingAmount * (1.0F - partialTicks);
+        if (entity.isChild()) {
+            limbSwing *= 3.0F;
+        }
+        return limbSwing;
+    }
+
+    public static float getLimbSwingAmount(LivingEntity entity, float partialTicks) {
+        float limbSwingAmount = lerp(partialTicks, entity.prevLimbSwingAmount, entity.limbSwingAmount);
+        return clampMax(limbSwingAmount, 1.0F);
     }
 
     /**
@@ -636,6 +650,10 @@ public final class MathHelper {
         return !VoxelShapes.compare(reference, outside, IBooleanFunction.AND);
     }
 
+    public static boolean isSitting(LivingEntity entity) {
+        return entity.isPassenger() && entity.getRidingEntity() != null && entity.getRidingEntity().shouldRiderSit();
+    }
+
     /**
      * Iterates through a {@link List} in reverse order.
      *
@@ -671,6 +689,10 @@ public final class MathHelper {
      */
     public static double lerp(double partialTicks, double old, double now) {
         return net.minecraft.util.math.MathHelper.lerp(partialTicks, old, now);
+    }
+
+    public static float lerpAngles(float partialTicks, float prevAngle, float angle) {
+        return prevAngle + partialTicks * wrapDegrees(angle - prevAngle);
     }
 
     /**
@@ -742,7 +764,7 @@ public final class MathHelper {
      * @return A {@link BlockRayTraceResult} containing the {@link BlockPos} of the {@code Block} hit.
      */
     @Nonnull
-    public static BlockRayTraceResult rayTraceBlocksFromEyes(@Nonnull Entity entity, float partialTicks, float distance, boolean fluid) {
+    public static BlockRayTraceResult rayTraceBlocksFromEyes(@Nonnull Entity entity, float partialTicks, double distance, boolean fluid) {
         Vec3d from = entity.getEyePosition(partialTicks);
         Vec3d look = entity.getLook(partialTicks);
         Vec3d to = from.add(look.x * distance, look.y * distance, look.z * distance);
@@ -755,7 +777,7 @@ public final class MathHelper {
 
     /**
      * Casts a ray tracing for {@code Block}s based on the {@link Entity}'s {@link Entity#rotationYaw} and {@link Entity#rotationPitch}.
-     * This method is useful for Entities that are projectiles, as {@link MathHelper#rayTraceBlocksFromEyes(Entity, float, float, boolean)}
+     * This method is useful for Entities that are projectiles, as {@link MathHelper#rayTraceBlocksFromEyes(Entity, float, double, boolean)}
      * usually do not work on them.
      *
      * @param entity   The {@link Entity} from whose {@code yaw} and {@code pitch} to cast the ray.
@@ -854,7 +876,7 @@ public final class MathHelper {
     @Nullable
     public static EntityRayTraceResult rayTraceEntityFromEyes(@Nonnull Entity entity, float partialTicks, double reachDistance) {
         Vec3d from = entity.getEyePosition(partialTicks);
-        Vec3d look = entity.getLook(partialTicks);
+        Vec3d look = entity.getLook(partialTicks).normalize();
         Vec3d to = from.add(look.x * reachDistance, look.y * reachDistance, look.z * reachDistance);
         return rayTraceEntities(entity, from, to, new AxisAlignedBB(from, to), reachDistance * reachDistance);
     }
@@ -1011,7 +1033,7 @@ public final class MathHelper {
      * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
      */
     public static float sin(@Radian float rad) {
-        return net.minecraft.util.math.MathHelper.sin(rad);
+        return net.minecraft.util.math.MathHelper.sin(wrapRadians(rad));
     }
 
     /**
@@ -1022,7 +1044,7 @@ public final class MathHelper {
      * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
      */
     public static float sinDeg(@Degree float deg) {
-        return net.minecraft.util.math.MathHelper.sin(degToRad(deg));
+        return net.minecraft.util.math.MathHelper.sin(degToRad(wrapDegrees(deg)));
     }
 
     /**
@@ -1162,5 +1184,39 @@ public final class MathHelper {
      */
     public static float wrapDegrees(@Degree float value) {
         return net.minecraft.util.math.MathHelper.wrapDegrees(value);
+    }
+
+    /**
+     * Wraps the angle given in radians in the range [-pi; pi)
+     *
+     * @param value The angle value in radians.
+     * @return The equivalent angle value wrapped.
+     */
+    public static double wrapRadians(@Radian double value) {
+        double d = value % (Math.PI * 2);
+        if (d >= Math.PI) {
+            d -= Math.PI * 2;
+        }
+        if (d < -Math.PI) {
+            d += Math.PI * 2;
+        }
+        return d;
+    }
+
+    /**
+     * Wraps the angle given in radians in the range [-pi; pi)
+     *
+     * @param value The angle value in radians.
+     * @return The equivalent angle value wrapped.
+     */
+    public static float wrapRadians(@Radian float value) {
+        float d = value % TAU;
+        if (d >= PI) {
+            d -= TAU;
+        }
+        if (d < -PI) {
+            d += TAU;
+        }
+        return d;
     }
 }
