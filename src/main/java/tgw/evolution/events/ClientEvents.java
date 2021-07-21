@@ -956,7 +956,7 @@ public class ClientEvents {
         }
         if (event.getType() == RenderGameOverlayEvent.ElementType.CROSSHAIRS) {
             event.setCanceled(true);
-            this.renderer.renderAttackIndicator();
+            this.renderer.renderAttackIndicator(event.getPartialTicks());
             return;
         }
         if (event.getType() == RenderGameOverlayEvent.ElementType.HEALTH) {
