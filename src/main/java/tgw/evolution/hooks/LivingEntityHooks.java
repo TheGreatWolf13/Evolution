@@ -470,7 +470,7 @@ public final class LivingEntityHooks {
         if (length < 1.0E-7) {
             return Vec3d.ZERO;
         }
-        if (entity.isSneaking()) {
+        if (entity.getPose() == Pose.SNEAKING) {
             if (!(entity instanceof PlayerEntity && ((PlayerEntity) entity).abilities.isFlying)) {
                 magnitude *= 0.3;
             }
