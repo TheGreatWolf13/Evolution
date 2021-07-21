@@ -48,6 +48,7 @@ public final class InputHooks {
         if (ClientEvents.LEFT_COUNTER_FIELD.get(mc) <= 0) {
             if (mc.objectMouseOver == null) {
                 Evolution.LOGGER.error("Null returned as 'hitResult', this shouldn't happen!");
+                return;
             }
             else if (!mc.player.isRowingBoat()) {
                 switch (mc.objectMouseOver.getType()) {
@@ -65,6 +66,7 @@ public final class InputHooks {
                     case MISS:
                         ClientEvents.getInstance().leftMouseClick();
                         ForgeHooks.onEmptyLeftClick(mc.player);
+                        break;
                 }
             }
         }
@@ -230,6 +232,7 @@ public final class InputHooks {
             !mc.player.isHandActive()) {
             rightClickMouse(mc);
         }
+        sendClickBlockToController(mc, mc.currentScreen == null && mc.gameSettings.keyBindAttack.isKeyDown() && mc.mouseHelper.isMouseGrabbed());
     }
 
     public static void rightClickMouse(Minecraft mc) {
@@ -238,6 +241,7 @@ public final class InputHooks {
             if (!mc.player.isRowingBoat()) {
                 if (mc.objectMouseOver == null) {
                     Evolution.LOGGER.warn("Null returned as 'hitResult', this shouldn't happen!");
+                    return;
                 }
                 for (Hand hand : Hand.values()) {
                     ItemStack stack = mc.player.getHeldItem(hand);
@@ -314,5 +318,30 @@ public final class InputHooks {
         offhandLungingStack = mc.player.getHeldItemOffhand();
         ClientEvents.addLungingPlayer(mc.player.getEntityId(), Hand.OFF_HAND);
         EvolutionNetwork.INSTANCE.sendToServer(new PacketCSLungeAnim(Hand.OFF_HAND));
+    }
+
+    public static void sendClickBlockToController(Minecraft mc, boolean leftClick) {
+        if (!leftClick) {
+            ClientEvents.LEFT_COUNTER_FIELD.set(mc, 0);
+        }
+        if (ClientEvents.LEFT_COUNTER_FIELD.get(mc) <= 0 && !mc.player.isHandActive()) {
+            if (leftClick &&
+                ClientEvents.getInstance().getObjectMouseOver() != null &&
+                ClientEvents.getInstance().getObjectMouseOver().getType() == RayTraceResult.Type.BLOCK) {
+                BlockRayTraceResult blockRayTrace = (BlockRayTraceResult) ClientEvents.getInstance().getObjectMouseOver();
+                BlockPos pos = blockRayTrace.getPos();
+                if (!mc.world.isAirBlock(pos)) {
+                    Direction face = blockRayTrace.getFace();
+                    if (mc.playerController.onPlayerDamageBlock(pos, face)) {
+                        mc.particles.addBlockHitEffects(pos, blockRayTrace);
+                        mc.player.swingArm(Hand.MAIN_HAND);
+                        ClientEvents.getInstance().swingArm(Hand.MAIN_HAND);
+                    }
+                }
+            }
+            else {
+                mc.playerController.resetBlockRemoving();
+            }
+        }
     }
 }
