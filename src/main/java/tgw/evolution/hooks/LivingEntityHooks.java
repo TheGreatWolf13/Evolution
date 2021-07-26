@@ -476,7 +476,7 @@ public final class LivingEntityHooks {
             }
         }
         if (entity instanceof PlayerEntity) {
-            if (Evolution.PRONED_PLAYERS.getOrDefault(entity.getUniqueID(), false)) {
+            if (entity.getPose() == Pose.SWIMMING && !entity.isInWater()) {
                 magnitude *= 0.3;
             }
         }

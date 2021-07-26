@@ -555,12 +555,14 @@ public class EntityEvents {
                 player.setSprinting(false);
             }
             if (Evolution.PRONED_PLAYERS.getOrDefault(player.getUniqueID(), false)) {
-                player.setSprinting(false);
-                player.stepHeight = getStepHeight(player);
                 SET_POSE_METHOD.call(player, Pose.SWIMMING);
             }
             else {
                 player.stepHeight = 0.6f;
+            }
+            if (player.getPose() == Pose.SWIMMING && !player.isInWater()) {
+                player.setSprinting(false);
+                player.stepHeight = getStepHeight(player);
             }
             if (!player.world.isRemote) {
                 //Put off torches in Water

@@ -935,8 +935,14 @@ public class ClientEvents {
         if (!this.isSneakPressed) {
             this.sneakpreviousPressed = false;
         }
-        if (this.proneToggle && !this.mc.player.isOnLadder()) {
+        if (this.mc.player.getPose() == Pose.SWIMMING && !this.mc.player.isInWater() && !this.mc.player.isOnLadder()) {
             movementInput.jump = false;
+        }
+        if (this.proneToggle && !this.mc.player.isOnLadder() && this.mc.player.onGround && this.isJumpPressed) {
+            BlockPos pos = this.mc.player.getPosition().up();
+            if (!this.mc.world.getBlockState(pos).getMaterial().blocksMovement()) {
+                this.proneToggle = false;
+            }
         }
     }
 
@@ -1134,6 +1140,16 @@ public class ClientEvents {
         }
     }
 
+    private boolean shouldBeProbe(PlayerEntity player) {
+        if (player.isInWater()) {
+            return false;
+        }
+        if (player.isInLava()) {
+            return false;
+        }
+        return !player.isOnLadder() || !this.isJumpPressed && player.onGround;
+    }
+
     @SubscribeEvent
     public void shutDownInternalServer(FMLServerStoppedEvent event) {
         if (this.inverted) {
@@ -1215,17 +1231,10 @@ public class ClientEvents {
         if (player != null) {
             UUID uuid = player.getUniqueID();
             boolean shouldBeProne = ClientProxy.TOGGLE_PRONE.isKeyDown() != this.proneToggle;
-            shouldBeProne = shouldBeProne &&
-                            !player.isInWater() &&
-                            !player.isInLava() &&
-                            (!player.isOnLadder() || !this.isJumpPressed && player.onGround);
-            shouldBeProne = shouldBeProne && (!player.isOnLadder() || !this.isJumpPressed && player.onGround);
+            shouldBeProne = shouldBeProne && this.shouldBeProbe(player);
             BlockPos pos = player.getPosition().up(2);
-            //noinspection ConstantConditions
             shouldBeProne = shouldBeProne ||
-                            this.proneToggle &&
-                            player.isOnLadder() &&
-                            !player.world.getBlockState(pos).getCollisionShape(player.world, pos, null).isEmpty();
+                            this.proneToggle && player.isOnLadder() && player.world.getBlockState(pos).getMaterial().blocksMovement();
             if (shouldBeProne != Evolution.PRONED_PLAYERS.getOrDefault(uuid, false)) {
                 EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSetProne(shouldBeProne));
             }
