@@ -702,7 +702,7 @@ public final class LivingEntityHooks {
         double legSlowDownX = 0;
         double legSlowDownZ = 0;
         double frictionAcc = frictionCoef * gravityAcceleration;
-        if (entity.onGround || isPlayerFlying && isActiveWalking) {
+        if (entity.onGround || isPlayerFlying) {
             double legSlowDown = legSlowDown(entity);
             if (frictionAcc != 0) {
                 legSlowDown *= frictionAcc * getFrictionModifier(entity);

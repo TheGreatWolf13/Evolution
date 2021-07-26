@@ -86,7 +86,7 @@ public final class PlayerHooks {
         if (player.abilities.isFlying && !player.isPassenger()) {
             double motionY = player.getMotion().y;
             float jumpMovementFactor = player.jumpMovementFactor;
-            player.jumpMovementFactor = player.abilities.getFlySpeed() * (player.isSprinting() ? 2 : 1);
+            player.jumpMovementFactor = 4 * player.abilities.getFlySpeed() * (player.isSprinting() ? 2 : 1);
             Vec3d motion = player.getMotion();
             player.setMotion(motion.x, motionY * 0.6, motion.z);
             player.fallDistance = 0.0F;
