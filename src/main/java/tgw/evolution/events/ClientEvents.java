@@ -127,6 +127,7 @@ public class ClientEvents {
     private boolean initialized;
     private boolean inverted;
     private boolean isJumpPressed;
+    private boolean isPreviousProned;
     private boolean isSneakPressed;
     private EntityRayTraceResult leftRayTrace;
     private boolean lunging;
@@ -538,6 +539,13 @@ public class ClientEvents {
                 InputHooks.parryCooldownTick();
                 this.updateBeltItem();
                 this.updateBackItem();
+                //Resets cooldown when proning
+                boolean isProned = this.mc.player.getPose() == Pose.SWIMMING && !this.mc.player.isInWater();
+                if (this.isPreviousProned != isProned) {
+                    this.mainhandTimeSinceLastHit = 0;
+                    this.offhandTimeSinceLastHit = 0;
+                    this.isPreviousProned = isProned;
+                }
                 //Handle Disoriented Effect
                 if (this.mc.player.isPotionActive(EvolutionEffects.DISORIENTED.get())) {
                     if (!this.inverted) {
