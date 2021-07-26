@@ -88,7 +88,7 @@ public final class PlayerHooks {
             float jumpMovementFactor = player.jumpMovementFactor;
             player.jumpMovementFactor = 4 * player.abilities.getFlySpeed() * (player.isSprinting() ? 2 : 1);
             Vec3d motion = player.getMotion();
-            player.setMotion(motion.x, motionY * 0.6, motion.z);
+            player.setMotion(motion.x, motionY * 0.8, motion.z);
             player.fallDistance = 0.0F;
             LivingEntityHooks.travel(player, direction, isJumping, jumpTicks, flags);
             setFlag(player, flags, EntityFlags.ELYTRA_FLYING, false);
