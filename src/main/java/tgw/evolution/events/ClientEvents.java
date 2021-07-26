@@ -8,6 +8,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.screen.inventory.CreativeScreen;
 import net.minecraft.client.gui.screen.inventory.InventoryScreen;
+import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.entity.PlayerRenderer;
@@ -16,6 +17,7 @@ import net.minecraft.client.renderer.model.ModelResourceLocation;
 import net.minecraft.client.util.ClientRecipeBook;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.Pose;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.BlockItem;
@@ -68,8 +70,10 @@ import tgw.evolution.items.*;
 import tgw.evolution.network.*;
 import tgw.evolution.potion.InfiniteEffectInstance;
 import tgw.evolution.test.ChessboardModel;
+import tgw.evolution.util.AdvancedEntityRayTraceResult;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.PlayerHelper;
+import tgw.evolution.util.hitbox.BodyPart;
 import tgw.evolution.util.reflection.FieldHandler;
 import tgw.evolution.util.reflection.StaticFieldHandler;
 import tgw.evolution.world.dimension.DimensionOverworld;
@@ -126,6 +130,7 @@ public class ClientEvents {
     private boolean isSneakPressed;
     private EntityRayTraceResult leftRayTrace;
     private boolean lunging;
+    private RayTraceResult objectMouseOver;
     private GameRenderer oldGameRenderer;
     private boolean previousPressed;
     private boolean proneToggle;
@@ -348,6 +353,10 @@ public class ClientEvents {
         return MathHelper.clamp((this.mainhandTimeSinceLastHit + partialTicks) / this.mc.player.getCooldownPeriod(), 0.0F, 1.0F);
     }
 
+    public RayTraceResult getObjectMouseOver() {
+        return this.objectMouseOver;
+    }
+
     public float getOffhandCooledAttackStrength(Item item, float adjustTicks) {
         if (!(item instanceof IOffhandAttackable)) {
             float cooldown = (float) (1.0 / PlayerHelper.ATTACK_SPEED * 20.0);
@@ -392,6 +401,13 @@ public class ClientEvents {
         if (this.mainhandTimeSinceLastHit >= cooldown) {
             this.mainhandTimeSinceLastHit = 0;
             double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getHitVec().y : Double.NaN;
+            if (this.leftRayTrace instanceof AdvancedEntityRayTraceResult) {
+                BodyPart part = BodyPart.ALL;
+                if (((AdvancedEntityRayTraceResult) this.leftRayTrace).getHitbox() != null) {
+                    part = ((AdvancedEntityRayTraceResult) this.leftRayTrace).getHitbox().getPart();
+                }
+                Evolution.LOGGER.debug("Part = {}", part);
+            }
             EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.leftPointedEntity, Hand.MAIN_HAND, rayTraceY));
             this.swingArm(Hand.MAIN_HAND);
         }
@@ -400,6 +416,39 @@ public class ClientEvents {
     @SubscribeEvent
     public void onChatRender(RenderGameOverlayEvent.Chat event) {
         event.setPosY(event.getPosY() - 10);
+    }
+
+    @SubscribeEvent
+    public void onClientRender(TickEvent.RenderTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            if (!this.mc.isGamePaused() && this.mc.player != null) {
+                this.mc.getProfiler().startSection("raytrace");
+                //RayTrace entities
+                double reachDistance = this.mc.player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue();
+                this.objectMouseOver = MathHelper.rayTraceBlocksFromEyes(this.mc.player, event.renderTickTime, reachDistance, false);
+                if (this.objectMouseOver.getType() == RayTraceResult.Type.BLOCK) {
+                    reachDistance = this.mc.player.getEyePosition(event.renderTickTime).distanceTo(this.objectMouseOver.getHitVec());
+                }
+                this.leftRayTrace = MathHelper.rayTraceOBBEntityFromEyes(this.mc.player, event.renderTickTime, reachDistance);
+                this.leftPointedEntity = this.leftRayTrace == null ? null : this.leftRayTrace.getEntity();
+                if (this.leftRayTrace != null) {
+                    this.objectMouseOver = this.leftRayTrace;
+                }
+                if (this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable) {
+                    this.rightRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player,
+                                                                           event.renderTickTime,
+                                                                           Math.min(reachDistance,
+                                                                                    ((IOffhandAttackable) this.mc.player.getHeldItemOffhand()
+                                                                                                                        .getItem()).getReach() +
+                                                                                    PlayerHelper.REACH_DISTANCE));
+                    this.rightPointedEntity = this.rightRayTrace == null ? null : this.rightRayTrace.getEntity();
+                }
+                else {
+                    this.rightPointedEntity = null;
+                }
+                this.mc.getProfiler().endSection();
+            }
+        }
     }
 
     @SubscribeEvent
@@ -472,25 +521,14 @@ public class ClientEvents {
                         Evolution.LOGGER.warn("Unregistered shader id: {}", shader);
                 }
             }
+            GameRenderer gameRenderer = this.mc.gameRenderer;
+            if (gameRenderer != this.oldGameRenderer) {
+                this.oldGameRenderer = gameRenderer;
+                LIGHTMAP_FIELD.set(this.oldGameRenderer, new LightTextureEv(this.oldGameRenderer));
+            }
             if (!this.mc.isGamePaused()) {
                 if (this.mc.world.dimension instanceof DimensionOverworld) {
                     this.mc.world.dimension.tick();
-                }
-                //RayTrace entities
-                this.leftRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player,
-                                                                      1.0f,
-                                                                      this.mc.player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue());
-                this.leftPointedEntity = this.leftRayTrace == null ? null : this.leftRayTrace.getEntity();
-                if (this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable) {
-                    this.rightRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player,
-                                                                           1.0f,
-                                                                           ((IOffhandAttackable) this.mc.player.getHeldItemOffhand()
-                                                                                                               .getItem()).getReach() +
-                                                                           PlayerHelper.REACH_DISTANCE);
-                    this.rightPointedEntity = this.rightRayTrace == null ? null : this.rightRayTrace.getEntity();
-                }
-                else {
-                    this.rightPointedEntity = null;
                 }
                 this.renderer.startTick();
                 ABOUT_TO_LUNGE_PLAYERS.entrySet().removeIf(entry -> entry.getValue().shouldBeRemoved());
@@ -500,38 +538,33 @@ public class ClientEvents {
                 InputHooks.parryCooldownTick();
                 this.updateBeltItem();
                 this.updateBackItem();
-            }
-            GameRenderer gameRenderer = this.mc.gameRenderer;
-            if (gameRenderer != this.oldGameRenderer) {
-                this.oldGameRenderer = gameRenderer;
-                LIGHTMAP_FIELD.set(this.oldGameRenderer, new LightTextureEv(this.oldGameRenderer));
-            }
-            //Handle two-handed items
-            if (this.mc.player.getHeldItemMainhand().getItem() instanceof ITwoHanded && !this.mc.player.getHeldItemOffhand().isEmpty()) {
-                this.mainhandTimeSinceLastHit = 0;
-                LEFT_COUNTER_FIELD.set(this.mc, Integer.MAX_VALUE);
-                this.mc.player.sendStatusMessage(EvolutionTexts.ACTION_TWO_HANDED, true);
-            }
-            //Prevents the player from attacking if on cooldown
-            if (this.getMainhandCooledAttackStrength(0.0F) != 1 &&
-                this.mc.objectMouseOver != null &&
-                this.mc.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
-                LEFT_COUNTER_FIELD.set(this.mc, Integer.MAX_VALUE);
-            }
-            //Handle Disoriented Effect
-            if (this.mc.player.isPotionActive(EvolutionEffects.DISORIENTED.get())) {
-                if (!this.inverted) {
-                    this.inverted = true;
+                //Handle Disoriented Effect
+                if (this.mc.player.isPotionActive(EvolutionEffects.DISORIENTED.get())) {
+                    if (!this.inverted) {
+                        this.inverted = true;
+                    }
                 }
-            }
-            else {
-                if (this.inverted) {
-                    this.inverted = false;
+                else {
+                    if (this.inverted) {
+                        this.inverted = false;
+                    }
                 }
-            }
-            //Handle Dizziness Effect
-            if (this.isPlayerDizzy()) {
-                this.mc.player.setSprinting(false);
+                //Handle Dizziness Effect
+                if (this.isPlayerDizzy()) {
+                    this.mc.player.setSprinting(false);
+                }
+                //Handle two-handed items
+                if (this.mc.player.getHeldItemMainhand().getItem() instanceof ITwoHanded && !this.mc.player.getHeldItemOffhand().isEmpty()) {
+                    this.mainhandTimeSinceLastHit = 0;
+                    LEFT_COUNTER_FIELD.set(this.mc, Integer.MAX_VALUE);
+                    this.mc.player.sendStatusMessage(EvolutionTexts.ACTION_TWO_HANDED, true);
+                }
+                //Prevents the player from attacking if on cooldown
+                if (this.getMainhandCooledAttackStrength(0.0F) != 1 &&
+                    this.objectMouseOver != null &&
+                    this.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
+                    LEFT_COUNTER_FIELD.set(this.mc, Integer.MAX_VALUE);
+                }
             }
         }
         //Runs at the end of each tick
@@ -577,13 +610,13 @@ public class ClientEvents {
                 }
                 //Handle creative features
                 if (this.mc.player.isCreative() && ClientProxy.BUILDING_ASSIST.isKeyDown()) {
-                    this.mc.player.sendStatusMessage(EvolutionTexts.ACTION_INERTIA, true);
-                    this.mc.player.setMotion(Vec3d.ZERO);
                     if (this.mc.player.getHeldItemMainhand().getItem() instanceof BlockItem) {
-                        if (this.mc.objectMouseOver instanceof BlockRayTraceResult) {
-                            BlockPos pos = ((BlockRayTraceResult) this.mc.objectMouseOver).getPos();
+                        if (this.objectMouseOver.getType() == RayTraceResult.Type.BLOCK) {
+                            BlockPos pos = ((BlockRayTraceResult) this.objectMouseOver).getPos();
                             if (!this.mc.world.getBlockState(pos).isAir(this.mc.world, pos)) {
-                                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSChangeBlock((BlockRayTraceResult) this.mc.objectMouseOver));
+                                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSChangeBlock((BlockRayTraceResult) this.objectMouseOver));
+                                this.swingArm(Hand.MAIN_HAND);
+                                this.mc.player.swingArm(Hand.MAIN_HAND);
                             }
                         }
                     }
@@ -991,20 +1024,39 @@ public class ClientEvents {
 
     @SubscribeEvent
     public void onRenderOutlines(DrawBlockHighlightEvent event) {
-        if (event.getTarget().getType() == RayTraceResult.Type.BLOCK) {
-            BlockPos hitPos = ((BlockRayTraceResult) event.getTarget()).getPos();
+        event.setCanceled(true);
+        ActiveRenderInfo renderInfo = event.getInfo();
+        RayTraceResult rayTrace = this.objectMouseOver;
+        if (rayTrace != null && rayTrace.getType() == RayTraceResult.Type.BLOCK) {
+            BlockPos hitPos = ((BlockRayTraceResult) rayTrace).getPos();
+            this.renderer.renderBlockOutlines(renderInfo, hitPos);
             if (!this.mc.world.getWorldBorder().contains(hitPos)) {
                 return;
             }
             if (this.mc.world.getBlockState(hitPos).getBlock() instanceof BlockKnapping) {
                 TEKnapping tile = (TEKnapping) this.mc.world.getTileEntity(hitPos);
-                this.renderer.renderOutlines(tile.type.getShape(), event.getInfo(), hitPos);
+                this.renderer.renderOutlines(tile.type.getShape(), renderInfo, hitPos);
                 return;
             }
             if (this.mc.world.getBlockState(hitPos).getBlock() instanceof BlockMolding) {
                 TEMolding tile = (TEMolding) this.mc.world.getTileEntity(hitPos);
-                this.renderer.renderOutlines(tile.molding.getShape(), event.getInfo(), hitPos);
+                this.renderer.renderOutlines(tile.molding.getShape(), renderInfo, hitPos);
             }
+        }
+        else if (rayTrace != null && rayTrace.getType() == RayTraceResult.Type.ENTITY) {
+            if (this.mc.getRenderManager().isDebugBoundingBox() && rayTrace instanceof AdvancedEntityRayTraceResult) {
+                AdvancedEntityRayTraceResult advRayTrace = (AdvancedEntityRayTraceResult) rayTrace;
+                if (advRayTrace.getHitbox() != null) {
+                    this.renderer.renderHitbox(advRayTrace.getEntity(), advRayTrace.getHitbox(), renderInfo, event.getPartialTicks());
+                }
+            }
+        }
+        if (this.mc.getRenderManager().isDebugBoundingBox() &&
+            this.mc.player.getHeldItemMainhand().getItem() == EvolutionItems.placeholder_item.get()) {
+            this.renderer.renderHitbox(this.mc.player,
+                                       MathHelper.getPlayerHitboxType(this.mc.player).getBoxes().get(0),
+                                       renderInfo,
+                                       event.getPartialTicks());
         }
     }
 

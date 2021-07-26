@@ -28,15 +28,17 @@ import net.minecraftforge.fml.network.FMLPlayMessages;
 import net.minecraftforge.fml.network.NetworkHooks;
 import tgw.evolution.blocks.BlockLeaves;
 import tgw.evolution.blocks.BlockUtils;
+import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.util.Gravity;
+import tgw.evolution.util.hitbox.HitboxEntity;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class EntityFallingTimber extends Entity implements IEntityAdditionalSpawnData {
+public class EntityFallingTimber extends Entity implements IEntityAdditionalSpawnData, IEvolutionEntity<EntityFallingTimber> {
 
     private static final int FALL_HURT_MAX = 1_000;
     private static final float FALL_HURT_AMOUNT = 2.0F;
@@ -143,6 +145,17 @@ public class EntityFallingTimber extends Entity implements IEntityAdditionalSpaw
     @Nullable
     public AxisAlignedBB getCollisionBoundingBox() {
         return this.isAlive() && this.isLog ? this.getBoundingBox() : null;
+    }
+
+    @Nullable
+    @Override
+    public HitboxEntity<EntityFallingTimber> getHitbox() {
+        return null;
+    }
+
+    @Override
+    public boolean hasHitboxes() {
+        return false;
     }
 
     @Override

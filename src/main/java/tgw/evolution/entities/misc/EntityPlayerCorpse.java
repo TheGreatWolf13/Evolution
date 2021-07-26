@@ -35,6 +35,8 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
+import tgw.evolution.entities.IEntityMass;
+import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.corpse.ContainerCorpseProvider;
@@ -42,6 +44,7 @@ import tgw.evolution.inventory.extendedinventory.IExtendedItemHandler;
 import tgw.evolution.util.Gravity;
 import tgw.evolution.util.NBTTypes;
 import tgw.evolution.util.Time;
+import tgw.evolution.util.hitbox.HitboxEntity;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -49,7 +52,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawnData {
+public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawnData, IEntityMass, IEvolutionEntity<EntityPlayerCorpse> {
 
     public static final DataParameter<Boolean> SKELETON = EntityDataManager.createKey(EntityPlayerCorpse.class, DataSerializers.BOOLEAN);
     private static PlayerProfileCache profileCache;
@@ -158,6 +161,17 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         return super.getCapability(cap, side);
     }
 
+    @Nullable
+    @Override
+    public HitboxEntity<EntityPlayerCorpse> getHitbox() {
+        return null;
+    }
+
+    @Override
+    public double getMass() {
+        return 70;
+    }
+
     @Override
     public ITextComponent getName() {
         if (this.isSkeleton()) {
@@ -178,6 +192,11 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
 
     public UUID getPlayerUUID() {
         return this.playerUUID;
+    }
+
+    @Override
+    public boolean hasHitboxes() {
+        return false;
     }
 
     public boolean isSkeleton() {

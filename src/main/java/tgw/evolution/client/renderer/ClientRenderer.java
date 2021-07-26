@@ -5,6 +5,7 @@ import com.google.common.collect.Ordering;
 import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
@@ -21,6 +22,7 @@ import net.minecraft.client.renderer.texture.PotionSpriteUploader;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.AttackIndicatorStatus;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
@@ -38,6 +40,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.GameType;
@@ -60,6 +63,8 @@ import tgw.evolution.init.*;
 import tgw.evolution.items.*;
 import tgw.evolution.network.PacketCSPlaySoundEntityEmitted;
 import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.hitbox.Hitbox;
+import tgw.evolution.util.hitbox.Matrix3d;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -126,6 +131,49 @@ public class ClientRenderer {
         GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
+    public static void drawHitbox(Hitbox hitbox,
+                                  double x,
+                                  double y,
+                                  double z,
+                                  float red,
+                                  float green,
+                                  float blue,
+                                  float alpha,
+                                  Entity entity,
+                                  float partialTicks) {
+        boolean renderAll = Minecraft.getInstance().player.getHeldItemMainhand().getItem() == EvolutionItems.placeholder_item.get();
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        hitbox.getParent().init(entity, partialTicks);
+        Matrix3d mainTransform = hitbox.getParent().getTransform().transpose();
+        final double[] points = new double[3];
+        for (Hitbox box : hitbox.getParent().getBoxes()) {
+            bufferbuilder.begin(GL11.GL_LINES, DefaultVertexFormats.POSITION_COLOR);
+            if (!renderAll) {
+                box = hitbox;
+            }
+            Hitbox finalBox = box;
+            Matrix3d transform = finalBox.getTransformation().transpose();
+            //noinspection ObjectAllocationInLoop
+            finalBox.forEachEdge((x0, y0, z0, x1, y1, z1) -> {
+                transform.transform(x0, y0, z0, points);
+                finalBox.doOffset(points);
+                mainTransform.transform(points[0], points[1], points[2], points);
+                finalBox.getParent().doOffset(points);
+                bufferbuilder.pos(points[0] + x, points[1] + y, points[2] + z).color(red, green, blue, alpha).endVertex();
+                transform.transform(x1, y1, z1, points);
+                finalBox.doOffset(points);
+                mainTransform.transform(points[0], points[1], points[2], points);
+                finalBox.getParent().doOffset(points);
+                bufferbuilder.pos(points[0] + x, points[1] + y, points[2] + z).color(red, green, blue, alpha).endVertex();
+            });
+            tessellator.draw();
+            if (!renderAll) {
+                break;
+            }
+        }
+    }
+
     public static void enableAlpha(float alpha) {
         GlStateManager.enableBlend();
         if (alpha == 1.0f) {
@@ -188,6 +236,10 @@ public class ClientRenderer {
             return true;
         }
         return !MathHelper.areItemStacksSufficientlyEqual(from, to);
+    }
+
+    private static boolean shouldShowAttackIndicator(Entity entity) {
+        return entity.canBeAttackedWithItem() && entity.isAlive();
     }
 
     private static void transformFirstPerson(HandSide hand, float swingProgress) {
@@ -419,7 +471,7 @@ public class ClientRenderer {
         int scaledWidth = this.mc.mainWindow.getScaledWidth();
         int scaledHeight = this.mc.mainWindow.getScaledHeight();
         if (gamesettings.thirdPersonView == 0) {
-            if (this.mc.playerController.getCurrentGameType() != GameType.SPECTATOR || this.rayTraceMouse(this.mc.objectMouseOver)) {
+            if (this.mc.playerController.getCurrentGameType() != GameType.SPECTATOR || this.rayTraceMouse(this.client.getObjectMouseOver())) {
                 if (gamesettings.showDebugInfo && !gamesettings.hideGUI && !this.mc.player.hasReducedDebug() && !gamesettings.reducedDebugInfo) {
                     GlStateManager.pushMatrix();
                     int blitOffset = 0;
@@ -448,8 +500,8 @@ public class ClientRenderer {
                         boolean shouldShowLeftAttackIndicator = false;
                         if (this.client.leftPointedEntity instanceof LivingEntity && leftCooledAttackStrength >= 1) {
                             shouldShowLeftAttackIndicator = this.mc.player.getCooldownPeriod() > 5;
-                            shouldShowLeftAttackIndicator &= this.client.leftPointedEntity.canBeAttackedWithItem();
-                            if (this.mc.objectMouseOver.getType() == RayTraceResult.Type.BLOCK) {
+                            shouldShowLeftAttackIndicator &= shouldShowAttackIndicator(this.client.leftPointedEntity);
+                            if (this.client.getObjectMouseOver().getType() == RayTraceResult.Type.BLOCK) {
                                 shouldShowLeftAttackIndicator = false;
                             }
                         }
@@ -470,8 +522,8 @@ public class ClientRenderer {
                             float rightCooledAttackStrength = this.client.getOffhandCooledAttackStrength(this.mc.player.getHeldItemOffhand()
                                                                                                                        .getItem(), partialTicks);
                             if (this.client.rightPointedEntity instanceof LivingEntity && rightCooledAttackStrength >= 1) {
-                                shouldShowRightAttackIndicator = this.client.rightPointedEntity.canBeAttackedWithItem();
-                                if (this.mc.objectMouseOver.getType() == RayTraceResult.Type.BLOCK) {
+                                shouldShowRightAttackIndicator = shouldShowAttackIndicator(this.client.rightPointedEntity);
+                                if (this.client.getObjectMouseOver().getType() == RayTraceResult.Type.BLOCK) {
                                     shouldShowRightAttackIndicator = false;
                                 }
                             }
@@ -489,6 +541,39 @@ public class ClientRenderer {
                     }
                 }
             }
+        }
+    }
+
+    public void renderBlockOutlines(ActiveRenderInfo renderInfo, BlockPos hitPos) {
+        BlockState state = this.mc.world.getBlockState(hitPos);
+        if (!state.isAir(this.mc.world, hitPos) && this.mc.world.getWorldBorder().contains(hitPos)) {
+            GlStateManager.enableBlend();
+            GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
+                                             GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                                             GlStateManager.SourceFactor.ONE,
+                                             GlStateManager.DestFactor.ZERO);
+            GlStateManager.lineWidth(Math.max(2.5F, this.mc.mainWindow.getFramebufferWidth() / 1_920.0F * 2.5F));
+            GlStateManager.disableTexture();
+            GlStateManager.depthMask(false);
+            GlStateManager.matrixMode(GL11.GL_PROJECTION);
+            GlStateManager.pushMatrix();
+            GlStateManager.scalef(1.0F, 1.0F, 0.999F);
+            double projX = renderInfo.getProjectedView().x;
+            double projY = renderInfo.getProjectedView().y;
+            double projZ = renderInfo.getProjectedView().z;
+            WorldRenderer.drawShape(state.getShape(this.mc.world, hitPos, ISelectionContext.forEntity(renderInfo.getRenderViewEntity())),
+                                    hitPos.getX() - projX,
+                                    hitPos.getY() - projY,
+                                    hitPos.getZ() - projZ,
+                                    0.0F,
+                                    0.0F,
+                                    0.0F,
+                                    0.4F);
+            GlStateManager.popMatrix();
+            GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+            GlStateManager.depthMask(true);
+            GlStateManager.enableTexture();
+            GlStateManager.disableBlend();
         }
     }
 
@@ -735,6 +820,32 @@ public class ClientRenderer {
         }
         GlStateManager.disableBlend();
         this.mc.getProfiler().endSection();
+    }
+
+    public void renderHitbox(Entity entity, Hitbox hitbox, ActiveRenderInfo info, float partialTicks) {
+        GlStateManager.enableBlend();
+        GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
+                                         GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                                         GlStateManager.SourceFactor.ONE,
+                                         GlStateManager.DestFactor.ZERO);
+        GlStateManager.lineWidth(Math.max(2.5F, this.mc.mainWindow.getFramebufferWidth() / 1_920.0F * 2.5F));
+        GlStateManager.disableTexture();
+        GlStateManager.depthMask(false);
+        GlStateManager.matrixMode(GL11.GL_PROJECTION);
+        GlStateManager.pushMatrix();
+        GlStateManager.scalef(1.0F, 1.0F, 0.999F);
+        double projX = info.getProjectedView().x;
+        double projY = info.getProjectedView().y;
+        double projZ = info.getProjectedView().z;
+        double posX = MathHelper.lerp(partialTicks, entity.lastTickPosX, entity.posX);
+        double posY = MathHelper.lerp(partialTicks, entity.lastTickPosY, entity.posY);
+        double posZ = MathHelper.lerp(partialTicks, entity.lastTickPosZ, entity.posZ);
+        drawHitbox(hitbox, posX - projX, posY - projY, posZ - projZ, 1.0F, 1.0F, 0.0F, 1.0F, entity, partialTicks);
+        GlStateManager.popMatrix();
+        GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+        GlStateManager.depthMask(true);
+        GlStateManager.enableTexture();
+        GlStateManager.disableBlend();
     }
 
     public void renderItemInFirstPerson(float partialTicks) {
@@ -1002,7 +1113,7 @@ public class ClientRenderer {
         BufferBuilder buffer = tessellator.getBuffer();
         GlStateManager.translatef(-0.5F, -0.5F, 0.0F);
         GlStateManager.scalef(0.007_812_5F, 0.007_812_5F, 0.007_812_5F);
-        buffer.begin(7, DefaultVertexFormats.POSITION_TEX);
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
         buffer.pos(-7, 135, 0).tex(0, 1).endVertex();
         buffer.pos(135, 135, 0).tex(1, 1).endVertex();
         buffer.pos(135, -7, 0).tex(1, 0).endVertex();
@@ -1047,7 +1158,7 @@ public class ClientRenderer {
         GlStateManager.lineWidth(Math.max(2.5F, this.mc.mainWindow.getFramebufferWidth() / 1_920.0F * 2.5F));
         GlStateManager.disableTexture();
         GlStateManager.depthMask(false);
-        GlStateManager.matrixMode(5_889);
+        GlStateManager.matrixMode(GL11.GL_PROJECTION);
         GlStateManager.pushMatrix();
         GlStateManager.scalef(1.0F, 1.0F, 0.999F);
         double projX = info.getProjectedView().x;
@@ -1055,7 +1166,7 @@ public class ClientRenderer {
         double projZ = info.getProjectedView().z;
         WorldRenderer.drawShape(shape, pos.getX() - projX, pos.getY() - projY, pos.getZ() - projZ, 1.0F, 1.0F, 0.0F, 1.0F);
         GlStateManager.popMatrix();
-        GlStateManager.matrixMode(5_888);
+        GlStateManager.matrixMode(GL11.GL_MODELVIEW);
         GlStateManager.depthMask(true);
         GlStateManager.enableTexture();
         GlStateManager.disableBlend();

@@ -30,14 +30,14 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.util.EntityStates;
 import tgw.evolution.util.Time;
 
-public abstract class EntityGenericAnimal extends EntityGenericAgeable implements IEntityAdditionalSpawnData {
+public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> extends EntityGenericAgeable<T> implements IEntityAdditionalSpawnData {
 
     private static final DataParameter<Integer> PREGNANCY_TIME = EntityDataManager.createKey(EntityGenericAgeable.class, DataSerializers.VARINT);
     private final AnimalFoodWaterController foodController;
     private Gender gender = Gender.MALE;
     private boolean inLove;
 
-    protected EntityGenericAnimal(EntityType<? extends EntityGenericAnimal> type, World worldIn) {
+    protected EntityGenericAnimal(EntityType<T> type, World worldIn) {
         super(type, worldIn);
         this.foodController = new AnimalFoodWaterController(this);
         this.gender = Gender.fromBoolean(this.rand.nextBoolean());

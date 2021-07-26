@@ -30,13 +30,14 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.util.hitbox.HitboxEntity;
 
 import javax.annotation.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.ATTACHED;
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
-public class EntityHook extends EntityGenericProjectile {
+public class EntityHook extends EntityGenericProjectile<EntityHook> {
 
     private boolean dealtDamage;
     private Direction facing = Direction.NORTH;
@@ -131,6 +132,17 @@ public class EntityHook extends EntityGenericProjectile {
     @Override
     protected SoundEvent getHitEntitySound() {
         return SoundEvents.ITEM_TRIDENT_HIT_GROUND;
+    }
+
+    @Nullable
+    @Override
+    public HitboxEntity<EntityHook> getHitbox() {
+        return null;
+    }
+
+    @Override
+    public boolean hasHitboxes() {
+        return false;
     }
 
     @Override

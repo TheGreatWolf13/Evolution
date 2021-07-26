@@ -11,8 +11,11 @@ import tgw.evolution.entities.ai.*;
 import tgw.evolution.util.EntityStates;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.Time;
+import tgw.evolution.util.hitbox.HitboxEntity;
 
-public class EntityCow extends EntityGenericAnimal {
+import javax.annotation.Nullable;
+
+public class EntityCow extends EntityGenericAnimal<EntityCow> {
 
     private int eatTimer;
     //    private EatGrassGoal eatGrassGoal;
@@ -102,6 +105,12 @@ public class EntityCow extends EntityGenericAnimal {
         return this.eatTimer < 4 ? (this.eatTimer - partialTicks) / 4.0F : -(this.eatTimer - 40 - partialTicks) / 4.0F;
     }
 
+    @Nullable
+    @Override
+    public HitboxEntity<EntityCow> getHitbox() {
+        return null;
+    }
+
     @Override
     public double getLegHeight() {
         //TODO implementation
@@ -172,6 +181,12 @@ public class EntityCow extends EntityGenericAnimal {
         else {
             super.handleStatusUpdate(id);
         }
+    }
+
+    @Override
+    public boolean hasHitboxes() {
+        //TODO implementation
+        return false;
     }
 
     @Override

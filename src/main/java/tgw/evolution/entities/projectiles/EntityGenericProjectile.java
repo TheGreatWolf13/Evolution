@@ -33,6 +33,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
 import net.minecraftforge.fml.network.NetworkHooks;
+import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.util.Gravity;
 import tgw.evolution.util.MathHelper;
@@ -42,7 +43,9 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.UUID;
 
-public abstract class EntityGenericProjectile extends Entity implements IProjectile, IEntityAdditionalSpawnData {
+public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<T>> extends Entity implements IProjectile,
+                                                                                                              IEntityAdditionalSpawnData,
+                                                                                                              IEvolutionEntity<T> {
     private static final DataParameter<Byte> PIERCE_LEVEL = EntityDataManager.createKey(EntityGenericProjectile.class, DataSerializers.BYTE);
     public byte arrowShake;
     public boolean inGround;

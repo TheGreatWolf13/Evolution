@@ -23,10 +23,11 @@ import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.items.ISpear;
 import tgw.evolution.util.NBTTypes;
+import tgw.evolution.util.hitbox.HitboxEntity;
 
 import javax.annotation.Nullable;
 
-public class EntitySpear extends EntityGenericProjectile implements IAerodynamicEntity {
+public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements IAerodynamicEntity {
 
     private boolean dealtDamage;
     private ItemStack stack;
@@ -61,6 +62,12 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
         return EvolutionSounds.JAVELIN_HIT_BLOCK.get();
     }
 
+    @Nullable
+    @Override
+    public HitboxEntity<EntitySpear> getHitbox() {
+        return null;
+    }
+
     public ItemStack getStack() {
         return this.stack;
     }
@@ -72,6 +79,11 @@ public class EntitySpear extends EntityGenericProjectile implements IAerodynamic
 
     public ResourceLocation getTextureName() {
         return this.texture;
+    }
+
+    @Override
+    public boolean hasHitboxes() {
+        return false;
     }
 
     @Override

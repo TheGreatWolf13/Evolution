@@ -506,7 +506,7 @@ public final class LivingEntityHooks {
             return (float) entity.getAttribute(EvolutionAttributes.FRICTION).getValue();
         }
         if (entity instanceof EntityGenericCreature) {
-            return ((EntityGenericCreature) entity).getFrictionModifier();
+            return ((EntityGenericCreature<?>) entity).getFrictionModifier();
         }
         return 2.0f;
     }
@@ -895,7 +895,7 @@ public final class LivingEntityHooks {
             return PlayerHelper.LEG_SLOWDOWN;
         }
         if (entity instanceof EntityGenericCreature) {
-            return ((EntityGenericCreature) entity).getLegSlowDown();
+            return ((EntityGenericCreature<?>) entity).getLegSlowDown();
         }
         return 1;
     }

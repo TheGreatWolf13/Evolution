@@ -91,7 +91,7 @@ public class EntityEvents {
         double legHeight = PlayerHelper.LEG_HEIGHT;
         double baseMass = PlayerHelper.MASS;
         if (entity instanceof EntityGenericCreature) {
-            EntityGenericCreature creature = (EntityGenericCreature) entity;
+            EntityGenericCreature<?> creature = (EntityGenericCreature<?>) entity;
             legHeight = creature.getLegHeight();
             baseMass = creature.getMass();
         }

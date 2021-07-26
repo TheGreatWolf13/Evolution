@@ -9,7 +9,7 @@ import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.world.World;
 import tgw.evolution.init.EvolutionParticles;
 
-public abstract class EntityGenericAgeable extends EntityGenericCreature {
+public abstract class EntityGenericAgeable<T extends EntityGenericAgeable<T>> extends EntityGenericCreature<T> {
 
     private static final DataParameter<Integer> AGE = EntityDataManager.createKey(EntityGenericAgeable.class, DataSerializers.VARINT);
     private static final DataParameter<Boolean> SLEEPING = EntityDataManager.createKey(EntityGenericAgeable.class, DataSerializers.BOOLEAN);
@@ -17,7 +17,7 @@ public abstract class EntityGenericAgeable extends EntityGenericCreature {
     private int lifeSpan;
     private boolean slept;
 
-    protected EntityGenericAgeable(EntityType<? extends EntityGenericAgeable> type, World worldIn) {
+    protected EntityGenericAgeable(EntityType<T> type, World worldIn) {
         super(type, worldIn);
         this.lifeSpan = this.computeLifeSpan();
     }

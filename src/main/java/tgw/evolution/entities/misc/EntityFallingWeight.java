@@ -28,15 +28,17 @@ import net.minecraftforge.fml.network.FMLPlayMessages;
 import net.minecraftforge.fml.network.NetworkHooks;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.*;
+import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.util.Gravity;
+import tgw.evolution.util.hitbox.HitboxEntity;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class EntityFallingWeight extends Entity implements IEntityAdditionalSpawnData {
+public class EntityFallingWeight extends Entity implements IEntityAdditionalSpawnData, IEvolutionEntity<EntityFallingWeight> {
 
     private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
     public int fallTime;
@@ -150,6 +152,17 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     @Nullable
     public AxisAlignedBB getCollisionBoundingBox() {
         return this.isAlive() ? this.getBoundingBox() : null;
+    }
+
+    @Nullable
+    @Override
+    public HitboxEntity<EntityFallingWeight> getHitbox() {
+        return null;
+    }
+
+    @Override
+    public boolean hasHitboxes() {
+        return false;
     }
 
     @Override

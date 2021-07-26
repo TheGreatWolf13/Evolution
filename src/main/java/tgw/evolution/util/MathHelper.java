@@ -23,7 +23,12 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.Heightmap;
-import net.minecraftforge.common.util.FakePlayer;
+import tgw.evolution.events.EntityEvents;
+import tgw.evolution.util.hitbox.EvolutionEntityHitboxes;
+import tgw.evolution.util.hitbox.Hitbox;
+import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.hitbox.Matrix3d;
+import tgw.evolution.util.reflection.FieldHandler;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -374,6 +379,78 @@ public final class MathHelper {
         return net.minecraft.util.math.MathHelper.floor(value);
     }
 
+    public static float getAgeInTicks(LivingEntity entity, float partialTicks) {
+        return entity.ticksExisted + partialTicks;
+    }
+
+    public static float getAngleByDirection(Direction dir) {
+        switch (dir) {
+            case SOUTH:
+                return 90.0F;
+            case NORTH:
+                return 270.0F;
+            case EAST:
+                return 180.0F;
+            default:
+                return 0.0F;
+        }
+    }
+
+    public static ArmPose getArmPose(LivingEntity entity, ItemStack mainhandStack, ItemStack offhandStack, Hand hand) {
+        ArmPose armPose = ArmPose.EMPTY;
+        ItemStack stack = hand == Hand.MAIN_HAND ? mainhandStack : offhandStack;
+        if (!stack.isEmpty()) {
+            armPose = ArmPose.ITEM;
+            if (entity.getItemInUseCount() > 0 && hand == entity.getActiveHand()) {
+                UseAction useaction = stack.getUseAction();
+                if (useaction == UseAction.BLOCK) {
+                    return ArmPose.BLOCK;
+                }
+                if (useaction == UseAction.BOW) {
+                    return ArmPose.BOW_AND_ARROW;
+                }
+                if (useaction == UseAction.SPEAR) {
+                    return ArmPose.THROW_SPEAR;
+                }
+                if (useaction == UseAction.CROSSBOW) {
+                    return ArmPose.CROSSBOW_CHARGE;
+                }
+            }
+            else {
+                boolean mainhandHasCrossbow = mainhandStack.getItem() == Items.CROSSBOW;
+                boolean mainhandIsCharged = CrossbowItem.isCharged(mainhandStack);
+                boolean offhandHasCrossbow = offhandStack.getItem() == Items.CROSSBOW;
+                boolean offhandIsCharged = CrossbowItem.isCharged(offhandStack);
+                if (mainhandHasCrossbow && mainhandIsCharged) {
+                    armPose = ArmPose.CROSSBOW_HOLD;
+                }
+                if (offhandHasCrossbow && offhandIsCharged && mainhandStack.getItem().getUseAction(mainhandStack) == UseAction.NONE) {
+                    return ArmPose.CROSSBOW_HOLD;
+                }
+            }
+        }
+        return armPose;
+    }
+
+    public static Direction getBedDirection(LivingEntity entity) {
+        BlockPos blockpos = entity.getBedPosition().orElse(null);
+        BlockState state = entity.world.getBlockState(blockpos);
+        return !state.isBed(entity.world, blockpos, entity) ? Direction.UP : state.getBedDirection(entity.world, blockpos);
+    }
+
+    public static Matrix3d getBodyRotationMatrix(Entity entity, float partialTicks) {
+        float angle = -getEntityBodyYaw(entity, partialTicks);
+        return new Matrix3d().asYRotation(degToRad(angle));
+    }
+
+    public static float getEntityBodyYaw(Entity entity, float partialTicks) {
+        if (entity instanceof LivingEntity) {
+            LivingEntity living = (LivingEntity) entity;
+            return partialTicks == 1.0F ? living.renderYawOffset : lerp(partialTicks, living.prevRenderYawOffset, living.renderYawOffset);
+        }
+        return partialTicks == 1.0F ? entity.rotationYaw : lerp(partialTicks, entity.prevRotationYaw, entity.rotationYaw);
+    }
+
     /**
      * Converts a {@link Hand} to {@link EquipmentSlotType}.
      *
@@ -389,6 +466,30 @@ public final class MathHelper {
             default:
                 throw new IllegalStateException("Unknown hand " + hand);
         }
+    }
+
+    public static HandSide getHandSide(LivingEntity entity) {
+        HandSide handSide = entity.getPrimaryHand();
+        return entity.swingingHand == Hand.MAIN_HAND ? handSide : handSide.opposite();
+    }
+
+    public static Matrix3d getHeadRotationMatrix(LivingEntity entity, float partialTick) {
+        float yaw = -entity.getYaw(partialTick);
+        float pitch = -entity.getPitch(partialTick);
+        Matrix3d xRot = new Matrix3d().asXRotation(degToRad(pitch));
+        Matrix3d yRot = new Matrix3d().asYRotation(degToRad(yaw));
+        return xRot.multiply(yRot);
+    }
+
+    @Nullable
+    public static HitboxEntity<? extends Entity> getHitboxes(Entity entity) {
+        if (entity instanceof PlayerEntity) {
+            return getPlayerHitboxType((PlayerEntity) entity);
+        }
+        if (entity instanceof CreeperEntity) {
+            return EvolutionEntityHitboxes.CREEPER;
+        }
+        return null;
     }
 
     /**
@@ -438,6 +539,23 @@ public final class MathHelper {
             default:
                 throw new IllegalStateException("Cannot get the negative direction for axis " + axis);
         }
+    }
+
+    public static float getNetHeadYaw(LivingEntity entity, float partialTicks) {
+        float interpYaw = lerpAngles(partialTicks, entity.prevRenderYawOffset, entity.renderYawOffset);
+        float headYaw = lerpAngles(partialTicks, entity.prevRotationYawHead, entity.rotationYawHead);
+        return headYaw - interpYaw;
+    }
+
+    public static HitboxEntity<PlayerEntity> getPlayerHitboxType(PlayerEntity player) {
+        if (player.world.isRemote) {
+            return "default".equals(((AbstractClientPlayerEntity) player).getSkinType()) ?
+                   EvolutionEntityHitboxes.PLAYER_STEVE :
+                   EvolutionEntityHitboxes.PLAYER_ALEX;
+        }
+        return EntityEvents.SKIN_TYPE.getOrDefault(player.getUniqueID(), SkinType.STEVE) == SkinType.STEVE ?
+               EvolutionEntityHitboxes.PLAYER_STEVE :
+               EvolutionEntityHitboxes.PLAYER_ALEX;
     }
 
     /**
@@ -551,6 +669,25 @@ public final class MathHelper {
             }
         }
         return builder.toString();
+    }
+
+    public static float getSwimAnimation(LivingEntity entity, float partialTicks) {
+        return lerp(partialTicks, LAST_SWIM.get(entity), SWIM.get(entity));
+    }
+
+    public static float getSwingProgress(LivingEntity entity, float partialTick) {
+        float f = entity.swingProgress - entity.prevSwingProgress;
+        if (f < 0.0F) {
+            ++f;
+        }
+        return entity.prevSwingProgress + f * partialTick;
+    }
+
+    public static boolean hasHitboxes(Entity entity) {
+        if (entity instanceof PlayerEntity) {
+            return true;
+        }
+        return entity instanceof CreeperEntity;
     }
 
     /**
@@ -908,6 +1045,134 @@ public final class MathHelper {
         Vec3d looking = new Vec3d(sin(theta), sin(phi), cos(theta)).normalize();
         Vec3d to = from.add(looking.x * distance, looking.y * distance, looking.z * distance);
         return rayTraceEntities(entity, from, to, new AxisAlignedBB(from, to), distance * distance);
+    }
+
+    /**
+     * Casts a ray tracing for Entities starting from the eyes of the desired {@link Entity} and extends to its reach distance.
+     * The ray will only collide with OBBs.
+     *
+     * @param entity        The {@link Entity} from whose eyes to cast the ray off.
+     * @param partialTicks  The partial tick to interpolate, between {@code 0.0f} and {@code 1.0f}.
+     * @param reachDistance The max distance the ray will travel.
+     * @return An {@link EntityRayTraceResult} containing the {@link Entity} hit by the ray traced and a {@link Vec3d}
+     * containing the position of the hit. If no {@link Entity} was hit by the ray, this {@link EntityRayTraceResult} will be {@code null}.
+     */
+    @Nullable
+    public static EntityRayTraceResult rayTraceOBBEntityFromEyes(@Nonnull Entity entity, float partialTicks, double reachDistance) {
+        Vec3d from = entity.getEyePosition(partialTicks);
+        Vec3d look = entity.getLook(partialTicks).normalize();
+        Vec3d to = from.add(look.x * reachDistance, look.y * reachDistance, look.z * reachDistance);
+        World world = entity.world;
+        double rangeSq = reachDistance * reachDistance;
+        Entity foundEntity = null;
+        Vec3d vec3d = null;
+        double[] distance = {1.0};
+        Hitbox[] hitbox = new Hitbox[1];
+        Hitbox box = null;
+        List<Entity> foundEntities = world.getEntitiesInAABBexcluding(entity, new AxisAlignedBB(from, to).grow(1.5), PREDICATE);
+        for (Entity entityInBoundingBox : foundEntities) {
+            Optional<Vec3d> optional = rayTracingEntityHitboxes(entityInBoundingBox, from, look, reachDistance, partialTicks, distance, hitbox);
+            if (optional.isPresent()) {
+                Vec3d hitResult = optional.get();
+                if (distance[0] < rangeSq || rangeSq == 0) {
+                    foundEntity = entityInBoundingBox;
+                    vec3d = hitResult;
+                    rangeSq = distance[0];
+                    box = hitbox[0];
+                    if (rangeSq == 0) {
+                        break;
+                    }
+                }
+            }
+        }
+        if (foundEntity == null) {
+            return null;
+        }
+        return new AdvancedEntityRayTraceResult(foundEntity, vec3d, box);
+    }
+
+    /**
+     * Ray traces an Entity's hitbox. If the Entity has no defined OBBs, it will default to the Bounding Box. If the Entity has OBBs,
+     * the ray will only collide with the nearest OBB to its origin.
+     *
+     * @param entity       The Entity the ray is being cast on.
+     * @param from         The origin of the ray.
+     * @param look         The direction of the ray.
+     * @param reach        How far the ray will extend for.
+     * @param partialTicks The partial tick for interpolation.
+     * @param distance     Will return the distance squared for the hit result. Must be a double[] with length 1.
+     * @param chosenBox    Will return the OBB hit, if any. Must be a Hitbox[] with length 1.
+     * @param <T>          The type of the Entity the ray is being cast on.
+     * @return An optional with the hit result, if any, or an empty optional.
+     */
+    @Nonnull
+    public static <T extends Entity> Optional<Vec3d> rayTracingEntityHitboxes(T entity,
+                                                                              Vec3d from,
+                                                                              Vec3d look,
+                                                                              double reach,
+                                                                              float partialTicks,
+                                                                              double[] distance,
+                                                                              Hitbox[] chosenBox) {
+        chosenBox[0] = null;
+        distance[0] = reach * reach;
+        if (!hasHitboxes(entity)) {
+            Vec3d to = from.add(look.x * reach, look.y * reach, look.z * reach);
+            Optional<Vec3d> optional = entity.getBoundingBox().rayTrace(from, to);
+            if (optional.isPresent()) {
+                double actualDistanceSquared = from.squareDistanceTo(optional.get());
+                distance[0] = actualDistanceSquared;
+                return optional;
+            }
+            if (entity.getBoundingBox().contains(from)) {
+                distance[0] = 0;
+                return Optional.of(from);
+            }
+            return Optional.empty();
+        }
+        HitboxEntity<T> hitbox = (HitboxEntity<T>) getHitboxes(entity);
+        hitbox.init(entity, partialTicks);
+        double posX = lerp(partialTicks, entity.lastTickPosX, entity.posX);
+        double posY = lerp(partialTicks, entity.lastTickPosY, entity.posY);
+        double posZ = lerp(partialTicks, entity.lastTickPosZ, entity.posZ);
+        from = from.subtract(posX, posY, posZ);
+        Vec3d mainOffset = hitbox.getOffset();
+        Matrix3d mainTransform = hitbox.getTransform();
+        from = from.subtract(mainOffset);
+        from = mainTransform.transform(from);
+        look = mainTransform.transform(look);
+        mainTransform.transpose();
+        Vec3d result = null;
+        for (Hitbox box : hitbox.getBoxes()) {
+            Vec3d newFrom = from;
+            Vec3d newLook = look;
+            Vec3d offset = box.getOffset();
+            Matrix3d transform = box.getTransformation();
+            newFrom = newFrom.subtract(offset);
+            newFrom = transform.transform(newFrom);
+            newLook = transform.transform(newLook);
+            Vec3d to = newFrom.add(newLook.x * reach, newLook.y * reach, newLook.z * reach);
+            Optional<Vec3d> optional = box.getAABB().rayTrace(newFrom, to);
+            if (optional.isPresent() || box.getAABB().contains(newFrom)) {
+                Vec3d hitResult = optional.orElse(newFrom);
+                double actualDistanceSquared = newFrom.squareDistanceTo(hitResult);
+                if (actualDistanceSquared < distance[0]) {
+                    distance[0] = actualDistanceSquared;
+                    result = transform.transpose().transform(hitResult);
+                    result = result.add(offset);
+                    result = mainTransform.transform(result);
+                    result = result.add(mainOffset);
+                    result = result.add(posX, posY, posZ);
+                    chosenBox[0] = box;
+                    if (actualDistanceSquared == 0) {
+                        break;
+                    }
+                }
+            }
+        }
+        if (result != null) {
+            return Optional.of(result);
+        }
+        return Optional.empty();
     }
 
     /**

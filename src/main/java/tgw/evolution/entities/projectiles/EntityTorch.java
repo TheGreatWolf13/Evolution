@@ -25,8 +25,11 @@ import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.ItemTorch;
 import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.hitbox.HitboxEntity;
 
-public class EntityTorch extends EntityGenericProjectile {
+import javax.annotation.Nullable;
+
+public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
 
     private long timeCreated;
 
@@ -52,6 +55,17 @@ public class EntityTorch extends EntityGenericProjectile {
     @Override
     protected ItemStack getArrowStack() {
         return ItemTorch.createStack(this.timeCreated, 1);
+    }
+
+    @Nullable
+    @Override
+    public HitboxEntity<EntityTorch> getHitbox() {
+        return null;
+    }
+
+    @Override
+    public boolean hasHitboxes() {
+        return false;
     }
 
     @Override

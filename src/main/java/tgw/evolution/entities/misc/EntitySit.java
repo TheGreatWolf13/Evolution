@@ -12,10 +12,14 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.network.FMLPlayMessages;
 import net.minecraftforge.fml.network.NetworkHooks;
 import tgw.evolution.blocks.ISittable;
+import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionEntities;
+import tgw.evolution.util.hitbox.HitboxEntity;
 
-public class EntitySit extends Entity {
+import javax.annotation.Nullable;
+
+public class EntitySit extends Entity implements IEvolutionEntity<EntitySit> {
 
     private BlockPos source;
 
@@ -62,9 +66,20 @@ public class EntitySit extends Entity {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
+    @Nullable
+    @Override
+    public HitboxEntity<EntitySit> getHitbox() {
+        return null;
+    }
+
     @Override
     public double getMountedYOffset() {
         return 0;
+    }
+
+    @Override
+    public boolean hasHitboxes() {
+        return false;
     }
 
     @Override

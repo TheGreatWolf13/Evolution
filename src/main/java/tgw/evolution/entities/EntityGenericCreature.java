@@ -13,13 +13,13 @@ import net.minecraftforge.common.ForgeHooks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.util.EntityStates;
 
-public abstract class EntityGenericCreature extends CreatureEntity implements IEntityMass {
+public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> extends CreatureEntity implements IEntityMass, IEvolutionEntity<T> {
 
     protected static final DataParameter<Boolean> DEAD = EntityDataManager.createKey(EntityGenericCreature.class, DataSerializers.BOOLEAN);
     protected static final DataParameter<Boolean> SKELETON = EntityDataManager.createKey(EntityGenericCreature.class, DataSerializers.BOOLEAN);
     protected int deathTimer;
 
-    protected EntityGenericCreature(EntityType<? extends EntityGenericCreature> type, World worldIn) {
+    protected EntityGenericCreature(EntityType<T> type, World worldIn) {
         super(type, worldIn);
     }
 

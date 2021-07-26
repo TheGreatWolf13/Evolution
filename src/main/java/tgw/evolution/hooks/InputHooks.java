@@ -5,6 +5,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -46,21 +47,22 @@ public final class InputHooks {
 
     public static void clickMouse(Minecraft mc) {
         if (ClientEvents.LEFT_COUNTER_FIELD.get(mc) <= 0) {
-            if (mc.objectMouseOver == null) {
+            if (ClientEvents.getInstance().getObjectMouseOver() == null) {
                 Evolution.LOGGER.error("Null returned as 'hitResult', this shouldn't happen!");
                 return;
             }
-            else if (!mc.player.isRowingBoat()) {
-                switch (mc.objectMouseOver.getType()) {
+            if (!mc.player.isRowingBoat()) {
+                switch (ClientEvents.getInstance().getObjectMouseOver().getType()) {
                     case ENTITY:
                         ClientEvents.getInstance().leftMouseClick();
                         break;
                     case BLOCK:
-                        BlockRayTraceResult blockRayTrace = (BlockRayTraceResult) mc.objectMouseOver;
+                        BlockRayTraceResult blockRayTrace = (BlockRayTraceResult) ClientEvents.getInstance().getObjectMouseOver();
                         BlockPos pos = blockRayTrace.getPos();
                         if (!mc.world.getBlockState(pos).isAir(mc.world, pos)) {
                             mc.playerController.clickBlock(pos, blockRayTrace.getFace());
                             ClientEvents.getInstance().swingArm(Hand.MAIN_HAND);
+                            mc.player.swingArm(Hand.MAIN_HAND);
                             break;
                         }
                     case MISS:
@@ -89,8 +91,9 @@ public final class InputHooks {
     }
 
     public static void middleClickMouse(Minecraft mc) {
-        if (mc.objectMouseOver != null && mc.objectMouseOver.getType() != RayTraceResult.Type.MISS) {
-            ForgeHooks.onPickBlock(mc.objectMouseOver, mc.player, mc.world);
+        if (ClientEvents.getInstance().getObjectMouseOver() != null &&
+            ClientEvents.getInstance().getObjectMouseOver().getType() != RayTraceResult.Type.MISS) {
+            ForgeHooks.onPickBlock(ClientEvents.getInstance().getObjectMouseOver(), mc.player, mc.world);
         }
     }
 
@@ -239,41 +242,39 @@ public final class InputHooks {
         if (!mc.playerController.getIsHittingBlock()) {
             RIGHT_CLICK_COUNTER.set(mc, 4);
             if (!mc.player.isRowingBoat()) {
-                if (mc.objectMouseOver == null) {
+                if (ClientEvents.getInstance().getObjectMouseOver() == null) {
                     Evolution.LOGGER.warn("Null returned as 'hitResult', this shouldn't happen!");
                     return;
                 }
                 for (Hand hand : Hand.values()) {
                     ItemStack stack = mc.player.getHeldItem(hand);
-                    if (mc.objectMouseOver != null) {
-                        switch (mc.objectMouseOver.getType()) {
-                            case ENTITY:
-                                EntityRayTraceResult entityRayTrace = (EntityRayTraceResult) mc.objectMouseOver;
-                                Entity entity = entityRayTrace.getEntity();
-                                if (mc.playerController.interactWithEntity(mc.player, entity, entityRayTrace, hand) == ActionResultType.SUCCESS) {
-                                    return;
+                    switch (ClientEvents.getInstance().getObjectMouseOver().getType()) {
+                        case ENTITY:
+                            EntityRayTraceResult entityRayTrace = (EntityRayTraceResult) ClientEvents.getInstance().getObjectMouseOver();
+                            Entity entity = entityRayTrace.getEntity();
+                            if (mc.playerController.interactWithEntity(mc.player, entity, entityRayTrace, hand) == ActionResultType.SUCCESS) {
+                                return;
+                            }
+                            if (mc.playerController.interactWithEntity(mc.player, entity, hand) == ActionResultType.SUCCESS) {
+                                return;
+                            }
+                            break;
+                        case BLOCK:
+                            BlockRayTraceResult blockRayTrace = (BlockRayTraceResult) ClientEvents.getInstance().getObjectMouseOver();
+                            int count = stack.getCount();
+                            ActionResultType actionResult = mc.playerController.func_217292_a(mc.player, mc.world, hand, blockRayTrace);
+                            if (actionResult == ActionResultType.SUCCESS) {
+                                mc.player.swingArm(hand);
+                                ClientEvents.getInstance().swingArm(hand);
+                                if (stack.getCount() != count || mc.playerController.isInCreativeMode()) {
+                                    mc.gameRenderer.itemRenderer.resetEquippedProgress(hand);
+                                    ClientRenderer.instance.resetEquipProgress(hand);
                                 }
-                                if (mc.playerController.interactWithEntity(mc.player, entity, hand) == ActionResultType.SUCCESS) {
-                                    return;
-                                }
-                                break;
-                            case BLOCK:
-                                BlockRayTraceResult blockRayTrace = (BlockRayTraceResult) mc.objectMouseOver;
-                                int count = stack.getCount();
-                                ActionResultType actionResult = mc.playerController.func_217292_a(mc.player, mc.world, hand, blockRayTrace);
-                                if (actionResult == ActionResultType.SUCCESS) {
-                                    mc.player.swingArm(hand);
-                                    ClientEvents.getInstance().swingArm(hand);
-                                    if (stack.getCount() != count || mc.playerController.isInCreativeMode()) {
-                                        mc.gameRenderer.itemRenderer.resetEquippedProgress(hand);
-                                        ClientRenderer.instance.resetEquipProgress(hand);
-                                    }
-                                    return;
-                                }
-                                if (actionResult == ActionResultType.FAIL) {
-                                    return;
-                                }
-                        }
+                                return;
+                            }
+                            if (actionResult == ActionResultType.FAIL) {
+                                return;
+                            }
                     }
                 }
                 ItemStack stackOffhand = mc.player.getHeldItemOffhand();
@@ -286,7 +287,7 @@ public final class InputHooks {
                 boolean isOffhandShield = mc.player.getHeldItemOffhand().isShield(mc.player);
                 for (Hand hand : MathHelper.HANDS_LEFT_PRIORITY) {
                     ItemStack stack = mc.player.getHeldItem(hand);
-                    if (stack.isEmpty() && (mc.objectMouseOver == null || mc.objectMouseOver.getType() == RayTraceResult.Type.MISS)) {
+                    if (stack.isEmpty() && ClientEvents.getInstance().getObjectMouseOver().getType() == RayTraceResult.Type.MISS) {
                         ForgeHooks.onEmptyClick(mc.player, hand);
                     }
                     if (hand == Hand.MAIN_HAND && (isLungingMainhand || ClientEvents.getInstance().getMainhandCooledAttackStrength(0.0f) < 1.0f)) {
