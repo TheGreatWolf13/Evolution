@@ -32,7 +32,7 @@ import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 public class BlockRope extends BlockEvolution implements IReplaceable, IClimbable {
 
     public BlockRope() {
-        super(Properties.create(Material.WOOL).hardnessAndResistance(0).sound(SoundType.CLOTH).doesNotBlockMovement());
+        super(Properties.create(Material.MISCELLANEOUS).hardnessAndResistance(0).sound(SoundType.CLOTH).doesNotBlockMovement());
         this.setDefaultState(this.getDefaultState().with(DIRECTION_HORIZONTAL, Direction.NORTH));
     }
 
