@@ -7,6 +7,7 @@ import net.minecraft.client.renderer.entity.IEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.LayerRenderer;
 import net.minecraft.client.renderer.entity.model.PlayerModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.entity.Pose;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.HandSide;
 import net.minecraftforge.api.distmarker.Dist;
@@ -33,7 +34,7 @@ public class LayerBelt extends LayerRenderer<AbstractClientPlayerEntity, PlayerM
         if (!beltStack.isEmpty()) {
             int sideOffset = player.getPrimaryHand() == HandSide.RIGHT ? -1 : 1;
             GlStateManager.pushMatrix();
-            if (player.isSneaking()) {
+            if (player.getPose() == Pose.SNEAKING) {
                 GlStateManager.translatef(0.0f, 0.2f, 0.0f);
             }
             this.translateToBody();
