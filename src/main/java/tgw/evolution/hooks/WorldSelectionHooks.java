@@ -37,6 +37,10 @@ public final class WorldSelectionHooks {
     private WorldSelectionHooks() {
     }
 
+    /**
+     * Hooks from {@link SaveFormat#getSaveList()}, replacing to method.
+     */
+    @EvolutionHook
     public static List<WorldSummary> getSaveList(SaveFormat save) throws AnvilConverterException {
         if (!Files.isDirectory(save.func_215781_c())) {
             throw new AnvilConverterException(new TranslationTextComponent("selectWorld.load_folder_access").getString());
@@ -66,7 +70,7 @@ public final class WorldSelectionHooks {
     }
 
     /**
-     * Hooks from {@link WorldSelectionList.Entry#render(int, int, int, int, int, int, int, boolean, float)}
+     * Hooks from {@link WorldSelectionList.Entry#render(int, int, int, int, int, int, int, boolean, float)}, replacing the method.
      */
     @EvolutionHook
     public static void render(WorldSelectionList.Entry entry,

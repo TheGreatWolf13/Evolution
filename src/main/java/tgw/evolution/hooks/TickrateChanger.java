@@ -21,7 +21,7 @@ public final class TickrateChanger {
     }
 
     /**
-     * Hooks from {@link MinecraftServer#run()}
+     * Hooks from {@link MinecraftServer#run()}, replacing every LDC instruction that has {@code 50L} in it.
      */
     @EvolutionHook
     public static long getMSPT() {

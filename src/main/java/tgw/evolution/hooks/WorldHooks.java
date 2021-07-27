@@ -13,7 +13,7 @@ public final class WorldHooks {
     }
 
     /**
-     * Hooks from {@link World#removeBlock(BlockPos, boolean)}
+     * Hooks from {@link World#removeBlock(BlockPos, boolean)}, replacing the method.
      */
     @EvolutionHook
     public static boolean removeBlock(World world, BlockPos pos, boolean isMoving) {
