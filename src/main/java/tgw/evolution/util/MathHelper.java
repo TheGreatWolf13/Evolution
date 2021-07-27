@@ -150,6 +150,43 @@ public final class MathHelper {
     }
 
     /**
+     * Attempts to calculate the size of a file or directory.
+     * <p>
+     * Since the operation is non-atomic, the returned value may be inaccurate.
+     * However, this method is quick and does its best.
+     */
+    public static long calculateSizeOnDisk(Path path) {
+        final AtomicLong size = new AtomicLong(0);
+        try {
+            Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException e) {
+                    if (e != null) {
+                        Evolution.LOGGER.warn("Had trouble traversing: " + dir + " (" + e + ")");
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                    size.addAndGet(attrs.size());
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                    Evolution.LOGGER.warn("Skipped: " + file + " (" + exc + ")");
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+        catch (IOException e) {
+            throw new AssertionError("walkFileTree will not throw IOException if the FileVisitor does not");
+        }
+        return size.get();
+    }
+
+    /**
      * Checks whether it can rain at the specified position, meaning that the block can see the sky and there is no physical obstruction to it.
      *
      * @param world The world being checked.
@@ -1318,43 +1355,6 @@ public final class MathHelper {
      */
     public static float sinDeg(@Degree float deg) {
         return net.minecraft.util.math.MathHelper.sin(degToRad(wrapDegrees(deg)));
-    }
-
-    /**
-     * Attempts to calculate the size of a file or directory.
-     * <p>
-     * Since the operation is non-atomic, the returned value may be inaccurate.
-     * However, this method is quick and does its best.
-     */
-    public static long size(Path path) {
-        final AtomicLong size = new AtomicLong(0);
-        try {
-            Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException e) {
-                    if (e != null) {
-                        Evolution.LOGGER.warn("Had trouble traversing: " + dir + " (" + e + ")");
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    size.addAndGet(attrs.size());
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    Evolution.LOGGER.warn("Skipped: " + file + " (" + exc + ")");
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        }
-        catch (IOException e) {
-            throw new AssertionError("walkFileTree will not throw IOException if the FileVisitor does not");
-        }
-        return size.get();
     }
 
     /**

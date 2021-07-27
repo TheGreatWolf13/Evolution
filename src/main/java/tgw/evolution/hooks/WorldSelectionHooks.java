@@ -1,6 +1,8 @@
 package tgw.evolution.hooks;
 
+import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.GlStateManager;
+import net.minecraft.client.AnvilConverterException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.FontRenderer;
@@ -13,20 +15,54 @@ import net.minecraft.util.SharedConstants;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.storage.SaveFormat;
+import net.minecraft.world.storage.WorldInfo;
 import net.minecraft.world.storage.WorldSummary;
 import org.apache.commons.lang3.StringUtils;
 import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.Metrics;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 public final class WorldSelectionHooks {
 
     public static final DateFormat DATE_FORMAT = new SimpleDateFormat();
 
     private WorldSelectionHooks() {
+    }
+
+    public static List<WorldSummary> getSaveList(SaveFormat save) throws AnvilConverterException {
+        if (!Files.isDirectory(save.func_215781_c())) {
+            throw new AnvilConverterException(new TranslationTextComponent("selectWorld.load_folder_access").getString());
+        }
+        List<WorldSummary> list = Lists.newArrayList();
+        File[] potentialWorlds = save.func_215781_c().toFile().listFiles();
+        for (File worldFolder : potentialWorlds) {
+            if (worldFolder.isDirectory()) {
+                String folderName = worldFolder.getName();
+                WorldInfo worldInfo = save.getWorldInfo(folderName);
+                if (worldInfo != null && (worldInfo.getSaveVersion() == 19_132 || worldInfo.getSaveVersion() == 19_133)) {
+                    boolean requiresConversion = worldInfo.getSaveVersion() != 19_133;
+                    String displayName = worldInfo.getWorldName();
+                    if (StringUtils.isEmpty(displayName)) {
+                        displayName = folderName;
+                    }
+                    //noinspection ObjectAllocationInLoop
+                    list.add(new WorldSummary(worldInfo,
+                                              folderName,
+                                              displayName,
+                                              MathHelper.calculateSizeOnDisk(worldFolder.toPath()),
+                                              requiresConversion));
+                }
+            }
+        }
+        return list;
     }
 
     /**
@@ -129,6 +165,5 @@ public final class WorldSelectionHooks {
                 AbstractGui.blit(rowX, rowY, 0.0F, i, 32, 32, 256, 256);
             }
         }
-
     }
 }

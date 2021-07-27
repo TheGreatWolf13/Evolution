@@ -11,6 +11,7 @@
   "Evolution PlayerEntity Transformer": "patches/PlayerEntity.js",
   "Evolution PlayerModel Transformer": "patches/PlayerModel.js",
   "Evolution PlayerRenderer Transformer": "patches/PlayerRenderer.js",
+  "Evolution SaveFormat Transformer": "patches/SaveFormat.js",
   "Evolution ShaderInstance Transformer": "patches/ShaderInstance.js",
   "Evolution World Transformer": "patches/World.js",
   "Evolution WorldSelectionList$Entry Transformer": "patches/WorldSelectionList$Entry.js"
