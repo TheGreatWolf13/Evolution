@@ -4,21 +4,21 @@ var Opcodes = Java.type("org.objectweb.asm.Opcodes");
 var FUNC = ASMAPI.mapMethod("func_216536_h");
 
 function log(message) {
-	print("[evolution/ ShaderInstance#func_216536_h() Transformer]: " + message);
+	print("[evolution/ShaderInstance Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {
 	if (method.name != name) {
 		return false;
 	}
-	log("Patching method: " + name + " (" + method.name + ")");
+	log("Patching method: " + name + method.desc);
 	patchFunction(method.instructions);
 	return true;
 }
 
 function initializeCoreMod() {
 	return {
-		"Evolution ShaderInstancePatch Transformer": {
+		"Evolution ShaderInstance Transformer": {
 			"target": {
 				"type": "CLASS",
 				"name": "net.minecraft.client.shader.ShaderInstance"

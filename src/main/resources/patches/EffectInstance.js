@@ -8,16 +8,15 @@ var VarInsnNode = Java.type("org.objectweb.asm.tree.VarInsnNode");
 var READ = ASMAPI.mapMethod("func_152446_a");
 
 function log(message) {
-	print("[evolution/ EffectInstance#read(CompoundNBT) Transformer]: " + message);
+	print("[evolution/EffectInstance Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {
 	if (method.name != name) {
 		return false;
 	}
-	log("Patching method: " + name + " (" + method.name + ")");
+	log("Patching method: " + name + method.desc);
 	patchFunction(method.instructions);
-	log("Patching successful");
 	return true;
 }
 

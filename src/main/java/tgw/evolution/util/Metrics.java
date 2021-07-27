@@ -74,6 +74,33 @@ public final class Metrics {
         return changedValue + " " + (full ? metric.getFullName() : metric.getPrefix()) + unit;
     }
 
+    public static String metricBytes(double value, int decimalPlaces) {
+        int numberOfDivisions = 0;
+        while (value > 1_024L) {
+            value /= 1_024L;
+            numberOfDivisions++;
+        }
+        Metric metric = Metric.NONE;
+        switch (numberOfDivisions) {
+            case 1:
+                metric = Metric.KILO;
+                break;
+            case 2:
+                metric = Metric.MEGA;
+                break;
+            case 3:
+                metric = Metric.GIGA;
+                break;
+            case 4:
+                metric = Metric.TERA;
+                break;
+            case 5:
+                metric = Metric.PETA;
+                break;
+        }
+        return String.format(Locale.ROOT, "%." + decimalPlaces + "f " + metric.getPrefix() + "B", value);
+    }
+
     public static String time(double timeInSeconds, int decimalPlaces, boolean full) {
         int magnitude = Math.floorDiv(MathHelper.floor(Math.log10(Math.abs(timeInSeconds))), 3);
         if (magnitude < -8) {

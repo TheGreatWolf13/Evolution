@@ -5,21 +5,21 @@ var SHOULDBEVISIBLE = ASMAPI.mapMethod("func_192738_c");
 var ISHIDDEN = ASMAPI.mapMethod("func_193224_j");
 
 function log(message) {
-	print("[evolution/ PlayerAdvancements Transformer]: " + message);
+	print("[evolution/PlayerAdvancements Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {
 	if (method.name != name) {
 		return false;
 	}
-	log("Patching method: " + name + " (" + method.name + ")");
+	log("Patching method: " + name + method.desc);
 	patchFunction(method.instructions);
 	return true;
 }
 
 function initializeCoreMod() {
 	return {
-		"Evolution PlayerAdvancementsPatch Transformer": {
+		"Evolution PlayerAdvancements Transformer": {
 			"target": {
 				"type": "CLASS",
 				"name": "net.minecraft.advancements.PlayerAdvancements"

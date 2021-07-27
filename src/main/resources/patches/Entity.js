@@ -1,6 +1,5 @@
 var ASMAPI = Java.type("net.minecraftforge.coremod.api.ASMAPI");
 var Opcodes = Java.type("org.objectweb.asm.Opcodes");
-
 var InsnList = Java.type("org.objectweb.asm.tree.InsnList");
 var InsnNode = Java.type("org.objectweb.asm.tree.InsnNode");
 var MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
@@ -10,23 +9,25 @@ var FieldInsnNode = Java.type("org.objectweb.asm.tree.FieldInsnNode");
 var DEALFIREDAMAGE = ASMAPI.mapMethod("func_70081_e");
 var BASETICK = ASMAPI.mapMethod("func_70030_z");
 var ATTACKENTITYFROM = ASMAPI.mapMethod("func_70097_a");
+var UPDATEFALLSTATE = ASMAPI.mapMethod("func_184231_a");
+var FALLDISTANCE = ASMAPI.mapField("field_70143_R");
 
 function log(message) {
-	print("[evolution/ Entity#dealFireDamage(int) Transformer]: " + message);
+	print("[evolution/Entity Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {
 	if (method.name != name) {
 		return false;
 	}
-	log("Patching method: " + name + " (" + method.name + ")");
+	log("Patching method: " + name + method.desc);
 	patchFunction(method.instructions);
 	return true;
 }
 
 function initializeCoreMod() {
 	return {
-		"Evolution EntityDealFireDamage Transformer": {
+		"Evolution Entity Transformer": {
 			"target": {
 				"type": "CLASS",
 				"name": "net.minecraft.entity.Entity"
@@ -41,6 +42,11 @@ function initializeCoreMod() {
 				}
 				for (var i in methods) {
                     if (patch(methods[i], BASETICK, patchOnFire)) {
+                        break;
+                    }
+                }
+                for (var i in methods) {
+                    if (patch(methods[i], UPDATEFALLSTATE, patchUpdateFallState)) {
                         break;
                     }
                 }
@@ -85,4 +91,26 @@ function patchOnFire(instructions) {
     attackEntityFrom.owner = "tgw/evolution/hooks/EntityHooks";
     attackEntityFrom.name = "onFireDamage";
     attackEntityFrom.desc = "(Lnet/minecraft/entity/Entity;)V";
+}
+
+function patchUpdateFallState(instructions) {
+    var fallDist;
+    for (var i = 0; i < instructions.size(); i++) {
+        var inst = instructions.get(i);
+        if (inst.getOpcode() == Opcodes.GETFIELD && inst.name == FALLDISTANCE) {
+            fallDist = inst;
+            break;
+        }
+    }
+
+    var aload0 = fallDist.getPrevious();
+    var fconst0 = fallDist.getNext();
+    var fcmpl = fconst0.getNext();
+    var iflel3 = fcmpl.getNext();
+
+    instructions.remove(aload0);
+    instructions.remove(fallDist);
+    instructions.remove(fconst0);
+    instructions.remove(fcmpl);
+    instructions.remove(iflel3);
 }

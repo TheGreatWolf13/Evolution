@@ -1,26 +1,25 @@
 var ASMAPI = Java.type("net.minecraftforge.coremod.api.ASMAPI");
 var Opcodes = Java.type("org.objectweb.asm.Opcodes");
-
 var InsnList = Java.type("org.objectweb.asm.tree.InsnList");
 var LdcInsnNode = Java.type("org.objectweb.asm.tree.LdcInsnNode");
 var MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
 
 function log(message) {
-	print("[evolution/ MinecraftServer#run() Transformer]: " + message);
+	print("[evolution/MinecraftServer Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {
 	if (method.name != name) {
 		return false;
 	}
-	log("Patching method: " + name + " (" + method.name + ")");
+	log("Patching method: " + name + method.desc);
 	patchFunction(method.instructions);
 	return true;
 }
 
 function initializeCoreMod() {
 	return {
-		"Evolution TickrateChanger Transformer": {
+		"Evolution MinecraftServer Transformer": {
 			"target": {
 				"type": "CLASS",
 				"name": "net.minecraft.server.MinecraftServer"

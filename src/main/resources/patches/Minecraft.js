@@ -1,6 +1,5 @@
 var ASMAPI = Java.type("net.minecraftforge.coremod.api.ASMAPI");
 var Opcodes = Java.type("org.objectweb.asm.Opcodes");
-
 var InsnNode = Java.type("org.objectweb.asm.tree.InsnNode");
 var MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
 var VarInsnNode = Java.type("org.objectweb.asm.tree.VarInsnNode");
@@ -9,21 +8,21 @@ var ISHANDACTIVE = ASMAPI.mapMethod("func_184587_cr");
 var PROCESSKEYBINDS = ASMAPI.mapMethod("func_184117_aA");
 
 function log(message) {
-	print("[evolution/ Minecraft#processKeyBinds() Transformer]: " + message);
+	print("[evolution/Minecraft Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {
 	if (method.name != name) {
 		return false;
 	}
-	log("Patching method: " + name + " (" + method.name + ")");
+	log("Patching method: " + name + method.desc);
 	patchFunction(method.instructions);
 	return true;
 }
 
 function initializeCoreMod() {
 	return {
-		"Evolution InputHooks Transformer": {
+		"Evolution Minecraft Transformer": {
 			"target": {
 				"type": "CLASS",
 				"name": "net.minecraft.client.Minecraft"

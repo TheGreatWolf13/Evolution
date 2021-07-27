@@ -1,36 +1,35 @@
 var ASMAPI = Java.type("net.minecraftforge.coremod.api.ASMAPI");
 var Opcodes = Java.type("org.objectweb.asm.Opcodes");
-
 var InsnNode = Java.type("org.objectweb.asm.tree.InsnNode");
 var MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
 var VarInsnNode = Java.type("org.objectweb.asm.tree.VarInsnNode");
 
-var PLAYEQUIPSOUND = ASMAPI.mapMethod("func_184606_a_");
+var DRAWNAMEPLATE = ASMAPI.mapMethod("func_190052_a");
 
 function log(message) {
-	print("[evolution/ LivingEntity#playEquipSound(ItemStack) Transformer]: " + message);
+	print("[evolution/GameRenderer Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {
 	if (method.name != name) {
 		return false;
 	}
-	log("Patching method: " + name + " (" + method.name + ")");
+	log("Patching method: " + name + method.desc);
 	patchFunction(method.instructions);
 	return true;
 }
 
 function initializeCoreMod() {
 	return {
-		"Evolution LivingEntityEquipSound Transformer": {
+		"Evolution GameRenderer Transformer": {
 			"target": {
 				"type": "CLASS",
-				"name": "net.minecraft.entity.LivingEntity"
+				"name": "net.minecraft.client.renderer.GameRenderer"
 			},
 			"transformer": function(classNode) {
 				var methods = classNode.methods;
 				for (var i in methods) {
-					if (patch(methods[i], PLAYEQUIPSOUND, patchEquipSound)) {
+					if (patch(methods[i], DRAWNAMEPLATE, patchDrawNameplate)) {
 						methods[i].localVariables.clear();
 						break;
 					}
@@ -41,15 +40,22 @@ function initializeCoreMod() {
 	};
 }
 
-function patchEquipSound(instructions) {
+function patchDrawNameplate(instructions) {
 	instructions.clear();
 	instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
 	instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
+	instructions.add(new VarInsnNode(Opcodes.FLOAD, 2));
+	instructions.add(new VarInsnNode(Opcodes.FLOAD, 3));
+	instructions.add(new VarInsnNode(Opcodes.FLOAD, 4));
+	instructions.add(new VarInsnNode(Opcodes.ILOAD, 5));
+	instructions.add(new VarInsnNode(Opcodes.FLOAD, 6));
+	instructions.add(new VarInsnNode(Opcodes.FLOAD, 7));
+	instructions.add(new VarInsnNode(Opcodes.ILOAD, 8));
 	instructions.add(new MethodInsnNode(
 		Opcodes.INVOKESTATIC,
-		"tgw/evolution/hooks/LivingEntityHooks",
-		"playEquipSound",
-		"(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/item/ItemStack;)V",
+		"tgw/evolution/hooks/GameRendererHooks",
+		"drawNameplate",
+		"(Lnet/minecraft/client/gui/FontRenderer;Ljava/lang/String;FFFIFFZ)V",
 		false
 	));
 	instructions.add(new InsnNode(Opcodes.RETURN));

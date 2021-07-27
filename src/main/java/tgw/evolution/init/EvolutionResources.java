@@ -37,6 +37,7 @@ public final class EvolutionResources {
     public static final ResourceLocation GUI_TABS = Evolution.getResource("textures/gui/tabs.png");
     public static final ResourceLocation GUI_WIDGETS = Evolution.getResource("textures/gui/widgets.png");
     public static final ResourceLocation GUI_WINDOW = Evolution.getResource("textures/gui/window.png");
+    public static final ResourceLocation GUI_WORLD_SELECTION = new ResourceLocation("textures/gui/world_selection.png");
     public static final ResourceLocation PIT_KILN = Evolution.getResource("textures/block/pit_kiln.png");
     public static final ResourceLocation[] PIT_LOGS = {Evolution.getResource("textures/block/pit_acacia.png"),
                                                        Evolution.getResource("textures/block/pit_aspen.png"),
@@ -69,6 +70,7 @@ public final class EvolutionResources {
     public static final ResourceLocation SUN = Evolution.getResource("textures/environment/sun.png");
     public static final ResourceLocation SOLAR_ECLIPSE = Evolution.getResource("textures/environment/solar_eclipse.png");
     public static final ResourceLocation LUNAR_ECLIPSE = Evolution.getResource("textures/environment/lunar_eclipse.png");
+    public static final ResourceLocation UNKNOWN_SERVER = new ResourceLocation("textures/misc/unknown_server.png");
 
     static {
         for (RockVariant variant : RockVariant.values()) {

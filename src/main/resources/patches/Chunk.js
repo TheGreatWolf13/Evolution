@@ -5,32 +5,35 @@ var InsnNode = Java.type("org.objectweb.asm.tree.InsnNode");
 var MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
 var VarInsnNode = Java.type("org.objectweb.asm.tree.VarInsnNode");
 
-var FUNC = ASMAPI.mapMethod("func_217766_a");
+var GETFLUIDSTATE = ASMAPI.mapMethod("func_206914_b");
 
 function log(message) {
-	print("[evolution/ PlayerRenderer#func_217766_a(AbstractClientPlayerEntity, ItemStack, ItemStack, Hand) Transformer]: " + message);
+	print("[evolution/Chunk Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {
 	if (method.name != name) {
 		return false;
 	}
-	log("Patching method: " + name + " (" + method.name + ")");
+	if (method.desc != "(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;") {
+	    return false;
+	}
+	log("Patching method: " + name + method.desc);
 	patchFunction(method.instructions);
 	return true;
 }
 
 function initializeCoreMod() {
 	return {
-		"Evolution PlayerRenderer Transformer": {
+		"Evolution Chunk Transformer": {
 			"target": {
 				"type": "CLASS",
-				"name": "net.minecraft.client.renderer.entity.PlayerRenderer"
+				"name": "net.minecraft.world.chunk.Chunk"
 			},
 			"transformer": function(classNode) {
 				var methods = classNode.methods;
 				for (var i in methods) {
-					if (patch(methods[i], FUNC, patchFunc)) {
+					if (patch(methods[i], GETFLUIDSTATE, patchGetFluidState)) {
 						methods[i].localVariables.clear();
 						break;
 					}
@@ -41,17 +44,15 @@ function initializeCoreMod() {
 	};
 }
 
-function patchFunc(instructions) {
+function patchGetFluidState(instructions) {
 	instructions.clear();
+	instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
 	instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
-	instructions.add(new VarInsnNode(Opcodes.ALOAD, 2));
-    instructions.add(new VarInsnNode(Opcodes.ALOAD, 3));
-	instructions.add(new VarInsnNode(Opcodes.ALOAD, 4));
 	instructions.add(new MethodInsnNode(
 		Opcodes.INVOKESTATIC,
-		"tgw/evolution/hooks/PlayerRenderHooks",
-		"func_217766_a",
-		"(Lnet/minecraft/client/entity/player/AbstractClientPlayerEntity;Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;Lnet/minecraft/util/Hand;)Lnet/minecraft/client/renderer/entity/model/BipedModel$ArmPose;",
+		"tgw/evolution/hooks/ChunkHooks",
+		"getFluidState",
+		"(Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;",
 		false
 	));
 	instructions.add(new InsnNode(Opcodes.ARETURN));

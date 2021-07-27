@@ -2,27 +2,29 @@ var ASMAPI = Java.type("net.minecraftforge.coremod.api.ASMAPI");
 var Opcodes = Java.type("org.objectweb.asm.Opcodes");
 var InsnList = Java.type("org.objectweb.asm.tree.InsnList");
 var VarInsnNode = Java.type("org.objectweb.asm.tree.VarInsnNode");
+var InsnNode = Java.type("org.objectweb.asm.tree.InsnNode");
 var MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
 
+var SHOULDRENDERSNEAK = ASMAPI.mapMethod("func_213287_bg");
 var LIVINGTICK = ASMAPI.mapMethod("func_70636_d");
 var COLLIDEDHORIZONTALLY = ASMAPI.mapField("field_70123_F");
 
 function log(message) {
-	print("[evolution/ ClientPlayerEntity#livingTick() Transformer]: " + message);
+	print("[evolution/ClientPlayerEntity Transformer]: " + message);
 }
 
 function patch(method, name, patchFunction) {
 	if (method.name != name) {
 		return false;
 	}
-	log("Patching method: " + name + " (" + method.name + ")");
+	log("Patching method: " + name + method.desc);
 	patchFunction(method.instructions);
 	return true;
 }
 
 function initializeCoreMod() {
 	return {
-		"Evolution ClientPlayerEntitySprint Transformer": {
+		"Evolution ClientPlayerEntity Transformer": {
 			"target": {
 				"type": "CLASS",
 				"name": "net.minecraft.client.entity.player.ClientPlayerEntity"
@@ -30,14 +32,33 @@ function initializeCoreMod() {
 			"transformer": function(classNode) {
 				var methods = classNode.methods;
 				for (var i in methods) {
-					if (patch(methods[i], LIVINGTICK, patchLivingTick)) {
+					if (patch(methods[i], SHOULDRENDERSNEAK, patchSneak)) {
+						methods[i].localVariables.clear();
 						break;
 					}
 				}
+				for (var i in methods) {
+                    if (patch(methods[i], LIVINGTICK, patchLivingTick)) {
+                        break;
+                    }
+                }
 				return classNode;
 			}
 		}
 	};
+}
+
+function patchSneak(instructions) {
+    instructions.clear();
+    instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+    instructions.add(new MethodInsnNode(
+    	Opcodes.INVOKESPECIAL,
+    	"net/minecraft/entity/Entity",
+    	"shouldRenderSneaking",
+    	"()Z",
+    	false
+    ));
+    instructions.add(new InsnNode(Opcodes.IRETURN));
 }
 
 function patchLivingTick(instructions) {
@@ -49,17 +70,16 @@ function patchLivingTick(instructions) {
             break;
         }
     }
-
     if (iload8 != null) {
         var newInst = new InsnList();
         newInst.add(new VarInsnNode(Opcodes.ILOAD, 7));
         newInst.add(new VarInsnNode(Opcodes.ALOAD, 0));
         newInst.add(new MethodInsnNode(
-                    		Opcodes.INVOKESTATIC,
-                    		"tgw/evolution/hooks/ClientPlayerHooks",
-                    		"getSprintBoolean",
-                    		"(ZLnet/minecraft/client/entity/player/ClientPlayerEntity;)Z",
-                    		false
+            Opcodes.INVOKESTATIC,
+            "tgw/evolution/hooks/ClientPlayerHooks",
+            "getSprintBoolean",
+            "(ZLnet/minecraft/client/entity/player/ClientPlayerEntity;)Z",
+            false
         ));
         instructions.insertBefore(iload8, newInst);
         instructions.remove(iload8);
