@@ -143,6 +143,7 @@
   "evolution.advancements.general.knapping.description": "Use a rock in a knapping block to shape it into something useful",
   "COMMENT_GUIS": "_____________________________________________________________________________________________________________________GUIs",
   "evolution.gui.knapping": "Knapping",
+  "evolution.ingamemenu.modoptions": "Mod Options...",
   "evolution.puzzle.attachment_type": "Attachment Type:",
   "evolution.puzzle.checkBB": "Check Bounding Box:",
   "evolution.puzzle.false": "FALSE",

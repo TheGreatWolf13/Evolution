@@ -3,17 +3,24 @@ package tgw.evolution.events;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.client.gui.AccessibilityScreen;
 import net.minecraft.client.gui.advancements.AdvancementsScreen;
+import net.minecraft.client.gui.screen.ConfirmOpenLinkScreen;
+import net.minecraft.client.gui.screen.ControlsScreen;
+import net.minecraft.client.gui.screen.IngameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.screen.inventory.CreativeScreen;
 import net.minecraft.client.gui.screen.inventory.InventoryScreen;
+import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.entity.PlayerRenderer;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ModelResourceLocation;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ClientRecipeBook;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -27,10 +34,8 @@ import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.tileentity.SkullTileEntity;
-import net.minecraft.util.Hand;
-import net.minecraft.util.MovementInput;
-import net.minecraft.util.SoundCategory;
 import net.minecraft.util.Timer;
+import net.minecraft.util.*;
 import net.minecraft.util.math.*;
 import net.minecraft.world.GameType;
 import net.minecraft.world.dimension.DimensionType;
@@ -40,6 +45,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.client.gui.GuiModList;
 import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import tgw.evolution.ClientProxy;
 import tgw.evolution.Evolution;
@@ -655,6 +661,43 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
+    public void onGUIMouseClickedPre(GuiScreenEvent.MouseClickedEvent.Pre event) {
+        MouseButton button = MouseButton.fromGLFW(event.getButton());
+        if (button != null) {
+            if (this.onMouseClicked(event.getMouseX(), event.getMouseY(), button)) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onGUIMouseDragPre(GuiScreenEvent.MouseDragEvent.Pre event) {
+        MouseButton button = MouseButton.fromGLFW(event.getMouseButton());
+        if (button != null) {
+            if (this.onMouseDrag(event.getMouseX(), event.getMouseY(), button)) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onGUIMouseReleasedPre(GuiScreenEvent.MouseReleasedEvent.Pre event) {
+        MouseButton button = MouseButton.fromGLFW(event.getButton());
+        if (button != null) {
+            if (this.onMouseReleased(button)) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onGUIMouseScrollPost(GuiScreenEvent.MouseScrollEvent.Post event) {
+        if (this.onMouseScrolled(event.getMouseX(), event.getMouseY(), event.getScrollDelta())) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
     public void onGUIOpen(GuiOpenEvent event) {
         if (event.getGui() instanceof InventoryScreen) {
             event.setCanceled(true);
@@ -670,39 +713,64 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
-    public void onGuiMouseClickedPre(GuiScreenEvent.MouseClickedEvent.Pre event) {
-        MouseButton button = MouseButton.fromGLFW(event.getButton());
-        if (button != null) {
-            if (this.onMouseClicked(event.getMouseX(), event.getMouseY(), button)) {
-                event.setCanceled(true);
+    public void onGUIPostInit(GuiScreenEvent.InitGuiEvent.Post event) {
+        if (event.getGui() instanceof IngameMenuScreen) {
+            event.addWidget(new Button(event.getWidgetList().get(6).x,
+                                       event.getWidgetList().get(6).y + 24,
+                                       event.getWidgetList().get(6).getWidth(),
+                                       event.getWidgetList().get(6).getHeight(),
+                                       I18n.format("evolution.ingamemenu.modoptions"),
+                                       button -> Minecraft.getInstance().displayGuiScreen(new GuiModList(event.getGui()))));
+            Widget shareToLan = event.getWidgetList().get(6);
+            shareToLan.x = event.getGui().width / 2 - 102;
+            shareToLan.setWidth(204);
+            Widget returnToMenu = event.getWidgetList().get(7);
+            returnToMenu.y += 24;
+            Widget menuOptions = event.getWidgetList().get(5);
+            menuOptions.y += 24;
+            for (Widget in : event.getWidgetList()) {
+                in.y -= 16;
             }
+            Widget feedback = event.getWidgetList().get(3);
+            Widget bugs = event.getWidgetList().get(4);
+            event.removeWidget(feedback);
+            event.removeWidget(bugs);
+            String feedbackLink = "https://github.com/MGSchultz-13/Evolution/discussions/categories/feedback";
+            feedback = new Button(event.getGui().width / 2 - 102,
+                                  event.getGui().height / 4 + 72 - 32,
+                                  98,
+                                  20,
+                                  I18n.format("menu.sendFeedback"),
+                                  button -> this.mc.displayGuiScreen(new ConfirmOpenLinkScreen(b -> {
+                                      if (b) {
+                                          Util.getOSType().openURI(feedbackLink);
+                                      }
+                                      this.mc.displayGuiScreen(event.getGui());
+                                  }, feedbackLink, true)));
+            String bugsLink = "https://github.com/MGSchultz-13/Evolution/issues";
+            bugs = new Button(event.getGui().width / 2 + 4,
+                              event.getGui().height / 4 + 72 - 32,
+                              98,
+                              20,
+                              I18n.format("menu.reportBugs"),
+                              button -> this.mc.displayGuiScreen(new ConfirmOpenLinkScreen(b -> {
+                                  if (b) {
+                                      Util.getOSType().openURI(bugsLink);
+                                  }
+                                  this.mc.displayGuiScreen(event.getGui());
+                              }, bugsLink, true)));
+            event.addWidget(feedback);
+            event.addWidget(bugs);
         }
-    }
-
-    @SubscribeEvent
-    public void onGuiMouseDragPre(GuiScreenEvent.MouseDragEvent.Pre event) {
-        MouseButton button = MouseButton.fromGLFW(event.getMouseButton());
-        if (button != null) {
-            if (this.onMouseDrag(event.getMouseX(), event.getMouseY(), button)) {
-                event.setCanceled(true);
-            }
+        else if (event.getGui() instanceof AccessibilityScreen) {
+            Widget autoJump = event.getWidgetList().get(5);
+            event.removeWidget(autoJump);
         }
-    }
-
-    @SubscribeEvent
-    public void onGuiMouseReleasedPre(GuiScreenEvent.MouseReleasedEvent.Pre event) {
-        MouseButton button = MouseButton.fromGLFW(event.getButton());
-        if (button != null) {
-            if (this.onMouseReleased(button)) {
-                event.setCanceled(true);
-            }
-        }
-    }
-
-    @SubscribeEvent
-    public void onGuiMouseScrollPost(GuiScreenEvent.MouseScrollEvent.Post event) {
-        if (this.onMouseScrolled(event.getMouseX(), event.getMouseY(), event.getScrollDelta())) {
-            event.setCanceled(true);
+        else if (event.getGui() instanceof ControlsScreen) {
+            Widget autoJump = event.getWidgetList().get(1);
+            event.removeWidget(autoJump);
+            Widget mouseSettings = event.getWidgetList().get(0);
+            mouseSettings.setWidth(310);
         }
     }
 
