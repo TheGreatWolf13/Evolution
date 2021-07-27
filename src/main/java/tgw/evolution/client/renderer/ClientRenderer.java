@@ -53,8 +53,10 @@ import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.client.event.RenderTooltipEvent;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 import tgw.evolution.capabilities.thirst.IThirst;
 import tgw.evolution.capabilities.thirst.ThirstStats;
+import tgw.evolution.client.Blending;
 import tgw.evolution.client.audio.SoundEntityEmitted;
 import tgw.evolution.client.gui.ScreenDisplayEffects;
 import tgw.evolution.events.ClientEvents;
@@ -486,14 +488,8 @@ public class ClientRenderer {
                 else {
                     GlStateManager.enableBlend();
                     GlStateManager.enableAlphaTest();
-                    GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-                                                     GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                                                     GlStateManager.SourceFactor.ONE,
-                                                     GlStateManager.DestFactor.ZERO);
-                    GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR,
-                                                     GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR,
-                                                     GlStateManager.SourceFactor.ONE,
-                                                     GlStateManager.DestFactor.ZERO);
+                    Blending.INVERTED_ADD.apply();
+                    GlStateManager.blendEquation(GL14.GL_FUNC_SUBTRACT);
                     blit((scaledWidth - 15) / 2, (scaledHeight - 15) / 2, 0, 0, 15, 15);
                     if (this.mc.gameSettings.attackIndicator == AttackIndicatorStatus.CROSSHAIR) {
                         float leftCooledAttackStrength = this.client.getMainhandCooledAttackStrength(partialTicks);
@@ -539,6 +535,7 @@ public class ClientRenderer {
                         }
                         GlStateManager.disableAlphaTest();
                     }
+                    GlStateManager.blendEquation(GL14.GL_FUNC_ADD);
                 }
             }
         }
@@ -548,10 +545,7 @@ public class ClientRenderer {
         BlockState state = this.mc.world.getBlockState(hitPos);
         if (!state.isAir(this.mc.world, hitPos) && this.mc.world.getWorldBorder().contains(hitPos)) {
             GlStateManager.enableBlend();
-            GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-                                             GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                                             GlStateManager.SourceFactor.ONE,
-                                             GlStateManager.DestFactor.ZERO);
+            Blending.DEFAULT.apply();
             GlStateManager.lineWidth(Math.max(2.5F, this.mc.mainWindow.getFramebufferWidth() / 1_920.0F * 2.5F));
             GlStateManager.disableTexture();
             GlStateManager.depthMask(false);
@@ -590,7 +584,7 @@ public class ClientRenderer {
             GlStateManager.fogStart(f1 * multiplier);
             GlStateManager.fogEnd(f1 * multiplier * 4.0F);
             if (GL.getCapabilities().GL_NV_fog_distance) {
-                GL11.glFogi(34_138, 34_139);
+                GL11.glFogi(0x855a, 0x855b);
             }
             event.setDensity(2.0F);
             event.setCanceled(true);
@@ -824,10 +818,7 @@ public class ClientRenderer {
 
     public void renderHitbox(Entity entity, Hitbox hitbox, ActiveRenderInfo info, float partialTicks) {
         GlStateManager.enableBlend();
-        GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-                                         GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                                         GlStateManager.SourceFactor.ONE,
-                                         GlStateManager.DestFactor.ZERO);
+        Blending.DEFAULT.apply();
         GlStateManager.lineWidth(Math.max(2.5F, this.mc.mainWindow.getFramebufferWidth() / 1_920.0F * 2.5F));
         GlStateManager.disableTexture();
         GlStateManager.depthMask(false);
@@ -1151,10 +1142,7 @@ public class ClientRenderer {
 
     public void renderOutlines(VoxelShape shape, ActiveRenderInfo info, BlockPos pos) {
         GlStateManager.enableBlend();
-        GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-                                         GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                                         GlStateManager.SourceFactor.ONE,
-                                         GlStateManager.DestFactor.ZERO);
+        Blending.DEFAULT.apply();
         GlStateManager.lineWidth(Math.max(2.5F, this.mc.mainWindow.getFramebufferWidth() / 1_920.0F * 2.5F));
         GlStateManager.disableTexture();
         GlStateManager.depthMask(false);

@@ -436,12 +436,12 @@ public class ClientEvents {
                     this.objectMouseOver = this.leftRayTrace;
                 }
                 if (this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable) {
-                    this.rightRayTrace = MathHelper.rayTraceEntityFromEyes(this.mc.player,
-                                                                           event.renderTickTime,
-                                                                           Math.min(reachDistance,
-                                                                                    ((IOffhandAttackable) this.mc.player.getHeldItemOffhand()
-                                                                                                                        .getItem()).getReach() +
-                                                                                    PlayerHelper.REACH_DISTANCE));
+                    this.rightRayTrace = MathHelper.rayTraceOBBEntityFromEyes(this.mc.player,
+                                                                              event.renderTickTime,
+                                                                              Math.min(reachDistance,
+                                                                                       ((IOffhandAttackable) this.mc.player.getHeldItemOffhand()
+                                                                                                                           .getItem()).getReach() +
+                                                                                       PlayerHelper.REACH_DISTANCE));
                     this.rightPointedEntity = this.rightRayTrace == null ? null : this.rightRayTrace.getEntity();
                 }
                 else {
