@@ -8,6 +8,7 @@ import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.list.KeyBindingList;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.util.Util;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -28,7 +29,7 @@ public class ListKeyBinding extends KeyBindingList {
         this.width = controls.width + 45;
         this.height = controls.height;
         this.y0 = 43;
-        this.y1 = controls.height - 80;
+        this.y1 = controls.height - 85;
         this.x1 = controls.width + 45;
         this.controlsScreen = controls;
         this.children().clear();
@@ -118,11 +119,43 @@ public class ListKeyBinding extends KeyBindingList {
             this.keybinding = name;
             this.keyDesc = I18n.format(name.getKeyDescription());
             this.btnChangeKeyBinding = new Button(0, 0, 95, 20, this.keyDesc, button -> ListKeyBinding.this.controlsScreen.buttonId = name) {
+
+                private boolean wasHovered;
+
                 @Override
                 protected String getNarrationMessage() {
                     return name.isInvalid() ?
                            I18n.format("narrator.controls.unbound", ListKeyBinding.KeyEntry.this.keyDesc) :
                            I18n.format("narrator.controls.bound", ListKeyBinding.KeyEntry.this.keyDesc, super.getNarrationMessage());
+                }
+
+                @Override
+                public void render(int mouseX, int mouseY, float partialTicks) {
+                    if (this.visible) {
+                        this.isHovered = mouseX >= this.x &&
+                                         mouseY >= this.y &&
+                                         mouseX < this.x + this.width &&
+                                         mouseY < this.y + this.height &&
+                                         mouseY < ListKeyBinding.this.y1;
+                        if (this.wasHovered != this.isHovered()) {
+                            if (this.isHovered()) {
+                                if (this.isFocused()) {
+                                    this.nextNarration = Util.milliTime() + 200L;
+                                }
+                                else {
+                                    this.nextNarration = Util.milliTime() + 750L;
+                                }
+                            }
+                            else {
+                                this.nextNarration = Long.MAX_VALUE;
+                            }
+                        }
+                        if (this.visible) {
+                            this.renderButton(mouseX, mouseY, partialTicks);
+                        }
+                        this.narrate();
+                        this.wasHovered = this.isHovered();
+                    }
                 }
             };
             this.btnResetKeyBinding = new Button(0, 0, 50, 20, I18n.format("controls.reset"), button -> {
@@ -130,9 +163,40 @@ public class ListKeyBinding extends KeyBindingList {
                 ListKeyBinding.this.minecraft.gameSettings.setKeyBindingCode(name, name.getDefault());
                 KeyBinding.resetKeyBindingArrayAndHash();
             }) {
+                private boolean wasHovered;
+
                 @Override
                 protected String getNarrationMessage() {
                     return I18n.format("narrator.controls.reset", ListKeyBinding.KeyEntry.this.keyDesc);
+                }
+
+                @Override
+                public void render(int mouseX, int mouseY, float partialTicks) {
+                    if (this.visible) {
+                        this.isHovered = mouseX >= this.x &&
+                                         mouseY >= this.y &&
+                                         mouseX < this.x + this.width &&
+                                         mouseY < this.y + this.height &&
+                                         mouseY < ListKeyBinding.this.y1;
+                        if (this.wasHovered != this.isHovered()) {
+                            if (this.isHovered()) {
+                                if (this.isFocused()) {
+                                    this.nextNarration = Util.milliTime() + 200L;
+                                }
+                                else {
+                                    this.nextNarration = Util.milliTime() + 750L;
+                                }
+                            }
+                            else {
+                                this.nextNarration = Long.MAX_VALUE;
+                            }
+                        }
+                        if (this.visible) {
+                            this.renderButton(mouseX, mouseY, partialTicks);
+                        }
+                        this.narrate();
+                        this.wasHovered = this.isHovered();
+                    }
                 }
             };
         }

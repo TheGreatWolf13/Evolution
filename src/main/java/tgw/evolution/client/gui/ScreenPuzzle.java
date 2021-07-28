@@ -16,7 +16,6 @@ public class ScreenPuzzle extends Screen {
     private final TEPuzzle tile;
     private TextFieldWidget attachmentTypeText;
     private boolean checkBB;
-    private Button checkBBButton;
     private Button doneButton;
     private TextFieldWidget finalStateText;
     private TextFieldWidget targetPoolText;
@@ -46,11 +45,13 @@ public class ScreenPuzzle extends Screen {
                                                     button -> this.sendUpdatesToServer()));
         this.addButton(new Button(this.width / 2 + 4, 210, 150, 20, I18n.format("gui.cancel"), p_214252_1_ -> this.onClose()));
         this.checkBB = this.tile.getCheckBB();
-        this.checkBBButton = this.addButton(new Button(this.width / 2 - 4 - 150, 160, 50, 20, "evolution.puzzle.checkbb", button -> {
-            this.checkBB = !this.checkBB;
-            this.updateToggleCheckButton();
-        }));
-        this.updateToggleCheckButton();
+        this.addButton(new GuiCheckBox(this.width / 2 - 4 - 150 + 1, 150, I18n.format("evolution.puzzle.checkBB"), this.checkBB, true) {
+            @Override
+            public void onPress() {
+                super.onPress();
+                ScreenPuzzle.this.checkBB = !ScreenPuzzle.this.checkBB;
+            }
+        });
         this.targetPoolText = new TextFieldWidget(this.font, this.width / 2 - 152, 40, 300, 20, I18n.format("evolution.puzzle.target_pool"));
         this.targetPoolText.setMaxStringLength(128);
         this.targetPoolText.setText(this.tile.getTargetPool().toString());
@@ -100,7 +101,6 @@ public class ScreenPuzzle extends Screen {
         this.attachmentTypeText.render(x, y, partialTicks);
         this.drawString(this.font, I18n.format("evolution.puzzle.final_state"), this.width / 2 - 153, 110, 0xa0_a0a0);
         this.finalStateText.render(x, y, partialTicks);
-        this.drawString(this.font, I18n.format("evolution.puzzle.checkBB"), this.width / 2 - 153, 150, 0xa0_a0a0);
         super.render(x, y, partialTicks);
     }
 
@@ -132,14 +132,5 @@ public class ScreenPuzzle extends Screen {
         this.attachmentTypeText.tick();
         this.targetPoolText.tick();
         this.finalStateText.tick();
-    }
-
-    private void updateToggleCheckButton() {
-        if (this.checkBB) {
-            this.checkBBButton.setMessage(I18n.format("evolution.puzzle.true"));
-        }
-        else {
-            this.checkBBButton.setMessage(I18n.format("evolution.puzzle.false"));
-        }
     }
 }

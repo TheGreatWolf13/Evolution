@@ -16,6 +16,7 @@ import net.minecraft.client.util.InputMappings;
 import net.minecraft.util.Util;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.settings.KeyModifier;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.GuiCheckBox;
 import tgw.evolution.util.reflection.FieldHandler;
@@ -234,15 +235,14 @@ public class ScreenControls extends ControlsScreen {
         }
         if (this.buttonId != null) {
             if (p_keyPressed_1_ == 256) {
-                this.buttonId.setKeyModifierAndCode(net.minecraftforge.client.settings.KeyModifier.getActiveModifier(), InputMappings.INPUT_INVALID);
+                this.buttonId.setKeyModifierAndCode(KeyModifier.getActiveModifier(), InputMappings.INPUT_INVALID);
                 this.options.setKeyBindingCode(this.buttonId, InputMappings.INPUT_INVALID);
             }
             else {
-                this.buttonId.setKeyModifierAndCode(net.minecraftforge.client.settings.KeyModifier.getActiveModifier(),
-                                                    InputMappings.getInputByCode(p_keyPressed_1_, p_keyPressed_2_));
+                this.buttonId.setKeyModifierAndCode(KeyModifier.getActiveModifier(), InputMappings.getInputByCode(p_keyPressed_1_, p_keyPressed_2_));
                 this.options.setKeyBindingCode(this.buttonId, InputMappings.getInputByCode(p_keyPressed_1_, p_keyPressed_2_));
             }
-            if (!net.minecraftforge.client.settings.KeyModifier.isKeyCodeModifier(this.buttonId.getKey())) {
+            if (!KeyModifier.isKeyCodeModifier(this.buttonId.getKey())) {
                 //noinspection ConstantConditions
                 this.buttonId = null;
             }
