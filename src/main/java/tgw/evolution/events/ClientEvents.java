@@ -62,6 +62,7 @@ import tgw.evolution.client.gui.GuiContainerHandler;
 import tgw.evolution.client.gui.IGuiScreenHandler;
 import tgw.evolution.client.gui.MouseButton;
 import tgw.evolution.client.gui.advancements.ScreenAdvancements;
+import tgw.evolution.client.gui.controls.ScreenControls;
 import tgw.evolution.client.layers.LayerBack;
 import tgw.evolution.client.layers.LayerBelt;
 import tgw.evolution.client.renderer.ClientRenderer;
@@ -707,6 +708,10 @@ public class ClientEvents {
             event.setCanceled(true);
             this.mc.displayGuiScreen(new ScreenAdvancements(this.mc.getConnection().getAdvancementManager()));
         }
+        else if (event.getGui() instanceof ControlsScreen && !(event.getGui() instanceof ScreenControls)) {
+            event.setCanceled(true);
+            this.mc.displayGuiScreen(new ScreenControls((ControlsScreen) event.getGui(), this.mc.gameSettings));
+        }
         if (!event.isCanceled()) {
             onGuiOpen(event.getGui());
         }
@@ -765,12 +770,6 @@ public class ClientEvents {
         else if (event.getGui() instanceof AccessibilityScreen) {
             Widget autoJump = event.getWidgetList().get(5);
             event.removeWidget(autoJump);
-        }
-        else if (event.getGui() instanceof ControlsScreen) {
-            Widget autoJump = event.getWidgetList().get(1);
-            event.removeWidget(autoJump);
-            Widget mouseSettings = event.getWidgetList().get(0);
-            mouseSettings.setWidth(310);
         }
     }
 

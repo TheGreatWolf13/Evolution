@@ -20,6 +20,8 @@ import net.minecraft.crash.ReportedException;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.common.ForgeConfig;
 import net.minecraftforge.fml.client.config.GuiUtils;
@@ -31,6 +33,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
+@OnlyIn(Dist.CLIENT)
 public final class GUIUtils {
 
     private static final Vector3f LIGHT0_POS = func_216509_a(0.2F, 1.0F, -0.7F);
@@ -190,7 +193,7 @@ public final class GUIUtils {
         }
     }
 
-    protected static void renderItemModelIntoGUIGreyscaled(ItemRenderer itemRenderer, ItemStack stack, int x, int y, IBakedModel bakedmodel) {
+    private static void renderItemModelIntoGUIGreyscaled(ItemRenderer itemRenderer, ItemStack stack, int x, int y, IBakedModel bakedmodel) {
         GlStateManager.pushMatrix();
         Minecraft.getInstance().textureManager.bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);
         Minecraft.getInstance().textureManager.getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);

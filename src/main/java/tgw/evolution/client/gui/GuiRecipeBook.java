@@ -4,12 +4,15 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.recipebook.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.client.config.GuiUtils;
 import tgw.evolution.util.reflection.FieldHandler;
 import tgw.evolution.util.reflection.MethodHandler;
 
 import java.util.List;
 
+@OnlyIn(Dist.CLIENT)
 public class GuiRecipeBook extends RecipeBookGui {
 
     private static final FieldHandler<RecipeBookPage, RecipeWidget> HOVERED_BUTTON_FIELD = new FieldHandler<>(RecipeBookPage.class, "field_194201_b");

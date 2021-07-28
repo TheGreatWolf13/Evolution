@@ -4,6 +4,7 @@
   "Evolution EffectInstance Transformer": "patches/EffectInstance.js",
   "Evolution Entity Transformer": "patches/Entity.js",
   "Evolution GameRenderer Transformer": "patches/GameRenderer.js",
+  "Evolution KeyBinding Transformer": "patches/KeyBinding.js",
   "Evolution LivingEntity Transformer": "patches/LivingEntity.js",
   "Evolution Minecraft Transformer": "patches/Minecraft.js",
   "Evolution MinecraftServer Transformer": "patches/MinecraftServer.js",

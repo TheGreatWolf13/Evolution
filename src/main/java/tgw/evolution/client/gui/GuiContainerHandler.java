@@ -3,11 +3,14 @@ package tgw.evolution.client.gui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.inventory.container.*;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.util.reflection.FieldHandler;
 import tgw.evolution.util.reflection.MethodHandler;
 
 import java.util.List;
 
+@OnlyIn(Dist.CLIENT)
 public class GuiContainerHandler implements IGuiScreenHandler {
     @SuppressWarnings("rawtypes")
     private static final MethodHandler<ContainerScreen, Void> HANDLE_MOUSE_CLICK = new MethodHandler<>(ContainerScreen.class,
