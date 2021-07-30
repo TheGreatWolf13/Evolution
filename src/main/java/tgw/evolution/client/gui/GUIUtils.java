@@ -99,6 +99,11 @@ public final class GUIUtils {
         GlStateManager.disableBlend();
     }
 
+    public static void drawSplitStringWithShadow(FontRenderer font, String str, int x, int y, int wrapWidth, int textColor) {
+        str = trimStringNewline(str);
+        renderSplitStringWithShadow(font, str, x, y, wrapWidth, textColor);
+    }
+
     public static void fill(int x0, int y1, int x1, int y0, int color, boolean over) {
         if (x0 < x1) {
             int temp = x0;
@@ -260,6 +265,18 @@ public final class GUIUtils {
         }
     }
 
+    private static void renderSplitStringWithShadow(FontRenderer font, String str, int x, int y, int wrapWidth, int textColor) {
+        for (String s : font.listFormattedStringToWidth(str, wrapWidth)) {
+            float f = x;
+            if (font.getBidiFlag()) {
+                int i = font.getStringWidth(font.bidiReorder(s));
+                f += wrapWidth - i;
+            }
+            font.drawStringWithShadow(s, f, y, textColor);
+            y += 9;
+        }
+    }
+
     public static void renderTooltip(Screen screen, List<String> tooltips, int mouseX, int mouseY) {
         GuiUtils.drawHoveringText(tooltips, mouseX, mouseY, screen.width, screen.height, -1, Minecraft.getInstance().fontRenderer);
     }
@@ -289,6 +306,13 @@ public final class GUIUtils {
         if (SHADER_GROUP != null) {
             SHADER_GROUP.close();
         }
+    }
+
+    private static String trimStringNewline(String text) {
+        while (text != null && text.endsWith("\n")) {
+            text = text.substring(0, text.length() - 1);
+        }
+        return text;
     }
 
     public static void vLine(int x, int y0, int y1, int color) {

@@ -3,6 +3,7 @@ package tgw.evolution.events;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.AccessibilityScreen;
 import net.minecraft.client.gui.advancements.AdvancementsScreen;
 import net.minecraft.client.gui.screen.ConfirmOpenLinkScreen;
@@ -41,12 +42,18 @@ import net.minecraft.world.GameType;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.client.ForgeIngameGui;
 import net.minecraftforge.client.event.*;
+import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ExtensionPoint;
+import net.minecraftforge.fml.ModContainer;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.client.gui.GuiModList;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
+import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 import tgw.evolution.ClientProxy;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockKnapping;
@@ -57,10 +64,7 @@ import tgw.evolution.client.LungeAttackInfo;
 import tgw.evolution.client.LungeChargeInfo;
 import tgw.evolution.client.MovementInputEvolution;
 import tgw.evolution.client.audio.SoundEntityEmitted;
-import tgw.evolution.client.gui.GuiContainerCreativeHandler;
-import tgw.evolution.client.gui.GuiContainerHandler;
-import tgw.evolution.client.gui.IGuiScreenHandler;
-import tgw.evolution.client.gui.MouseButton;
+import tgw.evolution.client.gui.*;
 import tgw.evolution.client.gui.advancements.ScreenAdvancements;
 import tgw.evolution.client.gui.controls.ScreenControls;
 import tgw.evolution.client.layers.LayerBack;
@@ -79,6 +83,7 @@ import tgw.evolution.potion.InfiniteEffectInstance;
 import tgw.evolution.test.ChessboardModel;
 import tgw.evolution.util.AdvancedEntityRayTraceResult;
 import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.OptiFineHelper;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.hitbox.BodyPart;
 import tgw.evolution.util.reflection.FieldHandler;
@@ -109,6 +114,7 @@ public class ClientEvents {
     private static final FieldHandler<ClientPlayerEntity, ClientRecipeBook> RECIPE_BOOK_FIELD = new FieldHandler<>(ClientPlayerEntity.class,
                                                                                                                    "field_192036_cb");
     private static final List<EffectInstance> EFFECTS_TO_TICK = new ArrayList<>();
+    private static final FieldHandler<ModContainer, EnumMap<ModConfig.Type, ModConfig>> CONFIGS = new FieldHandler<>(ModContainer.class, "configs");
     private static ClientEvents instance;
     @Nullable
     private static IGuiScreenHandler handler;
@@ -189,6 +195,48 @@ public class ClientEvents {
     private static float getRightCooldownPeriod(IOffhandAttackable item) {
         double attackSpeed = item.getAttackSpeed() + PlayerHelper.ATTACK_SPEED;
         return (float) (1 / attackSpeed * 20);
+    }
+
+    public static void onFinishLoading() {
+        Evolution.LOGGER.info("Creating config GUI factories...");
+        ModList.get().forEachModContainer((modId, container) -> {
+            // Ignore mods that already implement their own custom factory
+            if (container.getCustomExtension(ExtensionPoint.CONFIGGUIFACTORY).isPresent()) {
+                return;
+            }
+            EnumMap<ModConfig.Type, ModConfig> configs = CONFIGS.get(container);
+            ModConfig clientConfig = configs.get(ModConfig.Type.CLIENT);
+            /* Optifine basically breaks Forge's client config, so it's simply not added */
+            if (OptiFineHelper.isLoaded() && "forge".equals(modId)) {
+                Evolution.LOGGER.info("Ignoring Forge's client config since OptiFine was detected");
+                clientConfig = null;
+            }
+            ModConfig commonConfig = configs.get(ModConfig.Type.COMMON);
+            ForgeConfigSpec clientSpec = clientConfig != null ? clientConfig.getSpec() : null;
+            ForgeConfigSpec commonSpec = commonConfig != null ? commonConfig.getSpec() : null;
+            if (clientSpec != null || commonSpec != null) {// Only add if at least one config exists
+                Evolution.LOGGER.info("Registering config factory for mod {} (client: {}, common: {})",
+                                      modId,
+                                      clientSpec != null,
+                                      commonSpec != null);
+                ResourceLocation background = AbstractGui.BACKGROUND_LOCATION;
+                if (container.getModInfo() instanceof ModInfo) {
+                    String configBackground = (String) container.getModInfo().getModProperties().get("configuredBackground");
+                    if (configBackground != null) {
+                        background = new ResourceLocation(configBackground);
+                    }
+                }
+                String displayName = container.getModInfo().getDisplayName();
+                final ResourceLocation finalBackground = background;
+                container.registerExtensionPoint(ExtensionPoint.CONFIGGUIFACTORY,
+                                                 () -> (mc, screen) -> new ScreenConfig(screen,
+                                                                                        modId,
+                                                                                        displayName,
+                                                                                        clientSpec,
+                                                                                        commonSpec,
+                                                                                        finalBackground));
+            }
+        });
     }
 
     public static void onGuiOpen(Screen newScreen) {
@@ -734,7 +782,7 @@ public class ClientEvents {
             Widget menuOptions = event.getWidgetList().get(5);
             menuOptions.y += 24;
             for (Widget in : event.getWidgetList()) {
-                in.y -= 16;
+                in.y += 16;
             }
             Widget feedback = event.getWidgetList().get(3);
             Widget bugs = event.getWidgetList().get(4);
@@ -742,7 +790,7 @@ public class ClientEvents {
             event.removeWidget(bugs);
             String feedbackLink = "https://github.com/MGSchultz-13/Evolution/discussions/categories/feedback";
             feedback = new Button(event.getGui().width / 2 - 102,
-                                  event.getGui().height / 4 + 72 - 32,
+                                  event.getGui().height / 4 + 72,
                                   98,
                                   20,
                                   I18n.format("menu.sendFeedback"),
@@ -754,7 +802,7 @@ public class ClientEvents {
                                   }, feedbackLink, true)));
             String bugsLink = "https://github.com/MGSchultz-13/Evolution/issues";
             bugs = new Button(event.getGui().width / 2 + 4,
-                              event.getGui().height / 4 + 72 - 32,
+                              event.getGui().height / 4 + 72,
                               98,
                               20,
                               I18n.format("menu.reportBugs"),

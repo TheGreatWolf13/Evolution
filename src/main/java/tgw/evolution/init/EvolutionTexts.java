@@ -28,6 +28,7 @@ public final class EvolutionTexts {
     public static final ITextComponent EMPTY = new StringTextComponent("");
     public static final ITextComponent FLUID_FRESH_WATER = transl("evolution.fluid.fresh_water");
     public static final ITextComponent FLUID_SALT_WATER = transl("evolution.fluid.salt_water");
+    public static final ITextComponent GUI_SEARCH = transl("evolution.gui.search");
     public static final ITextComponent TOOLTIP_CLAY_MOLD = transl("evolution.tooltip.clay.mold").setStyle(INFO);
     public static final ITextComponent TOOLTIP_CONSUMABLE = transl("evolution.tooltip.consumable").setStyle(LIGHT_GREY);
     public static final ITextComponent TOOLTIP_EMPTY_CONTAINER = transl("evolution.tooltip.container.empty").setStyle(INFO);
@@ -56,6 +57,9 @@ public final class EvolutionTexts {
     public static final DecimalFormat TWO_PLACES = initFormat(",##0.##");
 
     private static final String CAPACITY = "evolution.tooltip.container.capacity";
+    private static final String CONFIG_ALLOWED_VALUES = "evolution.config.allowed_values";
+    private static final String CONFIG_DEFAULT = "evolution.config.default";
+    private static final String CONFIG_RANGE = "evolution.config.range";
     private static final String CONTAINER = "evolution.tooltop.container.amount";
     private static final String DISTANCE = "evolution.tooltip.distance";
     private static final String DURABILITY = "evolution.tooltip.durability";
@@ -77,6 +81,18 @@ public final class EvolutionTexts {
 
     private static ITextComponent chanceAndLevel(String message, float chance, int level) {
         return new TranslationTextComponent(message, PERCENT_ONE_PLACE.format(chance), MathHelper.getRomanNumber(level));
+    }
+
+    public static ITextComponent configAllowedValues(String allowed) {
+        return new TranslationTextComponent(CONFIG_ALLOWED_VALUES, allowed).setStyle(LIGHT_GREY);
+    }
+
+    public static ITextComponent configDefault(String def) {
+        return new TranslationTextComponent(CONFIG_DEFAULT, def).setStyle(LIGHT_GREY);
+    }
+
+    public static ITextComponent configRange(String range) {
+        return new TranslationTextComponent(CONFIG_RANGE, range).setStyle(LIGHT_GREY);
     }
 
     public static ITextComponent container(IItemFluidContainer container, ItemStack stack) {

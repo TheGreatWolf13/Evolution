@@ -34,9 +34,9 @@ public final class EvolutionConfig {
         public final ForgeConfigSpec.IntValue torchTime;
 
         Common(final ForgeConfigSpec.Builder builder) {
-            builder.comment("Common config settings").push("Common");
-            this.torchTime = builder.comment("Define the time in game hours the torch will be lit for. 0 will disable unliting.", "Default: 10")
-                                    .defineInRange("Torch Time", 10, 0, Time.YEAR_IN_TICKS / Time.HOUR_IN_TICKS);
+            builder.push("Common");
+            this.torchTime = builder.translation("evolution.config.torchTime")
+                                    .defineInRange("torchTime", 10, 0, Time.YEAR_IN_TICKS / Time.HOUR_IN_TICKS);
             builder.pop();
         }
     }
@@ -46,9 +46,8 @@ public final class EvolutionConfig {
         public final ForgeConfigSpec.BooleanValue crazyMode;
 
         Client(final ForgeConfigSpec.Builder builder) {
-            builder.comment("Client-only settings").push("Client");
-            this.crazyMode = builder.comment("I wouldn't use this if I were you... Might have some strange effects.", "Default: false")
-                                    .define("Crazy Mode", false);
+            builder.push("Client");
+            this.crazyMode = builder.translation("evolution.config.crazyMode").define("crazyMode", false);
             builder.pop();
         }
     }
