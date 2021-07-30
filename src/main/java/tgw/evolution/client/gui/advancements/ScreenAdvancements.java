@@ -11,6 +11,8 @@ import net.minecraft.client.network.play.ClientPlayNetHandler;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.network.play.client.CSeenAdvancementsPacket;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.client.gui.GUIUtils;
 import tgw.evolution.init.EvolutionResources;
 
@@ -18,6 +20,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Map;
 
+@OnlyIn(Dist.CLIENT)
 public class ScreenAdvancements extends Screen implements ClientAdvancementManager.IListener {
 
     private static final int WIDTH = 252;

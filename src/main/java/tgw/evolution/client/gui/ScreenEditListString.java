@@ -13,12 +13,14 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
+import tgw.evolution.client.gui.widgets.ButtonIcon;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@OnlyIn(Dist.CLIENT)
 public class ScreenEditListString extends Screen {
     private final ForgeConfigSpec.ConfigValue<List<?>> listValue;
     private final Screen parent;

@@ -12,6 +12,8 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.biome.Biome;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
 import tgw.evolution.init.EvolutionTexts;
 
@@ -20,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+@OnlyIn(Dist.CLIENT)
 public class CriterionGrid {
     private static final CriterionGrid EMPTY = new CriterionGrid();
     public static CriteriaDetail detailLevel = CriteriaDetail.DEFAULT;

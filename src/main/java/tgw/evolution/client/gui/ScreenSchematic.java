@@ -9,6 +9,8 @@ import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 import tgw.evolution.blocks.tileentities.TESchematic;
@@ -20,10 +22,11 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
+@OnlyIn(Dist.CLIENT)
 public class ScreenSchematic extends Screen {
 
-    private final TESchematic tile;
     private final DecimalFormat decimalFormat = new DecimalFormat("0.0###");
+    private final TESchematic tile;
     private Button detectSizeButton;
     private boolean ignoreEntities;
     private TextFieldWidget integrityEdit;

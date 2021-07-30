@@ -1,9 +1,12 @@
 package tgw.evolution.client.gui.advancements;
 
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 
+@OnlyIn(Dist.CLIENT)
 public interface IBetterDisplayInfo {
     /**
      * If the advancement should be able to be dragged in the gui

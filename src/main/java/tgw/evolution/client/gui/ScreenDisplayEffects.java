@@ -13,6 +13,8 @@ import net.minecraft.util.StringUtils;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionStyles;
@@ -23,6 +25,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@OnlyIn(Dist.CLIENT)
 public abstract class ScreenDisplayEffects<T extends Container> extends ContainerScreen<T> {
     private static final int X = 2;
     private static final List<String> TOOLTIPS = new ArrayList<>();

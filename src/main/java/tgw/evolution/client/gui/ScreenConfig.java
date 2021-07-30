@@ -30,10 +30,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.opengl.GL11;
 import tgw.evolution.Evolution;
+import tgw.evolution.client.gui.widgets.ButtonIcon;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.reflection.FieldHandler;
-import tgw.evolution.util.reflection.MethodHandler;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -56,7 +56,6 @@ public class ScreenConfig extends Screen {
         }
         return o1.getLabel().compareTo(o2.getLabel());
     };
-    private static final MethodHandler<Object, String> TO_STRING = new MethodHandler<>(Object.class, "toString");
     @SuppressWarnings("rawtypes")
     private static final FieldHandler<ForgeConfigSpec.EnumValue, Class<? extends Enum<?>>> CLAZZ = new FieldHandler<>(ForgeConfigSpec.EnumValue.class,
                                                                                                                       "clazz");
@@ -539,7 +538,8 @@ public class ScreenConfig extends Screen {
                 if (value instanceof ForgeConfigSpec.DoubleValue ||
                     value instanceof ForgeConfigSpec.IntValue ||
                     value instanceof ForgeConfigSpec.LongValue) {
-                    lines.add(EvolutionTexts.configRange(TO_STRING.call(spec.getRange())).getFormattedText());
+                    Object range = spec.getRange();
+                    lines.add(EvolutionTexts.configRange(range.toString()).getFormattedText());
                 }
                 else if (value instanceof ForgeConfigSpec.EnumValue<?>) {
                     ForgeConfigSpec.EnumValue<?> enumValue = (ForgeConfigSpec.EnumValue<?>) value;
@@ -584,7 +584,9 @@ public class ScreenConfig extends Screen {
             this.resetButton.active = !this.configValue.get().equals(this.valueSpec.getDefault());
             ITextComponent title = new StringTextComponent(this.label);
             if (ScreenConfig.this.minecraft.fontRenderer.getStringWidth(title.getUnformattedComponentText()) > width - 90) {
-                String trimmed = ScreenConfig.this.minecraft.fontRenderer.trimStringToWidth(title.getFormattedText(), width - 92).trim() + "...";
+                int tripleDotSize = ScreenConfig.this.minecraft.fontRenderer.getStringWidth("...");
+                String trimmed = ScreenConfig.this.minecraft.fontRenderer.trimStringToWidth(title.getFormattedText(), width - 90 - tripleDotSize)
+                                                                         .trim() + "...";
                 ScreenConfig.this.minecraft.fontRenderer.drawStringWithShadow(trimmed, x, y + 6, 0xFF_FFFF);
             }
             else {

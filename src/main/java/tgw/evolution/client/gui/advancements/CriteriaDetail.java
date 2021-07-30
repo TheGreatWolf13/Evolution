@@ -1,5 +1,9 @@
 package tgw.evolution.client.gui.advancements;
 
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+
+@OnlyIn(Dist.CLIENT)
 public enum CriteriaDetail {
     OFF("Off", false, false),
     DEFAULT("Default", true, false),

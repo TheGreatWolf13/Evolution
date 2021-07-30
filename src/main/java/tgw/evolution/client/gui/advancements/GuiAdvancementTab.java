@@ -10,11 +10,14 @@ import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.util.MathHelper;
 
 import javax.annotation.Nullable;
 import java.util.Map;
 
+@OnlyIn(Dist.CLIENT)
 public class GuiAdvancementTab extends AbstractGui {
 
     public static boolean doFade = true;

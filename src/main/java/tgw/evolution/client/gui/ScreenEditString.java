@@ -5,10 +5,13 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+@OnlyIn(Dist.CLIENT)
 public class ScreenEditString extends Screen {
     private final Consumer<String> onSave;
     private final Screen parent;

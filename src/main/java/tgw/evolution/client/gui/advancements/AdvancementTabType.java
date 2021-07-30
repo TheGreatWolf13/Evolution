@@ -3,9 +3,12 @@ package tgw.evolution.client.gui.advancements;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 
+@OnlyIn(Dist.CLIENT)
 public enum AdvancementTabType {
     ABOVE(0, 0, 28, 32, 8),
     BELOW(84, 0, 28, 32, 8),

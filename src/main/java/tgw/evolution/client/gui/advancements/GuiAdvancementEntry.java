@@ -10,6 +10,8 @@ import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.advancements.AdvancementState;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.renderer.RenderHelper;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.client.gui.GUIUtils;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.util.MathHelper;
@@ -18,6 +20,7 @@ import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
+@OnlyIn(Dist.CLIENT)
 public class GuiAdvancementEntry extends AbstractGui {
 
     protected static final int ADVANCEMENT_SIZE = 26;

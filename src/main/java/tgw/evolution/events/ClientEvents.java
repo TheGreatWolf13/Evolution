@@ -773,7 +773,7 @@ public class ClientEvents {
                                        event.getWidgetList().get(6).getWidth(),
                                        event.getWidgetList().get(6).getHeight(),
                                        I18n.format("evolution.ingamemenu.modoptions"),
-                                       button -> Minecraft.getInstance().displayGuiScreen(new GuiModList(event.getGui()))));
+                                       button -> this.mc.displayGuiScreen(new GuiModList(event.getGui()))));
             Widget shareToLan = event.getWidgetList().get(6);
             shareToLan.x = event.getGui().width / 2 - 102;
             shareToLan.setWidth(204);

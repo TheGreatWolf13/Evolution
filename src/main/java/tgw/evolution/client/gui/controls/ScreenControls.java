@@ -18,7 +18,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.settings.KeyModifier;
 import org.lwjgl.glfw.GLFW;
-import tgw.evolution.client.gui.GuiCheckBox;
+import tgw.evolution.client.gui.widgets.GuiCheckBox;
 import tgw.evolution.util.reflection.FieldHandler;
 
 import java.util.function.Predicate;

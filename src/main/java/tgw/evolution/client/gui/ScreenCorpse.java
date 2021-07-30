@@ -4,9 +4,12 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.corpse.ContainerCorpse;
 
+@OnlyIn(Dist.CLIENT)
 public class ScreenCorpse extends ContainerScreen<ContainerCorpse> {
 
     public ScreenCorpse(ContainerCorpse screenContainer, PlayerInventory inv, ITextComponent title) {

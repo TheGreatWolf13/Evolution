@@ -1,9 +1,12 @@
 package tgw.evolution.client.gui;
 
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
 
+@OnlyIn(Dist.CLIENT)
 public enum MouseButton {
     LEFT(0),
     RIGHT(1);

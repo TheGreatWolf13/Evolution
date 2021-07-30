@@ -1,12 +1,15 @@
-package tgw.evolution.client.gui;
+package tgw.evolution.client.gui.widgets;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.widget.button.Button;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.util.MathHelper;
 
+@OnlyIn(Dist.CLIENT)
 public class ButtonIcon extends Button {
     private final int u;
     private final int v;

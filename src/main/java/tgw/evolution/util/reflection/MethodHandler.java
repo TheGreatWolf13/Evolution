@@ -8,7 +8,6 @@ import java.util.Arrays;
 
 public class MethodHandler<Owner, Type> implements IReflectionHandler {
 
-    private static final Object[] EMPTY_ARRAY = new Object[0];
     private final String methodName;
     private final Class<Owner> methodOwner;
     private final Class<?>[] parameterTypes;
@@ -18,6 +17,10 @@ public class MethodHandler<Owner, Type> implements IReflectionHandler {
         this.methodName = methodName;
         this.methodOwner = methodClass;
         this.parameterTypes = parameterTypes;
+    }
+
+    public MethodHandler(Class<Owner> methodClass, String methodName) {
+        this(methodClass, methodName, EMPTY_CLAZZ);
     }
 
     @Nullable
@@ -41,7 +44,7 @@ public class MethodHandler<Owner, Type> implements IReflectionHandler {
 
     @Nullable
     public final Type call(Owner methodInstance) {
-        return this.call(methodInstance, EMPTY_ARRAY);
+        return this.call(methodInstance, EMPTY_ARGS);
     }
 
     @Override

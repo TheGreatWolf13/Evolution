@@ -1,10 +1,13 @@
 package tgw.evolution.client.gui.controls;
 
 import net.minecraft.client.resources.I18n;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.Comparator;
 import java.util.List;
 
+@OnlyIn(Dist.CLIENT)
 public enum SortOrder {
     NONE(entries -> {
     }),

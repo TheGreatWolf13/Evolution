@@ -7,10 +7,14 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.blocks.tileentities.TEPuzzle;
+import tgw.evolution.client.gui.widgets.GuiCheckBox;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketCSUpdatePuzzle;
 
+@OnlyIn(Dist.CLIENT)
 public class ScreenPuzzle extends Screen {
 
     private final TEPuzzle tile;

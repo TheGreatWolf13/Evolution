@@ -70,10 +70,10 @@ public final class MoldingPatterns {
     private static final boolean[][] BRICK_LAYER2 = MathHelper.rotateClockWise(BRICK_LAYER1);
     private static final boolean[][] BRICK_LAYER3 = MathHelper.rotateClockWise(BRICK_LAYER2);
     private static final boolean[][] BRICK_LAYER4 = MathHelper.rotateClockWise(BRICK_LAYER3);
-    private static final boolean[][][] BRICK1 = {BRICK_LAYER1, BRICK_LAYER1};
-    private static final boolean[][][] BRICK2 = {BRICK_LAYER2, BRICK_LAYER2};
-    private static final boolean[][][] BRICK3 = {BRICK_LAYER3, BRICK_LAYER3};
     private static final boolean[][][] BRICK4 = {BRICK_LAYER4, BRICK_LAYER4};
+    private static final boolean[][][] BRICK3 = {BRICK_LAYER3, BRICK_LAYER3};
+    private static final boolean[][][] BRICK2 = {BRICK_LAYER2, BRICK_LAYER2};
+    private static final boolean[][][] BRICK1 = {BRICK_LAYER1, BRICK_LAYER1};
     public static final boolean[][][][] BRICK = {BRICK1, BRICK2, BRICK3, BRICK4};
 
     private MoldingPatterns() {
@@ -100,6 +100,6 @@ public final class MoldingPatterns {
     }
 
     public static void load() {
-        Evolution.LOGGER.info("Molding patterns loaded");
+        Evolution.LOGGER.info("Loaded Molding Patterns");
     }
 }
