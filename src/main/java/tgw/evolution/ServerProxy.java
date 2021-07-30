@@ -27,5 +27,6 @@ public class ServerProxy implements IProxy {
     public void init() {
         KnappingPatterns.load();
         MoldingPatterns.load();
+        Evolution.LOGGER.info("ServerProxy: Finished loading!");
     }
 }

@@ -781,16 +781,13 @@ public class ClientEvents {
             returnToMenu.y += 24;
             Widget menuOptions = event.getWidgetList().get(5);
             menuOptions.y += 24;
-            for (Widget in : event.getWidgetList()) {
-                in.y += 16;
-            }
             Widget feedback = event.getWidgetList().get(3);
             Widget bugs = event.getWidgetList().get(4);
             event.removeWidget(feedback);
             event.removeWidget(bugs);
             String feedbackLink = "https://github.com/MGSchultz-13/Evolution/discussions/categories/feedback";
             feedback = new Button(event.getGui().width / 2 - 102,
-                                  event.getGui().height / 4 + 72,
+                                  event.getGui().height / 4 + 72 - 16,
                                   98,
                                   20,
                                   I18n.format("menu.sendFeedback"),
@@ -802,7 +799,7 @@ public class ClientEvents {
                                   }, feedbackLink, true)));
             String bugsLink = "https://github.com/MGSchultz-13/Evolution/issues";
             bugs = new Button(event.getGui().width / 2 + 4,
-                              event.getGui().height / 4 + 72,
+                              event.getGui().height / 4 + 72 - 16,
                               98,
                               20,
                               I18n.format("menu.reportBugs"),

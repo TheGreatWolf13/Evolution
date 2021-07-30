@@ -94,5 +94,6 @@ public class ClientProxy implements IProxy {
         ClientRegistry.registerKeyBinding(BUILDING_ASSIST);
         changeWorldOrders();
         EvolutionParticles.register();
+        Evolution.LOGGER.info("ClientProxy: Finished loading!");
     }
 }
