@@ -8,7 +8,6 @@ import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.merchant.villager.WanderingTraderEntity;
 import net.minecraft.entity.monster.PhantomEntity;
 import net.minecraft.entity.passive.horse.TraderLlamaEntity;
-import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.fluid.IFluidState;
@@ -63,7 +62,6 @@ public class EntityEvents {
     public static final Map<UUID, SkinType> SKIN_TYPE = new HashMap<>();
     private static final MethodHandler<Entity, Void> SET_POSE_METHOD = new MethodHandler<>(Entity.class, "func_213301_b", Pose.class);
     private static final FieldHandler<LivingEntity, CombatTracker> COMBAT_TRACKER_FIELD = new FieldHandler<>(LivingEntity.class, "field_94063_bt");
-    private static final FieldHandler<PlayerAbilities, Float> PLAYER_SPEED_FIELD = new FieldHandler<>(PlayerAbilities.class, "field_75097_g");
     private static final Random RANDOM = new Random();
     private static final Set<DamageSource> IGNORED_DAMAGE_SOURCES = Util.make(Sets.newHashSet(), set -> {
         set.add(EvolutionDamage.DROWN);
@@ -215,7 +213,6 @@ public class EntityEvents {
         living.getAttribute(LivingEntity.ENTITY_GRAVITY).setBaseValue(Gravity.gravity(living.world.getDimension()));
         if (living instanceof PlayerEntity) {
             PlayerEntity player = (PlayerEntity) living;
-            PLAYER_SPEED_FIELD.set(player.abilities, (float) PlayerHelper.WALK_FORCE);
             if (player.world.isRemote) {
                 if (player.equals(Evolution.PROXY.getClientPlayer())) {
                     EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSkinType());

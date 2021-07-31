@@ -699,7 +699,7 @@ public class ClientEvents {
     @SubscribeEvent
     public void onEntityCreated(EntityJoinWorldEvent event) {
         if (event.getEntity() instanceof ClientPlayerEntity && event.getEntity().equals(this.mc.player)) {
-            this.mc.player.abilities.setWalkSpeed((float) PlayerHelper.WALK_FORCE);
+//            STATS.set(this.mc.player, new EvolutionStatisticsManager());
             RECIPE_BOOK_FIELD.set(this.mc.player, new EvolutionRecipeBook(this.mc.player.world.getRecipeManager()));
         }
     }

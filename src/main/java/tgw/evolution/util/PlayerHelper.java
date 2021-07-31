@@ -359,9 +359,9 @@ public final class PlayerHelper {
         }
     }
 
-//    public static double getSpeed(double mass) {
-//        return WALK_SPEED * MASS / mass - WALK_SPEED;
-//    }
+    public static float getWalkSpeed() {
+        return (float) WALK_FORCE;
+    }
 
     private static float headHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
         damage *= 1.75f;

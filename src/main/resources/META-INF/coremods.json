@@ -8,6 +8,7 @@
   "Evolution LivingEntity Transformer": "patches/LivingEntity.js",
   "Evolution Minecraft Transformer": "patches/Minecraft.js",
   "Evolution MinecraftServer Transformer": "patches/MinecraftServer.js",
+  "Evolution PlayerAbilities Transformer": "patches/PlayerAbilities.js",
   "Evolution PlayerAdvancements Transformer": "patches/PlayerAdvancements.js",
   "Evolution PlayerEntity Transformer": "patches/PlayerEntity.js",
   "Evolution PlayerModel Transformer": "patches/PlayerModel.js",
