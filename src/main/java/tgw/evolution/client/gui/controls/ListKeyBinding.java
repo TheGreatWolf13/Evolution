@@ -73,7 +73,7 @@ public class ListKeyBinding extends KeyBindingList {
 
     @Override
     protected int getScrollbarPosition() {
-        return super.getScrollbarPosition() + 15 + 20;
+        return super.getScrollbarPosition() + 25;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -235,14 +235,14 @@ public class ListKeyBinding extends KeyBindingList {
         public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
             boolean flag = ListKeyBinding.this.controlsScreen.buttonId == this.keybinding;
             ListKeyBinding.this.minecraft.fontRenderer.drawString(this.keyDesc,
-                                                                  x + 90 - ListKeyBinding.this.maxListLabelWidth,
-                                                                  y + (height - 9) / 2.0f,
+                                                                  x + 150 - ListKeyBinding.this.maxListLabelWidth,
+                                                                  y + (height - 4) / 2.0f,
                                                                   0xff_ffff);
-            this.btnResetKeyBinding.x = x + 190 + 20;
+            this.btnResetKeyBinding.x = x + 260;
             this.btnResetKeyBinding.y = y;
             this.btnResetKeyBinding.active = !this.keybinding.isDefault();
             this.btnResetKeyBinding.render(mouseX, mouseY, partialTicks);
-            this.btnChangeKeyBinding.x = x + 105;
+            this.btnChangeKeyBinding.x = x + 160;
             this.btnChangeKeyBinding.y = y;
             this.btnChangeKeyBinding.setMessage(this.keybinding.getLocalizedName());
             boolean conflicts = false;
