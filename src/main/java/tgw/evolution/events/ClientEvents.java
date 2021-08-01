@@ -6,10 +6,7 @@ import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.AccessibilityScreen;
 import net.minecraft.client.gui.advancements.AdvancementsScreen;
-import net.minecraft.client.gui.screen.ConfirmOpenLinkScreen;
-import net.minecraft.client.gui.screen.ControlsScreen;
-import net.minecraft.client.gui.screen.IngameMenuScreen;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.*;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.screen.inventory.CreativeScreen;
 import net.minecraft.client.gui.screen.inventory.InventoryScreen;
@@ -277,14 +274,15 @@ public class ClientEvents {
         }
     }
 
-    public static void removeEffect(List<EffectInstance> list, Effect effect) {
+    public static boolean removeEffect(List<EffectInstance> list, Effect effect) {
         Iterator<EffectInstance> iterator = list.iterator();
         while (iterator.hasNext()) {
             if (iterator.next().getPotion() == effect) {
                 iterator.remove();
-                break;
+                return true;
             }
         }
+        return false;
     }
 
     public static void removePotionEffect(Effect effect) {
@@ -748,15 +746,16 @@ public class ClientEvents {
 
     @SubscribeEvent
     public void onGUIOpen(GuiOpenEvent event) {
-        if (event.getGui() instanceof InventoryScreen) {
+        Screen screen = event.getGui();
+        if (screen instanceof InventoryScreen) {
             event.setCanceled(true);
             EvolutionNetwork.INSTANCE.sendToServer(new PacketCSOpenExtendedInventory());
         }
-        else if (event.getGui() instanceof AdvancementsScreen) {
+        else if (screen instanceof AdvancementsScreen) {
             event.setCanceled(true);
             this.mc.displayGuiScreen(new ScreenAdvancements(this.mc.getConnection().getAdvancementManager()));
         }
-        else if (event.getGui() instanceof ControlsScreen && !(event.getGui() instanceof ScreenControls)) {
+        else if (screen instanceof ControlsScreen && !(screen instanceof ScreenControls)) {
             event.setCanceled(true);
             this.mc.displayGuiScreen(new ScreenControls((ControlsScreen) event.getGui(), this.mc.gameSettings));
         }
@@ -1095,10 +1094,10 @@ public class ClientEvents {
                 removeEffect(EFFECTS, event.getOldPotionEffect().getPotion());
             }
             removeEffect(EFFECTS_TO_TICK, event.getOldPotionEffect().getPotion());
-            removeEffect(EFFECTS_TO_ADD, event.getOldPotionEffect().getPotion());
+            boolean wasAdding = removeEffect(EFFECTS_TO_ADD, event.getOldPotionEffect().getPotion());
             InfiniteEffectInstance newEffect = new InfiniteEffectInstance(event.getOldPotionEffect());
             newEffect.combine(event.getPotionEffect());
-            if (isSame) {
+            if (isSame && !wasAdding) {
                 EFFECTS.add(newEffect);
             }
             else {
