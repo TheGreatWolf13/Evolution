@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Util;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
@@ -426,21 +427,9 @@ public class ScreenConfig extends Screen {
         }
 
         @Override
-        public void render(int x,
-                           int top,
-                           int left,
-                           int width,
-                           int p_230432_6_,
-                           int p_230432_7_,
-                           int p_230432_8_,
-                           boolean p_230432_9_,
-                           float p_230432_10_) {
+        public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
             ITextComponent title = new StringTextComponent(this.label).applyTextStyle(TextFormatting.BOLD).applyTextStyle(TextFormatting.YELLOW);
-            ScreenConfig.this.drawCenteredString(ScreenConfig.this.minecraft.fontRenderer,
-                                                 title.getFormattedText(),
-                                                 left + width / 2,
-                                                 top + 5,
-                                                 0xff_ffff);
+            ScreenConfig.this.drawCenteredString(ScreenConfig.this.minecraft.fontRenderer, title.getFormattedText(), x + width / 2, y + 5, 0xff_ffff);
         }
     }
 
@@ -464,7 +453,39 @@ public class ScreenConfig extends Screen {
                                                                                                        spec,
                                                                                                        values,
                                                                                                        ScreenConfig.this.background));
-                                     });
+                                     }) {
+                private boolean wasHovered;
+
+                @Override
+                public void render(int mouseX, int mouseY, float partialTicks) {
+                    if (this.visible) {
+                        this.isHovered = mouseX >= this.x &&
+                                         mouseY >= this.y &&
+                                         mouseX < this.x + this.width &&
+                                         mouseY < this.y + this.height &&
+                                         mouseY < ScreenConfig.this.height - 36 &&
+                                         mouseY >= 50;
+                        if (this.wasHovered != this.isHovered()) {
+                            if (this.isHovered()) {
+                                if (this.isFocused()) {
+                                    this.nextNarration = Util.milliTime() + 200L;
+                                }
+                                else {
+                                    this.nextNarration = Util.milliTime() + 750L;
+                                }
+                            }
+                            else {
+                                this.nextNarration = Long.MAX_VALUE;
+                            }
+                        }
+                        if (this.visible) {
+                            this.renderButton(mouseX, mouseY, partialTicks);
+                        }
+                        this.narrate();
+                        this.wasHovered = this.isHovered();
+                    }
+                }
+            };
         }
 
         @Override
@@ -497,6 +518,38 @@ public class ScreenConfig extends Screen {
                 configValue.set((N) valueSpec.getDefault());
                 this.onResetValue();
             }) {
+                private boolean wasHovered;
+
+                @Override
+                public void render(int mouseX, int mouseY, float partialTicks) {
+                    if (this.visible) {
+                        this.isHovered = mouseX >= this.x &&
+                                         mouseY >= this.y &&
+                                         mouseX < this.x + this.width &&
+                                         mouseY < this.y + this.height &&
+                                         mouseY < ScreenConfig.this.height - 36 &&
+                                         mouseY >= 50;
+                        if (this.wasHovered != this.isHovered()) {
+                            if (this.isHovered()) {
+                                if (this.isFocused()) {
+                                    this.nextNarration = Util.milliTime() + 200L;
+                                }
+                                else {
+                                    this.nextNarration = Util.milliTime() + 750L;
+                                }
+                            }
+                            else {
+                                this.nextNarration = Long.MAX_VALUE;
+                            }
+                        }
+                        if (this.visible) {
+                            this.renderButton(mouseX, mouseY, partialTicks);
+                        }
+                        this.narrate();
+                        this.wasHovered = this.isHovered();
+                    }
+                }
+
                 @Override
                 public void renderToolTip(int mouseX, int mouseY) {
                     if (this.active && this.isHovered()) {
@@ -803,7 +856,39 @@ public class ScreenConfig extends Screen {
                 boolean flag = !configValue.get();
                 configValue.set(flag);
                 button.setMessage(this.getLabel());
-            });
+            }) {
+                private boolean wasHovered;
+
+                @Override
+                public void render(int mouseX, int mouseY, float partialTicks) {
+                    if (this.visible) {
+                        this.isHovered = mouseX >= this.x &&
+                                         mouseY >= this.y &&
+                                         mouseX < this.x + this.width &&
+                                         mouseY < this.y + this.height &&
+                                         mouseY < ScreenConfig.this.height - 36 &&
+                                         mouseY >= 50;
+                        if (this.wasHovered != this.isHovered()) {
+                            if (this.isHovered()) {
+                                if (this.isFocused()) {
+                                    this.nextNarration = Util.milliTime() + 200L;
+                                }
+                                else {
+                                    this.nextNarration = Util.milliTime() + 750L;
+                                }
+                            }
+                            else {
+                                this.nextNarration = Long.MAX_VALUE;
+                            }
+                        }
+                        if (this.visible) {
+                            this.renderButton(mouseX, mouseY, partialTicks);
+                        }
+                        this.narrate();
+                        this.wasHovered = this.isHovered();
+                    }
+                }
+            };
             this.eventListeners.add(this.button);
         }
 
@@ -898,7 +983,39 @@ public class ScreenConfig extends Screen {
                     configValue.set(e);
                     button.setMessage(new StringTextComponent(e.name()).getText());
                 }
-            });
+            }) {
+                private boolean wasHovered;
+
+                @Override
+                public void render(int mouseX, int mouseY, float partialTicks) {
+                    if (this.visible) {
+                        this.isHovered = mouseX >= this.x &&
+                                         mouseY >= this.y &&
+                                         mouseX < this.x + this.width &&
+                                         mouseY < this.y + this.height &&
+                                         mouseY < ScreenConfig.this.height - 36 &&
+                                         mouseY >= 50;
+                        if (this.wasHovered != this.isHovered()) {
+                            if (this.isHovered()) {
+                                if (this.isFocused()) {
+                                    this.nextNarration = Util.milliTime() + 200L;
+                                }
+                                else {
+                                    this.nextNarration = Util.milliTime() + 750L;
+                                }
+                            }
+                            else {
+                                this.nextNarration = Long.MAX_VALUE;
+                            }
+                        }
+                        if (this.visible) {
+                            this.renderButton(mouseX, mouseY, partialTicks);
+                        }
+                        this.narrate();
+                        this.wasHovered = this.isHovered();
+                    }
+                }
+            };
             this.eventListeners.add(this.button);
         }
 

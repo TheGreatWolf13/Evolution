@@ -123,13 +123,6 @@ public class ListKeyBinding extends KeyBindingList {
                 private boolean wasHovered;
 
                 @Override
-                protected String getNarrationMessage() {
-                    return name.isInvalid() ?
-                           I18n.format("narrator.controls.unbound", ListKeyBinding.KeyEntry.this.keyDesc) :
-                           I18n.format("narrator.controls.bound", ListKeyBinding.KeyEntry.this.keyDesc, super.getNarrationMessage());
-                }
-
-                @Override
                 public void render(int mouseX, int mouseY, float partialTicks) {
                     if (this.visible) {
                         this.isHovered = mouseX >= this.x &&
@@ -167,18 +160,14 @@ public class ListKeyBinding extends KeyBindingList {
                 private boolean wasHovered;
 
                 @Override
-                protected String getNarrationMessage() {
-                    return I18n.format("narrator.controls.reset", ListKeyBinding.KeyEntry.this.keyDesc);
-                }
-
-                @Override
                 public void render(int mouseX, int mouseY, float partialTicks) {
                     if (this.visible) {
                         this.isHovered = mouseX >= this.x &&
                                          mouseY >= this.y &&
                                          mouseX < this.x + this.width &&
                                          mouseY < this.y + this.height &&
-                                         mouseY < ListKeyBinding.this.y1;
+                                         mouseY < ListKeyBinding.this.y1 &&
+                                         mouseY >= ListKeyBinding.this.y0;
                         if (this.wasHovered != this.isHovered()) {
                             if (this.isHovered()) {
                                 if (this.isFocused()) {
