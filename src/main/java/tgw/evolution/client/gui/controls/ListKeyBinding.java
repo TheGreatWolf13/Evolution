@@ -68,7 +68,7 @@ public class ListKeyBinding extends KeyBindingList {
 
     @Override
     public int getRowWidth() {
-        return super.getRowWidth() + 32;
+        return super.getRowWidth() + 80;
     }
 
     @Override
@@ -136,7 +136,8 @@ public class ListKeyBinding extends KeyBindingList {
                                          mouseY >= this.y &&
                                          mouseX < this.x + this.width &&
                                          mouseY < this.y + this.height &&
-                                         mouseY < ListKeyBinding.this.y1;
+                                         mouseY <= ListKeyBinding.this.y1 &&
+                                         mouseY >= ListKeyBinding.this.y0;
                         if (this.wasHovered != this.isHovered()) {
                             if (this.isHovered()) {
                                 if (this.isFocused()) {
@@ -235,14 +236,21 @@ public class ListKeyBinding extends KeyBindingList {
         public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
             boolean flag = ListKeyBinding.this.controlsScreen.buttonId == this.keybinding;
             ListKeyBinding.this.minecraft.fontRenderer.drawString(this.keyDesc,
-                                                                  x + 150 - ListKeyBinding.this.maxListLabelWidth,
+                                                                  x + ListKeyBinding.this.getRowWidth() -
+                                                                  this.btnResetKeyBinding.getWidth() -
+                                                                  this.btnChangeKeyBinding.getWidth() -
+                                                                  ListKeyBinding.this.maxListLabelWidth -
+                                                                  10,
                                                                   y + (height - 4) / 2.0f,
                                                                   0xff_ffff);
-            this.btnResetKeyBinding.x = x + 260;
+            this.btnResetKeyBinding.x = x + ListKeyBinding.this.getRowWidth() - this.btnResetKeyBinding.getWidth() - 2;
             this.btnResetKeyBinding.y = y;
             this.btnResetKeyBinding.active = !this.keybinding.isDefault();
             this.btnResetKeyBinding.render(mouseX, mouseY, partialTicks);
-            this.btnChangeKeyBinding.x = x + 160;
+            this.btnChangeKeyBinding.x = x + ListKeyBinding.this.getRowWidth() -
+                                         this.btnResetKeyBinding.getWidth() -
+                                         this.btnChangeKeyBinding.getWidth() -
+                                         4;
             this.btnChangeKeyBinding.y = y;
             this.btnChangeKeyBinding.setMessage(this.keybinding.getLocalizedName());
             boolean conflicts = false;
