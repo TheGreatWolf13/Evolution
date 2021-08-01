@@ -356,7 +356,7 @@ public class ScreenConfig extends Screen {
         this.drawCenteredString(this.font, this.title.getFormattedText(), this.width / 2, 7, 0xFF_FFFF);
         super.render(mouseX, mouseY, partialTicks);
         if (this.activeTooltip != null) {
-            this.renderTooltip(this.activeTooltip, mouseX, mouseY);
+            GUIUtils.renderTooltip(this, this.activeTooltip, mouseX, mouseY, 200);
         }
     }
 
@@ -516,7 +516,7 @@ public class ScreenConfig extends Screen {
         private List<String> createToolTip(ForgeConfigSpec.ConfigValue<?> value, ForgeConfigSpec.ValueSpec spec) {
             FontRenderer font = ScreenConfig.this.minecraft.fontRenderer;
             List<String> lines = new ArrayList<>(font.listFormattedStringToWidth(new StringTextComponent(createCommentFromConfig(spec)).getText(),
-                                                                                 200));
+                                                                                 Integer.MAX_VALUE));
             String name = lastValue(value.getPath(), "");
             lines.add(0, new StringTextComponent(name).applyTextStyle(TextFormatting.DARK_GRAY).getFormattedText());
             lines.add(0, new StringTextComponent(this.label).applyTextStyle(TextFormatting.YELLOW).getFormattedText());
