@@ -24,12 +24,12 @@ import java.util.List;
 
 public final class ServerRecipePlacerEv {
 
-    protected static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private ServerRecipePlacerEv() {
     }
 
-    protected static void clear(RecipeBookContainer<?> container, PlayerInventory inventory) {
+    private static void clear(RecipeBookContainer<?> container, PlayerInventory inventory) {
         for (int i = 0; i < container.getWidth() * container.getHeight() + 1; ++i) {
             if (i != container.getOutputSlot() ||
                 !(container instanceof WorkbenchContainer) &&
@@ -41,7 +41,7 @@ public final class ServerRecipePlacerEv {
         container.clear();
     }
 
-    protected static void consumeIngredient(PlayerInventory inventory, Slot slotToFill, ItemStack ingredientIn) {
+    private static void consumeIngredient(PlayerInventory inventory, Slot slotToFill, ItemStack ingredientIn) {
         int i = inventory.findSlotMatchingUnusedItem(ingredientIn);
         if (i != -1) {
             ItemStack itemstack = inventory.getStackInSlot(i).copy();
@@ -73,7 +73,7 @@ public final class ServerRecipePlacerEv {
         return i;
     }
 
-    protected static int getMaxAmount(RecipeBookContainer<?> container, boolean placeAll, int maxPossible, boolean recipeMatches) {
+    private static int getMaxAmount(RecipeBookContainer<?> container, boolean placeAll, int maxPossible, boolean recipeMatches) {
         if (placeAll) {
             return maxPossible;
         }
@@ -95,7 +95,7 @@ public final class ServerRecipePlacerEv {
         return i;
     }
 
-    protected static void giveToPlayer(RecipeBookContainer<?> container, PlayerInventory inventory, int slotIn) {
+    private static void giveToPlayer(RecipeBookContainer<?> container, PlayerInventory inventory, int slotIn) {
         ItemStack itemstack = container.getSlot(slotIn).getStack();
         if (!itemstack.isEmpty()) {
             for (; itemstack.getCount() > 0; container.getSlot(slotIn).decrStackSize(1)) {
@@ -232,11 +232,11 @@ public final class ServerRecipePlacerEv {
     }
 
     @SuppressWarnings("rawtypes")
-    protected static void tryPlaceRecipe(RecipeItemHelper helper,
-                                         RecipeBookContainer<?> container,
-                                         PlayerInventory inventory,
-                                         IRecipe recipe,
-                                         boolean placeAll) {
+    private static void tryPlaceRecipe(RecipeItemHelper helper,
+                                       RecipeBookContainer<?> container,
+                                       PlayerInventory inventory,
+                                       IRecipe recipe,
+                                       boolean placeAll) {
         boolean flag = container.matches(recipe);
         int i = helper.getBiggestCraftableStack(recipe, null);
         if (flag) {
