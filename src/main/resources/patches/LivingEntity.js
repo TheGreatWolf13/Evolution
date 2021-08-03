@@ -61,11 +61,6 @@ function initializeCoreMod() {
                         break;
                     }
                 }
-//                for (var i in methods) {
-//                    if (patch(methods[i], ATTACKENTITYFROM, patchAttackEntityFrom)) {
-//                        break;
-//                    }
-//                }
                 for (var i in methods) {
 					if (patch(methods[i], JUMP, patchJump)) {
 						methods[i].localVariables.clear();
@@ -123,16 +118,6 @@ function patchEquipSound(instructions) {
 	));
 	instructions.add(new InsnNode(Opcodes.RETURN));
 }
-
-//function patchAttackEntityFrom(instructions) {
-//	for (var i = 0; i < instructions.size(); i++) {
-//	    var inst = instructions.get(i);
-//	    if (inst.getOpcode() == Opcodes.GETSTATIC && inst.name == DROWN) {
-//            inst.name = "DROWN";
-//            inst.owner = "tgw/evolution/init/EvolutionDamage";
-//	    }
-//	}
-//}
 
 function patchStatusUpdate(instructions) {
 	for (var i = 0; i < instructions.size(); i++) {
