@@ -57,6 +57,13 @@ public final class GUIUtils {
     private GUIUtils() {
     }
 
+    public static void drawCenteredSplitString(FontRenderer font, String text, int width, int y, int color, int wrapWidth) {
+        for (String s : font.listFormattedStringToWidth(text, wrapWidth)) {
+            drawCenteredString(font, s, width, y, color);
+            y += 9;
+        }
+    }
+
     public static void drawCenteredString(FontRenderer font, String text, int width, int y, int color) {
         int textX = (width - font.getStringWidth(text)) / 2;
         font.drawString(text, textX, y, color);

@@ -1,11 +1,26 @@
 var ASMAPI = Java.type("net.minecraftforge.coremod.api.ASMAPI");
 var Opcodes = Java.type("org.objectweb.asm.Opcodes");
 var InsnNode = Java.type("org.objectweb.asm.tree.InsnNode");
+var InsnList = Java.type("org.objectweb.asm.tree.InsnList");
+var LdcInsnNode = Java.type("org.objectweb.asm.tree.LdcInsnNode");
 var MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
 var VarInsnNode = Java.type("org.objectweb.asm.tree.VarInsnNode");
+var LineNumberNode = Java.type("org.objectweb.asm.tree.LineNumberNode");
+var LabelNode = Java.type("org.objectweb.asm.tree.LabelNode");
+var FrameNode = Java.type("org.objectweb.asm.tree.FrameNode");
+var FieldInsnNode = Java.type("org.objectweb.asm.tree.FieldInsnNode");
+var JumpInsnNode = Java.type("org.objectweb.asm.tree.JumpInsnNode");
+var TypeInsnNode = Java.type("org.objectweb.asm.tree.TypeInsnNode");
+var TryCatchBlockNode = Java.type("org.objectweb.asm.tree.TryCatchBlockNode");
+var LocalVariableNode = Java.type("org.objectweb.asm.tree.LocalVariableNode");
 
 var ISHANDACTIVE = ASMAPI.mapMethod("func_184587_cr");
 var PROCESSKEYBINDS = ASMAPI.mapMethod("func_184117_aA");
+var FREEMEMORY = ASMAPI.mapMethod("func_71398_f");
+var RUN = ASMAPI.mapMethod("func_213178_c");
+var getCrashReport = ASMAPI.mapMethod("func_71575_a");
+var addGraphicsAndWorldToCrashReport = ASMAPI.mapMethod("func_71396_d");
+var LOGGER = ASMAPI.mapField("field_211189_a");
 
 function log(message) {
 	print("[evolution/Minecraft Transformer]: " + message);
@@ -17,6 +32,14 @@ function patch(method, name, patchFunction) {
 	}
 	log("Patching method: " + name + method.desc);
 	patchFunction(method.instructions);
+	return true;
+}
+
+function patchSpecial(method, name) {
+	if (method.name != name) {
+		return false;
+	}
+	log("Patching method: " + name + method.desc);
 	return true;
 }
 
@@ -34,10 +57,237 @@ function initializeCoreMod() {
 						break;
 					}
 				}
+				for (var i in methods) {
+                    if (patch(methods[i], FREEMEMORY, patchFreeMemory)) {
+						methods[i].localVariables.clear();
+						methods[i].tryCatchBlocks.clear();
+                        break;
+                    }
+                }
+                for (var i in methods) {
+                    if (patchSpecial(methods[i], RUN)) {
+                        patchRun(methods[i]);
+                        break;
+                    }
+                }
 				return classNode;
 			}
 		}
 	};
+}
+
+function getLine(instructions, number, index) {
+    var indexOld = index;
+    for (var i = 0; i < instructions.size(); i++) {
+        var inst = instructions.get(i);
+        if (inst instanceof LineNumberNode) {
+            if (inst.line == number) {
+                index--;
+                if (index == 0) {
+                    return i;
+                }
+            }
+        }
+    }
+    log("Could not find line " + number + " index " + indexOld);
+    return -1;
+}
+
+function patchRun(method) {
+    var instructions = method.instructions;
+
+    var line384 = getLine(instructions, 384, 1);
+    var L3 = instructions.get(line384 - 1);
+
+    var iload1 = instructions.get(line384 + 3);
+    var ifneL22 = instructions.get(line384 + 4);
+    var iconst1 = instructions.get(line384 + 5);
+    var gotoL23 = instructions.get(line384 + 6);
+    var iconst0 = instructions.get(line384 + 9);
+    var frameFull = instructions.get(line384 + 11);
+    instructions.remove(iload1);
+    instructions.remove(ifneL22);
+    instructions.remove(iconst1);
+    instructions.remove(gotoL23);
+    instructions.remove(iconst0);
+    instructions.insert(frameFull, new InsnNode(Opcodes.ICONST_1));
+
+    var line386 = getLine(instructions, 386, 1);
+    var iload1 = instructions.get(line386 + 1);
+    var ifeqL25 = instructions.get(line386 + 2);
+    instructions.remove(iload1);
+    instructions.remove(ifeqL25);
+
+    var line387 = getLine(instructions, 387, 1);
+    var aload2 = instructions.get(line387 + 1);
+    var athrow = instructions.get(line387 + 2);
+    instructions.remove(aload2);
+    instructions.remove(athrow);
+
+    var line391 = getLine(instructions, 391, 1);
+    var new0 = instructions.get(line391 + 2);
+    var init = instructions.get(line391 + 4);
+    new0.desc = "tgw/evolution/client/gui/ScreenMemoryError";
+    instructions.insertBefore(init, new VarInsnNode(Opcodes.ILOAD, 1));
+    init.owner = "tgw/evolution/client/gui/ScreenMemoryError";
+    init.desc = "(Z)V";
+
+    var line377 = getLine(instructions, 377, 1);
+    var L18 = instructions.get(line377 - 1);
+
+    var line395 = getLine(instructions, 395, 1);
+    var L4 = instructions.get(line395 - 1);
+
+    //reportedException
+    var reportedExc = new InsnList();
+    var L46 = new LabelNode();
+    reportedExc.add(L46);
+    reportedExc.add(new FrameNode(Opcodes.F_FULL, 2, ["net/minecraft/client/Minecraft", "I"], 1, ["net/minecraft/crash/ReportedException"]));
+    reportedExc.add(new VarInsnNode(Opcodes.ASTORE, 2));
+    var L47 = new LabelNode();
+    reportedExc.add(L47);
+    reportedExc.add(new VarInsnNode(Opcodes.ALOAD, 0));
+    reportedExc.add(new MethodInsnNode(
+        Opcodes.INVOKEVIRTUAL,
+        "net/minecraft/client/Minecraft",
+        FREEMEMORY,
+        "()V",
+        false
+    ));
+    reportedExc.add(new VarInsnNode(Opcodes.ALOAD, 0));
+    reportedExc.add(new VarInsnNode(Opcodes.ALOAD, 2));
+    reportedExc.add(new MethodInsnNode(
+        Opcodes.INVOKEVIRTUAL,
+        "net/minecraft/crash/ReportedException",
+        getCrashReport,
+        "()Lnet/minecraft/crash/CrashReport;",
+        false
+    ));
+    reportedExc.add(new MethodInsnNode(
+        Opcodes.INVOKEVIRTUAL,
+        "net/minecraft/client/Minecraft",
+        addGraphicsAndWorldToCrashReport,
+        "(Lnet/minecraft/crash/CrashReport;)Lnet/minecraft/crash/CrashReport;",
+        false
+    ));
+    reportedExc.add(new InsnNode(Opcodes.POP));
+    reportedExc.add(new FieldInsnNode(Opcodes.GETSTATIC, "net/minecraft/client/Minecraft", LOGGER, "Lorg/apache/logging/log4j/Logger;"));
+    reportedExc.add(new LdcInsnNode("Reported exception thrown!"));
+    reportedExc.add(new VarInsnNode(Opcodes.ALOAD, 2));
+    reportedExc.add(new MethodInsnNode(
+        Opcodes.INVOKEINTERFACE,
+        "org/apache/logging/log4j/Logger",
+        "fatal",
+        "(Ljava/lang/String;Ljava/lang/Throwable;)V",
+        true
+    ));
+    reportedExc.add(new VarInsnNode(Opcodes.ALOAD, 0));
+    reportedExc.add(new VarInsnNode(Opcodes.ALOAD, 2));
+    reportedExc.add(new MethodInsnNode(
+        Opcodes.INVOKEVIRTUAL,
+        "net/minecraft/crash/ReportedException",
+        getCrashReport,
+        "()Lnet/minecraft/crash/CrashReport;",
+        false
+    ));
+    reportedExc.add(new MethodInsnNode(
+        Opcodes.INVOKESTATIC,
+        "tgw/evolution/hooks/MinecraftHooks",
+        "displayCrashScreen",
+        "(Lnet/minecraft/client/Minecraft;Lnet/minecraft/crash/CrashReport;)V",
+        false
+    ));
+    var L48 = new LabelNode();
+    reportedExc.add(L48);
+    reportedExc.add(new JumpInsnNode(Opcodes.GOTO, L18));
+    //throwable
+    var L49 = new LabelNode();
+    reportedExc.add(L49);
+    reportedExc.add(new FrameNode(Opcodes.F_SAME1, 0, null, 1, ["java/lang/Throwable"]));
+    reportedExc.add(new VarInsnNode(Opcodes.ASTORE, 2));
+    var L50 = new LabelNode();
+    reportedExc.add(L50);
+    reportedExc.add(new VarInsnNode(Opcodes.ALOAD, 0));
+    reportedExc.add(new MethodInsnNode(
+        Opcodes.INVOKEVIRTUAL,
+        "net/minecraft/client/Minecraft",
+        FREEMEMORY,
+        "()V",
+        false
+    ));
+    reportedExc.add(new TypeInsnNode(Opcodes.NEW, "net/minecraft/crash/CrashReport"));
+    reportedExc.add(new InsnNode(Opcodes.DUP));
+    reportedExc.add(new LdcInsnNode("Unexpected error"));
+    reportedExc.add(new VarInsnNode(Opcodes.ALOAD, 2));
+    reportedExc.add(new MethodInsnNode(
+        Opcodes.INVOKESPECIAL,
+        "net/minecraft/crash/CrashReport",
+        "<init>",
+        "(Ljava/lang/String;Ljava/lang/Throwable;)V",
+        false
+    ));
+    reportedExc.add(new VarInsnNode(Opcodes.ASTORE, 3));
+    var L51 = new LabelNode();
+    reportedExc.add(L51);
+    reportedExc.add(new VarInsnNode(Opcodes.ALOAD, 0));
+    reportedExc.add(new VarInsnNode(Opcodes.ALOAD, 3));
+    reportedExc.add(new MethodInsnNode(
+        Opcodes.INVOKEVIRTUAL,
+        "net/minecraft/client/Minecraft",
+        addGraphicsAndWorldToCrashReport,
+        "(Lnet/minecraft/crash/CrashReport;)Lnet/minecraft/crash/CrashReport;",
+        false
+    ));
+    reportedExc.add(new InsnNode(Opcodes.POP));
+    reportedExc.add(new FieldInsnNode(Opcodes.GETSTATIC, "net/minecraft/client/Minecraft", LOGGER, "Lorg/apache/logging/log4j/Logger;"));
+    reportedExc.add(new LdcInsnNode("Unexpected exception thrown!"));
+    reportedExc.add(new VarInsnNode(Opcodes.ALOAD, 2));
+    reportedExc.add(new MethodInsnNode(
+        Opcodes.INVOKEINTERFACE,
+        "org/apache/logging/log4j/Logger",
+        "fatal",
+        "(Ljava/lang/String;Ljava/lang/Throwable;)V",
+        true
+    ));
+    reportedExc.add(new VarInsnNode(Opcodes.ALOAD, 0));
+    reportedExc.add(new VarInsnNode(Opcodes.ALOAD, 3));
+    reportedExc.add(new MethodInsnNode(
+        Opcodes.INVOKESTATIC,
+        "tgw/evolution/hooks/MinecraftHooks",
+        "displayCrashScreen",
+        "(Lnet/minecraft/client/Minecraft;Lnet/minecraft/crash/CrashReport;)V",
+        false
+    ));
+    var L52 = new LabelNode();
+    reportedExc.add(L52);
+    reportedExc.add(new JumpInsnNode(Opcodes.GOTO, L18));
+    //end exceptions
+    var line395_2 = getLine(instructions, 395, 2);
+    var gotoL18 = instructions.get(line395_2 + 1);
+    instructions.insert(gotoL18, reportedExc);
+    //update tryCatches
+    var tryCatch = method.tryCatchBlocks;
+    tryCatch.add(2, new TryCatchBlockNode(L3, L4, L46, "net/minecraft/crash/ReportedException"));
+    tryCatch.add(3, new TryCatchBlockNode(L3, L4, L49, "java/lang/Throwable"));
+    //update variables
+    method.maxLocals = 5;
+    var localVars = method.localVariables;
+    localVars.add(new LocalVariableNode("e", "Lnet/minecraft/crash/ReportedException;", null, L47, L48, 2));
+    localVars.add(new LocalVariableNode("report", "Lnet/minecraft/crash/CrashReport;", null, L51, L52, 3));
+    localVars.add(new LocalVariableNode("t", "Ljava/lang/Throwable;", null, L50, L52, 2));
+}
+
+function patchFreeMemory(instructions) {
+    instructions.clear();
+    instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+    instructions.add(new MethodInsnNode(
+        Opcodes.INVOKESTATIC,
+        "tgw/evolution/hooks/MinecraftHooks",
+        "freeMemory",
+        "(Lnet/minecraft/client/Minecraft;)V",
+        false
+    ));
+    instructions.add(new InsnNode(Opcodes.RETURN));
 }
 
 function patchKeyBinds(instructions) {

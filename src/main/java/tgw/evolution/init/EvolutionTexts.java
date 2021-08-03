@@ -28,6 +28,9 @@ public final class EvolutionTexts {
     public static final ITextComponent EMPTY = new StringTextComponent("");
     public static final ITextComponent FLUID_FRESH_WATER = transl("evolution.fluid.fresh_water");
     public static final ITextComponent FLUID_SALT_WATER = transl("evolution.fluid.salt_water");
+    public static final ITextComponent GUI_CRASH = transl("evolution.gui.crash");
+    public static final ITextComponent GUI_CRASH_REPORT_SAVE_FAILED = transl("evolution.gui.crash.reportSaveFailed").setStyle(DAMAGE);
+    public static final ITextComponent GUI_OUT_OF_MEMORY = transl("evolution.gui.outOfMemory");
     public static final ITextComponent GUI_SEARCH = transl("evolution.gui.search");
     public static final ITextComponent TOOLTIP_CLAY_MOLD = transl("evolution.tooltip.clay.mold").setStyle(INFO);
     public static final ITextComponent TOOLTIP_CONSUMABLE = transl("evolution.tooltip.consumable").setStyle(LIGHT_GREY);
@@ -48,13 +51,18 @@ public final class EvolutionTexts {
 
     private static final DecimalFormatSymbols SYMBOLS = getSymbols();
 
+    public static final DecimalFormat DEFAULT = initFormat(",##0");
+    public static final DecimalFormat ONE_PLACE = initFormat(",##0.#");
+    public static final DecimalFormat TWO_PLACES = initFormat(",##0.##");
+    public static final DecimalFormat THREE_PLACES = initFormat(",##0.###");
+
+    public static final DecimalFormat DAMAGE_FORMAT = initFormat(",##0 HP");
     public static final DecimalFormat DRINK_FORMAT = initFormat(",##0 mL");
     public static final DecimalFormat FOOD_FORMAT = initFormat(",##0 kcal");
     public static final DecimalFormat HOUR_FORMAT = initFormat(",##0 h");
     public static final DecimalFormat LITER_FORMAT = initFormat(",##0.## L");
     public static final DecimalFormat MASS_FORMAT = initFormat(",##0.## kg");
     public static final DecimalFormat PERCENT_ONE_PLACE = initFormat(",##0.#%");
-    public static final DecimalFormat TWO_PLACES = initFormat(",##0.##");
 
     private static final String CAPACITY = "evolution.tooltip.container.capacity";
     private static final String CONFIG_ALLOWED_VALUES = "evolution.config.allowed_values";
