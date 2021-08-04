@@ -9,11 +9,11 @@ import net.minecraft.client.gui.widget.list.ExtendedList;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
+import tgw.evolution.init.EvolutionTexts;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -57,8 +57,7 @@ public class ScreenEditListString extends Screen {
                                   20,
                                   I18n.format("evolution.gui.add_value"),
                                   button -> this.minecraft.displayGuiScreen(new ScreenEditString(ScreenEditListString.this,
-                                                                                                 new TranslationTextComponent(
-                                                                                                         "evolution.gui.edit_value"),
+                                                                                                 EvolutionTexts.GUI_EDIT_VALUE,
                                                                                                  "",
                                                                                                  o -> true,
                                                                                                  s -> {
@@ -165,10 +164,7 @@ public class ScreenEditListString extends Screen {
                                          20,
                                          I18n.format("evolution.gui.edit"),
                                          onPress -> ScreenEditListString.this.minecraft.displayGuiScreen(new ScreenEditString(ScreenEditListString.this,
-                                                                                                                              new TranslationTextComponent(
-                                                                                                                                      "evolution" +
-                                                                                                                                      ".gui" +
-                                                                                                                                      ".edit_value"),
+                                                                                                                              EvolutionTexts.GUI_EDIT_VALUE,
                                                                                                                               this.holder.getValue(),
                                                                                                                               o -> true,
                                                                                                                               this.holder::setValue)));

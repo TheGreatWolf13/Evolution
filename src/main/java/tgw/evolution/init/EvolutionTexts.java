@@ -30,6 +30,7 @@ public final class EvolutionTexts {
     public static final ITextComponent FLUID_SALT_WATER = transl("evolution.fluid.salt_water");
     public static final ITextComponent GUI_CRASH = transl("evolution.gui.crash");
     public static final ITextComponent GUI_CRASH_REPORT_SAVE_FAILED = transl("evolution.gui.crash.reportSaveFailed").setStyle(DAMAGE);
+    public static final ITextComponent GUI_EDIT_VALUE = transl("evolution.gui.edit_value");
     public static final ITextComponent GUI_KNAPPING = transl("evolution.gui.knapping");
     public static final ITextComponent GUI_OUT_OF_MEMORY = transl("evolution.gui.outOfMemory");
     public static final ITextComponent GUI_SEARCH = transl("evolution.gui.search");
