@@ -35,8 +35,8 @@ public abstract class ScreenDisplayEffects<T extends Container> extends Containe
     private boolean full;
     private int initialHeight;
 
-    public ScreenDisplayEffects(T screenContainer, PlayerInventory inv, ITextComponent titleIn) {
-        super(screenContainer, inv, titleIn);
+    public ScreenDisplayEffects(T screenContainer, PlayerInventory inv, ITextComponent title) {
+        super(screenContainer, inv, title);
     }
 
     public static int getFixedAmplifier(EffectInstance effect) {
