@@ -35,6 +35,7 @@ public final class EvolutionResources {
     public static final ResourceLocation GUI_ICONS = Evolution.getResource("textures/gui/icons.png");
     public static final ResourceLocation GUI_INVENTORY = Evolution.getResource("textures/gui/inventory.png");
     public static final ResourceLocation GUI_KNAPPING = Evolution.getResource("textures/gui/knapping.png");
+    public static final ResourceLocation GUI_MOLDING = Evolution.getResource("textures/gui/molding.png");
     public static final ResourceLocation GUI_STATS_ICONS = Evolution.getResource("textures/gui/stats_icons.png");
     public static final ResourceLocation GUI_TABS = Evolution.getResource("textures/gui/tabs.png");
     public static final ResourceLocation GUI_WIDGETS = Evolution.getResource("textures/gui/widgets.png");
