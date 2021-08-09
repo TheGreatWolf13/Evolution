@@ -63,9 +63,6 @@ public class DimensionOverworld extends Dimension {
     @OnlyIn(Dist.CLIENT)
     @Override
     public float[] calcSunriseSunsetColors(float celestialAngle, float partialTicks) {
-        if (celestialAngle != 0 || partialTicks != 0) {
-            return null;
-        }
         return this.sunsetColors;
     }
 
