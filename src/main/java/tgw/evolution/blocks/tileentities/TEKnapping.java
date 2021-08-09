@@ -65,7 +65,6 @@ public class TEKnapping extends TileEntity {
 
     @Override
     public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
-        Evolution.LOGGER.debug("on data knapping plz work ;-;");
         this.hitbox = null;
         this.handleUpdateTag(packet.getNbtCompound());
     }
