@@ -2,9 +2,9 @@ package tgw.evolution.util;
 
 public class FullDate {
     private final Date date;
-    private final Hour hour;
+    private final Time hour;
 
-    public FullDate(Date date, Hour hour) {
+    public FullDate(Date date, Time hour) {
         this.date = date;
         this.hour = hour;
         if (date.equals(Date.STARTING_DATE) && hour.toTicks() < 6_000) {
@@ -13,7 +13,7 @@ public class FullDate {
     }
 
     public FullDate(long ticks) {
-        this(new Date(ticks), Hour.fromTicks(ticks));
+        this(new Date(ticks), Time.fromTicks(ticks));
     }
 
     public String getFullString() {

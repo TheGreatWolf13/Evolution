@@ -11,7 +11,6 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.server.command.EnumArgument;
 import tgw.evolution.util.Date;
 import tgw.evolution.util.FullDate;
-import tgw.evolution.util.Hour;
 import tgw.evolution.util.Time;
 
 public class CommandDate implements Command<CommandSource> {
@@ -51,7 +50,7 @@ public class CommandDate implements Command<CommandSource> {
         }
         try {
             Date date = new Date(year, month, day);
-            Hour time = new Hour(hour, minute);
+            Time time = new Time(hour, minute);
             FullDate fullDate = new FullDate(date, time);
             long ticks = fullDate.toTicks();
             for (ServerWorld serverWorld : context.getSource().getServer().getWorlds()) {
@@ -64,7 +63,7 @@ public class CommandDate implements Command<CommandSource> {
             context.getSource()
                    .sendErrorMessage(new TranslationTextComponent("command.evolution.date.error",
                                                                   Date.STARTING_DATE.getFullString(),
-                                                                  Hour.START_TIME));
+                                                                  Time.START_TIME));
             return 0;
         }
     }

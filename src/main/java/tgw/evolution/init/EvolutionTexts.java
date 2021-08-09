@@ -8,11 +8,8 @@ import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.items.*;
 import tgw.evolution.util.MathHelper;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.Locale;
-
 import static tgw.evolution.init.EvolutionStyles.*;
+import static tgw.evolution.util.Metric.*;
 
 public final class EvolutionTexts {
 
@@ -55,21 +52,6 @@ public final class EvolutionTexts {
     public static final ITextComponent TOOLTIP_THROWABLE = transl("evolution.tooltip.throwable").setStyle(PROPERTY);
     public static final ITextComponent TOOLTIP_TORCH_RELIT = translSp("evolution.tooltip.torch" + ".relit").setStyle(INFO);
     public static final ITextComponent TOOLTIP_TWO_HANDED = transl("evolution.tooltip.two_handed").setStyle(PROPERTY);
-
-    private static final DecimalFormatSymbols SYMBOLS = getSymbols();
-
-    public static final DecimalFormat DEFAULT = initFormat(",##0");
-    public static final DecimalFormat ONE_PLACE = initFormat(",##0.#");
-    public static final DecimalFormat TWO_PLACES = initFormat(",##0.##");
-    public static final DecimalFormat THREE_PLACES = initFormat(",##0.###");
-
-    public static final DecimalFormat DAMAGE_FORMAT = initFormat(",##0 HP");
-    public static final DecimalFormat DRINK_FORMAT = initFormat(",##0 mL");
-    public static final DecimalFormat FOOD_FORMAT = initFormat(",##0 kcal");
-    public static final DecimalFormat HOUR_FORMAT = initFormat(",##0 h");
-    public static final DecimalFormat LITER_FORMAT = initFormat(",##0.## L");
-    public static final DecimalFormat MASS_FORMAT = initFormat(",##0.## kg");
-    public static final DecimalFormat PERCENT_ONE_PLACE = initFormat(",##0.#%");
 
     private static final String CAPACITY = "evolution.tooltip.container.capacity";
     private static final String CONFIG_ALLOWED_VALUES = "evolution.config.allowed_values";
@@ -144,20 +126,8 @@ public final class EvolutionTexts {
         return new StringTextComponent("    " + FOOD_FORMAT.format(amount));
     }
 
-    private static DecimalFormatSymbols getSymbols() {
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.ROOT);
-        symbols.setGroupingSeparator(' ');
-        return symbols;
-    }
-
     public static ITextComponent heavyAttack(IHeavyAttack item) {
         return chanceAndLevel(HEAVY_ATTACK, item.getHeavyAttackChance(), item.getHeavyAttackLevel()).setStyle(EFFECTS);
-    }
-
-    private static DecimalFormat initFormat(String pattern) {
-        DecimalFormat decimalFormat = new DecimalFormat(pattern);
-        decimalFormat.setDecimalFormatSymbols(SYMBOLS);
-        return decimalFormat;
     }
 
     public static ITextComponent knockback(IKnockback item) {

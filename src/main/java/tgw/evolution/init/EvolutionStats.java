@@ -20,7 +20,7 @@ public final class EvolutionStats {
     public static final IEvoStatFormatter DEFAULT = new IEvoStatFormatter() {
         @Override
         public String format(long value) {
-            return EvolutionTexts.DEFAULT.format(value);
+            return Metric.DEFAULT.format(value);
         }
 
         @Override
@@ -44,7 +44,7 @@ public final class EvolutionStats {
     public static final IEvoStatFormatter DAMAGE = new IEvoStatFormatter() {
         @Override
         public String format(long value) {
-            return EvolutionTexts.DAMAGE_FORMAT.format(value);
+            return Metric.DAMAGE_FORMAT.format(value);
         }
 
         @Override
@@ -62,15 +62,15 @@ public final class EvolutionStats {
             double days = hours / 24.0;
             double years = days / 365.25;
             if (years > 1 && !EvolutionConfig.CLIENT.limitTimeUnitsToHour.get()) {
-                return EvolutionTexts.TWO_PLACES.format(years) + " a";
+                return Metric.TWO_PLACES.format(years) + " a";
             }
             if (days > 1 && !EvolutionConfig.CLIENT.limitTimeUnitsToHour.get()) {
-                return EvolutionTexts.TWO_PLACES.format(days) + " d";
+                return Metric.TWO_PLACES.format(days) + " d";
             }
             if (hours > 1) {
-                return EvolutionTexts.TWO_PLACES.format(hours) + " h";
+                return Metric.TWO_PLACES.format(hours) + " h";
             }
-            return minutes > 1 ? EvolutionTexts.TWO_PLACES.format(minutes) + " min " : EvolutionTexts.TWO_PLACES.format(seconds) + " s";
+            return minutes > 1 ? Metric.TWO_PLACES.format(minutes) + " min " : Metric.TWO_PLACES.format(seconds) + " s";
         }
 
         @Override

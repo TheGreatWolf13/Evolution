@@ -1,7 +1,7 @@
 package tgw.evolution.util;
 
-import tgw.evolution.init.EvolutionTexts;
-
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
 public enum Metric {
@@ -24,11 +24,27 @@ public enum Metric {
     ZETTA("Zetta", "Z", 1E21),
     YOTTA("Yotta", "Y", 1E24),
     OVER_METRIC("Overflow", "over", 1E27);
-
     public static final int SECONDS_IN_A_MINUTE = 60;
     public static final int MINUTES_IN_AN_HOUR = 60;
     public static final int HOURS_IN_A_DAY = 24;
     public static final double DAYS_IN_A_YEAR = 365.25;
+
+    private static final DecimalFormatSymbols SYMBOLS = getSymbols();
+
+    public static final DecimalFormat DEFAULT = initFormat(",##0");
+    public static final DecimalFormat ONE_PLACE = initFormat(",##0.#");
+    public static final DecimalFormat TWO_PLACES = initFormat(",##0.##");
+    public static final DecimalFormat THREE_PLACES = initFormat(",##0.###");
+
+    public static final DecimalFormat INT_2 = initFormat("00");
+
+    public static final DecimalFormat DAMAGE_FORMAT = initFormat(",##0 HP");
+    public static final DecimalFormat DRINK_FORMAT = initFormat(",##0 mL");
+    public static final DecimalFormat FOOD_FORMAT = initFormat(",##0 kcal");
+    public static final DecimalFormat HOUR_FORMAT = initFormat(",##0 h");
+    public static final DecimalFormat LITER_FORMAT = initFormat(",##0.## L");
+    public static final DecimalFormat MASS_FORMAT = initFormat(",##0.## kg");
+    public static final DecimalFormat PERCENT_ONE_PLACE = initFormat(",##0.#%");
 
     private final String fullName;
     private final double inNumber;
@@ -97,13 +113,13 @@ public enum Metric {
     public static String format(double value, int decimalPlaces) {
         switch (decimalPlaces) {
             case 0:
-                return EvolutionTexts.DEFAULT.format(value);
+                return DEFAULT.format(value);
             case 1:
-                return EvolutionTexts.ONE_PLACE.format(value);
+                return ONE_PLACE.format(value);
             case 2:
-                return EvolutionTexts.TWO_PLACES.format(value);
+                return TWO_PLACES.format(value);
             case 3:
-                return EvolutionTexts.THREE_PLACES.format(value);
+                return THREE_PLACES.format(value);
         }
         if (decimalPlaces < 0) {
             throw new IllegalStateException("Negative Decimal Places?");
@@ -139,6 +155,18 @@ public enum Metric {
 
     public static double fromMetric(double value, Metric metric) {
         return value * metric.inNumber;
+    }
+
+    private static DecimalFormatSymbols getSymbols() {
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.ROOT);
+        symbols.setGroupingSeparator(' ');
+        return symbols;
+    }
+
+    private static DecimalFormat initFormat(String pattern) {
+        DecimalFormat decimalFormat = new DecimalFormat(pattern);
+        decimalFormat.setDecimalFormatSymbols(SYMBOLS);
+        return decimalFormat;
     }
 
     public static String time(double timeInSeconds, int decimalPlaces) {

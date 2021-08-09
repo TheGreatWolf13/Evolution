@@ -1,5 +1,6 @@
 package tgw.evolution.util;
 
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
 public class Date {
@@ -145,7 +146,7 @@ public class Date {
 
     @Override
     public String toString() {
-        return String.format("%02d", this.day) + "/" + String.format("%02d", this.month.getNumerical()) + "/" + this.year;
+        return Metric.INT_2.format(this.day) + "/" + Metric.INT_2.format(this.month.getNumerical()) + "/" + this.year;
     }
 
     public long toTicks() {
@@ -173,11 +174,13 @@ public class Date {
         private final int index;
         private final String name;
         private final int numerical;
+        private final ITextComponent textComponent;
 
         Month(String name, int numerical, int index) {
             this.name = name;
             this.numerical = numerical;
             this.index = index;
+            this.textComponent = new TranslationTextComponent("evolution.calendar.month." + this.name);
         }
 
         public static Month byIndex(int index) {
@@ -242,7 +245,7 @@ public class Date {
         }
 
         public String getTranslatedName() {
-            return new TranslationTextComponent("evolution.calendar.month." + this.name).getFormattedText();
+            return this.textComponent.getFormattedText();
         }
     }
 }
