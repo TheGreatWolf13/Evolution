@@ -154,7 +154,7 @@ public class Date {
         temp += (long) (this.month.getNumerical() - STARTING_DATE.month.getNumerical()) * Time.MONTH_IN_TICKS;
         temp += (long) (this.day - STARTING_DATE.day) * Time.DAY_IN_TICKS;
         temp -= 6_000;
-        return Math.max(temp, 0);
+        return temp;
     }
 
     public enum Month {
