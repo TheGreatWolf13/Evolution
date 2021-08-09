@@ -95,6 +95,7 @@ public final class Evolution {
         if (FMLLoader.getDist() == Dist.CLIENT) {
             ClientEvents.onFinishLoading();
         }
+        EvolutionCommands.registerArguments();
     }
 
     public static void log(boolean log, String message, Object... args) {
