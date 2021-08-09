@@ -164,5 +164,10 @@ public final class EvolutionNetwork {
                                  PacketSCThirstData::decode,
                                  PacketSCThirstData::handle);
         INSTANCE.registerMessage(increaseId(), PacketCSSkinType.class, PacketCSSkinType::encode, PacketCSSkinType::decode, PacketCSSkinType::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCStatistics.class,
+                                 PacketSCStatistics::encode,
+                                 PacketSCStatistics::decode,
+                                 PacketSCStatistics::handle);
     }
 }

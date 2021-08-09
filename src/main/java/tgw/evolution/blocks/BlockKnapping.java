@@ -159,7 +159,7 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IStoneV
         world.playSound(player, pos, SoundEvents.BLOCK_STONE_BREAK, SoundCategory.BLOCKS, 1.0F, 0.75F);
         tileEntity.matrix[x][z] = false;
         tileEntity.sendRenderUpdate();
-        tileEntity.checkParts();
+        tileEntity.checkParts(player);
         return true;
     }
 }

@@ -68,7 +68,7 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
                 }
             }
             player.addStat(Stats.ITEM_USED.get(this));
-
+            this.addStat(player);
         }
     }
 }

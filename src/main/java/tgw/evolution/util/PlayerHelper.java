@@ -13,7 +13,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.server.SAnimateHandPacket;
 import net.minecraft.network.play.server.SEntityVelocityPacket;
 import net.minecraft.particles.ParticleTypes;
-import net.minecraft.stats.Stats;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.Hand;
 import net.minecraft.util.SoundEvents;
@@ -22,8 +21,10 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
+import tgw.evolution.hooks.PlayerHooks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionNetwork;
+import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.items.*;
 import tgw.evolution.network.PacketSCHandAnimation;
 
@@ -59,6 +60,19 @@ public final class PlayerHelper {
     private static final Random RAND = new Random();
 
     private PlayerHelper() {
+    }
+
+    private static void applyDamageActual(PlayerEntity player, float amount, EvolutionDamage.Type type, LivingEntity entity) {
+        PlayerHooks.addStat(player, EvolutionStats.DAMAGE_DEALT_ACTUAL.get(type), amount);
+        PlayerHooks.addStat(player, EvolutionStats.DAMAGE_DEALT_ACTUAL.get(EvolutionDamage.Type.MELEE), amount);
+        PlayerHooks.addStat(player, EvolutionStats.DAMAGE_DEALT_ACTUAL.get(EvolutionDamage.Type.TOTAL), amount);
+        PlayerHooks.addStat(player, EvolutionStats.DAMAGE_DEALT, entity.getType(), amount);
+    }
+
+    private static void applyDamageRaw(PlayerEntity player, float amount, EvolutionDamage.Type type) {
+        PlayerHooks.addStat(player, EvolutionStats.DAMAGE_DEALT_RAW.get(type), amount);
+        PlayerHooks.addStat(player, EvolutionStats.DAMAGE_DEALT_RAW.get(EvolutionDamage.Type.MELEE), amount);
+        PlayerHooks.addStat(player, EvolutionStats.DAMAGE_DEALT_RAW.get(EvolutionDamage.Type.TOTAL), amount);
     }
 
     private static void attackEntity(PlayerEntity player, Entity targetEntity, Hand hand, double rayTraceHeight) {
@@ -242,17 +256,19 @@ public final class PlayerHelper {
                         }
                         //Stats and Heart particles
                         if (targetEntity instanceof LivingEntity) {
-                            float damageDealt = oldHealth - ((LivingEntity) targetEntity).getHealth();
-                            player.addStat(Stats.DAMAGE_DEALT, Math.round(damageDealt * 10.0F));
+                            LivingEntity living = (LivingEntity) targetEntity;
+                            float damageDealt = oldHealth - living.getHealth();
+                            applyDamageRaw(player, damage, type);
+                            applyDamageActual(player, damageDealt, type, living);
                             if (fireAspectModifier > 0) {
-                                targetEntity.setFire(fireAspectModifier * 4);
+                                living.setFire(fireAspectModifier * 4);
                             }
                             if (player.world instanceof ServerWorld && damageDealt >= 10.0F) {
                                 int heartsToSpawn = (int) (damageDealt * 0.1);
                                 ((ServerWorld) player.world).spawnParticle(ParticleTypes.DAMAGE_INDICATOR,
-                                                                           targetEntity.posX,
-                                                                           targetEntity.posY + targetEntity.getHeight() * 0.5F,
-                                                                           targetEntity.posZ,
+                                                                           living.posX,
+                                                                           living.posY + living.getHeight() * 0.5F,
+                                                                           living.posZ,
                                                                            heartsToSpawn,
                                                                            0.5,
                                                                            0,
@@ -481,17 +497,19 @@ public final class PlayerHelper {
                         }
                         //Stats and Heart particles
                         if (targetEntity instanceof LivingEntity) {
-                            float damageDealt = oldHealth - ((LivingEntity) targetEntity).getHealth();
-                            player.addStat(Stats.DAMAGE_DEALT, Math.round(damageDealt * 10.0F));
+                            LivingEntity living = (LivingEntity) targetEntity;
+                            float damageDealt = oldHealth - living.getHealth();
+                            applyDamageRaw(player, damage, type);
+                            applyDamageActual(player, damageDealt, type, living);
                             if (fireAspectModifier > 0) {
-                                targetEntity.setFire(fireAspectModifier * 4);
+                                living.setFire(fireAspectModifier * 4);
                             }
                             if (player.world instanceof ServerWorld && damageDealt >= 10.0F) {
                                 int heartsToSpawn = (int) (damageDealt * 0.1);
                                 ((ServerWorld) player.world).spawnParticle(ParticleTypes.DAMAGE_INDICATOR,
-                                                                           targetEntity.posX,
-                                                                           targetEntity.posY + targetEntity.getHeight() * 0.5F,
-                                                                           targetEntity.posZ,
+                                                                           living.posX,
+                                                                           living.posY + living.getHeight() * 0.5F,
+                                                                           living.posZ,
                                                                            heartsToSpawn,
                                                                            0.5,
                                                                            0,

@@ -32,6 +32,7 @@ public final class EvolutionResources {
     public static final int TACTICAL = 7;
     public static final ResourceLocation BUTTON_RECIPE_BOOK = new ResourceLocation("textures/gui/recipe_button.png");
     public static final ResourceLocation GUI_CORPSE = Evolution.getResource("textures/gui/corpse.png");
+    public static final ResourceLocation GUI_DAMAGE_ICONS = Evolution.getResource("textures/gui/damage_icons.png");
     public static final ResourceLocation GUI_ICONS = Evolution.getResource("textures/gui/icons.png");
     public static final ResourceLocation GUI_INVENTORY = Evolution.getResource("textures/gui/inventory.png");
     public static final ResourceLocation GUI_KNAPPING = Evolution.getResource("textures/gui/knapping.png");

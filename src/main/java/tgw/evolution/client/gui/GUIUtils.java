@@ -1,14 +1,13 @@
 package tgw.evolution.client.gui;
 
+import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.ItemRenderer;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.Vector3f;
+import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.entity.EntityRendererManager;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.texture.AtlasTexture;
@@ -17,9 +16,16 @@ import net.minecraft.client.shader.ShaderGroup;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.crash.ReportedException;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.SpawnReason;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ForgeHooksClient;
@@ -39,6 +45,7 @@ public final class GUIUtils {
     private static final Vector3f LIGHT0_POS = func_216509_a(0.2F, 1.0F, -0.7F);
     private static final Vector3f LIGHT1_POS = func_216509_a(-0.2F, 1.0F, 0.7F);
     private static final ShaderGroup SHADER_GROUP;
+    private static DifficultyInstance difficulty;
 
     static {
         ShaderGroup shader;
@@ -52,6 +59,10 @@ public final class GUIUtils {
             shader = null;
         }
         SHADER_GROUP = shader;
+    }
+
+    static {
+        setDifficulty(null);
     }
 
     private GUIUtils() {
@@ -71,6 +82,61 @@ public final class GUIUtils {
 
     public static void drawCenteredString(FontRenderer font, String text, int width, int y) {
         drawCenteredString(font, text, width, y, 0x40_4040);
+    }
+
+    public static void drawEntityOnScreen(int posX, int posY, float scale, float mouseX, float mouseY, LivingEntity entity) {
+        mouseX = posX - mouseX;
+        mouseY = posY - 45 - mouseY;
+        GlStateManager.disableBlend();
+        GlStateManager.depthMask(true);
+        GlStateManager.enableDepthTest();
+        GlStateManager.enableAlphaTest();
+        GlStateManager.enableColorMaterial();
+        GlStateManager.pushMatrix();
+        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.translatef(posX, posY, 50.0F);
+        GlStateManager.scalef(-scale, scale, scale);
+        GlStateManager.rotatef(180.0F, 0.0F, 0.0F, 1.0F);
+        float f2 = entity.renderYawOffset;
+        float f3 = entity.rotationYaw;
+        float f4 = entity.rotationPitch;
+        float f5 = entity.prevRotationYawHead;
+        float f6 = entity.rotationYawHead;
+        GlStateManager.rotatef(135.0F, 0.0F, 1.0F, 0.0F);
+        RenderHelper.enableStandardItemLighting();
+        GlStateManager.rotatef(-135.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotatef(-((float) Math.atan(mouseY / 40.0F)) * 20.0F, 1.0F, 0.0F, 0.0F);
+        boolean needsTurning = needsTurning(entity);
+        entity.renderYawOffset = (float) Math.atan(mouseX / 40.0F) * 20.0F + (needsTurning ? 180 : 0);
+        entity.rotationYaw = (float) Math.atan(mouseX / 40.0F) * 40.0F;
+        if (entity.getType() == EntityType.ENDER_DRAGON) {
+            GlStateManager.rotatef(-(float) Math.atan(mouseX / 40.0F) * 20.0F + 180, 0.0f, 1.0f, 0.0f);
+        }
+        entity.rotationPitch = -((float) Math.atan(mouseY / 40.0F)) * 20.0F;
+        entity.rotationYawHead = entity.rotationYaw + (needsTurning ? 180 : 0);
+        entity.prevRotationYawHead = entity.rotationYaw;
+        GlStateManager.translatef(0.0F, 0.0F, 0.0F);
+        try {
+            EntityRendererManager renderManager = Minecraft.getInstance().getRenderManager();
+            renderManager.setPlayerViewY(180.0F);
+            renderManager.setRenderShadow(false);
+            renderManager.renderEntity(entity, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, false);
+            renderManager.setRenderShadow(true);
+        }
+        finally {
+            entity.renderYawOffset = f2;
+            entity.rotationYaw = f3;
+            entity.rotationPitch = f4;
+            entity.prevRotationYawHead = f5;
+            entity.rotationYawHead = f6;
+            GlStateManager.popMatrix();
+            RenderHelper.disableStandardItemLighting();
+            GlStateManager.disableRescaleNormal();
+            GlStateManager.activeTexture(GLX.GL_TEXTURE1);
+            GlStateManager.disableTexture();
+            GlStateManager.activeTexture(GLX.GL_TEXTURE0);
+            GlStateManager.translatef(0.0F, 0.0F, 20.0F);
+        }
     }
 
     public static void drawRect(double x, double y, double x2, double y2, double width, int color) {
@@ -151,6 +217,29 @@ public final class GUIUtils {
         return vector3f;
     }
 
+    public static LivingEntity getEntity(World world, EntityType<?> type) {
+        LivingEntity entity = (LivingEntity) type.create(world);
+        if (entity instanceof MobEntity) {
+            try {
+                ((MobEntity) entity).onInitialSpawn(world, difficulty, SpawnReason.NATURAL, null, null);
+            }
+            catch (Throwable ignored) {
+            }
+        }
+        return entity;
+    }
+
+    public static float getEntityScale(LivingEntity entity, float baseScale, float targetHeight, float targetWidth) {
+        if (entity.getType() == EntityType.ENDER_DRAGON) {
+            targetWidth *= 3;
+            targetHeight *= 2;
+        }
+        else if (entity.getType() == EntityType.SQUID) {
+            targetHeight /= 2.5;
+        }
+        return Math.min(targetWidth / entity.getWidth(), targetHeight / entity.getHeight()) * baseScale;
+    }
+
     public static void hLine(int x0, int x1, int y, int color) {
         hLine(x0, x1, y, color, false);
     }
@@ -162,6 +251,10 @@ public final class GUIUtils {
             x1 = temp;
         }
         fill(x0, y, x1 + 1, y + 1, color, over);
+    }
+
+    private static boolean needsTurning(LivingEntity entity) {
+        return entity.getType() == EntityType.BAT;
     }
 
     public static void renderItemAndEffectIntoGUIGreyscaled(ItemRenderer itemRenderer, @Nullable LivingEntity entity, ItemStack stack, int x, int y) {
@@ -294,6 +387,16 @@ public final class GUIUtils {
 
     public static void setColor(int color) {
         GlStateManager.color3f((color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F);
+    }
+
+    public static void setDifficulty(@Nullable BlockPos pos) {
+        World world = Minecraft.getInstance().world;
+        if (world != null) {
+            difficulty = world.getDifficultyForLocation(pos == null ? world.getSpawnPoint() : pos);
+        }
+        else {
+            difficulty = new DifficultyInstance(Difficulty.NORMAL, 0, 0, 0);
+        }
     }
 
     private static void setupGuiTransform(ItemRenderer itemRenderer, int xPosition, int yPosition, boolean isGui3d) {

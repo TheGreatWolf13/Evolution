@@ -119,6 +119,7 @@ public class ItemJavelin extends ItemGenericTool implements IThrowable, ISpear, 
                     }
                 }
                 player.addStat(Stats.ITEM_USED.get(this));
+                this.addStat(player);
             }
         }
     }

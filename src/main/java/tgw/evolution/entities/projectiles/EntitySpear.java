@@ -3,11 +3,11 @@ package tgw.evolution.entities.projectiles;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
@@ -23,6 +23,7 @@ import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.items.ISpear;
 import tgw.evolution.util.NBTTypes;
+import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.hitbox.HitboxEntity;
 
 import javax.annotation.Nullable;
@@ -96,12 +97,19 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     protected void onEntityHit(EntityRayTraceResult rayTraceResult) {
         Entity hitEntity = rayTraceResult.getEntity();
         LivingEntity shooter = this.getShooter();
-        DamageSource source = EvolutionDamage.causeSpearDamage(this, shooter == null ? this : shooter);
+        DamageSourceEv source = EvolutionDamage.causeSpearDamage(this, shooter == null ? this : shooter);
         this.dealtDamage = true;
         SoundEvent soundEvent = EvolutionSounds.JAVELIN_HIT_ENTITY.get();
         float velocity = (float) this.getMotion().length();
         if (hitEntity instanceof LivingEntity && hitEntity.canBeAttackedWithItem()) {
-            hitEntity.attackEntityFrom(source, this.getDamage() * velocity);
+            LivingEntity living = (LivingEntity) hitEntity;
+            float oldHealth = living.getHealth();
+            float damage = this.getDamage() * velocity;
+            living.attackEntityFrom(source, damage);
+            if (shooter instanceof ServerPlayerEntity) {
+                this.applyDamageRaw((ServerPlayerEntity) shooter, damage, source.getType());
+                this.applyDamageActual((ServerPlayerEntity) shooter, oldHealth - living.getHealth(), source.getType(), living);
+            }
         }
         this.setMotion(this.getMotion().mul(-0.1, -0.1, -0.1));
         this.playSound(soundEvent, 1.0F, 1.0F);

@@ -1,14 +1,15 @@
 package tgw.evolution.blocks.tileentities;
 
 import net.minecraft.block.Block;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.shapes.VoxelShape;
-import tgw.evolution.Evolution;
 import tgw.evolution.blocks.IStoneVariant;
+import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.init.EvolutionTileEntities;
 import tgw.evolution.util.BlockFlags;
 import tgw.evolution.util.MathHelper;
@@ -31,12 +32,13 @@ public class TEKnapping extends TileEntity {
         super(EvolutionTileEntities.TE_KNAPPING.get());
     }
 
-    public void checkParts() {
+    public void checkParts(PlayerEntity player) {
         if (!this.world.isRemote()) {
             IStoneVariant block = (IStoneVariant) this.world.getBlockState(this.pos).getBlock();
             for (EnumKnapping knapping : EnumKnapping.values()) {
                 if (MathHelper.matricesEqual(this.matrix, knapping.getPattern())) {
                     this.spawnDrops(block.getVariant().getKnappedStack(knapping));
+                    player.addStat(EvolutionStats.TIMES_KNAPPING);
                     return;
                 }
             }

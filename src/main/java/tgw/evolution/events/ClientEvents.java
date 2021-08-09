@@ -31,6 +31,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.server.management.PlayerProfileCache;
+import net.minecraft.stats.StatisticsManager;
 import net.minecraft.tileentity.SkullTileEntity;
 import net.minecraft.util.Timer;
 import net.minecraft.util.*;
@@ -64,6 +65,7 @@ import tgw.evolution.client.audio.SoundEntityEmitted;
 import tgw.evolution.client.gui.*;
 import tgw.evolution.client.gui.advancements.ScreenAdvancements;
 import tgw.evolution.client.gui.controls.ScreenControls;
+import tgw.evolution.client.gui.stats.ScreenStats;
 import tgw.evolution.client.layers.LayerBack;
 import tgw.evolution.client.layers.LayerBelt;
 import tgw.evolution.client.renderer.ClientRenderer;
@@ -77,6 +79,7 @@ import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.items.*;
 import tgw.evolution.network.*;
 import tgw.evolution.potion.InfiniteEffectInstance;
+import tgw.evolution.stats.EvolutionStatisticsManager;
 import tgw.evolution.test.ChessboardModel;
 import tgw.evolution.util.AdvancedEntityRayTraceResult;
 import tgw.evolution.util.MathHelper;
@@ -112,6 +115,7 @@ public class ClientEvents {
                                                                                                                    "field_192036_cb");
     private static final List<EffectInstance> EFFECTS_TO_TICK = new ArrayList<>();
     private static final FieldHandler<ModContainer, EnumMap<ModConfig.Type, ModConfig>> CONFIGS = new FieldHandler<>(ModContainer.class, "configs");
+    private static final FieldHandler<ClientPlayerEntity, StatisticsManager> STATS = new FieldHandler<>(ClientPlayerEntity.class, "field_146108_bO");
     private static ClientEvents instance;
     @Nullable
     private static IGuiScreenHandler handler;
@@ -697,7 +701,7 @@ public class ClientEvents {
     @SubscribeEvent
     public void onEntityCreated(EntityJoinWorldEvent event) {
         if (event.getEntity() instanceof ClientPlayerEntity && event.getEntity().equals(this.mc.player)) {
-//            STATS.set(this.mc.player, new EvolutionStatisticsManager());
+            STATS.set(this.mc.player, new EvolutionStatisticsManager());
             RECIPE_BOOK_FIELD.set(this.mc.player, new EvolutionRecipeBook(this.mc.player.world.getRecipeManager()));
         }
     }
@@ -758,6 +762,10 @@ public class ClientEvents {
         else if (screen instanceof ControlsScreen && !(screen instanceof ScreenControls)) {
             event.setCanceled(true);
             this.mc.displayGuiScreen(new ScreenControls((ControlsScreen) event.getGui(), this.mc.gameSettings));
+        }
+        else if (screen instanceof StatsScreen) {
+            event.setCanceled(true);
+            this.mc.displayGuiScreen(new ScreenStats((StatsScreen) screen, this.mc.player.getStats()));
         }
         if (!event.isCanceled()) {
             onGuiOpen(event.getGui());

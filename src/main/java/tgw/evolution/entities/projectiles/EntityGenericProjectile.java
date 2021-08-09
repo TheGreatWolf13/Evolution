@@ -19,7 +19,6 @@ import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.network.play.server.SChangeGameStatePacket;
 import net.minecraft.particles.ParticleTypes;
-import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
@@ -34,10 +33,13 @@ import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
 import net.minecraftforge.fml.network.NetworkHooks;
 import tgw.evolution.entities.IEvolutionEntity;
+import tgw.evolution.hooks.PlayerHooks;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.util.Gravity;
 import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.NBTTypes;
+import tgw.evolution.util.damage.DamageSourceEv;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -77,6 +79,19 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
     public EntityGenericProjectile(EntityType<? extends EntityGenericProjectile> type, World worldIn) {
         super(type, worldIn);
         this.preventEntitySpawning = true;
+    }
+
+    public void applyDamageActual(ServerPlayerEntity shooter, float damage, EvolutionDamage.Type type, LivingEntity entity) {
+        PlayerHooks.addStat(shooter, EvolutionStats.DAMAGE_DEALT_ACTUAL.get(type), damage);
+        PlayerHooks.addStat(shooter, EvolutionStats.DAMAGE_DEALT_ACTUAL.get(EvolutionDamage.Type.RANGED), damage);
+        PlayerHooks.addStat(shooter, EvolutionStats.DAMAGE_DEALT_ACTUAL.get(EvolutionDamage.Type.TOTAL), damage);
+        PlayerHooks.addStat(shooter, EvolutionStats.DAMAGE_DEALT, entity.getType(), damage);
+    }
+
+    public void applyDamageRaw(ServerPlayerEntity shooter, float damage, EvolutionDamage.Type type) {
+        PlayerHooks.addStat(shooter, EvolutionStats.DAMAGE_DEALT_RAW.get(type), damage);
+        PlayerHooks.addStat(shooter, EvolutionStats.DAMAGE_DEALT_RAW.get(EvolutionDamage.Type.RANGED), damage);
+        PlayerHooks.addStat(shooter, EvolutionStats.DAMAGE_DEALT_RAW.get(EvolutionDamage.Type.TOTAL), damage);
     }
 
     @Override
@@ -182,7 +197,7 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
             this.piercedEntities.add(rayTracedEntity.getEntityId());
         }
         LivingEntity shooter = this.getShooter();
-        DamageSource source;
+        DamageSourceEv source;
         if (shooter == null) {
             source = EvolutionDamage.causeArrowDamage(this, this);
         }
@@ -194,21 +209,27 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
         if (this.isBurning() && !(rayTracedEntity instanceof EndermanEntity)) {
             rayTracedEntity.setFire(5);
         }
+        float oldHealth = rayTracedEntity instanceof LivingEntity ? ((LivingEntity) rayTracedEntity).getHealth() : 0;
         if (rayTracedEntity.attackEntityFrom(source, damage)) {
             if (rayTracedEntity instanceof LivingEntity) {
-                LivingEntity livingentity = (LivingEntity) rayTracedEntity;
+                LivingEntity livingHit = (LivingEntity) rayTracedEntity;
+                if (shooter instanceof ServerPlayerEntity) {
+                    this.applyDamageRaw((ServerPlayerEntity) shooter, damage, source.getType());
+                    float actualDamage = oldHealth - livingHit.getHealth();
+                    this.applyDamageActual((ServerPlayerEntity) shooter, actualDamage, source.getType(), livingHit);
+                }
                 if (!this.world.isRemote && this.getPierceLevel() <= 0) {
-                    livingentity.setArrowCountInEntity(livingentity.getArrowCountInEntity() + 1);
+                    livingHit.setArrowCountInEntity(livingHit.getArrowCountInEntity() + 1);
                 }
                 if (!this.world.isRemote && shooter != null) {
-                    EnchantmentHelper.applyThornEnchantments(livingentity, shooter);
-                    EnchantmentHelper.applyArthropodEnchantments(shooter, livingentity);
+                    EnchantmentHelper.applyThornEnchantments(livingHit, shooter);
+                    EnchantmentHelper.applyArthropodEnchantments(shooter, livingHit);
                 }
-                if (livingentity != shooter && livingentity instanceof PlayerEntity && shooter instanceof ServerPlayerEntity) {
+                if (livingHit != shooter && livingHit instanceof PlayerEntity && shooter instanceof ServerPlayerEntity) {
                     ((ServerPlayerEntity) shooter).connection.sendPacket(new SChangeGameStatePacket(6, 0.0F));
                 }
                 if (!rayTracedEntity.isAlive() && this.hitEntities != null) {
-                    this.hitEntities.add(livingentity);
+                    this.hitEntities.add(livingHit);
                 }
             }
             this.playSound(this.hitSound, 1.0F, 1.2F / (this.rand.nextFloat() * 0.2F + 0.9F));

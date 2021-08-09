@@ -1,6 +1,8 @@
 package tgw.evolution;
 
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.stats.Stat;
 import net.minecraft.world.World;
 import tgw.evolution.blocks.tileentities.KnappingPatterns;
 import tgw.evolution.blocks.tileentities.MoldingPatterns;
@@ -28,5 +30,10 @@ public class ServerProxy implements IProxy {
         KnappingPatterns.load();
         MoldingPatterns.load();
         Evolution.LOGGER.info("ServerProxy: Finished loading!");
+    }
+
+    @Override
+    public void updateStats(Object2LongMap<Stat<?>> statsData) {
+        throw new IllegalStateException("Only run this on the client!");
     }
 }

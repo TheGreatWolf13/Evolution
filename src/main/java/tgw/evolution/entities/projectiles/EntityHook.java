@@ -6,10 +6,10 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.IPacket;
-import net.minecraft.util.DamageSource;
 import net.minecraft.util.Direction;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
@@ -30,6 +30,7 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.hitbox.HitboxEntity;
 
 import javax.annotation.Nullable;
@@ -155,12 +156,18 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
     protected void onEntityHit(EntityRayTraceResult rayTraceResult) {
         Entity entity = rayTraceResult.getEntity();
         Entity shooter = this.getShooter();
-        DamageSource source = EvolutionDamage.causeHookDamage(this, shooter == null ? this : shooter);
+        DamageSourceEv source = EvolutionDamage.causeHookDamage(this, shooter == null ? this : shooter);
         this.dealtDamage = true;
         SoundEvent sound = SoundEvents.ITEM_TRIDENT_HIT;
         float damage = MathHelper.ceil(4 * this.getMotion().length());
         if (entity instanceof LivingEntity && entity.canBeAttackedWithItem()) {
-            entity.attackEntityFrom(source, damage);
+            LivingEntity living = (LivingEntity) entity;
+            float oldHealth = living.getHealth();
+            living.attackEntityFrom(source, damage);
+            if (shooter instanceof ServerPlayerEntity) {
+                this.applyDamageRaw((ServerPlayerEntity) shooter, damage, source.getType());
+                this.applyDamageActual((ServerPlayerEntity) shooter, oldHealth - living.getHealth(), source.getType(), living);
+            }
         }
         this.setMotion(this.getMotion().mul(-0.1, -0.1, -0.1));
         this.playSound(sound, 1.0F, 1.0F);

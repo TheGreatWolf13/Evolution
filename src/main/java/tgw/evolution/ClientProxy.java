@@ -1,12 +1,15 @@
 package tgw.evolution;
 
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
+import net.minecraft.client.gui.IProgressMeter;
 import net.minecraft.client.gui.ScreenManager;
 import net.minecraft.client.renderer.model.ModelBakery;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.stats.Stat;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldType;
@@ -23,9 +26,11 @@ import tgw.evolution.init.EvolutionContainers;
 import tgw.evolution.init.EvolutionParticles;
 import tgw.evolution.init.EvolutionRenderer;
 import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.stats.EvolutionStatisticsManager;
 import tgw.evolution.util.SkinType;
 import tgw.evolution.util.reflection.StaticFieldHandler;
 
+import java.util.Map;
 import java.util.Set;
 
 public class ClientProxy implements IProxy {
@@ -95,5 +100,17 @@ public class ClientProxy implements IProxy {
         changeWorldOrders();
         EvolutionParticles.register();
         Evolution.LOGGER.info("ClientProxy: Finished loading!");
+    }
+
+    @Override
+    public void updateStats(Object2LongMap<Stat<?>> statsData) {
+        for (Map.Entry<Stat<?>, Long> entry : statsData.entrySet()) {
+            Stat<?> stat = entry.getKey();
+            long i = entry.getValue();
+            ((EvolutionStatisticsManager) Minecraft.getInstance().player.getStats()).setValueLong(stat, i);
+        }
+        if (Minecraft.getInstance().currentScreen instanceof IProgressMeter) {
+            ((IProgressMeter) Minecraft.getInstance().currentScreen).onStatsUpdated();
+        }
     }
 }

@@ -16,6 +16,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
+import net.minecraft.stats.Stats;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
@@ -45,6 +46,7 @@ import tgw.evolution.capabilities.thirst.ThirstStats;
 import tgw.evolution.entities.EntityGenericCreature;
 import tgw.evolution.entities.IAgressive;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
+import tgw.evolution.hooks.PlayerHooks;
 import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.*;
 import tgw.evolution.inventory.extendedinventory.ContainerExtendedHandler;
@@ -64,6 +66,7 @@ public class EntityEvents {
     private static final FieldHandler<LivingEntity, CombatTracker> COMBAT_TRACKER_FIELD = new FieldHandler<>(LivingEntity.class, "field_94063_bt");
     private static final Random RANDOM = new Random();
     private static final Set<DamageSource> IGNORED_DAMAGE_SOURCES = Util.make(Sets.newHashSet(), set -> {
+        set.add(EvolutionDamage.DEHYDRATION);
         set.add(EvolutionDamage.DROWN);
         set.add(EvolutionDamage.FALL);
         set.add(EvolutionDamage.FALLING_ROCK);
@@ -73,6 +76,7 @@ public class EntityEvents {
         set.add(EvolutionDamage.VOID);
         set.add(EvolutionDamage.WALL_IMPACT);
         set.add(EvolutionDamage.WATER_IMPACT);
+        set.add(EvolutionDamage.WATER_INTOXICATION);
     });
     private static final Set<DamageSource> IGNORED_VANILLA_SOURCES = Util.make(Sets.newHashSet(), set -> {
         set.add(DamageSource.DROWN);
@@ -81,6 +85,7 @@ public class EntityEvents {
         set.add(DamageSource.OUT_OF_WORLD);
     });
     private final Map<DamageSource, EquipmentSlotType> damageMultipliers = new WeakHashMap<>();
+    //TODO replace with capability
     private final Map<UUID, Integer> playerTimeSinceLastHit = new HashMap<>();
 
     public static void calculateFallDamage(Entity entity, double velocity, double distanceOfSlowDown, boolean isWater) {
@@ -238,6 +243,10 @@ public class EntityEvents {
                 corpse.setInventory(player);
             }
             player.world.addEntity(corpse);
+            LivingEntity killer = (LivingEntity) event.getSource().getTrueSource();
+            if (killer != null) {
+                killer.onKillEntity(player);
+            }
         }
     }
 
@@ -309,13 +318,37 @@ public class EntityEvents {
             else if (source == DamageSource.DROWN) {
                 hitEntity.attackEntityFrom(EvolutionDamage.DROWN, 10.0f);
             }
+            else if ("mob".equals(source.getDamageType())) {
+                hitEntity.attackEntityFrom(EvolutionDamage.causeMobDamage((LivingEntity) source.getTrueSource()), event.getAmount());
+            }
             event.setCanceled(true);
             return;
+        }
+        if (!hitEntity.isAlive()) {
+            event.setCanceled(true);
+            return;
+        }
+        float damage = event.getAmount();
+        if (hitEntity instanceof ServerPlayerEntity) {
+            ServerPlayerEntity player = (ServerPlayerEntity) hitEntity;
+            EvolutionDamage.Type damageType = ((DamageSourceEv) source).getType();
+            ResourceLocation resLoc = EvolutionStats.DAMAGE_TAKEN_RAW.get(damageType);
+            if (resLoc != null) {
+                PlayerHooks.addStat(player, resLoc, damage);
+            }
+            if (source instanceof DamageSourceEntity) {
+                if (source instanceof DamageSourceEntityIndirect) {
+                    PlayerHooks.addStat(player, EvolutionStats.DAMAGE_TAKEN_RAW.get(EvolutionDamage.Type.RANGED), damage);
+                }
+                else {
+                    PlayerHooks.addStat(player, EvolutionStats.DAMAGE_TAKEN_RAW.get(EvolutionDamage.Type.MELEE), damage);
+                }
+            }
+            PlayerHooks.addStat(player, EvolutionStats.DAMAGE_TAKEN_RAW.get(EvolutionDamage.Type.TOTAL), damage);
         }
         if (IGNORED_DAMAGE_SOURCES.contains(source)) {
             return;
         }
-        float damage = event.getAmount();
         Evolution.LOGGER.debug("amount = " + damage);
         //Raytracing projectile damage
         if (source instanceof DamageSourceEntityIndirect && source.isProjectile()) {
@@ -360,6 +393,28 @@ public class EntityEvents {
     }
 
     @SubscribeEvent
+    public void onLivingDeath(LivingDeathEvent event) {
+        if (event.getEntityLiving() instanceof ServerPlayerEntity) {
+            ServerPlayerEntity player = (ServerPlayerEntity) event.getEntityLiving();
+            PlayerHooks.takeStat(player, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_DEATH));
+            PlayerHooks.takeStat(player, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_REST));
+            player.addStat(EvolutionStats.DEATHS);
+            DamageSource src = event.getSource();
+            if (src instanceof DamageSourceEv) {
+                ResourceLocation stat = EvolutionStats.DEATH_SOURCE.get(src.getDamageType());
+                if (stat == null) {
+                    if (!"fall_damage".equals(src.damageType)) {
+                        Evolution.LOGGER.warn("Unknown stat for {}", src);
+                    }
+                }
+                else {
+                    player.addStat(stat);
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
     public void onLivingFall(LivingFallEvent event) {
         Entity entity = event.getEntity();
         if (!(entity instanceof PlayerEntity) && !(entity instanceof EntityGenericCreature)) {
@@ -390,6 +445,7 @@ public class EntityEvents {
         }
         DamageSource source = event.getSource();
         if (event.getEntityLiving() instanceof PlayerEntity) {
+            PlayerEntity player = (PlayerEntity) event.getEntityLiving();
             EquipmentSlotType hitPart = this.damageMultipliers.remove(source);
             if (source instanceof IHitLocation) {
                 hitPart = ((IHitLocation) source).getHitLocation();
@@ -398,7 +454,34 @@ public class EntityEvents {
             if (source instanceof DamageSourceEv) {
                 type = ((DamageSourceEv) source).getType();
             }
-            event.setAmount(PlayerHelper.getDamage(hitPart, (PlayerEntity) event.getEntityLiving(), event.getAmount(), type));
+            float computedDamage = PlayerHelper.getDamage(hitPart, player, event.getAmount(), type);
+            if (computedDamage > 0) {
+                if (computedDamage > player.getHealth()) {
+                    computedDamage = player.getHealth();
+                }
+                ResourceLocation resLoc = EvolutionStats.DAMAGE_TAKEN_ACTUAL.get(type);
+                if (resLoc != null) {
+                    PlayerHooks.addStat(player, resLoc, computedDamage);
+                }
+                if (source instanceof DamageSourceEntity) {
+                    if (source instanceof DamageSourceEntityIndirect) {
+                        PlayerHooks.addStat(player, EvolutionStats.DAMAGE_TAKEN_ACTUAL.get(EvolutionDamage.Type.RANGED), computedDamage);
+                    }
+                    else {
+                        PlayerHooks.addStat(player, EvolutionStats.DAMAGE_TAKEN_ACTUAL.get(EvolutionDamage.Type.MELEE), computedDamage);
+                    }
+                    PlayerHooks.addStat(player, EvolutionStats.DAMAGE_TAKEN, source.getTrueSource().getType(), computedDamage);
+                }
+                PlayerHooks.addStat(player, EvolutionStats.DAMAGE_TAKEN_ACTUAL.get(EvolutionDamage.Type.TOTAL), computedDamage);
+            }
+            event.setAmount(computedDamage);
+        }
+    }
+
+    @SubscribeEvent
+    public void onLivingJump(LivingEvent.LivingJumpEvent event) {
+        if (event.getEntityLiving() instanceof ServerPlayerEntity) {
+            ((PlayerEntity) event.getEntityLiving()).addStat(EvolutionStats.JUMPS);
         }
     }
 
@@ -452,8 +535,14 @@ public class EntityEvents {
     }
 
     @SubscribeEvent
+    public void onPlayerLogOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        event.getPlayer().addStat(EvolutionStats.LEAVE_GAME);
+    }
+
+    @SubscribeEvent
     public void onPlayerRespawns(PlayerEvent.PlayerRespawnEvent event) {
         ServerPlayerEntity player = (ServerPlayerEntity) event.getPlayer();
+        player.getStats().markAllDirty();
         player.clearElytraFlying();
         player.extinguish();
         ServerWorld world = (ServerWorld) player.world;
@@ -548,8 +637,21 @@ public class EntityEvents {
             }
         }
         else if (event.phase == TickEvent.Phase.END) {
+            player.addStat(EvolutionStats.TIME_PLAYED);
             if (player.getPose() == Pose.SNEAKING) {
                 player.setSprinting(false);
+                player.addStat(EvolutionStats.TIME_SNEAKING);
+            }
+            if (!player.isSleeping()) {
+                if (player.isAlive()) {
+                    player.addStat(EvolutionStats.TIME_SINCE_LAST_REST);
+                }
+            }
+            else {
+                PlayerHooks.takeStat(player, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_REST));
+            }
+            if (player.isAlive()) {
+                player.addStat(EvolutionStats.TIME_SINCE_LAST_DEATH);
             }
             if (Evolution.PRONED_PLAYERS.getOrDefault(player.getUniqueID(), false)) {
                 SET_POSE_METHOD.call(player, Pose.SWIMMING);

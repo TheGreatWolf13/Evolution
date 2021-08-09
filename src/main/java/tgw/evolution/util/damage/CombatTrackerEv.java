@@ -6,6 +6,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.CombatTracker;
 import net.minecraft.util.DamageSource;
@@ -13,6 +14,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.items.IMelee;
 
 import javax.annotation.Nullable;
@@ -144,17 +146,26 @@ public class CombatTrackerEv extends CombatTracker {
                     }
                     //was doomed to fall by using
                     if (itemComp != null) {
+                        if (this.fighter instanceof ServerPlayerEntity) {
+                            ((ServerPlayerEntity) this.fighter).addStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
+                        }
                         return new TranslationTextComponent("death.fell.assist.item." + getFallSuffix(bestEntry),
                                                             this.fighter.getDisplayName(),
                                                             bestEntryDisplay,
                                                             itemComp);
                     }
                     //was doomed to fall by
+                    if (this.fighter instanceof ServerPlayerEntity) {
+                        ((ServerPlayerEntity) this.fighter).addStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
+                    }
                     return new TranslationTextComponent("death.fell.assist." + getFallSuffix(bestEntry),
                                                         this.fighter.getDisplayName(),
                                                         bestEntryDisplay);
                 }
                 //was doomed to fall
+                if (this.fighter instanceof ServerPlayerEntity) {
+                    ((ServerPlayerEntity) this.fighter).addStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
+                }
                 return new TranslationTextComponent("death.fell.killer." + getFallSuffix(bestEntry), this.fighter.getDisplayName());
             }
         }
@@ -170,15 +181,24 @@ public class CombatTrackerEv extends CombatTracker {
                 }
                 //fell too far and was finished by using
                 if (itemComp != null) {
+                    if (this.fighter instanceof ServerPlayerEntity) {
+                        ((ServerPlayerEntity) this.fighter).addStat(EvolutionStats.DEATH_SOURCE.get("fall_then_finished"));
+                    }
                     return new TranslationTextComponent("death.fell.finish.item." + getFallSuffix(bestEntry),
                                                         this.fighter.getDisplayName(),
                                                         lastEntryDisplay,
                                                         itemComp);
                 }
                 //fell too far and was finished by
+                if (this.fighter instanceof ServerPlayerEntity) {
+                    ((ServerPlayerEntity) this.fighter).addStat(EvolutionStats.DEATH_SOURCE.get("fall_then_finished"));
+                }
                 return new TranslationTextComponent("death.fell.finish." + getFallSuffix(bestEntry), this.fighter.getDisplayName(), lastEntryDisplay);
             }
             //Fell from a high place, ladder, rope, vine
+            if (this.fighter instanceof ServerPlayerEntity) {
+                ((ServerPlayerEntity) this.fighter).addStat(EvolutionStats.DEATH_SOURCE.get("fall"));
+            }
             return new TranslationTextComponent("death.fell.accident." + getFallSuffix(bestEntry), this.fighter.getDisplayName());
         }
         return lastEntry.getDamageSrc().getDeathMessage(this.fighter);

@@ -11,6 +11,8 @@ var GETHURTSOUND = ASMAPI.mapMethod("func_184601_bQ");
 var TRAVEL = ASMAPI.mapMethod("func_213352_e");
 var ISJUMPING = ASMAPI.mapField("field_70703_bu");
 var FLAGS = ASMAPI.mapField("field_184240_ax");
+var addMovementStat = ASMAPI.mapMethod("func_71000_j");
+var addMountedMovementStat = ASMAPI.mapMethod("func_71015_k");
 
 function log(message) {
 	print("[evolution/PlayerEntity Transformer]: " + message);
@@ -52,10 +54,54 @@ function initializeCoreMod() {
                         break;
                     }
                 }
+                for (var i in methods) {
+                    if (patch(methods[i], addMovementStat, patchMovementStat)) {
+                        methods[i].localVariables.clear();
+                        break;
+                    }
+                }
+                for (var i in methods) {
+                    if (patch(methods[i], addMountedMovementStat, patchMountedMovementStat)) {
+                        methods[i].localVariables.clear();
+                        break;
+                    }
+                }
 				return classNode;
 			}
 		}
 	};
+}
+
+function patchMountedMovementStat(instructions) {
+    instructions.clear();
+    instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+    instructions.add(new VarInsnNode(Opcodes.DLOAD, 1));
+    instructions.add(new VarInsnNode(Opcodes.DLOAD, 3));
+    instructions.add(new VarInsnNode(Opcodes.DLOAD, 5));
+    instructions.add(new MethodInsnNode(
+        Opcodes.INVOKESTATIC,
+        "tgw/evolution/hooks/PlayerHooks",
+        "addMountedMovementStat",
+        "(Lnet/minecraft/entity/player/PlayerEntity;DDD)V",
+        false
+    ));
+    instructions.add(new InsnNode(Opcodes.RETURN));
+}
+
+function patchMovementStat(instructions) {
+    instructions.clear();
+    instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+    instructions.add(new VarInsnNode(Opcodes.DLOAD, 1));
+    instructions.add(new VarInsnNode(Opcodes.DLOAD, 3));
+    instructions.add(new VarInsnNode(Opcodes.DLOAD, 5));
+    instructions.add(new MethodInsnNode(
+        Opcodes.INVOKESTATIC,
+        "tgw/evolution/hooks/PlayerHooks",
+        "addMovementStat",
+        "(Lnet/minecraft/entity/player/PlayerEntity;DDD)V",
+        false
+    ));
+    instructions.add(new InsnNode(Opcodes.RETURN));
 }
 
 function patchAttributes(instructions) {

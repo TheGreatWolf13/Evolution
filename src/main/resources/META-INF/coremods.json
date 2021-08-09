@@ -11,9 +11,12 @@
   "Evolution PlayerAbilities Transformer": "patches/PlayerAbilities.js",
   "Evolution PlayerAdvancements Transformer": "patches/PlayerAdvancements.js",
   "Evolution PlayerEntity Transformer": "patches/PlayerEntity.js",
+  "Evolution PlayerList Transformer": "patches/PlayerList.js",
   "Evolution PlayerModel Transformer": "patches/PlayerModel.js",
   "Evolution PlayerRenderer Transformer": "patches/PlayerRenderer.js",
   "Evolution SaveFormat Transformer": "patches/SaveFormat.js",
+  "Evolution ServerPlayerEntity Transformer": "patches/ServerPlayerEntity.js",
+  "Evolution ServerStatisticsManager Transformer": "patches/ServerStatisticsManager.js",
   "Evolution ShaderInstance Transformer": "patches/ShaderInstance.js",
   "Evolution World Transformer": "patches/World.js",
   "Evolution WorldSelectionList$Entry Transformer": "patches/WorldSelectionList$Entry.js"

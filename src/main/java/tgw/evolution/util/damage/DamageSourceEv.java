@@ -12,7 +12,37 @@ public class DamageSourceEv extends DamageSource {
         this.type = type;
     }
 
+    public DamageSourceEv absolute() {
+        this.setDamageIsAbsolute();
+        return this;
+    }
+
+    public DamageSourceEv bypassArmor() {
+        this.setDamageBypassesArmor();
+        return this;
+    }
+
+    public DamageSourceEv creative() {
+        this.setDamageAllowedInCreativeMode();
+        return this;
+    }
+
+    public DamageSourceEv fire() {
+        this.setFireDamage();
+        return this;
+    }
+
     public EvolutionDamage.Type getType() {
         return this.type;
+    }
+
+    public DamageSourceEv projectile() {
+        this.setProjectile();
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return "DamageSourceEv{" + this.type + "," + this.damageType + '}';
     }
 }

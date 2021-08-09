@@ -184,6 +184,7 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
                 }
             }
             player.addStat(Stats.ITEM_USED.get(this));
+            this.addStat(player);
         }
     }
 }

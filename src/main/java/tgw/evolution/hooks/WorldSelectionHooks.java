@@ -21,7 +21,7 @@ import net.minecraft.world.storage.WorldSummary;
 import org.apache.commons.lang3.StringUtils;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.Metrics;
+import tgw.evolution.util.Metric;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -116,7 +116,7 @@ public final class WorldSelectionHooks {
             else {
                 thirdLine = thirdLine + ", " + I18n.format("selectWorld.version") + " " + version;
             }
-            thirdLine = thirdLine + " (" + Metrics.metricBytes(summary.getSizeOnDisk(), 1) + ")";
+            thirdLine = thirdLine + " (" + Metric.bytes(summary.getSizeOnDisk(), 1) + ")";
         }
         FontRenderer fontRenderer = Minecraft.getInstance().fontRenderer;
         fontRenderer.drawString(firstLine, rowX + 32 + 3, rowY + 1, 16_777_215);

@@ -81,6 +81,7 @@ public final class Evolution {
         ModLoadingContext.get()
                          .registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
                                                  () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (s, b) -> true));
+        EvolutionStats.register();
     }
 
     public static ResourceLocation getResource(String name) {

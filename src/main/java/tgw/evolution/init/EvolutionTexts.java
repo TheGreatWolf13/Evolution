@@ -34,6 +34,11 @@ public final class EvolutionTexts {
     public static final ITextComponent GUI_KNAPPING = transl("evolution.gui.knapping");
     public static final ITextComponent GUI_OUT_OF_MEMORY = transl("evolution.gui.outOfMemory");
     public static final ITextComponent GUI_SEARCH = transl("evolution.gui.search");
+    public static final ITextComponent STAT_DAMAGE_DEALT_ACTUAL = transl("stat_type.evolution.damage_dealt_actual");
+    public static final ITextComponent STAT_DAMAGE_DEALT_RAW = transl("stat_type.evolution.damage_dealt_raw");
+    public static final ITextComponent STAT_DAMAGE_TAKEN_ACTUAL = transl("stat_type.evolution.damage_taken_actual");
+    public static final ITextComponent STAT_DAMAGE_TAKEN_BLOCKED = transl("stat_type.evolution.damage_taken_blocked");
+    public static final ITextComponent STAT_DAMAGE_TAKEN_RAW = transl("stat_type.evolution.damage_taken_raw");
     public static final ITextComponent TOOLTIP_CLAY_MOLD = transl("evolution.tooltip.clay.mold").setStyle(INFO);
     public static final ITextComponent TOOLTIP_CONSUMABLE = transl("evolution.tooltip.consumable").setStyle(LIGHT_GREY);
     public static final ITextComponent TOOLTIP_EMPTY_CONTAINER = transl("evolution.tooltip.container.empty").setStyle(INFO);
