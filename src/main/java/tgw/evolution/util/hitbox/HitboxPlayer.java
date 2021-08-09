@@ -1,6 +1,7 @@
 package tgw.evolution.util.hitbox;
 
 import net.minecraft.entity.Pose;
+import net.minecraft.entity.passive.horse.AbstractHorseEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.CrossbowItem;
 import net.minecraft.item.ItemStack;
@@ -103,6 +104,9 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
     public void init(PlayerEntity entity, float partialTicks) {
         this.reset();
         this.rotationYaw = -MathHelper.getEntityBodyYaw(entity, partialTicks);
+        if (entity.getRidingEntity() instanceof AbstractHorseEntity) {
+            this.rotationYaw = -MathHelper.getEntityBodyYaw(entity.getRidingEntity(), partialTicks);
+        }
         this.rotationPitch = -entity.getPitch(partialTicks);
         this.limbSwing = MathHelper.getLimbSwing(entity, partialTicks);
         this.limbSwingAmount = MathHelper.getLimbSwingAmount(entity, partialTicks);
