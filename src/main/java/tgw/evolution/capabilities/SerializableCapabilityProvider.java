@@ -42,5 +42,4 @@ public class SerializableCapabilityProvider<HANDLER> extends SimpleCapabilityPro
         }
         return this.getCapability().writeNBT(instance, this.getFacing());
     }
-
 }
