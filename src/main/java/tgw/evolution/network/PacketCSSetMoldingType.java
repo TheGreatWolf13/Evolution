@@ -14,8 +14,8 @@ import java.util.function.Supplier;
 
 public class PacketCSSetMoldingType implements IPacket {
 
-    private final BlockPos pos;
     private final EnumMolding molding;
+    private final BlockPos pos;
 
     public PacketCSSetMoldingType(BlockPos pos, EnumMolding molding) {
         this.pos = pos;
@@ -34,8 +34,8 @@ public class PacketCSSetMoldingType implements IPacket {
     public static void handle(PacketCSSetMoldingType packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
-                World world = context.get().getSender().world;
-                TileEntity tile = world.getTileEntity(packet.pos);
+                World world = context.get().getSender().level;
+                TileEntity tile = world.getBlockEntity(packet.pos);
                 if (tile instanceof TEMolding) {
                     ((TEMolding) tile).setType(packet.molding);
                     return;

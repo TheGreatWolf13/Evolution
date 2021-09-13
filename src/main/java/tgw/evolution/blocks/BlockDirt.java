@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
@@ -10,12 +9,12 @@ import net.minecraft.world.World;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.RockVariant;
 
-public class BlockDirt extends BlockGravity implements IStoneVariant {
+public class BlockDirt extends BlockGravity implements IRockVariant {
 
     private final RockVariant variant;
 
     public BlockDirt(RockVariant variant) {
-        super(Block.Properties.create(Material.EARTH).hardnessAndResistance(2.0F, 0.5F).sound(SoundType.GROUND), variant.getMass() / 4);
+        super(Properties.of(Material.DIRT).strength(2.0F, 0.5F).sound(SoundType.GRAVEL), variant.getMass() / 4);
         this.variant = variant;
     }
 
@@ -41,10 +40,10 @@ public class BlockDirt extends BlockGravity implements IStoneVariant {
 
     @Override
     public boolean preventSlope(World world, BlockPos pos) {
-        BlockPos up = pos.up();
+        BlockPos up = pos.above();
         if (world.getBlockState(up).getBlock() == this.variant.getGrass()) {
             return true;
         }
-        return world.getBlockState(up).getBlock() == this && world.getBlockState(pos.up(2)).getBlock() == this.variant.getGrass();
+        return world.getBlockState(up).getBlock() == this && world.getBlockState(pos.above(2)).getBlock() == this.variant.getGrass();
     }
 }

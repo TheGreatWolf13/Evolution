@@ -39,7 +39,7 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
     }
 
     private static ItemStack fillBucket(ItemStack emptyBucket, PlayerEntity player, Item fullBucket, int amount) {
-        if (player.abilities.isCreativeMode) {
+        if (player.abilities.instabuild) {
             return emptyBucket;
         }
         emptyBucket.shrink(1);
@@ -47,8 +47,8 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
         if (emptyBucket.isEmpty()) {
             return filledBucket;
         }
-        if (!player.inventory.addItemStackToInventory(filledBucket)) {
-            player.dropItem(filledBucket, false);
+        if (!player.inventory.add(filledBucket)) {
+            player.drop(filledBucket, false);
         }
         return emptyBucket;
     }
@@ -56,8 +56,8 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
     public abstract ItemStack emptyBucket();
 
     @Override
-    public void fillItemGroup(ItemGroup group, NonNullList<ItemStack> items) {
-        if (this.isInGroup(group)) {
+    public void fillItemCategory(ItemGroup group, NonNullList<ItemStack> items) {
+        if (this.allowdedIn(group)) {
             items.add(this.getDefaultInstance());
         }
     }
@@ -68,6 +68,14 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
             return new ItemStack(this);
         }
         return this.getFullStack();
+    }
+
+    @Override
+    public String getDescriptionId() {
+        if (this.emptyBucket().getItem() == this) {
+            return super.getDescriptionId();
+        }
+        return this.emptyBucket().getItem().getDescriptionId();
     }
 
     @Override
@@ -108,91 +116,10 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
         return stack;
     }
 
-    @Override
-    public String getTranslationKey() {
-        if (this.emptyBucket().getItem() == this) {
-            return super.getTranslationKey();
-        }
-        return this.emptyBucket().getItem().getTranslationKey();
-    }
-
-    @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
-        ItemStack stackInHand = player.getHeldItem(hand);
-        RayTraceResult rayTrace = rayTrace(world, player, !this.isFull(stackInHand) ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE);
-        if (rayTrace.getType() == RayTraceResult.Type.MISS) {
-            return new ActionResult<>(ActionResultType.PASS, stackInHand);
-        }
-        if (rayTrace.getType() != RayTraceResult.Type.BLOCK) {
-            return new ActionResult<>(ActionResultType.PASS, stackInHand);
-        }
-        BlockRayTraceResult blockRayTrace = (BlockRayTraceResult) rayTrace;
-        BlockPos pos = blockRayTrace.getPos();
-        if (world.isBlockModifiable(player, pos) && player.canPlayerEdit(pos, blockRayTrace.getFace(), stackInHand)) {
-            BlockState stateAtPos = world.getBlockState(pos);
-            //The bucket is empty
-            if (this.getFluid() == Fluids.EMPTY) {
-                if (stateAtPos.getBlock() instanceof IBlockFluidContainer) {
-                    Fluid fluid = ((IBlockFluidContainer) stateAtPos.getBlock()).getFluid(world, pos);
-                    if (fluid != Fluids.EMPTY) {
-                        int amount = ((IBlockFluidContainer) stateAtPos.getBlock()).getAmountRemoved(world, pos, this.getMaxAmount());
-                        if (amount > 0) {
-                            player.addStat(Stats.ITEM_USED.get(this));
-                            SoundEvent sound = this.getFluid().getAttributes().getEmptySound();
-                            if (sound == null) {
-                                sound = fluid.isIn(FluidTags.LAVA) ? SoundEvents.ITEM_BUCKET_FILL_LAVA : SoundEvents.ITEM_BUCKET_FILL;
-                            }
-                            player.playSound(sound, 1.0F, 1.0F);
-                            ItemStack fillStack = fillBucket(stackInHand, player, this.getFullBucket(fluid), amount);
-                            if (!world.isRemote) {
-                                CriteriaTriggers.FILLED_BUCKET.trigger((ServerPlayerEntity) player, new ItemStack(this.getFullBucket(fluid)));
-                            }
-                            return new ActionResult<>(ActionResultType.SUCCESS, fillStack);
-                        }
-                    }
-                }
-                return new ActionResult<>(ActionResultType.FAIL, stackInHand);
-            }
-            //The bucket is not full, but has fluid
-            if (!this.isFull(stackInHand) &&
-                stateAtPos.getBlock() instanceof IBlockFluidContainer &&
-                this.getFluid() == ((IBlockFluidContainer) stateAtPos.getBlock()).getFluid(world, pos)) {
-                int amount = ((IBlockFluidContainer) stateAtPos.getBlock()).getAmountRemoved(world, pos, this.getMissingAmount(stackInHand));
-                if (amount > 0) {
-                    player.addStat(Stats.ITEM_USED.get(this));
-                    SoundEvent sound = this.getFluid().getAttributes().getEmptySound();
-                    if (sound == null) {
-                        sound = this.getFluid().isIn(FluidTags.LAVA) ? SoundEvents.ITEM_BUCKET_FILL_LAVA : SoundEvents.ITEM_BUCKET_FILL;
-                    }
-                    player.playSound(sound, 1.0F, 1.0F);
-                    ItemStack fillStack = fillBucket(stackInHand, player, this.getFullBucket(this.getFluid()), this.getAmount(stackInHand) + amount);
-                    if (!world.isRemote) {
-                        CriteriaTriggers.FILLED_BUCKET.trigger((ServerPlayerEntity) player, new ItemStack(this.getFullBucket(this.getFluid())));
-                    }
-                    return new ActionResult<>(ActionResultType.SUCCESS, fillStack);
-                }
-            }
-            BlockPos movedPos = stateAtPos.getBlock() instanceof IBlockFluidContainer &&
-                                this.getFluid() == ((IBlockFluidContainer) stateAtPos.getBlock()).getFluid(world, pos) ?
-                                pos :
-                                blockRayTrace.getPos().offset(blockRayTrace.getFace());
-            int placed = this.tryPlaceContainedLiquid(player, world, movedPos, blockRayTrace, stackInHand);
-            if (placed > 0) {
-                if (player instanceof ServerPlayerEntity) {
-                    CriteriaTriggers.PLACED_BLOCK.trigger((ServerPlayerEntity) player, movedPos, stackInHand);
-                }
-                player.addStat(Stats.ITEM_USED.get(this));
-                return new ActionResult<>(ActionResultType.SUCCESS, this.getStackAfterPlacement(player, stackInHand, placed));
-            }
-            return new ActionResult<>(ActionResultType.FAIL, stackInHand);
-        }
-        return new ActionResult<>(ActionResultType.FAIL, stackInHand);
-    }
-
     public void playEmptySound(@Nullable PlayerEntity player, IWorld world, BlockPos pos) {
         SoundEvent sound = this.getFluid().getAttributes().getEmptySound();
         if (sound == null) {
-            sound = this.getFluid().isIn(FluidTags.LAVA) ? SoundEvents.ITEM_BUCKET_EMPTY_LAVA : SoundEvents.ITEM_BUCKET_EMPTY;
+            sound = this.getFluid().is(FluidTags.LAVA) ? SoundEvents.BUCKET_EMPTY_LAVA : SoundEvents.BUCKET_EMPTY;
         }
         world.playSound(player, pos, sound, SoundCategory.BLOCKS, 1.0F, 1.0F);
     }
@@ -211,18 +138,18 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
         BlockState stateAtPos = world.getBlockState(pos);
         Material materialAtPos = stateAtPos.getMaterial();
         boolean isReplaceable = BlockUtils.canBeReplacedByFluid(stateAtPos);
-        if (world.isAirBlock(pos) || isReplaceable) {
+        if (world.isEmptyBlock(pos) || isReplaceable) {
             int placed = 0;
-            if (this.getFluid().isIn(FluidTags.WATER) && world.dimension.doesWaterVaporize()) {
+            if (this.getFluid().is(FluidTags.WATER) && world.dimensionType().ultraWarm()) {
                 int posX = pos.getX();
                 int posY = pos.getY();
                 int posZ = pos.getZ();
                 world.playSound(player,
                                 pos,
-                                SoundEvents.BLOCK_FIRE_EXTINGUISH,
+                                SoundEvents.FIRE_EXTINGUISH,
                                 SoundCategory.BLOCKS,
                                 0.5F,
-                                2.6F + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.8F);
+                                2.6F + (world.random.nextFloat() - world.random.nextFloat()) * 0.8F);
 
                 for (int l = 0; l < 8; ++l) {
                     world.addParticle(ParticleTypes.LARGE_SMOKE, posX + Math.random(), posY + Math.random(), posZ + Math.random(), 0, 0, 0);
@@ -239,7 +166,7 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
                 }
             }
             else {
-                if (!world.isRemote && isReplaceable && !materialAtPos.isLiquid()) {
+                if (!world.isClientSide && isReplaceable && !materialAtPos.isLiquid()) {
                     world.destroyBlock(pos, true);
                 }
                 this.playEmptySound(player, world, pos);
@@ -249,7 +176,83 @@ public abstract class ItemGenericBucket extends ItemEv implements IItemFluidCont
             return placed;
         }
         return blockRayTrace != null ?
-               this.tryPlaceContainedLiquid(player, world, blockRayTrace.getPos().offset(blockRayTrace.getFace()), null, stackInHand) :
+               this.tryPlaceContainedLiquid(player, world, blockRayTrace.getBlockPos().relative(blockRayTrace.getDirection()), null, stackInHand) :
                0;
+    }
+
+    @Override
+    public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+        ItemStack stackInHand = player.getItemInHand(hand);
+        BlockRayTraceResult rayTrace = getPlayerPOVHitResult(world,
+                                                             player,
+                                                             !this.isFull(stackInHand) ?
+                                                             RayTraceContext.FluidMode.ANY :
+                                                             RayTraceContext.FluidMode.NONE);
+        if (rayTrace.getType() == RayTraceResult.Type.MISS) {
+            return new ActionResult<>(ActionResultType.PASS, stackInHand);
+        }
+        if (rayTrace.getType() != RayTraceResult.Type.BLOCK) {
+            return new ActionResult<>(ActionResultType.PASS, stackInHand);
+        }
+        BlockPos pos = rayTrace.getBlockPos();
+        if (world.mayInteract(player, pos) && player.mayUseItemAt(pos, rayTrace.getDirection(), stackInHand)) {
+            BlockState stateAtPos = world.getBlockState(pos);
+            //The bucket is empty
+            if (this.getFluid() == Fluids.EMPTY) {
+                if (stateAtPos.getBlock() instanceof IBlockFluidContainer) {
+                    Fluid fluid = ((IBlockFluidContainer) stateAtPos.getBlock()).getFluid(world, pos);
+                    if (fluid != Fluids.EMPTY) {
+                        int amount = ((IBlockFluidContainer) stateAtPos.getBlock()).getAmountRemoved(world, pos, this.getMaxAmount());
+                        if (amount > 0) {
+                            player.awardStat(Stats.ITEM_USED.get(this));
+                            SoundEvent sound = this.getFluid().getAttributes().getEmptySound();
+                            if (sound == null) {
+                                sound = fluid.is(FluidTags.LAVA) ? SoundEvents.BUCKET_FILL_LAVA : SoundEvents.BUCKET_FILL;
+                            }
+                            player.playSound(sound, 1.0F, 1.0F);
+                            ItemStack fillStack = fillBucket(stackInHand, player, this.getFullBucket(fluid), amount);
+                            if (!world.isClientSide) {
+                                CriteriaTriggers.FILLED_BUCKET.trigger((ServerPlayerEntity) player, new ItemStack(this.getFullBucket(fluid)));
+                            }
+                            return new ActionResult<>(ActionResultType.SUCCESS, fillStack);
+                        }
+                    }
+                }
+                return new ActionResult<>(ActionResultType.FAIL, stackInHand);
+            }
+            //The bucket is not full, but has fluid
+            if (!this.isFull(stackInHand) &&
+                stateAtPos.getBlock() instanceof IBlockFluidContainer &&
+                this.getFluid() == ((IBlockFluidContainer) stateAtPos.getBlock()).getFluid(world, pos)) {
+                int amount = ((IBlockFluidContainer) stateAtPos.getBlock()).getAmountRemoved(world, pos, this.getMissingAmount(stackInHand));
+                if (amount > 0) {
+                    player.awardStat(Stats.ITEM_USED.get(this));
+                    SoundEvent sound = this.getFluid().getAttributes().getEmptySound();
+                    if (sound == null) {
+                        sound = this.getFluid().is(FluidTags.LAVA) ? SoundEvents.BUCKET_FILL_LAVA : SoundEvents.BUCKET_FILL;
+                    }
+                    player.playSound(sound, 1.0F, 1.0F);
+                    ItemStack fillStack = fillBucket(stackInHand, player, this.getFullBucket(this.getFluid()), this.getAmount(stackInHand) + amount);
+                    if (!world.isClientSide) {
+                        CriteriaTriggers.FILLED_BUCKET.trigger((ServerPlayerEntity) player, new ItemStack(this.getFullBucket(this.getFluid())));
+                    }
+                    return new ActionResult<>(ActionResultType.SUCCESS, fillStack);
+                }
+            }
+            BlockPos movedPos = stateAtPos.getBlock() instanceof IBlockFluidContainer &&
+                                this.getFluid() == ((IBlockFluidContainer) stateAtPos.getBlock()).getFluid(world, pos) ?
+                                pos :
+                                rayTrace.getBlockPos().relative(rayTrace.getDirection());
+            int placed = this.tryPlaceContainedLiquid(player, world, movedPos, rayTrace, stackInHand);
+            if (placed > 0) {
+                if (player instanceof ServerPlayerEntity) {
+                    CriteriaTriggers.PLACED_BLOCK.trigger((ServerPlayerEntity) player, movedPos, stackInHand);
+                }
+                player.awardStat(Stats.ITEM_USED.get(this));
+                return new ActionResult<>(ActionResultType.SUCCESS, this.getStackAfterPlacement(player, stackInHand, placed));
+            }
+            return new ActionResult<>(ActionResultType.FAIL, stackInHand);
+        }
+        return new ActionResult<>(ActionResultType.FAIL, stackInHand);
     }
 }

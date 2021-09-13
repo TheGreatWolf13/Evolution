@@ -9,24 +9,24 @@ import static tgw.evolution.blocks.tileentities.Patterns.*;
 
 public final class MoldingPatterns {
 
-    public static final boolean[][][] NULL = FALSE_TENSOR;
-    public static final boolean[][][] AXE = {AXE_FALSE, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX};
-    public static final boolean[][][] CRUCIBLE = {TRUE_MATRIX, FULL_RING, FULL_RING, FULL_RING, FULL_RING};
-    public static final boolean[][][] SHOVEL = {SHOVEL_FALSE, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX};
-    public static final boolean[][][] HAMMER = {HAMMER_FALSE, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX};
-    public static final boolean[][][] HOE = {HOE_FALSE, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX};
-    public static final boolean[][][] PICKAXE = {{{true, true, false, true, true},
-                                                  {true, false, true, true, true},
-                                                  {true, false, true, true, true},
-                                                  {true, false, true, true, true},
-                                                  {true, true, false, true, true}}, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX};
-    public static final boolean[][][] SPEAR = {JAVELIN_FALSE, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX};
-    public static final boolean[][][] KNIFE = {KNIFE_FALSE, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX};
-    public static final boolean[][][] PROSPECTING = {{{true, true, false, true, true},
-                                                      {true, true, true, false, true},
-                                                      {true, true, true, false, true},
-                                                      {true, true, true, false, true},
-                                                      {true, false, false, false, true}}, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX};
+    public static final long[] NULL = FALSE_TENSOR;
+    public static final long[] AXE = {AXE_FALSE, MATRIX_FALSE, MATRIX_FALSE, MATRIX_FALSE, MATRIX_FALSE};
+    public static final long[] CRUCIBLE = {MATRIX_TRUE, RING_FULL, RING_FULL, RING_FULL, RING_FULL};
+    public static final long[] SHOVEL = {SHOVEL_FALSE, MATRIX_FALSE, MATRIX_FALSE, MATRIX_FALSE, MATRIX_FALSE};
+    public static final long[] HAMMER = {HAMMER_FALSE, MATRIX_FALSE, MATRIX_FALSE, MATRIX_FALSE, MATRIX_FALSE};
+    public static final long[] HOE = {HOE_FALSE, MATRIX_FALSE, MATRIX_FALSE, MATRIX_FALSE, MATRIX_FALSE};
+    //    public static final long[] PICKAXE = {{{true, true, false, true, true},
+//                                           {true, false, true, true, true},
+//                                           {true, false, true, true, true},
+//                                           {true, false, true, true, true},
+//                                           {true, true, false, true, true}}, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX};
+    public static final long[] SPEAR = {JAVELIN_FALSE, MATRIX_FALSE, MATRIX_FALSE, MATRIX_FALSE, MATRIX_FALSE};
+    public static final long[] KNIFE = {KNIFE_FALSE, MATRIX_FALSE, MATRIX_FALSE, MATRIX_FALSE, MATRIX_FALSE};
+//    public static final long[] PROSPECTING = {{{true, true, false, true, true},
+//                                               {true, true, true, false, true},
+//                                               {true, true, true, false, true},
+//                                               {true, true, true, false, true},
+//                                               {true, false, false, false, true}}, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX, FALSE_MATRIX};
 
     private static final boolean[][] SAW1 = {{true, true, true, false, false},
                                              {true, true, false, false, false},

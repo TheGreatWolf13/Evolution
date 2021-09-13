@@ -27,18 +27,18 @@ public class PacketSCPlaySoundEntityEmitted implements IPacket {
     }
 
     public static PacketSCPlaySoundEntityEmitted decode(PacketBuffer buffer) {
-        int entityId = buffer.readInt();
-        String sound = buffer.readString();
-        SoundCategory category = buffer.readEnumValue(SoundCategory.class);
+        int entityId = buffer.readVarInt();
+        String sound = buffer.readUtf();
+        SoundCategory category = buffer.readEnum(SoundCategory.class);
         float volume = buffer.readFloat();
         float pitch = buffer.readFloat();
         return new PacketSCPlaySoundEntityEmitted(entityId, sound, category, volume, pitch);
     }
 
     public static void encode(PacketSCPlaySoundEntityEmitted packet, PacketBuffer buffer) {
-        buffer.writeInt(packet.entityId);
-        buffer.writeString(packet.sound);
-        buffer.writeEnumValue(packet.category);
+        buffer.writeVarInt(packet.entityId);
+        buffer.writeUtf(packet.sound);
+        buffer.writeEnum(packet.category);
         buffer.writeFloat(packet.volume);
         buffer.writeFloat(packet.pitch);
     }

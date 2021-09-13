@@ -69,11 +69,11 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     public static int getRemainingTime(TETorch tile) {
-        return getRemainingTime(tile.getWorld().getDayTime(), tile.getTimePlaced());
+        return getRemainingTime(tile.getLevel().getDayTime(), tile.getTimePlaced());
     }
 
     @Override
-    public void addInformation(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
         if (!stack.hasTag()) {
             return;
         }
@@ -82,8 +82,8 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     @Override
-    public void fillItemGroup(ItemGroup group, NonNullList<ItemStack> items) {
-        if (this.isInGroup(group)) {
+    public void fillItemCategory(ItemGroup group, NonNullList<ItemStack> items) {
+        if (this.allowdedIn(group)) {
             items.add(this.getDefaultInstance());
         }
     }
@@ -104,7 +104,7 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     @Override
-    public UseAction getUseAction(ItemStack stack) {
+    public UseAction getUseAnimation(ItemStack stack) {
         return UseAction.BOW;
     }
 
@@ -121,40 +121,13 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
                 return;
             }
             if (getRemainingTime(world, stack) <= 0) {
-                entity.replaceItemInInventory(slot, new ItemStack(EvolutionItems.torch_unlit.get(), stack.getCount()));
+                entity.setSlot(slot, new ItemStack(EvolutionItems.torch_unlit.get(), stack.getCount()));
             }
         }
     }
 
     @Override
-    protected boolean onBlockPlaced(BlockPos pos, World world, @Nullable PlayerEntity player, ItemStack stack, BlockState state) {
-        if (!state.get(EvolutionBStates.LIT)) {
-            world.playEvent(Constants.WorldEvents.FIRE_EXTINGUISH_SOUND, pos, 0);
-        }
-        TileEntity tile = world.getTileEntity(pos);
-        if (tile instanceof TETorch) {
-            if (stack.hasTag()) {
-                ((TETorch) tile).setTimePlaced(stack.getTag().getLong("TimeCreated"));
-            }
-            else {
-                ((TETorch) tile).setTimePlaced(world.getDayTime());
-            }
-        }
-        return super.onBlockPlaced(pos, world, player, stack, state);
-    }
-
-    @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
-        ItemStack stack = player.getHeldItem(hand);
-        if (hand == Hand.OFF_HAND) {
-            return new ActionResult<>(ActionResultType.FAIL, stack);
-        }
-        player.setActiveHand(hand);
-        return new ActionResult<>(ActionResultType.SUCCESS, stack);
-    }
-
-    @Override
-    public void onPlayerStoppedUsing(ItemStack stack, World world, LivingEntity livingEntity, int timeLeft) {
+    public void releaseUsing(ItemStack stack, World world, LivingEntity livingEntity, int timeLeft) {
         if (livingEntity instanceof PlayerEntity) {
             PlayerEntity player = (PlayerEntity) livingEntity;
             int charge = this.getUseDuration(stack) - timeLeft;
@@ -165,7 +138,7 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
             if (strength < 0.1) {
                 return;
             }
-            if (!world.isRemote) {
+            if (!world.isClientSide) {
                 long timeCreated;
                 if (stack.hasTag()) {
                     timeCreated = stack.getTag().getLong("TimeCreated");
@@ -174,17 +147,44 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
                     timeCreated = world.getDayTime();
                 }
                 EntityTorch torch = new EntityTorch(world, player, timeCreated);
-                torch.shoot(player, player.rotationPitch, player.rotationYaw, 0.6f * strength, 1.0F);
+                torch.shoot(player, player.xRot, player.yRot, 0.6f * strength, 1.0F);
                 torch.pickupStatus = EntityGenericProjectile.PickupStatus.CREATIVE_ONLY;
-                world.addEntity(torch);
-                world.playMovingSound(null, torch, SoundEvents.ITEM_CROSSBOW_SHOOT, SoundCategory.PLAYERS, 1.0F, 1.0F);
+                world.addFreshEntity(torch);
+                world.playSound(null, torch, SoundEvents.CROSSBOW_SHOOT, SoundCategory.PLAYERS, 1.0F, 1.0F);
                 Evolution.usingPlaceholder(player, "sound");
-                if (!player.abilities.isCreativeMode) {
+                if (!player.abilities.instabuild) {
                     stack.shrink(1);
                 }
             }
-            player.addStat(Stats.ITEM_USED.get(this));
+            player.awardStat(Stats.ITEM_USED.get(this));
             this.addStat(player);
         }
+    }
+
+    @Override
+    protected boolean updateCustomBlockEntityTag(BlockPos pos, World world, @Nullable PlayerEntity player, ItemStack stack, BlockState state) {
+        if (!state.getValue(EvolutionBStates.LIT)) {
+            world.levelEvent(Constants.WorldEvents.FIRE_EXTINGUISH_SOUND, pos, 0);
+        }
+        TileEntity tile = world.getBlockEntity(pos);
+        if (tile instanceof TETorch) {
+            if (stack.hasTag()) {
+                ((TETorch) tile).setTimePlaced(stack.getTag().getLong("TimeCreated"));
+            }
+            else {
+                ((TETorch) tile).setTimePlaced(world.getDayTime());
+            }
+        }
+        return super.updateCustomBlockEntityTag(pos, world, player, stack, state);
+    }
+
+    @Override
+    public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (hand == Hand.OFF_HAND) {
+            return new ActionResult<>(ActionResultType.FAIL, stack);
+        }
+        player.startUsingItem(hand);
+        return new ActionResult<>(ActionResultType.SUCCESS, stack);
     }
 }

@@ -1,5 +1,7 @@
 package tgw.evolution.util;
 
+import net.minecraft.util.math.vector.Vector3d;
+
 public class Vec3f {
     public float x;
     public float y;
@@ -23,10 +25,14 @@ public class Vec3f {
     }
 
     public float inverseLength() {
-        return (float) net.minecraft.util.math.MathHelper.fastInvSqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+        return net.minecraft.util.math.MathHelper.fastInvSqrt(this.x * this.x + this.y * this.y + this.z * this.z);
     }
 
     public float length() {
         return MathHelper.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    }
+
+    public Vector3d toVec3d() {
+        return new Vector3d(this.x, this.y, this.z);
     }
 }

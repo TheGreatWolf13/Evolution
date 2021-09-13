@@ -1,6 +1,12 @@
 package tgw.evolution.events;
 
 import com.mojang.authlib.minecraft.MinecraftSessionService;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.AbstractGui;
@@ -12,14 +18,15 @@ import net.minecraft.client.gui.screen.inventory.CreativeScreen;
 import net.minecraft.client.gui.screen.inventory.InventoryScreen;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.renderer.ActiveRenderInfo;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.entity.PlayerRenderer;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ModelResourceLocation;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.client.settings.PointOfView;
 import net.minecraft.client.util.ClientRecipeBook;
+import net.minecraft.client.util.InputMappings;
+import net.minecraft.client.world.DimensionRenderInfo;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.Pose;
@@ -29,38 +36,41 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Effect;
-import net.minecraft.potion.EffectInstance;
 import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.stats.StatisticsManager;
 import net.minecraft.tileentity.SkullTileEntity;
 import net.minecraft.util.Timer;
 import net.minecraft.util.*;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.EntityRayTraceResult;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.DimensionType;
 import net.minecraft.world.GameType;
-import net.minecraft.world.dimension.DimensionType;
-import net.minecraftforge.client.ForgeIngameGui;
 import net.minecraftforge.client.event.*;
+import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.client.gui.GuiModList;
+import net.minecraftforge.fml.client.gui.screen.ModListScreen;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
+import org.lwjgl.glfw.GLFW;
 import tgw.evolution.ClientProxy;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.blocks.BlockMolding;
 import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.blocks.tileentities.TEMolding;
-import tgw.evolution.client.LungeAttackInfo;
-import tgw.evolution.client.LungeChargeInfo;
-import tgw.evolution.client.MovementInputEvolution;
 import tgw.evolution.client.audio.SoundEntityEmitted;
 import tgw.evolution.client.gui.*;
 import tgw.evolution.client.gui.advancements.ScreenAdvancements;
@@ -68,9 +78,16 @@ import tgw.evolution.client.gui.controls.ScreenControls;
 import tgw.evolution.client.gui.stats.ScreenStats;
 import tgw.evolution.client.layers.LayerBack;
 import tgw.evolution.client.layers.LayerBelt;
+import tgw.evolution.client.models.tile.BakedModelKnapping;
 import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
+import tgw.evolution.client.util.ClientEffectInstance;
+import tgw.evolution.client.util.LungeAttackInfo;
+import tgw.evolution.client.util.LungeChargeInfo;
+import tgw.evolution.client.util.MovementInputEvolution;
+import tgw.evolution.config.EvolutionConfig;
+import tgw.evolution.entities.IEntityPatch;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.hooks.InputHooks;
 import tgw.evolution.hooks.TickrateChanger;
@@ -78,13 +95,8 @@ import tgw.evolution.init.*;
 import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.items.*;
 import tgw.evolution.network.*;
-import tgw.evolution.potion.InfiniteEffectInstance;
 import tgw.evolution.stats.EvolutionStatisticsManager;
-import tgw.evolution.test.ChessboardModel;
-import tgw.evolution.util.AdvancedEntityRayTraceResult;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.OptiFineHelper;
-import tgw.evolution.util.PlayerHelper;
+import tgw.evolution.util.*;
 import tgw.evolution.util.hitbox.BodyPart;
 import tgw.evolution.util.reflection.FieldHandler;
 import tgw.evolution.util.reflection.StaticFieldHandler;
@@ -92,16 +104,17 @@ import tgw.evolution.world.dimension.DimensionOverworld;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.BiFunction;
 
 public class ClientEvents {
 
     public static final FieldHandler<Minecraft, Integer> LEFT_COUNTER_FIELD = new FieldHandler<>(Minecraft.class, "field_71429_W");
-    public static final List<EffectInstance> EFFECTS_TO_ADD = new ArrayList<>();
-    public static final List<EffectInstance> EFFECTS = new ArrayList<>();
-    public static final Map<Integer, LungeChargeInfo> ABOUT_TO_LUNGE_PLAYERS = new HashMap<>();
-    public static final Map<Integer, LungeAttackInfo> LUNGING_PLAYERS = new HashMap<>();
-    public static final Map<Integer, ItemStack> BELT_ITEMS = new HashMap<>();
-    public static final Map<Integer, ItemStack> BACK_ITEMS = new HashMap<>();
+    public static final List<ClientEffectInstance> EFFECTS_TO_ADD = new ArrayList<>();
+    public static final List<ClientEffectInstance> EFFECTS = new ArrayList<>();
+    public static final Int2ObjectMap<LungeChargeInfo> ABOUT_TO_LUNGE_PLAYERS = new Int2ObjectOpenHashMap<>();
+    public static final Int2ObjectMap<LungeAttackInfo> LUNGING_PLAYERS = new Int2ObjectOpenHashMap<>();
+    public static final Int2ObjectMap<ItemStack> BELT_ITEMS = new Int2ObjectOpenHashMap<>();
+    public static final Int2ObjectMap<ItemStack> BACK_ITEMS = new Int2ObjectOpenHashMap<>();
     private static final Map<PlayerRenderer, Object> INJECTED_PLAYER_RENDERERS = new WeakHashMap<>();
     private static final StaticFieldHandler<SkullTileEntity, PlayerProfileCache> PLAYER_PROF_FIELD = new StaticFieldHandler<>(SkullTileEntity.class,
                                                                                                                               "field_184298_j");
@@ -110,12 +123,14 @@ public class ClientEvents {
     private static final FieldHandler<GameRenderer, LightTexture> LIGHTMAP_FIELD = new FieldHandler<>(GameRenderer.class, "field_78513_d");
     private static final FieldHandler<Minecraft, Timer> TIMER_FIELD = new FieldHandler<>(Minecraft.class, "field_71428_T");
     private static final FieldHandler<Timer, Float> TICKRATE_FIELD = new FieldHandler<>(Timer.class, "field_194149_e");
-    private static final FieldHandler<EffectInstance, Integer> DURATION_FIELD = new FieldHandler<>(EffectInstance.class, "field_149431_d");
     private static final FieldHandler<ClientPlayerEntity, ClientRecipeBook> RECIPE_BOOK_FIELD = new FieldHandler<>(ClientPlayerEntity.class,
                                                                                                                    "field_192036_cb");
-    private static final List<EffectInstance> EFFECTS_TO_TICK = new ArrayList<>();
     private static final FieldHandler<ModContainer, EnumMap<ModConfig.Type, ModConfig>> CONFIGS = new FieldHandler<>(ModContainer.class, "configs");
     private static final FieldHandler<ClientPlayerEntity, StatisticsManager> STATS = new FieldHandler<>(ClientPlayerEntity.class, "field_146108_bO");
+    private static final StaticFieldHandler<DimensionRenderInfo, Object2ObjectMap<ResourceLocation, DimensionRenderInfo>> RENDER_INFO =
+            new StaticFieldHandler<>(
+            DimensionRenderInfo.class,
+            "field_239208_a_");
     private static ClientEvents instance;
     @Nullable
     private static IGuiScreenHandler handler;
@@ -131,25 +146,26 @@ public class ClientEvents {
     public int jumpTicks;
     @Nullable
     public Entity leftPointedEntity;
+    public EntityRayTraceResult leftRayTrace;
     public int mainhandTimeSinceLastHit;
     public int offhandTimeSinceLastHit;
     @Nullable
     public Entity rightPointedEntity;
+    public EntityRayTraceResult rightRayTrace;
     public boolean shouldPassEffectTick;
+    private Vector3d cameraPos = Vector3d.ZERO;
     private int currentShader;
-    private int currentThirdPersonView;
+    private DimensionOverworld dimension;
     private boolean initialized;
     private boolean inverted;
     private boolean isJumpPressed;
     private boolean isPreviousProned;
     private boolean isSneakPressed;
-    private EntityRayTraceResult leftRayTrace;
     private boolean lunging;
-    private RayTraceResult objectMouseOver;
+    //    private RayTraceResult objectMouseOver;
     private GameRenderer oldGameRenderer;
     private boolean previousPressed;
     private boolean proneToggle;
-    private EntityRayTraceResult rightRayTrace;
     private boolean sneakpreviousPressed;
     private int ticks;
     private float tps = 20.0f;
@@ -175,7 +191,16 @@ public class ClientEvents {
     }
 
     private static boolean areStacksCompatible(ItemStack a, ItemStack b) {
-        return a.isEmpty() || b.isEmpty() || a.isItemEqual(b) && ItemStack.areItemStackTagsEqual(a, b);
+        return a.isEmpty() || b.isEmpty() || a.sameItem(b) && ItemStack.tagMatches(a, b);
+    }
+
+    public static boolean containsEffect(List<ClientEffectInstance> list, Effect effect) {
+        for (ClientEffectInstance instance : list) {
+            if (instance.getEffect() == effect) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Nullable
@@ -187,6 +212,34 @@ public class ClientEvents {
             return new GuiContainerHandler((ContainerScreen<?>) currentScreen);
         }
         return null;
+    }
+
+    public static void fixInputMappings() {
+        FieldHandler<InputMappings.Type, BiFunction<Integer, String, ITextComponent>> function = new FieldHandler<>(InputMappings.Type.class,
+                                                                                                                    "field_237522_f_");
+        function.set(InputMappings.Type.KEYSYM, (keyCode, translationKey) -> {
+            String formattedString = I18n.get(translationKey);
+            if (formattedString.equals(translationKey)) {
+                String s = GLFW.glfwGetKeyName(keyCode, -1);
+                if (s != null) {
+                    return new StringTextComponent(s);
+                }
+            }
+            return new TranslationTextComponent(translationKey);
+        });
+    }
+
+    public static int getIndexAndRemove(List<ClientEffectInstance> list, Effect effect) {
+        Iterator<ClientEffectInstance> iterator = list.iterator();
+        int i = -1;
+        while (iterator.hasNext()) {
+            i++;
+            if (iterator.next().getEffect() == effect) {
+                iterator.remove();
+                return i;
+            }
+        }
+        return -1;
     }
 
     public static ClientEvents getInstance() {
@@ -261,27 +314,39 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void onModelBakeEvent(ModelBakeEvent event) {
-        // Find the existing model for ChessBoard - it will have been added automatically by vanilla due to our registration of
-        //   of the item in StartupCommon.
-        // Replace the mapping with our custom ChessboardModel.
-        ModelResourceLocation itemModelResourceLocation = ChessboardModel.MODEL_RESOURCE_LOCATION;
-        IBakedModel existingModel = event.getModelRegistry().get(itemModelResourceLocation);
-        if (existingModel == null) {
-            Evolution.LOGGER.warn("Did not find the expected vanilla baked model for ChessboardModel in registry");
-        }
-        else if (existingModel instanceof ChessboardModel) {
-            Evolution.LOGGER.warn("Tried to replace ChessboardModel twice");
-        }
-        else {
-            IBakedModel customModel = new ChessboardModel(existingModel);
-            event.getModelRegistry().put(itemModelResourceLocation, customModel);
+        for (RockVariant variant : RockVariant.values()) {
+            Block block;
+            try {
+                block = variant.getKnapping();
+            }
+            catch (IllegalStateException e) {
+                block = null;
+            }
+            if (block != null) {
+                for (BlockState state : block.getStateDefinition().getPossibleStates()) {
+                    //noinspection ObjectAllocationInLoop
+                    ModelResourceLocation variantMRL = BlockModelShapes.stateToModelLocation(state);
+                    IBakedModel existingModel = event.getModelRegistry().get(variantMRL);
+                    if (existingModel == null) {
+                        Evolution.LOGGER.warn("Did not find the expected vanilla baked model(s) for BlockKnapping in registry");
+                    }
+                    else if (existingModel instanceof BakedModelKnapping) {
+                        Evolution.LOGGER.warn("Tried to replace BakedModelKnapping twice");
+                    }
+                    else {
+                        //noinspection ObjectAllocationInLoop
+                        IBakedModel customModel = new BakedModelKnapping(existingModel, variant);
+                        event.getModelRegistry().put(variantMRL, customModel);
+                    }
+                }
+            }
         }
     }
 
-    public static boolean removeEffect(List<EffectInstance> list, Effect effect) {
-        Iterator<EffectInstance> iterator = list.iterator();
+    public static boolean removeEffect(List<ClientEffectInstance> list, Effect effect) {
+        Iterator<ClientEffectInstance> iterator = list.iterator();
         while (iterator.hasNext()) {
-            if (iterator.next().getPotion() == effect) {
+            if (iterator.next().getEffect() == effect) {
                 iterator.remove();
                 return true;
             }
@@ -291,8 +356,9 @@ public class ClientEvents {
 
     public static void removePotionEffect(Effect effect) {
         removeEffect(EFFECTS, effect);
-        removeEffect(EFFECTS_TO_ADD, effect);
-        removeEffect(EFFECTS_TO_TICK, effect);
+        if (removeEffect(EFFECTS_TO_ADD, effect)) {
+            instance.effectToAddTicks = 0;
+        }
     }
 
     private static void rmbTweakNewSlot(Slot selectedSlot, ItemStack stackOnMouse) {
@@ -304,7 +370,7 @@ public class ClientEvents {
         if (handler.isCraftingOutput(selectedSlot)) {
             return;
         }
-        ItemStack selectedSlotStack = selectedSlot.getStack();
+        ItemStack selectedSlotStack = selectedSlot.getItem();
         if (!areStacksCompatible(selectedSlotStack, stackOnMouse)) {
             return;
         }
@@ -321,11 +387,11 @@ public class ClientEvents {
     public void clearMemory() {
         EFFECTS.clear();
         EFFECTS_TO_ADD.clear();
-        EFFECTS_TO_TICK.clear();
         this.inverted = false;
+        this.dimension = null;
         ABOUT_TO_LUNGE_PLAYERS.clear();
         LUNGING_PLAYERS.clear();
-        if (this.mc.world == null) {
+        if (this.mc.level == null) {
             this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
         }
     }
@@ -335,18 +401,18 @@ public class ClientEvents {
         int startIndex = 0;
         int endIndex = slots.size();
         int direction = 1;
-        ItemStack selectedSlotStack = selectedSlot.getStack();
-        boolean findInPlayerInventory = selectedSlot.inventory != this.mc.player.inventory;
+        ItemStack selectedSlotStack = selectedSlot.getItem();
+        boolean findInPlayerInventory = selectedSlot.container != this.mc.player.inventory;
         for (int i = startIndex; i != endIndex; i += direction) {
             Slot slot = slots.get(i);
             if (handler.isIgnored(slot)) {
                 continue;
             }
-            boolean slotInPlayerInventory = slot.inventory == this.mc.player.inventory;
+            boolean slotInPlayerInventory = slot.container == this.mc.player.inventory;
             if (findInPlayerInventory != slotInPlayerInventory) {
                 continue;
             }
-            ItemStack stack = slot.getStack();
+            ItemStack stack = slot.getItem();
             if (stack.isEmpty()) {
                 continue;
             }
@@ -360,8 +426,8 @@ public class ClientEvents {
 
     @Nullable
     private List<Slot> findPushSlots(List<Slot> slots, Slot selectedSlot, int itemCount, boolean mustDistributeAll) {
-        ItemStack selectedSlotStack = selectedSlot.getStack();
-        boolean findInPlayerInventory = selectedSlot.inventory != this.mc.player.inventory;
+        ItemStack selectedSlotStack = selectedSlot.getItem();
+        boolean findInPlayerInventory = selectedSlot.container != this.mc.player.inventory;
         List<Slot> rv = new ArrayList<>();
         List<Slot> goodEmptySlots = new ArrayList<>();
         for (int i = 0; i != slots.size() && itemCount > 0; i++) {
@@ -369,16 +435,16 @@ public class ClientEvents {
             if (handler.isIgnored(slot)) {
                 continue;
             }
-            boolean slotInPlayerInventory = slot.inventory == this.mc.player.inventory;
+            boolean slotInPlayerInventory = slot.container == this.mc.player.inventory;
             if (findInPlayerInventory != slotInPlayerInventory) {
                 continue;
             }
             if (handler.isCraftingOutput(slot)) {
                 continue;
             }
-            ItemStack stack = slot.getStack();
+            ItemStack stack = slot.getItem();
             if (stack.isEmpty()) {
-                if (slot.isItemValid(selectedSlotStack)) {
+                if (slot.mayPlace(selectedSlotStack)) {
                     goodEmptySlots.add(slot);
                 }
             }
@@ -392,7 +458,7 @@ public class ClientEvents {
         for (int i = 0; i != goodEmptySlots.size() && itemCount > 0; i++) {
             Slot slot = goodEmptySlots.get(i);
             rv.add(slot);
-            itemCount -= Math.min(itemCount, slot.getStack().getMaxStackSize() - slot.getStack().getCount());
+            itemCount -= Math.min(itemCount, slot.getItem().getMaxStackSize() - slot.getItem().getCount());
         }
         if (mustDistributeAll && itemCount > 0) {
             return null;
@@ -400,19 +466,23 @@ public class ClientEvents {
         return rv;
     }
 
+    public Vector3d getCameraPos() {
+        return this.cameraPos;
+    }
+
+    public DimensionOverworld getDimension() {
+        return this.dimension;
+    }
+
     public short getDizzinessAmplifier() {
         if (this.isPlayerDizzy()) {
-            return (short) this.mc.player.getActivePotionEffect(EvolutionEffects.DIZZINESS.get()).getAmplifier();
+            return (short) this.mc.player.getEffect(EvolutionEffects.DIZZINESS.get()).getAmplifier();
         }
         return 0;
     }
 
     public float getMainhandCooledAttackStrength(float partialTicks) {
-        return MathHelper.clamp((this.mainhandTimeSinceLastHit + partialTicks) / this.mc.player.getCooldownPeriod(), 0.0F, 1.0F);
-    }
-
-    public RayTraceResult getObjectMouseOver() {
-        return this.objectMouseOver;
+        return MathHelper.clamp((this.mainhandTimeSinceLastHit + partialTicks) / this.mc.player.getCurrentItemAttackStrengthDelay(), 0.0F, 1.0F);
     }
 
     public float getOffhandCooledAttackStrength(Item item, float adjustTicks) {
@@ -421,6 +491,10 @@ public class ClientEvents {
             return MathHelper.clamp((this.offhandTimeSinceLastHit + adjustTicks) / cooldown, 0.0F, 1.0F);
         }
         return MathHelper.clamp((this.offhandTimeSinceLastHit + adjustTicks) / getRightCooldownPeriod((IOffhandAttackable) item), 0.0F, 1.0F);
+    }
+
+    public ClientRenderer getRenderer() {
+        return this.renderer;
     }
 
     public int getTickCount() {
@@ -433,9 +507,10 @@ public class ClientEvents {
 
     public void init() {
         //Bind Sky Renderer
-        if (this.mc.world.dimension.getType() == DimensionType.OVERWORLD) {
-            this.mc.world.dimension.setSkyRenderer(new SkyRenderer(this.mc.worldRenderer));
-        }
+        this.dimension = new DimensionOverworld();
+        Object2ObjectMap<ResourceLocation, DimensionRenderInfo> renderInfos = RENDER_INFO.get();
+        DimensionRenderInfo overworldRenderInfo = renderInfos.get(DimensionType.OVERWORLD_EFFECTS);
+        overworldRenderInfo.setSkyRenderHandler(new SkyRenderer(this.mc.levelRenderer, this.dimension));
         //Load skin for corpses
         PlayerProfileCache playerProfile = PLAYER_PROF_FIELD.get();
         MinecraftSessionService session = SESSION_FIELD.get();
@@ -444,21 +519,21 @@ public class ClientEvents {
             EntityPlayerCorpse.setSessionService(session);
         }
         //Replace MovementInput
-        this.mc.player.movementInput = new MovementInputEvolution(this.mc.gameSettings);
+        this.mc.player.input = new MovementInputEvolution(this.mc.options);
     }
 
     public boolean isPlayerDizzy() {
         if (this.mc.player != null) {
-            return this.mc.player.isPotionActive(EvolutionEffects.DIZZINESS.get());
+            return this.mc.player.hasEffect(EvolutionEffects.DIZZINESS.get());
         }
         return false;
     }
 
     public void leftMouseClick() {
-        float cooldown = this.mc.player.getCooldownPeriod();
+        float cooldown = this.mc.player.getCurrentItemAttackStrengthDelay();
         if (this.mainhandTimeSinceLastHit >= cooldown) {
             this.mainhandTimeSinceLastHit = 0;
-            double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getHitVec().y : Double.NaN;
+            double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getLocation().y : Double.NaN;
             if (this.leftRayTrace instanceof AdvancedEntityRayTraceResult) {
                 BodyPart part = BodyPart.ALL;
                 if (((AdvancedEntityRayTraceResult) this.leftRayTrace).getHitbox() != null) {
@@ -477,48 +552,15 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
-    public void onClientRender(TickEvent.RenderTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
-            if (!this.mc.isGamePaused() && this.mc.player != null) {
-                this.mc.getProfiler().startSection("raytrace");
-                //RayTrace entities
-                double reachDistance = this.mc.player.getAttribute(PlayerEntity.REACH_DISTANCE).getValue();
-                this.objectMouseOver = MathHelper.rayTraceBlocksFromEyes(this.mc.player, event.renderTickTime, reachDistance, false);
-                if (this.objectMouseOver.getType() == RayTraceResult.Type.BLOCK) {
-                    reachDistance = this.mc.player.getEyePosition(event.renderTickTime).distanceTo(this.objectMouseOver.getHitVec());
-                }
-                this.leftRayTrace = MathHelper.rayTraceOBBEntityFromEyes(this.mc.player, event.renderTickTime, reachDistance);
-                this.leftPointedEntity = this.leftRayTrace == null ? null : this.leftRayTrace.getEntity();
-                if (this.leftRayTrace != null) {
-                    this.objectMouseOver = this.leftRayTrace;
-                }
-                if (this.mc.player.getHeldItemOffhand().getItem() instanceof IOffhandAttackable) {
-                    this.rightRayTrace = MathHelper.rayTraceOBBEntityFromEyes(this.mc.player,
-                                                                              event.renderTickTime,
-                                                                              Math.min(reachDistance,
-                                                                                       ((IOffhandAttackable) this.mc.player.getHeldItemOffhand()
-                                                                                                                           .getItem()).getReach() +
-                                                                                       PlayerHelper.REACH_DISTANCE));
-                    this.rightPointedEntity = this.rightRayTrace == null ? null : this.rightRayTrace.getEntity();
-                }
-                else {
-                    this.rightPointedEntity = null;
-                }
-                this.mc.getProfiler().endSection();
-            }
-        }
-    }
-
-    @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
         //Turn auto-jump off
-        this.mc.gameSettings.autoJump = false;
+        this.mc.options.autoJump = false;
         if (this.mc.player == null) {
             this.initialized = false;
             this.clearMemory();
             return;
         }
-        if (this.mc.world == null) {
+        if (this.mc.level == null) {
             this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
             ABOUT_TO_LUNGE_PLAYERS.clear();
             LUNGING_PLAYERS.clear();
@@ -533,12 +575,12 @@ public class ClientEvents {
             if (this.jumpTicks > 0) {
                 this.jumpTicks--;
             }
-            if (this.mc.player.onGround) {
+            if (this.mc.player.isOnGround()) {
                 this.jumpTicks = 0;
             }
             //Apply shaders
             int shader;
-            if (!this.mc.player.isCreative() && !this.mc.player.isSpectator()) {
+            if (this.mc.options.getCameraType() == PointOfView.FIRST_PERSON && !this.mc.player.isCreative() && !this.mc.player.isSpectator()) {
                 float health = this.mc.player.getHealth();
                 if (health <= 12.5f) {
                     shader = 25;
@@ -556,42 +598,41 @@ public class ClientEvents {
             else {
                 shader = 0;
             }
-            if (this.mc.gameSettings.thirdPersonView != this.currentThirdPersonView) {
-                this.currentThirdPersonView = this.mc.gameSettings.thirdPersonView;
-                this.currentShader = 0;
-            }
             if (shader != this.currentShader) {
                 this.currentShader = shader;
                 switch (shader) {
-                    case 0:
-                        this.mc.gameRenderer.stopUseShader();
+                    case 0: {
+                        this.mc.gameRenderer.shutdownEffect();
                         break;
-                    case 25:
-                        this.mc.gameRenderer.loadShader(EvolutionResources.SHADER_DESATURATE_25);
+                    }
+                    case 25: {
+                        this.mc.gameRenderer.loadEffect(EvolutionResources.SHADER_DESATURATE_25);
                         break;
-                    case 50:
-                        this.mc.gameRenderer.loadShader(EvolutionResources.SHADER_DESATURATE_50);
+                    }
+                    case 50: {
+                        this.mc.gameRenderer.loadEffect(EvolutionResources.SHADER_DESATURATE_50);
                         break;
-                    case 75:
-                        this.mc.gameRenderer.loadShader(EvolutionResources.SHADER_DESATURATE_75);
+                    }
+                    case 75: {
+                        this.mc.gameRenderer.loadEffect(EvolutionResources.SHADER_DESATURATE_75);
                         break;
-                    default:
+                    }
+                    default: {
                         Evolution.LOGGER.warn("Unregistered shader id: {}", shader);
+                    }
                 }
             }
             GameRenderer gameRenderer = this.mc.gameRenderer;
             if (gameRenderer != this.oldGameRenderer) {
                 this.oldGameRenderer = gameRenderer;
-                LIGHTMAP_FIELD.set(this.oldGameRenderer, new LightTextureEv(this.oldGameRenderer));
+                LIGHTMAP_FIELD.set(this.oldGameRenderer, new LightTextureEv(this.oldGameRenderer, this.mc));
             }
-            if (!this.mc.isGamePaused()) {
-                if (this.mc.world.dimension instanceof DimensionOverworld) {
-                    this.mc.world.dimension.tick();
-                }
+            if (!this.mc.isPaused()) {
+                this.dimension.tick();
                 this.renderer.startTick();
-                ABOUT_TO_LUNGE_PLAYERS.entrySet().removeIf(entry -> entry.getValue().shouldBeRemoved());
+                ABOUT_TO_LUNGE_PLAYERS.int2ObjectEntrySet().removeIf(entry -> entry.getValue().shouldBeRemoved());
                 ABOUT_TO_LUNGE_PLAYERS.forEach((key, value) -> value.tick());
-                LUNGING_PLAYERS.entrySet().removeIf(entry -> entry.getValue().shouldBeRemoved());
+                LUNGING_PLAYERS.int2ObjectEntrySet().removeIf(entry -> entry.getValue().shouldBeRemoved());
                 LUNGING_PLAYERS.forEach((key, value) -> value.tick());
                 InputHooks.parryCooldownTick();
                 this.updateBeltItem();
@@ -604,7 +645,7 @@ public class ClientEvents {
                     this.isPreviousProned = isProned;
                 }
                 //Handle Disoriented Effect
-                if (this.mc.player.isPotionActive(EvolutionEffects.DISORIENTED.get())) {
+                if (this.mc.player.hasEffect(EvolutionEffects.DISORIENTED.get())) {
                     if (!this.inverted) {
                         this.inverted = true;
                     }
@@ -619,40 +660,34 @@ public class ClientEvents {
                     this.mc.player.setSprinting(false);
                 }
                 //Handle two-handed items
-                if (this.mc.player.getHeldItemMainhand().getItem() instanceof ITwoHanded && !this.mc.player.getHeldItemOffhand().isEmpty()) {
+                if (this.mc.player.getMainHandItem().getItem() instanceof ITwoHanded && !this.mc.player.getOffhandItem().isEmpty()) {
                     this.mainhandTimeSinceLastHit = 0;
                     LEFT_COUNTER_FIELD.set(this.mc, Integer.MAX_VALUE);
-                    this.mc.player.sendStatusMessage(EvolutionTexts.ACTION_TWO_HANDED, true);
+                    this.mc.player.displayClientMessage(EvolutionTexts.ACTION_TWO_HANDED, true);
                 }
                 //Prevents the player from attacking if on cooldown
                 if (this.getMainhandCooledAttackStrength(0.0F) != 1 &&
-                    this.objectMouseOver != null &&
-                    this.objectMouseOver.getType() != RayTraceResult.Type.BLOCK) {
+                    this.mc.hitResult != null &&
+                    this.mc.hitResult.getType() != RayTraceResult.Type.BLOCK) {
                     LEFT_COUNTER_FIELD.set(this.mc, Integer.MAX_VALUE);
                 }
             }
         }
         //Runs at the end of each tick
         else if (event.phase == TickEvent.Phase.END) {
-            if (!this.mc.isGamePaused()) {
+            if (!this.mc.isPaused()) {
                 //Remove inactive effects
-                if (!EFFECTS.isEmpty() || !EFFECTS_TO_TICK.isEmpty()) {
-                    Iterator<EffectInstance> iterator = EFFECTS.iterator();
+                if (!EFFECTS.isEmpty()) {
+                    Iterator<ClientEffectInstance> iterator = EFFECTS.iterator();
                     while (iterator.hasNext()) {
-                        Effect effect = iterator.next().getPotion();
-                        if (!this.mc.player.isPotionActive(effect)) {
+                        ClientEffectInstance instance = iterator.next();
+                        Effect effect = instance.getEffect();
+                        if (instance.getDuration() == 0 || !this.mc.player.hasEffect(effect)) {
                             iterator.remove();
                         }
-                    }
-                    iterator = EFFECTS_TO_TICK.iterator();
-                    while (iterator.hasNext()) {
-                        Effect effect = iterator.next().getPotion();
-                        if (!this.mc.player.isPotionActive(effect)) {
-                            iterator.remove();
+                        else {
+                            instance.tick();
                         }
-                    }
-                    for (EffectInstance effect : EFFECTS_TO_TICK) {
-                        DURATION_FIELD.set(effect, effect.getDuration() - 1);
                     }
                 }
                 if (this.shouldPassEffectTick) {
@@ -660,35 +695,35 @@ public class ClientEvents {
                     this.shouldPassEffectTick = false;
                 }
                 //Proning
-                boolean pressed = ClientProxy.TOGGLE_PRONE.isKeyDown();
+                boolean pressed = ClientProxy.TOGGLE_PRONE.isDown();
                 if (pressed && !this.previousPressed) {
                     this.proneToggle = !this.proneToggle;
                 }
                 this.previousPressed = pressed;
                 this.updateClientProneState(this.mc.player);
                 //Sneak on ladders
-                if (this.mc.player.isOnLadder()) {
+                if (this.mc.player.onClimbable()) {
                     if (this.isSneakPressed && !this.sneakpreviousPressed) {
                         this.sneakpreviousPressed = true;
-                        this.mc.player.setMotion(Vec3d.ZERO);
+                        this.mc.player.setDeltaMovement(Vector3d.ZERO);
                     }
                 }
                 //Handle creative features
-                if (this.mc.player.isCreative() && ClientProxy.BUILDING_ASSIST.isKeyDown()) {
-                    if (this.mc.player.getHeldItemMainhand().getItem() instanceof BlockItem) {
-                        if (this.objectMouseOver.getType() == RayTraceResult.Type.BLOCK) {
-                            BlockPos pos = ((BlockRayTraceResult) this.objectMouseOver).getPos();
-                            if (!this.mc.world.getBlockState(pos).isAir(this.mc.world, pos)) {
-                                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSChangeBlock((BlockRayTraceResult) this.objectMouseOver));
+                if (this.mc.player.isCreative() && ClientProxy.BUILDING_ASSIST.isDown()) {
+                    if (this.mc.player.getMainHandItem().getItem() instanceof BlockItem) {
+                        if (this.mc.hitResult.getType() == RayTraceResult.Type.BLOCK) {
+                            BlockPos pos = ((BlockRayTraceResult) this.mc.hitResult).getBlockPos();
+                            if (!this.mc.level.getBlockState(pos).isAir(this.mc.level, pos)) {
+                                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSChangeBlock((BlockRayTraceResult) this.mc.hitResult));
                                 this.swingArm(Hand.MAIN_HAND);
-                                this.mc.player.swingArm(Hand.MAIN_HAND);
+                                this.mc.player.swing(Hand.MAIN_HAND);
                             }
                         }
                     }
                 }
                 //Handle swing
                 this.ticks++;
-                if (this.mc.playerController.getIsHittingBlock()) {
+                if (this.mc.gameMode.isDestroying()) {
                     this.swingArm(Hand.MAIN_HAND);
                 }
                 this.lunging = false;
@@ -702,7 +737,7 @@ public class ClientEvents {
     public void onEntityCreated(EntityJoinWorldEvent event) {
         if (event.getEntity() instanceof ClientPlayerEntity && event.getEntity().equals(this.mc.player)) {
             STATS.set(this.mc.player, new EvolutionStatisticsManager());
-            RECIPE_BOOK_FIELD.set(this.mc.player, new EvolutionRecipeBook(this.mc.player.world.getRecipeManager()));
+            RECIPE_BOOK_FIELD.set(this.mc.player, new EvolutionRecipeBook());
         }
     }
 
@@ -757,15 +792,15 @@ public class ClientEvents {
         }
         else if (screen instanceof AdvancementsScreen) {
             event.setCanceled(true);
-            this.mc.displayGuiScreen(new ScreenAdvancements(this.mc.getConnection().getAdvancementManager()));
+            this.mc.setScreen(new ScreenAdvancements(this.mc.getConnection().getAdvancements()));
         }
         else if (screen instanceof ControlsScreen && !(screen instanceof ScreenControls)) {
             event.setCanceled(true);
-            this.mc.displayGuiScreen(new ScreenControls((ControlsScreen) event.getGui(), this.mc.gameSettings));
+            this.mc.setScreen(new ScreenControls((ControlsScreen) event.getGui(), this.mc.options));
         }
         else if (screen instanceof StatsScreen) {
             event.setCanceled(true);
-            this.mc.displayGuiScreen(new ScreenStats((StatsScreen) screen, this.mc.player.getStats()));
+            this.mc.setScreen(new ScreenStats((StatsScreen) screen, this.mc.player.getStats()));
         }
         if (!event.isCanceled()) {
             onGuiOpen(event.getGui());
@@ -779,8 +814,8 @@ public class ClientEvents {
                                        event.getWidgetList().get(6).y + 24,
                                        event.getWidgetList().get(6).getWidth(),
                                        event.getWidgetList().get(6).getHeight(),
-                                       I18n.format("evolution.ingamemenu.modoptions"),
-                                       button -> this.mc.displayGuiScreen(new GuiModList(event.getGui()))));
+                                       EvolutionTexts.GUI_MENU_MOD_OPTIONS,
+                                       button -> this.mc.setScreen(new ModListScreen(event.getGui()))));
             Widget shareToLan = event.getWidgetList().get(6);
             shareToLan.x = event.getGui().width / 2 - 102;
             shareToLan.setWidth(204);
@@ -797,24 +832,24 @@ public class ClientEvents {
                                   event.getGui().height / 4 + 72 - 16,
                                   98,
                                   20,
-                                  I18n.format("menu.sendFeedback"),
-                                  button -> this.mc.displayGuiScreen(new ConfirmOpenLinkScreen(b -> {
+                                  EvolutionTexts.GUI_MENU_SEND_FEEDBACK,
+                                  button -> this.mc.setScreen(new ConfirmOpenLinkScreen(b -> {
                                       if (b) {
-                                          Util.getOSType().openURI(feedbackLink);
+                                          Util.getPlatform().openUri(feedbackLink);
                                       }
-                                      this.mc.displayGuiScreen(event.getGui());
+                                      this.mc.setScreen(event.getGui());
                                   }, feedbackLink, true)));
             String bugsLink = "https://github.com/MGSchultz-13/Evolution/issues";
             bugs = new Button(event.getGui().width / 2 + 4,
                               event.getGui().height / 4 + 72 - 16,
                               98,
                               20,
-                              I18n.format("menu.reportBugs"),
-                              button -> this.mc.displayGuiScreen(new ConfirmOpenLinkScreen(b -> {
+                              EvolutionTexts.GUI_MENU_REPORT_BUGS,
+                              button -> this.mc.setScreen(new ConfirmOpenLinkScreen(b -> {
                                   if (b) {
-                                      Util.getOSType().openURI(bugsLink);
+                                      Util.getPlatform().openUri(bugsLink);
                                   }
-                                  this.mc.displayGuiScreen(event.getGui());
+                                  this.mc.setScreen(event.getGui());
                               }, bugsLink, true)));
             event.addWidget(feedback);
             event.addWidget(bugs);
@@ -831,7 +866,7 @@ public class ClientEvents {
         }
         Slot selectedSlot = handler.getSlotUnderMouse(x, y);
         oldSelectedSlot = selectedSlot;
-        ItemStack stackOnMouse = this.mc.player.inventory.getItemStack();
+        ItemStack stackOnMouse = this.mc.player.inventory.getCarried();
         if (button == MouseButton.LEFT) {
             if (stackOnMouse.isEmpty()) {
                 canDoLMBDrag = true;
@@ -865,12 +900,12 @@ public class ClientEvents {
         if (handler.isIgnored(selectedSlot)) {
             return false;
         }
-        ItemStack stackOnMouse = this.mc.player.inventory.getItemStack();
+        ItemStack stackOnMouse = this.mc.player.inventory.getCarried();
         if (button == MouseButton.LEFT) {
             if (!canDoLMBDrag) {
                 return false;
             }
-            ItemStack selectedSlotStack = selectedSlot.getStack();
+            ItemStack selectedSlotStack = selectedSlot.getItem();
             if (selectedSlotStack.isEmpty()) {
                 return false;
             }
@@ -946,11 +981,11 @@ public class ClientEvents {
             return true;
         }
         List<Slot> slots = handler.getSlots();
-        ItemStack selectedSlotStack = selectedSlot.getStack();
+        ItemStack selectedSlotStack = selectedSlot.getItem();
         if (selectedSlotStack.isEmpty()) {
             return true;
         }
-        ItemStack stackOnMouse = this.mc.player.inventory.getItemStack();
+        ItemStack stackOnMouse = this.mc.player.inventory.getCarried();
         int numItemsToMove = Math.abs(delta);
         boolean pushItems = delta < 0;
         if (handler.isCraftingOutput(selectedSlot)) {
@@ -973,7 +1008,7 @@ public class ClientEvents {
                             handler.clickSlot(slot, MouseButton.LEFT, false);
                         }
                         else {
-                            int clickTimes = slot.getStack().getMaxStackSize() - slot.getStack().getCount();
+                            int clickTimes = slot.getItem().getMaxStackSize() - slot.getItem().getCount();
                             while (clickTimes-- > 0) {
                                 handler.clickSlot(slot, MouseButton.RIGHT, false);
                             }
@@ -992,7 +1027,7 @@ public class ClientEvents {
             return true;
         }
         if (pushItems) {
-            if (!stackOnMouse.isEmpty() && !selectedSlot.isItemValid(stackOnMouse)) {
+            if (!stackOnMouse.isEmpty() && !selectedSlot.mayPlace(stackOnMouse)) {
                 return true;
             }
             numItemsToMove = Math.min(numItemsToMove, selectedSlotStack.getCount());
@@ -1003,7 +1038,7 @@ public class ClientEvents {
             }
             handler.clickSlot(selectedSlot, MouseButton.LEFT, false);
             for (Slot slot : targetSlots) {
-                int clickTimes = slot.getStack().getMaxStackSize() - slot.getStack().getCount();
+                int clickTimes = slot.getItem().getMaxStackSize() - slot.getItem().getCount();
                 clickTimes = Math.min(clickTimes, numItemsToMove);
                 numItemsToMove -= clickTimes;
                 while (clickTimes-- > 0) {
@@ -1020,13 +1055,13 @@ public class ClientEvents {
             if (targetSlot == null) {
                 break;
             }
-            int numItemsInTargetSlot = targetSlot.getStack().getCount();
+            int numItemsInTargetSlot = targetSlot.getItem().getCount();
             if (handler.isCraftingOutput(targetSlot)) {
                 if (maxItemsToMove < numItemsInTargetSlot) {
                     break;
                 }
                 maxItemsToMove -= numItemsInTargetSlot;
-                if (!stackOnMouse.isEmpty() && !selectedSlot.isItemValid(stackOnMouse)) {
+                if (!stackOnMouse.isEmpty() && !selectedSlot.mayPlace(stackOnMouse)) {
                     break;
                 }
                 handler.clickSlot(selectedSlot, MouseButton.LEFT, false);
@@ -1037,7 +1072,7 @@ public class ClientEvents {
             int numItemsToMoveFromTargetSlot = Math.min(numItemsToMove, numItemsInTargetSlot);
             maxItemsToMove -= numItemsToMoveFromTargetSlot;
             numItemsToMove -= numItemsToMoveFromTargetSlot;
-            if (!stackOnMouse.isEmpty() && !targetSlot.isItemValid(stackOnMouse)) {
+            if (!stackOnMouse.isEmpty() && !targetSlot.mayPlace(stackOnMouse)) {
                 break;
             }
             handler.clickSlot(targetSlot, MouseButton.LEFT, false);
@@ -1057,20 +1092,25 @@ public class ClientEvents {
     @SubscribeEvent
     public void onPlayerInput(InputUpdateEvent event) {
         MovementInput movementInput = event.getMovementInput();
-        this.isJumpPressed = movementInput.jump;
-        this.isSneakPressed = movementInput.sneak;
+        this.isJumpPressed = movementInput.jumping;
+        this.isSneakPressed = movementInput.shiftKeyDown;
         if (!this.isSneakPressed) {
             this.sneakpreviousPressed = false;
         }
-        if (this.mc.player.getPose() == Pose.SWIMMING && !this.mc.player.isInWater() && !this.mc.player.isOnLadder()) {
-            movementInput.jump = false;
+        if (this.mc.player.getPose() == Pose.SWIMMING && !this.mc.player.isInWater() && !this.mc.player.onClimbable()) {
+            movementInput.jumping = false;
         }
-        if (this.proneToggle && !this.mc.player.isOnLadder() && this.mc.player.onGround && this.isJumpPressed) {
-            BlockPos pos = this.mc.player.getPosition().up();
-            if (!this.mc.world.getBlockState(pos).getMaterial().blocksMovement()) {
+        if (this.proneToggle && !this.mc.player.onClimbable() && this.mc.player.isOnGround() && this.isJumpPressed) {
+            BlockPos pos = this.mc.player.blockPosition().above();
+            if (!this.mc.level.getBlockState(pos).getMaterial().blocksMotion()) {
                 this.proneToggle = false;
             }
         }
+    }
+
+    @SubscribeEvent
+    public void onPlayerRenderPost(RenderPlayerEvent.Post event) {
+        this.renderer.isRenderingPlayer = false;
     }
 
     @SubscribeEvent
@@ -1083,140 +1123,151 @@ public class ClientEvents {
         }
     }
 
-    @SubscribeEvent
-    public void onPotionAdded(PotionEvent.PotionAddedEvent event) {
-        if (!event.getEntityLiving().world.isRemote) {
-            return;
-        }
-        if (event.getEntityLiving() != this.mc.player) {
-            return;
-        }
-        if (event.getOldPotionEffect() == null) {
-            EffectInstance toAdd = new InfiniteEffectInstance(event.getPotionEffect());
-            EFFECTS_TO_ADD.add(toAdd);
-            EFFECTS_TO_TICK.add(toAdd);
-        }
-        else {
-            boolean isSame = event.getOldPotionEffect().getAmplifier() == event.getPotionEffect().getAmplifier();
-            if (isSame) {
-                removeEffect(EFFECTS, event.getOldPotionEffect().getPotion());
+    public void onPotionAdded(ClientEffectInstance instance, PacketSCAddEffect.Logic logic) {
+        switch (logic) {
+            case ADD:
+            case REPLACE: {
+                EFFECTS_TO_ADD.add(instance);
+                break;
             }
-            removeEffect(EFFECTS_TO_TICK, event.getOldPotionEffect().getPotion());
-            boolean wasAdding = removeEffect(EFFECTS_TO_ADD, event.getOldPotionEffect().getPotion());
-            InfiniteEffectInstance newEffect = new InfiniteEffectInstance(event.getOldPotionEffect());
-            newEffect.combine(event.getPotionEffect());
-            if (isSame && !wasAdding) {
-                EFFECTS.add(newEffect);
+            case UPDATE: {
+                removeEffect(EFFECTS, instance.getEffect());
+                int index = getIndexAndRemove(EFFECTS_TO_ADD, instance.getEffect());
+                if (index != -1) {
+                    EFFECTS_TO_ADD.add(index, instance);
+                }
+                else {
+                    EFFECTS.add(instance);
+                }
+                break;
             }
-            else {
-                EFFECTS_TO_ADD.add(newEffect);
-            }
-            EFFECTS_TO_TICK.add(newEffect);
         }
     }
 
     @SubscribeEvent
+    public void onRenderBlockHighlight(DrawHighlightEvent.HighlightBlock event) {
+        this.onRenderHightlight(event);
+    }
+
+    @SubscribeEvent
+    public void onRenderEntityHighlight(DrawHighlightEvent.HighlightEntity event) {
+        this.onRenderHightlight(event);
+    }
+
+    @SubscribeEvent
     public void onRenderGameOverlay(RenderGameOverlayEvent.Pre event) {
-        if (this.mc.player.getRidingEntity() != null) {
+        if (this.mc.player.getVehicle() != null) {
             ForgeIngameGui.renderFood = true;
         }
         if (event.getType() == RenderGameOverlayEvent.ElementType.CROSSHAIRS) {
             event.setCanceled(true);
-            this.renderer.renderAttackIndicator(event.getPartialTicks());
+            this.renderer.renderCrosshair(event.getMatrixStack(), event.getPartialTicks());
             return;
         }
         if (event.getType() == RenderGameOverlayEvent.ElementType.HEALTH) {
             event.setCanceled(true);
-            this.renderer.renderHealth();
+            this.renderer.renderHealth(event.getMatrixStack());
             return;
         }
         if (event.getType() == RenderGameOverlayEvent.ElementType.POTION_ICONS) {
             event.setCanceled(true);
-            this.renderer.renderPotionIcons(event.getPartialTicks());
+            this.renderer.renderPotionIcons(event.getMatrixStack(), event.getPartialTicks());
             return;
         }
         if (event.getType() == RenderGameOverlayEvent.ElementType.FOOD) {
             event.setCanceled(true);
-            this.renderer.renderFoodAndThirst();
+            this.renderer.renderFoodAndThirst(event.getMatrixStack());
         }
     }
 
     @SubscribeEvent
     public void onRenderHand(RenderHandEvent event) {
         event.setCanceled(true);
-        boolean sleeping = this.mc.getRenderViewEntity() instanceof LivingEntity && ((LivingEntity) this.mc.getRenderViewEntity()).isSleeping();
-        if (this.mc.gameSettings.thirdPersonView == 0 &&
+        boolean sleeping = this.mc.getCameraEntity() instanceof LivingEntity && ((LivingEntity) this.mc.getCameraEntity()).isSleeping();
+        if (this.mc.options.getCameraType() == PointOfView.FIRST_PERSON &&
             !sleeping &&
-            !this.mc.gameSettings.hideGUI &&
-            this.mc.playerController.getCurrentGameType() != GameType.SPECTATOR) {
-            this.mc.gameRenderer.enableLightmap();
-            this.renderer.renderItemInFirstPerson(event.getPartialTicks());
-            this.mc.gameRenderer.disableLightmap();
+            !this.mc.options.hideGui &&
+            this.mc.gameMode.getPlayerMode() != GameType.SPECTATOR) {
+            this.mc.gameRenderer.lightTexture().turnOnLightLayer();
+            this.renderer.renderItemInFirstPerson(event.getMatrixStack(), event.getBuffers(), event.getLight(), event.getPartialTicks());
+            this.mc.gameRenderer.lightTexture().turnOffLightLayer();
         }
     }
 
-    @SubscribeEvent
-    public void onRenderOutlines(DrawBlockHighlightEvent event) {
+    private void onRenderHightlight(DrawHighlightEvent event) {
         event.setCanceled(true);
+        MatrixStack matrices = event.getMatrix();
+        IRenderTypeBuffer buffer = event.getBuffers();
         ActiveRenderInfo renderInfo = event.getInfo();
-        RayTraceResult rayTrace = this.objectMouseOver;
+        RayTraceResult rayTrace = this.mc.hitResult;
         if (rayTrace != null && rayTrace.getType() == RayTraceResult.Type.BLOCK) {
-            BlockPos hitPos = ((BlockRayTraceResult) rayTrace).getPos();
-            this.renderer.renderBlockOutlines(renderInfo, hitPos);
-            if (!this.mc.world.getWorldBorder().contains(hitPos)) {
-                return;
-            }
-            if (this.mc.world.getBlockState(hitPos).getBlock() instanceof BlockKnapping) {
-                TEKnapping tile = (TEKnapping) this.mc.world.getTileEntity(hitPos);
-                this.renderer.renderOutlines(tile.type.getShape(), renderInfo, hitPos);
-                return;
-            }
-            if (this.mc.world.getBlockState(hitPos).getBlock() instanceof BlockMolding) {
-                TEMolding tile = (TEMolding) this.mc.world.getTileEntity(hitPos);
-                this.renderer.renderOutlines(tile.molding.getShape(), renderInfo, hitPos);
+            BlockPos hitPos = ((BlockRayTraceResult) rayTrace).getBlockPos();
+            if (this.mc.level.getWorldBorder().isWithinBounds(hitPos)) {
+                Block block = this.mc.level.getBlockState(hitPos).getBlock();
+                if (block instanceof BlockKnapping) {
+                    TEKnapping tile = (TEKnapping) this.mc.level.getBlockEntity(hitPos);
+                    this.renderer.renderOutlines(matrices, buffer, tile.type.getShape(), renderInfo, hitPos);
+                }
+                else if (block instanceof BlockMolding) {
+                    TEMolding tile = (TEMolding) this.mc.level.getBlockEntity(hitPos);
+                    this.renderer.renderOutlines(matrices, buffer, tile.molding.getShape(), renderInfo, hitPos);
+                }
+                this.renderer.renderBlockOutlines(matrices, buffer, renderInfo, hitPos);
             }
         }
         else if (rayTrace != null && rayTrace.getType() == RayTraceResult.Type.ENTITY) {
-            if (this.mc.getRenderManager().isDebugBoundingBox() && rayTrace instanceof AdvancedEntityRayTraceResult) {
+            if (this.mc.getEntityRenderDispatcher().shouldRenderHitBoxes() && rayTrace instanceof AdvancedEntityRayTraceResult) {
                 AdvancedEntityRayTraceResult advRayTrace = (AdvancedEntityRayTraceResult) rayTrace;
                 if (advRayTrace.getHitbox() != null) {
-                    this.renderer.renderHitbox(advRayTrace.getEntity(), advRayTrace.getHitbox(), renderInfo, event.getPartialTicks());
+                    this.renderer.renderHitbox(matrices,
+                                               buffer,
+                                               advRayTrace.getEntity(),
+                                               advRayTrace.getHitbox(),
+                                               renderInfo,
+                                               event.getPartialTicks());
                 }
             }
         }
-        if (this.mc.getRenderManager().isDebugBoundingBox() &&
-            this.mc.player.getHeldItemMainhand().getItem() == EvolutionItems.placeholder_item.get()) {
-            this.renderer.renderHitbox(this.mc.player,
-                                       MathHelper.getPlayerHitboxType(this.mc.player).getBoxes().get(0),
+        if (this.mc.getEntityRenderDispatcher().shouldRenderHitBoxes() &&
+            this.mc.player.getMainHandItem().getItem() == EvolutionItems.debug_item.get()) {
+            this.renderer.renderHitbox(matrices,
+                                       buffer,
+                                       this.mc.player,
+                                       ((IEntityPatch) this.mc.player).getHitboxes().getBoxes().get(0),
                                        renderInfo,
                                        event.getPartialTicks());
         }
     }
 
+    @SubscribeEvent
+    public void onRenderMissHighlight(DrawHighlightEvent event) {
+        this.onRenderHightlight(event);
+    }
+
     public void performLungeMovement() {
-        if (!this.lunging && this.mc.player.onGround && this.mc.player.moveForward > 0) {
+        if (!this.lunging && this.mc.player.isOnGround() && this.mc.player.zza > 0) {
             this.lunging = true;
-            Vec3d oldMotion = this.mc.player.getMotion();
-            float sinFacing = MathHelper.sinDeg(this.mc.player.rotationYaw);
-            float cosFacing = MathHelper.cosDeg(this.mc.player.rotationYaw);
+            Vector3d oldMotion = this.mc.player.getDeltaMovement();
+            float sinFacing = MathHelper.sinDeg(this.mc.player.yRot);
+            float cosFacing = MathHelper.cosDeg(this.mc.player.yRot);
             double lungeBoost = 0.15;
-            this.mc.player.setMotion(oldMotion.x - lungeBoost * sinFacing, oldMotion.y, oldMotion.z + lungeBoost * cosFacing);
+            this.mc.player.setDeltaMovement(oldMotion.x - lungeBoost * sinFacing, oldMotion.y, oldMotion.z + lungeBoost * cosFacing);
         }
     }
 
     public void performMainhandLunge(ItemStack mainhandStack, float strength) {
         this.mainhandTimeSinceLastHit = 0;
         this.renderer.resetFullEquipProgress(Hand.MAIN_HAND);
-        double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getHitVec().y : Double.NaN;
+        double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getLocation().y : Double.NaN;
         int slot = Integer.MIN_VALUE;
-        for (int i = 0; i < this.mc.player.inventory.mainInventory.size(); i++) {
-            if (this.mc.player.inventory.mainInventory.get(i).equals(mainhandStack, false)) {
+        for (int i = 0; i < this.mc.player.inventory.items.size(); i++) {
+            if (this.mc.player.inventory.items.get(i).equals(mainhandStack, false)) {
                 slot = i;
                 break;
             }
         }
         if (slot == Integer.MIN_VALUE) {
-            if (this.mc.player.inventory.offHandInventory.get(0).equals(mainhandStack, false)) {
+            if (this.mc.player.inventory.items.get(0).equals(mainhandStack, false)) {
                 slot = -1;
             }
         }
@@ -1231,14 +1282,14 @@ public class ClientEvents {
     public void performOffhandLunge(ItemStack offhandStack, float strength) {
         this.offhandTimeSinceLastHit = 0;
         this.renderer.resetFullEquipProgress(Hand.OFF_HAND);
-        double rayTraceY = this.rightRayTrace != null ? this.rightRayTrace.getHitVec().y : Double.NaN;
+        double rayTraceY = this.rightRayTrace != null ? this.rightRayTrace.getLocation().y : Double.NaN;
         int slot = Integer.MIN_VALUE;
-        if (this.mc.player.inventory.offHandInventory.get(0).equals(offhandStack, false)) {
+        if (this.mc.player.inventory.offhand.get(0).equals(offhandStack, false)) {
             slot = -1;
         }
         if (slot == Integer.MIN_VALUE) {
-            for (int i = 0; i < this.mc.player.inventory.mainInventory.size(); i++) {
-                if (this.mc.player.inventory.mainInventory.get(i).equals(offhandStack, false)) {
+            for (int i = 0; i < this.mc.player.inventory.items.size(); i++) {
+                if (this.mc.player.inventory.items.get(i).equals(offhandStack, false)) {
                     slot = i;
                     break;
                 }
@@ -1261,10 +1312,14 @@ public class ClientEvents {
         float cooldown = getRightCooldownPeriod(item);
         if (this.offhandTimeSinceLastHit >= cooldown) {
             this.offhandTimeSinceLastHit = 0;
-            double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getHitVec().y : Double.NaN;
+            double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getLocation().y : Double.NaN;
             EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.rightPointedEntity, Hand.OFF_HAND, rayTraceY));
             this.swingArm(Hand.OFF_HAND);
         }
+    }
+
+    public void setCameraPos(Vector3d cameraPos) {
+        this.cameraPos = cameraPos;
     }
 
     private boolean shouldBeProbe(PlayerEntity player) {
@@ -1274,7 +1329,11 @@ public class ClientEvents {
         if (player.isInLava()) {
             return false;
         }
-        return !player.isOnLadder() || !this.isJumpPressed && player.onGround;
+        return !player.onClimbable() || !this.isJumpPressed && player.isOnGround();
+    }
+
+    public boolean shouldRenderPlayer() {
+        return EvolutionConfig.CLIENT.firstPersonRenderer.get();
     }
 
     @SubscribeEvent
@@ -1285,7 +1344,7 @@ public class ClientEvents {
     }
 
     public void swingArm(Hand hand) {
-        ItemStack stack = this.mc.player.getHeldItem(hand);
+        ItemStack stack = this.mc.player.getItemInHand(hand);
         if (!stack.isEmpty() && stack.onEntitySwing(this.mc.player)) {
             return;
         }
@@ -1297,7 +1356,7 @@ public class ClientEvents {
         int priority = Integer.MAX_VALUE;
         int chosen = -1;
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = this.mc.player.inventory.mainInventory.get(i);
+            ItemStack stack = this.mc.player.inventory.items.get(i);
             if (stack.getItem() instanceof IBackWeapon) {
                 int stackPriority = ((IBackWeapon) stack.getItem()).getPriority();
                 if (priority > stackPriority) {
@@ -1310,20 +1369,20 @@ public class ClientEvents {
                 }
             }
         }
-        if (chosen == this.mc.player.inventory.currentItem) {
+        if (chosen == this.mc.player.inventory.selected) {
             backStack = ItemStack.EMPTY;
         }
-        BACK_ITEMS.put(this.mc.player.getEntityId(), backStack);
+        BACK_ITEMS.put(this.mc.player.getId(), backStack);
         EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateBeltBackItem(backStack, true));
     }
 
     private void updateBeltItem() {
-        ItemStack oldStack = BELT_ITEMS.getOrDefault(this.mc.player.getEntityId(), ItemStack.EMPTY);
+        ItemStack oldStack = BELT_ITEMS.getOrDefault(this.mc.player.getId(), ItemStack.EMPTY);
         ItemStack beltStack = ItemStack.EMPTY;
         int priority = Integer.MAX_VALUE;
         int chosen = -1;
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = this.mc.player.inventory.mainInventory.get(i);
+            ItemStack stack = this.mc.player.inventory.items.get(i);
             if (stack.getItem() instanceof IBeltWeapon) {
                 int stackPriority = ((IBeltWeapon) stack.getItem()).getPriority();
                 if (priority > stackPriority) {
@@ -1336,12 +1395,12 @@ public class ClientEvents {
                 }
             }
         }
-        if (chosen == this.mc.player.inventory.currentItem) {
+        if (chosen == this.mc.player.inventory.selected) {
             beltStack = ItemStack.EMPTY;
         }
-        if (!ItemStack.areItemStacksEqual(beltStack, oldStack)) {
+        if (!ItemStack.matches(beltStack, oldStack)) {
             if (beltStack.getItem() instanceof ItemSword) {
-                this.mc.getSoundHandler()
+                this.mc.getSoundManager()
                        .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATH.get(), SoundCategory.PLAYERS, 0.8f, 1.0f));
                 EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlaySoundEntityEmitted(this.mc.player,
                                                                                           EvolutionSounds.SWORD_SHEATH.get(),
@@ -1349,23 +1408,21 @@ public class ClientEvents {
                                                                                           0.8f,
                                                                                           1.0f));
             }
-            BELT_ITEMS.put(this.mc.player.getEntityId(), beltStack.copy());
+            BELT_ITEMS.put(this.mc.player.getId(), beltStack.copy());
             EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateBeltBackItem(beltStack, false));
         }
     }
 
     private void updateClientProneState(PlayerEntity player) {
         if (player != null) {
-            UUID uuid = player.getUniqueID();
-            boolean shouldBeProne = ClientProxy.TOGGLE_PRONE.isKeyDown() != this.proneToggle;
+            boolean shouldBeProne = ClientProxy.TOGGLE_PRONE.isDown() != this.proneToggle;
             shouldBeProne = shouldBeProne && this.shouldBeProbe(player);
-            BlockPos pos = player.getPosition().up(2);
-            shouldBeProne = shouldBeProne ||
-                            this.proneToggle && player.isOnLadder() && player.world.getBlockState(pos).getMaterial().blocksMovement();
-            if (shouldBeProne != Evolution.PRONED_PLAYERS.getOrDefault(uuid, false)) {
+            BlockPos pos = player.blockPosition().above(2);
+            shouldBeProne = shouldBeProne || this.proneToggle && player.onClimbable() && player.level.getBlockState(pos).getMaterial().blocksMotion();
+            if (shouldBeProne != Evolution.PRONED_PLAYERS.getOrDefault(player.getId(), false)) {
                 EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSetProne(shouldBeProne));
             }
-            Evolution.PRONED_PLAYERS.put(uuid, shouldBeProne);
+            Evolution.PRONED_PLAYERS.put(player.getId(), shouldBeProne);
         }
     }
 

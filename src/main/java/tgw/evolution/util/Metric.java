@@ -1,8 +1,12 @@
 package tgw.evolution.util;
 
+import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public enum Metric {
     UNDER_METRIC("Underflow", "under", 1E-27),
@@ -24,20 +28,18 @@ public enum Metric {
     ZETTA("Zetta", "Z", 1E21),
     YOTTA("Yotta", "Y", 1E24),
     OVER_METRIC("Overflow", "over", 1E27);
+
     public static final int SECONDS_IN_A_MINUTE = 60;
     public static final int MINUTES_IN_AN_HOUR = 60;
     public static final int HOURS_IN_A_DAY = 24;
     public static final double DAYS_IN_A_YEAR = 365.25;
-
+    private static final Map<Locale, DateFormat> DATE_FORMATS = new HashMap<>();
     private static final DecimalFormatSymbols SYMBOLS = getSymbols();
-
     public static final DecimalFormat DEFAULT = initFormat(",##0");
     public static final DecimalFormat ONE_PLACE = initFormat(",##0.#");
     public static final DecimalFormat TWO_PLACES = initFormat(",##0.##");
     public static final DecimalFormat THREE_PLACES = initFormat(",##0.###");
-
     public static final DecimalFormat INT_2 = initFormat("00");
-
     public static final DecimalFormat DAMAGE_FORMAT = initFormat(",##0 HP");
     public static final DecimalFormat DRINK_FORMAT = initFormat(",##0 mL");
     public static final DecimalFormat FOOD_FORMAT = initFormat(",##0 kcal");
@@ -45,7 +47,6 @@ public enum Metric {
     public static final DecimalFormat LITER_FORMAT = initFormat(",##0.## L");
     public static final DecimalFormat MASS_FORMAT = initFormat(",##0.## kg");
     public static final DecimalFormat PERCENT_ONE_PLACE = initFormat(",##0.#%");
-
     private final String fullName;
     private final double inNumber;
     private final String prefix;
@@ -155,6 +156,10 @@ public enum Metric {
 
     public static double fromMetric(double value, Metric metric) {
         return value * metric.inNumber;
+    }
+
+    public static DateFormat getDateFormatter(Locale locale) {
+        return DATE_FORMATS.computeIfAbsent(locale, l -> new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", l));
     }
 
     private static DecimalFormatSymbols getSymbols() {

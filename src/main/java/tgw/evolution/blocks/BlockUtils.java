@@ -5,13 +5,14 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.IFluidState;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IPlantable;
@@ -49,13 +50,13 @@ public final class BlockUtils {
     }
 
     public static void dropItemStack(World world, BlockPos pos, @Nonnull ItemStack stack) {
-        if (world.isRemote || stack.isEmpty()) {
+        if (world.isClientSide || stack.isEmpty()) {
             return;
         }
         ItemEntity entity = new ItemEntity(world, pos.getX() + 0.5f, pos.getY() + 0.3f, pos.getZ() + 0.5f, stack);
-        Vec3d motion = entity.getMotion();
-        entity.addVelocity(-motion.x, -motion.y, -motion.z);
-        world.addEntity(entity);
+        Vector3d motion = entity.getDeltaMovement();
+        entity.push(-motion.x, -motion.y, -motion.z);
+        world.addFreshEntity(entity);
     }
 
     /**
@@ -90,8 +91,9 @@ public final class BlockUtils {
         return state.getBlock() instanceof BlockMass;
     }
 
-    public static boolean hasSolidSide(World world, BlockPos pos, Direction side) {
-        return Block.hasSolidSide(world.getBlockState(pos), world, pos, side);
+    public static boolean hasSolidSide(IBlockReader world, BlockPos pos, Direction side) {
+        BlockState state = world.getBlockState(pos);
+        return state.isFaceSturdy(world, pos, side);
     }
 
     /**
@@ -103,11 +105,11 @@ public final class BlockUtils {
     }
 
     public static boolean isTouchingWater(IWorld world, BlockPos pos) {
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
         for (Direction direction : Direction.values()) {
-            mutablePos.setPos(pos).move(direction);
+            mutablePos.set(pos).move(direction);
             BlockState stateAtPos = world.getBlockState(mutablePos);
-            if (stateAtPos.getFluidState().isTagged(FluidTags.WATER)) {
+            if (stateAtPos.getFluidState().is(FluidTags.WATER)) {
                 return true;
             }
         }
@@ -123,79 +125,79 @@ public final class BlockUtils {
             return true;
         }
         state = world.getBlockState(pos.reset().down().north().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().down().south().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().down().west().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().down().east().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().down().north().east().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().down().north().west().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().down().west().south().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().down().east().south().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().north().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().south().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().east().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().west().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().north().west().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().south().west().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().north().east().getPos());
-        if (state.getBlock() instanceof BlockLog && state.get(TREE)) {
+        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
             return true;
         }
         state = world.getBlockState(pos.reset().south().east().getPos());
-        return state.getBlock() instanceof BlockLog && state.get(TREE);
+        return state.getBlock() instanceof BlockLog && state.getValue(TREE);
     }
 
     public static void scheduleBlockTick(World world, BlockPos pos, int tickrate) {
-        world.getPendingBlockTicks().scheduleTick(pos, world.getBlockState(pos).getBlock(), tickrate);
+        world.getBlockTicks().scheduleTick(pos, world.getBlockState(pos).getBlock(), tickrate);
     }
 
     public static void scheduleFluidTick(IWorld world, BlockPos pos) {
-        IFluidState fluidState = world.getFluidState(pos);
+        FluidState fluidState = world.getFluidState(pos);
         if (fluidState.isEmpty()) {
             return;
         }
-        Fluid fluid = fluidState.getFluid();
-        world.getPendingFluidTicks().scheduleTick(pos, fluid, fluid.getTickRate(world));
+        Fluid fluid = fluidState.getType();
+        world.getLiquidTicks().scheduleTick(pos, fluid, fluid.getTickDelay(world));
     }
 }

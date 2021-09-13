@@ -1,30 +1,41 @@
 package tgw.evolution.util;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
 
 import javax.annotation.Nullable;
 
 public enum VanillaRockVariant {
-    STONE(Blocks.STONE),
-    DIRT(Blocks.DIRT),
-    GRASS_BLOCK(Blocks.GRASS_BLOCK),
-    GRAVEL(Blocks.GRAVEL),
-    SAND(Blocks.SAND),
-    STONE_BRICKS(Blocks.STONE_BRICKS),
-    COBBLESTONE(Blocks.COBBLESTONE);
-
-    private final Block vanillaBlock;
-
-    VanillaRockVariant(Block vanillaBlock) {
-        this.vanillaBlock = vanillaBlock;
-    }
+    STONE,
+    DIRT,
+    GRASS,
+    GRAVEL,
+    SAND,
+    STONE_BRICKS,
+    COBBLESTONE;
 
     @Nullable
     public static VanillaRockVariant fromBlock(Block block) {
-        for (VanillaRockVariant vanilla : values()) {
-            if (vanilla.vanillaBlock == block) {
-                return vanilla;
+        switch (block.getRegistryName().getPath()) {
+            case "stone": {
+                return STONE;
+            }
+            case "dirt": {
+                return DIRT;
+            }
+            case "grass": {
+                return GRASS;
+            }
+            case "gravel": {
+                return GRAVEL;
+            }
+            case "sand": {
+                return SAND;
+            }
+            case "stone_bricks": {
+                return STONE_BRICKS;
+            }
+            case "cobblestone": {
+                return COBBLESTONE;
             }
         }
         return null;

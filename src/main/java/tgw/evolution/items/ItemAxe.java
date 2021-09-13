@@ -13,7 +13,7 @@ import java.util.Set;
 public class ItemAxe extends ItemGenericTool implements ITwoHanded, IHeavyAttack, IBackWeapon {
 
     private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet();
-    private static final Set<Material> EFFECTIVE_MAT = Sets.newHashSet(Material.WOOD, Material.PLANTS);
+    private static final Set<Material> EFFECTIVE_MAT = Sets.newHashSet(Material.WOOD, Material.PLANT);
     private final double mass;
 
     public ItemAxe(IItemTier tier, float attackSpeed, Properties builder, double mass) {

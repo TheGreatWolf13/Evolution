@@ -1,13 +1,8 @@
 package tgw.evolution.util;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.client.renderer.entity.model.RendererModel;
+import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.monster.CreeperEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.CrossbowItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -21,11 +16,14 @@ import net.minecraft.util.math.*;
 import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.World;
-import net.minecraft.world.gen.Heightmap;
 import tgw.evolution.Evolution;
-import tgw.evolution.events.EntityEvents;
-import tgw.evolution.util.hitbox.EvolutionEntityHitboxes;
+import tgw.evolution.blocks.tileentities.Patterns;
+import tgw.evolution.entities.IEntityPatch;
+import tgw.evolution.entities.INeckPosition;
+import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.HitboxEntity;
 import tgw.evolution.util.hitbox.Matrix3d;
@@ -39,7 +37,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -63,7 +60,7 @@ public final class MathHelper {
     public static final Direction[] DIRECTIONS_X = {Direction.WEST, Direction.EAST};
     public static final Direction[] DIRECTIONS_Z = {Direction.NORTH, Direction.SOUTH};
     public static final Hand[] HANDS_LEFT_PRIORITY = {Hand.OFF_HAND, Hand.MAIN_HAND};
-    private static final Predicate<Entity> PREDICATE = e -> e != null && !e.isSpectator() && e.canBeCollidedWith();
+    private static final Predicate<Entity> PREDICATE = e -> e != null && !e.isSpectator() && e.isPickable();
     private static final FieldHandler<LivingEntity, Float> LAST_SWIM = new FieldHandler<>(LivingEntity.class, "field_205018_bM");
     private static final FieldHandler<LivingEntity, Float> SWIM = new FieldHandler<>(LivingEntity.class, "field_205017_bL");
 
@@ -111,20 +108,6 @@ public final class MathHelper {
             return true;
         }
         return a.getItem() == b.getItem();
-    }
-
-    /**
-     * Returns whether two {@code float} values have the same sign.
-     *
-     * @param a The first value
-     * @param b The second value
-     * @return {@code true} if they have the same sign, {@code false} otherwise.
-     */
-    public static boolean areSameSign(float a, float b) {
-        if (a >= 0 && b >= 0) {
-            return true;
-        }
-        return a < 0 && b < 0;
     }
 
     /**
@@ -187,20 +170,6 @@ public final class MathHelper {
     }
 
     /**
-     * Checks whether it can rain at the specified position, meaning that the block can see the sky and there is no physical obstruction to it.
-     *
-     * @param world The world being checked.
-     * @param pos   The position being checked.
-     * @return Whether rain can happen at that location.
-     */
-    public static boolean canRainAt(World world, BlockPos pos) {
-        if (!world.isSkyLightMax(pos)) {
-            return false;
-        }
-        return world.getHeight(Heightmap.Type.MOTION_BLOCKING, pos).getY() <= pos.getY();
-    }
-
-    /**
      * Approximates a {@code double} value to an {@code int}, rounding up.
      *
      * @param value The value to approximate.
@@ -253,6 +222,74 @@ public final class MathHelper {
             return min;
         }
         return Math.min(value, max);
+    }
+
+    public static float clampAngle(float angle, float sweep, Direction dir) {
+        if (sweep >= 360) {
+            return angle;
+        }
+        switch (dir) {
+            case SOUTH: {
+                if (angle > sweep / 2) {
+                    return sweep / 2;
+                }
+                return Math.max(angle, -sweep / 2);
+            }
+            case WEST: {
+                if (angle >= -90 && angle <= 90) {
+                    if (angle < 90 - sweep / 2) {
+                        return 90 - sweep / 2;
+                    }
+                }
+                else {
+                    if (sweep / 2 < 90) {
+                        if (angle > 90 + sweep / 2 || angle < 0) {
+                            return 90 + sweep / 2;
+                        }
+                    }
+                    else {
+                        if (angle > -270 + sweep / 2 && angle < 0) {
+                            return -270 + sweep / 2;
+                        }
+                    }
+                }
+                return angle;
+            }
+            case NORTH: {
+                if (angle >= 0) {
+                    if (angle < 180 - sweep / 2) {
+                        return 180 - sweep / 2;
+                    }
+                }
+                else {
+                    if (angle > -180 + sweep / 2) {
+                        return -180 + sweep / 2;
+                    }
+                }
+                return angle;
+            }
+            case EAST: {
+                if (angle < 90 && angle > -90) {
+                    if (angle > -90 + sweep / 2) {
+                        return -90 + sweep / 2;
+                    }
+                }
+                else {
+                    if (sweep / 2 <= 90) {
+                        if (angle < -90 - sweep / 2 || angle > 0) {
+                            return -90 - sweep / 2;
+                        }
+                    }
+                    else {
+                        if (angle < 270 - sweep / 2 && angle > 0) {
+                            return 270 - sweep / 2;
+                        }
+                    }
+                }
+                return angle;
+            }
+        }
+        return angle;
     }
 
     /**
@@ -389,29 +426,8 @@ public final class MathHelper {
         return sqrt((x - x0) * (x - x0) + (y - y0) * (y - y0) + (z - z0) * (z - z0));
     }
 
-    /**
-     * Calculates the entity between two entities in euclidian space, squared.
-     *
-     * @param entity1 The first entity.
-     * @param entity2 The second entity.
-     * @return The square of the distance between the entities.
-     */
-    public static double distanceSquared(Entity entity1, Entity entity2) {
-        double deltaX = entity1.posX - entity2.posX;
-        double deltaY = entity1.posY - entity2.posY;
-        double deltaZ = entity1.posZ - entity2.posZ;
-        return deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
-    }
-
-    /**
-     * Fills a {@link Nonnull} {@code boolean} matrix with {@code true}.
-     *
-     * @param matrix The matrix to fill.
-     */
-    public static void fillBooleanMatrix(@Nonnull boolean[][] matrix) {
-        for (boolean[] vectors : matrix) {
-            Arrays.fill(vectors, true);
-        }
+    public static boolean epsilonEquals(double x, double y) {
+        return Math.abs(y - x) < 1.0E-5F;
     }
 
     /**
@@ -424,20 +440,36 @@ public final class MathHelper {
         return net.minecraft.util.math.MathHelper.floor(value);
     }
 
+    public static VoxelShape generateShapeFromPattern(long pattern) {
+        VoxelShape shape = VoxelShapes.empty();
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if ((pattern >> (7 - j) * 8 + 7 - i & 1) != 0) {
+                    shape = union(shape, EvolutionHitBoxes.KNAPPING_PART.move(i / 8.0f, 0, j / 8.0f));
+                }
+            }
+        }
+        return shape;
+    }
+
     public static float getAgeInTicks(LivingEntity entity, float partialTicks) {
-        return entity.ticksExisted + partialTicks;
+        return entity.tickCount + partialTicks;
     }
 
     public static float getAngleByDirection(Direction dir) {
         switch (dir) {
-            case SOUTH:
+            case SOUTH: {
                 return 90.0F;
-            case NORTH:
+            }
+            case NORTH: {
                 return 270.0F;
-            case EAST:
+            }
+            case EAST: {
                 return 180.0F;
-            default:
+            }
+            default: {
                 return 0.0F;
+            }
         }
     }
 
@@ -446,19 +478,21 @@ public final class MathHelper {
         ItemStack stack = hand == Hand.MAIN_HAND ? mainhandStack : offhandStack;
         if (!stack.isEmpty()) {
             armPose = ArmPose.ITEM;
-            if (entity.getItemInUseCount() > 0 && hand == entity.getActiveHand()) {
-                UseAction useaction = stack.getUseAction();
-                if (useaction == UseAction.BLOCK) {
-                    return ArmPose.BLOCK;
-                }
-                if (useaction == UseAction.BOW) {
-                    return ArmPose.BOW_AND_ARROW;
-                }
-                if (useaction == UseAction.SPEAR) {
-                    return ArmPose.THROW_SPEAR;
-                }
-                if (useaction == UseAction.CROSSBOW) {
-                    return ArmPose.CROSSBOW_CHARGE;
+            if (entity.getTicksUsingItem() > 0 && hand == entity.getUsedItemHand()) {
+                UseAction useaction = stack.getUseAnimation();
+                switch (useaction) {
+                    case BLOCK: {
+                        return ArmPose.BLOCK;
+                    }
+                    case BOW: {
+                        return ArmPose.BOW_AND_ARROW;
+                    }
+                    case SPEAR: {
+                        return ArmPose.THROW_SPEAR;
+                    }
+                    case CROSSBOW: {
+                        return ArmPose.CROSSBOW_CHARGE;
+                    }
                 }
             }
             else {
@@ -469,7 +503,7 @@ public final class MathHelper {
                 if (mainhandHasCrossbow && mainhandIsCharged) {
                     armPose = ArmPose.CROSSBOW_HOLD;
                 }
-                if (offhandHasCrossbow && offhandIsCharged && mainhandStack.getItem().getUseAction(mainhandStack) == UseAction.NONE) {
+                if (offhandHasCrossbow && offhandIsCharged && mainhandStack.getItem().getUseAnimation(mainhandStack) == UseAction.NONE) {
                     return ArmPose.CROSSBOW_HOLD;
                 }
             }
@@ -477,64 +511,59 @@ public final class MathHelper {
         return armPose;
     }
 
-    public static Direction getBedDirection(LivingEntity entity) {
-        BlockPos blockpos = entity.getBedPosition().orElse(null);
-        BlockState state = entity.world.getBlockState(blockpos);
-        return !state.isBed(entity.world, blockpos, entity) ? Direction.UP : state.getBedDirection(entity.world, blockpos);
-    }
-
     public static Matrix3d getBodyRotationMatrix(Entity entity, float partialTicks) {
         float angle = -getEntityBodyYaw(entity, partialTicks);
         return new Matrix3d().asYRotation(degToRad(angle));
     }
 
+    public static Vector3d getCameraPosition(Entity entity, float partialTicks) {
+        float yaw = entity.getViewYRot(partialTicks);
+        float pitch = entity.getViewXRot(partialTicks);
+        float cosBodyYaw;
+        float sinBodyYaw;
+        float sinYaw = sinDeg(yaw);
+        float cosYaw = cosDeg(yaw);
+        if (entity instanceof LivingEntity) {
+            float bodyYaw = lerpAngles(partialTicks, ((LivingEntity) entity).yBodyRotO, ((LivingEntity) entity).yBodyRot);
+            cosBodyYaw = cosDeg(bodyYaw);
+            sinBodyYaw = sinDeg(bodyYaw);
+        }
+        else {
+            cosBodyYaw = cosYaw;
+            sinBodyYaw = sinYaw;
+        }
+        float sinPitch = sinDeg(pitch);
+        float cosPitch = cosDeg(pitch);
+        float zOffset = ((INeckPosition) entity).getCameraZOffset();
+        float yOffset = ((INeckPosition) entity).getCameraYOffset();
+        Vector3d neckPoint = ((INeckPosition) entity).getNeckPoint();
+        float actualYOffset = yOffset * cosPitch - zOffset * sinPitch;
+        float horizontalOffset = yOffset * sinPitch + zOffset * cosPitch;
+        double x = lerp(partialTicks, entity.xo, entity.getX()) - horizontalOffset * sinYaw + neckPoint.x * cosBodyYaw - neckPoint.z * sinBodyYaw;
+        double y = lerp(partialTicks, entity.yo, entity.getY()) + neckPoint.y + actualYOffset;
+        double z = lerp(partialTicks, entity.zo, entity.getZ()) + horizontalOffset * cosYaw + neckPoint.x * sinBodyYaw + neckPoint.z * cosBodyYaw;
+        return new Vector3d(x, y, z);
+    }
+
     public static float getEntityBodyYaw(Entity entity, float partialTicks) {
         if (entity instanceof LivingEntity) {
             LivingEntity living = (LivingEntity) entity;
-            return partialTicks == 1.0F ? living.renderYawOffset : lerp(partialTicks, living.prevRenderYawOffset, living.renderYawOffset);
+            return partialTicks == 1.0F ? living.yBodyRot : lerp(partialTicks, living.yBodyRotO, living.yBodyRot);
         }
-        return partialTicks == 1.0F ? entity.rotationYaw : lerp(partialTicks, entity.prevRotationYaw, entity.rotationYaw);
-    }
-
-    /**
-     * Converts a {@link Hand} to {@link EquipmentSlotType}.
-     *
-     * @param hand The {@link Hand} to convert.
-     * @return The corresponding {@link EquipmentSlotType}.
-     */
-    public static EquipmentSlotType getEquipFromHand(@Nonnull Hand hand) {
-        switch (hand) {
-            case MAIN_HAND:
-                return EquipmentSlotType.MAINHAND;
-            case OFF_HAND:
-                return EquipmentSlotType.OFFHAND;
-            default:
-                throw new IllegalStateException("Unknown hand " + hand);
-        }
+        return partialTicks == 1.0F ? entity.yRot : lerp(partialTicks, entity.yRotO, entity.yRot);
     }
 
     public static HandSide getHandSide(LivingEntity entity) {
-        HandSide handSide = entity.getPrimaryHand();
-        return entity.swingingHand == Hand.MAIN_HAND ? handSide : handSide.opposite();
+        HandSide handSide = entity.getMainArm();
+        return entity.swingingArm == Hand.MAIN_HAND ? handSide : handSide.getOpposite();
     }
 
     public static Matrix3d getHeadRotationMatrix(LivingEntity entity, float partialTick) {
-        float yaw = -entity.getYaw(partialTick);
-        float pitch = -entity.getPitch(partialTick);
+        float yaw = -entity.getViewYRot(partialTick);
+        float pitch = -entity.getViewXRot(partialTick);
         Matrix3d xRot = new Matrix3d().asXRotation(degToRad(pitch));
         Matrix3d yRot = new Matrix3d().asYRotation(degToRad(yaw));
         return xRot.multiply(yRot);
-    }
-
-    @Nullable
-    public static HitboxEntity<? extends Entity> getHitboxes(Entity entity) {
-        if (entity instanceof PlayerEntity) {
-            return getPlayerHitboxType((PlayerEntity) entity);
-        }
-        if (entity instanceof CreeperEntity) {
-            return EvolutionEntityHitboxes.CREEPER;
-        }
-        return null;
     }
 
     /**
@@ -555,15 +584,15 @@ public final class MathHelper {
     }
 
     public static float getLimbSwing(LivingEntity entity, float partialTicks) {
-        float limbSwing = entity.limbSwing - entity.limbSwingAmount * (1.0F - partialTicks);
-        if (entity.isChild()) {
+        float limbSwing = entity.animationPosition - entity.animationSpeed * (1.0F - partialTicks);
+        if (entity.isBaby()) {
             limbSwing *= 3.0F;
         }
         return limbSwing;
     }
 
     public static float getLimbSwingAmount(LivingEntity entity, float partialTicks) {
-        float limbSwingAmount = lerp(partialTicks, entity.prevLimbSwingAmount, entity.limbSwingAmount);
+        float limbSwingAmount = lerp(partialTicks, entity.animationSpeedOld, entity.animationSpeed);
         return clampMax(limbSwingAmount, 1.0F);
     }
 
@@ -575,42 +604,35 @@ public final class MathHelper {
      */
     public static Direction getNegativeAxis(@Nonnull Direction.Axis axis) {
         switch (axis) {
-            case X:
+            case X: {
                 return Direction.WEST;
-            case Y:
+            }
+            case Y: {
                 return Direction.DOWN;
-            case Z:
+            }
+            case Z: {
                 return Direction.NORTH;
-            default:
-                throw new IllegalStateException("Cannot get the negative direction for axis " + axis);
+            }
+            default: {
+                throw new IllegalStateException("Unknown axis: " + axis);
+            }
         }
     }
 
     public static float getNetHeadYaw(LivingEntity entity, float partialTicks) {
-        float interpYaw = lerpAngles(partialTicks, entity.prevRenderYawOffset, entity.renderYawOffset);
-        float headYaw = lerpAngles(partialTicks, entity.prevRotationYawHead, entity.rotationYawHead);
+        float interpYaw = lerpAngles(partialTicks, entity.yBodyRotO, entity.yBodyRot);
+        float headYaw = lerpAngles(partialTicks, entity.yHeadRotO, entity.yHeadRot);
         return headYaw - interpYaw;
     }
 
-    public static HitboxEntity<PlayerEntity> getPlayerHitboxType(PlayerEntity player) {
-        if (player.world.isRemote) {
-            return "default".equals(((AbstractClientPlayerEntity) player).getSkinType()) ?
-                   EvolutionEntityHitboxes.PLAYER_STEVE :
-                   EvolutionEntityHitboxes.PLAYER_ALEX;
-        }
-        return EntityEvents.SKIN_TYPE.getOrDefault(player.getUniqueID(), SkinType.STEVE) == SkinType.STEVE ?
-               EvolutionEntityHitboxes.PLAYER_STEVE :
-               EvolutionEntityHitboxes.PLAYER_ALEX;
-    }
-
     /**
-     * Gets a {@code long} seed based on a {@link Vec3i}.
+     * Gets a {@code long} seed based on a {@link Vector3i}.
      *
-     * @param vec The {@link Vec3i} to base the seed in.
-     * @return A {@code long} containing a seed to this {@link Vec3i}.
+     * @param vec The {@link Vector3i} to base the seed in.
+     * @return A {@code long} containing a seed to this {@link Vector3i}.
      */
-    public static long getPositionRandom(Vec3i vec) {
-        return net.minecraft.util.math.MathHelper.getPositionRandom(vec);
+    public static long getPositionRandom(Vector3i vec) {
+        return net.minecraft.util.math.MathHelper.getSeed(vec);
     }
 
     /**
@@ -621,14 +643,18 @@ public final class MathHelper {
      */
     public static Direction getPositiveAxis(@Nonnull Direction.Axis axis) {
         switch (axis) {
-            case X:
+            case X: {
                 return Direction.EAST;
-            case Y:
+            }
+            case Y: {
                 return Direction.UP;
-            case Z:
+            }
+            case Z: {
                 return Direction.SOUTH;
-            default:
-                throw new IllegalStateException("Cannot get the positive direction for axis " + axis);
+            }
+            default: {
+                throw new IllegalStateException("Unknown axis: " + axis);
+            }
         }
     }
 
@@ -721,18 +747,11 @@ public final class MathHelper {
     }
 
     public static float getSwingProgress(LivingEntity entity, float partialTick) {
-        float f = entity.swingProgress - entity.prevSwingProgress;
+        float f = entity.attackAnim - entity.oAttackAnim;
         if (f < 0.0F) {
             ++f;
         }
-        return entity.prevSwingProgress + f * partialTick;
-    }
-
-    public static boolean hasHitboxes(Entity entity) {
-        if (entity instanceof PlayerEntity) {
-            return true;
-        }
-        return entity instanceof CreeperEntity;
+        return entity.oAttackAnim + f * partialTick;
     }
 
     /**
@@ -774,27 +793,8 @@ public final class MathHelper {
      * @param vec The corresponding vector.
      * @return The horizontal length of said vector.
      */
-    public static float horizontalLength(Vec3d vec) {
+    public static float horizontalLength(Vector3d vec) {
         return sqrt(vec.x * vec.x + vec.z * vec.z);
-    }
-
-    /**
-     * Inverts the values of a {@code boolean} matrix.
-     *
-     * @param matrix The {@code boolean} matrix to invert.
-     * @return A {@code new}, inverted {@code boolean} matrix.
-     */
-    @Nonnull
-    @SuppressWarnings("ObjectAllocationInLoop")
-    public static boolean[][] invertMatrix(@Nonnull boolean[][] matrix) {
-        boolean[][] mat = new boolean[matrix.length][];
-        for (int i = 0; i < matrix.length; i++) {
-            mat[i] = new boolean[matrix[i].length];
-            for (int j = 0; j < matrix[i].length; j++) {
-                mat[i][j] = !matrix[i][j];
-            }
-        }
-        return mat;
     }
 
     public static boolean isInInterval(float value, float middlePoint, float length) {
@@ -803,7 +803,7 @@ public final class MathHelper {
         return start <= value && value <= end;
     }
 
-    public static boolean isMouseInsideBox(int mouseX, int mouseY, int x0, int y0, int x1, int y1) {
+    public static boolean isMouseInsideBox(double mouseX, double mouseY, int x0, int y0, int x1, int y1) {
         if (x0 <= mouseX && mouseX <= x1) {
             return y0 <= mouseY && mouseY <= y1;
         }
@@ -818,7 +818,7 @@ public final class MathHelper {
      * @return {@code true} if the first {@link VoxelShape} is totally encompassed by the second one; {@code false} otherwise.
      */
     public static boolean isShapeTotallyInside(@Nonnull VoxelShape inside, @Nonnull VoxelShape reference) {
-        return !VoxelShapes.compare(reference, inside, IBooleanFunction.ONLY_SECOND);
+        return !VoxelShapes.joinIsNotEmpty(reference, inside, IBooleanFunction.ONLY_SECOND);
     }
 
     /**
@@ -829,11 +829,11 @@ public final class MathHelper {
      * @return {@code true} if the first {@link VoxelShape} is totally outside the reference one, {@code false} otherwise.
      */
     public static boolean isShapeTotallyOutside(VoxelShape outside, VoxelShape reference) {
-        return !VoxelShapes.compare(reference, outside, IBooleanFunction.AND);
+        return !VoxelShapes.joinIsNotEmpty(reference, outside, IBooleanFunction.AND);
     }
 
     public static boolean isSitting(LivingEntity entity) {
-        return entity.isPassenger() && entity.getRidingEntity() != null && entity.getRidingEntity().shouldRiderSit();
+        return entity.isPassenger() && entity.getVehicle() != null && entity.getVehicle().shouldRiderSit();
     }
 
     /**
@@ -896,21 +896,6 @@ public final class MathHelper {
     }
 
     /**
-     * Mirrors a {@link Nonnull} square {@code boolean} matrix vertically.
-     *
-     * @param input A square {@code boolean} matrix.
-     * @return A {@code new} square {@code boolean} matrix mirrored vertically.
-     */
-    @Nonnull
-    public static boolean[][] mirrorVertically(@Nonnull boolean[][] input) {
-        boolean[][] output = new boolean[input.length][input[0].length];
-        for (int i = 0; i < output.length; i++) {
-            System.arraycopy(input[input.length - 1 - i], 0, output[i], 0, output[i].length);
-        }
-        return output;
-    }
-
-    /**
      * Converts a {@code float} value from radians to degrees.
      *
      * @param radians The value in radians.
@@ -936,6 +921,21 @@ public final class MathHelper {
         return !(value > end);
     }
 
+    @Nonnull
+    public static BlockRayTraceResult rayTraceBlocksFromCamera(@Nonnull Entity entity,
+                                                               Vector3d cameraPos,
+                                                               float partialTicks,
+                                                               double distance,
+                                                               boolean fluid) {
+        Vector3d look = entity.getViewVector(partialTicks);
+        Vector3d to = cameraPos.add(look.x * distance, look.y * distance, look.z * distance);
+        return entity.level.clip(new RayTraceContext(cameraPos,
+                                                     to,
+                                                     RayTraceContext.BlockMode.OUTLINE,
+                                                     fluid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE,
+                                                     entity));
+    }
+
     /**
      * Casts a ray tracing for {@code Block}s starting from the eyes of the desired {@link Entity}.
      *
@@ -947,18 +947,18 @@ public final class MathHelper {
      */
     @Nonnull
     public static BlockRayTraceResult rayTraceBlocksFromEyes(@Nonnull Entity entity, float partialTicks, double distance, boolean fluid) {
-        Vec3d from = entity.getEyePosition(partialTicks);
-        Vec3d look = entity.getLook(partialTicks);
-        Vec3d to = from.add(look.x * distance, look.y * distance, look.z * distance);
-        return entity.world.rayTraceBlocks(new RayTraceContext(from,
-                                                               to,
-                                                               RayTraceContext.BlockMode.OUTLINE,
-                                                               fluid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE,
-                                                               entity));
+        Vector3d from = entity.getEyePosition(partialTicks);
+        Vector3d look = entity.getViewVector(partialTicks);
+        Vector3d to = from.add(look.x * distance, look.y * distance, look.z * distance);
+        return entity.level.clip(new RayTraceContext(from,
+                                                     to,
+                                                     RayTraceContext.BlockMode.OUTLINE,
+                                                     fluid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE,
+                                                     entity));
     }
 
     /**
-     * Casts a ray tracing for {@code Block}s based on the {@link Entity}'s {@link Entity#rotationYaw} and {@link Entity#rotationPitch}.
+     * Casts a ray tracing for {@code Block}s based on the {@link Entity}'s {@link Entity#yRot} and {@link Entity#xRot}.
      * This method is useful for Entities that are projectiles, as {@link MathHelper#rayTraceBlocksFromEyes(Entity, float, double, boolean)}
      * usually do not work on them.
      *
@@ -969,32 +969,32 @@ public final class MathHelper {
      */
     @Nonnull
     public static BlockRayTraceResult rayTraceBlocksFromYawAndPitch(@Nonnull Entity entity, double distance, boolean fluid) {
-        Vec3d from = entity.getEyePosition(1.0f);
-        float theta = entity.rotationYaw;
+        Vector3d from = entity.getEyePosition(1.0f);
+        float theta = entity.yRot;
         if (theta < 0) {
             theta += 360;
         }
         theta = degToRad(theta);
-        float phi = entity.rotationPitch;
+        float phi = entity.xRot;
         if (phi < 0) {
             phi += 360;
         }
         phi = degToRad(phi);
-        Vec3d looking = new Vec3d(sin(theta), sin(phi), cos(theta)).normalize();
-        Vec3d to = from.add(looking.x * distance, looking.y * distance, looking.z * distance);
-        return entity.world.rayTraceBlocks(new RayTraceContext(from,
-                                                               to,
-                                                               RayTraceContext.BlockMode.OUTLINE,
-                                                               fluid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE,
-                                                               entity));
+        Vector3d looking = new Vector3d(sin(theta), sin(phi), cos(theta)).normalize();
+        Vector3d to = from.add(looking.x * distance, looking.y * distance, looking.z * distance);
+        return entity.level.clip(new RayTraceContext(from,
+                                                     to,
+                                                     RayTraceContext.BlockMode.OUTLINE,
+                                                     fluid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE,
+                                                     entity));
     }
 
     /**
      * Casts a ray tracing for Entities inside an {@link AxisAlignedBB} from the starting vector to the end vector.
      *
      * @param toExclude       The {@link Entity} to exclude from this raytrace.
-     * @param startVec        The {@link Vec3d} representing the start of the raytrace.
-     * @param endVec          The {@link Vec3d} representing the end of the raytrace.
+     * @param startVec        The {@link Vector3d} representing the start of the raytrace.
+     * @param endVec          The {@link Vector3d} representing the end of the raytrace.
      * @param boundingBox     The {@link AxisAlignedBB} to look for entities inside.
      * @param distanceSquared The max distance this raytrace will travel, squared.
      * @return A {@link EntityRayTraceResult} containing the {@link Entity} hit by the ray traced
@@ -1003,17 +1003,17 @@ public final class MathHelper {
      */
     @Nullable
     public static EntityRayTraceResult rayTraceEntities(@Nonnull Entity toExclude,
-                                                        Vec3d startVec,
-                                                        Vec3d endVec,
+                                                        Vector3d startVec,
+                                                        Vector3d endVec,
                                                         AxisAlignedBB boundingBox,
                                                         double distanceSquared) {
-        World world = toExclude.world;
+        World world = toExclude.level;
         double range = distanceSquared;
         Entity entity = null;
-        Vec3d vec3d = null;
-        for (Entity entityInBoundingBox : world.getEntitiesInAABBexcluding(toExclude, boundingBox, PREDICATE)) {
+        Vector3d vec3d = null;
+        for (Entity entityInBoundingBox : world.getEntities(toExclude, boundingBox, PREDICATE)) {
             AxisAlignedBB axisalignedbb = entityInBoundingBox.getBoundingBox();
-            Optional<Vec3d> optional = axisalignedbb.rayTrace(startVec, endVec);
+            Optional<Vector3d> optional = axisalignedbb.clip(startVec, endVec);
             if (axisalignedbb.contains(startVec)) {
                 if (range >= 0) {
                     entity = entityInBoundingBox;
@@ -1022,10 +1022,10 @@ public final class MathHelper {
                 }
             }
             else if (optional.isPresent()) {
-                Vec3d hitResult = optional.get();
-                double actualDistanceSquared = startVec.squareDistanceTo(hitResult);
+                Vector3d hitResult = optional.get();
+                double actualDistanceSquared = startVec.distanceToSqr(hitResult);
                 if (actualDistanceSquared < range || range == 0) {
-                    if (entityInBoundingBox.getLowestRidingEntity() == toExclude.getLowestRidingEntity() && !entityInBoundingBox.canRiderInteract()) {
+                    if (entityInBoundingBox.getRootVehicle() == toExclude.getRootVehicle() && !entityInBoundingBox.canRiderInteract()) {
                         if (range == 0) {
                             entity = entityInBoundingBox;
                             vec3d = hitResult;
@@ -1057,14 +1057,14 @@ public final class MathHelper {
      */
     @Nullable
     public static EntityRayTraceResult rayTraceEntityFromEyes(@Nonnull Entity entity, float partialTicks, double reachDistance) {
-        Vec3d from = entity.getEyePosition(partialTicks);
-        Vec3d look = entity.getLook(partialTicks).normalize();
-        Vec3d to = from.add(look.x * reachDistance, look.y * reachDistance, look.z * reachDistance);
+        Vector3d from = entity.getEyePosition(partialTicks);
+        Vector3d look = entity.getViewVector(partialTicks).normalize();
+        Vector3d to = from.add(look.x * reachDistance, look.y * reachDistance, look.z * reachDistance);
         return rayTraceEntities(entity, from, to, new AxisAlignedBB(from, to), reachDistance * reachDistance);
     }
 
     /**
-     * Casts a ray tracing for {@code Entities} based on the {@link Entity}'s {@link Entity#rotationYaw} and {@link Entity#rotationPitch}.
+     * Casts a ray tracing for {@code Entities} based on the {@link Entity}'s {@link Entity#yRot} and {@link Entity#xRot}.
      * This method is useful for Entities that are projectiles, as {@link MathHelper#rayTraceEntityFromEyes(Entity, float, double)}
      * usually do not work on them.
      *
@@ -1076,19 +1076,19 @@ public final class MathHelper {
      */
     @Nullable
     public static EntityRayTraceResult rayTraceEntityFromPitchAndYaw(@Nonnull Entity entity, double distance) {
-        Vec3d from = entity.getEyePosition(1.0f);
-        float theta = entity.rotationYaw;
+        Vector3d from = entity.getEyePosition(1.0f);
+        float theta = entity.yRot;
         if (theta < 0) {
             theta += 360;
         }
         theta = degToRad(theta);
-        float phi = entity.rotationPitch;
+        float phi = entity.xRot;
         if (phi < 0) {
             phi += 360;
         }
         phi = degToRad(phi);
-        Vec3d looking = new Vec3d(sin(theta), sin(phi), cos(theta)).normalize();
-        Vec3d to = from.add(looking.x * distance, looking.y * distance, looking.z * distance);
+        Vector3d looking = new Vector3d(sin(theta), sin(phi), cos(theta)).normalize();
+        Vector3d to = from.add(looking.x * distance, looking.y * distance, looking.z * distance);
         return rayTraceEntities(entity, from, to, new AxisAlignedBB(from, to), distance * distance);
     }
 
@@ -1103,22 +1103,25 @@ public final class MathHelper {
      * containing the position of the hit. If no {@link Entity} was hit by the ray, this {@link EntityRayTraceResult} will be {@code null}.
      */
     @Nullable
-    public static EntityRayTraceResult rayTraceOBBEntityFromEyes(@Nonnull Entity entity, float partialTicks, double reachDistance) {
-        Vec3d from = entity.getEyePosition(partialTicks);
-        Vec3d look = entity.getLook(partialTicks).normalize();
-        Vec3d to = from.add(look.x * reachDistance, look.y * reachDistance, look.z * reachDistance);
-        World world = entity.world;
+    public static EntityRayTraceResult rayTraceOBBEntityFromEyes(@Nonnull Entity entity,
+                                                                 @Nullable Vector3d cameraPos,
+                                                                 float partialTicks,
+                                                                 double reachDistance) {
+        Vector3d from = cameraPos != null ? cameraPos : entity.getEyePosition(partialTicks);
+        Vector3d look = entity.getViewVector(partialTicks).normalize();
+        Vector3d to = from.add(look.x * reachDistance, look.y * reachDistance, look.z * reachDistance);
+        World world = entity.level;
         double rangeSq = reachDistance * reachDistance;
         Entity foundEntity = null;
-        Vec3d vec3d = null;
+        Vector3d vec3d = null;
         double[] distance = {1.0};
         Hitbox[] hitbox = new Hitbox[1];
         Hitbox box = null;
-        List<Entity> foundEntities = world.getEntitiesInAABBexcluding(entity, new AxisAlignedBB(from, to).grow(1.5), PREDICATE);
+        List<Entity> foundEntities = world.getEntities(entity, new AxisAlignedBB(from, to).inflate(1.5), PREDICATE);
         for (Entity entityInBoundingBox : foundEntities) {
-            Optional<Vec3d> optional = rayTracingEntityHitboxes(entityInBoundingBox, from, look, reachDistance, partialTicks, distance, hitbox);
+            Optional<Vector3d> optional = rayTracingEntityHitboxes(entityInBoundingBox, from, look, reachDistance, partialTicks, distance, hitbox);
             if (optional.isPresent()) {
-                Vec3d hitResult = optional.get();
+                Vector3d hitResult = optional.get();
                 if (distance[0] < rangeSq || rangeSq == 0) {
                     foundEntity = entityInBoundingBox;
                     vec3d = hitResult;
@@ -1151,20 +1154,20 @@ public final class MathHelper {
      * @return An optional with the hit result, if any, or an empty optional.
      */
     @Nonnull
-    public static <T extends Entity> Optional<Vec3d> rayTracingEntityHitboxes(T entity,
-                                                                              Vec3d from,
-                                                                              Vec3d look,
-                                                                              double reach,
-                                                                              float partialTicks,
-                                                                              double[] distance,
-                                                                              Hitbox[] chosenBox) {
+    public static <T extends Entity> Optional<Vector3d> rayTracingEntityHitboxes(T entity,
+                                                                                 Vector3d from,
+                                                                                 Vector3d look,
+                                                                                 double reach,
+                                                                                 float partialTicks,
+                                                                                 double[] distance,
+                                                                                 Hitbox[] chosenBox) {
         chosenBox[0] = null;
         distance[0] = reach * reach;
-        if (!hasHitboxes(entity)) {
-            Vec3d to = from.add(look.x * reach, look.y * reach, look.z * reach);
-            Optional<Vec3d> optional = entity.getBoundingBox().rayTrace(from, to);
+        if (!((IEntityPatch) entity).hasHitboxes()) {
+            Vector3d to = from.add(look.x * reach, look.y * reach, look.z * reach);
+            Optional<Vector3d> optional = entity.getBoundingBox().clip(from, to);
             if (optional.isPresent()) {
-                double actualDistanceSquared = from.squareDistanceTo(optional.get());
+                double actualDistanceSquared = from.distanceToSqr(optional.get());
                 distance[0] = actualDistanceSquared;
                 return optional;
             }
@@ -1174,32 +1177,32 @@ public final class MathHelper {
             }
             return Optional.empty();
         }
-        HitboxEntity<T> hitbox = (HitboxEntity<T>) getHitboxes(entity);
+        HitboxEntity<T> hitbox = (HitboxEntity<T>) ((IEntityPatch) entity).getHitboxes();
         hitbox.init(entity, partialTicks);
-        double posX = lerp(partialTicks, entity.lastTickPosX, entity.posX);
-        double posY = lerp(partialTicks, entity.lastTickPosY, entity.posY);
-        double posZ = lerp(partialTicks, entity.lastTickPosZ, entity.posZ);
+        double posX = lerp(partialTicks, entity.xOld, entity.getX());
+        double posY = lerp(partialTicks, entity.yOld, entity.getY());
+        double posZ = lerp(partialTicks, entity.zOld, entity.getZ());
         from = from.subtract(posX, posY, posZ);
-        Vec3d mainOffset = hitbox.getOffset();
+        Vector3d mainOffset = hitbox.getOffset();
         Matrix3d mainTransform = hitbox.getTransform();
         from = from.subtract(mainOffset);
         from = mainTransform.transform(from);
         look = mainTransform.transform(look);
         mainTransform.transpose();
-        Vec3d result = null;
+        Vector3d result = null;
         for (Hitbox box : hitbox.getBoxes()) {
-            Vec3d newFrom = from;
-            Vec3d newLook = look;
-            Vec3d offset = box.getOffset();
+            Vector3d newFrom = from;
+            Vector3d newLook = look;
+            Vector3d offset = box.getOffset();
             Matrix3d transform = box.getTransformation();
             newFrom = newFrom.subtract(offset);
             newFrom = transform.transform(newFrom);
             newLook = transform.transform(newLook);
-            Vec3d to = newFrom.add(newLook.x * reach, newLook.y * reach, newLook.z * reach);
-            Optional<Vec3d> optional = box.getAABB().rayTrace(newFrom, to);
+            Vector3d to = newFrom.add(newLook.x * reach, newLook.y * reach, newLook.z * reach);
+            Optional<Vector3d> optional = box.getAABB().clip(newFrom, to);
             if (optional.isPresent() || box.getAABB().contains(newFrom)) {
-                Vec3d hitResult = optional.orElse(newFrom);
-                double actualDistanceSquared = newFrom.squareDistanceTo(hitResult);
+                Vector3d hitResult = optional.orElse(newFrom);
+                double actualDistanceSquared = newFrom.distanceToSqr(hitResult);
                 if (actualDistanceSquared < distance[0]) {
                     distance[0] = actualDistanceSquared;
                     result = transform.transpose().transform(hitResult);
@@ -1225,7 +1228,7 @@ public final class MathHelper {
      *
      * @param value The value to relativize.
      * @param min   The mininum allowed value, representing the {@code 0.0f} in the scale.
-     * @param max   The maximum allowed value, representing the {code 1.0f} in the scale.
+     * @param max   The maximum allowed value, representing the {@code 1.0f} in the scale.
      * @return A value between {@code 0.0f} and {@code 1.0f},
      * where {@code 0.0f} represents the mininum of the scale and {@code 1.0f} represents the maximum.
      */
@@ -1238,26 +1241,15 @@ public final class MathHelper {
     }
 
     /**
-     * Resets a {@link Nonnull} {@code int} vector starting at the desired index to {@code -1}.
+     * Resets a {@link Nonnull} {@code long} array (representing a 8x8x8 boolean tensor) starting at the desired index to
+     * {@link tgw.evolution.blocks.tileentities.Patterns#MATRIX_FALSE}.
      *
-     * @param array The {@code int} vector to reset.
-     * @param index The index to start the reset.
-     */
-    public static void resetArray(@Nonnull int[] array, int index) {
-        for (int i = index; i < array.length; i++) {
-            array[i] = -1;
-        }
-    }
-
-    /**
-     * Resets a {@link Nonnull} {@code boolean} tensor starting at the desired index to {@code null}.
-     *
-     * @param tensor A {@code boolean} tensor to reset.
+     * @param tensor A {@code long} tensor to reset.
      * @param index  The index to start the reset.
      */
-    public static void resetTensor(@Nonnull boolean[][][] tensor, int index) {
+    public static void resetTensor(@Nonnull long[] tensor, int index) {
         for (int i = index; i < tensor.length; i++) {
-            tensor[i] = null;
+            tensor[i] = Patterns.MATRIX_FALSE;
         }
     }
 
@@ -1299,16 +1291,16 @@ public final class MathHelper {
             return shape;
         }
         VoxelShape[] buffer = {shape, VoxelShapes.empty()};
-        int times = (to.getHorizontalIndex() - from.getHorizontalIndex() + 4) % 4;
+        int times = (to.get2DDataValue() - from.get2DDataValue() + 4) % 4;
         for (int i = 0; i < times; i++) {
             //noinspection ObjectAllocationInLoop
-            buffer[0].forEachBox((minX, minY, minZ, maxX, maxY, maxZ) -> buffer[1] = VoxelShapes.or(buffer[1],
-                                                                                                    VoxelShapes.create(1 - maxZ,
-                                                                                                                       minY,
-                                                                                                                       minX,
-                                                                                                                       1 - minZ,
-                                                                                                                       maxY,
-                                                                                                                       maxX)));
+            buffer[0].forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> buffer[1] = VoxelShapes.or(buffer[1],
+                                                                                                     VoxelShapes.box(1 - maxZ,
+                                                                                                                     minY,
+                                                                                                                     minX,
+                                                                                                                     1 - minZ,
+                                                                                                                     maxY,
+                                                                                                                     maxX)));
             buffer[0] = buffer[1];
             buffer[1] = VoxelShapes.empty();
         }
@@ -1316,23 +1308,23 @@ public final class MathHelper {
     }
 
     /**
-     * Sets the rotation angles of a {@link RendererModel}.
+     * Sets the rotation angles of a {@link ModelRenderer}.
      *
      * @param model The model to set the rotation angles.
      * @param x     The rotation angle around the x axis.
      * @param y     The rotation angle around the y axis.
      * @param z     The rotation angle around the z axis.
      */
-    public static void setRotationAngle(@Nonnull RendererModel model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
+    public static void setRotationAngle(@Nonnull ModelRenderer model, float x, float y, float z) {
+        model.xRot = x;
+        model.yRot = y;
+        model.zRot = z;
     }
 
-    public static void setRotationPivot(RendererModel modelRenderer, float x, float y, float z) {
-        modelRenderer.rotationPointX = x;
-        modelRenderer.rotationPointY = y;
-        modelRenderer.rotationPointZ = z;
+    public static void setRotationPivot(ModelRenderer modelRenderer, float x, float y, float z) {
+        modelRenderer.x = x;
+        modelRenderer.y = y;
+        modelRenderer.z = z;
     }
 
     /**
@@ -1386,7 +1378,7 @@ public final class MathHelper {
      */
     @Nonnull
     public static VoxelShape subtract(@Nonnull VoxelShape A, @Nonnull VoxelShape B) {
-        return VoxelShapes.combine(A, B, IBooleanFunction.ONLY_FIRST);
+        return VoxelShapes.join(A, B, IBooleanFunction.ONLY_FIRST);
     }
 
     /**
@@ -1398,26 +1390,6 @@ public final class MathHelper {
      */
     public static float tan(@Radian float rad) {
         return net.minecraft.util.math.MathHelper.sin(rad) / net.minecraft.util.math.MathHelper.cos(rad);
-    }
-
-    /**
-     * Used to compare two {@link Nonnull} {@code boolean} tensors of the same size.
-     *
-     * @param a The first tensor.
-     * @param b The second tensor.
-     * @return {@code true} if the tensors are equal, {@code false} otherwise.
-     */
-    public static boolean tensorsEquals(@Nonnull boolean[][][] a, @Nonnull boolean[][][] b) {
-        for (int i = 0; i < a.length; i++) {
-            for (int j = 0; j < a[i].length; j++) {
-                for (int k = 0; k < a[i][j].length; k++) {
-                    if (a[i][j][k] != b[i][j][k]) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
     }
 
     /**
@@ -1449,22 +1421,6 @@ public final class MathHelper {
     }
 
     /**
-     * Translates a {@link Nonnull} square {@code boolean} matrix 1 unit to the right, wrapping values around.
-     *
-     * @param input A square {@code boolean} matrix.
-     * @return A {@code new} square {@code boolean} matrix translated one index to the right and wrapped around.
-     */
-    @Nonnull
-    public static boolean[][] translateRight(@Nonnull boolean[][] input) {
-        boolean[][] output = new boolean[input.length][input[0].length];
-        for (int i = 0; i < input.length; i++) {
-            output[i][0] = input[i][input.length - 1];
-            System.arraycopy(input[i], 0, output[i], 1, input.length - 1);
-        }
-        return output;
-    }
-
-    /**
      * Unites two {@link VoxelShape}s.
      *
      * @param A The first {@link VoxelShape}.
@@ -1473,7 +1429,7 @@ public final class MathHelper {
      */
     @Nonnull
     public static VoxelShape union(@Nonnull VoxelShape A, @Nonnull VoxelShape B) {
-        return VoxelShapes.combine(A, B, IBooleanFunction.OR);
+        return VoxelShapes.join(A, B, IBooleanFunction.OR);
     }
 
     /**

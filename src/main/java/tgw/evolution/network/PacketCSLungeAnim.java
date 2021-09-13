@@ -31,7 +31,7 @@ public class PacketCSLungeAnim implements IPacket {
             context.get().enqueueWork(() -> {
                 ServerPlayerEntity player = context.get().getSender();
                 EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> player),
-                                               new PacketSCLungeAnim(player.getEntityId(), packet.hand));
+                                               new PacketSCLungeAnim(player.getId(), packet.hand));
             });
             context.get().setPacketHandled(true);
         }

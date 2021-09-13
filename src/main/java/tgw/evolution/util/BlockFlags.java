@@ -14,7 +14,7 @@ public final class BlockFlags {
      */
     public static final int NOTIFY_NEIGHBORS = 1;
     /**
-     * Calls {@link World#notifyBlockUpdate(BlockPos, BlockState, BlockState, int)}.<br>
+     * Calls {@link World#sendBlockUpdated(BlockPos, BlockState, BlockState, int)}.<br>
      * Server-side, this updates all the path-finding navigators.
      */
     public static final int BLOCK_UPDATE = 2;
@@ -29,11 +29,7 @@ public final class BlockFlags {
     public static final int RERENDER = 8;
     /**
      * Causes neighbor updates to be sent to all surrounding blocks (including
-     * diagonals). This in turn will call
-     * {@link Block#updateDiagonalNeighbors(BlockState, IWorld, BlockPos, int)
-     * updateDiagonalNeighbors} on both old and new states, and
-     * {@link Block#updateNeighbors(BlockState, IWorld, BlockPos, int)
-     * updateNeighbors} on the new state.
+     * diagonals).
      */
     public static final int UPDATE_NEIGHBORS = 16;
     /**

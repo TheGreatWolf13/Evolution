@@ -7,9 +7,10 @@ import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.model.ItemOverrideList;
+import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.Direction;
+import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.awt.*;
@@ -176,8 +177,7 @@ public class ChessboardFinalisedModel implements IBakedModel {
                              itemRenderLayer,
                              face,
                              texture,
-                             true,
-                             DefaultVertexFormats.ITEM);
+                             true);
     }
 
     private static List<BakedQuad> getChessPiecesQuads(int numberOfPieces) {
@@ -186,7 +186,9 @@ public class ChessboardFinalisedModel implements IBakedModel {
         final int NUMBER_OF_ROWS = 8;
         final int MAX_NUMBER_OF_PIECES = PIECES_PER_ROW * NUMBER_OF_ROWS;
 
-        TextureAtlasSprite chessPieceTexture = Minecraft.getInstance().getTextureMap().getAtlasSprite("minecraft:block/diamond_block");
+        TextureAtlasSprite chessPieceTexture = Minecraft.getInstance()
+                                                        .getTextureAtlas(AtlasTexture.LOCATION_BLOCKS)
+                                                        .apply(new ResourceLocation("block/diamond_block"));
         // if you want to use your own texture, you can add it to the texture map using code similar to this in your ClientProxy:
         //   MinecraftForge.EVENT_BUS.register(new StitcherAddDigitsTexture());
         //    public class StitcherAddDigitsTexture {
@@ -278,14 +280,9 @@ public class ChessboardFinalisedModel implements IBakedModel {
                          Float.floatToRawIntBits(y),
                          Float.floatToRawIntBits(z),
                          color,
-                         Float.floatToRawIntBits(texture.getInterpolatedU(u)),
-                         Float.floatToRawIntBits(texture.getInterpolatedV(v)),
+                         Float.floatToRawIntBits(texture.getU(u)),
+                         Float.floatToRawIntBits(texture.getV(v)),
                          normal};
-    }
-
-    @Override
-    public ItemCameraTransforms getItemCameraTransforms() {
-        return this.parentModel.getItemCameraTransforms();
     }
 
     @Override
@@ -294,8 +291,8 @@ public class ChessboardFinalisedModel implements IBakedModel {
     }
 
     @Override
-    public TextureAtlasSprite getParticleTexture() {
-        return this.parentModel.getParticleTexture();
+    public TextureAtlasSprite getParticleIcon() {
+        return this.parentModel.getParticleIcon();
     }
 
     /**
@@ -307,7 +304,6 @@ public class ChessboardFinalisedModel implements IBakedModel {
      *             see here for more information: http://minecraft.gamepedia.com/Block_models#Item_models
      * @return the list of quads to be rendered
      */
-
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand) {
         if (side != null) {
@@ -319,17 +315,27 @@ public class ChessboardFinalisedModel implements IBakedModel {
     }
 
     @Override
-    public boolean isAmbientOcclusion() {
-        return this.parentModel.isAmbientOcclusion();
+    public ItemCameraTransforms getTransforms() {
+        return this.parentModel.getTransforms();
     }
 
     @Override
-    public boolean isBuiltInRenderer() {
-        return this.parentModel.isBuiltInRenderer();
+    public boolean isCustomRenderer() {
+        return this.parentModel.isCustomRenderer();
     }
 
     @Override
     public boolean isGui3d() {
         return this.parentModel.isGui3d();
+    }
+
+    @Override
+    public boolean useAmbientOcclusion() {
+        return this.parentModel.useAmbientOcclusion();
+    }
+
+    @Override
+    public boolean usesBlockLight() {
+        return false;
     }
 }

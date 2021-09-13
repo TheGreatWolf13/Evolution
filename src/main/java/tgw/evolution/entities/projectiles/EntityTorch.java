@@ -48,7 +48,13 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
     }
 
     @Override
-    public IPacket<?> createSpawnPacket() {
+    public void addAdditionalSaveData(CompoundNBT compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putLong("TimeCreated", this.timeCreated);
+    }
+
+    @Override
+    public IPacket<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
@@ -70,16 +76,16 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
 
     @Override
     protected void onEntityHit(EntityRayTraceResult rayTraceResult) {
-        SoundEvent soundevent = SoundEvents.ENTITY_ARROW_HIT;
+        SoundEvent soundevent = SoundEvents.ARROW_HIT;
         this.playSound(soundevent, 1.0F, 1.0F);
-        Evolution.usingPlaceholder(this.world.getClosestPlayer(this, 1_000), "sound");
-        BlockUtils.dropItemStack(this.world, this.getPosition(), this.getArrowStack());
+        Evolution.usingPlaceholder(this.level.getNearestPlayer(this, 128), "sound");
+        BlockUtils.dropItemStack(this.level, this.blockPosition(), this.getArrowStack());
         this.remove();
     }
 
     @Override
-    public void readAdditional(CompoundNBT compound) {
-        super.readAdditional(compound);
+    public void readAdditionalSaveData(CompoundNBT compound) {
+        super.readAdditionalSaveData(compound);
         this.timeCreated = compound.getLong("TimeCreated");
     }
 
@@ -87,14 +93,14 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
     public void tick() {
         super.tick();
         if (this.isInWater()) {
-            BlockPos pos = this.getPosition();
-            this.world.playSound(null,
+            BlockPos pos = this.blockPosition();
+            this.level.playSound(null,
                                  pos,
-                                 SoundEvents.BLOCK_FIRE_EXTINGUISH,
+                                 SoundEvents.FIRE_EXTINGUISH,
                                  SoundCategory.BLOCKS,
                                  1.0F,
-                                 2.6F + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.8F);
-            BlockUtils.dropItemStack(this.world, pos, new ItemStack(EvolutionItems.torch_unlit.get()));
+                                 2.6F + (this.random.nextFloat() - this.random.nextFloat()) * 0.8F);
+            BlockUtils.dropItemStack(this.level, pos, new ItemStack(EvolutionItems.torch_unlit.get()));
             this.remove();
             return;
         }
@@ -109,18 +115,18 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
     }
 
     public void tryPlaceBlock() {
-        if (this.world.isRemote) {
+        if (this.level.isClientSide) {
             return;
         }
-        BlockPos pos = this.getPosition();
-        if (this.world.isAirBlock(pos)) {
+        BlockPos pos = this.blockPosition();
+        if (this.level.isEmptyBlock(pos)) {
             BlockRayTraceResult rayTrace = MathHelper.rayTraceBlocksFromYawAndPitch(this, 1, false);
-            Direction face = rayTrace.getFace();
-            if (BlockUtils.hasSolidSide(this.world, pos.offset(face.getOpposite()), face)) {
+            Direction face = rayTrace.getDirection();
+            if (BlockUtils.hasSolidSide(this.level, pos.relative(face.getOpposite()), face)) {
                 if (face == Direction.UP) {
-                    BlockState state = EvolutionBlocks.TORCH.get().getDefaultState();
-                    this.world.setBlockState(pos, state);
-                    TileEntity tile = this.world.getTileEntity(pos);
+                    BlockState state = EvolutionBlocks.TORCH.get().defaultBlockState();
+                    this.level.setBlockAndUpdate(pos, state);
+                    TileEntity tile = this.level.getBlockEntity(pos);
                     if (tile instanceof TETorch) {
                         ((TETorch) tile).setTimePlaced(this.timeCreated);
                     }
@@ -128,12 +134,6 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
                 }
             }
         }
-        BlockUtils.dropItemStack(this.world, pos, this.getArrowStack());
-    }
-
-    @Override
-    public void writeAdditional(CompoundNBT compound) {
-        super.writeAdditional(compound);
-        compound.putLong("TimeCreated", this.timeCreated);
+        BlockUtils.dropItemStack(this.level, pos, this.getArrowStack());
     }
 }

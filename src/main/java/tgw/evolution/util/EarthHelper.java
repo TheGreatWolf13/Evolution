@@ -1,8 +1,8 @@
 package tgw.evolution.util;
 
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.client.ForgeHooksClient;
+import net.minecraft.world.biome.Biome;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.world.dimension.DimensionOverworld;
 
@@ -39,8 +39,8 @@ public final class EarthHelper {
 
     public static float calculateMoonAngle(long worldTime) {
         worldTime += 19.8 * Time.HOUR_IN_TICKS;
-        worldTime %= 25_200;
-        return (float) worldTime / 25_200;
+        worldTime %= 1.05 * Time.DAY_IN_TICKS;
+        return (float) (worldTime / (1.05 * Time.DAY_IN_TICKS));
     }
 
     public static float calculateSunAngle(long worldTime) {
@@ -71,7 +71,7 @@ public final class EarthHelper {
         return MathHelper.arcCosDeg(MOON.dotProduct(ZENITH) * MOON.inverseLength() * ZENITH.inverseLength());
     }
 
-    public static Vec3f getSkyColor(World world, BlockPos pos, float partialTick, DimensionOverworld dimension) {
+    public static Vec3f getSkyColor(ClientWorld world, BlockPos pos, float partialTick, DimensionOverworld dimension) {
         if (EvolutionConfig.CLIENT.crazyMode.get()) {
             int partial = tick % 20;
             if (partial == 0) {
@@ -90,53 +90,54 @@ public final class EarthHelper {
             return SKY_COLOR;
         }
         float sunAngle = 1.0f;
-        float elevationAngle = dimension.getSunElevationAngle();
+        float elevationAngle = dimension == null ? 0 : dimension.getSunElevationAngle();
         if (elevationAngle > 80) {
             sunAngle = -elevationAngle * elevationAngle / 784.0f + 10.0f * elevationAngle / 49.0f - 7.163_265f;
             sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
         }
-        if (dimension.isInSolarEclipse()) {
+        if (dimension != null && dimension.isInSolarEclipse()) {
             float intensity = 1.0F - dimension.getSolarEclipseIntensity();
             if (intensity < sunAngle) {
                 sunAngle = intensity;
             }
         }
-        int i = ForgeHooksClient.getSkyBlendColour(world, pos);
-        float f3 = (i >> 16 & 255) / 255.0F;
-        f3 *= sunAngle;
-        float f4 = (i >> 8 & 255) / 255.0F;
-        f4 *= sunAngle;
-        float f5 = (i & 255) / 255.0F;
-        f5 *= sunAngle;
-        float f6 = world.getRainStrength(partialTick);
-        if (f6 > 0.0F) {
-            float f7 = (f3 * 0.3F + f4 * 0.59F + f5 * 0.11F) * 0.6F;
-            float f8 = 1.0F - f6 * 0.75F;
-            f3 = f3 * f8 + f7 * (1.0F - f8);
-            f4 = f4 * f8 + f7 * (1.0F - f8);
-            f5 = f5 * f8 + f7 * (1.0F - f8);
+        Biome biome = world.getBiome(pos);
+        int color = biome.getSkyColor();
+        float r = (color >> 16 & 255) / 255.0F;
+        r *= sunAngle;
+        float g = (color >> 8 & 255) / 255.0F;
+        g *= sunAngle;
+        float b = (color & 255) / 255.0F;
+        b *= sunAngle;
+        float rainStrength = world.getRainLevel(partialTick);
+        if (rainStrength > 0.0F) {
+            float colorMod = (r * 0.3F + g * 0.59F + b * 0.11F) * 0.6F;
+            float rainMod = 1.0F - rainStrength * 0.75F;
+            r = r * rainMod + colorMod * (1.0F - rainMod);
+            g = g * rainMod + colorMod * (1.0F - rainMod);
+            b = b * rainMod + colorMod * (1.0F - rainMod);
         }
-        float f10 = world.getThunderStrength(partialTick);
-        if (f10 > 0.0F) {
-            float f11 = (f3 * 0.3F + f4 * 0.59F + f5 * 0.11F) * 0.2F;
-            float f9 = 1.0F - f10 * 0.75F;
-            f3 = f3 * f9 + f11 * (1.0F - f9);
-            f4 = f4 * f9 + f11 * (1.0F - f9);
-            f5 = f5 * f9 + f11 * (1.0F - f9);
+        float thunderStrength = world.getThunderLevel(partialTick);
+        if (thunderStrength > 0.0F) {
+            float colorMod = (r * 0.3F + g * 0.59F + b * 0.11F) * 0.2F;
+            float thunderMod = 1.0F - thunderStrength * 0.75F;
+            r = r * thunderMod + colorMod * (1.0F - thunderMod);
+            g = g * thunderMod + colorMod * (1.0F - thunderMod);
+            b = b * thunderMod + colorMod * (1.0F - thunderMod);
         }
-        if (world.getLastLightningBolt() > 0) {
-            float lastLightningBolt = world.getLastLightningBolt() - partialTick;
+        if (world.getSkyFlashTime() > 0) {
+            float lastLightningBolt = world.getSkyFlashTime() - partialTick;
             if (lastLightningBolt > 1.0F) {
                 lastLightningBolt = 1.0F;
             }
             lastLightningBolt *= 0.45F;
-            f3 = f3 * (1.0F - lastLightningBolt) + 0.8F * lastLightningBolt;
-            f4 = f4 * (1.0F - lastLightningBolt) + 0.8F * lastLightningBolt;
-            f5 = f5 * (1.0F - lastLightningBolt) + lastLightningBolt;
+            r = r * (1.0F - lastLightningBolt) + 0.8F * lastLightningBolt;
+            g = g * (1.0F - lastLightningBolt) + 0.8F * lastLightningBolt;
+            b = b * (1.0F - lastLightningBolt) + lastLightningBolt;
         }
-        SKY_COLOR.x = f3;
-        SKY_COLOR.y = f4;
-        SKY_COLOR.z = f5;
+        SKY_COLOR.x = r;
+        SKY_COLOR.y = g;
+        SKY_COLOR.z = b;
         return SKY_COLOR;
     }
 

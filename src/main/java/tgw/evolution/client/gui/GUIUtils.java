@@ -1,16 +1,19 @@
 package tgw.evolution.client.gui;
 
-import com.mojang.blaze3d.platform.GLX;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
+import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.texture.AtlasTexture;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.shader.ShaderGroup;
 import net.minecraft.crash.CrashReport;
@@ -22,15 +25,18 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
+import net.minecraft.util.IReorderingProcessor;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Matrix4f;
+import net.minecraft.util.math.vector.Quaternion;
+import net.minecraft.util.math.vector.Vector3f;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.World;
+import net.minecraft.world.storage.IWorldInfo;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.ForgeHooksClient;
-import net.minecraftforge.common.ForgeConfig;
-import net.minecraftforge.fml.client.config.GuiUtils;
 import org.lwjgl.opengl.GL11;
 import tgw.evolution.init.EvolutionResources;
 
@@ -42,8 +48,6 @@ import java.util.Random;
 @OnlyIn(Dist.CLIENT)
 public final class GUIUtils {
 
-    private static final Vector3f LIGHT0_POS = func_216509_a(0.2F, 1.0F, -0.7F);
-    private static final Vector3f LIGHT1_POS = func_216509_a(-0.2F, 1.0F, 0.7F);
     private static final ShaderGroup SHADER_GROUP;
     private static DifficultyInstance difficulty;
 
@@ -52,7 +56,7 @@ public final class GUIUtils {
         try {
             shader = new ShaderGroup(Minecraft.getInstance().getTextureManager(),
                                      Minecraft.getInstance().getResourceManager(),
-                                     Minecraft.getInstance().getFramebuffer(),
+                                     Minecraft.getInstance().getMainRenderTarget(),
                                      EvolutionResources.SHADER_DESATURATE_75);
         }
         catch (IOException e) {
@@ -68,75 +72,55 @@ public final class GUIUtils {
     private GUIUtils() {
     }
 
-    public static void drawCenteredSplitString(FontRenderer font, String text, int width, int y, int color, int wrapWidth) {
-        for (String s : font.listFormattedStringToWidth(text, wrapWidth)) {
-            drawCenteredString(font, s, width, y, color);
-            y += 9;
-        }
-    }
-
-    public static void drawCenteredString(FontRenderer font, String text, int width, int y, int color) {
-        int textX = (width - font.getStringWidth(text)) / 2;
-        font.drawString(text, textX, y, color);
-    }
-
-    public static void drawCenteredString(FontRenderer font, String text, int width, int y) {
-        drawCenteredString(font, text, width, y, 0x40_4040);
+    public static void drawCenteredStringNoShadow(MatrixStack matrices, FontRenderer font, ITextComponent text, float xCentre, float y, int color) {
+        IReorderingProcessor ireorderingprocessor = text.getVisualOrderText();
+        font.draw(matrices, ireorderingprocessor, xCentre - font.width(ireorderingprocessor) / 2.0f, y, color);
     }
 
     public static void drawEntityOnScreen(int posX, int posY, float scale, float mouseX, float mouseY, LivingEntity entity) {
         mouseX = posX - mouseX;
         mouseY = posY - 45 - mouseY;
-        GlStateManager.disableBlend();
-        GlStateManager.depthMask(true);
-        GlStateManager.enableDepthTest();
-        GlStateManager.enableAlphaTest();
-        GlStateManager.enableColorMaterial();
-        GlStateManager.pushMatrix();
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GlStateManager.translatef(posX, posY, 50.0F);
-        GlStateManager.scalef(-scale, scale, scale);
-        GlStateManager.rotatef(180.0F, 0.0F, 0.0F, 1.0F);
-        float f2 = entity.renderYawOffset;
-        float f3 = entity.rotationYaw;
-        float f4 = entity.rotationPitch;
-        float f5 = entity.prevRotationYawHead;
-        float f6 = entity.rotationYawHead;
-        GlStateManager.rotatef(135.0F, 0.0F, 1.0F, 0.0F);
-        RenderHelper.enableStandardItemLighting();
-        GlStateManager.rotatef(-135.0F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotatef(-((float) Math.atan(mouseY / 40.0F)) * 20.0F, 1.0F, 0.0F, 0.0F);
+        float atanMouseX = (float) Math.atan(mouseX / 40);
+        float atanMouseY = (float) Math.atan(mouseY / 40);
+        RenderSystem.pushMatrix();
+        RenderSystem.translatef(posX, posY, 1_050.0F);
+        RenderSystem.scalef(1.0f, 1.0f, -1.0f);
+        MatrixStack matrices = new MatrixStack();
+        matrices.translate(0, 0, 1_000);
+        matrices.scale(scale, scale, scale);
+        Quaternion quatZ = Vector3f.ZP.rotationDegrees(0.0F);
+        Quaternion quatX = Vector3f.XP.rotationDegrees(atanMouseY * 20.0F);
+        quatZ.mul(quatX);
+        matrices.mulPose(quatZ);
+        RenderSystem.rotatef(180.0F, 0.0F, 0.0F, 1.0F);
+        float oldYawOffset = entity.yBodyRot;
+        float oldYaw = entity.yRot;
+        float oldPitch = entity.xRot;
+        float oldPrevYawHead = entity.yHeadRotO;
+        float oldYawHead = entity.yHeadRot;
         boolean needsTurning = needsTurning(entity);
-        entity.renderYawOffset = (float) Math.atan(mouseX / 40.0F) * 20.0F + (needsTurning ? 180 : 0);
-        entity.rotationYaw = (float) Math.atan(mouseX / 40.0F) * 40.0F;
+        entity.yBodyRot = atanMouseX * 20.0F + (needsTurning ? 0 : 180);
+        entity.yRot = atanMouseX * 40.0F + 180;
         if (entity.getType() == EntityType.ENDER_DRAGON) {
-            GlStateManager.rotatef(-(float) Math.atan(mouseX / 40.0F) * 20.0F + 180, 0.0f, 1.0f, 0.0f);
+            matrices.mulPose(Vector3f.YP.rotationDegrees(-atanMouseX * 20.0F));
         }
-        entity.rotationPitch = -((float) Math.atan(mouseY / 40.0F)) * 20.0F;
-        entity.rotationYawHead = entity.rotationYaw + (needsTurning ? 180 : 0);
-        entity.prevRotationYawHead = entity.rotationYaw;
-        GlStateManager.translatef(0.0F, 0.0F, 0.0F);
-        try {
-            EntityRendererManager renderManager = Minecraft.getInstance().getRenderManager();
-            renderManager.setPlayerViewY(180.0F);
-            renderManager.setRenderShadow(false);
-            renderManager.renderEntity(entity, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, false);
-            renderManager.setRenderShadow(true);
-        }
-        finally {
-            entity.renderYawOffset = f2;
-            entity.rotationYaw = f3;
-            entity.rotationPitch = f4;
-            entity.prevRotationYawHead = f5;
-            entity.rotationYawHead = f6;
-            GlStateManager.popMatrix();
-            RenderHelper.disableStandardItemLighting();
-            GlStateManager.disableRescaleNormal();
-            GlStateManager.activeTexture(GLX.GL_TEXTURE1);
-            GlStateManager.disableTexture();
-            GlStateManager.activeTexture(GLX.GL_TEXTURE0);
-            GlStateManager.translatef(0.0F, 0.0F, 20.0F);
-        }
+        entity.xRot = -atanMouseY * 20.0F;
+        entity.yHeadRot = entity.yRot + (needsTurning ? 180 : 0);
+        entity.yHeadRotO = entity.yRot;
+        EntityRendererManager renderManager = Minecraft.getInstance().getEntityRenderDispatcher();
+        quatX.conj();
+        renderManager.overrideCameraOrientation(quatX);
+        renderManager.setRenderShadow(false);
+        IRenderTypeBuffer.Impl buffer = Minecraft.getInstance().renderBuffers().bufferSource();
+        RenderSystem.runAsFancy(() -> renderManager.render(entity, 0, 0, 0, 0.0f, 1.0F, matrices, buffer, 0xf0_00f0));
+        buffer.endBatch();
+        renderManager.setRenderShadow(true);
+        entity.yBodyRot = oldYawOffset;
+        entity.yRot = oldYaw;
+        entity.xRot = oldPitch;
+        entity.yHeadRotO = oldPrevYawHead;
+        entity.yHeadRot = oldYawHead;
+        RenderSystem.popMatrix();
     }
 
     public static void drawRect(double x, double y, double x2, double y2, double width, int color) {
@@ -153,31 +137,26 @@ public final class GUIUtils {
             x2 = tempX;
         }
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        GlStateManager.enableBlend();
-        GlStateManager.disableTexture();
-        GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-                                         GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                                         GlStateManager.SourceFactor.ONE,
-                                         GlStateManager.DestFactor.ZERO);
+        BufferBuilder builder = tessellator.getBuilder();
+        RenderSystem.enableBlend();
+        RenderSystem.disableTexture();
+        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
+                                       GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                                       GlStateManager.SourceFactor.ONE,
+                                       GlStateManager.DestFactor.ZERO);
         setColor(color);
-        bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
+        builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
         boolean xHigh = x < x2;
-        bufferbuilder.pos(x, xHigh ? y + width : y, over ? 1 : 0).endVertex();
-        bufferbuilder.pos(x2, xHigh ? y2 + width : y2, over ? 1 : 0).endVertex();
-        bufferbuilder.pos(x2 + width, xHigh ? y2 : y2 + width, over ? 1 : 0).endVertex();
-        bufferbuilder.pos(x + width, xHigh ? y : y + width, over ? 1 : 0).endVertex();
-        tessellator.draw();
-        GlStateManager.enableTexture();
-        GlStateManager.disableBlend();
+        builder.vertex(x, xHigh ? y + width : y, over ? 1 : 0).endVertex();
+        builder.vertex(x2, xHigh ? y2 + width : y2, over ? 1 : 0).endVertex();
+        builder.vertex(x2 + width, xHigh ? y2 : y2 + width, over ? 1 : 0).endVertex();
+        builder.vertex(x + width, xHigh ? y : y + width, over ? 1 : 0).endVertex();
+        tessellator.end();
+        RenderSystem.enableTexture();
+        RenderSystem.disableBlend();
     }
 
-    public static void drawSplitStringWithShadow(FontRenderer font, String str, int x, int y, int wrapWidth, int textColor) {
-        str = trimStringNewline(str);
-        renderSplitStringWithShadow(font, str, x, y, wrapWidth, textColor);
-    }
-
-    public static void fill(int x0, int y1, int x1, int y0, int color, boolean over) {
+    public static void fill(Matrix4f matrix, int x0, int y1, int x1, int y0, int color, boolean over) {
         if (x0 < x1) {
             int temp = x0;
             x0 = x1;
@@ -188,40 +167,43 @@ public final class GUIUtils {
             y1 = y0;
             y0 = temp;
         }
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        GlStateManager.enableBlend();
-        GlStateManager.disableTexture();
-        GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-                                         GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                                         GlStateManager.SourceFactor.ONE,
-                                         GlStateManager.DestFactor.ZERO);
+        BufferBuilder builder = Tessellator.getInstance().getBuilder();
+        RenderSystem.enableBlend();
+        RenderSystem.disableTexture();
+        RenderSystem.defaultBlendFunc();
+        builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
         float r = (color >> 16 & 255) / 255.0F;
         float g = (color >> 8 & 255) / 255.0F;
         float b = (color & 255) / 255.0F;
         float a = (color >> 24 & 255) / 255.0F;
-        GlStateManager.color4f(r, g, b, a);
-        bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
-        bufferbuilder.pos(x0, y0, over ? 0.1 : 0).endVertex();
-        bufferbuilder.pos(x1, y0, over ? 0.1 : 0).endVertex();
-        bufferbuilder.pos(x1, y1, over ? 0.1 : 0).endVertex();
-        bufferbuilder.pos(x0, y1, over ? 0.1 : 0).endVertex();
-        tessellator.draw();
-        GlStateManager.enableTexture();
-        GlStateManager.disableBlend();
+        builder.vertex(matrix, x0, y0, over ? 0.1f : 0).color(r, g, b, a).endVertex();
+        builder.vertex(matrix, x1, y0, over ? 0.1f : 0).color(r, g, b, a).endVertex();
+        builder.vertex(matrix, x1, y1, over ? 0.1f : 0).color(r, g, b, a).endVertex();
+        builder.vertex(matrix, x0, y1, over ? 0.1f : 0).color(r, g, b, a).endVertex();
+        builder.end();
+        WorldVertexBufferUploader.end(builder);
+        RenderSystem.enableTexture();
+        RenderSystem.disableBlend();
     }
 
-    private static Vector3f func_216509_a(float p_216509_0_, float p_216509_1_, float p_216509_2_) {
-        Vector3f vector3f = new Vector3f(p_216509_0_, p_216509_1_, p_216509_2_);
-        vector3f.normalize();
-        return vector3f;
+    public static void floatBlit(MatrixStack matrixStack,
+                                 float x,
+                                 float y,
+                                 int blitOffset,
+                                 float uOffset,
+                                 float vOffset,
+                                 int uWidth,
+                                 int vHeight,
+                                 int textureHeight,
+                                 int textureWidth) {
+        innerFloatBlit(matrixStack, x, x + uWidth, y, y + vHeight, blitOffset, uWidth, vHeight, uOffset, vOffset, textureWidth, textureHeight);
     }
 
     public static LivingEntity getEntity(World world, EntityType<?> type) {
         LivingEntity entity = (LivingEntity) type.create(world);
         if (entity instanceof MobEntity) {
             try {
-                ((MobEntity) entity).onInitialSpawn(world, difficulty, SpawnReason.NATURAL, null, null);
+                ((MobEntity) entity).finalizeSpawn(null, difficulty, SpawnReason.NATURAL, null, null);
             }
             catch (Throwable ignored) {
             }
@@ -237,115 +219,191 @@ public final class GUIUtils {
         else if (entity.getType() == EntityType.SQUID) {
             targetHeight /= 2.5;
         }
-        return Math.min(targetWidth / entity.getWidth(), targetHeight / entity.getHeight()) * baseScale;
+        return Math.min(targetWidth / entity.getBbWidth(), targetHeight / entity.getBbHeight()) * baseScale;
     }
 
-    public static void hLine(int x0, int x1, int y, int color) {
-        hLine(x0, x1, y, color, false);
+    public static void hLine(MatrixStack matrices, int x0, int x1, int y, int color) {
+        hLine(matrices, x0, x1, y, color, false);
     }
 
-    public static void hLine(int x0, int x1, int y, int color, boolean over) {
+    public static void hLine(MatrixStack matrices, int x0, int x1, int y, int color, boolean over) {
         if (x1 < x0) {
             int temp = x0;
             x0 = x1;
             x1 = temp;
         }
-        fill(x0, y, x1 + 1, y + 1, color, over);
+        fill(matrices.last().pose(), x0, y, x1 + 1, y + 1, color, over);
+    }
+
+    private static void innerFloatBlit(MatrixStack matrixStack,
+                                       float x1,
+                                       float x2,
+                                       float y1,
+                                       float y2,
+                                       int blitOffset,
+                                       int uWidth,
+                                       int vHeight,
+                                       float uOffset,
+                                       float vOffset,
+                                       int textureWidth,
+                                       int textureHeight) {
+        innerFloatBlit(matrixStack.last().pose(),
+                       x1,
+                       x2,
+                       y1,
+                       y2,
+                       blitOffset,
+                       uOffset / textureWidth,
+                       (uOffset + uWidth) / textureWidth,
+                       vOffset / textureHeight,
+                       (vOffset + vHeight) / textureHeight);
+    }
+
+    public static void innerFloatBlit(Matrix4f matrix,
+                                      float x1,
+                                      float x2,
+                                      float y1,
+                                      float y2,
+                                      int blitOffset,
+                                      float minU,
+                                      float maxU,
+                                      float minV,
+                                      float maxV) {
+        BufferBuilder builder = Tessellator.getInstance().getBuilder();
+        builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        builder.vertex(matrix, x1, y2, blitOffset).uv(minU, maxV).endVertex();
+        builder.vertex(matrix, x2, y2, blitOffset).uv(maxU, maxV).endVertex();
+        builder.vertex(matrix, x2, y1, blitOffset).uv(maxU, minV).endVertex();
+        builder.vertex(matrix, x1, y1, blitOffset).uv(minU, minV).endVertex();
+        builder.end();
+        RenderSystem.enableAlphaTest();
+        WorldVertexBufferUploader.end(builder);
     }
 
     private static boolean needsTurning(LivingEntity entity) {
         return entity.getType() == EntityType.BAT;
     }
 
-    public static void renderItemAndEffectIntoGUIGreyscaled(ItemRenderer itemRenderer, @Nullable LivingEntity entity, ItemStack stack, int x, int y) {
-        if (!stack.isEmpty()) {
-            itemRenderer.zLevel += 50.0F;
-            try {
-                renderItemModelIntoGUIGreyscaled(itemRenderer, stack, x, y, itemRenderer.getItemModelWithOverrides(stack, null, entity));
-            }
-            catch (Throwable throwable) {
-                CrashReport crashReport = CrashReport.makeCrashReport(throwable, "Rendering item");
-                CrashReportCategory crashReportCategory = crashReport.makeCategory("Item being rendered");
-                crashReportCategory.func_189529_a("Item Type", () -> String.valueOf(stack.getItem()));
-                crashReportCategory.func_189529_a("Registry Name", () -> String.valueOf(stack.getItem().getRegistryName()));
-                crashReportCategory.func_189529_a("Item Damage", () -> String.valueOf(stack.getDamage()));
-                crashReportCategory.func_189529_a("Item NBT", () -> String.valueOf(stack.getTag()));
-                crashReportCategory.func_189529_a("Item Foil", () -> String.valueOf(stack.hasEffect()));
-                throw new ReportedException(crashReport);
-            }
-            itemRenderer.zLevel -= 50.0F;
-        }
+    public static void renderItemAndEffectIntoGuiWithoutEntity(ItemRenderer renderer, ItemStack stack, int x, int y, int packedLight) {
+        renderItemIntoGUI(renderer, null, stack, x, y, packedLight);
     }
 
-    public static void renderItemGreyscaled(ItemRenderer itemRenderer, ItemStack stack, IBakedModel model) {
+    public static void renderItemGreyscaled(ItemStack stack, IBakedModel model) {
         if (!stack.isEmpty()) {
-            GlStateManager.pushMatrix();
-            GlStateManager.translatef(-0.5F, -0.5F, -0.5F);
-            if (model.isBuiltInRenderer()) {
-                GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-                GlStateManager.enableRescaleNormal();
-                stack.getItem().getTileEntityItemStackRenderer().renderByItem(stack);
+            RenderSystem.pushMatrix();
+            RenderSystem.translatef(-0.5f, -0.5f, -0.5f);
+            if (model.isCustomRenderer()) {
+                MatrixStack matrices = new MatrixStack();
+                IRenderTypeBuffer.Impl buffer = Minecraft.getInstance().renderBuffers().bufferSource();
+                stack.getItem()
+                     .getItemStackTileEntityRenderer()
+                     .renderByItem(stack, ItemCameraTransforms.TransformType.GUI, matrices, buffer, 0xf0_00f0, OverlayTexture.NO_OVERLAY);
+                buffer.endBatch();
             }
             else {
-                renderModelGreyscaled(itemRenderer, model, stack);
-                if (stack.hasEffect()) {
-                    ItemRenderer.renderEffect(Minecraft.getInstance().textureManager,
-                                              () -> renderModelGreyscaled(itemRenderer, model, 0x6666_6666),
-                                              8);
-                }
+                MatrixStack matrices = new MatrixStack();
+                IRenderTypeBuffer.Impl buffer = Minecraft.getInstance().renderBuffers().bufferSource();
+                RenderType renderType = RenderTypeLookup.getRenderType(stack, true);
+                IVertexBuilder modelBuffer = ItemRenderer.getFoilBuffer(buffer, renderType, true, stack.hasFoil());
+                renderModelGreyscaled(matrices, modelBuffer, model, 0xf0_00f0, OverlayTexture.NO_OVERLAY);
+                buffer.endBatch();
             }
-            GlStateManager.popMatrix();
+            RenderSystem.popMatrix();
         }
     }
 
-    private static void renderItemModelIntoGUIGreyscaled(ItemRenderer itemRenderer, ItemStack stack, int x, int y, IBakedModel bakedmodel) {
-        GlStateManager.pushMatrix();
-        Minecraft.getInstance().textureManager.bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);
-        Minecraft.getInstance().textureManager.getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);
-        GlStateManager.enableRescaleNormal();
-        GlStateManager.enableAlphaTest();
-        GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
-        GlStateManager.enableBlend();
-        GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        setupGuiTransform(itemRenderer, x, y, bakedmodel.isGui3d());
-        bakedmodel = ForgeHooksClient.handleCameraTransforms(bakedmodel, ItemCameraTransforms.TransformType.GUI, false);
-        renderItemGreyscaled(itemRenderer, stack, bakedmodel);
-        GlStateManager.disableAlphaTest();
-        GlStateManager.disableRescaleNormal();
-        GlStateManager.disableLighting();
-        GlStateManager.popMatrix();
-        Minecraft.getInstance().textureManager.bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);
-        Minecraft.getInstance().textureManager.getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
-    }
-
-    private static void renderModelGreyscaled(ItemRenderer itemRenderer, IBakedModel model, ItemStack stack) {
-        renderModelGreyscaled(itemRenderer, model, 0x6666_6666, stack);
-    }
-
-    private static void renderModelGreyscaled(ItemRenderer itemRenderer, IBakedModel model, int color) {
-        renderModelGreyscaled(itemRenderer, model, color, ItemStack.EMPTY);
-    }
-
-    private static void renderModelGreyscaled(ItemRenderer itemRenderer, IBakedModel model, int color, ItemStack stack) {
-        if (ForgeConfig.CLIENT.allowEmissiveItems.get()) {
-            ForgeHooksClient.renderLitItem(itemRenderer, model, color, stack);
-            return;
+    private static void renderItemIntoGUI(ItemRenderer renderer,
+                                          @Nullable LivingEntity livingEntity,
+                                          ItemStack stack,
+                                          int x,
+                                          int y,
+                                          int packedLight) {
+        if (!stack.isEmpty()) {
+            renderer.blitOffset += 50.0F;
+            try {
+                renderItemModelIntoGUI(renderer, stack, x, y, renderer.getModel(stack, null, livingEntity), packedLight);
+            }
+            catch (Throwable throwable) {
+                CrashReport crashReport = CrashReport.forThrowable(throwable, "Rendering item");
+                CrashReportCategory crashReportCategory = crashReport.addCategory("Item being rendered");
+                crashReportCategory.setDetail("Item Type", () -> String.valueOf(stack.getItem()));
+                crashReportCategory.setDetail("Registry Name", () -> String.valueOf(stack.getItem().getRegistryName()));
+                crashReportCategory.setDetail("Item Damage", () -> String.valueOf(stack.getDamageValue()));
+                crashReportCategory.setDetail("Item NBT", () -> String.valueOf(stack.getTag()));
+                crashReportCategory.setDetail("Item Foil", () -> String.valueOf(stack.hasFoil()));
+                throw new ReportedException(crashReport);
+            }
+            renderer.blitOffset -= 50.0F;
         }
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.ITEM);
+    }
+
+    private static void renderItemModelIntoGUI(ItemRenderer renderer, ItemStack stack, int x, int y, IBakedModel model, int packedLight) {
+        RenderSystem.pushMatrix();
+        Minecraft.getInstance().textureManager.bind(AtlasTexture.LOCATION_BLOCKS);
+        Minecraft.getInstance().textureManager.getTexture(AtlasTexture.LOCATION_BLOCKS).setBlurMipmap(false, false);
+        RenderSystem.enableRescaleNormal();
+        RenderSystem.enableAlphaTest();
+        RenderSystem.defaultAlphaFunc();
+        RenderSystem.enableBlend();
+        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+        RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
+        RenderSystem.translatef(x, y, 100.0F + renderer.blitOffset);
+        RenderSystem.translatef(8.0F, 8.0F, 0.0F);
+        RenderSystem.scalef(1.0F, -1.0F, 1.0F);
+        RenderSystem.scalef(16.0F, 16.0F, 16.0F);
+        MatrixStack matrices = new MatrixStack();
+        IRenderTypeBuffer.Impl buffer = Minecraft.getInstance().renderBuffers().bufferSource();
+        boolean flag = !model.usesBlockLight();
+        if (flag) {
+            RenderHelper.setupForFlatItems();
+        }
+        renderer.render(stack, ItemCameraTransforms.TransformType.GUI, false, matrices, buffer, packedLight, OverlayTexture.NO_OVERLAY, model);
+        buffer.endBatch();
+        RenderSystem.enableDepthTest();
+        if (flag) {
+            RenderHelper.setupFor3DItems();
+        }
+        RenderSystem.disableAlphaTest();
+        RenderSystem.disableRescaleNormal();
+        RenderSystem.popMatrix();
+    }
+
+    private static void renderModelGreyscaled(MatrixStack matrices, IVertexBuilder buffer, IBakedModel model, int packedLight, int packedOverlay) {
+        renderModelGreyscaled(matrices, buffer, model, packedLight, packedOverlay, 0x6666_6666);
+    }
+
+    private static void renderModelGreyscaled(MatrixStack matrices,
+                                              IVertexBuilder buffer,
+                                              IBakedModel model,
+                                              int packedLight,
+                                              int packedOverlay,
+                                              int color) {
         Random random = new Random();
         for (Direction direction : Direction.values()) {
             random.setSeed(42L);
-            itemRenderer.renderQuads(bufferbuilder, model.getQuads(null, direction, random), color, stack);
+            renderQuads(matrices, buffer, model.getQuads(null, direction, random), packedLight, packedOverlay, color);
         }
         random.setSeed(42L);
-        itemRenderer.renderQuads(bufferbuilder, model.getQuads(null, null, random), color, stack);
-        tessellator.draw();
+        renderQuads(matrices, buffer, model.getQuads(null, null, random), packedLight, packedOverlay, color);
     }
 
-    public static void renderRepeating(AbstractGui abstractGui,
+    private static void renderQuads(MatrixStack matrixStack,
+                                    IVertexBuilder buffer,
+                                    List<BakedQuad> quads,
+                                    int packedLight,
+                                    int packedOverlay,
+                                    int color) {
+        MatrixStack.Entry matrixEntry = matrixStack.last();
+        for (BakedQuad bakedQuad : quads) {
+            float red = (color >> 16 & 255) / 255.0F;
+            float green = (color >> 8 & 255) / 255.0F;
+            float blue = (color & 255) / 255.0F;
+            buffer.addVertexData(matrixEntry, bakedQuad, red, green, blue, packedLight, packedOverlay, true);
+        }
+    }
+
+    public static void renderRepeating(MatrixStack matrices,
+                                       AbstractGui abstractGui,
                                        int x,
                                        int y,
                                        int width,
@@ -360,55 +418,25 @@ public final class GUIUtils {
             for (int l = 0; l < height; l += textureHeight) {
                 int drawY = y + l;
                 int drawHeight = Math.min(textureHeight, height - l);
-                abstractGui.blit(drawX, drawY, textureX, textureY, drawWidth, drawHeight);
+                abstractGui.blit(matrices, drawX, drawY, textureX, textureY, drawWidth, drawHeight);
             }
         }
-    }
-
-    private static void renderSplitStringWithShadow(FontRenderer font, String str, int x, int y, int wrapWidth, int textColor) {
-        for (String s : font.listFormattedStringToWidth(str, wrapWidth)) {
-            float f = x;
-            if (font.getBidiFlag()) {
-                int i = font.getStringWidth(font.bidiReorder(s));
-                f += wrapWidth - i;
-            }
-            font.drawStringWithShadow(s, f, y, textColor);
-            y += 9;
-        }
-    }
-
-    public static void renderTooltip(Screen screen, List<String> tooltips, int mouseX, int mouseY) {
-        GuiUtils.drawHoveringText(tooltips, mouseX, mouseY, screen.width, screen.height, -1, Minecraft.getInstance().fontRenderer);
-    }
-
-    public static void renderTooltip(Screen screen, List<String> tooltips, int mouseX, int mouseY, int textLimit) {
-        GuiUtils.drawHoveringText(tooltips, mouseX, mouseY, screen.width, screen.height, textLimit, Minecraft.getInstance().fontRenderer);
     }
 
     public static void setColor(int color) {
-        GlStateManager.color3f((color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F);
+        RenderSystem.color3f((color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F);
     }
 
     public static void setDifficulty(@Nullable BlockPos pos) {
-        World world = Minecraft.getInstance().world;
+        World world = Minecraft.getInstance().level;
         if (world != null) {
-            difficulty = world.getDifficultyForLocation(pos == null ? world.getSpawnPoint() : pos);
+            IWorldInfo worldInfo = world.getLevelData();
+            difficulty = world.getCurrentDifficultyAt(pos == null ?
+                                                      new BlockPos(worldInfo.getXSpawn(), worldInfo.getYSpawn(), worldInfo.getZSpawn()) :
+                                                      pos);
         }
         else {
             difficulty = new DifficultyInstance(Difficulty.NORMAL, 0, 0, 0);
-        }
-    }
-
-    private static void setupGuiTransform(ItemRenderer itemRenderer, int xPosition, int yPosition, boolean isGui3d) {
-        GlStateManager.translatef(xPosition, yPosition, 100.0F + itemRenderer.zLevel);
-        GlStateManager.translatef(8.0F, 8.0F, 0.0F);
-        GlStateManager.scalef(1.0F, -1.0F, 1.0F);
-        GlStateManager.scalef(16.0F, 16.0F, 16.0F);
-        if (isGui3d) {
-            GlStateManager.enableLighting();
-        }
-        else {
-            GlStateManager.disableLighting();
         }
     }
 
@@ -418,23 +446,16 @@ public final class GUIUtils {
         }
     }
 
-    private static String trimStringNewline(String text) {
-        while (text != null && text.endsWith("\n")) {
-            text = text.substring(0, text.length() - 1);
-        }
-        return text;
+    public static void vLine(MatrixStack matrices, int x, int y0, int y1, int color) {
+        vLine(matrices, x, y0, y1, color, false);
     }
 
-    public static void vLine(int x, int y0, int y1, int color) {
-        vLine(x, y0, y1, color, false);
-    }
-
-    public static void vLine(int x, int y0, int y1, int color, boolean over) {
+    public static void vLine(MatrixStack matrices, int x, int y0, int y1, int color, boolean over) {
         if (y1 < y0) {
             int temp = y0;
             y0 = y1;
             y1 = temp;
         }
-        fill(x, y0 + 1, x + 1, y1, color, over);
+        fill(matrices.last().pose(), x, y0 + 1, x + 1, y1, color, over);
     }
 }

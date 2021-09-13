@@ -10,75 +10,97 @@ public class WindVector {
     private static int randomize(Random rand, int value) {
         int chosen;
         switch (value) {
-            case -2:
+            case -2: {
                 chosen = rand.nextInt(8);
                 switch (chosen) {
                     case 0:
                     case 1:
                     case 2:
-                    case 3:
+                    case 3: {
                         return -2;
+                    }
                     case 4:
                     case 5:
-                    case 6:
+                    case 6: {
                         return -1;
-                    case 7:
+                    }
+                    case 7: {
                         return 0;
+                    }
                 }
-            case -1:
+            }
+            case -1: {
                 chosen = rand.nextInt(4);
                 switch (chosen) {
-                    case 0:
+                    case 0: {
                         return -2;
+                    }
                     case 1:
-                    case 2:
+                    case 2: {
                         return -1;
-                    case 3:
+                    }
+                    case 3: {
                         return 0;
+                    }
                 }
-            case 0:
+            }
+            case 0: {
                 chosen = rand.nextInt(8);
                 switch (chosen) {
-                    case 0:
+                    case 0: {
                         return -2;
+                    }
                     case 1:
-                    case 2:
+                    case 2: {
                         return -1;
+                    }
                     case 3:
-                    case 4:
+                    case 4: {
                         return 0;
+                    }
                     case 5:
-                    case 6:
+                    case 6: {
                         return 1;
-                    case 7:
+                    }
+                    case 7: {
                         return 2;
+                    }
                 }
-            case 1:
+            }
+            case 1: {
                 chosen = rand.nextInt(4);
                 switch (chosen) {
-                    case 0:
+                    case 0: {
                         return 0;
+                    }
                     case 1:
-                    case 2:
+                    case 2: {
                         return 1;
-                    case 3:
+                    }
+                    case 3: {
                         return 2;
+                    }
                 }
-            case 2:
+            }
+            case 2: {
                 chosen = rand.nextInt(8);
                 switch (chosen) {
-                    case 0:
+                    case 0: {
                         return 0;
+                    }
                     case 1:
                     case 2:
-                    case 3:
+                    case 3: {
                         return 1;
+                    }
                     case 4:
                     case 5:
                     case 6:
-                    case 7:
+                    case 7: {
                         return 2;
+                    }
                 }
+            }
         }
         return 0;
     }

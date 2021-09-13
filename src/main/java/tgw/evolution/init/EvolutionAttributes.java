@@ -1,15 +1,30 @@
 package tgw.evolution.init;
 
+import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.entity.ai.attributes.IAttribute;
 import net.minecraft.entity.ai.attributes.RangedAttribute;
+import net.minecraftforge.fml.RegistryObject;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import tgw.evolution.Evolution;
 
 import java.util.UUID;
 
 public final class EvolutionAttributes {
 
-    public static final IAttribute MASS = new RangedAttribute(null, "evolution.mass", 70, 0, Integer.MAX_VALUE).setShouldWatch(true);
-    public static final IAttribute FRICTION = new RangedAttribute(null, "evolution.friction", 2, 2, Integer.MAX_VALUE).setShouldWatch(true);
+    public static final DeferredRegister<Attribute> ATTRIBUTES = DeferredRegister.create(ForgeRegistries.ATTRIBUTES, Evolution.MODID);
+
+    public static final RegistryObject<Attribute> MASS = ATTRIBUTES.register("mass",
+                                                                             () -> new RangedAttribute("evolution.mass",
+                                                                                                       70,
+                                                                                                       0,
+                                                                                                       Integer.MAX_VALUE).setSyncable(true));
+    public static final RegistryObject<Attribute> FRICTION = ATTRIBUTES.register("friction",
+                                                                                 () -> new RangedAttribute("evolution.friction",
+                                                                                                           2,
+                                                                                                           2,
+                                                                                                           Integer.MAX_VALUE).setSyncable(true));
     public static final UUID FRICTION_MODIFIER = UUID.fromString("c9907da6-8dd4-11eb-8dcd-0242ac130003");
     public static final UUID MASS_MODIFIER = UUID.fromString("d12c48de-b027-4f50-931e-81e7184a78a2");
     public static final UUID MASS_MODIFIER_OFFHAND = UUID.fromString("d12c48de-b027-4f50-931e-81e7184a78a3");
@@ -20,8 +35,12 @@ public final class EvolutionAttributes {
     public static final AttributeModifier SLOW_FALLING = new AttributeModifier(SLOW_FALLING_MODIFIER,
                                                                                "Slow falling acceleration reduction",
                                                                                -0.02,
-                                                                               AttributeModifier.Operation.ADDITION).setSaved(false);
+                                                                               AttributeModifier.Operation.ADDITION);
 
     private EvolutionAttributes() {
+    }
+
+    public static void register() {
+        ATTRIBUTES.register(FMLJavaModLoadingContext.get().getModEventBus());
     }
 }

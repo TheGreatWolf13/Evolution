@@ -3,8 +3,9 @@ package tgw.evolution.init;
 import net.minecraft.item.IItemTier;
 import net.minecraft.item.Item;
 import net.minecraft.item.crafting.Ingredient;
-import net.minecraftforge.fml.RegistryObject;
 import tgw.evolution.util.HarvestLevel;
+
+import java.util.function.Supplier;
 
 import static tgw.evolution.init.EvolutionItems.*;
 
@@ -39,26 +40,26 @@ public enum EvolutionToolMaterials implements IItemTier {
     private final int harvestLevel;
     private final float miningSpeed;
     private final String name;
-    private final Item repairMaterial;
+    private final Supplier<Item> repairMaterial;
 
     EvolutionToolMaterials(String name,
                            float attackDamage,
                            float miningSpeed,
                            int durability,
                            int harvestLevel,
-                           RegistryObject<Item> repairMaterial,
+                           Supplier<Item> repairMaterial,
                            int density) {
         this.attackDamage = attackDamage;
         this.miningSpeed = miningSpeed;
         this.durability = durability;
         this.harvestLevel = harvestLevel;
-        this.repairMaterial = repairMaterial.get();
+        this.repairMaterial = repairMaterial;
         this.name = name;
         this.density = density;
     }
 
     @Override
-    public float getAttackDamage() {
+    public float getAttackDamageBonus() {
         return this.attackDamage;
     }
 
@@ -67,12 +68,7 @@ public enum EvolutionToolMaterials implements IItemTier {
     }
 
     @Override
-    public float getEfficiency() {
-        return this.miningSpeed;
-    }
-
-    @Override
-    public int getEnchantability() {
+    public int getEnchantmentValue() {
         return 0;
     }
 
@@ -80,18 +76,13 @@ public enum EvolutionToolMaterials implements IItemTier {
         return this.density / 1_500.0;
     }
 
-    @Override
-    public int getHarvestLevel() {
-        return this.harvestLevel;
-    }
-
     public double getJavelinMass() {
         return this.density / 2_000.0;
     }
 
     @Override
-    public int getMaxUses() {
-        return this.durability;
+    public int getLevel() {
+        return this.harvestLevel;
     }
 
     public String getName() {
@@ -103,15 +94,25 @@ public enum EvolutionToolMaterials implements IItemTier {
     }
 
     @Override
-    public Ingredient getRepairMaterial() {
-        return Ingredient.fromItems(this.repairMaterial);
+    public Ingredient getRepairIngredient() {
+        return Ingredient.of(this.repairMaterial.get());
     }
 
     public double getShovelMass() {
         return this.density / 2_000.0;
     }
 
+    @Override
+    public float getSpeed() {
+        return this.miningSpeed;
+    }
+
     public double getSwordMass() {
         return this.density / 2_000.0;
+    }
+
+    @Override
+    public int getUses() {
+        return this.durability;
     }
 }

@@ -10,17 +10,14 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.state.StateContainer.Builder;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
+import net.minecraft.util.*;
 import net.minecraft.util.Direction.Axis;
-import net.minecraft.util.Hand;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
@@ -33,18 +30,18 @@ import javax.annotation.Nonnull;
 
 import static tgw.evolution.init.EvolutionBStates.LAYERS_1_5;
 
-public class BlockMolding extends BlockEvolution implements IReplaceable {
+public class BlockMolding extends BlockGeneric implements IReplaceable {
 
     public BlockMolding() {
-        super(Block.Properties.create(Material.CLAY).hardnessAndResistance(0.0F).sound(SoundType.GROUND));
-        this.setDefaultState(this.getDefaultState().with(LAYERS_1_5, 1));
+        super(Properties.of(Material.CLAY).strength(0.0F).sound(SoundType.GRAVEL).noOcclusion());
+        this.registerDefaultState(this.defaultBlockState().setValue(LAYERS_1_5, 1));
     }
 
     private static void dropItemStack(World world, BlockPos pos, @Nonnull ItemStack stack) {
-        ItemEntity entity = new ItemEntity(world, pos.getX() + 0.5f, pos.getY() + 0.3f, pos.getZ() + 0.5f, stack);
-        Vec3d motion = entity.getMotion();
-        entity.addVelocity(-motion.x, -motion.y, -motion.z);
-        world.addEntity(entity);
+        ItemEntity entity = new ItemEntity(world, pos.getX() + 0.5, pos.getY() + 0.3, pos.getZ() + 0.5, stack);
+        Vector3d motion = entity.getDeltaMovement();
+        entity.push(-motion.x, -motion.y, -motion.z);
+        world.addFreshEntity(entity);
     }
 
     @Override
@@ -58,18 +55,24 @@ public class BlockMolding extends BlockEvolution implements IReplaceable {
     }
 
     @Override
+    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+        BlockState up = world.getBlockState(pos.above());
+        return BlockUtils.isReplaceable(up) && BlockUtils.hasSolidSide(world, pos.below(), Direction.UP);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
+        builder.add(LAYERS_1_5);
+    }
+
+    @Override
     public TileEntity createTileEntity(BlockState state, IBlockReader world) {
         return new TEMolding();
     }
 
     @Override
-    protected void fillStateContainer(Builder<Block, BlockState> builder) {
-        builder.add(LAYERS_1_5);
-    }
-
-    @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return new ItemStack(EvolutionItems.clay.get(), state.get(LAYERS_1_5));
+        return new ItemStack(EvolutionItems.clay.get(), state.getValue(LAYERS_1_5));
     }
 
     @Override
@@ -83,13 +86,13 @@ public class BlockMolding extends BlockEvolution implements IReplaceable {
     }
 
     @Override
-    public BlockRenderType getRenderType(BlockState state) {
+    public BlockRenderType getRenderShape(BlockState state) {
         return BlockRenderType.MODEL;
     }
 
     @Override
     public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
-        TEMolding tile = (TEMolding) world.getTileEntity(pos);
+        TEMolding tile = (TEMolding) world.getBlockEntity(pos);
         if (tile != null) {
             return tile.getHitbox(state);
         }
@@ -107,68 +110,66 @@ public class BlockMolding extends BlockEvolution implements IReplaceable {
     }
 
     @Override
-    public boolean isSolid(BlockState state) {
-        return false;
-    }
-
-    @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
-        BlockPos posDown = pos.down();
-        BlockState down = worldIn.getBlockState(posDown);
-        BlockState up = worldIn.getBlockState(pos.up());
-        return BlockUtils.isReplaceable(up) && Block.hasSolidSide(down, worldIn, posDown, Direction.UP);
-    }
-
-    @Override
-    public void neighborChanged(BlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            if (!state.isValidPosition(worldIn, pos)) {
-                spawnDrops(state, worldIn, pos);
-                worldIn.removeBlock(pos, false);
+    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!world.isClientSide) {
+            if (!state.canSurvive(world, pos)) {
+                dropResources(state, world, pos);
+                world.removeBlock(pos, false);
             }
         }
     }
 
     @Override
-    public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        int layers = state.get(LAYERS_1_5);
-        if (player.getHeldItem(handIn).getItem() == EvolutionItems.clayball.get()) {
+    public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.equals(newState)) {
+            TEMolding tile = (TEMolding) worldIn.getBlockEntity(pos);
+            if (tile != null) {
+                tile.sendRenderUpdate();
+            }
+        }
+        super.onRemove(state, worldIn, pos, newState, isMoving);
+    }
+
+    @Override
+    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
+        int layers = state.getValue(LAYERS_1_5);
+        if (player.getItemInHand(hand).getItem() == EvolutionItems.clayball.get()) {
             if (layers < 5) {
-                worldIn.setBlockState(pos, state.with(LAYERS_1_5, layers + 1));
-                TEMolding tile = (TEMolding) worldIn.getTileEntity(pos);
+                world.setBlockAndUpdate(pos, state.setValue(LAYERS_1_5, layers + 1));
+                TEMolding tile = (TEMolding) world.getBlockEntity(pos);
                 tile.addLayer(layers);
-                worldIn.playSound(player, pos, SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 0.5F, 0.8F);
+                world.playSound(player, pos, SoundEvents.GRAVEL_PLACE, SoundCategory.BLOCKS, 0.5F, 0.8F);
                 if (!player.isCreative()) {
-                    player.getHeldItem(handIn).shrink(1);
+                    player.getItemInHand(hand).shrink(1);
                 }
-                return true;
+                return ActionResultType.SUCCESS;
             }
-            return false;
+            return ActionResultType.PASS;
         }
-        if (!player.getHeldItem(handIn).isEmpty()) {
-            return false;
+        if (!player.getItemInHand(hand).isEmpty()) {
+            return ActionResultType.PASS;
         }
-        TEMolding tile = (TEMolding) worldIn.getTileEntity(pos);
+        TEMolding tile = (TEMolding) world.getBlockEntity(pos);
         if (tile == null) {
-            return false;
+            return ActionResultType.PASS;
         }
-        double hitX = (hit.getHitVec().x - pos.getX()) * 16;
+        double hitX = (hit.getLocation().x - pos.getX()) * 16;
         if (!MathHelper.rangeInclusive(hitX, 0.5, 15.5)) {
-            return false;
+            return ActionResultType.PASS;
         }
-        double hitZ = (hit.getHitVec().z - pos.getZ()) * 16;
+        double hitZ = (hit.getLocation().z - pos.getZ()) * 16;
         if (!MathHelper.rangeInclusive(hitZ, 0.5, 15.5)) {
-            return false;
+            return ActionResultType.PASS;
         }
-        double hitY = (hit.getHitVec().y - pos.getY()) * 16;
-        int x = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.X, hitX, hit.getFace()));
-        int y = MathHelper.getIndex(5, 0, 15, MathHelper.hitOffset(Axis.Y, hitY, hit.getFace()));
-        int z = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.Z, hitZ, hit.getFace()));
-        if (!tile.matrices[y][x][z] || tile.molding.getPattern()[y][x][z]) {
-            return false;
-        }
-        worldIn.playSound(player, pos, SoundEvents.BLOCK_GRAVEL_BREAK, SoundCategory.BLOCKS, 1.0F, 0.75F);
-        tile.matrices[y][x][z] = false;
+        double hitY = (hit.getLocation().y - pos.getY()) * 16;
+        int x = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.X, hitX, hit.getDirection()));
+        int y = MathHelper.getIndex(5, 0, 15, MathHelper.hitOffset(Axis.Y, hitY, hit.getDirection()));
+        int z = MathHelper.getIndex(5, 0.5, 15.5, MathHelper.hitOffset(Axis.Z, hitZ, hit.getDirection()));
+//        if (!tile.matrices[y][x][z] || tile.molding.getPattern()[y][x][z]) {
+//            return ActionResultType.PASS;
+//        }
+        world.playSound(player, pos, SoundEvents.GRAVEL_BREAK, SoundCategory.BLOCKS, 1.0F, 0.75F);
+//        tile.matrices[y][x][z] = false;
         if (layers != 1) {
             int fail = tile.check();
             if (fail != -1) {
@@ -177,29 +178,18 @@ public class BlockMolding extends BlockEvolution implements IReplaceable {
                     count++;
                 }
                 if (layers == count) {
-                    worldIn.removeBlock(pos, false);
+                    world.removeBlock(pos, false);
                 }
                 else {
-                    worldIn.setBlockState(pos, state.with(LAYERS_1_5, layers - count));
+                    world.setBlockAndUpdate(pos, state.setValue(LAYERS_1_5, layers - count));
                 }
-                if (!worldIn.isRemote) {
-                    dropItemStack(worldIn, pos, new ItemStack(EvolutionItems.clayball.get(), count));
+                if (!world.isClientSide) {
+                    dropItemStack(world, pos, new ItemStack(EvolutionItems.clayball.get(), count));
                 }
             }
         }
         tile.sendRenderUpdate();
         tile.checkPatterns();
-        return true;
-    }
-
-    @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!state.equals(newState)) {
-            TEMolding tile = (TEMolding) worldIn.getTileEntity(pos);
-            if (tile != null) {
-                tile.sendRenderUpdate();
-            }
-        }
-        super.onReplaced(state, worldIn, pos, newState, isMoving);
+        return ActionResultType.SUCCESS;
     }
 }

@@ -21,20 +21,20 @@ public class PacketSCStatistics implements IPacket {
     }
 
     public static PacketSCStatistics decode(PacketBuffer buffer) {
-        int size = buffer.readInt();
+        int size = buffer.readVarInt();
         Object2LongMap<Stat<?>> statisticMap = new Object2LongOpenHashMap<>(size);
         for (int i = 0; i < size; ++i) {
-            readValues(statisticMap, Registry.STATS.getByValue(buffer.readInt()), buffer);
+            readValues(statisticMap, Registry.STAT_TYPE.byId(buffer.readVarInt()), buffer);
         }
         return new PacketSCStatistics(statisticMap);
     }
 
     public static void encode(PacketSCStatistics packet, PacketBuffer buffer) {
-        buffer.writeInt(packet.statsData.size());
+        buffer.writeVarInt(packet.statsData.size());
         for (Object2LongMap.Entry<Stat<?>> entry : packet.statsData.object2LongEntrySet()) {
             Stat<?> stat = entry.getKey();
-            buffer.writeInt(Registry.STATS.getId(stat.getType()));
-            buffer.writeInt(getStatId(stat));
+            buffer.writeVarInt(Registry.STAT_TYPE.getId(stat.getType()));
+            buffer.writeVarInt(getStatId(stat));
             buffer.writeLong(entry.getLongValue());
         }
     }
@@ -51,9 +51,9 @@ public class PacketSCStatistics implements IPacket {
     }
 
     private static <T> void readValues(Object2LongMap<Stat<?>> map, StatType<T> statType, PacketBuffer buffer) {
-        int statId = buffer.readInt();
+        int statId = buffer.readVarInt();
         long amount = buffer.readLong();
-        map.put(statType.get(statType.getRegistry().getByValue(statId)), amount);
+        map.put(statType.get(statType.getRegistry().byId(statId)), amount);
     }
 
     @Override

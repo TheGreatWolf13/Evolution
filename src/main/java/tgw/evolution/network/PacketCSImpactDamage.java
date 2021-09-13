@@ -25,7 +25,7 @@ public class PacketCSImpactDamage implements IPacket {
 
     public static void handle(PacketCSImpactDamage packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> context.get().getSender().attackEntityFrom(EvolutionDamage.WALL_IMPACT, packet.damage));
+            context.get().enqueueWork(() -> context.get().getSender().hurt(EvolutionDamage.WALL_IMPACT, packet.damage));
             context.get().setPacketHandled(true);
         }
     }

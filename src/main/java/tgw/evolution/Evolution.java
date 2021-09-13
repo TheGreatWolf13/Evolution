@@ -1,30 +1,38 @@
 package tgw.evolution;
 
-import com.google.common.collect.Maps;
+import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
+import it.unimi.dsi.fastutil.ints.Int2BooleanMaps;
+import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.world.World;
-import net.minecraft.world.dimension.Dimension;
-import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ParticleFactoryRegisterEvent;
+import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.common.world.ForgeWorldType;
+import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
+import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.network.FMLNetworkConstants;
+import net.minecraftforge.registries.DataSerializerEntry;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import tgw.evolution.blocks.BlockFire;
+import tgw.evolution.client.renderer.EvolutionRenderLayer;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ChunkEvents;
 import tgw.evolution.events.ClientEvents;
@@ -34,29 +42,20 @@ import tgw.evolution.init.*;
 import tgw.evolution.network.IPacketHandler;
 import tgw.evolution.network.PacketHandlerClient;
 import tgw.evolution.network.PacketHandlerDummy;
+import tgw.evolution.util.DataSerializer;
 import tgw.evolution.util.reflection.FieldHandler;
-import tgw.evolution.world.EvWorldDefault;
-import tgw.evolution.world.EvWorldFlat;
-import tgw.evolution.world.dimension.DimensionOverworld;
+import tgw.evolution.world.WorldEvolutionDefault;
+import tgw.evolution.world.WorldEvolutionFlat;
 import tgw.evolution.world.feature.EvolutionFeatures;
-import tgw.evolution.world.gen.carver.EvolutionCarvers;
-
-import java.util.Map;
-import java.util.UUID;
-import java.util.function.BiFunction;
 
 @Mod("evolution")
 public final class Evolution {
 
     public static final String MODID = "evolution";
     public static final Logger LOGGER = LogManager.getLogger(MODID);
-    public static final IProxy PROXY = DistExecutor.runForDist(() -> ClientProxy::new, () -> ServerProxy::new);
-    public static final IPacketHandler PACKET_HANDLER = DistExecutor.runForDist(() -> PacketHandlerClient::new, () -> PacketHandlerDummy::new);
-    public static final Map<UUID, Boolean> PRONED_PLAYERS = Maps.newConcurrentMap();
-    private static final FieldHandler<DimensionType, BiFunction<World, DimensionType, ? extends Dimension>> DIMENSION_FACTORY_FIELD =
-            new FieldHandler<>(
-            DimensionType.class,
-            "field_201038_g");
+    public static final IProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> ServerProxy::new);
+    public static final IPacketHandler PACKET_HANDLER = DistExecutor.safeRunForDist(() -> PacketHandlerClient::new, () -> PacketHandlerDummy::new);
+    public static final Int2BooleanMap PRONED_PLAYERS = Int2BooleanMaps.synchronize(new Int2BooleanOpenHashMap());
     public static Evolution instance;
 
     public Evolution() {
@@ -65,23 +64,35 @@ public final class Evolution {
         EvolutionBlocks.register();
         EvolutionItems.register();
         EvolutionFluids.register();
-        EvolutionCarvers.register();
+//        EvolutionCarvers.register();
         EvolutionFeatures.register();
         EvolutionEntities.register();
-        EvolutionTileEntities.register();
+        EvolutionTEs.register();
         EvolutionSounds.register();
         EvolutionContainers.register();
         EvolutionEffects.register();
         EvolutionBiomes.register();
+        EvolutionAttributes.register();
+        EvolutionStats.register();
+        EvolutionParticles.register();
+        ForgeWorldType defaultWorldType = new WorldEvolutionDefault();
+        defaultWorldType.setRegistryName(getResource("default"));
+        ForgeRegistries.WORLD_TYPES.register(defaultWorldType);
+        ForgeWorldType flatWorldType = new WorldEvolutionFlat();
+        flatWorldType.setRegistryName(getResource("flat"));
+        ForgeRegistries.WORLD_TYPES.register(flatWorldType);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::registerParticleFactories);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::setup);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::onClientSetup);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::loadComplete);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::onEntityAttributeCreation);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::onEntityAttributeModification);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::onTexturePreStitch);
+        FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(DataSerializerEntry.class, Evolution::registerSerializers);
         MinecraftForge.EVENT_BUS.register(this);
-        EvolutionParticles.register();
         ModLoadingContext.get()
                          .registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
                                                  () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (s, b) -> true));
-        EvolutionStats.register();
     }
 
     public static ResourceLocation getResource(String name) {
@@ -95,7 +106,6 @@ public final class Evolution {
         if (FMLLoader.getDist() == Dist.CLIENT) {
             ClientEvents.onFinishLoading();
         }
-        EvolutionCommands.registerArguments();
     }
 
     public static void log(boolean log, String message, Object... args) {
@@ -104,27 +114,46 @@ public final class Evolution {
         }
     }
 
-    @SubscribeEvent
-    public static void registerParticleFactories(ParticleFactoryRegisterEvent event) {
-        EvolutionParticles.registerFactories(Minecraft.getInstance().particles);
+    private static void onClientSetup(FMLClientSetupEvent event) {
+        EvolutionRenderLayer.setup();
+        ClientEvents.fixInputMappings();
+        FieldHandler<FontRenderer, Integer> fontHeight = new FieldHandler<>(FontRenderer.class, "field_78288_b");
+        fontHeight.set(Minecraft.getInstance().font, 10);
+    }
+
+    private static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
+        EvolutionEntities.registerEntityAttribute(event);
+    }
+
+    private static void onEntityAttributeModification(EntityAttributeModificationEvent event) {
+        EvolutionEntities.modifyEntityAttribute(event);
+    }
+
+    private static void onTexturePreStitch(TextureStitchEvent.Pre event) {
+        if (FMLLoader.getDist() == Dist.CLIENT) {
+            ClientProxy.addTextures(event);
+        }
+    }
+
+    private static void registerParticleFactories(ParticleFactoryRegisterEvent event) {
+        EvolutionParticles.registerFactories(Minecraft.getInstance().particleEngine);
+    }
+
+    private static void registerSerializers(RegistryEvent.Register<DataSerializerEntry> event) {
+        DataSerializer.register(event, getResource("item_list"));
     }
 
     private static void setup(FMLCommonSetupEvent event) {
-        new EvWorldDefault();
-        new EvWorldFlat();
         PROXY.init();
         EvolutionNetwork.registerMessages();
         EvolutionCapabilities.register();
         MinecraftForge.EVENT_BUS.register(new WorldEvents());
-        //        MinecraftForge.EVENT_BUS.register(new FallingEvents());
         MinecraftForge.EVENT_BUS.register(new ChunkEvents());
         MinecraftForge.EVENT_BUS.register(new EntityEvents());
-        BiFunction<World, DimensionType, ? extends Dimension> dimensionFactory = DimensionOverworld::new;
-        DIMENSION_FACTORY_FIELD.set(DimensionType.OVERWORLD, dimensionFactory);
         LOGGER.info("Setup registries done.");
     }
 
     public static void usingPlaceholder(PlayerEntity player, String obj) {
-        player.sendStatusMessage(new StringTextComponent("[DEBUG] Using placeholder " + obj + "!"), false);
+        player.displayClientMessage(new StringTextComponent("[DEBUG] Using placeholder " + obj + "!"), false);
     }
 }

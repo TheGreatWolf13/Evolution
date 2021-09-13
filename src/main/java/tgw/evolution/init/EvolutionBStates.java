@@ -29,13 +29,13 @@ public final class EvolutionBStates {
     public static final BooleanProperty WEST = BlockStateProperties.WEST;
     public static final BooleanProperty DOWN = BlockStateProperties.DOWN;
     public static final BooleanProperty UP = BlockStateProperties.UP;
-    public static final DirectionProperty DIRECTION_EXCEPT_UP = BlockStateProperties.FACING_EXCEPT_UP;
+    public static final DirectionProperty DIRECTION_EXCEPT_UP = BlockStateProperties.FACING_HOPPER;
     public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
-    public static final IntegerProperty AGE_0_15 = BlockStateProperties.AGE_0_15;
-    public static final IntegerProperty DISTANCE_0_7 = BlockStateProperties.DISTANCE_0_7;
+    public static final IntegerProperty AGE_0_15 = BlockStateProperties.AGE_15;
+    public static final IntegerProperty DISTANCE_0_7 = BlockStateProperties.STABILITY_DISTANCE;
     public static final DirectionProperty DIRECTION_HORIZONTAL = BlockStateProperties.HORIZONTAL_FACING;
     public static final BooleanProperty SNOWY = BlockStateProperties.SNOWY;
-    public static final IntegerProperty STAGE_0_1 = BlockStateProperties.STAGE_0_1;
+    public static final IntegerProperty STAGE_0_1 = BlockStateProperties.STAGE;
     public static final EnumProperty<SchematicMode> SCHEMATIC_MODE = EnumProperty.create("mode", SchematicMode.class);
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
     public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.AXIS;
@@ -45,18 +45,24 @@ public final class EvolutionBStates {
 
     public static BooleanProperty directionToProperty(Direction direction) {
         switch (direction) {
-            case UP:
+            case UP: {
                 return UP;
-            case DOWN:
+            }
+            case DOWN: {
                 return DOWN;
-            case EAST:
+            }
+            case EAST: {
                 return EAST;
-            case WEST:
+            }
+            case WEST: {
                 return WEST;
-            case NORTH:
+            }
+            case NORTH: {
                 return NORTH;
-            case SOUTH:
+            }
+            case SOUTH: {
                 return SOUTH;
+            }
         }
         throw new IllegalStateException("Unknown direction: " + direction);
     }

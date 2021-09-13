@@ -1,18 +1,21 @@
 package tgw.evolution.client.renderer.ambient;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraftforge.client.IRenderHandler;
+import net.minecraft.util.math.vector.Matrix4f;
+import net.minecraft.util.math.vector.Vector3f;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.ISkyRenderHandler;
 import org.lwjgl.opengl.GL11;
-import tgw.evolution.client.Blending;
+import tgw.evolution.client.util.Blending;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.util.EarthHelper;
 import tgw.evolution.util.MathHelper;
@@ -23,65 +26,65 @@ import tgw.evolution.world.dimension.DimensionOverworld;
 
 import java.util.Random;
 
-public class SkyRenderer implements IRenderHandler {
+@OnlyIn(Dist.CLIENT)
+public class SkyRenderer implements ISkyRenderHandler {
 
     private static final FieldHandler<WorldRenderer, VertexBuffer> SKYVBO_FIELD = new FieldHandler<>(WorldRenderer.class, "field_175012_t");
     private static final FieldHandler<WorldRenderer, VertexBuffer> SKY2VBO_FIELD = new FieldHandler<>(WorldRenderer.class, "field_175011_u");
-    private static final FieldHandler<WorldRenderer, Integer> GLSKYLIST2_FIELD = new FieldHandler<>(WorldRenderer.class, "field_72781_x");
     private static final FieldHandler<WorldRenderer, VertexFormat> VERTEX_BUFFER_FORMAT_FIELD = new FieldHandler<>(WorldRenderer.class,
                                                                                                                    "field_175014_r");
     private static final float SCALE_OF_CELESTIAL = 20.0f;
     private final DimensionOverworld dimension;
-    private final int glSkyList2;
     private final VertexBuffer sky2VBO;
     private final VertexBuffer skyVBO;
+    private final VertexFormat skyVertexFormat = DefaultVertexFormats.POSITION;
     private final VertexFormat vertexBufferFormat;
     private VertexBuffer starVBO;
 
-    public SkyRenderer(WorldRenderer worldRenderer) {
+    public SkyRenderer(WorldRenderer worldRenderer, DimensionOverworld dimension) {
         this.skyVBO = SKYVBO_FIELD.get(worldRenderer);
         this.sky2VBO = SKY2VBO_FIELD.get(worldRenderer);
-        this.glSkyList2 = GLSKYLIST2_FIELD.get(worldRenderer);
         this.vertexBufferFormat = VERTEX_BUFFER_FORMAT_FIELD.get(worldRenderer);
-        this.dimension = (DimensionOverworld) Minecraft.getInstance().world.dimension;
+        this.dimension = dimension;
         this.generateStars();
     }
 
     private static void drawMoonlight(Minecraft mc,
                                       BufferBuilder builder,
-                                      Tessellator tessellator,
-                                      float rainStrength,
+                                      Matrix4f moonMatrix,
+                                      float starBrightness,
                                       float moonCelestialRadius,
                                       float x0,
                                       float y0,
                                       float x1,
                                       float y1) {
         Blending.DEFAULT.apply();
-        GlStateManager.color4f(1.0f, 1.0f, 1.0f, rainStrength);
-        mc.textureManager.bindTexture(EvolutionResources.MOONLIGHT);
+        RenderSystem.color4f(1.0f, 1.0f, 1.0f, starBrightness);
+        mc.textureManager.bind(EvolutionResources.ENVIRONMENT_MOONLIGHT);
         builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        builder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(x0, y0).endVertex();
-        builder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(x1, y0).endVertex();
-        builder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(x1, y1).endVertex();
-        builder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(x0, y1).endVertex();
-        tessellator.draw();
+        builder.vertex(moonMatrix, SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).uv(x0, y0).endVertex();
+        builder.vertex(moonMatrix, SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).uv(x1, y0).endVertex();
+        builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).uv(x1, y1).endVertex();
+        builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).uv(x0, y1).endVertex();
+        builder.end();
+        WorldVertexBufferUploader.end(builder);
     }
 
     private static void drawSolarEclipse(Minecraft mc,
                                          ClientWorld world,
                                          float partialTicks,
-                                         Tessellator tessellator,
-                                         BufferBuilder buffer,
+                                         Matrix4f sunMatrix,
+                                         BufferBuilder builder,
                                          float radius,
                                          DimensionOverworld dimension) {
         float intensity = dimension.getSolarEclipseIntensity();
         if (intensity <= 1.0F / 81.0F) {
-            drawSun(mc, tessellator, buffer, radius);
-            float rainStrength = 1.0F - world.getRainStrength(partialTicks);
-            GlStateManager.color4f(1.0F, 1.0F, 1.0F, rainStrength * intensity * 81.0F);
+            drawSun(mc, sunMatrix, builder, radius);
+            float rainStrength = 1.0F - world.getRainLevel(partialTicks);
+            RenderSystem.color4f(1.0F, 1.0F, 1.0F, rainStrength * intensity * 81.0F);
         }
-        mc.textureManager.bindTexture(EvolutionResources.SOLAR_ECLIPSE);
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        mc.textureManager.bind(EvolutionResources.ENVIRONMENT_SOLAR_ECLIPSE);
+        builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
         int amplitudeIndex = dimension.getSolarEclipseAmplitudeIndex();
         int angleIndex = dimension.getSolarEclipseAngleIndex();
         boolean invertX = false;
@@ -108,27 +111,29 @@ public class SkyRenderer implements IRenderHandler {
             textureY0 = textureY1;
             textureY1 = temp;
         }
-        buffer.pos(-SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY0).endVertex();
-        buffer.pos(SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).tex(textureX1, textureY0).endVertex();
-        buffer.pos(SCALE_OF_CELESTIAL, radius, SCALE_OF_CELESTIAL).tex(textureX1, textureY1).endVertex();
-        buffer.pos(-SCALE_OF_CELESTIAL, radius, SCALE_OF_CELESTIAL).tex(textureX0, textureY1).endVertex();
-        tessellator.draw();
+        builder.vertex(sunMatrix, -SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).uv(textureX0, textureY0).endVertex();
+        builder.vertex(sunMatrix, SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).uv(textureX1, textureY0).endVertex();
+        builder.vertex(sunMatrix, SCALE_OF_CELESTIAL, radius, SCALE_OF_CELESTIAL).uv(textureX1, textureY1).endVertex();
+        builder.vertex(sunMatrix, -SCALE_OF_CELESTIAL, radius, SCALE_OF_CELESTIAL).uv(textureX0, textureY1).endVertex();
+        builder.end();
+        WorldVertexBufferUploader.end(builder);
     }
 
-    private static void drawSun(Minecraft mc, Tessellator tessellator, BufferBuilder bufferBuilder, float sunCelestialRadius) {
-        mc.textureManager.bindTexture(EvolutionResources.SUN);
-        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        bufferBuilder.pos(-SCALE_OF_CELESTIAL, sunCelestialRadius, -SCALE_OF_CELESTIAL).tex(0, 0).endVertex();
-        bufferBuilder.pos(SCALE_OF_CELESTIAL, sunCelestialRadius, -SCALE_OF_CELESTIAL).tex(1, 0).endVertex();
-        bufferBuilder.pos(SCALE_OF_CELESTIAL, sunCelestialRadius, SCALE_OF_CELESTIAL).tex(1, 1).endVertex();
-        bufferBuilder.pos(-SCALE_OF_CELESTIAL, sunCelestialRadius, SCALE_OF_CELESTIAL).tex(0, 1).endVertex();
-        tessellator.draw();
+    private static void drawSun(Minecraft mc, Matrix4f sunMatrix, BufferBuilder builder, float sunCelestialRadius) {
+        mc.textureManager.bind(EvolutionResources.ENVIRONMENT_SUN);
+        builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        builder.vertex(sunMatrix, -SCALE_OF_CELESTIAL, sunCelestialRadius, -SCALE_OF_CELESTIAL).uv(0, 0).endVertex();
+        builder.vertex(sunMatrix, SCALE_OF_CELESTIAL, sunCelestialRadius, -SCALE_OF_CELESTIAL).uv(1, 0).endVertex();
+        builder.vertex(sunMatrix, SCALE_OF_CELESTIAL, sunCelestialRadius, SCALE_OF_CELESTIAL).uv(1, 1).endVertex();
+        builder.vertex(sunMatrix, -SCALE_OF_CELESTIAL, sunCelestialRadius, SCALE_OF_CELESTIAL).uv(0, 1).endVertex();
+        builder.end();
+        WorldVertexBufferUploader.end(builder);
     }
 
-    private static void renderStars(BufferBuilder bufferBuilder) {
+    private static void renderStars(BufferBuilder builder) {
         Random random = new Random(10_842L);
-        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
-        for (int starNumber = 0; starNumber < 1_500; ++starNumber) {
+        builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
+        for (int starNumber = 0; starNumber < 1_500; starNumber++) {
             double dx = random.nextFloat() * 2.0F - 1.0F;
             double dy = random.nextFloat() * 2.0F - 1.0F;
             double dz = random.nextFloat() * 2.0F - 1.0F;
@@ -161,27 +166,36 @@ public class SkyRenderer implements IRenderHandler {
                     double d19 = ((vertex + 1 & 2) - 1) * d3;
                     double d21 = d18 * d16 - d19 * d15;
                     double d22 = d19 * d16 + d18 * d15;
-                    double d24 = 0.0 * d12 - d21 * d13;
-                    double deltaY = d21 * d12 + 0.0 * d13;
+                    double d24 = -d21 * d13;
+                    double deltaY = d21 * d12;
                     double deltaZ = d22 * d9 + d24 * d10;
                     double deltaX = d24 * d9 - d22 * d10;
-                    bufferBuilder.pos(x + deltaX, y + deltaY, z + deltaZ).endVertex();
+                    builder.vertex(x + deltaX, y + deltaY, z + deltaZ).endVertex();
                 }
             }
         }
     }
 
-    private void drawLunarEclipse(Minecraft mc, ClientWorld world, float partialTicks, Tessellator tessellator, BufferBuilder buffer, float radius) {
+    private void drawLunarEclipse(Minecraft mc, ClientWorld world, float partialTicks, Matrix4f moonMatrix, BufferBuilder builder, float radius) {
         MoonPhase phase = this.dimension.getEclipsePhase();
         float textureX0 = phase.getTextureX();
         float textureY0 = phase.getTextureY();
         float textureX1 = textureX0 + 0.2f;
         float textureY1 = textureY0 + 0.25f;
-        drawMoonlight(mc, buffer, tessellator, 1.0F - world.getRainStrength(partialTicks), radius, textureX0, textureY0, textureX1, textureY1);
+        float rainStrength = world.getRainLevel(partialTicks);
+        drawMoonlight(mc,
+                      builder,
+                      moonMatrix,
+                      1.0F - rainStrength * this.dimension.getSunBrightnessPure(partialTicks),
+                      radius,
+                      textureX0,
+                      textureY0,
+                      textureX1,
+                      textureY1);
         Blending.DEFAULT.apply();
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F - world.getRainStrength(partialTicks));
-        mc.textureManager.bindTexture(EvolutionResources.LUNAR_ECLIPSE);
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F - rainStrength);
+        mc.textureManager.bind(EvolutionResources.ENVIRONMENT_LUNAR_ECLIPSE);
+        builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
         int amplitudeIndex = this.dimension.getLunarEclipseAmplitudeIndex();
         int angleIndex = this.dimension.getLunarEclipseAngleIndex();
         boolean invertX = false;
@@ -208,181 +222,194 @@ public class SkyRenderer implements IRenderHandler {
             textureY0 = textureY1;
             textureY1 = temp;
         }
-        buffer.pos(-SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY0).endVertex();
-        buffer.pos(SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).tex(textureX1, textureY0).endVertex();
-        buffer.pos(SCALE_OF_CELESTIAL, radius, SCALE_OF_CELESTIAL).tex(textureX1, textureY1).endVertex();
-        buffer.pos(-SCALE_OF_CELESTIAL, radius, SCALE_OF_CELESTIAL).tex(textureX0, textureY1).endVertex();
-        tessellator.draw();
+        builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).uv(textureX0, textureY0).endVertex();
+        builder.vertex(moonMatrix, SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).uv(textureX1, textureY0).endVertex();
+        builder.vertex(moonMatrix, SCALE_OF_CELESTIAL, radius, SCALE_OF_CELESTIAL).uv(textureX1, textureY1).endVertex();
+        builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, radius, SCALE_OF_CELESTIAL).uv(textureX0, textureY1).endVertex();
+        builder.end();
+        WorldVertexBufferUploader.end(builder);
     }
 
-    private void drawMoon(Minecraft mc, BufferBuilder bufferBuilder, Tessellator tessellator, float rainStrength, float moonCelestialRadius) {
+    private void drawMoon(Minecraft mc,
+                          BufferBuilder builder,
+                          Matrix4f moonMatrix,
+                          float rainStrength,
+                          float moonCelestialRadius,
+                          float partialTicks) {
         MoonPhase phase = this.dimension.getMoonPhase();
         float textureX0 = phase.getTextureX();
         float textureY0 = phase.getTextureY();
         float textureX1 = textureX0 + 0.2f;
         float textureY1 = textureY0 + 0.25f;
-        drawMoonlight(mc, bufferBuilder, tessellator, rainStrength, moonCelestialRadius, textureX0, textureY0, textureX1, textureY1);
+        drawMoonlight(mc,
+                      builder,
+                      moonMatrix,
+                      1 - this.dimension.getSunBrightnessPure(partialTicks) * rainStrength,
+                      moonCelestialRadius,
+                      textureX0,
+                      textureY0,
+                      textureX1,
+                      textureY1);
         Blending.DEFAULT.apply();
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, rainStrength);
-        mc.textureManager.bindTexture(EvolutionResources.MOON_PHASES);
-        bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        bufferBuilder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY0).endVertex();
-        bufferBuilder.pos(SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(textureX1, textureY0).endVertex();
-        bufferBuilder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).tex(textureX1, textureY1).endVertex();
-        bufferBuilder.pos(-SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).tex(textureX0, textureY1).endVertex();
-        tessellator.draw();
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, rainStrength);
+        mc.textureManager.bind(EvolutionResources.ENVIRONMENT_MOON);
+        builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        builder.vertex(moonMatrix, SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).uv(textureX0, textureY0).endVertex();
+        builder.vertex(moonMatrix, SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).uv(textureX1, textureY0).endVertex();
+        builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).uv(textureX1, textureY1).endVertex();
+        builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).uv(textureX0, textureY1).endVertex();
+        builder.end();
+        WorldVertexBufferUploader.end(builder);
     }
 
     private void generateStars() {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferBuilder = tessellator.getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().getBuilder();
         if (this.starVBO != null) {
-            this.starVBO.deleteGlBuffers();
+            this.starVBO.close();
         }
         this.starVBO = new VertexBuffer(this.vertexBufferFormat);
-        renderStars(bufferBuilder);
-        bufferBuilder.finishDrawing();
-        bufferBuilder.reset();
-        this.starVBO.bufferData(bufferBuilder.getByteBuffer());
+        renderStars(builder);
+        builder.end();
+        this.starVBO.upload(builder);
     }
 
     @Override
-    public void render(int ticks, float partialTicks, ClientWorld world, Minecraft mc) {
-        GlStateManager.disableTexture();
+    public void render(int ticks, float partialTicks, MatrixStack matrices, ClientWorld world, Minecraft mc) {
+        this.dimension.setWorld(world);
+        RenderSystem.disableTexture();
         float latitude = this.dimension.getLatitude();
-        float sunAngle = this.dimension.calculateCelestialAngle(0, 0);
+        float sunAngle = this.dimension.getSunAngle();
         float sunCelestialRadius = this.dimension.getSunCelestialRadius();
         float sunSeasonalOffset = this.dimension.getSunSeasonalOffset();
-        Vec3f skyColor = EarthHelper.getSkyColor(world, mc.gameRenderer.getActiveRenderInfo().getBlockPos(), partialTicks, this.dimension);
-        GlStateManager.color3f(skyColor.x, skyColor.y, skyColor.z);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferBuilder = tessellator.getBuffer();
-        GlStateManager.depthMask(false);
-        GlStateManager.enableFog();
-        GlStateManager.color3f(skyColor.x, skyColor.y, skyColor.z);
-        this.skyVBO.bindBuffer();
-        GlStateManager.enableClientState(GL11.GL_VERTEX_ARRAY);
-        GlStateManager.vertexPointer(3, GL11.GL_FLOAT, 12, 0);
-        this.skyVBO.drawArrays(GL11.GL_QUADS);
-        VertexBuffer.unbindBuffer();
-        GlStateManager.disableClientState(GL11.GL_VERTEX_ARRAY);
-        GlStateManager.disableFog();
-        GlStateManager.disableAlphaTest();
-        GlStateManager.enableBlend();
-        GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-                                         GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                                         GlStateManager.SourceFactor.ONE,
-                                         GlStateManager.DestFactor.ZERO);
-        RenderHelper.disableStandardItemLighting();
-        float[] sunriseColors = this.dimension.calcSunriseSunsetColors(0, 0);
+        Vec3f skyColor = EarthHelper.getSkyColor(world, mc.gameRenderer.getMainCamera().getBlockPosition(), partialTicks, this.dimension);
+        BufferBuilder builder = Tessellator.getInstance().getBuilder();
+        FogRenderer.levelFogColor();
+        RenderSystem.depthMask(false);
+        RenderSystem.enableFog();
+        RenderSystem.color3f(skyColor.x, skyColor.y, skyColor.z);
+        this.skyVBO.bind();
+        this.skyVertexFormat.setupBufferState(0L);
+        this.skyVBO.draw(matrices.last().pose(), GL11.GL_QUADS);
+        VertexBuffer.unbind();
+        this.skyVertexFormat.clearBufferState();
+        RenderSystem.disableFog();
+        RenderSystem.disableAlphaTest();
+        RenderSystem.enableBlend();
+        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
+                                       GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                                       GlStateManager.SourceFactor.ONE,
+                                       GlStateManager.DestFactor.ZERO);
+        float[] sunriseColors = this.dimension.getSunriseColors();
         if (sunriseColors != null) {
-            GlStateManager.disableTexture();
-            GlStateManager.shadeModel(7_425);
+            RenderSystem.disableTexture();
+            RenderSystem.shadeModel(GL11.GL_SMOOTH);
             //Pushed matrix to draw sunrise / sunset
-            GlStateManager.pushMatrix();
-            GlStateManager.rotatef(-90.0f, 1.0F, 0.0F, 0.0F);
+            matrices.pushPose();
+            matrices.mulPose(Vector3f.XP.rotationDegrees(-90.0f));
             float sunAzimuth = MathHelper.radToDeg((float) MathHelper.atan2(EarthHelper.sunX, EarthHelper.sunZ)) + 180;
-            GlStateManager.rotatef(sunAzimuth, 0.0F, 0.0F, 1.0F);
-            bufferBuilder.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
-            bufferBuilder.pos(0, 100, 0).color(sunriseColors[0], sunriseColors[1], sunriseColors[2], sunriseColors[3]).endVertex();
-            for (int j = 0; j <= 16; ++j) {
+            matrices.mulPose(Vector3f.ZP.rotationDegrees(sunAzimuth));
+            Matrix4f sunriseMatrix = matrices.last().pose();
+            builder.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
+            builder.vertex(sunriseMatrix, 0, 100, 0).color(sunriseColors[0], sunriseColors[1], sunriseColors[2], sunriseColors[3]).endVertex();
+            for (int j = 0; j <= 16; j++) {
                 float f6 = j * MathHelper.TAU / 16.0F;
                 float f7 = MathHelper.sin(f6);
                 float f8 = MathHelper.cos(f6);
-                bufferBuilder.pos(f7 * 120.0F, f8 * 120.0F, -f8 * 80.0F * sunriseColors[3])
-                             .color(sunriseColors[0], sunriseColors[1], sunriseColors[2], 0.0F)
-                             .endVertex();
+                builder.vertex(sunriseMatrix, f7 * 120.0F, f8 * 120.0F, -f8 * 80.0F * sunriseColors[3])
+                       .color(sunriseColors[0], sunriseColors[1], sunriseColors[2], 0.0F)
+                       .endVertex();
             }
-            tessellator.draw();
-            GlStateManager.popMatrix();
+            builder.end();
+            WorldVertexBufferUploader.end(builder);
+            matrices.popPose();
             //Popped matrix of sunrise / sunset
-            GlStateManager.shadeModel(7_424);
+            RenderSystem.shadeModel(GL11.GL_FLAT);
         }
-        GlStateManager.enableTexture();
+        RenderSystem.enableTexture();
         Blending.ADDITIVE_ALPHA.apply();
         //Pushed matrix to draw the sun
-        GlStateManager.pushMatrix();
-        float rainStrength = 1.0F - world.getRainStrength(partialTicks);
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, rainStrength);
-        GlStateManager.rotatef(-90.0f, 0.0F, 1.0F, 0.0F);
+        matrices.pushPose();
+        float rainStrength = 1.0F - world.getRainLevel(partialTicks);
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, rainStrength);
+        matrices.mulPose(Vector3f.YP.rotationDegrees(-90.0f));
         //Translate the sun in the sky based on season.
-        GlStateManager.rotatef(latitude, 0.0f, 0.0f, 1.0f);
-        GlStateManager.translatef(sunSeasonalOffset, 0, 0);
-        GlStateManager.rotatef(360.0f * sunAngle + 180, 1.0F, 0.0F, 0.0F);
+        matrices.mulPose(Vector3f.ZP.rotationDegrees(latitude));
+        matrices.translate(sunSeasonalOffset, 0, 0);
+        matrices.mulPose(Vector3f.XP.rotationDegrees(360.0f * sunAngle + 180));
         //Draw the sun
         if (this.dimension.isInSolarEclipse()) {
-            drawSolarEclipse(mc, world, partialTicks, tessellator, bufferBuilder, sunCelestialRadius, this.dimension);
+            drawSolarEclipse(mc, world, partialTicks, matrices.last().pose(), builder, sunCelestialRadius, this.dimension);
         }
         else {
-            drawSun(mc, tessellator, bufferBuilder, sunCelestialRadius);
+            drawSun(mc, matrices.last().pose(), builder, sunCelestialRadius);
         }
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GlStateManager.disableBlend();
-        GlStateManager.enableFog();
-        GlStateManager.popMatrix();
-        GlStateManager.enableBlend();
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.disableBlend();
+        RenderSystem.enableFog();
+        matrices.popPose();
+        //Popped matrix of the sun
+        RenderSystem.enableBlend();
         Blending.ADDITIVE_ALPHA.apply();
-        //Poped matrix of the sun
         //Pushed the matrix to draw the moon and stars
-        GlStateManager.pushMatrix();
-        GlStateManager.rotatef(-90.0f, 0.0F, 1.0F, 0.0F);
+        matrices.pushPose();
+        matrices.mulPose(Vector3f.YP.rotationDegrees(-90.0f));
         //Translate the moon in the sky based on monthly amplitude.
-        GlStateManager.rotatef(latitude, 0.0f, 0.0f, 1.0f);
+        matrices.mulPose(Vector3f.ZP.rotationDegrees(latitude));
         float moonMonthlyOffset = this.dimension.getMoonMonthlyOffset();
-        float moonAngle = this.dimension.calculateMoonAngle();
+        float moonAngle = this.dimension.getMoonAngle();
         float moonCelestialRadius = this.dimension.getMoonCelestialRadius();
-        GlStateManager.translatef(moonMonthlyOffset, 0, 0);
-        GlStateManager.rotatef(360.0f * moonAngle + 180, 1.0F, 0.0F, 0.0F);
+        matrices.translate(moonMonthlyOffset, 0, 0);
+        matrices.mulPose(Vector3f.XP.rotationDegrees(360.0f * moonAngle + 180));
         //Draw stars
-        GlStateManager.disableTexture();
+        RenderSystem.disableTexture();
         float starBrightness = 1 - this.dimension.getSunBrightnessPure(partialTicks) * rainStrength;
         if (starBrightness > 0.0F) {
-            GlStateManager.color4f(1.0f, 1.0f, 1.0f, starBrightness);
-            this.starVBO.bindBuffer();
-            GlStateManager.enableClientState(GL11.GL_VERTEX_ARRAY);
-            GlStateManager.vertexPointer(3, GL11.GL_FLOAT, 12, 0);
-            this.starVBO.drawArrays(GL11.GL_QUADS);
-            VertexBuffer.unbindBuffer();
-            GlStateManager.disableClientState(GL11.GL_VERTEX_ARRAY);
+            RenderSystem.color4f(1.0f, 1.0f, 1.0f, starBrightness);
+            this.starVBO.bind();
+            this.skyVertexFormat.setupBufferState(0L);
+            this.starVBO.draw(matrices.last().pose(), GL11.GL_QUADS);
+            VertexBuffer.unbind();
+            this.skyVertexFormat.clearBufferState();
         }
         //Finish drawing stars
-        GlStateManager.enableTexture();
+        RenderSystem.enableTexture();
         //Draw the moon
         if (this.dimension.isInLunarEclipse()) {
-            this.drawLunarEclipse(mc, world, partialTicks, tessellator, bufferBuilder, moonCelestialRadius);
+            this.drawLunarEclipse(mc, world, partialTicks, matrices.last().pose(), builder, moonCelestialRadius);
         }
         else {
-            this.drawMoon(mc, bufferBuilder, tessellator, rainStrength, moonCelestialRadius);
+            this.drawMoon(mc, builder, matrices.last().pose(), rainStrength, moonCelestialRadius, partialTicks);
         }
         //Finish drawing moon
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GlStateManager.disableBlend();
-        GlStateManager.enableAlphaTest();
-        GlStateManager.enableFog();
-        GlStateManager.popMatrix();
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.disableBlend();
+        RenderSystem.enableAlphaTest();
+        RenderSystem.enableFog();
+        matrices.popPose();
         //Popped the matrix to draw the moon
-        GlStateManager.disableTexture();
-        GlStateManager.color3f(0.0F, 0.0F, 0.0F);
-        double distanceAboveTheHorizon = mc.player.getEyePosition(partialTicks).y - world.getHorizon();
+        RenderSystem.disableTexture();
+        RenderSystem.color3f(0.0F, 0.0F, 0.0F);
+        double distanceAboveTheHorizon = mc.player.getEyePosition(partialTicks).y - world.getLevelData().getHorizonHeight();
         if (distanceAboveTheHorizon < 0.0) {
             //Pushed matrix to draw the dark void
-            GlStateManager.pushMatrix();
-            GlStateManager.translatef(0.0F, 12.0F, 0.0F);
-            this.sky2VBO.bindBuffer();
-            GlStateManager.enableClientState(GL11.GL_VERTEX_ARRAY);
-            GlStateManager.vertexPointer(3, GL11.GL_FLOAT, 12, 0);
-            this.sky2VBO.drawArrays(GL11.GL_QUADS);
-            VertexBuffer.unbindBuffer();
-            GlStateManager.disableClientState(GL11.GL_VERTEX_ARRAY);
-            GlStateManager.popMatrix();
+            matrices.pushPose();
+            matrices.translate(0, 12, 0);
+            this.sky2VBO.bind();
+            this.skyVertexFormat.setupBufferState(0L);
+            this.sky2VBO.draw(matrices.last().pose(), GL11.GL_QUADS);
+            VertexBuffer.unbind();
+            this.skyVertexFormat.clearBufferState();
+            matrices.popPose();
             //Popped matrix of the dark void
         }
-        GlStateManager.color3f(skyColor.x * 0.2F + 0.04F, skyColor.y * 0.2F + 0.04F, skyColor.z * 0.6F + 0.1F);
-        GlStateManager.pushMatrix();
-        GlStateManager.translatef(0.0F, -((float) (distanceAboveTheHorizon - 16.0)), 0.0F);
-        GlStateManager.callList(this.glSkyList2);
-        GlStateManager.popMatrix();
-        GlStateManager.enableTexture();
-        GlStateManager.depthMask(true);
+        if (world.effects().hasGround()) {
+            RenderSystem.color3f(skyColor.x * 0.2F + 0.04F, skyColor.y * 0.2F + 0.04F, skyColor.z * 0.6F + 0.1F);
+        }
+        else {
+            RenderSystem.color3f(skyColor.x, skyColor.y, skyColor.z);
+        }
+        RenderSystem.enableTexture();
+        RenderSystem.depthMask(true);
+        RenderSystem.disableFog();
     }
 }

@@ -14,8 +14,8 @@ import java.util.Map;
 public class ChunkStorage implements IChunkStorage, INBTSerializable<LongArrayNBT> {
 
     protected final int capacity;
-    private final World world;
     private final ChunkPos chunkPos;
+    private final World world;
     protected int carbonDioxide;
     protected int gasNitrogen;
     protected int methane;
@@ -91,14 +91,14 @@ public class ChunkStorage implements IChunkStorage, INBTSerializable<LongArrayNB
 
     @Override
     public void deserializeNBT(LongArrayNBT nbt) {
-        this.nitrogen = nbt.get(EnumStorage.NITROGEN.getId()).getInt();
-        this.phosphorus = nbt.get(EnumStorage.PHOSPHORUS.getId()).getInt();
-        this.potassium = nbt.get(EnumStorage.POTASSIUM.getId()).getInt();
-        this.water = nbt.get(EnumStorage.WATER.getId()).getInt();
-        this.carbonDioxide = nbt.get(EnumStorage.CARBON_DIOXIDE.getId()).getInt();
-        this.oxygen = nbt.get(EnumStorage.OXYGEN.getId()).getInt();
-        this.gasNitrogen = nbt.get(EnumStorage.GAS_NITROGEN.getId()).getInt();
-        this.methane = nbt.get(EnumStorage.ORGANIC.getId()).getInt();
+        this.nitrogen = nbt.get(EnumStorage.NITROGEN.getId()).getAsInt();
+        this.phosphorus = nbt.get(EnumStorage.PHOSPHORUS.getId()).getAsInt();
+        this.potassium = nbt.get(EnumStorage.POTASSIUM.getId()).getAsInt();
+        this.water = nbt.get(EnumStorage.WATER.getId()).getAsInt();
+        this.carbonDioxide = nbt.get(EnumStorage.CARBON_DIOXIDE.getId()).getAsInt();
+        this.oxygen = nbt.get(EnumStorage.OXYGEN.getId()).getAsInt();
+        this.gasNitrogen = nbt.get(EnumStorage.GAS_NITROGEN.getId()).getAsInt();
+        this.methane = nbt.get(EnumStorage.ORGANIC.getId()).getAsInt();
     }
 
     @Override
@@ -135,12 +135,12 @@ public class ChunkStorage implements IChunkStorage, INBTSerializable<LongArrayNB
     }
 
     protected void onElementChanged() {
-        if (this.world.isRemote) {
+        if (this.world.isClientSide) {
             return;
         }
-        if (this.world.getChunkProvider().isChunkLoaded(this.chunkPos)) {
+        if (this.world.getChunkSource().isEntityTickingChunk(this.chunkPos)) {
             Chunk chunk = this.world.getChunk(this.chunkPos.x, this.chunkPos.z);
-            chunk.markDirty();
+            chunk.markUnsaved();
             EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> chunk), new PacketSCUpdateChunkStorage(this));
         }
     }

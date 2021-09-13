@@ -2,8 +2,7 @@ package tgw.evolution.world.puzzle;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.datafixers.Dynamic;
-import com.mojang.datafixers.types.DynamicOps;
+import com.mojang.serialization.Codec;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.command.arguments.BlockStateParser;
@@ -20,7 +19,10 @@ import javax.annotation.Nullable;
 public class ProcessorPuzzleReplacement extends StructureProcessor {
 
     public static final ProcessorPuzzleReplacement INSTANCE = new ProcessorPuzzleReplacement();
-    public static final IStructureProcessorType PUZZLE_REPLACEMENT = IStructureProcessorType.register("puzzle_replacement", a -> INSTANCE);
+    public static final Codec<ProcessorPuzzleReplacement> CODEC = Codec.unit(() -> INSTANCE);
+    public static final IStructureProcessorType<ProcessorPuzzleReplacement> PUZZLE_REPLACEMENT = IStructureProcessorType.register(
+            "puzzle_replacement",
+                                                                                                                                  CODEC);
 
     @Override
     protected IStructureProcessorType getType() {
@@ -28,13 +30,13 @@ public class ProcessorPuzzleReplacement extends StructureProcessor {
     }
 
     @Override
-    protected <T> Dynamic<T> serialize0(DynamicOps<T> ops) {
-        return new Dynamic<>(ops, ops.emptyMap());
-    }
-
-    @Override
     @Nullable
-    public Template.BlockInfo process(IWorldReader worldReaderIn, BlockPos pos, Template.BlockInfo p_215194_3_, Template.BlockInfo blockInfo, PlacementSettings placementSettingsIn) {
+    public Template.BlockInfo processBlock(IWorldReader world,
+                                           BlockPos pos,
+                                           BlockPos pos2,
+                                           Template.BlockInfo p_215194_3_,
+                                           Template.BlockInfo blockInfo,
+                                           PlacementSettings placementSettings) {
         Block block = blockInfo.state.getBlock();
         if (block != EvolutionBlocks.PUZZLE.get()) {
             return blockInfo;
@@ -44,9 +46,11 @@ public class ProcessorPuzzleReplacement extends StructureProcessor {
         try {
             blockstateparser.parse(true);
         }
-        catch (CommandSyntaxException commandsyntaxexception) {
-            throw new RuntimeException(commandsyntaxexception);
+        catch (CommandSyntaxException exception) {
+            throw new RuntimeException(exception);
         }
-        return blockstateparser.getState().getBlock() == Blocks.STRUCTURE_VOID ? null : new Template.BlockInfo(blockInfo.pos, blockstateparser.getState(), null);
+        return blockstateparser.getState().getBlock() == Blocks.STRUCTURE_VOID ?
+               null :
+               new Template.BlockInfo(blockInfo.pos, blockstateparser.getState(), null);
     }
 }

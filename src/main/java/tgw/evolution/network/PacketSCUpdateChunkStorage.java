@@ -55,26 +55,26 @@ public class PacketSCUpdateChunkStorage implements IPacket {
     }
 
     public static PacketSCUpdateChunkStorage decode(PacketBuffer buffer) {
-        return new PacketSCUpdateChunkStorage(new ChunkPos(buffer.readInt(), buffer.readInt()),
-                                              buffer.readInt(),
-                                              buffer.readInt(),
-                                              buffer.readInt(),
-                                              buffer.readInt(),
-                                              buffer.readInt(),
-                                              buffer.readInt(),
-                                              buffer.readInt());
+        return new PacketSCUpdateChunkStorage(new ChunkPos(buffer.readVarInt(), buffer.readVarInt()),
+                                              buffer.readVarInt(),
+                                              buffer.readVarInt(),
+                                              buffer.readVarInt(),
+                                              buffer.readVarInt(),
+                                              buffer.readVarInt(),
+                                              buffer.readVarInt(),
+                                              buffer.readVarInt());
     }
 
     public static void encode(PacketSCUpdateChunkStorage message, PacketBuffer buffer) {
-        buffer.writeInt(message.chunkPos.x);
-        buffer.writeInt(message.chunkPos.z);
-        buffer.writeInt(message.nitrogen);
-        buffer.writeInt(message.phosphorus);
-        buffer.writeInt(message.potassium);
-        buffer.writeInt(message.water);
-        buffer.writeInt(message.carbonDioxide);
-        buffer.writeInt(message.oxygen);
-        buffer.writeInt(message.gasNitrogen);
+        buffer.writeVarInt(message.chunkPos.x);
+        buffer.writeVarInt(message.chunkPos.z);
+        buffer.writeVarInt(message.nitrogen);
+        buffer.writeVarInt(message.phosphorus);
+        buffer.writeVarInt(message.potassium);
+        buffer.writeVarInt(message.water);
+        buffer.writeVarInt(message.carbonDioxide);
+        buffer.writeVarInt(message.oxygen);
+        buffer.writeVarInt(message.gasNitrogen);
     }
 
     public static void handle(PacketSCUpdateChunkStorage packet, Supplier<NetworkEvent.Context> context) {

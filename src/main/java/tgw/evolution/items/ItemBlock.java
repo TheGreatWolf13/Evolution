@@ -12,6 +12,6 @@ public class ItemBlock extends BlockItem implements IEvolutionItem {
 
     @Override
     public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
-        return !ItemStack.areItemStacksEqual(oldStack, newStack);
+        return !ItemStack.matches(oldStack, newStack);
     }
 }

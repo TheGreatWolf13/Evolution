@@ -21,24 +21,29 @@ public class DirectionDiagonalList {
 
     public void addFromDirection(Direction direction) {
         switch (direction) {
-            case NORTH:
+            case NORTH: {
                 this.add(DirectionDiagonal.NORTH_WEST);
                 this.add(DirectionDiagonal.NORTH_EAST);
                 break;
-            case SOUTH:
+            }
+            case SOUTH: {
                 this.add(DirectionDiagonal.SOUTH_WEST);
                 this.add(DirectionDiagonal.SOUTH_EAST);
                 break;
-            case WEST:
+            }
+            case WEST: {
                 this.add(DirectionDiagonal.NORTH_WEST);
                 this.add(DirectionDiagonal.SOUTH_WEST);
                 break;
-            case EAST:
+            }
+            case EAST: {
                 this.add(DirectionDiagonal.NORTH_EAST);
                 this.add(DirectionDiagonal.SOUTH_EAST);
                 break;
-            default:
+            }
+            default: {
                 throw new IllegalArgumentException("Only directions on the XZ plane are supported for this operation!");
+            }
         }
     }
 

@@ -14,6 +14,7 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
@@ -28,34 +29,41 @@ import java.util.Random;
 import static tgw.evolution.init.EvolutionBStates.ATTACHED;
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
-public class BlockClimbingHook extends BlockEvolution implements IReplaceable, IRopeSupport {
+public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRopeSupport {
 
     public BlockClimbingHook() {
-        super(Properties.create(Material.IRON)
-                        .sound(SoundType.METAL)
-                        .hardnessAndResistance(0.0f)
-                        .doesNotBlockMovement()
-                        .harvestLevel(HarvestLevel.UNBREAKABLE));
-        this.setDefaultState(this.getDefaultState().with(DIRECTION_HORIZONTAL, Direction.NORTH).with(ATTACHED, false));
+        super(Properties.of(Material.METAL).sound(SoundType.METAL).strength(0.0f).noCollission().harvestLevel(HarvestLevel.UNBREAKABLE));
+        this.registerDefaultState(this.defaultBlockState().setValue(DIRECTION_HORIZONTAL, Direction.NORTH).setValue(ATTACHED, false));
     }
 
     public static void checkSides(BlockState state, World world, BlockPos pos) {
-        Direction direction = state.get(DIRECTION_HORIZONTAL);
-        BlockState stateTest = world.getBlockState(pos.offset(direction));
+        Direction direction = state.getValue(DIRECTION_HORIZONTAL);
+        BlockState stateTest = world.getBlockState(pos.relative(direction));
         if (stateTest.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
-            if (stateTest.get(DIRECTION_HORIZONTAL).getOpposite() == direction) {
+            if (stateTest.getValue(DIRECTION_HORIZONTAL).getOpposite() == direction) {
                 return;
             }
         }
         else if (BlockUtils.isReplaceable(stateTest)) {
-            stateTest = world.getBlockState(pos.offset(direction).down());
+            stateTest = world.getBlockState(pos.relative(direction).below());
             if (stateTest.getBlock() == EvolutionBlocks.ROPE.get()) {
-                if (stateTest.get(DIRECTION_HORIZONTAL).getOpposite() == direction) {
+                if (stateTest.getValue(DIRECTION_HORIZONTAL).getOpposite() == direction) {
                     return;
                 }
             }
         }
-        world.setBlockState(pos, state.with(ATTACHED, false));
+        world.setBlockAndUpdate(pos, state.setValue(ATTACHED, false));
+    }
+
+    @Override
+    public void attack(BlockState state, World world, BlockPos pos, PlayerEntity player) {
+        if (!world.isClientSide) {
+            int rope = this.removeRope(state, world, pos);
+            BlockUtils.dropItemStack(world, pos, new ItemStack(EvolutionItems.rope.get(), rope));
+        }
+        world.removeBlock(pos, true);
+        dropResources(state, world, pos);
+        world.playSound(player, pos, SoundEvents.METAL_BREAK, SoundCategory.BLOCKS, 1.0f, 1.0f);
     }
 
     @Override
@@ -70,11 +78,16 @@ public class BlockClimbingHook extends BlockEvolution implements IReplaceable, I
 
     @Override
     public boolean canSupport(BlockState state, Direction direction) {
-        return state.get(DIRECTION_HORIZONTAL) == direction;
+        return state.getValue(DIRECTION_HORIZONTAL) == direction;
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+        return BlockUtils.hasSolidSide(world, pos.below(), Direction.UP);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
         builder.add(DIRECTION_HORIZONTAL, ATTACHED);
     }
 
@@ -89,28 +102,27 @@ public class BlockClimbingHook extends BlockEvolution implements IReplaceable, I
     }
 
     @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
-    }
-
-    @Override
     public int getRopeLength() {
-        return 5;
+        return 8;
     }
 
     @Override
     public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
-        switch (state.get(DIRECTION_HORIZONTAL)) {
-            case NORTH:
+        switch (state.getValue(DIRECTION_HORIZONTAL)) {
+            case NORTH: {
                 return EvolutionHitBoxes.HOOK_NORTH;
-            case EAST:
+            }
+            case EAST: {
                 return EvolutionHitBoxes.HOOK_EAST;
-            case SOUTH:
+            }
+            case SOUTH: {
                 return EvolutionHitBoxes.HOOK_SOUTH;
-            case WEST:
+            }
+            case WEST: {
                 return EvolutionHitBoxes.HOOK_WEST;
+            }
         }
-        throw new IllegalStateException("Invalid horizontal direction " + state.get(DIRECTION_HORIZONTAL));
+        throw new IllegalStateException("Invalid horizontal direction " + state.getValue(DIRECTION_HORIZONTAL));
     }
 
     @Override
@@ -119,22 +131,15 @@ public class BlockClimbingHook extends BlockEvolution implements IReplaceable, I
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
-        BlockPos posOffset = pos.offset(Direction.DOWN);
-        BlockState stateFace = world.getBlockState(posOffset);
-        return Block.hasSolidSide(stateFace, world, posOffset, Direction.UP);
-    }
-
-    @Override
     public BlockState mirror(BlockState state, Mirror mirror) {
-        return state.with(DIRECTION_HORIZONTAL, mirror.mirror(state.get(DIRECTION_HORIZONTAL)));
+        return state.setValue(DIRECTION_HORIZONTAL, mirror.mirror(state.getValue(DIRECTION_HORIZONTAL)));
     }
 
     @Override
     public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!world.isRemote) {
-            if (!state.isValidPosition(world, pos)) {
-                spawnDrops(state, world, pos);
+        if (!world.isClientSide) {
+            if (!state.canSurvive(world, pos)) {
+                dropResources(state, world, pos);
                 world.removeBlock(pos, false);
             }
             checkSides(state, world, pos);
@@ -142,27 +147,16 @@ public class BlockClimbingHook extends BlockEvolution implements IReplaceable, I
     }
 
     @Override
-    public void onBlockClicked(BlockState state, World world, BlockPos pos, PlayerEntity player) {
-        if (!world.isRemote) {
-            int rope = this.removeRope(state, world, pos);
-            BlockUtils.dropItemStack(world, pos, new ItemStack(EvolutionItems.rope.get(), rope));
-        }
-        world.removeBlock(pos, true);
-        spawnDrops(state, world, pos);
-        world.playSound(player, pos, SoundEvents.BLOCK_METAL_BREAK, SoundCategory.BLOCKS, 1.0f, 1.0f);
-    }
-
-    @Override
-    public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!world.isRemote && !isMoving && state.getBlock() != newState.getBlock()) {
-            BlockUtils.scheduleBlockTick(world, pos.down().offset(state.get(DIRECTION_HORIZONTAL)), BlockFlags.BLOCK_UPDATE);
+    public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!world.isClientSide && !isMoving && state.getBlock() != newState.getBlock()) {
+            BlockUtils.scheduleBlockTick(world, pos.below().relative(state.getValue(DIRECTION_HORIZONTAL)), BlockFlags.BLOCK_UPDATE);
         }
     }
 
     public int removeRope(BlockState state, World world, BlockPos pos) {
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos(pos);
-        Direction direction = state.get(DIRECTION_HORIZONTAL);
-        mutablePos.setPos(pos);
+        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+        Direction direction = state.getValue(DIRECTION_HORIZONTAL);
+        mutablePos.set(pos);
         Direction movement = direction;
         List<BlockPos> toRemove = new ArrayList<>();
         int count = 0;
@@ -170,9 +164,9 @@ public class BlockClimbingHook extends BlockEvolution implements IReplaceable, I
             mutablePos.move(movement);
             BlockState temp = world.getBlockState(mutablePos);
             if (movement != Direction.DOWN && temp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
-                if (temp.get(DIRECTION_HORIZONTAL) == movement.getOpposite()) {
+                if (temp.getValue(DIRECTION_HORIZONTAL) == movement.getOpposite()) {
                     count++;
-                    toRemove.add(mutablePos.toImmutable());
+                    toRemove.add(mutablePos.immutable());
                     continue;
                 }
                 break;
@@ -182,18 +176,18 @@ public class BlockClimbingHook extends BlockEvolution implements IReplaceable, I
                 mutablePos.move(Direction.DOWN);
                 temp = world.getBlockState(mutablePos);
                 if (temp.getBlock() == EvolutionBlocks.ROPE.get()) {
-                    if (temp.get(DIRECTION_HORIZONTAL) == direction.getOpposite()) {
+                    if (temp.getValue(DIRECTION_HORIZONTAL) == direction.getOpposite()) {
                         count++;
-                        toRemove.add(mutablePos.toImmutable());
+                        toRemove.add(mutablePos.immutable());
                         continue;
                     }
                 }
                 break;
             }
             if (movement == Direction.DOWN && temp.getBlock() == EvolutionBlocks.ROPE.get()) {
-                if (temp.get(DIRECTION_HORIZONTAL) == direction.getOpposite()) {
+                if (temp.getValue(DIRECTION_HORIZONTAL) == direction.getOpposite()) {
                     count++;
-                    toRemove.add(mutablePos.toImmutable());
+                    toRemove.add(mutablePos.immutable());
                     continue;
                 }
             }
@@ -205,12 +199,12 @@ public class BlockClimbingHook extends BlockEvolution implements IReplaceable, I
 
     @Override
     public BlockState rotate(BlockState state, Rotation rot) {
-        return state.with(DIRECTION_HORIZONTAL, rot.rotate(state.get(DIRECTION_HORIZONTAL)));
+        return state.setValue(DIRECTION_HORIZONTAL, rot.rotate(state.getValue(DIRECTION_HORIZONTAL)));
     }
 
     @Override
-    public void tick(BlockState state, World world, BlockPos pos, Random random) {
-        if (!world.isRemote) {
+    public void tick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+        if (!world.isClientSide) {
             checkSides(state, world, pos);
         }
     }

@@ -20,7 +20,7 @@ public enum CivilizationType {
     }
 
     public static CivilizationType byId(int id) {
-        for (CivilizationType type : CivilizationType.values()) {
+        for (CivilizationType type : values()) {
             if (type.id == id) {
                 return type;
             }

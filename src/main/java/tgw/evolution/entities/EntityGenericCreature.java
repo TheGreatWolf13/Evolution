@@ -6,21 +6,53 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
+import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.Direction;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.ForgeHooks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.util.EntityStates;
 
-public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> extends CreatureEntity implements IEntityMass, IEvolutionEntity<T> {
+public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> extends CreatureEntity implements IEntityProperties,
+                                                                                                                  IEvolutionEntity<T> {
 
-    protected static final DataParameter<Boolean> DEAD = EntityDataManager.createKey(EntityGenericCreature.class, DataSerializers.BOOLEAN);
-    protected static final DataParameter<Boolean> SKELETON = EntityDataManager.createKey(EntityGenericCreature.class, DataSerializers.BOOLEAN);
+    protected static final DataParameter<Boolean> DEAD = EntityDataManager.defineId(EntityGenericCreature.class, DataSerializers.BOOLEAN);
+    protected static final DataParameter<Boolean> SKELETON = EntityDataManager.defineId(EntityGenericCreature.class, DataSerializers.BOOLEAN);
     protected int deathTimer;
 
     protected EntityGenericCreature(EntityType<T> type, World worldIn) {
         super(type, worldIn);
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundNBT compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("DeathTimer", this.deathTimer);
+        compound.putBoolean("Dead", this.entityData.get(DEAD));
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        if (this.isDead()) {
+            this.deathTimer++;
+            if (this.deathTimer == 1) {
+                this.setDeltaMovement(0, this.getDeltaMovement().y, 0);
+                this.navigation.stop();
+            }
+            if (!this.isSkeleton() && this.skeletonTime() > 0) {
+                if (this.deathTimer >= this.skeletonTime()) {
+                    if (this.becomesSkeleton()) {
+                        this.entityData.set(SKELETON, true);
+                    }
+                    else {
+                        this.remove();
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -29,23 +61,55 @@ public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> 
     public abstract boolean becomesSkeleton();
 
     @Override
-    public boolean canBeAttackedWithItem() {
-        return !this.dataManager.get(DEAD);
-    }
-
-    @Override
     public boolean canBeCollidedWith() {
         return true;
     }
 
     @Override
-    public boolean canBePushed() {
-        return true;
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(DEAD, false);
+        this.entityData.define(SKELETON, false);
     }
 
     @Override
-    public boolean canDespawn(double distanceToClosestPlayer) {
-        return false;
+    public void die(DamageSource cause) {
+        if (ForgeHooks.onLivingDeath(this, cause)) {
+            return;
+        }
+        if (cause == EvolutionDamage.VOID) {
+            if (!this.dead) {
+                LivingEntity attackingEntity = this.getKillCredit();
+                if (this.deathScore >= 0 && attackingEntity != null) {
+                    attackingEntity.awardKillScore(this, this.deathScore, cause);
+                }
+                Entity entity = cause.getEntity();
+                if (entity != null && this.level instanceof ServerWorld) {
+                    entity.killed((ServerWorld) this.level, this);
+                }
+                if (this.isSleeping()) {
+                    this.stopSleeping();
+                }
+                this.dead = true;
+                this.getCombatTracker().recheckStatus();
+                this.level.broadcastEntityEvent(this, EntityStates.DEATH_SOUND);
+                this.setPose(Pose.DYING);
+            }
+            return;
+        }
+        if (!this.isDead()) {
+            LivingEntity attackingEntity = this.getKillCredit();
+            if (this.deathScore >= 0 && attackingEntity != null) {
+                attackingEntity.awardKillScore(this, this.deathScore, cause);
+            }
+            Entity trueSource = cause.getEntity();
+            if (trueSource != null && this.level instanceof ServerWorld) {
+                trueSource.killed((ServerWorld) this.level, this);
+            }
+            this.getCombatTracker().recheckStatus();
+            this.level.broadcastEntityEvent(this, EntityStates.DEATH_SOUND);
+            this.kill();
+        }
     }
 
     public abstract float getBaseHealth();
@@ -53,7 +117,7 @@ public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> 
     public abstract float getBaseWalkForce();
 
     @Override
-    public Direction getBedDirection() {
+    public Direction getBedOrientation() {
         return Direction.UP;
     }
 
@@ -65,10 +129,11 @@ public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> 
     }
 
     @Override
-    protected int getExperiencePoints(PlayerEntity player) {
+    protected int getExperienceReward(PlayerEntity player) {
         return 0;
     }
 
+    @Override
     public abstract float getFrictionModifier();
 
     /**
@@ -76,127 +141,68 @@ public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> 
      */
     public abstract double getLegHeight();
 
-    public abstract double getLegSlowDown();
+    @Override
+    public boolean isAttackable() {
+        return !this.entityData.get(DEAD);
+    }
 
     /**
      * @return Whether this entity is in the 'dead state'.
      */
     public boolean isDead() {
-        return this.dataManager.get(DEAD);
+        return this.entityData.get(DEAD);
     }
 
     @Override
     public boolean isInvulnerableTo(DamageSource source) {
-        return this.isInvulnerable() && !source.canHarmInCreative();
+        return this.isInvulnerable() && !source.isCreativePlayer();
+    }
+
+    @Override
+    public boolean isPushable() {
+        return true;
     }
 
     public boolean isSkeleton() {
-        return this.dataManager.get(SKELETON);
+        return this.entityData.get(SKELETON);
+    }
+
+    @Override
+    public void kill() {
+        this.hurt(EvolutionDamage.VOID, Float.MAX_VALUE);
     }
 
     /**
      * Kills this entity.
      */
-    public void kill() {
-        this.dataManager.set(DEAD, true);
+    public void onKilled() {
+        this.entityData.set(DEAD, true);
         this.setInvulnerable(true);
         this.setHealth(this.getMaxHealth());
         this.setPose(Pose.DYING);
-        this.spawnExplosionParticle();
-    }
-
-    @Override
-    public void livingTick() {
-        super.livingTick();
-        //Start of my livingTick
-        if (this.isDead()) {
-            this.deathTimer++;
-            if (this.deathTimer == 1) {
-                this.setMotion(0, this.getMotion().y, 0);
-                this.navigator.clearPath();
-            }
-            if (!this.isSkeleton() && this.skeletonTime() > 0) {
-                if (this.deathTimer >= this.skeletonTime()) {
-                    if (this.becomesSkeleton()) {
-                        this.dataManager.set(SKELETON, true);
-                    }
-                    else {
-                        this.remove();
-                    }
-                }
-            }
+        for (int i = 0; i < 20; i++) {
+            double dx = this.random.nextGaussian() * 0.02;
+            double dy = this.random.nextGaussian() * 0.02;
+            double dz = this.random.nextGaussian() * 0.02;
+            this.level.addParticle(ParticleTypes.POOF, this.getRandomX(1), this.getRandomY(), this.getRandomZ(1), dx, dy, dz);
         }
     }
 
     @Override
-    public void onDeath(DamageSource cause) {
-        if (ForgeHooks.onLivingDeath(this, cause)) {
-            return;
-        }
-        if (cause == EvolutionDamage.VOID) {
-            if (!this.dead) {
-                LivingEntity attackingEntity = this.getAttackingEntity();
-                if (this.scoreValue >= 0 && attackingEntity != null) {
-                    attackingEntity.awardKillScore(this, this.scoreValue, cause);
-                }
-                Entity entity = cause.getTrueSource();
-                if (entity != null) {
-                    entity.onKillEntity(this);
-                }
-                if (this.isSleeping()) {
-                    this.wakeUp();
-                }
-                this.dead = true;
-                this.getCombatTracker().reset();
-                this.world.setEntityState(this, EntityStates.DEATH_SOUND);
-                this.setPose(Pose.DYING);
-            }
-            return;
-        }
-        if (!this.isDead()) {
-            LivingEntity attackingEntity = this.getAttackingEntity();
-            if (this.scoreValue >= 0 && attackingEntity != null) {
-                attackingEntity.awardKillScore(this, this.scoreValue, cause);
-            }
-            Entity trueSource = cause.getTrueSource();
-            if (trueSource != null) {
-                trueSource.onKillEntity(this);
-            }
-            this.getCombatTracker().reset();
-            this.world.setEntityState(this, EntityStates.DEATH_SOUND);
-            this.kill();
-        }
-    }
-
-    @Override
-    public void onKillCommand() {
-        this.attackEntityFrom(EvolutionDamage.VOID, Float.MAX_VALUE);
-    }
-
-    @Override
-    public boolean preventDespawn() {
-        return true;
-    }
-
-    @Override
-    public void readAdditional(CompoundNBT compound) {
-        super.readAdditional(compound);
+    public void readAdditionalSaveData(CompoundNBT compound) {
+        super.readAdditionalSaveData(compound);
         this.deathTimer = compound.getInt("DeathTimer");
-        this.dataManager.set(DEAD, compound.getBoolean("Dead"));
+        this.entityData.set(DEAD, compound.getBoolean("Dead"));
     }
 
     @Override
-    protected void registerAttributes() {
-        super.registerAttributes();
-        this.getAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(this.getBaseHealth());
-        this.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(this.getBaseWalkForce());
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return false;
     }
 
     @Override
-    protected void registerData() {
-        super.registerData();
-        this.dataManager.register(DEAD, false);
-        this.dataManager.register(SKELETON, false);
+    public boolean requiresCustomPersistence() {
+        return true;
     }
 
     /**
@@ -204,11 +210,4 @@ public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> 
      * If {@code 0}, the entity does not turn into skeleton.
      */
     public abstract int skeletonTime();
-
-    @Override
-    public void writeAdditional(CompoundNBT compound) {
-        super.writeAdditional(compound);
-        compound.putInt("DeathTimer", this.deathTimer);
-        compound.putBoolean("Dead", this.dataManager.get(DEAD));
-    }
 }

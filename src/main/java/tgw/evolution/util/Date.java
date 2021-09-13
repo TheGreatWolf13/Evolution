@@ -101,15 +101,12 @@ public class Date {
         return this.day;
     }
 
-    public String getDayTranslation() {
-        return new TranslationTextComponent("evolution.calendar.day." + this.day, this.day).getFormattedText();
+    public ITextComponent getDayDisplayName() {
+        return new TranslationTextComponent("evolution.calendar.day." + this.day, this.day);
     }
 
-    public String getFullString() {
-        return new TranslationTextComponent("evolution.calendar.full_date",
-                                            this.getDayTranslation(),
-                                            this.month.getTranslatedName(),
-                                            this.year).getFormattedText();
+    public ITextComponent getDisplayName() {
+        return new TranslationTextComponent("evolution.calendar.full_date", this.getDayDisplayName(), this.month.getDisplayName(), this.year);
     }
 
     public Month getMonth() {
@@ -223,6 +220,10 @@ public class Date {
             throw new IllegalStateException("Invalid month number: " + number);
         }
 
+        public ITextComponent getDisplayName() {
+            return this.textComponent;
+        }
+
         public int getIndex() {
             return this.index;
         }
@@ -231,21 +232,17 @@ public class Date {
             return this.name;
         }
 
-        public Month getNext() {
-            return this.getNext(1);
-        }
-
         public Month getNext(int n) {
             int index = (this.index + n) % 12;
             return byIndex(index);
         }
 
-        public int getNumerical() {
-            return this.numerical;
+        public Month getNext() {
+            return this.getNext(1);
         }
 
-        public String getTranslatedName() {
-            return this.textComponent.getFormattedText();
+        public int getNumerical() {
+            return this.numerical;
         }
     }
 }

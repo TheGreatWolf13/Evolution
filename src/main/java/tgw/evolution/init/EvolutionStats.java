@@ -6,6 +6,10 @@ import net.minecraft.stats.StatType;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
+import net.minecraftforge.fml.RegistryObject;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
 import tgw.evolution.Evolution;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.stats.IEvoStatFormatter;
@@ -70,7 +74,7 @@ public final class EvolutionStats {
             if (hours > 1) {
                 return Metric.TWO_PLACES.format(hours) + " h";
             }
-            return minutes > 1 ? Metric.TWO_PLACES.format(minutes) + " min " : Metric.TWO_PLACES.format(seconds) + " s";
+            return minutes > 1 ? Metric.TWO_PLACES.format(minutes) + " min" : Metric.TWO_PLACES.format(seconds) + " s";
         }
 
         @Override
@@ -91,6 +95,8 @@ public final class EvolutionStats {
             return "null";
         }
     };
+
+    public static final DeferredRegister<StatType<?>> STATS = DeferredRegister.create(ForgeRegistries.STAT_TYPES, Evolution.MODID);
     //Damage Dealt
     public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_DEALT_ACTUAL = genDamage("dealt_actual", EvolutionDamage.PLAYER);
     public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_DEALT_RAW = genDamage("dealt_raw", EvolutionDamage.PLAYER);
@@ -118,13 +124,16 @@ public final class EvolutionStats {
     public static final ResourceLocation TOTAL_DISTANCE_TRAVELED = registerCustom("distance_total_traveled", DISTANCE);
     public static final ResourceLocation TOTAL_VEHICLE_RIDDEN_DISTANCE = registerCustom("distance_total_vehicle_ridden", DISTANCE);
     //Entity
-    public static final StatType<EntityType<?>> DAMAGE_DEALT = registerType("damage_dealt", Registry.ENTITY_TYPE);
-    public static final StatType<EntityType<?>> DAMAGE_TAKEN = registerType("damage_taken", Registry.ENTITY_TYPE);
+    public static final RegistryObject<StatType<EntityType<?>>> DAMAGE_DEALT = STATS.register("damage_dealt",
+                                                                                              () -> new StatType<>(Registry.ENTITY_TYPE));
+    public static final RegistryObject<StatType<EntityType<?>>> DAMAGE_TAKEN = STATS.register("damage_taken",
+                                                                                              () -> new StatType<>(Registry.ENTITY_TYPE));
     //Time
     public static final ResourceLocation TIME_PLAYED = registerCustom("time_played", TIME);
     public static final ResourceLocation TIME_SINCE_LAST_DEATH = registerCustom("time_since_last_death", TIME);
     public static final ResourceLocation TIME_SINCE_LAST_REST = registerCustom("time_since_last_rest", TIME);
     public static final ResourceLocation TIME_SNEAKING = registerCustom("time_sneaking", TIME);
+    public static final ResourceLocation TIME_WITH_WORLD_OPEN = registerCustom("time_with_world_open", TIME);
     //Generic
     public static final ResourceLocation CHESTS_OPENED = registerCustom("chests_opened", DEFAULT);
     public static final ResourceLocation ITEMS_DROPPED = registerCustom("items_dropped", DEFAULT);
@@ -158,7 +167,7 @@ public final class EvolutionStats {
     }
 
     public static void register() {
-        Evolution.LOGGER.info("Registered statistics");
+        STATS.register(FMLJavaModLoadingContext.get().getModEventBus());
     }
 
     private static ResourceLocation registerCustom(String key, IStatFormatter formatter) {
@@ -166,9 +175,5 @@ public final class EvolutionStats {
         Registry.register(Registry.CUSTOM_STAT, Evolution.MODID + ":" + key, resourceLocation);
         Stats.CUSTOM.get(resourceLocation, formatter);
         return resourceLocation;
-    }
-
-    private static <T> StatType<T> registerType(String key, Registry<T> registry) {
-        return Registry.register(Registry.STATS, Evolution.MODID + ":" + key, new StatType<>(registry));
     }
 }

@@ -9,6 +9,7 @@ import net.minecraft.fluid.Fluid;
 import net.minecraft.item.ItemStack;
 import net.minecraft.state.StateContainer;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
@@ -41,9 +42,25 @@ import static tgw.evolution.init.EvolutionBStates.OCCUPIED;
 public class BlockChopping extends BlockMass implements IReplaceable, ISittable, IFluidLoggable {
 
     public BlockChopping(WoodVariant name) {
-        super(Block.Properties.create(Material.WOOD).harvestLevel(HarvestLevel.STONE).sound(SoundType.WOOD).hardnessAndResistance(8.0F, 2.0F),
-              name.getMass() / 2);
-        this.setDefaultState(this.getDefaultState().with(OCCUPIED, false).with(FLUIDLOGGED, false));
+        super(Properties.of(Material.WOOD).harvestLevel(HarvestLevel.STONE).sound(SoundType.WOOD).strength(8.0F, 2.0F), name.getMass() / 2);
+        this.registerDefaultState(this.defaultBlockState().setValue(OCCUPIED, false).setValue(FLUIDLOGGED, false));
+    }
+
+    @Override
+    public void attack(BlockState state, World world, BlockPos pos, PlayerEntity player) {
+        if (state.getValue(FLUIDLOGGED)) {
+            return;
+        }
+        TileEntity tile = world.getBlockEntity(pos);
+        if (!(tile instanceof TEChopping)) {
+            return;
+        }
+        TEChopping chopping = (TEChopping) tile;
+        if (chopping.hasLog() && player.getMainHandItem().getItem() instanceof ItemAxe) {
+            if (chopping.increaseBreakProgress() == 3) {
+                chopping.breakLog(player);
+            }
+        }
     }
 
     @Override
@@ -61,15 +78,20 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
         return direction != Direction.DOWN;
     }
 
+    @Override
+    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+        return BlockUtils.hasSolidSide(world, pos.below(), Direction.UP);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+        builder.add(OCCUPIED, FLUIDLOGGED);
+    }
+
     @Nullable
     @Override
     public TileEntity createTileEntity(BlockState state, IBlockReader world) {
         return new TEChopping();
-    }
-
-    @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(OCCUPIED, FLUIDLOGGED);
     }
 
     @Override
@@ -105,7 +127,7 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
     @Override
     public int getMass(World world, BlockPos pos, BlockState state) {
         int mass = 0;
-        if (state.get(FLUIDLOGGED)) {
+        if (state.getValue(FLUIDLOGGED)) {
             Fluid fluid = this.getFluid(world, pos);
             if (fluid instanceof FluidGeneric) {
                 int amount = this.getCurrentAmount(world, pos, state);
@@ -137,17 +159,11 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
-        BlockState down = world.getBlockState(pos.down());
-        return Block.hasSolidSide(down, world, pos.down(), Direction.UP);
-    }
-
-    @Override
     public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!world.isRemote) {
-            if (!state.isValidPosition(world, pos)) {
-                spawnAsEntity(world, pos, this.getItem(world, pos, this.getDefaultState()));
-                TEUtils.invokeIfInstance(world.getTileEntity(pos), TEChopping::dropLog);
+        if (!world.isClientSide) {
+            if (!state.canSurvive(world, pos)) {
+                popResource(world, pos, this.getDrops(world, pos, this.defaultBlockState()));
+                TEUtils.invokeIfInstance(world.getBlockEntity(pos), TEChopping::dropLog);
                 world.removeBlock(pos, isMoving);
                 return;
             }
@@ -156,79 +172,26 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
     }
 
     @Override
-    public boolean onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
-        if (state.get(FLUIDLOGGED)) {
-            if (!state.get(OCCUPIED)) {
-                if (EntitySit.create(world, pos, player)) {
-                    world.setBlockState(pos, state.with(OCCUPIED, true));
-                    return true;
-                }
-            }
-            return false;
-        }
-        TileEntity tile = world.getTileEntity(pos);
-        if (!(tile instanceof TEChopping)) {
-            return false;
-        }
-        TEChopping chopping = (TEChopping) tile;
-        if (player.getHeldItem(hand).getItem() instanceof ItemLog && !state.get(OCCUPIED)) {
-            if (!chopping.hasLog()) {
-                chopping.setStack(player, hand);
-                return true;
-            }
-        }
-        if (!chopping.hasLog() && !state.get(OCCUPIED)) {
-            if (EntitySit.create(world, pos, player)) {
-                world.setBlockState(pos, state.with(OCCUPIED, true));
-                return true;
-            }
-            return false;
-        }
-        if (chopping.hasLog()) {
-            chopping.removeStack(player);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public void onBlockClicked(BlockState state, World world, BlockPos pos, PlayerEntity player) {
-        if (state.get(FLUIDLOGGED)) {
-            return;
-        }
-        TileEntity tile = world.getTileEntity(pos);
-        if (!(tile instanceof TEChopping)) {
-            return;
-        }
-        TEChopping chopping = (TEChopping) tile;
-        if (chopping.hasLog() && player.getHeldItemMainhand().getItem() instanceof ItemAxe) {
-            if (chopping.increaseBreakProgress() == 3) {
-                chopping.breakLog(player);
-            }
-        }
-    }
-
-    @Override
-    public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
         if (state.getBlock() == newState.getBlock()) {
             return;
         }
-        TEUtils.invokeIfInstance(world.getTileEntity(pos), TEChopping::dropLog);
+        TEUtils.invokeIfInstance(world.getBlockEntity(pos), TEChopping::dropLog);
     }
 
     @Override
     public void setBlockState(World world, BlockPos pos, BlockState state, @Nullable FluidGeneric fluid, int amount) {
         boolean hasFluid = amount > 0 && fluid != null;
-        TileEntity tile = world.getTileEntity(pos);
+        TileEntity tile = world.getBlockEntity(pos);
         if (hasFluid) {
             TEUtils.invokeIfInstance(tile, TEChopping::dropLog);
         }
-        BlockState stateToPlace = state.with(FLUIDLOGGED, hasFluid);
+        BlockState stateToPlace = state.setValue(FLUIDLOGGED, hasFluid);
         if (!(tile instanceof TEChopping)) {
-            world.removeTileEntity(pos);
+            world.removeBlockEntity(pos);
         }
-        world.setBlockState(pos, stateToPlace, BlockFlags.NOTIFY_UPDATE_AND_RERENDER + BlockFlags.IS_MOVING);
-        tile = world.getTileEntity(pos);
+        world.setBlock(pos, stateToPlace, BlockFlags.NOTIFY_UPDATE_AND_RERENDER + BlockFlags.IS_MOVING);
+        tile = world.getBlockEntity(pos);
         if (hasFluid) {
             TEUtils.<ILoggable>invokeIfInstance(tile, t -> t.setAmountAndFluid(amount, fluid), true);
             BlockUtils.scheduleFluidTick(world, pos);
@@ -239,15 +202,46 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
     }
 
     @Override
-    public BlockState updatePostPlacement(BlockState state,
-                                          Direction facing,
-                                          BlockState facingState,
-                                          IWorld world,
-                                          BlockPos currentPos,
-                                          BlockPos facingPos) {
-        if (state.get(FLUIDLOGGED)) {
+    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
+        if (state.getValue(FLUIDLOGGED)) {
             BlockUtils.scheduleFluidTick(world, currentPos);
         }
-        return super.updatePostPlacement(state, facing, facingState, world, currentPos, facingPos);
+        return super.updateShape(state, facing, facingState, world, currentPos, facingPos);
+    }
+
+    @Override
+    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
+        if (state.getValue(FLUIDLOGGED)) {
+            if (!state.getValue(OCCUPIED)) {
+                if (EntitySit.create(world, pos, player)) {
+                    world.setBlockAndUpdate(pos, state.setValue(OCCUPIED, true));
+                    return ActionResultType.SUCCESS;
+                }
+            }
+            return ActionResultType.PASS;
+        }
+        TileEntity tile = world.getBlockEntity(pos);
+        if (!(tile instanceof TEChopping)) {
+            return ActionResultType.PASS;
+        }
+        TEChopping chopping = (TEChopping) tile;
+        if (player.getItemInHand(hand).getItem() instanceof ItemLog && !state.getValue(OCCUPIED)) {
+            if (!chopping.hasLog()) {
+                chopping.setStack(player, hand);
+                return ActionResultType.SUCCESS;
+            }
+        }
+        if (!chopping.hasLog() && !state.getValue(OCCUPIED)) {
+            if (EntitySit.create(world, pos, player)) {
+                world.setBlockAndUpdate(pos, state.setValue(OCCUPIED, true));
+                return ActionResultType.SUCCESS;
+            }
+            return ActionResultType.PASS;
+        }
+        if (chopping.hasLog()) {
+            chopping.removeStack(player);
+            return ActionResultType.SUCCESS;
+        }
+        return ActionResultType.PASS;
     }
 }

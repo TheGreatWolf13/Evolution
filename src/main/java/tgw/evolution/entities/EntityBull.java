@@ -47,14 +47,14 @@
 //    @Override
 //    protected void registerGoals() {
 //        this.eatGrassGoal = new EatGrassGoal(this);
-//        this.goalSelector.addGoal(0, new SwinGoal(this));
-//        this.goalSelector.addGoal(1, new PanicGoal(this, 2.0D));
+//        this.goalSelector.addGoal(0, new GoalSwim(this));
+//        this.goalSelector.addGoal(1, new GoalPanic(this, 2.0D));
 //        this.goalSelector.addGoal(2, new BreedGoal(this, 1.0D));
 //        this.goalSelector.addGoal(3, new TemptGoal(this, 1.25D, false));
 //        this.goalSelector.addGoal(4, new FollowMotherGoal(this, 1.25D));
 //        this.goalSelector.addGoal(5, this.eatGrassGoal);
-//        this.goalSelector.addGoal(6, new WaterAvoidingRandomWalkingGoal(this, 1.0D));
-//        this.goalSelector.addGoal(7, new LookRandomlyGoal(this));
+//        this.goalSelector.addGoal(6, new GoalWaterAvoidingRandomWalking(this, 1.0D));
+//        this.goalSelector.addGoal(7, new GoalLookRandomly(this));
 //    }
 //
 //    @Override

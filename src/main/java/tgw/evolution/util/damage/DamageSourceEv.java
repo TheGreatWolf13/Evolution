@@ -13,22 +13,24 @@ public class DamageSourceEv extends DamageSource {
     }
 
     public DamageSourceEv absolute() {
-        this.setDamageIsAbsolute();
+        this.bypassMagic();
         return this;
     }
 
+    @Override
     public DamageSourceEv bypassArmor() {
-        this.setDamageBypassesArmor();
+        super.bypassArmor();
         return this;
     }
 
-    public DamageSourceEv creative() {
-        this.setDamageAllowedInCreativeMode();
+    @Override
+    public DamageSourceEv bypassInvul() {
+        super.bypassInvul();
         return this;
     }
 
     public DamageSourceEv fire() {
-        this.setFireDamage();
+        this.setIsFire();
         return this;
     }
 
@@ -43,6 +45,6 @@ public class DamageSourceEv extends DamageSource {
 
     @Override
     public String toString() {
-        return "DamageSourceEv{" + this.type + "," + this.damageType + '}';
+        return "DamageSourceEv{" + this.type + "," + this.msgId + '}';
     }
 }

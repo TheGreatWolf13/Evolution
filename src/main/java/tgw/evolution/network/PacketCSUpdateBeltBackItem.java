@@ -23,7 +23,7 @@ public class PacketCSUpdateBeltBackItem implements IPacket {
     }
 
     public static PacketCSUpdateBeltBackItem decode(PacketBuffer buffer) {
-        return new PacketCSUpdateBeltBackItem(buffer.readItemStack(), buffer.readBoolean());
+        return new PacketCSUpdateBeltBackItem(buffer.readItem(), buffer.readBoolean());
     }
 
     public static void encode(PacketCSUpdateBeltBackItem packet, PacketBuffer buffer) {
@@ -36,7 +36,7 @@ public class PacketCSUpdateBeltBackItem implements IPacket {
             context.get().enqueueWork(() -> {
                 ServerPlayerEntity player = context.get().getSender();
                 EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> player),
-                                               new PacketSCUpdateBeltBackItem(player.getEntityId(), packet.back, packet.stack));
+                                               new PacketSCUpdateBeltBackItem(player.getId(), packet.back, packet.stack));
             });
             context.get().setPacketHandled(true);
         }

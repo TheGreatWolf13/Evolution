@@ -37,25 +37,16 @@ public final class CapabilityChunkStorage {
     }
 
     public static void add(Chunk chunk, EnumStorage storage, int value) {
-        getChunkStorage(chunk).map(chunkStorages -> {
-            chunkStorages.addElement(storage, value);
-            return true;
-        }).orElseGet(() -> false);
+        getChunkStorage(chunk).ifPresent(chunkStorages -> chunkStorages.addElement(storage, value));
     }
 
     public static void addElements(Chunk chunk, Map<EnumStorage, Integer> map) {
-        getChunkStorage(chunk).map(chunkStorages -> {
-            chunkStorages.addMany(map);
-            return true;
-        }).orElseGet(() -> false);
+        getChunkStorage(chunk).ifPresent(chunkStorages -> chunkStorages.addMany(map));
     }
 
     public static boolean contains(Chunk chunk, EnumStorage storage, int value) {
         boolean[] bool = {false};
-        getChunkStorage(chunk).map(chunkStorages -> {
-            bool[0] = chunkStorages.getElementStored(storage) - value >= 0;
-            return true;
-        }).orElseGet(() -> false);
+        getChunkStorage(chunk).ifPresent(chunkStorages -> bool[0] = chunkStorages.getElementStored(storage) - value >= 0);
         return bool[0];
     }
 
@@ -75,15 +66,15 @@ public final class CapabilityChunkStorage {
                 if (instance == null) {
                     throw new IllegalArgumentException("Can not deserialize to an instance that isn't the default implementation");
                 }
-                ((ChunkStorage) instance).setElement(EnumStorage.NITROGEN, ((IntArrayNBT) nbt).get(EnumStorage.NITROGEN.getId()).getInt());
-                ((ChunkStorage) instance).setElement(EnumStorage.PHOSPHORUS, ((IntArrayNBT) nbt).get(EnumStorage.PHOSPHORUS.getId()).getInt());
-                ((ChunkStorage) instance).setElement(EnumStorage.POTASSIUM, ((IntArrayNBT) nbt).get(EnumStorage.POTASSIUM.getId()).getInt());
-                ((ChunkStorage) instance).setElement(EnumStorage.WATER, ((IntArrayNBT) nbt).get(EnumStorage.WATER.getId()).getInt());
+                ((ChunkStorage) instance).setElement(EnumStorage.NITROGEN, ((IntArrayNBT) nbt).get(EnumStorage.NITROGEN.getId()).getAsInt());
+                ((ChunkStorage) instance).setElement(EnumStorage.PHOSPHORUS, ((IntArrayNBT) nbt).get(EnumStorage.PHOSPHORUS.getId()).getAsInt());
+                ((ChunkStorage) instance).setElement(EnumStorage.POTASSIUM, ((IntArrayNBT) nbt).get(EnumStorage.POTASSIUM.getId()).getAsInt());
+                ((ChunkStorage) instance).setElement(EnumStorage.WATER, ((IntArrayNBT) nbt).get(EnumStorage.WATER.getId()).getAsInt());
                 ((ChunkStorage) instance).setElement(EnumStorage.CARBON_DIOXIDE,
-                                                     ((IntArrayNBT) nbt).get(EnumStorage.CARBON_DIOXIDE.getId()).getInt());
-                ((ChunkStorage) instance).setElement(EnumStorage.OXYGEN, ((IntArrayNBT) nbt).get(EnumStorage.OXYGEN.getId()).getInt());
-                ((ChunkStorage) instance).setElement(EnumStorage.GAS_NITROGEN, ((IntArrayNBT) nbt).get(EnumStorage.GAS_NITROGEN.getId()).getInt());
-                ((ChunkStorage) instance).setElement(EnumStorage.ORGANIC, ((IntArrayNBT) nbt).get(EnumStorage.ORGANIC.getId()).getInt());
+                                                     ((IntArrayNBT) nbt).get(EnumStorage.CARBON_DIOXIDE.getId()).getAsInt());
+                ((ChunkStorage) instance).setElement(EnumStorage.OXYGEN, ((IntArrayNBT) nbt).get(EnumStorage.OXYGEN.getId()).getAsInt());
+                ((ChunkStorage) instance).setElement(EnumStorage.GAS_NITROGEN, ((IntArrayNBT) nbt).get(EnumStorage.GAS_NITROGEN.getId()).getAsInt());
+                ((ChunkStorage) instance).setElement(EnumStorage.ORGANIC, ((IntArrayNBT) nbt).get(EnumStorage.ORGANIC.getId()).getAsInt());
             }
 
             @Override
@@ -104,19 +95,13 @@ public final class CapabilityChunkStorage {
 
     public static boolean remove(Chunk chunk, EnumStorage storage, int value) {
         boolean[] bool = {false};
-        getChunkStorage(chunk).map(chunkStorages -> {
-            bool[0] = chunkStorages.removeElement(storage, value);
-            return true;
-        }).orElseGet(() -> false);
+        getChunkStorage(chunk).ifPresent(chunkStorages -> bool[0] = chunkStorages.removeElement(storage, value));
         return bool[0];
     }
 
     public static boolean removeElements(Chunk chunk, Map<EnumStorage, Integer> map) {
         boolean[] bool = {false};
-        getChunkStorage(chunk).map(chunkStorages -> {
-            bool[0] = chunkStorages.removeMany(map);
-            return true;
-        }).orElseGet(() -> false);
+        getChunkStorage(chunk).ifPresent(chunkStorages -> bool[0] = chunkStorages.removeMany(map));
         return bool[0];
     }
 
@@ -126,7 +111,7 @@ public final class CapabilityChunkStorage {
         @SubscribeEvent
         public static void attachChunkCapabilities(AttachCapabilitiesEvent<Chunk> event) {
             Chunk chunk = event.getObject();
-            IChunkStorage chunkStorages = new ChunkStorage(DEFAULT_CAPACITY, chunk.getWorld(), chunk.getPos());
+            IChunkStorage chunkStorages = new ChunkStorage(DEFAULT_CAPACITY, chunk.getLevel(), chunk.getPos());
             event.addCapability(ID, new SerializableCapabilityProvider<>(INSTANCE, DEFAULT_FACING, chunkStorages));
         }
 

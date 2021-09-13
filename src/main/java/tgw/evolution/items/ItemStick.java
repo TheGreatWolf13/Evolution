@@ -30,14 +30,14 @@ public class ItemStick extends ItemBlock {
     }
 
     @Override
-    public void addInformation(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
         tooltip.add(EvolutionTexts.TOOLTIP_STICK_LIT);
     }
 
     @Override
-    public ActionResultType onItemUse(ItemUseContext context) {
-        World world = context.getWorld();
-        BlockPos pos = context.getPos();
+    public ActionResultType useOn(ItemUseContext context) {
+        World world = context.getLevel();
+        BlockPos pos = context.getClickedPos();
         BlockState state = world.getBlockState(pos);
         Block block = state.getBlock();
         if (block instanceof IFireSource && ((IFireSource) block).isFireSource(state)) {
@@ -45,17 +45,17 @@ public class ItemStick extends ItemBlock {
             if (CapabilityChunkStorage.remove(chunk, EnumStorage.OXYGEN, 1)) {
                 CapabilityChunkStorage.add(chunk, EnumStorage.CARBON_DIOXIDE, 1);
                 PlayerEntity player = context.getPlayer();
-                context.getItem().shrink(1);
+                context.getItemInHand().shrink(1);
                 ItemStack stack = ItemTorch.createStack(world, 1);
-                if (!player.inventory.addItemStackToInventory(stack)) {
+                if (!player.inventory.add(stack)) {
                     BlockUtils.dropItemStack(world, pos, stack);
                 }
-                world.playSound(player, pos, SoundEvents.BLOCK_FIRE_AMBIENT, SoundCategory.PLAYERS, 1.0F, world.rand.nextFloat() * 0.7F + 0.3F);
-                player.addStat(Stats.ITEM_CRAFTED.get(EvolutionItems.torch.get()));
+                world.playSound(player, pos, SoundEvents.FIRE_AMBIENT, SoundCategory.PLAYERS, 1.0F, world.random.nextFloat() * 0.7F + 0.3F);
+                player.awardStat(Stats.ITEM_CRAFTED.get(EvolutionItems.torch.get()));
                 return ActionResultType.SUCCESS;
             }
             return ActionResultType.FAIL;
         }
-        return super.onItemUse(context);
+        return super.useOn(context);
     }
 }

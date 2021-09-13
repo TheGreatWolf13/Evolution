@@ -17,8 +17,8 @@ public class ItemLog extends ItemGenericBlockPlaceable {
     }
 
     @Override
-    public boolean customCondition(Block block) {
-        return block instanceof BlockLogPile;
+    public boolean customCondition(Block blockAtPlacing, Block blockClicking) {
+        return blockClicking instanceof BlockLogPile;
     }
 
     @Override

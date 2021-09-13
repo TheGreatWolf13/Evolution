@@ -20,7 +20,7 @@ public class PacketCSLunge implements IPacket {
     private final float strength;
 
     public PacketCSLunge(Entity entity, Hand hand, double rayTraceHeight, int slot, float strength) {
-        this(entity == null ? -1 : entity.getEntityId(), hand, rayTraceHeight, slot, strength);
+        this(entity == null ? -1 : entity.getId(), hand, rayTraceHeight, slot, strength);
     }
 
     private PacketCSLunge(int entityId, Hand hand, double rayTraceHeight, int slot, float strength) {
@@ -32,18 +32,18 @@ public class PacketCSLunge implements IPacket {
     }
 
     public static PacketCSLunge decode(PacketBuffer buffer) {
-        return new PacketCSLunge(buffer.readInt(),
+        return new PacketCSLunge(buffer.readVarInt(),
                                  buffer.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND,
                                  buffer.readDouble(),
-                                 buffer.readInt(),
+                                 buffer.readVarInt(),
                                  buffer.readFloat());
     }
 
     public static void encode(PacketCSLunge packet, PacketBuffer buffer) {
-        buffer.writeInt(packet.entityId);
+        buffer.writeVarInt(packet.entityId);
         buffer.writeBoolean(packet.hand == Hand.MAIN_HAND);
         buffer.writeDouble(packet.rayTraceHeight);
-        buffer.writeInt(packet.slot);
+        buffer.writeVarInt(packet.slot);
         buffer.writeFloat(packet.strength);
     }
 
@@ -51,8 +51,8 @@ public class PacketCSLunge implements IPacket {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
                 ServerPlayerEntity player = context.get().getSender();
-                Entity entity = packet.entityId != -1 ? player.world.getEntityByID(packet.entityId) : null;
-                ItemStack lungeStack = packet.slot == -1 ? player.getHeldItemOffhand() : player.inventory.mainInventory.get(packet.slot);
+                Entity entity = packet.entityId != -1 ? player.level.getEntity(packet.entityId) : null;
+                ItemStack lungeStack = packet.slot == -1 ? player.getOffhandItem() : player.inventory.items.get(packet.slot);
                 PlayerHelper.performLunge(player, entity, packet.hand, packet.rayTraceHeight, lungeStack, packet.strength);
             });
             context.get().setPacketHandled(true);

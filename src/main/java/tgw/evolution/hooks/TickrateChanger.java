@@ -1,6 +1,7 @@
 package tgw.evolution.hooks;
 
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.concurrent.TickDelayedTask;
 import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionNetwork;
@@ -21,7 +22,7 @@ public final class TickrateChanger {
     }
 
     /**
-     * Hooks from {@link MinecraftServer#run()}, replacing every LDC instruction that has {@code 50L} in it.
+     * Hooks from {@link MinecraftServer#doRunTask(TickDelayedTask)}, replacing every LDC instruction that has {@code 50L} in it.
      */
     @EvolutionHook
     public static long getMSPT() {

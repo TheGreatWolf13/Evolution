@@ -24,7 +24,7 @@ public class ItemClay extends ItemGenericPlaceable {
     }
 
     @Override
-    public void addInformation(ItemStack stack, World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+    public void appendHoverText(ItemStack stack, World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
         tooltip.add(EvolutionTexts.TOOLTIP_CLAY_MOLD);
     }
 
@@ -40,12 +40,12 @@ public class ItemClay extends ItemGenericPlaceable {
 
     @Override
     public BlockState getSneakingState(BlockItemUseContext context) {
-        return EvolutionBlocks.MOLDING.get().getDefaultState();
+        return EvolutionBlocks.MOLDING.get().defaultBlockState();
     }
 
     @Override
     public void sucessPlaceLogic(BlockItemUseContext context) {
         EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) context.getPlayer()),
-                                       new PacketSCOpenMoldingGui(context.getPos()));
+                                       new PacketSCOpenMoldingGui(context.getClickedPos()));
     }
 }

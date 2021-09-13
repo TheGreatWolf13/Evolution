@@ -10,14 +10,14 @@ import java.util.function.Predicate;
 @OnlyIn(Dist.CLIENT)
 public enum DisplayMode {
     ALL(keyEntry -> true),
-    UNBOUND(keyEntry -> keyEntry.getKeybinding().isInvalid()),
+    UNBOUND(keyEntry -> keyEntry.getKeybinding().isUnbound()),
     CONFLICTING(keyEntry -> {
 
-        for (KeyBinding key : Minecraft.getInstance().gameSettings.keyBindings) {
-            if (key.getKeyDescription().equals(keyEntry.getKeybinding().getKeyDescription()) || key.isInvalid()) {
+        for (KeyBinding key : Minecraft.getInstance().options.keyMappings) {
+            if (key.getName().equals(keyEntry.getKeybinding().getName()) || key.isUnbound()) {
                 continue;
             }
-            if (key.getKey().getKeyCode() == keyEntry.getKeybinding().getKey().getKeyCode()) {
+            if (key.getKey().getValue() == keyEntry.getKeybinding().getKey().getValue()) {
                 return true;
             }
         }

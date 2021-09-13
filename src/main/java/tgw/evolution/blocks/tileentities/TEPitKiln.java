@@ -1,12 +1,13 @@
 package tgw.evolution.blocks.tileentities;
 
+import net.minecraft.block.BlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.TileEntity;
 import tgw.evolution.blocks.BlockUtils;
-import tgw.evolution.init.EvolutionTileEntities;
+import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.util.DirectionDiagonal;
 import tgw.evolution.util.WoodVariant;
 
@@ -14,42 +15,45 @@ import javax.annotation.Nullable;
 
 public class TEPitKiln extends TileEntity {
 
-    private boolean burning;
-    private boolean finished;
+    /**
+     * Bit 0: burning;<br>
+     * Bit 1: finished;<br>
+     * Bit 2: single;<br>
+     */
+    private byte flags;
     private byte[] logs = {-1, -1, -1, -1, -1, -1, -1, -1};
     private ItemStack neStack = ItemStack.EMPTY;
     private ItemStack nwStack = ItemStack.EMPTY;
     private ItemStack seStack = ItemStack.EMPTY;
-    private boolean single;
     private ItemStack swStack = ItemStack.EMPTY;
     private long timeStart = -1;
 
     public TEPitKiln() {
-        super(EvolutionTileEntities.TE_PIT_KILN.get());
+        super(EvolutionTEs.PIT_KILN.get());
     }
 
     public void checkEmpty() {
-        if (this.world.isRemote) {
+        if (this.level.isClientSide) {
             return;
         }
-        if (this.single) {
+        if (this.isSingle()) {
             if (this.nwStack.isEmpty()) {
-                this.world.removeBlock(this.pos, false);
+                this.level.removeBlock(this.worldPosition, false);
             }
             return;
         }
         if (this.neStack.isEmpty() && this.nwStack.isEmpty() && this.seStack.isEmpty() && this.swStack.isEmpty()) {
-            this.world.removeBlock(this.pos, false);
+            this.level.removeBlock(this.worldPosition, false);
         }
     }
 
     public void finish() {
-        this.finished = true;
+        this.setFinished(true);
         for (int i = 0; i < 8; i++) {
             this.logs[i] = -1;
         }
         //TODO manage stacks
-        this.markDirty();
+        this.setChanged();
     }
 
     public ItemStack getLogStack(int index) {
@@ -81,41 +85,57 @@ public class TEPitKiln extends TileEntity {
     @Nullable
     @Override
     public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.pos, 1, this.getUpdateTag());
+        return new SUpdateTileEntityPacket(this.worldPosition, 1, this.getUpdateTag());
     }
 
     @Override
     public CompoundNBT getUpdateTag() {
-        return this.write(new CompoundNBT());
+        return this.save(new CompoundNBT());
     }
 
     public boolean hasFinished() {
-        return this.finished;
+        return (this.flags & 2) != 0;
+    }
+
+    private boolean isBurning() {
+        return (this.flags & 1) != 0;
     }
 
     public boolean isSingle() {
-        return this.single;
+        return (this.flags & 4) != 0;
     }
 
-    public void setSingle(boolean single) {
-        this.single = single;
+    @Override
+    public void load(BlockState state, CompoundNBT compound) {
+        super.load(state, compound);
+        this.flags = compound.getByte("Flags");
+        this.logs = compound.getByteArray("Logs");
+        this.nwStack = ItemStack.of(compound.getCompound("NW"));
+        if (!this.isSingle()) {
+            this.neStack = ItemStack.of(compound.getCompound("NE"));
+            this.seStack = ItemStack.of(compound.getCompound("SE"));
+            this.swStack = ItemStack.of(compound.getCompound("SW"));
+        }
+        if (this.isBurning()) {
+            this.timeStart = compound.getLong("TimeStart");
+        }
     }
 
     @Override
     public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-        this.handleUpdateTag(pkt.getNbtCompound());
+        this.handleUpdateTag(this.level.getBlockState(this.worldPosition), pkt.getTag());
     }
 
     public void onRemoved() {
-        if (!this.world.isRemote) {
-            BlockUtils.dropItemStack(this.world, this.pos, this.nwStack);
-            BlockUtils.dropItemStack(this.world, this.pos, this.neStack);
-            BlockUtils.dropItemStack(this.world, this.pos, this.swStack);
-            BlockUtils.dropItemStack(this.world, this.pos, this.seStack);
+        if (!this.level.isClientSide) {
+            BlockUtils.dropItemStack(this.level, this.worldPosition, this.nwStack);
+            BlockUtils.dropItemStack(this.level, this.worldPosition, this.neStack);
+            BlockUtils.dropItemStack(this.level, this.worldPosition, this.swStack);
+            BlockUtils.dropItemStack(this.level, this.worldPosition, this.seStack);
             for (int i = 0; i < 8; i++) {
                 if (this.logs[i] != -1) {
                     //noinspection ObjectAllocationInLoop
-                    BlockUtils.dropItemStack(this.world, this.pos, new ItemStack(WoodVariant.byId(this.logs[i]).getLogItem()));
+                    BlockUtils.dropItemStack(this.level, this.worldPosition, new ItemStack(WoodVariant.byId(this.logs[i]).getLogItem()));
                 }
                 else {
                     break;
@@ -124,28 +144,38 @@ public class TEPitKiln extends TileEntity {
         }
     }
 
+    public void reset() {
+        this.setBurning(false);
+        this.timeStart = -1;
+        this.setChanged();
+    }
+
     @Override
-    public void read(CompoundNBT compound) {
-        super.read(compound);
-        this.single = compound.getBoolean("Single");
-        this.logs = compound.getByteArray("Logs");
-        this.burning = compound.getBoolean("Burning");
-        this.finished = compound.getBoolean("Finished");
-        this.nwStack = ItemStack.read(compound.getCompound("NW"));
-        if (!this.single) {
-            this.neStack = ItemStack.read(compound.getCompound("NE"));
-            this.seStack = ItemStack.read(compound.getCompound("SE"));
-            this.swStack = ItemStack.read(compound.getCompound("SW"));
+    public CompoundNBT save(CompoundNBT compound) {
+        compound.putByteArray("Logs", this.logs);
+        compound.putByte("Flags", this.flags);
+        compound.put("NW", this.nwStack.serializeNBT());
+        if (!this.isSingle()) {
+            compound.put("NE", this.neStack.serializeNBT());
+            compound.put("SW", this.swStack.serializeNBT());
+            compound.put("SE", this.seStack.serializeNBT());
         }
-        if (this.burning) {
-            this.timeStart = compound.getLong("TimeStart");
+        if (this.isBurning()) {
+            compound.putLong("TimeStart", this.timeStart);
+        }
+        return super.save(compound);
+    }
+
+    private void setBurning(boolean burning) {
+        if (this.isBurning() != burning) {
+            this.flags ^= 1;
         }
     }
 
-    public void reset() {
-        this.burning = false;
-        this.timeStart = -1;
-        this.markDirty();
+    private void setFinished(boolean finished) {
+        if (this.hasFinished() != finished) {
+            this.flags ^= 1 << 1;
+        }
     }
 
     public void setLog(int index, byte id) {
@@ -177,6 +207,12 @@ public class TEPitKiln extends TileEntity {
         stack.shrink(1);
     }
 
+    public void setSingle(boolean single) {
+        if (this.isSingle() != single) {
+            this.flags ^= 1 << 2;
+        }
+    }
+
     public void setStack(ItemStack stack, DirectionDiagonal diagonal) {
         switch (diagonal) {
             case NORTH_WEST:
@@ -195,26 +231,8 @@ public class TEPitKiln extends TileEntity {
     }
 
     public void start() {
-        this.burning = true;
-        this.timeStart = this.world.getDayTime();
-        this.markDirty();
-    }
-
-    @Override
-    public CompoundNBT write(CompoundNBT compound) {
-        compound.putByteArray("Logs", this.logs);
-        compound.putBoolean("Single", this.single);
-        compound.putBoolean("Finished", this.finished);
-        compound.putBoolean("Burning", this.burning);
-        compound.put("NW", this.nwStack.serializeNBT());
-        if (!this.single) {
-            compound.put("NE", this.neStack.serializeNBT());
-            compound.put("SW", this.swStack.serializeNBT());
-            compound.put("SE", this.seStack.serializeNBT());
-        }
-        if (this.burning) {
-            compound.putLong("TimeStart", this.timeStart);
-        }
-        return super.write(compound);
+        this.setBurning(true);
+        this.timeStart = this.level.getDayTime();
+        this.setChanged();
     }
 }

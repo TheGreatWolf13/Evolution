@@ -1,13 +1,12 @@
 package tgw.evolution.world.feature;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.datafixers.Dynamic;
+import com.mojang.serialization.Codec;
 import net.minecraft.block.Block;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorld;
+import net.minecraft.world.ISeedReader;
 import net.minecraft.world.chunk.IChunk;
 import net.minecraft.world.gen.ChunkGenerator;
-import net.minecraft.world.gen.GenerationSettings;
 import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.NoFeatureConfig;
 import tgw.evolution.util.BlockFlags;
@@ -19,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.function.Function;
 
 import static tgw.evolution.util.RockVariant.*;
 
@@ -56,7 +54,7 @@ public class FeatureStrata extends Feature<NoFeatureConfig> {
     public static final List<RockVariant> LAYER_SURFACE = new ArrayList<>(SURFACE_BLOCKS);
     public static Long seed;
 
-    public FeatureStrata(Function<Dynamic<?>, ? extends NoFeatureConfig> configFactory) {
+    public FeatureStrata(Codec<NoFeatureConfig> configFactory) {
         super(configFactory);
     }
 
@@ -113,9 +111,9 @@ public class FeatureStrata extends Feature<NoFeatureConfig> {
     }
 
     @Override
-    public boolean place(IWorld world, ChunkGenerator<? extends GenerationSettings> generator, Random rand, BlockPos pos, NoFeatureConfig config) {
-        if (seed == null || seed != generator.getSeed()) {
-            seed = generator.getSeed();
+    public boolean place(ISeedReader world, ChunkGenerator generator, Random rand, BlockPos pos, NoFeatureConfig config) {
+        if (seed == null || seed != world.getSeed()) {
+            seed = world.getSeed();
             Collections.copy(LAYER_SURFACE, SURFACE_BLOCKS);
             Collections.copy(LAYER_BOTTOM, BOTTOM_BLOCKS);
             RANDOM.setSeed(seed);
@@ -123,13 +121,13 @@ public class FeatureStrata extends Feature<NoFeatureConfig> {
             Collections.shuffle(LAYER_BOTTOM, RANDOM);
         }
         IChunk currentChunk = world.getChunk(pos);
-        int startX = currentChunk.getPos().getXStart();
-        int startZ = currentChunk.getPos().getZStart();
-        int endX = currentChunk.getPos().getXEnd();
-        int endZ = currentChunk.getPos().getZEnd();
+        int startX = currentChunk.getPos().getMinBlockX();
+        int startZ = currentChunk.getPos().getMinBlockZ();
+        int endX = currentChunk.getPos().getMaxBlockX();
+        int endZ = currentChunk.getPos().getMaxBlockZ();
         int chunkLowerLine = getChunkLowerLine(currentChunk.getPos().x, currentChunk.getPos().z);
         int chunkUpperLine = getChunkUpperLine(currentChunk.getPos().x, currentChunk.getPos().z);
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
         for (int x = startX; x <= endX; x++) {
             mutablePos.setX(x);
             for (int z = startZ; z <= endZ; z++) {
@@ -146,14 +144,14 @@ public class FeatureStrata extends Feature<NoFeatureConfig> {
                         continue;
                     }
                     if (y > chunkUpperLine + columnModifier) {
-                        world.setBlockState(mutablePos, surface.fromEnumVanillaRep(vanilla).getDefaultState(), BlockFlags.NO_RERENDER);
+                        world.setBlock(mutablePos, surface.fromEnumVanillaRep(vanilla).defaultBlockState(), BlockFlags.NO_RERENDER);
                         continue;
                     }
                     if (y > chunkLowerLine + columnModifier) {
-                        world.setBlockState(mutablePos, middle.fromEnumVanillaRep(vanilla).getDefaultState(), BlockFlags.NO_RERENDER);
+                        world.setBlock(mutablePos, middle.fromEnumVanillaRep(vanilla).defaultBlockState(), BlockFlags.NO_RERENDER);
                         continue;
                     }
-                    world.setBlockState(mutablePos, bottom.fromEnumVanillaRep(vanilla).getDefaultState(), BlockFlags.NO_RERENDER);
+                    world.setBlock(mutablePos, bottom.fromEnumVanillaRep(vanilla).defaultBlockState(), BlockFlags.NO_RERENDER);
                 }
             }
         }

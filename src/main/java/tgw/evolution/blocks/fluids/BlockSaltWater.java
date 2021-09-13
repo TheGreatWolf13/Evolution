@@ -13,9 +13,7 @@ import tgw.evolution.util.MathHelper;
 public class BlockSaltWater extends BlockGenericFluid {
 
     public BlockSaltWater() {
-        super(EvolutionFluids.SALT_WATER,
-              Block.Properties.create(Material.WATER).doesNotBlockMovement().hardnessAndResistance(HarvestLevel.UNBREAKABLE).noDrops(),
-              1_023);
+        super(EvolutionFluids.SALT_WATER, Block.Properties.of(Material.WATER).noCollission().harvestLevel(HarvestLevel.UNBREAKABLE).noDrops(), 1_023);
     }
 
     @Override

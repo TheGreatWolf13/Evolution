@@ -17,12 +17,12 @@ public class PacketSCRemoveEffect implements IPacket {
     }
 
     public static PacketSCRemoveEffect decode(PacketBuffer buffer) {
-        Effect effect = Effect.get(buffer.readInt());
+        Effect effect = Effect.byId(buffer.readVarInt());
         return new PacketSCRemoveEffect(effect);
     }
 
     public static void encode(PacketSCRemoveEffect packet, PacketBuffer buffer) {
-        buffer.writeInt(Effect.getId(packet.effect));
+        buffer.writeVarInt(Effect.getId(packet.effect));
     }
 
     public static void handle(PacketSCRemoveEffect packet, Supplier<NetworkEvent.Context> context) {

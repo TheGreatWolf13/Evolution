@@ -29,11 +29,11 @@ import static tgw.evolution.util.WoodVariant.*;
 @EventBusSubscriber
 public final class EvolutionItems {
 
-    public static final DeferredRegister<Item> ITEMS = new DeferredRegister<>(ForgeRegistries.ITEMS, Evolution.MODID);
-    //Placeholder
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Evolution.MODID);
+    //Dev
     public static final RegistryObject<Item> dev_drink = ITEMS.register("dev_drink", () -> new ItemDevDrink(propMisc()));
     public static final RegistryObject<Item> chessboard = ITEMS.register("mbe15_item_chessboard_registry_name", ItemChessboard::new);
-    public static final RegistryObject<Item> placeholder_item = ITEMS.register("placeholder_item", EvolutionItems::item);
+    public static final RegistryObject<Item> debug_item = ITEMS.register("debug_item", EvolutionItems::item);
     public static final RegistryObject<Item> placeholder_block = ITEMS.register("placeholder_block", () -> itemBlock(PLACEHOLDER_BLOCK));
     //Stick
     public static final RegistryObject<Item> stick = ITEMS.register("stick", () -> new ItemStick(STICK.get(), propTreesAndWood()));
@@ -345,8 +345,6 @@ public final class EvolutionItems {
     //Vegetation
     public static final RegistryObject<Item> grass = ITEMS.register("grass", () -> itemBlock(GRASS));
     public static final RegistryObject<Item> tallgrass = ITEMS.register("tallgrass", () -> itemBlock(TALLGRASS));
-    //Feces
-    public static final RegistryObject<Item> feces = ITEMS.register("feces", () -> itemBlock(FECES));
     //Axe Heads
     public static final RegistryObject<Item> axe_head_andesite = ITEMS.register("axe_head_andesite", EvolutionItems::stoneHeads);
     public static final RegistryObject<Item> axe_head_basalt = ITEMS.register("axe_head_basalt", EvolutionItems::stoneHeads);
@@ -744,7 +742,7 @@ public final class EvolutionItems {
                                                                                             EvolutionToolMaterials.COPPER,
                                                                                             propMisc(),
                                                                                             EvolutionToolMaterials.COPPER.getSwordMass()));
-    public static final RegistryObject<Item> shield_dev = ITEMS.register("shield_dev", () -> new ItemShield(propMisc().maxDamage(400)));
+    public static final RegistryObject<Item> shield_dev = ITEMS.register("shield_dev", () -> new ItemShield(propMisc().durability(400)));
 
     private EvolutionItems() {
     }
@@ -754,11 +752,17 @@ public final class EvolutionItems {
     }
 
     private static Item bucketCeramic(Supplier<? extends Fluid> fluid) {
-        return new ItemBucketCeramic(fluid, propLiquid().maxStackSize(fluid.get() == Fluids.EMPTY ? 16 : 1));
+        if (fluid instanceof RegistryObject) {
+            return new ItemBucketCeramic(fluid, propLiquid().stacksTo(1));
+        }
+        return new ItemBucketCeramic(fluid, propLiquid().stacksTo(fluid.get() == Fluids.EMPTY ? 16 : 1));
     }
 
     private static Item bucketCreative(Supplier<? extends Fluid> fluid) {
-        return new ItemBucketCreative(fluid, propLiquid().maxStackSize(fluid.get() == Fluids.EMPTY ? 16 : 1));
+        if (fluid instanceof RegistryObject) {
+            return new ItemBucketCreative(fluid, propLiquid().stacksTo(1));
+        }
+        return new ItemBucketCreative(fluid, propLiquid().stacksTo(fluid.get() == Fluids.EMPTY ? 16 : 1));
     }
 
     private static Item hammerStone(EvolutionToolMaterials tier) {
@@ -774,7 +778,7 @@ public final class EvolutionItems {
     }
 
     private static ItemLog itemLog(WoodVariant variant, RegistryObject<BlockLog> block) {
-        return new ItemLog(variant, block.get(), propTreesAndWood().maxStackSize(16));
+        return new ItemLog(variant, block.get(), propTreesAndWood().stacksTo(16));
     }
 
     private static Item itemRock(RegistryObject<Block> block, RockVariant name) {
@@ -784,8 +788,8 @@ public final class EvolutionItems {
     private static Item javelin(EvolutionToolMaterials tier) {
         return new ItemJavelin(MathHelper.attackSpeed(1.15f),
                                tier,
-                               propStoneTool().maxDamage(tier.getMaxUses()).setTEISR(() -> RenderStackItemJavelin::new),
-                               tier.getAttackDamage(),
+                               propStoneTool().durability(tier.getUses()).setISTER(() -> RenderStackItemJavelin::new),
+                               tier.getAttackDamageBonus(),
                                tier.getJavelinMass(),
                                tier.getName());
     }
@@ -795,23 +799,23 @@ public final class EvolutionItems {
     }
 
     public static Item.Properties propEgg() {
-        return new Item.Properties().group(EvolutionCreativeTabs.EGGS);
+        return new Item.Properties().tab(EvolutionCreativeTabs.EGGS);
     }
 
     public static Item.Properties propLiquid() {
-        return new Item.Properties().group(EvolutionCreativeTabs.LIQUIDS);
+        return new Item.Properties().tab(EvolutionCreativeTabs.LIQUIDS);
     }
 
     public static Item.Properties propMisc() {
-        return new Item.Properties().group(EvolutionCreativeTabs.MISC);
+        return new Item.Properties().tab(EvolutionCreativeTabs.MISC);
     }
 
     private static Item.Properties propStoneTool() {
-        return new Item.Properties().group(EvolutionCreativeTabs.STONE_TOOLS);
+        return new Item.Properties().tab(EvolutionCreativeTabs.STONE_TOOLS);
     }
 
     private static Item.Properties propTreesAndWood() {
-        return new Item.Properties().group(EvolutionCreativeTabs.TREES_AND_WOOD);
+        return new Item.Properties().tab(EvolutionCreativeTabs.TREES_AND_WOOD);
     }
 
     public static void register() {
@@ -823,7 +827,7 @@ public final class EvolutionItems {
     }
 
     private static Item stoneHeads() {
-        return new ItemEv(propStoneTool().maxStackSize(16));
+        return new ItemEv(propStoneTool().stacksTo(16));
     }
 
     private static Item wood() {

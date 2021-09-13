@@ -22,33 +22,33 @@ public class ItemWallOrFloor extends ItemBlock {
     }
 
     @Override
-    public void addToBlockToItemMap(Map<Block, Item> blockToItemMap, Item itemIn) {
-        super.addToBlockToItemMap(blockToItemMap, itemIn);
-        blockToItemMap.put(this.wallBlock, itemIn);
-    }
-
-    @Override
     @Nullable
-    protected BlockState getStateForPlacement(BlockItemUseContext context) {
+    protected BlockState getPlacementState(BlockItemUseContext context) {
         BlockState wallState = this.wallBlock.getStateForPlacement(context);
         BlockState stateForPlacement = null;
-        IWorldReader world = context.getWorld();
-        BlockPos blockpos = context.getPos();
+        IWorldReader world = context.getLevel();
+        BlockPos pos = context.getClickedPos();
         for (Direction direction : context.getNearestLookingDirections()) {
             if (direction != Direction.UP) {
                 BlockState floorState = direction == Direction.DOWN ? this.getBlock().getStateForPlacement(context) : wallState;
-                if (floorState != null && floorState.isValidPosition(world, blockpos)) {
+                if (floorState != null && floorState.canSurvive(world, pos)) {
                     stateForPlacement = floorState;
                     break;
                 }
             }
         }
-        return stateForPlacement != null && world.func_217350_a(stateForPlacement, blockpos, ISelectionContext.dummy()) ? stateForPlacement : null;
+        return stateForPlacement != null && world.isUnobstructed(stateForPlacement, pos, ISelectionContext.empty()) ? stateForPlacement : null;
     }
 
     @Override
-    public void removeFromBlockToItemMap(Map<Block, Item> blockToItemMap, Item itemIn) {
-        super.removeFromBlockToItemMap(blockToItemMap, itemIn);
+    public void registerBlocks(Map<Block, Item> blockToItemMap, Item item) {
+        super.registerBlocks(blockToItemMap, item);
+        blockToItemMap.put(this.wallBlock, item);
+    }
+
+    @Override
+    public void removeFromBlockToItemMap(Map<Block, Item> blockToItemMap, Item item) {
+        super.removeFromBlockToItemMap(blockToItemMap, item);
         blockToItemMap.remove(this.wallBlock);
     }
 }

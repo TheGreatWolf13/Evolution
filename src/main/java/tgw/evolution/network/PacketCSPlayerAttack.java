@@ -12,12 +12,12 @@ import java.util.function.Supplier;
 
 public class PacketCSPlayerAttack implements IPacket {
 
-    private final Hand hand;
     private final int entityId;
+    private final Hand hand;
     private final double rayTraceHeight;
 
     public PacketCSPlayerAttack(Entity entity, Hand hand, double rayTraceHeight) {
-        this(entity != null ? entity.getEntityId() : -1, hand, rayTraceHeight);
+        this(entity != null ? entity.getId() : -1, hand, rayTraceHeight);
     }
 
     private PacketCSPlayerAttack(int entityId, Hand hand, double rayTraceHeight) {
@@ -27,11 +27,11 @@ public class PacketCSPlayerAttack implements IPacket {
     }
 
     public static PacketCSPlayerAttack decode(PacketBuffer buffer) {
-        return new PacketCSPlayerAttack(buffer.readInt(), buffer.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND, buffer.readDouble());
+        return new PacketCSPlayerAttack(buffer.readVarInt(), buffer.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND, buffer.readDouble());
     }
 
     public static void encode(PacketCSPlayerAttack packet, PacketBuffer buffer) {
-        buffer.writeInt(packet.entityId);
+        buffer.writeVarInt(packet.entityId);
         buffer.writeBoolean(packet.hand == Hand.MAIN_HAND);
         buffer.writeDouble(packet.rayTraceHeight);
     }
@@ -40,7 +40,7 @@ public class PacketCSPlayerAttack implements IPacket {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
                 ServerPlayerEntity player = context.get().getSender();
-                Entity entity = packet.entityId != -1 ? player.world.getEntityByID(packet.entityId) : null;
+                Entity entity = packet.entityId != -1 ? player.level.getEntity(packet.entityId) : null;
                 PlayerHelper.performAttack(player, entity, packet.hand, packet.rayTraceHeight);
             });
             context.get().setPacketHandled(true);

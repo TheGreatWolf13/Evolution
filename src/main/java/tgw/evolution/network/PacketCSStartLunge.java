@@ -34,7 +34,7 @@ public class PacketCSStartLunge implements IPacket {
             context.get().enqueueWork(() -> {
                 ServerPlayerEntity player = context.get().getSender();
                 EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> player),
-                                               new PacketSCStartLunge(player.getEntityId(), packet.hand, packet.duration));
+                                               new PacketSCStartLunge(player.getId(), packet.hand, packet.duration));
             });
             context.get().setPacketHandled(true);
         }

@@ -2,7 +2,10 @@ package tgw.evolution.util;
 
 import javax.annotation.Nullable;
 
-public class InjectionUtil {
+public final class InjectionUtil {
+
+    private InjectionUtil() {
+    }
 
     @Nullable
     public static <T> T Null() {

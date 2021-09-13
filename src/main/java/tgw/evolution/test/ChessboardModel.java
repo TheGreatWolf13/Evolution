@@ -4,8 +4,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraftforge.client.model.data.IModelData;
 
 import javax.annotation.Nonnull;
@@ -26,27 +24,13 @@ public class ChessboardModel implements IBakedModel {
     }
 
     @Override
-    public ItemCameraTransforms getItemCameraTransforms() {
-        return this.baseChessboardModel.getItemCameraTransforms();
-    }
-
-    @Nonnull
-    @Override
-    public IModelData getModelData(@Nonnull IEnviromentBlockReader world,
-                                   @Nonnull BlockPos pos,
-                                   @Nonnull BlockState state,
-                                   @Nonnull IModelData tileData) {
-        throw new AssertionError("ChessboardModel::getModelData should never be called");
-    }
-
-    @Override
     public ItemOverrideList getOverrides() {
         return this.chessboardItemOverrideList;
     }
 
     @Override
-    public TextureAtlasSprite getParticleTexture() {
-        return this.baseChessboardModel.getParticleTexture();
+    public TextureAtlasSprite getParticleIcon() {
+        return this.baseChessboardModel.getParticleIcon();
     }
 
     @Override
@@ -61,17 +45,27 @@ public class ChessboardModel implements IBakedModel {
     }
 
     @Override
-    public boolean isAmbientOcclusion() {
-        return this.baseChessboardModel.isAmbientOcclusion();
+    public ItemCameraTransforms getTransforms() {
+        return this.baseChessboardModel.getTransforms();
     }
 
     @Override
-    public boolean isBuiltInRenderer() {
-        return this.baseChessboardModel.isBuiltInRenderer();
+    public boolean isCustomRenderer() {
+        return this.baseChessboardModel.isCustomRenderer();
     }
 
     @Override
     public boolean isGui3d() {
         return this.baseChessboardModel.isGui3d();
+    }
+
+    @Override
+    public boolean useAmbientOcclusion() {
+        return this.baseChessboardModel.useAmbientOcclusion();
+    }
+
+    @Override
+    public boolean usesBlockLight() {
+        return false;
     }
 }

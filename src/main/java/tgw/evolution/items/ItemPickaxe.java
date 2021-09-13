@@ -14,7 +14,7 @@ import java.util.Set;
 public class ItemPickaxe extends ItemGenericTool implements IBackWeapon {
 
     private static final Set<Block> EFFECTIVE_ON = new HashSet<>();
-    private static final Set<Material> EFFECTIVE_MAT = Sets.newHashSet(Material.ROCK, Material.IRON);
+    private static final Set<Material> EFFECTIVE_MAT = Sets.newHashSet(Material.STONE, Material.METAL);
     private final double mass;
 
     public ItemPickaxe(IItemTier tier, float attackSpeed, Properties builder, double mass) {

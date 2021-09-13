@@ -9,6 +9,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.Heightmap;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
@@ -21,26 +22,25 @@ public class WorldEvents {
 
     @Nullable
     public static BlockPos findSpawn(World world, int posX, int posZ) {
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos(posX, 0, posZ);
+        BlockPos.Mutable mutablePos = new BlockPos.Mutable(posX, 0, posZ);
         Biome biome = world.getBiome(mutablePos);
-        BlockState biomeSurfaceState = biome.getSurfaceBuilderConfig().getTop();
+        BlockState biomeSurfaceState = biome.getGenerationSettings().getSurfaceBuilderConfig().getTopMaterial();
         Chunk chunk = world.getChunk(posX >> 4, posZ >> 4);
-        int i = chunk.getTopBlockY(Heightmap.Type.MOTION_BLOCKING, posX & 15, posZ & 15);
+        int i = chunk.getHeight(Heightmap.Type.MOTION_BLOCKING, posX & 15, posZ & 15);
         if (i < 0) {
             return null;
         }
-        if (chunk.getTopBlockY(Heightmap.Type.WORLD_SURFACE, posX & 15, posZ & 15) >
-            chunk.getTopBlockY(Heightmap.Type.OCEAN_FLOOR, posX & 15, posZ & 15)) {
+        if (chunk.getHeight(Heightmap.Type.WORLD_SURFACE, posX & 15, posZ & 15) > chunk.getHeight(Heightmap.Type.OCEAN_FLOOR, posX & 15, posZ & 15)) {
             return null;
         }
         for (int j = i + 1; j >= 0; --j) {
-            mutablePos.setPos(posX, j, posZ);
+            mutablePos.set(posX, j, posZ);
             BlockState stateAtWorld = world.getBlockState(mutablePos);
             if (!stateAtWorld.getFluidState().isEmpty()) {
                 break;
             }
             if (BlockUtils.compareVanillaBlockStates(biomeSurfaceState, stateAtWorld)) {
-                return mutablePos.up().toImmutable();
+                return mutablePos.above().immutable();
             }
         }
         return null;
@@ -48,15 +48,19 @@ public class WorldEvents {
 
     @SubscribeEvent
     public void onWorldLoad(WorldEvent.Load event) {
-        if (event.getWorld().getWorld().getWorldInfo().getGameType() != GameType.CREATIVE) {
-            event.getWorld().getWorld().getGameRules().get(GameRules.REDUCED_DEBUG_INFO).set(true, event.getWorld().getWorld().getServer());
+        if (event.getWorld() instanceof ServerWorld) {
+            ServerWorld world = (ServerWorld) event.getWorld();
+            MinecraftServer server = world.getServer();
+            if (server.getWorldData().getGameType() != GameType.CREATIVE) {
+                world.getGameRules().getRule(GameRules.RULE_REDUCEDDEBUGINFO).set(true, server);
+            }
         }
     }
 
     @SubscribeEvent
     public void serverStart(FMLServerAboutToStartEvent event) {
         MinecraftServer server = event.getServer();
-        EntityPlayerCorpse.setProfileCache(server.getPlayerProfileCache());
-        EntityPlayerCorpse.setSessionService(server.getMinecraftSessionService());
+        EntityPlayerCorpse.setProfileCache(server.getProfileCache());
+        EntityPlayerCorpse.setSessionService(server.getSessionService());
     }
 }

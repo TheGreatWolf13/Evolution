@@ -1,12 +1,14 @@
 package tgw.evolution.items;
 
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
+import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.IItemTier;
@@ -14,6 +16,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.ToolType;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.util.PlayerHelper;
@@ -34,10 +37,10 @@ public abstract class ItemGenericTool extends ItemTiered implements IDurability,
                               Set<Material> effectiveMaterials,
                               Item.Properties builder,
                               ToolType tool) {
-        super(tier, builder.addToolType(tool, tier.getHarvestLevel()));
+        super(tier, builder.addToolType(tool, tier.getLevel()));
         this.effectiveBlocks = effectiveBlocks;
         this.effectiveMaterials = effectiveMaterials;
-        this.efficiency = tier.getEfficiency();
+        this.efficiency = tier.getSpeed();
         this.attackSpeed = attackSpeed;
     }
 
@@ -46,15 +49,7 @@ public abstract class ItemGenericTool extends ItemTiered implements IDurability,
     public abstract int blockDurabilityDamage();
 
     @Override
-    public boolean canHarvestBlock(BlockState state) {
-        if (this.effectiveMaterials.contains(state.getMaterial())) {
-            return this.getTier().getHarvestLevel() >= state.getHarvestLevel();
-        }
-        return false;
-    }
-
-    @Override
-    public boolean canPlayerBreakBlockWhileHolding(BlockState state, World worldIn, BlockPos pos, PlayerEntity player) {
+    public boolean canAttackBlock(BlockState state, World worldIn, BlockPos pos, PlayerEntity player) {
         return !player.isCreative();
     }
 
@@ -62,7 +57,7 @@ public abstract class ItemGenericTool extends ItemTiered implements IDurability,
 
     @Override
     public double getAttackDamage() {
-        return this.baseDamage() + this.getTier().getAttackDamage();
+        return this.baseDamage() + this.getTier().getAttackDamageBonus();
     }
 
     @Override
@@ -71,35 +66,36 @@ public abstract class ItemGenericTool extends ItemTiered implements IDurability,
     }
 
     @Override
-    public Multimap<String, AttributeModifier> getAttributeModifiers(EquipmentSlotType slot) {
-        Multimap<String, AttributeModifier> multimap = super.getAttributeModifiers(slot);
+    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlotType slot, ItemStack stack) {
+        ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
+        builder.putAll(this.getDefaultAttributeModifiers(slot));
         if (slot == EquipmentSlotType.MAINHAND) {
-            multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(),
-                         new AttributeModifier(ATTACK_DAMAGE_MODIFIER,
-                                               "Damage modifier",
-                                               this.getAttackDamage(),
-                                               AttributeModifier.Operation.ADDITION));
-            multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(),
-                         new AttributeModifier(ATTACK_SPEED_MODIFIER, "Tool modifier", this.getAttackSpeed(), AttributeModifier.Operation.ADDITION));
-            multimap.put(PlayerEntity.REACH_DISTANCE.getName(),
-                         new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER,
-                                               "Reach Modifier",
-                                               this.getReach(),
-                                               AttributeModifier.Operation.ADDITION));
-            multimap.put(EvolutionAttributes.MASS.getName(),
-                         new AttributeModifier(EvolutionAttributes.MASS_MODIFIER,
-                                               "Mass Modifier",
-                                               this.getMass(),
-                                               AttributeModifier.Operation.ADDITION));
+            builder.put(Attributes.ATTACK_DAMAGE,
+                        new AttributeModifier(BASE_ATTACK_DAMAGE_UUID,
+                                              "Damage modifier",
+                                              this.getAttackDamage(),
+                                              AttributeModifier.Operation.ADDITION));
+            builder.put(Attributes.ATTACK_SPEED,
+                        new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Tool modifier", this.getAttackSpeed(), AttributeModifier.Operation.ADDITION));
+            builder.put(ForgeMod.REACH_DISTANCE.get(),
+                        new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER,
+                                              "Reach Modifier",
+                                              this.getReach(),
+                                              AttributeModifier.Operation.ADDITION));
+            builder.put(EvolutionAttributes.MASS.get(),
+                        new AttributeModifier(EvolutionAttributes.MASS_MODIFIER,
+                                              "Mass Modifier",
+                                              this.getMass(),
+                                              AttributeModifier.Operation.ADDITION));
         }
         else if (slot == EquipmentSlotType.OFFHAND) {
-            multimap.put(EvolutionAttributes.MASS.getName(),
-                         new AttributeModifier(EvolutionAttributes.MASS_MODIFIER_OFFHAND,
-                                               "Mass Modifier",
-                                               this.getMass(),
-                                               AttributeModifier.Operation.ADDITION));
+            builder.put(EvolutionAttributes.MASS.get(),
+                        new AttributeModifier(EvolutionAttributes.MASS_MODIFIER_OFFHAND,
+                                              "Mass Modifier",
+                                              this.getMass(),
+                                              AttributeModifier.Operation.ADDITION));
         }
-        return multimap;
+        return builder.build();
     }
 
     @Override
@@ -120,15 +116,23 @@ public abstract class ItemGenericTool extends ItemTiered implements IDurability,
     }
 
     @Override
-    public boolean hitEntity(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        stack.damageItem(this.entityDurabilityDamage(), attacker, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
+    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        stack.hurtAndBreak(this.entityDurabilityDamage(), attacker, entity -> entity.broadcastBreakEvent(entity.getUsedItemHand()));
         return true;
     }
 
     @Override
-    public boolean onBlockDestroyed(ItemStack stack, @Nonnull World world, BlockState state, BlockPos pos, LivingEntity livingEntity) {
-        if (!world.isRemote && state.getBlockHardness(world, pos) != 0.0F) {
-            stack.damageItem(this.blockDurabilityDamage(), livingEntity, entity -> entity.sendBreakAnimation(entity.getActiveHand()));
+    public boolean isCorrectToolForDrops(BlockState state) {
+        if (this.effectiveMaterials.contains(state.getMaterial())) {
+            return this.getTier().getLevel() >= state.getHarvestLevel();
+        }
+        return false;
+    }
+
+    @Override
+    public boolean mineBlock(ItemStack stack, @Nonnull World world, BlockState state, BlockPos pos, LivingEntity livingEntity) {
+        if (!world.isClientSide && state.getDestroySpeed(world, pos) != 0.0F) {
+            stack.hurtAndBreak(this.blockDurabilityDamage(), livingEntity, entity -> entity.broadcastBreakEvent(entity.getUsedItemHand()));
         }
         return true;
     }

@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
@@ -11,16 +10,16 @@ import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
-import net.minecraftforge.common.IShearable;
+import net.minecraftforge.common.IForgeShearable;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.util.NutrientHelper;
 
-public class BlockTallGrass extends BlockBush implements IShearable {
+public class BlockTallGrass extends BlockBush implements IForgeShearable {
 
     public BlockTallGrass() {
-        super(Block.Properties.create(Material.TALL_PLANTS).doesNotBlockMovement().hardnessAndResistance(0.0F).sound(SoundType.PLANT));
+        super(Properties.of(Material.PLANT).noCollission().strength(0.0F).sound(SoundType.GRASS));
     }
 
     @Override
@@ -39,8 +38,8 @@ public class BlockTallGrass extends BlockBush implements IShearable {
     }
 
     @Override
-    public Block.OffsetType getOffsetType() {
-        return Block.OffsetType.XYZ;
+    public OffsetType getOffsetType() {
+        return OffsetType.XYZ;
     }
 
     @Override
@@ -49,10 +48,8 @@ public class BlockTallGrass extends BlockBush implements IShearable {
     }
 
     @Override
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        CapabilityChunkStorage.getChunkStorage(worldIn, worldIn.getChunk(pos).getPos()).map(chunkStorages -> {
-            chunkStorages.addMany(NutrientHelper.DECAY_TALL_GRASS);
-            return true;
-        }).orElseGet(() -> false);
+    public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+        CapabilityChunkStorage.getChunkStorage(worldIn, worldIn.getChunk(pos).getPos())
+                              .ifPresent(chunkStorages -> chunkStorages.addMany(NutrientHelper.DECAY_TALL_GRASS));
     }
 }

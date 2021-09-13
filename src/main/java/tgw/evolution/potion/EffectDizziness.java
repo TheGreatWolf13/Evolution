@@ -1,51 +1,44 @@
 package tgw.evolution.potion;
 
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
+import net.minecraft.entity.ai.attributes.AttributeModifierManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectType;
 import tgw.evolution.util.MathHelper;
 
-import java.util.Map;
-import java.util.WeakHashMap;
-
 public class EffectDizziness extends Effect {
 
-    private static final Map<LivingEntity, Integer> AFFECTED = new WeakHashMap<>();
-    public static int tick;
+    private static final Int2IntMap AFFECTED = new Int2IntOpenHashMap();
 
     public EffectDizziness() {
         super(EffectType.HARMFUL, 0x3a_5785);
     }
 
     @Override
-    public boolean isReady(int duration, int amplifier) {
-        return true;
-    }
-
-    @Override
-    public void performEffect(LivingEntity entity, int amplifier) {
-        if (entity.world.isRemote) {
+    public void applyEffectTick(LivingEntity entity, int amplifier) {
+        if (entity.level.isClientSide) {
             return;
         }
         if (entity instanceof PlayerEntity) {
             return;
         }
-        int tick = 0;
-        if (AFFECTED.containsKey(entity)) {
-            tick = AFFECTED.get(entity);
-        }
-        else {
-            AFFECTED.put(entity, tick);
-        }
-        entity.moveStrafing = Math.signum(MathHelper.cos(tick * MathHelper.TAU / (80 >> amplifier)));
+        int tick = AFFECTED.getOrDefault(entity.getId(), 0);
+        entity.zza = Math.signum(MathHelper.cos(tick * MathHelper.TAU / (80 >> amplifier)));
         entity.setSprinting(false);
-        AFFECTED.put(entity, ++tick);
+        AFFECTED.put(entity.getId(), ++tick);
     }
 
     @Override
-    public void removeAttributesModifiersFromEntity(LivingEntity entity, AbstractAttributeMap attributes, int amplifier) {
-        AFFECTED.remove(entity);
+    public boolean isDurationEffectTick(int duration, int amplifier) {
+        return true;
+    }
+
+    @Override
+    public void removeAttributeModifiers(LivingEntity entity, AttributeModifierManager attributes, int amplifier) {
+        AFFECTED.remove(entity.getId());
+        super.removeAttributeModifiers(entity, attributes, amplifier);
     }
 }

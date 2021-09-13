@@ -8,6 +8,7 @@ import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
 import tgw.evolution.blocks.tileentities.SchematicMode;
@@ -17,19 +18,19 @@ import java.util.function.Supplier;
 
 public class PacketCSUpdateSchematicBlock implements IPacket {
 
-    private final BlockPos tilePos;
     private final TESchematic.UpdateCommand command;
+    private final boolean ignoresEntities;
+    private final float integrity;
+    private final Mirror mirror;
     private final SchematicMode mode;
     private final String name;
-    private final BlockPos schematicPos;
-    private final BlockPos size;
-    private final Mirror mirror;
     private final Rotation rotation;
-    private final boolean ignoresEntities;
+    private final BlockPos schematicPos;
+    private final long seed;
     private final boolean showAir;
     private final boolean showBB;
-    private final float integrity;
-    private final long seed;
+    private final BlockPos size;
+    private final BlockPos tilePos;
 
     public PacketCSUpdateSchematicBlock(BlockPos tilePos,
                                         TESchematic.UpdateCommand command,
@@ -61,13 +62,13 @@ public class PacketCSUpdateSchematicBlock implements IPacket {
 
     public static PacketCSUpdateSchematicBlock decode(PacketBuffer buffer) {
         return new PacketCSUpdateSchematicBlock(buffer.readBlockPos(),
-                                                buffer.readEnumValue(TESchematic.UpdateCommand.class),
-                                                buffer.readEnumValue(SchematicMode.class),
-                                                buffer.readString(),
+                                                buffer.readEnum(TESchematic.UpdateCommand.class),
+                                                buffer.readEnum(SchematicMode.class),
+                                                buffer.readUtf(),
                                                 buffer.readBlockPos(),
                                                 buffer.readBlockPos(),
-                                                buffer.readEnumValue(Mirror.class),
-                                                buffer.readEnumValue(Rotation.class),
+                                                buffer.readEnum(Mirror.class),
+                                                buffer.readEnum(Rotation.class),
                                                 buffer.readBoolean(),
                                                 buffer.readBoolean(),
                                                 buffer.readBoolean(),
@@ -77,13 +78,13 @@ public class PacketCSUpdateSchematicBlock implements IPacket {
 
     public static void encode(PacketCSUpdateSchematicBlock packet, PacketBuffer buffer) {
         buffer.writeBlockPos(packet.tilePos);
-        buffer.writeEnumValue(packet.command);
-        buffer.writeEnumValue(packet.mode);
-        buffer.writeString(packet.name);
+        buffer.writeEnum(packet.command);
+        buffer.writeEnum(packet.mode);
+        buffer.writeUtf(packet.name);
         buffer.writeBlockPos(packet.schematicPos);
         buffer.writeBlockPos(packet.size);
-        buffer.writeEnumValue(packet.mirror);
-        buffer.writeEnumValue(packet.rotation);
+        buffer.writeEnum(packet.mirror);
+        buffer.writeEnum(packet.rotation);
         buffer.writeBoolean(packet.ignoresEntities);
         buffer.writeBoolean(packet.showAir);
         buffer.writeBoolean(packet.showBB);
@@ -94,10 +95,10 @@ public class PacketCSUpdateSchematicBlock implements IPacket {
     public static void handle(PacketCSUpdateSchematicBlock packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             PlayerEntity player = context.get().getSender();
-            if (player.canUseCommandBlock()) {
+            if (player.canUseGameMasterBlocks()) {
                 BlockPos tilePos = packet.tilePos;
-                BlockState state = player.world.getBlockState(tilePos);
-                TileEntity tile = player.world.getTileEntity(tilePos);
+                BlockState state = player.level.getBlockState(tilePos);
+                TileEntity tile = player.level.getBlockEntity(tilePos);
                 if (tile instanceof TESchematic) {
                     TESchematic teSchematic = (TESchematic) tile;
                     teSchematic.setMode(packet.mode);
@@ -115,37 +116,37 @@ public class PacketCSUpdateSchematicBlock implements IPacket {
                         String s = teSchematic.getName();
                         if (packet.command == TESchematic.UpdateCommand.SAVE_AREA) {
                             if (teSchematic.save()) {
-                                player.sendStatusMessage(new TranslationTextComponent("structure_block.save_success", s), false);
+                                player.displayClientMessage(new TranslationTextComponent("structure_block.save_success", s), false);
                             }
                             else {
-                                player.sendStatusMessage(new TranslationTextComponent("structure_block.save_failure", s), false);
+                                player.displayClientMessage(new TranslationTextComponent("structure_block.save_failure", s), false);
                             }
                         }
                         else if (packet.command == TESchematic.UpdateCommand.LOAD_AREA) {
                             if (!teSchematic.isStructureLoadable()) {
-                                player.sendStatusMessage(new TranslationTextComponent("structure_block.load_not_found", s), false);
+                                player.displayClientMessage(new TranslationTextComponent("structure_block.load_not_found", s), false);
                             }
-                            else if (teSchematic.load()) {
-                                player.sendStatusMessage(new TranslationTextComponent("structure_block.load_success", s), false);
+                            else if (teSchematic.load((ServerWorld) context.get().getSender().level)) {
+                                player.displayClientMessage(new TranslationTextComponent("structure_block.load_success", s), false);
                             }
                             else {
-                                player.sendStatusMessage(new TranslationTextComponent("structure_block.load_prepare", s), false);
+                                player.displayClientMessage(new TranslationTextComponent("structure_block.load_prepare", s), false);
                             }
                         }
                         else if (packet.command == TESchematic.UpdateCommand.SCAN_AREA) {
                             if (teSchematic.detectSize()) {
-                                player.sendStatusMessage(new TranslationTextComponent("structure_block.size_success", s), false);
+                                player.displayClientMessage(new TranslationTextComponent("structure_block.size_success", s), false);
                             }
                             else {
-                                player.sendStatusMessage(new TranslationTextComponent("structure_block.size_failure"), false);
+                                player.displayClientMessage(new TranslationTextComponent("structure_block.size_failure"), false);
                             }
                         }
                     }
                     else {
-                        player.sendStatusMessage(new TranslationTextComponent("structure_block.invalid_structure_name", packet.name), false);
+                        player.displayClientMessage(new TranslationTextComponent("structure_block.invalid_structure_name", packet.name), false);
                     }
-                    teSchematic.markDirty();
-                    player.world.notifyBlockUpdate(tilePos, state, state, 3);
+                    teSchematic.setChanged();
+                    player.level.sendBlockUpdated(tilePos, state, state, 3);
                 }
             }
         }

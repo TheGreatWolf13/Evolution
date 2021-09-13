@@ -1,21 +1,32 @@
 package tgw.evolution.client.models.entities;
 
-import net.minecraft.client.renderer.entity.model.RendererModel;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.model.Model;
-import net.minecraft.client.renderer.model.ModelBox;
+import net.minecraft.client.renderer.model.ModelRenderer;
 
 public class ModelTorch extends Model {
 
-    private final RendererModel model;
+    private final ModelRenderer model;
 
     public ModelTorch() {
-        this.textureWidth = 16;
-        this.textureHeight = 16;
-        this.model = new RendererModel(this, 0, 0);
-        this.model.cubeList.add(new ModelBox(this.model, 4, 4, -1.0f, 0.0F, -1.0f, 2, 10, 2, 0.0F, false));
+        super(RenderType::entitySolid);
+        this.texWidth = 16;
+        this.texHeight = 16;
+        this.model = new ModelRenderer(this, 0, 0);
+        this.model.addBox("", -1.0f, 0.0F, -1.0f, 2, 10, 2, 0.0F, 4, 4);
     }
 
-    public void renderer() {
-        this.model.render(0.062_5F);
+    @Override
+    public void renderToBuffer(MatrixStack matrices,
+                               IVertexBuilder vertex,
+                               int packetLight,
+                               int packetOverlay,
+                               float red,
+                               float green,
+                               float blue,
+                               float alpha) {
+        this.model.render(matrices, vertex, packetLight, packetOverlay, red, green, blue, alpha);
     }
 }

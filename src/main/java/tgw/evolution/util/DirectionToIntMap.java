@@ -7,7 +7,7 @@ public class DirectionToIntMap {
     private final int[] values = new int[6];
 
     public int get(Direction direction) {
-        return this.values[direction.getIndex()];
+        return this.values[direction.get3DDataValue()];
     }
 
     public int getBeamSize(Direction.Axis axis) {
@@ -32,6 +32,6 @@ public class DirectionToIntMap {
     }
 
     public void put(Direction direction, int value) {
-        this.values[direction.getIndex()] = value;
+        this.values[direction.get3DDataValue()] = value;
     }
 }

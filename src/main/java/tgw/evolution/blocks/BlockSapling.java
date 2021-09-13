@@ -8,10 +8,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.IWorldGenerationReader;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.event.ForgeEventFactory;
 import tgw.evolution.init.EvolutionHitBoxes;
+import tgw.evolution.util.BlockFlags;
 
 import java.util.Random;
 
@@ -22,13 +24,9 @@ public class BlockSapling extends BlockBush implements IGrowable {
     private final Tree tree;
 
     public BlockSapling(Tree tree) {
-        super(Block.Properties.create(Material.PLANTS)
-                              .doesNotBlockMovement()
-                              .tickRandomly()
-                              .hardnessAndResistance(0.0F, 0.0F)
-                              .sound(SoundType.PLANT));
+        super(Properties.of(Material.GRASS).noCollission().randomTicks().strength(0.0F, 0.0F).sound(SoundType.GRASS));
         this.tree = tree;
-        this.setDefaultState(this.getDefaultState().with(STAGE_0_1, 0));
+        this.registerDefaultState(this.defaultBlockState().setValue(STAGE_0_1, 0));
     }
 
     public static boolean canGrowInto(IWorldGenerationReader worldIn, BlockPos pos) {
@@ -44,17 +42,7 @@ public class BlockSapling extends BlockBush implements IGrowable {
     }
 
     @Override
-    public boolean canGrow(IBlockReader worldIn, BlockPos pos, BlockState state, boolean isClient) {
-        return true;
-    }
-
-    @Override
-    public boolean canUseBonemeal(World worldIn, Random rand, BlockPos pos, BlockState state) {
-        return true;
-    }
-
-    @Override
-    protected void fillStateContainer(Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
         builder.add(STAGE_0_1);
     }
 
@@ -64,27 +52,39 @@ public class BlockSapling extends BlockBush implements IGrowable {
     }
 
     @Override
-    public void grow(World worldIn, Random rand, BlockPos pos, BlockState state) {
-        this.grow(worldIn, pos, state, rand);
-    }
-
-    public void grow(IWorld worldIn, BlockPos pos, BlockState state, Random rand) {
-        if (state.get(STAGE_0_1) == 0) {
-            worldIn.setBlockState(pos, state.with(STAGE_0_1, 1), 4);
-            return;
-        }
-        this.tree.spawn(worldIn, pos, state, rand);
-
+    public boolean isBonemealSuccess(World world, Random rand, BlockPos pos, BlockState state) {
+        return true;
     }
 
     @Override
-    public void tick(BlockState state, World world, BlockPos pos, Random random) {
-        super.tick(state, world, pos, random);
-        if (!world.isAreaLoaded(pos, 1)) {
-            return; // Forge: prevent loading unloaded chunks when checking neighbor's light
+    public boolean isValidBonemealTarget(IBlockReader world, BlockPos pos, BlockState state, boolean isClient) {
+        return true;
+    }
+
+    @Override
+    public void performBonemeal(ServerWorld world, Random rand, BlockPos pos, BlockState state) {
+        this.placeTree(world, pos, state, rand);
+    }
+
+    public void placeTree(ServerWorld world, BlockPos pos, BlockState state, Random rand) {
+        if (state.getValue(STAGE_0_1) == 0) {
+            world.setBlock(pos, state.cycle(STAGE_0_1), BlockFlags.NO_RERENDER);
         }
-        if (world.getLight(pos.up()) >= 9 && random.nextInt(7) == 0) {
-            this.grow(world, pos, state, random);
+        else {
+            if (!ForgeEventFactory.saplingGrowTree(world, rand, pos)) {
+                return;
+            }
+            this.tree.growTree(world, world.getChunkSource().getGenerator(), pos, state, rand);
+        }
+    }
+
+    @Override
+    public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+        if (world.getBrightness(pos.above()) >= 9 && random.nextInt(7) == 0) {
+            if (!world.isAreaLoaded(pos, 1)) {
+                return;
+            }
+            this.placeTree(world, pos, state, random);
         }
     }
 }

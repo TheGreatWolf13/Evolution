@@ -34,12 +34,26 @@ import static tgw.evolution.init.EvolutionBStates.HALF;
 public class BlockDoublePlant extends BlockBush {
 
     public BlockDoublePlant() {
-        super(Block.Properties.create(Material.TALL_PLANTS).doesNotBlockMovement().hardnessAndResistance(0.0F).sound(SoundType.PLANT));
-        this.setDefaultState(this.stateContainer.getBaseState().with(HALF, DoubleBlockHalf.LOWER));
+        super(Properties.of(Material.PLANT).noCollission().strength(0.0F).sound(SoundType.GRASS));
+        this.registerDefaultState(this.defaultBlockState().setValue(HALF, DoubleBlockHalf.LOWER));
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+        if (state.getValue(HALF) != DoubleBlockHalf.UPPER) {
+            return super.canSurvive(state, world, pos);
+        }
+        BlockState blockstate = world.getBlockState(pos.below());
+        if (state.getBlock() != this) {
+            //Forge: This function is called during world gen and placement, before this block is set, so if we are not 'here' then assume it's the
+            // pre-check.
+            return super.canSurvive(state, world, pos);
+        }
+        return blockstate.getBlock() == this && blockstate.getValue(HALF) == DoubleBlockHalf.LOWER;
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
         builder.add(HALF);
     }
 
@@ -62,85 +76,67 @@ public class BlockDoublePlant extends BlockBush {
     }
 
     @Override
-    public Block.OffsetType getOffsetType() {
-        return Block.OffsetType.XZ;
+    public OffsetType getOffsetType() {
+        return OffsetType.XZ;
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public long getPositionRandom(BlockState state, BlockPos pos) {
-        return MathHelper.getCoordinateRandom(pos.getX(), pos.down(state.get(HALF) == DoubleBlockHalf.LOWER ? 0 : 1).getY(), pos.getZ());
+    public long getSeed(BlockState state, BlockPos pos) {
+        return MathHelper.getSeed(pos.getX(), pos.below(state.getValue(HALF) == DoubleBlockHalf.LOWER ? 0 : 1).getY(), pos.getZ());
     }
 
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
-        BlockPos pos = context.getPos();
-        return pos.getY() < context.getWorld().getDimension().getHeight() - 1 && context.getWorld().getBlockState(pos.up()).isReplaceable(context) ?
+        BlockPos pos = context.getClickedPos();
+        World world = context.getLevel();
+        return pos.getY() < world.dimensionType().logicalHeight() - 1 && world.getBlockState(pos.above()).canBeReplaced(context) ?
                super.getStateForPlacement(context) :
                null;
     }
 
     @Override
-    public void harvestBlock(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable TileEntity te, ItemStack stack) {
-        super.harvestBlock(world, player, pos, Blocks.AIR.getDefaultState(), te, stack);
-    }
-
-    @Override
-    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
-        if (state.get(HALF) != DoubleBlockHalf.UPPER) {
-            return super.isValidPosition(state, world, pos);
-        }
-        BlockState blockstate = world.getBlockState(pos.down());
-        if (state.getBlock() != this) {
-            //Forge: This function is called during world gen and placement, before this block is set, so if we are not 'here' then assume it's the
-            // pre-check.
-            return super.isValidPosition(state, world, pos);
-        }
-        return blockstate.getBlock() == this && blockstate.get(HALF) == DoubleBlockHalf.LOWER;
-    }
-
-    @Override
-    public void onBlockHarvested(World world, BlockPos pos, BlockState state, PlayerEntity player) {
-        DoubleBlockHalf doubleblockhalf = state.get(HALF);
-        BlockPos blockpos = doubleblockhalf == DoubleBlockHalf.LOWER ? pos.up() : pos.down();
-        BlockState blockstate = world.getBlockState(blockpos);
-        if (blockstate.getBlock() == this && blockstate.get(HALF) != doubleblockhalf) {
-            world.setBlockState(blockpos, Blocks.AIR.getDefaultState(), BlockFlags.NO_NEIGHBOR_DROPS + BlockFlags.NOTIFY_AND_UPDATE);
-            world.playEvent(player, Constants.WorldEvents.BREAK_BLOCK_EFFECTS, blockpos, Block.getStateId(blockstate));
-            if (!world.isRemote && !player.isCreative()) {
-                spawnDrops(state, world, pos, null, player, player.getHeldItemMainhand());
-                spawnDrops(blockstate, world, blockpos, null, player, player.getHeldItemMainhand());
-            }
-        }
-        super.onBlockHarvested(world, pos, state, player);
-    }
-
-    @Override
-    public void onBlockPlacedBy(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
-        world.setBlockState(pos.up(), this.getDefaultState().with(HALF, DoubleBlockHalf.UPPER), BlockFlags.NOTIFY_AND_UPDATE);
-    }
-
-    @Override
-    public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
         CapabilityChunkStorage.addElements(world.getChunkAt(pos), NutrientHelper.DECAY_TALL_GRASS);
     }
 
     @Override
-    public BlockState updatePostPlacement(BlockState state,
-                                          Direction facing,
-                                          BlockState facingState,
-                                          IWorld world,
-                                          BlockPos currentPos,
-                                          BlockPos facingPos) {
-        DoubleBlockHalf doubleblockhalf = state.get(HALF);
+    public void playerDestroy(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable TileEntity tile, ItemStack stack) {
+        super.playerDestroy(world, player, pos, Blocks.AIR.defaultBlockState(), tile, stack);
+    }
+
+    @Override
+    public void playerWillDestroy(World world, BlockPos pos, BlockState state, PlayerEntity player) {
+        DoubleBlockHalf doubleblockhalf = state.getValue(HALF);
+        BlockPos blockpos = doubleblockhalf == DoubleBlockHalf.LOWER ? pos.above() : pos.below();
+        BlockState blockstate = world.getBlockState(blockpos);
+        if (blockstate.getBlock() == this && blockstate.getValue(HALF) != doubleblockhalf) {
+            world.setBlock(blockpos, Blocks.AIR.defaultBlockState(), BlockFlags.NO_NEIGHBOR_DROPS + BlockFlags.NOTIFY_AND_UPDATE);
+            world.levelEvent(player, Constants.WorldEvents.BREAK_BLOCK_EFFECTS, blockpos, Block.getId(blockstate));
+            if (!world.isClientSide && !player.isCreative()) {
+                dropResources(state, world, pos, null, player, player.getMainHandItem());
+                dropResources(blockstate, world, blockpos, null, player, player.getMainHandItem());
+            }
+        }
+        super.playerWillDestroy(world, pos, state, player);
+    }
+
+    @Override
+    public void setPlacedBy(World world, BlockPos pos, BlockState state, LivingEntity entity, ItemStack stack) {
+        world.setBlock(pos.above(), this.defaultBlockState().setValue(HALF, DoubleBlockHalf.UPPER), BlockFlags.NOTIFY_AND_UPDATE);
+    }
+
+    @Override
+    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
+        DoubleBlockHalf doubleblockhalf = state.getValue(HALF);
         if (facing.getAxis() != Direction.Axis.Y ||
             doubleblockhalf == DoubleBlockHalf.LOWER != (facing == Direction.UP) ||
-            facingState.getBlock() == this && facingState.get(HALF) != doubleblockhalf) {
-            return doubleblockhalf == DoubleBlockHalf.LOWER && facing == Direction.DOWN && !state.isValidPosition(world, currentPos) ?
-                   Blocks.AIR.getDefaultState() :
-                   super.updatePostPlacement(state, facing, facingState, world, currentPos, facingPos);
+            facingState.getBlock() == this && facingState.getValue(HALF) != doubleblockhalf) {
+            return doubleblockhalf == DoubleBlockHalf.LOWER && facing == Direction.DOWN && !state.canSurvive(world, currentPos) ?
+                   Blocks.AIR.defaultBlockState() :
+                   super.updateShape(state, facing, facingState, world, currentPos, facingPos);
         }
-        return Blocks.AIR.getDefaultState();
+        return Blocks.AIR.defaultBlockState();
     }
 }

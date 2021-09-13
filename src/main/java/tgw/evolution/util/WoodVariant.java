@@ -39,90 +39,306 @@ public enum WoodVariant {
 
     public static WoodVariant byId(byte id) {
         switch (id) {
-            case 0:
+            case 0: {
                 return ACACIA;
-            case 1:
+            }
+            case 1: {
                 return ASPEN;
-            case 2:
+            }
+            case 2: {
                 return BIRCH;
-            case 3:
+            }
+            case 3: {
                 return CEDAR;
-            case 4:
+            }
+            case 4: {
                 return EBONY;
-            case 5:
+            }
+            case 5: {
                 return ELM;
-            case 6:
+            }
+            case 6: {
                 return EUCALYPTUS;
-            case 7:
+            }
+            case 7: {
                 return FIR;
-            case 8:
+            }
+            case 8: {
                 return KAPOK;
-            case 9:
+            }
+            case 9: {
                 return MANGROVE;
-            case 10:
+            }
+            case 10: {
                 return MAPLE;
-            case 11:
+            }
+            case 11: {
                 return OAK;
-            case 12:
+            }
+            case 12: {
                 return OLD_OAK;
-            case 13:
+            }
+            case 13: {
                 return PALM;
-            case 14:
+            }
+            case 14: {
                 return PINE;
-            case 15:
+            }
+            case 15: {
                 return REDWOOD;
-            case 16:
+            }
+            case 16: {
                 return SPRUCE;
-            case 17:
+            }
+            case 17: {
                 return WILLOW;
+            }
         }
-        throw new IllegalStateException("Unknown id: " + id);
+        throw new UnregistredFeatureException("Unregistred variant for id: " + id);
+    }
+
+    public Block getChoppingBlock() {
+        switch (this) {
+            case ACACIA: {
+                return EvolutionBlocks.CHOPPING_BLOCK_ACACIA.get();
+            }
+            case ASPEN: {
+                return EvolutionBlocks.CHOPPING_BLOCK_ASPEN.get();
+            }
+            case BIRCH: {
+                return EvolutionBlocks.CHOPPING_BLOCK_BIRCH.get();
+            }
+            case CEDAR: {
+                return EvolutionBlocks.CHOPPING_BLOCK_CEDAR.get();
+            }
+            case EBONY: {
+                return EvolutionBlocks.CHOPPING_BLOCK_EBONY.get();
+            }
+            case ELM: {
+                return EvolutionBlocks.CHOPPING_BLOCK_ELM.get();
+            }
+            case EUCALYPTUS: {
+                return EvolutionBlocks.CHOPPING_BLOCK_EUCALYPTUS.get();
+            }
+            case FIR: {
+                return EvolutionBlocks.CHOPPING_BLOCK_FIR.get();
+            }
+            case KAPOK: {
+                return EvolutionBlocks.CHOPPING_BLOCK_KAPOK.get();
+            }
+            case MANGROVE: {
+                return EvolutionBlocks.CHOPPING_BLOCK_MANGROVE.get();
+            }
+            case MAPLE: {
+                return EvolutionBlocks.CHOPPING_BLOCK_MAPLE.get();
+            }
+            case OAK: {
+                return EvolutionBlocks.CHOPPING_BLOCK_OAK.get();
+            }
+            case OLD_OAK: {
+                return EvolutionBlocks.CHOPPING_BLOCK_OLD_OAK.get();
+            }
+            case PALM: {
+                return EvolutionBlocks.CHOPPING_BLOCK_PALM.get();
+            }
+            case PINE: {
+                return EvolutionBlocks.CHOPPING_BLOCK_PINE.get();
+            }
+            case REDWOOD: {
+                return EvolutionBlocks.CHOPPING_BLOCK_REDWOOD.get();
+            }
+            case SPRUCE: {
+                return EvolutionBlocks.CHOPPING_BLOCK_SPRUCE.get();
+            }
+            case WILLOW: {
+                return EvolutionBlocks.CHOPPING_BLOCK_WILLOW.get();
+            }
+        }
+        throw new UnregistredFeatureException("Unregistred variant: " + this);
     }
 
     public byte getId() {
         return this.id;
     }
 
+    public Block getLeaves() {
+        switch (this) {
+            case ACACIA: {
+                return EvolutionBlocks.LEAVES_ACACIA.get();
+            }
+            case ASPEN: {
+                return EvolutionBlocks.LEAVES_ASPEN.get();
+            }
+            case BIRCH: {
+                return EvolutionBlocks.LEAVES_BIRCH.get();
+            }
+            case CEDAR: {
+                return EvolutionBlocks.LEAVES_CEDAR.get();
+            }
+            case EBONY: {
+                return EvolutionBlocks.LEAVES_EBONY.get();
+            }
+            case ELM: {
+                return EvolutionBlocks.LEAVES_ELM.get();
+            }
+            case EUCALYPTUS: {
+                return EvolutionBlocks.LEAVES_EUCALYPTUS.get();
+            }
+            case FIR: {
+                return EvolutionBlocks.LEAVES_FIR.get();
+            }
+            case KAPOK: {
+                return EvolutionBlocks.LEAVES_KAPOK.get();
+            }
+            case MANGROVE: {
+                return EvolutionBlocks.LEAVES_MANGROVE.get();
+            }
+            case MAPLE: {
+                return EvolutionBlocks.LEAVES_MAPLE.get();
+            }
+            case OAK: {
+                return EvolutionBlocks.LEAVES_OAK.get();
+            }
+            case OLD_OAK: {
+                return EvolutionBlocks.LEAVES_OLD_OAK.get();
+            }
+            case PALM: {
+                return EvolutionBlocks.LEAVES_PALM.get();
+            }
+            case PINE: {
+                return EvolutionBlocks.LEAVES_PINE.get();
+            }
+            case REDWOOD: {
+                return EvolutionBlocks.LEAVES_REDWOOD.get();
+            }
+            case SPRUCE: {
+                return EvolutionBlocks.LEAVES_SPRUCE.get();
+            }
+            case WILLOW: {
+                return EvolutionBlocks.LEAVES_WILLOW.get();
+            }
+        }
+        throw new UnregistredFeatureException("Unregistred variant: " + this);
+    }
+
+    public Block getLog() {
+        switch (this) {
+            case ACACIA: {
+                return EvolutionBlocks.LOG_ACACIA.get();
+            }
+            case ASPEN: {
+                return EvolutionBlocks.LOG_ASPEN.get();
+            }
+            case BIRCH: {
+                return EvolutionBlocks.LOG_BIRCH.get();
+            }
+            case CEDAR: {
+                return EvolutionBlocks.LOG_CEDAR.get();
+            }
+            case EBONY: {
+                return EvolutionBlocks.LOG_EBONY.get();
+            }
+            case ELM: {
+                return EvolutionBlocks.LOG_ELM.get();
+            }
+            case EUCALYPTUS: {
+                return EvolutionBlocks.LOG_EUCALYPTUS.get();
+            }
+            case FIR: {
+                return EvolutionBlocks.LOG_FIR.get();
+            }
+            case KAPOK: {
+                return EvolutionBlocks.LOG_KAPOK.get();
+            }
+            case MANGROVE: {
+                return EvolutionBlocks.LOG_MANGROVE.get();
+            }
+            case MAPLE: {
+                return EvolutionBlocks.LOG_MAPLE.get();
+            }
+            case OAK: {
+                return EvolutionBlocks.LOG_OAK.get();
+            }
+            case OLD_OAK: {
+                return EvolutionBlocks.LOG_OLD_OAK.get();
+            }
+            case PALM: {
+                return EvolutionBlocks.LOG_PALM.get();
+            }
+            case PINE: {
+                return EvolutionBlocks.LOG_PINE.get();
+            }
+            case REDWOOD: {
+                return EvolutionBlocks.LOG_REDWOOD.get();
+            }
+            case SPRUCE: {
+                return EvolutionBlocks.LOG_SPRUCE.get();
+            }
+            case WILLOW: {
+                return EvolutionBlocks.LOG_WILLOW.get();
+            }
+        }
+        throw new UnregistredFeatureException("Unregistred variant: " + this);
+    }
+
     public Item getLogItem() {
         switch (this) {
-            case ACACIA:
+            case ACACIA: {
                 return EvolutionItems.log_acacia.get();
-            case ASPEN:
+            }
+            case ASPEN: {
                 return EvolutionItems.log_aspen.get();
-            case BIRCH:
+            }
+            case BIRCH: {
                 return EvolutionItems.log_birch.get();
-            case CEDAR:
+            }
+            case CEDAR: {
                 return EvolutionItems.log_cedar.get();
-            case EBONY:
+            }
+            case EBONY: {
                 return EvolutionItems.log_ebony.get();
-            case ELM:
+            }
+            case ELM: {
                 return EvolutionItems.log_elm.get();
-            case EUCALYPTUS:
+            }
+            case EUCALYPTUS: {
                 return EvolutionItems.log_eucalyptus.get();
-            case FIR:
+            }
+            case FIR: {
                 return EvolutionItems.log_fir.get();
-            case KAPOK:
+            }
+            case KAPOK: {
                 return EvolutionItems.log_kapok.get();
-            case MANGROVE:
+            }
+            case MANGROVE: {
                 return EvolutionItems.log_mangrove.get();
-            case MAPLE:
+            }
+            case MAPLE: {
                 return EvolutionItems.log_maple.get();
-            case OAK:
+            }
+            case OAK: {
                 return EvolutionItems.log_oak.get();
-            case OLD_OAK:
+            }
+            case OLD_OAK: {
                 return EvolutionItems.log_old_oak.get();
-            case PALM:
+            }
+            case PALM: {
                 return EvolutionItems.log_palm.get();
-            case PINE:
+            }
+            case PINE: {
                 return EvolutionItems.log_pine.get();
-            case REDWOOD:
+            }
+            case REDWOOD: {
                 return EvolutionItems.log_redwood.get();
-            case SPRUCE:
+            }
+            case SPRUCE: {
                 return EvolutionItems.log_spruce.get();
-            case WILLOW:
+            }
+            case WILLOW: {
                 return EvolutionItems.log_willow.get();
+            }
         }
-        throw new IllegalStateException("Unknown variant: " + this);
+        throw new UnregistredFeatureException("Unregistred variant: " + this);
     }
 
     public int getMass() {
@@ -135,86 +351,182 @@ public enum WoodVariant {
 
     public Block getPile() {
         switch (this) {
-            case ACACIA:
+            case ACACIA: {
                 return EvolutionBlocks.LOG_PILE_ACACIA.get();
-            case ASPEN:
+            }
+            case ASPEN: {
                 return EvolutionBlocks.LOG_PILE_ASPEN.get();
-            case BIRCH:
+            }
+            case BIRCH: {
                 return EvolutionBlocks.LOG_PILE_BIRCH.get();
-            case CEDAR:
+            }
+            case CEDAR: {
                 return EvolutionBlocks.LOG_PILE_CEDAR.get();
-            case EBONY:
+            }
+            case EBONY: {
                 return EvolutionBlocks.LOG_PILE_EBONY.get();
-            case ELM:
+            }
+            case ELM: {
                 return EvolutionBlocks.LOG_PILE_ELM.get();
-            case EUCALYPTUS:
+            }
+            case EUCALYPTUS: {
                 return EvolutionBlocks.LOG_PILE_EUCALYPTUS.get();
-            case FIR:
+            }
+            case FIR: {
                 return EvolutionBlocks.LOG_PILE_FIR.get();
-            case KAPOK:
+            }
+            case KAPOK: {
                 return EvolutionBlocks.LOG_PILE_KAPOK.get();
-            case MANGROVE:
+            }
+            case MANGROVE: {
                 return EvolutionBlocks.LOG_PILE_MANGROVE.get();
-            case MAPLE:
+            }
+            case MAPLE: {
                 return EvolutionBlocks.LOG_PILE_MAPLE.get();
-            case OAK:
+            }
+            case OAK: {
                 return EvolutionBlocks.LOG_PILE_OAK.get();
-            case OLD_OAK:
+            }
+            case OLD_OAK: {
                 return EvolutionBlocks.LOG_PILE_OLD_OAK.get();
-            case PALM:
+            }
+            case PALM: {
                 return EvolutionBlocks.LOG_PILE_PALM.get();
-            case PINE:
+            }
+            case PINE: {
                 return EvolutionBlocks.LOG_PILE_PINE.get();
-            case REDWOOD:
+            }
+            case REDWOOD: {
                 return EvolutionBlocks.LOG_PILE_REDWOOD.get();
-            case SPRUCE:
+            }
+            case SPRUCE: {
                 return EvolutionBlocks.LOG_PILE_SPRUCE.get();
-            case WILLOW:
+            }
+            case WILLOW: {
                 return EvolutionBlocks.LOG_PILE_WILLOW.get();
+            }
         }
-        throw new IllegalStateException("Unknown variant: " + this);
+        throw new UnregistredFeatureException("Unregistred variant: " + this);
     }
 
     public Item getPlank() {
         switch (this) {
-            case ACACIA:
+            case ACACIA: {
                 return EvolutionItems.plank_acacia.get();
-            case ASPEN:
+            }
+            case ASPEN: {
                 return EvolutionItems.plank_aspen.get();
-            case BIRCH:
+            }
+            case BIRCH: {
                 return EvolutionItems.plank_birch.get();
-            case CEDAR:
+            }
+            case CEDAR: {
                 return EvolutionItems.plank_cedar.get();
-            case EBONY:
+            }
+            case EBONY: {
                 return EvolutionItems.plank_ebony.get();
-            case ELM:
+            }
+            case ELM: {
                 return EvolutionItems.plank_elm.get();
-            case EUCALYPTUS:
+            }
+            case EUCALYPTUS: {
                 return EvolutionItems.plank_eucalyptus.get();
-            case FIR:
+            }
+            case FIR: {
                 return EvolutionItems.plank_fir.get();
-            case KAPOK:
+            }
+            case KAPOK: {
                 return EvolutionItems.plank_kapok.get();
-            case MANGROVE:
+            }
+            case MANGROVE: {
                 return EvolutionItems.plank_mangrove.get();
-            case MAPLE:
+            }
+            case MAPLE: {
                 return EvolutionItems.plank_maple.get();
-            case OAK:
+            }
+            case OAK: {
                 return EvolutionItems.plank_oak.get();
-            case OLD_OAK:
+            }
+            case OLD_OAK: {
                 return EvolutionItems.plank_old_oak.get();
-            case PALM:
+            }
+            case PALM: {
                 return EvolutionItems.plank_palm.get();
-            case PINE:
+            }
+            case PINE: {
                 return EvolutionItems.plank_pine.get();
-            case REDWOOD:
+            }
+            case REDWOOD: {
                 return EvolutionItems.plank_redwood.get();
-            case SPRUCE:
+            }
+            case SPRUCE: {
                 return EvolutionItems.plank_spruce.get();
-            case WILLOW:
+            }
+            case WILLOW: {
                 return EvolutionItems.plank_willow.get();
+            }
         }
-        throw new IllegalStateException("Unknown variant: " + this);
+        throw new UnregistredFeatureException("Unregistred variant: " + this);
+    }
+
+    public Block getPlanks() {
+        switch (this) {
+            case ACACIA: {
+                return EvolutionBlocks.PLANKS_ACACIA.get();
+            }
+            case ASPEN: {
+                return EvolutionBlocks.PLANKS_ASPEN.get();
+            }
+            case BIRCH: {
+                return EvolutionBlocks.PLANKS_BIRCH.get();
+            }
+            case CEDAR: {
+                return EvolutionBlocks.PLANKS_CEDAR.get();
+            }
+            case EBONY: {
+                return EvolutionBlocks.PLANKS_EBONY.get();
+            }
+            case ELM: {
+                return EvolutionBlocks.PLANKS_ELM.get();
+            }
+            case EUCALYPTUS: {
+                return EvolutionBlocks.PLANKS_EUCALYPTUS.get();
+            }
+            case FIR: {
+                return EvolutionBlocks.PLANKS_FIR.get();
+            }
+            case KAPOK: {
+                return EvolutionBlocks.PLANKS_KAPOK.get();
+            }
+            case MANGROVE: {
+                return EvolutionBlocks.PLANKS_MANGROVE.get();
+            }
+            case MAPLE: {
+                return EvolutionBlocks.PLANKS_MAPLE.get();
+            }
+            case OAK: {
+                return EvolutionBlocks.PLANKS_OAK.get();
+            }
+            case OLD_OAK: {
+                return EvolutionBlocks.PLANKS_OLD_OAK.get();
+            }
+            case PALM: {
+                return EvolutionBlocks.PLANKS_PALM.get();
+            }
+            case PINE: {
+                return EvolutionBlocks.PLANKS_PINE.get();
+            }
+            case REDWOOD: {
+                return EvolutionBlocks.PLANKS_REDWOOD.get();
+            }
+            case SPRUCE: {
+                return EvolutionBlocks.PLANKS_SPRUCE.get();
+            }
+            case WILLOW: {
+                return EvolutionBlocks.PLANKS_WILLOW.get();
+            }
+        }
+        throw new UnregistredFeatureException("Unregistred variant: " + this);
     }
 
     public int getShearStrength() {

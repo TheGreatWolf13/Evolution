@@ -1,8 +1,9 @@
 package tgw.evolution.blocks.tileentities;
 
+import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.TileEntity;
-import tgw.evolution.init.EvolutionTileEntities;
+import tgw.evolution.init.EvolutionTEs;
 
 public class TELiquid extends TileEntity {
 
@@ -12,32 +13,32 @@ public class TELiquid extends TileEntity {
     private int missingLiquid;
 
     public TELiquid() {
-        super(EvolutionTileEntities.TE_LIQUID.get());
+        super(EvolutionTEs.LIQUID.get());
     }
 
     public int getMissingLiquid() {
         return this.missingLiquid;
     }
 
-    public void setMissingLiquid(int missingLiquid) {
-        this.missingLiquid = missingLiquid;
-        this.markDirty();
+    @Override
+    public void load(BlockState state, CompoundNBT compound) {
+        super.load(state, compound);
+        this.setMissingLiquid(compound.getInt("MissingLiquid"));
     }
 
     @Override
-    public void read(CompoundNBT compound) {
-        super.read(compound);
-        this.setMissingLiquid(compound.getInt("MissingLiquid"));
+    public CompoundNBT save(CompoundNBT compound) {
+        compound.putInt("MissingLiquid", this.missingLiquid);
+        return super.save(compound);
+    }
+
+    public void setMissingLiquid(int missingLiquid) {
+        this.missingLiquid = missingLiquid;
+        this.setChanged();
     }
 
     @Override
     public String toString() {
         return "TELiquid{" + "missingLiquid=" + this.missingLiquid + '}';
-    }
-
-    @Override
-    public CompoundNBT write(CompoundNBT compound) {
-        compound.putInt("MissingLiquid", this.missingLiquid);
-        return super.write(compound);
     }
 }

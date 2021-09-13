@@ -2,7 +2,7 @@ package tgw.evolution.util.hitbox;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,11 +32,11 @@ public abstract class HitboxEntity<T extends Entity> {
         return aabb(x0 * scale, y0 * scale, z0 * scale, x1 * scale, y1 * scale, z1 * scale);
     }
 
-    public static Vec3d v(double x, double y, double z) {
-        return new Vec3d(x / 16, y / 16, z / 16);
+    public static Vector3d v(double x, double y, double z) {
+        return new Vector3d(x / 16, y / 16, z / 16);
     }
 
-    public static Vec3d v(double x, double y, double z, double scale) {
+    public static Vector3d v(double x, double y, double z, double scale) {
         return v(x * scale, y * scale, z * scale);
     }
 
@@ -56,8 +56,8 @@ public abstract class HitboxEntity<T extends Entity> {
         return this.boxes;
     }
 
-    public Vec3d getOffset() {
-        return new Vec3d(this.pivotX, this.pivotY, this.pivotZ);
+    public Vector3d getOffset() {
+        return new Vector3d(this.pivotX, this.pivotY, this.pivotZ);
     }
 
     public Matrix3d getTransform() {

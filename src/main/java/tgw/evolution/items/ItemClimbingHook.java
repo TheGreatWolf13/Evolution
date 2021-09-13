@@ -17,11 +17,11 @@ import tgw.evolution.util.MathHelper;
 public class ItemClimbingHook extends ItemEv implements IThrowable {
 
     public ItemClimbingHook() {
-        super(EvolutionItems.propMisc().maxStackSize(1));
+        super(EvolutionItems.propMisc().stacksTo(1));
     }
 
     @Override
-    public UseAction getUseAction(ItemStack stack) {
+    public UseAction getUseAnimation(ItemStack stack) {
         return UseAction.BOW;
     }
 
@@ -31,21 +31,7 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
-        ItemStack stack = playerIn.getHeldItem(handIn);
-        if (handIn == Hand.OFF_HAND) {
-            return new ActionResult<>(ActionResultType.FAIL, stack);
-        }
-        if (playerIn.getHeldItemOffhand().getItem() != EvolutionItems.rope.get()) {
-            playerIn.sendStatusMessage(EvolutionTexts.ACTION_HOOK, true);
-            return new ActionResult<>(ActionResultType.FAIL, stack);
-        }
-        playerIn.setActiveHand(handIn);
-        return new ActionResult<>(ActionResultType.SUCCESS, stack);
-    }
-
-    @Override
-    public void onPlayerStoppedUsing(ItemStack stack, World world, LivingEntity entityLiving, int timeLeft) {
+    public void releaseUsing(ItemStack stack, World world, LivingEntity entityLiving, int timeLeft) {
         if (entityLiving instanceof PlayerEntity) {
             PlayerEntity player = (PlayerEntity) entityLiving;
             int charge = this.getUseDuration(stack) - timeLeft;
@@ -56,19 +42,33 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
             if (strength < 0.1) {
                 return;
             }
-            if (!world.isRemote) {
+            if (!world.isClientSide) {
                 EntityHook hook = new EntityHook(world, player);
-                hook.shoot(player, player.rotationPitch, player.rotationYaw, 0.5f * strength, 1.0F);
+                hook.shoot(player, player.xRot, player.yRot, 0.5f * strength, 1.0F);
                 hook.pickupStatus = EntityGenericProjectile.PickupStatus.CREATIVE_ONLY;
-                world.addEntity(hook);
-                world.playMovingSound(null, hook, SoundEvents.ITEM_TRIDENT_THROW, SoundCategory.PLAYERS, 1.0F, 1.0F);
+                world.addFreshEntity(hook);
+                world.playSound(null, hook, SoundEvents.TRIDENT_THROW, SoundCategory.PLAYERS, 1.0F, 1.0F);
                 Evolution.usingPlaceholder(player, "sound");
-                if (!player.abilities.isCreativeMode) {
-                    player.inventory.deleteStack(stack);
+                if (!player.abilities.instabuild) {
+                    player.inventory.removeItem(stack);
                 }
             }
-            player.addStat(Stats.ITEM_USED.get(this));
+            player.awardStat(Stats.ITEM_USED.get(this));
             this.addStat(player);
         }
+    }
+
+    @Override
+    public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (hand == Hand.OFF_HAND) {
+            return new ActionResult<>(ActionResultType.FAIL, stack);
+        }
+        if (player.getOffhandItem().getItem() != EvolutionItems.rope.get()) {
+            player.displayClientMessage(EvolutionTexts.ACTION_HOOK, true);
+            return new ActionResult<>(ActionResultType.FAIL, stack);
+        }
+        player.startUsingItem(hand);
+        return new ActionResult<>(ActionResultType.SUCCESS, stack);
     }
 }

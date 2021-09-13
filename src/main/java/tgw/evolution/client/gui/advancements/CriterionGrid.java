@@ -7,7 +7,8 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.Util;
+import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -28,7 +29,7 @@ public class CriterionGrid {
     public static CriteriaDetail detailLevel = CriteriaDetail.DEFAULT;
     public static boolean requiresShift;
     public final int numRows;
-    private final List<String> cellContents;
+    private final List<IFormattableTextComponent> cellContents;
     private final int[] cellWidths;
     private final int fontHeight;
     private final int numColumns;
@@ -47,7 +48,7 @@ public class CriterionGrid {
         this.height = 0;
     }
 
-    public CriterionGrid(List<String> cellContents, int[] cellWidths, int fontHeight, int numColumns) {
+    public CriterionGrid(List<IFormattableTextComponent> cellContents, int[] cellWidths, int fontHeight, int numColumns) {
         this.cellContents = cellContents;
         this.cellWidths = cellWidths;
         this.fontHeight = fontHeight;
@@ -57,7 +58,7 @@ public class CriterionGrid {
 
     // Of all the possible grids whose aspect ratio is less than the maximum, this method returns the one with the smallest number of rows.
     // If there is no such grid, this method returns a single-column grid.
-    public static CriterionGrid findOptimalCriterionGrid(Advancement advancement, AdvancementProgress progress, int maxWidth, FontRenderer renderer) {
+    public static CriterionGrid findOptimalCriterionGrid(Advancement advancement, AdvancementProgress progress, int maxWidth, FontRenderer font) {
         if (progress == null || detailLevel == CriteriaDetail.OFF) {
             return EMPTY;
         }
@@ -65,45 +66,40 @@ public class CriterionGrid {
         if (criteria.size() <= 1) {
             return EMPTY;
         }
-        int numUnobtained = advancement.getRequirementCount();
-        List<String> cellContents = new ArrayList<>();
+        int numUnobtained = advancement.getMaxCriteraRequired();
+        List<IFormattableTextComponent> cellContents = new ArrayList<>();
         for (String criterion : criteria.keySet()) {
-            if (progress.getCriterionProgress(criterion).isObtained()) {
+            if (progress.getCriterion(criterion).isDone()) {
                 if (detailLevel.showObtained()) {
                     //noinspection ObjectAllocationInLoop
-                    ITextComponent text = new StringTextComponent(" + ");
-                    text.getStyle().setColor(TextFormatting.GREEN);
-                    ITextComponent text2 = getCriteriaTranslated(criterion);
-                    text2.getStyle().setColor(TextFormatting.WHITE);
-                    text.appendSibling(text2);
-                    cellContents.add(text.getFormattedText());
+                    IFormattableTextComponent text = new StringTextComponent(" + ").withStyle(TextFormatting.GREEN);
+                    IFormattableTextComponent text2 = getCriteriaTranslated(criterion).withStyle(TextFormatting.WHITE);
+                    text.append(text2);
+                    cellContents.add(text);
                 }
                 numUnobtained--;
             }
             else {
                 if (detailLevel.showUnobtained()) {
                     //noinspection ObjectAllocationInLoop
-                    ITextComponent text = new StringTextComponent(" x ");
-                    text.getStyle().setColor(TextFormatting.DARK_RED);
-                    ITextComponent text2 = getCriteriaTranslated(criterion);
-                    text2.getStyle().setColor(TextFormatting.WHITE);
-                    text.appendSibling(text2);
-                    cellContents.add(text.getFormattedText());
+                    IFormattableTextComponent text = new StringTextComponent(" x ").withStyle(TextFormatting.RED);
+                    IFormattableTextComponent text2 = getCriteriaTranslated(criterion).withStyle(TextFormatting.WHITE);
+                    text.append(text2);
+                    cellContents.add(text);
                 }
             }
         }
         if (!detailLevel.showUnobtained() && numUnobtained > 0) {
-            ITextComponent text = new StringTextComponent(" x ");
-            text.getStyle().setColor(TextFormatting.DARK_RED);
-            ITextComponent text2 = EvolutionTexts.remaining(numUnobtained);
-            text2.getStyle().setColor(TextFormatting.WHITE);
-            text2.getStyle().setItalic(true);
-            text.appendSibling(text2);
-            cellContents.add(text.getFormattedText());
+            IFormattableTextComponent text = new StringTextComponent(" x ").withStyle(TextFormatting.RED);
+            IFormattableTextComponent text2 = EvolutionTexts.remaining(numUnobtained)
+                                                            .withStyle(TextFormatting.WHITE)
+                                                            .withStyle(TextFormatting.ITALIC);
+            text.append(text2);
+            cellContents.add(text);
         }
         int[] cellWidths = new int[cellContents.size()];
         for (int i = 0; i < cellWidths.length; i++) {
-            cellWidths[i] = renderer.getStringWidth(cellContents.get(i));
+            cellWidths[i] = font.width(cellContents.get(i));
         }
         int numCols = 0;
         CriterionGrid prevGrid = null;
@@ -111,7 +107,7 @@ public class CriterionGrid {
         do {
             numCols++;
             //noinspection ObjectAllocationInLoop
-            CriterionGrid newGrid = new CriterionGrid(cellContents, cellWidths, renderer.FONT_HEIGHT, numCols);
+            CriterionGrid newGrid = new CriterionGrid(cellContents, cellWidths, font.lineHeight, numCols);
             if (prevGrid != null && newGrid.numRows == prevGrid.numRows) {
                 // We increased the width without decreasing the height, which is pointless.
                 continue;
@@ -123,7 +119,7 @@ public class CriterionGrid {
         return prevGrid != null ? prevGrid : currGrid;
     }
 
-    private static ITextComponent getCriteriaTranslated(String criterion) {
+    private static IFormattableTextComponent getCriteriaTranslated(String criterion) {
         int endIndex = criterion.indexOf(':');
         String type = criterion.substring(0, endIndex == -1 ? 0 : endIndex);
         if (type.isEmpty()) {
@@ -132,13 +128,13 @@ public class CriterionGrid {
         switch (type) {
             case "item":
                 Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(criterion.substring(criterion.indexOf(':') + 1)));
-                return new TranslationTextComponent(item.getTranslationKey());
+                return new TranslationTextComponent(item.getDescriptionId());
             case "entity":
                 EntityType<?> entity = ForgeRegistries.ENTITIES.getValue(new ResourceLocation(criterion.substring(criterion.indexOf(':') + 1)));
-                return entity.getName();
+                return (IFormattableTextComponent) entity.getDescription();
             case "biome":
                 Biome biome = ForgeRegistries.BIOMES.getValue(new ResourceLocation(criterion.substring(criterion.indexOf(':') + 1)));
-                return biome.getDisplayName();
+                return new TranslationTextComponent(Util.makeDescriptionId("biome", biome.getRegistryName()));
             case "minecraft":
                 return new StringTextComponent(criterion);
         }
@@ -150,29 +146,29 @@ public class CriterionGrid {
         this.width = 0;
         for (int c = 0; c < this.numColumns; c++) {
             //noinspection ObjectAllocationInLoop
-            List<String> column = new ArrayList<>();
+            List<IFormattableTextComponent> column = new ArrayList<>();
             int columnWidth = 0;
             for (int r = 0; r < this.numRows; r++) {
                 int cellIndex = c * this.numRows + r;
                 if (cellIndex >= this.cellContents.size()) {
                     break;
                 }
-                String str = this.cellContents.get(cellIndex);
-                column.add(str);
+                IFormattableTextComponent text = this.cellContents.get(cellIndex);
+                column.add(text);
                 columnWidth = Math.max(columnWidth, this.cellWidths[cellIndex]);
             }
             //noinspection ObjectAllocationInLoop
             this.columns.add(new Column(column, columnWidth));
             this.width += columnWidth;
         }
-        this.height = this.numRows * this.fontHeight;
+        this.height = this.numRows * (this.fontHeight + 1);
     }
 
     public static class Column {
-        public final List<String> cells;
+        public final List<IFormattableTextComponent> cells;
         public final int width;
 
-        public Column(List<String> cells, int width) {
+        public Column(List<IFormattableTextComponent> cells, int width) {
             this.cells = cells;
             this.width = width;
         }

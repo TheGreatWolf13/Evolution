@@ -28,7 +28,7 @@ public class PacketCSSetProne implements IPacket {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
                 ServerPlayerEntity player = context.get().getSender();
-                Evolution.PRONED_PLAYERS.put(player.getUniqueID(), packet.proned);
+                Evolution.PRONED_PLAYERS.put(player.getId(), packet.proned);
             });
             context.get().setPacketHandled(true);
         }

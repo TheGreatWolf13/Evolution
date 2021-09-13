@@ -50,7 +50,7 @@ public class PuzzlePattern {
     public int getMaxHeight(TemplateManager manager) {
         if (this.maxHeight == Integer.MIN_VALUE) {
             this.maxHeight = this.puzzlePieces.stream()
-                                              .mapToInt(puzzlePiece -> puzzlePiece.getBoundingBox(manager, BlockPos.ZERO, Rotation.NONE).getYSize())
+                                              .mapToInt(puzzlePiece -> puzzlePiece.getBoundingBox(manager, BlockPos.ZERO, Rotation.NONE).getYSpan())
                                               .max()
                                               .orElse(0);
         }

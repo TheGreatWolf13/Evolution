@@ -1,0 +1,49 @@
+{
+  "compatibilityLevel": "JAVA_8",
+  "package": "tgw.evolution.mixin",
+  "mixins": [
+    "AbstractSkeletonEntityMixin",
+    "BlockMixin",
+    "ChunkMixin",
+    "DataFixesManagerMixin",
+    "EffectInstanceMixin",
+    "EntityMixin",
+    "LivingEntityMixin",
+    "MinecraftServerMixin",
+    "PlayerAbilitiesMixin",
+    "PlayerAdvancementsMixin",
+    "PlayerEntityMixin",
+    "PlayerListMixin",
+    "ServerPlayerEntityMixin",
+    "ServerStatisticsManagerMixin",
+    "SJoinGamePacketMixin",
+    "SPlayEntityEffectPacketMixin",
+    "WorldMixin",
+    "ZombieEntityMixin"
+  ],
+  "client": [
+    "AbstractClientPlayerEntityMixin",
+    "ActiveRenderInfoMixin",
+    "ClientPlayerEntityMixin",
+    "ClientPlayNetHandlerMixin",
+    "ClientWorldMixin",
+    "CreeperEntityMixin",
+    "EntityRendererMixin",
+    "FogRendererMixin",
+    "GameRendererMixin",
+    "IntegratedServerMixin",
+    "MinecraftMixin",
+    "NewChatGuiMixin",
+    "PlayerRendererMixin",
+    "RecipeBookGuiMixin",
+    "RecipeBookPageMixin",
+    "WorldRendererMixin"
+  ],
+  "server": [],
+  "required": true,
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "minVersion": "0.7.0",
+  "refmap": "mixins.evolution-refmap.json"
+}

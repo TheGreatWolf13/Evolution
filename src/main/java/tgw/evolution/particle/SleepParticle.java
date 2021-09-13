@@ -1,24 +1,29 @@
 package tgw.evolution.particle;
 
 import net.minecraft.client.particle.*;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particles.BasicParticleType;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public final class SleepParticle extends SpriteTexturedParticle {
 
-    private SleepParticle(World worldIn, double posXIn, double posYIn, double posZIn) {
-        super(worldIn, posXIn, posYIn, posZIn, 0, 0, 0);
-        this.motionX *= 0.01F;
-        this.motionY *= 0.01F;
-        this.motionZ *= 0.01F;
-        this.motionY += 0.01F;
-        this.particleScale *= 1.5F;
-        this.maxAge = 100;
-        this.canCollide = false;
+    private SleepParticle(ClientWorld world, double posX, double posY, double posZ) {
+        super(world, posX, posY, posZ, 0, 0, 0);
+        this.xd *= 0.01F;
+        this.yd *= 0.01F;
+        this.zd *= 0.01F;
+        this.yd += 0.01F;
+        this.quadSize *= 1.5F;
+        this.lifetime = 100;
+        this.hasPhysics = false;
+    }
+
+    @Override
+    public float getQuadSize(float scale) {
+        return this.quadSize * MathHelper.clamp((this.age + scale) / this.lifetime * 32.0F, 0.0F, 1.0F);
     }
 
     @Override
@@ -27,32 +32,27 @@ public final class SleepParticle extends SpriteTexturedParticle {
     }
 
     @Override
-    public float getScale(float p_217561_1_) {
-        return this.particleScale * MathHelper.clamp((this.age + p_217561_1_) / this.maxAge * 32.0F, 0.0F, 1.0F);
-    }
-
-    @Override
     public void tick() {
-        this.prevPosX = this.posX;
-        this.prevPosY = this.posY;
-        this.prevPosZ = this.posZ;
-        if (this.age++ >= this.maxAge) {
-            this.setExpired();
+        this.xo = this.x;
+        this.yo = this.y;
+        this.zo = this.z;
+        if (this.age++ >= this.lifetime) {
+            this.remove();
         }
         else {
-            this.move(this.motionX, this.motionY, this.motionZ);
-            if (this.posY == this.prevPosY) {
-                this.motionX *= 1.1;
-                this.motionZ *= 1.1;
+            this.move(this.xd, this.yd, this.zd);
+            if (this.y == this.yo) {
+                this.xd *= 1.1;
+                this.zd *= 1.1;
             }
             if (this.age > 75) {
-                this.motionY *= 0.86;
+                this.yd *= 0.86;
             }
-            this.motionX *= 0.86F;
-            this.motionZ *= 0.86F;
+            this.xd *= 0.86F;
+            this.xd *= 0.86F;
             if (this.onGround) {
-                this.motionX *= 0.7F;
-                this.motionZ *= 0.7F;
+                this.xd *= 0.7F;
+                this.xd *= 0.7F;
             }
         }
     }
@@ -62,14 +62,21 @@ public final class SleepParticle extends SpriteTexturedParticle {
 
         private final IAnimatedSprite spriteSet;
 
-        public Factory(IAnimatedSprite sprite) {
-            this.spriteSet = sprite;
+        public Factory(IAnimatedSprite spriteSet) {
+            this.spriteSet = spriteSet;
         }
 
         @Override
-        public Particle makeParticle(BasicParticleType typeIn, World worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            SleepParticle sleepParticle = new SleepParticle(worldIn, x, y, z);
-            sleepParticle.selectSpriteRandomly(this.spriteSet);
+        public Particle createParticle(BasicParticleType type,
+                                       ClientWorld world,
+                                       double x,
+                                       double y,
+                                       double z,
+                                       double xSpeed,
+                                       double ySpeed,
+                                       double zSpeed) {
+            SleepParticle sleepParticle = new SleepParticle(world, x, y, z);
+            sleepParticle.pickSprite(this.spriteSet);
             return sleepParticle;
         }
     }

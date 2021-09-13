@@ -23,18 +23,18 @@ public class PacketCSSkinType implements IPacket {
     }
 
     public static PacketCSSkinType decode(PacketBuffer buffer) {
-        return new PacketCSSkinType(buffer.readEnumValue(SkinType.class));
+        return new PacketCSSkinType(buffer.readEnum(SkinType.class));
     }
 
     public static void encode(PacketCSSkinType packet, PacketBuffer buffer) {
-        buffer.writeEnumValue(packet.skin);
+        buffer.writeEnum(packet.skin);
     }
 
     public static void handle(PacketCSSkinType packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
                 PlayerEntity player = context.get().getSender();
-                EntityEvents.SKIN_TYPE.put(player.getUniqueID(), packet.skin);
+                EntityEvents.SKIN_TYPE.put(player.getUUID(), packet.skin);
             });
             context.get().setPacketHandled(true);
         }

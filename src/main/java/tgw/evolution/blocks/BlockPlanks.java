@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
@@ -19,8 +18,7 @@ public class BlockPlanks extends BlockGravity {
     private final WoodVariant variant;
 
     public BlockPlanks(WoodVariant variant) {
-        super(Block.Properties.create(Material.WOOD).hardnessAndResistance(6.0f, 2.0f).sound(SoundType.WOOD).harvestLevel(HarvestLevel.STONE),
-              variant.getMass() / 4);
+        super(Properties.of(Material.WOOD).strength(6.0f, 2.0f).sound(SoundType.WOOD).harvestLevel(HarvestLevel.STONE), variant.getMass() / 4);
         this.variant = variant;
     }
 
@@ -31,7 +29,7 @@ public class BlockPlanks extends BlockGravity {
 
     @Override
     public SoundEvent breakSound() {
-        return SoundEvents.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR;
+        return SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR;
     }
 
     @Override

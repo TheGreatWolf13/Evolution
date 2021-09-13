@@ -59,13 +59,13 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
     }
 
     protected static HandSide getActiveHandside(PlayerEntity entity) {
-        HandSide handside = entity.getPrimaryHand();
-        return entity.getActiveHand() == Hand.MAIN_HAND ? handside : handside.opposite();
+        HandSide handside = entity.getMainArm();
+        return entity.getUsedItemHand() == Hand.MAIN_HAND ? handside : handside.getOpposite();
     }
 
     protected static HandSide getSwingingHandside(PlayerEntity entity) {
-        HandSide handside = entity.getPrimaryHand();
-        return entity.swingingHand == Hand.MAIN_HAND ? handside : handside.opposite();
+        HandSide handside = entity.getMainArm();
+        return entity.swingingArm == Hand.MAIN_HAND ? handside : handside.getOpposite();
     }
 
     protected static float swimInterp(float rotation, float pitch, float swimAnimation) {
@@ -80,10 +80,10 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
     }
 
     private void eatingAnimationHand(PlayerEntity entity) {
-        if (entity.isHandActive()) {
-            ItemStack stack = entity.getHeldItem(entity.getActiveHand());
-            boolean eatingOrDrinking = stack.getUseAction() == UseAction.EAT || stack.getUseAction() == UseAction.DRINK;
-            if (entity.getItemInUseCount() > 0 && eatingOrDrinking) {
+        if (entity.isUsingItem()) {
+            ItemStack stack = entity.getItemInHand(entity.getUsedItemHand());
+            boolean eatingOrDrinking = stack.getUseAnimation() == UseAction.EAT || stack.getUseAnimation() == UseAction.DRINK;
+            if (eatingOrDrinking && entity.getTicksUsingItem() > 0) {
                 HandSide activeHandside = getActiveHandside(entity);
                 HitboxGroup eatingArm = this.getArmForSide(activeHandside);
                 int mult = activeHandside == HandSide.LEFT ? -1 : 1;
@@ -104,20 +104,20 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
     public void init(PlayerEntity entity, float partialTicks) {
         this.reset();
         this.rotationYaw = -MathHelper.getEntityBodyYaw(entity, partialTicks);
-        if (entity.getRidingEntity() instanceof AbstractHorseEntity) {
-            this.rotationYaw = -MathHelper.getEntityBodyYaw(entity.getRidingEntity(), partialTicks);
+        if (entity.getVehicle() instanceof AbstractHorseEntity) {
+            this.rotationYaw = -MathHelper.getEntityBodyYaw(entity.getVehicle(), partialTicks);
         }
-        this.rotationPitch = -entity.getPitch(partialTicks);
+        this.rotationPitch = -entity.getViewXRot(partialTicks);
         this.limbSwing = MathHelper.getLimbSwing(entity, partialTicks);
         this.limbSwingAmount = MathHelper.getLimbSwingAmount(entity, partialTicks);
         this.swimAnimation = MathHelper.getSwimAnimation(entity, partialTicks);
-        this.remainingItemUseTime = entity.getItemInUseMaxCount();
+        this.remainingItemUseTime = entity.getUseItemRemainingTicks();
         this.isSitting = MathHelper.isSitting(entity);
-        ItemStack mainhandStack = entity.getHeldItemMainhand();
-        ItemStack offhandStack = entity.getHeldItemOffhand();
+        ItemStack mainhandStack = entity.getMainHandItem();
+        ItemStack offhandStack = entity.getOffhandItem();
         ArmPose mainhandPose = MathHelper.getArmPose(entity, mainhandStack, offhandStack, Hand.MAIN_HAND);
         ArmPose offhandPose = MathHelper.getArmPose(entity, mainhandStack, offhandStack, Hand.OFF_HAND);
-        if (entity.getPrimaryHand() == HandSide.RIGHT) {
+        if (entity.getMainArm() == HandSide.RIGHT) {
             this.rightArmPose = mainhandPose;
             this.leftArmPose = offhandPose;
         }
@@ -126,30 +126,44 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
             this.leftArmPose = mainhandPose;
         }
         this.swingProgress = MathHelper.getSwingProgress(entity, partialTicks);
-        this.isSneak = entity.getPose() == Pose.SNEAKING;
+        this.isSneak = entity.getPose() == Pose.CROUCHING;
         this.ageInTicks = MathHelper.getAgeInTicks(entity, partialTicks);
         //Main
         this.rotationY = MathHelper.degToRad(this.rotationYaw);
+        float sinYaw = MathHelper.sinDeg(this.rotationYaw);
+        float cosYaw = MathHelper.cosDeg(this.rotationYaw);
         Pose pose = entity.getPose();
-        if (pose == Pose.SLEEPING) {
-            Direction direction = entity.getBedDirection();
-            if (direction == null) {
-                direction = Direction.WEST;
+        switch (pose) {
+            case CROUCHING:
+            case STANDING: {
+                this.pivotX = -1 / 16.0f * sinYaw;
+                this.pivotZ = -1 / 16.0f * cosYaw;
+                break;
             }
-            this.rotationY = MathHelper.degToRad(MathHelper.getAngleByDirection(direction) + 90);
-            this.rotationX = MathHelper.degToRad(90);
-            this.setPivot(-26 * direction.getXOffset(), 0, -26 * direction.getZOffset(), SCALE / 16);
-        }
-        else if (this.swimAnimation > 0) {
-            float f3 = entity.isInWater() ? -90.0F - entity.rotationPitch : -90.0F;
-            float f4 = MathHelper.lerp(this.swimAnimation, 0.0F, f3);
-            this.rotationX += MathHelper.degToRad(f4);
-            if (entity.isActualySwimming()) {
-                this.pivotX = MathHelper.sinDeg(-this.rotationYaw) * -MathHelper.sinDeg(f4) +
-                              5 / 16.0f * MathHelper.cosDeg(f4) * MathHelper.sinDeg(-this.rotationYaw);
-                this.pivotY = 5 / 16.0f * -MathHelper.sinDeg(f4) - MathHelper.cosDeg(f4);
-                this.pivotZ = -MathHelper.cosDeg(-this.rotationYaw) * -MathHelper.sinDeg(f4) -
-                              5 / 16.0f * MathHelper.cosDeg(f4) * MathHelper.cosDeg(-this.rotationYaw);
+            case SLEEPING: {
+                Direction direction = entity.getBedOrientation();
+                if (direction == null) {
+                    direction = Direction.WEST;
+                }
+                this.rotationY = MathHelper.degToRad(MathHelper.getAngleByDirection(direction) + 90);
+                this.rotationX = MathHelper.degToRad(90);
+                this.setPivot(-26 * direction.getStepX(), 0, -26 * direction.getStepZ(), SCALE / 16);
+                break;
+            }
+            case SWIMMING: {
+                if (this.swimAnimation > 0) {
+                    float waterInclination = entity.isInWater() ? -90.0F - entity.xRot : -90.0F;
+                    float waterPitch = MathHelper.lerp(this.swimAnimation, 0.0F, waterInclination);
+                    this.rotationX += MathHelper.degToRad(waterPitch);
+                    if (entity.isSwimming()) {
+                        float sinWaterPitch = MathHelper.sinDeg(waterPitch);
+                        float cosWaterPitch = MathHelper.cosDeg(waterPitch);
+                        this.pivotX = -sinYaw * -sinWaterPitch + 5 / 16.0f * cosWaterPitch * -sinYaw;
+                        this.pivotY = 5 / 16.0f * -sinWaterPitch - cosWaterPitch;
+                        this.pivotZ = -cosYaw * -sinWaterPitch - 5 / 16.0f * cosWaterPitch * cosYaw;
+                    }
+                }
+                break;
             }
         }
         //Head
@@ -163,9 +177,9 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
         this.rightLeg.setPivot(-2, 12, 0, SCALE / 16);
         this.leftLeg.setPivot(2, 12, 0, SCALE / 16);
         //Mess
-        boolean isElytraFlying = entity.getTicksElytraFlying() > 4;
-        boolean isActuallySwimming = entity.isActualySwimming();
-        this.head.rotationY = MathHelper.degToRad(-entity.getYaw(partialTicks) - this.rotationYaw);
+        boolean isElytraFlying = entity.getFallFlyingTicks() > 4;
+        boolean isActuallySwimming = entity.isSwimming();
+        this.head.rotationY = MathHelper.degToRad(-entity.getViewYRot(partialTicks) - this.rotationYaw);
         this.head.rotationX = MathHelper.degToRad(this.rotationPitch);
         if (isElytraFlying) {
             this.head.rotationX = -MathHelper.PI / 4;
@@ -180,7 +194,7 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
         }
         float f = 1.0F;
         if (isElytraFlying) {
-            f = (float) entity.getMotion().lengthSquared();
+            f = (float) entity.getDeltaMovement().lengthSqr();
             f /= 0.2F;
             f = f * f * f;
         }
@@ -286,7 +300,7 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
             this.rightArm.setRotationX(MathHelper.PI / 2 + this.head.rotationX);
             this.leftArm.setRotationX(MathHelper.PI / 2 + this.head.rotationX);
         }
-        float f4 = CrossbowItem.getChargeTime(entity.getActiveItemStack());
+        float f4 = CrossbowItem.getChargeDuration(entity.getUseItem());
         if (this.rightArmPose == ArmPose.CROSSBOW_CHARGE) {
             this.rightArm.setRotationY(0.8F);
             this.rightArm.setRotationX(0.970_796_35F);

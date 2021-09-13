@@ -14,21 +14,33 @@ import tgw.evolution.util.DirectionToIntMap;
 import tgw.evolution.util.HarvestLevel;
 import tgw.evolution.util.RockVariant;
 
-public class BlockStone extends BlockGravity implements IStoneVariant {
+public class BlockStone extends BlockGravity implements IRockVariant {
 
     private final RockVariant variant;
 
     public BlockStone(RockVariant variant) {
-        super(Block.Properties.create(Material.ROCK)
-                              .hardnessAndResistance(variant.getRockType().getHardness() / 2.0F, 6.0F)
-                              .sound(SoundType.STONE)
-                              .harvestLevel(HarvestLevel.COPPER), variant.getMass());
+        super(Properties.of(Material.STONE)
+                        .strength(variant.getRockType().getHardness() / 2.0F, 6.0F)
+                        .sound(SoundType.STONE)
+                        .harvestLevel(HarvestLevel.COPPER), variant.getMass());
         this.variant = variant;
     }
 
     @Override
     public int beamSize() {
         return this.variant.getRockType().getRangeStone();
+    }
+
+    @Override
+    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+        for (Direction dir : Direction.values()) {
+            mutablePos.setWithOffset(pos, dir);
+            if (BlockUtils.hasSolidSide(world, mutablePos, dir.getOpposite())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -43,7 +55,7 @@ public class BlockStone extends BlockGravity implements IStoneVariant {
 
     @Override
     public BlockState getStateForFalling(BlockState state) {
-        return this.variant.getCobble().getDefaultState();
+        return this.variant.getCobble().defaultBlockState();
     }
 
     @Override
@@ -53,11 +65,11 @@ public class BlockStone extends BlockGravity implements IStoneVariant {
 
     @Override
     public boolean isPillar(BlockState state, World world, BlockPos pos, boolean nested) {
-        BlockPos down = pos.down();
+        BlockPos down = pos.below();
         if (canFallThrough(world.getBlockState(down))) {
             return false;
         }
-        if (canFallThrough(world.getBlockState(pos.down(2)))) {
+        if (canFallThrough(world.getBlockState(pos.below(2)))) {
             if (nested) {
                 return false;
             }
@@ -75,22 +87,10 @@ public class BlockStone extends BlockGravity implements IStoneVariant {
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-        for (Direction dir : Direction.values()) {
-            mutablePos.setPos(pos).move(dir);
-            if (Block.hasSolidSide(world.getBlockState(mutablePos), world, mutablePos, dir.getOpposite())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
     public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!world.isRemote) {
-            if (!state.isValidPosition(world, pos)) {
-                spawnAsEntity(world, pos, new ItemStack(this));
+        if (!world.isClientSide) {
+            if (!state.canSurvive(world, pos)) {
+                popResource(world, pos, new ItemStack(this));
                 world.removeBlock(pos, false);
             }
         }
@@ -99,7 +99,7 @@ public class BlockStone extends BlockGravity implements IStoneVariant {
 
     @Override
     public boolean specialCondition(World world, BlockPos pos) {
-        BlockPos up = pos.up();
+        BlockPos up = pos.above();
         if (world.getBlockState(up).getBlock() == this) {
             DirectionToIntMap map = this.checkBeams(world, up, true);
             if (map.isEmpty()) {

@@ -83,5 +83,10 @@ public interface IThirst extends INBTSerializable<CompoundNBT> {
      */
     void increaseThirstLevel(int amount);
 
+    /**
+     * Called every tick to tick the player's ThirstStats
+     *
+     * @param player The Player being ticked
+     */
     void tick(ServerPlayerEntity player);
 }

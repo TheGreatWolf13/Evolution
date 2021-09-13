@@ -9,21 +9,21 @@ public class ItemTiered extends ItemEv {
     private final IItemTier tier;
 
     public ItemTiered(IItemTier tier, Item.Properties builder) {
-        super(builder.defaultMaxDamage(tier.getMaxUses()));
+        super(builder.defaultDurability(tier.getUses()));
         this.tier = tier;
     }
 
     @Override
-    public boolean getIsRepairable(ItemStack toRepair, ItemStack repair) {
-        return this.tier.getRepairMaterial().test(repair) || super.getIsRepairable(toRepair, repair);
-    }
-
-    @Override
-    public int getItemEnchantability() {
-        return this.tier.getEnchantability();
+    public int getEnchantmentValue() {
+        return this.tier.getEnchantmentValue();
     }
 
     public IItemTier getTier() {
         return this.tier;
+    }
+
+    @Override
+    public boolean isValidRepairItem(ItemStack toRepair, ItemStack repair) {
+        return this.tier.getRepairIngredient().test(repair) || super.isValidRepairItem(toRepair, repair);
     }
 }

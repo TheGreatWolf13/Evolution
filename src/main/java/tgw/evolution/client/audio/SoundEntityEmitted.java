@@ -14,20 +14,20 @@ public class SoundEntityEmitted extends TickableSound {
         this.entity = entity;
         this.volume = volume;
         this.pitch = pitch;
-        this.x = (float) entity.posX;
-        this.y = (float) entity.posY;
-        this.z = (float) entity.posZ;
+        this.x = (float) entity.getX();
+        this.y = (float) entity.getY();
+        this.z = (float) entity.getZ();
     }
 
     @Override
     public void tick() {
         if (this.entity.removed) {
-            this.donePlaying = true;
+            this.stop();
         }
         else {
-            this.x = (float) this.entity.posX;
-            this.y = (float) this.entity.posY;
-            this.z = (float) this.entity.posZ;
+            this.x = (float) this.entity.getX();
+            this.y = (float) this.entity.getY();
+            this.z = (float) this.entity.getZ();
         }
     }
 }

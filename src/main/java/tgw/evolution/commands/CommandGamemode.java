@@ -17,27 +17,25 @@ public class CommandGamemode implements Command<CommandSource> {
     private static final CommandGamemode CMD = new CommandGamemode();
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
-        dispatcher.register(Commands.literal("gm")
-                                    .requires(cs -> cs.getEntity() instanceof ServerPlayerEntity && cs.hasPermissionLevel(2))
-                                    .executes(CMD));
+        dispatcher.register(Commands.literal("gm").requires(cs -> cs.getEntity() instanceof ServerPlayerEntity && cs.hasPermission(2)).executes(CMD));
     }
 
     private static void sendGameModeFeedback(CommandSource source, ServerPlayerEntity player, GameType gameType) {
         ITextComponent comp = new TranslationTextComponent("gameMode." + gameType.getName());
         if (source.getEntity() == player) {
-            source.sendFeedback(new TranslationTextComponent("commands.gamemode.success.self", comp), true);
+            source.sendSuccess(new TranslationTextComponent("commands.gamemode.success.self", comp), true);
         }
         else {
-            if (source.func_197023_e().getGameRules().getBoolean(GameRules.SEND_COMMAND_FEEDBACK)) {
-                player.sendMessage(new TranslationTextComponent("gameMode.changed", comp));
+            if (source.getServer().getGameRules().getBoolean(GameRules.RULE_SENDCOMMANDFEEDBACK)) {
+                player.displayClientMessage(new TranslationTextComponent("gameMode.changed", comp), false);
             }
-            source.sendFeedback(new TranslationTextComponent("commands.gamemode.success.other", player.getDisplayName(), comp), true);
+            source.sendSuccess(new TranslationTextComponent("commands.gamemode.success.other", player.getDisplayName(), comp), true);
         }
     }
 
     private static int setGameMode(CommandContext<CommandSource> source, ServerPlayerEntity player, GameType gameType) {
-        if (player.interactionManager.getGameType() != gameType) {
-            player.setGameType(gameType);
+        if (player.gameMode.getGameModeForPlayer() != gameType) {
+            player.setGameMode(gameType);
             sendGameModeFeedback(source.getSource(), player, gameType);
             return 1;
         }
@@ -48,7 +46,7 @@ public class CommandGamemode implements Command<CommandSource> {
     public int run(CommandContext<CommandSource> context) throws CommandSyntaxException {
         CommandSource source = context.getSource();
         if (source.getEntity() instanceof ServerPlayerEntity) {
-            ServerPlayerEntity player = source.asPlayer();
+            ServerPlayerEntity player = source.getPlayerOrException();
             GameType gm = player.isCreative() ? GameType.SURVIVAL : GameType.CREATIVE;
             return setGameMode(context, player, gm);
         }

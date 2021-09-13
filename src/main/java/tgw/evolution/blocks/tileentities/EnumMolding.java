@@ -14,17 +14,18 @@ public enum EnumMolding {
         MathHelper.subtract(EvolutionHitBoxes.MOLD_1, EvolutionHitBoxes.AXE_THICK),
         MoldingPatterns.AXE,
         new ItemStack(EvolutionItems.mold_clay_axe.get())),
-    PICKAXE(2,
-            MathHelper.subtract(EvolutionHitBoxes.MOLD_1, EvolutionHitBoxes.PICKAXE_THICK),
-            MoldingPatterns.PICKAXE,
-            new ItemStack(EvolutionItems.mold_clay_pickaxe.get()));
+    ;
+//    PICKAXE(2,
+//            MathHelper.subtract(EvolutionHitBoxes.MOLD_1, EvolutionHitBoxes.PICKAXE_THICK),
+//            MoldingPatterns.PICKAXE,
+//            new ItemStack(EvolutionItems.mold_clay_pickaxe.get()));
 
     private final byte id;
-    private final boolean[][][] pattern;
+    private final long[] pattern;
     private final VoxelShape shape;
     private final ItemStack stack;
 
-    EnumMolding(int id, VoxelShape shape, boolean[][][] pattern, ItemStack stack) {
+    EnumMolding(int id, VoxelShape shape, long[] pattern, ItemStack stack) {
         this.id = MathHelper.toByteExact(id);
         this.shape = shape;
         this.pattern = pattern;
@@ -45,7 +46,7 @@ public enum EnumMolding {
         return this.id;
     }
 
-    public boolean[][][] getPattern() {
+    public long[] getPattern() {
         return this.pattern;
     }
 

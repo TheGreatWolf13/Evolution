@@ -16,10 +16,10 @@ public class PacketHandlerClient implements IPacketHandler {
     public void handlePlaySoundEntityEmitted(PacketSCPlaySoundEntityEmitted packet, Supplier<NetworkEvent.Context> context) {
         context.get().enqueueWork(() -> {
             Minecraft mc = Minecraft.getInstance();
-            Entity entity = mc.world.getEntityByID(packet.entityId);
+            Entity entity = mc.level.getEntity(packet.entityId);
             SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(packet.sound));
             if (entity != null && sound != null) {
-                mc.getSoundHandler().play(new SoundEntityEmitted(entity, sound, packet.category, packet.volume, packet.pitch));
+                mc.getSoundManager().play(new SoundEntityEmitted(entity, sound, packet.category, packet.volume, packet.pitch));
             }
         });
     }

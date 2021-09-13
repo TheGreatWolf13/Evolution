@@ -7,7 +7,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
 import tgw.evolution.Evolution;
-import tgw.evolution.blocks.tileentities.EnumKnapping;
+import tgw.evolution.blocks.tileentities.KnappingRecipe;
 import tgw.evolution.blocks.tileentities.TEKnapping;
 
 import java.util.function.Supplier;
@@ -15,15 +15,15 @@ import java.util.function.Supplier;
 public class PacketCSSetKnappingType implements IPacket {
 
     private final BlockPos pos;
-    private final EnumKnapping type;
+    private final KnappingRecipe type;
 
-    public PacketCSSetKnappingType(BlockPos pos, EnumKnapping type) {
+    public PacketCSSetKnappingType(BlockPos pos, KnappingRecipe type) {
         this.pos = pos;
         this.type = type;
     }
 
     public static PacketCSSetKnappingType decode(PacketBuffer buffer) {
-        return new PacketCSSetKnappingType(buffer.readBlockPos(), EnumKnapping.byId(buffer.readByte()));
+        return new PacketCSSetKnappingType(buffer.readBlockPos(), KnappingRecipe.byId(buffer.readByte()));
     }
 
     public static void encode(PacketCSSetKnappingType packet, PacketBuffer buffer) {
@@ -34,8 +34,8 @@ public class PacketCSSetKnappingType implements IPacket {
     public static void handle(PacketCSSetKnappingType packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
-                World world = context.get().getSender().world;
-                TileEntity tile = world.getTileEntity(packet.pos);
+                World world = context.get().getSender().level;
+                TileEntity tile = world.getBlockEntity(packet.pos);
                 if (tile instanceof TEKnapping) {
                     ((TEKnapping) tile).setType(packet.type);
                     return;

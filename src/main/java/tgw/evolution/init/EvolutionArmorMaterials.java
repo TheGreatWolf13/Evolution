@@ -9,18 +9,26 @@ import net.minecraft.util.SoundEvent;
 import tgw.evolution.Evolution;
 
 public enum EvolutionArmorMaterials implements IArmorMaterial {
-    generic("placeholder", 400, new int[]{8, 10, 9, 7}, 25, EvolutionItems.placeholder_item.get(), "entity.ender_dragon.growl", 0.0f);
+    generic("placeholder", 400, new int[]{8, 10, 9, 7}, 25, EvolutionItems.debug_item.get(), "entity.ender_dragon.growl", 0.0f, 0.0f);
 
     private static final int[] MAX_DAMAGE_ARRAY = {13, 15, 16, 11};
+    private final int[] damageReduction;
     private final int durability;
     private final int enchantability;
-    private final String name;
     private final String equipSound;
-    private final int[] damageReduction;
+    private final float knockbackResistance;
+    private final String name;
     private final Item repairItem;
     private final float toughness;
 
-    EvolutionArmorMaterials(String name, int durability, int[] damageReductionAmount, int enchantability, Item repairItem, String equipSound, float toughness) {
+    EvolutionArmorMaterials(String name,
+                            int durability,
+                            int[] damageReductionAmount,
+                            int enchantability,
+                            Item repairItem,
+                            String equipSound,
+                            float toughness,
+                            float knockbackResistance) {
         this.name = name;
         this.equipSound = equipSound;
         this.durability = durability;
@@ -28,36 +36,42 @@ public enum EvolutionArmorMaterials implements IArmorMaterial {
         this.damageReduction = damageReductionAmount;
         this.repairItem = repairItem;
         this.toughness = toughness;
+        this.knockbackResistance = knockbackResistance;
     }
 
     @Override
-    public int getDurability(EquipmentSlotType slotIn) {
-        return MAX_DAMAGE_ARRAY[slotIn.getIndex()] * this.durability;
+    public int getDefenseForSlot(EquipmentSlotType slot) {
+        return this.damageReduction[slot.getIndex()];
     }
 
     @Override
-    public int getDamageReductionAmount(EquipmentSlotType slotIn) {
-        return this.damageReduction[slotIn.getIndex()];
+    public int getDurabilityForSlot(EquipmentSlotType slot) {
+        return MAX_DAMAGE_ARRAY[slot.getIndex()] * this.durability;
     }
 
     @Override
-    public int getEnchantability() {
+    public int getEnchantmentValue() {
         return this.enchantability;
     }
 
     @Override
-    public SoundEvent getSoundEvent() {
+    public SoundEvent getEquipSound() {
         return new SoundEvent(new ResourceLocation(this.equipSound));
     }
 
     @Override
-    public Ingredient getRepairMaterial() {
-        return Ingredient.fromItems(this.repairItem);
+    public float getKnockbackResistance() {
+        return this.knockbackResistance;
     }
 
     @Override
     public String getName() {
         return Evolution.MODID + ":" + this.name;
+    }
+
+    @Override
+    public Ingredient getRepairIngredient() {
+        return Ingredient.of(this.repairItem);
     }
 
     @Override

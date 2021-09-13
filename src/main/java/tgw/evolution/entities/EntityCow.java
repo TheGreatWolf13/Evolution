@@ -3,7 +3,9 @@ package tgw.evolution.entities;
 import net.minecraft.entity.EntitySize;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.Pose;
+import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -19,18 +21,34 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
 
     private int eatTimer;
     //    private EatGrassGoal eatGrassGoal;
-    private SleepGoal sleepGoal;
+    private GoalSleep goalSleep;
     private float tailIncX;
     private float tailIncZ;
     private int tailTimerX;
     private int tailTimerZ;
 
-    public EntityCow(EntityType<EntityCow> type, World worldIn) {
-        super(type, worldIn);
+    public EntityCow(EntityType<EntityCow> type, World world) {
+        super(type, world);
         super.setAge(this.getAdultAge());
-        if (!worldIn.isRemote) {
-            this.sleepGoal.setSleepTimer();
+        if (!world.isClientSide) {
+            this.goalSleep.setSleepTimer();
         }
+    }
+
+    @Override
+    public void aiStep() {
+        if (this.level.isClientSide) {
+            this.eatTimer = Math.max(0, this.eatTimer - 1);
+        }
+        if (!this.level.isClientSide && this.level.getDayTime() % 24_000 == 0) {
+            this.goalSleep.setSleepTimer();
+        }
+        super.aiStep();
+    }
+
+    @Override
+    public void appendDebugInfo(IFormattableTextComponent text) {
+        //TODO implementation
     }
 
     @Override
@@ -51,6 +69,15 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     }
 
     @Override
+    protected void customServerAiStep() {
+        if (!this.isDead()) {
+//            this.eatTimer = this.eatGrassGoal.getEatingGrassTimer();
+            this.sleepTime = this.goalSleep.getSleepTimer();
+        }
+        super.customServerAiStep();
+    }
+
+    @Override
     public int getAdultAge() {
         return 2 * Time.YEAR_IN_TICKS;
     }
@@ -62,9 +89,28 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     }
 
     @Override
+    public double getBaseMass() {
+        //TODO implementation
+        return 700;
+    }
+
+    @Override
     public float getBaseWalkForce() {
         //TODO implementation
         return 0.025f;
+    }
+
+    @Override
+    public EntitySize getDimensions(Pose pose) {
+        switch (pose) {
+            case DYING: {
+                return EntitySize.scalable(1.2F, 0.7F).scale(this.getScale());
+            }
+            case SLEEPING: {
+                return EntitySize.scalable(0.9F, 0.7F).scale(this.getScale());
+            }
+        }
+        return EntitySize.scalable(0.9F, 1.4F).scale(this.getScale());
     }
 
     @Override
@@ -87,7 +133,7 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
             float f = (this.eatTimer - 4 - partialTicks) / 32.0F;
             return MathHelper.PI / 5.0F + 0.219_911_49F * MathHelper.sin(f * 28.7F);
         }
-        return this.eatTimer > 0 ? MathHelper.PI / 5.0F : MathHelper.degToRad(this.rotationPitch);
+        return this.eatTimer > 0 ? MathHelper.PI / 5.0F : MathHelper.degToRad(this.xRot);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -118,31 +164,14 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     }
 
     @Override
-    public double getLegSlowDown() {
+    public double getLegSlowdown() {
         //TODO implementation
-        return 0.1;
-    }
-
-    @Override
-    public double getMass() {
-        //TODO implementation
-        return 700;
+        return 2.5 * this.getAttributeBaseValue(Attributes.MOVEMENT_SPEED);
     }
 
     @Override
     public int getNumberOfBabies() {
-        return this.rand.nextInt(100) == 0 ? 2 : 1;
-    }
-
-    @Override
-    public EntitySize getSize(Pose poseIn) {
-        if (poseIn == Pose.DYING) {
-            return EntitySize.flexible(1.2F, 0.7F).scale(this.getRenderScale());
-        }
-        if (poseIn == Pose.SLEEPING) {
-            return EntitySize.flexible(0.9F, 0.7F).scale(this.getRenderScale());
-        }
-        return EntitySize.flexible(0.9F, 1.4F).scale(this.getRenderScale());
+        return this.random.nextInt(100) == 0 ? 2 : 1;
     }
 
     @Override
@@ -153,7 +182,7 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
         if (poseIn == Pose.SLEEPING) {
             return 0.85F;
         }
-        return this.isChild() ? sizeIn.height * 0.95F : 1.35F;
+        return this.isBaby() ? sizeIn.height * 0.95F : 1.35F;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -161,7 +190,7 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
         if (this.isDead() || this.isSleeping()) {
             return false;
         }
-        return this.rand.nextInt(10_000) == 0;
+        return this.random.nextInt(10_000) == 0;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -169,17 +198,17 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
         if (this.isDead() || this.isSleeping()) {
             return false;
         }
-        return this.rand.nextInt(5_000) == 0;
+        return this.random.nextInt(5_000) == 0;
     }
 
     @OnlyIn(Dist.CLIENT)
     @Override
-    public void handleStatusUpdate(byte id) {
+    public void handleEntityEvent(byte id) {
         if (id == EntityStates.EAT_GRASS) {
             this.eatTimer = 40;
         }
         else {
-            super.handleStatusUpdate(id);
+            super.handleEntityEvent(id);
         }
     }
 
@@ -190,41 +219,30 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     }
 
     @Override
-    public void livingTick() {
-        if (this.world.isRemote) {
-            this.eatTimer = Math.max(0, this.eatTimer - 1);
-        }
-        if (!this.world.isRemote && this.world.getDayTime() % 24_000 == 0) {
-            this.sleepGoal.setSleepTimer();
-        }
-        super.livingTick();
-    }
-
-    @Override
     public float mortallyRate() {
         //TODO implementation
         return 0;
     }
 
     @Override
-    public void readAdditional(CompoundNBT compound) {
-        super.readAdditional(compound);
-        this.sleepGoal.setSleepTime(this.sleepTime);
+    public void readAdditionalSaveData(CompoundNBT compound) {
+        super.readAdditionalSaveData(compound);
+        this.goalSleep.setSleepTime(this.sleepTime);
     }
 
     @Override
     protected void registerGoals() {
 //        this.eatGrassGoal = new EatGrassGoal(this);
-        this.sleepGoal = new SleepGoal(this, Time.HOUR_IN_TICKS * 4, Time.HOUR_IN_TICKS);
-        this.goalSelector.addGoal(0, new SwinGoal(this));
-        this.goalSelector.addGoal(1, new PanicGoal(this, 2.0D));
-        this.goalSelector.addGoal(2, this.sleepGoal);
+        this.goalSleep = new GoalSleep(this, Time.HOUR_IN_TICKS * 4, Time.HOUR_IN_TICKS);
+        this.goalSelector.addGoal(0, new GoalSwim(this));
+        this.goalSelector.addGoal(1, new GoalPanic(this, 2.0D));
+        this.goalSelector.addGoal(2, this.goalSleep);
 //        this.goalSelector.addGoal(3, new BreedGoal(this, 1.0D));
 //        this.goalSelector.addGoal(4, new TemptGoal(this, 1.25D, false));
 //        this.goalSelector.addGoal(5, new FollowMotherGoal(this, 1.25D));
 //        this.goalSelector.addGoal(6, this.eatGrassGoal);
-        this.goalSelector.addGoal(7, new WaterAvoidingRandomWalkingGoal(this, 1.0D));
-        this.goalSelector.addGoal(8, new LookRandomlyGoal(this));
+        this.goalSelector.addGoal(7, new GoalWaterAvoidingRandomWalking(this, 1.0D));
+        this.goalSelector.addGoal(8, new GoalLookRandomly(this));
     }
 
     @Override
@@ -266,14 +284,5 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
             this.tailIncZ = 0.0F;
         }
         return this.tailIncZ;
-    }
-
-    @Override
-    protected void updateAITasks() {
-        if (!this.isDead()) {
-//            this.eatTimer = this.eatGrassGoal.getEatingGrassTimer();
-            this.sleepTime = this.sleepGoal.getSleepTimer();
-        }
-        super.updateAITasks();
     }
 }

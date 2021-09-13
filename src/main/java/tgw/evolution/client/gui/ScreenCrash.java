@@ -1,18 +1,16 @@
 package tgw.evolution.client.gui;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.gui.screen.ConfirmOpenLinkScreen;
 import net.minecraft.client.gui.screen.MainMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.resources.I18n;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.Util;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.util.text.event.ClickEvent;
-import tgw.evolution.init.EvolutionStyles;
 import tgw.evolution.init.EvolutionTexts;
 
 public class ScreenCrash extends Screen {
@@ -20,7 +18,6 @@ public class ScreenCrash extends Screen {
     protected final CrashReport report;
     private final String comment;
     private int clickWidth;
-    private String modListString;
     private ITextComponent textComp;
 
     public ScreenCrash(CrashReport report) {
@@ -65,7 +62,7 @@ public class ScreenCrash extends Screen {
                                  "This is a token for 1 free hug. Redeem at your nearest Mojangsta: [~~HUG~~]",
                                  "There are four lights!",
                                  "But it works on my machine."};
-            return comments[(int) (Util.nanoTime() % comments.length)];
+            return comments[(int) (Util.getNanos() % comments.length)];
         }
         catch (Throwable ignored) {
             return "Witty comment unavailable :(";
@@ -78,18 +75,18 @@ public class ScreenCrash extends Screen {
                                   this.height / 4 + 132,
                                   150,
                                   20,
-                                  I18n.format("gui.toTitle"),
-                                  button -> this.minecraft.displayGuiScreen(new MainMenuScreen())));
+                                  EvolutionTexts.GUI_MENU_TO_TITLE,
+                                  button -> this.minecraft.setScreen(new MainMenuScreen())));
         this.addButton(new Button(this.width / 2 - 155 + 160,
                                   this.height / 4 + 132,
                                   150,
                                   20,
-                                  I18n.format("menu.reportBugs"),
-                                  button -> this.minecraft.displayGuiScreen(new ConfirmOpenLinkScreen(b -> {
+                                  EvolutionTexts.GUI_MENU_REPORT_BUGS,
+                                  button -> this.minecraft.setScreen(new ConfirmOpenLinkScreen(b -> {
                                       if (b) {
-                                          Util.getOSType().openURI("https://github.com/MGSchultz-13/Evolution/issues");
+                                          Util.getPlatform().openUri("https://github.com/MGSchultz-13/Evolution/issues");
                                       }
-                                      this.minecraft.displayGuiScreen(this);
+                                      this.minecraft.setScreen(this);
                                   }, "https://github.com/MGSchultz-13/Evolution/issues", true))));
     }
 
@@ -98,7 +95,7 @@ public class ScreenCrash extends Screen {
         if (button == 0) {
             if (mouseY >= this.height / 4.0 + 60 && mouseY <= this.height / 4.0 + 69) {
                 if (mouseX >= this.width / 2.0 - this.clickWidth / 2.0 && mouseX <= this.width / 2.0 + this.clickWidth / 2.0) {
-                    this.handleComponentClicked(this.textComp);
+                    this.handleComponentClicked(this.textComp.getStyle());
                 }
             }
         }
@@ -106,31 +103,31 @@ public class ScreenCrash extends Screen {
     }
 
     @Override
-    public void render(int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground();
-        this.drawCenteredString(this.font, this.title.getFormattedText(), this.width / 2, this.height / 4 - 40, 0xff_ffff);
-        this.drawString(this.font, this.comment, this.width / 2 - 140, this.height / 4 - 13, 0xFF_FF00);
+    public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
+        this.renderBackground(matrices);
+        drawCenteredString(matrices, this.font, this.title, this.width / 2, this.height / 4 - 40, 0xff_ffff);
+        drawString(matrices, this.font, this.comment, this.width / 2 - 140, this.height / 4 - 13, 0xFF_FF00);
         int textColor = 0xD0_D0D0;
-        this.font.drawSplitString(I18n.format("evolution.gui.crash.summary"), this.width / 2 - 140, this.height / 4 + 15, 280, textColor);
-        this.font.drawSplitString(I18n.format("evolution.gui.crash.report"), this.width / 2 - 140, this.height / 4 + 35, 280, textColor);
+        this.font.drawWordWrap(EvolutionTexts.GUI_CRASH_SUMMARY, this.width / 2 - 140, this.height / 4 + 15, 280, textColor);
+        this.font.drawWordWrap(EvolutionTexts.GUI_CRASH_REPORT, this.width / 2 - 140, this.height / 4 + 35, 280, textColor);
         String file;
         int fileColor = 0x00_FF00;
-        if (this.report.getFile() != null) {
-            this.textComp = new StringTextComponent(this.report.getFile().getName()).applyTextStyle(TextFormatting.UNDERLINE)
-                                                                                    .applyTextStyle(style -> style.setClickEvent(new ClickEvent(
-                                                                                            ClickEvent.Action.OPEN_FILE,
-                                                                                            this.report.getFile().getAbsolutePath())));
-            file = this.textComp.getFormattedText();
-            this.clickWidth = this.font.getStringWidth(file);
+        if (this.report.getSaveFile() != null) {
+            this.textComp = new StringTextComponent(this.report.getSaveFile().getName()).withStyle(TextFormatting.UNDERLINE)
+                                                                                        .withStyle(style -> style.withClickEvent(new ClickEvent(
+                                                                                                ClickEvent.Action.OPEN_FILE,
+                                                                                                this.report.getSaveFile().getAbsolutePath())));
+            file = this.textComp.getString();
+            this.clickWidth = this.font.width(file);
         }
         else {
             fileColor = 0xFF_0000;
             this.clickWidth = 0;
-            file = new TranslationTextComponent("evolution.gui.crash.reportSaveFailed").setStyle(EvolutionStyles.DAMAGE).getFormattedText();
+            file = EvolutionTexts.GUI_CRASH_REPORT_SAVE_FAILED.getString();
         }
-        this.drawCenteredString(this.font, file, this.width / 2, this.height / 4 + 60, fileColor);
-        this.font.drawSplitString(I18n.format("evolution.gui.crash.conclusion"), this.width / 2 - 140, this.height / 4 + 85, 280, textColor);
-        super.render(mouseX, mouseY, partialTicks);
+        drawCenteredString(matrices, this.font, file, this.width / 2, this.height / 4 + 60, fileColor);
+        this.font.drawWordWrap(EvolutionTexts.GUI_CRASH_CONCLUSION, this.width / 2 - 140, this.height / 4 + 85, 280, textColor);
+        super.render(matrices, mouseX, mouseY, partialTicks);
     }
 
     @Override

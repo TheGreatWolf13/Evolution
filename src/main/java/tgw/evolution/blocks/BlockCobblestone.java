@@ -1,21 +1,20 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import tgw.evolution.util.HarvestLevel;
 import tgw.evolution.util.RockVariant;
 
-public class BlockCobblestone extends BlockGravity implements IStoneVariant {
+public class BlockCobblestone extends BlockGravity implements IRockVariant {
 
     private final RockVariant variant;
 
     public BlockCobblestone(RockVariant variant) {
-        super(Block.Properties.create(Material.ROCK)
-                              .hardnessAndResistance(variant.getRockType().getHardness(), 6.0F)
-                              .sound(SoundType.STONE)
-                              .harvestLevel(HarvestLevel.STONE), variant.getMass());
+        super(Properties.of(Material.STONE)
+                        .strength(variant.getRockType().getHardness(), 6.0F)
+                        .sound(SoundType.STONE)
+                        .harvestLevel(HarvestLevel.STONE), variant.getMass());
         this.variant = variant;
     }
 

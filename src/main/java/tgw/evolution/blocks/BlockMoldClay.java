@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
-public class BlockMoldClay extends BlockEvolution implements IReplaceable {
+public class BlockMoldClay extends BlockGeneric implements IReplaceable {
 
     private final int layers;
     private VoxelShape shapeEast;
@@ -30,8 +30,8 @@ public class BlockMoldClay extends BlockEvolution implements IReplaceable {
     private VoxelShape shapeWest;
 
     public BlockMoldClay(int layers) {
-        super(Block.Properties.create(Material.CLAY).hardnessAndResistance(0.0F).sound(SoundType.GROUND));
-        this.setDefaultState(this.getDefaultState().with(DIRECTION_HORIZONTAL, Direction.NORTH));
+        super(Properties.of(Material.CLAY).strength(0.0F).sound(SoundType.GRAVEL));
+        this.registerDefaultState(this.defaultBlockState().setValue(DIRECTION_HORIZONTAL, Direction.NORTH));
         this.layers = layers;
     }
 
@@ -54,7 +54,13 @@ public class BlockMoldClay extends BlockEvolution implements IReplaceable {
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+        BlockState up = world.getBlockState(pos.above());
+        return BlockUtils.isReplaceable(up) && BlockUtils.hasSolidSide(world, pos.below(), Direction.UP);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
         builder.add(DIRECTION_HORIZONTAL);
     }
 
@@ -73,13 +79,16 @@ public class BlockMoldClay extends BlockEvolution implements IReplaceable {
         if (this.layers != 0) {
             return EvolutionHitBoxes.MOLD_CLAY[this.layers - 1];
         }
-        switch (state.get(DIRECTION_HORIZONTAL)) {
-            case NORTH:
+        switch (state.getValue(DIRECTION_HORIZONTAL)) {
+            case NORTH: {
                 return this.shapeNorth;
-            case SOUTH:
+            }
+            case SOUTH: {
                 return this.shapeSouth;
-            case EAST:
+            }
+            case EAST: {
                 return this.shapeEast;
+            }
         }
         return this.shapeWest;
     }
@@ -87,10 +96,10 @@ public class BlockMoldClay extends BlockEvolution implements IReplaceable {
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
-        if (context.isPlacerSneaking()) {
+        if (context.isSecondaryUseActive()) {
             return null;
         }
-        return this.getDefaultState().with(DIRECTION_HORIZONTAL, context.getPlacementHorizontalFacing());
+        return this.defaultBlockState().setValue(DIRECTION_HORIZONTAL, context.getHorizontalDirection());
     }
 
     @Override
@@ -99,17 +108,10 @@ public class BlockMoldClay extends BlockEvolution implements IReplaceable {
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
-        BlockState down = world.getBlockState(pos.down());
-        BlockState up = world.getBlockState(pos.up());
-        return BlockUtils.isReplaceable(up) && Block.hasSolidSide(down, world, pos.down(), Direction.UP);
-    }
-
-    @Override
     public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!world.isRemote) {
-            if (!state.isValidPosition(world, pos)) {
-                spawnDrops(state, world, pos);
+        if (!world.isClientSide) {
+            if (!state.canSurvive(world, pos)) {
+                dropResources(state, world, pos);
                 world.removeBlock(pos, false);
             }
         }

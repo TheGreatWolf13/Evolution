@@ -1,5 +1,8 @@
 package tgw.evolution.util;
 
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
+
 public class FullDate {
     private final Date date;
     private final Time hour;
@@ -16,8 +19,8 @@ public class FullDate {
         this(new Date(ticks), Time.fromTicks(ticks));
     }
 
-    public String getFullString() {
-        return this.hour + " " + this.date.getFullString();
+    public ITextComponent getDisplayName() {
+        return new StringTextComponent(this.hour + " ").append(this.date.getDisplayName());
     }
 
     @Override

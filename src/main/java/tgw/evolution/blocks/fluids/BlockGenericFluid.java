@@ -5,10 +5,10 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.entity.Entity;
 import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.IFluidState;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.item.ItemStack;
+import net.minecraft.loot.LootContext;
 import net.minecraft.pathfinding.PathType;
 import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.IntegerProperty;
@@ -22,9 +22,8 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
-import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
-import net.minecraft.world.storage.loot.LootContext;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.util.Constants;
@@ -50,27 +49,27 @@ import static tgw.evolution.init.EvolutionBStates.LEVEL_1_8;
 public abstract class BlockGenericFluid extends BlockMass implements IBlockFluidContainer, IReplaceable {
     public static final IntegerProperty LEVEL = LEVEL_1_8;
     public static final BooleanProperty FULL = EvolutionBStates.FULL;
-    private final List<IFluidState> fluidStateCache;
+    private final List<FluidState> fluidStateCache;
     private final Supplier<? extends FluidGeneric> supplier;
     private boolean fluidStateCacheInitialized;
 
     public BlockGenericFluid(Supplier<? extends FluidGeneric> fluid, Properties properties, int mass) {
         super(properties, mass);
         this.fluidStateCache = Lists.newArrayList();
-        this.setDefaultState(this.getDefaultState().with(LEVEL, 8).with(FULL, true));
+        this.registerDefaultState(this.defaultBlockState().setValue(LEVEL, 8).setValue(FULL, true));
         this.supplier = fluid;
     }
 
-    public static int getFluidAmount(World world, BlockPos pos, BlockState state, IFluidState fluid) {
+    public static int getFluidAmount(World world, BlockPos pos, BlockState state, FluidState fluid) {
         if (fluid.isEmpty()) {
             return 0;
         }
         Block block = state.getBlock();
         if (block instanceof BlockGenericFluid) {
-            int layers = fluid.get(LEVEL_1_8);
+            int layers = fluid.getValue(LEVEL_1_8);
             int amount = 12_500 * layers;
-            if (!fluid.get(FALLING)) {
-                TileEntity tile = world.getTileEntity(pos);
+            if (!fluid.getValue(FALLING)) {
+                TileEntity tile = world.getBlockEntity(pos);
                 if (tile instanceof TELiquid) {
                     amount -= ((TELiquid) tile).getMissingLiquid();
                 }
@@ -91,25 +90,25 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     private static void triggerMixEffects(IWorld world, BlockPos pos) {
-        world.playEvent(Constants.WorldEvents.LAVA_EXTINGUISH, pos, 0);
-    }
-
-    @Override
-    public boolean allowsMovement(BlockState state, IBlockReader world, BlockPos pos, PathType type) {
-        return !this.getFluid().isIn(FluidTags.LAVA);
+        world.levelEvent(Constants.WorldEvents.LAVA_EXTINGUISH, pos, 0);
     }
 
     @Override
     public boolean canBeReplacedByFluid(BlockState state) {
-        if (!state.get(FULL)) {
+        if (!state.getValue(FULL)) {
             return true;
         }
-        return state.get(LEVEL) < 8;
+        return state.getValue(LEVEL) < 8;
     }
 
     @Override
     public boolean canBeReplacedByRope(BlockState state) {
         return false;
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+        builder.add(LEVEL, FULL);
     }
 
     @Nullable
@@ -119,19 +118,14 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(LEVEL, FULL);
-    }
-
-    @Override
     public int getAmountRemoved(World world, BlockPos pos, int maxAmount) {
-        IFluidState stateAtPos = world.getFluidState(pos);
+        FluidState stateAtPos = world.getFluidState(pos);
         int amountAtPos = FluidGeneric.getFluidAmount(world, pos, stateAtPos);
         int amountRemoved = MathHelper.clampMax(amountAtPos, maxAmount);
         amountAtPos -= amountRemoved;
         this.getFluid().setBlockState(world, pos, amountAtPos);
         for (Direction dir : Direction.values()) {
-            BlockPos offsetPos = pos.offset(dir);
+            BlockPos offsetPos = pos.relative(dir);
             BlockState stateAtOffset = world.getBlockState(offsetPos);
             if (stateAtOffset.getBlock() instanceof IFluidLoggable) {
                 BlockUtils.scheduleBlockTick(world, offsetPos, 2);
@@ -160,12 +154,12 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    public IFluidState getFluidState(BlockState state) {
+    public FluidState getFluidState(BlockState state) {
         if (!this.fluidStateCacheInitialized) {
             this.initFluidStateCache();
         }
-        int level = state.get(LEVEL) - 1;
-        if (state.get(FULL)) {
+        int level = state.getValue(LEVEL) - 1;
+        if (state.getValue(FULL)) {
             level += 8;
         }
         return this.fluidStateCache.get(level);
@@ -178,11 +172,11 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
 
     @Override
     public int getMass(BlockState state) {
-        return state.get(LEVEL) * this.getBaseMass() / 8;
+        return state.getValue(LEVEL) * this.getBaseMass() / 8;
     }
 
     @Override
-    public BlockRenderType getRenderType(BlockState state) {
+    public BlockRenderType getRenderShape(BlockState state) {
         return BlockRenderType.INVISIBLE;
     }
 
@@ -193,30 +187,29 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
 
     @Override
     public boolean hasTileEntity(BlockState state) {
-        return !state.get(FULL);
+        return !state.getValue(FULL);
     }
 
     protected synchronized void initFluidStateCache() {
         if (!this.fluidStateCacheInitialized) {
             for (int i = 1; i <= 8; i++) {
-                this.fluidStateCache.add(this.getFluid().getFlowingFluidState(i, false));
+                this.fluidStateCache.add(this.getFluid().getFlowing(i, false));
             }
             for (int i = 1; i <= 8; i++) {
-                this.fluidStateCache.add(this.getFluid().getFlowingFluidState(i, true));
+                this.fluidStateCache.add(this.getFluid().getFlowing(i, true));
             }
             this.fluidStateCacheInitialized = true;
         }
     }
 
     @Override
-    public boolean isReplaceable(BlockState state) {
-        return true;
+    public boolean isPathfindable(BlockState state, IBlockReader world, BlockPos pos, PathType type) {
+        return !this.getFluid().is(FluidTags.LAVA);
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public boolean isSideInvisible(BlockState state, BlockState adjacentBlockState, Direction side) {
-        return adjacentBlockState.getFluidState().getFluid().isEquivalentTo(this.getFluid()) || super.isSolid(state);
+    public boolean isReplaceable(BlockState state) {
+        return true;
     }
 
     @Override
@@ -227,21 +220,14 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean isMoving) {
+    public void onPlace(BlockState state, World world, BlockPos pos, BlockState oldState, boolean isMoving) {
         if (this.reactWithNeighbors(world, pos)) {
             BlockUtils.scheduleFluidTick(world, pos);
         }
     }
 
     @Override
-    public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
-        if (this.getFluid().isIn(FluidTags.LAVA)) {
-            entity.setInLava();
-        }
-    }
-
-    @Override
-    public void onReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
         if (isMoving) {
             return;
         }
@@ -249,7 +235,7 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
         if (newBlock instanceof BlockGenericFluid || newBlock == Blocks.AIR) {
             return;
         }
-        IFluidState fluidState;
+        FluidState fluidState;
         if (!(state.getBlock() instanceof BlockGenericFluid)) {
             fluidState = world.getFluidState(pos);
         }
@@ -269,7 +255,7 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
         if (currentAmount == 0) {
             return;
         }
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
         DirectionList list = new DirectionList();
         list.fillHorizontal();
         //Try placing liquid to the sides
@@ -279,7 +265,7 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
                 return;
             }
         }
-        mutablePos.setPos(pos);
+        mutablePos.set(pos);
         //try placing liquid up
         currentAmount = this.tryDisplaceToDirection(world, pos, Direction.UP, currentAmount, 255 - pos.getY());
         if (currentAmount == 0) {
@@ -298,28 +284,28 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    public void randomTick(BlockState state, World world, BlockPos pos, Random random) {
+    public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
         world.getFluidState(pos).randomTick(world, pos, random);
     }
 
     public boolean reactWithNeighbors(World world, BlockPos pos) {
-        if (this.getFluid().isIn(FluidTags.LAVA)) {
+        if (this.getFluid().is(FluidTags.LAVA)) {
             boolean flag = false;
             for (Direction direction : Direction.values()) {
-                if (direction != Direction.DOWN && world.getFluidState(pos.offset(direction)).isTagged(FluidTags.WATER)) {
+                if (direction != Direction.DOWN && world.getFluidState(pos.relative(direction)).is(FluidTags.WATER)) {
                     flag = true;
                     break;
                 }
             }
             if (flag) {
-                IFluidState ifluidstate = world.getFluidState(pos);
+                FluidState ifluidstate = world.getFluidState(pos);
                 if (ifluidstate.isSource()) {
-                    world.setBlockState(pos, ForgeEventFactory.fireFluidPlaceBlockEvent(world, pos, pos, Blocks.OBSIDIAN.getDefaultState()));
+                    world.setBlockAndUpdate(pos, ForgeEventFactory.fireFluidPlaceBlockEvent(world, pos, pos, Blocks.OBSIDIAN.defaultBlockState()));
                     triggerMixEffects(world, pos);
                     return false;
                 }
-                if (ifluidstate.getActualHeight(world, pos) >= 0.444_444_45F) {
-                    world.setBlockState(pos, ForgeEventFactory.fireFluidPlaceBlockEvent(world, pos, pos, Blocks.COBBLESTONE.getDefaultState()));
+                if (ifluidstate.getHeight(world, pos) >= 0.444_444_45F) {
+                    world.setBlockAndUpdate(pos, ForgeEventFactory.fireFluidPlaceBlockEvent(world, pos, pos, Blocks.COBBLESTONE.defaultBlockState()));
                     triggerMixEffects(world, pos);
                     return false;
                 }
@@ -330,7 +316,7 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
 
     @Override
     public int receiveFluid(World world, BlockPos pos, BlockState originalState, FluidGeneric fluid, int amount) {
-        IFluidState stateAtPos = originalState.getFluidState();
+        FluidState stateAtPos = originalState.getFluidState();
         FluidGeneric fluidAtPos = this.getFluid();
         if (fluidAtPos == fluid) {
             int amountAtPos = FluidGeneric.getFluidAmount(world, pos, stateAtPos);
@@ -343,14 +329,16 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    public int tickRate(IWorldReader world) {
-        return this.getFluid().getTickRate(world);
+    @OnlyIn(Dist.CLIENT)
+    public boolean skipRendering(BlockState state, BlockState adjacentBlockState, Direction side) {
+        return adjacentBlockState.getFluidState().getType().isSame(this.getFluid()) || state.canOcclude();
     }
 
     public abstract int tryDisplaceIn(World world, BlockPos pos, BlockState stateAtPos, FluidGeneric otherFluid, int amount);
 
     public int tryDisplaceToDirection(World world, BlockPos origin, Direction direction, int amount, int maxDistance) {
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos(origin);
+        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+        mutablePos.set(origin);
         for (int offset = 1; offset <= maxDistance; offset++) {
             BlockState stateAtPos = world.getBlockState(mutablePos);
             if (!FluidGeneric.canSendToOrReceiveFrom(stateAtPos, direction)) {
@@ -379,7 +367,7 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
                 }
                 continue;
             }
-            Fluid otherFluid = world.getFluidState(mutablePos).getFluid();
+            Fluid otherFluid = world.getFluidState(mutablePos).getType();
             if (otherFluid instanceof FluidGeneric) {
                 amount = this.tryDisplaceIn(world, mutablePos, stateAtPos, (FluidGeneric) otherFluid, amount);
                 if (amount == 0) {
@@ -393,13 +381,8 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    public BlockState updatePostPlacement(BlockState state,
-                                          Direction facing,
-                                          BlockState facingState,
-                                          IWorld world,
-                                          BlockPos currentPos,
-                                          BlockPos facingPos) {
+    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
         BlockUtils.scheduleFluidTick(world, currentPos);
-        return super.updatePostPlacement(state, facing, facingState, world, currentPos, facingPos);
+        return super.updateShape(state, facing, facingState, world, currentPos, facingPos);
     }
 }

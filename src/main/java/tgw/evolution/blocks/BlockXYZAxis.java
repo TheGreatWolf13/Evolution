@@ -13,35 +13,40 @@ public abstract class BlockXYZAxis extends BlockGravity {
 
     public BlockXYZAxis(Properties builder, int mass) {
         super(builder, mass);
-        this.setDefaultState(this.getDefaultState().with(AXIS, Direction.Axis.Y));
+        this.registerDefaultState(this.defaultBlockState().setValue(AXIS, Direction.Axis.Y));
     }
 
     @Override
-    protected void fillStateContainer(Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
         builder.add(AXIS);
-        super.fillStateContainer(builder);
+        super.createBlockStateDefinition(builder);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
-        return this.getDefaultState().with(AXIS, context.getFace().getAxis());
+        return this.defaultBlockState().setValue(AXIS, context.getClickedFace().getAxis());
     }
 
     @Override
     public BlockState rotate(BlockState state, Rotation rot) {
         switch (rot) {
             case COUNTERCLOCKWISE_90:
-            case CLOCKWISE_90:
-                switch (state.get(AXIS)) {
-                    case X:
-                        return state.with(AXIS, Direction.Axis.Z);
-                    case Z:
-                        return state.with(AXIS, Direction.Axis.X);
-                    default:
+            case CLOCKWISE_90: {
+                switch (state.getValue(AXIS)) {
+                    case X: {
+                        return state.setValue(AXIS, Direction.Axis.Z);
+                    }
+                    case Z: {
+                        return state.setValue(AXIS, Direction.Axis.X);
+                    }
+                    default: {
                         return state;
+                    }
                 }
-            default:
+            }
+            default: {
                 return state;
+            }
         }
     }
 }

@@ -4,14 +4,14 @@
 //import net.minecraft.tileentity.ITickableTileEntity;
 //import net.minecraft.tileentity.TileEntity;
 //import tgw.evolution.entities.EntityShadowHound;
-//import tgw.evolution.init.EvolutionTileEntities;
+//import tgw.evolution.init.EvolutionTEs;
 //
 //public class TEShadowHound extends TileEntity implements ITickableTileEntity {
 //
 //    public float health = 6;
 //
 //    public TEShadowHound() {
-//        super(EvolutionTileEntities.TE_SHADOWHOUND.get());
+//        super(EvolutionTEs.TE_SHADOWHOUND.get());
 //    }
 //
 //    @Override

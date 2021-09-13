@@ -8,8 +8,8 @@ import tgw.evolution.init.EvolutionDamage;
 import javax.annotation.Nullable;
 
 public class CombatEntryEv {
-    private final DamageSource damageSrc;
     private final float damage;
+    private final DamageSource damageSrc;
     private final String fallSuffix;
 
     public CombatEntryEv(DamageSource damageSrcIn, float damageAmount, String fallSuffixIn) {
@@ -32,7 +32,7 @@ public class CombatEntryEv {
 
     @Nullable
     public ITextComponent getDamageSrcDisplayName() {
-        return this.damageSrc.getTrueSource() == null ? null : this.damageSrc.getTrueSource().getDisplayName();
+        return this.damageSrc.getEntity() == null ? null : this.damageSrc.getEntity().getDisplayName();
     }
 
     @Nullable
@@ -41,6 +41,6 @@ public class CombatEntryEv {
     }
 
     public boolean isLivingDamageSrc() {
-        return this.damageSrc.getTrueSource() instanceof LivingEntity;
+        return this.damageSrc.getEntity() instanceof LivingEntity;
     }
 }

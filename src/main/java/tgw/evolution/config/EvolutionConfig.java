@@ -44,12 +44,16 @@ public final class EvolutionConfig {
     public static class Client {
 
         public final ForgeConfigSpec.BooleanValue crazyMode;
+        public final ForgeConfigSpec.BooleanValue firstPersonRenderer;
+        public final ForgeConfigSpec.BooleanValue hitmarkers;
         public final ForgeConfigSpec.BooleanValue limitTimeUnitsToHour;
 
         Client(final ForgeConfigSpec.Builder builder) {
             builder.push("Client");
             this.crazyMode = builder.translation("evolution.config.crazyMode").define("crazyMode", false);
             this.limitTimeUnitsToHour = builder.translation("evolution.config.limitTimeUnitsToHour").define("limitTimeUnitsToHour", false);
+            this.hitmarkers = builder.translation("evolution.config.hitmarkers").define("hitmarkers", true);
+            this.firstPersonRenderer = builder.translation("evolution.config.firstPersonRenderer").define("firstPersonRenderer", true);
             builder.pop();
         }
     }

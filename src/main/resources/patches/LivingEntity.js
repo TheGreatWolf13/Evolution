@@ -14,8 +14,8 @@ var JUMP = ASMAPI.mapMethod("func_70664_aZ");
 var GETJUMPUPWARDSMOTION = ASMAPI.mapMethod("func_175134_bD");
 var LIVINGTICK = ASMAPI.mapMethod("func_70636_d");
 var ISSERVERWORLD = ASMAPI.mapMethod("func_70613_aW");
-var SETMOTIONVEC = ASMAPI.mapMethod("func_213293_j");
-var SETMOTIONDOUBLE = ASMAPI.mapMethod("func_213317_d");
+var SETMOTIONVEC = ASMAPI.mapMethod("func_213317_d");
+var SETMOTIONDOUBLE = ASMAPI.mapMethod("func_213293_j");
 var GETMOTION = ASMAPI.mapMethod("func_213322_ci");
 var TRAVEL = ASMAPI.mapMethod("func_213352_e");
 var ISJUMPING = ASMAPI.mapField("field_70703_bu");
@@ -51,36 +51,12 @@ function initializeCoreMod() {
 					}
 				}
                 for (var i in methods) {
-                    if (patch(methods[i], PLAYEQUIPSOUND, patchEquipSound)) {
-                        methods[i].localVariables.clear();
-                        break;
-                    }
-                }
-                for (var i in methods) {
                     if (patch(methods[i], HANDLESTATUSUPDATE, patchStatusUpdate)) {
                         break;
                     }
                 }
                 for (var i in methods) {
-					if (patch(methods[i], JUMP, patchJump)) {
-						methods[i].localVariables.clear();
-						break;
-					}
-				}
-				for (var i in methods) {
-                    if (patch(methods[i], GETJUMPUPWARDSMOTION, patchUpMotion)) {
-                        methods[i].localVariables.clear();
-                        break;
-                    }
-                }
-                for (var i in methods) {
                     if (patch(methods[i], LIVINGTICK, patchLivingTick)) {
-                        break;
-                    }
-                }
-                for (var i in methods) {
-                    if (patch(methods[i], TRAVEL, patchTravel)) {
-                        methods[i].localVariables.clear();
                         break;
                     }
                 }
@@ -105,20 +81,6 @@ function patchAttackFrom(instructions) {
 	instructions.add(new InsnNode(Opcodes.IRETURN));
 }
 
-function patchEquipSound(instructions) {
-	instructions.clear();
-	instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
-	instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
-	instructions.add(new MethodInsnNode(
-		Opcodes.INVOKESTATIC,
-		"tgw/evolution/hooks/LivingEntityHooks",
-		"playEquipSound",
-		"(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/item/ItemStack;)V",
-		false
-	));
-	instructions.add(new InsnNode(Opcodes.RETURN));
-}
-
 function patchStatusUpdate(instructions) {
 	for (var i = 0; i < instructions.size(); i++) {
 	    var inst = instructions.get(i);
@@ -136,33 +98,6 @@ function patchStatusUpdate(instructions) {
             break;
         }
     }
-}
-
-function patchJump(instructions) {
-	instructions.clear();
-	instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
-	instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
-	instructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "net/minecraft/entity/LivingEntity", GETJUMPUPWARDSMOTION, "()F", false));
-	instructions.add(new MethodInsnNode(
-		Opcodes.INVOKESTATIC,
-		"tgw/evolution/hooks/LivingEntityHooks",
-		"jump",
-		"(Lnet/minecraft/entity/LivingEntity;F)V",
-		false
-	));
-	instructions.add(new InsnNode(Opcodes.RETURN));
-}
-
-function patchUpMotion(instructions) {
-	instructions.clear();
-	instructions.add(new MethodInsnNode(
-		Opcodes.INVOKESTATIC,
-		"tgw/evolution/hooks/LivingEntityHooks",
-		"getJumpUpwardsMotion",
-		"()F",
-		false
-	));
-	instructions.add(new InsnNode(Opcodes.FRETURN));
 }
 
 function patchLivingTick(instructions) {
@@ -271,28 +206,4 @@ function patchLivingTick(instructions) {
             break;
         }
     }
-}
-
-function patchTravel(instructions) {
-	instructions.clear();
-	instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
-	instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
-	instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
-	instructions.add(new FieldInsnNode(Opcodes.GETFIELD, "net/minecraft/entity/LivingEntity", ISJUMPING, "Z"));
-	instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
-	instructions.add(new FieldInsnNode(Opcodes.GETFIELD, "net/minecraft/entity/LivingEntity", JUMPTICKS, "I"));
-	instructions.add(new FieldInsnNode(
-	    Opcodes.GETSTATIC,
-	    "net/minecraft/entity/Entity",
-	    FLAGS,
-	    "Lnet/minecraft/network/datasync/DataParameter;"
-	));
-	instructions.add(new MethodInsnNode(
-		Opcodes.INVOKESTATIC,
-		"tgw/evolution/hooks/LivingEntityHooks",
-		"travel",
-		"(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/util/math/Vec3d;ZILnet/minecraft/network/datasync/DataParameter;)V",
-		false
-	));
-	instructions.add(new InsnNode(Opcodes.RETURN));
 }

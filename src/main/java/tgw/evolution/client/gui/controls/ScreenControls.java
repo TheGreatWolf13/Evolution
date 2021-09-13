@@ -1,11 +1,13 @@
 package tgw.evolution.client.gui.controls;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.screen.ControlsScreen;
 import net.minecraft.client.gui.screen.MouseSettingsScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.SettingsScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
@@ -14,21 +16,22 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.util.Util;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.settings.KeyModifier;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.widgets.GuiCheckBox;
+import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.reflection.FieldHandler;
 
 import java.util.function.Predicate;
 
 @OnlyIn(Dist.CLIENT)
 public class ScreenControls extends ControlsScreen {
-    private static final FieldHandler<ControlsScreen, Screen> PARENT_SCREEN = new FieldHandler<>(ControlsScreen.class, "field_146332_f");
+    private static final FieldHandler<SettingsScreen, Screen> PARENT_SCREEN = new FieldHandler<>(SettingsScreen.class, "field_228182_a_");
     private static final FieldHandler<ControlsScreen, KeyBindingList> KEY_BINDING_LIST = new FieldHandler<>(ControlsScreen.class, "field_146494_r");
     private final GameSettings options;
-    private final Screen parentScreen;
     private GuiCheckBox buttonCat;
     private Button buttonConflicting;
     private GuiCheckBox buttonKey;
@@ -45,7 +48,6 @@ public class ScreenControls extends ControlsScreen {
 
     public ScreenControls(ControlsScreen screen, GameSettings settings) {
         super(PARENT_SCREEN.get(screen), settings);
-        this.parentScreen = PARENT_SCREEN.get(screen);
         this.options = settings;
     }
 
@@ -56,7 +58,7 @@ public class ScreenControls extends ControlsScreen {
 
     public void filterKeys() {
         KeyBindingList keyBindingList = KEY_BINDING_LIST.get(this);
-        this.lastSearch = this.search.getText();
+        this.lastSearch = this.search.getValue();
         keyBindingList.children().clear();
         if (this.lastSearch.isEmpty() && this.displayMode == DisplayMode.ALL && this.sortOrder == SortOrder.NONE) {
             keyBindingList.children().addAll(((ListKeyBinding) keyBindingList).getAllEntries());
@@ -65,17 +67,24 @@ public class ScreenControls extends ControlsScreen {
         keyBindingList.setScrollAmount(0);
         Predicate<ListKeyBinding.KeyEntry> filters = this.displayMode.getPredicate();
         switch (this.searchType) {
-            case NAME:
-                filters = filters.and(keyEntry -> keyEntry.getKeyDesc().toLowerCase().contains(this.lastSearch.toLowerCase()));
+            case NAME: {
+                filters = filters.and(keyEntry -> keyEntry.getKeyDesc().getString().toLowerCase().contains(this.lastSearch.toLowerCase()));
                 break;
-            case CATEGORY:
-                filters = filters.and(keyEntry -> I18n.format(keyEntry.getKeybinding().getKeyCategory())
+            }
+            case CATEGORY: {
+                filters = filters.and(keyEntry -> I18n.get(keyEntry.getKeybinding().getCategory())
                                                       .toLowerCase()
                                                       .contains(this.lastSearch.toLowerCase()));
                 break;
-            case KEY:
-                filters = filters.and(keyEntry -> keyEntry.getKeybinding().getLocalizedName().toLowerCase().contains(this.lastSearch.toLowerCase()));
+            }
+            case KEY: {
+                filters = filters.and(keyEntry -> keyEntry.getKeybinding()
+                                                          .getTranslatedKeyMessage()
+                                                          .getString()
+                                                          .toLowerCase()
+                                                          .contains(this.lastSearch.toLowerCase()));
                 break;
+            }
         }
         for (ListKeyBinding.Entry entry : ((ListKeyBinding) keyBindingList).getAllEntries()) {
             if (entry instanceof ListKeyBinding.KeyEntry) {
@@ -99,48 +108,51 @@ public class ScreenControls extends ControlsScreen {
                                   18,
                                   150,
                                   20,
-                                  I18n.format("options.mouse_settings"),
-                                  button -> this.minecraft.displayGuiScreen(new MouseSettingsScreen(this))));
+                                  EvolutionTexts.GUI_CONTROLS_MOUSE_SETTINGS,
+                                  button -> this.minecraft.setScreen(new MouseSettingsScreen(this, this.minecraft.options))));
         KEY_BINDING_LIST.set(this, new ListKeyBinding(this, this.minecraft));
         KeyBindingList keyBindingList = KEY_BINDING_LIST.get(this);
         this.children.add(keyBindingList);
-        this.setFocused(keyBindingList);
         this.addButton(new Button(this.width / 2 - 155 + 160,
                                   this.height - 29,
                                   150,
                                   20,
-                                  I18n.format("gui.done"),
-                                  button -> ScreenControls.this.minecraft.displayGuiScreen(ScreenControls.this.parentScreen)));
-        this.buttonReset = this.addButton(new Button(this.width / 2 - 155, this.height - 29, 150, 20, I18n.format("controls.resetAll"), button -> {
-            if (!this.confirmingReset) {
-                this.confirmingReset = true;
-                button.setMessage(I18n.format("evolution.options.controls.confirmReset"));
-                return;
-            }
-            this.confirmingReset = false;
-            button.setMessage(I18n.format("controls.resetAll"));
-            for (KeyBinding keybinding : ScreenControls.this.minecraft.gameSettings.keyBindings) {
-                keybinding.setToDefault();
-            }
-            KeyBinding.resetKeyBindingArrayAndHash();
-        }));
+                                  EvolutionTexts.GUI_GENERAL_DONE,
+                                  button -> ScreenControls.this.minecraft.setScreen(ScreenControls.this.lastScreen)));
+        this.buttonReset = this.addButton(new Button(this.width / 2 - 155,
+                                                     this.height - 29,
+                                                     150,
+                                                     20,
+                                                     EvolutionTexts.GUI_CONTROLS_RESET_ALL,
+                                                     button -> {
+                                                         if (!this.confirmingReset) {
+                                                             this.confirmingReset = true;
+                                                             button.setMessage(EvolutionTexts.GUI_CONTROLS_CONFIRM_RESET);
+                                                             return;
+                                                         }
+                                                         this.confirmingReset = false;
+                                                         button.setMessage(EvolutionTexts.GUI_CONTROLS_RESET_ALL);
+                                                         for (KeyBinding keybinding : ScreenControls.this.minecraft.options.keyMappings) {
+                                                             keybinding.setToDefault();
+                                                         }
+                                                         KeyBinding.resetMapping();
+                                                     }));
         this.buttonUnbound = this.addButton(new Button(this.width / 2 - 155 + 160,
                                                        this.height - 29 - 24 - 24,
                                                        150,
                                                        20,
                                                        this.displayMode != DisplayMode.UNBOUND ?
-                                                       I18n.format("evolution.options.controls.showUnbound") :
-                                                       I18n.format("evolution.options.controls.showAll"),
+                                                       EvolutionTexts.GUI_CONTROLS_SHOW_UNBOUND :
+                                                       EvolutionTexts.GUI_CONTROLS_SHOW_ALL,
                                                        button -> {
                                                            if (this.displayMode == DisplayMode.UNBOUND) {
-                                                               this.buttonUnbound.setMessage(I18n.format("evolution.options.controls.showUnbound"));
+                                                               this.buttonUnbound.setMessage(EvolutionTexts.GUI_CONTROLS_SHOW_UNBOUND);
                                                                this.displayMode = DisplayMode.ALL;
                                                            }
                                                            else {
                                                                this.displayMode = DisplayMode.UNBOUND;
-                                                               this.buttonUnbound.setMessage(I18n.format("evolution.options.controls.showAll"));
-                                                               this.buttonConflicting.setMessage(I18n.format("evolution.options.controls" +
-                                                                                                             ".showConflicts"));
+                                                               this.buttonUnbound.setMessage(EvolutionTexts.GUI_CONTROLS_SHOW_ALL);
+                                                               this.buttonConflicting.setMessage(EvolutionTexts.GUI_CONTROLS_SHOW_CONFLICTS);
                                                            }
                                                            this.filterKeys();
                                                        }));
@@ -149,31 +161,25 @@ public class ScreenControls extends ControlsScreen {
                                                            150,
                                                            20,
                                                            this.displayMode != DisplayMode.CONFLICTING ?
-                                                           I18n.format("evolution.options.controls.showConflicts") :
-                                                           I18n.format("evolution.options.controls.showAll"),
+                                                           EvolutionTexts.GUI_CONTROLS_SHOW_CONFLICTS :
+                                                           EvolutionTexts.GUI_CONTROLS_SHOW_ALL,
                                                            button -> {
                                                                if (this.displayMode == DisplayMode.CONFLICTING) {
-                                                                   this.buttonConflicting.setMessage(I18n.format(
-                                                                           "evolution.options.controls.showConflicts"));
+                                                                   this.buttonConflicting.setMessage(EvolutionTexts.GUI_CONTROLS_SHOW_CONFLICTS);
                                                                    this.displayMode = DisplayMode.ALL;
                                                                }
                                                                else {
                                                                    this.displayMode = DisplayMode.CONFLICTING;
-                                                                   this.buttonConflicting.setMessage(I18n.format("evolution.options.controls" +
-                                                                                                                 ".showAll"));
-                                                                   this.buttonUnbound.setMessage(I18n.format("evolution.options.controls" +
-                                                                                                             ".showUnbound"));
+                                                                   this.buttonConflicting.setMessage(EvolutionTexts.GUI_CONTROLS_SHOW_ALL);
+                                                                   this.buttonUnbound.setMessage(EvolutionTexts.GUI_CONTROLS_SHOW_UNBOUND);
                                                                }
                                                                this.filterKeys();
                                                            }));
-        this.search = new TextFieldWidget(this.font, this.width / 2 - 154, this.height - 29 - 23, 148, 18, "");
-        this.search.setText(this.lastSearch);
-        this.buttonKey = this.addButton(new GuiCheckBox(this.width / 2 -
-                                                        10 -
-                                                        13 -
-                                                        this.font.getStringWidth(I18n.format("evolution.options.controls.key")),
+        this.search = new TextFieldWidget(this.font, this.width / 2 - 154, this.height - 29 - 23, 148, 18, EvolutionTexts.EMPTY);
+        this.search.setValue(this.lastSearch);
+        this.buttonKey = this.addButton(new GuiCheckBox(this.width / 2 - 10 - 13 - this.font.width(EvolutionTexts.GUI_CONTROLS_KEY),
                                                         this.height - 29 - 37,
-                                                        I18n.format("evolution.options.controls.key"),
+                                                        EvolutionTexts.GUI_CONTROLS_KEY,
                                                         this.isKeyMarked) {
             @Override
             public void onPress() {
@@ -187,7 +193,7 @@ public class ScreenControls extends ControlsScreen {
         });
         this.buttonCat = this.addButton(new GuiCheckBox(this.width / 2 - 150,
                                                         this.height - 29 - 37,
-                                                        I18n.format("evolution.options.controls.category"),
+                                                        EvolutionTexts.GUI_CONTROLS_CATEGORY,
                                                         this.isCategoryMarked) {
             @Override
             public void onPress() {
@@ -203,85 +209,83 @@ public class ScreenControls extends ControlsScreen {
                                   18,
                                   150,
                                   20,
-                                  I18n.format("evolution.options.controls.sort", this.sortOrder.getName()),
+                                  new TranslationTextComponent("evolution.gui.controls.sort", this.sortOrder.getName()),
                                   button -> {
                                       this.sortOrder = this.sortOrder.cycle();
-                                      button.setMessage(I18n.format("evolution.options.controls.sort", this.sortOrder.getName()));
+                                      button.setMessage(new TranslationTextComponent("evolution.gui.controls.sort", this.sortOrder.getName()));
                                       this.filterKeys();
                                   }));
         this.filterKeys();
     }
 
     @Override
-    public boolean keyPressed(int p_keyPressed_1_, int p_keyPressed_2_, int p_keyPressed_3_) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         this.buttonKey.setFocused(false);
         this.buttonCat.setFocused(false);
-        if (!this.search.isFocused() && this.buttonId == null) {
+        if (!this.search.isFocused() && this.selectedKey == null) {
             if (hasControlDown()) {
-                if (InputMappings.isKeyDown(this.minecraft.mainWindow.getHandle(), GLFW.GLFW_KEY_F)) {
-                    this.search.setFocused2(true);
+                if (InputMappings.isKeyDown(this.minecraft.getWindow().getWindow(), GLFW.GLFW_KEY_F)) {
+                    this.search.setFocus(true);
                     return true;
                 }
             }
         }
-        if (this.search.keyPressed(p_keyPressed_1_, p_keyPressed_2_, p_keyPressed_3_)) {
+        if (this.search.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
         }
         if (this.search.isFocused()) {
-            if (p_keyPressed_1_ == 256) {
-                this.search.setFocused2(false);
+            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+                this.search.setFocus(false);
                 return true;
             }
         }
-        if (this.buttonId != null) {
-            if (p_keyPressed_1_ == 256) {
-                this.buttonId.setKeyModifierAndCode(KeyModifier.getActiveModifier(), InputMappings.INPUT_INVALID);
-                this.options.setKeyBindingCode(this.buttonId, InputMappings.INPUT_INVALID);
+        if (this.selectedKey != null) {
+            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+                this.selectedKey.setKeyModifierAndCode(KeyModifier.getActiveModifier(), InputMappings.UNKNOWN);
+                this.options.setKey(this.selectedKey, InputMappings.UNKNOWN);
             }
             else {
-                this.buttonId.setKeyModifierAndCode(KeyModifier.getActiveModifier(), InputMappings.getInputByCode(p_keyPressed_1_, p_keyPressed_2_));
-                this.options.setKeyBindingCode(this.buttonId, InputMappings.getInputByCode(p_keyPressed_1_, p_keyPressed_2_));
+                this.selectedKey.setKeyModifierAndCode(KeyModifier.getActiveModifier(), InputMappings.getKey(keyCode, scanCode));
+                this.options.setKey(this.selectedKey, InputMappings.getKey(keyCode, scanCode));
             }
-            if (!KeyModifier.isKeyCodeModifier(this.buttonId.getKey())) {
+            if (!KeyModifier.isKeyCodeModifier(this.selectedKey.getKey())) {
                 //noinspection ConstantConditions
-                this.buttonId = null;
+                this.selectedKey = null;
             }
-            this.time = Util.milliTime();
-            KeyBinding.resetKeyBindingArrayAndHash();
+            this.lastKeySelection = Util.getMillis();
+            KeyBinding.resetMapping();
             return true;
         }
-        return super.keyPressed(p_keyPressed_1_, p_keyPressed_2_, p_keyPressed_3_);
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
     public boolean mouseClicked(double mx, double my, int mb) {
         KeyBindingList keyBindingList = KEY_BINDING_LIST.get(this);
         boolean valid;
-        if (this.buttonId != null) {
-            this.options.setKeyBindingCode(this.buttonId, InputMappings.Type.MOUSE.getOrMakeInput(mb));
+        if (this.selectedKey != null) {
+            this.options.setKey(this.selectedKey, InputMappings.Type.MOUSE.getOrCreate(mb));
             //noinspection ConstantConditions
-            this.buttonId = null;
-            KeyBinding.resetKeyBindingArrayAndHash();
+            this.selectedKey = null;
+            KeyBinding.resetMapping();
             valid = true;
-            this.search.setFocused2(false);
+            this.search.setFocus(false);
         }
         else if (mb == 0 && keyBindingList.mouseClicked(mx, my, mb)) {
             this.setDragging(true);
-            this.setFocused(keyBindingList);
             valid = true;
-            this.search.setFocused2(false);
+            this.search.setFocus(false);
         }
         else {
             valid = this.search.mouseClicked(mx, my, mb);
             if (!valid && this.search.isFocused() && mb == 1) {
-                this.search.setText("");
+                this.search.setValue("");
                 valid = true;
             }
         }
         if (!valid) {
             for (IGuiEventListener iguieventlistener : this.children()) {
                 if (iguieventlistener.mouseClicked(mx, my, mb)) {
-                    this.setFocused(iguieventlistener);
                     if (mb == 0) {
                         this.setDragging(true);
                     }
@@ -310,36 +314,39 @@ public class ScreenControls extends ControlsScreen {
      * Draws the screen and all the components in it.
      */
     @Override
-    public void render(int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground();
-        KEY_BINDING_LIST.get(this).render(mouseX, mouseY, partialTicks);
-        this.drawCenteredString(this.font, this.title.getFormattedText(), this.width / 2, 8, 0xff_ffff);
-        boolean flag = false;
-        for (KeyBinding keybinding : this.options.keyBindings) {
+    public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
+        this.renderBackground(matrices);
+        KEY_BINDING_LIST.get(this).render(matrices, mouseX, mouseY, partialTicks);
+        drawCenteredString(matrices, this.font, this.title, this.width / 2, 5, 0xff_ffff);
+        boolean isResetActive = false;
+        for (KeyBinding keybinding : this.options.keyMappings) {
             if (!keybinding.isDefault()) {
-                flag = true;
+                isResetActive = true;
                 break;
             }
         }
-        this.search.render(mouseX, mouseY, partialTicks);
-        this.buttonReset.active = flag;
-        if (!flag) {
+        this.search.render(matrices, mouseX, mouseY, partialTicks);
+        this.buttonReset.active = isResetActive;
+        if (!isResetActive) {
             this.confirmingReset = false;
-            this.buttonReset.setMessage(I18n.format("controls.resetAll"));
+            this.buttonReset.setMessage(EvolutionTexts.GUI_CONTROLS_RESET_ALL);
         }
         for (Widget button : this.buttons) {
-            button.render(mouseX, mouseY, partialTicks);
+            button.render(matrices, mouseX, mouseY, partialTicks);
         }
-        String text = I18n.format("evolution.options.controls.search");
-        GlStateManager.disableLighting();
-        this.font.drawStringWithShadow(text, (this.width - 155 - this.font.getStringWidth(text)) / 2.0f, this.height - 27 - 50, 0xff_ffff);
-        GlStateManager.enableLighting();
+        RenderSystem.disableLighting();
+        this.font.draw(matrices,
+                       EvolutionTexts.GUI_GENERAL_SEARCH,
+                       (this.width - 155 - this.font.width(EvolutionTexts.GUI_GENERAL_SEARCH)) / 2.0f,
+                       this.height - 27 - 50,
+                       0xff_ffff);
+        RenderSystem.enableLighting();
     }
 
     @Override
     public void tick() {
         this.search.tick();
-        if (!this.lastSearch.equals(this.search.getText())) {
+        if (!this.lastSearch.equals(this.search.getValue())) {
             this.filterKeys();
         }
     }

@@ -8,7 +8,6 @@ import net.minecraft.item.UseAction;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
@@ -17,10 +16,6 @@ public class ItemShield extends ItemEv implements IDurability {
 
     public ItemShield(Properties properties) {
         super(properties);
-        this.addPropertyOverride(new ResourceLocation("blocking"),
-                                 (stack, world, entity) -> entity != null && entity.isHandActive() && entity.getActiveItemStack() == stack ?
-                                                           1.0F :
-                                                           0.0F);
     }
 
     @Nullable
@@ -30,7 +25,7 @@ public class ItemShield extends ItemEv implements IDurability {
     }
 
     @Override
-    public UseAction getUseAction(ItemStack stack) {
+    public UseAction getUseAnimation(ItemStack stack) {
         return UseAction.BLOCK;
     }
 
@@ -45,9 +40,9 @@ public class ItemShield extends ItemEv implements IDurability {
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
-        ItemStack stack = player.getHeldItem(hand);
-        player.setActiveHand(hand);
+    public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        player.startUsingItem(hand);
         return new ActionResult<>(ActionResultType.SUCCESS, stack);
     }
 }

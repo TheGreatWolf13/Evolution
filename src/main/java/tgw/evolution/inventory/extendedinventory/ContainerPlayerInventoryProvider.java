@@ -18,5 +18,4 @@ public class ContainerPlayerInventoryProvider implements INamedContainerProvider
     public ITextComponent getDisplayName() {
         return new StringTextComponent("");
     }
-
 }

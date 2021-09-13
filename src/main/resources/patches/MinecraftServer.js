@@ -4,6 +4,8 @@ var InsnList = Java.type("org.objectweb.asm.tree.InsnList");
 var LdcInsnNode = Java.type("org.objectweb.asm.tree.LdcInsnNode");
 var MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
 
+var RUN = ASMAPI.mapMethod("func_240802_v_");
+
 function log(message) {
 	print("[evolution/MinecraftServer Transformer]: " + message);
 }
@@ -27,7 +29,7 @@ function initializeCoreMod() {
 			"transformer": function(classNode) {
 				var methods = classNode.methods;
 				for (var i in methods) {
-					if (patch(methods[i], "run", patchServer)) {
+					if (patch(methods[i], RUN, patchServer)) {
 						break;
 					}
 				}

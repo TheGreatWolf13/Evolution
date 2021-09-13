@@ -6,15 +6,14 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
+import net.minecraft.loot.LootContext;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.state.StateContainer.Builder;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.storage.loot.LootContext;
+import net.minecraft.world.server.ServerWorld;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.MetalVariant;
 
 import java.util.ArrayList;
@@ -28,30 +27,30 @@ public class BlockMetal extends BlockGravity {
     private final MetalVariant variant;
 
     public BlockMetal(MetalVariant variant) {
-        super(Block.Properties.create(Material.IRON)
-                              .harvestLevel(variant.getHarvestLevel())
-                              .sound(SoundType.METAL)
-                              .hardnessAndResistance(variant.getHardness(), variant.getResistance()), variant.getDensity());
+        super(Properties.of(Material.METAL)
+                        .harvestLevel(variant.getHarvestLevel())
+                        .sound(SoundType.METAL)
+                        .strength(variant.getHardness(), variant.getResistance()), variant.getDensity());
         this.variant = variant;
-        this.setDefaultState(this.getDefaultState().with(OXIDATION, 0));
+        this.registerDefaultState(this.defaultBlockState().setValue(OXIDATION, 0));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
+        builder.add(OXIDATION);
     }
 
     @Override
     public SoundEvent fallSound() {
-        return SoundEvents.BLOCK_ANVIL_LAND;
-    }
-
-    @Override
-    protected void fillStateContainer(Builder<Block, BlockState> builder) {
-        builder.add(OXIDATION);
+        return SoundEvents.ANVIL_LAND;
     }
 
     @Override
     public List<ItemStack> getDrops(BlockState state, LootContext.Builder builder) {
         ItemStack stack = new ItemStack(EvolutionItems.block_copper.get());
-        if (state.get(OXIDATION) != 0) {
+        if (state.getValue(OXIDATION) != 0) {
             CompoundNBT nbt = new CompoundNBT();
-            nbt.putInt("Oxidation", state.get(OXIDATION));
+            nbt.putInt("Oxidation", state.getValue(OXIDATION));
             stack.setTag(nbt);
         }
         List<ItemStack> list = new ArrayList<>(1);
@@ -66,15 +65,15 @@ public class BlockMetal extends BlockGravity {
 
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
-        CompoundNBT nbt = context.getPlayer().getItemStackFromSlot(MathHelper.getEquipFromHand(context.getHand())).getTag();
+        CompoundNBT nbt = context.getPlayer().getItemInHand(context.getHand()).getTag();
         if (nbt == null) {
-            return this.getDefaultState();
+            return this.defaultBlockState();
         }
-        return this.getDefaultState().with(OXIDATION, nbt.getInt("Oxidation"));
+        return this.defaultBlockState().setValue(OXIDATION, nbt.getInt("Oxidation"));
     }
 
     @Override
-    public void randomTick(BlockState state, World world, BlockPos pos, Random rand) {
+    public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random rand) {
         //TODO oxidation
     }
 }

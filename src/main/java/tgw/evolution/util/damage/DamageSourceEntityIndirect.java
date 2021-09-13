@@ -22,11 +22,39 @@ public class DamageSourceEntityIndirect extends DamageSourceEntity implements IH
     }
 
     @Override
-    public ITextComponent getDeathMessage(LivingEntity deadEntity) {
+    @Nullable
+    public Entity getDirectEntity() {
+        return this.damageSourceEntity;
+    }
+
+    @Override
+    @Nullable
+    public Entity getEntity() {
+        return this.trueSource;
+    }
+
+    @Override
+    @Nullable
+    public EquipmentSlotType getHitLocation() {
+        return this.hitLocation;
+    }
+
+    @Override
+    @Nullable
+    public ITextComponent getItemDisplay() {
+        ItemStack heldStack = this.trueSource instanceof LivingEntity ? ((LivingEntity) this.trueSource).getMainHandItem() : ItemStack.EMPTY;
+        if ("spear".equals(this.msgId)) {
+            heldStack = ((EntitySpear) this.damageSourceEntity).getStack();
+        }
+        return heldStack.isEmpty() ? null : heldStack.getDisplayName();
+    }
+
+    @Override
+    public ITextComponent getLocalizedDeathMessage(LivingEntity deadEntity) {
         ITextComponent sourceComp = this.trueSource == null ? this.damageSourceEntity.getDisplayName() : this.trueSource.getDisplayName();
         ITextComponent itemComp = this.getItemDisplay();
-        String message = "death.attack." + this.damageType;
-        if ("spear".equals(this.damageType)) {
+        String message = "death.attack." + this.msgId;
+        if ("spear".equals(this.msgId)) {
             if (this.trueSource == null && itemComp != null) {
                 return new TranslationTextComponent(message, deadEntity.getDisplayName(), itemComp);
             }
@@ -37,35 +65,7 @@ public class DamageSourceEntityIndirect extends DamageSourceEntity implements IH
                new TranslationTextComponent(message, deadEntity.getDisplayName(), sourceComp);
     }
 
-    @Override
-    @Nullable
-    public EquipmentSlotType getHitLocation() {
-        return this.hitLocation;
-    }
-
     public void setHitLocation(@Nullable EquipmentSlotType hitLocation) {
         this.hitLocation = hitLocation;
-    }
-
-    @Override
-    @Nullable
-    public Entity getImmediateSource() {
-        return this.damageSourceEntity;
-    }
-
-    @Override
-    @Nullable
-    public ITextComponent getItemDisplay() {
-        ItemStack heldStack = this.trueSource instanceof LivingEntity ? ((LivingEntity) this.trueSource).getHeldItemMainhand() : ItemStack.EMPTY;
-        if ("spear".equals(this.damageType)) {
-            heldStack = ((EntitySpear) this.damageSourceEntity).getStack();
-        }
-        return heldStack.isEmpty() ? null : heldStack.getTextComponent();
-    }
-
-    @Override
-    @Nullable
-    public Entity getTrueSource() {
-        return this.trueSource;
     }
 }

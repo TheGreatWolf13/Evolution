@@ -33,10 +33,6 @@ public class ItemJavelin extends ItemGenericTool implements IThrowable, ISpear, 
         this.damage = damage;
         this.mass = mass;
         this.modelTexture = Evolution.getResource("textures/entity/javelin/javelin_" + name + ".png");
-        this.addPropertyOverride(new ResourceLocation("throwing"),
-                                 (stack, world, entity) -> entity != null && entity.isHandActive() && entity.getActiveItemStack() == stack ?
-                                                           1.0F :
-                                                           0.0F);
     }
 
     @Override
@@ -81,7 +77,7 @@ public class ItemJavelin extends ItemGenericTool implements IThrowable, ISpear, 
     }
 
     @Override
-    public UseAction getUseAction(ItemStack stack) {
+    public UseAction getUseAnimation(ItemStack stack) {
         return UseAction.SPEAR;
     }
 
@@ -91,41 +87,41 @@ public class ItemJavelin extends ItemGenericTool implements IThrowable, ISpear, 
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
-        ItemStack stack = playerIn.getHeldItem(handIn);
-        if (stack.getDamage() >= stack.getMaxDamage() || handIn == Hand.OFF_HAND) {
-            return new ActionResult<>(ActionResultType.FAIL, stack);
-        }
-        playerIn.setActiveHand(handIn);
-        return new ActionResult<>(ActionResultType.SUCCESS, stack);
+    public float reach() {
+        return 5.0f;
     }
 
     @Override
-    public void onPlayerStoppedUsing(ItemStack stack, World worldIn, LivingEntity entityLiving, int timeLeft) {
-        if (entityLiving instanceof PlayerEntity) {
-            PlayerEntity player = (PlayerEntity) entityLiving;
+    public void releaseUsing(ItemStack stack, World world, LivingEntity entity, int timeLeft) {
+        if (entity instanceof PlayerEntity) {
+            PlayerEntity player = (PlayerEntity) entity;
             int i = this.getUseDuration(stack) - timeLeft;
             if (i >= 10) {
-                if (!worldIn.isRemote) {
-                    EntitySpear spear = new EntitySpear(worldIn, player, stack, this.damage, this.mass);
-                    spear.shoot(player, player.rotationPitch, player.rotationYaw, 0.825f, 2.5F);
-                    if (player.abilities.isCreativeMode) {
+                if (!world.isClientSide) {
+                    EntitySpear spear = new EntitySpear(world, player, stack, this.damage, this.mass);
+                    spear.shoot(player, player.xRot, player.yRot, 0.825f, 2.5F);
+                    if (player.abilities.instabuild) {
                         spear.pickupStatus = EntityGenericProjectile.PickupStatus.CREATIVE_ONLY;
                     }
-                    worldIn.addEntity(spear);
-                    worldIn.playMovingSound(null, spear, EvolutionSounds.JAVELIN_THROW.get(), SoundCategory.PLAYERS, 1.0F, 1.0F);
-                    if (!player.abilities.isCreativeMode) {
-                        player.inventory.deleteStack(stack);
+                    world.addFreshEntity(spear);
+                    world.playSound(null, spear, EvolutionSounds.JAVELIN_THROW.get(), SoundCategory.PLAYERS, 1.0F, 1.0F);
+                    if (!player.abilities.instabuild) {
+                        player.inventory.removeItem(stack);
                     }
                 }
-                player.addStat(Stats.ITEM_USED.get(this));
+                player.awardStat(Stats.ITEM_USED.get(this));
                 this.addStat(player);
             }
         }
     }
 
     @Override
-    public float reach() {
-        return 5.0f;
+    public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (stack.getDamageValue() >= stack.getMaxDamage() || hand == Hand.OFF_HAND) {
+            return new ActionResult<>(ActionResultType.FAIL, stack);
+        }
+        player.startUsingItem(hand);
+        return new ActionResult<>(ActionResultType.SUCCESS, stack);
     }
 }

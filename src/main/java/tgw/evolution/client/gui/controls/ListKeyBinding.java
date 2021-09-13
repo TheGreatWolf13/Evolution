@@ -1,6 +1,7 @@
 package tgw.evolution.client.gui.controls;
 
 import com.google.common.collect.ImmutableList;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.screen.ControlsScreen;
@@ -9,10 +10,14 @@ import net.minecraft.client.gui.widget.list.KeyBindingList;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.Util;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.ArrayUtils;
+import tgw.evolution.init.EvolutionTexts;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,11 +39,11 @@ public class ListKeyBinding extends KeyBindingList {
         this.controlsScreen = controls;
         this.children().clear();
         this.allEntries = new ArrayList<>();
-        KeyBinding[] akeybinding = ArrayUtils.clone(mc.gameSettings.keyBindings);
+        KeyBinding[] akeybinding = ArrayUtils.clone(mc.options.keyMappings);
         Arrays.sort(akeybinding);
         String s = null;
         for (KeyBinding keybinding : akeybinding) {
-            String s1 = keybinding.getKeyCategory();
+            String s1 = keybinding.getCategory();
             if (!s1.equals(s)) {
                 s = s1;
                 if (!s1.endsWith(".hidden")) {
@@ -46,7 +51,7 @@ public class ListKeyBinding extends KeyBindingList {
                     this.add(new ListKeyBinding.CategoryEntry(s1));
                 }
             }
-            int i = mc.fontRenderer.getStringWidth(I18n.format(keybinding.getKeyDescription()));
+            int i = mc.font.width(I18n.get(keybinding.getName()));
             if (i > this.maxListLabelWidth) {
                 this.maxListLabelWidth = i;
             }
@@ -83,8 +88,8 @@ public class ListKeyBinding extends KeyBindingList {
         private final int labelWidth;
 
         public CategoryEntry(String name) {
-            this.labelText = I18n.format(name);
-            this.labelWidth = ListKeyBinding.this.minecraft.fontRenderer.getStringWidth(this.labelText);
+            this.labelText = I18n.get(name);
+            this.labelWidth = ListKeyBinding.this.minecraft.font.width(this.labelText);
         }
 
         @Override
@@ -93,11 +98,21 @@ public class ListKeyBinding extends KeyBindingList {
         }
 
         @Override
-        public void render(int index, int rowY, int rowX, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
-            ListKeyBinding.this.minecraft.fontRenderer.drawString(this.labelText,
-                                                                  (ListKeyBinding.this.minecraft.currentScreen.width - this.labelWidth) / 2.0f,
-                                                                  rowY + height - 9 - 1,
-                                                                  0xff_ffff);
+        public void render(MatrixStack matrices,
+                           int index,
+                           int rowY,
+                           int rowX,
+                           int width,
+                           int height,
+                           int mouseX,
+                           int mouseY,
+                           boolean isMouseOver,
+                           float partialTicks) {
+            ListKeyBinding.this.minecraft.font.draw(matrices,
+                                                    this.labelText,
+                                                    (ListKeyBinding.this.minecraft.screen.width - this.labelWidth) / 2.0f,
+                                                    rowY + height - 9 - 1,
+                                                    0xff_ffff);
         }
     }
 
@@ -109,21 +124,21 @@ public class ListKeyBinding extends KeyBindingList {
         /**
          * The localized key description for this KeyEntry
          */
-        private final String keyDesc;
+        private final ITextComponent keyDesc;
         /**
          * The keybinding specified for this KeyEntry
          */
         private final KeyBinding keybinding;
 
-        private KeyEntry(final KeyBinding name) {
-            this.keybinding = name;
-            this.keyDesc = I18n.format(name.getKeyDescription());
-            this.btnChangeKeyBinding = new Button(0, 0, 95, 20, this.keyDesc, button -> ListKeyBinding.this.controlsScreen.buttonId = name) {
+        private KeyEntry(final KeyBinding keyBinding) {
+            this.keybinding = keyBinding;
+            this.keyDesc = new TranslationTextComponent(keyBinding.getName());
+            this.btnChangeKeyBinding = new Button(0, 0, 95, 20, this.keyDesc, button -> ListKeyBinding.this.controlsScreen.selectedKey = keyBinding) {
 
                 private boolean wasHovered;
 
                 @Override
-                public void render(int mouseX, int mouseY, float partialTicks) {
+                public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
                     if (this.visible) {
                         this.isHovered = mouseX >= this.x &&
                                          mouseY >= this.y &&
@@ -134,10 +149,10 @@ public class ListKeyBinding extends KeyBindingList {
                         if (this.wasHovered != this.isHovered()) {
                             if (this.isHovered()) {
                                 if (this.isFocused()) {
-                                    this.nextNarration = Util.milliTime() + 200L;
+                                    this.nextNarration = Util.getMillis() + 200L;
                                 }
                                 else {
-                                    this.nextNarration = Util.milliTime() + 750L;
+                                    this.nextNarration = Util.getMillis() + 750L;
                                 }
                             }
                             else {
@@ -145,22 +160,22 @@ public class ListKeyBinding extends KeyBindingList {
                             }
                         }
                         if (this.visible) {
-                            this.renderButton(mouseX, mouseY, partialTicks);
+                            this.renderButton(matrices, mouseX, mouseY, partialTicks);
                         }
                         this.narrate();
                         this.wasHovered = this.isHovered();
                     }
                 }
             };
-            this.btnResetKeyBinding = new Button(0, 0, 50, 20, I18n.format("controls.reset"), button -> {
+            this.btnResetKeyBinding = new Button(0, 0, 50, 20, EvolutionTexts.GUI_CONTROLS_RESET, button -> {
                 this.keybinding.setToDefault();
-                ListKeyBinding.this.minecraft.gameSettings.setKeyBindingCode(name, name.getDefault());
-                KeyBinding.resetKeyBindingArrayAndHash();
+                ListKeyBinding.this.minecraft.options.setKey(keyBinding, keyBinding.getDefaultKey());
+                KeyBinding.resetMapping();
             }) {
                 private boolean wasHovered;
 
                 @Override
-                public void render(int mouseX, int mouseY, float partialTicks) {
+                public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
                     if (this.visible) {
                         this.isHovered = mouseX >= this.x &&
                                          mouseY >= this.y &&
@@ -171,10 +186,10 @@ public class ListKeyBinding extends KeyBindingList {
                         if (this.wasHovered != this.isHovered()) {
                             if (this.isHovered()) {
                                 if (this.isFocused()) {
-                                    this.nextNarration = Util.milliTime() + 200L;
+                                    this.nextNarration = Util.getMillis() + 200L;
                                 }
                                 else {
-                                    this.nextNarration = Util.milliTime() + 750L;
+                                    this.nextNarration = Util.getMillis() + 750L;
                                 }
                             }
                             else {
@@ -182,7 +197,7 @@ public class ListKeyBinding extends KeyBindingList {
                             }
                         }
                         if (this.visible) {
-                            this.renderButton(mouseX, mouseY, partialTicks);
+                            this.renderButton(matrices, mouseX, mouseY, partialTicks);
                         }
                         this.narrate();
                         this.wasHovered = this.isHovered();
@@ -200,7 +215,7 @@ public class ListKeyBinding extends KeyBindingList {
             return this.btnChangeKeyBinding;
         }
 
-        public String getKeyDesc() {
+        public ITextComponent getKeyDesc() {
             return this.keyDesc;
         }
 
@@ -222,49 +237,61 @@ public class ListKeyBinding extends KeyBindingList {
         }
 
         @Override
-        public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
-            boolean flag = ListKeyBinding.this.controlsScreen.buttonId == this.keybinding;
-            ListKeyBinding.this.minecraft.fontRenderer.drawString(this.keyDesc,
-                                                                  x + ListKeyBinding.this.getRowWidth() -
-                                                                  this.btnResetKeyBinding.getWidth() -
-                                                                  this.btnChangeKeyBinding.getWidth() -
-                                                                  ListKeyBinding.this.maxListLabelWidth -
-                                                                  10,
-                                                                  y + (height - 4) / 2.0f,
-                                                                  0xff_ffff);
+        public void render(MatrixStack matrices,
+                           int index,
+                           int y,
+                           int x,
+                           int width,
+                           int height,
+                           int mouseX,
+                           int mouseY,
+                           boolean isMouseOver,
+                           float partialTicks) {
+            boolean flag = ListKeyBinding.this.controlsScreen.selectedKey == this.keybinding;
+            ListKeyBinding.this.minecraft.font.draw(matrices,
+                                                    this.keyDesc,
+                                                    x + ListKeyBinding.this.getRowWidth() -
+                                                    this.btnResetKeyBinding.getWidth() -
+                                                    this.btnChangeKeyBinding.getWidth() -
+                                                    ListKeyBinding.this.maxListLabelWidth -
+                                                    10,
+                                                    y + (height - 4) / 2.0f,
+                                                    0xff_ffff);
             this.btnResetKeyBinding.x = x + ListKeyBinding.this.getRowWidth() - this.btnResetKeyBinding.getWidth() - 2;
             this.btnResetKeyBinding.y = y;
             this.btnResetKeyBinding.active = !this.keybinding.isDefault();
-            this.btnResetKeyBinding.render(mouseX, mouseY, partialTicks);
+            this.btnResetKeyBinding.render(matrices, mouseX, mouseY, partialTicks);
             this.btnChangeKeyBinding.x = x + ListKeyBinding.this.getRowWidth() -
                                          this.btnResetKeyBinding.getWidth() -
                                          this.btnChangeKeyBinding.getWidth() -
                                          4;
             this.btnChangeKeyBinding.y = y;
-            this.btnChangeKeyBinding.setMessage(this.keybinding.getLocalizedName());
+            this.btnChangeKeyBinding.setMessage(this.keybinding.getTranslatedKeyMessage());
             boolean conflicts = false;
             boolean keyCodeModifierConflict = true; // less severe form of conflict, like SHIFT conflicting with SHIFT+G
-            if (!this.keybinding.isInvalid()) {
-                for (KeyBinding keybinding : ListKeyBinding.this.minecraft.gameSettings.keyBindings) {
-                    if (keybinding != this.keybinding && this.keybinding.conflicts(keybinding)) {
+            if (!this.keybinding.isUnbound()) {
+                for (KeyBinding keybinding : ListKeyBinding.this.minecraft.options.keyMappings) {
+                    if (keybinding != this.keybinding && this.keybinding.same(keybinding)) {
                         conflicts = true;
                         keyCodeModifierConflict &= keybinding.hasKeyCodeModifierConflict(this.keybinding);
                     }
                 }
             }
             if (flag) {
-                this.btnChangeKeyBinding.setMessage(TextFormatting.WHITE +
-                                                    "> " +
-                                                    TextFormatting.YELLOW +
-                                                    this.btnChangeKeyBinding.getMessage() +
-                                                    TextFormatting.WHITE +
-                                                    " <");
+                this.btnChangeKeyBinding.setMessage(new StringTextComponent("> ").append(this.btnChangeKeyBinding.getMessage()
+                                                                                                                 .copy()
+                                                                                                                 .withStyle(TextFormatting.YELLOW))
+                                                                                 .append(" <")
+                                                                                 .withStyle(TextFormatting.YELLOW));
             }
             else if (conflicts) {
-                this.btnChangeKeyBinding.setMessage((keyCodeModifierConflict ? TextFormatting.GOLD : TextFormatting.RED) +
-                                                    this.btnChangeKeyBinding.getMessage());
+                this.btnChangeKeyBinding.setMessage(this.btnChangeKeyBinding.getMessage()
+                                                                            .copy()
+                                                                            .withStyle(keyCodeModifierConflict ?
+                                                                                       TextFormatting.GOLD :
+                                                                                       TextFormatting.RED));
             }
-            this.btnChangeKeyBinding.render(mouseX, mouseY, partialTicks);
+            this.btnChangeKeyBinding.render(matrices, mouseX, mouseY, partialTicks);
         }
     }
 }

@@ -13,11 +13,11 @@ import java.util.function.Supplier;
 
 public class PacketCSUpdatePuzzle implements IPacket {
 
-    private final BlockPos pos;
     private final ResourceLocation attachmentType;
-    private final ResourceLocation targetPool;
-    private final String finalState;
     private final boolean checkBB;
+    private final String finalState;
+    private final BlockPos pos;
+    private final ResourceLocation targetPool;
 
     public PacketCSUpdatePuzzle(BlockPos pos, ResourceLocation attachmentType, ResourceLocation targetPool, String finalState, boolean checkBB) {
         this.pos = pos;
@@ -31,7 +31,7 @@ public class PacketCSUpdatePuzzle implements IPacket {
         return new PacketCSUpdatePuzzle(buffer.readBlockPos(),
                                         buffer.readResourceLocation(),
                                         buffer.readResourceLocation(),
-                                        buffer.readString(),
+                                        buffer.readUtf(),
                                         buffer.readBoolean());
     }
 
@@ -39,14 +39,14 @@ public class PacketCSUpdatePuzzle implements IPacket {
         buffer.writeBlockPos(packet.pos);
         buffer.writeResourceLocation(packet.attachmentType);
         buffer.writeResourceLocation(packet.targetPool);
-        buffer.writeString(packet.finalState);
+        buffer.writeUtf(packet.finalState);
         buffer.writeBoolean(packet.checkBB);
     }
 
     public static void handle(PacketCSUpdatePuzzle packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
-                TileEntity tile = context.get().getSender().world.getTileEntity(packet.pos);
+                TileEntity tile = context.get().getSender().level.getBlockEntity(packet.pos);
                 if (!(tile instanceof TEPuzzle)) {
                     Evolution.LOGGER.warn("Could not find TEPuzzle at " + packet.pos);
                     return;

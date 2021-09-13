@@ -19,11 +19,11 @@ public class PacketSCLungeAnim implements IPacket {
     }
 
     public static PacketSCLungeAnim decode(PacketBuffer buffer) {
-        return new PacketSCLungeAnim(buffer.readInt(), buffer.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND);
+        return new PacketSCLungeAnim(buffer.readVarInt(), buffer.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND);
     }
 
     public static void encode(PacketSCLungeAnim packet, PacketBuffer buffer) {
-        buffer.writeInt(packet.entityId);
+        buffer.writeVarInt(packet.entityId);
         buffer.writeBoolean(packet.hand == Hand.MAIN_HAND);
     }
 

@@ -7,7 +7,7 @@ import java.util.Map;
 
 import static tgw.evolution.capabilities.chunkstorage.EnumStorage.*;
 
-public class NutrientHelper {
+public final class NutrientHelper {
 
     public static final Map<EnumStorage, Integer> GROW_GRASS_BLOCK = new EnumMap<>(EnumStorage.class);
     public static final Map<EnumStorage, Integer> DECAY_GRASS_BLOCK = new EnumMap<>(EnumStorage.class);
@@ -46,5 +46,8 @@ public class NutrientHelper {
         DECAY_TALL_GRASS.put(PHOSPHORUS, 1);
         DECAY_TALL_GRASS.put(POTASSIUM, 1);
         DECAY_TALL_GRASS.put(ORGANIC, 1);
+    }
+
+    private NutrientHelper() {
     }
 }

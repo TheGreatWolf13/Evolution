@@ -1,15 +1,17 @@
 package tgw.evolution.client.layers;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.entity.IEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.LayerRenderer;
 import net.minecraft.client.renderer.entity.model.PlayerModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.entity.Pose;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.HandSide;
+import net.minecraft.util.math.vector.Vector3f;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.events.ClientEvents;
@@ -22,38 +24,36 @@ public class LayerBelt extends LayerRenderer<AbstractClientPlayerEntity, PlayerM
     }
 
     @Override
-    public void render(AbstractClientPlayerEntity player,
+    public void render(MatrixStack matrices,
+                       IRenderTypeBuffer buffer,
+                       int packetLight,
+                       AbstractClientPlayerEntity player,
                        float limbSwing,
                        float limbSwingAmount,
                        float partialTicks,
                        float ageInTicks,
                        float headYaw,
-                       float headPitch,
-                       float scale) {
-        ItemStack beltStack = ClientEvents.BELT_ITEMS.getOrDefault(player.getEntityId(), ItemStack.EMPTY);
+                       float headPitch) {
+        ItemStack beltStack = ClientEvents.BELT_ITEMS.getOrDefault(player.getId(), ItemStack.EMPTY);
         if (!beltStack.isEmpty()) {
-            int sideOffset = player.getPrimaryHand() == HandSide.RIGHT ? -1 : 1;
-            GlStateManager.pushMatrix();
-            if (player.getPose() == Pose.SNEAKING) {
-                GlStateManager.translatef(0.0f, 0.2f, 0.0f);
-            }
-            this.translateToBody();
-            GlStateManager.rotatef(-90.0f, 0.0f, 1.0f, 0.0f);
-            GlStateManager.translatef(0.1f, 0.85f, sideOffset * 0.28f);
-            GlStateManager.scalef(0.75f, 0.75f, 0.75f);
+            int sideOffset = player.getMainArm() == HandSide.RIGHT ? -1 : 1;
+            matrices.pushPose();
+            this.getParentModel().body.translateAndRotate(matrices);
+            matrices.mulPose(Vector3f.YP.rotationDegrees(-90));
+            matrices.translate(0.1, 0.85, sideOffset * 0.28);
+            matrices.scale(0.75f, 0.75f, 0.75f);
             Minecraft.getInstance()
                      .getItemRenderer()
-                     .renderItem(beltStack, player, ItemCameraTransforms.TransformType.NONE, player.getPrimaryHand() == HandSide.LEFT);
-            GlStateManager.popMatrix();
+                     .renderStatic(player,
+                                   beltStack,
+                                   ItemCameraTransforms.TransformType.NONE,
+                                   player.getMainArm() == HandSide.LEFT,
+                                   matrices,
+                                   buffer,
+                                   player.level,
+                                   packetLight,
+                                   OverlayTexture.NO_OVERLAY);
+            matrices.popPose();
         }
-    }
-
-    @Override
-    public boolean shouldCombineTextures() {
-        return false;
-    }
-
-    private void translateToBody() {
-        this.getEntityModel().bipedBody.postRender(0.062_5F);
     }
 }

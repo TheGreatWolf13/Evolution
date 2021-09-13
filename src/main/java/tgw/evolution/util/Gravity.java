@@ -1,7 +1,7 @@
 package tgw.evolution.util;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.world.dimension.Dimension;
+import net.minecraft.world.DimensionType;
 import tgw.evolution.entities.projectiles.IAerodynamicEntity;
 
 public final class Gravity {
@@ -32,7 +32,7 @@ public final class Gravity {
     /**
      * Returns the gravitational acceleration of the given dimension in metres / tick^2.
      */
-    public static double gravity(Dimension dimension) {
+    public static double gravity(DimensionType dimension) {
         return EARTH_GRAVITY;
     }
 
@@ -40,27 +40,27 @@ public final class Gravity {
      * Returns the horizontal drag due to air resistance in the given dimension, based on the area of the body.
      */
     public static double horizontalDrag(Entity entity) {
-        if (entity.getEntityWorld().getDimension().isSurfaceWorld()) {
-            return 0.5 * AIR_DENSITY * entity.getWidth() * entity.getHeight() * coefOfDrag(entity);
+        if (entity.level.dimensionType().natural()) {
+            return 0.5 * AIR_DENSITY * entity.getBbWidth() * entity.getBbHeight() * coefOfDrag(entity);
         }
         return 0;
     }
 
     public static double horizontalWaterDrag(Entity entity) {
-        return 0.5 * WATER_DENSITY * entity.getWidth() * entity.getHeight() * coefOfDrag(entity);
+        return 0.5 * WATER_DENSITY * entity.getBbWidth() * entity.getBbHeight() * coefOfDrag(entity);
     }
 
     /**
      * Returns the vertical drag due to air resistance in the given dimension, based on the area of the body.
      */
     public static double verticalDrag(Entity entity) {
-        if (entity.getEntityWorld().getDimension().isSurfaceWorld()) {
-            return 0.5 * AIR_DENSITY * entity.getWidth() * entity.getWidth() * coefOfDrag(entity);
+        if (entity.level.dimensionType().natural()) {
+            return 0.5 * AIR_DENSITY * entity.getBbWidth() * entity.getBbWidth() * coefOfDrag(entity);
         }
         return 0;
     }
 
     public static double verticalWaterDrag(Entity entity) {
-        return 0.5 * WATER_DENSITY * entity.getWidth() * entity.getWidth() * coefOfDrag(entity);
+        return 0.5 * WATER_DENSITY * entity.getBbWidth() * entity.getBbWidth() * coefOfDrag(entity);
     }
 }

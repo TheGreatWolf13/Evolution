@@ -1,5 +1,6 @@
 package tgw.evolution.client.gui.advancements;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.item.ItemStack;
@@ -48,7 +49,7 @@ public enum AdvancementTabType {
         return null;
     }
 
-    public void draw(AbstractGui gui, int x, int y, int width, int height, boolean selected, int index) {
+    public void draw(MatrixStack matrices, AbstractGui gui, int x, int y, int width, int height, boolean selected, int index) {
         int i = this.textureX;
         index %= this.getMax(width, height);
         if (index > 0) {
@@ -58,42 +59,35 @@ public enum AdvancementTabType {
             i += this.width;
         }
         int j = selected ? this.textureY + this.height : this.textureY;
-        gui.blit(x + this.getX(index, width, height), y + this.getY(index, width, height), i, j, this.width, this.height);
-    }
-
-    public void draw(AbstractGui gui, int x, int y, boolean p_192651_4_, int p_192651_5_) {
-        int i = this.textureX;
-        if (p_192651_5_ > 0) {
-            i += this.width;
-        }
-        if (p_192651_5_ == this.max - 1) {
-            i += this.width;
-        }
-        int j = p_192651_4_ ? this.textureY + this.height : this.textureY;
-        gui.blit(x + this.getX(p_192651_5_), y + this.getY(p_192651_5_), i, j, this.width, this.height);
+        gui.blit(matrices, x + this.getX(index, width, height), y + this.getY(index, width, height), i, j, this.width, this.height);
     }
 
     public void drawIcon(int left, int top, int width, int height, int index, ItemRenderer renderItem, ItemStack stack) {
         int i = left + this.getX(index, width, height);
         int j = top + this.getY(index, width, height);
         switch (this) {
-            case ABOVE:
+            case ABOVE: {
                 i += 6;
                 j += 9;
                 break;
-            case BELOW:
+            }
+            case BELOW: {
                 i += 6;
                 j += 6;
                 break;
-            case LEFT:
+            }
+            case LEFT: {
                 i += 10;
                 j += 5;
                 break;
-            case RIGHT:
+            }
+            case RIGHT: {
                 i += 6;
                 j += 5;
+                break;
+            }
         }
-        renderItem.renderItemAndEffectIntoGUI(null, stack, i, j);
+        renderItem.renderAndDecorateItem(null, stack, i, j);
     }
 
     public int getMax() {

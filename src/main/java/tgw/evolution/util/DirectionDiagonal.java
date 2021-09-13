@@ -39,7 +39,7 @@ public enum DirectionDiagonal {
         return SOUTH_EAST;
     }
 
-    public void movePos(BlockPos.MutableBlockPos mutablePos) {
+    public void movePos(BlockPos.Mutable mutablePos) {
         mutablePos.move(this.xDirection).move(this.zDirection);
     }
 }

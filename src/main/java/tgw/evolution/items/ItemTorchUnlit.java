@@ -38,38 +38,38 @@ public class ItemTorchUnlit extends ItemWallOrFloor {
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
         tooltip.add(EvolutionTexts.TOOLTIP_TORCH_RELIT);
+    }
+
+    @Override
+    public String getDescriptionId() {
+        return this.getOrCreateDescriptionId();
     }
 
     @Nullable
     @Override
-    protected BlockState getStateForPlacement(BlockItemUseContext context) {
+    protected BlockState getPlacementState(BlockItemUseContext context) {
         BlockState wallState = this.wallBlock.getStateForPlacement(context);
         BlockState stateForPlacement = null;
-        IWorldReader worldIn = context.getWorld();
-        BlockPos blockpos = context.getPos();
+        IWorldReader world = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
         for (Direction direction : context.getNearestLookingDirections()) {
             if (direction != Direction.UP) {
                 BlockState floorState = direction == Direction.DOWN ? this.getBlock().getStateForPlacement(context) : wallState;
-                if (floorState != null && floorState.isValidPosition(worldIn, blockpos)) {
-                    stateForPlacement = floorState.with(LIT, false);
+                if (floorState != null && floorState.canSurvive(world, blockpos)) {
+                    stateForPlacement = floorState.setValue(LIT, false);
                     break;
                 }
             }
         }
-        return stateForPlacement != null && worldIn.func_217350_a(stateForPlacement, blockpos, ISelectionContext.dummy()) ? stateForPlacement : null;
+        return stateForPlacement != null && world.isUnobstructed(stateForPlacement, blockpos, ISelectionContext.empty()) ? stateForPlacement : null;
     }
 
     @Override
-    public String getTranslationKey() {
-        return this.getDefaultTranslationKey();
-    }
-
-    @Override
-    public ActionResultType onItemUse(ItemUseContext context) {
-        World world = context.getWorld();
-        BlockPos pos = context.getPos();
+    public ActionResultType useOn(ItemUseContext context) {
+        World world = context.getLevel();
+        BlockPos pos = context.getClickedPos();
         BlockState state = world.getBlockState(pos);
         Block block = state.getBlock();
         if (block instanceof IFireSource && ((IFireSource) block).isFireSource(state)) {
@@ -77,17 +77,17 @@ public class ItemTorchUnlit extends ItemWallOrFloor {
             if (CapabilityChunkStorage.remove(chunk, EnumStorage.OXYGEN, 1)) {
                 CapabilityChunkStorage.add(chunk, EnumStorage.CARBON_DIOXIDE, 1);
                 PlayerEntity player = context.getPlayer();
-                context.getItem().shrink(1);
+                context.getItemInHand().shrink(1);
                 ItemStack stack = ItemTorch.createStack(world, 1);
-                if (!player.inventory.addItemStackToInventory(stack)) {
+                if (!player.inventory.add(stack)) {
                     BlockUtils.dropItemStack(world, pos, stack);
                 }
-                world.playSound(player, pos, SoundEvents.BLOCK_FIRE_AMBIENT, SoundCategory.PLAYERS, 1.0F, world.rand.nextFloat() * 0.7F + 0.3F);
-                player.addStat(Stats.ITEM_CRAFTED.get(EvolutionItems.torch.get()));
+                world.playSound(player, pos, SoundEvents.FIRE_AMBIENT, SoundCategory.PLAYERS, 1.0F, world.random.nextFloat() * 0.7F + 0.3F);
+                player.awardStat(Stats.ITEM_CRAFTED.get(EvolutionItems.torch.get()));
                 return ActionResultType.SUCCESS;
             }
             return ActionResultType.FAIL;
         }
-        return super.onItemUse(context);
+        return super.useOn(context);
     }
 }

@@ -5,14 +5,16 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
 import net.minecraft.client.gui.IProgressMeter;
 import net.minecraft.client.gui.ScreenManager;
-import net.minecraft.client.renderer.model.ModelBakery;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemModelsProperties;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.stats.Stat;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldType;
+import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -22,16 +24,12 @@ import tgw.evolution.client.gui.ScreenCorpse;
 import tgw.evolution.client.gui.ScreenInventoryExtended;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.events.ItemEvents;
-import tgw.evolution.init.EvolutionContainers;
-import tgw.evolution.init.EvolutionParticles;
-import tgw.evolution.init.EvolutionRenderer;
-import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.init.*;
 import tgw.evolution.stats.EvolutionStatisticsManager;
+import tgw.evolution.util.RockVariant;
 import tgw.evolution.util.SkinType;
-import tgw.evolution.util.reflection.StaticFieldHandler;
 
 import java.util.Map;
-import java.util.Set;
 
 public class ClientProxy implements IProxy {
 
@@ -45,28 +43,55 @@ public class ClientProxy implements IProxy {
                                                                     InputMappings.Type.KEYSYM,
                                                                     GLFW.GLFW_KEY_BACKSLASH,
                                                                     "key.categories.creative");
-    public static final StaticFieldHandler<ModelBakery, Set<ResourceLocation>> BUILTIN_TEXTURES = new StaticFieldHandler<>(ModelBakery.class,
-                                                                                                                           "field_177602_b");
 
-    private static void addTextures() {
-        Set<ResourceLocation> builtin = BUILTIN_TEXTURES.get();
-        for (String str : EvolutionResources.SLOT_EXTENDED) {
-            //noinspection ObjectAllocationInLoop
-            builtin.add(new ResourceLocation(str));
+    private static void addOverrides() {
+        ItemModelsProperties.register(EvolutionItems.shield_dev.get(),
+                                      new ResourceLocation("blocking"),
+                                      (stack, world, entity) -> entity != null && entity.isUsingItem() && entity.getUseItem() == stack ? 1.0F : 0.0F);
+        ResourceLocation throwing = new ResourceLocation("throwing");
+        for (RockVariant variant : RockVariant.values()) {
+            Item item;
+            try {
+                item = variant.getJavelin();
+            }
+            catch (IllegalStateException t) {
+                item = null;
+            }
+            if (item != null) {
+                ItemModelsProperties.register(item,
+                                              throwing,
+                                              (stack, world, entity) -> entity != null && entity.isUsingItem() && entity.getUseItem() == stack ?
+                                                                        1.0F :
+                                                                        0.0F);
+            }
+        }
+        ItemModelsProperties.register(EvolutionItems.block_copper.get(), new ResourceLocation("oxidation"), (stack, worldIn, entity) -> {
+            CompoundNBT nbt = stack.getTag();
+            if (nbt == null) {
+                return 0;
+            }
+            return nbt.getInt("Oxidation");
+        });
+    }
+
+    public static void addTextures(TextureStitchEvent.Pre event) {
+        for (ResourceLocation resLoc : EvolutionResources.SLOT_EXTENDED) {
+            event.addSprite(resLoc);
         }
     }
 
     public static void changeWorldOrders() {
-        int evId = 0;
-        for (WorldType worldType : WorldType.WORLD_TYPES) {
-            if (worldType != null && "ev_default".equals(worldType.getName())) {
-                evId = worldType.getId();
-                break;
-            }
-        }
-        WorldType evWorld = WorldType.WORLD_TYPES[evId];
-        System.arraycopy(WorldType.WORLD_TYPES, 0, WorldType.WORLD_TYPES, 1, evId);
-        WorldType.WORLD_TYPES[0] = evWorld;
+        Evolution.LOGGER.warn("Change world order");
+//        int evId = 0;
+//        for (WorldType worldType : WorldType.WORLD_TYPES) {
+//            if (worldType != null && "ev_default".equals(worldType.getName())) {
+//                evId = worldType.getId();
+//                break;
+//            }
+//        }
+//        WorldType evWorld = WorldType.WORLD_TYPES[evId];
+//        System.arraycopy(WorldType.WORLD_TYPES, 0, WorldType.WORLD_TYPES, 1, evId);
+//        WorldType.WORLD_TYPES[0] = evWorld;
     }
 
     @Override
@@ -76,20 +101,20 @@ public class ClientProxy implements IProxy {
 
     @Override
     public World getClientWorld() {
-        return Minecraft.getInstance().world;
+        return Minecraft.getInstance().level;
     }
 
     @Override
     public SkinType getSkinType() {
-        return "default".equals(((AbstractClientPlayerEntity) this.getClientPlayer()).getSkinType()) ? SkinType.STEVE : SkinType.ALEX;
+        return "default".equals(((AbstractClientPlayerEntity) this.getClientPlayer()).getModelName()) ? SkinType.STEVE : SkinType.ALEX;
     }
 
     @Override
     public void init() {
         EvolutionRenderer.registryEntityRenders();
-        addTextures();
-        ScreenManager.registerFactory(EvolutionContainers.EXTENDED_INVENTORY.get(), ScreenInventoryExtended::new);
-        ScreenManager.registerFactory(EvolutionContainers.CORPSE.get(), ScreenCorpse::new);
+        addOverrides();
+        ScreenManager.register(EvolutionContainers.EXTENDED_INVENTORY.get(), ScreenInventoryExtended::new);
+        ScreenManager.register(EvolutionContainers.CORPSE.get(), ScreenCorpse::new);
         ColorManager.registerBlockColorHandlers(Minecraft.getInstance().getBlockColors());
         ColorManager.registerItemColorHandlers(Minecraft.getInstance().getItemColors());
         FMLJavaModLoadingContext.get().getModEventBus().addListener(ClientEvents::onModelBakeEvent);
@@ -104,13 +129,13 @@ public class ClientProxy implements IProxy {
 
     @Override
     public void updateStats(Object2LongMap<Stat<?>> statsData) {
-        for (Map.Entry<Stat<?>, Long> entry : statsData.entrySet()) {
+        for (Map.Entry<Stat<?>, Long> entry : statsData.object2LongEntrySet()) {
             Stat<?> stat = entry.getKey();
             long i = entry.getValue();
             ((EvolutionStatisticsManager) Minecraft.getInstance().player.getStats()).setValueLong(stat, i);
         }
-        if (Minecraft.getInstance().currentScreen instanceof IProgressMeter) {
-            ((IProgressMeter) Minecraft.getInstance().currentScreen).onStatsUpdated();
+        if (Minecraft.getInstance().screen instanceof IProgressMeter) {
+            ((IProgressMeter) Minecraft.getInstance().screen).onStatsUpdated();
         }
     }
 }

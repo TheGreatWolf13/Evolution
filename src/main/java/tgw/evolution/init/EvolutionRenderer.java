@@ -4,17 +4,11 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
-import tgw.evolution.blocks.tileentities.*;
 import tgw.evolution.client.renderer.entities.*;
-import tgw.evolution.client.renderer.tile.*;
-import tgw.evolution.entities.EntityCow;
-import tgw.evolution.entities.misc.EntityFallingPeat;
-import tgw.evolution.entities.misc.EntityFallingTimber;
-import tgw.evolution.entities.misc.EntityFallingWeight;
-import tgw.evolution.entities.misc.EntityPlayerCorpse;
-import tgw.evolution.entities.projectiles.EntityHook;
-import tgw.evolution.entities.projectiles.EntitySpear;
-import tgw.evolution.entities.projectiles.EntityTorch;
+import tgw.evolution.client.renderer.tile.RenderTEChopping;
+import tgw.evolution.client.renderer.tile.RenderTEMolding;
+import tgw.evolution.client.renderer.tile.RenderTEPitKiln;
+import tgw.evolution.client.renderer.tile.RenderTESchematic;
 
 @OnlyIn(Dist.CLIENT)
 public final class EvolutionRenderer {
@@ -23,21 +17,17 @@ public final class EvolutionRenderer {
     }
 
     public static void registryEntityRenders() {
-        RenderingRegistry.registerEntityRenderingHandler(EntityCow.class, RenderCow::new);
-        RenderingRegistry.registerEntityRenderingHandler(EntityFallingWeight.class, RenderFallingWeight::new);
-        RenderingRegistry.registerEntityRenderingHandler(EntityFallingPeat.class, RenderFallingPeat::new);
-        RenderingRegistry.registerEntityRenderingHandler(EntityFallingTimber.class, RenderFallingTimber::new);
-//        RenderingRegistry.registerEntityRenderingHandler(EntityBull.class, RenderBull::new);
-//        RenderingRegistry.registerEntityRenderingHandler(EntityShadowHound.class, RenderShadowHound::new);
-        RenderingRegistry.registerEntityRenderingHandler(EntitySpear.class, RenderSpear::new);
-        RenderingRegistry.registerEntityRenderingHandler(EntityHook.class, RenderHook::new);
-        RenderingRegistry.registerEntityRenderingHandler(EntityTorch.class, RenderTorch::new);
-        RenderingRegistry.registerEntityRenderingHandler(EntityPlayerCorpse.class, RenderPlayerCorpse::new);
-        ClientRegistry.bindTileEntitySpecialRenderer(TEKnapping.class, new RenderTileKnapping());
-//        ClientRegistry.bindTileEntitySpecialRenderer(TEShadowHound.class, new RenderTileShadowHound());
-        ClientRegistry.bindTileEntitySpecialRenderer(TEMolding.class, new RenderTileMolding());
-        ClientRegistry.bindTileEntitySpecialRenderer(TEChopping.class, new RenderTileChopping());
-        ClientRegistry.bindTileEntitySpecialRenderer(TEPitKiln.class, new RenderTilePitKiln());
-        ClientRegistry.bindTileEntitySpecialRenderer(TESchematic.class, new RenderTileSchematic());
+        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.COW.get(), RenderCow::new);
+        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.FALLING_PEAT.get(), RenderFallingPeat::new);
+        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.FALLING_WEIGHT.get(), RenderFallingWeight::new);
+        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.HOOK.get(), RenderHook::new);
+        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.PLAYER_CORPSE.get(), RenderPlayerCorpse::new);
+        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.SIT.get(), RenderDummy::new);
+        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.SPEAR.get(), RenderSpear::new);
+        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.TORCH.get(), RenderTorch::new);
+        ClientRegistry.bindTileEntityRenderer(EvolutionTEs.CHOPPING.get(), RenderTEChopping::new);
+        ClientRegistry.bindTileEntityRenderer(EvolutionTEs.MOLDING.get(), RenderTEMolding::new);
+        ClientRegistry.bindTileEntityRenderer(EvolutionTEs.PIT_KILN.get(), RenderTEPitKiln::new);
+        ClientRegistry.bindTileEntityRenderer(EvolutionTEs.SCHEMATIC.get(), RenderTESchematic::new);
     }
 }

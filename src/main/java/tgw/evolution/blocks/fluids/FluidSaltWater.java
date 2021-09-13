@@ -2,7 +2,7 @@ package tgw.evolution.blocks.fluids;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.IFluidState;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
@@ -23,8 +23,13 @@ public abstract class FluidSaltWater extends FluidGeneric {
 
     private static Properties makeProperties() {
         return new Properties(EvolutionFluids.SALT_WATER,
-                              FluidAttributes.builder(EvolutionResources.FRESH_WATER, EvolutionResources.FRESH_WATER).color(0x4009_00b3)).block(
-                EvolutionBlocks.SALT_WATER);
+                              FluidAttributes.builder(EvolutionResources.FLUID_FRESH_WATER, EvolutionResources.FLUID_FRESH_WATER)
+                                             .color(0x4009_00b3)).block(EvolutionBlocks.SALT_WATER);
+    }
+
+    @Override
+    public int getAmount(FluidState state) {
+        return state.getValue(LEVEL);
     }
 
     @Override
@@ -33,18 +38,14 @@ public abstract class FluidSaltWater extends FluidGeneric {
     }
 
     @Override
-    public int getLevel(IFluidState state) {
-        return state.get(LEVEL_1_8);
-    }
-
-    @Override
     public ITextComponent getTextComp() {
         return EvolutionTexts.FLUID_SALT_WATER;
     }
 
     @Override
-    public boolean level(World world, BlockPos pos, IFluidState fluidState, Direction direction, FluidGeneric otherFluid, int tolerance) {
-        BlockPos.MutableBlockPos auxPos = new BlockPos.MutableBlockPos(pos).move(direction);
+    public boolean level(World world, BlockPos pos, FluidState fluidState, Direction direction, FluidGeneric otherFluid, int tolerance) {
+        BlockPos.Mutable auxPos = new BlockPos.Mutable();
+        auxPos.set(pos).move(direction);
         BlockState stateAtOffset = world.getBlockState(auxPos);
         //noinspection SwitchStatementWithTooFewBranches
         switch (otherFluid.getId()) {
@@ -85,7 +86,7 @@ public abstract class FluidSaltWater extends FluidGeneric {
         }
 
         @Override
-        public boolean isSource(IFluidState state) {
+        public boolean isSource(FluidState state) {
             return false;
         }
     }
@@ -97,7 +98,7 @@ public abstract class FluidSaltWater extends FluidGeneric {
         }
 
         @Override
-        public boolean isSource(IFluidState state) {
+        public boolean isSource(FluidState state) {
             return true;
         }
     }

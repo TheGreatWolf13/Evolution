@@ -7,7 +7,6 @@ var VarInsnNode = Java.type("org.objectweb.asm.tree.VarInsnNode");
 var FieldInsnNode = Java.type("org.objectweb.asm.tree.FieldInsnNode");
 
 var DEALFIREDAMAGE = ASMAPI.mapMethod("func_70081_e");
-var BASETICK = ASMAPI.mapMethod("func_70030_z");
 var ATTACKENTITYFROM = ASMAPI.mapMethod("func_70097_a");
 var UPDATEFALLSTATE = ASMAPI.mapMethod("func_184231_a");
 var FALLDISTANCE = ASMAPI.mapField("field_70143_R");
@@ -40,11 +39,6 @@ function initializeCoreMod() {
 						break;
 					}
 				}
-				for (var i in methods) {
-                    if (patch(methods[i], BASETICK, patchOnFire)) {
-                        break;
-                    }
-                }
                 for (var i in methods) {
                     if (patch(methods[i], UPDATEFALLSTATE, patchUpdateFallState)) {
                         break;
@@ -68,29 +62,6 @@ function patchDealFireDamage(instructions) {
 		false
 	));
 	instructions.add(new InsnNode(Opcodes.RETURN));
-}
-
-function patchOnFire(instructions) {
-	var attackEntityFrom;
-	for (var i = 0; i < instructions.size(); i++) {
-        var instruction = instructions.get(i);
-        if (instruction.getOpcode() == Opcodes.INVOKEVIRTUAL && instruction.name == ATTACKENTITYFROM) {
-            attackEntityFrom = instruction;
-            break;
-        }
-    }
-    var pop = attackEntityFrom.getNext();
-    var fconst = attackEntityFrom.getPrevious();
-    var onfire = fconst.getPrevious();
-    var aload = onfire.getPrevious();
-    instructions.remove(onfire);
-    instructions.remove(fconst);
-    instructions.remove(pop);
-
-    attackEntityFrom.setOpcode(Opcodes.INVOKESTATIC);
-    attackEntityFrom.owner = "tgw/evolution/hooks/EntityHooks";
-    attackEntityFrom.name = "onFireDamage";
-    attackEntityFrom.desc = "(Lnet/minecraft/entity/Entity;)V";
 }
 
 function patchUpdateFallState(instructions) {

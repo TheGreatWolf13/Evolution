@@ -1,10 +1,12 @@
 package tgw.evolution.util.hitbox;
 
 import net.minecraft.entity.monster.CreeperEntity;
+import net.minecraft.util.math.vector.Vector3d;
 import tgw.evolution.util.MathHelper;
 
 public class HitboxCreeper extends HitboxEntity<CreeperEntity> {
 
+    public static final Vector3d NECK_STANDING = new Vector3d(0, 18 / 16.0, 0);
     protected final Hitbox body = this.addBox(BodyPart.CHEST, aabb(-4, -12, -2, 4, 0, 2));
     protected final Hitbox head = this.addBox(BodyPart.HEAD, HitboxLib.BIPED_HEAD);
     protected final Hitbox legFL = this.addBox(BodyPart.FRONT_LEFT_LEG, HitboxLib.CREEPER_LEG);
@@ -19,7 +21,7 @@ public class HitboxCreeper extends HitboxEntity<CreeperEntity> {
     public void init(CreeperEntity entity, float partialTicks) {
         this.reset();
         this.rotationYaw = -MathHelper.getEntityBodyYaw(entity, partialTicks);
-        this.rotationPitch = -entity.getPitch(partialTicks);
+        this.rotationPitch = -entity.getViewXRot(partialTicks);
         this.limbSwing = MathHelper.getLimbSwing(entity, partialTicks);
         this.limbSwingAmount = MathHelper.getLimbSwingAmount(entity, partialTicks);
         //Main
@@ -27,7 +29,7 @@ public class HitboxCreeper extends HitboxEntity<CreeperEntity> {
         //Head
         this.head.pivotY = 18 / 16.0f;
         this.head.rotationX = MathHelper.degToRad(this.rotationPitch);
-        this.head.rotationY = MathHelper.degToRad(-entity.getYaw(partialTicks) - this.rotationYaw);
+        this.head.rotationY = MathHelper.degToRad(-entity.getViewYRot(partialTicks) - this.rotationYaw);
         //Body
         this.body.pivotY = 18 / 16.0f;
         //LegFL

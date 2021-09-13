@@ -30,6 +30,7 @@ import net.minecraftforge.fml.network.PacketDistributor;
 import org.apache.commons.io.FileUtils;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionNetwork;
+import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.PacketSCStatistics;
 import tgw.evolution.util.NBTTypes;
 
@@ -57,7 +58,7 @@ public class EvolutionServerStatisticsManager extends ServerStatisticsManager {
         this.partialData.defaultReturnValue(0);
         if (statsFile.isFile()) {
             try {
-                this.parseLocal(server.getDataFixer(), FileUtils.readFileToString(statsFile));
+                this.parseLocal(server.getFixerUpper(), FileUtils.readFileToString(statsFile));
             }
             catch (IOException exception) {
                 Evolution.LOGGER.error("Couldn't read statistics file {}", statsFile, exception);
@@ -68,16 +69,12 @@ public class EvolutionServerStatisticsManager extends ServerStatisticsManager {
         }
     }
 
-    private static <T> ResourceLocation getStatResourceLocation(Stat<T> stat) {
-        return stat.getType().getRegistry().getKey(stat.getValue());
-    }
-
-    private static CompoundNBT readNBTFromJson(JsonObject jsonObject) {
+    private static CompoundNBT fromJson(JsonObject jsonObject) {
         CompoundNBT compoundNBT = new CompoundNBT();
         for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
             JsonElement element = entry.getValue();
             if (element.isJsonObject()) {
-                compoundNBT.put(entry.getKey(), readNBTFromJson(element.getAsJsonObject()));
+                compoundNBT.put(entry.getKey(), fromJson(element.getAsJsonObject()));
             }
             else if (element.isJsonPrimitive()) {
                 JsonPrimitive primitive = element.getAsJsonPrimitive();
@@ -89,41 +86,12 @@ public class EvolutionServerStatisticsManager extends ServerStatisticsManager {
         return compoundNBT;
     }
 
-    private static <T> Optional<Stat<T>> tryGetStat(StatType<T> statType, String resLoc) {
-        Optional<ResourceLocation> optional = Optional.ofNullable(ResourceLocation.tryCreate(resLoc));
-        Registry<T> registry = statType.getRegistry();
-        return optional.flatMap(registry::getValue).map(statType::get);
+    private static <T> ResourceLocation getKey(Stat<T> stat) {
+        return stat.getType().getRegistry().getKey(stat.getValue());
     }
 
-    @Override
-    protected String func_199061_b() {
-        Map<StatType<?>, JsonObject> dataMap = Maps.newHashMap();
-        for (Object2LongMap.Entry<Stat<?>> entry : this.statsData.object2LongEntrySet()) {
-            Stat<?> stat = entry.getKey();
-            //noinspection ObjectAllocationInLoop
-            dataMap.computeIfAbsent(stat.getType(), key -> new JsonObject())
-                   .addProperty(getStatResourceLocation(stat).toString(), entry.getLongValue());
-        }
-        JsonObject data = new JsonObject();
-        for (Map.Entry<StatType<?>, JsonObject> entry : dataMap.entrySet()) {
-            data.add(Registry.STATS.getKey(entry.getKey()).toString(), entry.getValue());
-        }
-        Map<StatType<?>, JsonObject> partialDataMap = Maps.newHashMap();
-        for (Object2FloatMap.Entry<Stat<?>> entry : this.partialData.object2FloatEntrySet()) {
-            Stat<?> stat = entry.getKey();
-            //noinspection ObjectAllocationInLoop
-            partialDataMap.computeIfAbsent(stat.getType(), key -> new JsonObject())
-                          .addProperty(getStatResourceLocation(stat).toString(), entry.getFloatValue());
-        }
-        JsonObject partialData = new JsonObject();
-        for (Map.Entry<StatType<?>, JsonObject> entry : partialDataMap.entrySet()) {
-            partialData.add(Registry.STATS.getKey(entry.getKey()).toString(), entry.getValue());
-        }
-        JsonObject finalObj = new JsonObject();
-        finalObj.add("stats", data);
-        finalObj.add("partial", partialData);
-        finalObj.addProperty("DataVersion", SharedConstants.getVersion().getWorldVersion());
-        return finalObj.toString();
+    private static <T> Optional<Stat<T>> getStat(StatType<T> statType, String resLoc) {
+        return Optional.ofNullable(ResourceLocation.tryParse(resLoc)).flatMap(statType.getRegistry()::getOptional).map(statType::get);
     }
 
     private Set<Stat<?>> getDirty() {
@@ -168,9 +136,22 @@ public class EvolutionServerStatisticsManager extends ServerStatisticsManager {
         this.setValueLong(stat, this.getValueLong(stat) + amount);
     }
 
-    public void incrementPartial(Stat<?> stat, float amount) {
-        if (amount <= 0 || Float.isInfinite(amount) || Float.isNaN(amount)) {
+    public void incrementPartial(PlayerEntity player, Stat<?> stat, float amount) {
+        if (amount <= 0 || Float.isNaN(amount)) {
             return;
+        }
+        if (Float.isInfinite(amount)) {
+            if (stat.getType() == Stats.CUSTOM) {
+                if (EvolutionStats.DAMAGE_TAKEN_RAW.containsValue(stat.getValue())) {
+                    amount = player.getHealth() + player.getAbsorptionAmount();
+                }
+                else {
+                    return;
+                }
+            }
+            else {
+                return;
+            }
         }
         long value = (long) amount;
         amount -= value;
@@ -199,26 +180,24 @@ public class EvolutionServerStatisticsManager extends ServerStatisticsManager {
                 Evolution.LOGGER.error("Unable to parse Stat data from {}", this.statsFile);
                 return;
             }
-            CompoundNBT compoundNBT = readNBTFromJson(jsonElement.getAsJsonObject());
+            CompoundNBT compoundNBT = fromJson(jsonElement.getAsJsonObject());
             if (!compoundNBT.contains("DataVersion", NBTTypes.ANY_NUMERIC)) {
                 compoundNBT.putInt("DataVersion", 1_343);
             }
             compoundNBT = NBTUtil.update(dataFixer, DefaultTypeReferences.STATS, compoundNBT, compoundNBT.getInt("DataVersion"));
             if (compoundNBT.contains("stats", NBTTypes.COMPOUND_NBT)) {
                 CompoundNBT stats = compoundNBT.getCompound("stats");
-                for (String s : stats.keySet()) {
+                for (String s : stats.getAllKeys()) {
                     if (stats.contains(s, NBTTypes.COMPOUND_NBT)) {
                         //noinspection ObjectAllocationInLoop
-                        Util.acceptOrElse(Registry.STATS.getValue(new ResourceLocation(s)), statType -> {
+                        Util.ifElse(Registry.STAT_TYPE.getOptional(new ResourceLocation(s)), statType -> {
                             CompoundNBT compoundnbt2 = stats.getCompound(s);
-                            for (String s1 : compoundnbt2.keySet()) {
+                            for (String s1 : compoundnbt2.getAllKeys()) {
                                 if (compoundnbt2.contains(s1, NBTTypes.ANY_NUMERIC)) {
                                     //noinspection ObjectAllocationInLoop
-                                    Util.acceptOrElse(tryGetStat(statType, s1),
-                                                      stat -> this.statsData.put(stat, compoundnbt2.getLong(s1)),
-                                                      () -> Evolution.LOGGER.warn("Invalid statistic in {}: Don't know what {} is",
-                                                                                  this.statsFile,
-                                                                                  s1));
+                                    Util.ifElse(getStat(statType, s1),
+                                                stat -> this.statsData.put(stat, compoundnbt2.getLong(s1)),
+                                                () -> Evolution.LOGGER.warn("Invalid statistic in {}: Don't know what {} is", this.statsFile, s1));
                                 }
                                 else {
                                     Evolution.LOGGER.warn("Invalid statistic value in {}: Don't know what {} is for key {}",
@@ -233,19 +212,17 @@ public class EvolutionServerStatisticsManager extends ServerStatisticsManager {
             }
             if (compoundNBT.contains("partial", NBTTypes.COMPOUND_NBT)) {
                 CompoundNBT partial = compoundNBT.getCompound("partial");
-                for (String s : partial.keySet()) {
+                for (String s : partial.getAllKeys()) {
                     if (partial.contains(s, NBTTypes.COMPOUND_NBT)) {
                         //noinspection ObjectAllocationInLoop
-                        Util.acceptOrElse(Registry.STATS.getValue(new ResourceLocation(s)), statType -> {
+                        Util.ifElse(Registry.STAT_TYPE.getOptional(new ResourceLocation(s)), statType -> {
                             CompoundNBT compoundnbt2 = partial.getCompound(s);
-                            for (String s1 : compoundnbt2.keySet()) {
+                            for (String s1 : compoundnbt2.getAllKeys()) {
                                 if (compoundnbt2.contains(s1, NBTTypes.ANY_NUMERIC)) {
                                     //noinspection ObjectAllocationInLoop
-                                    Util.acceptOrElse(tryGetStat(statType, s1),
-                                                      stat -> this.partialData.put(stat, compoundnbt2.getFloat(s1)),
-                                                      () -> Evolution.LOGGER.warn("Invalid statistic in {}: Don't know what {} is",
-                                                                                  this.statsFile,
-                                                                                  s1));
+                                    Util.ifElse(getStat(statType, s1),
+                                                stat -> this.partialData.put(stat, compoundnbt2.getFloat(s1)),
+                                                () -> Evolution.LOGGER.warn("Invalid statistic in {}: Don't know what {} is", this.statsFile, s1));
                                 }
                                 else {
                                     Evolution.LOGGER.warn("Invalid statistic value in {}: Don't know what {} is for key {}",
@@ -266,7 +243,7 @@ public class EvolutionServerStatisticsManager extends ServerStatisticsManager {
 
     @Override
     public void sendStats(ServerPlayerEntity player) {
-        int i = this.server.getTickCounter();
+        int i = this.server.getTickCount();
         Object2LongMap<Stat<?>> stats = new Object2LongOpenHashMap<>();
         if (i - this.lastStatRequest > 100) {
             this.lastStatRequest = i;
@@ -290,5 +267,34 @@ public class EvolutionServerStatisticsManager extends ServerStatisticsManager {
     public void setValueLong(Stat<?> stat, long amount) {
         this.statsData.put(stat, amount);
         this.dirty.add(stat);
+    }
+
+    @Override
+    protected String toJson() {
+        Map<StatType<?>, JsonObject> dataMap = Maps.newHashMap();
+        for (Object2LongMap.Entry<Stat<?>> entry : this.statsData.object2LongEntrySet()) {
+            Stat<?> stat = entry.getKey();
+            //noinspection ObjectAllocationInLoop
+            dataMap.computeIfAbsent(stat.getType(), key -> new JsonObject()).addProperty(getKey(stat).toString(), entry.getLongValue());
+        }
+        JsonObject data = new JsonObject();
+        for (Map.Entry<StatType<?>, JsonObject> entry : dataMap.entrySet()) {
+            data.add(Registry.STAT_TYPE.getKey(entry.getKey()).toString(), entry.getValue());
+        }
+        Map<StatType<?>, JsonObject> partialDataMap = Maps.newHashMap();
+        for (Object2FloatMap.Entry<Stat<?>> entry : this.partialData.object2FloatEntrySet()) {
+            Stat<?> stat = entry.getKey();
+            //noinspection ObjectAllocationInLoop
+            partialDataMap.computeIfAbsent(stat.getType(), key -> new JsonObject()).addProperty(getKey(stat).toString(), entry.getFloatValue());
+        }
+        JsonObject partialData = new JsonObject();
+        for (Map.Entry<StatType<?>, JsonObject> entry : partialDataMap.entrySet()) {
+            partialData.add(Registry.STAT_TYPE.getKey(entry.getKey()).toString(), entry.getValue());
+        }
+        JsonObject finalObj = new JsonObject();
+        finalObj.add("stats", data);
+        finalObj.add("partial", partialData);
+        finalObj.addProperty("DataVersion", SharedConstants.getCurrentVersion().getWorldVersion());
+        return finalObj.toString();
     }
 }

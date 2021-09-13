@@ -23,7 +23,7 @@ public class PacketSCUpdateBeltBackItem implements IPacket {
     }
 
     public static PacketSCUpdateBeltBackItem decode(PacketBuffer buffer) {
-        return new PacketSCUpdateBeltBackItem(buffer.readInt(), buffer.readBoolean(), buffer.readItemStack());
+        return new PacketSCUpdateBeltBackItem(buffer.readInt(), buffer.readBoolean(), buffer.readItem());
     }
 
     public static void encode(PacketSCUpdateBeltBackItem packet, PacketBuffer buffer) {

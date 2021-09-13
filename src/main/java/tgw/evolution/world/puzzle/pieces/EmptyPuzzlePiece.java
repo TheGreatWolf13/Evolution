@@ -25,17 +25,27 @@ public class EmptyPuzzlePiece extends PuzzlePiece {
     }
 
     @Override
+    public MutableBoundingBox getBoundingBox(TemplateManager templateManagerIn, BlockPos pos, Rotation rotationIn) {
+        return MutableBoundingBox.getUnknownBox();
+    }
+
+    @Override
     public List<Template.BlockInfo> getPuzzleBlocks(TemplateManager templateManagerIn, BlockPos pos, Rotation rotationIn, Random rand) {
         return Collections.emptyList();
     }
 
     @Override
-    public MutableBoundingBox getBoundingBox(TemplateManager templateManagerIn, BlockPos pos, Rotation rotationIn) {
-        return MutableBoundingBox.getNewBoundingBox();
+    public EnumPuzzleType getType() {
+        return EnumPuzzleType.EMPTY;
     }
 
     @Override
-    public boolean place(TemplateManager templateManagerIn, IWorld worldIn, BlockPos pos, Rotation rotationIn, MutableBoundingBox boundsIn, Random rand) {
+    public boolean place(TemplateManager templateManagerIn,
+                         IWorld worldIn,
+                         BlockPos pos,
+                         Rotation rotationIn,
+                         MutableBoundingBox boundsIn,
+                         Random rand) {
         return true;
     }
 
@@ -47,10 +57,5 @@ public class EmptyPuzzlePiece extends PuzzlePiece {
     @Override
     public String toString() {
         return "Empty";
-    }
-
-    @Override
-    public EnumPuzzleType getType() {
-        return EnumPuzzleType.EMPTY;
     }
 }

@@ -1,10 +1,12 @@
 package tgw.evolution.client.gui.widgets;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.client.config.GuiUtils;
+import net.minecraftforge.fml.client.gui.GuiUtils;
 
 @OnlyIn(Dist.CLIENT)
 public class GuiCheckBox extends Button {
@@ -12,17 +14,17 @@ public class GuiCheckBox extends Button {
     private final boolean leftText;
     private boolean isChecked;
 
-    public GuiCheckBox(int xPos, int yPos, String displayString, boolean isChecked, boolean leftText) {
-        super(xPos, yPos, Minecraft.getInstance().fontRenderer.getStringWidth(displayString) + 2 + 11, 11, displayString, b -> {
+    public GuiCheckBox(int xPos, int yPos, ITextComponent displayString, boolean isChecked, boolean leftText) {
+        super(xPos, yPos, Minecraft.getInstance().font.width(displayString) + 2 + 11, 11, displayString, b -> {
         });
         this.isChecked = isChecked;
         this.boxWidth = 11;
         this.height = 11;
-        this.width = this.boxWidth + 2 + Minecraft.getInstance().fontRenderer.getStringWidth(displayString);
+        this.width = this.boxWidth + 2 + Minecraft.getInstance().font.width(displayString);
         this.leftText = leftText;
     }
 
-    public GuiCheckBox(int xPos, int yPos, String displayString, boolean isChecked) {
+    public GuiCheckBox(int xPos, int yPos, ITextComponent displayString, boolean isChecked) {
         this(xPos, yPos, displayString, isChecked, false);
     }
 
@@ -41,7 +43,7 @@ public class GuiCheckBox extends Button {
     }
 
     @Override
-    public void renderButton(int mouseX, int mouseY, float partial) {
+    public void renderButton(MatrixStack matrices, int mouseX, int mouseY, float partial) {
         if (this.visible) {
             Minecraft mc = Minecraft.getInstance();
             this.isHovered = mouseX >= this.x && mouseY >= this.y && mouseX < this.x + this.boxWidth && mouseY < this.y + this.height;
@@ -67,13 +69,14 @@ public class GuiCheckBox extends Button {
                 color = 0xa0_a0a0;
             }
             if (this.isChecked) {
-                this.drawCenteredString(mc.fontRenderer,
-                                        "x",
-                                        (this.leftText ? this.x + this.width - this.boxWidth : this.x) + this.boxWidth / 2 + 1,
-                                        this.y + 1,
-                                        0xe0_e0e0);
+                drawCenteredString(matrices,
+                                   mc.font,
+                                   "x",
+                                   (this.leftText ? this.x + this.width - this.boxWidth : this.x) + this.boxWidth / 2 + 1,
+                                   this.y + 1,
+                                   0xe0_e0e0);
             }
-            this.drawString(mc.fontRenderer, this.getMessage(), this.leftText ? this.x : this.x + this.boxWidth + 2, this.y + 2, color);
+            drawString(matrices, mc.font, this.getMessage(), this.leftText ? this.x : this.x + this.boxWidth + 2, this.y + 2, color);
         }
     }
 

@@ -4,7 +4,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import tgw.evolution.init.EvolutionDamage;
@@ -23,33 +23,33 @@ public class DamageSourceEntity extends DamageSourceEv {
 
     @Override
     @Nullable
-    public Vec3d getDamageLocation() {
-        return new Vec3d(this.damageSourceEntity.posX, this.damageSourceEntity.posY, this.damageSourceEntity.posZ);
+    public Entity getEntity() {
+        return this.damageSourceEntity;
+    }
+
+    @Nullable
+    public ITextComponent getItemDisplay() {
+        ItemStack heldStack = ((LivingEntity) this.damageSourceEntity).getMainHandItem();
+        return heldStack.getItem() instanceof IMelee ? heldStack.getDisplayName() : null;
     }
 
     @Override
-    public ITextComponent getDeathMessage(LivingEntity deadEntity) {
+    public ITextComponent getLocalizedDeathMessage(LivingEntity deadEntity) {
         ITextComponent itemComp = this.getItemDisplay();
-        String message = "death.attack." + this.damageType;
+        String message = "death.attack." + this.msgId;
         return itemComp != null ?
                new TranslationTextComponent(message + ".item", deadEntity.getDisplayName(), this.damageSourceEntity.getDisplayName(), itemComp) :
                new TranslationTextComponent(message, deadEntity.getDisplayName(), this.damageSourceEntity.getDisplayName());
     }
 
+    @Override
     @Nullable
-    public ITextComponent getItemDisplay() {
-        ItemStack heldStack = ((LivingEntity) this.damageSourceEntity).getHeldItemMainhand();
-        return heldStack.getItem() instanceof IMelee ? heldStack.getTextComponent() : null;
+    public Vector3d getSourcePosition() {
+        return this.damageSourceEntity != null ? this.damageSourceEntity.position() : null;
     }
 
     @Override
-    @Nullable
-    public Entity getTrueSource() {
-        return this.damageSourceEntity;
-    }
-
-    @Override
-    public boolean isDifficultyScaled() {
+    public boolean scalesWithDifficulty() {
         return this.damageSourceEntity != null &&
                this.damageSourceEntity instanceof LivingEntity &&
                !(this.damageSourceEntity instanceof PlayerEntity);

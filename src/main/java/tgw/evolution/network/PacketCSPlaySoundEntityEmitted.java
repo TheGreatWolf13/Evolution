@@ -28,7 +28,7 @@ public class PacketCSPlaySoundEntityEmitted implements IPacket {
                                           @Nonnull SoundCategory category,
                                           float volume,
                                           float pitch) {
-        this(entity.getEntityId(), sound.getRegistryName().toString(), category, volume, pitch);
+        this(entity.getId(), sound.getRegistryName().toString(), category, volume, pitch);
     }
 
     private PacketCSPlaySoundEntityEmitted(int entityId, @Nonnull String sound, @Nonnull SoundCategory category, float volume, float pitch) {
@@ -40,18 +40,18 @@ public class PacketCSPlaySoundEntityEmitted implements IPacket {
     }
 
     public static PacketCSPlaySoundEntityEmitted decode(PacketBuffer buffer) {
-        int entityId = buffer.readInt();
-        String sound = buffer.readString();
-        SoundCategory category = buffer.readEnumValue(SoundCategory.class);
+        int entityId = buffer.readVarInt();
+        String sound = buffer.readUtf();
+        SoundCategory category = buffer.readEnum(SoundCategory.class);
         float volume = buffer.readFloat();
         float pitch = buffer.readFloat();
         return new PacketCSPlaySoundEntityEmitted(entityId, sound, category, volume, pitch);
     }
 
     public static void encode(PacketCSPlaySoundEntityEmitted packet, PacketBuffer buffer) {
-        buffer.writeInt(packet.entityId);
-        buffer.writeString(packet.sound);
-        buffer.writeEnumValue(packet.category);
+        buffer.writeVarInt(packet.entityId);
+        buffer.writeUtf(packet.sound);
+        buffer.writeEnum(packet.category);
         buffer.writeFloat(packet.volume);
         buffer.writeFloat(packet.pitch);
     }

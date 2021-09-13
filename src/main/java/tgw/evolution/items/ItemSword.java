@@ -84,7 +84,7 @@ public class ItemSword extends ItemGenericTool implements IOffhandAttackable, IS
     }
 
     @Override
-    public UseAction getUseAction(ItemStack stack) {
+    public UseAction getUseAnimation(ItemStack stack) {
         return UseAction.BLOCK;
     }
 
@@ -94,15 +94,20 @@ public class ItemSword extends ItemGenericTool implements IOffhandAttackable, IS
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
-        ItemStack stack = player.getHeldItem(hand);
-        player.setActiveHand(hand);
+    public float reach() {
+        return 4.0f;
+    }
+
+    @Override
+    public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        player.startUsingItem(hand);
         return new ActionResult<>(ActionResultType.SUCCESS, stack);
     }
 
     @Override
-    public float reach() {
-        return 4.0f;
+    public boolean useItemPreventsSprinting() {
+        return true;
     }
 
     @Override

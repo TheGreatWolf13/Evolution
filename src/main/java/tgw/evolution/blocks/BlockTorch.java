@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import com.google.common.collect.Lists;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -10,6 +9,8 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
+import net.minecraft.loot.LootContext;
+import net.minecraft.loot.LootParameters;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.state.StateContainer.Builder;
 import net.minecraft.stats.Stats;
@@ -23,8 +24,7 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
-import net.minecraft.world.storage.loot.LootContext;
-import net.minecraft.world.storage.loot.LootParameters;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.util.Constants;
@@ -44,7 +44,7 @@ import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.Time;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -54,15 +54,14 @@ import static tgw.evolution.init.EvolutionBStates.LIT;
 public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, IFluidLoggable {
 
     public BlockTorch() {
-        super(Block.Properties.create(Material.MISCELLANEOUS).hardnessAndResistance(0.0F).tickRandomly().doesNotBlockMovement().sound(SoundType.WOOD),
-              0);
-        this.setDefaultState(this.getDefaultState().with(LIT, true).with(FLUIDLOGGED, false));
+        super(Properties.of(Material.DECORATION).strength(0.0F).randomTicks().noCollission().sound(SoundType.WOOD), 0);
+        this.registerDefaultState(this.defaultBlockState().setValue(LIT, true).setValue(FLUIDLOGGED, false));
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
     public void animateTick(BlockState state, World world, BlockPos pos, Random rand) {
-        if (!state.get(LIT)) {
+        if (!state.getValue(LIT)) {
             return;
         }
         double posX = pos.getX() + 0.5;
@@ -88,37 +87,38 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
     }
 
     @Override
+    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+        return canSupportCenter(world, pos.below(), Direction.UP);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
+        builder.add(LIT, FLUIDLOGGED);
+    }
+
+    @Override
     public TileEntity createTileEntity(BlockState state, IBlockReader world) {
         return new TETorch();
     }
 
     @Override
-    protected void fillStateContainer(Builder<Block, BlockState> builder) {
-        builder.add(LIT, FLUIDLOGGED);
-    }
-
-    @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        if (state.get(LIT)) {
-            return TEUtils.returnIfInstance(world.getTileEntity(pos), ItemTorch::getDroppedStack, ItemStack.EMPTY);
+        if (state.getValue(LIT)) {
+            return TEUtils.returnIfInstance(world.getBlockEntity(pos), ItemTorch::getDroppedStack, ItemStack.EMPTY);
         }
         return new ItemStack(EvolutionItems.torch_unlit.get());
     }
 
     @Override
     public List<ItemStack> getDrops(BlockState state, LootContext.Builder builder) {
-        if (!state.get(LIT)) {
-            List<ItemStack> list = new ArrayList<>(1);
-            list.add(new ItemStack(EvolutionItems.torch_unlit.get()));
-            return list;
+        if (!state.getValue(LIT)) {
+            return Collections.singletonList(new ItemStack(EvolutionItems.torch_unlit.get()));
         }
-        TileEntity tile = builder.get(LootParameters.BLOCK_ENTITY);
+        TileEntity tile = builder.getParameter(LootParameters.BLOCK_ENTITY);
         if (tile instanceof TETorch) {
-            List<ItemStack> list = new ArrayList<>(1);
-            list.add(ItemTorch.getDroppedStack((TETorch) tile));
-            return list;
+            return Collections.singletonList(ItemTorch.getDroppedStack((TETorch) tile));
         }
-        return Lists.newArrayList(ItemStack.EMPTY);
+        return Collections.singletonList(ItemStack.EMPTY);
     }
 
     @Override
@@ -137,14 +137,14 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
     }
 
     @Override
-    public int getLightValue(BlockState state) {
-        return state.get(LIT) ? 15 : 0;
+    public int getLightValue(BlockState state, IBlockReader world, BlockPos pos) {
+        return state.getValue(LIT) ? 15 : 0;
     }
 
     @Override
     public int getMass(World world, BlockPos pos, BlockState state) {
         int mass = 0;
-        if (state.get(FLUIDLOGGED)) {
+        if (state.getValue(FLUIDLOGGED)) {
             Fluid fluid = this.getFluid(world, pos);
             if (fluid instanceof FluidGeneric) {
                 int amount = this.getCurrentAmount(world, pos, state);
@@ -156,36 +156,36 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
     }
 
     @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
-    }
-
-    @Override
     public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
         return EvolutionHitBoxes.TORCH;
     }
 
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
-        World world = context.getWorld();
-        BlockPos pos = context.getPos();
+        World world = context.getLevel();
+        BlockPos pos = context.getClickedPos();
         if (!world.getFluidState(pos).isEmpty()) {
-            return this.getDefaultState().with(LIT, false);
+            return this.defaultBlockState().setValue(LIT, false);
         }
         if (CapabilityChunkStorage.contains(world.getChunkAt(pos), EnumStorage.OXYGEN, 1)) {
-            return this.getDefaultState();
+            return this.defaultBlockState();
         }
-        return this.getDefaultState().with(LIT, false);
+        return this.defaultBlockState().setValue(LIT, false);
     }
 
     @Override
     public boolean hasTileEntity(BlockState state) {
-        return state.get(FLUIDLOGGED) || state.get(LIT);
+        return state.getValue(FLUIDLOGGED) || state.getValue(LIT);
     }
 
     @Override
     public boolean isFireSource(BlockState state) {
-        return state.get(LIT);
+        return state.getValue(LIT);
+    }
+
+    @Override
+    public boolean isRandomlyTicking(BlockState state) {
+        return state.getValue(LIT);
     }
 
     @Override
@@ -194,67 +194,30 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
-        return hasEnoughSolidSide(world, pos.down(), Direction.UP);
+    public void onPlace(BlockState state, World world, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (world.isClientSide) {
+            return;
+        }
+        if (!state.getValue(LIT)) {
+            return;
+        }
+        TEUtils.invokeIfInstance(world.getBlockEntity(pos), TETorch::setPlaceTime);
     }
 
     @Override
-    public boolean onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
-        Evolution.LOGGER.debug("{}", world.getTileEntity(pos));
-        if (state.get(FLUIDLOGGED)) {
-            return false;
-        }
-        ItemStack stack = player.getHeldItem(hand);
-        if (stack.isEmpty() && state.get(LIT)) {
-            world.setBlockState(pos, state.with(LIT, false));
-            world.playSound(player,
-                            pos,
-                            SoundEvents.BLOCK_FIRE_EXTINGUISH,
-                            SoundCategory.BLOCKS,
-                            1.0F,
-                            2.6F + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.8F);
-            return true;
-        }
-        if (stack.getItem() == EvolutionItems.torch.get() && !state.get(LIT)) {
-            if (CapabilityChunkStorage.remove(world.getChunkAt(pos), EnumStorage.OXYGEN, 1)) {
-                CapabilityChunkStorage.add(world.getChunkAt(pos), EnumStorage.CARBON_DIOXIDE, 1);
-                world.setBlockState(pos, state.with(LIT, true));
-                world.playSound(player, pos, SoundEvents.BLOCK_FIRE_AMBIENT, SoundCategory.BLOCKS, 1.0F, world.rand.nextFloat() * 0.7F + 0.3F);
-                if (!world.isRemote) {
-                    TEUtils.invokeIfInstance(world.getTileEntity(pos), TETorch::setPlaceTime);
-                }
-                player.addStat(Stats.ITEM_CRAFTED.get(EvolutionItems.torch.get()));
-                return true;
-            }
-            return false;
-        }
-        return false;
-    }
-
-    @Override
-    public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (world.isRemote) {
+    public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+        if (!state.getValue(LIT)) {
             return;
         }
-        if (!state.get(LIT)) {
-            return;
-        }
-        TEUtils.invokeIfInstance(world.getTileEntity(pos), TETorch::setPlaceTime);
-    }
-
-    @Override
-    public void randomTick(BlockState state, World world, BlockPos pos, Random random) {
-        if (world.isRemote || !state.get(LIT)) {
-            return;
-        }
-        if (world.getTileEntity(pos) != null) {
-            TETorch tile = (TETorch) world.getTileEntity(pos);
+        TileEntity tile = world.getBlockEntity(pos);
+        if (tile != null) {
+            TETorch teTorch = (TETorch) tile;
             int torchTime = EvolutionConfig.COMMON.torchTime.get();
             if (torchTime == 0) {
                 return;
             }
-            if (world.getDayTime() >= tile.getTimePlaced() + (long) torchTime * Time.HOUR_IN_TICKS) {
-                world.setBlockState(pos, state.with(LIT, false));
+            if (world.getDayTime() >= teTorch.getTimePlaced() + (long) torchTime * Time.HOUR_IN_TICKS) {
+                world.setBlockAndUpdate(pos, state.setValue(LIT, false));
             }
         }
     }
@@ -262,37 +225,60 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
     @Override
     public void setBlockState(World world, BlockPos pos, BlockState state, @Nullable FluidGeneric fluid, int amount) {
         boolean hasFluid = amount > 0 && fluid != null;
-        if (hasFluid && state.get(LIT)) {
-            world.playEvent(Constants.WorldEvents.FIRE_EXTINGUISH_SOUND, pos, 0);
+        if (hasFluid && state.getValue(LIT)) {
+            world.levelEvent(Constants.WorldEvents.FIRE_EXTINGUISH_SOUND, pos, 0);
         }
-        BlockState stateToPlace = state.with(FLUIDLOGGED, hasFluid).with(LIT, false);
-        world.setBlockState(pos, stateToPlace, BlockFlags.NOTIFY_UPDATE_AND_RERENDER);
+        BlockState stateToPlace = state.setValue(FLUIDLOGGED, hasFluid).setValue(LIT, false);
+        world.setBlock(pos, stateToPlace, BlockFlags.NOTIFY_UPDATE_AND_RERENDER);
         if (hasFluid) {
-            TEUtils.<ILoggable>invokeIfInstance(world.getTileEntity(pos), t -> t.setAmountAndFluid(amount, fluid), true);
+            TEUtils.<ILoggable>invokeIfInstance(world.getBlockEntity(pos), t -> t.setAmountAndFluid(amount, fluid), true);
             BlockUtils.scheduleFluidTick(world, pos);
         }
         else {
-            TEUtils.<ILoggable>invokeIfInstance(world.getTileEntity(pos), t -> t.setAmountAndFluid(0, null));
+            TEUtils.<ILoggable>invokeIfInstance(world.getBlockEntity(pos), t -> t.setAmountAndFluid(0, null));
         }
     }
 
     @Override
-    public boolean ticksRandomly(BlockState state) {
-        return state.get(LIT);
-    }
-
-    @Override
-    public BlockState updatePostPlacement(BlockState state,
-                                          Direction facing,
-                                          BlockState facingState,
-                                          IWorld world,
-                                          BlockPos currentPos,
-                                          BlockPos facingPos) {
-        if (state.get(FLUIDLOGGED)) {
+    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
+        if (state.getValue(FLUIDLOGGED)) {
             BlockUtils.scheduleFluidTick(world, currentPos);
         }
-        return facing == Direction.DOWN && !this.isValidPosition(state, world, currentPos) ?
-               Blocks.AIR.getDefaultState() :
-               super.updatePostPlacement(state, facing, facingState, world, currentPos, facingPos);
+        return facing == Direction.DOWN && !this.canSurvive(state, world, currentPos) ?
+               Blocks.AIR.defaultBlockState() :
+               super.updateShape(state, facing, facingState, world, currentPos, facingPos);
+    }
+
+    @Override
+    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
+        Evolution.LOGGER.debug("{}", world.getBlockEntity(pos));
+        if (state.getValue(FLUIDLOGGED)) {
+            return ActionResultType.PASS;
+        }
+        ItemStack stack = player.getItemInHand(hand);
+        if (stack.isEmpty() && state.getValue(LIT)) {
+            world.setBlockAndUpdate(pos, state.setValue(LIT, false));
+            world.playSound(player,
+                            pos,
+                            SoundEvents.FIRE_EXTINGUISH,
+                            SoundCategory.BLOCKS,
+                            1.0F,
+                            2.6F + (world.random.nextFloat() - world.random.nextFloat()) * 0.8F);
+            return ActionResultType.SUCCESS;
+        }
+        if (stack.getItem() == EvolutionItems.torch.get() && !state.getValue(LIT)) {
+            if (CapabilityChunkStorage.remove(world.getChunkAt(pos), EnumStorage.OXYGEN, 1)) {
+                CapabilityChunkStorage.add(world.getChunkAt(pos), EnumStorage.CARBON_DIOXIDE, 1);
+                world.setBlockAndUpdate(pos, state.setValue(LIT, true));
+                world.playSound(player, pos, SoundEvents.FIRE_AMBIENT, SoundCategory.BLOCKS, 1.0F, world.random.nextFloat() * 0.7F + 0.3F);
+                if (!world.isClientSide) {
+                    TEUtils.invokeIfInstance(world.getBlockEntity(pos), TETorch::setPlaceTime);
+                }
+                player.awardStat(Stats.ITEM_CRAFTED.get(EvolutionItems.torch.get()));
+                return ActionResultType.SUCCESS;
+            }
+            return ActionResultType.PASS;
+        }
+        return ActionResultType.PASS;
     }
 }	

@@ -15,12 +15,11 @@ import tgw.evolution.potion.EffectGeneric;
 import tgw.evolution.potion.EffectHydration;
 import tgw.evolution.potion.EffectWaterIntoxication;
 
-import java.util.Arrays;
 import java.util.List;
 
 public final class EvolutionEffects {
 
-    public static final DeferredRegister<Effect> EFFECTS = new DeferredRegister<>(ForgeRegistries.POTIONS, Evolution.MODID);
+    public static final DeferredRegister<Effect> EFFECTS = DeferredRegister.create(ForgeRegistries.POTIONS, Evolution.MODID);
     public static final RegistryObject<Effect> DISORIENTED = EFFECTS.register("disoriented", () -> new EffectGeneric(EffectType.HARMFUL, 0xed_a677));
     public static final RegistryObject<Effect> DIZZINESS = EFFECTS.register("dizziness", EffectDizziness::new);
     public static final RegistryObject<Effect> HYDRATION = EFFECTS.register("hydration", EffectHydration::new);
@@ -35,20 +34,25 @@ public final class EvolutionEffects {
             if (level > 5) {
                 level = 5;
             }
-            return new TranslationTextComponent(effect.getName() + ".desc." + level);
+            return new TranslationTextComponent(effect.getDescriptionId() + ".desc." + level);
         }
         if (effect == Effects.POISON) {
             if (level > 4) {
                 level = 4;
             }
-            return new TranslationTextComponent(effect.getName() + ".desc." + level);
+            return new TranslationTextComponent(effect.getDescriptionId() + ".desc." + level);
         }
-        return new TranslationTextComponent(effect.getName() + ".desc");
+        if (effect == Effects.WITHER) {
+            if (level > 5) {
+                level = 5;
+            }
+            return new TranslationTextComponent(effect.getDescriptionId() + ".desc." + level);
+        }
+        return new TranslationTextComponent(effect.getDescriptionId() + ".desc");
     }
 
-    public static void getEffectDescription(List<String> tooltips, Effect effect, int level) {
-        String desc = getEffectComp(effect, level).getFormattedText();
-        tooltips.addAll(Arrays.asList(desc.split("\n")));
+    public static void getEffectDescription(List<ITextComponent> tooltips, Effect effect, int level) {
+        tooltips.add(getEffectComp(effect, level));
     }
 
     public static void register() {

@@ -4,7 +4,9 @@ import com.electronwill.nightconfig.core.AbstractConfig;
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import joptsimple.internal.Strings;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.IGuiEventListener;
@@ -16,12 +18,10 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.util.IReorderingProcessor;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Util;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.text.*;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.GuiScreenEvent;
@@ -29,6 +29,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.MinecraftForge;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
@@ -47,7 +48,7 @@ public class ScreenConfig extends Screen {
 
     public static final Comparator<Entry> COMPARATOR = (o1, o2) -> {
         if (o1 instanceof SubMenu && o2 instanceof SubMenu) {
-            return o1.getLabel().compareTo(o2.getLabel());
+            return o1.label.getString().compareTo(o2.label.getString());
         }
         if (!(o1 instanceof SubMenu) && o2 instanceof SubMenu) {
             return 1;
@@ -55,9 +56,8 @@ public class ScreenConfig extends Screen {
         if (o1 instanceof SubMenu) {
             return -1;
         }
-        return o1.getLabel().compareTo(o2.getLabel());
+        return o1.label.getString().compareTo(o2.label.getString());
     };
-    @SuppressWarnings("rawtypes")
     private static final FieldHandler<ForgeConfigSpec.EnumValue, Class<? extends Enum<?>>> CLAZZ = new FieldHandler<>(ForgeConfigSpec.EnumValue.class,
                                                                                                                       "clazz");
     private static final Pattern PATTERN_CAMEL_CASE = Pattern.compile("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])");
@@ -73,7 +73,7 @@ public class ScreenConfig extends Screen {
     private final Screen parent;
     private ConfigTextFieldWidget activeTextField;
     @Nullable
-    private List<String> activeTooltip;
+    private List<IReorderingProcessor> activeTooltip;
     private List<Entry> entries;
     private ConfigList list;
     private Button restoreDefaultsButton;
@@ -117,11 +117,11 @@ public class ScreenConfig extends Screen {
         this.background = background;
     }
 
-    private static String createCommentFromConfig(ForgeConfigSpec.ValueSpec valueSpec) {
+    private static IFormattableTextComponent createCommentFromConfig(ForgeConfigSpec.ValueSpec valueSpec) {
         if (valueSpec.getTranslationKey() != null) {
-            return new TranslationTextComponent(valueSpec.getTranslationKey() + ".comment").getString();
+            return new TranslationTextComponent(valueSpec.getTranslationKey() + ".comment");
         }
-        return valueSpec.getComment() != null ? valueSpec.getComment() : "";
+        return valueSpec.getComment() != null ? new StringTextComponent(valueSpec.getComment()) : new StringTextComponent("");
     }
 
     /**
@@ -132,7 +132,7 @@ public class ScreenConfig extends Screen {
      * @param input the config value name
      * @return a readable label string
      */
-    private static String createLabel(String input) {
+    private static IFormattableTextComponent createLabel(String input) {
         String valueName = input;
         // Try split by camel case
         String[] words = PATTERN_CAMEL_CASE.split(valueName);
@@ -147,7 +147,7 @@ public class ScreenConfig extends Screen {
         }
         // Finally join words. Some mods have inputs like "Foo_Bar" and this causes a double space.
         // To fix this any whitespace is replaced with a single space
-        return DOUBLE_SPACE.matcher(Strings.join(words, " ")).replaceAll(" ");
+        return new StringTextComponent(DOUBLE_SPACE.matcher(Strings.join(words, " ")).replaceAll(" "));
     }
 
     /**
@@ -159,9 +159,9 @@ public class ScreenConfig extends Screen {
      * @param valueSpec   the associated value spec
      * @return a readable label string
      */
-    private static String createLabelFromConfig(ForgeConfigSpec.ConfigValue<?> configValue, ForgeConfigSpec.ValueSpec valueSpec) {
+    private static IFormattableTextComponent createLabelFromConfig(ForgeConfigSpec.ConfigValue<?> configValue, ForgeConfigSpec.ValueSpec valueSpec) {
         if (valueSpec.getTranslationKey() != null) {
-            return new TranslationTextComponent(valueSpec.getTranslationKey()).getString();
+            return new TranslationTextComponent(valueSpec.getTranslationKey());
         }
         return createLabel(lastValue(configValue.getPath(), ""));
     }
@@ -188,12 +188,12 @@ public class ScreenConfig extends Screen {
         List<Entry> entries = new ArrayList<>();
         if (this.clientValues != null && this.clientSpec != null) {
             if (!this.subMenu) {
-                entries.add(new TitleEntry(I18n.format("evolution.config.client_config")));
+                entries.add(new TitleEntry(EvolutionTexts.CONFIG_CLIENT_CONFIG));
             }
             this.createEntriesFromConfig(this.clientValues, this.clientSpec, entries);
         }
         if (this.commonValues != null && this.commonSpec != null) {
-            entries.add(new TitleEntry(I18n.format("evolution.config.common_config")));
+            entries.add(new TitleEntry(EvolutionTexts.CONFIG_COMMON_CONFIG));
             this.createEntriesFromConfig(this.commonValues, this.commonSpec, entries);
         }
         this.entries = ImmutableList.copyOf(entries);
@@ -247,8 +247,8 @@ public class ScreenConfig extends Screen {
         entries.addAll(subEntries);
     }
 
-    private String createTranslatableLabel(String label) {
-        return I18n.format(this.modId + ".config.label." + label.toLowerCase());
+    private IFormattableTextComponent createTranslatableLabel(String label) {
+        return new TranslationTextComponent(this.modId + ".config.label." + label.toLowerCase());
     }
 
     /**
@@ -289,14 +289,14 @@ public class ScreenConfig extends Screen {
         this.constructEntries();
         this.list = new ConfigList(this.entries);
         this.children.add(this.list);
-        this.searchTextField = new ConfigTextFieldWidget(this.font, this.width / 2 - 110, 22, 220, 20, EvolutionTexts.GUI_SEARCH);
+        this.searchTextField = new ConfigTextFieldWidget(this.font, this.width / 2 - 110, 22, 220, 20, EvolutionTexts.GUI_GENERAL_SEARCH);
         this.searchTextField.setResponder(s -> {
             if (!s.isEmpty()) {
                 this.list.replaceEntries(this.entries.stream()
                                                      .filter(entry -> (entry instanceof SubMenu || entry instanceof ConfigEntry<?, ?>) &&
-                                                                      entry.getLabel()
-                                                                           .toLowerCase(Locale.ENGLISH)
-                                                                           .contains(s.toLowerCase(Locale.ENGLISH)))
+                                                                      entry.label.getString()
+                                                                                 .toLowerCase(Locale.ROOT)
+                                                                                 .contains(s.toLowerCase(Locale.ROOT)))
                                                      .collect(Collectors.toList()));
             }
             else {
@@ -309,24 +309,24 @@ public class ScreenConfig extends Screen {
                                       this.height - 29,
                                       150,
                                       20,
-                                      I18n.format("gui.back"),
-                                      button -> this.minecraft.displayGuiScreen(this.parent)));
+                                      EvolutionTexts.GUI_GENERAL_BACK,
+                                      button -> this.minecraft.setScreen(this.parent)));
         }
         else {
-            this.addButton(new Button(this.width / 2 - 155 + 160, this.height - 29, 150, 20, I18n.format("gui.done"), button -> {
+            this.addButton(new Button(this.width / 2 - 155 + 160, this.height - 29, 150, 20, EvolutionTexts.GUI_GENERAL_DONE, button -> {
                 if (this.clientSpec != null) {
                     this.clientSpec.save();
                 }
                 if (this.commonSpec != null) {
                     this.commonSpec.save();
                 }
-                this.minecraft.displayGuiScreen(this.parent);
+                this.minecraft.setScreen(this.parent);
             }));
             this.restoreDefaultsButton = this.addButton(new Button(this.width / 2 - 155,
                                                                    this.height - 29,
                                                                    150,
                                                                    20,
-                                                                   I18n.format("evolution.gui.restore_defaults"),
+                                                                   EvolutionTexts.GUI_CONFIG_RESTORE_DEFAULTS,
                                                                    button -> {
                                                                        if (this.allConfigValues == null) {
                                                                            return;
@@ -349,32 +349,40 @@ public class ScreenConfig extends Screen {
     }
 
     @Override
-    public void render(int mouseX, int mouseY, float partialTicks) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
+            this.searchTextField.setFocus(false);
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
         this.activeTooltip = null;
-        this.renderBackground();
-        this.list.render(mouseX, mouseY, partialTicks);
-        this.searchTextField.render(mouseX, mouseY, partialTicks);
-        this.drawCenteredString(this.font, this.title.getFormattedText(), this.width / 2, 7, 0xFF_FFFF);
-        super.render(mouseX, mouseY, partialTicks);
+        this.renderBackground(matrices);
+        this.list.render(matrices, mouseX, mouseY, partialTicks);
+        this.searchTextField.render(matrices, mouseX, mouseY, partialTicks);
+        drawCenteredString(matrices, this.font, this.title, this.width / 2, 7, 0xFF_FFFF);
+        super.render(matrices, mouseX, mouseY, partialTicks);
         if (this.activeTooltip != null) {
-            GUIUtils.renderTooltip(this, this.activeTooltip, mouseX, mouseY, 200);
+            this.renderTooltip(matrices, this.activeTooltip, mouseX, mouseY);
         }
     }
 
     @Override
     public void renderDirtBackground(int vOffset) {
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        this.minecraft.getTextureManager().bindTexture(this.background);
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+        BufferBuilder builder = tessellator.getBuilder();
+        this.minecraft.getTextureManager().bind(this.background);
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
         float size = 32.0F;
-        bufferbuilder.pos(0.0D, this.height, 0.0D).tex(0.0F, this.height / size + vOffset).color(64, 64, 64, 255).endVertex();
-        bufferbuilder.pos(this.width, this.height, 0.0D).tex(this.width / size, this.height / size + vOffset).color(64, 64, 64, 255).endVertex();
-        bufferbuilder.pos(this.width, 0.0D, 0.0D).tex(this.width / size, vOffset).color(64, 64, 64, 255).endVertex();
-        bufferbuilder.pos(0.0D, 0.0D, 0.0D).tex(0.0F, vOffset).color(64, 64, 64, 255).endVertex();
-        tessellator.draw();
-        MinecraftForge.EVENT_BUS.post(new GuiScreenEvent.BackgroundDrawnEvent(this));
+        builder.vertex(0, this.height, 0).uv(0.0F, this.height / size + vOffset).color(64, 64, 64, 255).endVertex();
+        builder.vertex(this.width, this.height, 0).uv(this.width / size, this.height / size + vOffset).color(64, 64, 64, 255).endVertex();
+        builder.vertex(this.width, 0, 0).uv(this.width / size, vOffset).color(64, 64, 64, 255).endVertex();
+        builder.vertex(0, 0, 0).uv(0.0F, vOffset).color(64, 64, 64, 255).endVertex();
+        tessellator.end();
+        MinecraftForge.EVENT_BUS.post(new GuiScreenEvent.BackgroundDrawnEvent(this, new MatrixStack()));
     }
 
     /**
@@ -383,7 +391,7 @@ public class ScreenConfig extends Screen {
      *
      * @param activeTooltip a tooltip list to show
      */
-    public void setActiveTooltip(@Nullable List<String> activeTooltip) {
+    public void setActiveTooltip(@Nullable List<IReorderingProcessor> activeTooltip) {
         this.activeTooltip = activeTooltip;
     }
 
@@ -404,20 +412,20 @@ public class ScreenConfig extends Screen {
     }
 
     abstract static class Entry extends AbstractOptionList.Entry<Entry> {
-        protected String label;
-        protected List<String> tooltip;
+        protected IFormattableTextComponent label;
+        protected List<IReorderingProcessor> tooltip;
 
-        public Entry(String label) {
+        public Entry(IFormattableTextComponent label) {
             this.label = label;
         }
 
-        public String getLabel() {
+        public IFormattableTextComponent getLabel() {
             return this.label;
         }
     }
 
     public class TitleEntry extends Entry {
-        public TitleEntry(String title) {
+        public TitleEntry(IFormattableTextComponent title) {
             super(title);
         }
 
@@ -427,9 +435,18 @@ public class ScreenConfig extends Screen {
         }
 
         @Override
-        public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
-            ITextComponent title = new StringTextComponent(this.label).applyTextStyle(TextFormatting.BOLD).applyTextStyle(TextFormatting.YELLOW);
-            ScreenConfig.this.drawCenteredString(ScreenConfig.this.minecraft.fontRenderer, title.getFormattedText(), x + width / 2, y + 5, 0xff_ffff);
+        public void render(MatrixStack matrices,
+                           int index,
+                           int y,
+                           int x,
+                           int width,
+                           int height,
+                           int mouseX,
+                           int mouseY,
+                           boolean hovered,
+                           float partialTicks) {
+            IFormattableTextComponent title = this.label.withStyle(TextFormatting.BOLD).withStyle(TextFormatting.YELLOW);
+            drawCenteredString(matrices, ScreenConfig.this.minecraft.font, title, x + width / 2, y + 5, 0xff_ffff);
         }
     }
 
@@ -438,26 +455,19 @@ public class ScreenConfig extends Screen {
 
         public SubMenu(String label, ForgeConfigSpec spec, AbstractConfig values) {
             super(ScreenConfig.this.createTranslatableLabel(label));
-            this.button = new Button(10,
-                                     5,
-                                     44,
-                                     20,
-                                     new StringTextComponent(this.getLabel()).applyTextStyle(TextFormatting.BOLD)
-                                                                             .applyTextStyle(TextFormatting.WHITE)
-                                                                             .getFormattedText(),
-                                     onPress -> {
-                                         String newTitle = ScreenConfig.this.displayName + " > " + this.getLabel();
-                                         ScreenConfig.this.minecraft.displayGuiScreen(new ScreenConfig(ScreenConfig.this,
-                                                                                                       ScreenConfig.this.modId,
-                                                                                                       newTitle,
-                                                                                                       spec,
-                                                                                                       values,
-                                                                                                       ScreenConfig.this.background));
-                                     }) {
+            this.button = new Button(10, 5, 44, 20, this.getLabel().withStyle(TextFormatting.BOLD).withStyle(TextFormatting.WHITE), onPress -> {
+                String newTitle = ScreenConfig.this.displayName + " > " + this.getLabel().getString();
+                ScreenConfig.this.minecraft.setScreen(new ScreenConfig(ScreenConfig.this,
+                                                                       ScreenConfig.this.modId,
+                                                                       newTitle,
+                                                                       spec,
+                                                                       values,
+                                                                       ScreenConfig.this.background));
+            }) {
                 private boolean wasHovered;
 
                 @Override
-                public void render(int mouseX, int mouseY, float partialTicks) {
+                public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
                     if (this.visible) {
                         this.isHovered = mouseX >= this.x &&
                                          mouseY >= this.y &&
@@ -468,10 +478,10 @@ public class ScreenConfig extends Screen {
                         if (this.wasHovered != this.isHovered()) {
                             if (this.isHovered()) {
                                 if (this.isFocused()) {
-                                    this.nextNarration = Util.milliTime() + 200L;
+                                    this.nextNarration = Util.getMillis() + 200L;
                                 }
                                 else {
-                                    this.nextNarration = Util.milliTime() + 750L;
+                                    this.nextNarration = Util.getMillis() + 750L;
                                 }
                             }
                             else {
@@ -479,7 +489,7 @@ public class ScreenConfig extends Screen {
                             }
                         }
                         if (this.visible) {
-                            this.renderButton(mouseX, mouseY, partialTicks);
+                            this.renderButton(matrices, mouseX, mouseY, partialTicks);
                         }
                         this.narrate();
                         this.wasHovered = this.isHovered();
@@ -494,11 +504,20 @@ public class ScreenConfig extends Screen {
         }
 
         @Override
-        public void render(int x, int top, int left, int width, int height, int mouseX, int mouseY, boolean selected, float partialTicks) {
+        public void render(MatrixStack matrices,
+                           int x,
+                           int top,
+                           int left,
+                           int width,
+                           int height,
+                           int mouseX,
+                           int mouseY,
+                           boolean selected,
+                           float partialTicks) {
             this.button.x = left - 1;
             this.button.y = top;
             this.button.setWidth(width);
-            this.button.render(mouseX, mouseY, partialTicks);
+            this.button.render(matrices, mouseX, mouseY, partialTicks);
         }
     }
 
@@ -521,7 +540,7 @@ public class ScreenConfig extends Screen {
                 private boolean wasHovered;
 
                 @Override
-                public void render(int mouseX, int mouseY, float partialTicks) {
+                public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
                     if (this.visible) {
                         this.isHovered = mouseX >= this.x &&
                                          mouseY >= this.y &&
@@ -532,10 +551,10 @@ public class ScreenConfig extends Screen {
                         if (this.wasHovered != this.isHovered()) {
                             if (this.isHovered()) {
                                 if (this.isFocused()) {
-                                    this.nextNarration = Util.milliTime() + 200L;
+                                    this.nextNarration = Util.getMillis() + 200L;
                                 }
                                 else {
-                                    this.nextNarration = Util.milliTime() + 750L;
+                                    this.nextNarration = Util.getMillis() + 750L;
                                 }
                             }
                             else {
@@ -543,7 +562,7 @@ public class ScreenConfig extends Screen {
                             }
                         }
                         if (this.visible) {
-                            this.renderButton(mouseX, mouseY, partialTicks);
+                            this.renderButton(matrices, mouseX, mouseY, partialTicks);
                         }
                         this.narrate();
                         this.wasHovered = this.isHovered();
@@ -551,10 +570,10 @@ public class ScreenConfig extends Screen {
                 }
 
                 @Override
-                public void renderToolTip(int mouseX, int mouseY) {
+                public void renderToolTip(MatrixStack matrices, int mouseX, int mouseY) {
                     if (this.active && this.isHovered()) {
-                        ScreenConfig.this.setActiveTooltip(ScreenConfig.this.minecraft.fontRenderer.listFormattedStringToWidth(new TranslationTextComponent(
-                                "evolution.gui.reset").getFormattedText(), Math.max(ScreenConfig.this.width / 2 - 43, 170)));
+                        ScreenConfig.this.setActiveTooltip(ScreenConfig.this.minecraft.font.split(EvolutionTexts.GUI_CONFIG_RESET,
+                                                                                                  Math.max(ScreenConfig.this.width / 2 - 43, 170)));
                     }
                 }
             };
@@ -566,65 +585,49 @@ public class ScreenConfig extends Screen {
             return this.eventListeners;
         }
 
-        private List<String> createToolTip(ForgeConfigSpec.ConfigValue<?> value, ForgeConfigSpec.ValueSpec spec) {
-            FontRenderer font = ScreenConfig.this.minecraft.fontRenderer;
-            List<String> lines = new ArrayList<>(font.listFormattedStringToWidth(new StringTextComponent(createCommentFromConfig(spec)).getText(),
-                                                                                 Integer.MAX_VALUE));
+        private List<IReorderingProcessor> createToolTip(ForgeConfigSpec.ConfigValue<?> value, ForgeConfigSpec.ValueSpec spec) {
+            FontRenderer font = ScreenConfig.this.minecraft.font;
+            List<IReorderingProcessor> lines = new ArrayList<>(font.split(createCommentFromConfig(spec),
+                                                                          Math.max(ScreenConfig.this.width / 2 - 43, 170)));
             String name = lastValue(value.getPath(), "");
-            lines.add(0, new StringTextComponent(name).applyTextStyle(TextFormatting.DARK_GRAY).getFormattedText());
-            lines.add(0, new StringTextComponent(this.label).applyTextStyle(TextFormatting.YELLOW).getFormattedText());
-            int rangeIndex = -1;
-            for (int i = 0; i < lines.size(); i++) {
-                String text = lines.get(i);
-                if (text.startsWith("Range: ") || text.startsWith("Allowed Values: ")) {
-                    rangeIndex = i;
-                    break;
-                }
+            lines.add(0, new StringTextComponent(name).withStyle(TextFormatting.DARK_GRAY).getVisualOrderText());
+            lines.addAll(0, font.split(this.label.withStyle(TextFormatting.YELLOW), Math.max(ScreenConfig.this.width / 2 - 43, 170)));
+            if (value instanceof ForgeConfigSpec.DoubleValue ||
+                value instanceof ForgeConfigSpec.IntValue ||
+                value instanceof ForgeConfigSpec.LongValue) {
+                Object range = spec.getRange();
+                lines.add(EvolutionTexts.configRange(range.toString()).getVisualOrderText());
             }
-            if (rangeIndex != -1) {
-                for (int i = rangeIndex; i < lines.size(); i++) {
-                    //noinspection ObjectAllocationInLoop
-                    lines.set(i, new StringTextComponent(lines.get(i)).applyTextStyle(TextFormatting.GRAY).getFormattedText());
-                }
+            else if (value instanceof ForgeConfigSpec.EnumValue<?>) {
+                ForgeConfigSpec.EnumValue<?> enumValue = (ForgeConfigSpec.EnumValue<?>) value;
+                Class<? extends Enum<?>> clazz = CLAZZ.get(enumValue);
+                Enum<?>[] values = clazz.getEnumConstants();
+                lines.add(EvolutionTexts.configAllowedValues(Arrays.stream(values)
+                                                                   .map(o -> I18n.get(ScreenConfig.this.modId +
+                                                                                      ".config.enum_" +
+                                                                                      o.name().toLowerCase()))
+                                                                   .collect(Collectors.joining(", "))).getVisualOrderText());
             }
-            else {
-                if (value instanceof ForgeConfigSpec.DoubleValue ||
-                    value instanceof ForgeConfigSpec.IntValue ||
-                    value instanceof ForgeConfigSpec.LongValue) {
-                    Object range = spec.getRange();
-                    lines.add(EvolutionTexts.configRange(range.toString()).getFormattedText());
-                }
-                else if (value instanceof ForgeConfigSpec.EnumValue<?>) {
-                    ForgeConfigSpec.EnumValue<?> enumValue = (ForgeConfigSpec.EnumValue<?>) value;
-                    Class<? extends Enum<?>> clazz = CLAZZ.get(enumValue);
-                    Enum<?>[] values = clazz.getEnumConstants();
-                    lines.add(EvolutionTexts.configAllowedValues(Arrays.stream(values)
-                                                                       .map(o -> I18n.format(ScreenConfig.this.modId +
-                                                                                             ".config.enum_" +
-                                                                                             o.name().toLowerCase()))
-                                                                       .collect(Collectors.joining(", "))).getFormattedText());
-                }
-                if (value instanceof ForgeConfigSpec.IntValue ||
-                    value instanceof ForgeConfigSpec.DoubleValue ||
-                    value instanceof ForgeConfigSpec.LongValue ||
-                    value instanceof ForgeConfigSpec.BooleanValue ||
-                    value instanceof ForgeConfigSpec.EnumValue ||
-                    value.get() instanceof String) {
-                    Object def = spec.getDefault();
-                    String str = def.toString();
-                    if (def instanceof Boolean) {
-                        if ((Boolean) def) {
-                            str = I18n.format("options.on");
-                        }
-                        else {
-                            str = I18n.format("options.off");
-                        }
+            if (value instanceof ForgeConfigSpec.IntValue ||
+                value instanceof ForgeConfigSpec.DoubleValue ||
+                value instanceof ForgeConfigSpec.LongValue ||
+                value instanceof ForgeConfigSpec.BooleanValue ||
+                value instanceof ForgeConfigSpec.EnumValue ||
+                value.get() instanceof String) {
+                Object def = spec.getDefault();
+                String str = def.toString();
+                if (def instanceof Boolean) {
+                    if ((Boolean) def) {
+                        str = I18n.get("options.on");
                     }
-                    else if (def instanceof Enum) {
-                        str = I18n.format(ScreenConfig.this.modId + ".config.enum_" + ((Enum<?>) def).name().toLowerCase());
+                    else {
+                        str = I18n.get("options.off");
                     }
-                    lines.add(EvolutionTexts.configDefault(str).getFormattedText());
                 }
+                else if (def instanceof Enum) {
+                    str = I18n.get(ScreenConfig.this.modId + ".config.enum_" + ((Enum<?>) def).name().toLowerCase());
+                }
+                lines.add(EvolutionTexts.configDefault(str).getVisualOrderText());
             }
             return lines;
         }
@@ -633,24 +636,35 @@ public class ScreenConfig extends Screen {
         }
 
         @Override
-        public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
+        public void render(MatrixStack matrices,
+                           int index,
+                           int y,
+                           int x,
+                           int width,
+                           int height,
+                           int mouseX,
+                           int mouseY,
+                           boolean hovered,
+                           float partialTicks) {
             this.resetButton.active = !this.configValue.get().equals(this.valueSpec.getDefault());
-            ITextComponent title = new StringTextComponent(this.label);
-            if (ScreenConfig.this.minecraft.fontRenderer.getStringWidth(title.getUnformattedComponentText()) > width - 90) {
-                int tripleDotSize = ScreenConfig.this.minecraft.fontRenderer.getStringWidth("...");
-                String trimmed = ScreenConfig.this.minecraft.fontRenderer.trimStringToWidth(title.getFormattedText(), width - 90 - tripleDotSize)
-                                                                         .trim() + "...";
-                ScreenConfig.this.minecraft.fontRenderer.drawStringWithShadow(trimmed, x, y + 6, 0xFF_FFFF);
+            IFormattableTextComponent title = this.label;
+            if (ScreenConfig.this.minecraft.font.width(title.getString()) > width - 90) {
+                int tripleDotSize = ScreenConfig.this.minecraft.font.width("...");
+                IFormattableTextComponent trimmed = new StringTextComponent(ScreenConfig.this.minecraft.font.substrByWidth(title,
+                                                                                                                           width - 90 - tripleDotSize)
+                                                                                                            .getString() + "...").withStyle(
+                        TextFormatting.YELLOW);
+                ScreenConfig.this.minecraft.font.draw(matrices, trimmed, x, y + 6, 0xFF_FFFF);
             }
             else {
-                ScreenConfig.this.minecraft.fontRenderer.drawStringWithShadow(title.getFormattedText(), x, y + 6, 0xFF_FFFF);
+                ScreenConfig.this.minecraft.font.draw(matrices, title, x, y + 6, 0xFF_FFFF);
             }
             if (this.isMouseOver(mouseX, mouseY) && mouseX < ScreenConfig.this.list.getRowLeft() + ScreenConfig.this.list.getRowWidth() - 87) {
                 ScreenConfig.this.setActiveTooltip(this.tooltip);
             }
             this.resetButton.x = x + width - 21;
             this.resetButton.y = y;
-            this.resetButton.render(mouseX, mouseY, partialTicks);
+            this.resetButton.render(matrices, mouseX, mouseY, partialTicks);
         }
     }
 
@@ -684,55 +698,67 @@ public class ScreenConfig extends Screen {
          * @param partialTicks the partial ticks
          */
         @Override
-        public void render(int mouseX, int mouseY, float partialTicks) {
-            this.renderBackground();
+        public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
+            this.renderBackground(matrices);
             int scrollBarStart = this.getScrollbarPosition();
-            this.minecraft.getTextureManager().bindTexture(ScreenConfig.this.background);
-            GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+            this.minecraft.getTextureManager().bind(ScreenConfig.this.background);
+            RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
             Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
-            buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
-            buffer.pos(this.x0, this.y1, 0).tex(this.x0 / 32.0F, (this.y1 + (int) this.getScrollAmount()) / 32.0F).color(32, 32, 32, 255).endVertex();
-            buffer.pos(this.x1, this.y1, 0).tex(this.x1 / 32.0F, (this.y1 + (int) this.getScrollAmount()) / 32.0F).color(32, 32, 32, 255).endVertex();
-            buffer.pos(this.x1, this.y0, 0).tex(this.x1 / 32.0F, (this.y0 + (int) this.getScrollAmount()) / 32.0F).color(32, 32, 32, 255).endVertex();
-            buffer.pos(this.x0, this.y0, 0).tex(this.x0 / 32.0F, (this.y0 + (int) this.getScrollAmount()) / 32.0F).color(32, 32, 32, 255).endVertex();
-            tessellator.draw();
+            BufferBuilder builder = tessellator.getBuilder();
+            builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+            builder.vertex(this.x0, this.y1, 0)
+                   .uv(this.x0 / 32.0F, (this.y1 + (int) this.getScrollAmount()) / 32.0F)
+                   .color(32, 32, 32, 255)
+                   .endVertex();
+            builder.vertex(this.x1, this.y1, 0)
+                   .uv(this.x1 / 32.0F, (this.y1 + (int) this.getScrollAmount()) / 32.0F)
+                   .color(32, 32, 32, 255)
+                   .endVertex();
+            builder.vertex(this.x1, this.y0, 0)
+                   .uv(this.x1 / 32.0F, (this.y0 + (int) this.getScrollAmount()) / 32.0F)
+                   .color(32, 32, 32, 255)
+                   .endVertex();
+            builder.vertex(this.x0, this.y0, 0)
+                   .uv(this.x0 / 32.0F, (this.y0 + (int) this.getScrollAmount()) / 32.0F)
+                   .color(32, 32, 32, 255)
+                   .endVertex();
+            tessellator.end();
             int rowLeft = this.getRowLeft();
             int scrollOffset = this.y0 + 4 - (int) this.getScrollAmount();
-            this.renderList(rowLeft, scrollOffset, mouseX, mouseY, partialTicks);
-            this.minecraft.getTextureManager().bindTexture(ScreenConfig.this.background);
-            GlStateManager.enableDepthTest();
-            GlStateManager.depthFunc(GL11.GL_ALWAYS);
-            buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
-            buffer.pos(this.x0, this.y0, -100).tex(0.0F, this.y0 / 32.0F).color(64, 64, 64, 255).endVertex();
-            buffer.pos(this.x0 + this.width, this.y0, -100).tex(this.width / 32.0F, this.y0 / 32.0F).color(64, 64, 64, 255).endVertex();
-            buffer.pos(this.x0 + this.width, 0.0D, -100).tex(this.width / 32.0F, 0.0F).color(64, 64, 64, 255).endVertex();
-            buffer.pos(this.x0, 0.0D, -100).tex(0.0F, 0.0F).color(64, 64, 64, 255).endVertex();
-            buffer.pos(this.x0, this.height, -100).tex(0.0F, this.height / 32.0F).color(64, 64, 64, 255).endVertex();
-            buffer.pos(this.x0 + this.width, this.height, -100).tex(this.width / 32.0F, this.height / 32.0F).color(64, 64, 64, 255).endVertex();
-            buffer.pos(this.x0 + this.width, this.y1, -100).tex(this.width / 32.0F, this.y1 / 32.0F).color(64, 64, 64, 255).endVertex();
-            buffer.pos(this.x0, this.y1, -100).tex(0.0F, this.y1 / 32.0F).color(64, 64, 64, 255).endVertex();
-            tessellator.draw();
-            GlStateManager.depthFunc(GL11.GL_LEQUAL);
-            GlStateManager.disableDepthTest();
-            GlStateManager.enableBlend();
-            GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-                                             GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                                             GlStateManager.SourceFactor.ZERO,
-                                             GlStateManager.DestFactor.ONE);
-            GlStateManager.disableAlphaTest();
-            GlStateManager.shadeModel(GL11.GL_SMOOTH);
-            GlStateManager.disableTexture();
-            buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
-            buffer.pos(this.x0, this.y0 + 4, 0).tex(0.0F, 1.0F).color(0, 0, 0, 0).endVertex();
-            buffer.pos(this.x1, this.y0 + 4, 0).tex(1.0F, 1.0F).color(0, 0, 0, 0).endVertex();
-            buffer.pos(this.x1, this.y0, 0).tex(1.0F, 0.0F).color(0, 0, 0, 255).endVertex();
-            buffer.pos(this.x0, this.y0, 0).tex(0.0F, 0.0F).color(0, 0, 0, 255).endVertex();
-            buffer.pos(this.x0, this.y1, 0).tex(0.0F, 1.0F).color(0, 0, 0, 255).endVertex();
-            buffer.pos(this.x1, this.y1, 0).tex(1.0F, 1.0F).color(0, 0, 0, 255).endVertex();
-            buffer.pos(this.x1, this.y1 - 4, 0).tex(1.0F, 0.0F).color(0, 0, 0, 0).endVertex();
-            buffer.pos(this.x0, this.y1 - 4, 0).tex(0.0F, 0.0F).color(0, 0, 0, 0).endVertex();
-            tessellator.draw();
+            this.renderList(matrices, rowLeft, scrollOffset, mouseX, mouseY, partialTicks);
+            this.minecraft.getTextureManager().bind(ScreenConfig.this.background);
+            RenderSystem.enableDepthTest();
+            RenderSystem.depthFunc(GL11.GL_ALWAYS);
+            builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+            builder.vertex(this.x0, this.y0, -100).uv(0.0F, this.y0 / 32.0F).color(64, 64, 64, 255).endVertex();
+            builder.vertex(this.x0 + this.width, this.y0, -100).uv(this.width / 32.0F, this.y0 / 32.0F).color(64, 64, 64, 255).endVertex();
+            builder.vertex(this.x0 + this.width, 0.0D, -100).uv(this.width / 32.0F, 0.0F).color(64, 64, 64, 255).endVertex();
+            builder.vertex(this.x0, 0.0D, -100).uv(0.0F, 0.0F).color(64, 64, 64, 255).endVertex();
+            builder.vertex(this.x0, this.height, -100).uv(0.0F, this.height / 32.0F).color(64, 64, 64, 255).endVertex();
+            builder.vertex(this.x0 + this.width, this.height, -100).uv(this.width / 32.0F, this.height / 32.0F).color(64, 64, 64, 255).endVertex();
+            builder.vertex(this.x0 + this.width, this.y1, -100).uv(this.width / 32.0F, this.y1 / 32.0F).color(64, 64, 64, 255).endVertex();
+            builder.vertex(this.x0, this.y1, -100).uv(0.0F, this.y1 / 32.0F).color(64, 64, 64, 255).endVertex();
+            tessellator.end();
+            RenderSystem.depthFunc(GL11.GL_LEQUAL);
+            RenderSystem.disableDepthTest();
+            RenderSystem.enableBlend();
+            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
+                                           GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                                           GlStateManager.SourceFactor.ZERO,
+                                           GlStateManager.DestFactor.ONE);
+            RenderSystem.disableAlphaTest();
+            RenderSystem.shadeModel(GL11.GL_SMOOTH);
+            RenderSystem.disableTexture();
+            builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+            builder.vertex(this.x0, this.y0 + 4, 0).uv(0.0F, 1.0F).color(0, 0, 0, 0).endVertex();
+            builder.vertex(this.x1, this.y0 + 4, 0).uv(1.0F, 1.0F).color(0, 0, 0, 0).endVertex();
+            builder.vertex(this.x1, this.y0, 0).uv(1.0F, 0.0F).color(0, 0, 0, 255).endVertex();
+            builder.vertex(this.x0, this.y0, 0).uv(0.0F, 0.0F).color(0, 0, 0, 255).endVertex();
+            builder.vertex(this.x0, this.y1, 0).uv(0.0F, 1.0F).color(0, 0, 0, 255).endVertex();
+            builder.vertex(this.x1, this.y1, 0).uv(1.0F, 1.0F).color(0, 0, 0, 255).endVertex();
+            builder.vertex(this.x1, this.y1 - 4, 0).uv(1.0F, 0.0F).color(0, 0, 0, 0).endVertex();
+            builder.vertex(this.x0, this.y1 - 4, 0).uv(0.0F, 0.0F).color(0, 0, 0, 0).endVertex();
+            tessellator.end();
             int maxScroll = Math.max(0, this.getMaxPosition() - (this.y1 - this.y0 - 4));
             if (maxScroll > 0) {
                 int scrollBarStartY = (int) ((float) ((this.y1 - this.y0) * (this.y1 - this.y0)) / this.getMaxPosition());
@@ -741,31 +767,31 @@ public class ScreenConfig extends Screen {
                 if (scrollBarEndY < this.y0) {
                     scrollBarEndY = this.y0;
                 }
-                buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
-                buffer.pos(scrollBarStart, this.y1, 0).tex(0.0F, 1.0F).color(0, 0, 0, 255).endVertex();
+                builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+                builder.vertex(scrollBarStart, this.y1, 0).uv(0.0F, 1.0F).color(0, 0, 0, 255).endVertex();
                 int scrollBarEnd = scrollBarStart + 6;
-                buffer.pos(scrollBarEnd, this.y1, 0).tex(1.0F, 1.0F).color(0, 0, 0, 255).endVertex();
-                buffer.pos(scrollBarEnd, this.y0, 0).tex(1.0F, 0.0F).color(0, 0, 0, 255).endVertex();
-                buffer.pos(scrollBarStart, this.y0, 0).tex(0.0F, 0.0F).color(0, 0, 0, 255).endVertex();
-                buffer.pos(scrollBarStart, scrollBarEndY + scrollBarStartY, 0.0D).tex(0.0F, 1.0F).color(128, 128, 128, 255).endVertex();
-                buffer.pos(scrollBarEnd, scrollBarEndY + scrollBarStartY, 0.0D).tex(1.0F, 1.0F).color(128, 128, 128, 255).endVertex();
-                buffer.pos(scrollBarEnd, scrollBarEndY, 0).tex(1.0F, 0.0F).color(128, 128, 128, 255).endVertex();
-                buffer.pos(scrollBarStart, scrollBarEndY, 0).tex(0.0F, 0.0F).color(128, 128, 128, 255).endVertex();
-                buffer.pos(scrollBarStart, scrollBarEndY + scrollBarStartY - 1, 0.0D).tex(0.0F, 1.0F).color(192, 192, 192, 255).endVertex();
-                buffer.pos(scrollBarEnd - 1, scrollBarEndY + scrollBarStartY - 1, 0.0D).tex(1.0F, 1.0F).color(192, 192, 192, 255).endVertex();
-                buffer.pos(scrollBarEnd - 1, scrollBarEndY, 0).tex(1.0F, 0.0F).color(192, 192, 192, 255).endVertex();
-                buffer.pos(scrollBarStart, scrollBarEndY, 0).tex(0.0F, 0.0F).color(192, 192, 192, 255).endVertex();
-                tessellator.draw();
+                builder.vertex(scrollBarEnd, this.y1, 0).uv(1.0F, 1.0F).color(0, 0, 0, 255).endVertex();
+                builder.vertex(scrollBarEnd, this.y0, 0).uv(1.0F, 0.0F).color(0, 0, 0, 255).endVertex();
+                builder.vertex(scrollBarStart, this.y0, 0).uv(0.0F, 0.0F).color(0, 0, 0, 255).endVertex();
+                builder.vertex(scrollBarStart, scrollBarEndY + scrollBarStartY, 0.0D).uv(0.0F, 1.0F).color(128, 128, 128, 255).endVertex();
+                builder.vertex(scrollBarEnd, scrollBarEndY + scrollBarStartY, 0.0D).uv(1.0F, 1.0F).color(128, 128, 128, 255).endVertex();
+                builder.vertex(scrollBarEnd, scrollBarEndY, 0).uv(1.0F, 0.0F).color(128, 128, 128, 255).endVertex();
+                builder.vertex(scrollBarStart, scrollBarEndY, 0).uv(0.0F, 0.0F).color(128, 128, 128, 255).endVertex();
+                builder.vertex(scrollBarStart, scrollBarEndY + scrollBarStartY - 1, 0.0D).uv(0.0F, 1.0F).color(192, 192, 192, 255).endVertex();
+                builder.vertex(scrollBarEnd - 1, scrollBarEndY + scrollBarStartY - 1, 0.0D).uv(1.0F, 1.0F).color(192, 192, 192, 255).endVertex();
+                builder.vertex(scrollBarEnd - 1, scrollBarEndY, 0).uv(1.0F, 0.0F).color(192, 192, 192, 255).endVertex();
+                builder.vertex(scrollBarStart, scrollBarEndY, 0).uv(0.0F, 0.0F).color(192, 192, 192, 255).endVertex();
+                tessellator.end();
             }
-            this.renderDecorations(mouseX, mouseY);
-            GlStateManager.enableTexture();
-            GlStateManager.shadeModel(GL11.GL_FLAT);
-            GlStateManager.enableAlphaTest();
-            GlStateManager.disableBlend();
-            this.renderToolTips(mouseX, mouseY);
+            this.renderDecorations(matrices, mouseX, mouseY);
+            RenderSystem.enableTexture();
+            RenderSystem.shadeModel(GL11.GL_FLAT);
+            RenderSystem.enableAlphaTest();
+            RenderSystem.disableBlend();
+            this.renderToolTips(matrices, mouseX, mouseY);
         }
 
-        private void renderToolTips(int mouseX, int mouseY) {
+        private void renderToolTips(MatrixStack matrices, int mouseX, int mouseY) {
             if (this.isMouseOver(mouseX, mouseY) && mouseX < ScreenConfig.this.list.getRowLeft() + ScreenConfig.this.list.getRowWidth() - 87) {
                 ScreenConfig.Entry entry = this.getEntryAtPosition(mouseX, mouseY);
                 if (entry != null) {
@@ -774,7 +800,7 @@ public class ScreenConfig extends Screen {
             }
             this.children().forEach(entry -> entry.children().forEach(o -> {
                 if (o instanceof Button) {
-                    ((Button) o).renderToolTip(mouseX, mouseY);
+                    ((Button) o).renderToolTip(matrices, mouseX, mouseY);
                 }
             }));
         }
@@ -792,7 +818,7 @@ public class ScreenConfig extends Screen {
         public NumberEntry(T configValue, ForgeConfigSpec.ValueSpec valueSpec, Function<String, Number> parser) {
             super(configValue, valueSpec);
             this.textField = new ConfigTextFieldWidget(ScreenConfig.this.font, 0, 0, 60, 18, EvolutionTexts.EMPTY);
-            this.textField.setText(configValue.get().toString());
+            this.textField.setValue(configValue.get().toString());
             this.textField.setResponder(s -> {
                 try {
                     Number n = parser.apply(s);
@@ -813,15 +839,24 @@ public class ScreenConfig extends Screen {
 
         @Override
         public void onResetValue() {
-            this.textField.setText(this.configValue.get().toString());
+            this.textField.setValue(this.configValue.get().toString());
         }
 
         @Override
-        public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
-            super.render(index, y, x, width, height, mouseX, mouseY, hovered, partialTicks);
+        public void render(MatrixStack matrices,
+                           int index,
+                           int y,
+                           int x,
+                           int width,
+                           int height,
+                           int mouseX,
+                           int mouseY,
+                           boolean hovered,
+                           float partialTicks) {
+            super.render(matrices, index, y, x, width, height, mouseX, mouseY, hovered, partialTicks);
             this.textField.x = x + width - 85;
             this.textField.y = y + 1;
-            this.textField.render(mouseX, mouseY, partialTicks);
+            this.textField.render(matrices, mouseX, mouseY, partialTicks);
         }
     }
 
@@ -830,6 +865,11 @@ public class ScreenConfig extends Screen {
         public IntegerEntry(ForgeConfigSpec.ConfigValue<Integer> configValue, ForgeConfigSpec.ValueSpec valueSpec) {
             super(configValue, valueSpec, Integer::parseInt);
         }
+
+        @Override
+        public String toString() {
+            return "IntegerEntry{" + this.label.getString() + "}";
+        }
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -837,12 +877,22 @@ public class ScreenConfig extends Screen {
         public DoubleEntry(ForgeConfigSpec.ConfigValue<Double> configValue, ForgeConfigSpec.ValueSpec valueSpec) {
             super(configValue, valueSpec, Double::parseDouble);
         }
+
+        @Override
+        public String toString() {
+            return "DoubleEntry{" + this.label.getString() + "}";
+        }
     }
 
     @OnlyIn(Dist.CLIENT)
     public class LongEntry extends NumberEntry<Long, ForgeConfigSpec.ConfigValue<Long>> {
         public LongEntry(ForgeConfigSpec.ConfigValue<Long> configValue, ForgeConfigSpec.ValueSpec valueSpec) {
             super(configValue, valueSpec, Long::parseLong);
+        }
+
+        @Override
+        public String toString() {
+            return "LongEntry{" + this.label.getString() + "}";
         }
     }
 
@@ -860,7 +910,7 @@ public class ScreenConfig extends Screen {
                 private boolean wasHovered;
 
                 @Override
-                public void render(int mouseX, int mouseY, float partialTicks) {
+                public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
                     if (this.visible) {
                         this.isHovered = mouseX >= this.x &&
                                          mouseY >= this.y &&
@@ -871,10 +921,10 @@ public class ScreenConfig extends Screen {
                         if (this.wasHovered != this.isHovered()) {
                             if (this.isHovered()) {
                                 if (this.isFocused()) {
-                                    this.nextNarration = Util.milliTime() + 200L;
+                                    this.nextNarration = Util.getMillis() + 200L;
                                 }
                                 else {
-                                    this.nextNarration = Util.milliTime() + 750L;
+                                    this.nextNarration = Util.getMillis() + 750L;
                                 }
                             }
                             else {
@@ -882,7 +932,7 @@ public class ScreenConfig extends Screen {
                             }
                         }
                         if (this.visible) {
-                            this.renderButton(mouseX, mouseY, partialTicks);
+                            this.renderButton(matrices, mouseX, mouseY, partialTicks);
                         }
                         this.narrate();
                         this.wasHovered = this.isHovered();
@@ -893,8 +943,8 @@ public class ScreenConfig extends Screen {
         }
 
         @Override
-        public String getLabel() {
-            return I18n.format(this.configValue.get() ? "options.on" : "options.off");
+        public IFormattableTextComponent getLabel() {
+            return this.configValue.get() ? EvolutionTexts.GUI_GENERAL_ON : EvolutionTexts.GUI_GENERAL_OFF;
         }
 
         @Override
@@ -903,11 +953,25 @@ public class ScreenConfig extends Screen {
         }
 
         @Override
-        public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
-            super.render(index, y, x, width, height, mouseX, mouseY, hovered, partialTicks);
+        public void render(MatrixStack matrices,
+                           int index,
+                           int y,
+                           int x,
+                           int width,
+                           int height,
+                           int mouseX,
+                           int mouseY,
+                           boolean hovered,
+                           float partialTicks) {
+            super.render(matrices, index, y, x, width, height, mouseX, mouseY, hovered, partialTicks);
             this.button.x = x + width - 87;
             this.button.y = y;
-            this.button.render(mouseX, mouseY, partialTicks);
+            this.button.render(matrices, mouseX, mouseY, partialTicks);
+        }
+
+        @Override
+        public String toString() {
+            return "BooleanEntry{" + this.label.getString() + '}';
         }
     }
 
@@ -917,26 +981,40 @@ public class ScreenConfig extends Screen {
 
         public StringEntry(ForgeConfigSpec.ConfigValue<String> configValue, ForgeConfigSpec.ValueSpec valueSpec) {
             super(configValue, valueSpec);
-            String title = createLabelFromConfig(configValue, valueSpec);
+            ITextComponent title = createLabelFromConfig(configValue, valueSpec);
             this.button = new Button(10,
                                      5,
                                      64,
                                      20,
-                                     new TranslationTextComponent("evolution.gui.edit").getFormattedText(),
-                                     button -> ScreenConfig.this.minecraft.displayGuiScreen(new ScreenEditString(ScreenConfig.this,
-                                                                                                                 new StringTextComponent(title),
-                                                                                                                 configValue.get(),
-                                                                                                                 valueSpec::test,
-                                                                                                                 configValue::set)));
+                                     EvolutionTexts.GUI_GENERAL_EDIT,
+                                     button -> ScreenConfig.this.minecraft.setScreen(new ScreenEditString(ScreenConfig.this,
+                                                                                                          title,
+                                                                                                          configValue.get(),
+                                                                                                          valueSpec::test,
+                                                                                                          configValue::set)));
             this.eventListeners.add(this.button);
         }
 
         @Override
-        public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
-            super.render(index, y, x, width, height, mouseX, mouseY, hovered, partialTicks);
+        public void render(MatrixStack matrices,
+                           int index,
+                           int y,
+                           int x,
+                           int width,
+                           int height,
+                           int mouseX,
+                           int mouseY,
+                           boolean hovered,
+                           float partialTicks) {
+            super.render(matrices, index, y, x, width, height, mouseX, mouseY, hovered, partialTicks);
             this.button.x = x + width - 87;
             this.button.y = y;
-            this.button.render(mouseX, mouseY, partialTicks);
+            this.button.render(matrices, mouseX, mouseY, partialTicks);
+        }
+
+        @Override
+        public String toString() {
+            return "StringEntry{" + this.label.toString() + '}';
         }
     }
 
@@ -946,25 +1024,34 @@ public class ScreenConfig extends Screen {
 
         public ListStringEntry(ForgeConfigSpec.ConfigValue<List<?>> configValue, ForgeConfigSpec.ValueSpec valueSpec) {
             super(configValue, valueSpec);
-            String title = createLabelFromConfig(configValue, valueSpec);
+            ITextComponent title = createLabelFromConfig(configValue, valueSpec);
             this.button = new Button(10,
                                      5,
                                      64,
                                      20,
-                                     new TranslationTextComponent("evolution.gui.edit").getFormattedText(),
-                                     button -> ScreenConfig.this.minecraft.displayGuiScreen(new ScreenEditListString(ScreenConfig.this,
-                                                                                                                     new StringTextComponent(title),
-                                                                                                                     configValue,
-                                                                                                                     valueSpec)));
+                                     EvolutionTexts.GUI_GENERAL_EDIT,
+                                     button -> ScreenConfig.this.minecraft.setScreen(new ScreenEditListString(ScreenConfig.this,
+                                                                                                              title,
+                                                                                                              configValue,
+                                                                                                              valueSpec)));
             this.eventListeners.add(this.button);
         }
 
         @Override
-        public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
-            super.render(index, y, x, width, height, mouseX, mouseY, hovered, partialTicks);
+        public void render(MatrixStack matrices,
+                           int index,
+                           int y,
+                           int x,
+                           int width,
+                           int height,
+                           int mouseX,
+                           int mouseY,
+                           boolean hovered,
+                           float partialTicks) {
+            super.render(matrices, index, y, x, width, height, mouseX, mouseY, hovered, partialTicks);
             this.button.x = x + width - 87;
             this.button.y = y;
-            this.button.render(mouseX, mouseY, partialTicks);
+            this.button.render(matrices, mouseX, mouseY, partialTicks);
         }
     }
 
@@ -974,20 +1061,27 @@ public class ScreenConfig extends Screen {
 
         public EnumEntry(ForgeConfigSpec.ConfigValue<Enum<?>> configValue, ForgeConfigSpec.ValueSpec valueSpec) {
             super(configValue, valueSpec);
-            this.button = new Button(10, 5, 64, 20, new StringTextComponent(configValue.get().name()).getText(), button -> {
-                Object o = configValue.get();
-                if (o != null) {
-                    Enum<?> e = (Enum<?>) o;
-                    Object[] values = e.getDeclaringClass().getEnumConstants();
-                    e = (Enum<?>) values[(e.ordinal() + 1) % values.length];
-                    configValue.set(e);
-                    button.setMessage(new StringTextComponent(e.name()).getText());
-                }
-            }) {
+            this.button = new Button(10,
+                                     5,
+                                     64,
+                                     20,
+                                     new TranslationTextComponent(ScreenConfig.this.modId + ".config.enum_" + configValue.get().name().toLowerCase()),
+                                     button -> {
+                                         Object o = configValue.get();
+                                         if (o != null) {
+                                             Enum<?> e = (Enum<?>) o;
+                                             Object[] values = e.getDeclaringClass().getEnumConstants();
+                                             e = (Enum<?>) values[(e.ordinal() + 1) % values.length];
+                                             configValue.set(e);
+                                             button.setMessage(new TranslationTextComponent(ScreenConfig.this.modId +
+                                                                                            ".config.enum_" +
+                                                                                            e.name().toLowerCase()));
+                                         }
+                                     }) {
                 private boolean wasHovered;
 
                 @Override
-                public void render(int mouseX, int mouseY, float partialTicks) {
+                public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
                     if (this.visible) {
                         this.isHovered = mouseX >= this.x &&
                                          mouseY >= this.y &&
@@ -998,10 +1092,10 @@ public class ScreenConfig extends Screen {
                         if (this.wasHovered != this.isHovered()) {
                             if (this.isHovered()) {
                                 if (this.isFocused()) {
-                                    this.nextNarration = Util.milliTime() + 200L;
+                                    this.nextNarration = Util.getMillis() + 200L;
                                 }
                                 else {
-                                    this.nextNarration = Util.milliTime() + 750L;
+                                    this.nextNarration = Util.getMillis() + 750L;
                                 }
                             }
                             else {
@@ -1009,7 +1103,7 @@ public class ScreenConfig extends Screen {
                             }
                         }
                         if (this.visible) {
-                            this.renderButton(mouseX, mouseY, partialTicks);
+                            this.renderButton(matrices, mouseX, mouseY, partialTicks);
                         }
                         this.narrate();
                         this.wasHovered = this.isHovered();
@@ -1021,15 +1115,31 @@ public class ScreenConfig extends Screen {
 
         @Override
         public void onResetValue() {
-            this.button.setMessage(new StringTextComponent(this.configValue.get().name()).getText());
+            this.button.setMessage(new TranslationTextComponent(ScreenConfig.this.modId +
+                                                                ".config.enum_" +
+                                                                this.configValue.get().name().toLowerCase()));
         }
 
         @Override
-        public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
-            super.render(index, y, x, width, height, mouseX, mouseY, hovered, partialTicks);
+        public void render(MatrixStack matrices,
+                           int index,
+                           int y,
+                           int x,
+                           int width,
+                           int height,
+                           int mouseX,
+                           int mouseY,
+                           boolean hovered,
+                           float partialTicks) {
+            super.render(matrices, index, y, x, width, height, mouseX, mouseY, hovered, partialTicks);
             this.button.x = x + width - 87;
             this.button.y = y;
-            this.button.render(mouseX, mouseY, partialTicks);
+            this.button.render(matrices, mouseX, mouseY, partialTicks);
+        }
+
+        @Override
+        public String toString() {
+            return "EnumEntry{" + this.label.getString() + '}';
         }
     }
 
@@ -1041,15 +1151,24 @@ public class ScreenConfig extends Screen {
     @OnlyIn(Dist.CLIENT)
     public class ConfigTextFieldWidget extends TextFieldWidget {
         public ConfigTextFieldWidget(FontRenderer fontRenderer, int x, int y, int width, int height, ITextComponent label) {
-            super(fontRenderer, x, y, width, height, label.getFormattedText());
+            super(fontRenderer, x, y, width, height, label);
         }
 
         @Override
-        public void setFocused2(boolean focused) {
-            super.setFocused2(focused);
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            if (button == GLFW.GLFW_MOUSE_BUTTON_2) {
+                this.setValue("");
+                return true;
+            }
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
+
+        @Override
+        public void setFocus(boolean focused) {
+            super.setFocus(focused);
             if (focused) {
                 if (ScreenConfig.this.activeTextField != null && ScreenConfig.this.activeTextField != this) {
-                    ScreenConfig.this.activeTextField.setFocused2(false);
+                    ScreenConfig.this.activeTextField.setFocus(false);
                 }
                 ScreenConfig.this.activeTextField = this;
             }

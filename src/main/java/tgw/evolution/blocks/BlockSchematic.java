@@ -10,6 +10,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.state.StateContainer;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -25,7 +26,12 @@ import static tgw.evolution.init.EvolutionBStates.SCHEMATIC_MODE;
 public class BlockSchematic extends Block {
 
     public BlockSchematic() {
-        super(Properties.create(Material.IRON, MaterialColor.LIGHT_GRAY).hardnessAndResistance(-1.0F, 3_600_000.0F).sound(SoundType.METAL).noDrops());
+        super(Properties.of(Material.METAL, MaterialColor.COLOR_LIGHT_GRAY).strength(-1.0F, 3_600_000.0F).sound(SoundType.METAL).noDrops());
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+        builder.add(SCHEMATIC_MODE);
     }
 
     @Nullable
@@ -35,18 +41,13 @@ public class BlockSchematic extends Block {
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(SCHEMATIC_MODE);
-    }
-
-    @Override
-    public BlockRenderType getRenderType(BlockState state) {
+    public BlockRenderType getRenderShape(BlockState state) {
         return BlockRenderType.MODEL;
     }
 
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
-        return this.getDefaultState().with(SCHEMATIC_MODE, SchematicMode.SAVE);
+        return this.defaultBlockState().setValue(SCHEMATIC_MODE, SchematicMode.SAVE);
     }
 
     @Override
@@ -55,8 +56,8 @@ public class BlockSchematic extends Block {
     }
 
     @Override
-    public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        TileEntity tileentity = worldIn.getTileEntity(pos);
-        return tileentity instanceof TESchematic && ((TESchematic) tileentity).usedBy(player);
+    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
+        TileEntity tileentity = world.getBlockEntity(pos);
+        return tileentity instanceof TESchematic && ((TESchematic) tileentity).usedBy(player) ? ActionResultType.SUCCESS : ActionResultType.PASS;
     }
 }

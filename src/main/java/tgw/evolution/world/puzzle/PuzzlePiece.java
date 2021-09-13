@@ -12,14 +12,16 @@ import net.minecraft.world.gen.feature.template.TemplateManager;
 import tgw.evolution.util.NBTHelper;
 import tgw.evolution.world.puzzle.pieces.config.PlacementType;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Random;
 
 public abstract class PuzzlePiece {
 
+    @Nonnull
     private volatile PlacementType projection;
 
-    protected PuzzlePiece(PlacementType projection) {
+    protected PuzzlePiece(@Nonnull PlacementType projection) {
         this.projection = projection;
     }
 
@@ -27,11 +29,16 @@ public abstract class PuzzlePiece {
         this.projection = PlacementType.byId(NBTHelper.asByte(nbt, "Proj", PlacementType.RIGID.getId()));
     }
 
-    public abstract List<Template.BlockInfo> getPuzzleBlocks(TemplateManager templateManagerIn, BlockPos pos, Rotation rotationIn, Random rand);
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof PuzzlePiece)) {
+            return false;
+        }
+        PuzzlePiece that = (PuzzlePiece) o;
+        return this.projection == that.projection;
+    }
 
     public abstract MutableBoundingBox getBoundingBox(TemplateManager templateManagerIn, BlockPos pos, Rotation rotationIn);
-
-    public abstract boolean place(TemplateManager templateManagerIn, IWorld worldIn, BlockPos pos, Rotation rotationIn, MutableBoundingBox boundsIn, Random rand);
 
     public PlacementType getPlacementBehaviour() {
         PlacementType placementBehaviour = this.projection;
@@ -46,24 +53,9 @@ public abstract class PuzzlePiece {
         return this;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof PuzzlePiece)) {
-            return false;
-        }
-        PuzzlePiece that = (PuzzlePiece) o;
-        return this.projection == that.projection;
-    }
+    public abstract List<Template.BlockInfo> getPuzzleBlocks(TemplateManager templateManagerIn, BlockPos pos, Rotation rotationIn, Random rand);
 
     public abstract EnumPuzzleType getType();
-
-    protected abstract INBT serialize0();
-
-    public final INBT serialize() {
-        INBT pieceNBT = this.serialize0();
-        INBT thisNBT = NBTHelper.mergeInto(pieceNBT, new StringNBT("PieceType"), new ByteNBT(this.getType().getId()));
-        return NBTHelper.mergeInto(thisNBT, new StringNBT("Proj"), new ByteNBT(this.projection.getId()));
-    }
 
     public int groundLevelDelta() {
         return 1;
@@ -73,4 +65,19 @@ public abstract class PuzzlePiece {
     public int hashCode() {
         return 0;
     }
+
+    public abstract boolean place(TemplateManager templateManagerIn,
+                                  IWorld worldIn,
+                                  BlockPos pos,
+                                  Rotation rotationIn,
+                                  MutableBoundingBox boundsIn,
+                                  Random rand);
+
+    public final INBT serialize() {
+        INBT pieceNBT = this.serialize0();
+        INBT thisNBT = NBTHelper.mergeInto(pieceNBT, StringNBT.valueOf("PieceType"), ByteNBT.valueOf(this.getType().getId()));
+        return NBTHelper.mergeInto(thisNBT, StringNBT.valueOf("Proj"), ByteNBT.valueOf(this.projection.getId()));
+    }
+
+    protected abstract INBT serialize0();
 }

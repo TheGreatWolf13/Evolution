@@ -7,7 +7,7 @@ import net.minecraft.util.Hand;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
 import tgw.evolution.Evolution;
-import tgw.evolution.client.LungeChargeInfo;
+import tgw.evolution.client.util.LungeChargeInfo;
 import tgw.evolution.events.ClientEvents;
 
 import java.util.function.Supplier;
@@ -25,11 +25,11 @@ public class PacketSCStartLunge implements IPacket {
     }
 
     public static PacketSCStartLunge decode(PacketBuffer buffer) {
-        return new PacketSCStartLunge(buffer.readInt(), buffer.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND, buffer.readByte());
+        return new PacketSCStartLunge(buffer.readVarInt(), buffer.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND, buffer.readByte());
     }
 
     public static void encode(PacketSCStartLunge packet, PacketBuffer buffer) {
-        buffer.writeInt(packet.entityId);
+        buffer.writeVarInt(packet.entityId);
         buffer.writeBoolean(packet.hand == Hand.MAIN_HAND);
         buffer.writeByte(packet.duration);
     }
@@ -37,7 +37,7 @@ public class PacketSCStartLunge implements IPacket {
     public static void handle(PacketSCStartLunge packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
-                ItemStack lungeStack = ((LivingEntity) Evolution.PROXY.getClientWorld().getEntityByID(packet.entityId)).getHeldItem(packet.hand);
+                ItemStack lungeStack = ((LivingEntity) Evolution.PROXY.getClientWorld().getEntity(packet.entityId)).getItemInHand(packet.hand);
                 LungeChargeInfo lunge = ClientEvents.ABOUT_TO_LUNGE_PLAYERS.get(packet.entityId);
                 if (lunge == null) {
                     ClientEvents.ABOUT_TO_LUNGE_PLAYERS.put(packet.entityId, new LungeChargeInfo(packet.hand, lungeStack, packet.duration));

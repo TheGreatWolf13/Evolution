@@ -1,15 +1,18 @@
 package tgw.evolution.client.renderer.entities;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.vector.Vector3f;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.models.entities.ModelHook;
 import tgw.evolution.entities.projectiles.EntityHook;
-
-import javax.annotation.Nullable;
 
 public class RenderHook extends EntityRenderer<EntityHook> {
 
@@ -21,23 +24,18 @@ public class RenderHook extends EntityRenderer<EntityHook> {
     }
 
     @Override
-    public void doRender(EntityHook entity, double x, double y, double z, float entityYaw, float partialTicks) {
-        this.bindEntityTexture(entity);
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GlStateManager.pushMatrix();
-        GlStateManager.disableLighting();
-        GlStateManager.translatef((float) x, (float) y, (float) z);
-        GlStateManager.rotatef(MathHelper.lerp(partialTicks, entity.prevRotationYaw, entity.rotationYaw) - 90.0F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotatef(MathHelper.lerp(partialTicks, entity.prevRotationPitch, entity.rotationPitch) + 90.0F, 0.0F, 0.0F, 1.0F);
-        this.model.renderer();
-        GlStateManager.popMatrix();
-        super.doRender(entity, x, y, z, entityYaw, partialTicks);
-        GlStateManager.enableLighting();
+    public ResourceLocation getTextureLocation(EntityHook entity) {
+        return HOOK;
     }
 
-    @Nullable
     @Override
-    protected ResourceLocation getEntityTexture(EntityHook entity) {
-        return HOOK;
+    public void render(EntityHook entity, float yaw, float partialTicks, MatrixStack matrices, IRenderTypeBuffer buffer, int packedLight) {
+        matrices.pushPose();
+        matrices.mulPose(Vector3f.YP.rotationDegrees(MathHelper.lerp(partialTicks, entity.yRotO, entity.yRot) - 90.0F));
+        matrices.mulPose(Vector3f.ZP.rotationDegrees(MathHelper.lerp(partialTicks, entity.xRotO, entity.xRot) + 90.0F));
+        IVertexBuilder modelBuffer = ItemRenderer.getFoilBuffer(buffer, this.model.renderType(this.getTextureLocation(entity)), false, false);
+        this.model.renderToBuffer(matrices, modelBuffer, packedLight, OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, 1.0f);
+        matrices.popPose();
+        super.render(entity, yaw, partialTicks, matrices, buffer, packedLight);
     }
 }

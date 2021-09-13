@@ -11,7 +11,7 @@
 //import net.minecraftforge.common.MinecraftForge;
 //import tgw.evolution.entities.AgeableEntity;
 //import tgw.evolution.entities.AnimalEntity;
-//import tgw.evolution.entities.event.BabyEntitySpawnEvent;
+//import tgw.evolution.entities.event.EventSpawnBabyEntity;
 //
 //public class BreedGoal extends Goal {
 //	private static final EntityPredicate field_220689_d = new EntityPredicate().setDistance(8.0D).allowInvulnerable().allowFriendlyFire()
@@ -92,7 +92,7 @@
 //	 */
 //	protected void spawnBaby() {
 //		AgeableEntity ageableentity = this.animal.createChild(this.mate);
-//		BabyEntitySpawnEvent event = new BabyEntitySpawnEvent(this.animal, this.mate, ageableentity);
+//		EventSpawnBabyEntity event = new EventSpawnBabyEntity(this.animal, this.mate, ageableentity);
 //		boolean cancelled = MinecraftForge.EVENT_BUS.post(event);
 //		ageableentity = event.getChild();
 //		if (cancelled) {

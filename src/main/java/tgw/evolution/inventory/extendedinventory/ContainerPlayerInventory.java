@@ -1,6 +1,7 @@
 package tgw.evolution.inventory.extendedinventory;
 
 import com.google.common.collect.Lists;
+import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.util.RecipeBookCategories;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -11,13 +12,11 @@ import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.container.CraftingResultSlot;
+import net.minecraft.inventory.container.PlayerContainer;
 import net.minecraft.inventory.container.RecipeBookContainer;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.ICraftingRecipe;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.IRecipeType;
-import net.minecraft.item.crafting.RecipeItemHelper;
+import net.minecraft.item.crafting.*;
 import net.minecraft.network.play.server.SSetSlotPacket;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
@@ -40,7 +39,7 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
                                                                       EquipmentSlotType.LEGS,
                                                                       EquipmentSlotType.FEET};
     public final IExtendedItemHandler handler;
-    public final boolean isLocalWorld;
+    public final boolean isClientSide;
     private final CraftingInventory craftingInventory = new CraftingInventory(this, 2, 2);
     private final CraftResultInventory craftingResult = new CraftResultInventory();
     private final PlayerEntity player;
@@ -48,7 +47,7 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
     public ContainerPlayerInventory(int windowId, PlayerInventory inventory) {
         super(EvolutionContainers.EXTENDED_INVENTORY.get(), windowId);
         this.player = inventory.player;
-        this.isLocalWorld = this.player.world.isRemote;
+        this.isClientSide = this.player.level.isClientSide;
         this.handler = this.player.getCapability(CapabilityExtendedInventory.INSTANCE).orElseThrow(IllegalStateException::new);
         //Crafting result slot
         this.addSlot(new CraftingResultSlot(inventory.player, this.craftingInventory, this.craftingResult, 0, 161, 62));
@@ -66,27 +65,21 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
             this.addSlot(new Slot(inventory, 39 - k, 26, 8 + k * 18) {
 
                 @Override
-                public boolean canTakeStack(PlayerEntity playerIn) {
-                    if (equipmentslottype == EquipmentSlotType.CHEST) {
-                        return ContainerPlayerInventory.this.handler.getStackInSlot(EvolutionResources.CLOAK).isEmpty();
-                    }
-                    ItemStack stack = this.getStack();
-                    return !stack.isEmpty();
-                }
-
-                @Override
-                public int getSlotStackLimit() {
+                public int getMaxStackSize() {
                     return 1;
                 }
 
                 @Override
-                @OnlyIn(Dist.CLIENT)
-                public String getSlotTexture() {
-                    return EvolutionResources.SLOT_ARMOR[equipmentslottype.getIndex()];
+                public boolean mayPickup(PlayerEntity player) {
+                    if (equipmentslottype == EquipmentSlotType.CHEST) {
+                        return ContainerPlayerInventory.this.handler.getStackInSlot(EvolutionResources.CLOAK).isEmpty();
+                    }
+                    ItemStack stack = this.getItem();
+                    return !stack.isEmpty();
                 }
 
                 @Override
-                public boolean isItemValid(ItemStack stack) {
+                public boolean mayPlace(ItemStack stack) {
                     if (equipmentslottype == EquipmentSlotType.CHEST) {
                         if (!ContainerPlayerInventory.this.handler.getStackInSlot(EvolutionResources.CLOAK).isEmpty()) {
                             return false;
@@ -94,7 +87,7 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
                     }
                     return stack.canEquip(equipmentslottype, ContainerPlayerInventory.this.player);
                 }
-            });
+            }).setBackground(AtlasTexture.LOCATION_BLOCKS, EvolutionResources.SLOT_ARMOR[equipmentslottype.getIndex()]);
         }
         //Main inventory slots
         for (int l = 0; l < 3; ++l) {
@@ -109,14 +102,7 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
             this.addSlot(new Slot(inventory, i1, 26 + i1 * 18, 142));
         }
         //Shield slot
-        this.addSlot(new Slot(inventory, 40, 116, 62) {
-
-            @Override
-            @OnlyIn(Dist.CLIENT)
-            public String getSlotTexture() {
-                return EvolutionResources.SLOT_SHIELD;
-            }
-        });
+        this.addSlot(new Slot(inventory, 40, 116, 62).setBackground(AtlasTexture.LOCATION_BLOCKS, PlayerContainer.EMPTY_ARMOR_SLOT_SHIELD));
         this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.HAT, 44, 8));
         this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.BODY, 44, 26));
         this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.LEGS, 44, 44));
@@ -127,69 +113,69 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
         this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.TACTICAL, 116, 44));
     }
 
-    protected static void func_217066_a(int window,
-                                        World world,
-                                        PlayerEntity player,
-                                        CraftingInventory craftingInventory,
-                                        CraftResultInventory resultInventory) {
-        if (!world.isRemote) {
+    protected static void slotChangedCraftingGrid(int window,
+                                                  World world,
+                                                  PlayerEntity player,
+                                                  CraftingInventory craftingInventory,
+                                                  CraftResultInventory resultInventory) {
+        if (!world.isClientSide) {
             ServerPlayerEntity playerMP = (ServerPlayerEntity) player;
             ItemStack stack = ItemStack.EMPTY;
-            Optional<ICraftingRecipe> optional = world.getServer().getRecipeManager().getRecipe(IRecipeType.CRAFTING, craftingInventory, world);
+            Optional<ICraftingRecipe> optional = world.getServer().getRecipeManager().getRecipeFor(IRecipeType.CRAFTING, craftingInventory, world);
             if (optional.isPresent()) {
                 ICraftingRecipe recipe = optional.get();
-                if (resultInventory.canUseRecipe(world, playerMP, recipe)) {
-                    stack = recipe.getCraftingResult(craftingInventory);
+                if (resultInventory.setRecipeUsed(world, playerMP, recipe)) {
+                    stack = recipe.assemble(craftingInventory);
                 }
             }
-            resultInventory.setInventorySlotContents(0, stack);
-            playerMP.connection.sendPacket(new SSetSlotPacket(window, 0, stack));
+            resultInventory.setItem(0, stack);
+            playerMP.connection.send(new SSetSlotPacket(window, 0, stack));
         }
     }
 
     @Override
-    public boolean canInteractWith(PlayerEntity player) {
-        return true;
+    public boolean canTakeItemForPickAll(ItemStack stack, Slot slot) {
+        return slot.container != this.craftingResult && super.canTakeItemForPickAll(stack, slot);
     }
 
     @Override
-    public boolean canMergeSlot(ItemStack stack, Slot slot) {
-        return slot.inventory != this.craftingResult && super.canMergeSlot(stack, slot);
+    public void clearCraftingContent() {
+        this.craftingResult.clearContent();
+        this.craftingInventory.clearContent();
     }
 
     @Override
-    public void clear() {
-        this.craftingResult.clear();
-        this.craftingInventory.clear();
-    }
-
-    @Override
-    public void func_201771_a(RecipeItemHelper itemHelper) {
+    public void fillCraftSlotsStackedContents(RecipeItemHelper itemHelper) {
         this.craftingInventory.fillStackedContents(itemHelper);
     }
 
     @Override
-    public void func_217056_a(boolean placeAll, IRecipe<?> recipe, ServerPlayerEntity player) {
-        ServerRecipePlacerEv.place(this, player, recipe, placeAll);
-    }
-
-    @Override
-    public int getHeight() {
+    public int getGridHeight() {
         return this.craftingInventory.getHeight();
     }
 
     @Override
-    public int getOutputSlot() {
-        return 0;
+    public int getGridWidth() {
+        return this.craftingInventory.getWidth();
     }
 
     @Nonnull
     @Override
     public List<RecipeBookCategories> getRecipeBookCategories() {
-        return Lists.newArrayList(RecipeBookCategories.SEARCH,
-                                  RecipeBookCategories.EQUIPMENT,
-                                  RecipeBookCategories.BUILDING_BLOCKS,
-                                  RecipeBookCategories.MISC);
+        return Lists.newArrayList(RecipeBookCategories.CRAFTING_SEARCH,
+                                  RecipeBookCategories.CRAFTING_EQUIPMENT,
+                                  RecipeBookCategories.CRAFTING_BUILDING_BLOCKS,
+                                  RecipeBookCategories.CRAFTING_MISC);
+    }
+
+    @Override
+    public RecipeBookCategory getRecipeBookType() {
+        return RecipeBookCategory.CRAFTING;
+    }
+
+    @Override
+    public int getResultSlotIndex() {
+        return 0;
     }
 
     @Override
@@ -199,98 +185,102 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
     }
 
     @Override
-    public int getWidth() {
-        return this.craftingInventory.getWidth();
+    public void handlePlacement(boolean placeAll, IRecipe<?> recipe, ServerPlayerEntity player) {
+        ServerRecipePlacerEv.recipeClicked(this, player, recipe, placeAll);
     }
 
     @Override
-    public boolean matches(IRecipe<? super CraftingInventory> recipeIn) {
-        return recipeIn.matches(this.craftingInventory, this.player.world);
-    }
-
-    @Override
-    public void onContainerClosed(PlayerEntity playerIn) {
-        super.onContainerClosed(playerIn);
-        this.craftingResult.clear();
-        if (!playerIn.world.isRemote) {
-            this.clearContainer(playerIn, playerIn.world, this.craftingInventory);
-        }
-    }
-
-    @Override
-    public void onCraftMatrixChanged(IInventory inventoryIn) {
-        func_217066_a(this.windowId, this.player.world, this.player, this.craftingInventory, this.craftingResult);
-    }
-
-    @Override
-    public ItemStack transferStackInSlot(PlayerEntity player, int index) {
+    public ItemStack quickMoveStack(PlayerEntity player, int index) {
         ItemStack stack = ItemStack.EMPTY;
-        Slot slot = this.inventorySlots.get(index);
-        if (slot != null && slot.getHasStack()) {
-            ItemStack stackInSlot = slot.getStack();
+        Slot slot = this.slots.get(index);
+        if (slot != null && slot.hasItem()) {
+            ItemStack stackInSlot = slot.getItem();
             stack = stackInSlot.copy();
-            EquipmentSlotType equipmentSlotType = MobEntity.getSlotForItemStack(stack);
+            EquipmentSlotType equipmentSlotType = MobEntity.getEquipmentSlotForItem(stack);
             if (index == 0) {
-                if (!this.mergeItemStack(stackInSlot, 9, 45, true)) {
+                if (!this.moveItemStackTo(stackInSlot, 9, 45, true)) {
                     return ItemStack.EMPTY;
                 }
-                slot.onSlotChange(stackInSlot, stack);
+                slot.onQuickCraft(stackInSlot, stack);
             }
             else if (index < 5) {
-                if (!this.mergeItemStack(stackInSlot, 9, 45, false)) {
+                if (!this.moveItemStackTo(stackInSlot, 9, 45, false)) {
                     return ItemStack.EMPTY;
                 }
             }
             else if (index < 9) {
-                if (!this.mergeItemStack(stackInSlot, 9, 45, false)) {
+                if (!this.moveItemStackTo(stackInSlot, 9, 45, false)) {
                     return ItemStack.EMPTY;
                 }
             }
-            else if (equipmentSlotType.getSlotType() == EquipmentSlotType.Group.ARMOR &&
-                     !this.inventorySlots.get(8 - equipmentSlotType.getIndex()).getHasStack()) {
+            else if (equipmentSlotType.getType() == EquipmentSlotType.Group.ARMOR && !this.slots.get(8 - equipmentSlotType.getIndex()).hasItem()) {
                 int i = 8 - equipmentSlotType.getIndex();
-                if (!this.mergeItemStack(stackInSlot, i, i + 1, false)) {
+                if (!this.moveItemStackTo(stackInSlot, i, i + 1, false)) {
                     return ItemStack.EMPTY;
                 }
             }
             else if (stackInSlot.getItem() instanceof IAdditionalEquipment && index < 45) {
                 IAdditionalEquipment item = (IAdditionalEquipment) stackInSlot.getItem();
                 for (int validSlot : item.getType().getValidSlots()) {
-                    this.mergeItemStack(stackInSlot, 46 + validSlot, 47 + validSlot, false);
+                    this.moveItemStackTo(stackInSlot, 46 + validSlot, 47 + validSlot, false);
                 }
             }
-            else if (equipmentSlotType == EquipmentSlotType.OFFHAND && !this.inventorySlots.get(45).getHasStack()) {
-                if (!this.mergeItemStack(stackInSlot, 45, 46, false)) {
+            else if (equipmentSlotType == EquipmentSlotType.OFFHAND && !this.slots.get(45).hasItem()) {
+                if (!this.moveItemStackTo(stackInSlot, 45, 46, false)) {
                     return ItemStack.EMPTY;
                 }
             }
             else if (index < 36) {
-                if (!this.mergeItemStack(stackInSlot, 36, 45, false)) {
+                if (!this.moveItemStackTo(stackInSlot, 36, 45, false)) {
                     return ItemStack.EMPTY;
                 }
             }
             else if (index < 45) {
-                if (!this.mergeItemStack(stackInSlot, 9, 36, false)) {
+                if (!this.moveItemStackTo(stackInSlot, 9, 36, false)) {
                     return ItemStack.EMPTY;
                 }
             }
-            else if (!this.mergeItemStack(stackInSlot, 9, 45, false)) {
+            else if (!this.moveItemStackTo(stackInSlot, 9, 45, false)) {
                 return ItemStack.EMPTY;
             }
             if (stackInSlot.isEmpty()) {
-                slot.putStack(ItemStack.EMPTY);
+                slot.set(ItemStack.EMPTY);
             }
             else {
-                slot.onSlotChanged();
+                slot.setChanged();
             }
             if (stackInSlot.getCount() == stack.getCount()) {
                 return ItemStack.EMPTY;
             }
             ItemStack itemstack2 = slot.onTake(player, stackInSlot);
             if (index == 0) {
-                player.dropItem(itemstack2, false);
+                player.drop(itemstack2, false);
             }
         }
         return stack;
+    }
+
+    @Override
+    public boolean recipeMatches(IRecipe<? super CraftingInventory> recipe) {
+        return recipe.matches(this.craftingInventory, this.player.level);
+    }
+
+    @Override
+    public void removed(PlayerEntity player) {
+        super.removed(player);
+        this.craftingResult.clearContent();
+        if (!player.level.isClientSide) {
+            this.clearContainer(player, player.level, this.craftingInventory);
+        }
+    }
+
+    @Override
+    public void slotsChanged(IInventory inventory) {
+        slotChangedCraftingGrid(this.containerId, this.player.level, this.player, this.craftingInventory, this.craftingResult);
+    }
+
+    @Override
+    public boolean stillValid(PlayerEntity player) {
+        return true;
     }
 }

@@ -5,25 +5,26 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.state.StateContainer;
-import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.IShearable;
+import net.minecraftforge.common.IForgeShearable;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.util.BlockFlags;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -33,13 +34,13 @@ import java.util.Random;
 import static tgw.evolution.init.EvolutionBStates.DISTANCE_0_7;
 import static tgw.evolution.init.EvolutionBStates.TREE;
 
-public class BlockLeaves extends BlockEvolution implements IShearable, IReplaceable {
+public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShearable {
 
-    private static final Vec3d MOTION_MULTIPLIER = new Vec3d(0.5, 1, 0.5);
+    private static final Vector3d MOTION_MULTIPLIER = new Vector3d(0.5, 1, 0.5);
 
     public BlockLeaves() {
-        super(Block.Properties.create(Material.LEAVES).hardnessAndResistance(0.2F, 0.2F).sound(SoundType.PLANT).doesNotBlockMovement());
-        this.setDefaultState(this.getDefaultState().with(DISTANCE_0_7, 0).with(TREE, true));
+        super(Properties.of(Material.LEAVES).strength(0.2F, 0.2F).sound(SoundType.GRASS).noCollission());
+        this.registerDefaultState(this.defaultBlockState().setValue(DISTANCE_0_7, 0).setValue(TREE, true));
     }
 
     /**
@@ -54,9 +55,9 @@ public class BlockLeaves extends BlockEvolution implements IShearable, IReplacea
     /**
      * Called when this block should fall.
      */
-    private static void fall(World worldIn, BlockPos pos) {
-        EntityFallingWeight entity = new EntityFallingWeight(worldIn, pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, worldIn.getBlockState(pos));
-        worldIn.addEntity(entity);
+    private static void fall(World world, BlockPos pos) {
+        EntityFallingWeight entity = new EntityFallingWeight(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, world.getBlockState(pos));
+        world.addFreshEntity(entity);
     }
 
     /**
@@ -66,34 +67,33 @@ public class BlockLeaves extends BlockEvolution implements IShearable, IReplacea
         if (neighbor.getBlock() instanceof BlockLog) {
             return 0;
         }
-        return neighbor.getBlock() instanceof BlockLeaves ? neighbor.get(DISTANCE_0_7) : 7;
+        return neighbor.getBlock() instanceof BlockLeaves ? neighbor.getValue(DISTANCE_0_7) : 7;
     }
 
     /**
      * Updates this blockstate in accordance with the distance away from logs.
      */
-    private static BlockState updateDistance(BlockState state, IWorld iWorld, BlockPos pos) {
+    private static BlockState updateDistance(BlockState state, IWorld world, BlockPos pos) {
         int i = 7;
-        try (BlockPos.PooledMutableBlockPos mutableBlockPos = BlockPos.PooledMutableBlockPos.retain()) {
-            for (Direction direction : Direction.values()) {
-                mutableBlockPos.setPos(pos).move(direction);
-                i = Math.min(i, getDistance(iWorld.getBlockState(mutableBlockPos)) + 1);
-                if (i == 1) {
-                    break;
-                }
+        BlockPos.Mutable mutable = new BlockPos.Mutable();
+        for (Direction direction : Direction.values()) {
+            mutable.setWithOffset(pos, direction);
+            i = Math.min(i, getDistance(world.getBlockState(mutable)) + 1);
+            if (i == 1) {
+                break;
             }
         }
-        return state.with(DISTANCE_0_7, i);
+        return state.setValue(DISTANCE_0_7, i);
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void animateTick(BlockState stateIn, World worldIn, BlockPos pos, Random rand) {
-        if (worldIn.isRainingAt(pos.up()) && !worldIn.getBlockState(pos.down()).isSolid() && rand.nextInt(15) == 1) {
-            double d0 = pos.getX() + rand.nextFloat();
-            double d1 = pos.getY() - 0.05D;
-            double d2 = pos.getZ() + rand.nextFloat();
-            worldIn.addParticle(ParticleTypes.DRIPPING_WATER, d0, d1, d2, 0.0D, 0.0D, 0.0D);
+    public void animateTick(BlockState state, World world, BlockPos pos, Random rand) {
+        if (world.isRainingAt(pos.above()) && !world.getBlockState(pos.below()).canOcclude() && rand.nextInt(15) == 1) {
+            double x = pos.getX() + rand.nextFloat();
+            double y = pos.getY() - 0.05;
+            double z = pos.getZ() + rand.nextFloat();
+            world.addParticle(ParticleTypes.DRIPPING_WATER, x, y, z, 0, 0, 0);
         }
     }
 
@@ -107,41 +107,44 @@ public class BlockLeaves extends BlockEvolution implements IShearable, IReplacea
         return false;
     }
 
-    @Override
-    public boolean causesSuffocation(BlockState state, IBlockReader worldIn, BlockPos pos) {
-        return false;
-    }
-
     /**
      * Checks whether this block should fall.
      */
-    private void checkFallable(World worldIn, BlockPos pos) {
-        if (canFallThrough(worldIn.getBlockState(pos.down())) && pos.getY() >= 0) {
-            if (worldIn.isAreaLoaded(pos.add(-32, -32, -32), pos.add(32, 32, 32))) {
-                if (!worldIn.isRemote) {
-                    fall(worldIn, pos);
+    private void checkFallable(World world, BlockPos pos) {
+        if (canFallThrough(world.getBlockState(pos.below())) && pos.getY() >= 0) {
+            if (world.isAreaLoaded(pos, 32)) {
+                if (!world.isClientSide) {
+                    fall(world, pos);
                 }
             }
             else {
-                BlockState state = this.getDefaultState();
-                if (worldIn.getBlockState(pos).getBlock() == this) {
-                    state = worldIn.getBlockState(pos);
-                    worldIn.removeBlock(pos, false);
+                BlockState state = this.defaultBlockState();
+                if (world.getBlockState(pos).getBlock() == this) {
+                    state = world.getBlockState(pos);
+                    world.removeBlock(pos, false);
                 }
-                BlockPos blockpos = pos.down();
-                while (canFallThrough(worldIn.getBlockState(blockpos)) && blockpos.getY() > 0) {
-                    blockpos = blockpos.down();
+                BlockPos.Mutable posDown = new BlockPos.Mutable();
+                posDown.setWithOffset(pos, Direction.DOWN);
+                while (canFallThrough(world.getBlockState(posDown)) && posDown.getY() > 0) {
+                    posDown.move(Direction.DOWN);
                 }
-                if (blockpos.getY() > 0) {
-                    worldIn.setBlockState(blockpos.up(), state); //Forge: Fix loss of state information during world gen.
+                if (posDown.getY() > 0) {
+                    world.setBlockAndUpdate(posDown.move(Direction.UP), state);
                 }
             }
         }
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
         builder.add(DISTANCE_0_7, TREE);
+    }
+
+    @Override
+    public void entityInside(BlockState state, World world, BlockPos pos, Entity entity) {
+        if (entity instanceof LivingEntity) {
+            entity.makeStuckInBlock(state, MOTION_MULTIPLIER);
+        }
     }
 
     @Nullable
@@ -166,21 +169,18 @@ public class BlockLeaves extends BlockEvolution implements IShearable, IReplacea
     }
 
     @Override
-    public int getOpacity(BlockState state, IBlockReader worldIn, BlockPos pos) {
+    public int getLightBlock(BlockState state, IBlockReader world, BlockPos pos) {
         return 1;
     }
 
     @Override
-    public BlockRenderLayer getRenderLayer() {
-        if (Minecraft.getInstance().gameSettings.fancyGraphics) {
-            return BlockRenderLayer.CUTOUT_MIPPED;
-        }
-        return BlockRenderLayer.SOLID;
+    public BlockState getStateForPlacement(BlockItemUseContext context) {
+        return updateDistance(this.defaultBlockState().setValue(TREE, false), context.getLevel(), context.getClickedPos());
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        return updateDistance(this.getDefaultState().with(TREE, false), context.getWorld(), context.getPos());
+    public boolean isRandomlyTicking(BlockState state) {
+        return state.getValue(TREE) && (state.getValue(DISTANCE_0_7) == 0 || state.getValue(DISTANCE_0_7) == 7);
     }
 
     @Override
@@ -189,64 +189,40 @@ public class BlockLeaves extends BlockEvolution implements IShearable, IReplacea
     }
 
     @Override
-    public boolean isSolid(BlockState state) {
-        return false;
-    }
-
-    @Override
-    public void onBlockAdded(BlockState state, World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (!worldIn.isRemote) {
-            worldIn.getPendingBlockTicks().scheduleTick(pos, this, this.tickRate(worldIn));
+    public void onPlace(BlockState state, World world, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!world.isClientSide) {
+            world.getBlockTicks().scheduleTick(pos, this, 2);
         }
     }
 
     @Override
-    public void onEntityCollision(BlockState state, World worldIn, BlockPos pos, Entity entityIn) {
-        if (entityIn instanceof LivingEntity) {
-            entityIn.setMotionMultiplier(state, MOTION_MULTIPLIER);
-        }
-    }
-
-    @Override
-    public List<ItemStack> onSheared(ItemStack item, IWorld world, BlockPos pos, int fortune) {
-        world.setBlockState(pos, Blocks.AIR.getDefaultState(), 11);
+    public List<ItemStack> onSheared(PlayerEntity player, ItemStack item, World world, BlockPos pos, int fortune) {
+        world.setBlock(pos, Blocks.AIR.defaultBlockState(), BlockFlags.NOTIFY_UPDATE_AND_RERENDER);
         return Collections.singletonList(new ItemStack(this));
     }
 
     @Override
-    public void randomTick(BlockState state, World worldIn, BlockPos pos, Random random) {
-        if (state.get(TREE) && state.get(DISTANCE_0_7) == 7) {
-            spawnDrops(state, worldIn, pos);
-            worldIn.removeBlock(pos, false);
+    public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+        if (state.getValue(TREE) && state.getValue(DISTANCE_0_7) == 7) {
+            dropResources(state, world, pos);
+            world.removeBlock(pos, false);
         }
     }
 
     @Override
-    public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
-        worldIn.setBlockState(pos, updateDistance(state, worldIn, pos), 3);
-        if (!worldIn.isRemote) {
-            if (!state.get(TREE) && state.get(DISTANCE_0_7) == 7) {
-                this.checkFallable(worldIn, pos);
-            }
+    public void tick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+        world.setBlockAndUpdate(pos, updateDistance(state, world, pos));
+        if (!state.getValue(TREE) && state.getValue(DISTANCE_0_7) == 7) {
+            this.checkFallable(world, pos);
         }
     }
 
     @Override
-    public boolean ticksRandomly(BlockState state) {
-        return state.get(TREE) && (state.get(DISTANCE_0_7) == 0 || state.get(DISTANCE_0_7) == 7);
-    }
-
-    @Override
-    public BlockState updatePostPlacement(BlockState stateIn,
-                                          Direction facing,
-                                          BlockState facingState,
-                                          IWorld worldIn,
-                                          BlockPos currentPos,
-                                          BlockPos facingPos) {
+    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
         int i = getDistance(facingState) + 1;
-        if (i != 1 || stateIn.get(DISTANCE_0_7) != i) {
-            worldIn.getPendingBlockTicks().scheduleTick(currentPos, this, 1);
+        if (i != 1 || state.getValue(DISTANCE_0_7) != i) {
+            world.getBlockTicks().scheduleTick(currentPos, this, 1);
         }
-        return stateIn;
+        return state;
     }
 }

@@ -9,6 +9,6 @@ import tgw.evolution.init.EvolutionStats;
 public interface IThrowable {
 
     default void addStat(PlayerEntity player) {
-        player.addStat(EvolutionStats.ITEMS_THROWN);
+        player.awardStat(EvolutionStats.ITEMS_THROWN);
     }
 }

@@ -12,20 +12,15 @@ import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 public class GuiContainerHandler implements IGuiScreenHandler {
-    @SuppressWarnings("rawtypes")
     private static final MethodHandler<ContainerScreen, Void> HANDLE_MOUSE_CLICK = new MethodHandler<>(ContainerScreen.class,
                                                                                                        "func_184098_a",
                                                                                                        Slot.class,
                                                                                                        int.class,
                                                                                                        int.class,
                                                                                                        ClickType.class);
-    @SuppressWarnings("rawtypes")
     private static final FieldHandler<ContainerScreen, Boolean> IGNORE_MOUSE_UP = new FieldHandler<>(ContainerScreen.class, "field_146995_H");
-    @SuppressWarnings("rawtypes")
     private static final FieldHandler<ContainerScreen, Boolean> DRAG_SPLITTING = new FieldHandler<>(ContainerScreen.class, "field_147007_t");
-    @SuppressWarnings("rawtypes")
     private static final FieldHandler<ContainerScreen, Integer> DRAG_SPLITTING_BUTTON = new FieldHandler<>(ContainerScreen.class, "field_146988_G");
-    @SuppressWarnings("rawtypes")
     private static final MethodHandler<ContainerScreen, Slot> GET_SELECTED_SLOT = new MethodHandler<>(ContainerScreen.class,
                                                                                                       "func_195360_a",
                                                                                                       double.class,
@@ -40,11 +35,7 @@ public class GuiContainerHandler implements IGuiScreenHandler {
 
     @Override
     public void clickSlot(Slot slot, MouseButton mouseButton, boolean shiftPressed) {
-        HANDLE_MOUSE_CLICK.call(this.guiContainer,
-                                slot,
-                                slot.slotNumber,
-                                mouseButton.getValue(),
-                                shiftPressed ? ClickType.QUICK_MOVE : ClickType.PICKUP);
+        HANDLE_MOUSE_CLICK.call(this.guiContainer, slot, slot.index, mouseButton.getValue(), shiftPressed ? ClickType.QUICK_MOVE : ClickType.PICKUP);
     }
 
     @Override
@@ -66,7 +57,7 @@ public class GuiContainerHandler implements IGuiScreenHandler {
 
     @Override
     public List<Slot> getSlots() {
-        return this.guiContainer.getContainer().inventorySlots;
+        return this.guiContainer.getMenu().slots;
     }
 
     @Override
@@ -74,7 +65,7 @@ public class GuiContainerHandler implements IGuiScreenHandler {
         return slot instanceof CraftingResultSlot ||
                slot instanceof FurnaceResultSlot ||
                slot instanceof MerchantResultSlot ||
-               this.guiContainer.getContainer() instanceof RepairContainer && slot.slotNumber == 2;
+               this.guiContainer.getMenu() instanceof RepairContainer && slot.index == 2;
     }
 
     @Override

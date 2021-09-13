@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
@@ -10,7 +9,7 @@ import tgw.evolution.init.EvolutionSounds;
 public class BlockClay extends BlockGravity {
 
     public BlockClay() {
-        super(Block.Properties.create(Material.CLAY).hardnessAndResistance(2.0F, 0.6F).sound(SoundType.GROUND), 2_067);
+        super(Properties.of(Material.CLAY).strength(2.0F, 0.6F).sound(SoundType.GRAVEL), 2_067);
     }
 
     @Override

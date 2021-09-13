@@ -30,9 +30,9 @@ public abstract class ItemGenericPlaceable extends ItemEv {
 
     protected static boolean canPlace(BlockItemUseContext context, BlockState state) {
         PlayerEntity playerentity = context.getPlayer();
-        ISelectionContext iselectioncontext = playerentity == null ? ISelectionContext.dummy() : ISelectionContext.forEntity(playerentity);
-        return state.isValidPosition(context.getWorld(), context.getPos()) &&
-               context.getWorld().func_217350_a(state, context.getPos(), iselectioncontext);
+        ISelectionContext selectionContext = playerentity == null ? ISelectionContext.empty() : ISelectionContext.of(playerentity);
+        return state.canSurvive(context.getLevel(), context.getClickedPos()) &&
+               context.getLevel().isUnobstructed(state, context.getClickedPos(), selectionContext);
     }
 
     protected static SoundEvent getPlaceSound(BlockState state, World world, BlockPos pos, PlayerEntity entity) {
@@ -40,7 +40,7 @@ public abstract class ItemGenericPlaceable extends ItemEv {
     }
 
     protected static boolean placeBlock(BlockItemUseContext context, BlockState state) {
-        return context.getWorld().setBlockState(context.getPos(), state, BlockFlags.NOTIFY_UPDATE_AND_RERENDER);
+        return context.getLevel().setBlock(context.getClickedPos(), state, BlockFlags.NOTIFY_UPDATE_AND_RERENDER);
     }
 
     public abstract boolean customCondition(Block block);
@@ -51,28 +51,20 @@ public abstract class ItemGenericPlaceable extends ItemEv {
     @Nullable
     public abstract BlockState getSneakingState(BlockItemUseContext context);
 
-    @Override
-    public ActionResultType onItemUse(ItemUseContext context) {
-        ActionResultType resultType = this.tryPlace(new BlockItemUseContext(context));
-        return resultType != ActionResultType.SUCCESS && this.isFood() ?
-               this.onItemRightClick(context.getWorld(), context.getPlayer(), context.getHand()).getType() :
-               resultType;
-    }
-
     public abstract void sucessPlaceLogic(BlockItemUseContext context);
 
     public ActionResultType tryPlace(BlockItemUseContext context) {
         if (context == null) {
             return ActionResultType.FAIL;
         }
-        if (context.getWorld().isRemote) {
+        if (context.getLevel().isClientSide) {
             return ActionResultType.FAIL;
         }
         BlockState stateForPlacement = null;
-        if (context.isPlacerSneaking()) {
+        if (context.isSecondaryUseActive()) {
             stateForPlacement = this.getSneakingState(context);
         }
-        if (this.customCondition(context.getWorld().getBlockState(context.getPos()).getBlock())) {
+        if (this.customCondition(context.getLevel().getBlockState(context.getClickedPos()).getBlock())) {
             stateForPlacement = this.getCustomState(context);
         }
         if (stateForPlacement == null) {
@@ -84,33 +76,41 @@ public abstract class ItemGenericPlaceable extends ItemEv {
         if (!canPlace(context, stateForPlacement)) {
             return ActionResultType.FAIL;
         }
-        if (!stateForPlacement.isValidPosition(context.getWorld(), context.getPos())) {
+        if (!stateForPlacement.canSurvive(context.getLevel(), context.getClickedPos())) {
             return ActionResultType.FAIL;
         }
         if (!placeBlock(context, stateForPlacement)) {
             return ActionResultType.FAIL;
         }
-        BlockPos pos = context.getPos();
-        World worldIn = context.getWorld();
+        BlockPos pos = context.getClickedPos();
+        World world = context.getLevel();
         ServerPlayerEntity player = (ServerPlayerEntity) context.getPlayer();
-        ItemStack stack = context.getItem();
-        BlockState stateInPos = worldIn.getBlockState(pos);
+        ItemStack stack = context.getItemInHand();
+        BlockState stateInPos = world.getBlockState(pos);
         Block blockInPos = stateInPos.getBlock();
         if (blockInPos == stateForPlacement.getBlock()) {
-            blockInPos.onBlockPlacedBy(worldIn, pos, stateInPos, player, stack);
+            blockInPos.setPlacedBy(world, pos, stateInPos, player, stack);
             CriteriaTriggers.PLACED_BLOCK.trigger(player, pos, stack);
         }
         this.sucessPlaceLogic(context);
-        SoundType soundtype = stateInPos.getSoundType(worldIn, pos, context.getPlayer());
-        player.swingArm(context.getHand());
+        SoundType soundtype = stateInPos.getSoundType(world, pos, context.getPlayer());
+        player.swing(context.getHand());
         EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCHandAnimation(context.getHand()));
-        worldIn.playSound(null,
-                          pos,
-                          getPlaceSound(stateInPos, worldIn, pos, context.getPlayer()),
-                          SoundCategory.BLOCKS,
-                          (soundtype.getVolume() + 1.0F) / 2.0F,
-                          soundtype.getPitch() * 0.8F);
+        world.playSound(null,
+                        pos,
+                        getPlaceSound(stateInPos, world, pos, context.getPlayer()),
+                        SoundCategory.BLOCKS,
+                        (soundtype.getVolume() + 1.0F) / 2.0F,
+                        soundtype.getPitch() * 0.8F);
         stack.shrink(1);
         return ActionResultType.SUCCESS;
+    }
+
+    @Override
+    public ActionResultType useOn(ItemUseContext context) {
+        ActionResultType resultType = this.tryPlace(new BlockItemUseContext(context));
+        return resultType != ActionResultType.SUCCESS && this.isEdible() ?
+               this.use(context.getLevel(), context.getPlayer(), context.getHand()).getResult() :
+               resultType;
     }
 }

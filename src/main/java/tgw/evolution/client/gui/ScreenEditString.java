@@ -1,12 +1,13 @@
 package tgw.evolution.client.gui;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.resources.I18n;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import tgw.evolution.init.EvolutionTexts;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -29,30 +30,30 @@ public class ScreenEditString extends Screen {
 
     @Override
     protected void init() {
-        this.textField = new TextFieldWidget(this.font, this.width / 2 - 150, this.height / 2 - 25, 300, 20, "");
-        this.textField.setText(this.value);
-        this.textField.setMaxStringLength(32_500);
+        this.textField = new TextFieldWidget(this.font, this.width / 2 - 150, this.height / 2 - 25, 300, 20, EvolutionTexts.EMPTY);
+        this.textField.setValue(this.value);
+        this.textField.setMaxLength(32_500);
         this.children.add(this.textField);
-        this.addButton(new Button(this.width / 2 - 1 - 150, this.height / 2 + 3, 148, 20, I18n.format("gui.done"), button -> {
-            String text = this.textField.getText();
+        this.addButton(new Button(this.width / 2 - 1 - 150, this.height / 2 + 3, 148, 20, EvolutionTexts.GUI_GENERAL_DONE, button -> {
+            String text = this.textField.getValue();
             if (this.validator.apply(text)) {
                 this.onSave.accept(text);
-                this.minecraft.displayGuiScreen(this.parent);
+                this.minecraft.setScreen(this.parent);
             }
         }));
         this.addButton(new Button(this.width / 2 + 3,
                                   this.height / 2 + 3,
                                   148,
                                   20,
-                                  I18n.format("gui.cancel"),
-                                  button -> this.minecraft.displayGuiScreen(this.parent)));
+                                  EvolutionTexts.GUI_GENERAL_CANCEL,
+                                  button -> this.minecraft.setScreen(this.parent)));
     }
 
     @Override
-    public void render(int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground();
-        this.textField.render(mouseX, mouseY, partialTicks);
-        this.drawCenteredString(this.font, this.title.getFormattedText(), this.width / 2, this.height / 2 - 40, 0xFF_FFFF);
-        super.render(mouseX, mouseY, partialTicks);
+    public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
+        this.renderBackground(matrices);
+        this.textField.render(matrices, mouseX, mouseY, partialTicks);
+        drawCenteredString(matrices, this.font, this.title, this.width / 2, this.height / 2 - 40, 0xFF_FFFF);
+        super.render(matrices, mouseX, mouseY, partialTicks);
     }
 }

@@ -1,9 +1,10 @@
 package tgw.evolution.client.renderer.entities;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.vector.Vector3f;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.Evolution;
@@ -25,24 +26,7 @@ public class RenderCow extends MobRenderer<EntityCow, ModelCow> {
     }
 
     @Override
-    protected void applyRotations(EntityCow entityLiving, float ageInTicks, float rotationYaw, float partialTicks) {
-        GlStateManager.rotatef(180.0F - rotationYaw, 0.0F, 1.0F, 0.0F);
-        if (entityLiving.isDead()) {
-            float f = (MathHelper.clampMax(entityLiving.getDeathTime(), 20) + partialTicks - 1.0F) / 20.0F * 1.6F;
-            f = MathHelper.sqrt(f);
-            if (f > 1.0F) {
-                f = 1.0F;
-            }
-            GlStateManager.rotatef(f * this.getDeathMaxRotation(entityLiving), 0.0F, 0.0F, 1.0F);
-            GlStateManager.translatef(0.32F, -0.75f, 0.0F);
-        }
-        else if (entityLiving.isSleeping()) {
-            GlStateManager.translatef(0.0F, -0.7f, 0.0F);
-        }
-    }
-
-    @Override
-    protected ResourceLocation getEntityTexture(EntityCow entity) {
+    public ResourceLocation getTextureLocation(EntityCow entity) {
         if (entity.isDead()) {
             if (entity.isSkeleton()) {
                 return SKELETON;
@@ -53,5 +37,22 @@ public class RenderCow extends MobRenderer<EntityCow, ModelCow> {
             return SLEEPING;
         }
         return DEFAULT;
+    }
+
+    @Override
+    protected void setupRotations(EntityCow cow, MatrixStack matrices, float ageInTicks, float rotationYaw, float partialTicks) {
+        matrices.mulPose(Vector3f.YP.rotationDegrees(180.0F - rotationYaw));
+        if (cow.isDead()) {
+            float f = (MathHelper.clampMax(cow.getDeathTime(), 20) + partialTicks - 1.0F) / 20.0F * 1.6F;
+            f = MathHelper.sqrt(f);
+            if (f > 1.0F) {
+                f = 1.0F;
+            }
+            matrices.mulPose(Vector3f.ZP.rotationDegrees(f * this.getFlipDegrees(cow)));
+            matrices.translate(0.32, -0.75, 0);
+        }
+        else if (cow.isSleeping()) {
+            matrices.translate(0, -0.7, 0);
+        }
     }
 }

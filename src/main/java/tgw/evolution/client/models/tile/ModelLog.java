@@ -1,22 +1,34 @@
 package tgw.evolution.client.models.tile;
 
-import net.minecraft.client.renderer.entity.model.RendererModel;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.model.Model;
+import net.minecraft.client.renderer.model.ModelRenderer;
 import tgw.evolution.util.MathHelper;
 
 public class ModelLog extends Model {
 
-    private final RendererModel log;
+    private final ModelRenderer log;
 
     public ModelLog(int x, int y) {
-        this.textureWidth = 40;
-        this.textureHeight = 8;
-        this.log = new RendererModel(this, 0, 0);
+        super(RenderType::entitySolid);
+        this.texWidth = 40;
+        this.texHeight = 8;
+        this.log = new ModelRenderer(this, 0, 0);
         this.log.addBox(-16, 8 + 4 * y, 4 * x, 16, 4, 4);
         MathHelper.setRotationAngle(this.log, 0, MathHelper.PI_OVER_2, 0);
     }
 
-    public void render() {
-        this.log.render(0.062_5f);
+    @Override
+    public void renderToBuffer(MatrixStack matrices,
+                               IVertexBuilder buffer,
+                               int packedLight,
+                               int packedOverlay,
+                               float red,
+                               float green,
+                               float blue,
+                               float alpha) {
+        this.log.render(matrices, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }

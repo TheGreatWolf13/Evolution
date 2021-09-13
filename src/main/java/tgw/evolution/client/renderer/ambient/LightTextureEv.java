@@ -1,183 +1,187 @@
 package tgw.evolution.client.renderer.ambient;
 
-import com.mojang.blaze3d.platform.GLX;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.NativeImage;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.world.World;
-import net.minecraft.world.dimension.DimensionType;
-import tgw.evolution.util.MathHelper;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL11C;
+import org.lwjgl.opengl.GL13C;
+import tgw.evolution.events.ClientEvents;
 
 public class LightTextureEv extends LightTexture {
 
-    private static final float[] COLORS = new float[3];
-    private final DynamicTexture dynamicTexture;
-    private final NativeImage nativeImage;
-    private final ResourceLocation resourceLocation;
+    private static final Vector3f LERP_0 = new Vector3f(1.0F, 1.0F, 1.0F);
+    private static final Vector3f LERP_1 = new Vector3f(0.99F, 1.12F, 1.0F);
+    private static final Vector3f VEC_0 = new Vector3f();
+    private static final Vector3f VEC_1 = new Vector3f();
+    private static final Vector3f VEC_2 = new Vector3f();
+    private static final Vector3f VEC_3 = new Vector3f();
+    private static final Vector3f VEC_4 = new Vector3f();
+    private static final Vector3f VEC_5 = new Vector3f();
     private final GameRenderer gameRenderer;
+    private final NativeImage lightPixels;
+    private final DynamicTexture lightTexture;
+    private final ResourceLocation lightTextureLocation;
     private final Minecraft mc;
     private boolean needsUpdate;
-    private float torchFlickerDX;
-    private float torchFlickerX;
+    private float torchFlicker;
 
-    public LightTextureEv(GameRenderer gameRenderer) {
-        super(gameRenderer);
+    public LightTextureEv(GameRenderer gameRenderer, Minecraft mc) {
+        super(gameRenderer, mc);
         this.gameRenderer = gameRenderer;
-        this.mc = gameRenderer.getMinecraft();
-        this.dynamicTexture = new DynamicTexture(16, 16, false);
-        this.resourceLocation = this.mc.getTextureManager().getDynamicTextureLocation("light_map", this.dynamicTexture);
-        this.nativeImage = this.dynamicTexture.getTextureData();
+        this.mc = mc;
+        this.lightTexture = new DynamicTexture(16, 16, false);
+        this.lightTextureLocation = this.mc.getTextureManager().register("light_map", this.lightTexture);
+        this.lightPixels = this.lightTexture.getPixels();
+        for (int i = 0; i < 16; ++i) {
+            for (int j = 0; j < 16; ++j) {
+                this.lightPixels.setPixelRGBA(j, i, -1);
+            }
+        }
+        this.lightTexture.upload();
+    }
+
+    private static float getLightBrightness(World world, int lightLevel) {
+        if (world.dimensionType().natural()) {
+            return ClientEvents.getInstance().getDimension().getAmbientLight(lightLevel);
+        }
+        return world.dimensionType().brightness(lightLevel);
+    }
+
+    private static float getSunBrightness(ClientWorld world, float partialTicks) {
+        if (world.dimensionType().natural()) {
+            return ClientEvents.getInstance().getDimension().getSunBrightness(partialTicks);
+        }
+        return world.getSkyDarken(partialTicks);
+    }
+
+    private static float invGamma(float value) {
+        float f = 1.0F - value;
+        return 1.0F - f * f * f * f;
+    }
+
+    private static void setVec(Vector3f ref, Vector3f assign) {
+        ref.set(assign.x(), assign.y(), assign.z());
     }
 
     @Override
     public void close() {
-        this.dynamicTexture.close();
-    }
-
-    @Override
-    public void disableLightmap() {
-        GlStateManager.activeTexture(GLX.GL_TEXTURE1);
-        GlStateManager.disableTexture();
-        GlStateManager.activeTexture(GLX.GL_TEXTURE0);
-    }
-
-    @Override
-    public void enableLightmap() {
-        GlStateManager.activeTexture(GLX.GL_TEXTURE1);
-        GlStateManager.matrixMode(5_890);
-        GlStateManager.loadIdentity();
-        GlStateManager.scalef(0.003_906_25F, 0.003_906_25F, 0.003_906_25F);
-        GlStateManager.translatef(8.0F, 8.0F, 8.0F);
-        GlStateManager.matrixMode(5_888);
-        this.mc.getTextureManager().bindTexture(this.resourceLocation);
-        GlStateManager.texParameter(3_553, 10_241, 9_729);
-        GlStateManager.texParameter(3_553, 10_240, 9_729);
-        GlStateManager.texParameter(3_553, 10_242, 10_496);
-        GlStateManager.texParameter(3_553, 10_243, 10_496);
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GlStateManager.enableTexture();
-        GlStateManager.activeTexture(GLX.GL_TEXTURE0);
+        this.lightTexture.close();
     }
 
     @Override
     public void tick() {
-        this.torchFlickerDX += (Math.random() - Math.random()) * Math.random() * Math.random();
-        this.torchFlickerDX *= 0.9;
-        this.torchFlickerX += this.torchFlickerDX - this.torchFlickerX;
+        this.torchFlicker += (Math.random() - Math.random()) * Math.random() * Math.random() * 0.1;
+        this.torchFlicker *= 0.9;
         this.needsUpdate = true;
     }
 
     @Override
-    public void updateLightmap(float partialTicks) {
+    public void turnOffLightLayer() {
+        RenderSystem.activeTexture(GL13C.GL_TEXTURE2);
+        RenderSystem.disableTexture();
+        RenderSystem.activeTexture(GL13C.GL_TEXTURE0);
+    }
+
+    @Override
+    public void turnOnLightLayer() {
+        RenderSystem.activeTexture(GL13C.GL_TEXTURE2);
+        RenderSystem.matrixMode(GL11.GL_TEXTURE);
+        RenderSystem.loadIdentity();
+        RenderSystem.scalef(0.003_906_25F, 0.003_906_25F, 0.003_906_25F);
+        RenderSystem.translatef(8.0F, 8.0F, 8.0F);
+        RenderSystem.matrixMode(GL11.GL_MODELVIEW);
+        this.mc.getTextureManager().bind(this.lightTextureLocation);
+        RenderSystem.texParameter(GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_MIN_FILTER, 0x2601);
+        RenderSystem.texParameter(GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_MAG_FILTER, 0x2601);
+        RenderSystem.texParameter(GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_WRAP_S, 0x2900);
+        RenderSystem.texParameter(GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_WRAP_T, 0x2900);
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.enableTexture();
+        RenderSystem.activeTexture(GL13C.GL_TEXTURE0);
+    }
+
+    @Override
+    public void updateLightTexture(float partialTicks) {
         if (this.needsUpdate) {
-            this.mc.getProfiler().startSection("lightTex");
-            World world = this.mc.world;
+            this.needsUpdate = false;
+            this.mc.getProfiler().push("lightTex");
+            ClientWorld world = this.mc.level;
             if (world != null) {
-                float skyBrightness = world.getSunBrightness(1.0F);
-                float waterBrightness = this.mc.player.getWaterBrightness();
-                float nightVisionBrightness;
-                if (this.mc.player.isPotionActive(Effects.NIGHT_VISION)) {
-                    nightVisionBrightness = this.gameRenderer.getNightVisionBrightness(this.mc.player, partialTicks);
+                float skyBrightness = getSunBrightness(world, partialTicks);
+                if (world.getSkyFlashTime() > 0) {
+                    skyBrightness = 1.0F;
                 }
-                else if (waterBrightness > 0.0F && this.mc.player.isPotionActive(Effects.CONDUIT_POWER)) {
-                    nightVisionBrightness = waterBrightness;
+                float waterBrightness = this.mc.player.getWaterVision();
+                float nightVisionModifier;
+                if (this.mc.player.hasEffect(Effects.NIGHT_VISION)) {
+                    nightVisionModifier = GameRenderer.getNightVisionScale(this.mc.player, partialTicks);
+                }
+                else if (waterBrightness > 0.0F && this.mc.player.hasEffect(Effects.CONDUIT_POWER)) {
+                    nightVisionModifier = waterBrightness;
                 }
                 else {
-                    nightVisionBrightness = 0.0F;
+                    nightVisionModifier = 0.0F;
                 }
-                if (nightVisionBrightness > 0) {
+                if (nightVisionModifier > 0) {
                     skyBrightness = 1.0f;
                 }
-                for (int i = 0; i < 16; ++i) {
-                    for (int j = 0; j < 16; ++j) {
-                        float skyLight = world.dimension.getLightBrightnessTable()[i] * skyBrightness;
-                        float blockLight = world.dimension.getLightBrightnessTable()[j] * (this.torchFlickerX * 0.1F + 1.5F);
-                        if (world.getLastLightningBolt() > 0) {
-                            skyLight = world.dimension.getLightBrightnessTable()[i];
+                VEC_0.set(skyBrightness, skyBrightness, skyBrightness);
+                VEC_0.lerp(LERP_0, 0.35F);
+                float f4 = this.torchFlicker + 1.5F;
+                for (int y = 0; y < 16; y++) {
+                    for (int x = 0; x < 16; x++) {
+                        float skyLight = getLightBrightness(world, y) * skyBrightness;
+                        float blockLight = getLightBrightness(world, x) * f4;
+                        float f7 = blockLight * ((blockLight * 0.6F + 0.4F) * 0.6F + 0.4F);
+                        float f8 = blockLight * (blockLight * blockLight * 0.6F + 0.4F);
+                        VEC_1.set(blockLight, f7, f8);
+                        if (world.effects().forceBrightLightmap()) {
+                            VEC_1.lerp(LERP_1, 0.25F);
                         }
-                        float f6 = skyLight * (skyBrightness * 0.65F + 0.35F);
-                        float f7 = skyLight * (skyBrightness * 0.65F + 0.35F);
-                        float f9 = blockLight * (blockLight * blockLight * 0.6F + 0.4F);
-                        float f8 = blockLight * ((blockLight * 0.6F + 0.4F) * 0.6F + 0.4F);
-                        float colorR = f6 + blockLight;
-                        float colorG = f7 + f8;
-                        float colorB = skyLight + f9;
-                        if (this.gameRenderer.getBossColorModifier(partialTicks) > 0.0F) {
-                            float f13 = this.gameRenderer.getBossColorModifier(partialTicks);
-                            colorR = colorR * (1.0F - f13) + colorR * 0.7F * f13;
-                            colorG = colorG * (1.0F - f13) + colorG * 0.6F * f13;
-                            colorB = colorB * (1.0F - f13) + colorB * 0.6F * f13;
-                        }
-                        if (world.dimension.getType() == DimensionType.THE_END) {
-                            colorR = 0.22F + blockLight * 0.75F;
-                            colorG = 0.28F + f8 * 0.75F;
-                            colorB = 0.25F + f9 * 0.75F;
-                        }
-                        COLORS[0] = colorR;
-                        COLORS[1] = colorG;
-                        COLORS[2] = colorB;
-                        world.getDimension().getLightmapColors(partialTicks, skyBrightness, skyLight, blockLight, COLORS);
-                        colorR = COLORS[0];
-                        colorG = COLORS[1];
-                        colorB = COLORS[2];
-                        // Forge: fix MC-58177
-                        colorR = MathHelper.clamp(colorR, 0.0f, 1.0f);
-                        colorG = MathHelper.clamp(colorG, 0.0f, 1.0f);
-                        colorB = MathHelper.clamp(colorB, 0.0f, 1.0f);
-                        if (nightVisionBrightness > 0.0F) {
-                            float f17 = 1.0F / colorR;
-                            if (f17 > 1.0F / colorG) {
-                                f17 = 1.0F / colorG;
+                        else {
+                            setVec(VEC_2, VEC_0);
+                            VEC_2.mul(skyLight);
+                            VEC_1.add(VEC_2);
+                            if (this.gameRenderer.getDarkenWorldAmount(partialTicks) > 0.0F) {
+                                float f9 = this.gameRenderer.getDarkenWorldAmount(partialTicks);
+                                setVec(VEC_3, VEC_1);
+                                VEC_3.mul(0.7F, 0.6F, 0.6F);
+                                VEC_1.lerp(VEC_3, f9);
                             }
-                            if (f17 > 1.0F / colorB) {
-                                f17 = 1.0F / colorB;
+                        }
+                        VEC_1.clamp(0.0F, 1.0F);
+                        if (nightVisionModifier > 0.0F) {
+                            float f10 = Math.max(VEC_1.x(), Math.max(VEC_1.y(), VEC_1.z()));
+                            if (f10 < 1.0F) {
+                                setVec(VEC_5, VEC_1);
+                                float f12 = 1.0F / f10;
+                                VEC_5.mul(f12);
+                                VEC_1.lerp(VEC_5, nightVisionModifier);
                             }
-                            colorR = colorR * (1.0F - nightVisionBrightness) + colorR * f17 * nightVisionBrightness;
-                            colorG = colorG * (1.0F - nightVisionBrightness) + colorG * f17 * nightVisionBrightness;
-                            colorB = colorB * (1.0F - nightVisionBrightness) + colorB * f17 * nightVisionBrightness;
                         }
-                        if (colorR > 1.0F) {
-                            colorR = 1.0F;
-                        }
-                        if (colorG > 1.0F) {
-                            colorG = 1.0F;
-                        }
-                        if (colorB > 1.0F) {
-                            colorB = 1.0F;
-                        }
-                        float gamma = (float) this.mc.gameSettings.gamma;
-                        float f14 = 1.0F - colorR;
-                        float f15 = 1.0F - colorG;
-                        float f16 = 1.0F - colorB;
-                        f14 = 1.0F - f14 * f14 * f14 * f14;
-                        f15 = 1.0F - f15 * f15 * f15 * f15;
-                        f16 = 1.0F - f16 * f16 * f16 * f16;
-                        colorR = colorR * (1.0F - gamma) + f14 * gamma;
-                        colorG = colorG * (1.0F - gamma) + f15 * gamma;
-                        colorB = colorB * (1.0F - gamma) + f16 * gamma;
-                        colorR = MathHelper.clamp(colorR, 0, 1);
-                        colorG = MathHelper.clamp(colorG, 0, 1);
-                        colorB = MathHelper.clamp(colorB, 0, 1);
-                        if (nightVisionBrightness > 0) {
-                            colorR = 1;
-                            colorG = 1;
-                            colorB = 1;
-                        }
-                        int l = (int) (colorR * 255.0F);
-                        int i1 = (int) (colorG * 255.0F);
-                        int j1 = (int) (colorB * 255.0F);
-                        //noinspection InsertLiteralUnderscores
-                        this.nativeImage.setPixelRGBA(j, i, -16777216 | j1 << 16 | i1 << 8 | l);
+                        float gamma = (float) this.mc.options.gamma;
+                        setVec(VEC_4, VEC_1);
+                        VEC_4.map(LightTextureEv::invGamma);
+                        VEC_1.lerp(VEC_4, gamma);
+                        VEC_1.clamp(0.0F, 1.0F);
+                        VEC_1.mul(255.0F);
+                        int red = (int) VEC_1.x();
+                        int green = (int) VEC_1.y();
+                        int blue = (int) VEC_1.z();
+                        this.lightPixels.setPixelRGBA(x, y, 0xff00_0000 | blue << 16 | green << 8 | red);
                     }
                 }
-                this.dynamicTexture.updateDynamicTexture();
-                this.needsUpdate = false;
-                this.mc.getProfiler().endSection();
+                this.lightTexture.upload();
+                this.mc.getProfiler().pop();
             }
         }
     }

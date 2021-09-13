@@ -26,13 +26,13 @@ public final class ColorManager {
     }
 
     public static void registerBlockColorHandlers(BlockColors colors) {
-        IBlockColor grass = (state, blockReader, pos, color) -> BiomeColors.getGrassColor(blockReader, pos);
-        IBlockColor spruce = (state, blockReader, pos, color) -> FoliageColors.getSpruce();
-        IBlockColor birch = (state, blockReader, pos, color) -> FoliageColors.getBirch();
+        IBlockColor grass = (state, blockReader, pos, color) -> BiomeColors.getAverageGrassColor(blockReader, pos);
+        IBlockColor spruce = (state, blockReader, pos, color) -> FoliageColors.getEvergreenColor();
+        IBlockColor birch = (state, blockReader, pos, color) -> FoliageColors.getBirchColor();
         IBlockColor aspen = (state, blockReader, pos, color) -> 16_776_192;
         IBlockColor leaves = (state, blockReader, pos, color) -> blockReader != null && pos != null ?
-                                                                 BiomeColors.getFoliageColor(blockReader, pos) :
-                                                                 FoliageColors.getDefault();
+                                                                 BiomeColors.getAverageFoliageColor(blockReader, pos) :
+                                                                 FoliageColors.getDefaultColor();
         //Grass
         register(colors, grass, GRASS_ANDESITE);
         register(colors, grass, GRASS_ANDESITE);
@@ -100,9 +100,9 @@ public final class ColorManager {
 
     public static void registerItemColorHandlers(ItemColors colors) {
         IItemColor grass = (itemStack, color) -> GrassColors.get(0.5, 1.0);
-        IItemColor spruce = (itemStack, color) -> FoliageColors.getSpruce();
-        IItemColor birch = (itemStack, color) -> FoliageColors.getBirch();
-        IItemColor leaves = (itemStack, color) -> FoliageColors.getDefault();
+        IItemColor spruce = (itemStack, color) -> FoliageColors.getEvergreenColor();
+        IItemColor birch = (itemStack, color) -> FoliageColors.getBirchColor();
+        IItemColor leaves = (itemStack, color) -> FoliageColors.getDefaultColor();
         IItemColor aspen = (stack, color) -> 16_776_192;
         //Grass
         register(colors, grass, GRASS_ANDESITE);

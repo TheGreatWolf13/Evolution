@@ -11,9 +11,9 @@ import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.*;
@@ -28,20 +28,19 @@ public class BlockLog extends BlockXYZAxis {
     private final WoodVariant variant;
 
     public BlockLog(WoodVariant variant) {
-        super(Block.Properties.create(Material.WOOD).hardnessAndResistance(8.0F, 2.0F).sound(SoundType.WOOD).harvestLevel(HarvestLevel.STONE),
-              variant.getMass());
+        super(Properties.of(Material.WOOD).strength(8.0F, 2.0F).sound(SoundType.WOOD).harvestLevel(HarvestLevel.STONE), variant.getMass());
         this.variant = variant;
-        this.setDefaultState(this.getDefaultState().with(TREE, false));
+        this.registerDefaultState(this.defaultBlockState().setValue(TREE, false));
     }
 
     @Override
     public boolean beamCondition(BlockState checking, BlockState state) {
-        return state.get(AXIS) == checking.get(AXIS);
+        return state.getValue(AXIS) == checking.getValue(AXIS);
     }
 
     @Override
     public Direction[] beamDirections(BlockState state) {
-        return new Direction[]{MathHelper.getNegativeAxis(state.get(AXIS)), MathHelper.getPositiveAxis(state.get(AXIS))};
+        return new Direction[]{MathHelper.getNegativeAxis(state.getValue(AXIS)), MathHelper.getPositiveAxis(state.getValue(AXIS))};
     }
 
     @Override
@@ -51,23 +50,23 @@ public class BlockLog extends BlockXYZAxis {
 
     @Override
     public SoundEvent breakSound() {
-        return SoundEvents.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR;
+        return SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR;
     }
 
     @Override
     protected boolean canSustainWeight(BlockState state) {
-        return state.get(AXIS) != Axis.Y && super.canSustainWeight(state);
+        return state.getValue(AXIS) != Axis.Y && super.canSustainWeight(state);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
+        builder.add(TREE);
+        super.createBlockStateDefinition(builder);
     }
 
     @Override
     public SoundEvent fallSound() {
         return EvolutionSounds.WOOD_COLLAPSE.get();
-    }
-
-    @Override
-    protected void fillStateContainer(Builder<Block, BlockState> builder) {
-        builder.add(TREE);
-        super.fillStateContainer(builder);
     }
 
     @Override
@@ -92,61 +91,45 @@ public class BlockLog extends BlockXYZAxis {
 
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
-        return super.getStateForPlacement(context).with(TREE, false);
+        return super.getStateForPlacement(context).setValue(TREE, false);
     }
 
     @Override
     public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (state.get(TREE)) {
-            BlockPos up = pos.up();
+        if (state.getValue(TREE)) {
+            BlockPos up = pos.above();
             for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
-                state.updateNeighbors(world, up.offset(dir), BlockFlags.NOTIFY_AND_UPDATE);
+                state.updateNeighbourShapes(world, up.relative(dir), BlockFlags.NOTIFY_AND_UPDATE);
             }
         }
         super.neighborChanged(state, world, pos, block, fromPos, isMoving);
     }
 
     @Override
-    public void onExplosionDestroy(World world, BlockPos pos, Explosion explosion) {
-        //        if (!world.isRemote) {
-        //            if (world.getBlockState(pos.up()).getBlock() instanceof BlockLog && world.getBlockState(pos.up()).get(TREE)) {
-        //                PlayerEntity player = world.getClosestPlayer(pos.getX(), pos.getY(), pos.getZ(), 25, false);
-        //                Direction direction = Direction.byHorizontalIndex(world.getRandom().nextInt(4));
-        //                if (player != null) {
-        //                    direction = player.getHorizontalFacing();
-        //                }
-        //                FallingEvents.chopEvent(world, world.getBlockState(pos.up()), pos.up(), direction);
-        //            }
-        //        }
-    }
-
-    @Override
-    public void tick(BlockState state, World world, BlockPos blockPos, Random random) {
+    public void tick(BlockState state, ServerWorld world, BlockPos blockPos, Random random) {
         OriginMutableBlockPos pos = new OriginMutableBlockPos(blockPos);
-        if (!world.isRemote) {
-            if (!state.get(TREE)) {
-                super.tick(state, world, blockPos, random);
+        if (!state.getValue(TREE)) {
+            super.tick(state, world, blockPos, random);
+        }
+        else {
+            //                if (!BlockUtils.isTrunkSustained(worldIn, pos)) {
+            //                    pos.reset();
+            //                    PlayerEntity player = worldIn.getClosestPlayer(pos.getX(), pos.getY(), pos.getZ(), 25, false);
+            //                    Direction direction = Direction.byHorizontalIndex(random.nextInt(4));
+            //                    if (player != null) {
+            //                        direction = player.getHorizontalFacing();
+            //                    }
+            //                    FallingEvents.chopEvent(worldIn, worldIn.getBlockState(pos.up().getPos()), pos.getPos(), direction);
+            //                }
+            pos.reset();
+            if (world.getBlockState(pos.down().getPos()).getBlock() instanceof BlockLog && !world.getBlockState(pos.getPos()).getValue(TREE)) {
+                world.setBlock(pos.reset().getPos(), state.setValue(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
             }
-            else {
-                //                if (!BlockUtils.isTrunkSustained(worldIn, pos)) {
-                //                    pos.reset();
-                //                    PlayerEntity player = worldIn.getClosestPlayer(pos.getX(), pos.getY(), pos.getZ(), 25, false);
-                //                    Direction direction = Direction.byHorizontalIndex(random.nextInt(4));
-                //                    if (player != null) {
-                //                        direction = player.getHorizontalFacing();
-                //                    }
-                //                    FallingEvents.chopEvent(worldIn, worldIn.getBlockState(pos.up().getPos()), pos.getPos(), direction);
-                //                }
-                pos.reset();
-                if (world.getBlockState(pos.down().getPos()).getBlock() instanceof BlockLog && !world.getBlockState(pos.getPos()).get(TREE)) {
-                    world.setBlockState(pos.reset().getPos(), state.with(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
-                }
-                else if (world.getBlockState(pos.up().getPos()).getBlock() instanceof BlockLog && !world.getBlockState(pos.getPos()).get(TREE)) {
-                    world.setBlockState(pos.reset().getPos(), state.with(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
-                }
-                else if (!BlockUtils.isTrunkSustained(world, pos) && BlockUtils.isReplaceable(world.getBlockState(pos.up().getPos()))) {
-                    world.setBlockState(pos.reset().getPos(), state.with(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
-                }
+            else if (world.getBlockState(pos.up().getPos()).getBlock() instanceof BlockLog && !world.getBlockState(pos.getPos()).getValue(TREE)) {
+                world.setBlock(pos.reset().getPos(), state.setValue(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
+            }
+            else if (!BlockUtils.isTrunkSustained(world, pos) && BlockUtils.isReplaceable(world.getBlockState(pos.up().getPos()))) {
+                world.setBlock(pos.reset().getPos(), state.setValue(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
             }
         }
     }

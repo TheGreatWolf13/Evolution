@@ -31,12 +31,52 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
     public final WoodVariant variant;
 
     public BlockLogPile(WoodVariant variant) {
-        super(Block.Properties.create(Material.WOOD)
-                              .hardnessAndResistance(1_000.0F, 2.0F)
-                              .sound(SoundType.WOOD)
-                              .harvestLevel(HarvestLevel.UNBREAKABLE), variant.getMass());
-        this.setDefaultState(this.getDefaultState().with(LOG_COUNT, 1).with(DIRECTION_HORIZONTAL, Direction.NORTH));
+        super(Properties.of(Material.WOOD).strength(1_000.0F, 2.0F).sound(SoundType.WOOD).harvestLevel(HarvestLevel.UNBREAKABLE), variant.getMass());
+        this.registerDefaultState(this.defaultBlockState().setValue(LOG_COUNT, 1).setValue(DIRECTION_HORIZONTAL, Direction.NORTH));
         this.variant = variant;
+    }
+
+    @Override
+    public void attack(BlockState state, World world, BlockPos pos, PlayerEntity player) {
+        if (world.isClientSide) {
+            return;
+        }
+        if (Math.abs(pos.getX() + 0.5 - player.getX()) < 1.5 &&
+            Math.abs(pos.getY() - player.getY()) < 1.5 &&
+            Math.abs(pos.getZ() + 0.5 - player.getZ()) < 1.5) {
+            ItemStack stack = new ItemStack(this.variant.getLogItem());
+            if (!player.inventory.add(stack)) {
+                BlockUtils.dropItemStack(world, pos, stack);
+            }
+            else {
+                world.playSound(null,
+                                pos.getX() + 0.5f,
+                                pos.getY() + 0.5f,
+                                pos.getZ() + 0.5f,
+                                SoundEvents.ITEM_PICKUP,
+                                SoundCategory.PLAYERS,
+                                0.2f,
+                                ((world.random.nextFloat() - world.random.nextFloat()) * 0.7f + 1) * 2);
+            }
+            if (state.getValue(LOG_COUNT) == 1) {
+                world.removeBlock(pos, false);
+                return;
+            }
+            world.setBlockAndUpdate(pos, state.setValue(LOG_COUNT, state.getValue(LOG_COUNT) - 1));
+        }
+    }
+
+    @Override
+    public boolean canBeReplaced(BlockState state, BlockItemUseContext useContext) {
+        return useContext.getItemInHand().getItem() == this.variant.getLogItem() &&
+               state.getValue(LOG_COUNT) < 16 &&
+               (!useContext.replacingClickedOnBlock() ||
+                (useContext.getClickedFace() == Direction.UP || useContext.getClickedFace() == state.getValue(DIRECTION_HORIZONTAL).getClockWise()) &&
+                useContext.getClickLocation().y - useContext.getClickedPos().getY() < 1 &&
+                useContext.getClickLocation().x - useContext.getClickedPos().getX() < 1 &&
+                useContext.getClickLocation().z - useContext.getClickedPos().getZ() < 1 &&
+                useContext.getClickLocation().x - useContext.getClickedPos().getX() > 0 &&
+                useContext.getClickLocation().z - useContext.getClickedPos().getZ() > 0);
     }
 
     @Override
@@ -50,13 +90,19 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
     }
 
     @Override
-    protected void fillStateContainer(Builder<Block, BlockState> builder) {
+    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+        return (state.getValue(LOG_COUNT) == 16 || BlockUtils.isReplaceable(world.getBlockState(pos.above()))) &&
+               BlockUtils.hasSolidSide(world, pos.below(), Direction.UP);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
         builder.add(LOG_COUNT, DIRECTION_HORIZONTAL);
     }
 
     @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return new ItemStack(this.variant.getLogItem(), state.get(LOG_COUNT));
+        return new ItemStack(this.variant.getLogItem(), state.getValue(LOG_COUNT));
     }
 
     @Override
@@ -76,7 +122,7 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
 
     @Override
     public int getMass(BlockState state) {
-        return state.get(LOG_COUNT) * this.getBaseMass() / 16;
+        return state.getValue(LOG_COUNT) * this.getBaseMass() / 16;
     }
 
     @Override
@@ -86,9 +132,9 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
 
     @Override
     public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
-        int logCount = state.get(LOG_COUNT);
+        int logCount = state.getValue(LOG_COUNT);
         if (logCount == 16) {
-            return VoxelShapes.fullCube();
+            return VoxelShapes.block();
         }
         VoxelShape shape = VoxelShapes.empty();
         if (logCount >= 12) {
@@ -101,56 +147,32 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
             shape = EvolutionHitBoxes.LOG_PILE[4];
         }
         return MathHelper.union(shape,
-                                MathHelper.rotateShape(Direction.NORTH, state.get(DIRECTION_HORIZONTAL), EvolutionHitBoxes.LOG_PILE[logCount]));
+                                MathHelper.rotateShape(Direction.NORTH, state.getValue(DIRECTION_HORIZONTAL), EvolutionHitBoxes.LOG_PILE[logCount]));
     }
 
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
-        BlockState state = context.getWorld().getBlockState(context.getPos());
+        BlockState state = context.getLevel().getBlockState(context.getClickedPos());
         return state.getBlock() == this ?
-               state.with(LOG_COUNT, Math.min(16, state.get(LOG_COUNT) + 1)) :
-               this.getDefaultState().with(DIRECTION_HORIZONTAL, context.getPlacementHorizontalFacing());
+               state.setValue(LOG_COUNT, Math.min(16, state.getValue(LOG_COUNT) + 1)) :
+               this.defaultBlockState().setValue(DIRECTION_HORIZONTAL, context.getHorizontalDirection());
     }
 
     @Override
     public boolean isReplaceable(BlockState state) {
-        return state.get(LOG_COUNT) < 13;
-    }
-
-    @Override
-    public boolean isReplaceable(BlockState state, BlockItemUseContext useContext) {
-        return useContext.getItem().getItem() == this.variant.getLogItem() &&
-               state.get(LOG_COUNT) < 16 &&
-               (!useContext.replacingClickedOnBlock() ||
-                (useContext.getFace() == Direction.UP || useContext.getFace() == state.get(DIRECTION_HORIZONTAL).rotateY()) &&
-                useContext.getHitVec().y - useContext.getPos().getY() < 1 &&
-                useContext.getHitVec().x - useContext.getPos().getX() < 1 &&
-                useContext.getHitVec().z - useContext.getPos().getZ() < 1 &&
-                useContext.getHitVec().x - useContext.getPos().getX() > 0 &&
-                useContext.getHitVec().z - useContext.getPos().getZ() > 0);
-    }
-
-    @Override
-    public boolean isSolid(BlockState state) {
-        return state.get(LOG_COUNT) == 16;
-    }
-
-    @Override
-    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
-        return (this.isSolid(state) || BlockUtils.isReplaceable(world.getBlockState(pos.up()))) &&
-               Block.hasSolidSide(world.getBlockState(pos.down()), world, pos.down(), Direction.UP);
+        return state.getValue(LOG_COUNT) < 13;
     }
 
     @Override
     public BlockState mirror(BlockState state, Mirror mirror) {
-        return state.rotate(mirror.toRotation(state.get(DIRECTION_HORIZONTAL)));
+        return state.rotate(mirror.getRotation(state.getValue(DIRECTION_HORIZONTAL)));
     }
 
     @Override
     public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!world.isRemote) {
-            if (!state.isValidPosition(world, pos)) {
-                spawnDrops(state, world, pos);
+        if (!world.isClientSide) {
+            if (!state.canSurvive(world, pos)) {
+                dropResources(state, world, pos);
                 world.removeBlock(pos, false);
             }
         }
@@ -158,37 +180,7 @@ public class BlockLogPile extends BlockMass implements IReplaceable {
     }
 
     @Override
-    public void onBlockClicked(BlockState state, World world, BlockPos pos, PlayerEntity player) {
-        if (world.isRemote) {
-            return;
-        }
-        if (Math.abs(pos.getX() + 0.5 - player.posX) < 1.5 &&
-            Math.abs(pos.getY() - player.posY) < 1.5 &&
-            Math.abs(pos.getZ() + 0.5 - player.posZ) < 1.5) {
-            ItemStack stack = new ItemStack(this.variant.getLogItem());
-            if (!player.inventory.addItemStackToInventory(stack)) {
-                BlockUtils.dropItemStack(world, pos, stack);
-            }
-            else {
-                world.playSound(null,
-                                pos.getX() + 0.5f,
-                                pos.getY() + 0.5f,
-                                pos.getZ() + 0.5f,
-                                SoundEvents.ENTITY_ITEM_PICKUP,
-                                SoundCategory.PLAYERS,
-                                0.2f,
-                                ((world.rand.nextFloat() - world.rand.nextFloat()) * 0.7f + 1) * 2);
-            }
-            if (state.get(LOG_COUNT) == 1) {
-                world.removeBlock(pos, false);
-                return;
-            }
-            world.setBlockState(pos, state.with(LOG_COUNT, state.get(LOG_COUNT) - 1));
-        }
-    }
-
-    @Override
     public BlockState rotate(BlockState state, Rotation rot) {
-        return state.with(DIRECTION_HORIZONTAL, rot.rotate(state.get(DIRECTION_HORIZONTAL)));
+        return state.setValue(DIRECTION_HORIZONTAL, rot.rotate(state.getValue(DIRECTION_HORIZONTAL)));
     }
 }

@@ -1,24 +1,3 @@
 {
-  "Evolution Chunk Transformer": "patches/Chunk.js",
-  "Evolution ClientPlayerEntity Transformer": "patches/ClientPlayerEntity.js",
-  "Evolution EffectInstance Transformer": "patches/EffectInstance.js",
-  "Evolution Entity Transformer": "patches/Entity.js",
-  "Evolution GameRenderer Transformer": "patches/GameRenderer.js",
-  "Evolution KeyBinding Transformer": "patches/KeyBinding.js",
-  "Evolution LivingEntity Transformer": "patches/LivingEntity.js",
-  "Evolution Minecraft Transformer": "patches/Minecraft.js",
-  "Evolution MinecraftServer Transformer": "patches/MinecraftServer.js",
-  "Evolution NewChatGui Transformer": "patches/NewChatGui.js",
-  "Evolution PlayerAbilities Transformer": "patches/PlayerAbilities.js",
-  "Evolution PlayerAdvancements Transformer": "patches/PlayerAdvancements.js",
-  "Evolution PlayerEntity Transformer": "patches/PlayerEntity.js",
-  "Evolution PlayerList Transformer": "patches/PlayerList.js",
-  "Evolution PlayerModel Transformer": "patches/PlayerModel.js",
-  "Evolution PlayerRenderer Transformer": "patches/PlayerRenderer.js",
-  "Evolution SaveFormat Transformer": "patches/SaveFormat.js",
-  "Evolution ServerPlayerEntity Transformer": "patches/ServerPlayerEntity.js",
-  "Evolution ServerStatisticsManager Transformer": "patches/ServerStatisticsManager.js",
-  "Evolution ShaderInstance Transformer": "patches/ShaderInstance.js",
-  "Evolution World Transformer": "patches/World.js",
-  "Evolution WorldSelectionList$Entry Transformer": "patches/WorldSelectionList$Entry.js"
+  "Evolution MinecraftServer Transformer": "patches/MinecraftServer.js"
 }

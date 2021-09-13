@@ -17,7 +17,7 @@ public class PacketSCUpdateCameraTilt implements IPacket {
     }
 
     public PacketSCUpdateCameraTilt(PlayerEntity player) {
-        this.attackedAtYaw = player.attackedAtYaw;
+        this.attackedAtYaw = player.hurtDir;
     }
 
     public static PacketSCUpdateCameraTilt decode(PacketBuffer buffer) {
@@ -30,7 +30,7 @@ public class PacketSCUpdateCameraTilt implements IPacket {
 
     public static void handle(PacketSCUpdateCameraTilt packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> Evolution.PROXY.getClientPlayer().attackedAtYaw = packet.attackedAtYaw);
+            context.get().enqueueWork(() -> Evolution.PROXY.getClientPlayer().hurtDir = packet.attackedAtYaw);
             context.get().setPacketHandled(true);
         }
     }

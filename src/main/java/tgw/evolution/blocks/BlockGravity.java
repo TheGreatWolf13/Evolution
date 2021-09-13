@@ -11,9 +11,9 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorldReader;
+import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
-import net.minecraft.world.dimension.Dimension;
+import net.minecraft.world.server.ServerWorld;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.*;
@@ -31,7 +31,7 @@ public class BlockGravity extends BlockMass {
     public static boolean canFallThrough(BlockState state) {
         Block block = state.getBlock();
         if (block instanceof BlockPeat) {
-            return state.get(LAYERS_1_4) != 4;
+            return state.getValue(LAYERS_1_4) != 4;
         }
         Material material = state.getMaterial();
         return state.isAir() || material.isLiquid() || material.isReplaceable() || block instanceof IReplaceable;
@@ -67,9 +67,10 @@ public class BlockGravity extends BlockMass {
 
     public final DirectionToIntMap checkBeams(World world, BlockPos pos, boolean nested) {
         DirectionToIntMap beams = new DirectionToIntMap();
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos(pos);
+        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+        mutablePos.set(pos);
         for (Direction direction : this.beamDirections(world.getBlockState(pos))) {
-            mutablePos.setPos(pos);
+            mutablePos.set(pos);
             for (int i = 1; i <= this.beamSize(); i++) {
                 BlockState check = world.getBlockState(mutablePos.move(direction));
                 if (check.getBlock() == this) {
@@ -104,7 +105,7 @@ public class BlockGravity extends BlockMass {
                     this.fall(world, pos);
                     return;
                 }
-                if (BlockUtils.hasMass(world.getBlockState(pos.up()))) {
+                if (BlockUtils.hasMass(world.getBlockState(pos.above()))) {
                     if (!this.canSustainWeight(world.getBlockState(pos))) {
                         this.fall(world, pos);
                         return;
@@ -127,14 +128,14 @@ public class BlockGravity extends BlockMass {
         }
         if (this.canSlope()) {
             if (this.preventSlope(world, pos)) {
-                BlockUtils.scheduleBlockTick(world, pos.down(), 2);
+                BlockUtils.scheduleBlockTick(world, pos.below(), 2);
                 return;
             }
             if (this.RANDOM.nextFloat() < this.slopeChance()) {
                 DirectionList slopePossibility = new DirectionList();
-                BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+                BlockPos.Mutable mutablePos = new BlockPos.Mutable();
                 for (Direction slopeDirection : MathHelper.DIRECTIONS_HORIZONTAL) {
-                    mutablePos.setPos(pos);
+                    mutablePos.set(pos);
                     if (BlockUtils.isReplaceable(world.getBlockState(mutablePos.move(slopeDirection)))) {
                         if (BlockUtils.isReplaceable(world.getBlockState(mutablePos.move(Direction.DOWN)))) {
                             slopePossibility.add(slopeDirection);
@@ -144,7 +145,7 @@ public class BlockGravity extends BlockMass {
                 while (!slopePossibility.isEmpty()) {
                     Direction slopeDirection = slopePossibility.getRandomAndRemove(this.RANDOM);
                     //noinspection ObjectAllocationInLoop
-                    if (world.getEntitiesWithinAABB(EntityFallingWeight.class, new AxisAlignedBB(pos.offset(slopeDirection))).isEmpty()) {
+                    if (world.getEntitiesOfClass(EntityFallingWeight.class, new AxisAlignedBB(pos.relative(slopeDirection))).isEmpty()) {
                         this.slope(world, pos, slopeDirection);
                         return;
                     }
@@ -161,9 +162,10 @@ public class BlockGravity extends BlockMass {
         int negativeSide = beams.get(MathHelper.getNegativeAxis(axis));
         int beamSize = positiveSide + negativeSide;
         int min = Math.min(positiveSide, negativeSide);
-        int supportedMass = (int) ((this.beamSize() - min) / (double) beamSize * this.shearStrength(world.getDimension()) / 64);
+        int supportedMass = (int) ((this.beamSize() - min) / (double) beamSize * this.shearStrength(world.dimensionType()) / 64);
+        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+        mutablePos.set(pos);
         int mass = 0;
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos(pos);
         for (int i = pos.getY() + 1; i < 256; i++) {
             BlockState stateUp = world.getBlockState(mutablePos.move(Direction.UP));
             Block blockUp = stateUp.getBlock();
@@ -174,7 +176,7 @@ public class BlockGravity extends BlockMass {
             if (mass > supportedMass) {
                 world.playSound(null, mutablePos, this.breakSound(), SoundCategory.BLOCKS, 2.0F, 1.0F);
                 if (fallBelow) {
-                    this.fall(world, pos.down());
+                    this.fall(world, pos.below());
                     return;
                 }
                 this.fall(world, pos);
@@ -194,10 +196,10 @@ public class BlockGravity extends BlockMass {
                                                              this.getStateForFalling(world.getBlockState(pos)));
         world.removeBlock(pos, true);
         entity.fallTime = 1;
-        world.addEntity(entity);
+        world.addFreshEntity(entity);
         entity.playSound(this.fallSound(), 0.25F, 1.0F);
         for (Direction dir : MathHelper.DIRECTIONS_EXCEPT_DOWN) {
-            BlockUtils.scheduleBlockTick(world, pos.offset(dir), 2);
+            BlockUtils.scheduleBlockTick(world, pos.relative(dir), 2);
         }
     }
 
@@ -221,53 +223,53 @@ public class BlockGravity extends BlockMass {
     }
 
     public boolean isPillar(BlockState state, World world, BlockPos pos, boolean nested) {
-        return !canFallThrough(world.getBlockState(pos.down()));
+        return !canFallThrough(world.getBlockState(pos.below()));
     }
 
     @Override
-    public void onBlockHarvested(World world, BlockPos pos, BlockState state, PlayerEntity player) {
-        BlockPos up = pos.up();
+    public void playerWillDestroy(World world, BlockPos pos, BlockState state, PlayerEntity player) {
+        BlockPos up = pos.above();
         BlockUtils.scheduleBlockTick(world, up, 2);
         if (this.canSlope()) {
             for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
-                BlockUtils.scheduleBlockTick(world, up.offset(dir), 2);
+                BlockUtils.scheduleBlockTick(world, up.relative(dir), 2);
             }
         }
         else if (this.hasBeams()) {
             for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
-                BlockUtils.scheduleBlockTick(world, pos.offset(dir), 2);
+                BlockUtils.scheduleBlockTick(world, pos.relative(dir), 2);
             }
         }
-        super.onBlockHarvested(world, pos, state, player);
+        super.playerWillDestroy(world, pos, state, player);
     }
 
     public boolean preventSlope(World world, BlockPos pos) {
         return false;
     }
 
-    public final int shearStrength(Dimension dim) {
+    public final int shearStrength(DimensionType dim) {
         return (int) (this.getShearStrength() / (Gravity.gravity(dim) * 400));
     }
 
     public boolean shouldFall(World world, BlockPos pos) {
-        return canFallThrough(world.getBlockState(pos.down())) && pos.getY() >= 0;
+        return canFallThrough(world.getBlockState(pos.below())) && pos.getY() >= 0;
     }
 
     public void slope(World world, BlockPos pos, Direction offset) {
         EntityFallingWeight entity = new EntityFallingWeight(world,
-                                                             pos.getX() + offset.getXOffset() + 0.5D,
+                                                             pos.getX() + offset.getStepX() + 0.5,
                                                              pos.getY(),
-                                                             pos.getZ() + offset.getZOffset() + 0.5D,
+                                                             pos.getZ() + offset.getStepZ() + 0.5,
                                                              this.getStateForFalling(world.getBlockState(pos)));
-        world.setBlockState(pos, Blocks.AIR.getDefaultState(), BlockFlags.IS_MOVING + BlockFlags.NOTIFY_AND_UPDATE);
+        world.setBlock(pos, Blocks.AIR.defaultBlockState(), BlockFlags.IS_MOVING + BlockFlags.NOTIFY_AND_UPDATE);
         entity.fallTime = 1;
-        world.addEntity(entity);
+        world.addFreshEntity(entity);
         entity.playSound(this.fallSound(), 0.125F, 1.0F);
-        BlockUtils.scheduleBlockTick(world, pos.down(), 2);
-        BlockPos up = pos.up();
+        BlockUtils.scheduleBlockTick(world, pos.below(), 2);
+        BlockPos up = pos.above();
         BlockUtils.scheduleBlockTick(world, up, 2);
         for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
-            BlockUtils.scheduleBlockTick(world, up.offset(dir), 2);
+            BlockUtils.scheduleBlockTick(world, up.relative(dir), 2);
         }
     }
 
@@ -292,14 +294,7 @@ public class BlockGravity extends BlockMass {
     }
 
     @Override
-    public void tick(BlockState state, World world, BlockPos pos, Random random) {
-        if (!world.isRemote) {
-            this.checkPhysics(world, pos);
-        }
-    }
-
-    @Override
-    public final int tickRate(IWorldReader world) {
-        return 2;
+    public void tick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+        this.checkPhysics(world, pos);
     }
 }

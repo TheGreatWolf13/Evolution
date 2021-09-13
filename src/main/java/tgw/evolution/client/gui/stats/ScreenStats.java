@@ -2,7 +2,8 @@ package tgw.evolution.client.gui.stats;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.SimpleSound;
@@ -45,10 +46,8 @@ import java.util.*;
 @OnlyIn(Dist.CLIENT)
 public class ScreenStats extends Screen implements IProgressMeter {
 
-    @SuppressWarnings("rawtypes")
     private static final FieldHandler<Stat, IStatFormatter> FORMATTER = new FieldHandler<>(Stat.class, "field_75976_b");
     private static final FieldHandler<StatsScreen, Screen> PARENT_SCREEN = new FieldHandler<>(StatsScreen.class, "field_146332_f");
-    protected final Screen parentScreen;
     private final EvolutionStatisticsManager stats;
     private ListDamageStats damageStats;
     private ListDeathStats deathStats;
@@ -64,7 +63,6 @@ public class ScreenStats extends Screen implements IProgressMeter {
 
     public ScreenStats(StatsScreen parent, StatisticsManager manager) {
         super(new TranslationTextComponent("gui.stats"));
-        this.parentScreen = PARENT_SCREEN.get(parent);
         this.stats = (EvolutionStatisticsManager) manager;
     }
 
@@ -73,50 +71,60 @@ public class ScreenStats extends Screen implements IProgressMeter {
     }
 
     public static String getFormattedName(Stat<ResourceLocation> stat) {
-        return I18n.format("stat." + stat.getValue().toString().replace(':', '.'));
+        return I18n.get("stat." + stat.getValue().toString().replace(':', '.'));
     }
 
     @Nullable
     public ExtendedList<?> byId(int displayId) {
         switch (displayId) {
-            case 0:
+            case 0: {
                 return this.generalStats;
-            case 1:
+            }
+            case 1: {
                 return this.itemStats;
-            case 2:
+            }
+            case 2: {
                 return this.mobStats;
-            case 3:
+            }
+            case 3: {
                 return this.distanceStats;
-            case 4:
+            }
+            case 4: {
                 return this.timeStats;
-            case 5:
+            }
+            case 5: {
                 return this.deathStats;
-            case 6:
+            }
+            case 6: {
                 return this.damageStats;
+            }
         }
         return null;
     }
 
-    private void drawDamageSprite(int x, int y, EvolutionDamage.Type type) {
-        //TODO
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.minecraft.getTextureManager().bindTexture(EvolutionResources.GUI_DAMAGE_ICONS);
-        blit(x, y, this.blitOffset, 0, 0, 16, 16, 128, 128);
+    private void drawDamageSprite(MatrixStack matrices, int x, int y, EvolutionDamage.Type type) {
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        this.minecraft.getTextureManager().bind(EvolutionResources.GUI_STATS_ICONS);
+        blit(matrices, x, y, this.getBlitOffset(), 0, 0, 18, 18, 128, 128);
+        RenderSystem.enableBlend();
+        this.minecraft.getTextureManager().bind(EvolutionResources.GUI_DAMAGE_ICONS);
+        blit(matrices, x + 1, y + 1, this.getBlitOffset(), type.getTexX() * 16, type.getTexY() * 16, 16, 16, 128, 128);
+        RenderSystem.disableBlend();
     }
 
-    private void drawSprite(int x, int y, int u, int v) {
-        GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.minecraft.getTextureManager().bindTexture(EvolutionResources.GUI_STATS_ICONS);
-        blit(x, y, this.blitOffset, u, v, 18, 18, 128, 128);
+    private void drawSprite(MatrixStack matrices, int x, int y, int u, int v) {
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        this.minecraft.getTextureManager().bind(EvolutionResources.GUI_STATS_ICONS);
+        blit(matrices, x, y, this.getBlitOffset(), u, v, 18, 18, 128, 128);
     }
 
-    private void drawStatsScreen(int x, int y, Item item) {
-        this.drawSprite(x + 1, y + 1, 0, 0);
-        GlStateManager.enableRescaleNormal();
-        RenderHelper.enableGUIStandardItemLighting();
-        this.itemRenderer.renderItemIntoGUI(item.getDefaultInstance(), x + 2, y + 2);
-        RenderHelper.disableStandardItemLighting();
-        GlStateManager.disableRescaleNormal();
+    private void drawStatsScreen(MatrixStack matrices, int x, int y, Item item) {
+        this.drawSprite(matrices, x + 1, y + 1, 0, 0);
+        RenderSystem.enableRescaleNormal();
+        RenderHelper.turnBackOn();
+        this.itemRenderer.renderGuiItem(item.getDefaultInstance(), x + 2, y + 2);
+        RenderHelper.turnOff();
+        RenderSystem.disableRescaleNormal();
     }
 
     @Nullable
@@ -124,26 +132,10 @@ public class ScreenStats extends Screen implements IProgressMeter {
         return this.displaySlot;
     }
 
-    public void setDisplaySlot(int displayId) {
-        this.children.remove(this.generalStats);
-        this.children.remove(this.itemStats);
-        this.children.remove(this.mobStats);
-        this.children.remove(this.distanceStats);
-        this.children.remove(this.timeStats);
-        this.children.remove(this.deathStats);
-        this.children.remove(this.damageStats);
-        if (displayId != -1) {
-            ExtendedList<?> displaySlot = this.byId(displayId);
-            this.children.add(0, displaySlot);
-            this.displaySlot = displaySlot;
-            this.displayId = displayId;
-        }
-    }
-
     @Override
     protected void init() {
         this.doesGuiPauseGame = true;
-        this.minecraft.getConnection().sendPacket(new CClientStatusPacket(CClientStatusPacket.State.REQUEST_STATS));
+        this.minecraft.getConnection().send(new CClientStatusPacket(CClientStatusPacket.State.REQUEST_STATS));
     }
 
     public void initButtons() {
@@ -151,29 +143,44 @@ public class ScreenStats extends Screen implements IProgressMeter {
                                   this.height - 52,
                                   80,
                                   20,
-                                  I18n.format("stat.generalButton"),
+                                  EvolutionTexts.GUI_STATS_GENERAL_BUTTON,
                                   button -> this.setDisplaySlot(0)));
         Button itemButton = this.addButton(new Button(this.width / 2 - 80,
                                                       this.height - 52,
                                                       80,
                                                       20,
-                                                      I18n.format("stat.itemsButton"),
+                                                      EvolutionTexts.GUI_STATS_ITEMS_BUTTON,
                                                       button -> this.setDisplaySlot(1)));
         Button mobButton = this.addButton(new Button(this.width / 2,
                                                      this.height - 52,
                                                      80,
                                                      20,
-                                                     I18n.format("stat.mobsButton"),
+                                                     EvolutionTexts.GUI_STATS_MOB_BUTTON,
                                                      button -> this.setDisplaySlot(2)));
         this.addButton(new Button(this.width / 2 + 80,
                                   this.height - 52,
                                   80,
                                   20,
-                                  I18n.format("stat.distanceButton"),
+                                  EvolutionTexts.GUI_STATS_DISTANCE_BUTTON,
                                   button -> this.setDisplaySlot(3)));
-        this.addButton(new Button(this.width / 2 - 120, this.height - 32, 80, 20, I18n.format("stat.timeButton"), button -> this.setDisplaySlot(4)));
-        this.addButton(new Button(this.width / 2 - 40, this.height - 32, 80, 20, I18n.format("stat.deathButton"), button -> this.setDisplaySlot(5)));
-        this.addButton(new Button(this.width / 2 + 40, this.height - 32, 80, 20, I18n.format("stat.damageButton"), button -> this.setDisplaySlot(6)));
+        this.addButton(new Button(this.width / 2 - 120,
+                                  this.height - 32,
+                                  80,
+                                  20,
+                                  EvolutionTexts.GUI_STATS_TIME_BUTTON,
+                                  button -> this.setDisplaySlot(4)));
+        this.addButton(new Button(this.width / 2 - 40,
+                                  this.height - 32,
+                                  80,
+                                  20,
+                                  EvolutionTexts.GUI_STATS_DEATH_BUTTON,
+                                  button -> this.setDisplaySlot(5)));
+        this.addButton(new Button(this.width / 2 + 40,
+                                  this.height - 32,
+                                  80,
+                                  20,
+                                  EvolutionTexts.GUI_STATS_DAMAGE_BUTTON,
+                                  button -> this.setDisplaySlot(6)));
         if (this.itemStats.children().isEmpty()) {
             itemButton.active = false;
         }
@@ -208,20 +215,37 @@ public class ScreenStats extends Screen implements IProgressMeter {
     }
 
     @Override
-    public void render(int mouseX, int mouseY, float partialTicks) {
+    public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
         if (this.doesGuiPauseGame) {
-            this.renderBackground();
-            this.drawCenteredString(this.font, I18n.format("multiplayer.downloadingStats"), this.width / 2, this.height / 2, 0xff_ffff);
-            this.drawCenteredString(this.font,
-                                    LOADING_STRINGS[(int) (Util.milliTime() / 150L % LOADING_STRINGS.length)],
-                                    this.width / 2,
-                                    this.height / 2 + 9 * 2,
-                                    0xff_ffff);
+            this.renderBackground(matrices);
+            drawCenteredString(matrices, this.font, I18n.get("multiplayer.downloadingStats"), this.width / 2, this.height / 2, 0xff_ffff);
+            drawCenteredString(matrices,
+                               this.font,
+                               LOADING_SYMBOLS[(int) (Util.getMillis() / 150L % LOADING_SYMBOLS.length)],
+                               this.width / 2,
+                               this.height / 2 + 9 * 2,
+                               0xff_ffff);
         }
         else {
-            this.displaySlot.render(mouseX, mouseY, partialTicks);
-            this.drawCenteredString(this.font, this.title.getFormattedText(), this.width / 2, 20, 0xff_ffff);
-            super.render(mouseX, mouseY, partialTicks);
+            this.displaySlot.render(matrices, mouseX, mouseY, partialTicks);
+            drawCenteredString(matrices, this.font, this.title, this.width / 2, 20, 0xff_ffff);
+            super.render(matrices, mouseX, mouseY, partialTicks);
+        }
+    }
+
+    public void setDisplaySlot(int displayId) {
+        this.children.remove(this.generalStats);
+        this.children.remove(this.itemStats);
+        this.children.remove(this.mobStats);
+        this.children.remove(this.distanceStats);
+        this.children.remove(this.timeStats);
+        this.children.remove(this.deathStats);
+        this.children.remove(this.damageStats);
+        if (displayId != -1) {
+            ExtendedList<?> displaySlot = this.byId(displayId);
+            this.children.add(0, displaySlot);
+            this.displaySlot = displaySlot;
+            this.displayId = displayId;
         }
     }
 
@@ -249,8 +273,8 @@ public class ScreenStats extends Screen implements IProgressMeter {
         }
 
         @Override
-        protected void renderBackground() {
-            ScreenStats.this.renderBackground();
+        protected void renderBackground(MatrixStack matrices) {
+            ScreenStats.this.renderBackground(matrices);
         }
 
         @OnlyIn(Dist.CLIENT)
@@ -264,13 +288,23 @@ public class ScreenStats extends Screen implements IProgressMeter {
             }
 
             @Override
-            public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
-                ListCustomStats.this.drawString(ScreenStats.this.font, this.title, x + 2, y + 1, index % 2 == 0 ? 0xff_ffff : 0x75_7575);
-                ListCustomStats.this.drawString(ScreenStats.this.font,
-                                                this.value,
-                                                x + 2 + 213 - ScreenStats.this.font.getStringWidth(this.value),
-                                                y + 1,
-                                                index % 2 == 0 ? 0xff_ffff : 0x75_7575);
+            public void render(MatrixStack matrices,
+                               int index,
+                               int y,
+                               int x,
+                               int width,
+                               int height,
+                               int mouseX,
+                               int mouseY,
+                               boolean hovered,
+                               float partialTicks) {
+                drawString(matrices, ScreenStats.this.font, this.title, x + 2, y + 1, index % 2 == 0 ? 0xff_ffff : 0x75_7575);
+                drawString(matrices,
+                           ScreenStats.this.font,
+                           this.value,
+                           x + 2 + 213 - ScreenStats.this.font.width(this.value),
+                           y + 1,
+                           index % 2 == 0 ? 0xff_ffff : 0x75_7575);
             }
         }
     }
@@ -306,27 +340,28 @@ public class ScreenStats extends Screen implements IProgressMeter {
         @Override
         protected void clickedHeader(int mouseX, int mouseY) {
             this.currentHeader = -1;
-            for (int i = 0; i < this.headerTexture.length; i++) {
-                int j = mouseX - getCategoryOffset(i);
-                if (j >= -36 && j <= 0) {
-                    this.currentHeader = i;
-                    break;
+            if (mouseY < this.headerHeight + this.y0 + 3) {
+                for (int i = 0; i < this.headerTexture.length; i++) {
+                    int j = mouseX - getCategoryOffset(i);
+                    if (j >= -36 && j <= 0) {
+                        this.currentHeader = i;
+                        break;
+                    }
                 }
             }
             if (this.currentHeader >= 0) {
                 this.sortBy(this.damageStatList.get(this.currentHeader));
-                this.minecraft.getSoundHandler().play(SimpleSound.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                this.minecraft.getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             }
         }
 
-        protected void drawName(@Nullable ITextComponent text, int mouseX, int mouseY) {
+        protected void drawName(MatrixStack matrices, @Nullable ITextComponent text, int mouseX, int mouseY) {
             if (text != null) {
-                String s = text.getFormattedText();
                 int i = mouseX + 12;
                 int j = mouseY - 12;
-                int k = ScreenStats.this.font.getStringWidth(s);
-                this.fillGradient(i - 3, j - 3, i + k + 3, j + 8 + 3, 0xc000_0000, 0xc000_0000);
-                ScreenStats.this.font.drawStringWithShadow(s, i, j, -1);
+                int k = ScreenStats.this.font.width(text);
+                this.fillGradient(matrices, i - 3, j - 3, i + k + 3, j + 8 + 3, 0xc000_0000, 0xc000_0000);
+                ScreenStats.this.font.draw(matrices, text, i, j, -1);
             }
         }
 
@@ -341,12 +376,12 @@ public class ScreenStats extends Screen implements IProgressMeter {
         }
 
         @Override
-        protected void renderBackground() {
-            ScreenStats.this.renderBackground();
+        protected void renderBackground(MatrixStack matrices) {
+            ScreenStats.this.renderBackground(matrices);
         }
 
         @Override
-        protected void renderDecorations(int mouseX, int mouseY) {
+        protected void renderDecorations(MatrixStack matrices, int mouseX, int mouseY) {
             if (mouseY >= this.y0 && mouseY <= this.y1) {
                 ScreenStats.ListDamageStats.Entry entryAtPos = this.getEntryAtPosition(mouseX, mouseY);
                 int i = (this.width - this.getRowWidth()) / 2;
@@ -355,55 +390,62 @@ public class ScreenStats extends Screen implements IProgressMeter {
                         return;
                     }
                     EvolutionDamage.Type type = this.damageList.get(this.children().indexOf(entryAtPos));
-                    this.drawName(type.getTextComponent(), mouseX, mouseY);
+                    this.drawName(matrices, type.getTextComponent(), mouseX, mouseY);
                 }
                 else {
                     ITextComponent tooltip = null;
-                    int j = mouseX - i;
-                    for (int k = 0; k < this.headerTexture.length; ++k) {
-                        int l = getCategoryOffset(k);
-                        if (j >= l - 18 && j <= l) {
-                            switch (k) {
-                                case 0:
-                                    tooltip = EvolutionTexts.STAT_DAMAGE_DEALT_RAW;
-                                    break;
-                                case 1:
-                                    tooltip = EvolutionTexts.STAT_DAMAGE_DEALT_ACTUAL;
-                                    break;
-                                case 2:
-                                    tooltip = EvolutionTexts.STAT_DAMAGE_TAKEN_BLOCKED;
-                                    break;
-                                case 3:
-                                    tooltip = EvolutionTexts.STAT_DAMAGE_TAKEN_RAW;
-                                    break;
-                                case 4:
-                                    tooltip = EvolutionTexts.STAT_DAMAGE_TAKEN_ACTUAL;
-                                    break;
+                    if (mouseY < this.headerHeight + this.y0 + 3) {
+                        int j = mouseX - i;
+                        for (int k = 0; k < this.headerTexture.length; ++k) {
+                            int l = getCategoryOffset(k);
+                            if (j >= l - 18 && j <= l) {
+                                switch (k) {
+                                    case 0: {
+                                        tooltip = EvolutionTexts.GUI_STATS_DAMAGE_DEALT_RAW;
+                                        break;
+                                    }
+                                    case 1: {
+                                        tooltip = EvolutionTexts.GUI_STATS_DAMAGE_DEALT_ACTUAL;
+                                        break;
+                                    }
+                                    case 2: {
+                                        tooltip = EvolutionTexts.GUI_STATS_DAMAGE_TAKEN_BLOCKED;
+                                        break;
+                                    }
+                                    case 3: {
+                                        tooltip = EvolutionTexts.GUI_STATS_DAMAGE_TAKEN_RAW;
+                                        break;
+                                    }
+                                    case 4: {
+                                        tooltip = EvolutionTexts.GUI_STATS_DAMAGE_TAKEN_ACTUAL;
+                                        break;
+                                    }
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
-                    this.drawName(tooltip, mouseX, mouseY);
+                    this.drawName(matrices, tooltip, mouseX, mouseY);
                 }
             }
         }
 
         @Override
-        protected void renderHeader(int mouseX, int mouseY, Tessellator tessellator) {
-            if (!this.minecraft.mouseHelper.isLeftDown()) {
+        protected void renderHeader(MatrixStack matrices, int mouseX, int mouseY, Tessellator tessellator) {
+            if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.currentHeader = -1;
             }
             for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.drawSprite(mouseX + getCategoryOffset(i) - 18, mouseY + 1, 0, this.currentHeader == i ? 0 : 90);
+                ScreenStats.this.drawSprite(matrices, mouseX + getCategoryOffset(i) - 18, mouseY + 1, 0, this.currentHeader == i ? 0 : 90);
             }
             if (this.sorting != null) {
                 int k = getCategoryOffset(this.damageStatList.indexOf(this.sorting)) - 36;
                 int j = this.sortOrder == 1 ? 2 : 1;
-                ScreenStats.this.drawSprite(mouseX + k, mouseY + 1, 18 * j, 0);
+                ScreenStats.this.drawSprite(matrices, mouseX + k, mouseY + 1, 18 * j, 0);
             }
             for (int l = 0; l < this.headerTexture.length; ++l) {
                 int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.drawSprite(mouseX + getCategoryOffset(l) - 18 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 90);
+                ScreenStats.this.drawSprite(matrices, mouseX + getCategoryOffset(l) - 18 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 90);
             }
         }
 
@@ -466,26 +508,31 @@ public class ScreenStats extends Screen implements IProgressMeter {
             private Entry() {
             }
 
-            private void drawStatCount(@Nullable Stat<?> stat, int x, int y, boolean highlight) {
+            private void drawStatCount(MatrixStack matrices, @Nullable Stat<?> stat, int x, int y, boolean highlight) {
                 String s = stat == null ? "-" : EvolutionStats.METRIC.format(ScreenStats.this.stats.getValueLong(stat));
-                ScreenStats.ListDamageStats.this.drawString(ScreenStats.this.font,
-                                                            s,
-                                                            x - ScreenStats.this.font.getStringWidth(s),
-                                                            y + 5,
-                                                            highlight ? 0xff_ffff : 0x75_7575);
+                drawString(matrices, ScreenStats.this.font, s, x - ScreenStats.this.font.width(s), y + 5, highlight ? 0xff_ffff : 0x75_7575);
             }
 
             @Override
-            public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
+            public void render(MatrixStack matrices,
+                               int index,
+                               int y,
+                               int x,
+                               int width,
+                               int height,
+                               int mouseX,
+                               int mouseY,
+                               boolean hovered,
+                               float partialTicks) {
                 EvolutionDamage.Type type = ListDamageStats.this.damageList.get(index);
-                ScreenStats.this.drawDamageSprite(x + 40, y, type);
+                ScreenStats.this.drawDamageSprite(matrices, x + 40, y, type);
                 for (int j = 0; j < ListDamageStats.this.damageStatList.size(); j++) {
                     Stat<?> stat = null;
                     ResourceLocation resLoc = ListDamageStats.this.damageStatList.get(j).get(type);
                     if (resLoc != null) {
                         stat = Stats.CUSTOM.get(resLoc);
                     }
-                    this.drawStatCount(stat, x + getCategoryOffset(j), y, index % 2 == 0);
+                    this.drawStatCount(matrices, stat, x + getCategoryOffset(j), y, index % 2 == 0);
                 }
             }
         }
@@ -518,16 +565,18 @@ public class ScreenStats extends Screen implements IProgressMeter {
         @Override
         protected void clickedHeader(int mouseX, int mouseY) {
             this.currentHeader = -1;
-            for (int i = 0; i < this.headerTexture.length; i++) {
-                int j = mouseX - getCategoryOffset(i) - 18;
-                if (j >= -36 && j <= 0) {
-                    this.currentHeader = i;
-                    break;
+            if (mouseY < this.headerHeight + this.y0 + 3) {
+                for (int i = 0; i < this.headerTexture.length; i++) {
+                    int j = mouseX - getCategoryOffset(i) - 18;
+                    if (j >= -36 && j <= 0) {
+                        this.currentHeader = i;
+                        break;
+                    }
                 }
             }
             if (this.currentHeader >= 0) {
                 this.sort();
-                this.minecraft.getSoundHandler().play(SimpleSound.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                this.minecraft.getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             }
         }
 
@@ -542,21 +591,21 @@ public class ScreenStats extends Screen implements IProgressMeter {
         }
 
         @Override
-        protected void renderHeader(int mouseX, int mouseY, Tessellator tessellator) {
-            if (!this.minecraft.mouseHelper.isLeftDown()) {
+        protected void renderHeader(MatrixStack matrices, int mouseX, int mouseY, Tessellator tessellator) {
+            if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.currentHeader = -1;
             }
             for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.drawSprite(mouseX + getCategoryOffset(i), mouseY + 1, 0, this.currentHeader == i ? 0 : 36);
+                ScreenStats.this.drawSprite(matrices, mouseX + getCategoryOffset(i), mouseY + 1, 0, this.currentHeader == i ? 0 : 36);
             }
             if (this.sortOrder != 0) {
                 int k = getCategoryOffset(0) - 18;
                 int j = this.sortOrder == 1 ? 2 : 1;
-                ScreenStats.this.drawSprite(mouseX + k, mouseY + 1, 18 * j, 0);
+                ScreenStats.this.drawSprite(matrices, mouseX + k, mouseY + 1, 18 * j, 0);
             }
             for (int l = 0; l < this.headerTexture.length; ++l) {
                 int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.drawSprite(mouseX + getCategoryOffset(l) + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 36);
+                ScreenStats.this.drawSprite(matrices, mouseX + getCategoryOffset(l) + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 36);
             }
         }
 
@@ -600,18 +649,26 @@ public class ScreenStats extends Screen implements IProgressMeter {
         class Entry extends ExtendedList.AbstractListEntry<ListDeathStats.Entry> {
 
             @Override
-            public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
+            public void render(MatrixStack matrices,
+                               int index,
+                               int y,
+                               int x,
+                               int width,
+                               int height,
+                               int mouseX,
+                               int mouseY,
+                               boolean hovered,
+                               float partialTicks) {
                 String name = getFormattedName(ListDeathStats.this.deathList.get(index));
                 int color = index % 2 == 0 ? 0xff_ffff : 0x75_7575;
-                ScreenStats.ListDeathStats.this.drawString(ScreenStats.this.font, name, x + 2, y + 1, color);
+                drawString(matrices, ScreenStats.this.font, name, x + 2, y + 1, color);
                 String value = EvolutionStats.DEFAULT.format(ScreenStats.this.stats.getValueLong(ListDeathStats.this.deathList.get(index)));
-                ScreenStats.ListDeathStats.this.drawString(ScreenStats.this.font,
-                                                           value,
-                                                           x + 2 + ListDeathStats.this.getRowWidth() -
-                                                           7 -
-                                                           ScreenStats.this.font.getStringWidth(value),
-                                                           y + 1,
-                                                           color);
+                drawString(matrices,
+                           ScreenStats.this.font,
+                           value,
+                           x + 2 + ListDeathStats.this.getRowWidth() - 7 - ScreenStats.this.font.width(value),
+                           y + 1,
+                           color);
             }
         }
     }
@@ -643,39 +700,41 @@ public class ScreenStats extends Screen implements IProgressMeter {
         @Override
         protected void clickedHeader(int mouseX, int mouseY) {
             this.currentHeader = -1;
-            for (int i = 0; i < this.headerTexture.length; i++) {
-                int j = mouseX - getCategoryOffset(i);
-                if (j >= -36 && j <= 0) {
-                    this.currentHeader = i;
-                    break;
+            if (mouseY < this.headerHeight + this.y0 + 3) {
+                for (int i = 0; i < this.headerTexture.length; i++) {
+                    int j = mouseX - getCategoryOffset(i);
+                    if (j >= -36 && j <= 0) {
+                        this.currentHeader = i;
+                        break;
+                    }
                 }
             }
             if (this.currentHeader >= 0) {
                 this.sort();
-                this.minecraft.getSoundHandler().play(SimpleSound.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                this.minecraft.getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             }
         }
 
         protected String getFormattedName(Stat<ResourceLocation> stat) {
-            return I18n.format("stat." + stat.getValue().toString().replace(':', '.'));
+            return I18n.get("stat." + stat.getValue().toString().replace(':', '.'));
         }
 
         @Override
-        protected void renderHeader(int mouseX, int mouseY, Tessellator tessellator) {
-            if (!this.minecraft.mouseHelper.isLeftDown()) {
+        protected void renderHeader(MatrixStack matrices, int mouseX, int mouseY, Tessellator tessellator) {
+            if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.currentHeader = -1;
             }
             for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.drawSprite(mouseX + getCategoryOffset(i) - 18, mouseY + 1, 0, this.currentHeader == i ? 0 : 72);
+                ScreenStats.this.drawSprite(matrices, mouseX + getCategoryOffset(i) - 18, mouseY + 1, 0, this.currentHeader == i ? 0 : 72);
             }
             if (this.sortOrder != 0) {
                 int k = getCategoryOffset(0) - 18 * 2;
                 int j = this.sortOrder == 1 ? 2 : 1;
-                ScreenStats.this.drawSprite(mouseX + k, mouseY + 1, 18 * j, 0);
+                ScreenStats.this.drawSprite(matrices, mouseX + k, mouseY + 1, 18 * j, 0);
             }
             for (int l = 0; l < this.headerTexture.length; ++l) {
                 int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.drawSprite(mouseX + getCategoryOffset(l) - 18 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 72);
+                ScreenStats.this.drawSprite(matrices, mouseX + getCategoryOffset(l) - 18 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 72);
             }
         }
 
@@ -719,16 +778,21 @@ public class ScreenStats extends Screen implements IProgressMeter {
         class Entry extends ExtendedList.AbstractListEntry<ListTimeStats.Entry> {
 
             @Override
-            public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
+            public void render(MatrixStack matrices,
+                               int index,
+                               int y,
+                               int x,
+                               int width,
+                               int height,
+                               int mouseX,
+                               int mouseY,
+                               boolean hovered,
+                               float partialTicks) {
                 String name = ListTimeStats.this.getFormattedName(ListTimeStats.this.timeList.get(index));
                 int color = index % 2 == 0 ? 0xff_ffff : 0x75_7575;
-                ScreenStats.ListTimeStats.this.drawString(ScreenStats.this.font, name, x + 2, y + 1, color);
+                drawString(matrices, ScreenStats.this.font, name, x + 2, y + 1, color);
                 String value = EvolutionStats.TIME.format(ScreenStats.this.stats.getValueLong(ListTimeStats.this.timeList.get(index)));
-                ScreenStats.ListTimeStats.this.drawString(ScreenStats.this.font,
-                                                          value,
-                                                          x + 2 + 213 - ScreenStats.this.font.getStringWidth(value),
-                                                          y + 1,
-                                                          color);
+                drawString(matrices, ScreenStats.this.font, value, x + 2 + 213 - ScreenStats.this.font.width(value), y + 1, color);
             }
         }
     }
@@ -761,39 +825,41 @@ public class ScreenStats extends Screen implements IProgressMeter {
         @Override
         protected void clickedHeader(int mouseX, int mouseY) {
             this.currentHeader = -1;
-            for (int i = 0; i < this.headerTexture.length; i++) {
-                int j = mouseX - getCategoryOffset(i);
-                if (j >= -36 && j <= 0) {
-                    this.currentHeader = i;
-                    break;
+            if (mouseY < this.headerHeight + this.y0 + 3) {
+                for (int i = 0; i < this.headerTexture.length; i++) {
+                    int j = mouseX - getCategoryOffset(i);
+                    if (j >= -36 && j <= 0) {
+                        this.currentHeader = i;
+                        break;
+                    }
                 }
             }
             if (this.currentHeader >= 0) {
                 this.sort();
-                this.minecraft.getSoundHandler().play(SimpleSound.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                this.minecraft.getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             }
         }
 
         protected String getFormattedName(Stat<ResourceLocation> stat) {
-            return I18n.format("stat." + stat.getValue().toString().replace(':', '.'));
+            return I18n.get("stat." + stat.getValue().toString().replace(':', '.'));
         }
 
         @Override
-        protected void renderHeader(int mouseX, int mouseY, Tessellator tessellator) {
-            if (!this.minecraft.mouseHelper.isLeftDown()) {
+        protected void renderHeader(MatrixStack matrices, int mouseX, int mouseY, Tessellator tessellator) {
+            if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.currentHeader = -1;
             }
             for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.drawSprite(mouseX + getCategoryOffset(i) - 18, mouseY + 1, 0, this.currentHeader == i ? 0 : 54);
+                ScreenStats.this.drawSprite(matrices, mouseX + getCategoryOffset(i) - 18, mouseY + 1, 0, this.currentHeader == i ? 0 : 54);
             }
             if (this.sortOrder != 0) {
                 int k = getCategoryOffset(0) - 18 * 2;
                 int j = this.sortOrder == 1 ? 2 : 1;
-                ScreenStats.this.drawSprite(mouseX + k, mouseY + 1, 18 * j, 0);
+                ScreenStats.this.drawSprite(matrices, mouseX + k, mouseY + 1, 18 * j, 0);
             }
             for (int l = 0; l < this.headerTexture.length; ++l) {
                 int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.drawSprite(mouseX + getCategoryOffset(l) - 18 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 54);
+                ScreenStats.this.drawSprite(matrices, mouseX + getCategoryOffset(l) - 18 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 54);
             }
         }
 
@@ -837,16 +903,21 @@ public class ScreenStats extends Screen implements IProgressMeter {
         class Entry extends ExtendedList.AbstractListEntry<ScreenStats.ListDistanceStats.Entry> {
 
             @Override
-            public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
+            public void render(MatrixStack matrices,
+                               int index,
+                               int y,
+                               int x,
+                               int width,
+                               int height,
+                               int mouseX,
+                               int mouseY,
+                               boolean hovered,
+                               float partialTicks) {
                 String name = ListDistanceStats.this.getFormattedName(ListDistanceStats.this.distanceList.get(index));
                 int color = index % 2 == 0 ? 0xff_ffff : 0x75_7575;
-                ScreenStats.ListDistanceStats.this.drawString(ScreenStats.this.font, name, x + 2, y + 1, color);
+                drawString(matrices, ScreenStats.this.font, name, x + 2, y + 1, color);
                 String value = EvolutionStats.DISTANCE.format(ScreenStats.this.stats.getValueLong(ListDistanceStats.this.distanceList.get(index)));
-                ScreenStats.ListDistanceStats.this.drawString(ScreenStats.this.font,
-                                                              value,
-                                                              x + 2 + 213 - ScreenStats.this.font.getStringWidth(value),
-                                                              y + 1,
-                                                              color);
+                drawString(matrices, ScreenStats.this.font, value, x + 2 + 213 - ScreenStats.this.font.width(value), y + 1, color);
             }
         }
     }
@@ -868,14 +939,14 @@ public class ScreenStats extends Screen implements IProgressMeter {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 9 * 6);
             this.statTypes = Lists.newArrayList(Stats.ENTITY_KILLED,
                                                 Stats.ENTITY_KILLED_BY,
-                                                EvolutionStats.DAMAGE_DEALT,
-                                                EvolutionStats.DAMAGE_TAKEN);
+                                                EvolutionStats.DAMAGE_DEALT.get(),
+                                                EvolutionStats.DAMAGE_TAKEN.get());
             this.setRenderHeader(true, 20);
             this.entityList = new ArrayList<>();
             for (EntityType<?> entityType : Registry.ENTITY_TYPE) {
                 if (this.shouldAddEntry(entityType)) {
                     this.entityList.add(entityType);
-                    this.entities.put(entityType, GUIUtils.getEntity(ScreenStats.this.minecraft.world, entityType));
+                    this.entities.put(entityType, GUIUtils.getEntity(ScreenStats.this.minecraft.level, entityType));
                     //noinspection ObjectAllocationInLoop
                     this.addEntry(new ScreenStats.ListMobStats.Entry());
                 }
@@ -886,27 +957,28 @@ public class ScreenStats extends Screen implements IProgressMeter {
         @Override
         protected void clickedHeader(int mouseX, int mouseY) {
             this.currentHeader = -1;
-            for (int i = 0; i < this.headerTexture.length; i++) {
-                int j = mouseX - getCategoryOffset(i) + 18 * 3;
-                if (j >= -36 && j <= 0) {
-                    this.currentHeader = i;
-                    break;
+            if (mouseY < this.headerHeight + this.y0 + 3) {
+                for (int i = 0; i < this.headerTexture.length; i++) {
+                    int j = mouseX - getCategoryOffset(i) + 18 * 3;
+                    if (j >= -36 && j <= 0) {
+                        this.currentHeader = i;
+                        break;
+                    }
                 }
             }
             if (this.currentHeader >= 0) {
                 this.sortBy(this.statTypes.get(this.currentHeader));
-                this.minecraft.getSoundHandler().play(SimpleSound.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                this.minecraft.getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             }
         }
 
-        protected void drawName(@Nullable ITextComponent text, int mouseX, int mouseY) {
+        protected void drawName(MatrixStack matrices, @Nullable ITextComponent text, int mouseX, int mouseY) {
             if (text != null) {
-                String s = text.getFormattedText();
                 int i = mouseX + 12;
                 int j = mouseY - 12;
-                int k = ScreenStats.this.font.getStringWidth(s);
-                this.fillGradient(i - 3, j - 3, i + k + 3, j + 8 + 3, 0xc000_0000, 0xc000_0000);
-                ScreenStats.this.font.drawStringWithShadow(s, i, j, -1);
+                int k = ScreenStats.this.font.width(text);
+                this.fillGradient(matrices, i - 3, j - 3, i + k + 3, j + 8 + 3, 0xc000_0000, 0xc000_0000);
+                ScreenStats.this.font.draw(matrices, text, i, j, -1);
             }
         }
 
@@ -916,46 +988,48 @@ public class ScreenStats extends Screen implements IProgressMeter {
         }
 
         @Override
-        protected void renderBackground() {
-            ScreenStats.this.renderBackground();
+        protected void renderBackground(MatrixStack matrices) {
+            ScreenStats.this.renderBackground(matrices);
         }
 
         @Override
-        protected void renderDecorations(int mouseX, int mouseY) {
+        protected void renderDecorations(MatrixStack matrices, int mouseX, int mouseY) {
             if (mouseY >= this.y0 && mouseY <= this.y1) {
                 ScreenStats.ListMobStats.Entry entryAtPos = this.getEntryAtPosition(mouseX, mouseY);
                 if (entryAtPos == null) {
                     int i = (this.width - this.getRowWidth()) / 2;
                     ITextComponent text = null;
-                    int j = mouseX - i;
-                    for (int k = 0; k < this.headerTexture.length; ++k) {
-                        int l = getCategoryOffset(k) - 18 * 3;
-                        if (j >= l - 18 && j <= l) {
-                            text = new TranslationTextComponent(this.statTypes.get(k).getTranslationKey() + ".name");
-                            break;
+                    if (mouseY < this.headerHeight + this.y0 + 3) {
+                        int j = mouseX - i;
+                        for (int k = 0; k < this.headerTexture.length; ++k) {
+                            int l = getCategoryOffset(k) - 18 * 3;
+                            if (j >= l - 18 && j <= l) {
+                                text = new TranslationTextComponent(this.statTypes.get(k).getTranslationKey() + ".name");
+                                break;
+                            }
                         }
                     }
-                    this.drawName(text, mouseX, mouseY);
+                    this.drawName(matrices, text, mouseX, mouseY);
                 }
             }
         }
 
         @Override
-        protected void renderHeader(int mouseX, int mouseY, Tessellator tessellator) {
-            if (!this.minecraft.mouseHelper.isLeftDown()) {
+        protected void renderHeader(MatrixStack matrices, int mouseX, int mouseY, Tessellator tessellator) {
+            if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.currentHeader = -1;
             }
             for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.drawSprite(mouseX + getCategoryOffset(i) - 18 * 4, mouseY + 1, 0, this.currentHeader == i ? 0 : 36);
+                ScreenStats.this.drawSprite(matrices, mouseX + getCategoryOffset(i) - 18 * 4, mouseY + 1, 0, this.currentHeader == i ? 0 : 36);
             }
             if (this.sorting != null) {
                 int k = getCategoryOffset(this.statTypes.indexOf(this.sorting)) - 18 * 5;
                 int j = this.sortOrder == 1 ? 2 : 1;
-                ScreenStats.this.drawSprite(mouseX + k, mouseY + 1, 18 * j, 0);
+                ScreenStats.this.drawSprite(matrices, mouseX + k, mouseY + 1, 18 * j, 0);
             }
             for (int l = 0; l < this.headerTexture.length; ++l) {
                 int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.drawSprite(mouseX + getCategoryOffset(l) - 18 * 4 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 36);
+                ScreenStats.this.drawSprite(matrices, mouseX + getCategoryOffset(l) - 18 * 4 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 36);
             }
         }
 
@@ -966,10 +1040,10 @@ public class ScreenStats extends Screen implements IProgressMeter {
             if (ScreenStats.this.stats.getValueLong(Stats.ENTITY_KILLED_BY.get(type)) > 0) {
                 return true;
             }
-            if (ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_DEALT.get(type)) > 0) {
+            if (ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_DEALT.get().get(type)) > 0) {
                 return true;
             }
-            return ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_TAKEN.get(type)) > 0;
+            return ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_TAKEN.get().get(type)) > 0;
         }
 
         protected void sortBy(StatType<?> statType) {
@@ -994,68 +1068,66 @@ public class ScreenStats extends Screen implements IProgressMeter {
             }
 
             private String getDmgDealtValue(String plural, long dmgDealt) {
-                String s = EvolutionStats.DAMAGE_DEALT.getTranslationKey();
-                return dmgDealt == 0 ? I18n.format(s + ".none", plural) : I18n.format(s, EvolutionStats.DAMAGE.format(dmgDealt), plural);
+                String s = EvolutionStats.DAMAGE_DEALT.get().getTranslationKey();
+                return dmgDealt == 0 ? I18n.get(s + ".none", plural) : I18n.get(s, EvolutionStats.DAMAGE.format(dmgDealt), plural);
             }
 
             private String getDmgTakenValue(String plural, long dmgTaken) {
-                String s = EvolutionStats.DAMAGE_TAKEN.getTranslationKey();
-                return dmgTaken == 0 ? I18n.format(s + ".none", plural) : I18n.format(s, EvolutionStats.DAMAGE.format(dmgTaken), plural);
+                String s = EvolutionStats.DAMAGE_TAKEN.get().getTranslationKey();
+                return dmgTaken == 0 ? I18n.get(s + ".none", plural) : I18n.get(s, EvolutionStats.DAMAGE.format(dmgTaken), plural);
             }
 
             private String getKilledByValue(String plural, long killedBy) {
                 String s = Stats.ENTITY_KILLED_BY.getTranslationKey();
                 if (killedBy == 0) {
-                    return I18n.format(s + ".none", plural);
+                    return I18n.get(s + ".none", plural);
                 }
-                return killedBy > 1 ? I18n.format(s, plural, killedBy) : I18n.format(s + ".once", plural);
+                return killedBy > 1 ? I18n.get(s, plural, killedBy) : I18n.get(s + ".once", plural);
             }
 
             private String getKilledValue(String singular, String plural, long killed) {
                 String s = Stats.ENTITY_KILLED.getTranslationKey();
                 if (killed == 0) {
-                    return I18n.format(s + ".none", plural);
+                    return I18n.get(s + ".none", plural);
                 }
-                return killed > 1 ? I18n.format(s, killed, plural) : I18n.format(s + ".once", singular);
+                return killed > 1 ? I18n.get(s, killed, plural) : I18n.get(s + ".once", singular);
             }
 
             @Override
-            public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
+            public void render(MatrixStack matrices,
+                               int index,
+                               int y,
+                               int x,
+                               int width,
+                               int height,
+                               int mouseX,
+                               int mouseY,
+                               boolean hovered,
+                               float partialTicks) {
                 EntityType<?> type = ListMobStats.this.entityList.get(index);
                 LivingEntity entity = ListMobStats.this.entities.get(type);
                 if (type == EntityType.PLAYER) {
                     entity = ListMobStats.this.minecraft.player;
                 }
                 GUIUtils.drawEntityOnScreen(x - 30, y + 45, GUIUtils.getEntityScale(entity, 1.0f, 40, 35), mouseX, mouseY, entity);
-                long dmgDealt = ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_DEALT, type);
-                long dmgTaken = ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_TAKEN, type);
+                long dmgDealt = ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_DEALT.get(), type);
+                long dmgTaken = ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_TAKEN.get(), type);
                 long killed = ScreenStats.this.stats.getValueLong(Stats.ENTITY_KILLED, type);
                 long killedBy = ScreenStats.this.stats.getValueLong(Stats.ENTITY_KILLED_BY, type);
-                String entityName = I18n.format(Util.makeTranslationKey("entity", EntityType.getKey(type)));
-                String entityNamePlural = I18n.format(Util.makeTranslationKey("entity", EntityType.getKey(type)) + ".plural");
-                ScreenStats.ListMobStats.this.drawString(ScreenStats.this.font, entityName, x + 2, y + 1, 0xff_ffff);
+                String entityName = I18n.get(Util.makeDescriptionId("entity", EntityType.getKey(type)));
+                String entityNamePlural = I18n.get(Util.makeDescriptionId("entity", EntityType.getKey(type)) + ".plural");
+                drawString(matrices, ScreenStats.this.font, entityName, x + 2, y + 1, 0xff_ffff);
                 int dmgColor = dmgDealt == dmgTaken ? dmgDealt == 0 ? 0x75_7575 : 0xc4_ad00 : dmgDealt > dmgTaken ? 0x33_b500 : 0xff_3030;
-                ScreenStats.ListMobStats.this.drawString(ScreenStats.this.font,
-                                                         this.getDmgDealtValue(entityNamePlural, dmgDealt),
-                                                         x + 2 + 10,
-                                                         y + 1 + 9,
-                                                         dmgColor);
-                ScreenStats.ListMobStats.this.drawString(ScreenStats.this.font,
-                                                         this.getDmgTakenValue(entityNamePlural, dmgTaken),
-                                                         x + 2 + 10,
-                                                         y + 1 + 9 * 2,
-                                                         dmgColor);
+                drawString(matrices, ScreenStats.this.font, this.getDmgDealtValue(entityNamePlural, dmgDealt), x + 2 + 10, y + 1 + 9, dmgColor);
+                drawString(matrices, ScreenStats.this.font, this.getDmgTakenValue(entityNamePlural, dmgTaken), x + 2 + 10, y + 1 + 9 * 2, dmgColor);
                 int killColor = killed == killedBy ? killed == 0 ? 0x75_7575 : 0xc4_ad00 : killed > killedBy ? 0x33_b500 : 0xff_3030;
-                ScreenStats.ListMobStats.this.drawString(ScreenStats.this.font,
-                                                         this.getKilledValue(entityName, entityNamePlural, killed),
-                                                         x + 2 + 10,
-                                                         y + 1 + 9 * 3,
-                                                         killColor);
-                ScreenStats.ListMobStats.this.drawString(ScreenStats.this.font,
-                                                         this.getKilledByValue(entityNamePlural, killedBy),
-                                                         x + 2 + 10,
-                                                         y + 1 + 9 * 4,
-                                                         killColor);
+                drawString(matrices,
+                           ScreenStats.this.font,
+                           this.getKilledValue(entityName, entityNamePlural, killed),
+                           x + 2 + 10,
+                           y + 1 + 9 * 3,
+                           killColor);
+                drawString(matrices, ScreenStats.this.font, this.getKilledByValue(entityNamePlural, killedBy), x + 2 + 10, y + 1 + 9 * 4, killColor);
             }
         }
 
@@ -1079,7 +1151,7 @@ public class ScreenStats extends Screen implements IProgressMeter {
                     j = ScreenStats.this.stats.getValueLong(entitySorting, b);
                 }
                 return i == j ?
-                       String.CASE_INSENSITIVE_ORDER.compare(a.getName().getString(), b.getName().getString()) :
+                       String.CASE_INSENSITIVE_ORDER.compare(a.getDescription().getString(), b.getDescription().getString()) :
                        ListMobStats.this.sortOrder * Long.compare(i, j);
             }
         }
@@ -1138,27 +1210,28 @@ public class ScreenStats extends Screen implements IProgressMeter {
         @Override
         protected void clickedHeader(int mouseX, int mouseY) {
             this.currentHeader = -1;
-            for (int i = 0; i < this.headerTexture.length; i++) {
-                int j = mouseX - getCategoryOffset(i);
-                if (j >= -36 && j <= 0) {
-                    this.currentHeader = i;
-                    break;
+            if (mouseY < this.headerHeight + this.y0 + 3) {
+                for (int i = 0; i < this.headerTexture.length; i++) {
+                    int j = mouseX - getCategoryOffset(i);
+                    if (j >= -36 && j <= 0) {
+                        this.currentHeader = i;
+                        break;
+                    }
                 }
             }
             if (this.currentHeader >= 0) {
                 this.sortBy(this.byIndex(this.currentHeader));
-                this.minecraft.getSoundHandler().play(SimpleSound.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                this.minecraft.getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             }
         }
 
-        protected void drawName(@Nullable ITextComponent text, int mouseX, int mouseY) {
+        protected void drawName(MatrixStack matrices, @Nullable ITextComponent text, int mouseX, int mouseY) {
             if (text != null) {
-                String s = text.getFormattedText();
                 int i = mouseX + 12;
                 int j = mouseY - 12;
-                int k = ScreenStats.this.font.getStringWidth(s);
-                this.fillGradient(i - 3, j - 3, i + k + 3, j + 8 + 3, 0xc000_0000, 0xc000_0000);
-                ScreenStats.this.font.drawStringWithShadow(s, i, j, -1);
+                int k = ScreenStats.this.font.width(text);
+                this.fillGradient(matrices, i - 3, j - 3, i + k + 3, j + 8 + 3, 0xc000_0000, 0xc000_0000);
+                ScreenStats.this.font.draw(matrices, text, i, j, -1);
             }
         }
 
@@ -1182,12 +1255,12 @@ public class ScreenStats extends Screen implements IProgressMeter {
         }
 
         @Override
-        protected void renderBackground() {
-            ScreenStats.this.renderBackground();
+        protected void renderBackground(MatrixStack matrices) {
+            ScreenStats.this.renderBackground(matrices);
         }
 
         @Override
-        protected void renderDecorations(int mouseX, int mouseY) {
+        protected void renderDecorations(MatrixStack matrices, int mouseX, int mouseY) {
             if (mouseY >= this.y0 && mouseY <= this.y1) {
                 ScreenStats.ListStats.Entry entryAtPos = this.getEntryAtPosition(mouseX, mouseY);
                 int i = (this.width - this.getRowWidth()) / 2;
@@ -1196,39 +1269,41 @@ public class ScreenStats extends Screen implements IProgressMeter {
                         return;
                     }
                     Item item = this.itemList.get(this.children().indexOf(entryAtPos));
-                    this.drawName(item.getName(), mouseX, mouseY);
+                    this.drawName(matrices, item.getDescription(), mouseX, mouseY);
                 }
                 else {
                     ITextComponent itextcomponent = null;
-                    int j = mouseX - i;
-                    for (int k = 0; k < this.headerTexture.length; ++k) {
-                        int l = getCategoryOffset(k);
-                        if (j >= l - 18 && j <= l) {
-                            itextcomponent = new TranslationTextComponent(this.byIndex(k).getTranslationKey());
-                            break;
+                    if (mouseY < this.headerHeight + this.y0 + 3) {
+                        int j = mouseX - i;
+                        for (int k = 0; k < this.headerTexture.length; ++k) {
+                            int l = getCategoryOffset(k);
+                            if (j >= l - 18 && j <= l) {
+                                itextcomponent = new TranslationTextComponent(this.byIndex(k).getTranslationKey());
+                                break;
+                            }
                         }
                     }
-                    this.drawName(itextcomponent, mouseX, mouseY);
+                    this.drawName(matrices, itextcomponent, mouseX, mouseY);
                 }
             }
         }
 
         @Override
-        protected void renderHeader(int mouseX, int mouseY, Tessellator tessellator) {
-            if (!this.minecraft.mouseHelper.isLeftDown()) {
+        protected void renderHeader(MatrixStack matrices, int mouseX, int mouseY, Tessellator tessellator) {
+            if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.currentHeader = -1;
             }
             for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.drawSprite(mouseX + getCategoryOffset(i) - 18, mouseY + 1, 0, this.currentHeader == i ? 0 : 18);
+                ScreenStats.this.drawSprite(matrices, mouseX + getCategoryOffset(i) - 18, mouseY + 1, 0, this.currentHeader == i ? 0 : 18);
             }
             if (this.sorting != null) {
                 int k = getCategoryOffset(this.indexOf(this.sorting)) - 36;
                 int j = this.sortOrder == 1 ? 2 : 1;
-                ScreenStats.this.drawSprite(mouseX + k, mouseY + 1, 18 * j, 0);
+                ScreenStats.this.drawSprite(matrices, mouseX + k, mouseY + 1, 18 * j, 0);
             }
             for (int l = 0; l < this.headerTexture.length; ++l) {
                 int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.drawSprite(mouseX + getCategoryOffset(l) - 18 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 18);
+                ScreenStats.this.drawSprite(matrices, mouseX + getCategoryOffset(l) - 18 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 18);
             }
         }
 
@@ -1272,7 +1347,7 @@ public class ScreenStats extends Screen implements IProgressMeter {
                     j = ScreenStats.this.stats.getValueLong(itemSorting, b);
                 }
                 return i == j ?
-                       String.CASE_INSENSITIVE_ORDER.compare(a.getName().getString(), b.getName().getString()) :
+                       String.CASE_INSENSITIVE_ORDER.compare(a.getDescription().getString(), b.getDescription().getString()) :
                        ListStats.this.sortOrder * Long.compare(i, j);
             }
         }
@@ -1283,19 +1358,24 @@ public class ScreenStats extends Screen implements IProgressMeter {
             private Entry() {
             }
 
-            private void drawStatCount(@Nullable Stat<?> stat, int x, int y, boolean highlight) {
+            private void drawStatCount(MatrixStack matrices, @Nullable Stat<?> stat, int x, int y, boolean highlight) {
                 String s = stat == null ? "-" : EvolutionStats.METRIC.format(ScreenStats.this.stats.getValueLong(stat));
-                ScreenStats.ListStats.this.drawString(ScreenStats.this.font,
-                                                      s,
-                                                      x - ScreenStats.this.font.getStringWidth(s),
-                                                      y + 5,
-                                                      highlight ? 0xff_ffff : 0x75_7575);
+                drawString(matrices, ScreenStats.this.font, s, x - ScreenStats.this.font.width(s), y + 5, highlight ? 0xff_ffff : 0x75_7575);
             }
 
             @Override
-            public void render(int index, int y, int x, int width, int height, int mouseX, int mouseY, boolean hovered, float partialTicks) {
+            public void render(MatrixStack matrices,
+                               int index,
+                               int y,
+                               int x,
+                               int width,
+                               int height,
+                               int mouseX,
+                               int mouseY,
+                               boolean hovered,
+                               float partialTicks) {
                 Item item = ScreenStats.this.itemStats.itemList.get(index);
-                ScreenStats.this.drawStatsScreen(x + 40, y, item);
+                ScreenStats.this.drawStatsScreen(matrices, x + 40, y, item);
                 for (int i = 0; i < ScreenStats.this.itemStats.blockStatList.size(); ++i) {
                     Stat<Block> stat;
                     if (item instanceof BlockItem) {
@@ -1304,10 +1384,11 @@ public class ScreenStats extends Screen implements IProgressMeter {
                     else {
                         stat = null;
                     }
-                    this.drawStatCount(stat, x + getCategoryOffset(i), y, index % 2 == 0);
+                    this.drawStatCount(matrices, stat, x + getCategoryOffset(i), y, index % 2 == 0);
                 }
                 for (int j = 0; j < ScreenStats.this.itemStats.itemStatList.size(); ++j) {
-                    this.drawStatCount(ScreenStats.this.itemStats.itemStatList.get(j).get(item),
+                    this.drawStatCount(matrices,
+                                       ScreenStats.this.itemStats.itemStatList.get(j).get(item),
                                        x + getCategoryOffset(j + ScreenStats.this.itemStats.blockStatList.size()),
                                        y,
                                        index % 2 == 0);

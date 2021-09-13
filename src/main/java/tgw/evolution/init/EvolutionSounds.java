@@ -11,7 +11,7 @@ import tgw.evolution.Evolution;
 @EventBusSubscriber
 public final class EvolutionSounds {
 
-    public static final DeferredRegister<SoundEvent> SOUNDS = new DeferredRegister<>(ForgeRegistries.SOUND_EVENTS, Evolution.MODID);
+    public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, Evolution.MODID);
 
     public static final RegistryObject<SoundEvent> JAVELIN_HIT_BLOCK = SOUNDS.register("javelin_hit_block",
                                                                                        () -> new SoundEvent(Evolution.getResource(

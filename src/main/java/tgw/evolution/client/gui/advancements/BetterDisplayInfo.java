@@ -25,8 +25,6 @@ public class BetterDisplayInfo implements IBetterDisplayInfo {
     private static final int MINECRAFT_UNCOMPLETED_TITLE_COLOR = ColorHelper.RGB(DEFAULT_MINECRAFT_UNCOMPLETED_TITLE_COLOR);
     public static int defaultUncompletedTitleColor = MINECRAFT_UNCOMPLETED_TITLE_COLOR;
     public static int defaultCompletedLineColor = ColorHelper.RGB("#FFFFFF");
-    public static boolean defaultDrawDirectLines;
-    public static boolean defaultHideLines;
     public static int defaultUncompletedLineColor = ColorHelper.RGB("#333333");
     private final ResourceLocation id;
     private boolean allowDragging;
@@ -68,12 +66,12 @@ public class BetterDisplayInfo implements IBetterDisplayInfo {
         this.completedTitleColor = defaultCompletedTitleColor;
         this.unCompletedIconColor = defaultUncompletedIconColor;
         this.unCompletedTitleColor = defaultUncompletedTitleColor;
-        this.drawDirectLines = defaultDrawDirectLines;
+        this.drawDirectLines = false;
         this.unCompletedLineColor = defaultUncompletedLineColor;
         this.completedLineColor = defaultCompletedLineColor;
         this.posX = null;
         this.posY = null;
-        this.hideLines = defaultHideLines;
+        this.hideLines = false;
         this.allowDragging = false;
     }
 

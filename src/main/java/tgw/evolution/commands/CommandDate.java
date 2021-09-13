@@ -24,7 +24,7 @@ public class CommandDate implements Command<CommandSource> {
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.register(Commands.literal("date")
-                                    .requires(cs -> cs.hasPermissionLevel(3))
+                                    .requires(cs -> cs.hasPermission(3))
                                     .then(Commands.argument("day", DAY)
                                                   .then(Commands.argument("month", MONTH)
                                                                 .then(Commands.argument("year", YEAR)
@@ -53,17 +53,15 @@ public class CommandDate implements Command<CommandSource> {
             Time time = new Time(hour, minute);
             FullDate fullDate = new FullDate(date, time);
             long ticks = fullDate.toTicks();
-            for (ServerWorld serverWorld : context.getSource().getServer().getWorlds()) {
+            for (ServerWorld serverWorld : context.getSource().getServer().getAllLevels()) {
                 serverWorld.setDayTime(ticks);
             }
-            context.getSource().sendFeedback(new TranslationTextComponent("command.evolution.date.success", fullDate.getFullString()), true);
+            context.getSource().sendSuccess(new TranslationTextComponent("command.evolution.date.success", fullDate.getDisplayName()), true);
             return SINGLE_SUCCESS;
         }
         catch (IllegalStateException e) {
             context.getSource()
-                   .sendErrorMessage(new TranslationTextComponent("command.evolution.date.error",
-                                                                  Date.STARTING_DATE.getFullString(),
-                                                                  Time.START_TIME));
+                   .sendFailure(new TranslationTextComponent("command.evolution.date.error", Date.STARTING_DATE.getDisplayName(), Time.START_TIME));
             return 0;
         }
     }

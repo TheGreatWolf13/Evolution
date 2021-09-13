@@ -35,8 +35,8 @@
 //
 //    @Override
 //    protected void registerGoals() {
-//        this.goalSelector.addGoal(5, new WaterAvoidingRandomWalkingGoal(this, 1.0D));
-//        this.goalSelector.addGoal(6, new LookRandomlyGoal(this));
+//        this.goalSelector.addGoal(5, new GoalWaterAvoidingRandomWalking(this, 1.0D));
+//        this.goalSelector.addGoal(6, new GoalLookRandomly(this));
 //        this.goalSelector.addGoal(3, new ShadowHoundAttackGoal(this, 2.5, false));
 //        this.goalSelector.addGoal(2, new AvoidShadowHoundEntityGoal<>(this, PlayerEntity.class, 16, 1.4, 1.8));
 //        this.goalSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, PlayerEntity.class, true));

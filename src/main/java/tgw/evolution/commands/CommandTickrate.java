@@ -15,7 +15,7 @@ public class CommandTickrate implements Command<CommandSource> {
     private static final FloatArgumentType TPS = FloatArgumentType.floatArg(TickrateChanger.MIN_TICKRATE, TickrateChanger.MAX_TICKRATE);
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
-        dispatcher.register(Commands.literal("tickrate").requires(cs -> cs.hasPermissionLevel(3)).then(Commands.argument("tps", TPS).executes(CMD)));
+        dispatcher.register(Commands.literal("tickrate").requires(cs -> cs.hasPermission(3)).then(Commands.argument("tps", TPS).executes(CMD)));
     }
 
     @Override
@@ -25,7 +25,7 @@ public class CommandTickrate implements Command<CommandSource> {
         if (!change) {
             return 0;
         }
-        context.getSource().sendFeedback(new TranslationTextComponent("command.evolution.tickrate", tickrate), true);
+        context.getSource().sendSuccess(new TranslationTextComponent("command.evolution.tickrate", tickrate), true);
         return SINGLE_SUCCESS;
     }
 }

@@ -12,22 +12,21 @@ import tgw.evolution.items.IMelee;
 
 public class DamageSourcePlayer extends DamageSourceEntity {
 
-    private final Hand hand;
+    private final ItemStack stack;
 
     public DamageSourcePlayer(String damage, PlayerEntity entity, EvolutionDamage.Type type, Hand hand) {
         super(damage, entity, type);
-        this.hand = hand;
-    }
-
-    @Override
-    public ITextComponent getDeathMessage(LivingEntity deadEntity) {
-        String message = "death.attack." + this.damageType + ".item";
-        return new TranslationTextComponent(message, deadEntity.getDisplayName(), this.damageSourceEntity.getDisplayName(), this.getItemDisplay());
+        this.stack = entity.getItemInHand(hand);
     }
 
     @Override
     public ITextComponent getItemDisplay() {
-        ItemStack heldStack = ((LivingEntity) this.damageSourceEntity).getHeldItem(this.hand);
-        return heldStack.getItem() instanceof IMelee ? heldStack.getTextComponent() : EvolutionTexts.DEATH_FISTS;
+        return this.stack.getItem() instanceof IMelee ? this.stack.getDisplayName() : EvolutionTexts.DEATH_FISTS;
+    }
+
+    @Override
+    public ITextComponent getLocalizedDeathMessage(LivingEntity deadEntity) {
+        String message = "death.attack." + this.msgId + ".item";
+        return new TranslationTextComponent(message, deadEntity.getDisplayName(), this.damageSourceEntity.getDisplayName(), this.getItemDisplay());
     }
 }

@@ -10,10 +10,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.state.StateContainer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Mirror;
-import net.minecraft.util.Rotation;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.IBlockReader;
@@ -27,13 +24,18 @@ import javax.annotation.Nullable;
 public class BlockPuzzle extends DirectionalBlock {
 
     public BlockPuzzle() {
-        super(Properties.create(Material.IRON, MaterialColor.LIGHT_GRAY).hardnessAndResistance(-1.0F, 3_600_000.0F).sound(SoundType.METAL).noDrops());
-        this.setDefaultState(this.getDefaultState().with(FACING, Direction.UP));
+        super(Properties.of(Material.METAL, MaterialColor.COLOR_LIGHT_GRAY).strength(-1.0F, 3_600_000.0F).sound(SoundType.METAL).noDrops());
+        this.registerDefaultState(this.defaultBlockState().setValue(FACING, Direction.UP));
     }
 
     public static boolean puzzlesMatches(Template.BlockInfo puzzle, Template.BlockInfo other) {
-        return puzzle.state.get(FACING) == other.state.get(FACING).getOpposite() &&
+        return puzzle.state.getValue(FACING) == other.state.getValue(FACING).getOpposite() &&
                puzzle.nbt.getString("AttachementType").equals(other.nbt.getString("AttachementType"));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
     }
 
     @Nullable
@@ -43,13 +45,8 @@ public class BlockPuzzle extends DirectionalBlock {
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
-    }
-
-    @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
-        return this.getDefaultState().with(FACING, context.getFace());
+        return this.defaultBlockState().setValue(FACING, context.getClickedFace());
     }
 
     @Override
@@ -60,23 +57,23 @@ public class BlockPuzzle extends DirectionalBlock {
     @Override
     @Deprecated
     public BlockState mirror(BlockState state, Mirror mirror) {
-        return state.with(FACING, mirror.mirror(state.get(FACING)));
-    }
-
-    @Override
-    public boolean onBlockActivated(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
-        TileEntity tile = world.getTileEntity(pos);
-        if (tile instanceof TEPuzzle && player.canUseCommandBlock()) {
-            if (world.isRemote) {
-                ScreenPuzzle.open((TEPuzzle) tile);
-            }
-            return true;
-        }
-        return false;
+        return state.setValue(FACING, mirror.mirror(state.getValue(FACING)));
     }
 
     @Override
     public BlockState rotate(BlockState state, Rotation rot) {
-        return state.with(FACING, rot.rotate(state.get(FACING)));
+        return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
+    }
+
+    @Override
+    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
+        TileEntity tile = world.getBlockEntity(pos);
+        if (tile instanceof TEPuzzle && player.canUseGameMasterBlocks()) {
+            if (world.isClientSide) {
+                ScreenPuzzle.open((TEPuzzle) tile);
+            }
+            return ActionResultType.SUCCESS;
+        }
+        return ActionResultType.PASS;
     }
 }

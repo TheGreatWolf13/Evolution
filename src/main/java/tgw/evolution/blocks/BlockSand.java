@@ -1,6 +1,5 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
@@ -8,12 +7,12 @@ import net.minecraft.util.SoundEvent;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.RockVariant;
 
-public class BlockSand extends BlockGravity implements IStoneVariant {
+public class BlockSand extends BlockGravity implements IRockVariant {
 
     private final RockVariant variant;
 
     public BlockSand(RockVariant variant) {
-        super(Block.Properties.create(Material.SAND).hardnessAndResistance(1.0F, 0.5F).sound(SoundType.SAND), variant.getMass() / 8);
+        super(Properties.of(Material.SAND).strength(1.0F, 0.5F).sound(SoundType.SAND), variant.getMass() / 8);
         this.variant = variant;
     }
 

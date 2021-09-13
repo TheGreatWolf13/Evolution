@@ -4,7 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.pathfinding.PathType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
@@ -13,7 +13,7 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IPlantable;
 
-public class BlockBush extends BlockEvolution implements IPlantable, IReplaceable {
+public class BlockBush extends BlockGeneric implements IPlantable, IReplaceable {
 
     protected BlockBush(Properties builder) {
         super(builder);
@@ -38,6 +38,15 @@ public class BlockBush extends BlockEvolution implements IPlantable, IReplaceabl
     }
 
     @Override
+    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+        BlockPos blockpos = pos.below();
+        if (state.getBlock() == this) {
+            return BlockUtils.canSustainSapling(world.getBlockState(blockpos), this);
+        }
+        return isValidGround(world.getBlockState(blockpos));
+    }
+
+    @Override
     public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
         return new ItemStack(this);
     }
@@ -48,7 +57,7 @@ public class BlockBush extends BlockEvolution implements IPlantable, IReplaceabl
     }
 
     @Override
-    public int getOpacity(BlockState state, IBlockReader world, BlockPos pos) {
+    public int getLightBlock(BlockState state, IBlockReader world, BlockPos pos) {
         return 0;
     }
 
@@ -56,14 +65,14 @@ public class BlockBush extends BlockEvolution implements IPlantable, IReplaceabl
     public BlockState getPlant(IBlockReader world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
         if (state.getBlock() != this) {
-            return this.getDefaultState();
+            return this.defaultBlockState();
         }
         return state;
     }
 
     @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
+    public boolean isPathfindable(BlockState state, IBlockReader world, BlockPos pos, PathType type) {
+        return type == PathType.AIR && !this.hasCollision || super.isPathfindable(state, world, pos, type);
     }
 
     @Override
@@ -72,28 +81,14 @@ public class BlockBush extends BlockEvolution implements IPlantable, IReplaceabl
     }
 
     @Override
-    public boolean isSolid(BlockState state) {
-        return false;
-    }
-
-    @Override
-    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
-        BlockPos blockpos = pos.down();
-        if (state.getBlock() == this) {
-            return BlockUtils.canSustainSapling(world.getBlockState(blockpos), this);
-        }
-        return isValidGround(world.getBlockState(blockpos));
-    }
-
-    @Override
-    public BlockState updatePostPlacement(BlockState state,
-                                          Direction facing,
-                                          BlockState facingState,
-                                          IWorld worldIn,
-                                          BlockPos currentPos,
-                                          BlockPos facingPos) {
-        return !state.isValidPosition(worldIn, currentPos) ?
-               Blocks.AIR.getDefaultState() :
-               super.updatePostPlacement(state, facing, facingState, worldIn, currentPos, facingPos);
+    public BlockState updateShape(BlockState state,
+                                  Direction facing,
+                                  BlockState facingState,
+                                  IWorld worldIn,
+                                  BlockPos currentPos,
+                                  BlockPos facingPos) {
+        return !state.canSurvive(worldIn, currentPos) ?
+               Blocks.AIR.defaultBlockState() :
+               super.updateShape(state, facing, facingState, worldIn, currentPos, facingPos);
     }
 }

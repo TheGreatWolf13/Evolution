@@ -2,7 +2,7 @@ package tgw.evolution.util.hitbox;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
 import tgw.evolution.util.ILineConsumer;
 
 public class Hitbox {
@@ -51,8 +51,8 @@ public class Hitbox {
         return this.aabb;
     }
 
-    public Vec3d getOffset() {
-        return new Vec3d(this.pivotX, this.pivotY, this.pivotZ);
+    public Vector3d getOffset() {
+        return new Vector3d(this.pivotX, this.pivotY, this.pivotZ);
     }
 
     public <T extends Entity> HitboxEntity<T> getParent() {

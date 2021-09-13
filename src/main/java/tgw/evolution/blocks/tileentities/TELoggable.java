@@ -1,5 +1,6 @@
 package tgw.evolution.blocks.tileentities;
 
+import net.minecraft.block.BlockState;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.nbt.CompoundNBT;
@@ -7,7 +8,7 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.TileEntity;
 import tgw.evolution.blocks.fluids.FluidGeneric;
-import tgw.evolution.init.EvolutionTileEntities;
+import tgw.evolution.init.EvolutionTEs;
 
 import javax.annotation.Nullable;
 
@@ -18,7 +19,7 @@ public class TELoggable extends TileEntity implements ILoggable {
     private int fluidAmount;
 
     public TELoggable() {
-        super(EvolutionTileEntities.TE_LOGGABLE.get());
+        super(EvolutionTEs.LOGGABLE.get());
     }
 
     @Override
@@ -32,32 +33,33 @@ public class TELoggable extends TileEntity implements ILoggable {
     }
 
     @Override
-    public void setFluidAmount(int fluidAmount) {
-        this.fluidAmount = fluidAmount;
-        TEUtils.sendRenderUpdate(this);
-    }
-
-    @Override
     public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.pos, 0, this.getUpdateTag());
+        return new SUpdateTileEntityPacket(this.worldPosition, 0, this.getUpdateTag());
     }
 
     @Override
     public CompoundNBT getUpdateTag() {
-        return this.write(new CompoundNBT());
+        return this.save(new CompoundNBT());
+    }
+
+    @Override
+    public void load(BlockState state, CompoundNBT compound) {
+        super.load(state, compound);
+        this.fluidAmount = compound.getInt("Amount");
+        this.fluid = FluidGeneric.byId(compound.getByte("Fluid"));
     }
 
     @Override
     public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
-        this.handleUpdateTag(packet.getNbtCompound());
+        this.handleUpdateTag(this.level.getBlockState(this.worldPosition), packet.getTag());
         TEUtils.sendRenderUpdate(this);
     }
 
     @Override
-    public void read(CompoundNBT compound) {
-        this.fluidAmount = compound.getInt("Amount");
-        this.fluid = FluidGeneric.byId(compound.getByte("Fluid"));
-        super.read(compound);
+    public CompoundNBT save(CompoundNBT compound) {
+        compound.putInt("Amount", this.fluidAmount);
+        compound.putByte("Fluid", this.fluid == null ? 0 : this.fluid.getId());
+        return super.save(compound);
     }
 
     @Override
@@ -67,14 +69,13 @@ public class TELoggable extends TileEntity implements ILoggable {
     }
 
     @Override
-    public String toString() {
-        return "TELoggable{" + "fluid=" + this.fluid + ", fluidAmount=" + this.fluidAmount + '}';
+    public void setFluidAmount(int fluidAmount) {
+        this.fluidAmount = fluidAmount;
+        TEUtils.sendRenderUpdate(this);
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT compound) {
-        compound.putInt("Amount", this.fluidAmount);
-        compound.putByte("Fluid", this.fluid == null ? 0 : this.fluid.getId());
-        return super.write(compound);
+    public String toString() {
+        return "TELoggable{" + "fluid=" + this.fluid + ", fluidAmount=" + this.fluidAmount + '}';
     }
 }

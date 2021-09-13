@@ -4,7 +4,6 @@ import net.minecraft.client.resources.I18n;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import java.util.Comparator;
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
@@ -12,10 +11,12 @@ public enum SortOrder {
     NONE(entries -> {
     }),
     AZ(entries -> {
-        entries.sort(Comparator.comparing(o -> ((ListKeyBinding.KeyEntry) o).getKeyDesc()));
+        entries.sort((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(((ListKeyBinding.KeyEntry) o1).getKeyDesc().getString(),
+                                                                       ((ListKeyBinding.KeyEntry) o2).getKeyDesc().getString()));
     }),
     ZA(entries -> {
-        entries.sort((o1, o2) -> ((ListKeyBinding.KeyEntry) o2).getKeyDesc().compareTo(((ListKeyBinding.KeyEntry) o1).getKeyDesc()));
+        entries.sort((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(((ListKeyBinding.KeyEntry) o2).getKeyDesc().getString(),
+                                                                       ((ListKeyBinding.KeyEntry) o1).getKeyDesc().getString()));
     });
 
     private final ISort sorter;
@@ -31,12 +32,15 @@ public enum SortOrder {
     public String getName() {
         switch (this) {
             default:
-            case NONE:
-                return I18n.format("evolution.options.controls.none");
-            case AZ:
-                return I18n.format("evolution.options.controls.az");
-            case ZA:
-                return I18n.format("evolution.options.controls.za");
+            case NONE: {
+                return I18n.get("evolution.gui.controls.none");
+            }
+            case AZ: {
+                return I18n.get("evolution.gui.controls.az");
+            }
+            case ZA: {
+                return I18n.get("evolution.gui.controls.za");
+            }
         }
     }
 

@@ -12,6 +12,7 @@ import net.minecraft.util.CombatTracker;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
+import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStats;
@@ -21,7 +22,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 public class CombatTrackerEv extends CombatTracker {
-    private final List<CombatEntryEv> combatEntries = Lists.newArrayList();
+    private final List<CombatEntryEv> entries = Lists.newArrayList();
     private final LivingEntity fighter;
     private int combatEndTime;
     private int combatStartTime;
@@ -42,46 +43,6 @@ public class CombatTrackerEv extends CombatTracker {
         return entry.getFallSuffix() == null ? "generic" : entry.getFallSuffix();
     }
 
-    @Override
-    public void calculateFallSuffix() {
-        this.resetFallSuffix();
-        if (this.fallSuffixBlock != null) {
-            if (this.fallSuffixBlock == Blocks.LADDER) {
-                this.fallSuffix = "ladder";
-            }
-            else if (this.fallSuffixBlock == EvolutionBlocks.ROPE.get()) {
-                this.fallSuffix = "rope";
-            }
-            else if (this.fallSuffixBlock == Blocks.VINE) {
-                this.fallSuffix = "vines";
-            }
-            this.fallSuffixBlock = null;
-        }
-    }
-
-    @Override
-    @Nullable
-    public LivingEntity getBestAttacker() {
-        LivingEntity livingEntity = null;
-        PlayerEntity player = null;
-        float livingDamage = 0.0F;
-        float playerDamage = 0.0F;
-        for (CombatEntryEv entry : this.combatEntries) {
-            if (entry.getDamageSrc().getTrueSource() instanceof PlayerEntity && (player == null || entry.getDamage() > playerDamage)) {
-                playerDamage = entry.getDamage();
-                player = (PlayerEntity) entry.getDamageSrc().getTrueSource();
-            }
-            if (entry.getDamageSrc().getTrueSource() instanceof LivingEntity && (livingEntity == null || entry.getDamage() > livingDamage)) {
-                livingDamage = entry.getDamage();
-                livingEntity = (LivingEntity) entry.getDamageSrc().getTrueSource();
-            }
-        }
-        if (player != null && playerDamage >= livingDamage) {
-            return player;
-        }
-        return livingEntity;
-    }
-
     /**
      * @return Always returns fall or void entries, or the ones before them, if any.
      */
@@ -91,9 +52,9 @@ public class CombatTrackerEv extends CombatTracker {
         CombatEntryEv lastSuffixEntry = null;
         float suffixDamage = 0.0F;
         float fallOrVoidAmount = 0.0F;
-        for (int i = 0; i < this.combatEntries.size(); ++i) {
-            CombatEntryEv currentEntry = this.combatEntries.get(i);
-            CombatEntryEv possibleDoomEntry = i > 0 ? this.combatEntries.get(i - 1) : null;
+        for (int i = 0; i < this.entries.size(); ++i) {
+            CombatEntryEv currentEntry = this.entries.get(i);
+            CombatEntryEv possibleDoomEntry = i > 0 ? this.entries.get(i - 1) : null;
             if ((currentEntry.getDamageSrc() == EvolutionDamage.FALL || currentEntry.getDamageSrc() == EvolutionDamage.VOID) &&
                 currentEntry.getDamage() > 0.0F &&
                 (lastFallVoidEntry == null || currentEntry.getDamageAmount() > fallOrVoidAmount)) {
@@ -121,33 +82,36 @@ public class CombatTrackerEv extends CombatTracker {
 
     @Override
     public int getCombatDuration() {
-        return this.inCombat ? this.fighter.ticksExisted - this.combatStartTime : this.combatEndTime - this.combatStartTime;
+        return this.inCombat ? this.fighter.tickCount - this.combatStartTime : this.combatEndTime - this.combatStartTime;
     }
 
     @Override
     public ITextComponent getDeathMessage() {
-        if (this.combatEntries.isEmpty()) {
+        if (this.entries.isEmpty()) {
             return new TranslationTextComponent("death.attack.generic", this.fighter.getDisplayName());
         }
         CombatEntryEv bestEntry = this.getBestCombatEntry();
-        CombatEntryEv lastEntry = this.combatEntries.get(this.combatEntries.size() - 1);
-        Entity lastEntity = lastEntry.getDamageSrc().getTrueSource();
+        CombatEntryEv lastEntry = this.entries.get(this.entries.size() - 1);
+        Entity lastEntity = lastEntry.getDamageSrc().getEntity();
         //hit then fall
         if (bestEntry != null && lastEntry.getDamageSrc() == EvolutionDamage.FALL) {
             ITextComponent bestEntryDisplay = bestEntry.getDamageSrcDisplayName();
             if (bestEntry.getDamageSrc() != EvolutionDamage.FALL && bestEntry.getDamageSrc() != EvolutionDamage.VOID) {
                 if (bestEntryDisplay != null) {
-                    Entity bestEntity = bestEntry.getDamageSrc().getTrueSource();
-                    ItemStack bestStack = bestEntity instanceof LivingEntity ? ((LivingEntity) bestEntity).getHeldItemMainhand() : ItemStack.EMPTY;
-                    ITextComponent itemComp = bestStack.getItem() instanceof IMelee ? bestStack.getTextComponent() : null;
                     DamageSource bestDamageSource = bestEntry.getDamageSrc();
+                    ITextComponent itemComp;
                     if (bestDamageSource instanceof DamageSourceEntity) {
                         itemComp = ((DamageSourceEntity) bestDamageSource).getItemDisplay();
+                    }
+                    else {
+                        Entity bestEntity = bestDamageSource.getEntity();
+                        ItemStack bestStack = bestEntity instanceof LivingEntity ? ((LivingEntity) bestEntity).getMainHandItem() : ItemStack.EMPTY;
+                        itemComp = bestStack.getItem() instanceof IMelee ? bestStack.getHoverName() : null;
                     }
                     //was doomed to fall by using
                     if (itemComp != null) {
                         if (this.fighter instanceof ServerPlayerEntity) {
-                            ((ServerPlayerEntity) this.fighter).addStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
+                            ((ServerPlayerEntity) this.fighter).awardStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
                         }
                         return new TranslationTextComponent("death.fell.assist.item." + getFallSuffix(bestEntry),
                                                             this.fighter.getDisplayName(),
@@ -156,7 +120,7 @@ public class CombatTrackerEv extends CombatTracker {
                     }
                     //was doomed to fall by
                     if (this.fighter instanceof ServerPlayerEntity) {
-                        ((ServerPlayerEntity) this.fighter).addStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
+                        ((ServerPlayerEntity) this.fighter).awardStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
                     }
                     return new TranslationTextComponent("death.fell.assist." + getFallSuffix(bestEntry),
                                                         this.fighter.getDisplayName(),
@@ -164,7 +128,7 @@ public class CombatTrackerEv extends CombatTracker {
                 }
                 //was doomed to fall
                 if (this.fighter instanceof ServerPlayerEntity) {
-                    ((ServerPlayerEntity) this.fighter).addStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
+                    ((ServerPlayerEntity) this.fighter).awardStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
                 }
                 return new TranslationTextComponent("death.fell.killer." + getFallSuffix(bestEntry), this.fighter.getDisplayName());
             }
@@ -173,16 +137,19 @@ public class CombatTrackerEv extends CombatTracker {
         if (bestEntry != null && bestEntry.getDamageSrc() == EvolutionDamage.FALL) {
             ITextComponent lastEntryDisplay = lastEntry.getDamageSrcDisplayName();
             if (lastEntryDisplay != null) {
-                ItemStack lastStack = lastEntity instanceof LivingEntity ? ((LivingEntity) lastEntity).getHeldItemMainhand() : ItemStack.EMPTY;
-                ITextComponent itemComp = lastStack.getItem() instanceof IMelee ? lastStack.getTextComponent() : null;
                 DamageSource lastSource = lastEntry.getDamageSrc();
+                ITextComponent itemComp;
                 if (lastSource instanceof DamageSourceEntity) {
                     itemComp = ((DamageSourceEntity) lastSource).getItemDisplay();
+                }
+                else {
+                    ItemStack lastStack = lastEntity instanceof LivingEntity ? ((LivingEntity) lastEntity).getMainHandItem() : ItemStack.EMPTY;
+                    itemComp = lastStack.getItem() instanceof IMelee ? lastStack.getHoverName() : null;
                 }
                 //fell too far and was finished by using
                 if (itemComp != null) {
                     if (this.fighter instanceof ServerPlayerEntity) {
-                        ((ServerPlayerEntity) this.fighter).addStat(EvolutionStats.DEATH_SOURCE.get("fall_then_finished"));
+                        ((ServerPlayerEntity) this.fighter).awardStat(EvolutionStats.DEATH_SOURCE.get("fall_then_finished"));
                     }
                     return new TranslationTextComponent("death.fell.finish.item." + getFallSuffix(bestEntry),
                                                         this.fighter.getDisplayName(),
@@ -191,60 +158,103 @@ public class CombatTrackerEv extends CombatTracker {
                 }
                 //fell too far and was finished by
                 if (this.fighter instanceof ServerPlayerEntity) {
-                    ((ServerPlayerEntity) this.fighter).addStat(EvolutionStats.DEATH_SOURCE.get("fall_then_finished"));
+                    ((ServerPlayerEntity) this.fighter).awardStat(EvolutionStats.DEATH_SOURCE.get("fall_then_finished"));
                 }
                 return new TranslationTextComponent("death.fell.finish." + getFallSuffix(bestEntry), this.fighter.getDisplayName(), lastEntryDisplay);
             }
             //Fell from a high place, ladder, rope, vine
             if (this.fighter instanceof ServerPlayerEntity) {
-                ((ServerPlayerEntity) this.fighter).addStat(EvolutionStats.DEATH_SOURCE.get("fall"));
+                ((ServerPlayerEntity) this.fighter).awardStat(EvolutionStats.DEATH_SOURCE.get("fall"));
             }
             return new TranslationTextComponent("death.fell.accident." + getFallSuffix(bestEntry), this.fighter.getDisplayName());
         }
-        return lastEntry.getDamageSrc().getDeathMessage(this.fighter);
+        return lastEntry.getDamageSrc().getLocalizedDeathMessage(this.fighter);
     }
 
     @Override
-    public LivingEntity getFighter() {
+    @Nullable
+    public LivingEntity getKiller() {
+        LivingEntity livingEntity = null;
+        PlayerEntity player = null;
+        float livingDamage = 0.0F;
+        float playerDamage = 0.0F;
+        for (CombatEntryEv entry : this.entries) {
+            if (entry.getDamageSrc().getEntity() instanceof PlayerEntity && (player == null || entry.getDamage() > playerDamage)) {
+                playerDamage = entry.getDamage();
+                player = (PlayerEntity) entry.getDamageSrc().getEntity();
+            }
+            if (entry.getDamageSrc().getEntity() instanceof LivingEntity && (livingEntity == null || entry.getDamage() > livingDamage)) {
+                livingDamage = entry.getDamage();
+                livingEntity = (LivingEntity) entry.getDamageSrc().getEntity();
+            }
+        }
+        if (player != null && playerDamage >= livingDamage) {
+            return player;
+        }
+        return livingEntity;
+    }
+
+    @Override
+    public LivingEntity getMob() {
         return this.fighter;
     }
 
     @Override
-    public void reset() {
-        int i = this.inCombat ? 300 : 100;
-        if (this.takingDamage && (this.fighter.deathTime > 0 || this.fighter.ticksExisted - this.lastDamageTime > i)) {
-            boolean isInCombat = this.inCombat;
-            this.takingDamage = false;
-            this.inCombat = false;
-            this.combatEndTime = this.fighter.ticksExisted;
-            if (isInCombat) {
-                this.fighter.sendEndCombat();
+    public void prepareForDamage() {
+        this.resetPreparedStatus();
+        if (this.fallSuffixBlock != null) {
+            if (this.fallSuffixBlock == Blocks.LADDER) {
+                this.fallSuffix = "ladder";
             }
-            this.combatEntries.clear();
+            else if (this.fallSuffixBlock == EvolutionBlocks.ROPE.get()) {
+                this.fallSuffix = "rope";
+            }
+            else if (this.fallSuffixBlock == Blocks.VINE) {
+                this.fallSuffix = "vines";
+            }
+            else {
+                Evolution.LOGGER.warn("Missing fall suffix for {}", this.fallSuffixBlock);
+            }
+            this.fallSuffixBlock = null;
         }
     }
 
-    private void resetFallSuffix() {
+    @Override
+    public void recheckStatus() {
+        int i = this.inCombat ? 300 : 100;
+        if (this.takingDamage && (this.fighter.deathTime > 0 || this.fighter.tickCount - this.lastDamageTime > i)) {
+            boolean isInCombat = this.inCombat;
+            this.takingDamage = false;
+            this.inCombat = false;
+            this.combatEndTime = this.fighter.tickCount;
+            if (isInCombat) {
+                this.fighter.onLeaveCombat();
+            }
+            this.entries.clear();
+        }
+    }
+
+    @Override
+    public void recordDamage(DamageSource source, float healthIn, float damageAmount) {
+        this.recheckStatus();
+        this.prepareForDamage();
+        CombatEntryEv entry = new CombatEntryEv(source, damageAmount, this.fallSuffix);
+        this.entries.add(entry);
+        this.lastDamageTime = this.fighter.tickCount;
+        this.takingDamage = true;
+        if (entry.isLivingDamageSrc() && !this.inCombat && this.fighter.isAlive()) {
+            this.inCombat = true;
+            this.combatStartTime = this.fighter.tickCount;
+            this.combatEndTime = this.combatStartTime;
+            this.fighter.onEnterCombat();
+        }
+    }
+
+    private void resetPreparedStatus() {
         this.fallSuffix = null;
     }
 
     public void setFallSuffixBlock(@Nullable Block block) {
         this.fallSuffixBlock = block;
-    }
-
-    @Override
-    public void trackDamage(DamageSource source, float healthIn, float damageAmount) {
-        this.reset();
-        this.calculateFallSuffix();
-        CombatEntryEv entry = new CombatEntryEv(source, damageAmount, this.fallSuffix);
-        this.combatEntries.add(entry);
-        this.lastDamageTime = this.fighter.ticksExisted;
-        this.takingDamage = true;
-        if (entry.isLivingDamageSrc() && !this.inCombat && this.fighter.isAlive()) {
-            this.inCombat = true;
-            this.combatStartTime = this.fighter.ticksExisted;
-            this.combatEndTime = this.combatStartTime;
-            this.fighter.sendEnterCombat();
-        }
     }
 }

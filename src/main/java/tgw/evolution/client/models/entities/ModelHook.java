@@ -1,33 +1,44 @@
 package tgw.evolution.client.models.entities;
 
-import net.minecraft.client.renderer.entity.model.RendererModel;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.model.Model;
-import net.minecraft.client.renderer.model.ModelBox;
+import net.minecraft.client.renderer.model.ModelRenderer;
 import tgw.evolution.util.MathHelper;
 
 public class ModelHook extends Model {
 
-    private final RendererModel bone;
+    private final ModelRenderer bone;
 
     public ModelHook() {
-        this.textureWidth = 16;
-        this.textureHeight = 16;
-        this.bone = new RendererModel(this, 0, 0);
-        this.bone.setRotationPoint(0.0F, 24.0F, 0.0F);
+        super(RenderType::entitySolid);
+        this.texWidth = 16;
+        this.texHeight = 16;
+        this.bone = new ModelRenderer(this, 0, 0);
+        this.bone.setPos(0.0F, 24.0F, 0.0F);
         MathHelper.setRotationAngle(this.bone, -MathHelper.PI_OVER_2, 0.0F, 0.0F);
-        this.bone.cubeList.add(new ModelBox(this.bone, 8, 0, 2.5F, 2.0F, -23.0F, 1, 1, 3, 0.0F, false));
-        this.bone.cubeList.add(new ModelBox(this.bone, 8, 4, -3.5f, 2.0F, -23.0F, 1, 1, 3, 0.0F, false));
-        this.bone.cubeList.add(new ModelBox(this.bone, 0, 7, 1.5F, 1.0F, -24.0F, 1, 1, 1, 0.0F, false));
-        this.bone.cubeList.add(new ModelBox(this.bone, 5, 0, -2.5F, 1.0F, -24.0F, 1, 1, 1, 0.0F, false));
-        this.bone.cubeList.add(new ModelBox(this.bone, 0, 5, -1.5F, 0.0F, -25.0F, 1, 1, 1, 0.0F, false));
-        this.bone.cubeList.add(new ModelBox(this.bone, 0, 9, 0.5F, 0.0F, -25.0F, 1, 1, 1, 0.0F, false));
-        this.bone.cubeList.add(new ModelBox(this.bone, 0, 11, -0.5F, -1.0F, -25.0F, 1, 1, 1, 0.0F, false));
-        this.bone.cubeList.add(new ModelBox(this.bone, 0, 13, -0.5F, -2.0F, -24.0F, 1, 1, 1, 0.0F, false));
-        this.bone.cubeList.add(new ModelBox(this.bone, 0, 0, -0.5F, -3.0F, -23.0F, 1, 1, 3, 0.0F, false));
-        this.bone.cubeList.add(new ModelBox(this.bone, 0, 8, -0.5F, -0.5F, -24.0F, 1, 1, 7, 0.0F, false));
+        this.bone.addBox("", 2.5f, 2.0f, -23.0f, 1, 1, 3, 0.0f, 8, 0);
+        this.bone.addBox("", -3.5f, 2.0F, -23.0F, 1, 1, 3, 0.0F, 8, 4);
+        this.bone.addBox("", 1.5F, 1.0F, -24.0F, 1, 1, 1, 0.0F, 0, 7);
+        this.bone.addBox("", -2.5F, 1.0F, -24.0F, 1, 1, 1, 0.0F, 5, 0);
+        this.bone.addBox("", -1.5F, 0.0F, -25.0F, 1, 1, 1, 0.0F, 0, 5);
+        this.bone.addBox("", 0.5F, 0.0F, -25.0F, 1, 1, 1, 0.0F, 0, 9);
+        this.bone.addBox("", -0.5F, -1.0F, -25.0F, 1, 1, 1, 0.0F, 0, 11);
+        this.bone.addBox("", -0.5F, -2.0F, -24.0F, 1, 1, 1, 0.0F, 0, 13);
+        this.bone.addBox("", -0.5F, -3.0F, -23.0F, 1, 1, 3, 0.0F, 0, 0);
+        this.bone.addBox("", -0.5F, -0.5F, -24.0F, 1, 1, 7, 0.0F, 0, 8);
     }
 
-    public void renderer() {
-        this.bone.render(0.062_5F);
+    @Override
+    public void renderToBuffer(MatrixStack matrices,
+                               IVertexBuilder vertex,
+                               int packedLight,
+                               int packedOverlay,
+                               float red,
+                               float green,
+                               float blue,
+                               float alpha) {
+        this.bone.render(matrices, vertex, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }

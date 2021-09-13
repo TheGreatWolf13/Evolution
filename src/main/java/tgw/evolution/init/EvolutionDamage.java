@@ -38,7 +38,7 @@ public final class EvolutionDamage {
     public static final DamageSource IN_FIRE = createSrc(new DamageSourceEv("in_fire", Type.FIRE).fire().bypassArmor());
     public static final DamageSource IN_WALL = createSrc(new DamageSourceEv("in_wall", Type.SUFFOCATION).bypassArmor());
     public static final DamageSource ON_FIRE = createSrc(new DamageSourceEv("on_fire", Type.FIRE).fire().bypassArmor());
-    public static final DamageSource VOID = createSrc(new DamageSourceEv("void", Type.VOID).bypassArmor().creative());
+    public static final DamageSource VOID = createSrc(new DamageSourceEv("void", Type.VOID).bypassArmor().bypassInvul());
     public static final DamageSource WALL_IMPACT = createSrc(new DamageSourceEv("wall_impact", Type.IMPACT).bypassArmor());
     public static final DamageSource WATER_IMPACT = createSrc(new DamageSourceEv("water_impact", Type.IMPACT).bypassArmor());
     public static final DamageSource WATER_INTOXICATION = createSrc(new DamageSourceEv("water_intoxication", Type.SICKNESS).bypassArmor().absolute());
@@ -82,37 +82,49 @@ public final class EvolutionDamage {
     }
 
     private static DamageSource createSrc(DamageSource src) {
-        ALL_SOURCES.add(src.damageType);
+        ALL_SOURCES.add(src.msgId);
         return src;
     }
 
     public enum Type {
-        CRUSHING("crushing"),
-        DROWNING("drowning"),
-        FIRE("fire"),
-        GENERIC("generic"),
-        IMPACT("impact"),
-        MELEE("melee"),     //Used only for statistics
-        PIERCING("piercing"),
-        RANGED("ranged"),   //Used only for statistics
-        SICKNESS("sickness"),
-        SLASHING("slashing"),
-        SUFFOCATION("suffocation"),
-        TOTAL("total"),     //Used only for statistics
-        VOID("void");
+        CRUSHING("crushing", 0, 0),
+        DROWNING("drowning", 7, 0),
+        FIRE("fire", 6, 0),
+        GENERIC("generic", 0, 0),
+        IMPACT("impact", 5, 0),
+        MELEE("melee", 0, 0),     //Used only for statistics
+        PIERCING("piercing", 0, 0),
+        RANGED("ranged", 0, 0),   //Used only for statistics
+        SICKNESS("sickness", 4, 0),
+        SLASHING("slashing", 0, 0),
+        SUFFOCATION("suffocation", 2, 0),
+        TOTAL("total", 3, 0),     //Used only for statistics
+        VOID("void", 1, 0);
 
         private final String name;
+        private final int texX;
+        private final int texY;
         private final ITextComponent textComponent;
         private final String translationKey;
 
-        Type(String name) {
+        Type(String name, int texX, int texY) {
             this.name = name;
             this.translationKey = "evolution.tooltip.damage." + name;
             this.textComponent = new TranslationTextComponent(this.translationKey);
+            this.texX = texX;
+            this.texY = texY;
         }
 
         public String getName() {
             return this.name;
+        }
+
+        public int getTexX() {
+            return this.texX;
+        }
+
+        public int getTexY() {
+            return this.texY;
         }
 
         public ITextComponent getTextComponent() {

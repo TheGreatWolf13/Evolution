@@ -12,7 +12,7 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -21,30 +21,37 @@ import java.util.function.Supplier;
 
 public class PacketCSChangeBlock implements IPacket {
 
-    private final BlockPos pos;
-    private final Vec3d vec;
     private final Direction direction;
     private final boolean isInside;
+    private final BlockPos pos;
+    private final Vector3d vec;
 
     public PacketCSChangeBlock(BlockRayTraceResult result) {
-        this.pos = result.getPos();
-        this.vec = result.getHitVec();
-        this.direction = result.getFace();
+        this.pos = result.getBlockPos();
+        this.vec = result.getLocation();
+        this.direction = result.getDirection();
         this.isInside = result.isInside();
     }
 
+    public PacketCSChangeBlock(Vector3d vec, Direction direction, BlockPos pos, boolean isInside) {
+        this.direction = direction;
+        this.isInside = isInside;
+        this.pos = pos;
+        this.vec = vec;
+    }
+
     public static PacketCSChangeBlock decode(PacketBuffer buffer) {
-        return new PacketCSChangeBlock(new BlockRayTraceResult(new Vec3d(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()),
-                                                               buffer.readEnumValue(Direction.class),
-                                                               buffer.readBlockPos(),
-                                                               buffer.readBoolean()));
+        return new PacketCSChangeBlock(new Vector3d(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()),
+                                       buffer.readEnum(Direction.class),
+                                       buffer.readBlockPos(),
+                                       buffer.readBoolean());
     }
 
     public static void encode(PacketCSChangeBlock packet, PacketBuffer buffer) {
         buffer.writeDouble(packet.vec.x);
         buffer.writeDouble(packet.vec.y);
         buffer.writeDouble(packet.vec.z);
-        buffer.writeEnumValue(packet.direction);
+        buffer.writeEnum(packet.direction);
         buffer.writeBlockPos(packet.pos);
         buffer.writeBoolean(packet.isInside);
     }
@@ -53,9 +60,9 @@ public class PacketCSChangeBlock implements IPacket {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
                 PlayerEntity player = context.get().getSender();
-                Item item = player.getHeldItemMainhand().getItem();
+                Item item = player.getMainHandItem().getItem();
                 if (item instanceof BlockItem) {
-                    World world = player.world;
+                    World world = player.level;
                     BlockRayTraceResult result = new BlockRayTraceResult(packet.vec, packet.direction, packet.pos, packet.isInside);
                     ItemUseContext itemContext = new ItemUseContext(player, Hand.MAIN_HAND, result);
                     BlockItemUseContext blockContext = new BlockItemUseContext(itemContext);
@@ -63,7 +70,7 @@ public class PacketCSChangeBlock implements IPacket {
                     if (state.getBlock() instanceof AbstractButtonBlock) {
                         return;
                     }
-                    world.setBlockState(packet.pos, state);
+                    world.setBlockAndUpdate(packet.pos, state);
                 }
             });
             context.get().setPacketHandled(true);

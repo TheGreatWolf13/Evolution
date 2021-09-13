@@ -13,11 +13,7 @@ import java.util.Set;
 public class ItemShovel extends ItemGenericTool implements IBackWeapon {
 
     private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet();
-    private static final Set<Material> EFFECTIVE_MATS = Sets.newHashSet(Material.EARTH,
-                                                                        Material.ORGANIC,
-                                                                        Material.SAND,
-                                                                        Material.CLAY,
-                                                                        Material.SNOW);
+    private static final Set<Material> EFFECTIVE_MATS = Sets.newHashSet(Material.DIRT, Material.GRASS, Material.SAND, Material.CLAY, Material.SNOW);
     private final double mass;
 
     public ItemShovel(IItemTier tier, float attackSpeed, Properties builder, double mass) {

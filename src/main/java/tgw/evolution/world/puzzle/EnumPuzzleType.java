@@ -20,9 +20,24 @@ public enum EnumPuzzleType {
 
     @Nullable
     public static EnumPuzzleType byId(int id) {
-        for (EnumPuzzleType type : EnumPuzzleType.values()) {
-            if (type.id == id) {
-                return type;
+        switch (id) {
+            case 0: {
+                return EMPTY;
+            }
+            case 1: {
+                return SINGLE;
+            }
+            case 2: {
+                return FEATURE;
+            }
+            case 3: {
+                return LIST;
+            }
+            case 4: {
+                return CONFIGURED;
+            }
+            case 5: {
+                return CAVE;
             }
         }
         return null;

@@ -35,7 +35,7 @@ public class PacketSCParrySound implements IPacket {
                 else {
                     sound = EvolutionSounds.PARRY_FAIL.get();
                 }
-                Evolution.PROXY.getClientPlayer().playSound(sound, 0.4f, 0.8F + Evolution.PROXY.getClientWorld().rand.nextFloat() * 0.4F);
+                Evolution.PROXY.getClientPlayer().playSound(sound, 0.4f, 0.8F + Evolution.PROXY.getClientWorld().random.nextFloat() * 0.4F);
             });
             context.get().setPacketHandled(true);
         }

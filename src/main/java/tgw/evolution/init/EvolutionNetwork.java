@@ -106,12 +106,6 @@ public final class EvolutionNetwork {
                                  PacketSCRemoveEffect::encode,
                                  PacketSCRemoveEffect::decode,
                                  PacketSCRemoveEffect::handle);
-        INSTANCE.registerMessage(increaseId(),
-                                 PacketSCRenderUpdate.class,
-                                 PacketSCRenderUpdate::encode,
-                                 PacketSCRenderUpdate::decode,
-                                 PacketSCRenderUpdate::handle);
-        INSTANCE.registerMessage(increaseId(), PacketSCUpdateTE.class, PacketSCUpdateTE::encode, PacketSCUpdateTE::decode, PacketSCUpdateTE::handle);
         INSTANCE.registerMessage(increaseId(), PacketCSLunge.class, PacketCSLunge::encode, PacketCSLunge::decode, PacketCSLunge::handle);
         INSTANCE.registerMessage(increaseId(),
                                  PacketCSStartLunge.class,
@@ -169,5 +163,15 @@ public final class EvolutionNetwork {
                                  PacketSCStatistics::encode,
                                  PacketSCStatistics::decode,
                                  PacketSCStatistics::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCAddEffect.class,
+                                 PacketSCAddEffect::encode,
+                                 PacketSCAddEffect::decode,
+                                 PacketSCAddEffect::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCHitmarker.class,
+                                 PacketSCHitmarker::encode,
+                                 PacketSCHitmarker::decode,
+                                 PacketSCHitmarker::handle);
     }
 }

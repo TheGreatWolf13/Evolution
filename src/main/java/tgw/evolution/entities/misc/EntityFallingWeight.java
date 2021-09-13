@@ -18,7 +18,11 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceContext;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
@@ -40,10 +44,10 @@ import java.util.List;
 
 public class EntityFallingWeight extends Entity implements IEntityAdditionalSpawnData, IEvolutionEntity<EntityFallingWeight> {
 
-    private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+    private final BlockPos.Mutable mutablePos = new BlockPos.Mutable();
     public int fallTime;
     private int mass = 500;
-    private BlockState state = EvolutionBlocks.DESTROY_9.get().getDefaultState();
+    private BlockState state = EvolutionBlocks.DESTROY_9.get().defaultBlockState();
 
     public EntityFallingWeight(@SuppressWarnings("unused") FMLPlayMessages.SpawnEntity spawn, World world) {
         this(EvolutionEntities.FALLING_WEIGHT.get(), world);
@@ -57,21 +61,18 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         this(EvolutionEntities.FALLING_WEIGHT.get(), world);
         this.state = state;
         this.mass = this.state.getBlock() instanceof BlockMass ? ((BlockMass) this.state.getBlock()).getMass(this.state) : 500;
-        this.preventEntitySpawning = true;
-        this.setPosition(x, y, z);
-        this.setMotion(Vec3d.ZERO);
-        this.prevPosX = x;
-        this.prevPosY = y;
-        this.prevPosZ = z;
+        this.blocksBuilding = true;
+        this.setPos(x, y, z);
+        this.setDeltaMovement(Vector3d.ZERO);
+        this.xo = x;
+        this.yo = y;
+        this.zo = z;
     }
 
     @Override
-    public void applyEntityCollision(Entity entity) {
-    }
-
-    @Override
-    public boolean canBeAttackedWithItem() {
-        return false;
+    protected void addAdditionalSaveData(CompoundNBT compound) {
+        compound.put("BlockState", NBTUtil.writeBlockState(this.state));
+        compound.putInt("Time", this.fallTime);
     }
 
     @Override
@@ -80,78 +81,74 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public boolean canRenderOnFire() {
-        return false;
-    }
-
-    @Override
-    protected boolean canTriggerWalking() {
-        return false;
-    }
-
-    @Override
-    public IPacket<?> createSpawnPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
-    }
-
-    @Override
-    public void fall(float distance, float damageMultiplier) {
-        if (this.world.isRemote) {
-            return;
+    public boolean causeFallDamage(float distance, float damageMultiplier) {
+        if (this.level.isClientSide) {
+            return false;
         }
-        boolean isRock = this.state.getMaterial() == Material.ROCK;
-        boolean isWood = this.state.getMaterial() == Material.WOOD;
-        boolean isSoil = this.state.getMaterial() == Material.EARTH ||
-                         this.state.getMaterial() == Material.CLAY ||
-                         this.state.getMaterial() == Material.SAND;
-        boolean isMetal = this.state.getMaterial() == Material.IRON;
         DamageSource source = null;
-        if (isRock) {
+        Material material = this.state.getMaterial();
+        if (material == Material.STONE || this.state.getBlock() instanceof BlockKnapping) {
             source = EvolutionDamage.FALLING_ROCK;
         }
-        else if (isSoil) {
+        else if (material == Material.DIRT || material == Material.CLAY || material == Material.SAND) {
             source = EvolutionDamage.FALLING_SOIL;
         }
-        else if (isWood) {
+        else if (material == Material.WOOD) {
             source = EvolutionDamage.FALLING_WOOD;
         }
-        else if (isMetal) {
+        else if (material == Material.METAL) {
             source = EvolutionDamage.FALLING_METAL;
         }
         if (source == null) {
             Evolution.LOGGER.warn("No falling damage for block {}", this.state);
+            return false;
         }
-        float motionY = 20.0F * (float) this.getMotion().y;
-        List<Entity> list = Lists.newArrayList(this.world.getEntitiesWithinAABBExcludingEntity(this, this.getBoundingBox()));
+        float motionY = 20.0F * (float) this.getDeltaMovement().y;
+        List<Entity> list = Lists.newArrayList(this.level.getEntities(this, this.getBoundingBox()));
         float kinecticEnergy = this.mass * motionY * motionY / 2;
         for (Entity entity : list) {
-            float forceOfImpact = kinecticEnergy / entity.getHeight();
-            float area = entity.getWidth() * entity.getWidth();
+            float forceOfImpact = kinecticEnergy / entity.getBbHeight();
+            float area = entity.getBbWidth() * entity.getBbWidth();
             float pressure = forceOfImpact / area;
-            pressure += this.mass * Gravity.gravity(this.world.dimension) / area;
+            pressure += this.mass * Gravity.gravity(this.level.dimensionType()) / area;
             float damage = pressure / 344_738.0F * 100.0F;
-            entity.attackEntityFrom(source, damage);
+            entity.hurt(source, damage);
         }
+        return false;
     }
 
     @Override
-    public void fillCrashReport(CrashReportCategory category) {
-        super.fillCrashReport(category);
-        category.func_71507_a("Immitating BlockState", this.state.toString());
+    protected void defineSynchedData() {
     }
+
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    public boolean displayFireAnimation() {
+        return false;
+    }
+
+    @Override
+    public void fillCrashReportCategory(CrashReportCategory category) {
+        super.fillCrashReportCategory(category);
+        category.setDetail("Immitating BlockState", this.state.toString());
+    }
+
+    @Override
+    public IPacket<?> getAddEntityPacket() {
+        return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    //TODO
+//    @Override
+//    public boolean func_241845_aY() {
+//        return this.isAlive();
+//    }
 
     /**
      * Returns the {@code BlockState} this entity is immitating.
      */
     public BlockState getBlockState() {
         return this.state;
-    }
-
-    @Override
-    @Nullable
-    public AxisAlignedBB getCollisionBoundingBox() {
-        return this.isAlive() ? this.getBoundingBox() : null;
     }
 
     @Nullable
@@ -166,18 +163,28 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    protected void readAdditional(CompoundNBT compound) {
+    public boolean isAttackable() {
+        return false;
+    }
+
+    @Override
+    protected boolean isMovementNoisy() {
+        return false;
+    }
+
+    @Override
+    public void push(Entity entity) {
+    }
+
+    @Override
+    protected void readAdditionalSaveData(CompoundNBT compound) {
         this.state = NBTUtil.readBlockState(compound.getCompound("BlockState"));
         this.fallTime = compound.getInt("Time");
     }
 
     @Override
     public void readSpawnData(PacketBuffer buffer) {
-        this.state = NBTUtil.readBlockState(buffer.readCompoundTag());
-    }
-
-    @Override
-    protected void registerData() {
+        this.state = NBTUtil.readBlockState(buffer.readNbt());
     }
 
     @Override
@@ -186,27 +193,27 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
             this.remove();
             return;
         }
-        this.prevPosX = this.posX;
-        this.prevPosY = this.posY;
-        this.prevPosZ = this.posZ;
+        this.xo = this.getX();
+        this.yo = this.getY();
+        this.zo = this.getZ();
         Block carryingBlock = this.state.getBlock();
         if (this.fallTime++ == 0) {
-            BlockPos pos = new BlockPos(this);
-            if (this.world.getBlockState(pos).getBlock() == carryingBlock) {
-                this.world.removeBlock(pos, false);
+            BlockPos pos = this.blockPosition();
+            if (this.level.getBlockState(pos).getBlock() == carryingBlock) {
+                this.level.removeBlock(pos, false);
             }
-            else if (!this.world.isRemote) {
+            else if (!this.level.isClientSide) {
                 this.remove();
                 return;
             }
         }
-        Vec3d motion = this.getMotion();
+        Vector3d motion = this.getDeltaMovement();
         double motionX = motion.x;
         double motionY = motion.y;
         double motionZ = motion.z;
         double gravity = 0;
-        if (!this.hasNoGravity()) {
-            gravity = Gravity.gravity(this.world.dimension);
+        if (!this.isNoGravity()) {
+            gravity = Gravity.gravity(this.level.dimensionType());
         }
         double horizontalDrag = this.isInWater() ? Gravity.horizontalWaterDrag(this) / this.mass : Gravity.horizontalDrag(this) / this.mass;
         double verticalDrag = this.isInWater() ? Gravity.verticalWaterDrag(this) / this.mass : Gravity.verticalDrag(this) / this.mass;
@@ -234,54 +241,54 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         if (Math.abs(motionZ) < 1e-6) {
             motionZ = 0;
         }
-        this.setMotion(motionX, motionY, motionZ);
-        this.move(MoverType.SELF, this.getMotion());
-        this.mutablePos.setPos(this.posX, this.posY, this.posZ);
-        if (this.world.getBlockState(this.mutablePos.down()).getBlock() instanceof BlockLeaves) {
+        this.setDeltaMovement(motionX, motionY, motionZ);
+        this.move(MoverType.SELF, this.getDeltaMovement());
+        this.mutablePos.set(this.getX(), this.getY(), this.getZ());
+        if (this.level.getBlockState(this.mutablePos.below()).getBlock() instanceof BlockLeaves) {
             if (this.state.getBlock() instanceof BlockLeaves) {
-                this.world.setBlockState(this.mutablePos, this.state);
+                this.level.setBlockAndUpdate(this.mutablePos, this.state);
                 this.remove();
             }
         }
-        if (this.world.getBlockState(this.mutablePos).getBlock() instanceof BlockLeaves) {
+        if (this.level.getBlockState(this.mutablePos).getBlock() instanceof BlockLeaves) {
             if (!(this.state.getBlock() instanceof BlockLeaves)) {
-                this.world.setBlockState(this.mutablePos, Blocks.AIR.getDefaultState());
-                this.playSound(SoundEvents.BLOCK_GRASS_BREAK, 1.0f, 1.0f);
+                this.level.setBlockAndUpdate(this.mutablePos, Blocks.AIR.defaultBlockState());
+                this.playSound(SoundEvents.GRASS_BREAK, 1.0f, 1.0f);
             }
         }
-        this.mutablePos.setPos(this);
-        boolean isInWater = this.world.getFluidState(this.mutablePos).isTagged(FluidTags.WATER);
-        double d0 = this.getMotion().lengthSquared();
-        if (d0 > 1.0D) {
-            BlockRayTraceResult raytraceresult = this.world.rayTraceBlocks(new RayTraceContext(new Vec3d(this.prevPosX, this.prevPosY, this.prevPosZ),
-                                                                                               new Vec3d(this.posX, this.posY, this.posZ),
-                                                                                               RayTraceContext.BlockMode.COLLIDER,
-                                                                                               RayTraceContext.FluidMode.SOURCE_ONLY,
-                                                                                               this));
-            if (raytraceresult.getType() != RayTraceResult.Type.MISS && this.world.getFluidState(raytraceresult.getPos()).isTagged(FluidTags.WATER)) {
-                this.mutablePos.setPos(raytraceresult.getPos());
+        this.mutablePos.set(this.blockPosition());
+        boolean isInWater = this.level.getFluidState(this.mutablePos).is(FluidTags.WATER);
+        double d0 = this.getDeltaMovement().lengthSqr();
+        if (d0 > 1) {
+            BlockRayTraceResult raytraceresult = this.level.clip(new RayTraceContext(new Vector3d(this.xo, this.yo, this.zo),
+                                                                                     new Vector3d(this.getX(), this.getY(), this.getZ()),
+                                                                                     RayTraceContext.BlockMode.COLLIDER,
+                                                                                     RayTraceContext.FluidMode.SOURCE_ONLY,
+                                                                                     this));
+            if (raytraceresult.getType() != RayTraceResult.Type.MISS && this.level.getFluidState(raytraceresult.getBlockPos()).is(FluidTags.WATER)) {
+                this.mutablePos.set(raytraceresult.getBlockPos());
                 isInWater = true;
             }
         }
         if (!this.onGround && !isInWater) {
-            if (this.fallTime > 100 && !this.world.isRemote && (this.mutablePos.getY() < 1 || this.mutablePos.getY() > 256) ||
+            if (this.fallTime > 100 && !this.level.isClientSide && (this.mutablePos.getY() < 1 || this.mutablePos.getY() > 256) ||
                 this.fallTime > 6_000) {
-                if (this.world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
+                if (this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
                     if (carryingBlock instanceof BlockCobblestone) {
-                        this.entityDropItem(new ItemStack(((BlockCobblestone) carryingBlock).getVariant().getRock(), 4));
+                        this.spawnAtLocation(new ItemStack(((BlockCobblestone) carryingBlock).getVariant().getRock(), 4));
                     }
                     else {
-                        this.entityDropItem(carryingBlock);
+                        this.spawnAtLocation(carryingBlock);
                     }
                 }
                 this.remove();
             }
         }
         else {
-            BlockState state = this.world.getBlockState(this.mutablePos);
-            BlockPos posDown = new BlockPos(this.posX, this.posY - 0.01, this.posZ);
-            if (this.world.isAirBlock(posDown)) {
-                if (!isInWater && FallingBlock.canFallThrough(this.world.getBlockState(posDown))) {
+            BlockState state = this.level.getBlockState(this.mutablePos);
+            BlockPos posDown = new BlockPos(this.getX(), this.getY() - 0.01, this.getZ());
+            if (this.level.isEmptyBlock(posDown)) {
+                if (!isInWater && FallingBlock.isFree(this.level.getBlockState(posDown))) {
                     this.onGround = false;
                     return;
                 }
@@ -291,22 +298,22 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
                 if (BlockUtils.isReplaceable(state)) {
                     ItemStack stack;
                     if (state.getBlock() instanceof IReplaceable) {
-                        stack = ((IReplaceable) state.getBlock()).getDrops(this.world, this.mutablePos, state);
+                        stack = ((IReplaceable) state.getBlock()).getDrops(this.level, this.mutablePos, state);
                     }
                     else {
                         stack = new ItemStack(state.getBlock());
                     }
-                    if (this.world.getGameRules().getBoolean(GameRules.DO_TILE_DROPS)) {
-                        this.entityDropItem(stack);
+                    if (this.level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) {
+                        this.spawnAtLocation(stack);
                     }
-                    this.world.setBlockState(this.mutablePos, this.state, 3);
+                    this.level.setBlockAndUpdate(this.mutablePos, this.state);
                 }
-                else if (this.world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS)) {
+                else if (this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
                     if (carryingBlock instanceof BlockCobblestone) {
-                        this.entityDropItem(new ItemStack(((BlockCobblestone) carryingBlock).getVariant().getRock(), 4));
+                        this.spawnAtLocation(new ItemStack(((BlockCobblestone) carryingBlock).getVariant().getRock(), 4));
                     }
                     else {
-                        this.entityDropItem(carryingBlock);
+                        this.spawnAtLocation(carryingBlock);
                     }
                 }
             }
@@ -314,13 +321,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    protected void writeAdditional(CompoundNBT compound) {
-        compound.put("BlockState", NBTUtil.writeBlockState(this.state));
-        compound.putInt("Time", this.fallTime);
-    }
-
-    @Override
     public void writeSpawnData(PacketBuffer buffer) {
-        buffer.writeCompoundTag(NBTUtil.writeBlockState(this.state));
+        buffer.writeNbt(NBTUtil.writeBlockState(this.state));
     }
 }

@@ -9,7 +9,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.PacketDistributor;
-import tgw.evolution.blocks.IStoneVariant;
+import tgw.evolution.blocks.BlockKnapping;
+import tgw.evolution.blocks.IRockVariant;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketSCOpenKnappingGui;
@@ -18,7 +19,7 @@ import tgw.evolution.util.RockVariant;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class ItemRock extends ItemGenericBlockPlaceable implements IStoneVariant {
+public class ItemRock extends ItemGenericBlockPlaceable implements IRockVariant {
 
     private final RockVariant variant;
 
@@ -28,7 +29,7 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IStoneVariant
     }
 
     @Override
-    public void addInformation(ItemStack stack, World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+    public void appendHoverText(ItemStack stack, World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
         switch (this.variant.getRockType()) {
             case IGNEOUS_EXTRUSIVE:
                 tooltip.add(EvolutionTexts.TOOLTIP_ROCK_TYPE_IGEXTRUSIVE);
@@ -47,8 +48,8 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IStoneVariant
     }
 
     @Override
-    public boolean customCondition(Block block) {
-        return false;
+    public boolean customCondition(Block blockAtPlacing, Block blockClicking) {
+        return blockClicking instanceof BlockKnapping;
     }
 
     @Override
@@ -59,7 +60,7 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IStoneVariant
 
     @Override
     public BlockState getSneakingState(BlockItemUseContext context) {
-        return this.variant.getKnapping().getDefaultState();
+        return this.variant.getKnapping().defaultBlockState();
     }
 
     @Override
@@ -70,6 +71,6 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IStoneVariant
     @Override
     public void sneakingAction(BlockItemUseContext context) {
         EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) context.getPlayer()),
-                                       new PacketSCOpenKnappingGui(context.getPos(), this.variant));
+                                       new PacketSCOpenKnappingGui(context.getClickedPos(), this.variant));
     }
 }

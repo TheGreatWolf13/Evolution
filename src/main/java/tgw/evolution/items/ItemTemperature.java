@@ -12,8 +12,8 @@ public class ItemTemperature extends ItemEv {
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
-        CompoundNBT nbt = stack.getChildTag("Temperature");
+    public void inventoryTick(ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
+        CompoundNBT nbt = stack.getTagElement("Temperature");
         if (nbt == null) {
             return;
         }

@@ -21,7 +21,8 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.extensions.IForgeTileEntity;
 import tgw.evolution.client.gui.ScreenSchematic;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionTileEntities;
+import tgw.evolution.init.EvolutionTEs;
+import tgw.evolution.util.BlockFlags;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -35,7 +36,12 @@ import static tgw.evolution.init.EvolutionBStates.SCHEMATIC_MODE;
 public class TESchematic extends TileEntity {
 
     private static final int CAP = 64;
-    private boolean ignoreEntities = true;
+    /**
+     * Bit 0: ignoresEntities;<br>
+     * Bit 1: showAir;<br>
+     * Bit 2: showBoundingBox;
+     */
+    private byte flags = 0b101;
     private float integrity = 1.0F;
     private Mirror mirror = Mirror.NONE;
     private SchematicMode mode = SchematicMode.SAVE;
@@ -43,56 +49,54 @@ public class TESchematic extends TileEntity {
     private Rotation rotation = Rotation.NONE;
     private BlockPos schematicPos = new BlockPos(0, 1, 0);
     private long seed;
-    private boolean showAir;
-    private boolean showBoundingBox = true;
     private BlockPos size = BlockPos.ZERO;
 
     public TESchematic() {
-        super(EvolutionTileEntities.TE_SCHEMATIC.get());
+        super(EvolutionTEs.SCHEMATIC.get());
     }
 
     private static MutableBoundingBox calculateEnclosingBoundingBox(BlockPos startingPos, List<TESchematic> relatedCornerBlocks) {
         MutableBoundingBox boundingBox;
         if (relatedCornerBlocks.size() > 1) {
-            BlockPos pos = relatedCornerBlocks.get(0).getPos();
+            BlockPos pos = relatedCornerBlocks.get(0).getBlockPos();
             boundingBox = new MutableBoundingBox(pos, pos);
         }
         else {
             boundingBox = new MutableBoundingBox(startingPos, startingPos);
         }
         for (TESchematic tile : relatedCornerBlocks) {
-            BlockPos pos = tile.getPos();
-            if (pos.getX() < boundingBox.minX) {
-                boundingBox.minX = pos.getX();
+            BlockPos pos = tile.getBlockPos();
+            if (pos.getX() < boundingBox.x0) {
+                boundingBox.x0 = pos.getX();
             }
-            else if (pos.getX() > boundingBox.maxX) {
-                boundingBox.maxX = pos.getX();
+            else if (pos.getX() > boundingBox.x1) {
+                boundingBox.x1 = pos.getX();
             }
-            if (pos.getY() < boundingBox.minY) {
-                boundingBox.minY = pos.getY();
+            if (pos.getY() < boundingBox.y0) {
+                boundingBox.y0 = pos.getY();
             }
-            else if (pos.getY() > boundingBox.maxY) {
-                boundingBox.maxY = pos.getY();
+            else if (pos.getY() > boundingBox.y1) {
+                boundingBox.y1 = pos.getY();
             }
-            if (pos.getZ() < boundingBox.minZ) {
-                boundingBox.minZ = pos.getZ();
+            if (pos.getZ() < boundingBox.z0) {
+                boundingBox.z0 = pos.getZ();
             }
-            else if (pos.getZ() > boundingBox.maxZ) {
-                boundingBox.maxZ = pos.getZ();
+            else if (pos.getZ() > boundingBox.z1) {
+                boundingBox.z1 = pos.getZ();
             }
         }
         return boundingBox;
     }
 
     private static Random createRandom(long seed) {
-        return seed == 0L ? new Random(Util.milliTime()) : new Random(seed);
+        return seed == 0L ? new Random(Util.getMillis()) : new Random(seed);
     }
 
     public boolean detectSize() {
         if (this.mode != SchematicMode.SAVE) {
             return false;
         }
-        BlockPos pos = this.getPos();
+        BlockPos pos = this.getBlockPos();
         int searchLimit = CAP + 30;
         BlockPos startPos = new BlockPos(pos.getX() - searchLimit, 0, pos.getZ() - searchLimit);
         BlockPos endPos = new BlockPos(pos.getX() + searchLimit, 255, pos.getZ() + searchLimit);
@@ -102,14 +106,12 @@ public class TESchematic extends TileEntity {
             return false;
         }
         MutableBoundingBox boundingBox = calculateEnclosingBoundingBox(pos, relatedCornerBlocks);
-        if (boundingBox.maxX - boundingBox.minX > 1 && boundingBox.maxY - boundingBox.minY > 1 && boundingBox.maxZ - boundingBox.minZ > 1) {
-            this.schematicPos = new BlockPos(boundingBox.minX - pos.getX() + 1, boundingBox.minY - pos.getY() + 1, boundingBox.minZ - pos.getZ() + 1);
-            this.size = new BlockPos(boundingBox.maxX - boundingBox.minX - 1,
-                                     boundingBox.maxY - boundingBox.minY - 1,
-                                     boundingBox.maxZ - boundingBox.minZ - 1);
-            this.markDirty();
-            BlockState state = this.world.getBlockState(pos);
-            this.world.notifyBlockUpdate(pos, state, state, 3);
+        if (boundingBox.x1 - boundingBox.x0 > 1 && boundingBox.y1 - boundingBox.y0 > 1 && boundingBox.z1 - boundingBox.z0 > 1) {
+            this.schematicPos = new BlockPos(boundingBox.x0 - pos.getX() + 1, boundingBox.y0 - pos.getY() + 1, boundingBox.z0 - pos.getZ() + 1);
+            this.size = new BlockPos(boundingBox.x1 - boundingBox.x0 - 1, boundingBox.y1 - boundingBox.y0 - 1, boundingBox.z1 - boundingBox.z0 - 1);
+            this.setChanged();
+            BlockState state = this.level.getBlockState(pos);
+            this.level.sendBlockUpdated(pos, state, state, 3);
             return true;
         }
         return false;
@@ -124,53 +126,24 @@ public class TESchematic extends TileEntity {
         return this.integrity;
     }
 
-    public void setIntegrity(float integrityIn) {
-        this.integrity = integrityIn;
-    }
-
-    @Override
-    public double getMaxRenderDistanceSquared() {
-        return 16_384;
-    }
-
     public Mirror getMirror() {
         return this.mirror;
-    }
-
-    public void setMirror(Mirror mirrorIn) {
-        this.mirror = mirrorIn;
     }
 
     public SchematicMode getMode() {
         return this.mode;
     }
 
-    public void setMode(SchematicMode modeIn) {
-        this.mode = modeIn;
-        BlockState blockstate = this.world.getBlockState(this.getPos());
-        if (blockstate.getBlock() == EvolutionBlocks.SCHEMATIC_BLOCK.get()) {
-            this.world.setBlockState(this.getPos(), blockstate.with(SCHEMATIC_MODE, modeIn), 2);
-        }
-    }
-
     public String getName() {
         return this.name == null ? "" : this.name.toString();
     }
 
-    public void setName(@Nullable String nameIn) {
-        this.name = StringUtils.isNullOrEmpty(nameIn) ? null : ResourceLocation.tryCreate(nameIn);
-    }
-
-    public void setName(@Nullable ResourceLocation p_210163_1_) {
-        this.name = p_210163_1_;
-    }
-
     private List<TESchematic> getNearbySchematicBlocks(BlockPos startPos, BlockPos endPos) {
         List<TESchematic> schematicBlocks = Lists.newArrayList();
-        for (BlockPos pos : BlockPos.getAllInBoxMutable(startPos, endPos)) {
-            BlockState state = this.world.getBlockState(pos);
+        for (BlockPos pos : BlockPos.betweenClosed(startPos, endPos)) {
+            BlockState state = this.level.getBlockState(pos);
             if (state.getBlock() == EvolutionBlocks.SCHEMATIC_BLOCK.get()) {
-                TileEntity tile = this.world.getTileEntity(pos);
+                TileEntity tile = this.level.getBlockEntity(pos);
                 if (tile instanceof TESchematic) {
                     schematicBlocks.add((TESchematic) tile);
                 }
@@ -188,24 +161,12 @@ public class TESchematic extends TileEntity {
         return this.rotation;
     }
 
-    public void setRotation(Rotation rotationIn) {
-        this.rotation = rotationIn;
-    }
-
     public BlockPos getSchematicPos() {
         return this.schematicPos;
     }
 
-    public void setSchematicPos(BlockPos posIn) {
-        this.schematicPos = posIn;
-    }
-
     public long getSeed() {
         return this.seed;
-    }
-
-    public void setSeed(long seedIn) {
-        this.seed = seedIn;
     }
 
     public BlockPos getStructureSize() {
@@ -215,12 +176,17 @@ public class TESchematic extends TileEntity {
     @Override
     @Nullable
     public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.pos, 7, this.getUpdateTag());
+        return new SUpdateTileEntityPacket(this.worldPosition, 7, this.getUpdateTag());
     }
 
     @Override
     public CompoundNBT getUpdateTag() {
-        return this.write(new CompoundNBT());
+        return this.save(new CompoundNBT());
+    }
+
+    @Override
+    public double getViewDistance() {
+        return 16_384;
     }
 
     public boolean hasName() {
@@ -228,15 +194,15 @@ public class TESchematic extends TileEntity {
     }
 
     public boolean ignoresEntities() {
-        return this.ignoreEntities;
+        return (this.flags & 1) != 0;
     }
 
     public boolean isStructureLoadable() {
-        if (this.mode == SchematicMode.LOAD && !this.world.isRemote && this.name != null) {
-            ServerWorld serverWorld = (ServerWorld) this.world;
-            TemplateManager templateManager = serverWorld.getStructureTemplateManager();
+        if (this.mode == SchematicMode.LOAD && !this.level.isClientSide && this.name != null) {
+            ServerWorld serverWorld = (ServerWorld) this.level;
+            TemplateManager templateManager = serverWorld.getStructureManager();
             try {
-                return templateManager.getTemplate(this.name) != null;
+                return templateManager.get(this.name) != null;
             }
             catch (ResourceLocationException exception) {
                 return false;
@@ -245,51 +211,87 @@ public class TESchematic extends TileEntity {
         return false;
     }
 
-    public boolean load() {
-        return this.load(true);
+    @Override
+    public void load(BlockState state, CompoundNBT compound) {
+        super.load(state, compound);
+        this.setName(compound.getString("Name"));
+        int posX = MathHelper.clamp(compound.getInt("PosX"), -CAP, CAP);
+        int posY = MathHelper.clamp(compound.getInt("PosY"), -CAP, CAP);
+        int posZ = MathHelper.clamp(compound.getInt("PosZ"), -CAP, CAP);
+        this.schematicPos = new BlockPos(posX, posY, posZ);
+        int sizeX = MathHelper.clamp(compound.getInt("SizeX"), 0, CAP);
+        int sizeY = MathHelper.clamp(compound.getInt("SizeY"), 0, CAP);
+        int sizeZ = MathHelper.clamp(compound.getInt("SizeZ"), 0, CAP);
+        this.size = new BlockPos(sizeX, sizeY, sizeZ);
+        try {
+            this.rotation = Rotation.valueOf(compound.getString("Rot"));
+        }
+        catch (IllegalArgumentException exception) {
+            this.rotation = Rotation.NONE;
+        }
+        try {
+            this.mirror = Mirror.valueOf(compound.getString("Mirror"));
+        }
+        catch (IllegalArgumentException exception) {
+            this.mirror = Mirror.NONE;
+        }
+        this.mode = SchematicMode.byId(compound.getByte("Mode"));
+        this.flags = compound.getByte("Flags");
+        if (compound.contains("Integrity")) {
+            this.integrity = compound.getFloat("Integrity");
+        }
+        else {
+            this.integrity = 1.0F;
+        }
+        this.seed = compound.getLong("Seed");
+        this.updateBlockState();
     }
 
-    public boolean load(boolean requireMatchingSize) {
-        if (this.mode == SchematicMode.LOAD && !this.world.isRemote && this.name != null) {
-            BlockPos tilePos = this.getPos();
-            BlockPos schematicPos = tilePos.add(this.schematicPos);
-            ServerWorld serverWorld = (ServerWorld) this.world;
-            TemplateManager templateManager = serverWorld.getStructureTemplateManager();
+    public boolean load(ServerWorld world) {
+        return this.load(world, true);
+    }
+
+    public boolean load(ServerWorld world, boolean matchingSize) {
+        if (this.mode == SchematicMode.LOAD && this.name != null) {
+            TemplateManager templateManager = world.getStructureManager();
             Template template;
             try {
-                template = templateManager.getTemplate(this.name);
+                template = templateManager.get(this.name);
             }
-            catch (ResourceLocationException exception) {
+            catch (ResourceLocationException e) {
                 return false;
             }
-            if (template == null) {
-                return false;
-            }
-            BlockPos size = template.getSize();
-            boolean sizeMatches = this.size.equals(size);
-            if (!sizeMatches) {
-                this.size = size;
-                this.markDirty();
-                BlockState state = this.world.getBlockState(tilePos);
-                this.world.notifyBlockUpdate(tilePos, state, state, 3);
-            }
-            if (requireMatchingSize && !sizeMatches) {
-                return false;
-            }
-            //noinspection ConstantConditions
-            PlacementSettings placementSettings = new PlacementSettings().setMirror(this.mirror)
-                                                                         .setRotation(this.rotation)
-                                                                         .setIgnoreEntities(this.ignoreEntities)
-                                                                         .setChunk(null);
-            if (this.integrity < 1.0F) {
-                placementSettings.clearProcessors()
-                                 .addProcessor(new IntegrityProcessor(MathHelper.clamp(this.integrity, 0.0F, 1.0F)))
-                                 .setRandom(createRandom(this.seed));
-            }
-            template.addBlocksToWorldChunk(this.world, schematicPos, placementSettings);
-            return true;
+            return template != null && this.load(world, matchingSize, template);
         }
         return false;
+    }
+
+    public boolean load(ServerWorld world, boolean matchingSize, Template template) {
+        BlockPos pos = this.getBlockPos();
+        BlockPos structureSize = template.getSize();
+        boolean isSizeEquals = this.size.equals(structureSize);
+        if (!isSizeEquals) {
+            this.size = structureSize;
+            this.setChanged();
+            BlockState state = world.getBlockState(pos);
+            world.sendBlockUpdated(pos, state, state, BlockFlags.NOTIFY_AND_UPDATE);
+        }
+        if (matchingSize && !isSizeEquals) {
+            return false;
+        }
+        PlacementSettings settings = new PlacementSettings().setMirror(this.mirror)
+                                                            .setRotation(this.rotation)
+                                                            .setIgnoreEntities(this.ignoresEntities())
+                                                            .setChunkPos(null);
+        if (this.integrity < 1.0F) {
+            settings.clearProcessors()
+                    .addProcessor(new IntegrityProcessor(MathHelper.clamp(this.integrity, 0.0F, 1.0F)))
+                    .setRandom(createRandom(this.seed));
+        }
+
+        BlockPos schematicAbsPos = pos.offset(this.schematicPos);
+        template.placeInWorld(world, schematicAbsPos, settings, createRandom(this.seed));
+        return true;
     }
 
     public void nextMode() {
@@ -308,45 +310,7 @@ public class TESchematic extends TileEntity {
 
     @Override
     public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-        this.handleUpdateTag(pkt.getNbtCompound());
-    }
-
-    @Override
-    public void read(CompoundNBT compound) {
-        super.read(compound);
-        this.setName(compound.getString("name"));
-        int posX = MathHelper.clamp(compound.getInt("posX"), -CAP, CAP);
-        int posY = MathHelper.clamp(compound.getInt("posY"), -CAP, CAP);
-        int posZ = MathHelper.clamp(compound.getInt("posZ"), -CAP, CAP);
-        this.schematicPos = new BlockPos(posX, posY, posZ);
-        int sizeX = MathHelper.clamp(compound.getInt("sizeX"), 0, CAP);
-        int sizeY = MathHelper.clamp(compound.getInt("sizeY"), 0, CAP);
-        int sizeZ = MathHelper.clamp(compound.getInt("sizeZ"), 0, CAP);
-        this.size = new BlockPos(sizeX, sizeY, sizeZ);
-        try {
-            this.rotation = Rotation.valueOf(compound.getString("rotation"));
-        }
-        catch (IllegalArgumentException exception) {
-            this.rotation = Rotation.NONE;
-        }
-        try {
-            this.mirror = Mirror.valueOf(compound.getString("mirror"));
-        }
-        catch (IllegalArgumentException exception) {
-            this.mirror = Mirror.NONE;
-        }
-        this.mode = SchematicMode.byId(compound.getByte("mode"));
-        this.ignoreEntities = compound.getBoolean("ignoreEntities");
-        this.showAir = compound.getBoolean("showair");
-        this.showBoundingBox = compound.getBoolean("showboundingbox");
-        if (compound.contains("integrity")) {
-            this.integrity = compound.getFloat("integrity");
-        }
-        else {
-            this.integrity = 1.0F;
-        }
-        this.seed = compound.getLong("seed");
-        this.updateBlockState();
+        this.handleUpdateTag(this.level.getBlockState(this.worldPosition), pkt.getTag());
     }
 
     public boolean save() {
@@ -354,21 +318,21 @@ public class TESchematic extends TileEntity {
     }
 
     public boolean save(boolean writeToDisk) {
-        if (this.mode == SchematicMode.SAVE && !this.world.isRemote && this.name != null) {
-            BlockPos pos = this.getPos().add(this.schematicPos);
-            ServerWorld serverWorld = (ServerWorld) this.world;
-            TemplateManager templateManager = serverWorld.getStructureTemplateManager();
+        if (this.mode == SchematicMode.SAVE && !this.level.isClientSide && this.name != null) {
+            BlockPos pos = this.getBlockPos().offset(this.schematicPos);
+            ServerWorld serverWorld = (ServerWorld) this.level;
+            TemplateManager templateManager = serverWorld.getStructureManager();
             Template template;
             try {
-                template = templateManager.getTemplateDefaulted(this.name);
+                template = templateManager.get(this.name);
             }
             catch (ResourceLocationException exception) {
                 return false;
             }
-            template.takeBlocksFromWorld(this.world, pos, this.size, !this.ignoreEntities, Blocks.STRUCTURE_VOID);
+            template.fillFromWorld(this.level, pos, this.size, !this.ignoresEntities(), Blocks.STRUCTURE_VOID);
             if (writeToDisk) {
                 try {
-                    return templateManager.writeToFile(this.name);
+                    return templateManager.save(this.name);
                 }
                 catch (ResourceLocationException exception) {
                     return false;
@@ -379,16 +343,77 @@ public class TESchematic extends TileEntity {
         return false;
     }
 
+    @Override
+    public CompoundNBT save(CompoundNBT compound) {
+        super.save(compound);
+        compound.putString("Name", this.getName());
+        compound.putInt("PosX", this.schematicPos.getX());
+        compound.putInt("PosY", this.schematicPos.getY());
+        compound.putInt("PosZ", this.schematicPos.getZ());
+        compound.putInt("SizeX", this.size.getX());
+        compound.putInt("SizeY", this.size.getY());
+        compound.putInt("SizeZ", this.size.getZ());
+        compound.putString("Rot", this.rotation.toString());
+        compound.putString("Mirror", this.mirror.toString());
+        compound.putByte("Mode", this.mode.getId());
+        compound.putByte("Flags", this.flags);
+        compound.putFloat("Integrity", this.integrity);
+        compound.putLong("Seed", this.seed);
+        return compound;
+    }
+
     public void setIgnoresEntities(boolean ignoreEntitiesIn) {
-        this.ignoreEntities = ignoreEntitiesIn;
+        if (this.ignoresEntities() != ignoreEntitiesIn) {
+            this.flags ^= 1;
+        }
     }
 
-    public void setShowAir(boolean showAirIn) {
-        this.showAir = showAirIn;
+    public void setIntegrity(float integrity) {
+        this.integrity = integrity;
     }
 
-    public void setShowBoundingBox(boolean showBoundingBoxIn) {
-        this.showBoundingBox = showBoundingBoxIn;
+    public void setMirror(Mirror mirror) {
+        this.mirror = mirror;
+    }
+
+    public void setMode(SchematicMode mode) {
+        this.mode = mode;
+        BlockState blockstate = this.level.getBlockState(this.getBlockPos());
+        if (blockstate.getBlock() == EvolutionBlocks.SCHEMATIC_BLOCK.get()) {
+            this.level.setBlock(this.getBlockPos(), blockstate.setValue(SCHEMATIC_MODE, mode), BlockFlags.BLOCK_UPDATE);
+        }
+    }
+
+    public void setName(@Nullable String name) {
+        this.name = StringUtils.isNullOrEmpty(name) ? null : ResourceLocation.tryParse(name);
+    }
+
+    public void setName(@Nullable ResourceLocation p_210163_1_) {
+        this.name = p_210163_1_;
+    }
+
+    public void setRotation(Rotation rotationIn) {
+        this.rotation = rotationIn;
+    }
+
+    public void setSchematicPos(BlockPos posIn) {
+        this.schematicPos = posIn;
+    }
+
+    public void setSeed(long seedIn) {
+        this.seed = seedIn;
+    }
+
+    public void setShowAir(boolean showAir) {
+        if (this.showsAir() != showAir) {
+            this.flags ^= 1 << 1;
+        }
+    }
+
+    public void setShowBoundingBox(boolean showBoundingBox) {
+        if (this.showsBoundingBox() != showBoundingBox) {
+            this.flags ^= 1 << 2;
+        }
     }
 
     public void setSize(BlockPos sizeIn) {
@@ -396,52 +421,31 @@ public class TESchematic extends TileEntity {
     }
 
     public boolean showsAir() {
-        return this.showAir;
+        return (this.flags & 2) != 0;
     }
 
     public boolean showsBoundingBox() {
-        return this.showBoundingBox;
+        return (this.flags & 4) != 0;
     }
 
     private void updateBlockState() {
-        if (this.world != null) {
-            BlockPos pos = this.getPos();
-            BlockState state = this.world.getBlockState(pos);
+        if (this.level != null) {
+            BlockPos pos = this.getBlockPos();
+            BlockState state = this.level.getBlockState(pos);
             if (state.getBlock() == EvolutionBlocks.SCHEMATIC_BLOCK.get()) {
-                this.world.setBlockState(pos, state.with(SCHEMATIC_MODE, this.mode), 2);
+                this.level.setBlock(pos, state.setValue(SCHEMATIC_MODE, this.mode), BlockFlags.BLOCK_UPDATE);
             }
         }
     }
 
     public boolean usedBy(PlayerEntity player) {
-        if (!player.canUseCommandBlock()) {
+        if (!player.canUseGameMasterBlocks()) {
             return false;
         }
-        if (player.getEntityWorld().isRemote) {
+        if (player.getCommandSenderWorld().isClientSide) {
             ScreenSchematic.open(this);
         }
         return true;
-    }
-
-    @Override
-    public CompoundNBT write(CompoundNBT compound) {
-        super.write(compound);
-        compound.putString("name", this.getName());
-        compound.putInt("posX", this.schematicPos.getX());
-        compound.putInt("posY", this.schematicPos.getY());
-        compound.putInt("posZ", this.schematicPos.getZ());
-        compound.putInt("sizeX", this.size.getX());
-        compound.putInt("sizeY", this.size.getY());
-        compound.putInt("sizeZ", this.size.getZ());
-        compound.putString("rotation", this.rotation.toString());
-        compound.putString("mirror", this.mirror.toString());
-        compound.putByte("mode", this.mode.getId());
-        compound.putBoolean("ignoreEntities", this.ignoreEntities);
-        compound.putBoolean("showair", this.showAir);
-        compound.putBoolean("showboundingbox", this.showBoundingBox);
-        compound.putFloat("integrity", this.integrity);
-        compound.putLong("seed", this.seed);
-        return compound;
     }
 
     public enum UpdateCommand {
