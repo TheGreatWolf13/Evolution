@@ -36,6 +36,7 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Effect;
+import net.minecraft.potion.Effects;
 import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.stats.StatisticsManager;
 import net.minecraft.tileentity.SkullTileEntity;
@@ -1111,6 +1112,10 @@ public class ClientEvents {
             renderer.addLayer(new LayerBelt(renderer));
             renderer.addLayer(new LayerBack(renderer));
             INJECTED_PLAYER_RENDERERS.put(renderer, null);
+        }
+        if (this.renderer.isRenderingPlayer && this.mc.player.hasEffect(Effects.CONFUSION)) {
+            renderer.getModel().head.visible = false;
+            renderer.getModel().hat.visible = false;
         }
     }
 
