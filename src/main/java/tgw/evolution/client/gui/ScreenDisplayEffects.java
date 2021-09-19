@@ -106,7 +106,7 @@ public abstract class ScreenDisplayEffects<T extends Container> extends Containe
         int i = this.initialHeight;
         for (EffectInstance ignored : this.effects) {
             RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-            this.blit(matrices, X, i, 0, 166, 140, 32);
+            this.blit(matrices, X, i, 0, 166, 156, 32);
             i += this.effectHeight;
         }
     }
@@ -158,7 +158,7 @@ public abstract class ScreenDisplayEffects<T extends Container> extends Containe
             if (ef == this.effects.size() - 1) {
                 h = 32;
             }
-            if (MathHelper.isMouseInsideBox(mouseX, mouseY, X, i, MathHelper.clampMax(X + 140, leftOffset), i + h)) {
+            if (MathHelper.isMouseInsideBox(mouseX, mouseY, X, i, MathHelper.clampMax(X + 156, leftOffset), i + h)) {
                 TOOLTIPS.clear();
                 String amp = getFixedAmplifier(effect) > 0 ? " " + MathHelper.getRomanNumber(getFixedAmplifier(effect) + 1) : "";
                 TOOLTIPS.add(new TranslationTextComponent(effect.getEffect().getDescriptionId()).append(new StringTextComponent(amp))
