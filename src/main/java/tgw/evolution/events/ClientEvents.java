@@ -63,7 +63,6 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.client.gui.screen.ModListScreen;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
-import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.ClientProxy;
 import tgw.evolution.Evolution;
@@ -260,7 +259,7 @@ public class ClientEvents {
             }
             EnumMap<ModConfig.Type, ModConfig> configs = CONFIGS.get(container);
             ModConfig clientConfig = configs.get(ModConfig.Type.CLIENT);
-            /* Optifine basically breaks Forge's client config, so it's simply not added */
+            // Optifine basically breaks Forge's client config, so it's simply not added
             if (OptiFineHelper.isLoaded() && "forge".equals(modId)) {
                 Evolution.LOGGER.info("Ignoring Forge's client config since OptiFine was detected");
                 clientConfig = null;
@@ -273,22 +272,14 @@ public class ClientEvents {
                                       modId,
                                       clientSpec != null,
                                       commonSpec != null);
-                ResourceLocation background = AbstractGui.BACKGROUND_LOCATION;
-                if (container.getModInfo() instanceof ModInfo) {
-                    String configBackground = (String) container.getModInfo().getModProperties().get("configuredBackground");
-                    if (configBackground != null) {
-                        background = new ResourceLocation(configBackground);
-                    }
-                }
                 String displayName = container.getModInfo().getDisplayName();
-                final ResourceLocation finalBackground = background;
                 container.registerExtensionPoint(ExtensionPoint.CONFIGGUIFACTORY,
                                                  () -> (mc, screen) -> new ScreenConfig(screen,
                                                                                         modId,
                                                                                         displayName,
                                                                                         clientSpec,
                                                                                         commonSpec,
-                                                                                        finalBackground));
+                                                                                        AbstractGui.BACKGROUND_LOCATION));
             }
         });
     }
