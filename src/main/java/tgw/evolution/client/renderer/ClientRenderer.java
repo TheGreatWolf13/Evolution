@@ -538,7 +538,7 @@ public class ClientRenderer {
             RenderSystem.lineWidth(Math.max(2.5F, this.mc.getWindow().getWidth() / 1_920.0F * 2.5F));
             RenderSystem.disableTexture();
             matrices.pushPose();
-            RenderSystem.scalef(1.0F, 1.0F, 0.999F);
+            RenderSystem.scalef(1.0F, 1.0F, 1.0F);
             double projX = camera.getPosition().x;
             double projY = camera.getPosition().y;
             double projZ = camera.getPosition().z;
