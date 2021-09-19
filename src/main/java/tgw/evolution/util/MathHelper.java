@@ -98,7 +98,7 @@ public final class MathHelper {
     }
 
     /**
-     * Checks whether or not two {@link ItemStack} are sufficiently equal.
+     * Checks whether two {@link ItemStack} are sufficiently equal.
      * This means that they are the same item.
      *
      * @return {@code true} if the {@link ItemStack}s are sufficiently equal, {@code false} otherwise.
@@ -111,7 +111,7 @@ public final class MathHelper {
     }
 
     /**
-     * Calculates the Arctangent of a vector given two components.
+     * Calculates the arc-tangent of a vector given two components.
      *
      * @param y The y component of the vector.
      * @param x The x component of the vector.
@@ -411,13 +411,13 @@ public final class MathHelper {
     }
 
     /**
-     * Calculates the shortest distance between two points in euclidian space.
+     * Calculates the shortest distance between two points in euclidean space.
      *
      * @param x  The x coordinate of the first point.
      * @param y  The y coordinate of the first point.
      * @param z  The z coordinate of the first point.
      * @param x0 The x coordinate of the second point.
-     * @param y0 The y coordiante of the second point.
+     * @param y0 The y coordinate of the second point.
      * @param z0 The z coordinate of the second point.
      * @return The shortest distance between the points as a {@code float} value.
      * The distance will never be negative.
@@ -760,7 +760,7 @@ public final class MathHelper {
      * @param axis      The desired {@link Axis} to offset.
      * @param hit       The position of the hit.
      * @param direction The {@link Direction} from where the hit came from.
-     * @return A hit position offset in the derired {@link Direction}
+     * @return A hit position offset in the desired {@link Direction}
      * if the {@link Direction} is in the desired {@link Axis}.
      * If it is not, the position will not change.
      */
@@ -824,7 +824,7 @@ public final class MathHelper {
     /**
      * Calculates if the {@link VoxelShape} is totally outside another one.
      *
-     * @param outside   The {@link VoxelShape} that should be totally ouside the reference.
+     * @param outside   The {@link VoxelShape} that should be totally outside the reference.
      * @param reference The reference {@link VoxelShape}.
      * @return {@code true} if the first {@link VoxelShape} is totally outside the reference one, {@code false} otherwise.
      */
@@ -1227,10 +1227,10 @@ public final class MathHelper {
      * Relativizes a value to be between {@code 0.0f} and {@code 1.0f} inside a scale.
      *
      * @param value The value to relativize.
-     * @param min   The mininum allowed value, representing the {@code 0.0f} in the scale.
+     * @param min   The minimum allowed value, representing the {@code 0.0f} in the scale.
      * @param max   The maximum allowed value, representing the {@code 1.0f} in the scale.
      * @return A value between {@code 0.0f} and {@code 1.0f},
-     * where {@code 0.0f} represents the mininum of the scale and {@code 1.0f} represents the maximum.
+     * where {@code 0.0f} represents the minimum of the scale and {@code 1.0f} represents the maximum.
      */
     public static float relativize(float value, float min, float max) {
         value = clamp(value, min, max);
@@ -1311,9 +1311,9 @@ public final class MathHelper {
      * Sets the rotation angles of a {@link ModelRenderer}.
      *
      * @param model The model to set the rotation angles.
-     * @param x     The rotation angle around the x axis.
-     * @param y     The rotation angle around the y axis.
-     * @param z     The rotation angle around the z axis.
+     * @param x     The rotation angle around the x-axis.
+     * @param y     The rotation angle around the y-axis.
+     * @param z     The rotation angle around the z-axis.
      */
     public static void setRotationAngle(@Nonnull ModelRenderer model, float x, float y, float z) {
         model.xRot = x;
@@ -1370,7 +1370,7 @@ public final class MathHelper {
     }
 
     /**
-     * Substracts one {@link VoxelShape} from the other.
+     * Subtracts one {@link VoxelShape} from the other.
      *
      * @param A The {@link VoxelShape} to subtract from
      * @param B The {@link VoxelShape} to subtract
