@@ -686,7 +686,7 @@ public class ClientRenderer {
                 background = 13;
             }
             int y = top;
-            if (saturation <= 0.0F && this.client.getTickCount() % (level * 3 + 1) == 0) {
+            if (saturation <= 0.0F && this.client.getTickCount() % Math.max(level * level, 1) == 0) {
                 y = top + this.rand.nextInt(3) - 1;
             }
             blit(matrices, x, y, 16 + background * 9, 27, 9, 9);
@@ -712,7 +712,7 @@ public class ClientRenderer {
                 icon += 36;
                 background = 13;
             }
-            if (this.client.getTickCount() % (level * 5 + 1) == 0) {
+            if (this.client.getTickCount() % Math.max(level * level, 1) == 0) {
                 int shake = this.rand.nextInt(3) - 1;
                 this.thirstShakeAligment[i] = (byte) shake;
             }
