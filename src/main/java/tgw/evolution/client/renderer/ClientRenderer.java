@@ -1331,14 +1331,14 @@ public class ClientRenderer {
             float finalX = x;
             float finalY = y;
             runnable = () -> {
-                this.mc.getTextureManager().bind(ContainerScreen.INVENTORY_LOCATION);
+                this.mc.getTextureManager().bind(EvolutionResources.GUI_INVENTORY);
                 RenderSystem.color4f(1.0F, 1.0F, 1.0F, alpha);
                 RenderSystem.enableBlend();
                 if (addingInstance.isAmbient()) {
-                    floatBlit(matrices, finalX, finalY, 165, 166, 24, 24, -80);
+                    floatBlit(matrices, finalX, finalY, 24, 198, 24, 24, -80);
                 }
                 else {
-                    floatBlit(matrices, finalX, finalY, 141, 166, 24, 24, -80);
+                    floatBlit(matrices, finalX, finalY, 0, 198, 24, 24, -80);
                 }
                 TextureAtlasSprite atlasSprite = potionSprite.get(addingEffect);
                 this.mc.getTextureManager().bind(atlasSprite.atlas().location());
@@ -1390,6 +1390,7 @@ public class ClientRenderer {
             int neutralCount = 0;
             int harmfulCount = 0;
             boolean isMoving = false;
+            List<Runnable> runnables = new ArrayList<>(effects.size());
             for (ClientEffectInstance effectInstance : effects) {
                 if (!effectInstance.isShowIcon()) {
                     continue;
@@ -1474,19 +1475,28 @@ public class ClientRenderer {
                     }
                     TextureAtlasSprite atlasSprite = potionSprite.get(effect);
                     this.mc.getTextureManager().bind(atlasSprite.atlas().location());
-                    RenderSystem.color4f(1.0F, 1.0F, 1.0F, alpha);
+                    RenderSystem.color4f(1.0f, 1.0f, 1.0f, alpha);
                     floatBlit(matrices, x + 3, y + 3, 0, 18, 18, atlasSprite);
                     if (effectInstance.getAmplifier() != 0) {
-                        RenderSystem.pushMatrix();
-                        RenderSystem.scalef(0.5f, 0.5f, 0.5f);
-                        this.mc.font.drawShadow(matrices,
-                                                MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(effectInstance) + 1),
-                                                (x + 3) * 2,
-                                                (y + 17) * 2,
-                                                0xff_ffff);
-                        RenderSystem.popMatrix();
+                        float finalX = x;
+                        float finalY = y;
+                        //noinspection ObjectAllocationInLoop
+                        runnables.add(() -> this.mc.font.drawShadow(matrices,
+                                                                    MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(effectInstance) +
+                                                                                              1),
+                                                                    (finalX + 3) * 2,
+                                                                    (finalY + 17) * 2,
+                                                                    0xff_ffff));
                     }
                 }
+            }
+            for (Runnable run : runnables) {
+                RenderSystem.pushMatrix();
+                RenderSystem.scalef(0.5f, 0.5f, 0.5f);
+                if (run != null) {
+                    run.run();
+                }
+                RenderSystem.popMatrix();
             }
             this.lastBeneficalCount = beneficalCount;
             this.lastNeutralCount = neutralCount;
