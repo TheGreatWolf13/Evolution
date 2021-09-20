@@ -167,7 +167,7 @@ public class ScreenSchematic extends Screen {
                                                                  185,
                                                                  40,
                                                                  20,
-                                                                 new StringTextComponent("0º"),
+                                                                 new StringTextComponent("0\u00B0"),
                                                                  button -> {
                                                                      this.tile.setRotation(Rotation.NONE);
                                                                      this.updateDirectionButtons();
@@ -176,20 +176,25 @@ public class ScreenSchematic extends Screen {
                                                                    185,
                                                                    40,
                                                                    20,
-                                                                   new StringTextComponent("90º"),
+                                                                   new StringTextComponent("90\u00B0"),
                                                                    button -> {
                                                                        this.tile.setRotation(Rotation.CLOCKWISE_90);
                                                                        this.updateDirectionButtons();
                                                                    }));
-        this.rotate180DegreesButton = this.addButton(new Button(this.width / 2 + 1 + 20, 185, 40, 20, new StringTextComponent("180º"), button -> {
-            this.tile.setRotation(Rotation.CLOCKWISE_180);
-            this.updateDirectionButtons();
-        }));
+        this.rotate180DegreesButton = this.addButton(new Button(this.width / 2 + 1 + 20,
+                                                                185,
+                                                                40,
+                                                                20,
+                                                                new StringTextComponent("180\u00B0"),
+                                                                button -> {
+                                                                    this.tile.setRotation(Rotation.CLOCKWISE_180);
+                                                                    this.updateDirectionButtons();
+                                                                }));
         this.rotate270DegressButton = this.addButton(new Button(this.width / 2 + 1 + 40 + 1 + 20,
                                                                 185,
                                                                 40,
                                                                 20,
-                                                                new StringTextComponent("270º"),
+                                                                new StringTextComponent("270\u00B0"),
                                                                 button -> {
                                                                     this.tile.setRotation(Rotation.COUNTERCLOCKWISE_90);
                                                                     this.updateDirectionButtons();
@@ -279,11 +284,11 @@ public class ScreenSchematic extends Screen {
     @Override
     public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(matrices);
-        SchematicMode structuremode = this.tile.getMode();
+        SchematicMode schematicMode = this.tile.getMode();
         drawCenteredString(matrices, this.font, this.title, this.width / 2, 10, 0xa0_a0a0);
         drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_NAME, this.width / 2 - 153, 30, 0xa0_a0a0);
         this.nameEdit.render(matrices, mouseX, mouseY, partialTicks);
-        if (structuremode == SchematicMode.LOAD || structuremode == SchematicMode.SAVE) {
+        if (schematicMode == SchematicMode.LOAD || schematicMode == SchematicMode.SAVE) {
             drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_POS, this.width / 2 - 153, 70, 0xa0_a0a0);
             this.posXEdit.render(matrices, mouseX, mouseY, partialTicks);
             this.posYEdit.render(matrices, mouseX, mouseY, partialTicks);
@@ -291,7 +296,7 @@ public class ScreenSchematic extends Screen {
             int textWidth = this.font.width(EvolutionTexts.GUI_SCHEMATIC_ENTITIES);
             drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_ENTITIES, this.width / 2 + 154 - textWidth, 150, 0xa0_a0a0);
         }
-        if (structuremode == SchematicMode.SAVE) {
+        if (schematicMode == SchematicMode.SAVE) {
             drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_SIZE, this.width / 2 - 153, 110, 0xa0_a0a0);
             this.sizeXEdit.render(matrices, mouseX, mouseY, partialTicks);
             this.sizeYEdit.render(matrices, mouseX, mouseY, partialTicks);
@@ -301,14 +306,14 @@ public class ScreenSchematic extends Screen {
             textWidth = this.font.width(EvolutionTexts.GUI_SCHEMATIC_SHOW_AIR);
             drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_SHOW_AIR, this.width / 2 + 154 - textWidth, 70, 0xa0_a0a0);
         }
-        if (structuremode == SchematicMode.LOAD) {
+        if (schematicMode == SchematicMode.LOAD) {
             drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_INTEGRITY, this.width / 2 - 153, 110, 0xa0_a0a0);
             this.integrityEdit.render(matrices, mouseX, mouseY, partialTicks);
             this.seedEdit.render(matrices, mouseX, mouseY, partialTicks);
             int textWidth = this.font.width(EvolutionTexts.GUI_SCHEMATIC_SHOW_BB);
             drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_SHOW_BB, this.width / 2 + 154 - textWidth, 70, 0xa0_a0a0);
         }
-        String modeInfo = "structure_block.mode_info." + structuremode.getSerializedName();
+        String modeInfo = "evolution.gui.schematic.modeInfo." + schematicMode.getSerializedName();
         drawString(matrices, this.font, I18n.get(modeInfo), this.width / 2 - 153, 174, 0xa0_a0a0);
         super.render(matrices, mouseX, mouseY, partialTicks);
     }
