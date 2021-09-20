@@ -4,7 +4,6 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.potion.EffectInstance;
 import net.minecraftforge.fml.network.PacketDistributor;
-import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCThirstData;
@@ -26,6 +25,9 @@ public class ThirstStats implements IThirst {
      * Bit 0: intoxicated;<br>
      * Bit 1: veryIntoxicated;<br>
      * Bit 2: extremelyIntoxicated;<br>
+     * Bit 3: dehydrated;<br>
+     * Bit 4: veryDehydrated;<br>
+     * Bit 5: extremelyDehydrated;<br>
      */
     private byte flags;
     private float hydrationExhaustion;
@@ -33,7 +35,6 @@ public class ThirstStats implements IThirst {
     private boolean needsUpdate;
     private float thirstExhaustion;
     private int thirstLevel = THIRST_CAPACITY;
-    private int timer;
 
     @Override
     public void addHydrationExhaustion(float exhaustion) {
@@ -75,7 +76,6 @@ public class ThirstStats implements IThirst {
         this.setHydrationLevel(nbt.getShort("HydrationLevel"));
         this.setThirstExhaustion(nbt.getFloat("ThirstExhaustion"));
         this.setHydrationExhaustion(nbt.getFloat("HydrationExhaustion"));
-        this.timer = nbt.getByte("Timer");
         this.flags = nbt.getByte("Flags");
     }
 
@@ -113,12 +113,24 @@ public class ThirstStats implements IThirst {
         }
     }
 
+    public boolean isDehydrated() {
+        return (this.flags & 8) != 0;
+    }
+
+    public boolean isExtremelyDehydrated() {
+        return (this.flags & 32) != 0;
+    }
+
     public boolean isExtremelyIntoxicated() {
         return (this.flags & 4) != 0;
     }
 
     public boolean isIntoxicated() {
         return (this.flags & 1) != 0;
+    }
+
+    public boolean isVeryDehydrated() {
+        return (this.flags & 16) != 0;
     }
 
     public boolean isVeryIntoxicated() {
@@ -132,17 +144,34 @@ public class ThirstStats implements IThirst {
         nbt.putShort("HydrationLevel", (short) this.hydrationLevel);
         nbt.putFloat("ThirstExhaustion", this.thirstExhaustion);
         nbt.putFloat("HydrationExhaustion", this.hydrationExhaustion);
-        nbt.putByte("Timer", (byte) this.timer);
         nbt.putByte("Flags", this.flags);
         return nbt;
     }
 
-    public void setExtremelyIntoxicated(boolean extremelyIntoxicated) {
-        if (extremelyIntoxicated) {
-            this.flags |= 1 << 2;
+    public void setDehydrated(boolean dehydrated) {
+        if (dehydrated) {
+            this.flags |= 8;
         }
         else {
-            this.flags &= ~(1 << 2);
+            this.flags &= ~8;
+        }
+    }
+
+    public void setExtremelyDehydrated(boolean extremelyDehydrated) {
+        if (extremelyDehydrated) {
+            this.flags |= 32;
+        }
+        else {
+            this.flags &= ~32;
+        }
+    }
+
+    public void setExtremelyIntoxicated(boolean extremelyIntoxicated) {
+        if (extremelyIntoxicated) {
+            this.flags |= 4;
+        }
+        else {
+            this.flags &= ~4;
         }
     }
 
@@ -183,12 +212,21 @@ public class ThirstStats implements IThirst {
         }
     }
 
-    public void setVeryIntoxicated(boolean veryIntoxicated) {
-        if (veryIntoxicated) {
-            this.flags |= 1 << 1;
+    public void setVeryDehydrated(boolean veryDehydrated) {
+        if (veryDehydrated) {
+            this.flags |= 16;
         }
         else {
-            this.flags &= ~(1 << 1);
+            this.flags &= ~16;
+        }
+    }
+
+    public void setVeryIntoxicated(boolean veryIntoxicated) {
+        if (veryIntoxicated) {
+            this.flags |= 2;
+        }
+        else {
+            this.flags &= ~2;
         }
     }
 
@@ -207,15 +245,26 @@ public class ThirstStats implements IThirst {
             }
             this.addThirstExhaustion(DAILY_CONSUMPTION / Time.DAY_IN_TICKS * (1.0f + sprintModifier + thirstEffectModifier + hydrationModifier));
             this.addHydrationExhaustion(0.9f);
-            if (this.thirstLevel <= 0) {
-                this.timer++;
-                if (this.timer >= 80) {
-                    player.hurt(EvolutionDamage.DEHYDRATION, 1.0F);
-                    this.timer = 0;
-                }
+            if (this.thirstLevel <= 0 && !this.isExtremelyDehydrated()) {
+                this.setDehydrated(true);
+                this.setVeryDehydrated(true);
+                this.setExtremelyDehydrated(true);
+                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.DEHYDRATION.get(), 2, false, false, true));
             }
-            else {
-                this.timer = 0;
+            else if (this.thirstLevel <= 0.1 * THIRST_CAPACITY && !this.isVeryDehydrated()) {
+                this.setDehydrated(true);
+                this.setVeryDehydrated(true);
+                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.DEHYDRATION.get(), 1, false, false, true));
+            }
+            else if (this.thirstLevel <= 0.25 * THIRST_CAPACITY && !this.isDehydrated()) {
+                this.setDehydrated(true);
+                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.DEHYDRATION.get(), 0, false, false, true));
+            }
+            else if (this.thirstLevel > 0.25 * THIRST_CAPACITY && this.isDehydrated()) {
+                this.setDehydrated(false);
+                this.setVeryDehydrated(false);
+                this.setExtremelyDehydrated(false);
+                player.removeEffect(EvolutionEffects.DEHYDRATION.get());
             }
             if (this.hydrationLevel >= HYDRATION_CAPACITY && !this.isExtremelyIntoxicated()) {
                 this.setExtremelyIntoxicated(true);
@@ -232,7 +281,7 @@ public class ThirstStats implements IThirst {
                 this.setIntoxicated(true);
                 player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.WATER_INTOXICATION.get(), 0, false, false, true));
             }
-            else if (this.isIntoxicated() && this.hydrationLevel <= 0) {
+            else if (this.hydrationLevel <= 0 && this.isIntoxicated()) {
                 this.setIntoxicated(false);
                 this.setVeryIntoxicated(false);
                 this.setExtremelyIntoxicated(false);
@@ -244,6 +293,9 @@ public class ThirstStats implements IThirst {
             this.setIntoxicated(false);
             this.setVeryIntoxicated(false);
             this.setExtremelyIntoxicated(false);
+            this.setDehydrated(false);
+            this.setVeryDehydrated(false);
+            this.setExtremelyDehydrated(false);
         }
         if (this.needsUpdate) {
             EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCThirstData(this));
