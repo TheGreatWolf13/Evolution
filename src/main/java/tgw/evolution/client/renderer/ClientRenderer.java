@@ -1355,7 +1355,6 @@ public class ClientRenderer {
                     RenderSystem.popMatrix();
                 }
             };
-            this.client.shouldPassEffectTick = true;
             if (this.client.effectToAddTicks == 20) {
                 movingInstance = null;
                 this.client.effectToAddTicks = 0;

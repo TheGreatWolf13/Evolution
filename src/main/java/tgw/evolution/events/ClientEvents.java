@@ -152,7 +152,6 @@ public class ClientEvents {
     @Nullable
     public Entity rightPointedEntity;
     public EntityRayTraceResult rightRayTrace;
-    public boolean shouldPassEffectTick;
     private Vector3d cameraPos = Vector3d.ZERO;
     private int currentShader;
     private DimensionOverworld dimension;
@@ -682,9 +681,8 @@ public class ClientEvents {
                         }
                     }
                 }
-                if (this.shouldPassEffectTick) {
+                if (!EFFECTS_TO_ADD.isEmpty()) {
                     this.effectToAddTicks++;
-                    this.shouldPassEffectTick = false;
                 }
                 //Proning
                 boolean pressed = ClientProxy.TOGGLE_PRONE.isDown();
