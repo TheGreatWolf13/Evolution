@@ -21,6 +21,6 @@ public class ItemClock extends ItemEv {
             FullDate date = new FullDate(world.getDayTime());
             player.displayClientMessage(date.getDisplayName(), true);
         }
-        return new ActionResult<>(ActionResultType.SUCCESS, stack);
+        return new ActionResult<>(ActionResultType.CONSUME, stack);
     }
 }

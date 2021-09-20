@@ -122,6 +122,6 @@ public class ItemJavelin extends ItemGenericTool implements IThrowable, ISpear, 
             return new ActionResult<>(ActionResultType.FAIL, stack);
         }
         player.startUsingItem(hand);
-        return new ActionResult<>(ActionResultType.SUCCESS, stack);
+        return new ActionResult<>(ActionResultType.CONSUME, stack);
     }
 }

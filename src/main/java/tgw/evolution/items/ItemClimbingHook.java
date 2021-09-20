@@ -69,6 +69,6 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
             return new ActionResult<>(ActionResultType.FAIL, stack);
         }
         player.startUsingItem(hand);
-        return new ActionResult<>(ActionResultType.SUCCESS, stack);
+        return new ActionResult<>(ActionResultType.CONSUME, stack);
     }
 }

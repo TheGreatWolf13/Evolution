@@ -36,6 +36,6 @@ public class ItemChunkStorageGetter extends ItemEv {
                                                                      " " +
                                                                      this.element.getName()), false);
         }
-        return new ActionResult<>(ActionResultType.SUCCESS, player.getItemInHand(hand));
+        return new ActionResult<>(ActionResultType.CONSUME, player.getItemInHand(hand));
     }
 }

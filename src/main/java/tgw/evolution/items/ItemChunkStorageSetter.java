@@ -74,6 +74,6 @@ public class ItemChunkStorageSetter extends ItemEv {
         if (!world.isClientSide) {
             this.addRemoveChunkStorage(world, player, 1);
         }
-        return new ActionResult<>(ActionResultType.SUCCESS, player.getItemInHand(hand));
+        return new ActionResult<>(ActionResultType.CONSUME, player.getItemInHand(hand));
     }
 }

@@ -93,7 +93,7 @@ public abstract class ItemGenericConsumable extends ItemEv implements IConsumabl
         if (this instanceof IDrink || this instanceof IFood || this instanceof INutrient) {
             ItemStack heldStack = player.getItemInHand(hand);
             player.startUsingItem(hand);
-            return new ActionResult<>(ActionResultType.SUCCESS, heldStack);
+            return new ActionResult<>(ActionResultType.CONSUME, heldStack);
         }
         return new ActionResult<>(ActionResultType.PASS, player.getItemInHand(hand));
     }

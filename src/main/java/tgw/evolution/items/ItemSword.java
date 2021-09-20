@@ -102,7 +102,7 @@ public class ItemSword extends ItemGenericTool implements IOffhandAttackable, IS
     public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack stack = player.getItemInHand(hand);
         player.startUsingItem(hand);
-        return new ActionResult<>(ActionResultType.SUCCESS, stack);
+        return new ActionResult<>(ActionResultType.CONSUME, stack);
     }
 
     @Override

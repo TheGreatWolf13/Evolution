@@ -116,7 +116,7 @@ public class ItemFireStarter extends ItemEv implements IDurability {
         BlockRayTraceResult rayTrace = MathHelper.rayTraceBlocksFromEyes(player, 1, distance, false);
         if (rayTrace.getType() == RayTraceResult.Type.BLOCK && canSetFire(world, rayTrace.getBlockPos().relative(rayTrace.getDirection()))) {
             player.startUsingItem(hand);
-            return new ActionResult<>(ActionResultType.SUCCESS, player.getItemInHand(hand));
+            return new ActionResult<>(ActionResultType.CONSUME, player.getItemInHand(hand));
         }
         return new ActionResult<>(ActionResultType.FAIL, player.getItemInHand(hand));
     }
