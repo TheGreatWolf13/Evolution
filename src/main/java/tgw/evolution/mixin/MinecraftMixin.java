@@ -232,7 +232,7 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
             this.setScreen(new ScreenCrash(report));
         }
         catch (Throwable t) {
-            LOGGER.error("An uncaught exception occured while displaying the crash screen, making normal report instead", t);
+            LOGGER.error("An uncaught exception occurred while displaying the crash screen, making normal report instead", t);
             crash(report);
             //noinspection ConstantConditions
             ServerLifecycleHooks.handleExit(report.getSaveFile() != null ? -1 : -2);
