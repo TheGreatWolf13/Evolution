@@ -1,6 +1,7 @@
 package tgw.evolution.init;
 
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
+import tgw.evolution.capabilities.health.CapabilityHealth;
 import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
 import tgw.evolution.capabilities.thirst.CapabilityThirst;
 
@@ -13,5 +14,6 @@ public final class EvolutionCapabilities {
         CapabilityChunkStorage.register();
         CapabilityExtendedInventory.register();
         CapabilityThirst.register();
+        CapabilityHealth.register();
     }
 }

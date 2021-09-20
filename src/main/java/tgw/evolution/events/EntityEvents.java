@@ -47,6 +47,9 @@ import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.IClimbable;
 import tgw.evolution.capabilities.SerializableCapabilityProvider;
+import tgw.evolution.capabilities.health.CapabilityHealth;
+import tgw.evolution.capabilities.health.HealthStats;
+import tgw.evolution.capabilities.health.IHealth;
 import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
 import tgw.evolution.capabilities.thirst.CapabilityThirst;
 import tgw.evolution.capabilities.thirst.IThirst;
@@ -92,8 +95,6 @@ public class EntityEvents {
         set.add(DamageSource.OUT_OF_WORLD);
     });
     private final Map<DamageSource, EquipmentSlotType> damageMultipliers = new WeakHashMap<>();
-    //TODO replace with capability
-    private final Map<UUID, Integer> playerTimeSinceLastHit = new HashMap<>();
 
     public static void calculateFallDamage(LivingEntity entity, double velocity, double distanceOfSlowDown, boolean isWater) {
         //Convert from m/t to m/s
@@ -173,6 +174,7 @@ public class EntityEvents {
             event.addCapability(Evolution.getResource("extended_inventory"),
                                 new SerializableCapabilityProvider<>(CapabilityExtendedInventory.INSTANCE, new ContainerExtendedHandler()));
             event.addCapability(Evolution.getResource("thirst"), new SerializableCapabilityProvider<>(CapabilityThirst.INSTANCE, new ThirstStats()));
+            event.addCapability(Evolution.getResource("health"), new SerializableCapabilityProvider<>(CapabilityHealth.INSTANCE, new HealthStats()));
         }
     }
 
@@ -622,41 +624,12 @@ public class EntityEvents {
             }
             //Handles Status Updates
             if (!player.level.isClientSide) {
-                //Handles Player health regeneration
-                if (player.level.getGameRules().getBoolean(GameRules.RULE_NATURAL_REGENERATION)) {
-                    UUID uuid = player.getUUID();
-                    if (player.hurtTime > 0) {
-                        this.playerTimeSinceLastHit.put(uuid, 0);
-                    }
-                    else {
-                        int time = this.playerTimeSinceLastHit.getOrDefault(uuid, 0) + 1;
-                        if (time == 100) {
-                            this.playerTimeSinceLastHit.put(uuid, 0);
-                            if (player.isHurt()) {
-                                float currentHealth = MathHelper.clampMin(player.getHealth(), 1);
-                                float healAmount = currentHealth / 100;
-                                player.setHealth(player.getHealth() + healAmount);
-                            }
-                        }
-                        else {
-                            this.playerTimeSinceLastHit.put(uuid, time);
-                        }
-                    }
-                }
-                if (player.isHurt() && player.hasEffect(Effects.REGENERATION)) {
-                    EffectInstance instance = player.getEffect(Effects.REGENERATION);
-                    int timer = 50 >> instance.getAmplifier();
-                    if (timer < 1) {
-                        timer = 1;
-                    }
-                    if (instance.getDuration() % timer == 0) {
-                        player.setHealth(player.getHealth() + 1);
-                    }
-                }
-                //Ticks Player Thirst system
+                //Ticks Player Health and Thirst system
                 if (!player.isCreative() && !player.isSpectator()) {
                     IThirst thirst = player.getCapability(CapabilityThirst.INSTANCE).orElseThrow(IllegalStateException::new);
                     thirst.tick((ServerPlayerEntity) player);
+                    IHealth health = player.getCapability(CapabilityHealth.INSTANCE).orElseThrow(IllegalStateException::new);
+                    health.tick((ServerPlayerEntity) player);
                 }
             }
         }
@@ -718,16 +691,23 @@ public class EntityEvents {
 
     @SubscribeEvent
     public void onPotionAdded(PotionEvent.PotionAddedEvent event) {
-        if (event.getEntityLiving() instanceof ServerPlayerEntity) {
-            ServerPlayerEntity player = (ServerPlayerEntity) event.getEntityLiving();
-            if (event.getOldPotionEffect() == null) {
+        LivingEntity entity = event.getEntityLiving();
+        EffectInstance oldInstance = event.getOldPotionEffect();
+        if (oldInstance != null) {
+            oldInstance.getEffect().removeAttributeModifiers(entity, entity.getAttributes(), oldInstance.getAmplifier());
+        }
+        EffectInstance newInstance = event.getPotionEffect();
+        newInstance.getEffect().addAttributeModifiers(entity, entity.getAttributes(), newInstance.getAmplifier());
+        if (entity instanceof ServerPlayerEntity) {
+            ServerPlayerEntity player = (ServerPlayerEntity) entity;
+            if (oldInstance == null) {
                 EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player),
-                                               new PacketSCAddEffect(event.getPotionEffect(), PacketSCAddEffect.Logic.ADD));
+                                               new PacketSCAddEffect(newInstance, PacketSCAddEffect.Logic.ADD));
             }
             else {
-                EffectInstance newEffect = new EffectInstance(event.getOldPotionEffect());
-                newEffect.update(event.getPotionEffect());
-                boolean isSame = event.getOldPotionEffect().getAmplifier() == newEffect.getAmplifier();
+                EffectInstance newEffect = new EffectInstance(oldInstance);
+                newEffect.update(newInstance);
+                boolean isSame = oldInstance.getAmplifier() == newEffect.getAmplifier();
                 if (isSame) {
                     EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player),
                                                    new PacketSCAddEffect(newEffect, PacketSCAddEffect.Logic.UPDATE));
