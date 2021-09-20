@@ -21,7 +21,7 @@ public class EffectWaterIntoxication extends Effect {
         if (amplifier > 0) {
             entity.hurt(EvolutionDamage.WATER_INTOXICATION, amplifier);
             if (!entity.hasEffect(Effects.CONFUSION) && random.nextFloat() < 0.15 * amplifier) {
-                entity.addEffect(new EffectInstance(Effects.CONFUSION, 400 * amplifier, amplifier, true, false, false));
+                entity.addEffect(new EffectInstance(Effects.CONFUSION, 400 * amplifier, 0, true, false, false));
             }
             if (!entity.hasEffect(Effects.WEAKNESS) && random.nextFloat() < 0.15 * amplifier) {
                 entity.addEffect(new EffectInstance(Effects.WEAKNESS, 400 * amplifier, amplifier, true, false, false));
