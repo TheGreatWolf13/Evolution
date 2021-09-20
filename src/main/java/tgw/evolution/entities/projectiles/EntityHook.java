@@ -138,7 +138,7 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
     }
 
     @Override
-    protected SoundEvent getHitEntitySound() {
+    protected SoundEvent getHitBlockSound() {
         return SoundEvents.TRIDENT_HIT_GROUND;
     }
 

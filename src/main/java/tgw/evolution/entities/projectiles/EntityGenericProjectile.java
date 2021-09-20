@@ -19,13 +19,11 @@ import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.network.play.server.SChangeGameStatePacket;
 import net.minecraft.particles.ParticleTypes;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
@@ -58,7 +56,6 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
     public int timeInGround;
     private float damage = 2.0f;
     private List<Entity> hitEntities;
-    private SoundEvent hitSound = this.getHitEntitySound();
     @Nullable
     private BlockState inBlockState;
     private double mass = 1;
@@ -83,20 +80,19 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
 
     @Override
     public void addAdditionalSaveData(CompoundNBT compound) {
-        compound.putShort("life", (short) this.ticksInGround);
+        compound.putShort("TicksInGround", (short) this.ticksInGround);
         if (this.inBlockState != null) {
-            compound.put("inBlockState", NBTUtil.writeBlockState(this.inBlockState));
+            compound.put("BlockStateIn", NBTUtil.writeBlockState(this.inBlockState));
         }
-        compound.putByte("shake", this.arrowShake);
-        compound.putBoolean("inGround", this.inGround);
-        compound.putByte("pickup", (byte) this.pickupStatus.ordinal());
-        compound.putDouble("damage", this.damage);
-        compound.putDouble("mass", this.mass);
+        compound.putByte("Shake", this.arrowShake);
+        compound.putBoolean("InGround", this.inGround);
+        compound.putByte("Pickup", (byte) this.pickupStatus.ordinal());
+        compound.putDouble("Damage", this.damage);
+        compound.putDouble("Mass", this.mass);
         compound.putByte("PierceLevel", this.getPierceLevel());
         if (this.shootingEntity != null) {
             compound.putUUID("OwnerUUID", this.shootingEntity);
         }
-        compound.putString("SoundEvent", Registry.SOUND_EVENT.getKey(this.hitSound).toString());
     }
 
     public void applyDamageActual(ServerPlayerEntity shooter, float damage, EvolutionDamage.Type type, LivingEntity entity) {
@@ -133,7 +129,7 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
         return 0.0F;
     }
 
-    protected SoundEvent getHitEntitySound() {
+    protected SoundEvent getHitBlockSound() {
         return SoundEvents.ARROW_HIT;
     }
 
@@ -233,7 +229,7 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
                     this.hitEntities.add(livingHit);
                 }
             }
-            this.playSound(this.hitSound, 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
+            this.playSound(this.getHitBlockSound(), 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
             if (this.getPierceLevel() <= 0 && !(rayTracedEntity instanceof EndermanEntity)) {
                 this.remove();
             }
@@ -266,11 +262,10 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
             this.setDeltaMovement(vec3d);
             Vector3d vec3d1 = vec3d.normalize().scale(0.05);
             this.setPosRaw(this.getX() - vec3d1.x, this.getY() - vec3d1.y, this.getZ() - vec3d1.z);
-            this.playSound(this.hitSound, 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
+            this.playSound(this.getHitBlockSound(), 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
             this.inGround = true;
             this.arrowShake = 7;
             this.setPierceLevel((byte) 0);
-            this.hitSound = SoundEvents.ARROW_HIT;
             this.resetHitEntities();
             this.onProjectileCollision(this.level, stateAtPos, blockRayTrace);
         }
@@ -314,22 +309,18 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
 
     @Override
     public void readAdditionalSaveData(CompoundNBT compound) {
-        this.ticksInGround = compound.getShort("life");
-        if (compound.contains("inBlockState", NBTTypes.COMPOUND_NBT)) {
-            this.inBlockState = NBTUtil.readBlockState(compound.getCompound("inBlockState"));
+        this.ticksInGround = compound.getShort("TicksInGround");
+        if (compound.contains("BlockStateIn", NBTTypes.COMPOUND_NBT)) {
+            this.inBlockState = NBTUtil.readBlockState(compound.getCompound("BlockStateIn"));
         }
-        this.arrowShake = compound.getByte("shake");
-        this.inGround = compound.getBoolean("inGround");
-        this.damage = compound.getFloat("damage");
-        this.mass = compound.getDouble("mass");
-        this.pickupStatus = PickupStatus.getByOrdinal(compound.getByte("pickup"));
+        this.arrowShake = compound.getByte("Shake");
+        this.inGround = compound.getBoolean("InGround");
+        this.damage = compound.getFloat("Damage");
+        this.mass = compound.getDouble("Mass");
+        this.pickupStatus = PickupStatus.getByOrdinal(compound.getByte("Pickup"));
         this.setPierceLevel(compound.getByte("PierceLevel"));
         if (compound.hasUUID("OwnerUUID")) {
             this.shootingEntity = compound.getUUID("OwnerUUID");
-        }
-        if (compound.contains("SoundEvent", NBTTypes.STRING)) {
-            this.hitSound = Registry.SOUND_EVENT.getOptional(new ResourceLocation(compound.getString("SoundEvent")))
-                                                .orElseGet(this::getHitEntitySound);
         }
     }
 
@@ -353,10 +344,6 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
 
     public void setDamage(float damage) {
         this.damage = damage;
-    }
-
-    public void setHitSound(SoundEvent soundIn) {
-        this.hitSound = soundIn;
     }
 
     public void setPierceLevel(byte level) {
@@ -385,6 +372,7 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
                                                .add(this.random.nextGaussian() * 0.007_5F * inaccuracy,
                                                     this.random.nextGaussian() * 0.007_5F * inaccuracy,
                                                     this.random.nextGaussian() * 0.007_5F * inaccuracy)
+                                               .normalize()
                                                .scale(velocity);
         this.setDeltaMovement(motion);
         float horizontalLength = MathHelper.sqrt(getHorizontalDistanceSqr(motion));

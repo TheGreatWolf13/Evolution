@@ -66,7 +66,7 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     }
 
     @Override
-    protected SoundEvent getHitEntitySound() {
+    protected SoundEvent getHitBlockSound() {
         return EvolutionSounds.JAVELIN_HIT_BLOCK.get();
     }
 
