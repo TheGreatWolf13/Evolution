@@ -57,18 +57,18 @@
       "evolution:events/stone_collapse_2"
     ]
   },
-  "sword_sheath": {
+  "sword_sheathe": {
     "category": "player",
-    "subtitle": "evolution.subtitle.sword_sheath",
+    "subtitle": "evolution.subtitle.sword_sheathe",
     "sounds": [
-      "evolution:sword_sheath"
+      "evolution:sword_sheathe"
     ]
   },
-  "sword_unsheath": {
+  "sword_unsheathe": {
     "category": "player",
-    "subtitle": "evolution.subtitle.sword_unsheath",
+    "subtitle": "evolution.subtitle.sword_unsheathe",
     "sounds": [
-      "evolution:sword_unsheath"
+      "evolution:sword_unsheathe"
     ]
   },
   "tree_falling": {
