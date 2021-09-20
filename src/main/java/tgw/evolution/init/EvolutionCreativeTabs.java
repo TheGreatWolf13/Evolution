@@ -5,6 +5,13 @@ import net.minecraft.item.ItemStack;
 
 public final class EvolutionCreativeTabs {
 
+    public static final ItemGroup DEV = new ItemGroup("evolution.dev") {
+        @Override
+        public ItemStack makeIcon() {
+            return new ItemStack(EvolutionItems.debug_item.get());
+        }
+    };
+
     public static final ItemGroup MISC = new ItemGroup("evolution.misc") {
         @Override
         public ItemStack makeIcon() {

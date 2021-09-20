@@ -31,10 +31,10 @@ public final class EvolutionItems {
 
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Evolution.MODID);
     //Dev
-    public static final RegistryObject<Item> dev_drink = ITEMS.register("dev_drink", () -> new ItemDevDrink(propMisc()));
+    public static final RegistryObject<Item> dev_drink = ITEMS.register("dev_drink", () -> new ItemDevDrink(propDev()));
     public static final RegistryObject<Item> chessboard = ITEMS.register("mbe15_item_chessboard_registry_name", ItemChessboard::new);
-    public static final RegistryObject<Item> debug_item = ITEMS.register("debug_item", EvolutionItems::item);
-    public static final RegistryObject<Item> placeholder_block = ITEMS.register("placeholder_block", () -> itemBlock(PLACEHOLDER_BLOCK));
+    public static final RegistryObject<Item> debug_item = ITEMS.register("debug_item", () -> item(propDev()));
+    public static final RegistryObject<Item> placeholder_block = ITEMS.register("placeholder_block", () -> itemBlock(PLACEHOLDER_BLOCK, propDev()));
     //Stick
     public static final RegistryObject<Item> stick = ITEMS.register("stick", () -> new ItemStick(STICK.get(), propTreesAndWood()));
     //Stone
@@ -304,44 +304,44 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> sapling_willow = ITEMS.register("sapling_willow", () -> woodBlock(SAPLING_WILLOW));
     //Debug
     public static final RegistryObject<Item> nitrogen_setter = ITEMS.register("nitrogen_setter",
-                                                                              () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.NITROGEN));
+                                                                              () -> new ItemChunkStorageSetter(propDev(), EnumStorage.NITROGEN));
     public static final RegistryObject<Item> nitrogen_getter = ITEMS.register("nitrogen_getter",
-                                                                              () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.NITROGEN));
+                                                                              () -> new ItemChunkStorageGetter(propDev(), EnumStorage.NITROGEN));
     public static final RegistryObject<Item> phosphorus_setter = ITEMS.register("phosphorus_setter",
-                                                                                () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.PHOSPHORUS));
+                                                                                () -> new ItemChunkStorageSetter(propDev(), EnumStorage.PHOSPHORUS));
     public static final RegistryObject<Item> phosphorus_getter = ITEMS.register("phosphorus_getter",
-                                                                                () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.PHOSPHORUS));
+                                                                                () -> new ItemChunkStorageGetter(propDev(), EnumStorage.PHOSPHORUS));
     public static final RegistryObject<Item> potassium_setter = ITEMS.register("potassium_setter",
-                                                                               () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.POTASSIUM));
+                                                                               () -> new ItemChunkStorageSetter(propDev(), EnumStorage.POTASSIUM));
     public static final RegistryObject<Item> potassium_getter = ITEMS.register("potassium_getter",
-                                                                               () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.POTASSIUM));
+                                                                               () -> new ItemChunkStorageGetter(propDev(), EnumStorage.POTASSIUM));
     public static final RegistryObject<Item> water_setter = ITEMS.register("water_setter",
-                                                                           () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.WATER));
+                                                                           () -> new ItemChunkStorageSetter(propDev(), EnumStorage.WATER));
     public static final RegistryObject<Item> water_getter = ITEMS.register("water_getter",
-                                                                           () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.WATER));
+                                                                           () -> new ItemChunkStorageGetter(propDev(), EnumStorage.WATER));
     public static final RegistryObject<Item> carbon_dioxide_setter = ITEMS.register("carbon_dioxide_setter",
-                                                                                    () -> new ItemChunkStorageSetter(propMisc(),
+                                                                                    () -> new ItemChunkStorageSetter(propDev(),
                                                                                                                      EnumStorage.CARBON_DIOXIDE));
     public static final RegistryObject<Item> carbon_dioxide_getter = ITEMS.register("carbon_dioxide_getter",
-                                                                                    () -> new ItemChunkStorageGetter(propMisc(),
+                                                                                    () -> new ItemChunkStorageGetter(propDev(),
                                                                                                                      EnumStorage.CARBON_DIOXIDE));
     public static final RegistryObject<Item> oxygen_setter = ITEMS.register("oxygen_setter",
-                                                                            () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.OXYGEN));
+                                                                            () -> new ItemChunkStorageSetter(propDev(), EnumStorage.OXYGEN));
     public static final RegistryObject<Item> oxygen_getter = ITEMS.register("oxygen_getter",
-                                                                            () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.OXYGEN));
+                                                                            () -> new ItemChunkStorageGetter(propDev(), EnumStorage.OXYGEN));
     public static final RegistryObject<Item> gas_nitrogen_setter = ITEMS.register("gas_nitrogen_setter",
-                                                                                  () -> new ItemChunkStorageSetter(propMisc(),
+                                                                                  () -> new ItemChunkStorageSetter(propDev(),
                                                                                                                    EnumStorage.GAS_NITROGEN));
     public static final RegistryObject<Item> gas_nitrogen_getter = ITEMS.register("gas_nitrogen_getter",
-                                                                                  () -> new ItemChunkStorageGetter(propMisc(),
+                                                                                  () -> new ItemChunkStorageGetter(propDev(),
                                                                                                                    EnumStorage.GAS_NITROGEN));
     public static final RegistryObject<Item> organic_setter = ITEMS.register("organic_setter",
-                                                                             () -> new ItemChunkStorageSetter(propMisc(), EnumStorage.ORGANIC));
+                                                                             () -> new ItemChunkStorageSetter(propDev(), EnumStorage.ORGANIC));
     public static final RegistryObject<Item> organic_getter = ITEMS.register("organic_getter",
-                                                                             () -> new ItemChunkStorageGetter(propMisc(), EnumStorage.ORGANIC));
+                                                                             () -> new ItemChunkStorageGetter(propDev(), EnumStorage.ORGANIC));
     public static final RegistryObject<Item> clock = ITEMS.register("clock", () -> new ItemClock(propMisc()));
-    public static final RegistryObject<Item> puzzle = ITEMS.register("puzzle", () -> itemBlock(PUZZLE));
-    public static final RegistryObject<Item> schematic_block = ITEMS.register("schematic_block", () -> itemBlock(SCHEMATIC_BLOCK));
+    public static final RegistryObject<Item> puzzle = ITEMS.register("puzzle", () -> itemBlock(PUZZLE, propDev()));
+    public static final RegistryObject<Item> schematic_block = ITEMS.register("schematic_block", () -> itemBlock(SCHEMATIC_BLOCK, propDev()));
     //Vegetation
     public static final RegistryObject<Item> grass = ITEMS.register("grass", () -> itemBlock(GRASS));
     public static final RegistryObject<Item> tallgrass = ITEMS.register("tallgrass", () -> itemBlock(TALLGRASS));
@@ -497,9 +497,9 @@ public final class EvolutionItems {
     //Metal Blocks
     public static final RegistryObject<Item> block_copper = ITEMS.register("block_copper", () -> new ItemBlockMetal(BLOCK_COPPER.get(), propMisc()));
     //Metal Ingots
-    public static final RegistryObject<Item> ingot_copper = ITEMS.register("ingot_copper", EvolutionItems::item);
+    public static final RegistryObject<Item> ingot_copper = ITEMS.register("ingot_copper", () -> item(propMisc()));
     //Metal Nuggets
-    public static final RegistryObject<Item> nugget_copper = ITEMS.register("nugget_copper", EvolutionItems::item);
+    public static final RegistryObject<Item> nugget_copper = ITEMS.register("nugget_copper", () -> item(propMisc()));
     //Shovel Heads
     public static final RegistryObject<Item> shovel_head_andesite = ITEMS.register("shovel_head_andesite", EvolutionItems::stoneHeads);
     public static final RegistryObject<Item> shovel_head_basalt = ITEMS.register("shovel_head_basalt", EvolutionItems::stoneHeads);
@@ -620,7 +620,7 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> brick_clay = ITEMS.register("brick_clay", () -> new ItemClayMolded(BRICK_CLAY));
     public static final RegistryObject<Item> crucible_clay = ITEMS.register("crucible_clay", () -> new ItemClayMolded(CRUCIBLE_CLAY, true));
 
-    public static final RegistryObject<Item> straw = ITEMS.register("straw", EvolutionItems::item);
+    public static final RegistryObject<Item> straw = ITEMS.register("straw", () -> item(propMisc()));
     public static final RegistryObject<Item> fire_starter = ITEMS.register("fire_starter", ItemFireStarter::new);
     //Hoe Heads
     public static final RegistryObject<Item> hoe_head_andesite = ITEMS.register("hoe_head_andesite", EvolutionItems::stoneHeads);
@@ -665,7 +665,7 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> knife_blade_shale = ITEMS.register("knife_blade_shale", EvolutionItems::stoneHeads);
     public static final RegistryObject<Item> knife_blade_slate = ITEMS.register("knife_blade_slate", EvolutionItems::stoneHeads);
     //Rope
-    public static final RegistryObject<Item> rope = ITEMS.register("rope", EvolutionItems::item);
+    public static final RegistryObject<Item> rope = ITEMS.register("rope", () -> item(propMisc()));
     public static final RegistryObject<Item> climbing_stake = ITEMS.register("climbing_stake", () -> itemBlock(CLIMBING_STAKE));
     public static final RegistryObject<Item> climbing_hook = ITEMS.register("climbing_hook", ItemClimbingHook::new);
     //Hammer
@@ -740,9 +740,9 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> sword_dev = ITEMS.register("sword_dev",
                                                                         () -> new ItemSword(MathHelper.attackSpeed(0.7f),
                                                                                             EvolutionToolMaterials.COPPER,
-                                                                                            propMisc(),
+                                                                                            propDev(),
                                                                                             EvolutionToolMaterials.COPPER.getSwordMass()));
-    public static final RegistryObject<Item> shield_dev = ITEMS.register("shield_dev", () -> new ItemShield(propMisc().durability(400)));
+    public static final RegistryObject<Item> shield_dev = ITEMS.register("shield_dev", () -> new ItemShield(propDev().durability(400)));
 
     private EvolutionItems() {
     }
@@ -769,16 +769,20 @@ public final class EvolutionItems {
         return new ItemHammer(tier, MathHelper.attackSpeed(1.25F), propStoneTool(), tier.getHammerMass());
     }
 
-    private static Item item() {
-        return new ItemEv(propMisc());
+    private static Item item(Item.Properties prop) {
+        return new ItemEv(prop);
     }
 
     private static Item itemBlock(RegistryObject<Block> block) {
         return new ItemBlock(block.get(), propMisc());
     }
 
+    private static Item itemBlock(RegistryObject<Block> block, Item.Properties prop) {
+        return new ItemBlock(block.get(), prop);
+    }
+
     private static ItemLog itemLog(WoodVariant variant, RegistryObject<BlockLog> block) {
-        return new ItemLog(variant, block.get(), propTreesAndWood().stacksTo(16));
+        return new ItemLog(variant, block.get(), propTreesAndWood());
     }
 
     private static Item itemRock(RegistryObject<Block> block, RockVariant name) {
@@ -796,6 +800,10 @@ public final class EvolutionItems {
 
     private static Item pickaxe(EvolutionToolMaterials tier) {
         return new ItemPickaxe(tier, MathHelper.attackSpeed(0.85F), propMisc(), tier.getPickaxeMass());
+    }
+
+    public static Item.Properties propDev() {
+        return new Item.Properties().tab(EvolutionCreativeTabs.DEV);
     }
 
     public static Item.Properties propEgg() {
