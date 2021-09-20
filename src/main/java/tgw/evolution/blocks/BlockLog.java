@@ -9,7 +9,6 @@ import net.minecraft.state.StateContainer.Builder;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.SoundEvent;
-import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
@@ -50,7 +49,7 @@ public class BlockLog extends BlockXYZAxis {
 
     @Override
     public SoundEvent breakSound() {
-        return SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR;
+        return EvolutionSounds.WOOD_BREAK.get();
     }
 
     @Override

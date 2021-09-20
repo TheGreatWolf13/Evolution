@@ -1,5 +1,6 @@
 package tgw.evolution.init;
 
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -31,12 +32,15 @@ public final class EvolutionSounds {
                                                                                  () -> new SoundEvent(Evolution.getResource("stone_break")));
     public static final RegistryObject<SoundEvent> STONE_COLLAPSE = SOUNDS.register("stone_collapse",
                                                                                     () -> new SoundEvent(Evolution.getResource("stone_collapse")));
-    public static final RegistryObject<SoundEvent> SWORD_SHEATH = SOUNDS.register("sword_sheath",
-                                                                                  () -> new SoundEvent(Evolution.getResource("sword_sheath")));
-    public static final RegistryObject<SoundEvent> SWORD_UNSHEATH = SOUNDS.register("sword_unsheath",
-                                                                                    () -> new SoundEvent(Evolution.getResource("sword_unsheath")));
+    public static final RegistryObject<SoundEvent> SWORD_SHEATHE = SOUNDS.register("sword_sheathe",
+                                                                                   () -> new SoundEvent(Evolution.getResource("sword_sheathe")));
+    public static final RegistryObject<SoundEvent> SWORD_UNSHEATHE = SOUNDS.register("sword_unsheathe",
+                                                                                     () -> new SoundEvent(Evolution.getResource("sword_unsheathe")));
     public static final RegistryObject<SoundEvent> TREE_FALLING = SOUNDS.register("tree_falling",
                                                                                   () -> new SoundEvent(Evolution.getResource("tree_falling")));
+    public static final RegistryObject<SoundEvent> WOOD_BREAK = SOUNDS.register("wood_break",
+                                                                                () -> new SoundEvent(new ResourceLocation(
+                                                                                        "entity.zombie.break_wooden_door")));
     public static final RegistryObject<SoundEvent> WOOD_COLLAPSE = SOUNDS.register("wood_collapse",
                                                                                    () -> new SoundEvent(Evolution.getResource("wood_collapse")));
 

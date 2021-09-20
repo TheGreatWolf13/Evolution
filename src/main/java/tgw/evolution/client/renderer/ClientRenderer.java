@@ -1764,9 +1764,13 @@ public class ClientRenderer {
                     this.currentMainhandItem = mainhandStack;
                     if (this.currentMainhandItem.getItem() instanceof ItemSword) {
                         this.mc.getSoundManager()
-                               .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATH.get(), SoundCategory.PLAYERS, 0.8f, 1.0f));
+                               .play(new SoundEntityEmitted(this.mc.player,
+                                                            EvolutionSounds.SWORD_UNSHEATHE.get(),
+                                                            SoundCategory.PLAYERS,
+                                                            0.8f,
+                                                            1.0f));
                         EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlaySoundEntityEmitted(this.mc.player,
-                                                                                                  EvolutionSounds.SWORD_UNSHEATH.get(),
+                                                                                                  EvolutionSounds.SWORD_UNSHEATHE.get(),
                                                                                                   SoundCategory.PLAYERS,
                                                                                                   0.8f,
                                                                                                   1.0f));
@@ -1783,9 +1787,13 @@ public class ClientRenderer {
                     this.currentOffhandItem = offhandStack;
                     if (this.currentOffhandItem.getItem() instanceof ItemSword) {
                         this.mc.getSoundManager()
-                               .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATH.get(), SoundCategory.PLAYERS, 0.8f, 1.0f));
+                               .play(new SoundEntityEmitted(this.mc.player,
+                                                            EvolutionSounds.SWORD_UNSHEATHE.get(),
+                                                            SoundCategory.PLAYERS,
+                                                            0.8f,
+                                                            1.0f));
                         EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlaySoundEntityEmitted(this.mc.player,
-                                                                                                  EvolutionSounds.SWORD_UNSHEATH.get(),
+                                                                                                  EvolutionSounds.SWORD_UNSHEATHE.get(),
                                                                                                   SoundCategory.PLAYERS,
                                                                                                   0.8f,
                                                                                                   1.0f));

@@ -1398,9 +1398,9 @@ public class ClientEvents {
         if (!ItemStack.matches(beltStack, oldStack)) {
             if (beltStack.getItem() instanceof ItemSword) {
                 this.mc.getSoundManager()
-                       .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATH.get(), SoundCategory.PLAYERS, 0.8f, 1.0f));
+                       .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATHE.get(), SoundCategory.PLAYERS, 0.8f, 1.0f));
                 EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlaySoundEntityEmitted(this.mc.player,
-                                                                                          EvolutionSounds.SWORD_SHEATH.get(),
+                                                                                          EvolutionSounds.SWORD_SHEATHE.get(),
                                                                                           SoundCategory.PLAYERS,
                                                                                           0.8f,
                                                                                           1.0f));
