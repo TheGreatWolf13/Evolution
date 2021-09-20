@@ -7,6 +7,8 @@ import javax.annotation.Nullable;
 
 public interface IEntityPatch {
 
+    int getFireDamageImmunity();
+
     @Nullable
     default HitboxEntity<? extends Entity> getHitboxes() {
         return null;
@@ -19,4 +21,6 @@ public interface IEntityPatch {
     default boolean hasHitboxes() {
         return false;
     }
+
+    void setFireDamageImmunity(int immunity);
 }

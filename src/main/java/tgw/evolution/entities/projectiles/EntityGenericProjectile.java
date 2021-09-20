@@ -1,7 +1,7 @@
 package tgw.evolution.entities.projectiles;
 
-import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import net.minecraft.block.BlockState;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.*;
@@ -41,12 +41,12 @@ import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.damage.DamageSourceEv;
 
 import javax.annotation.Nullable;
-import java.util.List;
 import java.util.UUID;
 
 public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<T>> extends Entity implements IEntityAdditionalSpawnData,
                                                                                                               IEvolutionEntity<T> {
     private static final DataParameter<Byte> PIERCE_LEVEL = EntityDataManager.defineId(EntityGenericProjectile.class, DataSerializers.BYTE);
+    protected final IntSet hitEntities = new IntOpenHashSet();
     public byte arrowShake;
     public boolean inGround;
     public PickupStatus pickupStatus = PickupStatus.ALLOWED;
@@ -55,7 +55,6 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
     public int ticksInAir;
     public int timeInGround;
     private float damage = 2.0f;
-    private List<Entity> hitEntities;
     @Nullable
     private BlockState inBlockState;
     private double mass = 1;
@@ -184,9 +183,6 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
             if (this.piercedEntities == null) {
                 this.piercedEntities = new IntOpenHashSet(5);
             }
-            if (this.hitEntities == null) {
-                this.hitEntities = Lists.newArrayListWithCapacity(5);
-            }
             if (this.piercedEntities.size() >= this.getPierceLevel() + 1) {
                 this.remove();
                 return;
@@ -226,7 +222,7 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
                     ((ServerPlayerEntity) shooter).connection.send(new SChangeGameStatePacket(SChangeGameStatePacket.ARROW_HIT_PLAYER, 0.0F));
                 }
                 if (!rayTracedEntity.isAlive() && this.hitEntities != null) {
-                    this.hitEntities.add(livingHit);
+                    this.hitEntities.add(livingHit.getId());
                 }
             }
             this.playSound(this.getHitBlockSound(), 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));

@@ -8,6 +8,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.particle.ParticleManager;
+import net.minecraft.entity.Entity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particles.ParticleTypes;
@@ -28,7 +29,9 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
+import tgw.evolution.entities.IEntityPatch;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.util.BlockFlags;
 import tgw.evolution.util.MathHelper;
@@ -79,33 +82,33 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     public static void init() {
-        BlockFire fireblock = EvolutionBlocks.FIRE.get();
+        BlockFire fire = EvolutionBlocks.FIRE.get();
         for (WoodVariant variant : WoodVariant.values()) {
-            fireblock.setFireInfo(variant.getPlanks(), 5, 20);
-            fireblock.setFireInfo(variant.getLog(), 5, 5);
-            fireblock.setFireInfo(variant.getChoppingBlock(), 5, 5);
-            fireblock.setFireInfo(variant.getPile(), 5, 5);
-            fireblock.setFireInfo(variant.getLeaves(), 30, 60);
+            fire.setFireInfo(variant.getPlanks(), 5, 20);
+            fire.setFireInfo(variant.getLog(), 5, 5);
+            fire.setFireInfo(variant.getChoppingBlock(), 5, 5);
+            fire.setFireInfo(variant.getPile(), 5, 5);
+            fire.setFireInfo(variant.getLeaves(), 30, 60);
         }
-        //        fireblock.setFireInfo(Blocks.OAK_SLAB, 5, 20);
-        //        fireblock.setFireInfo(Blocks.OAK_FENCE_GATE, 5, 20);
-        //        fireblock.setFireInfo(Blocks.OAK_FENCE, 5, 20);
-        //        fireblock.setFireInfo(Blocks.OAK_STAIRS, 5, 20);
-        //        fireblock.setFireInfo(Blocks.BOOKSHELF, 30, 20);
-        //        fireblock.setFireInfo(Blocks.TNT, 15, 100);
-        fireblock.setFireInfo(EvolutionBlocks.GRASS.get(), 60, 100);
-        fireblock.setFireInfo(EvolutionBlocks.TALLGRASS.get(), 60, 100);
-        //        fireblock.setFireInfo(Blocks.WHITE_WOOL, 30, 60);
-        //        fireblock.setFireInfo(Blocks.VINE, 15, 100);
-        //        fireblock.setFireInfo(Blocks.COAL_BLOCK, 5, 5);
-        //        fireblock.setFireInfo(Blocks.HAY_BLOCK, 60, 20);
-        //        fireblock.setFireInfo(Blocks.WHITE_CARPET, 60, 20);
-        //        fireblock.setFireInfo(Blocks.DRIED_KELP_BLOCK, 30, 60);
-        //        fireblock.setFireInfo(Blocks.BAMBOO, 60, 60);
-        //        fireblock.setFireInfo(Blocks.SCAFFOLDING, 60, 60);
-        //        fireblock.setFireInfo(Blocks.LECTERN, 30, 20);
-        //        fireblock.setFireInfo(Blocks.COMPOSTER, 5, 20);
-        //        fireblock.setFireInfo(Blocks.SWEET_BERRY_BUSH, 60, 100);
+        //        fire.setFireInfo(Blocks.OAK_SLAB, 5, 20);
+        //        fire.setFireInfo(Blocks.OAK_FENCE_GATE, 5, 20);
+        //        fire.setFireInfo(Blocks.OAK_FENCE, 5, 20);
+        //        fire.setFireInfo(Blocks.OAK_STAIRS, 5, 20);
+        //        fire.setFireInfo(Blocks.BOOKSHELF, 30, 20);
+        //        fire.setFireInfo(Blocks.TNT, 15, 100);
+        fire.setFireInfo(EvolutionBlocks.GRASS.get(), 60, 100);
+        fire.setFireInfo(EvolutionBlocks.TALLGRASS.get(), 60, 100);
+        //        fire.setFireInfo(Blocks.WHITE_WOOL, 30, 60);
+        //        fire.setFireInfo(Blocks.VINE, 15, 100);
+        //        fire.setFireInfo(Blocks.COAL_BLOCK, 5, 5);
+        //        fire.setFireInfo(Blocks.HAY_BLOCK, 60, 20);
+        //        fire.setFireInfo(Blocks.WHITE_CARPET, 60, 20);
+        //        fire.setFireInfo(Blocks.DRIED_KELP_BLOCK, 30, 60);
+        //        fire.setFireInfo(Blocks.BAMBOO, 60, 60);
+        //        fire.setFireInfo(Blocks.SCAFFOLDING, 60, 60);
+        //        fire.setFireInfo(Blocks.LECTERN, 30, 20);
+        //        fire.setFireInfo(Blocks.COMPOSTER, 5, 20);
+        //        fire.setFireInfo(Blocks.SWEET_BERRY_BUSH, 60, 100);
     }
 
     @Override
@@ -232,6 +235,21 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     @Override
     protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
         builder.add(AGE_0_15, NORTH, EAST, SOUTH, WEST, UP);
+    }
+
+    @Override
+    public void entityInside(BlockState state, World world, BlockPos pos, Entity entity) {
+        if (!entity.fireImmune()) {
+            entity.setRemainingFireTicks(entity.getRemainingFireTicks() + 1);
+            if (entity.getRemainingFireTicks() == 0) {
+                entity.setSecondsOnFire(8);
+            }
+            if (((IEntityPatch) entity).getFireDamageImmunity() == 0) {
+                entity.hurt(EvolutionDamage.IN_FIRE, 2.5f);
+                ((IEntityPatch) entity).setFireDamageImmunity(10);
+            }
+        }
+        super.entityInside(state, world, pos, entity);
     }
 
     public int getActualEncouragement(BlockState state) {

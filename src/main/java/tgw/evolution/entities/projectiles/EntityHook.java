@@ -15,7 +15,6 @@ import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -39,7 +38,6 @@ import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
 public class EntityHook extends EntityGenericProjectile<EntityHook> {
 
-    private boolean dealtDamage;
     private Direction facing = Direction.NORTH;
 
     public EntityHook(World world, LivingEntity thrower) {
@@ -123,7 +121,6 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
     @Override
     public void addAdditionalSaveData(CompoundNBT compound) {
         super.addAdditionalSaveData(compound);
-        compound.putBoolean("DealtDamage", this.dealtDamage);
         compound.putByte("Facing", (byte) this.facing.get3DDataValue());
     }
 
@@ -156,35 +153,29 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
     @Override
     protected void onEntityHit(EntityRayTraceResult rayTraceResult) {
         Entity entity = rayTraceResult.getEntity();
-        Entity shooter = this.getShooter();
-        DamageSourceEv source = EvolutionDamage.causeHookDamage(this, shooter == null ? this : shooter);
-        this.dealtDamage = true;
-        SoundEvent sound = SoundEvents.TRIDENT_HIT;
-        float damage = MathHelper.ceil(4 * this.getDeltaMovement().length());
-        if (entity instanceof LivingEntity && entity.isAttackable()) {
-            LivingEntity living = (LivingEntity) entity;
-            float oldHealth = living.getHealth();
-            living.hurt(source, damage);
-            if (shooter instanceof ServerPlayerEntity) {
-                this.applyDamageRaw((ServerPlayerEntity) shooter, damage, source.getType());
-                this.applyDamageActual((ServerPlayerEntity) shooter, oldHealth - living.getHealth(), source.getType(), living);
+        if (!this.hitEntities.contains(entity.getId())) {
+            this.hitEntities.add(entity.getId());
+            Entity shooter = this.getShooter();
+            DamageSourceEv source = EvolutionDamage.causeHookDamage(this, shooter == null ? this : shooter);
+            float damage = MathHelper.ceil(4 * this.getDeltaMovement().length());
+            if (entity instanceof LivingEntity && entity.isAttackable()) {
+                LivingEntity living = (LivingEntity) entity;
+                float oldHealth = living.getHealth();
+                living.hurt(source, damage);
+                if (shooter instanceof ServerPlayerEntity) {
+                    this.applyDamageRaw((ServerPlayerEntity) shooter, damage, source.getType());
+                    this.applyDamageActual((ServerPlayerEntity) shooter, oldHealth - living.getHealth(), source.getType(), living);
+                }
             }
+            this.setDeltaMovement(this.getDeltaMovement().multiply(-0.1, -0.1, -0.1));
+            this.playSound(SoundEvents.TRIDENT_HIT, 1.0F, 1.0F);
+            Evolution.usingPlaceholder(entity.level.getNearestPlayer(this, 128), "sound");
         }
-        this.setDeltaMovement(this.getDeltaMovement().multiply(-0.1, -0.1, -0.1));
-        this.playSound(sound, 1.0F, 1.0F);
-        Evolution.usingPlaceholder(entity.level.getNearestPlayer(this, 128), "sound");
-    }
-
-    @Override
-    @Nullable
-    protected EntityRayTraceResult rayTraceEntities(Vector3d startVec, Vector3d endVec) {
-        return this.dealtDamage ? null : super.rayTraceEntities(startVec, endVec);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundNBT compound) {
         super.readAdditionalSaveData(compound);
-        this.dealtDamage = compound.getBoolean("DealtDamage");
         this.facing = Direction.from3DDataValue(compound.getByte("Facing"));
     }
 
@@ -198,12 +189,8 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
     public void tick() {
         super.tick();
         if (this.timeInGround > 0) {
-            this.dealtDamage = true;
             this.tryPlaceBlock();
             this.remove();
-        }
-        if (this.ticksInAir > 10) {
-            this.dealtDamage = false;
         }
     }
 

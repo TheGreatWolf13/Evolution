@@ -12,7 +12,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -30,7 +29,6 @@ import javax.annotation.Nullable;
 
 public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements IAerodynamicEntity {
 
-    private boolean dealtDamage;
     private ItemStack stack;
     private ResourceLocation texture;
 
@@ -52,7 +50,6 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     public void addAdditionalSaveData(CompoundNBT compound) {
         super.addAdditionalSaveData(compound);
         compound.put("Spear", this.stack.serializeNBT());
-        compound.putBoolean("DealtDamage", this.dealtDamage);
     }
 
     @Override
@@ -92,40 +89,35 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     @Override
     protected void onEntityHit(EntityRayTraceResult rayTraceResult) {
         Entity hitEntity = rayTraceResult.getEntity();
-        LivingEntity shooter = this.getShooter();
-        DamageSourceEv source = EvolutionDamage.causeSpearDamage(this, shooter == null ? this : shooter);
-        this.dealtDamage = true;
-        SoundEvent soundEvent = EvolutionSounds.JAVELIN_HIT_ENTITY.get();
-        float velocity = (float) this.getDeltaMovement().length();
-        if (hitEntity instanceof LivingEntity && hitEntity.isAttackable()) {
-            LivingEntity living = (LivingEntity) hitEntity;
-            float oldHealth = living.getHealth();
-            float damage = this.getDamage() * velocity;
-            living.hurt(source, damage);
-            if (shooter instanceof ServerPlayerEntity) {
-                this.applyDamageRaw((ServerPlayerEntity) shooter, damage, source.getType());
-                this.applyDamageActual((ServerPlayerEntity) shooter, oldHealth - living.getHealth(), source.getType(), living);
+        if (!this.hitEntities.contains(hitEntity.getId())) {
+            this.hitEntities.add(hitEntity.getId());
+            LivingEntity shooter = this.getShooter();
+            DamageSourceEv source = EvolutionDamage.causeSpearDamage(this, shooter == null ? this : shooter);
+            float velocity = (float) this.getDeltaMovement().length();
+            if (hitEntity instanceof LivingEntity && hitEntity.isAttackable()) {
+                LivingEntity living = (LivingEntity) hitEntity;
+                float oldHealth = living.getHealth();
+                float damage = this.getDamage() * velocity;
+                living.hurt(source, damage);
+                if (shooter instanceof ServerPlayerEntity) {
+                    this.applyDamageRaw((ServerPlayerEntity) shooter, damage, source.getType());
+                    this.applyDamageActual((ServerPlayerEntity) shooter, oldHealth - living.getHealth(), source.getType(), living);
+                }
+            }
+            this.setDeltaMovement(this.getDeltaMovement().multiply(-0.1, -0.1, -0.1));
+            this.playSound(EvolutionSounds.JAVELIN_HIT_ENTITY.get(), 1.0F, 1.0F);
+            if (shooter != null) {
+                this.stack.hurtAndBreak(1, shooter, entity -> {
+                });
+            }
+            else {
+                this.stack.setDamageValue(this.stack.getDamageValue() + 1);
+            }
+            if (this.stack.isEmpty()) {
+                this.playSound(SoundEvents.ITEM_BREAK, 0.8F, 0.8F + this.level.random.nextFloat() * 0.4F);
+                this.remove();
             }
         }
-        this.setDeltaMovement(this.getDeltaMovement().multiply(-0.1, -0.1, -0.1));
-        this.playSound(soundEvent, 1.0F, 1.0F);
-        if (shooter != null) {
-            this.stack.hurtAndBreak(1, shooter, entity -> {
-            });
-        }
-        else {
-            this.stack.setDamageValue(this.stack.getDamageValue() + 1);
-        }
-        if (this.stack.isEmpty()) {
-            this.playSound(SoundEvents.ITEM_BREAK, 0.8F, 0.8F + this.level.random.nextFloat() * 0.4F);
-            this.remove();
-        }
-    }
-
-    @Override
-    @Nullable
-    protected EntityRayTraceResult rayTraceEntities(Vector3d startVec, Vector3d endVec) {
-        return this.dealtDamage ? null : super.rayTraceEntities(startVec, endVec);
     }
 
     @Override
@@ -134,7 +126,6 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
         if (compound.contains("Spear", NBTTypes.COMPOUND_NBT)) {
             this.setStack(ItemStack.of(compound.getCompound("Spear")));
         }
-        this.dealtDamage = compound.getBoolean("DealtDamage");
     }
 
     @Override
@@ -157,12 +148,6 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     @Override
     public void tick() {
         super.tick();
-        if (this.timeInGround > 10) {
-            this.dealtDamage = true;
-        }
-        if (this.ticksInAir > 10) {
-            this.dealtDamage = false;
-        }
         if (this.stack.isEmpty() && this.timeInGround > 10) {
             this.remove();
         }

@@ -6,6 +6,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MoverType;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
@@ -18,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import tgw.evolution.blocks.IClimbable;
 import tgw.evolution.entities.IEntityPatch;
@@ -28,7 +30,6 @@ import tgw.evolution.util.MathHelper;
 
 import javax.annotation.Nullable;
 
-@SuppressWarnings("MethodMayBeStatic")
 @Mixin(Entity.class)
 public abstract class EntityMixin extends CapabilityProvider<Entity> implements IEntityProperties, IEntityPatch, INeckPosition {
 
@@ -42,6 +43,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     public float yRot;
     @Shadow
     public float yRotO;
+    protected int fireDamageImmunity;
     protected boolean hasCollidedOnX;
     protected boolean hasCollidedOnZ;
     @Shadow
@@ -54,6 +56,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Redirect(method = "baseTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;hurt(Lnet/minecraft/util/DamageSource;F)Z"))
     private boolean baseTickProxy(Entity entity, DamageSource source, float amount) {
+        if (this.fireDamageImmunity > 0) {
+            return false;
+        }
         return entity.hurt(EvolutionDamage.ON_FIRE, 2.5f);
     }
 
@@ -76,6 +81,11 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     }
 
     @Override
+    public int getFireDamageImmunity() {
+        return this.fireDamageImmunity;
+    }
+
+    @Override
     public Vector3d getNeckPoint() {
         return Vector3d.ZERO;
     }
@@ -93,11 +103,29 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     public abstract boolean isOnGround();
 
+    @Inject(method = "baseTick", at = @At("HEAD"))
+    private void onBaseTickPre(CallbackInfo ci) {
+        if (this.fireDamageImmunity > 0) {
+            this.fireDamageImmunity--;
+        }
+    }
+
+    @Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/CompoundNBT;getShort(Ljava/lang/String;)S", ordinal = 0))
+    private void onLoad(CompoundNBT nbt, CallbackInfo ci) {
+        this.fireDamageImmunity = nbt.getByte("FireImmunity");
+    }
+
     @Inject(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/profiler/IProfiler;push(Ljava/lang/String;)V", ordinal = 1),
             locals = LocalCapture.CAPTURE_FAILHARD)
     private void onMove(MoverType type, Vector3d pos, CallbackInfo ci, Vector3d allowedMovement) {
         this.hasCollidedOnX = !MathHelper.epsilonEquals(pos.x, allowedMovement.x);
         this.hasCollidedOnZ = !MathHelper.epsilonEquals(pos.z, allowedMovement.z);
+    }
+
+    @Inject(method = "saveWithoutId", at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/CompoundNBT;putShort(Ljava/lang/String;S)V", ordinal
+            = 0))
+    private void onSaveWithoutId(CompoundNBT nbt, CallbackInfoReturnable<CompoundNBT> cir) {
+        nbt.putByte("FireImmunity", (byte) this.fireDamageImmunity);
     }
 
     @Inject(method = "turn", at = @At("HEAD"), cancellable = true)
@@ -195,5 +223,10 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
                 }
             }
         }
+    }
+
+    @Override
+    public void setFireDamageImmunity(int immunity) {
+        this.fireDamageImmunity = immunity;
     }
 }
