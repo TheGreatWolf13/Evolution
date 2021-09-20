@@ -21,6 +21,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.items.IEvolutionItem;
 
 @Mixin(ClientPlayerEntity.class)
@@ -222,6 +223,9 @@ public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity
     }
 
     private boolean effectsAllowSprinting() {
+        if (this.hasEffect(EvolutionEffects.DEHYDRATION.get())) {
+            return false;
+        }
         return !this.hasEffect(Effects.BLINDNESS);
     }
 
