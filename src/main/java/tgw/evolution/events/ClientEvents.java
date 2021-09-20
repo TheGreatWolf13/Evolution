@@ -168,6 +168,7 @@ public class ClientEvents {
     private boolean sneakpreviousPressed;
     private int ticks;
     private float tps = 20.0f;
+    private int warmUpTicks;
 
     public ClientEvents(Minecraft mc) {
         this.mc = mc;
@@ -384,6 +385,7 @@ public class ClientEvents {
         LUNGING_PLAYERS.clear();
         if (this.mc.level == null) {
             this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
+            this.warmUpTicks = 0;
         }
     }
 
@@ -667,13 +669,14 @@ public class ClientEvents {
         //Runs at the end of each tick
         else if (event.phase == TickEvent.Phase.END) {
             if (!this.mc.isPaused()) {
+                this.warmUpTicks++;
                 //Remove inactive effects
                 if (!EFFECTS.isEmpty()) {
                     Iterator<ClientEffectInstance> iterator = EFFECTS.iterator();
                     while (iterator.hasNext()) {
                         ClientEffectInstance instance = iterator.next();
                         Effect effect = instance.getEffect();
-                        if (instance.getDuration() == 0 || !this.mc.player.hasEffect(effect)) {
+                        if (instance.getDuration() == 0 || !this.mc.player.hasEffect(effect) && this.warmUpTicks >= 100) {
                             iterator.remove();
                         }
                         else {
