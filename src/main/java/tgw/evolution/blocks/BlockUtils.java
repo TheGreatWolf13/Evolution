@@ -49,14 +49,18 @@ public final class BlockUtils {
         return false;
     }
 
-    public static void dropItemStack(World world, BlockPos pos, @Nonnull ItemStack stack) {
+    public static void dropItemStack(World world, BlockPos pos, @Nonnull ItemStack stack, double heightOffset) {
         if (world.isClientSide || stack.isEmpty()) {
             return;
         }
-        ItemEntity entity = new ItemEntity(world, pos.getX() + 0.5f, pos.getY() + 0.3f, pos.getZ() + 0.5f, stack);
+        ItemEntity entity = new ItemEntity(world, pos.getX() + 0.5, pos.getY() + heightOffset, pos.getZ() + 0.5, stack);
         Vector3d motion = entity.getDeltaMovement();
         entity.push(-motion.x, -motion.y, -motion.z);
         world.addFreshEntity(entity);
+    }
+
+    public static void dropItemStack(World world, BlockPos pos, @Nonnull ItemStack stack) {
+        dropItemStack(world, pos, stack, 0);
     }
 
     /**

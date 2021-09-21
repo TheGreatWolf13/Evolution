@@ -5,10 +5,12 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
+import net.minecraft.stats.Stats;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Hand;
 import tgw.evolution.blocks.BlockUtils;
@@ -33,9 +35,11 @@ public class TEChopping extends TileEntity implements ILoggable {
 
     public void breakLog(PlayerEntity player) {
         if (!this.level.isClientSide) {
-            ItemStack stack = new ItemStack(WoodVariant.byId(this.id).getFirewood(), 16);
-            BlockUtils.dropItemStack(this.level, this.worldPosition, stack);
+            Item firewood = WoodVariant.byId(this.id).getFirewood();
+            ItemStack stack = new ItemStack(firewood, 16);
+            BlockUtils.dropItemStack(this.level, this.worldPosition, stack, 0.5);
             player.getMainHandItem().hurtAndBreak(1, player, playerEntity -> playerEntity.getItemBySlot(EquipmentSlotType.MAINHAND));
+            player.awardStat(Stats.ITEM_CRAFTED.get(firewood), 16);
         }
         this.id = -1;
         this.breakProgress = 0;
