@@ -79,7 +79,7 @@ public class BlockRopeGround extends BlockGeneric implements IReplaceable {
 
     @Override
     public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
-        return NonNullList.of(new ItemStack(EvolutionItems.rope.get()));
+        return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.rope.get()));
     }
 
     @Override

@@ -62,7 +62,7 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IRockVa
 
     @Override
     public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
-        return NonNullList.of(new ItemStack(this.variant.getRock()));
+        return NonNullList.of(ItemStack.EMPTY, new ItemStack(this.variant.getRock()));
     }
 
     @Override

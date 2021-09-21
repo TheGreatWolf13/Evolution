@@ -65,7 +65,7 @@ public class BlockPlaceableItem extends BlockMass implements IReplaceable, IFlui
 
     @Override
     public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
-        return NonNullList.of(new ItemStack(this));
+        return NonNullList.of(ItemStack.EMPTY, new ItemStack(this));
     }
 
     @Override

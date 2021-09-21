@@ -104,9 +104,9 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
     @Override
     public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
         if (state.getValue(LIT)) {
-            return NonNullList.of(TEUtils.returnIfInstance(world.getBlockEntity(pos), ItemTorch::getDroppedStack, ItemStack.EMPTY));
+            return NonNullList.of(ItemStack.EMPTY, TEUtils.returnIfInstance(world.getBlockEntity(pos), ItemTorch::getDroppedStack, ItemStack.EMPTY));
         }
-        return NonNullList.of(new ItemStack(EvolutionItems.torch_unlit.get()));
+        return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.torch_unlit.get()));
     }
 
     @Override

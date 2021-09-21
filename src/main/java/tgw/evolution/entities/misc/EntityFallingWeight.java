@@ -131,7 +131,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     @Override
     public void fillCrashReportCategory(CrashReportCategory category) {
         super.fillCrashReportCategory(category);
-        category.setDetail("Immitating BlockState", this.state.toString());
+        category.setDetail("Imitating BlockState", this.state.toString());
     }
 
     @Override
@@ -146,7 +146,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
 //    }
 
     /**
-     * Returns the {@code BlockState} this entity is immitating.
+     * Returns the {@code BlockState} this entity is imitating.
      */
     public BlockState getBlockState() {
         return this.state;
@@ -302,7 +302,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
                         drops = ((IReplaceable) state.getBlock()).getDrops(this.level, this.mutablePos, state);
                     }
                     else {
-                        drops = NonNullList.of(new ItemStack(state.getBlock()));
+                        drops = NonNullList.of(ItemStack.EMPTY, new ItemStack(state.getBlock()));
                     }
                     if (this.level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) {
                         for (ItemStack stack : drops) {

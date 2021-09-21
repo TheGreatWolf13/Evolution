@@ -182,7 +182,9 @@ public class BlockFirewoodPile extends BlockMass implements IReplaceable {
     public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         if (!world.isClientSide) {
             if (!state.canSurvive(world, pos)) {
-                dropResources(state, world, pos);
+                for (ItemStack stack : this.getDrops(world, pos, state)) {
+                    popResource(world, pos, stack);
+                }
                 world.removeBlock(pos, false);
             }
         }

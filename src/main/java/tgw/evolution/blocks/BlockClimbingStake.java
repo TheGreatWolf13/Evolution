@@ -141,7 +141,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
 
     @Override
     public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
-        return NonNullList.of(new ItemStack(this));
+        return NonNullList.of(ItemStack.EMPTY, new ItemStack(this));
     }
 
     @Override

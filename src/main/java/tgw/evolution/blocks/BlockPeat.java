@@ -148,7 +148,7 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
 
     @Override
     public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
-        return NonNullList.of(new ItemStack(EvolutionItems.peat.get(), state.getValue(LAYERS_1_4)));
+        return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.peat.get(), state.getValue(LAYERS_1_4)));
     }
 
     @Override

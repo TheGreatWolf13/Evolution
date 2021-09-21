@@ -131,7 +131,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable {
 
     @Override
     public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
-        return NonNullList.of(new ItemStack(EvolutionItems.straw.get(), MathHelper.clamp(state.getValue(LAYERS_0_16), 0, 8)));
+        return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.straw.get(), MathHelper.clamp(state.getValue(LAYERS_0_16), 0, 8)));
     }
 
     @Override
