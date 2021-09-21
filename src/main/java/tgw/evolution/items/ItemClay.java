@@ -24,7 +24,7 @@ public class ItemClay extends ItemGenericPlaceable {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+    public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
         tooltip.add(EvolutionTexts.TOOLTIP_CLAY_MOLD);
     }
 

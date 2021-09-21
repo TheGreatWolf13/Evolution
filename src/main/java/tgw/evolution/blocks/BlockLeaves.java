@@ -13,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.state.StateContainer;
 import net.minecraft.util.Direction;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
@@ -26,7 +27,6 @@ import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.BlockFlags;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -147,10 +147,9 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
         }
     }
 
-    @Nullable
     @Override
-    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return null;
+    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+        return NonNullList.of(ItemStack.EMPTY);
     }
 
     @Override

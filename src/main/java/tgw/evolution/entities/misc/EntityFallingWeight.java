@@ -17,6 +17,7 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -296,15 +297,17 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
             if ((!isInWater || this.onGround) && state.getBlock() != Blocks.MOVING_PISTON) {
                 this.remove();
                 if (BlockUtils.isReplaceable(state)) {
-                    ItemStack stack;
+                    NonNullList<ItemStack> drops;
                     if (state.getBlock() instanceof IReplaceable) {
-                        stack = ((IReplaceable) state.getBlock()).getDrops(this.level, this.mutablePos, state);
+                        drops = ((IReplaceable) state.getBlock()).getDrops(this.level, this.mutablePos, state);
                     }
                     else {
-                        stack = new ItemStack(state.getBlock());
+                        drops = NonNullList.of(new ItemStack(state.getBlock()));
                     }
                     if (this.level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) {
-                        this.spawnAtLocation(stack);
+                        for (ItemStack stack : drops) {
+                            this.spawnAtLocation(stack);
+                        }
                     }
                     this.level.setBlockAndUpdate(this.mutablePos, this.state);
                 }

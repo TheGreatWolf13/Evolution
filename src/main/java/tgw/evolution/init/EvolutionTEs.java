@@ -24,6 +24,7 @@ public final class EvolutionTEs {
     public static final DeferredRegister<TileEntityType<?>> TILES = DeferredRegister.create(ForgeRegistries.TILE_ENTITIES, Evolution.MODID);
 
     public static final RegistryObject<TileEntityType<TEChopping>> CHOPPING;
+    public static final RegistryObject<TileEntityType<TEFirewoodPile>> FIREWOOD_PILE;
     public static final RegistryObject<TileEntityType<TEKnapping>> KNAPPING;
     public static final RegistryObject<TileEntityType<TELiquid>> LIQUID;
     public static final RegistryObject<TileEntityType<TELoggable>> LOGGABLE;
@@ -36,6 +37,7 @@ public final class EvolutionTEs {
 
     static {
         CHOPPING = TILES.register("te_chopping", () -> Builder.of(TEChopping::new, getMatchingBlocks(BlockChopping.class)).build(null));
+        FIREWOOD_PILE = TILES.register("te_firewood_pile", () -> Builder.of(TEFirewoodPile::new, EvolutionBlocks.FIREWOOD_PILE.get()).build(null));
         KNAPPING = TILES.register("te_knapping", () -> Builder.of(TEKnapping::new, getMatchingBlocks(BlockKnapping.class)).build(null));
         LIQUID = TILES.register("te_liquid", () -> Builder.of(TELiquid::new, FRESH_WATER.get(), SALT_WATER.get()).build(null));
         LOGGABLE = TILES.register("te_loggable",

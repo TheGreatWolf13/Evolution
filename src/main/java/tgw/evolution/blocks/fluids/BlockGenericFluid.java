@@ -16,6 +16,7 @@ import net.minecraft.state.StateContainer;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
@@ -135,8 +136,8 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return ItemStack.EMPTY;
+    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+        return NonNullList.of(ItemStack.EMPTY);
     }
 
     @Override

@@ -2,8 +2,11 @@ package tgw.evolution.blocks;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+
+import javax.annotation.Nonnull;
 
 public interface IReplaceable {
 
@@ -11,11 +14,14 @@ public interface IReplaceable {
 
     boolean canBeReplacedByRope(BlockState state);
 
-    ItemStack getDrops(World world, BlockPos pos, BlockState state);
+    @Nonnull
+    NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state);
 
     boolean isReplaceable(BlockState state);
 
     default void onReplaced(BlockState state, World world, BlockPos pos) {
-        BlockUtils.dropItemStack(world, pos, this.getDrops(world, pos, state));
+        for (ItemStack stack : this.getDrops(world, pos, state)) {
+            BlockUtils.dropItemStack(world, pos, stack);
+        }
     }
 }

@@ -1,0 +1,7 @@
+{
+	"parent": "evolution:item/firewood",
+	"textures": {
+		"0": "evolution:block/log_ebony",
+		"1": "evolution:block/log_top_ebony"
+	}
+}

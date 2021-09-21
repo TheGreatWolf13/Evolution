@@ -8,6 +8,7 @@ import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.state.StateContainer;
 import net.minecraft.util.Direction;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
@@ -65,8 +66,8 @@ public class BlockMoldClay extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return new ItemStack(this);
+    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+        return NonNullList.of(new ItemStack(this));
     }
 
     @Override

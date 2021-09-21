@@ -130,8 +130,8 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return new ItemStack(EvolutionItems.straw.get(), MathHelper.clamp(state.getValue(LAYERS_0_16), 0, 8));
+    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+        return NonNullList.of(new ItemStack(EvolutionItems.straw.get(), MathHelper.clamp(state.getValue(LAYERS_0_16), 0, 8)));
     }
 
     @Override
@@ -184,7 +184,9 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable {
     public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         if (!world.isClientSide) {
             if (!state.canSurvive(world, pos)) {
-                BlockUtils.dropItemStack(world, pos, this.getDrops(world, pos, state));
+                for (ItemStack stack : this.getDrops(world, pos, state)) {
+                    BlockUtils.dropItemStack(world, pos, stack);
+                }
                 world.removeBlock(pos, false);
             }
         }

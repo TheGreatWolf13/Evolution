@@ -125,6 +125,7 @@ public final class EvolutionTexts {
     public static final ITextComponent TOOLTIP_CLAY_MOLD = transl("evolution.tooltip.clayMold").setStyle(INFO);
     public static final ITextComponent TOOLTIP_CONSUMABLE = transl("evolution.tooltip.consumable").setStyle(LIGHT_GREY);
     public static final ITextComponent TOOLTIP_CONTAINER_EMPTY = transl("evolution.tooltip.containerEmpty").setStyle(INFO);
+    public static final ITextComponent TOOLTIP_FIREWOOD_PILE = transl("evolution.tooltip.firewoodPile").setStyle(INFO);
     public static final ITextComponent TOOLTIP_LUNGE = transl("evolution.tooltip.lunge").setStyle(PROPERTY);
     public static final ITextComponent TOOLTIP_OFFHAND = transl("evolution.tooltip.offhand").setStyle(LIGHT_GREY);
     public static final ITextComponent TOOLTIP_PARRY = transl("evolution.tooltip.parry").setStyle(PROPERTY);
@@ -145,7 +146,7 @@ public final class EvolutionTexts {
     private static final String CONFIG_RANGE = "evolution.config.range";
     //    Tooltip
     private static final String TOOLTIP_ADVANCEMENTS_REMAIN = "evolution.tooltip.advancementsRemain";
-    private static final String TOOLTIP_CONTAINER_AMOUNT = "evolution.tooltop.containerAmount";
+    private static final String TOOLTIP_CONTAINER_AMOUNT = "evolution.tooltip.containerAmount";
     private static final String TOOLTIP_CONTAINER_CAPACITY = "evolution.tooltip.containerCapacity";
     private static final String TOOLTIP_DISTANCE = "evolution.tooltip.distance";
     private static final String TOOLTIP_DURABILITY = "evolution.tooltip.durability";

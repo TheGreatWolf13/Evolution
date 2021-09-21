@@ -15,12 +15,12 @@ public final class EvolutionBStates {
     public static final IntegerProperty LAYERS_1_4 = IntegerProperty.create("layers", 1, 4);
     public static final IntegerProperty LAYERS_1_5 = IntegerProperty.create("layers", 1, 5);
     public static final BooleanProperty TREE = BooleanProperty.create("tree");
-    public static final IntegerProperty LOG_COUNT = IntegerProperty.create("log_count", 1, 16);
+    public static final IntegerProperty FIREWOOD_COUNT = IntegerProperty.create("log_count", 1, 16);
     public static final IntegerProperty OXIDATION = IntegerProperty.create("oxidation", 0, 8);
     public static final BooleanProperty HIT = BooleanProperty.create("hit");
     public static final IntegerProperty LEVEL_1_8 = IntegerProperty.create("level", 1, 8);
     public static final BooleanProperty FULL = BooleanProperty.create("full");
-    public static final BooleanProperty FLUIDLOGGED = BooleanProperty.create("fluidlogged");
+    public static final BooleanProperty FLUID_LOGGED = BooleanProperty.create("fluid_logged");
     public static final BooleanProperty OCCUPIED = BlockStateProperties.OCCUPIED;
     public static final BooleanProperty ATTACHED = BlockStateProperties.ATTACHED;
     public static final BooleanProperty NORTH = BlockStateProperties.NORTH;

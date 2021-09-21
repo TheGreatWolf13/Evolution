@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.state.StateContainer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
@@ -22,13 +23,13 @@ import tgw.evolution.util.MathHelper;
 
 import javax.annotation.Nullable;
 
-import static tgw.evolution.init.EvolutionBStates.FLUIDLOGGED;
+import static tgw.evolution.init.EvolutionBStates.FLUID_LOGGED;
 
 public class BlockPlaceableItem extends BlockMass implements IReplaceable, IFluidLoggable {
 
     public BlockPlaceableItem(Properties properties) {
         super(properties, 0);
-        this.registerDefaultState(this.defaultBlockState().setValue(FLUIDLOGGED, false));
+        this.registerDefaultState(this.defaultBlockState().setValue(FLUID_LOGGED, false));
     }
 
     @Override
@@ -53,7 +54,7 @@ public class BlockPlaceableItem extends BlockMass implements IReplaceable, IFlui
 
     @Override
     protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(FLUIDLOGGED);
+        builder.add(FLUID_LOGGED);
     }
 
     @Nullable
@@ -63,8 +64,8 @@ public class BlockPlaceableItem extends BlockMass implements IReplaceable, IFlui
     }
 
     @Override
-    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return new ItemStack(this);
+    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+        return NonNullList.of(new ItemStack(this));
     }
 
     @Override
@@ -80,7 +81,7 @@ public class BlockPlaceableItem extends BlockMass implements IReplaceable, IFlui
     @Override
     public int getMass(World world, BlockPos pos, BlockState state) {
         int mass = 0;
-        if (state.getValue(FLUIDLOGGED)) {
+        if (state.getValue(FLUID_LOGGED)) {
             Fluid fluid = this.getFluid(world, pos);
             if (fluid instanceof FluidGeneric) {
                 int amount = this.getCurrentAmount(world, pos, state);
@@ -104,7 +105,7 @@ public class BlockPlaceableItem extends BlockMass implements IReplaceable, IFlui
 
     @Override
     public boolean hasTileEntity(BlockState state) {
-        return state.getValue(FLUIDLOGGED);
+        return state.getValue(FLUID_LOGGED);
     }
 
     @Override
@@ -124,7 +125,7 @@ public class BlockPlaceableItem extends BlockMass implements IReplaceable, IFlui
 
     @Override
     public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
-        if (state.getValue(FLUIDLOGGED)) {
+        if (state.getValue(FLUID_LOGGED)) {
             BlockUtils.scheduleFluidTick(world, currentPos);
         }
         return super.updateShape(state, facing, facingState, world, currentPos, facingPos);

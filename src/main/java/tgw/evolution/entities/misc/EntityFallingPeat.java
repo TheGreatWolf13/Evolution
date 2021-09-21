@@ -3,6 +3,7 @@ package tgw.evolution.entities.misc;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.*;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.PacketBuffer;
@@ -195,7 +196,9 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
                 if (state.getBlock() != Blocks.MOVING_PISTON) {
                     BlockPeat.placeLayersOn(this.level, pos, this.layers);
                     if (state.getBlock() instanceof IReplaceable && state.getBlock() != this.getBlockState().getBlock()) {
-                        this.spawnAtLocation(((IReplaceable) state.getBlock()).getDrops(this.level, pos, state));
+                        for (ItemStack stack : ((IReplaceable) state.getBlock()).getDrops(this.level, pos, state)) {
+                            this.spawnAtLocation(stack);
+                        }
                     }
                     this.remove();
                 }

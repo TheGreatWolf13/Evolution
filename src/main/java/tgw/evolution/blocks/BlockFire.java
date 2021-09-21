@@ -15,6 +15,7 @@ import net.minecraft.particles.ParticleTypes;
 import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.util.Direction;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
@@ -87,7 +88,6 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
             fire.setFireInfo(variant.getPlanks(), 5, 20);
             fire.setFireInfo(variant.getLog(), 5, 5);
             fire.setFireInfo(variant.getChoppingBlock(), 5, 5);
-            fire.setFireInfo(variant.getPile(), 5, 5);
             fire.setFireInfo(variant.getLeaves(), 30, 60);
         }
         //        fire.setFireInfo(Blocks.OAK_SLAB, 5, 20);
@@ -96,6 +96,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
         //        fire.setFireInfo(Blocks.OAK_STAIRS, 5, 20);
         //        fire.setFireInfo(Blocks.BOOKSHELF, 30, 20);
         //        fire.setFireInfo(Blocks.TNT, 15, 100);
+        fire.setFireInfo(EvolutionBlocks.FIREWOOD_PILE.get(), 5, 5);
         fire.setFireInfo(EvolutionBlocks.GRASS.get(), 60, 100);
         fire.setFireInfo(EvolutionBlocks.TALLGRASS.get(), 60, 100);
         //        fire.setFireInfo(Blocks.WHITE_WOOL, 30, 60);
@@ -253,16 +254,16 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     public int getActualEncouragement(BlockState state) {
-        return state.hasProperty(FLUIDLOGGED) && state.getValue(FLUIDLOGGED) ? 0 : this.encouragements.getInt(state.getBlock());
+        return state.hasProperty(FLUID_LOGGED) && state.getValue(FLUID_LOGGED) ? 0 : this.encouragements.getInt(state.getBlock());
     }
 
     public int getActualFlammability(BlockState state) {
-        return state.hasProperty(FLUIDLOGGED) && state.getValue(FLUIDLOGGED) ? 0 : this.flammabilities.getInt(state.getBlock());
+        return state.hasProperty(FLUID_LOGGED) && state.getValue(FLUID_LOGGED) ? 0 : this.flammabilities.getInt(state.getBlock());
     }
 
     @Override
-    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return ItemStack.EMPTY;
+    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+        return NonNullList.of(ItemStack.EMPTY);
     }
 
     @Override

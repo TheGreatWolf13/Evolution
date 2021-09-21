@@ -48,14 +48,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import static tgw.evolution.init.EvolutionBStates.FLUIDLOGGED;
+import static tgw.evolution.init.EvolutionBStates.FLUID_LOGGED;
 import static tgw.evolution.init.EvolutionBStates.LIT;
 
 public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, IFluidLoggable {
 
     public BlockTorch() {
         super(Properties.of(Material.DECORATION).strength(0.0F).randomTicks().noCollission().sound(SoundType.WOOD), 0);
-        this.registerDefaultState(this.defaultBlockState().setValue(LIT, true).setValue(FLUIDLOGGED, false));
+        this.registerDefaultState(this.defaultBlockState().setValue(LIT, true).setValue(FLUID_LOGGED, false));
     }
 
     @Override
@@ -93,7 +93,7 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
 
     @Override
     protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
-        builder.add(LIT, FLUIDLOGGED);
+        builder.add(LIT, FLUID_LOGGED);
     }
 
     @Override
@@ -102,11 +102,11 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
     }
 
     @Override
-    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
+    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
         if (state.getValue(LIT)) {
-            return TEUtils.returnIfInstance(world.getBlockEntity(pos), ItemTorch::getDroppedStack, ItemStack.EMPTY);
+            return NonNullList.of(TEUtils.returnIfInstance(world.getBlockEntity(pos), ItemTorch::getDroppedStack, ItemStack.EMPTY));
         }
-        return new ItemStack(EvolutionItems.torch_unlit.get());
+        return NonNullList.of(new ItemStack(EvolutionItems.torch_unlit.get()));
     }
 
     @Override
@@ -144,7 +144,7 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
     @Override
     public int getMass(World world, BlockPos pos, BlockState state) {
         int mass = 0;
-        if (state.getValue(FLUIDLOGGED)) {
+        if (state.getValue(FLUID_LOGGED)) {
             Fluid fluid = this.getFluid(world, pos);
             if (fluid instanceof FluidGeneric) {
                 int amount = this.getCurrentAmount(world, pos, state);
@@ -175,7 +175,7 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
 
     @Override
     public boolean hasTileEntity(BlockState state) {
-        return state.getValue(FLUIDLOGGED) || state.getValue(LIT);
+        return state.getValue(FLUID_LOGGED) || state.getValue(LIT);
     }
 
     @Override
@@ -228,7 +228,7 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
         if (hasFluid && state.getValue(LIT)) {
             world.levelEvent(Constants.WorldEvents.FIRE_EXTINGUISH_SOUND, pos, 0);
         }
-        BlockState stateToPlace = state.setValue(FLUIDLOGGED, hasFluid).setValue(LIT, false);
+        BlockState stateToPlace = state.setValue(FLUID_LOGGED, hasFluid).setValue(LIT, false);
         world.setBlock(pos, stateToPlace, BlockFlags.NOTIFY_UPDATE_AND_RERENDER);
         if (hasFluid) {
             TEUtils.<ILoggable>invokeIfInstance(world.getBlockEntity(pos), t -> t.setAmountAndFluid(amount, fluid), true);
@@ -241,7 +241,7 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
 
     @Override
     public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
-        if (state.getValue(FLUIDLOGGED)) {
+        if (state.getValue(FLUID_LOGGED)) {
             BlockUtils.scheduleFluidTick(world, currentPos);
         }
         return facing == Direction.DOWN && !this.canSurvive(state, world, currentPos) ?
@@ -252,7 +252,7 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
     @Override
     public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
         Evolution.LOGGER.debug("{}", world.getBlockEntity(pos));
-        if (state.getValue(FLUIDLOGGED)) {
+        if (state.getValue(FLUID_LOGGED)) {
             return ActionResultType.PASS;
         }
         ItemStack stack = player.getItemInHand(hand);

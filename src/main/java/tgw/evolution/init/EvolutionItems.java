@@ -302,6 +302,25 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> sapling_redwood = ITEMS.register("sapling_redwood", () -> woodBlock(SAPLING_REDWOOD));
     public static final RegistryObject<Item> sapling_spruce = ITEMS.register("sapling_spruce", () -> woodBlock(SAPLING_SPRUCE));
     public static final RegistryObject<Item> sapling_willow = ITEMS.register("sapling_willow", () -> woodBlock(SAPLING_WILLOW));
+    //Firewood
+    public static final RegistryObject<Item> firewood_acacia = ITEMS.register("firewood_acacia", () -> firewood(ACACIA));
+    public static final RegistryObject<Item> firewood_aspen = ITEMS.register("firewood_aspen", () -> firewood(ASPEN));
+    public static final RegistryObject<Item> firewood_birch = ITEMS.register("firewood_birch", () -> firewood(BIRCH));
+    public static final RegistryObject<Item> firewood_cedar = ITEMS.register("firewood_cedar", () -> firewood(CEDAR));
+    public static final RegistryObject<Item> firewood_ebony = ITEMS.register("firewood_ebony", () -> firewood(EBONY));
+    public static final RegistryObject<Item> firewood_elm = ITEMS.register("firewood_elm", () -> firewood(ELM));
+    public static final RegistryObject<Item> firewood_eucalyptus = ITEMS.register("firewood_eucalyptus", () -> firewood(EUCALYPTUS));
+    public static final RegistryObject<Item> firewood_fir = ITEMS.register("firewood_fir", () -> firewood(FIR));
+    public static final RegistryObject<Item> firewood_kapok = ITEMS.register("firewood_kapok", () -> firewood(KAPOK));
+    public static final RegistryObject<Item> firewood_mangrove = ITEMS.register("firewood_mangrove", () -> firewood(MANGROVE));
+    public static final RegistryObject<Item> firewood_maple = ITEMS.register("firewood_maple", () -> firewood(MAPLE));
+    public static final RegistryObject<Item> firewood_oak = ITEMS.register("firewood_oak", () -> firewood(OAK));
+    public static final RegistryObject<Item> firewood_old_oak = ITEMS.register("firewood_old_oak", () -> firewood(OLD_OAK));
+    public static final RegistryObject<Item> firewood_palm = ITEMS.register("firewood_palm", () -> firewood(PALM));
+    public static final RegistryObject<Item> firewood_pine = ITEMS.register("firewood_pine", () -> firewood(PINE));
+    public static final RegistryObject<Item> firewood_redwood = ITEMS.register("firewood_redwood", () -> firewood(REDWOOD));
+    public static final RegistryObject<Item> firewood_spruce = ITEMS.register("firewood_spruce", () -> firewood(SPRUCE));
+    public static final RegistryObject<Item> firewood_willow = ITEMS.register("firewood_willow", () -> firewood(WILLOW));
     //Debug
     public static final RegistryObject<Item> nitrogen_setter = ITEMS.register("nitrogen_setter",
                                                                               () -> new ItemChunkStorageSetter(propDev(), EnumStorage.NITROGEN));
@@ -765,6 +784,10 @@ public final class EvolutionItems {
         return new ItemBucketCreative(fluid, propLiquid().stacksTo(fluid.get() == Fluids.EMPTY ? 16 : 1));
     }
 
+    private static Item firewood(WoodVariant variant) {
+        return new ItemFirewood(variant);
+    }
+
     private static Item hammerStone(EvolutionToolMaterials tier) {
         return new ItemHammer(tier, MathHelper.attackSpeed(1.25F), propStoneTool(), tier.getHammerMass());
     }
@@ -818,11 +841,11 @@ public final class EvolutionItems {
         return new Item.Properties().tab(EvolutionCreativeTabs.MISC);
     }
 
-    private static Item.Properties propStoneTool() {
+    public static Item.Properties propStoneTool() {
         return new Item.Properties().tab(EvolutionCreativeTabs.STONE_TOOLS);
     }
 
-    private static Item.Properties propTreesAndWood() {
+    public static Item.Properties propTreesAndWood() {
         return new Item.Properties().tab(EvolutionCreativeTabs.TREES_AND_WOOD);
     }
 

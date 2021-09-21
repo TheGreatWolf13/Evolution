@@ -12,6 +12,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.shapes.ISelectionContext;
@@ -36,19 +37,19 @@ import tgw.evolution.util.WoodVariant;
 
 import javax.annotation.Nullable;
 
-import static tgw.evolution.init.EvolutionBStates.FLUIDLOGGED;
+import static tgw.evolution.init.EvolutionBStates.FLUID_LOGGED;
 import static tgw.evolution.init.EvolutionBStates.OCCUPIED;
 
 public class BlockChopping extends BlockMass implements IReplaceable, ISittable, IFluidLoggable {
 
     public BlockChopping(WoodVariant name) {
         super(Properties.of(Material.WOOD).harvestLevel(HarvestLevel.STONE).sound(SoundType.WOOD).strength(8.0F, 2.0F), name.getMass() / 2);
-        this.registerDefaultState(this.defaultBlockState().setValue(OCCUPIED, false).setValue(FLUIDLOGGED, false));
+        this.registerDefaultState(this.defaultBlockState().setValue(OCCUPIED, false).setValue(FLUID_LOGGED, false));
     }
 
     @Override
     public void attack(BlockState state, World world, BlockPos pos, PlayerEntity player) {
-        if (state.getValue(FLUIDLOGGED)) {
+        if (state.getValue(FLUID_LOGGED)) {
             return;
         }
         TileEntity tile = world.getBlockEntity(pos);
@@ -85,7 +86,7 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
 
     @Override
     protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(OCCUPIED, FLUIDLOGGED);
+        builder.add(OCCUPIED, FLUID_LOGGED);
     }
 
     @Nullable
@@ -95,8 +96,8 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
     }
 
     @Override
-    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return new ItemStack(this);
+    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+        return NonNullList.of(new ItemStack(this));
     }
 
     @Override
@@ -127,7 +128,7 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
     @Override
     public int getMass(World world, BlockPos pos, BlockState state) {
         int mass = 0;
-        if (state.getValue(FLUIDLOGGED)) {
+        if (state.getValue(FLUID_LOGGED)) {
             Fluid fluid = this.getFluid(world, pos);
             if (fluid instanceof FluidGeneric) {
                 int amount = this.getCurrentAmount(world, pos, state);
@@ -162,7 +163,9 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
     public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         if (!world.isClientSide) {
             if (!state.canSurvive(world, pos)) {
-                popResource(world, pos, this.getDrops(world, pos, this.defaultBlockState()));
+                for (ItemStack stack : this.getDrops(world, pos, this.defaultBlockState())) {
+                    popResource(world, pos, stack);
+                }
                 TEUtils.invokeIfInstance(world.getBlockEntity(pos), TEChopping::dropLog);
                 world.removeBlock(pos, isMoving);
                 return;
@@ -186,7 +189,7 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
         if (hasFluid) {
             TEUtils.invokeIfInstance(tile, TEChopping::dropLog);
         }
-        BlockState stateToPlace = state.setValue(FLUIDLOGGED, hasFluid);
+        BlockState stateToPlace = state.setValue(FLUID_LOGGED, hasFluid);
         if (!(tile instanceof TEChopping)) {
             world.removeBlockEntity(pos);
         }
@@ -203,7 +206,7 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
 
     @Override
     public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
-        if (state.getValue(FLUIDLOGGED)) {
+        if (state.getValue(FLUID_LOGGED)) {
             BlockUtils.scheduleFluidTick(world, currentPos);
         }
         return super.updateShape(state, facing, facingState, world, currentPos, facingPos);
@@ -211,7 +214,7 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
 
     @Override
     public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
-        if (state.getValue(FLUIDLOGGED)) {
+        if (state.getValue(FLUID_LOGGED)) {
             if (!state.getValue(OCCUPIED)) {
                 if (EntitySit.create(world, pos, player)) {
                     world.setBlockAndUpdate(pos, state.setValue(OCCUPIED, true));

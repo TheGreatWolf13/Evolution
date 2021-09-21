@@ -71,8 +71,8 @@ public class BlockMolding extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return new ItemStack(EvolutionItems.clay.get(), state.getValue(LAYERS_1_5));
+    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+        return NonNullList.of(new ItemStack(EvolutionItems.clay.get(), state.getValue(LAYERS_1_5)));
     }
 
     @Override

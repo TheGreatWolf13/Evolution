@@ -78,6 +78,7 @@ import tgw.evolution.client.gui.controls.ScreenControls;
 import tgw.evolution.client.gui.stats.ScreenStats;
 import tgw.evolution.client.layers.LayerBack;
 import tgw.evolution.client.layers.LayerBelt;
+import tgw.evolution.client.models.tile.BakedModelFirewoodPile;
 import tgw.evolution.client.models.tile.BakedModelKnapping;
 import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
@@ -331,6 +332,22 @@ public class ClientEvents {
                         event.getModelRegistry().put(variantMRL, customModel);
                     }
                 }
+            }
+        }
+        for (BlockState state : EvolutionBlocks.FIREWOOD_PILE.get().getStateDefinition().getPossibleStates()) {
+            //noinspection ObjectAllocationInLoop
+            ModelResourceLocation variantMRL = BlockModelShapes.stateToModelLocation(state);
+            IBakedModel existingModel = event.getModelRegistry().get(variantMRL);
+            if (existingModel == null) {
+                Evolution.LOGGER.warn("Did not find the expected vanilla baked model(s) for BlockFirewoodPile in registry");
+            }
+            else if (existingModel instanceof BakedModelKnapping) {
+                Evolution.LOGGER.warn("Tried to replace BakedModelFirewoodPile twice");
+            }
+            else {
+                //noinspection ObjectAllocationInLoop
+                IBakedModel firewoodPileModel = new BakedModelFirewoodPile(existingModel);
+                event.getModelRegistry().put(variantMRL, firewoodPileModel);
             }
         }
     }

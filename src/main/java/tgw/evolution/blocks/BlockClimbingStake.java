@@ -140,8 +140,8 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
     }
 
     @Override
-    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return new ItemStack(this);
+    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+        return NonNullList.of(new ItemStack(this));
     }
 
     @Override
@@ -330,14 +330,18 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                     return ropeCount;
                 }
                 if (stateTemp.getBlock() instanceof IReplaceable) {
-                    BlockUtils.dropItemStack(world, mutablePos, ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp));
+                    for (ItemStack stack : ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp)) {
+                        BlockUtils.dropItemStack(world, mutablePos, stack);
+                    }
                 }
                 world.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
                 ropeCount++;
                 continue;
             }
             if (stateTemp.getBlock() instanceof IReplaceable) {
-                BlockUtils.dropItemStack(world, mutablePos, ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp));
+                for (ItemStack stack : ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp)) {
+                    BlockUtils.dropItemStack(world, mutablePos, stack);
+                }
             }
             if (currentMovement == Direction.DOWN) {
                 world.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));

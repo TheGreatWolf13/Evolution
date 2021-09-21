@@ -98,14 +98,18 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
                     return ropeCount;
                 }
                 if (stateTemp.getBlock() instanceof IReplaceable) {
-                    BlockUtils.dropItemStack(world, mutablePos, ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp));
+                    for (ItemStack stack : ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp)) {
+                        BlockUtils.dropItemStack(world, mutablePos, stack);
+                    }
                 }
                 world.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
                 ropeCount++;
                 continue;
             }
             if (stateTemp.getBlock() instanceof IReplaceable) {
-                BlockUtils.dropItemStack(world, mutablePos, ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp));
+                for (ItemStack stack : ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp)) {
+                    BlockUtils.dropItemStack(world, mutablePos, stack);
+                }
             }
             if (currentMovement == Direction.DOWN) {
                 world.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));

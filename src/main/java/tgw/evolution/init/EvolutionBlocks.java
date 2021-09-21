@@ -332,25 +332,8 @@ public final class EvolutionBlocks {
     public static final RegistryObject<Block> PLANKS_REDWOOD = BLOCKS.register("planks_redwood", () -> planks(REDWOOD));
     public static final RegistryObject<Block> PLANKS_SPRUCE = BLOCKS.register("planks_spruce", () -> planks(SPRUCE));
     public static final RegistryObject<Block> PLANKS_WILLOW = BLOCKS.register("planks_willow", () -> planks(WILLOW));
-    //Log Pile
-    public static final RegistryObject<Block> LOG_PILE_ACACIA = BLOCKS.register("log_pile_acacia", () -> logPile(ACACIA));
-    public static final RegistryObject<Block> LOG_PILE_ASPEN = BLOCKS.register("log_pile_aspen", () -> logPile(ASPEN));
-    public static final RegistryObject<Block> LOG_PILE_BIRCH = BLOCKS.register("log_pile_birch", () -> logPile(BIRCH));
-    public static final RegistryObject<Block> LOG_PILE_CEDAR = BLOCKS.register("log_pile_cedar", () -> logPile(CEDAR));
-    public static final RegistryObject<Block> LOG_PILE_EBONY = BLOCKS.register("log_pile_ebony", () -> logPile(EBONY));
-    public static final RegistryObject<Block> LOG_PILE_ELM = BLOCKS.register("log_pile_elm", () -> logPile(ELM));
-    public static final RegistryObject<Block> LOG_PILE_EUCALYPTUS = BLOCKS.register("log_pile_eucalyptus", () -> logPile(EUCALYPTUS));
-    public static final RegistryObject<Block> LOG_PILE_FIR = BLOCKS.register("log_pile_fir", () -> logPile(FIR));
-    public static final RegistryObject<Block> LOG_PILE_KAPOK = BLOCKS.register("log_pile_kapok", () -> logPile(KAPOK));
-    public static final RegistryObject<Block> LOG_PILE_MANGROVE = BLOCKS.register("log_pile_mangrove", () -> logPile(MANGROVE));
-    public static final RegistryObject<Block> LOG_PILE_MAPLE = BLOCKS.register("log_pile_maple", () -> logPile(MAPLE));
-    public static final RegistryObject<Block> LOG_PILE_OAK = BLOCKS.register("log_pile_oak", () -> logPile(OAK));
-    public static final RegistryObject<Block> LOG_PILE_OLD_OAK = BLOCKS.register("log_pile_old_oak", () -> logPile(OLD_OAK));
-    public static final RegistryObject<Block> LOG_PILE_PALM = BLOCKS.register("log_pile_palm", () -> logPile(PALM));
-    public static final RegistryObject<Block> LOG_PILE_PINE = BLOCKS.register("log_pile_pine", () -> logPile(PINE));
-    public static final RegistryObject<Block> LOG_PILE_REDWOOD = BLOCKS.register("log_pile_redwood", () -> logPile(REDWOOD));
-    public static final RegistryObject<Block> LOG_PILE_SPRUCE = BLOCKS.register("log_pile_spruce", () -> logPile(SPRUCE));
-    public static final RegistryObject<Block> LOG_PILE_WILLOW = BLOCKS.register("log_pile_willow", () -> logPile(WILLOW));
+    //Firewood Pile
+    public static final RegistryObject<Block> FIREWOOD_PILE = BLOCKS.register("firewood_pile", BlockFirewoodPile::new);
     //Torches
     public static final RegistryObject<Block> TORCH = BLOCKS.register("torch", BlockTorch::new);
     public static final RegistryObject<Block> WALL_TORCH = BLOCKS.register("wall_torch", BlockWallTorch::new);
@@ -470,10 +453,6 @@ public final class EvolutionBlocks {
 
     private static BlockLog log(WoodVariant variant) {
         return new BlockLog(variant);
-    }
-
-    private static Block logPile(WoodVariant variant) {
-        return new BlockLogPile(variant);
     }
 
     private static Block metal(MetalVariant variant) {

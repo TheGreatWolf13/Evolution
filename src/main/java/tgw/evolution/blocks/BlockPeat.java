@@ -13,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.state.StateContainer.Builder;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
@@ -33,14 +34,14 @@ import tgw.evolution.util.MathHelper;
 import javax.annotation.Nullable;
 import java.util.Random;
 
-import static tgw.evolution.init.EvolutionBStates.FLUIDLOGGED;
+import static tgw.evolution.init.EvolutionBStates.FLUID_LOGGED;
 import static tgw.evolution.init.EvolutionBStates.LAYERS_1_4;
 
 public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable {
 
     public BlockPeat() {
         super(Properties.of(Material.DIRT).strength(2.0f, 0.5f).sound(SoundType.GRAVEL), 1_156);
-        this.registerDefaultState(this.defaultBlockState().setValue(LAYERS_1_4, 1).setValue(FLUIDLOGGED, false));
+        this.registerDefaultState(this.defaultBlockState().setValue(LAYERS_1_4, 1).setValue(FLUID_LOGGED, false));
     }
 
     private static boolean canFallThrough(BlockState state, World world, BlockPos pos) {
@@ -136,7 +137,7 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
 
     @Override
     protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
-        builder.add(LAYERS_1_4, FLUIDLOGGED);
+        builder.add(LAYERS_1_4, FLUID_LOGGED);
     }
 
     @Nullable
@@ -146,8 +147,8 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
     }
 
     @Override
-    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return new ItemStack(EvolutionItems.peat.get(), state.getValue(LAYERS_1_4));
+    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+        return NonNullList.of(new ItemStack(EvolutionItems.peat.get(), state.getValue(LAYERS_1_4)));
     }
 
     @Override
@@ -169,7 +170,7 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
     @Override
     public int getMass(World world, BlockPos pos, BlockState state) {
         int mass = 0;
-        if (state.getValue(FLUIDLOGGED)) {
+        if (state.getValue(FLUID_LOGGED)) {
             Fluid fluid = this.getFluid(world, pos);
             if (fluid instanceof FluidGeneric) {
                 int amount = this.getCurrentAmount(world, pos, state);
@@ -202,7 +203,7 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
 
     @Override
     public boolean hasTileEntity(BlockState state) {
-        return state.getValue(FLUIDLOGGED);
+        return state.getValue(FLUID_LOGGED);
     }
 
     @Override
@@ -215,7 +216,7 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
         Block block = state.getBlock();
         Block newBlock = newState.getBlock();
         if (block == newBlock) {
-            if (state.getValue(FLUIDLOGGED) && newState.getValue(FLUIDLOGGED)) {
+            if (state.getValue(FLUID_LOGGED) && newState.getValue(FLUID_LOGGED)) {
                 int layers = state.getValue(LAYERS_1_4);
                 int newLayers = newState.getValue(LAYERS_1_4);
                 if (newLayers > layers) {
@@ -245,7 +246,7 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
 
     @Override
     public void tick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-        if (state.getValue(FLUIDLOGGED)) {
+        if (state.getValue(FLUID_LOGGED)) {
             BlockUtils.scheduleFluidTick(world, pos);
         }
         checkFallable(world, pos, state);
@@ -253,7 +254,7 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
 
     @Override
     public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
-        if (state.getValue(FLUIDLOGGED)) {
+        if (state.getValue(FLUID_LOGGED)) {
             BlockUtils.scheduleFluidTick(world, currentPos);
         }
         return !state.canSurvive(world, currentPos) ?

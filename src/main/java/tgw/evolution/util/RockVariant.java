@@ -118,7 +118,7 @@ public enum RockVariant {
                 return CLAY;
             }
         }
-        throw new UnregistredFeatureException("Unregistred variant for id: " + id);
+        throw new UnregisteredFeatureException("Unregistered variant for id: " + id);
     }
 
     public Block fromEnumVanillaRep(VanillaRockVariant vanilla) {
@@ -145,7 +145,7 @@ public enum RockVariant {
                 return this.getStoneBricks();
             }
         }
-        throw new UnregistredFeatureException("Could not find a Block to replace vanilla " + vanilla);
+        throw new UnregisteredFeatureException("Could not find a Block to replace vanilla " + vanilla);
     }
 
     public Item getAxeHead() {
@@ -215,7 +215,7 @@ public enum RockVariant {
                 return EvolutionItems.axe_head_slate.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public Block getCobble() {
@@ -285,7 +285,7 @@ public enum RockVariant {
                 return EvolutionBlocks.COBBLE_SLATE.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public Block getDirt() {
@@ -357,7 +357,7 @@ public enum RockVariant {
                 return EvolutionBlocks.DIRT_SLATE.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public Block getDryGrass() {
@@ -427,7 +427,7 @@ public enum RockVariant {
                 return EvolutionBlocks.DRY_GRASS_SLATE.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public Block getGrass() {
@@ -499,7 +499,7 @@ public enum RockVariant {
                 return EvolutionBlocks.GRASS_SLATE.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public Block getGravel() {
@@ -569,7 +569,7 @@ public enum RockVariant {
                 return EvolutionBlocks.GRAVEL_SLATE.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public Item getHammerHead() {
@@ -639,7 +639,7 @@ public enum RockVariant {
                 return EvolutionItems.hammer_head_slate.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public Item getHoeHead() {
@@ -709,7 +709,7 @@ public enum RockVariant {
                 return EvolutionItems.hoe_head_slate.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public byte getId() {
@@ -783,7 +783,7 @@ public enum RockVariant {
                 return EvolutionItems.javelin_slate.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public Item getJavelinHead() {
@@ -853,7 +853,7 @@ public enum RockVariant {
                 return EvolutionItems.javelin_head_slate.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public ItemStack getKnappedStack(KnappingRecipe knapping) {
@@ -880,7 +880,7 @@ public enum RockVariant {
                 return new ItemStack(this.getJavelinHead());
             }
         }
-        throw new UnregistredFeatureException("Unregistred KnappingRecipe " + knapping);
+        throw new UnregisteredFeatureException("Unregistered KnappingRecipe " + knapping);
     }
 
     public Block getKnapping() {
@@ -950,7 +950,7 @@ public enum RockVariant {
                 return EvolutionBlocks.KNAPPING_SLATE.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public Item getKnifeBlade() {
@@ -1020,7 +1020,7 @@ public enum RockVariant {
                 return EvolutionItems.knife_blade_slate.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public int getMass() {
@@ -1098,7 +1098,7 @@ public enum RockVariant {
                 return EvolutionBlocks.ROCK_SLATE.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public RockType getRockType() {
@@ -1172,7 +1172,7 @@ public enum RockVariant {
                 return EvolutionBlocks.SAND_SLATE.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public int getShearStrength() {
@@ -1246,7 +1246,7 @@ public enum RockVariant {
                 return EvolutionItems.shovel_head_slate.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public Block getStone() {
@@ -1316,7 +1316,7 @@ public enum RockVariant {
                 return EvolutionBlocks.STONE_SLATE.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 
     public Block getStoneBricks() {
@@ -1386,6 +1386,6 @@ public enum RockVariant {
                 return EvolutionBlocks.STONE_BRICKS_SLATE.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred RockVariant: " + this);
+        throw new UnregisteredFeatureException("Unregistered RockVariant: " + this);
     }
 }

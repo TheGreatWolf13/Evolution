@@ -47,7 +47,7 @@ public interface IFluidLoggable extends IBlockFluidContainer {
     }
 
     default int getApparentAmount(World world, BlockPos pos, BlockState state) {
-        if (!state.getValue(EvolutionBStates.FLUIDLOGGED)) {
+        if (!state.getValue(EvolutionBStates.FLUID_LOGGED)) {
             return this.getInitialAmount(state);
         }
         TileEntity tile = world.getBlockEntity(pos);
@@ -70,7 +70,7 @@ public interface IFluidLoggable extends IBlockFluidContainer {
     }
 
     default int getCurrentAmount(World world, BlockPos pos, BlockState state) {
-        if (!state.getValue(EvolutionBStates.FLUIDLOGGED)) {
+        if (!state.getValue(EvolutionBStates.FLUID_LOGGED)) {
             return 0;
         }
         TileEntity tile = world.getBlockEntity(pos);
@@ -92,7 +92,7 @@ public interface IFluidLoggable extends IBlockFluidContainer {
     int getFluidCapacity(BlockState state);
 
     default FluidState getFluidState(World world, BlockPos pos, BlockState state) {
-        if (!state.getValue(EvolutionBStates.FLUIDLOGGED)) {
+        if (!state.getValue(EvolutionBStates.FLUID_LOGGED)) {
             return Fluids.EMPTY.defaultFluidState();
         }
         TileEntity tile = world.getBlockEntity(pos);
@@ -143,7 +143,7 @@ public interface IFluidLoggable extends IBlockFluidContainer {
 
     default void setBlockState(World world, BlockPos pos, BlockState state, @Nullable FluidGeneric fluid, int amount) {
         boolean hasFluid = amount > 0 && fluid != null;
-        BlockState stateToPlace = state.setValue(EvolutionBStates.FLUIDLOGGED, hasFluid);
+        BlockState stateToPlace = state.setValue(EvolutionBStates.FLUID_LOGGED, hasFluid);
         if (!(world.getBlockEntity(pos) instanceof ILoggable)) {
             world.removeBlockEntity(pos);
         }

@@ -33,7 +33,7 @@ public class TEChopping extends TileEntity implements ILoggable {
 
     public void breakLog(PlayerEntity player) {
         if (!this.level.isClientSide) {
-            ItemStack stack = new ItemStack(WoodVariant.byId(this.id).getPlank(), 8);
+            ItemStack stack = new ItemStack(WoodVariant.byId(this.id).getFirewood(), 16);
             BlockUtils.dropItemStack(this.level, this.worldPosition, stack);
             player.getMainHandItem().hurtAndBreak(1, player, playerEntity -> playerEntity.getItemBySlot(EquipmentSlotType.MAINHAND));
         }

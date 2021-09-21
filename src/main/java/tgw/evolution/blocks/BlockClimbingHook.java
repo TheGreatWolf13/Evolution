@@ -92,8 +92,8 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
     }
 
     @Override
-    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
-        return new ItemStack(EvolutionItems.climbing_hook.get());
+    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+        return NonNullList.of(new ItemStack(EvolutionItems.climbing_hook.get()));
     }
 
     @Override

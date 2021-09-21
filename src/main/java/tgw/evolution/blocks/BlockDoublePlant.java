@@ -13,6 +13,7 @@ import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.DoubleBlockHalf;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockReader;
@@ -58,9 +59,9 @@ public class BlockDoublePlant extends BlockBush {
     }
 
     @Override
-    public ItemStack getDrops(World world, BlockPos pos, BlockState state) {
+    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
         if (state.getBlock() == EvolutionBlocks.TALLGRASS.get()) {
-            return ItemStack.EMPTY;
+            return NonNullList.of(ItemStack.EMPTY);
         }
         return super.getDrops(world, pos, state);
     }

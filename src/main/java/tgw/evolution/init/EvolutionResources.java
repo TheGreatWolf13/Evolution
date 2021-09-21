@@ -7,7 +7,7 @@ import tgw.evolution.util.RockVariant;
 import tgw.evolution.util.WoodVariant;
 
 public final class EvolutionResources {
-    //Slot indeces
+    //Slot indices
     public static final int BOOTS = 0;
     public static final int LEGGINGS = 1;
     public static final int CHESTPLATE = 2;
@@ -23,6 +23,8 @@ public final class EvolutionResources {
     //Resource Locations
     //Blocks
     public static final ResourceLocation[] BLOCK_KNAPPING;
+    public static final ResourceLocation[] BLOCK_LOG_SIDE;
+    public static final ResourceLocation[] BLOCK_LOG_TOP;
     public static final ResourceLocation BLOCK_MOLDING = Evolution.getResource("textures/block/molding_block.png");
     public static final ResourceLocation BLOCK_PIT_KILN = Evolution.getResource("textures/block/pit_kiln.png");
     public static final ResourceLocation[] BLOCK_PIT_LOG;
@@ -75,6 +77,16 @@ public final class EvolutionResources {
                 //noinspection ObjectAllocationInLoop
                 BLOCK_KNAPPING[variant.getId()] = Evolution.getResource("block/stone_" + variant.getName());
             }
+        }
+        BLOCK_LOG_SIDE = new ResourceLocation[WoodVariant.values().length];
+        for (WoodVariant variant : WoodVariant.values()) {
+            //noinspection ObjectAllocationInLoop
+            BLOCK_LOG_SIDE[variant.getId()] = Evolution.getResource("block/log_" + variant.getName());
+        }
+        BLOCK_LOG_TOP = new ResourceLocation[WoodVariant.values().length];
+        for (WoodVariant variant : WoodVariant.values()) {
+            //noinspection ObjectAllocationInLoop
+            BLOCK_LOG_TOP[variant.getId()] = Evolution.getResource("block/log_top_" + variant.getName());
         }
         BLOCK_PIT_LOG = new ResourceLocation[WoodVariant.values().length];
         for (WoodVariant variant : WoodVariant.values()) {

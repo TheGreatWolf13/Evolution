@@ -94,7 +94,7 @@ public enum WoodVariant {
                 return WILLOW;
             }
         }
-        throw new UnregistredFeatureException("Unregistred variant for id: " + id);
+        throw new UnregisteredFeatureException("Unregistered variant for id: " + id);
     }
 
     public Block getChoppingBlock() {
@@ -154,7 +154,67 @@ public enum WoodVariant {
                 return EvolutionBlocks.CHOPPING_BLOCK_WILLOW.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred variant: " + this);
+        throw new UnregisteredFeatureException("Unregistered variant: " + this);
+    }
+
+    public Item getFirewood() {
+        switch (this) {
+            case ACACIA: {
+                return EvolutionItems.firewood_acacia.get();
+            }
+            case ASPEN: {
+                return EvolutionItems.firewood_aspen.get();
+            }
+            case BIRCH: {
+                return EvolutionItems.firewood_birch.get();
+            }
+            case CEDAR: {
+                return EvolutionItems.firewood_cedar.get();
+            }
+            case EBONY: {
+                return EvolutionItems.firewood_ebony.get();
+            }
+            case ELM: {
+                return EvolutionItems.firewood_elm.get();
+            }
+            case EUCALYPTUS: {
+                return EvolutionItems.firewood_eucalyptus.get();
+            }
+            case FIR: {
+                return EvolutionItems.firewood_fir.get();
+            }
+            case KAPOK: {
+                return EvolutionItems.firewood_kapok.get();
+            }
+            case MANGROVE: {
+                return EvolutionItems.firewood_mangrove.get();
+            }
+            case MAPLE: {
+                return EvolutionItems.firewood_maple.get();
+            }
+            case OAK: {
+                return EvolutionItems.firewood_oak.get();
+            }
+            case OLD_OAK: {
+                return EvolutionItems.firewood_old_oak.get();
+            }
+            case PALM: {
+                return EvolutionItems.firewood_palm.get();
+            }
+            case PINE: {
+                return EvolutionItems.firewood_pine.get();
+            }
+            case REDWOOD: {
+                return EvolutionItems.firewood_redwood.get();
+            }
+            case SPRUCE: {
+                return EvolutionItems.firewood_spruce.get();
+            }
+            case WILLOW: {
+                return EvolutionItems.firewood_willow.get();
+            }
+        }
+        throw new UnregisteredFeatureException("Unregistered variant: " + this);
     }
 
     public byte getId() {
@@ -218,7 +278,7 @@ public enum WoodVariant {
                 return EvolutionBlocks.LEAVES_WILLOW.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred variant: " + this);
+        throw new UnregisteredFeatureException("Unregistered variant: " + this);
     }
 
     public Block getLog() {
@@ -278,7 +338,7 @@ public enum WoodVariant {
                 return EvolutionBlocks.LOG_WILLOW.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred variant: " + this);
+        throw new UnregisteredFeatureException("Unregistered variant: " + this);
     }
 
     public Item getLogItem() {
@@ -338,7 +398,7 @@ public enum WoodVariant {
                 return EvolutionItems.log_willow.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred variant: " + this);
+        throw new UnregisteredFeatureException("Unregistered variant: " + this);
     }
 
     public int getMass() {
@@ -347,66 +407,6 @@ public enum WoodVariant {
 
     public String getName() {
         return this.name;
-    }
-
-    public Block getPile() {
-        switch (this) {
-            case ACACIA: {
-                return EvolutionBlocks.LOG_PILE_ACACIA.get();
-            }
-            case ASPEN: {
-                return EvolutionBlocks.LOG_PILE_ASPEN.get();
-            }
-            case BIRCH: {
-                return EvolutionBlocks.LOG_PILE_BIRCH.get();
-            }
-            case CEDAR: {
-                return EvolutionBlocks.LOG_PILE_CEDAR.get();
-            }
-            case EBONY: {
-                return EvolutionBlocks.LOG_PILE_EBONY.get();
-            }
-            case ELM: {
-                return EvolutionBlocks.LOG_PILE_ELM.get();
-            }
-            case EUCALYPTUS: {
-                return EvolutionBlocks.LOG_PILE_EUCALYPTUS.get();
-            }
-            case FIR: {
-                return EvolutionBlocks.LOG_PILE_FIR.get();
-            }
-            case KAPOK: {
-                return EvolutionBlocks.LOG_PILE_KAPOK.get();
-            }
-            case MANGROVE: {
-                return EvolutionBlocks.LOG_PILE_MANGROVE.get();
-            }
-            case MAPLE: {
-                return EvolutionBlocks.LOG_PILE_MAPLE.get();
-            }
-            case OAK: {
-                return EvolutionBlocks.LOG_PILE_OAK.get();
-            }
-            case OLD_OAK: {
-                return EvolutionBlocks.LOG_PILE_OLD_OAK.get();
-            }
-            case PALM: {
-                return EvolutionBlocks.LOG_PILE_PALM.get();
-            }
-            case PINE: {
-                return EvolutionBlocks.LOG_PILE_PINE.get();
-            }
-            case REDWOOD: {
-                return EvolutionBlocks.LOG_PILE_REDWOOD.get();
-            }
-            case SPRUCE: {
-                return EvolutionBlocks.LOG_PILE_SPRUCE.get();
-            }
-            case WILLOW: {
-                return EvolutionBlocks.LOG_PILE_WILLOW.get();
-            }
-        }
-        throw new UnregistredFeatureException("Unregistred variant: " + this);
     }
 
     public Item getPlank() {
@@ -466,7 +466,7 @@ public enum WoodVariant {
                 return EvolutionItems.plank_willow.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred variant: " + this);
+        throw new UnregisteredFeatureException("Unregistered variant: " + this);
     }
 
     public Block getPlanks() {
@@ -526,7 +526,7 @@ public enum WoodVariant {
                 return EvolutionBlocks.PLANKS_WILLOW.get();
             }
         }
-        throw new UnregistredFeatureException("Unregistred variant: " + this);
+        throw new UnregisteredFeatureException("Unregistered variant: " + this);
     }
 
     public int getShearStrength() {
