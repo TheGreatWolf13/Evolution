@@ -10,10 +10,13 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceContext;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.CapabilityProvider;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -89,6 +92,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     public Vector3d getNeckPoint() {
         return Vector3d.ZERO;
     }
+
+    @Shadow
+    public abstract Vector3d getViewVector(float p_70676_1_);
 
     @Override
     public final boolean hasCollidedOnXAxis() {
@@ -223,6 +229,23 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
                 }
             }
         }
+    }
+
+    /**
+     * @author MGSchultz
+     * <p>
+     * Overwrite to handle camera pos.
+     */
+    @Overwrite
+    public RayTraceResult pick(double distance, float partialTicks, boolean checkFluids) {
+        Vector3d camera = MathHelper.getCameraPosition((Entity) (Object) this, partialTicks);
+        Vector3d viewVec = this.getViewVector(partialTicks);
+        Vector3d to = camera.add(viewVec.x * distance, viewVec.y * distance, viewVec.z * distance);
+        return this.level.clip(new RayTraceContext(camera,
+                                                   to,
+                                                   RayTraceContext.BlockMode.OUTLINE,
+                                                   checkFluids ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE,
+                                                   (Entity) (Object) this));
     }
 
     @Override
