@@ -217,7 +217,9 @@ public class ClientEvents {
     }
 
     public static void fixAccessibilityScreen() {
-        StaticFieldHandler<AccessibilityScreen, AbstractOption[]> options = new StaticFieldHandler<>(AccessibilityScreen.class, "field_212986_a");
+        StaticFieldHandler<AccessibilityScreen, AbstractOption[]> options = new StaticFieldHandler<>(AccessibilityScreen.class,
+                                                                                                     "field_212986_a",
+                                                                                                     true);
         options.set(new AbstractOption[]{AbstractOption.NARRATOR,
                                          AbstractOption.SHOW_SUBTITLES,
                                          AbstractOption.TEXT_BACKGROUND_OPACITY,
