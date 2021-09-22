@@ -7,8 +7,10 @@ import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.client.shader.ShaderGroup;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraftforge.client.ForgeHooksClient;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -34,24 +36,6 @@ public abstract class WorldRendererMixin {
     @Final
     private RenderTypeBuffers renderBuffers;
     private boolean shouldProcessEntityEffects;
-
-    @Inject(method = "renderLevel", at = @At(value = "INVOKE_STRING", target = "Lnet/minecraft/profiler/IProfiler;popPush(Ljava/lang/String;)V",
-            args = {
-            "ldc=destroyProgress"}))
-    private void onRenderLevel(MatrixStack matrices,
-                               float partialTicks,
-                               long finishTimeNano,
-                               boolean drawBlockOutline,
-                               ActiveRenderInfo camera,
-                               GameRenderer gameRenderer,
-                               LightTexture lightTexture,
-                               Matrix4f proj,
-                               CallbackInfo ci) {
-        if (this.shouldProcessEntityEffects) {
-            this.entityEffect.process(partialTicks);
-            this.minecraft.getMainRenderTarget().bindWrite(false);
-        }
-    }
 
     @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/WorldRenderer;checkPoseStack" +
                                                                         "(Lcom/mojang/blaze3d/matrix/MatrixStack;)V", ordinal = 0))
@@ -93,6 +77,44 @@ public abstract class WorldRendererMixin {
         ClientEvents.getInstance().getRenderer().isRenderingPlayer = true;
         this.renderEntity(entity, x, y, z, partialTicks, matrices, buffer);
         ClientEvents.getInstance().getRenderer().isRenderingPlayer = false;
+    }
+
+    @Inject(method = "renderLevel", at = @At(value = "INVOKE_STRING", target = "Lnet/minecraft/profiler/IProfiler;popPush(Ljava/lang/String;)V",
+            args = {
+            "ldc=destroyProgress"}))
+    private void onRenderLevel1(MatrixStack matrices,
+                                float partialTicks,
+                                long finishTimeNano,
+                                boolean drawBlockOutline,
+                                ActiveRenderInfo camera,
+                                GameRenderer gameRenderer,
+                                LightTexture lightTexture,
+                                Matrix4f proj,
+                                CallbackInfo ci) {
+        if (this.shouldProcessEntityEffects) {
+            this.entityEffect.process(partialTicks);
+            this.minecraft.getMainRenderTarget().bindWrite(false);
+        }
+    }
+
+    @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;pushMatrix()V", ordinal = 0))
+    private void onRenderLevel2(MatrixStack matrices,
+                                float partialTicks,
+                                long finishTimeNano,
+                                boolean drawBlockOutline,
+                                ActiveRenderInfo camera,
+                                GameRenderer gameRenderer,
+                                LightTexture lightTexture,
+                                Matrix4f proj,
+                                CallbackInfo ci) {
+        if (this.minecraft.hitResult != null && this.minecraft.hitResult.getType() == RayTraceResult.Type.MISS) {
+            ForgeHooksClient.onDrawBlockHighlight((WorldRenderer) (Object) this,
+                                                  camera,
+                                                  this.minecraft.hitResult,
+                                                  partialTicks,
+                                                  matrices,
+                                                  this.renderBuffers.bufferSource());
+        }
     }
 
     @Shadow
