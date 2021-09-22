@@ -117,6 +117,7 @@ public final class Evolution {
     private static void onClientSetup(FMLClientSetupEvent event) {
         EvolutionRenderLayer.setup();
         ClientEvents.fixInputMappings();
+        ClientEvents.fixAccessibilityScreen();
         FieldHandler<FontRenderer, Integer> fontHeight = new FieldHandler<>(FontRenderer.class, "field_78288_b");
         fontHeight.set(Minecraft.getInstance().font, 10);
     }

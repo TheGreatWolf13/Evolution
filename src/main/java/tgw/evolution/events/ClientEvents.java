@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.AbstractOption;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.AbstractGui;
@@ -213,6 +214,21 @@ public class ClientEvents {
             return new GuiContainerHandler((ContainerScreen<?>) currentScreen);
         }
         return null;
+    }
+
+    public static void fixAccessibilityScreen() {
+        StaticFieldHandler<AccessibilityScreen, AbstractOption[]> options = new StaticFieldHandler<>(AccessibilityScreen.class, "field_212986_a");
+        options.set(new AbstractOption[]{AbstractOption.NARRATOR,
+                                         AbstractOption.SHOW_SUBTITLES,
+                                         AbstractOption.TEXT_BACKGROUND_OPACITY,
+                                         AbstractOption.TEXT_BACKGROUND,
+                                         AbstractOption.CHAT_OPACITY,
+                                         AbstractOption.CHAT_LINE_SPACING,
+                                         AbstractOption.CHAT_DELAY,
+                                         AbstractOption.TOGGLE_CROUCH,
+                                         AbstractOption.TOGGLE_SPRINT,
+                                         AbstractOption.SCREEN_EFFECTS_SCALE,
+                                         AbstractOption.FOV_EFFECTS_SCALE});
     }
 
     public static void fixInputMappings() {
@@ -863,10 +879,6 @@ public class ClientEvents {
                               }, bugsLink, true)));
             event.addWidget(feedback);
             event.addWidget(bugs);
-        }
-        else if (event.getGui() instanceof AccessibilityScreen) {
-            Widget autoJump = event.getWidgetList().get(5);
-            event.removeWidget(autoJump);
         }
     }
 
