@@ -356,9 +356,10 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
     }
 
     public void shoot(Entity shooter, float pitch, float yaw, float velocity, float inaccuracy) {
-        float x = -MathHelper.sinDeg(yaw) * MathHelper.cosDeg(pitch);
+        float cosPitch = MathHelper.cosDeg(pitch);
+        float x = -MathHelper.sinDeg(yaw) * cosPitch;
         float y = -MathHelper.sinDeg(pitch);
-        float z = MathHelper.cosDeg(yaw) * MathHelper.cosDeg(pitch);
+        float z = MathHelper.cosDeg(yaw) * cosPitch;
         this.shoot(x, y, z, velocity, inaccuracy);
         this.setDeltaMovement(this.getDeltaMovement().add(shooter.getDeltaMovement().x, shooter.getDeltaMovement().y, shooter.getDeltaMovement().z));
     }

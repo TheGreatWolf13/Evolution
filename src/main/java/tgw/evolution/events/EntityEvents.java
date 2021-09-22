@@ -45,7 +45,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
 import tgw.evolution.Evolution;
-import tgw.evolution.blocks.IClimbable;
 import tgw.evolution.capabilities.SerializableCapabilityProvider;
 import tgw.evolution.capabilities.health.CapabilityHealth;
 import tgw.evolution.capabilities.health.HealthStats;
@@ -517,15 +516,6 @@ public class EntityEvents {
             BlockPos pos = new BlockPos(entity.getX(), entity.getBoundingBox().minY, entity.getZ());
             BlockState state = entity.level.getBlockState(pos);
             Block block = state.getBlock();
-            if (block instanceof IClimbable && !entity.level.isClientSide) {
-                float sweepAngle = ((IClimbable) block).getSweepAngle();
-                if (!Float.isNaN(sweepAngle)) {
-                    float yaw = MathHelper.wrapDegrees(entity.getViewYRot(1.0f));
-                    yaw = MathHelper.clampAngle(yaw, sweepAngle, ((IClimbable) block).getDirection(state));
-                    entity.yRot = yaw;
-                    entity.yRotO = yaw;
-                }
-            }
             combatTracker.setFallSuffixBlock(block);
         }
         else if (entity.isOnGround()) {
