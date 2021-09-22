@@ -26,7 +26,13 @@ public abstract class PlayerRendererMixin extends LivingRenderer<AbstractClientP
 
     @Inject(method = "scale", at = @At("TAIL"))
     private void onScale(AbstractClientPlayerEntity player, MatrixStack matrices, float partialTicks, CallbackInfo ci) {
-        matrices.translate(0, 0, 1 / 16.0);
+        switch (player.getPose()) {
+            case STANDING:
+            case CROUCHING: {
+                matrices.translate(0, 0, 1 / 16.0);
+                break;
+            }
+        }
     }
 
     /**

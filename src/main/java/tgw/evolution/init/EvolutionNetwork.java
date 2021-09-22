@@ -173,5 +173,6 @@ public final class EvolutionNetwork {
                                  PacketSCHitmarker::encode,
                                  PacketSCHitmarker::decode,
                                  PacketSCHitmarker::handle);
+        INSTANCE.registerMessage(increaseId(), PacketSCMovement.class, PacketSCMovement::encode, PacketSCMovement::decode, PacketSCMovement::handle);
     }
 }

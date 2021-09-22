@@ -3,6 +3,7 @@ package tgw.evolution.util;
 import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.Pose;
 import net.minecraft.item.CrossbowItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -517,6 +518,9 @@ public final class MathHelper {
     }
 
     public static Vector3d getCameraPosition(Entity entity, float partialTicks) {
+        if (entity.getPose() == Pose.SLEEPING) {
+            return new Vector3d(entity.getX(), entity.getY() + 0.17, entity.getZ());
+        }
         float yaw = entity.getViewYRot(partialTicks);
         float pitch = entity.getViewXRot(partialTicks);
         float cosBodyYaw;

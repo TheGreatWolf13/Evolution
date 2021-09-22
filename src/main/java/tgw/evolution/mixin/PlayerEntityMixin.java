@@ -1,5 +1,6 @@
 package tgw.evolution.mixin;
 
+import com.mojang.datafixers.util.Either;
 import net.minecraft.entity.*;
 import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.entity.player.PlayerEntity;
@@ -8,19 +9,26 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
+import net.minecraft.util.Unit;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.network.PacketDistributor;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tgw.evolution.entities.IEntityPatch;
 import tgw.evolution.entities.INeckPosition;
 import tgw.evolution.events.EntityEvents;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionStats;
+import tgw.evolution.network.PacketSCMovement;
 import tgw.evolution.util.EntityFlags;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.SkinType;
@@ -186,6 +194,13 @@ public abstract class PlayerEntityMixin extends LivingEntity implements INeckPos
     @Override
     public boolean hasHitboxes() {
         return true;
+    }
+
+    @Inject(method = "startSleepInBed", at = @At("TAIL"))
+    private void onStartSleepInBed(BlockPos pos, CallbackInfoReturnable<Either<PlayerEntity.SleepResult, Unit>> cir) {
+        if (!this.level.isClientSide) {
+            EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) (Object) this), new PacketSCMovement(0, 0, 0));
+        }
     }
 
     /**
