@@ -163,7 +163,6 @@ public class ClientEvents {
     private boolean isPreviousProned;
     private boolean isSneakPressed;
     private boolean lunging;
-    //    private RayTraceResult objectMouseOver;
     private GameRenderer oldGameRenderer;
     private boolean previousPressed;
     private boolean proneToggle;
@@ -171,6 +170,10 @@ public class ClientEvents {
     private int ticks;
     private float tps = 20.0f;
     private int warmUpTicks;
+    /**
+     * Bit 0 to 7: whether the player was in water in the last 8 frames, 0 being the most recent, 7 being the least recent.
+     */
+    private byte wasInWater;
 
     public ClientEvents(Minecraft mc) {
         this.mc = mc;
@@ -1147,9 +1150,24 @@ public class ClientEvents {
             renderer.addLayer(new LayerBack(renderer));
             INJECTED_PLAYER_RENDERERS.put(renderer, null);
         }
-        if (this.renderer.isRenderingPlayer && this.mc.player.hasEffect(Effects.CONFUSION)) {
-            renderer.getModel().head.visible = false;
-            renderer.getModel().hat.visible = false;
+        //Hide certain parts of the player model to not clip into the camera in certain situations
+        if (this.renderer.isRenderingPlayer) {
+            boolean hasNausea = this.mc.player.hasEffect(Effects.CONFUSION);
+            float swimAnimation = MathHelper.getSwimAnimation(this.mc.player, event.getPartialRenderTick());
+            Pose pose = this.mc.player.getPose();
+            boolean isGettingUpFromCrawling = pose != Pose.SWIMMING && swimAnimation > 0;
+            boolean isInWater = this.mc.player.isInWater();
+            boolean isGoingCrawling = pose == Pose.SWIMMING && !isInWater && swimAnimation < 1;
+            if (hasNausea || isGettingUpFromCrawling || isGoingCrawling || this.wasPreviousInWater(7) != isInWater) {
+                renderer.getModel().head.visible = false;
+                renderer.getModel().hat.visible = false;
+            }
+            if (isGettingUpFromCrawling || isGoingCrawling) {
+                renderer.getModel().body.visible = false;
+                renderer.getModel().jacket.visible = false;
+            }
+            this.wasInWater <<= 1;
+            this.wasInWater |= isInWater ? 1 : 0;
         }
     }
 
@@ -1465,5 +1483,9 @@ public class ClientEvents {
         this.tps = tickrate;
         Timer timer = TIMER_FIELD.get(this.mc);
         TICKRATE_FIELD.set(timer, 1_000.0F / tickrate);
+    }
+
+    private boolean wasPreviousInWater(int frame) {
+        return (this.wasInWater & 1 << frame) != 0;
     }
 }
