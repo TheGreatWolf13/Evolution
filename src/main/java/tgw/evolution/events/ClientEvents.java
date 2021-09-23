@@ -838,49 +838,51 @@ public class ClientEvents {
     @SubscribeEvent
     public void onGUIPostInit(GuiScreenEvent.InitGuiEvent.Post event) {
         if (event.getGui() instanceof IngameMenuScreen) {
-            event.addWidget(new Button(event.getWidgetList().get(6).x,
-                                       event.getWidgetList().get(6).y + 24,
-                                       event.getWidgetList().get(6).getWidth(),
-                                       event.getWidgetList().get(6).getHeight(),
-                                       EvolutionTexts.GUI_MENU_MOD_OPTIONS,
-                                       button -> this.mc.setScreen(new ModListScreen(event.getGui()))));
-            Widget shareToLan = event.getWidgetList().get(6);
-            shareToLan.x = event.getGui().width / 2 - 102;
-            shareToLan.setWidth(204);
-            Widget returnToMenu = event.getWidgetList().get(7);
-            returnToMenu.y += 24;
-            Widget menuOptions = event.getWidgetList().get(5);
-            menuOptions.y += 24;
-            Widget feedback = event.getWidgetList().get(3);
-            Widget bugs = event.getWidgetList().get(4);
-            event.removeWidget(feedback);
-            event.removeWidget(bugs);
-            String feedbackLink = "https://github.com/MGSchultz-13/Evolution/discussions/categories/feedback";
-            feedback = new Button(event.getGui().width / 2 - 102,
+            if (!event.getWidgetList().isEmpty()) {
+                event.addWidget(new Button(event.getWidgetList().get(6).x,
+                                           event.getWidgetList().get(6).y + 24,
+                                           event.getWidgetList().get(6).getWidth(),
+                                           event.getWidgetList().get(6).getHeight(),
+                                           EvolutionTexts.GUI_MENU_MOD_OPTIONS,
+                                           button -> this.mc.setScreen(new ModListScreen(event.getGui()))));
+                Widget shareToLan = event.getWidgetList().get(6);
+                shareToLan.x = event.getGui().width / 2 - 102;
+                shareToLan.setWidth(204);
+                Widget returnToMenu = event.getWidgetList().get(7);
+                returnToMenu.y += 24;
+                Widget menuOptions = event.getWidgetList().get(5);
+                menuOptions.y += 24;
+                Widget feedback = event.getWidgetList().get(3);
+                Widget bugs = event.getWidgetList().get(4);
+                event.removeWidget(feedback);
+                event.removeWidget(bugs);
+                String feedbackLink = "https://github.com/MGSchultz-13/Evolution/discussions/categories/feedback";
+                feedback = new Button(event.getGui().width / 2 - 102,
+                                      event.getGui().height / 4 + 72 - 16,
+                                      98,
+                                      20,
+                                      EvolutionTexts.GUI_MENU_SEND_FEEDBACK,
+                                      button -> this.mc.setScreen(new ConfirmOpenLinkScreen(b -> {
+                                          if (b) {
+                                              Util.getPlatform().openUri(feedbackLink);
+                                          }
+                                          this.mc.setScreen(event.getGui());
+                                      }, feedbackLink, true)));
+                String bugsLink = "https://github.com/MGSchultz-13/Evolution/issues";
+                bugs = new Button(event.getGui().width / 2 + 4,
                                   event.getGui().height / 4 + 72 - 16,
                                   98,
                                   20,
-                                  EvolutionTexts.GUI_MENU_SEND_FEEDBACK,
+                                  EvolutionTexts.GUI_MENU_REPORT_BUGS,
                                   button -> this.mc.setScreen(new ConfirmOpenLinkScreen(b -> {
                                       if (b) {
-                                          Util.getPlatform().openUri(feedbackLink);
+                                          Util.getPlatform().openUri(bugsLink);
                                       }
                                       this.mc.setScreen(event.getGui());
-                                  }, feedbackLink, true)));
-            String bugsLink = "https://github.com/MGSchultz-13/Evolution/issues";
-            bugs = new Button(event.getGui().width / 2 + 4,
-                              event.getGui().height / 4 + 72 - 16,
-                              98,
-                              20,
-                              EvolutionTexts.GUI_MENU_REPORT_BUGS,
-                              button -> this.mc.setScreen(new ConfirmOpenLinkScreen(b -> {
-                                  if (b) {
-                                      Util.getPlatform().openUri(bugsLink);
-                                  }
-                                  this.mc.setScreen(event.getGui());
-                              }, bugsLink, true)));
-            event.addWidget(feedback);
-            event.addWidget(bugs);
+                                  }, bugsLink, true)));
+                event.addWidget(feedback);
+                event.addWidget(bugs);
+            }
         }
     }
 
