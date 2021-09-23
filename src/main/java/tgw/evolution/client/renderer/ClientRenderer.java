@@ -1457,7 +1457,7 @@ public class ClientRenderer {
                         break;
                     }
                 }
-                if (effectInstance != movingInstance) {
+                if (effectInstance != movingInstance && !this.mc.options.renderDebug) {
                     this.mc.getTextureManager().bind(ContainerScreen.INVENTORY_LOCATION);
                     RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
                     float alpha = 1.0F;
