@@ -56,7 +56,6 @@ import tgw.evolution.capabilities.thirst.ThirstStats;
 import tgw.evolution.entities.EntityGenericCreature;
 import tgw.evolution.entities.IAgressive;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
-import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.*;
 import tgw.evolution.inventory.extendedinventory.ContainerExtendedHandler;
 import tgw.evolution.network.*;
@@ -551,8 +550,18 @@ public class EntityEvents {
 
     @SubscribeEvent
     public void onPlayerLogIn(PlayerEvent.PlayerLoggedInEvent event) {
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) event.getPlayer()),
-                                       new PacketSCChangeTickrate(TickrateChanger.getCurrentTickrate()));
+        PlayerEntity player = event.getPlayer();
+        World world = player.level;
+        if (!world.isClientSide) {
+            PacketDistributor.PacketTarget target = PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player);
+            for (PlayerEntity otherPlayer : world.players()) {
+                if (!otherPlayer.equals(player)) {
+                    //noinspection ObjectAllocationInLoop
+                    EvolutionNetwork.INSTANCE.send(target, new PacketSCFixRotation(otherPlayer));
+                }
+            }
+            EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> player), new PacketSCFixRotation(player));
+        }
     }
 
     @SubscribeEvent

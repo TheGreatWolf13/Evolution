@@ -179,5 +179,10 @@ public final class EvolutionNetwork {
                                  PacketSCMultiplayerPause::encode,
                                  PacketSCMultiplayerPause::decode,
                                  PacketSCMultiplayerPause::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCFixRotation.class,
+                                 PacketSCFixRotation::encode,
+                                 PacketSCFixRotation::decode,
+                                 PacketSCFixRotation::handle);
     }
 }

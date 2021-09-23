@@ -432,6 +432,16 @@ public final class MathHelper {
     }
 
     /**
+     * Approximates a {@code float} value to an {@code int}, rounding down.
+     *
+     * @param value The value to approximate.
+     * @return An {@code int} value rounded down.
+     */
+    public static int floor(float value) {
+        return net.minecraft.util.math.MathHelper.floor(value);
+    }
+
+    /**
      * Approximates a {@code double} value to an {@code int}, rounding down.
      *
      * @param value The value to approximate.
