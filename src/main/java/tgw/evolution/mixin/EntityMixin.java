@@ -5,6 +5,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MoverType;
+import net.minecraft.entity.Pose;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.DamageSource;
@@ -94,7 +95,10 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     }
 
     @Shadow
-    public abstract Vector3d getViewVector(float p_70676_1_);
+    public abstract Pose getPose();
+
+    @Shadow
+    public abstract Vector3d getViewVector(float partialTicks);
 
     @Override
     public final boolean hasCollidedOnXAxis() {
@@ -105,6 +109,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     public final boolean hasCollidedOnZAxis() {
         return this.hasCollidedOnZ;
     }
+
+    @Shadow
+    public abstract boolean isInWater();
 
     @Shadow
     public abstract boolean isOnGround();
@@ -228,6 +235,20 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
                     }
                 }
             }
+        }
+        else if (this.getPose() == Pose.SWIMMING && !this.isInWater()) {
+            double dPitch = pitch * 0.15;
+            this.xRot += dPitch;
+            double dYaw = yaw * 0.15;
+            this.yRot += dYaw;
+            this.xRot = MathHelper.clamp(this.xRot, 0.0F, 90.0F);
+            this.xRotO += dPitch;
+            this.yRotO += dYaw;
+            this.xRotO = MathHelper.clamp(this.xRotO, 0.0F, 90.0F);
+            if (this.vehicle != null) {
+                this.vehicle.onPassengerTurned((Entity) (Object) this);
+            }
+            ci.cancel();
         }
     }
 
