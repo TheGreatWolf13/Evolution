@@ -9,7 +9,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.SimpleSound;
 import net.minecraft.client.gui.IProgressMeter;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.StatsScreen;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.widget.list.ExtendedList;
 import net.minecraft.client.renderer.RenderHelper;
@@ -47,7 +46,6 @@ import java.util.*;
 public class ScreenStats extends Screen implements IProgressMeter {
 
     private static final FieldHandler<Stat, IStatFormatter> FORMATTER = new FieldHandler<>(Stat.class, "field_75976_b");
-    private static final FieldHandler<StatsScreen, Screen> PARENT_SCREEN = new FieldHandler<>(StatsScreen.class, "field_146332_f");
     private final EvolutionStatisticsManager stats;
     private ListDamageStats damageStats;
     private ListDeathStats deathStats;
@@ -61,7 +59,7 @@ public class ScreenStats extends Screen implements IProgressMeter {
     private ListMobStats mobStats;
     private ListTimeStats timeStats;
 
-    public ScreenStats(StatsScreen parent, StatisticsManager manager) {
+    public ScreenStats(StatisticsManager manager) {
         super(new TranslationTextComponent("gui.stats"));
         this.stats = (EvolutionStatisticsManager) manager;
     }
@@ -1227,11 +1225,11 @@ public class ScreenStats extends Screen implements IProgressMeter {
 
         protected void drawName(MatrixStack matrices, @Nullable ITextComponent text, int mouseX, int mouseY) {
             if (text != null) {
+                int k = ScreenStats.this.font.width(text);
                 int i = mouseX + 12;
                 int j = mouseY - 12;
-                int k = ScreenStats.this.font.width(text);
                 this.fillGradient(matrices, i - 3, j - 3, i + k + 3, j + 8 + 3, 0xc000_0000, 0xc000_0000);
-                ScreenStats.this.font.draw(matrices, text, i, j, -1);
+                ScreenStats.this.font.draw(matrices, text, i, j, 0xffff_ffff);
             }
         }
 
