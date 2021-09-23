@@ -244,7 +244,7 @@ public class ClientEvents {
             if (formattedString.equals(translationKey)) {
                 String s = GLFW.glfwGetKeyName(keyCode, -1);
                 if (s != null) {
-                    return new StringTextComponent(s);
+                    return new StringTextComponent(s.toUpperCase(Locale.ROOT));
                 }
             }
             return new TranslationTextComponent(translationKey);
@@ -831,7 +831,7 @@ public class ClientEvents {
         }
         else if (screen instanceof StatsScreen) {
             event.setCanceled(true);
-            this.mc.setScreen(new ScreenStats((StatsScreen) screen, this.mc.player.getStats()));
+            this.mc.setScreen(new ScreenStats(this.mc.player.getStats()));
         }
         if (!event.isCanceled()) {
             onGuiOpen(event.getGui());
