@@ -97,6 +97,7 @@ import tgw.evolution.init.*;
 import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.items.*;
 import tgw.evolution.network.*;
+import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.stats.EvolutionStatisticsManager;
 import tgw.evolution.util.*;
 import tgw.evolution.util.hitbox.BodyPart;
@@ -423,6 +424,10 @@ public class ClientEvents {
         LUNGING_PLAYERS.clear();
         if (this.mc.level == null) {
             this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
+            if (((IMinecraftPatch) this.mc).isMultiplayerPaused()) {
+                Evolution.LOGGER.info("Resuming client");
+                ((IMinecraftPatch) Minecraft.getInstance()).setMultiplayerPaused(false);
+            }
             this.warmUpTicks = 0;
         }
     }

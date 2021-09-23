@@ -15,5 +15,6 @@ public final class EvolutionCommands {
         CommandRegen.register(dispatcher);
         CommandDate.register(dispatcher);
         CommandHeal.register(dispatcher);
+        CommandPause.register(dispatcher);
     }
 }

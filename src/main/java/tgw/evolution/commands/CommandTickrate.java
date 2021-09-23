@@ -11,7 +11,7 @@ import tgw.evolution.hooks.TickrateChanger;
 
 public class CommandTickrate implements Command<CommandSource> {
 
-    private static final CommandTickrate CMD = new CommandTickrate();
+    private static final Command<CommandSource> CMD = new CommandTickrate();
     private static final FloatArgumentType TPS = FloatArgumentType.floatArg(TickrateChanger.MIN_TICKRATE, TickrateChanger.MAX_TICKRATE);
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {

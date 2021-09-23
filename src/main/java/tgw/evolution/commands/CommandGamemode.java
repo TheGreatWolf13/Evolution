@@ -14,7 +14,7 @@ import net.minecraft.world.GameType;
 
 public class CommandGamemode implements Command<CommandSource> {
 
-    private static final CommandGamemode CMD = new CommandGamemode();
+    private static final Command<CommandSource> CMD = new CommandGamemode();
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.register(Commands.literal("gm").requires(cs -> cs.getEntity() instanceof ServerPlayerEntity && cs.hasPermission(2)).executes(CMD));

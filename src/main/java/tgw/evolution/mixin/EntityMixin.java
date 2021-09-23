@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MoverType;
@@ -30,6 +31,7 @@ import tgw.evolution.entities.IEntityPatch;
 import tgw.evolution.entities.IEntityProperties;
 import tgw.evolution.entities.INeckPosition;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.util.MathHelper;
 
 import javax.annotation.Nullable;
@@ -143,6 +145,10 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Inject(method = "turn", at = @At("HEAD"), cancellable = true)
     private void onTurn(double yaw, double pitch, CallbackInfo ci) {
+        if (((IMinecraftPatch) Minecraft.getInstance()).isMultiplayerPaused()) {
+            ci.cancel();
+            return;
+        }
         if (!this.isOnGround()) {
             if ((Object) this instanceof LivingEntity) {
                 boolean isPlayerFlying = (Object) this instanceof PlayerEntity && ((PlayerEntity) (Object) this).abilities.flying;

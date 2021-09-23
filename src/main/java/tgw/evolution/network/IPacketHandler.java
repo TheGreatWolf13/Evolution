@@ -6,5 +6,7 @@ import java.util.function.Supplier;
 
 public interface IPacketHandler {
 
+    void handleMultiplayerPause(boolean paused);
+
     void handlePlaySoundEntityEmitted(PacketSCPlaySoundEntityEmitted packet, Supplier<NetworkEvent.Context> context);
 }

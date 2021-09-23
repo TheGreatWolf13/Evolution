@@ -1,40 +1,52 @@
 package tgw.evolution.mixin;
 
-import net.minecraft.client.GameSettings;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.MouseHelper;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.*;
+import net.minecraft.client.audio.MusicTicker;
+import net.minecraft.client.audio.SoundHandler;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.IngameGui;
 import net.minecraft.client.gui.LoadingGui;
+import net.minecraft.client.gui.ResourceLoadProgressGui;
 import net.minecraft.client.gui.advancements.AdvancementsScreen;
 import net.minecraft.client.gui.chat.NarratorChatListener;
+import net.minecraft.client.gui.screen.DeathScreen;
 import net.minecraft.client.gui.screen.DirtMessageScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.SleepInMultiplayerScreen;
 import net.minecraft.client.gui.screen.inventory.CreativeScreen;
 import net.minecraft.client.gui.screen.inventory.InventoryScreen;
 import net.minecraft.client.gui.social.SocialInteractionsScreen;
+import net.minecraft.client.gui.toasts.ToastGui;
 import net.minecraft.client.gui.toasts.TutorialToast;
 import net.minecraft.client.multiplayer.PlayerController;
 import net.minecraft.client.network.play.ClientPlayNetHandler;
 import net.minecraft.client.particle.ParticleManager;
+import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.settings.CloudOption;
 import net.minecraft.client.settings.PointOfView;
+import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.client.tutorial.Tutorial;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.crash.CrashReport;
+import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.crash.ReportedException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.ChatVisibility;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.client.CPlayerDiggingPacket;
+import net.minecraft.profiler.IProfileResult;
 import net.minecraft.profiler.IProfiler;
 import net.minecraft.profiler.LongTickDetector;
+import net.minecraft.profiler.Snooper;
 import net.minecraft.server.integrated.IntegratedServer;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
+import net.minecraft.util.*;
 import net.minecraft.util.concurrent.RecursiveEventLoop;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -47,6 +59,7 @@ import net.minecraft.world.GameType;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.fml.hooks.BasicEventHooks;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Final;
@@ -66,19 +79,24 @@ import tgw.evolution.items.ILunge;
 import tgw.evolution.items.IOffhandAttackable;
 import tgw.evolution.items.IParry;
 import tgw.evolution.network.PacketCSStartLunge;
+import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.util.MathHelper;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
 
-@SuppressWarnings("MethodMayBeStatic")
 @Mixin(Minecraft.class)
-public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
+public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implements IMinecraftPatch {
 
     @Shadow
     public static byte[] reserve;
+    @Shadow
+    @Final
+    public static boolean ON_OSX;
     @Shadow
     @Final
     private static ITextComponent SOCIAL_INTERACTIONS_NOT_AVAILABLE;
@@ -86,8 +104,15 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
     @Final
     private static Logger LOGGER;
     @Shadow
+    private static int fps;
+    @Shadow
     @Nullable
     public Entity crosshairPickEntity;
+    @Shadow
+    public String fpsString;
+    @Shadow
+    @Final
+    public FrameTimer frameTimer;
     @Shadow
     @Nullable
     public PlayerController gameMode;
@@ -101,6 +126,9 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
     @Nullable
     public RayTraceResult hitResult;
     @Shadow
+    @Final
+    public KeyboardListener keyboardHandler;
+    @Shadow
     @Nullable
     public ClientWorld level;
     @Shadow
@@ -109,6 +137,8 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
     @Shadow
     @Final
     public MouseHelper mouseHandler;
+    @Shadow
+    public boolean noRender;
     @Shadow
     @Final
     public GameSettings options;
@@ -125,16 +155,48 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
     @Nullable
     public Screen screen;
     @Shadow
+    @Final
+    public TextureManager textureManager;
+    @Shadow
     protected int missTime;
     @Shadow
     @Nullable
     private CrashReport delayedCrash;
     @Shadow
+    @Nullable
+    private IProfileResult fpsPieResults;
+    @Shadow
+    private int frames;
+    @Shadow
     private Thread gameThread;
     @Shadow
     private boolean isLocalServer;
     @Shadow
+    private long lastNanoTime;
+    @Shadow
+    private long lastTime;
+    @Shadow
+    @Final
+    private Framebuffer mainRenderTarget;
+    private boolean multiplayerPause;
+    @Shadow
+    @Final
+    private MusicTicker musicManager;
+    @Shadow
+    private boolean pause;
+    @Shadow
+    private float pausePartialTick;
+    @Shadow
+    @Nullable
+    private NetworkManager pendingConnection;
+    @Shadow
+    @Nullable
+    private CompletableFuture<Void> pendingReload;
+    @Shadow
     private IProfiler profiler;
+    @Shadow
+    @Final
+    private Queue<Runnable> progressTasks;
     @Shadow
     private int rightClickDelay;
     @Shadow
@@ -143,11 +205,26 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
     @Nullable
     private IntegratedServer singleplayerServer;
     @Shadow
+    @Final
+    private Snooper snooper;
+    @Shadow
     @Nullable
     private TutorialToast socialInteractionsToast;
     @Shadow
     @Final
+    private SoundHandler soundManager;
+    @Shadow
+    @Final
+    private Timer timer;
+    @Shadow
+    @Final
+    private ToastGui toast;
+    @Shadow
+    @Final
     private Tutorial tutorial;
+    @Shadow
+    @Final
+    private MainWindow window;
 
     public MinecraftMixin(String name) {
         super(name);
@@ -294,6 +371,9 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
     @Nullable
     public abstract ClientPlayNetHandler getConnection();
 
+    @Shadow
+    protected abstract int getFramerateLimit();
+
     /**
      * @author MGSchultz
      * <p>
@@ -316,14 +396,16 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
             boolean isSaveToolbarDown = this.options.keySaveHotbarActivator.isDown();
             boolean isLoadToolbarDown = this.options.keyLoadHotbarActivator.isDown();
             if (this.options.keyHotbarSlots[slot].consumeClick()) {
-                if (this.player.isSpectator()) {
-                    this.gui.getSpectatorGui().onHotbarSelected(slot);
-                }
-                else if (!this.player.isCreative() || this.screen != null || !isLoadToolbarDown && !isSaveToolbarDown) {
-                    this.player.inventory.selected = slot;
-                }
-                else {
-                    CreativeScreen.handleHotbarLoadOrSave((Minecraft) (Object) this, slot, isLoadToolbarDown, isSaveToolbarDown);
+                if (!this.multiplayerPause) {
+                    if (this.player.isSpectator()) {
+                        this.gui.getSpectatorGui().onHotbarSelected(slot);
+                    }
+                    else if (!this.player.isCreative() || this.screen != null || !isLoadToolbarDown && !isSaveToolbarDown) {
+                        this.player.inventory.selected = slot;
+                    }
+                    else {
+                        CreativeScreen.handleHotbarLoadOrSave((Minecraft) (Object) this, slot, isLoadToolbarDown, isSaveToolbarDown);
+                    }
                 }
             }
         }
@@ -342,13 +424,15 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
             }
         }
         while (this.options.keyInventory.consumeClick()) {
-            if (this.gameMode.isServerControlledInventory()) {
-                this.player.sendOpenInventory();
-            }
-            else {
-                this.tutorial.onOpenInventory();
-                //noinspection ObjectAllocationInLoop
-                this.setScreen(new InventoryScreen(this.player));
+            if (!this.multiplayerPause) {
+                if (this.gameMode.isServerControlledInventory()) {
+                    this.player.sendOpenInventory();
+                }
+                else {
+                    this.tutorial.onOpenInventory();
+                    //noinspection ObjectAllocationInLoop
+                    this.setScreen(new InventoryScreen(this.player));
+                }
             }
         }
         while (this.options.keyAdvancements.consumeClick()) {
@@ -356,15 +440,19 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
             this.setScreen(new AdvancementsScreen(this.player.connection.getAdvancements()));
         }
         while (this.options.keySwapOffhand.consumeClick()) {
-            if (!this.player.isSpectator()) {
-                //noinspection ObjectAllocationInLoop
-                this.getConnection()
-                    .send(new CPlayerDiggingPacket(CPlayerDiggingPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ZERO, Direction.DOWN));
+            if (!this.multiplayerPause) {
+                if (!this.player.isSpectator()) {
+                    //noinspection ObjectAllocationInLoop
+                    this.getConnection()
+                        .send(new CPlayerDiggingPacket(CPlayerDiggingPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ZERO, Direction.DOWN));
+                }
             }
         }
         while (this.options.keyDrop.consumeClick()) {
-            if (!this.player.isSpectator() && this.player.drop(Screen.hasControlDown())) {
-                this.player.swing(Hand.MAIN_HAND);
+            if (!this.multiplayerPause) {
+                if (!this.player.isSpectator() && this.player.drop(Screen.hasControlDown())) {
+                    this.player.swing(Hand.MAIN_HAND);
+                }
             }
         }
         boolean isChatVisible = this.options.chatVisibility != ChatVisibility.HIDDEN;
@@ -379,7 +467,9 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
         Item offhandItem = this.player.getOffhandItem().getItem();
         if (this.player.isUsingItem()) {
             if (!this.options.keyUse.isDown()) {
-                this.gameMode.releaseUsingItem(this.player);
+                if (!this.multiplayerPause) {
+                    this.gameMode.releaseUsingItem(this.player);
+                }
             }
             while (this.options.keyAttack.consumeClick()) {
                 //TODO shield bash
@@ -395,42 +485,46 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
                 int lungeFullTime = ((ILunge) mainhandItem).getFullLungeTime();
                 int lungeMinTime = ((ILunge) mainhandItem).getMinLungeTime();
                 if (this.options.keyAttack.isDown()) {
-                    if (ClientEvents.getInstance().getMainhandCooledAttackStrength(0.0f) >= 1.0f && InputHooks.attackKeyReleased) {
-                        InputHooks.attackKeyDown();
-                        this.missTime = 1;
-                        if (InputHooks.getAttackKeyDownTicks() >= lungeMinTime) {
-                            if (!InputHooks.isMainhandLungeInProgress) {
-                                InputHooks.isMainhandLungeInProgress = true;
-                                LungeChargeInfo lunge = ClientEvents.ABOUT_TO_LUNGE_PLAYERS.get(this.player.getId());
-                                if (lunge == null) {
-                                    ClientEvents.ABOUT_TO_LUNGE_PLAYERS.put(this.player.getId(),
-                                                                            new LungeChargeInfo(Hand.MAIN_HAND,
-                                                                                                this.player.getMainHandItem(),
-                                                                                                lungeFullTime - lungeMinTime));
+                    if (!this.multiplayerPause) {
+                        if (ClientEvents.getInstance().getMainhandCooledAttackStrength(0.0f) >= 1.0f && InputHooks.attackKeyReleased) {
+                            InputHooks.attackKeyDown();
+                            this.missTime = 1;
+                            if (InputHooks.getAttackKeyDownTicks() >= lungeMinTime) {
+                                if (!InputHooks.isMainhandLungeInProgress) {
+                                    InputHooks.isMainhandLungeInProgress = true;
+                                    LungeChargeInfo lunge = ClientEvents.ABOUT_TO_LUNGE_PLAYERS.get(this.player.getId());
+                                    if (lunge == null) {
+                                        ClientEvents.ABOUT_TO_LUNGE_PLAYERS.put(this.player.getId(),
+                                                                                new LungeChargeInfo(Hand.MAIN_HAND,
+                                                                                                    this.player.getMainHandItem(),
+                                                                                                    lungeFullTime - lungeMinTime));
+                                    }
+                                    else {
+                                        lunge.addInfo(Hand.MAIN_HAND, this.player.getMainHandItem(), lungeFullTime - lungeMinTime);
+                                    }
+                                    EvolutionNetwork.INSTANCE.sendToServer(new PacketCSStartLunge(Hand.MAIN_HAND, lungeFullTime - lungeMinTime));
                                 }
-                                else {
-                                    lunge.addInfo(Hand.MAIN_HAND, this.player.getMainHandItem(), lungeFullTime - lungeMinTime);
-                                }
-                                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSStartLunge(Hand.MAIN_HAND, lungeFullTime - lungeMinTime));
                             }
-                        }
-                        if (InputHooks.getAttackKeyDownTicks() >= lungeFullTime) {
-                            InputHooks.leftLunge((Minecraft) (Object) this, lungeMinTime, lungeFullTime);
-                            InputHooks.releaseAttack(this.options.keyAttack);
-                            InputHooks.attackKeyReleased = false;
+                            if (InputHooks.getAttackKeyDownTicks() >= lungeFullTime) {
+                                InputHooks.leftLunge((Minecraft) (Object) this, lungeMinTime, lungeFullTime);
+                                InputHooks.releaseAttack(this.options.keyAttack);
+                                InputHooks.attackKeyReleased = false;
+                            }
                         }
                     }
                 }
                 else {
-                    InputHooks.attackKeyReleased = true;
-                    if (InputHooks.getAttackKeyDownTicks() > lungeMinTime) {
-                        InputHooks.leftLunge((Minecraft) (Object) this, lungeMinTime, lungeFullTime);
+                    if (!this.multiplayerPause) {
+                        InputHooks.attackKeyReleased = true;
+                        if (InputHooks.getAttackKeyDownTicks() > lungeMinTime) {
+                            InputHooks.leftLunge((Minecraft) (Object) this, lungeMinTime, lungeFullTime);
+                        }
+                        else if (InputHooks.getAttackKeyDownTicks() > 0) {
+                            InputHooks.isMainhandLungeInProgress = false;
+                            this.startAttack();
+                        }
+                        InputHooks.releaseAttack(this.options.keyAttack);
                     }
-                    else if (InputHooks.getAttackKeyDownTicks() > 0) {
-                        InputHooks.isMainhandLungeInProgress = false;
-                        this.startAttack();
-                    }
-                    InputHooks.releaseAttack(this.options.keyAttack);
                 }
             }
             else {
@@ -438,48 +532,54 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
                 InputHooks.releaseAttack(this.options.keyAttack);
                 InputHooks.attackKeyReleased = true;
                 while (this.options.keyAttack.consumeClick()) {
-                    this.startAttack();
+                    if (!this.multiplayerPause) {
+                        this.startAttack();
+                    }
                 }
             }
             if (offhandItem instanceof ILunge && this.mouseHandler.isMouseGrabbed()) {
                 int lungeFullTime = ((ILunge) offhandItem).getFullLungeTime();
                 int lungeMinTime = ((ILunge) offhandItem).getMinLungeTime();
                 if (this.options.keyUse.isDown()) {
-                    if (ClientEvents.getInstance().getOffhandCooledAttackStrength(offhandItem, 0.0f) >= 1.0f && InputHooks.useKeyReleased) {
-                        InputHooks.useKeyDownTicks++;
-                        if (InputHooks.useKeyDownTicks >= lungeMinTime) {
-                            if (!InputHooks.isOffhandLungeInProgress) {
-                                InputHooks.isOffhandLungeInProgress = true;
-                                LungeChargeInfo lunge = ClientEvents.ABOUT_TO_LUNGE_PLAYERS.get(this.player.getId());
-                                if (lunge == null) {
-                                    ClientEvents.ABOUT_TO_LUNGE_PLAYERS.put(this.player.getId(),
-                                                                            new LungeChargeInfo(Hand.OFF_HAND,
-                                                                                                this.player.getOffhandItem(),
-                                                                                                lungeFullTime - lungeMinTime));
+                    if (!this.multiplayerPause) {
+                        if (ClientEvents.getInstance().getOffhandCooledAttackStrength(offhandItem, 0.0f) >= 1.0f && InputHooks.useKeyReleased) {
+                            InputHooks.useKeyDownTicks++;
+                            if (InputHooks.useKeyDownTicks >= lungeMinTime) {
+                                if (!InputHooks.isOffhandLungeInProgress) {
+                                    InputHooks.isOffhandLungeInProgress = true;
+                                    LungeChargeInfo lunge = ClientEvents.ABOUT_TO_LUNGE_PLAYERS.get(this.player.getId());
+                                    if (lunge == null) {
+                                        ClientEvents.ABOUT_TO_LUNGE_PLAYERS.put(this.player.getId(),
+                                                                                new LungeChargeInfo(Hand.OFF_HAND,
+                                                                                                    this.player.getOffhandItem(),
+                                                                                                    lungeFullTime - lungeMinTime));
+                                    }
+                                    else {
+                                        lunge.addInfo(Hand.OFF_HAND, this.player.getOffhandItem(), lungeFullTime - lungeMinTime);
+                                    }
+                                    EvolutionNetwork.INSTANCE.sendToServer(new PacketCSStartLunge(Hand.OFF_HAND, lungeFullTime - lungeMinTime));
                                 }
-                                else {
-                                    lunge.addInfo(Hand.OFF_HAND, this.player.getOffhandItem(), lungeFullTime - lungeMinTime);
-                                }
-                                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSStartLunge(Hand.OFF_HAND, lungeFullTime - lungeMinTime));
                             }
-                        }
-                        if (InputHooks.useKeyDownTicks >= lungeFullTime) {
-                            InputHooks.rightLunge((Minecraft) (Object) this, lungeMinTime, lungeFullTime);
-                            InputHooks.useKeyDownTicks = 0;
-                            InputHooks.useKeyReleased = false;
+                            if (InputHooks.useKeyDownTicks >= lungeFullTime) {
+                                InputHooks.rightLunge((Minecraft) (Object) this, lungeMinTime, lungeFullTime);
+                                InputHooks.useKeyDownTicks = 0;
+                                InputHooks.useKeyReleased = false;
+                            }
                         }
                     }
                 }
                 else {
-                    InputHooks.useKeyReleased = true;
-                    if (InputHooks.useKeyDownTicks > lungeMinTime) {
-                        InputHooks.rightLunge((Minecraft) (Object) this, lungeMinTime, lungeFullTime);
+                    if (!this.multiplayerPause) {
+                        InputHooks.useKeyReleased = true;
+                        if (InputHooks.useKeyDownTicks > lungeMinTime) {
+                            InputHooks.rightLunge((Minecraft) (Object) this, lungeMinTime, lungeFullTime);
+                        }
+                        else if (InputHooks.useKeyDownTicks > 0) {
+                            InputHooks.isOffhandLungeInProgress = false;
+                            this.startUseItem();
+                        }
+                        InputHooks.useKeyDownTicks = 0;
                     }
-                    else if (InputHooks.useKeyDownTicks > 0) {
-                        InputHooks.isOffhandLungeInProgress = false;
-                        this.startUseItem();
-                    }
-                    InputHooks.useKeyDownTicks = 0;
                 }
             }
             else {
@@ -487,17 +587,31 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
                 InputHooks.useKeyDownTicks = 0;
                 InputHooks.useKeyReleased = true;
                 while (this.options.keyUse.consumeClick()) {
-                    this.startUseItem();
+                    if (!this.multiplayerPause) {
+                        this.startUseItem();
+                    }
                 }
             }
             while (this.options.keyPickItem.consumeClick()) {
-                this.pickBlock();
+                if (!this.multiplayerPause) {
+                    this.pickBlock();
+                }
             }
         }
         if (!(offhandItem instanceof IOffhandAttackable) && this.options.keyUse.isDown() && this.rightClickDelay == 0 && !this.player.isUsingItem()) {
-            this.startUseItem();
+            if (!this.multiplayerPause) {
+                this.startUseItem();
+            }
         }
-        this.continueAttack(this.screen == null && this.options.keyAttack.isDown() && this.mouseHandler.isMouseGrabbed());
+        this.continueAttack(this.screen == null && this.options.keyAttack.isDown() && this.mouseHandler.isMouseGrabbed() && !this.multiplayerPause);
+    }
+
+    @Shadow
+    public abstract boolean hasSingleplayerServer();
+
+    @Override
+    public boolean isMultiplayerPaused() {
+        return this.multiplayerPause;
     }
 
     @Shadow
@@ -519,6 +633,14 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
             }
         }
     }
+
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Shadow
+    @Deprecated
+    public abstract CompletableFuture<Void> reloadResourcePacks();
+
+    @Shadow
+    protected abstract void renderFpsMeter(MatrixStack p_238183_1_, IProfileResult p_238183_2_);
 
     /**
      * @author MGSchultz
@@ -581,16 +703,131 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
         }
     }
 
-    @Shadow
-    protected abstract void runTick(boolean p_195542_1_);
+    /**
+     * @author MGSchultz
+     * <p>
+     * Overwrite to handle multiplayer pause
+     */
+    @Overwrite
+    private void runTick(boolean shouldRender) {
+        this.window.setErrorSection("Pre render");
+        long i = Util.getNanos();
+        if (this.window.shouldClose()) {
+            this.stop();
+        }
+        if (this.pendingReload != null && !(this.overlay instanceof ResourceLoadProgressGui)) {
+            CompletableFuture<Void> completablefuture = this.pendingReload;
+            this.pendingReload = null;
+            this.reloadResourcePacks().thenRun(() -> completablefuture.complete(null));
+        }
+        Runnable runnable;
+        while ((runnable = this.progressTasks.poll()) != null) {
+            runnable.run();
+        }
+        if (shouldRender) {
+            int j = this.timer.advanceTime(Util.getMillis());
+            this.profiler.push("scheduledExecutables");
+            this.runAllTasks();
+            this.profiler.pop();
+            this.profiler.push("tick");
+            for (int k = 0; k < Math.min(10, j); ++k) {
+                this.profiler.incrementCounter("clientTick");
+                this.tick();
+            }
+            this.profiler.pop();
+        }
+        this.mouseHandler.turnPlayer();
+        this.window.setErrorSection("Render");
+        this.profiler.push("sound");
+        this.soundManager.updateSource(this.gameRenderer.getMainCamera());
+        this.profiler.pop();
+        this.profiler.push("render");
+        RenderSystem.pushMatrix();
+        RenderSystem.clear(16_640, ON_OSX);
+        this.mainRenderTarget.bindWrite(true);
+        FogRenderer.setupNoFog();
+        this.profiler.push("display");
+        RenderSystem.enableTexture();
+        RenderSystem.enableCull();
+        this.profiler.pop();
+        if (!this.noRender) {
+            BasicEventHooks.onRenderTickStart(this.pause ? this.pausePartialTick : this.timer.partialTick);
+            this.profiler.popPush("gameRenderer");
+            this.gameRenderer.render(this.pause ? this.pausePartialTick : this.timer.partialTick, i, shouldRender);
+            this.profiler.popPush("toasts");
+            this.toast.render(new MatrixStack());
+            this.profiler.pop();
+            BasicEventHooks.onRenderTickEnd(this.pause ? this.pausePartialTick : this.timer.partialTick);
+        }
+        if (this.fpsPieResults != null) {
+            this.profiler.push("fpsPie");
+            this.renderFpsMeter(new MatrixStack(), this.fpsPieResults);
+            this.profiler.pop();
+        }
+        this.profiler.push("blit");
+        this.mainRenderTarget.unbindWrite();
+        RenderSystem.popMatrix();
+        RenderSystem.pushMatrix();
+        this.mainRenderTarget.blitToScreen(this.window.getWidth(), this.window.getHeight());
+        RenderSystem.popMatrix();
+        this.profiler.popPush("updateDisplay");
+        this.window.updateDisplay();
+        int i1 = this.getFramerateLimit();
+        if (i1 < AbstractOption.FRAMERATE_LIMIT.getMaxValue()) {
+            RenderSystem.limitDisplayFPS(i1);
+        }
+        this.profiler.popPush("yield");
+        Thread.yield();
+        this.profiler.pop();
+        this.window.setErrorSection("Post render");
+        ++this.frames;
+        boolean flag = this.hasSingleplayerServer() &&
+                       (this.screen != null && this.screen.isPauseScreen() || this.overlay != null && this.overlay.isPauseScreen()) &&
+                       !this.singleplayerServer.isPublished() ||
+                       this.getConnection() != null && this.multiplayerPause && shouldRender; //Added check for multiplayer pause
+        if (this.pause != flag) {
+            if (this.pause) {
+                this.pausePartialTick = this.timer.partialTick;
+            }
+            else {
+                this.timer.partialTick = this.pausePartialTick;
+            }
+            this.pause = flag;
+        }
+        long l = Util.getNanos();
+        this.frameTimer.logFrameDuration(l - this.lastNanoTime);
+        this.lastNanoTime = l;
+        this.profiler.push("fpsUpdate");
+        while (Util.getMillis() >= this.lastTime + 1_000L) {
+            fps = this.frames;
+            this.fpsString = String.format("%d fps T: %s%s%s%s B: %d",
+                                           fps,
+                                           this.options.framerateLimit == AbstractOption.FRAMERATE_LIMIT.getMaxValue() ?
+                                           "inf" :
+                                           this.options.framerateLimit,
+                                           this.options.enableVsync ? " vsync" : "",
+                                           this.options.graphicsMode.toString(),
+                                           this.options.renderClouds == CloudOption.OFF ?
+                                           "" :
+                                           this.options.renderClouds == CloudOption.FAST ? " fast-clouds" : " fancy-clouds",
+                                           this.options.biomeBlendRadius);
+            this.lastTime += 1_000L;
+            this.frames = 0;
+            this.snooper.prepare();
+            if (!this.snooper.isStarted()) {
+                this.snooper.start();
+            }
+        }
+        this.profiler.pop();
+    }
 
-    @Redirect(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/integrated/IntegratedServer;isPublished()Z"))
-    private boolean runTickProxy(IntegratedServer integratedServer) {
-        return false;
+    @Override
+    public void setMultiplayerPaused(boolean paused) {
+        this.multiplayerPause = paused;
     }
 
     @Shadow
-    public abstract void setScreen(@Nullable Screen p_147108_1_);
+    public abstract void setScreen(@Nullable Screen screen);
 
     @Shadow
     protected abstract boolean shouldRenderFpsPie();
@@ -761,6 +998,138 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> {
                 }
             }
         }
+    }
+
+    @Shadow
+    public abstract void stop();
+
+    /**
+     * @author MGSchultz
+     * <p>
+     * Overwrite to handle multiplayer pause.
+     */
+    @Overwrite
+    public void tick() {
+        if (this.rightClickDelay > 0) {
+            --this.rightClickDelay;
+        }
+        BasicEventHooks.onPreClientTick();
+        this.profiler.push("gui");
+        if (!this.pause) {
+            this.gui.tick();
+        }
+        this.profiler.pop();
+        this.gameRenderer.pick(1.0F);
+        this.tutorial.onLookAt(this.level, this.hitResult);
+        this.profiler.push("gameMode");
+        if ((!this.pause || this.pause && this.multiplayerPause) && this.level != null) { //Added check for multiplayer pause
+            this.gameMode.tick();
+        }
+        this.profiler.popPush("textures");
+        //noinspection VariableNotUsedInsideIf
+        if (this.level != null) {
+            this.textureManager.tick();
+        }
+        if (this.screen == null && this.player != null) {
+            if (this.player.isDeadOrDying() && !(this.screen instanceof DeathScreen)) {
+                this.setScreen(null);
+            }
+            else if (this.player.isSleeping() && this.level != null) {
+                this.setScreen(new SleepInMultiplayerScreen());
+            }
+        }
+        else if (this.screen != null && this.screen instanceof SleepInMultiplayerScreen && !this.player.isSleeping()) {
+            this.setScreen(null);
+        }
+        //noinspection VariableNotUsedInsideIf
+        if (this.screen != null) {
+            this.missTime = 10_000;
+        }
+        if (this.screen != null) {
+            Screen.wrapScreenError(() -> {
+                this.screen.tick();
+            }, "Ticking screen", this.screen.getClass().getCanonicalName());
+        }
+        if (!this.options.renderDebug) {
+            this.gui.clearCache();
+        }
+        if (this.overlay == null && (this.screen == null || this.screen.passEvents)) {
+            this.profiler.popPush("Keybindings");
+            this.handleKeybinds();
+            if (this.missTime > 0) {
+                --this.missTime;
+            }
+        }
+        if (this.level != null) {
+            this.profiler.popPush("gameRenderer");
+            if (!this.pause) {
+                this.gameRenderer.tick();
+            }
+            this.profiler.popPush("levelRenderer");
+            if (!this.pause) {
+                this.levelRenderer.tick();
+            }
+            this.profiler.popPush("level");
+            if (!this.pause) {
+                if (this.level.getSkyFlashTime() > 0) {
+                    this.level.setSkyFlashTime(this.level.getSkyFlashTime() - 1);
+                }
+                this.level.tickEntities();
+            }
+        }
+        else if (this.gameRenderer.currentEffect() != null) {
+            this.gameRenderer.shutdownEffect();
+        }
+        if (!this.pause) {
+            this.musicManager.tick();
+        }
+        this.soundManager.tick(this.pause);
+        if (this.level != null) {
+            if (!this.pause) {
+                if (!this.options.joinedFirstServer && this.isMultiplayerServer()) {
+                    ITextComponent itextcomponent = new TranslationTextComponent("tutorial.socialInteractions.title");
+                    ITextComponent itextcomponent1 = new TranslationTextComponent("tutorial.socialInteractions.description",
+                                                                                  Tutorial.key("socialInteractions"));
+                    this.socialInteractionsToast = new TutorialToast(TutorialToast.Icons.SOCIAL_INTERACTIONS, itextcomponent, itextcomponent1, true);
+                    this.tutorial.addTimedToast(this.socialInteractionsToast, 160);
+                    this.options.joinedFirstServer = true;
+                    this.options.save();
+                }
+                this.tutorial.tick();
+                try {
+                    this.level.tick(() -> true);
+                }
+                catch (Throwable throwable) {
+                    CrashReport crashreport = CrashReport.forThrowable(throwable, "Exception in world tick");
+                    if (this.level == null) {
+                        CrashReportCategory crashreportcategory = crashreport.addCategory("Affected level");
+                        crashreportcategory.setDetail("Problem", "Level is null!");
+                    }
+                    else {
+                        this.level.fillReportDetails(crashreport);
+                    }
+                    throw new ReportedException(crashreport);
+                }
+            }
+            this.profiler.popPush("animateTick");
+            if (!this.pause && this.level != null) {
+                this.level.animateTick(MathHelper.floor(this.player.getX()),
+                                       MathHelper.floor(this.player.getY()),
+                                       MathHelper.floor(this.player.getZ()));
+            }
+            this.profiler.popPush("particles");
+            if (!this.pause) {
+                this.particleEngine.tick();
+            }
+        }
+        else if (this.pendingConnection != null) {
+            this.profiler.popPush("pendingConnection");
+            this.pendingConnection.tick();
+        }
+        this.profiler.popPush("keyboard");
+        this.keyboardHandler.tick();
+        this.profiler.pop();
+        BasicEventHooks.onPostClientTick();
     }
 
     @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;pick(F)V", ordinal = 0))

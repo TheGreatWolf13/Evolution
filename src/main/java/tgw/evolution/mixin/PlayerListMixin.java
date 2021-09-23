@@ -7,6 +7,7 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.ServerPlayNetHandler;
 import net.minecraft.network.play.server.SJoinGamePacket;
+import net.minecraft.server.CustomServerBossInfoManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerList;
 import net.minecraft.server.management.PlayerProfileCache;
@@ -17,6 +18,7 @@ import net.minecraft.world.GameRules;
 import net.minecraft.world.biome.BiomeManager;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.IWorldInfo;
+import net.minecraftforge.fml.network.PacketDistributor;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -25,11 +27,17 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+import tgw.evolution.hooks.TickrateChanger;
+import tgw.evolution.init.EvolutionNetwork;
+import tgw.evolution.network.PacketSCChangeTickrate;
+import tgw.evolution.network.PacketSCMultiplayerPause;
+import tgw.evolution.patches.IMinecraftServerPatch;
 import tgw.evolution.patches.ISJoinGamePacketPatch;
 import tgw.evolution.stats.EvolutionServerStatisticsManager;
 
 import java.io.File;
 
+@SuppressWarnings("MethodMayBeStatic")
 @Mixin(PlayerList.class)
 public abstract class PlayerListMixin {
 
@@ -95,7 +103,16 @@ public abstract class PlayerListMixin {
 
     @Redirect(method = "placeNewPlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/play/ServerPlayNetHandler;" +
                                                                              "send(Lnet/minecraft/network/IPacket;)V", ordinal = 0))
-    private void placeNewPlayerProxy(ServerPlayNetHandler serverPlayNetHandler, IPacket<?> packet) {
+    private void placeNewPlayerProxy0(ServerPlayNetHandler serverPlayNetHandler, IPacket<?> packet) {
 
+    }
+
+    @Redirect(method = "placeNewPlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/CustomServerBossInfoManager;onPlayerConnect" +
+                                                                             "(Lnet/minecraft/entity/player/ServerPlayerEntity;)V", ordinal = 0))
+    private void placeNewPlayerProxy1(CustomServerBossInfoManager customServerBossInfoManager, ServerPlayerEntity player) {
+        customServerBossInfoManager.onPlayerConnect(player);
+        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCChangeTickrate(TickrateChanger.getCurrentTickrate()));
+        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player),
+                                       new PacketSCMultiplayerPause(((IMinecraftServerPatch) player.getServer()).isMultiplayerPaused()));
     }
 }

@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.recipebook.RecipeBookGui;
 import net.minecraft.item.ItemStack;
@@ -10,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+import tgw.evolution.patches.IMinecraftPatch;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(RecipeBookGui.class)
@@ -36,5 +38,12 @@ public abstract class RecipeBookGuiMixin extends AbstractGui {
                                                CallbackInfo ci,
                                                ItemStack stack) {
         GuiUtils.preItemToolTip(stack);
+    }
+
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
+    private void onTick(CallbackInfo ci) {
+        if (((IMinecraftPatch) Minecraft.getInstance()).isMultiplayerPaused()) {
+            ci.cancel();
+        }
     }
 }

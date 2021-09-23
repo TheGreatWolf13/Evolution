@@ -180,6 +180,7 @@ public class ScreenInventoryExtended extends ScreenDisplayEffects<ContainerPlaye
         }
         else {
             this.recipeBookGui.tick();
+            super.tick();
         }
     }
 }

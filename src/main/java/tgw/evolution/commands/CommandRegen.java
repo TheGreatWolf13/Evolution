@@ -20,7 +20,7 @@ import java.util.Collection;
 
 public class CommandRegen implements Command<CommandSource> {
 
-    private static final CommandRegen CMD = new CommandRegen();
+    private static final Command<CommandSource> CMD = new CommandRegen();
     private static final EnumArgument<RegenType> TYPE = EnumArgument.enumArgument(RegenType.class);
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {

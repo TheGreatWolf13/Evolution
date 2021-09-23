@@ -19,6 +19,13 @@ public final class EvolutionTexts {
     public static final ITextComponent ACTION_HOOK = transl("evolution.actionbar.hook").setStyle(WHITE);
     public static final ITextComponent ACTION_INERTIA = transl("evolution.actionbar.inertia").setStyle(WHITE);
     public static final ITextComponent ACTION_TWO_HANDED = transl("evolution.actionbar.twoHanded").setStyle(WHITE);
+    //Command
+    public static final ITextComponent COMMAND_PAUSE_PAUSE_FAIL = transl("command.evolution.pause.pause.fail");
+    public static final ITextComponent COMMAND_PAUSE_PAUSE_INFO = transl("command.evolution.pause.pause.info");
+    public static final ITextComponent COMMAND_PAUSE_PAUSE_SUCCESS = transl("command.evolution.pause.pause.success");
+    public static final ITextComponent COMMAND_PAUSE_RESUME_FAIL = transl("command.evolution.pause.resume.fail");
+    public static final ITextComponent COMMAND_PAUSE_RESUME_INFO = transl("command.evolution.pause.resume.info");
+    public static final ITextComponent COMMAND_PAUSE_RESUME_SUCCESS = transl("command.evolution.pause.resume.success");
     //Config
     public static final IFormattableTextComponent CONFIG_CLIENT_CONFIG = transl("evolution.config.clientConfig");
     public static final IFormattableTextComponent CONFIG_COMMON_CONFIG = transl("evolution.config.commonConfig");

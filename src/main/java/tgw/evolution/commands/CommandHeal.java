@@ -15,7 +15,7 @@ import tgw.evolution.patches.IEffectInstancePatch;
 
 public class CommandHeal implements Command<CommandSource> {
 
-    private static final CommandHeal CMD = new CommandHeal();
+    private static final Command<CommandSource> CMD = new CommandHeal();
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.register(Commands.literal("heal")
