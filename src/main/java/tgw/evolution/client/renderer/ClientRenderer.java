@@ -154,7 +154,8 @@ public class ClientRenderer {
                                   float alpha,
                                   Entity entity,
                                   float partialTicks) {
-        boolean renderAll = Minecraft.getInstance().player.getMainHandItem().getItem() == EvolutionItems.debug_item.get();
+        boolean renderAll = Minecraft.getInstance().player.getMainHandItem().getItem() == EvolutionItems.debug_item.get() ||
+                            Minecraft.getInstance().player.getOffhandItem().getItem() == EvolutionItems.debug_item.get();
         hitbox.getParent().init(entity, partialTicks);
         Matrix3d mainTransform = hitbox.getParent().getTransform().transpose();
         final double[] points = new double[3];

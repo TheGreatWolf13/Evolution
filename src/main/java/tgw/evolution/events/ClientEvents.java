@@ -1257,7 +1257,8 @@ public class ClientEvents {
             }
         }
         if (this.mc.getEntityRenderDispatcher().shouldRenderHitBoxes() &&
-            this.mc.player.getMainHandItem().getItem() == EvolutionItems.debug_item.get()) {
+            (this.mc.player.getMainHandItem().getItem() == EvolutionItems.debug_item.get() ||
+             this.mc.player.getOffhandItem().getItem() == EvolutionItems.debug_item.get())) {
             this.renderer.renderHitbox(matrices,
                                        buffer,
                                        this.mc.player,
