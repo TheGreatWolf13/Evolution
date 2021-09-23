@@ -328,7 +328,7 @@ public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity
                 this.jumping = this.input.jumping;
             }
             else {
-                if (this.onGround || this.onClimbable()) {
+                if (this.onGround || this.onClimbable() || this.isInWater()) {
                     this.jumping = this.input.jumping;
                 }
             }
