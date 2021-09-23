@@ -1,6 +1,8 @@
 package tgw.evolution.util;
 
 import com.google.common.collect.ImmutableMap;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntitySize;
 import net.minecraft.entity.LivingEntity;
@@ -66,6 +68,7 @@ public final class PlayerHelper {
     public static final double WALK_FORCE = MathHelper.convertForce(1_000);
     public static final Vector3d NECK_POS_STANDING = new Vector3d(0, 24 / 16.0 * 0.937_5, -1 / 16.0);
     public static final Vector3d NECK_POS_SNEAKING = new Vector3d(0, 1.27 - 4 / 16.0 * 0.937_5, -1 / 16.0);
+    public static final Vector3d NECK_POS_CRAWLING = new Vector3d(0, 4.62 / 16.0 * 0.937_5, -2 / 16.0);
     public static final EntitySize STANDING_SIZE = EntitySize.scalable(0.625F, 1.8F);
     public static final Map<Pose, EntitySize> SIZE_BY_POSE = ImmutableMap.<Pose, EntitySize>builder()
                                                                          .put(Pose.STANDING, STANDING_SIZE)
@@ -604,5 +607,38 @@ public final class PlayerHelper {
             ((EvolutionServerStatisticsManager) ((ServerPlayerEntity) player).getStats()).setValueLong(stat, 0);
             player.getScoreboard().forAllObjectives(stat, player.getScoreboardName(), Score::reset);
         }
+    }
+
+    //TODO temp
+    public static double tempDoubleValueY() {
+        return 0;
+    }
+
+    //TODO temp
+    public static double tempDoubleValueZ() {
+        return 0;
+    }
+
+    //TODO temp
+    public static void tempTranslationAbsolute(AbstractClientPlayerEntity player, MatrixStack matrices, float partialTicks) {
+
+    }
+
+    //TODO temp
+    public static void tempTranslationRelative(AbstractClientPlayerEntity player, MatrixStack matrices, float partialTicks) {
+        float pitch = player.getViewXRot(partialTicks);
+        float sinPitch = Math.abs(MathHelper.sinDeg(pitch));
+        float cosPitch = MathHelper.cosDeg(pitch);
+        if (pitch <= 0) {
+            matrices.translate(0, -1 * sinPitch - 1.35 * cosPitch * cosPitch, -0.2 * sinPitch + 0.2 * cosPitch);
+        }
+        else {
+            matrices.translate(0, -1.75 * sinPitch - 1.35 * cosPitch * cosPitch, -0.2 * sinPitch + 0.2 * cosPitch);
+        }
+    }
+
+    //TODO temp
+    public static Vector3d tempVector3d() {
+        return new Vector3d(0, 4.62 / 16.0 * 0.937_5, -2 / 16.0);
     }
 }

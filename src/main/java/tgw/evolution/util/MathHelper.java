@@ -512,6 +512,14 @@ public final class MathHelper {
         return armPose;
     }
 
+    public static float getAttackAnim(LivingEntity entity, float partialTick) {
+        float f = entity.attackAnim - entity.oAttackAnim;
+        if (f < 0.0F) {
+            ++f;
+        }
+        return entity.oAttackAnim + f * partialTick;
+    }
+
     public static Matrix3d getBodyRotationMatrix(Entity entity, float partialTicks) {
         float angle = -getEntityBodyYaw(entity, partialTicks);
         return new Matrix3d().asYRotation(degToRad(angle));
@@ -748,14 +756,6 @@ public final class MathHelper {
 
     public static float getSwimAnimation(LivingEntity entity, float partialTicks) {
         return lerp(partialTicks, LAST_SWIM.get(entity), SWIM.get(entity));
-    }
-
-    public static float getSwingProgress(LivingEntity entity, float partialTick) {
-        float f = entity.attackAnim - entity.oAttackAnim;
-        if (f < 0.0F) {
-            ++f;
-        }
-        return entity.oAttackAnim + f * partialTick;
     }
 
     /**

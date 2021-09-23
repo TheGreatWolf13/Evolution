@@ -9,12 +9,17 @@ import net.minecraft.client.renderer.entity.LivingRenderer;
 import net.minecraft.client.renderer.entity.PlayerRenderer;
 import net.minecraft.client.renderer.entity.model.PlayerModel;
 import net.minecraft.client.renderer.model.ModelRenderer;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.vector.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import tgw.evolution.util.PlayerHelper;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(PlayerRenderer.class)
@@ -30,6 +35,15 @@ public abstract class PlayerRendererMixin extends LivingRenderer<AbstractClientP
             case STANDING:
             case CROUCHING: {
                 matrices.translate(0, 0, 1 / 16.0);
+                break;
+            }
+            case SWIMMING: {
+                if (!player.isInWater()) {
+                    matrices.translate(0, 9 / 16.0, -0.5 / 16.0);
+                }
+                else {
+                    PlayerHelper.tempTranslationAbsolute(player, matrices, partialTicks);
+                }
                 break;
             }
         }
@@ -67,4 +81,54 @@ public abstract class PlayerRendererMixin extends LivingRenderer<AbstractClientP
 
     @Shadow
     protected abstract void setModelProperties(AbstractClientPlayerEntity p_177137_1_);
+
+    /**
+     * @author MGSchultz
+     * <p>
+     * Overwrite to improve first person camera.
+     */
+    @Override
+    @Overwrite
+    protected void setupRotations(AbstractClientPlayerEntity player, MatrixStack matrices, float ageInTicks, float rotationYaw, float partialTicks) {
+        float swimAmount = player.getSwimAmount(partialTicks);
+        if (player.isFallFlying()) {
+            super.setupRotations(player, matrices, ageInTicks, rotationYaw, partialTicks);
+            float f1 = player.getFallFlyingTicks() + partialTicks;
+            float f2 = MathHelper.clamp(f1 * f1 / 100.0F, 0.0F, 1.0F);
+            if (!player.isAutoSpinAttack()) {
+                matrices.mulPose(Vector3f.XP.rotationDegrees(f2 * (-90.0F - player.xRot)));
+            }
+            Vector3d viewVec = player.getViewVector(partialTicks);
+            Vector3d motion = player.getDeltaMovement();
+            double horizMotionSqr = Entity.getHorizontalDistanceSqr(motion);
+            double horizViewSqr = Entity.getHorizontalDistanceSqr(viewVec);
+            if (horizMotionSqr > 0 && horizViewSqr > 0) {
+                double d2 = (motion.x * viewVec.x + motion.z * viewVec.z) / Math.sqrt(horizMotionSqr * horizViewSqr);
+                double d3 = motion.x * viewVec.z - motion.z * viewVec.x;
+                matrices.mulPose(Vector3f.YP.rotation((float) (Math.signum(d3) * Math.acos(d2))));
+            }
+        }
+        else if (swimAmount > 0.0F) {
+            super.setupRotations(player, matrices, ageInTicks, rotationYaw, partialTicks);
+            float desiredXRot = player.isInWater() ? -90.0F - player.xRot : -90.0F;
+            float interpXRot = MathHelper.lerp(swimAmount, 0.0F, desiredXRot);
+            matrices.mulPose(Vector3f.XP.rotationDegrees(interpXRot));
+            if (player.isVisuallySwimming()) {
+                if (!player.isInWater()) {
+                    //Crawling pose
+                    matrices.translate(0, -1, 0.3);
+                }
+                else {
+                    //Swimming pose
+                    PlayerHelper.tempTranslationRelative(player, matrices, partialTicks);
+                }
+            }
+            else {
+                matrices.translate(0, -1.3, 0);
+            }
+        }
+        else {
+            super.setupRotations(player, matrices, ageInTicks, rotationYaw, partialTicks);
+        }
+    }
 }

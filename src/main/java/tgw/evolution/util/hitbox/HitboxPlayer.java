@@ -1,5 +1,6 @@
 package tgw.evolution.util.hitbox;
 
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.Pose;
 import net.minecraft.entity.passive.horse.AbstractHorseEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -31,6 +32,7 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
     protected final HitboxGroup rightLeg;
     protected final Hitbox shoulderL;
     protected final Hitbox shoulderR;
+    protected float attackTime;
     protected boolean isSitting;
     protected boolean isSneak;
     protected ArmPose leftArmPose;
@@ -39,7 +41,6 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
     protected float remainingItemUseTime;
     protected ArmPose rightArmPose;
     protected float swimAnimation;
-    protected float swingProgress;
 
     public HitboxPlayer(boolean slim) {
         this.armL = this.addBox(BodyPart.LEFT_ARM, aabb(-1, -6, -2, slim ? 2 : 3, -2, 2, SCALE));
@@ -54,10 +55,6 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
         this.rightLeg = new HitboxGroup(this.legR, this.footR);
     }
 
-    private static float func_203068_a(float f) {
-        return -65.0F * f + f * f;
-    }
-
     protected static HandSide getActiveHandside(PlayerEntity entity) {
         HandSide handside = entity.getMainArm();
         return entity.getUsedItemHand() == Hand.MAIN_HAND ? handside : handside.getOpposite();
@@ -68,15 +65,19 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
         return entity.swingingArm == Hand.MAIN_HAND ? handside : handside.getOpposite();
     }
 
-    protected static float swimInterp(float rotation, float pitch, float swimAnimation) {
-        float f = (pitch - rotation) % MathHelper.TAU;
+    private static float quadraticArmUpdate(float f) {
+        return -65.0F * f + f * f;
+    }
+
+    protected static float rotLerpRad(float partialTick, float old, float now) {
+        float f = (now - old) % MathHelper.TAU;
         if (f < -MathHelper.PI) {
             f += MathHelper.TAU;
         }
         if (f >= MathHelper.PI) {
             f -= MathHelper.TAU;
         }
-        return rotation + swimAnimation * f;
+        return old + partialTick * f;
     }
 
     private void eatingAnimationHand(PlayerEntity entity) {
@@ -98,6 +99,11 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
 
     protected HitboxGroup getArmForSide(HandSide side) {
         return side == HandSide.LEFT ? this.leftArm : this.rightArm;
+    }
+
+    protected HandSide getAttackArm(LivingEntity entity) {
+        HandSide handside = entity.getMainArm();
+        return entity.swingingArm == Hand.MAIN_HAND ? handside : handside.getOpposite();
     }
 
     @Override
@@ -125,7 +131,7 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
             this.rightArmPose = offhandPose;
             this.leftArmPose = mainhandPose;
         }
-        this.swingProgress = MathHelper.getSwingProgress(entity, partialTicks);
+        this.attackTime = MathHelper.getAttackAnim(entity, partialTicks);
         this.isSneak = entity.getPose() == Pose.CROUCHING;
         this.ageInTicks = MathHelper.getAgeInTicks(entity, partialTicks);
         //Main
@@ -136,8 +142,8 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
         switch (pose) {
             case CROUCHING:
             case STANDING: {
-                this.pivotX = -1 / 16.0f * sinYaw;
-                this.pivotZ = -1 / 16.0f * cosYaw;
+                this.pivotX = -1 / 16.0f * sinYaw * (1 - this.swimAnimation);
+                this.pivotZ = -1 / 16.0f * cosYaw * (1 - this.swimAnimation);
                 break;
             }
             case SLEEPING: {
@@ -150,20 +156,36 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
                 this.setPivot(-26 * direction.getStepX(), 0, -26 * direction.getStepZ(), SCALE / 16);
                 break;
             }
-            case SWIMMING: {
-                if (this.swimAnimation > 0) {
-                    float waterInclination = entity.isInWater() ? -90.0F - entity.xRot : -90.0F;
-                    float waterPitch = MathHelper.lerp(this.swimAnimation, 0.0F, waterInclination);
-                    this.rotationX += MathHelper.degToRad(waterPitch);
-                    if (entity.isSwimming()) {
-                        float sinWaterPitch = MathHelper.sinDeg(waterPitch);
-                        float cosWaterPitch = MathHelper.cosDeg(waterPitch);
-                        this.pivotX = -sinYaw * -sinWaterPitch + 5 / 16.0f * cosWaterPitch * -sinYaw;
-                        this.pivotY = 5 / 16.0f * -sinWaterPitch - cosWaterPitch;
-                        this.pivotZ = -cosYaw * -sinWaterPitch - 5 / 16.0f * cosWaterPitch * cosYaw;
-                    }
+        }
+        if (this.swimAnimation > 0) {
+            if (!entity.isInWater()) {
+                float waterInclination = -90.0F;
+                float waterPitch = MathHelper.lerp(this.swimAnimation, 0.0F, waterInclination);
+                this.rotationX += MathHelper.degToRad(waterPitch);
+                float sinWaterPitch = MathHelper.sinDeg(waterPitch);
+                float cosWaterPitch = MathHelper.cosDeg(waterPitch);
+                if (entity.isVisuallySwimming()) {
+                    this.pivotX = 24.5f / 16.0f * -sinYaw * -sinWaterPitch + 4.4f / 16.0f * cosWaterPitch * -sinYaw;
+                    this.pivotY = 4.4f / 16.0f * -sinWaterPitch - 24.5f / 16.0f * cosWaterPitch;
+                    this.pivotZ = 24.5f / 16.0f * -cosYaw * -sinWaterPitch - 4.4f / 16.0f * cosWaterPitch * cosYaw;
                 }
-                break;
+                else {
+                    this.pivotX = 21 / 16.0f * -sinYaw * -sinWaterPitch + 1 / 16.0f * cosWaterPitch * -sinYaw;
+                    this.pivotY = 1 / 16.0f * -sinWaterPitch - 21 / 16.0f * cosWaterPitch;
+                    this.pivotZ = 21 / 16.0f * -cosYaw * -sinWaterPitch - 1 / 16.0f * cosWaterPitch * cosYaw;
+                }
+            }
+            else {
+                float waterInclination = -90.0F - entity.xRot;
+                float waterPitch = MathHelper.lerp(this.swimAnimation, 0.0F, waterInclination);
+                this.rotationX += MathHelper.degToRad(waterPitch);
+                if (entity.isVisuallySwimming()) {
+                    float sinWaterPitch = MathHelper.sinDeg(waterPitch);
+                    float cosWaterPitch = MathHelper.cosDeg(waterPitch);
+                    this.pivotX = -sinYaw * -sinWaterPitch + 5 / 16.0f * cosWaterPitch * -sinYaw;
+                    this.pivotY = 5 / 16.0f * -sinWaterPitch - cosWaterPitch;
+                    this.pivotZ = -cosYaw * -sinWaterPitch - 5 / 16.0f * cosWaterPitch * cosYaw;
+                }
             }
         }
         //Head
@@ -178,18 +200,27 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
         this.leftLeg.setPivot(2, 12, 0, SCALE / 16);
         //Mess
         boolean isElytraFlying = entity.getFallFlyingTicks() > 4;
-        boolean isActuallySwimming = entity.isSwimming();
-        this.head.rotationY = MathHelper.degToRad(-entity.getViewYRot(partialTicks) - this.rotationYaw);
+        boolean isVisuallySwimming = entity.isVisuallySwimming();
+        float viewYaw = entity.getViewYRot(partialTicks);
+        this.head.rotationY = MathHelper.degToRad(-viewYaw - this.rotationYaw);
         this.head.rotationX = MathHelper.degToRad(this.rotationPitch);
+        this.head.rotationZ = 0;
         if (isElytraFlying) {
             this.head.rotationX = -MathHelper.PI / 4;
         }
         else if (this.swimAnimation > 0.0F) {
-            if (isActuallySwimming) {
-                this.head.rotationX = swimInterp(this.head.rotationX, MathHelper.PI / 4, this.swimAnimation);
+            if (isVisuallySwimming) {
+                if (!entity.isInWater()) {
+                    this.head.rotationX = MathHelper.degToRad(this.rotationPitch + 90);
+                }
+                else {
+                    this.head.rotationX = rotLerpRad(this.swimAnimation, this.head.rotationX, -MathHelper.PI_OVER_2);
+                }
+                this.head.rotationY = 0;
+                this.head.rotationZ = -MathHelper.degToRad(this.rotationYaw + viewYaw);
             }
             else {
-                this.head.rotationX = swimInterp(this.head.rotationX, MathHelper.degToRad(this.rotationPitch), this.swimAnimation);
+                this.head.rotationX = rotLerpRad(this.swimAnimation, this.head.rotationX, MathHelper.degToRad(this.rotationPitch));
             }
         }
         float f = 1.0F;
@@ -242,10 +273,10 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
             this.rightArmPose != ArmPose.BOW_AND_ARROW) {
             this.leftArm.setRotationX(this.leftArm.getRotationX() * 0.5F - MathHelper.PI);
         }
-        if (this.swingProgress > 0) {
+        if (this.attackTime > 0) {
             HandSide swingingHandside = getSwingingHandside(entity);
             HitboxGroup swingingArm = this.getArmForSide(swingingHandside);
-            float f1 = this.swingProgress;
+            float f1 = this.attackTime;
             this.body.rotationY = -MathHelper.sin(MathHelper.sqrt(f1) * MathHelper.TAU) * 0.2F;
             if (swingingHandside == HandSide.LEFT) {
                 this.body.rotationY *= -1;
@@ -257,15 +288,15 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
             this.rightArm.addRotationY(this.body.rotationY);
             this.leftArm.addRotationY(this.body.rotationY);
             this.leftArm.addRotationX(this.body.rotationY);
-            f1 = 1.0F - this.swingProgress;
+            f1 = 1.0F - this.attackTime;
             f1 *= f1;
             f1 *= f1;
             f1 = 1.0F - f1;
             float f2 = MathHelper.sin(f1 * MathHelper.PI);
-            float f3 = MathHelper.sin(this.swingProgress * MathHelper.PI) * -(-this.head.rotationX - 0.7F) * 0.75F;
+            float f3 = MathHelper.sin(this.attackTime * MathHelper.PI) * -(-this.head.rotationX - 0.7F) * 0.75F;
             swingingArm.setRotationX(swingingArm.getRotationX() + (f2 * 1.2F + f3));
             swingingArm.addRotationY(this.body.rotationY * 2);
-            swingingArm.addRotationZ(MathHelper.sin(this.swingProgress * MathHelper.PI) * -0.4F);
+            swingingArm.addRotationZ(MathHelper.sin(this.attackTime * MathHelper.PI) * -0.4F);
         }
         if (this.isSneak) {
             this.body.rotationX = -0.5F;
@@ -317,7 +348,7 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
             this.rightArm.setRotationY(-MathHelper.lerp(f6 / f4, -0.4F, -0.85F));
             this.rightArm.setRotationX(-MathHelper.lerp(f6 / f4, this.rightArm.getRotationX(), -MathHelper.PI / 2));
         }
-        if (this.rightArmPose == ArmPose.CROSSBOW_HOLD && this.swingProgress <= 0.0F) {
+        if (this.rightArmPose == ArmPose.CROSSBOW_HOLD && this.attackTime <= 0.0F) {
             this.rightArm.setRotationY(0.3F + this.head.rotationY);
             this.leftArm.setRotationY(-0.6F + this.head.rotationY);
             this.rightArm.setRotationX(MathHelper.PI / 2 + this.head.rotationX - 0.1F);
@@ -331,36 +362,40 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
         }
         if (this.swimAnimation > 0.0F) {
             float f7 = this.limbSwing % 26.0F;
-            float f8 = this.swingProgress > 0.0F ? 0.0F : this.swimAnimation;
+            HandSide attackArm = this.getAttackArm(entity);
+            float rightArmAnim = attackArm == HandSide.RIGHT && this.attackTime > 0.0F ? 0.0F : this.swimAnimation;
+            float leftArmAnim = attackArm == HandSide.LEFT && this.attackTime > 0.0F ? 0.0F : this.swimAnimation;
             if (f7 < 14.0F) {
-                this.leftArm.setRotationX(swimInterp(this.leftArm.getRotationX(), 0.0F, this.swimAnimation));
-                this.rightArm.setRotationX(MathHelper.lerp(f8, this.rightArm.getRotationX(), 0.0F));
-                this.leftArm.setRotationY(-swimInterp(-this.leftArm.getRotationY(), MathHelper.PI, this.swimAnimation));
-                this.rightArm.setRotationY(-MathHelper.lerp(f8, -this.rightArm.getRotationY(), MathHelper.PI));
-                this.leftArm.setRotationZ(swimInterp(this.leftArm.getRotationZ(),
-                                                     MathHelper.PI + 1.870_796_4F * func_203068_a(f7) / func_203068_a(14.0F),
-                                                     this.swimAnimation));
-                this.rightArm.setRotationZ(MathHelper.lerp(f8,
+                this.leftArm.setRotationX(rotLerpRad(leftArmAnim, this.leftArm.getRotationX(), 0.0F));
+                this.rightArm.setRotationX(MathHelper.lerp(rightArmAnim, this.rightArm.getRotationX(), 0.0F));
+                this.leftArm.setRotationY(MathHelper.lerp(leftArmAnim, this.leftArm.getRotationY(), MathHelper.PI));
+                this.rightArm.setRotationY(MathHelper.lerp(rightArmAnim, this.rightArm.getRotationY(), -MathHelper.PI));
+                this.leftArm.setRotationZ(rotLerpRad(leftArmAnim,
+                                                     this.leftArm.getRotationZ(),
+                                                     MathHelper.PI + 1.870_796_4F * quadraticArmUpdate(f7) / quadraticArmUpdate(14.0F)));
+                this.rightArm.setRotationZ(MathHelper.lerp(rightArmAnim,
                                                            this.rightArm.getRotationZ(),
-                                                           MathHelper.PI - 1.870_796_4F * func_203068_a(f7) / func_203068_a(14.0F)));
+                                                           MathHelper.PI - 1.870_796_4F * quadraticArmUpdate(f7) / quadraticArmUpdate(14.0F)));
             }
             else if (f7 >= 14.0F && f7 < 22.0F) {
                 float f10 = (f7 - 14.0F) / 8.0F;
-                this.leftArm.setRotationX(swimInterp(this.leftArm.getRotationX(), -MathHelper.PI / 2 * f10, this.swimAnimation));
-                this.rightArm.setRotationX(MathHelper.lerp(f8, this.rightArm.getRotationX(), -MathHelper.PI / 2 * f10));
-                this.leftArm.setRotationY(-swimInterp(-this.leftArm.getRotationY(), MathHelper.PI, this.swimAnimation));
-                this.rightArm.setRotationY(-MathHelper.lerp(f8, -this.rightArm.getRotationY(), MathHelper.PI));
-                this.leftArm.setRotationZ(swimInterp(this.leftArm.getRotationZ(), 5.012_389F - 1.870_796_4F * f10, this.swimAnimation));
-                this.rightArm.setRotationZ(MathHelper.lerp(f8, this.rightArm.getRotationZ(), 1.270_796_3F + 1.870_796_4F * f10));
+                this.leftArm.setRotationX(rotLerpRad(leftArmAnim, this.leftArm.getRotationX(), -MathHelper.PI_OVER_2 * f10));
+                this.rightArm.setRotationX(-MathHelper.lerp(rightArmAnim, -this.rightArm.getRotationX(), MathHelper.PI_OVER_2 * f10));
+                this.leftArm.setRotationY(MathHelper.lerp(leftArmAnim, this.leftArm.getRotationY(), MathHelper.PI));
+                this.rightArm.setRotationY(MathHelper.lerp(rightArmAnim, this.rightArm.getRotationY(), -MathHelper.PI));
+                this.leftArm.setRotationZ(rotLerpRad(leftArmAnim, this.leftArm.getRotationZ(), 5.012_389F - 1.870_796_4F * f10));
+                this.rightArm.setRotationZ(MathHelper.lerp(rightArmAnim, this.rightArm.getRotationZ(), 1.270_796_3F + 1.870_796_4F * f10));
             }
             else if (f7 >= 22.0F && f7 < 26.0F) {
                 float f9 = (f7 - 22.0F) / 4.0F;
-                this.leftArm.setRotationX(swimInterp(this.leftArm.getRotationX(), -MathHelper.PI / 2 + MathHelper.PI / 2 * f9, this.swimAnimation));
-                this.rightArm.setRotationX(MathHelper.lerp(f8, this.rightArm.getRotationX(), -MathHelper.PI / 2 + MathHelper.PI / 2 * f9));
-                this.leftArm.setRotationY(-swimInterp(-this.leftArm.getRotationY(), MathHelper.PI, this.swimAnimation));
-                this.rightArm.setRotationY(-MathHelper.lerp(f8, -this.rightArm.getRotationY(), MathHelper.PI));
-                this.leftArm.setRotationZ(swimInterp(this.leftArm.getRotationZ(), MathHelper.PI, this.swimAnimation));
-                this.rightArm.setRotationZ(MathHelper.lerp(f8, this.rightArm.getRotationZ(), MathHelper.PI));
+                this.leftArm.setRotationX(-rotLerpRad(leftArmAnim, -this.leftArm.getRotationX(), MathHelper.PI_OVER_2 - MathHelper.PI_OVER_2 * f9));
+                this.rightArm.setRotationX(-MathHelper.lerp(rightArmAnim,
+                                                            -this.rightArm.getRotationX(),
+                                                            MathHelper.PI_OVER_2 - MathHelper.PI_OVER_2 * f9));
+                this.leftArm.setRotationY(MathHelper.lerp(leftArmAnim, this.leftArm.getRotationY(), MathHelper.PI));
+                this.rightArm.setRotationY(MathHelper.lerp(rightArmAnim, this.rightArm.getRotationY(), -MathHelper.PI));
+                this.leftArm.setRotationZ(rotLerpRad(leftArmAnim, this.leftArm.getRotationZ(), MathHelper.PI));
+                this.rightArm.setRotationZ(MathHelper.lerp(rightArmAnim, this.rightArm.getRotationZ(), MathHelper.PI));
             }
             this.leftLeg.setRotationX(MathHelper.lerp(this.swimAnimation,
                                                       this.leftLeg.getRotationX(),

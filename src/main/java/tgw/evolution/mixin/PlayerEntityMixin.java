@@ -11,7 +11,6 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.Unit;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.network.PacketDistributor;
@@ -30,6 +29,7 @@ import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.PacketSCMovement;
 import tgw.evolution.util.EntityFlags;
+import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.SkinType;
 import tgw.evolution.util.hitbox.EvolutionEntityHitboxes;
@@ -187,6 +187,16 @@ public abstract class PlayerEntityMixin extends LivingEntity implements INeckPos
             case CROUCHING: {
                 return PlayerHelper.NECK_POS_SNEAKING;
             }
+            case SWIMMING: {
+                if (!this.isInWater()) {
+                    return PlayerHelper.NECK_POS_CRAWLING;
+                }
+                return PlayerHelper.tempVector3d();
+            }
+        }
+        float swimAnimation = MathHelper.getSwimAnimation(this, 1.0f);
+        if (swimAnimation > 0) {
+            return PlayerHelper.NECK_POS_CRAWLING;
         }
         return PlayerHelper.NECK_POS_STANDING;
     }
