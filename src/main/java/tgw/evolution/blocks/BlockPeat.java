@@ -48,6 +48,9 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
         if (!BlockGravity.canFallThrough(state)) {
             return false;
         }
+        if (state.getBlock() instanceof BlockPeat) {
+            return state.getValue(LAYERS_1_4) != 4;
+        }
         return state.getCollisionShape(world, pos).isEmpty();
     }
 
@@ -240,7 +243,10 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
         if (player.isCreative() || state.getValue(LAYERS_1_4) == 1) {
             return super.removedByPlayer(state, world, pos, player, willHarvest, fluid);
         }
-        world.setBlockAndUpdate(pos, state.setValue(LAYERS_1_4, state.getValue(LAYERS_1_4) - 1));
+        this.playerWillDestroy(world, pos, state, player);
+        world.setBlock(pos,
+                       state.setValue(LAYERS_1_4, state.getValue(LAYERS_1_4) - 1),
+                       world.isClientSide ? BlockFlags.NOTIFY_UPDATE_AND_RERENDER : BlockFlags.NOTIFY_AND_UPDATE);
         return true;
     }
 
