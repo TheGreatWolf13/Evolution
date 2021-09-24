@@ -26,6 +26,9 @@ public final class EvolutionTexts {
     public static final ITextComponent COMMAND_PAUSE_RESUME_FAIL = transl("command.evolution.pause.resume.fail");
     public static final ITextComponent COMMAND_PAUSE_RESUME_INFO = transl("command.evolution.pause.resume.info");
     public static final ITextComponent COMMAND_PAUSE_RESUME_SUCCESS = transl("command.evolution.pause.resume.success");
+    public static final ITextComponent COMMAND_SHADER_RESET = transl("command.evolution.shader.reset");
+    public static final ITextComponent COMMAND_SHADER_TOGGLE_OFF = transl("command.evolution.shader.toggleOff");
+    public static final ITextComponent COMMAND_SHADER_TOGGLE_ON = transl("command.evolution.shader.toggleOn");
     //Config
     public static final IFormattableTextComponent CONFIG_CLIENT_CONFIG = transl("evolution.config.clientConfig");
     public static final IFormattableTextComponent CONFIG_COMMON_CONFIG = transl("evolution.config.commonConfig");

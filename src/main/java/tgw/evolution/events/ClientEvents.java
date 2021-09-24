@@ -50,6 +50,7 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.GameType;
@@ -134,6 +135,7 @@ public class ClientEvents {
             new StaticFieldHandler<>(
             DimensionRenderInfo.class,
             "field_239208_a_");
+    private static final FieldHandler<GameRenderer, Boolean> EFFECT_ACTIVE = new FieldHandler<>(GameRenderer.class, "field_175083_ad");
     private static ClientEvents instance;
     @Nullable
     private static IGuiScreenHandler handler;
@@ -157,6 +159,7 @@ public class ClientEvents {
     public EntityRayTraceResult rightRayTrace;
     private Vector3d cameraPos = Vector3d.ZERO;
     private int currentShader;
+    private int desiredShader;
     private DimensionOverworld dimension;
     private boolean initialized;
     private boolean inverted;
@@ -165,6 +168,7 @@ public class ClientEvents {
     private boolean isSneakPressed;
     private boolean lunging;
     private GameRenderer oldGameRenderer;
+    private PointOfView previousPointOfView;
     private boolean previousPressed;
     private boolean proneToggle;
     private boolean sneakpreviousPressed;
@@ -533,8 +537,63 @@ public class ClientEvents {
         return this.renderer;
     }
 
+    @Nullable
+    public ResourceLocation getShader(int shaderId) {
+        switch (shaderId) {
+            case 1: {
+                return EvolutionResources.SHADER_MOTION_BLUR;
+            }
+            case 25: {
+                return EvolutionResources.SHADER_DESATURATE_25;
+            }
+            case 50: {
+                return EvolutionResources.SHADER_DESATURATE_50;
+            }
+            case 75: {
+                return EvolutionResources.SHADER_DESATURATE_75;
+            }
+        }
+        return null;
+    }
+
     public int getTickCount() {
         return this.ticks;
+    }
+
+    public void handleShaderPacket(int shaderId) {
+        switch (shaderId) {
+            case PacketSCShader.QUERY: {
+                this.mc.player.displayClientMessage(new TranslationTextComponent("command.evolution.shader.query", this.currentShader), false);
+                return;
+            }
+            case PacketSCShader.TOGGLE: {
+                this.mc.gameRenderer.togglePostEffect();
+                if (EFFECT_ACTIVE.get(this.mc.gameRenderer)) {
+                    this.mc.player.displayClientMessage(EvolutionTexts.COMMAND_SHADER_TOGGLE_ON, false);
+                }
+                else {
+                    this.mc.player.displayClientMessage(EvolutionTexts.COMMAND_SHADER_TOGGLE_OFF, false);
+                }
+                return;
+            }
+            case 0: {
+                this.mc.player.displayClientMessage(EvolutionTexts.COMMAND_SHADER_RESET, false);
+                this.desiredShader = 0;
+                return;
+            }
+        }
+        if (this.hasShader(shaderId)) {
+            this.mc.player.displayClientMessage(new TranslationTextComponent("command.evolution.shader.success", shaderId), false);
+            this.desiredShader = shaderId;
+        }
+        else {
+            this.mc.player.displayClientMessage(new TranslationTextComponent("command.evolution.shader.fail", shaderId).withStyle(TextFormatting.RED),
+                                                false);
+        }
+    }
+
+    public boolean hasShader(int shaderId) {
+        return this.getShader(shaderId) != null;
     }
 
     public boolean hasShiftDown() {
@@ -615,7 +674,7 @@ public class ClientEvents {
                 this.jumpTicks = 0;
             }
             //Apply shaders
-            int shader;
+            int shader = 0;
             if (this.mc.options.getCameraType() == PointOfView.FIRST_PERSON && !this.mc.player.isCreative() && !this.mc.player.isSpectator()) {
                 float health = this.mc.player.getHealth();
                 if (health <= 12.5f) {
@@ -627,34 +686,37 @@ public class ClientEvents {
                 else if (health <= 50) {
                     shader = 75;
                 }
-                else {
-                    shader = 0;
+            }
+            if (this.desiredShader == 0) {
+                if (shader != this.currentShader) {
+                    this.currentShader = shader;
+                    if (shader == 0) {
+                        this.mc.gameRenderer.shutdownEffect();
+                    }
+                    else {
+                        ResourceLocation shaderLoc = this.getShader(shader);
+                        if (shaderLoc != null) {
+                            this.mc.gameRenderer.loadEffect(shaderLoc);
+                        }
+                        else {
+                            Evolution.LOGGER.warn("Unregistered shader id: {}", shader);
+                        }
+                    }
                 }
             }
             else {
-                shader = 0;
-            }
-            if (shader != this.currentShader) {
-                this.currentShader = shader;
-                switch (shader) {
-                    case 0: {
-                        this.mc.gameRenderer.shutdownEffect();
-                        break;
+                if (this.mc.options.getCameraType() != this.previousPointOfView) {
+                    this.previousPointOfView = this.mc.options.getCameraType();
+                    this.currentShader = 0;
+                }
+                if (this.desiredShader != this.currentShader) {
+                    this.currentShader = this.desiredShader;
+                    ResourceLocation shaderLoc = this.getShader(this.desiredShader);
+                    if (shaderLoc != null) {
+                        this.mc.gameRenderer.loadEffect(shaderLoc);
                     }
-                    case 25: {
-                        this.mc.gameRenderer.loadEffect(EvolutionResources.SHADER_DESATURATE_25);
-                        break;
-                    }
-                    case 50: {
-                        this.mc.gameRenderer.loadEffect(EvolutionResources.SHADER_DESATURATE_50);
-                        break;
-                    }
-                    case 75: {
-                        this.mc.gameRenderer.loadEffect(EvolutionResources.SHADER_DESATURATE_75);
-                        break;
-                    }
-                    default: {
-                        Evolution.LOGGER.warn("Unregistered shader id: {}", shader);
+                    else {
+                        Evolution.LOGGER.warn("Unregistered shader id: {}", this.desiredShader);
                     }
                 }
             }

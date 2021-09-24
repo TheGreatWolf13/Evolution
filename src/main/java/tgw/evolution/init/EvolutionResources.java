@@ -56,6 +56,7 @@ public final class EvolutionResources {
     public static final ResourceLocation SHADER_DESATURATE_25 = Evolution.getResource("shaders/post/saturation25.json");
     public static final ResourceLocation SHADER_DESATURATE_50 = Evolution.getResource("shaders/post/saturation50.json");
     public static final ResourceLocation SHADER_DESATURATE_75 = Evolution.getResource("shaders/post/saturation75.json");
+    public static final ResourceLocation SHADER_MOTION_BLUR = new ResourceLocation("shaders/post/phosphor.json");
     //Slots
     public static final ResourceLocation[] SLOT_ARMOR = {PlayerContainer.EMPTY_ARMOR_SLOT_BOOTS,
                                                          PlayerContainer.EMPTY_ARMOR_SLOT_LEGGINGS,
