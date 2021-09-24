@@ -6,6 +6,8 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.SimpleSound;
 import net.minecraft.client.gui.chat.NarratorChatListener;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.multiplayer.ClientAdvancementManager;
@@ -13,6 +15,7 @@ import net.minecraft.client.network.play.ClientPlayNetHandler;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.network.play.client.CSeenAdvancementsPacket;
+import net.minecraft.util.SoundEvents;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.glfw.GLFW;
@@ -222,6 +225,10 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
 
     @Override
     public void onSelectedTabChanged(@Nullable Advancement advancement) {
+        //noinspection VariableNotUsedInsideIf
+        if (this.selectedTab != null) {
+            Minecraft.getInstance().getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+        }
         this.selectedTab = this.tabs.get(advancement);
     }
 

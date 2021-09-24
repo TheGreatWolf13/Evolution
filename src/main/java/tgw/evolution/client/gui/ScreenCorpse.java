@@ -3,11 +3,13 @@ package tgw.evolution.client.gui;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.SimpleSound;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.IReorderingProcessor;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -84,11 +86,11 @@ public class ScreenCorpse extends ContainerScreen<ContainerCorpse> {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
             if (MathHelper.isMouseInsideBox(mouseX, mouseY, this.tabX, this.tabY, this.tabX + 32, this.tabY + 28)) {
-                this.selectedTab = 0;
+                this.setSelectedTab(0);
                 return true;
             }
             if (MathHelper.isMouseInsideBox(mouseX, mouseY, this.tabX, this.tabY + 32, this.tabX + 32, this.tabY + 32 + 28)) {
-                this.selectedTab = 1;
+                this.setSelectedTab(1);
                 return true;
             }
         }
@@ -185,5 +187,12 @@ public class ScreenCorpse extends ContainerScreen<ContainerCorpse> {
             }
         }
         super.renderTooltip(matrices, mouseX, mouseY);
+    }
+
+    protected void setSelectedTab(int selectedTab) {
+        if (this.selectedTab != selectedTab) {
+            Minecraft.getInstance().getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+            this.selectedTab = selectedTab;
+        }
     }
 }
