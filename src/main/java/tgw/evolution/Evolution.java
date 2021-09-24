@@ -87,7 +87,8 @@ public final class Evolution {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::loadComplete);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::onEntityAttributeCreation);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::onEntityAttributeModification);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::onTexturePreStitch);
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                                     () -> () -> FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::onTexturePreStitch));
         FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(DataSerializerEntry.class, Evolution::registerSerializers);
         MinecraftForge.EVENT_BUS.register(this);
         ModLoadingContext.get()
@@ -131,9 +132,7 @@ public final class Evolution {
     }
 
     private static void onTexturePreStitch(TextureStitchEvent.Pre event) {
-        if (FMLLoader.getDist() == Dist.CLIENT) {
-            ClientProxy.addTextures(event);
-        }
+        PROXY.addTextures(event);
     }
 
     private static void registerParticleFactories(ParticleFactoryRegisterEvent event) {

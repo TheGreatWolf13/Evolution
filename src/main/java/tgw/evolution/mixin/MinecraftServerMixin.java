@@ -11,7 +11,7 @@ import net.minecraft.network.play.server.SUpdateTimePacket;
 import net.minecraft.profiler.IProfiler;
 import net.minecraft.profiler.Snooper;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.integrated.IntegratedServer;
+import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.management.PlayerList;
 import net.minecraft.test.TestCollection;
 import net.minecraft.util.FrameTimer;
@@ -111,9 +111,12 @@ public abstract class MinecraftServerMixin extends RecursiveEventLoop<TickDelaye
         return this.isMultiplayerPaused;
     }
 
+    @Shadow
+    public abstract boolean isSingleplayer();
+
     @Inject(method = "tickServer", at = @At("HEAD"))
     private void onTickServer(BooleanSupplier supplier, CallbackInfo ci) {
-        if (!((Object) this instanceof IntegratedServer)) {
+        if ((Object) this instanceof DedicatedServer) {
             for (ServerPlayerEntity player : this.getPlayerList().getPlayers()) {
                 player.awardStat(EvolutionStats.TIME_WITH_WORLD_OPEN);
             }

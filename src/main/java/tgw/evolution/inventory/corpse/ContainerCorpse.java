@@ -1,6 +1,5 @@
 package tgw.evolution.inventory.corpse;
 
-import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.EquipmentSlotType;
@@ -45,45 +44,45 @@ public class ContainerCorpse extends Container implements IEvolutionContainer {
                 ContainerCorpse.this.corpse.setSlot(EquipmentSlotType.HEAD, this.getItem().copy());
                 return super.onTake(player, stackTaken);
             }
-        }.setBackground(AtlasTexture.LOCATION_BLOCKS, EvolutionResources.SLOT_ARMOR[EvolutionResources.HELMET]));
+        }.setBackground(PlayerContainer.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[EvolutionResources.HELMET]));
         this.addSlot(new SlotItemHandler(handler, 1, 26, 18) {
             @Override
             public ItemStack onTake(PlayerEntity player, ItemStack stackTaken) {
                 ContainerCorpse.this.corpse.setSlot(EquipmentSlotType.CHEST, this.getItem().copy());
                 return super.onTake(player, stackTaken);
             }
-        }.setBackground(AtlasTexture.LOCATION_BLOCKS, EvolutionResources.SLOT_ARMOR[EvolutionResources.CHESTPLATE]));
+        }.setBackground(PlayerContainer.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[EvolutionResources.CHESTPLATE]));
         this.addSlot(new SlotItemHandler(handler, 2, 44, 18) {
             @Override
             public ItemStack onTake(PlayerEntity player, ItemStack stackTaken) {
                 ContainerCorpse.this.corpse.setSlot(EquipmentSlotType.LEGS, this.getItem().copy());
                 return super.onTake(player, stackTaken);
             }
-        }.setBackground(AtlasTexture.LOCATION_BLOCKS, EvolutionResources.SLOT_ARMOR[EvolutionResources.LEGGINGS]));
+        }.setBackground(PlayerContainer.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[EvolutionResources.LEGGINGS]));
         this.addSlot(new SlotItemHandler(handler, 3, 62, 18) {
             @Override
             public ItemStack onTake(PlayerEntity player, ItemStack stackTaken) {
                 ContainerCorpse.this.corpse.setSlot(EquipmentSlotType.FEET, this.getItem().copy());
                 return super.onTake(player, stackTaken);
             }
-        }.setBackground(AtlasTexture.LOCATION_BLOCKS, EvolutionResources.SLOT_ARMOR[EvolutionResources.BOOTS]));
+        }.setBackground(PlayerContainer.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[EvolutionResources.BOOTS]));
     }
 
     private void addClothesSlots(IItemHandler handler) {
-        this.addSlot(new SlotItemHandler(handler, 4, 98, 18).setBackground(AtlasTexture.LOCATION_BLOCKS,
+        this.addSlot(new SlotItemHandler(handler, 4, 98, 18).setBackground(PlayerContainer.BLOCK_ATLAS,
                                                                            EvolutionResources.SLOT_EXTENDED[EvolutionResources.FEET]));
-        this.addSlot(new SlotItemHandler(handler, 5, 116, 18).setBackground(AtlasTexture.LOCATION_BLOCKS,
+        this.addSlot(new SlotItemHandler(handler, 5, 116, 18).setBackground(PlayerContainer.BLOCK_ATLAS,
                                                                             EvolutionResources.SLOT_EXTENDED[EvolutionResources.LEGS]));
-        this.addSlot(new SlotItemHandler(handler, 6, 134, 18).setBackground(AtlasTexture.LOCATION_BLOCKS,
+        this.addSlot(new SlotItemHandler(handler, 6, 134, 18).setBackground(PlayerContainer.BLOCK_ATLAS,
                                                                             EvolutionResources.SLOT_EXTENDED[EvolutionResources.BODY]));
-        this.addSlot(new SlotItemHandler(handler, 7, 152, 18).setBackground(AtlasTexture.LOCATION_BLOCKS,
+        this.addSlot(new SlotItemHandler(handler, 7, 152, 18).setBackground(PlayerContainer.BLOCK_ATLAS,
                                                                             EvolutionResources.SLOT_EXTENDED[EvolutionResources.HAT]));
     }
 
     private void addEquipmentSlots(IItemHandler handler) {
-        this.addSlot(new SlotItemHandler(handler, 8, 44, 36).setBackground(AtlasTexture.LOCATION_BLOCKS,
+        this.addSlot(new SlotItemHandler(handler, 8, 44, 36).setBackground(PlayerContainer.BLOCK_ATLAS,
                                                                            EvolutionResources.SLOT_EXTENDED[EvolutionResources.MASK]));
-        this.addSlot(new SlotItemHandler(handler, 9, 62, 36).setBackground(AtlasTexture.LOCATION_BLOCKS,
+        this.addSlot(new SlotItemHandler(handler, 9, 62, 36).setBackground(PlayerContainer.BLOCK_ATLAS,
                                                                            EvolutionResources.SLOT_EXTENDED[EvolutionResources.CLOAK]));
         this.addSlot(new SlotItemHandler(handler, 10, 80, 36) {
             @Override
@@ -91,10 +90,10 @@ public class ContainerCorpse extends Container implements IEvolutionContainer {
                 ContainerCorpse.this.corpse.setSlot(EquipmentSlotType.OFFHAND, this.getItem().copy());
                 return super.onTake(player, stackTaken);
             }
-        }.setBackground(AtlasTexture.LOCATION_BLOCKS, PlayerContainer.EMPTY_ARMOR_SLOT_SHIELD));
-        this.addSlot(new SlotItemHandler(handler, 11, 98, 36).setBackground(AtlasTexture.LOCATION_BLOCKS,
+        }.setBackground(PlayerContainer.BLOCK_ATLAS, PlayerContainer.EMPTY_ARMOR_SLOT_SHIELD));
+        this.addSlot(new SlotItemHandler(handler, 11, 98, 36).setBackground(PlayerContainer.BLOCK_ATLAS,
                                                                             EvolutionResources.SLOT_EXTENDED[EvolutionResources.BACK]));
-        this.addSlot(new SlotItemHandler(handler, 12, 116, 36).setBackground(AtlasTexture.LOCATION_BLOCKS,
+        this.addSlot(new SlotItemHandler(handler, 12, 116, 36).setBackground(PlayerContainer.BLOCK_ATLAS,
                                                                              EvolutionResources.SLOT_EXTENDED[EvolutionResources.TACTICAL]));
     }
 

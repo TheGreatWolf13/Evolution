@@ -1,7 +1,5 @@
 package tgw.evolution.blocks.tileentities;
 
-import tgw.evolution.Evolution;
-
 import static tgw.evolution.blocks.tileentities.Patterns.*;
 
 public final class KnappingPatterns {
@@ -15,9 +13,5 @@ public final class KnappingPatterns {
     public static final long KNIFE = KNIFE_TRUE;
 
     private KnappingPatterns() {
-    }
-
-    public static void load() {
-        Evolution.LOGGER.info("Loaded Knapping Patterns");
     }
 }

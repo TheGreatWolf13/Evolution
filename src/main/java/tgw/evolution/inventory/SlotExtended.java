@@ -1,7 +1,7 @@
 package tgw.evolution.inventory;
 
-import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.PlayerContainer;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import tgw.evolution.init.EvolutionResources;
@@ -16,7 +16,7 @@ public class SlotExtended extends SlotItemHandler {
         super(handler, index, xPosition, yPosition);
         this.player = player;
         this.slot = index;
-        this.setBackground(AtlasTexture.LOCATION_BLOCKS, EvolutionResources.SLOT_EXTENDED[this.slot]);
+        this.setBackground(PlayerContainer.BLOCK_ATLAS, EvolutionResources.SLOT_EXTENDED[this.slot]);
     }
 
     protected boolean isBlocked() {

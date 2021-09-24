@@ -4,7 +4,10 @@ import net.minecraft.client.audio.TickableSound;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
+@OnlyIn(Dist.CLIENT)
 public class SoundEntityEmitted extends TickableSound {
 
     private final Entity entity;

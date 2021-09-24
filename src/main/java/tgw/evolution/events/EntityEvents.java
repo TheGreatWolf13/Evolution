@@ -3,7 +3,6 @@ package tgw.evolution.events;
 import com.google.common.collect.Sets;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
@@ -224,7 +223,7 @@ public class EntityEvents {
         //Sets the gravity of the Living Entities and the Player to be that of the dimension they're in
         if (living instanceof PlayerEntity) {
             PlayerEntity player = (PlayerEntity) living;
-            if (player instanceof ClientPlayerEntity) {
+            if (player.level.isClientSide) {
                 if (player.equals(Evolution.PROXY.getClientPlayer())) {
                     EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSkinType());
                 }

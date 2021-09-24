@@ -1,7 +1,6 @@
 package tgw.evolution.inventory.extendedinventory;
 
 import com.google.common.collect.Lists;
-import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.util.RecipeBookCategories;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -87,7 +86,7 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
                     }
                     return stack.canEquip(equipmentslottype, ContainerPlayerInventory.this.player);
                 }
-            }).setBackground(AtlasTexture.LOCATION_BLOCKS, EvolutionResources.SLOT_ARMOR[equipmentslottype.getIndex()]);
+            }).setBackground(PlayerContainer.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[equipmentslottype.getIndex()]);
         }
         //Main inventory slots
         for (int l = 0; l < 3; ++l) {
@@ -102,7 +101,7 @@ public class ContainerPlayerInventory extends RecipeBookContainer<CraftingInvent
             this.addSlot(new Slot(inventory, i1, 26 + i1 * 18, 142));
         }
         //Shield slot
-        this.addSlot(new Slot(inventory, 40, 116, 62).setBackground(AtlasTexture.LOCATION_BLOCKS, PlayerContainer.EMPTY_ARMOR_SLOT_SHIELD));
+        this.addSlot(new Slot(inventory, 40, 116, 62).setBackground(PlayerContainer.BLOCK_ATLAS, PlayerContainer.EMPTY_ARMOR_SLOT_SHIELD));
         this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.HAT, 44, 8));
         this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.BODY, 44, 26));
         this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.LEGS, 44, 44));

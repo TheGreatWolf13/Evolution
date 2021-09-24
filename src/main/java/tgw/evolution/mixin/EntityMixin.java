@@ -16,6 +16,8 @@ import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.capabilities.CapabilityProvider;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -143,6 +145,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         nbt.putByte("FireImmunity", (byte) this.fireDamageImmunity);
     }
 
+    @OnlyIn(Dist.CLIENT)
     @Inject(method = "turn", at = @At("HEAD"), cancellable = true)
     private void onTurn(double yaw, double pitch, CallbackInfo ci) {
         if (((IMinecraftPatch) Minecraft.getInstance()).isMultiplayerPaused()) {

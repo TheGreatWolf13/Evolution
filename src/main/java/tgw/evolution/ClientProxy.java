@@ -74,12 +74,6 @@ public class ClientProxy implements IProxy {
         });
     }
 
-    public static void addTextures(TextureStitchEvent.Pre event) {
-        for (ResourceLocation resLoc : EvolutionResources.SLOT_EXTENDED) {
-            event.addSprite(resLoc);
-        }
-    }
-
     public static void changeWorldOrders() {
         Evolution.LOGGER.warn("Change world order");
 //        int evId = 0;
@@ -92,6 +86,13 @@ public class ClientProxy implements IProxy {
 //        WorldType evWorld = WorldType.WORLD_TYPES[evId];
 //        System.arraycopy(WorldType.WORLD_TYPES, 0, WorldType.WORLD_TYPES, 1, evId);
 //        WorldType.WORLD_TYPES[0] = evWorld;
+    }
+
+    @Override
+    public void addTextures(TextureStitchEvent.Pre event) {
+        for (ResourceLocation resLoc : EvolutionResources.SLOT_EXTENDED) {
+            event.addSprite(resLoc);
+        }
     }
 
     @Override
@@ -111,6 +112,7 @@ public class ClientProxy implements IProxy {
 
     @Override
     public void init() {
+        IProxy.super.init();
         EvolutionRenderer.registryEntityRenders();
         addOverrides();
         ScreenManager.register(EvolutionContainers.EXTENDED_INVENTORY.get(), ScreenInventoryExtended::new);
