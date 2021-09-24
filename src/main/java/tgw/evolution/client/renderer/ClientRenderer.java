@@ -91,6 +91,7 @@ public class ClientRenderer {
     private final Minecraft mc;
     private final Random rand = new Random();
     private final byte[] thirstShakeAligment = new byte[10];
+    public boolean isAddingEffect;
     public boolean isRenderingPlayer;
     private byte alphaDir = 1;
     private ItemStack currentMainhandItem = ItemStack.EMPTY;
@@ -1305,6 +1306,10 @@ public class ClientRenderer {
                 this.client.effectToAddTicks = 0;
                 continue;
             }
+            if (!this.isAddingEffect) {
+                this.isAddingEffect = true;
+                this.client.effectToAddTicks = 0;
+            }
             float alpha;
             float x0 = (this.mc.getWindow().getGuiScaledWidth() - 24) / 2.0f;
             float y0 = Math.max((this.mc.getWindow().getGuiScaledHeight() - 24) / 3.0f, 1 + 26 * 3 + 12 + (this.mc.isDemo() ? 15 : 0));
@@ -1356,9 +1361,10 @@ public class ClientRenderer {
                     RenderSystem.popMatrix();
                 }
             };
-            if (this.client.effectToAddTicks == 20) {
+            if (this.client.effectToAddTicks >= 20) {
                 movingInstance = null;
                 this.client.effectToAddTicks = 0;
+                this.isAddingEffect = false;
                 ClientEvents.removeEffect(ClientEvents.EFFECTS, addingEffect.getEffect());
                 for (ClientEffectInstance instance : ClientEvents.EFFECTS_TO_ADD) {
                     for (int i = 0; i < 20; i++) {

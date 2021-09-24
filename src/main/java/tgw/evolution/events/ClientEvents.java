@@ -730,6 +730,9 @@ public class ClientEvents {
                 if (!EFFECTS_TO_ADD.isEmpty()) {
                     this.effectToAddTicks++;
                 }
+                else {
+                    this.renderer.isAddingEffect = false;
+                }
                 //Proning
                 boolean pressed = ClientProxy.TOGGLE_PRONE.isDown();
                 if (pressed && !this.previousPressed) {
