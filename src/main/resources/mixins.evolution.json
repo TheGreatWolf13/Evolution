@@ -16,6 +16,7 @@
     "PlayerInventoryMixin",
     "PlayerListMixin",
     "ServerPlayerEntityMixin",
+    "ServerPlayNetHandlerMixin",
     "ServerStatisticsManagerMixin",
     "SJoinGamePacketMixin",
     "SPlayEntityEffectPacketMixin",
