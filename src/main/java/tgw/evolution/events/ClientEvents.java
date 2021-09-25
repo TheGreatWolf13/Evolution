@@ -648,11 +648,15 @@ public class ClientEvents {
 
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
+        this.mc.getProfiler().push("evolution");
+        this.mc.getProfiler().push("init");
         //Turn auto-jump off
         this.mc.options.autoJump = false;
         if (this.mc.player == null) {
             this.initialized = false;
             this.clearMemory();
+            this.mc.getProfiler().pop();
+            this.mc.getProfiler().pop();
             return;
         }
         if (this.mc.level == null) {
@@ -664,9 +668,11 @@ public class ClientEvents {
             this.init();
             this.initialized = true;
         }
+        this.mc.getProfiler().pop();
         //Runs at the start of each tick
         if (event.phase == TickEvent.Phase.START) {
             //Jump
+            this.mc.getProfiler().push("jump");
             if (this.jumpTicks > 0) {
                 this.jumpTicks--;
             }
@@ -674,6 +680,7 @@ public class ClientEvents {
                 this.jumpTicks = 0;
             }
             //Apply shaders
+            this.mc.getProfiler().popPush("shaders");
             int shader = 0;
             if (this.mc.options.getCameraType() == PointOfView.FIRST_PERSON && !this.mc.player.isCreative() && !this.mc.player.isSpectator()) {
                 float health = this.mc.player.getHealth();
@@ -720,21 +727,29 @@ public class ClientEvents {
                     }
                 }
             }
+            this.mc.getProfiler().popPush("lightMap");
             GameRenderer gameRenderer = this.mc.gameRenderer;
             if (gameRenderer != this.oldGameRenderer) {
                 this.oldGameRenderer = gameRenderer;
                 LIGHTMAP_FIELD.set(this.oldGameRenderer, new LightTextureEv(this.oldGameRenderer, this.mc));
             }
+            this.mc.getProfiler().pop();
             if (!this.mc.isPaused()) {
+                this.mc.getProfiler().push("dimension");
                 this.dimension.tick();
+                this.mc.getProfiler().popPush("renderer");
                 this.renderer.startTick();
+                this.mc.getProfiler().popPush("lunge");
                 ABOUT_TO_LUNGE_PLAYERS.int2ObjectEntrySet().removeIf(entry -> entry.getValue().shouldBeRemoved());
                 ABOUT_TO_LUNGE_PLAYERS.forEach((key, value) -> value.tick());
                 LUNGING_PLAYERS.int2ObjectEntrySet().removeIf(entry -> entry.getValue().shouldBeRemoved());
                 LUNGING_PLAYERS.forEach((key, value) -> value.tick());
+                this.mc.getProfiler().pop();
                 InputHooks.parryCooldownTick();
+                this.mc.getProfiler().push("updateHeld");
                 this.updateBeltItem();
                 this.updateBackItem();
+                this.mc.getProfiler().popPush("prone");
                 //Resets cooldown when proning
                 boolean isProned = this.mc.player.getPose() == Pose.SWIMMING && !this.mc.player.isInWater();
                 if (this.isPreviousProned != isProned) {
@@ -742,6 +757,7 @@ public class ClientEvents {
                     this.offhandTimeSinceLastHit = 0;
                     this.isPreviousProned = isProned;
                 }
+                this.mc.getProfiler().popPush("effects");
                 //Handle Disoriented Effect
                 if (this.mc.player.hasEffect(EvolutionEffects.DISORIENTED.get())) {
                     if (!this.inverted) {
@@ -758,17 +774,20 @@ public class ClientEvents {
                     this.mc.player.setSprinting(false);
                 }
                 //Handle two-handed items
+                this.mc.getProfiler().popPush("twoHanded");
                 if (this.mc.player.getMainHandItem().getItem() instanceof ITwoHanded && !this.mc.player.getOffhandItem().isEmpty()) {
                     this.mainhandTimeSinceLastHit = 0;
                     LEFT_COUNTER_FIELD.set(this.mc, Integer.MAX_VALUE);
                     this.mc.player.displayClientMessage(EvolutionTexts.ACTION_TWO_HANDED, true);
                 }
                 //Prevents the player from attacking if on cooldown
+                this.mc.getProfiler().popPush("cooldown");
                 if (this.getMainhandCooledAttackStrength(0.0F) != 1 &&
                     this.mc.hitResult != null &&
                     this.mc.hitResult.getType() != RayTraceResult.Type.BLOCK) {
                     LEFT_COUNTER_FIELD.set(this.mc, Integer.MAX_VALUE);
                 }
+                this.mc.getProfiler().pop();
             }
         }
         //Runs at the end of each tick
@@ -776,6 +795,7 @@ public class ClientEvents {
             if (!this.mc.isPaused()) {
                 this.warmUpTicks++;
                 //Remove inactive effects
+                this.mc.getProfiler().push("effects");
                 if (!EFFECTS.isEmpty()) {
                     Iterator<ClientEffectInstance> iterator = EFFECTS.iterator();
                     while (iterator.hasNext()) {
@@ -795,6 +815,7 @@ public class ClientEvents {
                 else {
                     this.renderer.isAddingEffect = false;
                 }
+                this.mc.getProfiler().popPush("prone");
                 //Proning
                 boolean pressed = ClientProxy.TOGGLE_PRONE.isDown();
                 if (pressed && !this.previousPressed) {
@@ -803,6 +824,7 @@ public class ClientEvents {
                 this.previousPressed = pressed;
                 this.updateClientProneState(this.mc.player);
                 //Sneak on ladders
+                this.mc.getProfiler().popPush("ladders");
                 if (this.mc.player.onClimbable()) {
                     if (this.isSneakPressed && !this.sneakpreviousPressed) {
                         this.sneakpreviousPressed = true;
@@ -810,6 +832,7 @@ public class ClientEvents {
                     }
                 }
                 //Handle creative features
+                this.mc.getProfiler().popPush("creative");
                 if (this.mc.player.isCreative() && ClientProxy.BUILDING_ASSIST.isDown()) {
                     if (this.mc.player.getMainHandItem().getItem() instanceof BlockItem) {
                         if (this.mc.hitResult.getType() == RayTraceResult.Type.BLOCK) {
@@ -823,15 +846,19 @@ public class ClientEvents {
                     }
                 }
                 //Handle swing
+                this.mc.getProfiler().popPush("swing");
                 this.ticks++;
                 if (this.mc.gameMode.isDestroying()) {
                     this.swingArm(Hand.MAIN_HAND);
                 }
                 this.lunging = false;
                 //Ticks renderer
+                this.mc.getProfiler().popPush("renderer");
                 this.renderer.endTick();
+                this.mc.getProfiler().pop();
             }
         }
+        this.mc.getProfiler().pop();
     }
 
     @SubscribeEvent
