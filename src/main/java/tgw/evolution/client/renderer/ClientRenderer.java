@@ -743,12 +743,13 @@ public class ClientRenderer {
         if (heldStack.isEmpty() || !(heldStack.getItem() instanceof IDrink)) {
             this.flashAlpha = 0;
             this.alphaDir = 1;
-            return;
         }
-        //Restored thirst/hydration overlay while holding drink
-        IDrink drink = (IDrink) heldStack.getItem();
-        this.drawThirstOverlay(matrices, drink.getThirst(), thirst.getThirstLevel(), left, top, this.flashAlpha);
-        this.drawHydrationOverlay(matrices, drink.getThirst(), thirst.getHydrationLevel(), left, top, this.flashAlpha);
+        else {
+            //Restored thirst/hydration overlay while holding drink
+            IDrink drink = (IDrink) heldStack.getItem();
+            this.drawThirstOverlay(matrices, drink.getThirst(), thirst.getThirstLevel(), left, top, this.flashAlpha);
+            this.drawHydrationOverlay(matrices, drink.getThirst(), thirst.getHydrationLevel(), left, top, this.flashAlpha);
+        }
         RenderSystem.disableBlend();
         this.mc.getProfiler().pop();
     }
