@@ -15,12 +15,14 @@
     "PlayerEntityMixin",
     "PlayerInventoryMixin",
     "PlayerListMixin",
+    "SaveFormatMixin",
     "ServerPlayerEntityMixin",
     "ServerPlayNetHandlerMixin",
     "ServerStatisticsManagerMixin",
     "SJoinGamePacketMixin",
     "SPlayEntityEffectPacketMixin",
     "WorldMixin",
+    "WorldSummaryMixin",
     "ZombieEntityMixin"
   ],
   "client": [
