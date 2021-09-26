@@ -1013,8 +1013,9 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
         if (this.rightClickDelay > 0) {
             --this.rightClickDelay;
         }
+        this.profiler.push("preTick");
         BasicEventHooks.onPreClientTick();
-        this.profiler.push("gui");
+        this.profiler.popPush("gui");
         if (!this.pause) {
             this.gui.tick();
         }
@@ -1046,9 +1047,7 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
             this.missTime = 10_000;
         }
         if (this.screen != null) {
-            Screen.wrapScreenError(() -> {
-                this.screen.tick();
-            }, "Ticking screen", this.screen.getClass().getCanonicalName());
+            Screen.wrapScreenError(() -> this.screen.tick(), "Ticking screen", this.screen.getClass().getCanonicalName());
         }
         if (!this.options.renderDebug) {
             this.gui.clearCache();
@@ -1128,8 +1127,9 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
         }
         this.profiler.popPush("keyboard");
         this.keyboardHandler.tick();
-        this.profiler.pop();
+        this.profiler.popPush("postTick");
         BasicEventHooks.onPostClientTick();
+        this.profiler.pop();
     }
 
     @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;pick(F)V", ordinal = 0))

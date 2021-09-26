@@ -31,7 +31,7 @@ public abstract class ClientWorldMixin extends World {
     @Inject(method = "getStarBrightness", at = @At(value = "HEAD"), cancellable = true)
     private void onGetStarBrightness(float partialTicks, CallbackInfoReturnable<Float> cir) {
         if (ClientEvents.getInstance().getDimension() != null) {
-            cir.setReturnValue(ClientEvents.getInstance().getDimension().getSunBrightness(partialTicks));
+            cir.setReturnValue(ClientEvents.getInstance().getDimension().getSkyBrightness(partialTicks));
         }
     }
 }

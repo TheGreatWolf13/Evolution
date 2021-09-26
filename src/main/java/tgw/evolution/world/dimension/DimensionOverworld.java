@@ -16,6 +16,7 @@ import javax.annotation.Nullable;
 public class DimensionOverworld {
 
     private static final float[] SUNSET_COLORS = new float[4];
+    private final Vec3f lastFogColor = new Vec3f(0, 0, 0);
     private MoonPhase eclipsePhase = MoonPhase.FULL_MOON;
     private Vector3d fogColor = Vector3d.ZERO;
     private boolean isInLunarEclipse;
@@ -31,6 +32,7 @@ public class DimensionOverworld {
     private MoonPhase moonPhase = MoonPhase.NEW_MOON;
     private float solarEclipseAmplitude;
     private float solarEclipseAngle;
+    private float starsAngle;
     private float sunAngle;
     private float sunCelestialRadius;
     private float sunElevationAngle;
@@ -40,10 +42,6 @@ public class DimensionOverworld {
 
     public DimensionOverworld() {
         this.generateLightBrightnessTable();
-    }
-
-    public Vector3d biomeColorModifier(Vector3d biomeFogColor, float multiplier) {
-        return biomeFogColor.multiply(multiplier * 0.97 + 0.03, multiplier * 0.97 + 0.03, multiplier * 0.97 + 0.03);
     }
 
     private Vector3d calculateFogColor() {
@@ -79,12 +77,20 @@ public class DimensionOverworld {
         return this.lightBrightnessTable[light];
     }
 
+    public Vector3d getBrightnessDependentFogColor(Vector3d biomeFogColor, float multiplier) {
+        return biomeFogColor.multiply(multiplier * 0.97 + 0.03, multiplier * 0.97 + 0.03, multiplier * 0.97 + 0.03);
+    }
+
     public MoonPhase getEclipsePhase() {
         return this.eclipsePhase;
     }
 
     public Vector3d getFogColor() {
         return this.fogColor;
+    }
+
+    public Vec3f getLastFogColor() {
+        return this.lastFogColor;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -127,6 +133,12 @@ public class DimensionOverworld {
         return this.moonPhase;
     }
 
+    public float getSkyBrightness(float partialTicks) {
+        float moonlightMult = this.moonlightMult();
+        float moonlightMin = 1 - moonlightMult;
+        return this.getSunBrightness(partialTicks) * moonlightMult + moonlightMin;
+    }
+
     public Vector3d getSkyColor(BlockPos pos, float partialTick) {
         Vec3f skyColor = EarthHelper.getSkyColor(this.world, pos, partialTick, this);
         return new Vector3d(skyColor.x, skyColor.y, skyColor.z);
@@ -146,10 +158,8 @@ public class DimensionOverworld {
         return angleMod * amplitudeMod / 81.0F;
     }
 
-    public float getStarBrightness() {
-        float f1 = 1.0F - (MathHelper.cosDeg(this.sunElevationAngle) * 2.0F + 0.25F);
-        f1 = MathHelper.clamp(f1, 0.0F, 1.0F);
-        return f1 * f1 * 0.5F;
+    public float getStarsAngle() {
+        return this.starsAngle;
     }
 
     public float getSunAngle() {
@@ -157,21 +167,15 @@ public class DimensionOverworld {
     }
 
     public float getSunBrightness(float partialTicks) {
-        float moonlightMult = this.moonlightMult();
-        float moonlightMin = 1 - moonlightMult;
-        return this.getSunBrightnessPure(partialTicks) * moonlightMult + moonlightMin;
-    }
-
-    public float getSunBrightnessPure(float partialTicks) {
-        float skyBrightness = 1.0F - (MathHelper.cosDeg(this.sunElevationAngle) * 2.0F + 0.62F);
-        skyBrightness = MathHelper.clamp(skyBrightness, 0.0F, 1.0F);
+        float skyBrightness = 1.0f - (MathHelper.cosDeg(this.sunElevationAngle) * 2.0f + 0.62f);
+        skyBrightness = MathHelper.clamp(skyBrightness, 0, 1);
         if (this.isInSolarEclipse) {
             float intensity = MathHelper.clampMax(this.getSolarEclipseIntensity(), 0.9F);
             if (skyBrightness < intensity) {
                 skyBrightness = intensity;
             }
         }
-        skyBrightness = 1.0F - skyBrightness;
+        skyBrightness = 1.0f - skyBrightness;
         if (this.world != null) {
             skyBrightness *= 1.0f - this.world.getRainLevel(partialTicks) * 0.312_5f;
             skyBrightness *= 1.0f - this.world.getThunderLevel(partialTicks) * 0.312_5f;
@@ -219,6 +223,12 @@ public class DimensionOverworld {
         return 0.97f - (moonLight - 0.03f) * mult;
     }
 
+    public void setFogColor(float red, float green, float blue) {
+        this.lastFogColor.x = red;
+        this.lastFogColor.y = green;
+        this.lastFogColor.z = blue;
+    }
+
     public void setWorld(ClientWorld world) {
         if (this.world != world) {
             this.world = world;
@@ -247,10 +257,12 @@ public class DimensionOverworld {
         if (this.world == null) {
             return;
         }
-        this.sunAngle = EarthHelper.calculateSunAngle(this.world.getDayTime());
-        this.moonAngle = EarthHelper.calculateMoonAngle(this.world.getDayTime());
-        float seasonAngle = EarthHelper.sunSeasonalInclination(this.world.getDayTime());
-        float monthlyAngle = EarthHelper.lunarMonthlyAmpl(this.world.getDayTime());
+        long dayTime = this.world.getDayTime();
+        this.sunAngle = EarthHelper.calculateSunAngle(dayTime);
+        this.starsAngle = EarthHelper.calculateStarsAngle(dayTime);
+        this.moonAngle = EarthHelper.calculateMoonAngle(dayTime);
+        float seasonAngle = EarthHelper.sunSeasonalInclination(dayTime);
+        float monthlyAngle = EarthHelper.lunarMonthlyAmpl(dayTime);
         float eclipseAngle = MathHelper.wrapDegrees(360 * (this.sunAngle - this.moonAngle));
         this.isInSolarEclipse = false;
         this.isInLunarEclipse = false;

@@ -9,6 +9,11 @@ public class Time {
     public static final int MONTHS_IN_A_YEAR = 12;
     public static final int DAYS_IN_A_YEAR = MONTHS_IN_A_YEAR * DAYS_IN_A_MONTH;
     public static final int YEAR_IN_TICKS = DAYS_IN_A_YEAR * DAY_IN_TICKS;
+    /**
+     * A sidereal day presents the time it takes for the Earth to spin around its axis by 360º relative to the background stars.
+     * It is equivalent to 23h 56min 04s.
+     */
+    public static final int SIDEREAL_DAY_IN_TICKS = (int) (DAY_IN_TICKS * (23 + 56 / 60.0 + 4 / (60.0 * 60.0)) / 24.0);
     private final int hour;
     private final int minute;
 

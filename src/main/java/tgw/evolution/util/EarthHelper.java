@@ -43,6 +43,11 @@ public final class EarthHelper {
         return (float) (worldTime / (1.05 * Time.DAY_IN_TICKS));
     }
 
+    public static float calculateStarsAngle(long worldTime) {
+        worldTime %= Time.SIDEREAL_DAY_IN_TICKS;
+        return (float) worldTime / Time.SIDEREAL_DAY_IN_TICKS;
+    }
+
     public static float calculateSunAngle(long worldTime) {
         worldTime += 6 * Time.HOUR_IN_TICKS;
         worldTime %= Time.DAY_IN_TICKS;
@@ -154,7 +159,7 @@ public final class EarthHelper {
     }
 
     /**
-     * Calculates the visual amplitude of the moon in the skies. This phenomena is cylic and repeats monthly.
+     * Calculates the visual amplitude of the moon in the skies. This phenomenon is cyclic and repeats monthly.
      * The maximum amplitude depends on the lunar standstill (which varies from -5.1 degrees to +5.1 degrees)
      * and the tilt of the Earth's orbit (23.5 degrees).
      *
@@ -167,7 +172,7 @@ public final class EarthHelper {
     }
 
     /**
-     * Calculates the amplitude of the inclination of the lunar orbit. This phenomena is cyclic and repeats every 18.6 years,
+     * Calculates the amplitude of the inclination of the lunar orbit. This phenomenon is cyclic and repeats every 18.6 years,
      * with maximum amplitude of 5.1 degrees.
      *
      * @param worldTime The time of the world, in ticks.

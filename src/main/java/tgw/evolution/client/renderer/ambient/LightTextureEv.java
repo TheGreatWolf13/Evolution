@@ -58,7 +58,7 @@ public class LightTextureEv extends LightTexture {
 
     private static float getSunBrightness(ClientWorld world, float partialTicks) {
         if (world.dimensionType().natural()) {
-            return ClientEvents.getInstance().getDimension().getSunBrightness(partialTicks);
+            return ClientEvents.getInstance().getDimension().getSkyBrightness(partialTicks);
         }
         return world.getSkyDarken(partialTicks);
     }
