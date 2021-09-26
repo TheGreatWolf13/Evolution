@@ -58,6 +58,7 @@ import tgw.evolution.util.EntityFlags;
 import tgw.evolution.util.EntityStates;
 import tgw.evolution.util.Gravity;
 import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.damage.DamageSourceEntity;
 
 import javax.annotation.Nullable;
 
@@ -610,7 +611,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                 }
                 this.level.broadcastEntityEvent(this, state);
             }
-            if (source != EvolutionDamage.DROWN && (!blocked || amount > 0.0F)) { //Replace for Evolution Damage
+            if (source instanceof DamageSourceEntity && (!blocked || amount > 0.0F)) { //Replace for Evolution Damage
                 this.markHurt();
             }
             if (sourceEntity != null) {
