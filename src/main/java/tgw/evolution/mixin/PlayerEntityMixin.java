@@ -6,9 +6,6 @@ import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.SoundEvents;
 import net.minecraft.util.Unit;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
@@ -24,7 +21,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tgw.evolution.entities.IEntityPatch;
 import tgw.evolution.entities.INeckPosition;
 import tgw.evolution.events.EntityEvents;
-import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.PacketSCMovement;
@@ -161,24 +157,6 @@ public abstract class PlayerEntityMixin extends LivingEntity implements INeckPos
         return EntityEvents.SKIN_TYPE.getOrDefault(this.getUUID(), SkinType.STEVE) == SkinType.STEVE ?
                EvolutionEntityHitboxes.PLAYER_STEVE :
                EvolutionEntityHitboxes.PLAYER_ALEX;
-    }
-
-    /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to use Evolution Damage Sources.
-     */
-    @Nullable
-    @Override
-    @Overwrite
-    protected SoundEvent getHurtSound(DamageSource source) {
-        if (source == EvolutionDamage.ON_FIRE) {
-            return SoundEvents.PLAYER_HURT_ON_FIRE;
-        }
-        if (source == EvolutionDamage.DROWN) {
-            return SoundEvents.PLAYER_HURT_DROWN;
-        }
-        return source == DamageSource.SWEET_BERRY_BUSH ? SoundEvents.PLAYER_HURT_SWEET_BERRY_BUSH : SoundEvents.PLAYER_HURT;
     }
 
     @Override

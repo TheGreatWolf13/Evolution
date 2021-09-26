@@ -1,5 +1,6 @@
 package tgw.evolution.mixin;
 
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -8,9 +9,12 @@ import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.attributes.ModifiableAttributeInstance;
 import net.minecraft.entity.passive.IFlyingAnimal;
+import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ArmorItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -18,7 +22,10 @@ import net.minecraft.item.Items;
 import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
+import net.minecraft.stats.Stats;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.EntityDamageSource;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -48,6 +55,7 @@ import tgw.evolution.items.IAdditionalEquipment;
 import tgw.evolution.items.IEvolutionItem;
 import tgw.evolution.network.PacketCSImpactDamage;
 import tgw.evolution.util.EntityFlags;
+import tgw.evolution.util.EntityStates;
 import tgw.evolution.util.Gravity;
 import tgw.evolution.util.MathHelper;
 
@@ -58,9 +66,30 @@ import javax.annotation.Nullable;
 public abstract class LivingEntityMixin extends Entity implements IEntityProperties {
 
     @Shadow
+    public float animationSpeed;
+    @Shadow
     public float flyingSpeed;
     @Shadow
+    public float hurtDir;
+    @Shadow
+    public int hurtDuration;
+    @Shadow
+    public int hurtTime;
+    @Shadow
     protected boolean jumping;
+    @Shadow
+    protected float lastHurt;
+    @Shadow
+    @Nullable
+    protected PlayerEntity lastHurtByPlayer;
+    @Shadow
+    protected int lastHurtByPlayerTime;
+    @Shadow
+    protected int noActionTime;
+    @Shadow
+    private DamageSource lastDamageSource;
+    @Shadow
+    private long lastDamageStamp;
     @Shadow
     private int noJumpDelay;
 
@@ -68,10 +97,16 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         super(entityType, world);
     }
 
+    @Shadow
+    protected abstract void actuallyHurt(DamageSource p_70665_1_, float p_70665_2_);
+
     @Redirect(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;isEffectiveAi()Z", ordinal = 0))
     private boolean aiStepProxy(LivingEntity entity) {
         return true;
     }
+
+    @Shadow
+    protected abstract void blockUsingShield(LivingEntity p_190629_1_);
 
     @Shadow
     public abstract void calculateEntityAnimation(LivingEntity p_233629_1_, boolean p_233629_2_);
@@ -173,6 +208,12 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     @Shadow
     public abstract boolean canStandOnFluid(Fluid p_230285_1_);
 
+    @Shadow
+    protected abstract boolean checkTotemDeathProtection(DamageSource p_190628_1_);
+
+    @Shadow
+    public abstract void die(DamageSource p_70645_1_);
+
     private Vector3d getAbsoluteAcceleration(Vector3d direction, double magnitude) {
         double length = direction.lengthSqr();
         if (length < 1.0E-7) {
@@ -226,6 +267,10 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
 
     @Shadow
     @Nullable
+    protected abstract SoundEvent getDeathSound();
+
+    @Shadow
+    @Nullable
     public abstract EffectInstance getEffect(Effect p_70660_1_);
 
     @Shadow
@@ -235,6 +280,9 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     public float getFrictionModifier() {
         return 2.0f;
     }
+
+    @Shadow
+    public abstract ItemStack getItemBySlot(EquipmentSlotType p_184582_1_);
 
     /**
      * @author MGSchultz
@@ -253,7 +301,13 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     }
 
     @Shadow
+    protected abstract float getSoundVolume();
+
+    @Shadow
     public abstract ItemStack getUseItem();
+
+    @Shadow
+    protected abstract float getVoicePitch();
 
     @Shadow
     protected abstract float getWaterSlowDown();
@@ -443,14 +497,184 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     @Shadow
     public abstract boolean hasEffect(Effect p_70644_1_);
 
+    /**
+     * @author MGSchultz
+     * <p>
+     * Overwrite to use Evolution Damage Sources.
+     */
+    @Override
+    @Overwrite
+    public boolean hurt(DamageSource source, float amount) {
+        if (!ForgeHooks.onLivingAttack((LivingEntity) (Object) this, source, amount)) {
+            return false;
+        }
+        if (this.isInvulnerableTo(source)) {
+            return false;
+        }
+        if (this.level.isClientSide) {
+            return false;
+        }
+        if (this.isDeadOrDying()) {
+            return false;
+        }
+        if (source.isFire() && this.hasEffect(Effects.FIRE_RESISTANCE)) {
+            return false;
+        }
+        if (this.isSleeping() && !this.level.isClientSide) {
+            this.stopSleeping();
+        }
+        this.noActionTime = 0;
+        float f = amount;
+        if ((source == DamageSource.ANVIL || source == DamageSource.FALLING_BLOCK) && !this.getItemBySlot(EquipmentSlotType.HEAD).isEmpty()) {
+            this.getItemBySlot(EquipmentSlotType.HEAD)
+                .hurtAndBreak((int) (amount * 4.0F + this.random.nextFloat() * amount * 2.0F),
+                              (LivingEntity) (Object) this,
+                              e -> e.broadcastBreakEvent(EquipmentSlotType.HEAD));
+            amount *= 0.75F;
+        }
+        boolean blocked = false;
+        float blockedAmount = 0.0F;
+        if (amount > 0.0F && this.isDamageSourceBlocked(source)) {
+            this.hurtCurrentlyUsedShield(amount);
+            blockedAmount = amount;
+            amount = 0.0F;
+            if (!source.isProjectile()) {
+                Entity entity = source.getDirectEntity();
+                if (entity instanceof LivingEntity) {
+                    this.blockUsingShield((LivingEntity) entity);
+                }
+            }
+            blocked = true;
+        }
+        this.animationSpeed = 1.5F;
+        boolean gotHurt = true;
+        if (this.invulnerableTime > 10.0F) {
+            if (amount <= this.lastHurt) {
+                return false;
+            }
+            this.actuallyHurt(source, amount - this.lastHurt);
+            this.lastHurt = amount;
+            gotHurt = false;
+        }
+        else {
+            this.lastHurt = amount;
+            this.invulnerableTime = 20;
+            this.actuallyHurt(source, amount);
+            this.hurtDuration = 10;
+            this.hurtTime = this.hurtDuration;
+        }
+        this.hurtDir = 0.0F;
+        Entity sourceEntity = source.getEntity();
+        if (sourceEntity != null) {
+            if (sourceEntity instanceof LivingEntity) {
+                this.setLastHurtByMob((LivingEntity) sourceEntity);
+            }
+            if (sourceEntity instanceof PlayerEntity) {
+                this.lastHurtByPlayerTime = 100;
+                this.lastHurtByPlayer = (PlayerEntity) sourceEntity;
+            }
+            else if (sourceEntity instanceof TameableEntity) {
+                TameableEntity tameable = (TameableEntity) sourceEntity;
+                if (tameable.isTame()) {
+                    this.lastHurtByPlayerTime = 100;
+                    LivingEntity owner = tameable.getOwner();
+                    if (owner != null && owner.getType() == EntityType.PLAYER) {
+                        this.lastHurtByPlayer = (PlayerEntity) owner;
+                    }
+                    else {
+                        this.lastHurtByPlayer = null;
+                    }
+                }
+            }
+        }
+        if (gotHurt) {
+            if (blocked) {
+                this.level.broadcastEntityEvent(this, EntityStates.SHIELD_BLOCK_SOUND);
+            }
+            else if (source instanceof EntityDamageSource && ((EntityDamageSource) source).isThorns()) {
+                this.level.broadcastEntityEvent(this, EntityStates.THORNS_HIT_SOUND);
+            }
+            else {
+                byte state;
+                if (source == EvolutionDamage.DROWN) { //Replace for Evolution Damage
+                    state = EntityStates.DROWN_HIT_SOUND;
+                }
+                else if (source.isFire()) {
+                    state = EntityStates.FIRE_HIT_SOUND;
+                }
+                else if (source == DamageSource.SWEET_BERRY_BUSH) {
+                    state = EntityStates.SWEET_BERRY_BUSH_HIT_SOUND;
+                }
+                else {
+                    state = EntityStates.GENERIC_HIT_SOUND;
+                }
+                this.level.broadcastEntityEvent(this, state);
+            }
+            if (source != EvolutionDamage.DROWN && (!blocked || amount > 0.0F)) { //Replace for Evolution Damage
+                this.markHurt();
+            }
+            if (sourceEntity != null) {
+                double dx = sourceEntity.getX() - this.getX();
+                double dz;
+                for (dz = sourceEntity.getZ() - this.getZ(); dx * dx + dz * dz < 1.0E-4; dz = (Math.random() - Math.random()) * 0.01) {
+                    dx = (Math.random() - Math.random()) * 0.01;
+                }
+                this.hurtDir = MathHelper.radToDeg((float) MathHelper.atan2(dz, dx)) - this.yRot;
+                this.knockback(0.4F, dx, dz);
+            }
+            else {
+                this.hurtDir = (int) (Math.random() * 2.0) * 180;
+            }
+        }
+        if (this.isDeadOrDying()) {
+            if (!this.checkTotemDeathProtection(source)) {
+                SoundEvent soundevent = this.getDeathSound();
+                if (gotHurt && soundevent != null) {
+                    this.playSound(soundevent, this.getSoundVolume(), this.getVoicePitch());
+                }
+                this.die(source);
+            }
+        }
+        else if (gotHurt) {
+            this.playHurtSound(source);
+        }
+        boolean didDamage = !blocked || amount > 0.0F;
+        if (didDamage) {
+            this.lastDamageSource = source;
+            this.lastDamageStamp = this.level.getGameTime();
+        }
+        if ((Object) this instanceof ServerPlayerEntity) {
+            CriteriaTriggers.ENTITY_HURT_PLAYER.trigger((ServerPlayerEntity) (Object) this, source, f, amount, blocked);
+            if (blockedAmount > 0.0F && blockedAmount < 3.402_823_5E37F) {
+                ((PlayerEntity) (Object) this).awardStat(Stats.DAMAGE_BLOCKED_BY_SHIELD, Math.round(blockedAmount * 10.0F));
+            }
+        }
+        if (sourceEntity instanceof ServerPlayerEntity) {
+            CriteriaTriggers.PLAYER_HURT_ENTITY.trigger((ServerPlayerEntity) sourceEntity, this, source, f, amount, blocked);
+        }
+        return didDamage;
+    }
+
+    @Shadow
+    protected abstract void hurtCurrentlyUsedShield(float p_184590_1_);
+
     @Shadow
     protected abstract boolean isAffectedByFluids();
+
+    @Shadow
+    protected abstract boolean isDamageSourceBlocked(DamageSource p_184583_1_);
+
+    @Shadow
+    public abstract boolean isDeadOrDying();
 
     @Shadow
     public abstract boolean isEffectiveAi();
 
     @Shadow
     public abstract boolean isFallFlying();
+
+    @Shadow
+    public abstract boolean isSleeping();
 
     @Shadow
     public abstract boolean isUsingItem();
@@ -491,6 +715,9 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     }
 
     @Shadow
+    public abstract void knockback(float p_233627_1_, double p_233627_2_, double p_233627_4_);
+
+    @Shadow
     public abstract boolean onClimbable();
 
     @Inject(method = "<init>", at = @At(value = "TAIL"))
@@ -523,6 +750,15 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
             }
         }
     }
+
+    @Shadow
+    protected abstract void playHurtSound(DamageSource p_184581_1_);
+
+    @Shadow
+    public abstract void setLastHurtByMob(@Nullable LivingEntity p_70604_1_);
+
+    @Shadow
+    public abstract void stopSleeping();
 
     /**
      * @author MGSchultz

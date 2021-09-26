@@ -51,11 +51,6 @@ function initializeCoreMod() {
 					}
 				}
                 for (var i in methods) {
-                    if (patch(methods[i], HANDLESTATUSUPDATE, patchStatusUpdate)) {
-                        break;
-                    }
-                }
-                for (var i in methods) {
                     if (patch(methods[i], LIVINGTICK, patchLivingTick)) {
                         break;
                     }
@@ -79,25 +74,6 @@ function patchAttackFrom(instructions) {
 		false
 	));
 	instructions.add(new InsnNode(Opcodes.IRETURN));
-}
-
-function patchStatusUpdate(instructions) {
-	for (var i = 0; i < instructions.size(); i++) {
-	    var inst = instructions.get(i);
-	    if (inst.getOpcode() == Opcodes.GETSTATIC && inst.name == DROWN) {
-            inst.name = "DROWN";
-            inst.owner = "tgw/evolution/init/EvolutionDamage";
-            break;
-	    }
-	}
-	for (var i = 0; i < instructions.size(); i++) {
-        var inst = instructions.get(i);
-        if (inst.getOpcode() == Opcodes.GETSTATIC && inst.name == ON_FIRE) {
-            inst.name = "ON_FIRE";
-            inst.owner = "tgw/evolution/init/EvolutionDamage";
-            break;
-        }
-    }
 }
 
 function patchLivingTick(instructions) {
