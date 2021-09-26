@@ -297,7 +297,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                     }
                 }
             }
-            this.fallDistance = 0.0F;
+            this.fallDistance = 1.0F;
             double newX;
             double newZ;
             if (!this.isOnGround()) {
@@ -538,7 +538,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                 if (!gravity.hasModifier(EvolutionAttributes.SLOW_FALLING)) {
                     gravity.addTransientModifier(EvolutionAttributes.SLOW_FALLING);
                 }
-                this.fallDistance = 0.0F;
+                this.fallDistance = 1.0F;
             }
             else if (gravity.hasModifier(EvolutionAttributes.SLOW_FALLING)) {
                 gravity.removeModifier(EvolutionAttributes.SLOW_FALLING);
