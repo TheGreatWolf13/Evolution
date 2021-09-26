@@ -769,10 +769,6 @@ public class ClientEvents {
                         this.inverted = false;
                     }
                 }
-                //Handle Dizziness Effect
-                if (this.isPlayerDizzy()) {
-                    this.mc.player.setSprinting(false);
-                }
                 //Handle two-handed items
                 this.mc.getProfiler().popPush("twoHanded");
                 if (this.mc.player.getMainHandItem().getItem() instanceof ITwoHanded && !this.mc.player.getOffhandItem().isEmpty()) {

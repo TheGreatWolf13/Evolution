@@ -175,6 +175,7 @@
   "effect.evolution.dehydration.desc.8": "Sua injestão deficiente de água causou falta de água no seu corpo, o que comprometeu severamente funções metabólicas básicas.\n\nCausa:\n ► Desabilita a regeneração de vida natural\n ► Desabilita sua habilidade de correr\n ► Aumenta o consumo de energia\n ► Lentidão\n\nPode causar:\n ► Tontura\n\nAlém disso, você toma 1HP de dano a cada tick.",
   "effect.evolution.disoriented": "Desorientação",
   "effect.evolution.dizziness": "Tontura",
+  "effect.evolution.dizziness.desc": "Você está tonto e sente dificuldade em andar em linha reta.",
   "effect.evolution.hydration": "Hidratação",
   "effect.evolution.hydration.desc": "Enche sua barra de sede em 1 ponto por [nível] a cada tick.",
   "effect.evolution.thirst": "Sede",

@@ -27,18 +27,24 @@ public class MovementInputEvolution extends MovementInputFromOptions {
         this.left = inverted ? this.gameSettings.keyRight.isDown() : this.gameSettings.keyLeft.isDown();
         this.right = inverted ? this.gameSettings.keyLeft.isDown() : this.gameSettings.keyRight.isDown();
         this.forwardImpulse = this.up == this.down ? 0.0F : this.up ? 1 : -1;
-        this.leftImpulse = 0;
+        this.leftImpulse = this.left == this.right ? 0.0F : this.left ? 1 : -1;
         if (dizziness) {
-            this.leftImpulse = Math.signum(MathHelper.cos(this.tick * MathHelper.TAU / (80 >> ClientEvents.getInstance().getDizzinessAmplifier())));
-        }
-        this.leftImpulse += this.left == this.right ? 0.0F : this.left ? 1 : -1;
-        this.leftImpulse = MathHelper.clamp(this.leftImpulse, -1, 1);
-        this.jumping = inverted ? this.gameSettings.keyShift.isDown() : this.gameSettings.keyJump.isDown();
-        this.shiftKeyDown = inverted ? this.gameSettings.keyJump.isDown() : this.gameSettings.keyShift.isDown();
-        if (!dizziness) {
-            this.tick = 0;
+            if (this.forwardImpulse != 0) {
+                this.leftImpulse += 1.5 * MathHelper.cos(this.tick * MathHelper.TAU / (32 << ClientEvents.getInstance().getDizzinessAmplifier()));
+            }
+            else if (this.leftImpulse != 0) {
+                this.forwardImpulse += 1.5 * MathHelper.cos(this.tick * MathHelper.TAU / (32 << ClientEvents.getInstance().getDizzinessAmplifier()));
+            }
+            else {
+                dizziness = false;
+            }
         }
         else {
+            this.tick = 0;
+        }
+        this.jumping = inverted ? this.gameSettings.keyShift.isDown() : this.gameSettings.keyJump.isDown();
+        this.shiftKeyDown = inverted ? this.gameSettings.keyJump.isDown() : this.gameSettings.keyShift.isDown();
+        if (dizziness) {
             this.tick++;
         }
     }

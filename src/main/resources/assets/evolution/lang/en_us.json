@@ -175,6 +175,7 @@
   "effect.evolution.dehydration.desc.8": "Your deficient water intake has caused lack of water in your body, which has severely compromised basic metabolic functions.\n\nCauses:\n ► Disables natural health regeneration\n ► Disables your ability to sprint\n ► Increases stamina consumption\n ► Slowness\n\nMay cause:\n ► Dizziness\n\nIn addition, you take 1HP of damage every tick.",
   "effect.evolution.disoriented": "Disoriented",
   "effect.evolution.dizziness": "Dizziness",
+  "effect.evolution.dizziness.desc": "You feel dizzy and find it difficult to walk in a straight line.",
   "effect.evolution.hydration": "Hydration",
   "effect.evolution.hydration.desc": "Replenishes your thirst bar by 1 point per [level] every tick.",
   "effect.evolution.thirst": "Thirst",

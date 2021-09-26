@@ -226,6 +226,9 @@ public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity
         if (this.hasEffect(EvolutionEffects.DEHYDRATION.get())) {
             return false;
         }
+        if (this.hasEffect(EvolutionEffects.DIZZINESS.get())) {
+            return false;
+        }
         return !this.hasEffect(Effects.BLINDNESS);
     }
 
