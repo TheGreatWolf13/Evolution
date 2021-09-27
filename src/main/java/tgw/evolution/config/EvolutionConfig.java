@@ -43,7 +43,11 @@ public final class EvolutionConfig {
 
     public static class Client {
 
+        public final ForgeConfigSpec.BooleanValue celestialEquator;
+        public final ForgeConfigSpec.BooleanValue celestialForceAll;
+        public final ForgeConfigSpec.BooleanValue celestialPoles;
         public final ForgeConfigSpec.BooleanValue crazyMode;
+        public final ForgeConfigSpec.BooleanValue ecliptic;
         public final ForgeConfigSpec.BooleanValue firstPersonRenderer;
         public final ForgeConfigSpec.BooleanValue hitmarkers;
         public final ForgeConfigSpec.BooleanValue limitTimeUnitsToHour;
@@ -54,6 +58,14 @@ public final class EvolutionConfig {
             this.limitTimeUnitsToHour = builder.translation("evolution.config.limitTimeUnitsToHour").define("limitTimeUnitsToHour", false);
             this.hitmarkers = builder.translation("evolution.config.hitmarkers").define("hitmarkers", true);
             this.firstPersonRenderer = builder.translation("evolution.config.firstPersonRenderer").define("firstPersonRenderer", true);
+            builder.push("debug");
+            builder.push("sky");
+            this.celestialForceAll = builder.translation("evolution.config.celestialForceAll").define("celestialForceAll", false);
+            this.celestialEquator = builder.translation("evolution.config.celestialEquator").define("celestialEquator", false);
+            this.celestialPoles = builder.translation("evolution.config.celestialPoles").define("celestialPoles", false);
+            this.ecliptic = builder.translation("evolution.config.ecliptic").define("ecliptic", false);
+            builder.pop();
+            builder.pop();
             builder.pop();
         }
     }
