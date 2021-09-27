@@ -358,7 +358,8 @@ public final class EvolutionItems {
                                                                              () -> new ItemChunkStorageSetter(propDev(), EnumStorage.ORGANIC));
     public static final RegistryObject<Item> organic_getter = ITEMS.register("organic_getter",
                                                                              () -> new ItemChunkStorageGetter(propDev(), EnumStorage.ORGANIC));
-    public static final RegistryObject<Item> clock = ITEMS.register("clock", () -> new ItemClock(propMisc()));
+    public static final RegistryObject<Item> clock = ITEMS.register("clock", () -> new ItemClock(propDev()));
+    public static final RegistryObject<Item> sextant = ITEMS.register("sextant", () -> new ItemSextant(propDev()));
     public static final RegistryObject<Item> puzzle = ITEMS.register("puzzle", () -> itemBlock(PUZZLE, propDev()));
     public static final RegistryObject<Item> schematic_block = ITEMS.register("schematic_block", () -> itemBlock(SCHEMATIC_BLOCK, propDev()));
     //Vegetation

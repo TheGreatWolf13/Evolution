@@ -44,6 +44,7 @@ public enum Metric {
     public static final DecimalFormat DRINK_FORMAT = initFormat(",##0 mL");
     public static final DecimalFormat FOOD_FORMAT = initFormat(",##0 kcal");
     public static final DecimalFormat HOUR_FORMAT = initFormat(",##0 h");
+    public static final DecimalFormat LATITUDE_FORMAT = initFormat("#0.## \u00B0");
     public static final DecimalFormat LITER_FORMAT = initFormat(",##0.## L");
     public static final DecimalFormat MASS_FORMAT = initFormat(",##0.## kg");
     public static final DecimalFormat PERCENT_ONE_PLACE = initFormat(",##0.#%");
