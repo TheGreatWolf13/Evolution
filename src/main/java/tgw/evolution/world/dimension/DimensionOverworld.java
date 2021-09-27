@@ -15,29 +15,30 @@ import javax.annotation.Nullable;
 
 public class DimensionOverworld {
 
-    private static final float[] SUNSET_COLORS = new float[4];
+    private static final float[] DUSK_DAWN_COLORS = new float[4];
     private final Vec3f lastFogColor = new Vec3f(0, 0, 0);
+    private float[] duskDawnColors;
     private MoonPhase eclipsePhase = MoonPhase.FULL_MOON;
     private Vector3d fogColor = Vector3d.ZERO;
     private boolean isInLunarEclipse;
     private boolean isInSolarEclipse;
     private float latitude;
     private float[] lightBrightnessTable;
-    private float lunarEclipseAmplitude;
-    private float lunarEclipseAngle;
-    private float moonAngle;
+    private float lunarEclipseDDeclination;
+    private float lunarEclipseDRightAscension;
+    private float moonAltitude;
     private float moonCelestialRadius;
-    private float moonElevationAngle;
-    private float moonMonthlyOffset;
+    private float moonDeclination;
     private MoonPhase moonPhase = MoonPhase.NEW_MOON;
-    private float solarEclipseAmplitude;
-    private float solarEclipseAngle;
-    private float starsAngle;
-    private float sunAngle;
+    private float moonRightAscension;
+    private float solarEclipseDDeclination;
+    private float solarEclipseDRightAscension;
+    private float starsRightAscension;
+    private float sunAltitude;
+    private float sunAzimuth;
     private float sunCelestialRadius;
-    private float sunElevationAngle;
-    private float sunSeasonalOffset;
-    private float[] sunsetColors;
+    private float sunDeclination;
+    private float sunRightAscension;
     private ClientWorld world;
 
     public DimensionOverworld() {
@@ -46,8 +47,8 @@ public class DimensionOverworld {
 
     private Vector3d calculateFogColor() {
         float sunAngle = 1.0f;
-        if (this.sunElevationAngle > 80) {
-            sunAngle = -this.sunElevationAngle * this.sunElevationAngle / 784.0f + 10.0f * this.sunElevationAngle / 49.0f - 7.163_265f;
+        if (this.sunAltitude > 80) {
+            sunAngle = -this.sunAltitude * this.sunAltitude / 784.0f + 10.0f * this.sunAltitude / 49.0f - 7.163_265f;
             sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
         }
         if (this.isInSolarEclipse) {
@@ -81,6 +82,10 @@ public class DimensionOverworld {
         return biomeFogColor.multiply(multiplier * 0.97 + 0.03, multiplier * 0.97 + 0.03, multiplier * 0.97 + 0.03);
     }
 
+    public float[] getDuskDawnColors() {
+        return this.duskDawnColors;
+    }
+
     public MoonPhase getEclipsePhase() {
         return this.eclipsePhase;
     }
@@ -98,39 +103,39 @@ public class DimensionOverworld {
         return this.latitude;
     }
 
-    public int getLunarEclipseAmplitudeIndex() {
-        return Math.round(this.lunarEclipseAmplitude);
-    }
-
-    public int getLunarEclipseAngleIndex() {
-        return Math.round(this.lunarEclipseAngle);
+    public int getLunarEclipseDeclinationIndex() {
+        return Math.round(this.lunarEclipseDDeclination);
     }
 
     public float getLunarEclipseIntensity() {
-        float angleMod = 9.0F - Math.abs(this.lunarEclipseAngle);
-        float amplitudeMod = 9.0F - Math.abs(this.lunarEclipseAmplitude);
+        float angleMod = 9.0F - Math.abs(this.lunarEclipseDRightAscension);
+        float amplitudeMod = 9.0F - Math.abs(this.lunarEclipseDDeclination);
         return angleMod * amplitudeMod / 81.0F;
     }
 
-    public float getMoonAngle() {
-        return this.moonAngle;
+    public int getLunarEclipseRightAscensionIndex() {
+        return Math.round(this.lunarEclipseDRightAscension);
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public float getMoonAltitude() {
+        return this.moonAltitude;
     }
 
     public float getMoonCelestialRadius() {
         return this.moonCelestialRadius;
     }
 
-    @OnlyIn(Dist.CLIENT)
-    public float getMoonElevationAngle() {
-        return this.moonElevationAngle;
-    }
-
-    public float getMoonMonthlyOffset() {
-        return this.moonMonthlyOffset;
+    public float getMoonDeclination() {
+        return this.moonDeclination;
     }
 
     public MoonPhase getMoonPhase() {
         return this.moonPhase;
+    }
+
+    public float getMoonRightAscension() {
+        return this.moonRightAscension;
     }
 
     public float getSkyBrightness(float partialTicks) {
@@ -144,30 +149,38 @@ public class DimensionOverworld {
         return new Vector3d(skyColor.x, skyColor.y, skyColor.z);
     }
 
-    public int getSolarEclipseAmplitudeIndex() {
-        return Math.round(this.solarEclipseAmplitude);
-    }
-
-    public int getSolarEclipseAngleIndex() {
-        return Math.round(this.solarEclipseAngle);
+    public int getSolarEclipseDeclinationIndex() {
+        return Math.round(this.solarEclipseDDeclination);
     }
 
     public float getSolarEclipseIntensity() {
-        float angleMod = 9.0F - Math.abs(this.solarEclipseAngle);
-        float amplitudeMod = 9.0F - Math.abs(this.solarEclipseAmplitude);
+        float angleMod = 9.0F - Math.abs(this.solarEclipseDRightAscension);
+        float amplitudeMod = 9.0F - Math.abs(this.solarEclipseDDeclination);
         return angleMod * amplitudeMod / 81.0F;
     }
 
-    public float getStarsAngle() {
-        return this.starsAngle;
+    public int getSolarEclipseRightAscensionIndex() {
+        return Math.round(this.solarEclipseDRightAscension);
     }
 
-    public float getSunAngle() {
-        return this.sunAngle;
+    public float getStarsRightAscension() {
+        return this.starsRightAscension;
+    }
+
+    /**
+     * @return The angle the Sun makes with the Zenith, being 0º at the Zenith, 90º at the Horizon and 180º at Nadir
+     */
+    @OnlyIn(Dist.CLIENT)
+    public float getSunAltitude() {
+        return this.sunAltitude;
+    }
+
+    public float getSunAzimuth() {
+        return this.sunAzimuth;
     }
 
     public float getSunBrightness(float partialTicks) {
-        float skyBrightness = 1.0f - (MathHelper.cosDeg(this.sunElevationAngle) * 2.0f + 0.62f);
+        float skyBrightness = 1.0f - (MathHelper.cosDeg(this.sunAltitude) * 2.0f + 0.62f);
         skyBrightness = MathHelper.clamp(skyBrightness, 0, 1);
         if (this.isInSolarEclipse) {
             float intensity = MathHelper.clampMax(this.getSolarEclipseIntensity(), 0.9F);
@@ -187,20 +200,12 @@ public class DimensionOverworld {
         return this.sunCelestialRadius;
     }
 
-    /**
-     * @return The angle the Sun makes with the Zenith, being 0º at the Zenith, 90º at the Horizon and 180º at Nadir
-     */
-    @OnlyIn(Dist.CLIENT)
-    public float getSunElevationAngle() {
-        return this.sunElevationAngle;
+    public float getSunDeclination() {
+        return this.sunDeclination;
     }
 
-    public float getSunSeasonalOffset() {
-        return this.sunSeasonalOffset;
-    }
-
-    public float[] getSunriseColors() {
-        return this.sunsetColors;
+    public float getSunRightAscension() {
+        return this.sunRightAscension;
     }
 
     public boolean isInLunarEclipse() {
@@ -212,14 +217,14 @@ public class DimensionOverworld {
     }
 
     public float moonlightMult() {
-        if (this.moonElevationAngle > 96) {
+        if (this.moonAltitude > 96) {
             return 0.97F;
         }
         float moonLight = this.isInLunarEclipse ? (1.0f - this.getLunarEclipseIntensity()) * 0.27f + 0.03f : this.moonPhase.getMoonLight();
-        if (this.moonElevationAngle < 90) {
+        if (this.moonAltitude < 90) {
             return 1.0f - moonLight;
         }
-        float mult = 1.0f - (this.moonElevationAngle - 90) / 5.0f;
+        float mult = 1.0f - (this.moonAltitude - 90) / 5.0f;
         return 0.97f - (moonLight - 0.03f) * mult;
     }
 
@@ -238,17 +243,17 @@ public class DimensionOverworld {
 
     @Nullable
     private float[] sunsetColors() {
-        if (this.sunElevationAngle >= 66.0F && this.sunElevationAngle <= 107.5F) {
-            float cosElevation = MathHelper.cosDeg(this.sunElevationAngle);
-            float mult = this.sunElevationAngle > 90 ? 1.5f : 1.1f;
+        if (this.sunAltitude >= 66.0F && this.sunAltitude <= 107.5F) {
+            float cosElevation = MathHelper.cosDeg(this.sunAltitude);
+            float mult = this.sunAltitude > 90 ? 1.5f : 1.1f;
             float f3 = cosElevation * mult + 0.5F;
             float alpha = 1.0F - (1.0F - MathHelper.sin(f3 * MathHelper.PI)) * 0.99F;
             alpha *= alpha;
-            SUNSET_COLORS[0] = f3 * 0.3F + 0.7F;
-            SUNSET_COLORS[1] = f3 * f3 * alpha * 0.7F + 0.2F;
-            SUNSET_COLORS[2] = 0.2F * alpha;
-            SUNSET_COLORS[3] = alpha;
-            return SUNSET_COLORS;
+            DUSK_DAWN_COLORS[0] = f3 * 0.3F + 0.7F;
+            DUSK_DAWN_COLORS[1] = f3 * f3 * alpha * 0.7F + 0.2F;
+            DUSK_DAWN_COLORS[2] = 0.2F * alpha;
+            DUSK_DAWN_COLORS[3] = alpha;
+            return DUSK_DAWN_COLORS;
         }
         return null;
     }
@@ -258,57 +263,65 @@ public class DimensionOverworld {
             return;
         }
         long dayTime = this.world.getDayTime();
-        this.sunAngle = EarthHelper.calculateSunAngle(dayTime);
-        this.starsAngle = EarthHelper.calculateStarsAngle(dayTime);
-        this.moonAngle = EarthHelper.calculateMoonAngle(dayTime);
-        float seasonAngle = EarthHelper.sunSeasonalInclination(dayTime);
-        float monthlyAngle = EarthHelper.lunarMonthlyAmpl(dayTime);
-        float eclipseAngle = MathHelper.wrapDegrees(360 * (this.sunAngle - this.moonAngle));
+        this.sunRightAscension = EarthHelper.calculateSunRightAscension(dayTime);
+        this.starsRightAscension = EarthHelper.calculateStarsRightAscension(dayTime);
+        this.moonRightAscension = EarthHelper.calculateMoonRightAscension(dayTime);
+        float seasonDeclination = EarthHelper.sunSeasonalDeclination(dayTime);
+        float monthlyDeclination = EarthHelper.lunarMonthlyDeclination(dayTime);
+        float dRightAscension = MathHelper.wrapDegrees(360 * (this.sunRightAscension - this.moonRightAscension));
         this.isInSolarEclipse = false;
         this.isInLunarEclipse = false;
-        if (Math.abs(eclipseAngle) <= 3.0f) {
-            float eclipseAmplitude = MathHelper.wrapDegrees(seasonAngle - monthlyAngle);
-            if (Math.abs(eclipseAmplitude) <= 7.0f) {
+        if (Math.abs(dRightAscension) <= 3.0f) {
+            float dDeclination = MathHelper.wrapDegrees(seasonDeclination - monthlyDeclination);
+            if (Math.abs(dDeclination) <= 7.0f) {
                 this.isInSolarEclipse = true;
-                this.solarEclipseAngle = EarthHelper.getEclipseAmount(eclipseAngle * 7.0f / 3.0f);
-                this.solarEclipseAmplitude = EarthHelper.getEclipseAmount(eclipseAmplitude);
+                this.solarEclipseDRightAscension = EarthHelper.getEclipseAmount(dRightAscension * 7.0f / 3.0f);
+                this.solarEclipseDDeclination = EarthHelper.getEclipseAmount(dDeclination);
             }
         }
-        else if (177.0f <= Math.abs(eclipseAngle) || Math.abs(eclipseAngle) <= -177.0f) {
-            float eclipseAmplitude = MathHelper.wrapDegrees(seasonAngle - monthlyAngle);
-            if (Math.abs(eclipseAmplitude) <= 14.0f) {
-                if (eclipseAngle > 0) {
-                    eclipseAngle -= 180;
+        else if (177.0f <= Math.abs(dRightAscension) || Math.abs(dRightAscension) <= -177.0f) {
+            float dDeclination = MathHelper.wrapDegrees(seasonDeclination - monthlyDeclination);
+            if (Math.abs(dDeclination) <= 14.0f) {
+                if (dRightAscension > 0) {
+                    dRightAscension -= 180;
                 }
                 else {
-                    eclipseAngle += 180;
+                    dRightAscension += 180;
                 }
-                eclipseAngle = -eclipseAngle;
+                dRightAscension = -dRightAscension;
                 this.isInLunarEclipse = true;
-                this.lunarEclipseAngle = EarthHelper.getEclipseAmount(Math.signum(eclipseAngle) * eclipseAngle * eclipseAngle * 7.0f / 9.0f);
-                this.lunarEclipseAmplitude = EarthHelper.getEclipseAmount(eclipseAmplitude * eclipseAmplitude * eclipseAmplitude / 392.0f);
-                this.eclipsePhase = EarthHelper.phaseByEclipseIntensity(this.getLunarEclipseAngleIndex(), this.getLunarEclipseAmplitudeIndex());
+                this.lunarEclipseDRightAscension = EarthHelper.getEclipseAmount(Math.signum(dRightAscension) *
+                                                                                dRightAscension *
+                                                                                dRightAscension *
+                                                                                7.0f / 9.0f);
+                this.lunarEclipseDDeclination = EarthHelper.getEclipseAmount(dDeclination * dDeclination * dDeclination / 392.0f);
+                this.eclipsePhase = EarthHelper.phaseByEclipseIntensity(this.getLunarEclipseRightAscensionIndex(),
+                                                                        this.getLunarEclipseDeclinationIndex());
             }
         }
         this.latitude = EarthHelper.calculateLatitude(Evolution.PROXY.getClientPlayer().getZ());
         float sinLatitude = MathHelper.sinDeg(this.latitude);
         float cosLatitude = MathHelper.cosDeg(this.latitude);
-        this.sunCelestialRadius = 100.0f * MathHelper.cosDeg(seasonAngle);
-        this.moonCelestialRadius = 100.0f * MathHelper.cosDeg(monthlyAngle);
-        this.sunSeasonalOffset = -100.0f * MathHelper.sinDeg(seasonAngle);
-        this.moonMonthlyOffset = -100.0f * MathHelper.sinDeg(monthlyAngle);
-        this.sunElevationAngle = EarthHelper.getSunElevation(sinLatitude,
-                                                             cosLatitude,
-                                                             this.sunAngle * 360,
-                                                             this.sunCelestialRadius,
-                                                             this.sunSeasonalOffset);
-        this.moonElevationAngle = EarthHelper.getMoonElevation(sinLatitude,
-                                                               cosLatitude,
-                                                               this.moonAngle * 360,
-                                                               this.moonCelestialRadius,
-                                                               this.moonMonthlyOffset);
+        this.sunCelestialRadius = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(seasonDeclination);
+        this.moonCelestialRadius = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(monthlyDeclination);
+        this.sunDeclination = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(seasonDeclination);
+        this.moonDeclination = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(monthlyDeclination);
+        this.sunAltitude = EarthHelper.getSunAltitude(sinLatitude,
+                                                      cosLatitude,
+                                                      this.sunRightAscension * 360,
+                                                      this.sunCelestialRadius,
+                                                      this.sunDeclination);
+        this.moonAltitude = EarthHelper.getMoonAltitude(sinLatitude,
+                                                        cosLatitude,
+                                                        this.moonRightAscension * 360,
+                                                        this.moonCelestialRadius,
+                                                        this.moonDeclination);
         this.fogColor = this.calculateFogColor();
-        this.sunsetColors = this.sunsetColors();
-        this.moonPhase = MoonPhase.byAngles(this.sunAngle * 360, this.moonAngle * 360);
+        this.duskDawnColors = this.sunsetColors();
+        //noinspection VariableNotUsedInsideIf
+        if (this.duskDawnColors != null) {
+            this.sunAzimuth = MathHelper.radToDeg((float) MathHelper.atan2(EarthHelper.sunX, EarthHelper.sunZ)) + 180;
+        }
+        this.moonPhase = MoonPhase.byAngles(this.sunRightAscension * 360, this.moonRightAscension * 360);
     }
 }

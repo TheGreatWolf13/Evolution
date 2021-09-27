@@ -9,15 +9,13 @@ import tgw.evolution.world.dimension.DimensionOverworld;
 public final class EarthHelper {
 
     public static final long NORTH_POLE = 100_000L;
-    private static final float RADIUS = 100.0f;
-    private static final Vec3f ZENITH = new Vec3f(0, RADIUS, 0);
+    public static final float CELESTIAL_SPHERE_RADIUS = 100.0f;
+    private static final Vec3f ZENITH = new Vec3f(0, CELESTIAL_SPHERE_RADIUS, 0);
     private static final Vec3f SUN = new Vec3f(0, 0, 0);
     private static final Vec3f MOON = new Vec3f(0, 0, 0);
     private static final Vec3f SKY_COLOR = new Vec3f(0, 0, 0);
     private static final Vec3f NEXT_COLOR = new Vec3f(0, 0, 0);
     private static final Vec3f CURRENT_COLOR = new Vec3f(0, 0, 0);
-    public static float moonX;
-    public static float moonZ;
     public static float sunX;
     public static float sunZ;
     private static int tick;
@@ -37,18 +35,18 @@ public final class EarthHelper {
         return 90 - MathHelper.radToDeg((float) MathHelper.atan2(side, posZ));
     }
 
-    public static float calculateMoonAngle(long worldTime) {
+    public static float calculateMoonRightAscension(long worldTime) {
         worldTime += 19.8 * Time.HOUR_IN_TICKS;
         worldTime %= 1.05 * Time.DAY_IN_TICKS;
         return (float) (worldTime / (1.05 * Time.DAY_IN_TICKS));
     }
 
-    public static float calculateStarsAngle(long worldTime) {
+    public static float calculateStarsRightAscension(long worldTime) {
         worldTime %= Time.SIDEREAL_DAY_IN_TICKS;
         return (float) worldTime / Time.SIDEREAL_DAY_IN_TICKS;
     }
 
-    public static float calculateSunAngle(long worldTime) {
+    public static float calculateSunRightAscension(long worldTime) {
         worldTime += 6 * Time.HOUR_IN_TICKS;
         worldTime %= Time.DAY_IN_TICKS;
         return (float) worldTime / Time.DAY_IN_TICKS;
@@ -57,22 +55,20 @@ public final class EarthHelper {
     /**
      * The current intensity of the eclipse, where negative means it's going to happen, 0 is full, and positive means it's already happened.
      *
-     * @param angle The angle of the eclipse.
+     * @param dRightAsc The difference of the celestial objects' right ascension.
      * @return A float, from -9 to 9.
      */
-    public static float getEclipseAmount(float angle) {
-        return angle * 9.0f / 7.0F;
+    public static float getEclipseAmount(float dRightAsc) {
+        return dRightAsc * 9.0f / 7.0F;
     }
 
-    public static float getMoonElevation(float sinLatitude, float cosLatitude, float celestialAngle, float celestialRadius, float monthlyOffset) {
-        celestialAngle -= 90;
-        moonX = celestialRadius * MathHelper.cosDeg(celestialAngle);
-        float sinCelestialAngle = MathHelper.sinDeg(celestialAngle);
-        MOON.x = moonX;
-        float yt = celestialRadius * sinCelestialAngle;
-        MOON.y = yt * cosLatitude + monthlyOffset * sinLatitude;
-        moonZ = monthlyOffset * cosLatitude - celestialRadius * sinCelestialAngle * sinLatitude;
-        MOON.z = moonZ;
+    public static float getMoonAltitude(float sinLatitude, float cosLatitude, float rightAscension, float celestialRadius, float declination) {
+        rightAscension -= 90;
+        float sinRightAsc = MathHelper.sinDeg(rightAscension);
+        MOON.x = celestialRadius * MathHelper.cosDeg(rightAscension);
+        float yt = celestialRadius * sinRightAsc;
+        MOON.y = yt * cosLatitude + declination * sinLatitude;
+        MOON.z = declination * cosLatitude - celestialRadius * sinRightAsc * sinLatitude;
         return MathHelper.arcCosDeg(MOON.dotProduct(ZENITH) * MOON.inverseLength() * ZENITH.inverseLength());
     }
 
@@ -95,7 +91,7 @@ public final class EarthHelper {
             return SKY_COLOR;
         }
         float sunAngle = 1.0f;
-        float elevationAngle = dimension == null ? 0 : dimension.getSunElevationAngle();
+        float elevationAngle = dimension == null ? 0 : dimension.getSunAltitude();
         if (elevationAngle > 80) {
             sunAngle = -elevationAngle * elevationAngle / 784.0f + 10.0f * elevationAngle / 49.0f - 7.163_265f;
             sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
@@ -146,46 +142,46 @@ public final class EarthHelper {
         return SKY_COLOR;
     }
 
-    public static float getSunElevation(float sinLatitude, float cosLatitude, float celestialAngle, float celestialRadius, float seasonOffset) {
-        celestialAngle -= 90;
-        sunX = celestialRadius * MathHelper.cosDeg(celestialAngle);
-        float sinCelestialAngle = MathHelper.sinDeg(celestialAngle);
+    public static float getSunAltitude(float sinLatitude, float cosLatitude, float rightAscension, float celestialRadius, float declination) {
+        rightAscension -= 90;
+        sunX = celestialRadius * MathHelper.cosDeg(rightAscension);
+        float sinRightAsc = MathHelper.sinDeg(rightAscension);
         SUN.x = sunX;
-        float yt = celestialRadius * sinCelestialAngle;
-        SUN.y = yt * cosLatitude + seasonOffset * sinLatitude;
-        sunZ = seasonOffset * cosLatitude - celestialRadius * sinCelestialAngle * sinLatitude;
+        float yt = celestialRadius * sinRightAsc;
+        SUN.y = yt * cosLatitude + declination * sinLatitude;
+        sunZ = declination * cosLatitude - celestialRadius * sinRightAsc * sinLatitude;
         SUN.z = sunZ;
         return MathHelper.arcCosDeg(SUN.dotProduct(ZENITH) * SUN.inverseLength() * ZENITH.inverseLength());
     }
 
     /**
-     * Calculates the visual amplitude of the moon in the skies. This phenomenon is cyclic and repeats monthly.
-     * The maximum amplitude depends on the lunar standstill (which varies from -5.1 degrees to +5.1 degrees)
+     * Calculates the declination of the Moon in the skies. This phenomenon is cyclic and repeats monthly.
+     * The maximum declination depends on the lunar standstill (which varies from -5.1 degrees to +5.1 degrees)
      * and the tilt of the Earth's orbit (23.5 degrees).
      *
      * @param worldTime The time of the world, in ticks.
-     * @return A value in degrees representing the visual lunar amplitude in the skies.
+     * @return A value in degrees representing the declination of the Moon in the skies.
      */
-    public static float lunarMonthlyAmpl(long worldTime) {
-        float amplitude = lunarStandStillAmpl(worldTime) + 23.5f;
+    public static float lunarMonthlyDeclination(long worldTime) {
+        float amplitude = lunarStandStillAmplitude(worldTime) + 23.5f;
         return amplitude * MathHelper.sin(MathHelper.TAU * worldTime / Time.MONTH_IN_TICKS);
     }
 
     /**
-     * Calculates the amplitude of the inclination of the lunar orbit. This phenomenon is cyclic and repeats every 18.6 years,
+     * Calculates the amplitude of the declination of the lunar orbit. This phenomenon is cyclic and repeats every 18.6 years,
      * with maximum amplitude of 5.1 degrees.
      *
      * @param worldTime The time of the world, in ticks.
      * @return A value in degrees representing the lunar orbit amplitude.
      */
-    public static float lunarStandStillAmpl(long worldTime) {
+    public static float lunarStandStillAmplitude(long worldTime) {
         return 5.1f * MathHelper.cos(MathHelper.TAU * worldTime / (Time.YEAR_IN_TICKS * 18.6f));
     }
 
-    public static MoonPhase phaseByEclipseIntensity(int angle, int amplitude) {
-        int angleMod = 9 - Math.abs(angle);
-        int amplitudeMod = 9 - Math.abs(amplitude);
-        float intensity = angleMod * amplitudeMod / 81.0F;
+    public static MoonPhase phaseByEclipseIntensity(int rightAscension, int declination) {
+        int rightAscMod = 9 - Math.abs(rightAscension);
+        int declinationMod = 9 - Math.abs(declination);
+        float intensity = rightAscMod * declinationMod / 81.0F;
         if (intensity < 0.111_111f) {
             return MoonPhase.WAXING_GIBBOUS_4;
         }
@@ -217,12 +213,12 @@ public final class EarthHelper {
     }
 
     /**
-     * The current visual inclination of the Sun based on the seasons, given in degrees.
+     * The current declination of the Sun from the Celestial Equator, based on the seasons, given in degrees.
      *
      * @param worldTime The time of the world, in ticks.
-     * @return A {@code float} value representing the Sun inclination angle in degrees.
+     * @return A {@code float} value representing the Sun declination angle in degrees.
      */
-    public static float sunSeasonalInclination(long worldTime) {
+    public static float sunSeasonalDeclination(long worldTime) {
         worldTime = worldTime / Time.DAY_IN_TICKS + Date.DAYS_SINCE_MARCH_EQUINOX;
         return 23.5f * MathHelper.sin(MathHelper.TAU * worldTime / Time.DAYS_IN_A_YEAR);
     }
