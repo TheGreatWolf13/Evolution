@@ -219,7 +219,7 @@ public final class EarthHelper {
      * @return A {@code float} value representing the Sun declination angle in degrees.
      */
     public static float sunSeasonalDeclination(long worldTime) {
-        worldTime = worldTime / Time.DAY_IN_TICKS + Date.DAYS_SINCE_MARCH_EQUINOX;
-        return 23.5f * MathHelper.sin(MathHelper.TAU * worldTime / Time.DAYS_IN_A_YEAR);
+        float dayTime = (float) worldTime / Time.DAY_IN_TICKS + Date.DAYS_SINCE_MARCH_EQUINOX;
+        return 23.5f * MathHelper.sin(MathHelper.TAU * dayTime / Time.DAYS_IN_A_YEAR);
     }
 }
