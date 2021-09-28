@@ -235,7 +235,7 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
             }
         }
         if (!chopping.hasLog() && !state.getValue(OCCUPIED)) {
-            if (EntitySit.create(world, pos, player)) {
+            if (!player.isCrouching() && EntitySit.create(world, pos, player)) {
                 world.setBlockAndUpdate(pos, state.setValue(OCCUPIED, true));
                 return ActionResultType.SUCCESS;
             }
