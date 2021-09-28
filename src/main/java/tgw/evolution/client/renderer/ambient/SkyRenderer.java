@@ -330,15 +330,17 @@ public class SkyRenderer implements ISkyRenderHandler {
         this.skyVertexFormat.clearBufferState();
         //Render background stars
         mc.getProfiler().popPush("stars");
+        RenderSystem.enableBlend();
         float starBrightness = (1.0f - this.dimension.getSunBrightness(partialTicks)) * rainStrength;
         if (starBrightness > 0.0F) {
             RenderSystem.disableTexture();
             //Pushed the matrix to draw the background stars
             matrices.pushPose();
+            Blending.ADDITIVE_ALPHA.apply();
             matrices.mulPose(SKY_PRE_TRANSFORM);
             matrices.mulPose(latitudeTransform);
             matrices.mulPose(Vector3f.XP.rotationDegrees(360.0f * starsRightAscension + 180));
-            RenderSystem.color4f(1.0f, 1.0f, 1.0f, starBrightness);
+            RenderSystem.color4f(starBrightness, starBrightness, starBrightness, starBrightness);
             this.starVBO.bind();
             this.skyVertexFormat.setupBufferState(0L);
             this.starVBO.draw(matrices.last().pose(), GL11.GL_QUADS);
