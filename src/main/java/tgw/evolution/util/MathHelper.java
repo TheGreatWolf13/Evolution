@@ -17,6 +17,8 @@ import net.minecraft.util.math.*;
 import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.util.math.vector.Matrix3f;
+import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.World;
@@ -25,6 +27,8 @@ import tgw.evolution.blocks.tileentities.Patterns;
 import tgw.evolution.entities.IEntityPatch;
 import tgw.evolution.entities.INeckPosition;
 import tgw.evolution.init.EvolutionHitBoxes;
+import tgw.evolution.patches.IMatrix3fPatch;
+import tgw.evolution.patches.IMatrix4fPatch;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.HitboxEntity;
 import tgw.evolution.util.hitbox.Matrix3d;
@@ -121,6 +125,18 @@ public final class MathHelper {
     @Radian
     public static double atan2(double y, double x) {
         return net.minecraft.util.math.MathHelper.atan2(y, x);
+    }
+
+    /**
+     * Calculates the arc-tangent of a vector given two components.
+     *
+     * @param y The y component of the vector.
+     * @param x The x component of the vector.
+     * @return The angle between the vector and the X axis, given in degrees.
+     */
+    @Degree
+    public static double atan2Deg(double y, double x) {
+        return Math.toDegrees(net.minecraft.util.math.MathHelper.atan2(y, x));
     }
 
     /**
@@ -348,6 +364,10 @@ public final class MathHelper {
         return Math.max(value, min);
     }
 
+    public static int computeNormal(Matrix3f normalMatrix, Direction facing) {
+        return ((IMatrix3fPatch) (Object) normalMatrix).computeNormal(facing);
+    }
+
     /**
      * Converts the given acceleration to Minecraft values.
      *
@@ -573,6 +593,14 @@ public final class MathHelper {
             return partialTicks == 1.0F ? living.yBodyRot : lerp(partialTicks, living.yBodyRotO, living.yBodyRot);
         }
         return partialTicks == 1.0F ? entity.yRot : lerp(partialTicks, entity.yRotO, entity.yRot);
+    }
+
+    public static IMatrix4fPatch getExtendedMatrix(Matrix4f matrix) {
+        return (IMatrix4fPatch) (Object) matrix;
+    }
+
+    public static IMatrix3fPatch getExtendedMatrix(Matrix3f matrix) {
+        return (IMatrix3fPatch) (Object) matrix;
     }
 
     public static HandSide getHandSide(LivingEntity entity) {
@@ -1255,6 +1283,23 @@ public final class MathHelper {
     }
 
     /**
+     * Relativizes a value to be between {@code 0.0} and {@code 1.0} inside a scale.
+     *
+     * @param value The value to relativize.
+     * @param min   The minimum allowed value, representing the {@code 0.0} in the scale.
+     * @param max   The maximum allowed value, representing the {@code 1.0} in the scale.
+     * @return A value between {@code 0.0} and {@code 1.0},
+     * where {@code 0.0} represents the minimum of the scale and {@code 1.0} represents the maximum.
+     */
+    public static double relativize(double value, double min, double max) {
+        value = clamp(value, min, max);
+        value -= min;
+        double delta = max - min;
+        value /= delta;
+        return value;
+    }
+
+    /**
      * Resets a {@link Nonnull} {@code long} array (representing a 8x8x8 boolean tensor) starting at the desired index to
      * {@link tgw.evolution.blocks.tileentities.Patterns#MATRIX_FALSE}.
      *
@@ -1432,6 +1477,17 @@ public final class MathHelper {
             throw new ArithmeticException("Short overflow " + value);
         }
         return (short) value;
+    }
+
+    public static int transformPackedNormal(int norm, Matrix3f matrix) {
+        IMatrix3fPatch mat = getExtendedMatrix(matrix);
+        float normX1 = Norm3b.unpackX(norm);
+        float normY1 = Norm3b.unpackY(norm);
+        float normZ1 = Norm3b.unpackZ(norm);
+        float normX2 = mat.transformVecX(normX1, normY1, normZ1);
+        float normY2 = mat.transformVecY(normX1, normY1, normZ1);
+        float normZ2 = mat.transformVecZ(normX1, normY1, normZ1);
+        return Norm3b.pack(normX2, normY2, normZ2);
     }
 
     /**
