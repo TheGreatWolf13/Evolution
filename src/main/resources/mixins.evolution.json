@@ -32,6 +32,7 @@
     "ActiveRenderInfoMixin",
     "BipedModelMixin",
     "BlockModelRendererMixin",
+    "BufferBuilderMixin",
     "ClientPlayerEntityMixin",
     "ClientPlayNetHandlerMixin",
     "ClientWorldMixin",
