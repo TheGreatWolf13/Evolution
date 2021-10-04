@@ -24,6 +24,7 @@ import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.ItemHammer;
+import tgw.evolution.util.DirectionUtil;
 import tgw.evolution.util.HarvestLevel;
 import tgw.evolution.util.MathHelper;
 
@@ -54,7 +55,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
     }
 
     public static void checkSides(BlockState state, World world, BlockPos pos) {
-        for (Direction direction : MathHelper.DIRECTIONS_EXCEPT_UP) {
+        for (Direction direction : DirectionUtil.HORIZ_NESW) {
             if (state.getValue(directionToProperty(direction))) {
                 BlockState stateTest = world.getBlockState(pos.relative(direction));
                 if (direction == Direction.DOWN) {
@@ -205,7 +206,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
         if (!world.isClientSide && !isMoving && state.getBlock() != newState.getBlock()) {
             if (state.getValue(DIRECTION_EXCEPT_UP) == Direction.DOWN) {
                 BlockPos downPos = pos.below();
-                for (Direction direction : MathHelper.DIRECTIONS_HORIZONTAL) {
+                for (Direction direction : DirectionUtil.HORIZ_NESW) {
                     if (state.getValue(directionToProperty(direction))) {
                         BlockUtils.scheduleBlockTick(world, downPos.relative(direction), 2);
                     }
@@ -238,7 +239,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
             }
             return count;
         }
-        for (Direction direction : MathHelper.DIRECTIONS_HORIZONTAL) {
+        for (Direction direction : DirectionUtil.HORIZ_NESW) {
             mutablePos.set(pos);
             if (state.getValue(directionToProperty(direction))) {
                 Direction movement = direction;

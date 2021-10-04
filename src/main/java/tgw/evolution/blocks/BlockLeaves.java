@@ -26,6 +26,7 @@ import net.minecraftforge.common.IForgeShearable;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.BlockFlags;
+import tgw.evolution.util.DirectionUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -76,7 +77,7 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
     private static BlockState updateDistance(BlockState state, IWorld world, BlockPos pos) {
         int i = 7;
         BlockPos.Mutable mutable = new BlockPos.Mutable();
-        for (Direction direction : Direction.values()) {
+        for (Direction direction : DirectionUtil.ALL) {
             mutable.setWithOffset(pos, direction);
             i = Math.min(i, getDistance(world.getBlockState(mutable)) + 1);
             if (i == 1) {

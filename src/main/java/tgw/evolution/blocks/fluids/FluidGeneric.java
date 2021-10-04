@@ -25,10 +25,7 @@ import tgw.evolution.blocks.IFluidLoggable;
 import tgw.evolution.blocks.IReplaceable;
 import tgw.evolution.blocks.tileentities.TELiquid;
 import tgw.evolution.init.EvolutionFluids;
-import tgw.evolution.util.DirectionDiagonal;
-import tgw.evolution.util.DirectionDiagonalList;
-import tgw.evolution.util.DirectionList;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.*;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
@@ -317,7 +314,7 @@ public abstract class FluidGeneric extends FlowingFluid {
         else {
             world.removeBlockEntity(pos);
         }
-        for (Direction dir : Direction.values()) {
+        for (Direction dir : DirectionUtil.ALL) {
             BlockPos offsetPos = pos.relative(dir);
             BlockState stateAtOffset = world.getBlockState(offsetPos);
             if (stateAtOffset.getBlock() instanceof IFluidLoggable) {
@@ -332,7 +329,7 @@ public abstract class FluidGeneric extends FlowingFluid {
             return;
         }
         this.auxList.clear();
-        for (Direction direction : MathHelper.DIRECTIONS_HORIZONTAL) {
+        for (Direction direction : DirectionUtil.HORIZ_NESW) {
             if (BlockUtils.canBeReplacedByFluid(world.getBlockState(this.auxPos.set(pos).move(direction)))) {
                 this.auxList.add(direction);
             }
@@ -460,7 +457,7 @@ public abstract class FluidGeneric extends FlowingFluid {
                         this.setBlockState(world, pos, rlThis);
                     }
                     if (direction.getAxis() == Direction.Axis.X) {
-                        for (Direction dir : MathHelper.DIRECTIONS_Z) {
+                        for (Direction dir : DirectionUtil.Z) {
                             if (!canSendToOrReceiveFrom(stateAtPos, dir)) {
                                 continue;
                             }
@@ -473,7 +470,7 @@ public abstract class FluidGeneric extends FlowingFluid {
                         }
                     }
                     else {
-                        for (Direction dir : MathHelper.DIRECTIONS_X) {
+                        for (Direction dir : DirectionUtil.X) {
                             if (!canSendToOrReceiveFrom(stateAtPos, dir)) {
                                 continue;
                             }

@@ -11,6 +11,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import tgw.evolution.util.DirectionToIntMap;
+import tgw.evolution.util.DirectionUtil;
 import tgw.evolution.util.HarvestLevel;
 import tgw.evolution.util.RockVariant;
 
@@ -34,7 +35,7 @@ public class BlockStone extends BlockGravity implements IRockVariant {
     @Override
     public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
         BlockPos.Mutable mutablePos = new BlockPos.Mutable();
-        for (Direction dir : Direction.values()) {
+        for (Direction dir : DirectionUtil.ALL) {
             mutablePos.setWithOffset(pos, dir);
             if (BlockUtils.hasSolidSide(world, mutablePos, dir.getOpposite())) {
                 return true;

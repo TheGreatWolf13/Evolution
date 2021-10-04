@@ -17,6 +17,7 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IPlantable;
 import tgw.evolution.util.DirectionToIntMap;
+import tgw.evolution.util.DirectionUtil;
 import tgw.evolution.util.OriginMutableBlockPos;
 
 import javax.annotation.Nonnull;
@@ -110,7 +111,7 @@ public final class BlockUtils {
 
     public static boolean isTouchingWater(IWorld world, BlockPos pos) {
         BlockPos.Mutable mutablePos = new BlockPos.Mutable();
-        for (Direction direction : Direction.values()) {
+        for (Direction direction : DirectionUtil.ALL) {
             mutablePos.set(pos).move(direction);
             BlockState stateAtPos = world.getBlockState(mutablePos);
             if (stateAtPos.getFluidState().is(FluidTags.WATER)) {

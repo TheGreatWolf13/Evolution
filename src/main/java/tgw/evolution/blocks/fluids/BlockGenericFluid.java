@@ -36,6 +36,7 @@ import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.util.DirectionList;
+import tgw.evolution.util.DirectionUtil;
 import tgw.evolution.util.MathHelper;
 
 import javax.annotation.Nullable;
@@ -125,7 +126,7 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
         int amountRemoved = MathHelper.clampMax(amountAtPos, maxAmount);
         amountAtPos -= amountRemoved;
         this.getFluid().setBlockState(world, pos, amountAtPos);
-        for (Direction dir : Direction.values()) {
+        for (Direction dir : DirectionUtil.ALL) {
             BlockPos offsetPos = pos.relative(dir);
             BlockState stateAtOffset = world.getBlockState(offsetPos);
             if (stateAtOffset.getBlock() instanceof IFluidLoggable) {
@@ -292,7 +293,7 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     public boolean reactWithNeighbors(World world, BlockPos pos) {
         if (this.getFluid().is(FluidTags.LAVA)) {
             boolean flag = false;
-            for (Direction direction : Direction.values()) {
+            for (Direction direction : DirectionUtil.ALL) {
                 if (direction != Direction.DOWN && world.getFluidState(pos.relative(direction)).is(FluidTags.WATER)) {
                     flag = true;
                     break;

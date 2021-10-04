@@ -42,7 +42,7 @@ public class BlockGravity extends BlockMass {
     }
 
     public Direction[] beamDirections(BlockState state) {
-        return MathHelper.DIRECTIONS_HORIZONTAL;
+        return DirectionUtil.HORIZ_NESW;
     }
 
     public int beamSize() {
@@ -134,7 +134,7 @@ public class BlockGravity extends BlockMass {
             if (this.RANDOM.nextFloat() < this.slopeChance()) {
                 DirectionList slopePossibility = new DirectionList();
                 BlockPos.Mutable mutablePos = new BlockPos.Mutable();
-                for (Direction slopeDirection : MathHelper.DIRECTIONS_HORIZONTAL) {
+                for (Direction slopeDirection : DirectionUtil.HORIZ_NESW) {
                     mutablePos.set(pos);
                     if (BlockUtils.isReplaceable(world.getBlockState(mutablePos.move(slopeDirection)))) {
                         if (BlockUtils.isReplaceable(world.getBlockState(mutablePos.move(Direction.DOWN)))) {
@@ -198,7 +198,7 @@ public class BlockGravity extends BlockMass {
         entity.fallTime = 1;
         world.addFreshEntity(entity);
         entity.playSound(this.fallSound(), 0.25F, 1.0F);
-        for (Direction dir : MathHelper.DIRECTIONS_EXCEPT_DOWN) {
+        for (Direction dir : DirectionUtil.ALL_EXCEPT_DOWN) {
             BlockUtils.scheduleBlockTick(world, pos.relative(dir), 2);
         }
     }
@@ -231,12 +231,12 @@ public class BlockGravity extends BlockMass {
         BlockPos up = pos.above();
         BlockUtils.scheduleBlockTick(world, up, 2);
         if (this.canSlope()) {
-            for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
+            for (Direction dir : DirectionUtil.HORIZ_NESW) {
                 BlockUtils.scheduleBlockTick(world, up.relative(dir), 2);
             }
         }
         else if (this.hasBeams()) {
-            for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
+            for (Direction dir : DirectionUtil.HORIZ_NESW) {
                 BlockUtils.scheduleBlockTick(world, pos.relative(dir), 2);
             }
         }
@@ -268,7 +268,7 @@ public class BlockGravity extends BlockMass {
         BlockUtils.scheduleBlockTick(world, pos.below(), 2);
         BlockPos up = pos.above();
         BlockUtils.scheduleBlockTick(world, up, 2);
-        for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
+        for (Direction dir : DirectionUtil.HORIZ_NESW) {
             BlockUtils.scheduleBlockTick(world, up.relative(dir), 2);
         }
     }
@@ -281,8 +281,8 @@ public class BlockGravity extends BlockMass {
     }
 
     /**
-     * @param world : The World
-     * @param pos   : The BlockPos where physics is being calculated.
+     * @param world The World
+     * @param pos   The BlockPos where physics is being calculated.
      *              Used by stone blocks to sustain blocks under a beam.
      */
     public boolean specialCondition(World world, BlockPos pos) {

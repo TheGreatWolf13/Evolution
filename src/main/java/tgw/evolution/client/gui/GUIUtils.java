@@ -39,16 +39,18 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.opengl.GL11;
 import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.util.DirectionUtil;
+import tgw.evolution.util.XoRoShiRoRandom;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.List;
-import java.util.Random;
 
 @OnlyIn(Dist.CLIENT)
 public final class GUIUtils {
 
     private static final ShaderGroup SHADER_GROUP;
+    private static final XoRoShiRoRandom RANDOM = new XoRoShiRoRandom();
     private static DifficultyInstance difficulty;
 
     static {
@@ -378,13 +380,10 @@ public final class GUIUtils {
                                               int packedLight,
                                               int packedOverlay,
                                               int color) {
-        Random random = new Random();
-        for (Direction direction : Direction.values()) {
-            random.setSeed(42L);
-            renderQuads(matrices, buffer, model.getQuads(null, direction, random), packedLight, packedOverlay, color);
+        for (Direction direction : DirectionUtil.ALL) {
+            renderQuads(matrices, buffer, model.getQuads(null, direction, RANDOM.setSeedAndReturn(42L)), packedLight, packedOverlay, color);
         }
-        random.setSeed(42L);
-        renderQuads(matrices, buffer, model.getQuads(null, null, random), packedLight, packedOverlay, color);
+        renderQuads(matrices, buffer, model.getQuads(null, null, RANDOM.setSeedAndReturn(42L)), packedLight, packedOverlay, color);
     }
 
     private static void renderQuads(MatrixStack matrixStack,

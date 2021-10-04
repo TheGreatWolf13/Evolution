@@ -11,6 +11,7 @@ import net.minecraftforge.client.model.data.IModelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.util.DirectionUtil;
 import tgw.evolution.util.XoRoShiRoRandom;
 
 import javax.annotation.Nullable;
@@ -48,7 +49,7 @@ public abstract class BlockModelRendererMixin {
                             int overlay,
                             IModelData modelData) {
         XoRoShiRoRandom random = this.random;
-        for (Direction direction : Direction.values()) {
+        for (Direction direction : DirectionUtil.ALL) {
             renderQuadList(entry,
                            builder,
                            red,

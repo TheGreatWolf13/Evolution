@@ -29,6 +29,7 @@ import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.BlockFlags;
+import tgw.evolution.util.DirectionUtil;
 import tgw.evolution.util.MathHelper;
 
 import javax.annotation.Nullable;
@@ -76,7 +77,7 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
         EntityFallingPeat entity = new EntityFallingPeat(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, state.getValue(LAYERS_1_4));
         world.addFreshEntity(entity);
         entity.playSound(EvolutionSounds.SOIL_COLLAPSE.get(), 0.25F, 1.0F);
-        for (Direction dir : MathHelper.DIRECTIONS_EXCEPT_DOWN) {
+        for (Direction dir : DirectionUtil.ALL_EXCEPT_DOWN) {
             BlockUtils.scheduleBlockTick(world, pos.relative(dir), 2);
         }
     }

@@ -57,13 +57,9 @@ public final class MathHelper {
     public static final float SQRT_2 = sqrt(2.0f);
     public static final float SQRT_2_OVER_2 = SQRT_2 / 2.0f;
     public static final Random RANDOM = new Random();
-    public static final Direction[] DIRECTIONS_EXCEPT_DOWN = {Direction.UP, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
-    public static final Direction[] DIRECTIONS_EXCEPT_UP = {Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
-    public static final Direction[] DIRECTIONS_HORIZONTAL = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+
     public static final DirectionDiagonal[][] DIAGONALS = {{DirectionDiagonal.NORTH_WEST, DirectionDiagonal.NORTH_EAST},
                                                            {DirectionDiagonal.SOUTH_WEST, DirectionDiagonal.SOUTH_EAST}};
-    public static final Direction[] DIRECTIONS_X = {Direction.WEST, Direction.EAST};
-    public static final Direction[] DIRECTIONS_Z = {Direction.NORTH, Direction.SOUTH};
     public static final Hand[] HANDS_LEFT_PRIORITY = {Hand.OFF_HAND, Hand.MAIN_HAND};
     private static final Predicate<Entity> PREDICATE = e -> e != null && !e.isSpectator() && e.isPickable();
     private static final FieldHandler<LivingEntity, Float> LAST_SWIM = new FieldHandler<>(LivingEntity.class, "field_205018_bM");

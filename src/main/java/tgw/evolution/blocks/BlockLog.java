@@ -97,7 +97,7 @@ public class BlockLog extends BlockXYZAxis {
     public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         if (state.getValue(TREE)) {
             BlockPos up = pos.above();
-            for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
+            for (Direction dir : DirectionUtil.HORIZ_NESW) {
                 state.updateNeighbourShapes(world, up.relative(dir), BlockFlags.NOTIFY_AND_UPDATE);
             }
         }

@@ -35,7 +35,7 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.util.BlockFlags;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.DirectionUtil;
 import tgw.evolution.util.WoodVariant;
 
 import javax.annotation.Nullable;
@@ -71,7 +71,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
             return 0;
         }
         int i = 0;
-        for (Direction direction : Direction.values()) {
+        for (Direction direction : DirectionUtil.ALL) {
             BlockState blockstate = world.getBlockState(pos.relative(direction));
             i = Math.max(blockstate.getFlammability(world, pos.relative(direction), direction.getOpposite()), i);
         }
@@ -185,7 +185,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     private boolean areNeighborsFlammable(IBlockReader world, BlockPos pos) {
-        for (Direction direction : Direction.values()) {
+        for (Direction direction : DirectionUtil.ALL) {
             if (this.canCatchFire(world, pos.relative(direction), direction.getOpposite())) {
                 return true;
             }
@@ -305,7 +305,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
         BlockPos posDown = pos.below();
         if (!this.canCatchFire(world, pos, Direction.UP) && !BlockUtils.hasSolidSide(world, posDown, Direction.UP)) {
             BlockState state = this.defaultBlockState();
-            for (Direction direction : MathHelper.DIRECTIONS_EXCEPT_DOWN) {
+            for (Direction direction : DirectionUtil.ALL_EXCEPT_DOWN) {
                 BooleanProperty booleanProperty = directionToProperty(direction);
                 if (booleanProperty != null) {
                     state = state.setValue(booleanProperty, this.canCatchFire(world, pos.relative(direction), direction.getOpposite()));

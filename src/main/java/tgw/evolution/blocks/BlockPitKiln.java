@@ -25,10 +25,7 @@ import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.ItemClayMolded;
 import tgw.evolution.items.ItemLog;
-import tgw.evolution.util.DirectionDiagonal;
-import tgw.evolution.util.HarvestLevel;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.Time;
+import tgw.evolution.util.*;
 
 import javax.annotation.Nullable;
 import java.util.Random;
@@ -43,7 +40,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable {
     }
 
     public static boolean canBurn(World world, BlockPos pos) {
-        for (Direction dir : MathHelper.DIRECTIONS_HORIZONTAL) {
+        for (Direction dir : DirectionUtil.HORIZ_NESW) {
             if (!checkDirection(world, pos, dir)) {
                 return false;
             }

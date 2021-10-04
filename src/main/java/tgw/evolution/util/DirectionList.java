@@ -22,7 +22,7 @@ public class DirectionList {
     }
 
     public void fillHorizontal() {
-        System.arraycopy(MathHelper.DIRECTIONS_HORIZONTAL, 0, this.values, 0, 4);
+        System.arraycopy(DirectionUtil.HORIZ_NESW, 0, this.values, 0, 4);
         this.current = 4;
     }
 

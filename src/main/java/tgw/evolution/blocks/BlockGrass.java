@@ -18,7 +18,7 @@ import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.BlockFlags;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.DirectionUtil;
 import tgw.evolution.util.NutrientHelper;
 import tgw.evolution.util.RockVariant;
 
@@ -105,7 +105,7 @@ public class BlockGrass extends BlockGenericSlowable implements IRockVariant {
                                             EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, 4) :
                                             this.variant.getDirt().defaultBlockState());
                     CapabilityChunkStorage.addElements(world.getChunkAt(pos), NutrientHelper.DECAY_GRASS_BLOCK);
-                    for (Direction direction : MathHelper.DIRECTIONS_HORIZONTAL) {
+                    for (Direction direction : DirectionUtil.HORIZ_NESW) {
                         BlockPos offset = pos.relative(direction);
                         Block block = world.getBlockState(offset).getBlock();
                         if (block instanceof BlockGrass) {

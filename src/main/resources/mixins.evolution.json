@@ -43,6 +43,7 @@
     "FogRendererMixin",
     "GameRendererMixin",
     "IntegratedServerMixin",
+    "ItemRendererMixin",
     "IVertexBuilderMixin",
     "KeyboardListenerMixin",
     "MatrixStackMixin",
