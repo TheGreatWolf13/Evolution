@@ -54,6 +54,7 @@
     "RecipeBookPageMixin",
     "RecipeTabToggleWidgetMixin",
     "RenderTypeLookupMixin",
+    "WorldLoadProgressScreenMixin",
     "WorldRendererMixin"
   ],
   "server": [],
