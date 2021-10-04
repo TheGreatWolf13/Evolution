@@ -21,6 +21,7 @@ import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStyles;
 import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.*;
 import tgw.evolution.util.NBTTypes;
 
@@ -182,7 +183,7 @@ public class ItemEvents {
         }
         //Attributes
         boolean hasMass = false;
-        for (EquipmentSlotType slot : EquipmentSlotType.values()) {
+        for (EquipmentSlotType slot : SlotType.SLOTS) {
             Multimap<Attribute, AttributeModifier> multimap = stack.getAttributeModifiers(slot);
             if (!multimap.isEmpty()) {
                 if (hasAddedLine) {

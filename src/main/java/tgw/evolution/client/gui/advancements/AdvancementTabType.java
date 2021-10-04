@@ -97,27 +97,34 @@ public enum AdvancementTabType {
     private int getMax(int width, int height) {
         switch (this) {
             case LEFT:
-            case RIGHT:
+            case RIGHT: {
                 return height / 32;
+            }
             case ABOVE:
-            case BELOW:
+            case BELOW: {
                 return width / 32;
-            default:
+            }
+            default: {
                 return this.max;
+            }
         }
     }
 
     public int getX(int p_192648_1_) {
         switch (this) {
             case ABOVE:
-            case BELOW:
+            case BELOW: {
                 return (this.width + 4) * p_192648_1_;
-            case LEFT:
+            }
+            case LEFT: {
                 return -this.width + 4;
-            case RIGHT:
+            }
+            case RIGHT: {
                 return 248;
-            default:
+            }
+            default: {
                 throw new UnsupportedOperationException("Don't know what this tab type is!" + this);
+            }
         }
     }
 
@@ -125,43 +132,55 @@ public enum AdvancementTabType {
         index %= this.getMax(width, height);
         switch (this) {
             case ABOVE:
-            case BELOW:
+            case BELOW: {
                 return (this.width + 4) * index;
-            case LEFT:
+            }
+            case LEFT: {
                 return -this.width + 4;
-            case RIGHT:
+            }
+            case RIGHT: {
                 return width - 4;
-            default:
+            }
+            default: {
                 throw new UnsupportedOperationException("Don't know what this tab type is!" + this);
+            }
         }
     }
 
     public int getY(int p_192653_1_) {
         switch (this) {
-            case ABOVE:
+            case ABOVE: {
                 return -this.height + 4;
-            case BELOW:
+            }
+            case BELOW: {
                 return 136;
+            }
             case LEFT:
-            case RIGHT:
+            case RIGHT: {
                 return this.height * p_192653_1_;
-            default:
+            }
+            default: {
                 throw new UnsupportedOperationException("Don't know what this tab type is!" + this);
+            }
         }
     }
 
     public int getY(int index, int width, int height) {
         index %= this.getMax(width, height);
         switch (this) {
-            case ABOVE:
+            case ABOVE: {
                 return -this.height + 4;
-            case BELOW:
+            }
+            case BELOW: {
                 return height - 4;
+            }
             case LEFT:
-            case RIGHT:
+            case RIGHT: {
                 return this.height * index;
-            default:
+            }
+            default: {
                 throw new UnsupportedOperationException("Don't know what this tab type is!" + this);
+            }
         }
     }
 

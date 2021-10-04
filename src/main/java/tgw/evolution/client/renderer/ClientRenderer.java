@@ -67,6 +67,7 @@ import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.InputHooks;
 import tgw.evolution.init.*;
+import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.*;
 import tgw.evolution.network.PacketCSPlaySoundEntityEmitted;
 import tgw.evolution.util.MathHelper;
@@ -1531,7 +1532,7 @@ public class ClientRenderer {
             boolean hasDamage = false;
             boolean hasSpeed = false;
             boolean hasReach = false;
-            for (EquipmentSlotType slot : EquipmentSlotType.values()) {
+            for (EquipmentSlotType slot : SlotType.SLOTS) {
                 Multimap<Attribute, AttributeModifier> multimap = stack.getAttributeModifiers(slot);
                 if (!multimap.isEmpty()) {
                     for (Map.Entry<Attribute, AttributeModifier> entry : multimap.entries()) {

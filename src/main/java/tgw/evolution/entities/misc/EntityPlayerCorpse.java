@@ -108,13 +108,13 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         if (player.getMainArm() == HandSide.RIGHT) {
             this.model |= 1 << 7;
         }
-        NonNullList<ItemStack> equip = NonNullList.withSize(EquipmentSlotType.values().length + SlotType.values().length, ItemStack.EMPTY);
+        NonNullList<ItemStack> equip = NonNullList.withSize(SlotType.SLOTS.length + SlotType.VALUES.length, ItemStack.EMPTY);
         int i = 0;
-        for (EquipmentSlotType slot : EquipmentSlotType.values()) {
+        for (EquipmentSlotType slot : SlotType.SLOTS) {
             equip.set(i++, player.getItemBySlot(slot).copy());
         }
         IExtendedItemHandler additionalEquip = player.getCapability(CapabilityExtendedInventory.INSTANCE).orElseThrow(IllegalStateException::new);
-        for (SlotType slot : SlotType.values()) {
+        for (SlotType slot : SlotType.VALUES) {
             equip.set(i++, additionalEquip.getStackInSlot(slot.ordinal()).copy());
         }
         this.setEquipment(equip);
@@ -187,7 +187,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     @Override
     protected void defineSynchedData() {
         this.entityData.define(SKELETON, false);
-        this.entityData.define(EQUIPMENT, NonNullList.withSize(EquipmentSlotType.values().length + SlotType.values().length, ItemStack.EMPTY));
+        this.entityData.define(EQUIPMENT, NonNullList.withSize(SlotType.SLOTS.length + SlotType.VALUES.length, ItemStack.EMPTY));
     }
 
     @Override
@@ -331,12 +331,12 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
             if (this.level.isClientSide) {
                 NonNullList<ItemStack> equipment = this.entityData.get(EQUIPMENT);
                 if (this.player != null) {
-                    for (EquipmentSlotType type : EquipmentSlotType.values()) {
+                    for (EquipmentSlotType type : SlotType.SLOTS) {
                         this.player.setItemSlot(type, equipment.get(type.ordinal()));
                     }
                 }
                 if (this.skeleton != null) {
-                    for (EquipmentSlotType type : EquipmentSlotType.values()) {
+                    for (EquipmentSlotType type : SlotType.SLOTS) {
                         this.skeleton.setItemSlot(type, equipment.get(type.ordinal()));
                     }
                 }

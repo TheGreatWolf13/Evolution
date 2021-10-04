@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.HandSide;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
+import tgw.evolution.inventory.SlotType;
 
 public class EntitySkeletonDummy extends SkeletonEntity {
 
@@ -14,7 +15,7 @@ public class EntitySkeletonDummy extends SkeletonEntity {
 
     public EntitySkeletonDummy(World world, NonNullList<ItemStack> equipment, HandSide mainArm) {
         super(EntityType.SKELETON, world);
-        for (EquipmentSlotType type : EquipmentSlotType.values()) {
+        for (EquipmentSlotType type : SlotType.SLOTS) {
             this.setItemSlot(type, equipment.get(type.ordinal()));
         }
         this.mainArm = mainArm;

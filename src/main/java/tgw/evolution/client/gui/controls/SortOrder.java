@@ -19,6 +19,7 @@ public enum SortOrder {
                                                                        ((ListKeyBinding.KeyEntry) o1).getKeyDesc().getString()));
     });
 
+    public static final SortOrder[] VALUES = values();
     private final ISort sorter;
 
     SortOrder(ISort sorter) {
@@ -26,7 +27,7 @@ public enum SortOrder {
     }
 
     public SortOrder cycle() {
-        return values()[(this.ordinal() + 1) % values().length];
+        return VALUES[(this.ordinal() + 1) % VALUES.length];
     }
 
     public String getName() {

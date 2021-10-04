@@ -1,5 +1,6 @@
 package tgw.evolution.inventory;
 
+import net.minecraft.inventory.EquipmentSlotType;
 import tgw.evolution.init.EvolutionResources;
 
 public enum SlotType {
@@ -11,6 +12,9 @@ public enum SlotType {
     MASK(EvolutionResources.MASK),
     BACK(EvolutionResources.BACK),
     TACTICAL(EvolutionResources.TACTICAL);
+
+    public static final SlotType[] VALUES = values();
+    public static final EquipmentSlotType[] SLOTS = EquipmentSlotType.values();
 
     private final int[] validSlots;
 

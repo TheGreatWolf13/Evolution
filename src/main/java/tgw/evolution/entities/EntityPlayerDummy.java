@@ -8,6 +8,7 @@ import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.HandSide;
 import net.minecraft.util.NonNullList;
+import tgw.evolution.inventory.SlotType;
 
 public class EntityPlayerDummy extends RemoteClientPlayerEntity {
 
@@ -16,7 +17,7 @@ public class EntityPlayerDummy extends RemoteClientPlayerEntity {
     public EntityPlayerDummy(ClientWorld world, GameProfile profile, NonNullList<ItemStack> equipment, byte model) {
         super(world, profile);
         this.model = model;
-        for (EquipmentSlotType type : EquipmentSlotType.values()) {
+        for (EquipmentSlotType type : SlotType.SLOTS) {
             this.setItemSlot(type, equipment.get(type.ordinal()));
         }
     }
