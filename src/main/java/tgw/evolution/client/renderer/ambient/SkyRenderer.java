@@ -19,10 +19,7 @@ import org.lwjgl.opengl.GL11;
 import tgw.evolution.client.util.Blending;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.util.EarthHelper;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.MoonPhase;
-import tgw.evolution.util.Vec3f;
+import tgw.evolution.util.*;
 import tgw.evolution.util.reflection.FieldHandler;
 import tgw.evolution.world.dimension.DimensionOverworld;
 
@@ -56,7 +53,7 @@ public class SkyRenderer implements ISkyRenderHandler {
     private static void buildStars(BufferBuilder builder) {
         Random random = new Random(10_842L);
         builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
-        for (int starNumber = 0; starNumber < 1_500; starNumber++) {
+        for (int starNumber = 0; starNumber < 2_500; starNumber++) {
             double dx = random.nextFloat() * 2.0F - 1.0F;
             double dy = random.nextFloat() * 2.0F - 1.0F;
             double dz = random.nextFloat() * 2.0F - 1.0F;
@@ -66,9 +63,9 @@ public class SkyRenderer implements ISkyRenderHandler {
                 dx *= lengthSquared;
                 dy *= lengthSquared;
                 dz *= lengthSquared;
-                double x = dx * EarthHelper.CELESTIAL_SPHERE_RADIUS;
-                double y = dy * EarthHelper.CELESTIAL_SPHERE_RADIUS;
-                double z = dz * EarthHelper.CELESTIAL_SPHERE_RADIUS;
+                double x = dx * EarthHelper.CELESTIAL_SPHERE_RADIUS * 1.2;
+                double y = dy * EarthHelper.CELESTIAL_SPHERE_RADIUS * 1.2;
+                double z = dz * EarthHelper.CELESTIAL_SPHERE_RADIUS * 1.2;
                 double d3 = 0.15F + random.nextFloat() * 0.1F;
                 double d8 = Math.atan2(dx, dz);
                 double d9 = Math.sin(d8);
@@ -120,6 +117,20 @@ public class SkyRenderer implements ISkyRenderHandler {
         builder.vertex(moonMatrix, SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).uv(x1, y0).endVertex();
         builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).uv(x1, y1).endVertex();
         builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).uv(x0, y1).endVertex();
+        builder.end();
+        WorldVertexBufferUploader.end(builder);
+    }
+
+    private static void drawPlanet(BufferBuilder builder, Matrix4f matrix, float radius, float angularSize) {
+        builder.begin(GL11.GL_POLYGON, DefaultVertexFormats.POSITION);
+        builder.vertex(matrix, -angularSize / 3, radius, angularSize).endVertex();
+        builder.vertex(matrix, -angularSize, radius, angularSize / 3).endVertex();
+        builder.vertex(matrix, -angularSize, radius, -angularSize / 3).endVertex();
+        builder.vertex(matrix, -angularSize / 3, radius, -angularSize).endVertex();
+        builder.vertex(matrix, angularSize / 3, radius, -angularSize).endVertex();
+        builder.vertex(matrix, angularSize, radius, -angularSize / 3).endVertex();
+        builder.vertex(matrix, angularSize, radius, angularSize / 3).endVertex();
+        builder.vertex(matrix, angularSize / 3, radius, angularSize).endVertex();
         builder.end();
         WorldVertexBufferUploader.end(builder);
     }
@@ -179,6 +190,16 @@ public class SkyRenderer implements ISkyRenderHandler {
         builder.vertex(sunMatrix, SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).uv(textureX1, textureY0).endVertex();
         builder.vertex(sunMatrix, SCALE_OF_CELESTIAL, radius, SCALE_OF_CELESTIAL).uv(textureX1, textureY1).endVertex();
         builder.vertex(sunMatrix, -SCALE_OF_CELESTIAL, radius, SCALE_OF_CELESTIAL).uv(textureX0, textureY1).endVertex();
+        builder.end();
+        WorldVertexBufferUploader.end(builder);
+    }
+
+    private static void drawSquare(Matrix4f matrix, BufferBuilder builder, float celestialRadius) {
+        builder.begin(GL11.GL_LINE_LOOP, DefaultVertexFormats.POSITION);
+        builder.vertex(matrix, -2.5f, celestialRadius, 2.5f).endVertex();
+        builder.vertex(matrix, -2.5f, celestialRadius, -2.5f).endVertex();
+        builder.vertex(matrix, 2.5f, celestialRadius, -2.5f).endVertex();
+        builder.vertex(matrix, 2.5f, celestialRadius, 2.5f).endVertex();
         builder.end();
         WorldVertexBufferUploader.end(builder);
     }
@@ -309,14 +330,14 @@ public class SkyRenderer implements ISkyRenderHandler {
         float latitude = this.dimension.getLatitude();
         Quaternion latitudeTransform = Vector3f.ZP.rotationDegrees(latitude);
         float sunRightAscension = this.dimension.getSunRightAscension();
-        float starsRightAscension = this.dimension.getStarsRightAscension();
         float sunCelestialRadius = this.dimension.getSunCelestialRadius();
-        float sunDeclination = this.dimension.getSunDeclination();
+        float sunDeclinationOffset = this.dimension.getSunDeclinationOffset();
         float rainStrength = 1.0F - world.getRainLevel(partialTicks);
         Vec3f skyColor = EarthHelper.getSkyColor(world, mc.gameRenderer.getMainCamera().getBlockPosition(), partialTicks, this.dimension);
-        float moonDeclination = this.dimension.getMoonDeclination();
+        float moonDeclinationOffset = this.dimension.getMoonDeclinationOffset();
         float moonRightAscension = this.dimension.getMoonRightAscension();
         float moonCelestialRadius = this.dimension.getMoonCelestialRadius();
+        float sunBrightness = this.dimension.getSunBrightness(partialTicks);
         mc.getProfiler().popPush("dome");
         BufferBuilder builder = Tessellator.getInstance().getBuilder();
         FogRenderer.levelFogColor();
@@ -331,8 +352,9 @@ public class SkyRenderer implements ISkyRenderHandler {
         //Render background stars
         mc.getProfiler().popPush("stars");
         RenderSystem.enableBlend();
-        float starBrightness = (1.0f - this.dimension.getSunBrightness(partialTicks)) * rainStrength;
+        float starBrightness = (1.0f - sunBrightness) * rainStrength;
         if (starBrightness > 0.0F) {
+            float starsRightAscension = this.dimension.getStarsRightAscension();
             RenderSystem.disableTexture();
             //Pushed the matrix to draw the background stars
             matrices.pushPose();
@@ -349,17 +371,70 @@ public class SkyRenderer implements ISkyRenderHandler {
             matrices.popPose();
             //Popped the matrix to draw the background stars
         }
+        if (EvolutionConfig.CLIENT.showPlanets.get()) {
+            //Render planets
+            mc.getProfiler().popPush("planets");
+            float planetStarBrightness = (1.0f - sunBrightness * sunBrightness) * rainStrength;
+            if (planetStarBrightness > 0.0F) {
+                RenderSystem.disableFog();
+                RenderSystem.disableTexture();
+                //Pushed the matrix to draw the planets
+                Blending.ADDITIVE_ALPHA.apply();
+                matrices.pushPose();
+                matrices.mulPose(SKY_PRE_TRANSFORM);
+                matrices.mulPose(latitudeTransform);
+                matrices.translate(PlanetsHelper.getDecOff1Mercury(), 0, 0);
+                matrices.mulPose(Vector3f.XP.rotationDegrees(PlanetsHelper.getHa1Mercury() + 180));
+                RenderSystem.color4f(planetStarBrightness, planetStarBrightness, planetStarBrightness, planetStarBrightness);
+                drawPlanet(builder, matrices.last().pose(), PlanetsHelper.getDist1Mercury(), PlanetsHelper.getAngSize1Mercury() * 5);
+                matrices.popPose();
+                matrices.pushPose();
+                matrices.mulPose(SKY_PRE_TRANSFORM);
+                matrices.mulPose(latitudeTransform);
+                matrices.translate(PlanetsHelper.getDecOff2Venus(), 0, 0);
+                matrices.mulPose(Vector3f.XP.rotationDegrees(PlanetsHelper.getHa2Venus() + 180));
+                RenderSystem.color4f(planetStarBrightness, planetStarBrightness, planetStarBrightness, planetStarBrightness);
+                drawPlanet(builder, matrices.last().pose(), PlanetsHelper.getDist2Venus(), PlanetsHelper.getAngSize2Venus() * 5);
+                matrices.popPose();
+                matrices.pushPose();
+                matrices.mulPose(SKY_PRE_TRANSFORM);
+                matrices.mulPose(latitudeTransform);
+                matrices.translate(PlanetsHelper.getDecOff4Mars(), 0, 0);
+                matrices.mulPose(Vector3f.XP.rotationDegrees(PlanetsHelper.getHa4Mars() + 180));
+                RenderSystem.color4f(planetStarBrightness, planetStarBrightness, planetStarBrightness, planetStarBrightness);
+                drawPlanet(builder, matrices.last().pose(), PlanetsHelper.getDist4Mars(), PlanetsHelper.getAngSize4Mars() * 5);
+                matrices.popPose();
+                matrices.pushPose();
+                matrices.mulPose(SKY_PRE_TRANSFORM);
+                matrices.mulPose(latitudeTransform);
+                matrices.translate(PlanetsHelper.getDecOff5Jupiter(), 0, 0);
+                matrices.mulPose(Vector3f.XP.rotationDegrees(PlanetsHelper.getHa5Jupiter() + 180));
+                RenderSystem.color4f(planetStarBrightness, planetStarBrightness, planetStarBrightness, planetStarBrightness);
+                drawPlanet(builder, matrices.last().pose(), PlanetsHelper.getDist5Jupiter(), PlanetsHelper.getAngSize5Jupiter() * 5);
+                matrices.popPose();
+                matrices.pushPose();
+                matrices.mulPose(SKY_PRE_TRANSFORM);
+                matrices.mulPose(latitudeTransform);
+                matrices.translate(PlanetsHelper.getDecOff6Saturn(), 0, 0);
+                matrices.mulPose(Vector3f.XP.rotationDegrees(PlanetsHelper.getHa6Saturn() + 180));
+                RenderSystem.color4f(planetStarBrightness, planetStarBrightness, planetStarBrightness, planetStarBrightness);
+                drawPlanet(builder, matrices.last().pose(), PlanetsHelper.getDist6Saturn(), PlanetsHelper.getAngSize6Saturn() * 5);
+                matrices.popPose();
+                //Popped the matrix to draw the planets
+            }
+        }
         //Render moon shadow
         mc.getProfiler().popPush("moonShadow");
         Quaternion moonTransform = null;
         if (starBrightness > 0 && !this.dimension.isInSolarEclipse()) {
+            RenderSystem.enableFog();
             RenderSystem.enableBlend();
             //Pushed the matrix to draw moon shadow
             matrices.pushPose();
             matrices.mulPose(SKY_PRE_TRANSFORM);
             //Translate the moon in the sky based on monthly amplitude.
             matrices.mulPose(latitudeTransform);
-            matrices.translate(moonDeclination, 0, 0);
+            matrices.translate(moonDeclinationOffset, 0, 0);
             moonTransform = Vector3f.XP.rotationDegrees(360.0f * moonRightAscension + 180);
             matrices.mulPose(moonTransform);
             RenderSystem.enableTexture();
@@ -414,7 +489,7 @@ public class SkyRenderer implements ISkyRenderHandler {
         matrices.mulPose(SKY_PRE_TRANSFORM);
         //Translate the sun in the sky based on season.
         matrices.mulPose(latitudeTransform);
-        matrices.translate(sunDeclination, 0, 0);
+        matrices.translate(sunDeclinationOffset, 0, 0);
         matrices.mulPose(Vector3f.XP.rotationDegrees(360.0f * sunRightAscension + 180));
         //Draw the sun
         if (this.dimension.isInSolarEclipse()) {
@@ -435,7 +510,7 @@ public class SkyRenderer implements ISkyRenderHandler {
         matrices.mulPose(SKY_PRE_TRANSFORM);
         //Translate the moon in the sky based on monthly amplitude.
         matrices.mulPose(latitudeTransform);
-        matrices.translate(moonDeclination, 0, 0);
+        matrices.translate(moonDeclinationOffset, 0, 0);
         if (moonTransform == null) {
             moonTransform = Vector3f.XP.rotationDegrees(360.0f * moonRightAscension + 180);
         }
@@ -461,6 +536,7 @@ public class SkyRenderer implements ISkyRenderHandler {
         boolean equator = forceAll || EvolutionConfig.CLIENT.celestialEquator.get();
         boolean poles = forceAll || EvolutionConfig.CLIENT.celestialPoles.get();
         boolean ecliptic = forceAll || EvolutionConfig.CLIENT.ecliptic.get();
+        boolean planets = EvolutionConfig.CLIENT.showPlanets.get() && (forceAll || EvolutionConfig.CLIENT.planets.get());
         if (equator || poles) {
             RenderSystem.disableTexture();
             //Pushed matrix to draw celestial equator and poles
@@ -493,7 +569,7 @@ public class SkyRenderer implements ISkyRenderHandler {
             matrices.mulPose(SKY_PRE_TRANSFORM);
             //Translate the sun in the sky based on season.
             matrices.mulPose(latitudeTransform);
-            matrices.translate(sunDeclination, 0, 0);
+            matrices.translate(sunDeclinationOffset, 0, 0);
             //Draw the ecliptic
             RenderSystem.color4f(0.0F, 1.0f, 0.0F, 1.0f);
             drawLine(matrices.last().pose(), builder, EarthHelper.CELESTIAL_SPHERE_RADIUS);
@@ -502,6 +578,49 @@ public class SkyRenderer implements ISkyRenderHandler {
             RenderSystem.enableFog();
             matrices.popPose();
             //Popped matrix of the ecliptic
+        }
+        if (planets) {
+            RenderSystem.disableTexture();
+            matrices.pushPose();
+            matrices.mulPose(SKY_PRE_TRANSFORM);
+            matrices.mulPose(latitudeTransform);
+            matrices.translate(PlanetsHelper.getDecOff1Mercury(), 0, 0);
+            matrices.mulPose(Vector3f.XP.rotationDegrees(PlanetsHelper.getHa1Mercury() + 180));
+            RenderSystem.color4f(1.0F, 0.0f, 0.0F, 1.0f);
+            drawSquare(matrices.last().pose(), builder, EarthHelper.CELESTIAL_SPHERE_RADIUS);
+            matrices.popPose();
+            matrices.pushPose();
+            matrices.mulPose(SKY_PRE_TRANSFORM);
+            matrices.mulPose(latitudeTransform);
+            matrices.translate(PlanetsHelper.getDecOff2Venus(), 0, 0);
+            matrices.mulPose(Vector3f.XP.rotationDegrees(PlanetsHelper.getHa2Venus() + 180));
+            RenderSystem.color4f(1.0F, 0.5f, 0.0F, 1.0f);
+            drawSquare(matrices.last().pose(), builder, EarthHelper.CELESTIAL_SPHERE_RADIUS);
+            matrices.popPose();
+            matrices.pushPose();
+            matrices.mulPose(SKY_PRE_TRANSFORM);
+            matrices.mulPose(latitudeTransform);
+            matrices.translate(PlanetsHelper.getDecOff4Mars(), 0, 0);
+            matrices.mulPose(Vector3f.XP.rotationDegrees(PlanetsHelper.getHa4Mars() + 180));
+            RenderSystem.color4f(1.0F, 1.0f, 0.0F, 1.0f);
+            drawSquare(matrices.last().pose(), builder, EarthHelper.CELESTIAL_SPHERE_RADIUS);
+            matrices.popPose();
+            matrices.pushPose();
+            matrices.mulPose(SKY_PRE_TRANSFORM);
+            matrices.mulPose(latitudeTransform);
+            matrices.translate(PlanetsHelper.getDecOff5Jupiter(), 0, 0);
+            matrices.mulPose(Vector3f.XP.rotationDegrees(PlanetsHelper.getHa5Jupiter() + 180));
+            RenderSystem.color4f(0.0F, 1.0f, 0.0F, 1.0f);
+            drawSquare(matrices.last().pose(), builder, EarthHelper.CELESTIAL_SPHERE_RADIUS);
+            matrices.popPose();
+            matrices.pushPose();
+            matrices.mulPose(SKY_PRE_TRANSFORM);
+            matrices.mulPose(latitudeTransform);
+            matrices.translate(PlanetsHelper.getDecOff6Saturn(), 0, 0);
+            matrices.mulPose(Vector3f.XP.rotationDegrees(PlanetsHelper.getHa6Saturn() + 180));
+            RenderSystem.color4f(0.0F, 1.0f, 1.0F, 1.0f);
+            drawSquare(matrices.last().pose(), builder, EarthHelper.CELESTIAL_SPHERE_RADIUS);
+            matrices.popPose();
         }
         mc.getProfiler().popPush("void");
         RenderSystem.disableTexture();

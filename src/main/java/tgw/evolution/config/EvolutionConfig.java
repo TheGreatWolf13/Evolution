@@ -51,6 +51,8 @@ public final class EvolutionConfig {
         public final ForgeConfigSpec.BooleanValue firstPersonRenderer;
         public final ForgeConfigSpec.BooleanValue hitmarkers;
         public final ForgeConfigSpec.BooleanValue limitTimeUnitsToHour;
+        public final ForgeConfigSpec.BooleanValue planets;
+        public final ForgeConfigSpec.BooleanValue showPlanets;
 
         Client(final ForgeConfigSpec.Builder builder) {
             builder.push("Client");
@@ -58,12 +60,14 @@ public final class EvolutionConfig {
             this.limitTimeUnitsToHour = builder.translation("evolution.config.limitTimeUnitsToHour").define("limitTimeUnitsToHour", false);
             this.hitmarkers = builder.translation("evolution.config.hitmarkers").define("hitmarkers", true);
             this.firstPersonRenderer = builder.translation("evolution.config.firstPersonRenderer").define("firstPersonRenderer", true);
+            this.showPlanets = builder.translation("evolution.config.showPlanets").define("showPlanets", true);
             builder.push("debug");
             builder.push("sky");
             this.celestialForceAll = builder.translation("evolution.config.celestialForceAll").define("celestialForceAll", false);
             this.celestialEquator = builder.translation("evolution.config.celestialEquator").define("celestialEquator", false);
             this.celestialPoles = builder.translation("evolution.config.celestialPoles").define("celestialPoles", false);
             this.ecliptic = builder.translation("evolution.config.ecliptic").define("ecliptic", false);
+            this.planets = builder.translation("evolution.config.planets").define("planets", false);
             builder.pop();
             builder.pop();
             builder.pop();

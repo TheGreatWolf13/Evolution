@@ -35,6 +35,8 @@
   "evolution.config.limitTimeUnitsToHour": "Limitar Unidades de Tempo em Horas",
   "evolution.config.limitTimeUnitsToHour.comment": "Limita as unidades de tempo na tela de estatísticas em horas, ao invés de dias e anos.",
   "evolution.config.range": "Intervalo: %1$s",
+  "evolution.config.showPlanets": "Mostrar Planetas",
+  "evolution.config.showPlanets.comment": "Mostra os planetas nos céus. Embora imersivo e realista, eles não têm qualquer impacto na jogabilidade. Desabilitá-los pode levemente melhorar a performance.",
   "evolution.config.torchTime": "Tempo da Tocha",
   "evolution.config.torchTime.comment": "Define o tempo pelo qual a tocha ficará acessa, em horas dentro do jogo.\n0 vai desabilitar que elas apaguem.",
   "forge.config.label.client": "Client",

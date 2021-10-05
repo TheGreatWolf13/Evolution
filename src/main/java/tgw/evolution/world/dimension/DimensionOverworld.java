@@ -1,15 +1,14 @@
 package tgw.evolution.world.dimension;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.Evolution;
-import tgw.evolution.util.EarthHelper;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.MoonPhase;
-import tgw.evolution.util.Vec3f;
+import tgw.evolution.config.EvolutionConfig;
+import tgw.evolution.util.*;
 
 import javax.annotation.Nullable;
 
@@ -28,7 +27,7 @@ public class DimensionOverworld {
     private float lunarEclipseDRightAscension;
     private float moonAltitude;
     private float moonCelestialRadius;
-    private float moonDeclination;
+    private float moonDeclinationOffset;
     private MoonPhase moonPhase = MoonPhase.NEW_MOON;
     private float moonRightAscension;
     private float solarEclipseDDeclination;
@@ -37,7 +36,7 @@ public class DimensionOverworld {
     private float sunAltitude;
     private float sunAzimuth;
     private float sunCelestialRadius;
-    private float sunDeclination;
+    private float sunDeclinationOffset;
     private float sunRightAscension;
     private ClientWorld world;
 
@@ -126,8 +125,8 @@ public class DimensionOverworld {
         return this.moonCelestialRadius;
     }
 
-    public float getMoonDeclination() {
-        return this.moonDeclination;
+    public float getMoonDeclinationOffset() {
+        return this.moonDeclinationOffset;
     }
 
     public MoonPhase getMoonPhase() {
@@ -200,8 +199,8 @@ public class DimensionOverworld {
         return this.sunCelestialRadius;
     }
 
-    public float getSunDeclination() {
-        return this.sunDeclination;
+    public float getSunDeclinationOffset() {
+        return this.sunDeclinationOffset;
     }
 
     public float getSunRightAscension() {
@@ -244,9 +243,9 @@ public class DimensionOverworld {
     @Nullable
     private float[] sunsetColors() {
         if (this.sunAltitude >= 66.0F && this.sunAltitude <= 107.5F) {
-            float cosElevation = MathHelper.cosDeg(this.sunAltitude);
+            float cosSunAlt = MathHelper.cosDeg(this.sunAltitude);
             float mult = this.sunAltitude > 90 ? 1.5f : 1.1f;
-            float f3 = cosElevation * mult + 0.5F;
+            float f3 = cosSunAlt * mult + 0.5F;
             float alpha = 1.0F - (1.0F - MathHelper.sin(f3 * MathHelper.PI)) * 0.99F;
             alpha *= alpha;
             DUSK_DAWN_COLORS[0] = f3 * 0.3F + 0.7F;
@@ -262,12 +261,35 @@ public class DimensionOverworld {
         if (this.world == null) {
             return;
         }
+        Minecraft.getInstance().getProfiler().push("init");
         long dayTime = this.world.getDayTime();
-        this.sunRightAscension = EarthHelper.calculateSunRightAscension(dayTime);
+        this.latitude = EarthHelper.calculateLatitude(Evolution.PROXY.getClientPlayer().getZ());
+        float sinLatitude = MathHelper.sinDeg(this.latitude);
+        float cosLatitude = MathHelper.cosDeg(this.latitude);
+        Minecraft.getInstance().getProfiler().popPush("stars");
         this.starsRightAscension = EarthHelper.calculateStarsRightAscension(dayTime);
-        this.moonRightAscension = EarthHelper.calculateMoonRightAscension(dayTime);
+        Minecraft.getInstance().getProfiler().popPush("sun");
+        this.sunRightAscension = EarthHelper.calculateSunRightAscension(dayTime);
         float seasonDeclination = EarthHelper.sunSeasonalDeclination(dayTime);
+        this.sunCelestialRadius = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(seasonDeclination);
+        this.sunDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(seasonDeclination);
+        this.sunAltitude = EarthHelper.getSunAltitude(sinLatitude,
+                                                      cosLatitude,
+                                                      this.sunRightAscension * 360,
+                                                      this.sunCelestialRadius,
+                                                      this.sunDeclinationOffset);
+        Minecraft.getInstance().getProfiler().popPush("moon");
+        this.moonRightAscension = EarthHelper.calculateMoonRightAscension(dayTime);
         float monthlyDeclination = EarthHelper.lunarMonthlyDeclination(dayTime);
+        this.moonCelestialRadius = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(monthlyDeclination);
+        this.moonDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(monthlyDeclination);
+        this.moonPhase = MoonPhase.byAngles(this.sunRightAscension * 360, this.moonRightAscension * 360);
+        this.moonAltitude = EarthHelper.getMoonAltitude(sinLatitude,
+                                                        cosLatitude,
+                                                        this.moonRightAscension * 360,
+                                                        this.moonCelestialRadius,
+                                                        this.moonDeclinationOffset);
+        Minecraft.getInstance().getProfiler().popPush("eclipse");
         float dRightAscension = MathHelper.wrapDegrees(360 * (this.sunRightAscension - this.moonRightAscension));
         this.isInSolarEclipse = false;
         this.isInLunarEclipse = false;
@@ -299,29 +321,22 @@ public class DimensionOverworld {
                                                                         this.getLunarEclipseDeclinationIndex());
             }
         }
-        this.latitude = EarthHelper.calculateLatitude(Evolution.PROXY.getClientPlayer().getZ());
-        float sinLatitude = MathHelper.sinDeg(this.latitude);
-        float cosLatitude = MathHelper.cosDeg(this.latitude);
-        this.sunCelestialRadius = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(seasonDeclination);
-        this.moonCelestialRadius = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(monthlyDeclination);
-        this.sunDeclination = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(seasonDeclination);
-        this.moonDeclination = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(monthlyDeclination);
-        this.sunAltitude = EarthHelper.getSunAltitude(sinLatitude,
-                                                      cosLatitude,
-                                                      this.sunRightAscension * 360,
-                                                      this.sunCelestialRadius,
-                                                      this.sunDeclination);
-        this.moonAltitude = EarthHelper.getMoonAltitude(sinLatitude,
-                                                        cosLatitude,
-                                                        this.moonRightAscension * 360,
-                                                        this.moonCelestialRadius,
-                                                        this.moonDeclination);
+        Minecraft.getInstance().getProfiler().popPush("effects");
         this.fogColor = this.calculateFogColor();
         this.duskDawnColors = this.sunsetColors();
         //noinspection VariableNotUsedInsideIf
         if (this.duskDawnColors != null) {
             this.sunAzimuth = MathHelper.radToDeg((float) MathHelper.atan2(EarthHelper.sunX, EarthHelper.sunZ)) + 180;
         }
-        this.moonPhase = MoonPhase.byAngles(this.sunRightAscension * 360, this.moonRightAscension * 360);
+        if (EvolutionConfig.CLIENT.showPlanets.get()) {
+            Minecraft.getInstance().getProfiler().popPush("planets");
+            PlanetsHelper.preCalculations(dayTime);
+            PlanetsHelper.calculateOrbit1Mercury(dayTime);
+            PlanetsHelper.calculateOrbit2Venus(dayTime);
+            PlanetsHelper.calculateOrbit4Mars(dayTime);
+            PlanetsHelper.calculateOrbit5Jupiter(dayTime);
+            PlanetsHelper.calculateOrbit6Saturn(dayTime);
+        }
+        Minecraft.getInstance().getProfiler().pop();
     }
 }

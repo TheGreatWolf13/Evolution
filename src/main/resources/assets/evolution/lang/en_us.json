@@ -35,6 +35,8 @@
   "evolution.config.limitTimeUnitsToHour": "Limit Time Units to Hour",
   "evolution.config.limitTimeUnitsToHour.comment": "Limits the time units in the statistics screen to hours, instead of days and years.",
   "evolution.config.range": "Range: %1$s",
+  "evolution.config.showPlanets": "Show Planets",
+  "evolution.config.showPlanets.comment": "Shows the planets in the skies. Although immersive and realistic, they do not have any gameplay impact. Disabling them might slightly improve performance.",
   "evolution.config.torchTime": "Torch Time",
   "evolution.config.torchTime.comment": "Define the time in game hours the torch will be lit for.\n0 will disable unliting.",
   "forge.config.label.client": "Client",

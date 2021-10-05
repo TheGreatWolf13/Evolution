@@ -10,6 +10,7 @@ public final class EarthHelper {
 
     public static final long NORTH_POLE = 100_000L;
     public static final float CELESTIAL_SPHERE_RADIUS = 100.0f;
+    public static final float ECLIPTIC_INCLINATION = 23.5f; //º
     private static final Vec3f ZENITH = new Vec3f(0, CELESTIAL_SPHERE_RADIUS, 0);
     private static final Vec3f SUN = new Vec3f(0, 0, 0);
     private static final Vec3f MOON = new Vec3f(0, 0, 0);
@@ -42,6 +43,7 @@ public final class EarthHelper {
     }
 
     public static float calculateStarsRightAscension(long worldTime) {
+        worldTime += 6 * Time.HOUR_IN_TICKS;
         worldTime %= Time.SIDEREAL_DAY_IN_TICKS;
         return (float) worldTime / Time.SIDEREAL_DAY_IN_TICKS;
     }
@@ -163,7 +165,7 @@ public final class EarthHelper {
      * @return A value in degrees representing the declination of the Moon in the skies.
      */
     public static float lunarMonthlyDeclination(long worldTime) {
-        float amplitude = lunarStandStillAmplitude(worldTime) + 23.5f;
+        float amplitude = lunarStandStillAmplitude(worldTime) + ECLIPTIC_INCLINATION;
         return amplitude * MathHelper.sin(MathHelper.TAU * worldTime / Time.MONTH_IN_TICKS);
     }
 
@@ -220,6 +222,6 @@ public final class EarthHelper {
      */
     public static float sunSeasonalDeclination(long worldTime) {
         float dayTime = (float) worldTime / Time.DAY_IN_TICKS + Date.DAYS_SINCE_MARCH_EQUINOX;
-        return 23.5f * MathHelper.sin(MathHelper.TAU * dayTime / Time.DAYS_IN_A_YEAR);
+        return ECLIPTIC_INCLINATION * MathHelper.sin(MathHelper.TAU * dayTime / Time.DAYS_IN_A_YEAR);
     }
 }
