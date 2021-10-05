@@ -352,14 +352,18 @@ public final class PlayerHelper {
         }
         Evolution.LOGGER.debug("{} received {}HP of {} damage on {}", player.getScoreboardName(), damage, type, slot);
         switch (slot) {
-            case HEAD:
+            case HEAD: {
                 return headHit(player, damage, type);
-            case CHEST:
+            }
+            case CHEST: {
                 return chestHit(player, damage, type);
-            case LEGS:
+            }
+            case LEGS: {
                 return legHit(player, damage, type);
-            case FEET:
+            }
+            case FEET: {
                 return footHit(player, damage, type);
+            }
         }
         return damage;
     }
@@ -368,7 +372,7 @@ public final class PlayerHelper {
     public static EquipmentSlotType getPartByPosition(double y, PlayerEntity player) {
         double yRelativistic = y - player.getY();
         switch (player.getPose()) {
-            case CROUCHING:
+            case CROUCHING: {
                 if (yRelativistic <= 0.25) {
                     return EquipmentSlotType.FEET;
                 }
@@ -382,14 +386,17 @@ public final class PlayerHelper {
                     return EquipmentSlotType.HEAD;
                 }
                 return null;
-            case DYING:
+            }
+            case DYING: {
                 return null;
+            }
             case FALL_FLYING:
             case SLEEPING:
             case SPIN_ATTACK:
-            case SWIMMING:
+            case SWIMMING: {
                 return EquipmentSlotType.LEGS;
-            default:
+            }
+            default: {
                 if (yRelativistic <= 0.375) {
                     return EquipmentSlotType.FEET;
                 }
@@ -403,6 +410,7 @@ public final class PlayerHelper {
                     return EquipmentSlotType.HEAD;
                 }
                 return null;
+            }
         }
     }
 
