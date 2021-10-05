@@ -1,4 +1,54 @@
 {
+  "copper_break": {
+    "sounds": [
+      "evolution:block/copper/break1",
+      "evolution:block/copper/break2",
+      "evolution:block/copper/break3",
+      "evolution:block/copper/break4"
+    ],
+    "subtitle": "subtitles.block.generic.break"
+  },
+  "copper_fall": {
+    "sounds": [
+      "evolution:block/copper/step1",
+      "evolution:block/copper/step2",
+      "evolution:block/copper/step3",
+      "evolution:block/copper/step4",
+      "evolution:block/copper/step5",
+      "evolution:block/copper/step6"
+    ]
+  },
+  "copper_hit": {
+    "sounds": [
+      "evolution:block/copper/step1",
+      "evolution:block/copper/step2",
+      "evolution:block/copper/step3",
+      "evolution:block/copper/step4",
+      "evolution:block/copper/step5",
+      "evolution:block/copper/step6"
+    ],
+    "subtitle": "subtitles.block.generic.hit"
+  },
+  "copper_place": {
+    "sounds": [
+      "evolution:block/copper/break1",
+      "evolution:block/copper/break2",
+      "evolution:block/copper/break3",
+      "evolution:block/copper/break4"
+    ],
+    "subtitle": "subtitles.block.generic.place"
+  },
+  "copper_step": {
+    "sounds": [
+      "evolution:block/copper/step1",
+      "evolution:block/copper/step2",
+      "evolution:block/copper/step3",
+      "evolution:block/copper/step4",
+      "evolution:block/copper/step5",
+      "evolution:block/copper/step6"
+    ],
+    "subtitle": "subtitles.block.generic.footsteps"
+  },
   "javelin_hit_block": {
     "category": "player",
     "subtitle": "evolution.subtitle.javelin_hit_block",

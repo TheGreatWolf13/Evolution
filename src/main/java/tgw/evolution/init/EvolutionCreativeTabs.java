@@ -12,6 +12,13 @@ public final class EvolutionCreativeTabs {
         }
     };
 
+    public static final ItemGroup EGGS = new ItemGroup("evolution.eggs") {
+        @Override
+        public ItemStack makeIcon() {
+            return new ItemStack(EvolutionEntities.SPAWN_EGG_COW.get());
+        }
+    };
+
     public static final ItemGroup MISC = new ItemGroup("evolution.misc") {
         @Override
         public ItemStack makeIcon() {
@@ -19,10 +26,10 @@ public final class EvolutionCreativeTabs {
         }
     };
 
-    public static final ItemGroup STONE_TOOLS = new ItemGroup("evolution.stone_tools") {
+    public static final ItemGroup STONE_TOOLS = new ItemGroup("evolution.stone") {
         @Override
         public ItemStack makeIcon() {
-            return new ItemStack(EvolutionItems.axe_head_andesite.get());
+            return new ItemStack(EvolutionItems.rock_andesite.get());
         }
     };
 
@@ -33,10 +40,10 @@ public final class EvolutionCreativeTabs {
         }
     };
 
-    public static final ItemGroup EGGS = new ItemGroup("evolution.eggs") {
+    public static final ItemGroup METAL = new ItemGroup("evolution.metal") {
         @Override
         public ItemStack makeIcon() {
-            return new ItemStack(EvolutionEntities.SPAWN_EGG_COW.get());
+            return new ItemStack(EvolutionItems.ingot_copper.get());
         }
     };
 

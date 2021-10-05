@@ -10,7 +10,6 @@ import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemModelsProperties;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.stats.Stat;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
@@ -65,13 +64,6 @@ public class ClientProxy implements IProxy {
                                                                         0.0F);
             }
         }
-        ItemModelsProperties.register(EvolutionItems.block_copper.get(), new ResourceLocation("oxidation"), (stack, worldIn, entity) -> {
-            CompoundNBT nbt = stack.getTag();
-            if (nbt == null) {
-                return 0;
-            }
-            return nbt.getInt("Oxidation");
-        });
     }
 
     public static void changeWorldOrders() {

@@ -43,7 +43,7 @@ public final class EvolutionTEs {
         LOGGABLE = TILES.register("te_loggable",
                                   () -> Builder.of(TELoggable::new, getMatchingBlocks(BlockPlaceableRock.class, PEAT.get(), STICK.get()))
                                                .build(null));
-        METAL = TILES.register("te_metal", () -> Builder.of(TEMetal::new, BLOCK_COPPER.get()).build(null));
+        METAL = TILES.register("te_metal", () -> Builder.of(TEMetal::new, getMetals()).build(null));
         MOLDING = TILES.register("te_molding", () -> Builder.of(TEMolding::new, EvolutionBlocks.MOLDING.get()).build(null));
         PIT_KILN = TILES.register("te_pit_kiln", () -> Builder.of(TEPitKiln::new, EvolutionBlocks.PIT_KILN.get()).build(null));
         PUZZLE = TILES.register("te_puzzle", () -> Builder.of(TEPuzzle::new, EvolutionBlocks.PUZZLE.get()).build(null));
@@ -62,6 +62,10 @@ public final class EvolutionTEs {
         List<Block> blockList = ForgeRegistries.BLOCKS.getValues().stream().filter(block -> block.getClass() == clazz).collect(Collectors.toList());
         blockList.addAll(Arrays.asList(otherBlocks));
         return blockList.toArray(new Block[0]);
+    }
+
+    private static Block[] getMetals() {
+        return new Block[]{BLOCK_METAL_COPPER.get(), BLOCK_METAL_COPPER_EXP.get(), BLOCK_METAL_COPPER_WEAT.get()};
     }
 
     public static void register() {

@@ -19,6 +19,7 @@ import tgw.evolution.blocks.trees.TreeBirch;
 import tgw.evolution.blocks.trees.TreeNull;
 import tgw.evolution.blocks.trees.TreeOak;
 import tgw.evolution.util.MetalVariant;
+import tgw.evolution.util.Oxidation;
 import tgw.evolution.util.RockVariant;
 import tgw.evolution.util.WoodVariant;
 
@@ -360,7 +361,13 @@ public final class EvolutionBlocks {
     public static final RegistryObject<Block> BRICK_CLAY = BLOCKS.register("brick_clay", () -> new BlockMoldClay(Block.box(2, 0, 5, 14, 6, 11)));
     public static final RegistryObject<Block> CRUCIBLE_CLAY = BLOCKS.register("crucible_clay", () -> new BlockMoldClay(5));
     //Metal Blocks
-    public static final RegistryObject<Block> BLOCK_COPPER = BLOCKS.register("block_copper", () -> metal(COPPER));
+    public static final RegistryObject<Block> BLOCK_METAL_COPPER = BLOCKS.register("block_metal_copper", () -> metal(COPPER, Oxidation.NONE));
+    public static final RegistryObject<Block> BLOCK_METAL_COPPER_EXP = BLOCKS.register("block_metal_copper_exposed",
+                                                                                       () -> metal(COPPER, Oxidation.EXPOSED));
+    public static final RegistryObject<Block> BLOCK_METAL_COPPER_WEAT = BLOCKS.register("block_metal_copper_weathered",
+                                                                                        () -> metal(COPPER, Oxidation.WEATHERED));
+    public static final RegistryObject<Block> BLOCK_METAL_COPPER_OXID = BLOCKS.register("block_metal_copper_oxidized",
+                                                                                        () -> metal(COPPER, Oxidation.OXIDIZED));
     //Chopping Blocks
     public static final RegistryObject<Block> CHOPPING_BLOCK_ACACIA = BLOCKS.register("chopping_block_acacia", () -> new BlockChopping(ACACIA));
     public static final RegistryObject<Block> CHOPPING_BLOCK_ASPEN = BLOCKS.register("chopping_block_aspen", () -> new BlockChopping(ASPEN));
@@ -455,8 +462,8 @@ public final class EvolutionBlocks {
         return new BlockLog(variant);
     }
 
-    private static Block metal(MetalVariant variant) {
-        return new BlockMetal(variant);
+    private static Block metal(MetalVariant variant, Oxidation oxidation) {
+        return new BlockMetal(variant, oxidation);
     }
 
     private static Block planks(WoodVariant variant) {

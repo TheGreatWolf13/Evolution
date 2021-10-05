@@ -20,7 +20,6 @@ public final class DirectionUtil {
     private DirectionUtil() {
     }
 
-    // Direction#byId is slow in the absence of Lithium
     public static Direction getOpposite(Direction dir) {
         return OPPOSITE[dir.ordinal()];
     }

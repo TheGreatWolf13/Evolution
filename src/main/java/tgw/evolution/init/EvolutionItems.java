@@ -515,7 +515,14 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> javelin_shale = ITEMS.register("javelin_shale", () -> javelin(EvolutionToolMaterials.STONE_SHALE));
     public static final RegistryObject<Item> javelin_slate = ITEMS.register("javelin_slate", () -> javelin(EvolutionToolMaterials.STONE_SLATE));
     //Metal Blocks
-    public static final RegistryObject<Item> block_copper = ITEMS.register("block_copper", () -> new ItemBlockMetal(BLOCK_COPPER.get(), propMisc()));
+    public static final RegistryObject<Item> block_metal_copper = ITEMS.register("block_metal_copper",
+                                                                                 () -> itemBlock(BLOCK_METAL_COPPER, propMetal()));
+    public static final RegistryObject<Item> block_metal_copper_exposed = ITEMS.register("block_metal_copper_exposed",
+                                                                                         () -> itemBlock(BLOCK_METAL_COPPER_EXP, propMetal()));
+    public static final RegistryObject<Item> block_metal_copper_weathered = ITEMS.register("block_metal_copper_weathered",
+                                                                                           () -> itemBlock(BLOCK_METAL_COPPER_WEAT, propMetal()));
+    public static final RegistryObject<Item> block_metal_copper_oxidized = ITEMS.register("block_metal_copper_oxidized",
+                                                                                          () -> itemBlock(BLOCK_METAL_COPPER_OXID, propMetal()));
     //Metal Ingots
     public static final RegistryObject<Item> ingot_copper = ITEMS.register("ingot_copper", () -> item(propMisc()));
     //Metal Nuggets
@@ -836,6 +843,10 @@ public final class EvolutionItems {
 
     public static Item.Properties propLiquid() {
         return new Item.Properties().tab(EvolutionCreativeTabs.LIQUIDS);
+    }
+
+    public static Item.Properties propMetal() {
+        return new Item.Properties().tab(EvolutionCreativeTabs.METAL);
     }
 
     public static Item.Properties propMisc() {

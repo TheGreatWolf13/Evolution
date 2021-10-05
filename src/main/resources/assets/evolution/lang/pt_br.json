@@ -6,8 +6,9 @@
   "itemGroup.evolution.dev": "Itens de Desenvolvedor",
   "itemGroup.evolution.eggs": "Ovos de Spawn",
   "itemGroup.evolution.liquids": "Líquidos e Recipientes",
+  "itemGroup.evolution.metal": "Metal",
   "itemGroup.evolution.misc": "Diversos",
-  "itemGroup.evolution.stone_tools": "Ferramentas de Pedra",
+  "itemGroup.evolution.stone": "Pedra",
   "itemGroup.evolution.trees_and_wood": "Árvores e Madeira",
   "COMMENT_CONFIG": "________________________________________________________________________________________________________________CONFIGS",
   "evolution.config.allowedValues": "Valores Permitidos: %1$s",
@@ -541,7 +542,10 @@
   "evolution.fluid.fresh_water": "Água Doce",
   "evolution.fluid.salt_water": "Água Salgada",
   "COMMENT_BLOCKS": "_________________________________________________________________________________________________________________BLOCKS",
-  "block.evolution.block_copper": "Bloco de Cobre",
+  "block.evolution.block_metal_copper": "Bloco de Cobre",
+  "block.evolution.block_metal_copper_exposed": "Bloco de Cobre Exposto",
+  "block.evolution.block_metal_copper_weathered": "Bloco de Cobre Desgastado",
+  "block.evolution.block_metal_copper_oxidized": "Bloco de Cobre Oxidado",
   "block.evolution.clay": "Argila",
   "block.evolution.chopping_block_acacia": "Bloco de Corte de Acácia",
   "block.evolution.chopping_block_aspen": "Bloco de Corte de Choupo",
@@ -1109,5 +1113,6 @@
   "evolution.easter.chert": "As estrelas eram lindas, não eram?",
   "evolution.easter.gabbro": "Você já ficou olhando um ciclone por tanto tempo que começou a ficar hipnotizado?",
   "evolution.easter.gneiss": "Às vezes, é como se fosse ontem que tocavam seus instrumentos em frente à fogueira...",
-  "evolution.easter.slate": "Eu só estou aqui pela ciência espacial e os marshmallows."
+  "evolution.easter.slate": "Eu só estou aqui pela ciência espacial e os marshmallows.",
+  "block.evolution.block_copper": "Bloco de Cobre"
 }
