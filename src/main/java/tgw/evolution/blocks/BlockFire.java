@@ -73,7 +73,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
         int i = 0;
         for (Direction direction : DirectionUtil.ALL) {
             BlockState blockstate = world.getBlockState(pos.relative(direction));
-            i = Math.max(blockstate.getFlammability(world, pos.relative(direction), direction.getOpposite()), i);
+            i = Math.max(blockstate.getFlammability(world, pos.relative(direction), DirectionUtil.getOpposite(direction)), i);
         }
         return i;
     }
@@ -186,7 +186,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
 
     private boolean areNeighborsFlammable(IBlockReader world, BlockPos pos) {
         for (Direction direction : DirectionUtil.ALL) {
-            if (this.canCatchFire(world, pos.relative(direction), direction.getOpposite())) {
+            if (this.canCatchFire(world, pos.relative(direction), DirectionUtil.getOpposite(direction))) {
                 return true;
             }
         }
@@ -308,7 +308,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
             for (Direction direction : DirectionUtil.ALL_EXCEPT_DOWN) {
                 BooleanProperty booleanProperty = directionToProperty(direction);
                 if (booleanProperty != null) {
-                    state = state.setValue(booleanProperty, this.canCatchFire(world, pos.relative(direction), direction.getOpposite()));
+                    state = state.setValue(booleanProperty, this.canCatchFire(world, pos.relative(direction), DirectionUtil.getOpposite(direction)));
                 }
             }
             return state;

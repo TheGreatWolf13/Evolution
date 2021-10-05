@@ -20,6 +20,7 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.util.BlockFlags;
+import tgw.evolution.util.DirectionUtil;
 import tgw.evolution.util.HarvestLevel;
 import tgw.evolution.util.MathHelper;
 
@@ -41,14 +42,14 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
         Direction direction = state.getValue(DIRECTION_HORIZONTAL);
         BlockState stateTest = world.getBlockState(pos.relative(direction));
         if (stateTest.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
-            if (stateTest.getValue(DIRECTION_HORIZONTAL).getOpposite() == direction) {
+            if (DirectionUtil.getOpposite(stateTest.getValue(DIRECTION_HORIZONTAL)) == direction) {
                 return;
             }
         }
         else if (BlockUtils.isReplaceable(stateTest)) {
             stateTest = world.getBlockState(pos.relative(direction).below());
             if (stateTest.getBlock() == EvolutionBlocks.ROPE.get()) {
-                if (stateTest.getValue(DIRECTION_HORIZONTAL).getOpposite() == direction) {
+                if (DirectionUtil.getOpposite(stateTest.getValue(DIRECTION_HORIZONTAL)) == direction) {
                     return;
                 }
             }
@@ -170,7 +171,7 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
             mutablePos.move(movement);
             BlockState temp = world.getBlockState(mutablePos);
             if (movement != Direction.DOWN && temp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
-                if (temp.getValue(DIRECTION_HORIZONTAL) == movement.getOpposite()) {
+                if (temp.getValue(DIRECTION_HORIZONTAL) == DirectionUtil.getOpposite(movement)) {
                     count++;
                     toRemove.add(mutablePos.immutable());
                     continue;
@@ -182,7 +183,7 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
                 mutablePos.move(Direction.DOWN);
                 temp = world.getBlockState(mutablePos);
                 if (temp.getBlock() == EvolutionBlocks.ROPE.get()) {
-                    if (temp.getValue(DIRECTION_HORIZONTAL) == direction.getOpposite()) {
+                    if (temp.getValue(DIRECTION_HORIZONTAL) == DirectionUtil.getOpposite(direction)) {
                         count++;
                         toRemove.add(mutablePos.immutable());
                         continue;
@@ -191,7 +192,7 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
                 break;
             }
             if (movement == Direction.DOWN && temp.getBlock() == EvolutionBlocks.ROPE.get()) {
-                if (temp.getValue(DIRECTION_HORIZONTAL) == direction.getOpposite()) {
+                if (temp.getValue(DIRECTION_HORIZONTAL) == DirectionUtil.getOpposite(direction)) {
                     count++;
                     toRemove.add(mutablePos.immutable());
                     continue;

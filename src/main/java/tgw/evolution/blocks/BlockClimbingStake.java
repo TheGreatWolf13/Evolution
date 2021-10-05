@@ -65,14 +65,14 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                     continue;
                 }
                 if (stateTest.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
-                    if (stateTest.getValue(DIRECTION_HORIZONTAL).getOpposite() == direction) {
+                    if (DirectionUtil.getOpposite(stateTest.getValue(DIRECTION_HORIZONTAL)) == direction) {
                         continue;
                     }
                 }
                 else if (BlockUtils.isReplaceable(stateTest)) {
                     stateTest = world.getBlockState(pos.relative(direction).below());
                     if (stateTest.getBlock() == EvolutionBlocks.ROPE.get()) {
-                        if (stateTest.getValue(DIRECTION_HORIZONTAL).getOpposite() == direction) {
+                        if (DirectionUtil.getOpposite(stateTest.getValue(DIRECTION_HORIZONTAL)) == direction) {
                             continue;
                         }
                     }
@@ -132,7 +132,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
     @Override
     public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
         Direction facing = state.getValue(DIRECTION_EXCEPT_UP);
-        return BlockUtils.hasSolidSide(world, pos.relative(facing), facing.getOpposite());
+        return BlockUtils.hasSolidSide(world, pos.relative(facing), DirectionUtil.getOpposite(facing));
     }
 
     @Override
@@ -178,7 +178,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
-        Direction face = context.getClickedFace().getOpposite();
+        Direction face = DirectionUtil.getOpposite(context.getClickedFace());
         if (face == Direction.UP) {
             face = Direction.DOWN;
         }
@@ -247,7 +247,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                     mutablePos.move(movement);
                     temp = world.getBlockState(mutablePos);
                     if (movement != Direction.DOWN && temp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
-                        if (temp.getValue(DIRECTION_HORIZONTAL) == movement.getOpposite()) {
+                        if (temp.getValue(DIRECTION_HORIZONTAL) == DirectionUtil.getOpposite(movement)) {
                             count++;
                             toRemove.add(mutablePos.immutable());
                             continue;
@@ -259,7 +259,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                         mutablePos.move(Direction.DOWN);
                         temp = world.getBlockState(mutablePos);
                         if (temp.getBlock() == EvolutionBlocks.ROPE.get()) {
-                            if (temp.getValue(DIRECTION_HORIZONTAL) == direction.getOpposite()) {
+                            if (temp.getValue(DIRECTION_HORIZONTAL) == DirectionUtil.getOpposite(direction)) {
                                 count++;
                                 toRemove.add(mutablePos.immutable());
                                 continue;
@@ -268,7 +268,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                         break;
                     }
                     if (movement == Direction.DOWN && temp.getBlock() == EvolutionBlocks.ROPE.get()) {
-                        if (temp.getValue(DIRECTION_HORIZONTAL) == direction.getOpposite()) {
+                        if (temp.getValue(DIRECTION_HORIZONTAL) == DirectionUtil.getOpposite(direction)) {
                             count++;
                             toRemove.add(mutablePos.immutable());
                             continue;
@@ -366,7 +366,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
             int count = heldStack.getCount();
             Direction movement = state.getValue(DIRECTION_EXCEPT_UP) != Direction.DOWN ? Direction.DOWN : player.getDirection();
             Direction support = state.getValue(DIRECTION_EXCEPT_UP) == Direction.DOWN ?
-                                player.getDirection().getOpposite() :
+                                DirectionUtil.getOpposite(player.getDirection()) :
                                 state.getValue(DIRECTION_EXCEPT_UP);
             Direction ropeDir = movement == Direction.DOWN ? Direction.DOWN : player.getDirection();
             boolean before = state.getValue(directionToProperty(ropeDir));
