@@ -55,7 +55,7 @@ public class RenderFallingWeight extends EntityRenderer<EntityFallingWeight> {
                                               MUTABLE_POS,
                                               matrices,
                                               buffer.getBuffer(type),
-                                              true,
+                                              false,
                                               MathHelper.RANDOM,
                                               MathHelper.getPositionRandom(MUTABLE_POS),
                                               OverlayTexture.NO_OVERLAY);
