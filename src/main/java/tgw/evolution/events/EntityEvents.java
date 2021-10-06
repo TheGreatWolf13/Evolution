@@ -607,6 +607,14 @@ public class EntityEvents {
                 }
             }
         }
+        PacketDistributor.PacketTarget target = PacketDistributor.PLAYER.with(() -> player);
+        for (PlayerEntity otherPlayer : world.players()) {
+            if (!otherPlayer.equals(player)) {
+                //noinspection ObjectAllocationInLoop
+                EvolutionNetwork.INSTANCE.send(target, new PacketSCFixRotation(otherPlayer));
+            }
+        }
+        EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> player), new PacketSCFixRotation(player));
     }
 
     @SubscribeEvent
