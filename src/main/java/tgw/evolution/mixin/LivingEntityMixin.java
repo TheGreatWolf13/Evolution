@@ -24,10 +24,7 @@ import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.EntityDamageSource;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.SoundEvents;
+import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
@@ -48,6 +45,7 @@ import tgw.evolution.blocks.IFriction;
 import tgw.evolution.entities.IEntityPatch;
 import tgw.evolution.entities.IEntityProperties;
 import tgw.evolution.events.EntityEvents;
+import tgw.evolution.hooks.LivingEntityHooks;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionNetwork;
@@ -69,6 +67,8 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     @Shadow
     public float animationSpeed;
     @Shadow
+    public float attackAnim;
+    @Shadow
     public float flyingSpeed;
     @Shadow
     public float hurtDir;
@@ -76,6 +76,22 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     public int hurtDuration;
     @Shadow
     public int hurtTime;
+    @Shadow
+    public int removeArrowTime;
+    @Shadow
+    public int removeStingerTime;
+    @Shadow
+    public float yBodyRot;
+    @Shadow
+    public float yBodyRotO;
+    @Shadow
+    public float yHeadRot;
+    @Shadow
+    public float yHeadRotO;
+    @Shadow
+    protected float animStep;
+    @Shadow
+    protected int fallFlyTicks;
     @Shadow
     protected boolean jumping;
     @Shadow
@@ -87,6 +103,10 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     protected int lastHurtByPlayerTime;
     @Shadow
     protected int noActionTime;
+    @Shadow
+    protected float oRun;
+    @Shadow
+    protected float run;
     @Shadow
     private DamageSource lastDamageSource;
     @Shadow
@@ -101,6 +121,9 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     @Shadow
     protected abstract void actuallyHurt(DamageSource p_70665_1_, float p_70665_2_);
 
+    @Shadow
+    public abstract void aiStep();
+
     @Redirect(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;isEffectiveAi()Z", ordinal = 0))
     private boolean aiStepProxy(LivingEntity entity) {
         return true;
@@ -109,8 +132,27 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     @Shadow
     protected abstract void blockUsingShield(LivingEntity p_190629_1_);
 
-    @Shadow
-    public abstract void calculateEntityAnimation(LivingEntity p_233629_1_, boolean p_233629_2_);
+    /**
+     * @author MGSchultz
+     * <p>
+     * Overwrite to reset animation position.
+     */
+    @Overwrite
+    public void calculateEntityAnimation(LivingEntity entity, boolean flies) {
+        entity.animationSpeedOld = entity.animationSpeed;
+        double dx = entity.getX() - entity.xo;
+        double dy = flies ? entity.getY() - entity.yo : 0.0D;
+        double dz = entity.getZ() - entity.zo;
+        float dSSq = MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * 4.0F;
+        if (dSSq > 1.0F) {
+            dSSq = 1.0F;
+        }
+        else if (dSSq <= 1E-20 && entity.animationSpeed <= 1E-2F) {
+            entity.animationPosition = 0;
+        }
+        entity.animationSpeed += (dSSq - entity.animationSpeed) * 0.4F;
+        entity.animationPosition += entity.animationSpeed;
+    }
 
     private void calculateWallImpact(double speedX, double speedZ, double mass) {
         double motionXPost = this.getDeltaMovement().x;
@@ -210,7 +252,13 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     public abstract boolean canStandOnFluid(Fluid p_230285_1_);
 
     @Shadow
+    protected abstract boolean checkBedExists();
+
+    @Shadow
     protected abstract boolean checkTotemDeathProtection(DamageSource p_190628_1_);
+
+    @Shadow
+    protected abstract void detectEquipmentUpdates();
 
     @Shadow
     public abstract void die(DamageSource p_70645_1_);
@@ -252,6 +300,9 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     }
 
     @Shadow
+    public abstract int getArrowCount();
+
+    @Shadow
     @Nullable
     public abstract ModifiableAttributeInstance getAttribute(Attribute attribute);
 
@@ -265,6 +316,9 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     public double getBaseMass() {
         return 70;
     }
+
+    @Shadow
+    public abstract CombatTracker getCombatTracker();
 
     @Shadow
     @Nullable
@@ -303,6 +357,9 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
 
     @Shadow
     protected abstract float getSoundVolume();
+
+    @Shadow
+    public abstract int getStingerCount();
 
     @Shadow
     public abstract ItemStack getUseItem();
@@ -756,10 +813,135 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     protected abstract void playHurtSound(DamageSource p_184581_1_);
 
     @Shadow
+    public abstract void setArrowCount(int p_85034_1_);
+
+    @Shadow
     public abstract void setLastHurtByMob(@Nullable LivingEntity p_70604_1_);
 
     @Shadow
+    public abstract void setStingerCount(int p_226300_1_);
+
+    @Shadow
     public abstract void stopSleeping();
+
+    /**
+     * @author MGSchultz
+     * <p>
+     * Overwrite to rotate body
+     */
+    @Override
+    @Overwrite
+    public void tick() {
+        if (ForgeHooks.onLivingUpdate((LivingEntity) (Object) this)) {
+            return;
+        }
+        super.tick();
+        this.updatingUsingItem();
+        this.updateSwimAmount();
+        if (!this.level.isClientSide) {
+            int i = this.getArrowCount();
+            if (i > 0) {
+                if (this.removeArrowTime <= 0) {
+                    this.removeArrowTime = 20 * (30 - i);
+                }
+                --this.removeArrowTime;
+                if (this.removeArrowTime <= 0) {
+                    this.setArrowCount(i - 1);
+                }
+            }
+            int j = this.getStingerCount();
+            if (j > 0) {
+                if (this.removeStingerTime <= 0) {
+                    this.removeStingerTime = 20 * (30 - j);
+                }
+                --this.removeStingerTime;
+                if (this.removeStingerTime <= 0) {
+                    this.setStingerCount(j - 1);
+                }
+            }
+            this.detectEquipmentUpdates();
+            if (this.tickCount % 20 == 0) {
+                this.getCombatTracker().recheckStatus();
+            }
+            if (!this.glowing) {
+                boolean flag = this.hasEffect(Effects.GLOWING);
+                if (this.getSharedFlag(6) != flag) {
+                    this.setSharedFlag(6, flag);
+                }
+            }
+            if (this.isSleeping() && !this.checkBedExists()) {
+                this.stopSleeping();
+            }
+        }
+        this.aiStep();
+        double dx = this.getX() - this.xo;
+        double dz = this.getZ() - this.zo;
+        float dSSq = (float) (dx * dx + dz * dz);
+        float f1 = this.yBodyRot;
+        this.oRun = this.run;
+        float f3 = 0.0F;
+        float f2 = 0.0F;
+        if (dSSq > 0.002_500_000_2F) {
+            f3 = 1.0F;
+            f2 = MathHelper.sqrt(dSSq) * 3.0F;
+            float f4 = (float) MathHelper.atan2Deg(dz, dx) - 90.0F;
+            float f5 = Math.abs(MathHelper.wrapDegrees(this.yRot) - f4);
+            if (95.0F < f5 && f5 < 265.0F) {
+                f1 = f4 - 180.0F;
+            }
+            else {
+                f1 = f4;
+            }
+        }
+        if (this.attackAnim > 0.0F || LivingEntityHooks.shouldFixRotation((LivingEntity) (Object) this)) {
+            f1 = this.yRot;
+        }
+        if (!this.onGround) {
+            f3 = 0.0F;
+        }
+        this.run += (f3 - this.run) * 0.3F;
+        this.level.getProfiler().push("headTurn");
+        f2 = this.tickHeadTurn(f1, f2);
+        this.level.getProfiler().popPush("rangeChecks");
+        while (this.yRot - this.yRotO < -180.0F) {
+            this.yRotO -= 360.0F;
+        }
+        while (this.yRot - this.yRotO >= 180.0F) {
+            this.yRotO += 360.0F;
+        }
+        while (this.yBodyRot - this.yBodyRotO < -180.0F) {
+            this.yBodyRotO -= 360.0F;
+        }
+        while (this.yBodyRot - this.yBodyRotO >= 180.0F) {
+            this.yBodyRotO += 360.0F;
+        }
+        while (this.xRot - this.xRotO < -180.0F) {
+            this.xRotO -= 360.0F;
+        }
+        while (this.xRot - this.xRotO >= 180.0F) {
+            this.xRotO += 360.0F;
+        }
+        while (this.yHeadRot - this.yHeadRotO < -180.0F) {
+            this.yHeadRotO -= 360.0F;
+        }
+        while (this.yHeadRot - this.yHeadRotO >= 180.0F) {
+            this.yHeadRotO += 360.0F;
+        }
+        this.level.getProfiler().pop();
+        this.animStep += f2;
+        if (this.isFallFlying()) {
+            ++this.fallFlyTicks;
+        }
+        else {
+            this.fallFlyTicks = 0;
+        }
+        if (this.isSleeping()) {
+            this.xRot = 0.0F;
+        }
+    }
+
+    @Shadow
+    protected abstract float tickHeadTurn(float p_110146_1_, float p_110146_2_);
 
     /**
      * @author MGSchultz
@@ -912,4 +1094,10 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         }
         this.calculateEntityAnimation((LivingEntity) (Object) this, this instanceof IFlyingAnimal);
     }
+
+    @Shadow
+    protected abstract void updateSwimAmount();
+
+    @Shadow
+    protected abstract void updatingUsingItem();
 }

@@ -1,8 +1,13 @@
 package tgw.evolution.util.hitbox;
 
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.CrossbowItem;
+import net.minecraft.util.Hand;
+import net.minecraft.util.HandSide;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.vector.Vector3d;
+import tgw.evolution.util.MathHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +37,13 @@ public abstract class HitboxEntity<T extends Entity> {
         return aabb(x0 * scale, y0 * scale, z0 * scale, x1 * scale, y1 * scale, z1 * scale);
     }
 
+    public static boolean shouldPoseArm(LivingEntity entity, HandSide side) {
+        if (entity.getMainArm() == side) {
+            return entity.getUsedItemHand() == Hand.MAIN_HAND;
+        }
+        return entity.getUsedItemHand() == Hand.OFF_HAND;
+    }
+
     public static Vector3d v(double x, double y, double z) {
         return new Vector3d(x / 16, y / 16, z / 16);
     }
@@ -44,6 +56,35 @@ public abstract class HitboxEntity<T extends Entity> {
         Hitbox box = new Hitbox(part, aabb, this);
         this.boxes.add(box);
         return box;
+    }
+
+    public void animateCrossbowCharge(IHitbox rightArm, IHitbox leftArm, LivingEntity entity, boolean rightHanded) {
+        IHitbox mainArm = rightHanded ? rightArm : leftArm;
+        IHitbox offArm = rightHanded ? leftArm : rightArm;
+        mainArm.setRotationY(rightHanded ? -0.8F : 0.8F);
+        mainArm.setRotationX(-0.970_796_35F);
+        offArm.setRotationX(mainArm.getRotationX());
+        float f = CrossbowItem.getChargeDuration(entity.getUseItem());
+        float f1 = MathHelper.clamp(entity.getTicksUsingItem(), 0.0F, f);
+        float f2 = f1 / f;
+        offArm.setRotationY(MathHelper.lerp(f2, 0.4F, 0.85F) * (rightHanded ? 1 : -1));
+        offArm.setRotationX(MathHelper.lerp(f2, offArm.getRotationX(), -MathHelper.PI_OVER_2));
+    }
+
+    public void animateCrossbowHold(IHitbox rightArm, IHitbox leftArm, IHitbox head, boolean rightHanded) {
+        IHitbox mainArm = rightHanded ? rightArm : leftArm;
+        IHitbox offArm = rightHanded ? leftArm : rightArm;
+        mainArm.setRotationY((rightHanded ? -0.3F : 0.3F) + head.getRotationY());
+        offArm.setRotationY((rightHanded ? 0.6F : -0.6F) + head.getRotationY());
+        mainArm.setRotationX(-MathHelper.PI_OVER_2 + head.getRotationX() + 0.1F);
+        offArm.setRotationX(-1.5F + head.getRotationX());
+    }
+
+    public void bobArms(IHitbox rightArm, IHitbox leftArm, float ageInTicks) {
+        rightArm.addRotationZ(MathHelper.cos(ageInTicks * 0.09F) * 0.05F + 0.05F);
+        leftArm.addRotationZ(-MathHelper.cos(ageInTicks * 0.09F) * 0.05F - 0.05F);
+        rightArm.addRotationX(-MathHelper.sin(ageInTicks * 0.067F) * 0.05F);
+        leftArm.addRotationX(MathHelper.sin(ageInTicks * 0.067F) * 0.05F);
     }
 
     public void doOffset(double[] answer) {

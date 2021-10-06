@@ -5,6 +5,10 @@ import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.client.renderer.model.ModelHelper;
 import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.UseAction;
+import net.minecraft.util.Hand;
 import net.minecraft.util.HandSide;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -40,11 +44,119 @@ public abstract class BipedModelMixin<T extends LivingEntity> extends AgeableMod
     @Shadow
     protected abstract HandSide getAttackArm(T p_217147_1_);
 
-    @Shadow
-    protected abstract void poseLeftArm(T p_241655_1_);
+    /**
+     * @author MGSchultz
+     */
+    @Overwrite
+    private void poseLeftArm(T entity) {
+        switch (this.leftArmPose) {
+            case EMPTY: {
+                this.leftArm.yRot = 0.0F;
+                break;
+            }
+            case BLOCK: {
+                this.leftArm.xRot = this.leftArm.xRot * 0.5F - 0.942_477_9F;
+                this.leftArm.yRot = MathHelper.PI / 6.0F;
+                break;
+            }
+            case ITEM: {
+                if (entity.isUsingItem()) {
+                    if (this.shouldPoseArm(entity, HandSide.LEFT)) {
+                        ItemStack stack = entity.getUseItem();
+                        Item useItem = stack.getItem();
+                        UseAction action = useItem.getUseAnimation(stack);
+                        if (action == UseAction.EAT || action == UseAction.DRINK) {
+                            this.leftArm.xRot = -MathHelper.lerp(-1.0f * (entity.xRot - 90.0f) / 180.0f, 1.0f, 2.0f) +
+                                                MathHelper.sin(entity.tickCount * 1.5f) * 0.1f;
+                            this.leftArm.yRot = 0.3f;
+                            this.leftArm.zRot = -0.3f;
+                            break;
+                        }
+                    }
+                }
+                this.leftArm.xRot = this.leftArm.xRot * 0.5F - MathHelper.PI / 10.0F;
+                this.leftArm.yRot = 0.0F;
+                break;
+            }
+            case THROW_SPEAR: {
+                this.leftArm.xRot = this.leftArm.xRot * 0.5F - (MathHelper.PI - MathHelper.degToRad(entity.xRot));
+                this.leftArm.yRot = 0.0F;
+                break;
+            }
+            case BOW_AND_ARROW: {
+                this.rightArm.yRot = -0.1F + this.head.yRot - 0.4F;
+                this.leftArm.yRot = 0.1F + this.head.yRot;
+                this.rightArm.xRot = -MathHelper.PI_OVER_2 + this.head.xRot;
+                this.leftArm.xRot = -MathHelper.PI_OVER_2 + this.head.xRot;
+                break;
+            }
+            case CROSSBOW_CHARGE: {
+                ModelHelper.animateCrossbowCharge(this.rightArm, this.leftArm, entity, false);
+                break;
+            }
+            case CROSSBOW_HOLD: {
+                ModelHelper.animateCrossbowHold(this.rightArm, this.leftArm, this.head, false);
+                break;
+            }
+        }
+    }
 
-    @Shadow
-    protected abstract void poseRightArm(T p_241654_1_);
+    /**
+     * @author MGSchultz
+     */
+    @Overwrite
+    private void poseRightArm(T entity) {
+        switch (this.rightArmPose) {
+            case EMPTY: {
+                this.rightArm.yRot = 0.0F;
+                break;
+            }
+            case BLOCK: {
+                this.rightArm.xRot = this.rightArm.xRot * 0.5F - 0.942_477_9F;
+                this.rightArm.yRot = -MathHelper.PI / 6.0F;
+                break;
+            }
+            case ITEM: {
+                if (entity.isUsingItem()) {
+                    if (this.shouldPoseArm(entity, HandSide.RIGHT)) {
+                        ItemStack stack = entity.getUseItem();
+                        Item useItem = stack.getItem();
+                        UseAction action = useItem.getUseAnimation(stack);
+                        if (action == UseAction.EAT || action == UseAction.DRINK) {
+                            this.rightArm.xRot = -MathHelper.lerp(-1.0f * (entity.xRot - 90.0f) / 180.0f, 1.0f, 2.0f) +
+                                                 MathHelper.sin(entity.tickCount * 1.5f) * 0.1f;
+                            this.rightArm.yRot = -0.3f;
+                            this.rightArm.zRot = 0.3f;
+                            break;
+                        }
+                    }
+                }
+                this.rightArm.xRot = this.rightArm.xRot * 0.5F - MathHelper.PI / 10.0F;
+                this.rightArm.yRot = 0.0F;
+                break;
+            }
+            case THROW_SPEAR: {
+                this.rightArm.xRot = this.rightArm.xRot * 0.5F - (MathHelper.PI - MathHelper.degToRad(entity.xRot));
+                this.rightArm.yRot = 0.0F;
+                break;
+            }
+            case BOW_AND_ARROW: {
+                this.rightArm.yRot = -0.1F + this.head.yRot;
+                this.leftArm.yRot = 0.1F + this.head.yRot + 0.4F;
+                this.rightArm.xRot = -MathHelper.PI_OVER_2 + this.head.xRot;
+                this.leftArm.xRot = -MathHelper.PI_OVER_2 + this.head.xRot;
+                break;
+            }
+            case CROSSBOW_CHARGE: {
+                ModelHelper.animateCrossbowCharge(this.rightArm, this.leftArm, entity, true);
+                break;
+            }
+            case CROSSBOW_HOLD: {
+                ModelHelper.animateCrossbowHold(this.rightArm, this.leftArm, this.head, true);
+                break;
+            }
+        }
+    }
 
     @Shadow
     protected abstract float quadraticArmUpdate(float p_203068_1_);
@@ -201,4 +313,11 @@ public abstract class BipedModelMixin<T extends LivingEntity> extends AgeableMod
 
     @Shadow
     protected abstract void setupAttackAnimation(T p_230486_1_, float p_230486_2_);
+
+    private boolean shouldPoseArm(T entity, HandSide side) {
+        if (entity.getMainArm() == side) {
+            return entity.getUsedItemHand() == Hand.MAIN_HAND;
+        }
+        return entity.getUsedItemHand() == Hand.OFF_HAND;
+    }
 }

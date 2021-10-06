@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class HitboxGroup {
+public class HitboxGroup implements IHitbox {
 
     private final List<Hitbox> boxes = new ArrayList<>();
 
@@ -12,24 +12,28 @@ public class HitboxGroup {
         Collections.addAll(this.boxes, boxes);
     }
 
+    @Override
     public void addRotationX(float x) {
         for (Hitbox box : this.boxes) {
             box.rotationX += x;
         }
     }
 
+    @Override
     public void addRotationY(float y) {
         for (Hitbox box : this.boxes) {
             box.rotationY += y;
         }
     }
 
+    @Override
     public void addRotationZ(float z) {
         for (Hitbox box : this.boxes) {
             box.rotationZ += z;
         }
     }
 
+    @Override
     public float getRotationX() {
         if (this.boxes.isEmpty()) {
             throw new IllegalStateException("Empty group");
@@ -37,12 +41,7 @@ public class HitboxGroup {
         return this.boxes.get(0).rotationX;
     }
 
-    public void setRotationX(float x) {
-        for (Hitbox box : this.boxes) {
-            box.rotationX = x;
-        }
-    }
-
+    @Override
     public float getRotationY() {
         if (this.boxes.isEmpty()) {
             throw new IllegalStateException("Empty group");
@@ -50,23 +49,12 @@ public class HitboxGroup {
         return this.boxes.get(0).rotationY;
     }
 
-    public void setRotationY(float y) {
-        for (Hitbox box : this.boxes) {
-            box.rotationY = y;
-        }
-    }
-
+    @Override
     public float getRotationZ() {
         if (this.boxes.isEmpty()) {
             throw new IllegalStateException("Empty group");
         }
         return this.boxes.get(0).rotationZ;
-    }
-
-    public void setRotationZ(float z) {
-        for (Hitbox box : this.boxes) {
-            box.rotationZ = z;
-        }
     }
 
     public void setPivot(float x, float y, float z) {
@@ -94,6 +82,27 @@ public class HitboxGroup {
     public void setPivotZ(float z) {
         for (Hitbox box : this.boxes) {
             box.pivotZ = z;
+        }
+    }
+
+    @Override
+    public void setRotationX(float x) {
+        for (Hitbox box : this.boxes) {
+            box.rotationX = x;
+        }
+    }
+
+    @Override
+    public void setRotationY(float y) {
+        for (Hitbox box : this.boxes) {
+            box.rotationY = y;
+        }
+    }
+
+    @Override
+    public void setRotationZ(float z) {
+        for (Hitbox box : this.boxes) {
+            box.rotationZ = z;
         }
     }
 }

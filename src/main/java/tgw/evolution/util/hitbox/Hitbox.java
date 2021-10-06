@@ -5,7 +5,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.vector.Vector3d;
 import tgw.evolution.util.ILineConsumer;
 
-public class Hitbox {
+public class Hitbox implements IHitbox {
 
     private final AxisAlignedBB aabb;
     private final HitboxEntity<? extends Entity> parent;
@@ -21,6 +21,21 @@ public class Hitbox {
         this.part = part;
         this.aabb = aabb;
         this.parent = parent;
+    }
+
+    @Override
+    public void addRotationX(float x) {
+        this.rotationX += x;
+    }
+
+    @Override
+    public void addRotationY(float y) {
+        this.rotationY += y;
+    }
+
+    @Override
+    public void addRotationZ(float z) {
+        this.rotationZ += z;
     }
 
     public void doOffset(double[] answer) {
@@ -63,6 +78,21 @@ public class Hitbox {
         return this.part;
     }
 
+    @Override
+    public float getRotationX() {
+        return this.rotationX;
+    }
+
+    @Override
+    public float getRotationY() {
+        return this.rotationY;
+    }
+
+    @Override
+    public float getRotationZ() {
+        return this.rotationZ;
+    }
+
     public Matrix3d getTransformation() {
         Matrix3d xRot = new Matrix3d().asXRotation(this.rotationX);
         Matrix3d yRot = new Matrix3d().asYRotation(this.rotationY);
@@ -90,6 +120,21 @@ public class Hitbox {
     protected void setRotation(float x, float y, float z) {
         this.rotationX = x;
         this.rotationY = y;
+        this.rotationZ = z;
+    }
+
+    @Override
+    public void setRotationX(float x) {
+        this.rotationX = x;
+    }
+
+    @Override
+    public void setRotationY(float y) {
+        this.rotationY = y;
+    }
+
+    @Override
+    public void setRotationZ(float z) {
         this.rotationZ = z;
     }
 

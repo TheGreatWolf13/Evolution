@@ -1,57 +1,12 @@
-//package tgw.evolution.hooks;
-//
-//import net.minecraft.advancements.CriteriaTriggers;
-//import net.minecraft.block.Block;
-//import net.minecraft.block.BlockState;
-//import net.minecraft.block.Blocks;
-//import net.minecraft.entity.*;
-//import net.minecraft.entity.ai.attributes.Attributes;
-//import net.minecraft.entity.ai.attributes.ModifiableAttributeInstance;
-//import net.minecraft.entity.passive.IFlyingAnimal;
-//import net.minecraft.entity.passive.TameableEntity;
-//import net.minecraft.entity.player.PlayerEntity;
-//import net.minecraft.entity.player.ServerPlayerEntity;
-//import net.minecraft.entity.projectile.AbstractArrowEntity;
-//import net.minecraft.fluid.FluidState;
-//import net.minecraft.inventory.EquipmentSlotType;
-//import net.minecraft.item.Item;
-//import net.minecraft.item.ItemStack;
-//import net.minecraft.item.Items;
-//import net.minecraft.item.UseAction;
-//import net.minecraft.network.datasync.DataParameter;
-//import net.minecraft.potion.EffectInstance;
-//import net.minecraft.potion.Effects;
-//import net.minecraft.stats.Stats;
-//import net.minecraft.tags.FluidTags;
-//import net.minecraft.util.*;
-//import net.minecraft.util.math.AxisAlignedBB;
-//import net.minecraft.util.math.BlockPos;
-//import net.minecraft.util.math.vector.Vector3d;
-//import net.minecraftforge.common.ForgeHooks;
-//import net.minecraftforge.common.ForgeMod;
-//import net.minecraftforge.event.ForgeEventFactory;
-//import net.minecraftforge.fml.network.PacketDistributor;
-//import tgw.evolution.Evolution;
-//import tgw.evolution.blocks.BlockUtils;
-//import tgw.evolution.blocks.ICollisionBlock;
-//import tgw.evolution.blocks.IFriction;
-//import tgw.evolution.entities.EntityGenericCreature;
-//import tgw.evolution.entities.IEntityProperties;
-//import tgw.evolution.events.ClientEvents;
-//import tgw.evolution.events.EntityEvents;
-//import tgw.evolution.init.EvolutionAttributes;
-//import tgw.evolution.init.EvolutionDamage;
-//import tgw.evolution.init.EvolutionNetwork;
-//import tgw.evolution.init.EvolutionSounds;
-//import tgw.evolution.items.IEvolutionItem;
-//import tgw.evolution.network.PacketCSImpactDamage;
-//import tgw.evolution.network.PacketSCParrySound;
-//import tgw.evolution.util.*;
-//import tgw.evolution.util.reflection.FieldHandler;
-//import tgw.evolution.util.reflection.MethodHandler;
-//
-//public final class LivingEntityHooks {
-//
+package tgw.evolution.hooks;
+
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.UseAction;
+
+public final class LivingEntityHooks {
+
 //    private static final FieldHandler<LivingEntity, PlayerEntity> ATTACKING_PLAYER = new FieldHandler<>(LivingEntity.class, "field_70717_bb");
 //    private static final FieldHandler<LivingEntity, Integer> RECENTLY_HIT = new FieldHandler<>(LivingEntity.class, "field_70718_bc");
 //    private static final MethodHandler<LivingEntity, SoundEvent> GET_DEATH_SOUND = new MethodHandler<>(LivingEntity.class, "func_184615_bR");
@@ -62,10 +17,26 @@
 //                                                                                                 DamageSource.class);
 //    private static final FieldHandler<LivingEntity, DamageSource> LAST_DAMAGE_SOURCE = new FieldHandler<>(LivingEntity.class, "field_189750_bF");
 //    private static final FieldHandler<LivingEntity, Long> LAST_DAMAGE_STAMP = new FieldHandler<>(LivingEntity.class, "field_189751_bG");
-//
-//    private LivingEntityHooks() {
-//    }
-//
+
+    private LivingEntityHooks() {
+    }
+
+    public static boolean shouldFixRotation(LivingEntity entity) {
+        if (entity.getVehicle() != null) {
+            return false;
+        }
+        if (entity.isUsingItem() && !entity.getUseItem().isEmpty()) {
+            ItemStack activeItem = entity.getUseItem();
+            Item item = activeItem.getItem();
+            UseAction action = item.getUseAnimation(activeItem);
+            if (action == UseAction.BLOCK || action == UseAction.SPEAR || action == UseAction.EAT || action == UseAction.DRINK) {
+                return item.getUseDuration(activeItem) > 0;
+            }
+            return false;
+        }
+        return false;
+    }
+
 //    /**
 //     * Hooks from {@link LivingEntity#attackEntityFrom(DamageSource, float)}
 //     */
@@ -240,11 +211,11 @@
 //        }
 //        return damageNotBlocked;
 //    }
-//
+
 //    private static void blockUsingShield(LivingEntity blocking, LivingEntity blocked) {
 //        constructKnockBackVector(blocked, blocking);
 //    }
-//
+
 //    private static void calculateWallImpact(LivingEntity entity, double motionX, double motionZ, double mass) {
 //        double motionXPost = entity.getMotion().x;
 //        double motionZPost = entity.getMotion().z;
@@ -338,7 +309,7 @@
 //            }
 //        }
 //    }
-//
+
 //    private static boolean canBlockDamageSource(LivingEntity entity, DamageSource source) {
 //        Entity immediateSource = source.getImmediateSource();
 //        boolean piercing = false;
@@ -360,7 +331,7 @@
 //        }
 //        return false;
 //    }
-//
+
 //    private static boolean canParryDamageSource(LivingEntity entity, DamageSource source) {
 //        Entity immediateSource = source.getImmediateSource();
 //        boolean piercing = false;
@@ -382,7 +353,7 @@
 //        }
 //        return false;
 //    }
-//
+
 //    private static boolean checkTotemDeathProtection(LivingEntity entity, DamageSource source) {
 //        if (source.canHarmInCreative()) {
 //            return false;
@@ -410,11 +381,11 @@
 //        }
 //        return stack != null;
 //    }
-//
+
 //    private static void constructKnockBackVector(LivingEntity blocked, LivingEntity blocking) {
 //        blocking.applyKnockback(0.5F, blocking.getPosX() - blocked.getPosX(), blocking.getPosZ() - blocked.getPosZ());
 //    }
-//
+
 //    private static void damageEntity(LivingEntity entity, DamageSource source, float amount) {
 //        if (!entity.isInvulnerableTo(source)) {
 //            amount = ForgeHooks.onLivingHurt(entity, source, amount);
@@ -446,7 +417,7 @@
 //            }
 //        }
 //    }
-//
+
 //    private static void damageShield(LivingEntity entity, float damage) {
 //        if (!(entity instanceof PlayerEntity)) {
 //            return;
@@ -470,7 +441,7 @@
 //            }
 //        }
 //    }
-//
+
 //    private static Vector3d getAbsoluteAcceleration(LivingEntity entity, Vector3d direction, float magnitude) {
 //        double length = direction.lengthSquared();
 //        if (length < 1.0E-7) {
@@ -500,13 +471,13 @@
 //        float cosFacing = MathHelper.cosDeg(entity.rotationYaw);
 //        return new Vector3d(accX * cosFacing - accZ * sinFacing, accY, accZ * cosFacing + accX * sinFacing);
 //    }
-//
+
 //    private static float getEntityAcceleration(LivingEntity entity) {
 //        float force = entity.getAIMoveSpeed();
 //        float mass = (float) getMass(entity);
 //        return force / mass;
 //    }
-//
+
 //    private static float getFrictionModifier(LivingEntity entity) {
 //        if (entity instanceof PlayerEntity) {
 //            return (float) entity.getAttribute(EvolutionAttributes.FRICTION.get()).getValue();
@@ -516,7 +487,7 @@
 //        }
 //        return 2.0f;
 //    }
-//
+
 //    public static double getJumpSlowDown(PlayerEntity player) {
 //        if (player.isCreative()) {
 //            return 0;
@@ -527,7 +498,7 @@
 //        int equipMass = totalMass - baseMass;
 //        return equipMass * 0.000_2;
 //    }
-//
+
 //    private static double getMass(Entity entity) {
 //        if (entity instanceof IEntityProperties) {
 //            return ((IEntityProperties) entity).getBaseMass();
@@ -538,7 +509,7 @@
 //        }
 //        return 1;
 //    }
-//
+
 //    private static int getParryTime(LivingEntity entity) {
 //        ItemStack stack = entity.getActiveItemStack();
 //        if (stack.isEmpty()) {
@@ -546,7 +517,7 @@
 //        }
 //        return stack.getItem().getUseDuration(stack) - entity.getItemInUseCount();
 //    }
-//
+
 //    private static void handleElytraMovement(LivingEntity entity, double gravityAcceleration, DataParameter<Byte> flags) {
 //        Vector3d motion = entity.getMotion();
 //        double motionX = motion.x;
@@ -595,7 +566,7 @@
 //            setFlag(entity, flags, EntityFlags.ELYTRA_FLYING, false);
 //        }
 //    }
-//
+
 //    private static Vector3d handleLadderMotion(LivingEntity entity, double x, double y, double z) {
 //        boolean isCreativeFlying = entity instanceof PlayerEntity && ((PlayerEntity) entity).abilities.isFlying;
 //        if (entity.isOnLadder() && !isCreativeFlying) {
@@ -620,7 +591,7 @@
 //        }
 //        return new Vector3d(x, y, z);
 //    }
-//
+
 //    private static void handleLavaMovement(LivingEntity entity, Vector3d direction, double gravityAcceleration) {
 //        double posY = entity.getPosY();
 //        entity.moveRelative(0.02F, direction);
@@ -637,7 +608,7 @@
 //        }
 //        entity.setMotion(motionX, motionY, motionZ);
 //    }
-//
+
 //    private static void handleNormalMovement(LivingEntity entity,
 //                                             Vector3d direction,
 //                                             double gravityAcceleration,
@@ -759,7 +730,7 @@
 //            calculateWallImpact(entity, motionX, motionZ, mass);
 //        }
 //    }
-//
+
 //    private static void handleWaterMotion(LivingEntity entity, Vector3d direction, double gravityAcceleration, boolean isJumping, int jumpTicks) {
 //        if (entity.isOnGround() || jumpTicks > 0) {
 //            if (entity.func_233571_b_(FluidTags.WATER) <= 0.4) {
@@ -822,7 +793,7 @@
 //        entity.setMotion(motionX, motionY, motionZ);
 //        entity.move(MoverType.SELF, entity.getMotion());
 //    }
-//
+
 //    private static boolean isActiveItemStackBlocking(LivingEntity entity) {
 //        ItemStack stack = entity.getActiveItemStack();
 //        if (entity.isHandActive() && !stack.isEmpty()) {
@@ -837,7 +808,7 @@
 //        }
 //        return false;
 //    }
-//
+
 //    private static boolean isActiveItemStackParrying(LivingEntity entity) {
 //        ItemStack stack = entity.getActiveItemStack();
 //        if (entity.isHandActive() && !stack.isEmpty()) {
@@ -849,7 +820,7 @@
 //        }
 //        return false;
 //    }
-//
+
 //    /**
 //     * Hooks from {@link LivingEntity#jump()}
 //     */
@@ -861,7 +832,7 @@
 //            }
 //        }
 //    }
-//
+
 //    private static float jumpMovementFactor(LivingEntity entity, float frictionCoef, int jumpTicks) {
 //        if (entity instanceof PlayerEntity) {
 //            if (!((PlayerEntity) entity).abilities.isFlying) {
@@ -873,14 +844,14 @@
 //        }
 //        return entity.isOnGround() ? getEntityAcceleration(entity) * frictionCoef * getFrictionModifier(entity) : entity.jumpMovementFactor;
 //    }
-//
+
 //    private static double legSlowDown(LivingEntity entity) {
 //        if (entity instanceof PlayerEntity) {
 //            return PlayerHelper.LEG_SLOWDOWN;
 //        }
 //        return 1;
 //    }
-//
+
 //    private static void setFlag(LivingEntity entity, DataParameter<Byte> flags, int flag, boolean set) {
 //        byte byteField = entity.getDataManager().get(flags);
 //        if (set) {
@@ -890,7 +861,7 @@
 //            entity.getDataManager().set(flags, (byte) (byteField & ~(1 << flag)));
 //        }
 //    }
-//
+
 //    /**
 //     * Hooks from {@link LivingEntity#travel(Vector3d)}
 //     */
@@ -943,4 +914,4 @@
 //        }
 //        entity.limbSwing += entity.limbSwingAmount;
 //    }
-//}
+}
