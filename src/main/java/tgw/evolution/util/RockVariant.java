@@ -35,6 +35,7 @@ public enum RockVariant {
     PEAT(20, null, "peat", 1_156, 0),
     CLAY(21, null, "clay", 2_067, 0);
 
+    public static final RockVariant[] VALUES = values();
     private final int density;
     private final byte id;
     private final String name;

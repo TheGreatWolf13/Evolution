@@ -7,6 +7,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import tgw.evolution.blocks.tileentities.MoldingPatterns;
 import tgw.evolution.util.SkinType;
+import tgw.evolution.util.toast.Toasts;
 
 public interface IProxy {
 
@@ -20,6 +21,7 @@ public interface IProxy {
 
     default void init() {
         MoldingPatterns.load();
+        Toasts.register();
     }
 
     void updateStats(Object2LongMap<Stat<?>> statsData);

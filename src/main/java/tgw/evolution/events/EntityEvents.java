@@ -52,6 +52,8 @@ import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
 import tgw.evolution.capabilities.thirst.CapabilityThirst;
 import tgw.evolution.capabilities.thirst.IThirst;
 import tgw.evolution.capabilities.thirst.ThirstStats;
+import tgw.evolution.capabilities.toast.CapabilityToast;
+import tgw.evolution.capabilities.toast.ToastStats;
 import tgw.evolution.entities.EntityGenericCreature;
 import tgw.evolution.entities.IAgressive;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
@@ -172,6 +174,7 @@ public class EntityEvents {
                                 new SerializableCapabilityProvider<>(CapabilityExtendedInventory.INSTANCE, new ContainerExtendedHandler()));
             event.addCapability(Evolution.getResource("thirst"), new SerializableCapabilityProvider<>(CapabilityThirst.INSTANCE, new ThirstStats()));
             event.addCapability(Evolution.getResource("health"), new SerializableCapabilityProvider<>(CapabilityHealth.INSTANCE, new HealthStats()));
+            event.addCapability(Evolution.getResource("toast"), new SerializableCapabilityProvider<>(CapabilityToast.INSTANCE, new ToastStats()));
         }
     }
 

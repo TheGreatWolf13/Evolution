@@ -27,15 +27,14 @@ public class ScreenKnapping extends Screen {
     private static final int HEIGHT = 78;
     private final Map<Button, ItemStack> buttons = new HashMap<>();
     private final BlockPos pos;
-    private final ItemStack[] stacks = new ItemStack[KnappingRecipe.values().length - 1];
+    private final ItemStack[] stacks = new ItemStack[KnappingRecipe.VALUES.length - 1];
 
     public ScreenKnapping(BlockPos pos, RockVariant variant) {
         super(EvolutionTexts.GUI_KNAPPING);
         this.pos = pos;
-        KnappingRecipe[] values = KnappingRecipe.values();
         for (int i = 0; i < this.stacks.length; i++) {
             //noinspection ObjectAllocationInLoop
-            this.stacks[i] = variant.getKnappedStack(values[i + 1]);
+            this.stacks[i] = variant.getKnappedStack(KnappingRecipe.VALUES[i + 1]);
         }
     }
 
@@ -60,7 +59,7 @@ public class ScreenKnapping extends Screen {
         int xSize = 20 * nButtons + 5 * (nButtons - 1);
         int relX = (this.width - xSize) / 2;
         int relY = (this.height - 20) / 2;
-        KnappingRecipe[] values = KnappingRecipe.values();
+        KnappingRecipe[] values = KnappingRecipe.VALUES;
         this.buttons.put(new Button(relX, relY, 20, 20, EvolutionTexts.EMPTY, button -> this.setTile(values[1])), this.stacks[0]);
         this.buttons.put(new Button(relX + 25, relY, 20, 20, EvolutionTexts.EMPTY, button -> this.setTile(values[2])), this.stacks[1]);
         this.buttons.put(new Button(relX + 25 * 2, relY, 20, 20, EvolutionTexts.EMPTY, button -> this.setTile(values[3])), this.stacks[2]);

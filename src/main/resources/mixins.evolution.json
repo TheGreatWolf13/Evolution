@@ -8,6 +8,7 @@
     "DataFixesManagerMixin",
     "EffectInstanceMixin",
     "EntityMixin",
+    "InventoryChangeTriggerMixin",
     "LivingEntityMixin",
     "Matrix3fMixin",
     "Matrix4fMixin",

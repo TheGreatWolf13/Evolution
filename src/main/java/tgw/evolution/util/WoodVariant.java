@@ -25,6 +25,7 @@ public enum WoodVariant {
     SPRUCE(16, "spruce", 440, 8_100_000),
     WILLOW(17, "willow", 500, 7_850_000);
 
+    public static final WoodVariant[] VALUES = values();
     private final int density;
     private final byte id;
     private final String name;

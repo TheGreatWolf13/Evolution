@@ -48,7 +48,7 @@ public class ClientProxy implements IProxy {
                                       new ResourceLocation("blocking"),
                                       (stack, world, entity) -> entity != null && entity.isUsingItem() && entity.getUseItem() == stack ? 1.0F : 0.0F);
         ResourceLocation throwing = new ResourceLocation("throwing");
-        for (RockVariant variant : RockVariant.values()) {
+        for (RockVariant variant : RockVariant.VALUES) {
             Item item;
             try {
                 item = variant.getJavelin();

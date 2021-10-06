@@ -84,7 +84,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
 
     public static void init() {
         BlockFire fire = EvolutionBlocks.FIRE.get();
-        for (WoodVariant variant : WoodVariant.values()) {
+        for (WoodVariant variant : WoodVariant.VALUES) {
             fire.setFireInfo(variant.getPlanks(), 5, 20);
             fire.setFireInfo(variant.getLog(), 5, 5);
             fire.setFireInfo(variant.getChoppingBlock(), 5, 5);

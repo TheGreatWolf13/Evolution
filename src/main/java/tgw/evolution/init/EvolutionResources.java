@@ -73,25 +73,25 @@ public final class EvolutionResources {
                                                             Evolution.getResource("item/slot_tactical")};
 
     static {
-        BLOCK_KNAPPING = new ResourceLocation[RockVariant.values().length];
-        for (RockVariant variant : RockVariant.values()) {
+        BLOCK_KNAPPING = new ResourceLocation[RockVariant.VALUES.length];
+        for (RockVariant variant : RockVariant.VALUES) {
             if (variant != RockVariant.CLAY && variant != RockVariant.PEAT) {
                 //noinspection ObjectAllocationInLoop
                 BLOCK_KNAPPING[variant.getId()] = Evolution.getResource("block/stone_" + variant.getName());
             }
         }
-        BLOCK_LOG_SIDE = new ResourceLocation[WoodVariant.values().length];
-        for (WoodVariant variant : WoodVariant.values()) {
+        BLOCK_LOG_SIDE = new ResourceLocation[WoodVariant.VALUES.length];
+        for (WoodVariant variant : WoodVariant.VALUES) {
             //noinspection ObjectAllocationInLoop
             BLOCK_LOG_SIDE[variant.getId()] = Evolution.getResource("block/log_" + variant.getName());
         }
-        BLOCK_LOG_TOP = new ResourceLocation[WoodVariant.values().length];
-        for (WoodVariant variant : WoodVariant.values()) {
+        BLOCK_LOG_TOP = new ResourceLocation[WoodVariant.VALUES.length];
+        for (WoodVariant variant : WoodVariant.VALUES) {
             //noinspection ObjectAllocationInLoop
             BLOCK_LOG_TOP[variant.getId()] = Evolution.getResource("block/log_top_" + variant.getName());
         }
-        BLOCK_PIT_LOG = new ResourceLocation[WoodVariant.values().length];
-        for (WoodVariant variant : WoodVariant.values()) {
+        BLOCK_PIT_LOG = new ResourceLocation[WoodVariant.VALUES.length];
+        for (WoodVariant variant : WoodVariant.VALUES) {
             //noinspection ObjectAllocationInLoop
             BLOCK_PIT_LOG[variant.getId()] = Evolution.getResource("textures/block/pit_" + variant.getName() + ".png");
         }

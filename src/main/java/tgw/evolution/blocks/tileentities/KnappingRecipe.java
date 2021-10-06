@@ -15,6 +15,7 @@ public enum KnappingRecipe {
     HOE(5, KnappingPatterns.HOE),
     KNIFE(6, KnappingPatterns.KNIFE);
 
+    public static final KnappingRecipe[] VALUES = values();
     private final byte id;
     private final long pattern;
     private final VoxelShape shape;
@@ -27,7 +28,7 @@ public enum KnappingRecipe {
 
     @Nonnull
     public static KnappingRecipe byId(int id) {
-        for (KnappingRecipe knapping : values()) {
+        for (KnappingRecipe knapping : VALUES) {
             if (knapping.id == id) {
                 return knapping;
             }

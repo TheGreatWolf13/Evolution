@@ -4,6 +4,7 @@ import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.health.CapabilityHealth;
 import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
 import tgw.evolution.capabilities.thirst.CapabilityThirst;
+import tgw.evolution.capabilities.toast.CapabilityToast;
 
 public final class EvolutionCapabilities {
 
@@ -15,5 +16,6 @@ public final class EvolutionCapabilities {
         CapabilityExtendedInventory.register();
         CapabilityThirst.register();
         CapabilityHealth.register();
+        CapabilityToast.register();
     }
 }

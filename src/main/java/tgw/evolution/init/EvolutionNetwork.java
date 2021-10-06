@@ -185,5 +185,6 @@ public final class EvolutionNetwork {
                                  PacketSCFixRotation::decode,
                                  PacketSCFixRotation::handle);
         INSTANCE.registerMessage(increaseId(), PacketSCShader.class, PacketSCShader::encode, PacketSCShader::decode, PacketSCShader::handle);
+        INSTANCE.registerMessage(increaseId(), PacketSCToast.class, PacketSCToast::encode, PacketSCToast::decode, PacketSCToast::handle);
     }
 }

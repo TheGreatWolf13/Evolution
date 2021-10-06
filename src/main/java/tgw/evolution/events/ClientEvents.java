@@ -78,6 +78,7 @@ import tgw.evolution.client.gui.*;
 import tgw.evolution.client.gui.advancements.ScreenAdvancements;
 import tgw.evolution.client.gui.controls.ScreenControls;
 import tgw.evolution.client.gui.stats.ScreenStats;
+import tgw.evolution.client.gui.toast.ToastCustomRecipe;
 import tgw.evolution.client.layers.LayerBack;
 import tgw.evolution.client.layers.LayerBelt;
 import tgw.evolution.client.models.tile.BakedModelFirewoodPile;
@@ -333,7 +334,7 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void onModelBakeEvent(ModelBakeEvent event) {
-        for (RockVariant variant : RockVariant.values()) {
+        for (RockVariant variant : RockVariant.VALUES) {
             Block block;
             try {
                 block = variant.getKnapping();
@@ -413,6 +414,12 @@ public class ClientEvents {
             return;
         }
         handler.clickSlot(selectedSlot, MouseButton.RIGHT, false);
+    }
+
+    public void addCustomRecipeToast(int id) {
+        for (ToastHolderRecipe toast : Toasts.getHolderForId(id)) {
+            ToastCustomRecipe.addOrUpdate(this.mc.getToasts(), toast);
+        }
     }
 
     public boolean areControlsInverted() {
