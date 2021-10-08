@@ -55,16 +55,6 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
         this.rightLeg = new HitboxGroup(this.legR, this.footR);
     }
 
-    protected static HandSide getActiveHandside(PlayerEntity entity) {
-        HandSide handside = entity.getMainArm();
-        return entity.getUsedItemHand() == Hand.MAIN_HAND ? handside : handside.getOpposite();
-    }
-
-    protected static HandSide getSwingingHandside(PlayerEntity entity) {
-        HandSide handside = entity.getMainArm();
-        return entity.swingingArm == Hand.MAIN_HAND ? handside : handside.getOpposite();
-    }
-
     private static float quadraticArmUpdate(float f) {
         return -65.0F * f + f * f;
     }
@@ -78,23 +68,6 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
             f -= MathHelper.TAU;
         }
         return old + partialTick * f;
-    }
-
-    private void eatingAnimationHand(PlayerEntity entity) {
-        if (entity.isUsingItem()) {
-            ItemStack stack = entity.getItemInHand(entity.getUsedItemHand());
-            boolean eatingOrDrinking = stack.getUseAnimation() == UseAction.EAT || stack.getUseAnimation() == UseAction.DRINK;
-            if (eatingOrDrinking && entity.getTicksUsingItem() > 0) {
-                HandSide activeHandside = getActiveHandside(entity);
-                HitboxGroup eatingArm = this.getArmForSide(activeHandside);
-                int mult = activeHandside == HandSide.LEFT ? -1 : 1;
-                eatingArm.setRotationX(1.3f);
-                eatingArm.setRotationY(0.5f * mult);
-                eatingArm.setRotationZ(MathHelper.cos(this.ageInTicks) * 0.1F);
-                this.head.rotationY = 0;
-                this.head.rotationX = -MathHelper.cos(this.ageInTicks) * 0.2F;
-            }
-        }
     }
 
     protected HitboxGroup getArmForSide(HandSide side) {
@@ -123,14 +96,6 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
         ItemStack offhandStack = entity.getOffhandItem();
         this.rightArmPose = MathHelper.getArmPose(entity, mainhandStack, offhandStack, Hand.MAIN_HAND);
         this.leftArmPose = MathHelper.getArmPose(entity, mainhandStack, offhandStack, Hand.OFF_HAND);
-//        if (entity.getMainArm() == HandSide.RIGHT) {
-//            this.rightArmPose = mainhandPose;
-//            this.leftArmPose = offhandPose;
-//        }
-//        else {
-//            this.rightArmPose = offhandPose;
-//            this.leftArmPose = mainhandPose;
-//        }
         this.attackTime = MathHelper.getAttackAnim(entity, partialTicks);
         this.isSneak = entity.getPose() == Pose.CROUCHING;
         this.ageInTicks = MathHelper.getAgeInTicks(entity, partialTicks);
@@ -176,15 +141,20 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
                 }
             }
             else {
-                float waterInclination = -90.0F - entity.xRot;
+                float waterInclination = -90.0F + this.rotationPitch;
                 float waterPitch = MathHelper.lerp(this.swimAnimation, 0.0F, waterInclination);
                 this.rotationX += MathHelper.degToRad(waterPitch);
+                float sinWaterPitch = MathHelper.sinDeg(waterPitch);
+                float cosWaterPitch = MathHelper.cosDeg(waterPitch);
                 if (entity.isVisuallySwimming()) {
-                    float sinWaterPitch = MathHelper.sinDeg(waterPitch);
-                    float cosWaterPitch = MathHelper.cosDeg(waterPitch);
-                    this.pivotX = -sinYaw * -sinWaterPitch + 5 / 16.0f * cosWaterPitch * -sinYaw;
-                    this.pivotY = 5 / 16.0f * -sinWaterPitch - cosWaterPitch;
-                    this.pivotZ = -cosYaw * -sinWaterPitch - 5 / 16.0f * cosWaterPitch * cosYaw;
+                    this.pivotX = 22.375f / 16.0f * -sinYaw * -sinWaterPitch - 4 / 16.0f * cosWaterPitch * -sinYaw;
+                    this.pivotY = 6.358_310_793f / 16.0f - 22.391_689_21f / 16.0f * cosWaterPitch + 3.983_310_793f / 16.0f * sinWaterPitch;
+                    this.pivotZ = 22.375f / 16.0f * -cosYaw * -sinWaterPitch + 4 / 16.0f * cosWaterPitch * cosYaw;
+                }
+                else {
+                    this.pivotX = 21 / 16.0f * -sinYaw * -sinWaterPitch + 1 / 16.0f * cosWaterPitch * -sinYaw;
+                    this.pivotY = 1 / 16.0f * -sinWaterPitch - 21 / 16.0f * cosWaterPitch;
+                    this.pivotZ = 21 / 16.0f * -cosYaw * -sinWaterPitch - 1 / 16.0f * cosWaterPitch * cosYaw;
                 }
             }
         }
@@ -214,7 +184,7 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
                     this.head.rotationX = MathHelper.degToRad(this.rotationPitch + 90);
                 }
                 else {
-                    this.head.rotationX = rotLerpRad(this.swimAnimation, this.head.rotationX, -MathHelper.PI_OVER_2);
+                    this.head.rotationX = rotLerpRad(this.swimAnimation, this.head.rotationX, MathHelper.PI_OVER_2);
                 }
                 this.head.rotationY = 0;
                 this.head.rotationZ = -MathHelper.degToRad(this.rotationYaw + viewYaw);
@@ -256,59 +226,7 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
             this.poseRightArm(entity);
             this.poseLeftArm(entity);
         }
-        this.setupAttackAnimation(entity, this.ageInTicks);
-//        switch (this.leftArmPose) {
-//            case BLOCK:
-//                this.leftArm.setRotationX(this.leftArm.getRotationX() * 0.5F + 0.942_477_9F);
-//                this.leftArm.setRotationY(-MathHelper.PI / 6);
-//                break;
-//            case ITEM:
-//                this.leftArm.setRotationX(this.leftArm.getRotationX() * 0.5F + MathHelper.PI / 10);
-//                break;
-//        }
-//        switch (this.rightArmPose) {
-//            case BLOCK:
-//                this.rightArm.setRotationX(this.rightArm.getRotationX() * 0.5F + 0.942_477_9F);
-//                this.rightArm.setRotationY(MathHelper.PI / 6);
-//                break;
-//            case ITEM:
-//                this.rightArm.setRotationX(this.rightArm.getRotationX() * 0.5F + MathHelper.PI / 10);
-//                break;
-//            case THROW_SPEAR:
-//                this.rightArm.setRotationX(this.rightArm.getRotationX() * 0.5F + MathHelper.PI);
-//                break;
-//        }
-//        if (this.leftArmPose == ArmPose.THROW_SPEAR &&
-//            this.rightArmPose != ArmPose.BLOCK &&
-//            this.rightArmPose != ArmPose.THROW_SPEAR &&
-//            this.rightArmPose != ArmPose.BOW_AND_ARROW) {
-//            this.leftArm.setRotationX(this.leftArm.getRotationX() * 0.5F - MathHelper.PI);
-//        }
-//        if (this.attackTime > 0) {
-//            HandSide swingingHandside = getSwingingHandside(entity);
-//            HitboxGroup swingingArm = this.getArmForSide(swingingHandside);
-//            float f1 = this.attackTime;
-//            this.body.rotationY = -MathHelper.sin(MathHelper.sqrt(f1) * MathHelper.TAU) * 0.2F;
-//            if (swingingHandside == HandSide.LEFT) {
-//                this.body.rotationY *= -1;
-//            }
-//            this.rightArm.setPivotZ(MathHelper.sin(this.body.rotationY) * 5.0F * SCALE / 16);
-//            this.rightArm.setPivotX(-MathHelper.cos(this.body.rotationY) * 5.0F * SCALE / 16);
-//            this.leftArm.setPivotZ(-MathHelper.sin(this.body.rotationY) * 5.0F * SCALE / 16);
-//            this.leftArm.setPivotX(MathHelper.cos(this.body.rotationY) * 5.0F * SCALE / 16);
-//            this.rightArm.addRotationY(this.body.rotationY);
-//            this.leftArm.addRotationY(this.body.rotationY);
-//            this.leftArm.addRotationX(this.body.rotationY);
-//            f1 = 1.0F - this.attackTime;
-//            f1 *= f1;
-//            f1 *= f1;
-//            f1 = 1.0F - f1;
-//            float f2 = MathHelper.sin(f1 * MathHelper.PI);
-//            float f3 = MathHelper.sin(this.attackTime * MathHelper.PI) * -(-this.head.rotationX - 0.7F) * 0.75F;
-//            swingingArm.setRotationX(swingingArm.getRotationX() + (f2 * 1.2F + f3));
-//            swingingArm.addRotationY(this.body.rotationY * 2);
-//            swingingArm.addRotationZ(MathHelper.sin(this.attackTime * MathHelper.PI) * -0.4F);
-//        }
+        this.setupAttackAnimation(entity);
         if (this.isSneak) {
             this.body.rotationX = -0.5F;
             this.rightArm.addRotationX(-0.4f);
@@ -327,47 +245,6 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
             this.rightLeg.setPivotZ(-0.1f * SCALE / 16);
         }
         this.bobArms(this.rightArm, this.leftArm, this.ageInTicks);
-//        if (this.rightArmPose == ArmPose.BOW_AND_ARROW) {
-//            this.rightArm.setRotationY(0.1F + this.head.rotationY);
-//            this.leftArm.setRotationY(-0.5F + this.head.rotationY);
-//            this.rightArm.setRotationX(MathHelper.PI / 2 + this.head.rotationX);
-//            this.leftArm.setRotationX(MathHelper.PI / 2 + this.head.rotationX);
-//        }
-//        else if (this.leftArmPose == ArmPose.BOW_AND_ARROW && this.rightArmPose != ArmPose.THROW_SPEAR && this.rightArmPose != ArmPose.BLOCK) {
-//            this.rightArm.setRotationY(0.5F + this.head.rotationY);
-//            this.leftArm.setRotationY(-0.1F + this.head.rotationY);
-//            this.rightArm.setRotationX(MathHelper.PI / 2 + this.head.rotationX);
-//            this.leftArm.setRotationX(MathHelper.PI / 2 + this.head.rotationX);
-//        }
-//        float f4 = CrossbowItem.getChargeDuration(entity.getUseItem());
-//        if (this.rightArmPose == ArmPose.CROSSBOW_CHARGE) {
-//            this.rightArm.setRotationY(0.8F);
-//            this.rightArm.setRotationX(0.970_796_35F);
-//            this.leftArm.setRotationX(-0.970_796_35F);
-//            float f5 = MathHelper.clamp(this.remainingItemUseTime, 0.0F, f4);
-//            this.leftArm.setRotationY(-MathHelper.lerp(f5 / f4, 0.4F, 0.85F));
-//            this.leftArm.setRotationX(-MathHelper.lerp(f5 / f4, this.leftArm.getRotationX(), -MathHelper.PI / 2));
-//        }
-//        else if (this.leftArmPose == ArmPose.CROSSBOW_CHARGE) {
-//            this.leftArm.setRotationY(-0.8F);
-//            this.rightArm.setRotationX(-0.970_796_35F);
-//            this.leftArm.setRotationX(0.970_796_35F);
-//            float f6 = MathHelper.clamp(this.remainingItemUseTime, 0.0F, f4);
-//            this.rightArm.setRotationY(-MathHelper.lerp(f6 / f4, -0.4F, -0.85F));
-//            this.rightArm.setRotationX(-MathHelper.lerp(f6 / f4, this.rightArm.getRotationX(), -MathHelper.PI / 2));
-//        }
-//        if (this.rightArmPose == ArmPose.CROSSBOW_HOLD && this.attackTime <= 0.0F) {
-//            this.rightArm.setRotationY(0.3F + this.head.rotationY);
-//            this.leftArm.setRotationY(-0.6F + this.head.rotationY);
-//            this.rightArm.setRotationX(MathHelper.PI / 2 + this.head.rotationX - 0.1F);
-//            this.leftArm.setRotationX(1.5F + this.head.rotationX);
-//        }
-//        else if (this.leftArmPose == ArmPose.CROSSBOW_HOLD) {
-//            this.rightArm.setRotationY(0.6F + this.head.rotationY);
-//            this.leftArm.setRotationY(-0.3F + this.head.rotationY);
-//            this.rightArm.setRotationX(1.5F + this.head.rotationX);
-//            this.leftArm.setRotationX(MathHelper.PI / 2 + this.head.rotationX - 0.1F);
-//        }
         if (this.swimAnimation > 0.0F) {
             float f7 = this.limbSwing % 26.0F;
             HandSide attackArm = this.getAttackArm(entity);
@@ -412,8 +289,6 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
                                                        this.rightLeg.getRotationX(),
                                                        -0.3F * MathHelper.cos(this.limbSwing * 0.333_333_34F)));
         }
-        //TODO add lunge
-//        this.eatingAnimationHand(entity);
     }
 
     private void poseLeftArm(PlayerEntity entity) {
@@ -522,7 +397,7 @@ public class HitboxPlayer extends HitboxEntity<PlayerEntity> {
         }
     }
 
-    protected void setupAttackAnimation(PlayerEntity player, float ageInTicks) {
+    protected void setupAttackAnimation(PlayerEntity player) {
         if (!(this.attackTime <= 0.0F)) {
             HandSide handside = this.getAttackArm(player);
             HitboxGroup arm = this.getArmForSide(handside);

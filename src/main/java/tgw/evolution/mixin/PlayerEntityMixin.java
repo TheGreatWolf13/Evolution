@@ -169,7 +169,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements INeckPos
                 if (!this.isInWater()) {
                     return PlayerHelper.NECK_POS_CRAWLING;
                 }
-                return PlayerHelper.tempVector3d();
+                return PlayerHelper.getSwimmingNeckPoint(this.xRot);
             }
         }
         float swimAnimation = MathHelper.getSwimAnimation(this, 1.0f);

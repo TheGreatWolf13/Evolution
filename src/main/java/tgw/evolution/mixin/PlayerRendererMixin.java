@@ -19,7 +19,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import tgw.evolution.util.PlayerHelper;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(PlayerRenderer.class)
@@ -40,9 +39,6 @@ public abstract class PlayerRendererMixin extends LivingRenderer<AbstractClientP
             case SWIMMING: {
                 if (!player.isInWater()) {
                     matrices.translate(0, 9 / 16.0, -0.5 / 16.0);
-                }
-                else {
-                    PlayerHelper.tempTranslationAbsolute(player, matrices, partialTicks);
                 }
                 break;
             }
@@ -112,18 +108,21 @@ public abstract class PlayerRendererMixin extends LivingRenderer<AbstractClientP
             super.setupRotations(player, matrices, ageInTicks, rotationYaw, partialTicks);
             float desiredXRot = player.isInWater() ? -90.0F - player.xRot : -90.0F;
             float interpXRot = MathHelper.lerp(swimAmount, 0.0F, desiredXRot);
-            matrices.mulPose(Vector3f.XP.rotationDegrees(interpXRot));
             if (player.isVisuallySwimming()) {
                 if (!player.isInWater()) {
                     //Crawling pose
+                    matrices.mulPose(Vector3f.XP.rotationDegrees(interpXRot));
                     matrices.translate(0, -1, 0.3);
                 }
                 else {
                     //Swimming pose
-                    PlayerHelper.tempTranslationRelative(player, matrices, partialTicks);
+                    matrices.translate(0, 0.4, 0);
+                    matrices.mulPose(Vector3f.XP.rotationDegrees(interpXRot));
+                    matrices.translate(0, -1.4, -0.25);
                 }
             }
             else {
+                matrices.mulPose(Vector3f.XP.rotationDegrees(interpXRot));
                 matrices.translate(0, -1.3, 0);
             }
         }

@@ -1256,17 +1256,18 @@ public class ClientEvents {
         if (this.renderer.isRenderingPlayer) {
             boolean hasNausea = this.mc.player.hasEffect(Effects.CONFUSION);
             float swimAnimation = MathHelper.getSwimAnimation(this.mc.player, event.getPartialRenderTick());
-            Pose pose = this.mc.player.getPose();
-            boolean isGettingUpFromCrawling = pose != Pose.SWIMMING && swimAnimation > 0;
+            boolean isInSwimAnimation = swimAnimation > 0 && swimAnimation < 1;
             boolean isInWater = this.mc.player.isInWater();
-            boolean isGoingCrawling = pose == Pose.SWIMMING && !isInWater && swimAnimation < 1;
-            if (hasNausea || isGettingUpFromCrawling || isGoingCrawling || this.wasPreviousInWater(7) != isInWater) {
+            if (hasNausea || isInSwimAnimation || this.wasPreviousInWater(7) != isInWater || isInWater && swimAnimation > 0) {
                 renderer.getModel().head.visible = false;
                 renderer.getModel().hat.visible = false;
             }
-            if (isGettingUpFromCrawling || isGoingCrawling) {
-                renderer.getModel().body.visible = false;
-                renderer.getModel().jacket.visible = false;
+            if (isInSwimAnimation) {
+                renderer.getModel().setAllVisible(false);
+                renderer.getModel().rightArm.visible = true;
+                renderer.getModel().rightSleeve.visible = true;
+                renderer.getModel().leftArm.visible = true;
+                renderer.getModel().leftSleeve.visible = true;
             }
             this.wasInWater <<= 1;
             this.wasInWater |= isInWater ? 1 : 0;
@@ -1480,6 +1481,9 @@ public class ClientEvents {
         if (player.isInLava()) {
             return false;
         }
+        if (player.getVehicle() != null) {
+            return false;
+        }
         return !player.onClimbable() || !this.isJumpPressed && player.isOnGround();
     }
 
@@ -1572,8 +1576,8 @@ public class ClientEvents {
             shouldBeProne = shouldBeProne || this.proneToggle && player.onClimbable() && player.level.getBlockState(pos).getMaterial().blocksMotion();
             if (shouldBeProne != Evolution.PRONED_PLAYERS.getOrDefault(player.getId(), false)) {
                 EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSetProne(shouldBeProne));
+                Evolution.PRONED_PLAYERS.put(player.getId(), shouldBeProne);
             }
-            Evolution.PRONED_PLAYERS.put(player.getId(), shouldBeProne);
         }
     }
 

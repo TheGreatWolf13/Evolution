@@ -664,6 +664,9 @@ public class EntityEvents {
             }
             else {
                 player.maxUpStep = 0.6f;
+                if (player.getVehicle() != null) {
+                    SET_POSE_METHOD.call(player, Pose.STANDING);
+                }
             }
             if (player.getPose() == Pose.SWIMMING && !player.isInWater()) {
                 player.setSprinting(false);

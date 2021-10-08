@@ -1,8 +1,6 @@
 package tgw.evolution.util;
 
 import com.google.common.collect.ImmutableMap;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntitySize;
 import net.minecraft.entity.LivingEntity;
@@ -414,6 +412,12 @@ public final class PlayerHelper {
         }
     }
 
+    public static Vector3d getSwimmingNeckPoint(float xRot) {
+        float cosPitch = MathHelper.cosDeg(xRot);
+        float sinPitch = MathHelper.sinDeg(xRot);
+        return new Vector3d(0, 0.36 - 0.02 * sinPitch - 0.25 * cosPitch, 0.02 * cosPitch - 0.25 * sinPitch);
+    }
+
     private static float headHit(PlayerEntity player, float damage, EvolutionDamage.Type type) {
         damage *= 1.75f;
         //TODO
@@ -615,38 +619,5 @@ public final class PlayerHelper {
             ((EvolutionServerStatisticsManager) ((ServerPlayerEntity) player).getStats()).setValueLong(stat, 0);
             player.getScoreboard().forAllObjectives(stat, player.getScoreboardName(), Score::reset);
         }
-    }
-
-    //TODO temp
-    public static double tempDoubleValueY() {
-        return 0;
-    }
-
-    //TODO temp
-    public static double tempDoubleValueZ() {
-        return 0;
-    }
-
-    //TODO temp
-    public static void tempTranslationAbsolute(AbstractClientPlayerEntity player, MatrixStack matrices, float partialTicks) {
-
-    }
-
-    //TODO temp
-    public static void tempTranslationRelative(AbstractClientPlayerEntity player, MatrixStack matrices, float partialTicks) {
-        float pitch = player.getViewXRot(partialTicks);
-        float sinPitch = Math.abs(MathHelper.sinDeg(pitch));
-        float cosPitch = MathHelper.cosDeg(pitch);
-        if (pitch <= 0) {
-            matrices.translate(0, -1 * sinPitch - 1.35 * cosPitch * cosPitch, -0.2 * sinPitch + 0.2 * cosPitch);
-        }
-        else {
-            matrices.translate(0, -1.75 * sinPitch - 1.35 * cosPitch * cosPitch, -0.2 * sinPitch + 0.2 * cosPitch);
-        }
-    }
-
-    //TODO temp
-    public static Vector3d tempVector3d() {
-        return new Vector3d(0, 4.62 / 16.0 * 0.937_5, -2 / 16.0);
     }
 }
