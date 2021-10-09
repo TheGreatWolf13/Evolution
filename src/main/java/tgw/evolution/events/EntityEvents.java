@@ -63,7 +63,7 @@ import tgw.evolution.network.*;
 import tgw.evolution.util.*;
 import tgw.evolution.util.damage.*;
 import tgw.evolution.util.reflection.FieldHandler;
-import tgw.evolution.util.reflection.MethodHandler;
+import tgw.evolution.util.reflection.FunctionMethodHandler;
 
 import java.util.*;
 
@@ -71,7 +71,9 @@ public class EntityEvents {
 
     public static final WindVector WIND = new WindVector();
     public static final Map<UUID, SkinType> SKIN_TYPE = new HashMap<>();
-    private static final MethodHandler<Entity, Void> SET_POSE_METHOD = new MethodHandler<>(Entity.class, "func_213301_b", Pose.class);
+    private static final FunctionMethodHandler<Entity, Void, Pose> SET_POSE_METHOD = new FunctionMethodHandler<>(Entity.class,
+                                                                                                                 "func_213301_b",
+                                                                                                                 Pose.class);
     private static final FieldHandler<LivingEntity, CombatTracker> COMBAT_TRACKER_FIELD = new FieldHandler<>(LivingEntity.class, "field_94063_bt");
     private static final Random RANDOM = new Random();
     private static final Set<DamageSource> IGNORED_DAMAGE_SOURCES = Util.make(Sets.newHashSet(), set -> {

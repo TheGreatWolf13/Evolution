@@ -5,26 +5,30 @@ import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.inventory.container.*;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import tgw.evolution.util.reflection.BiFunctionMethodHandler;
 import tgw.evolution.util.reflection.FieldHandler;
-import tgw.evolution.util.reflection.MethodHandler;
+import tgw.evolution.util.reflection.TetraFunctionMethodHandler;
 
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 public class GuiContainerHandler implements IGuiScreenHandler {
-    private static final MethodHandler<ContainerScreen, Void> HANDLE_MOUSE_CLICK = new MethodHandler<>(ContainerScreen.class,
-                                                                                                       "func_184098_a",
-                                                                                                       Slot.class,
-                                                                                                       int.class,
-                                                                                                       int.class,
-                                                                                                       ClickType.class);
+    private static final TetraFunctionMethodHandler<ContainerScreen, Void, Slot, Integer, Integer, ClickType> HANDLE_MOUSE_CLICK =
+            new TetraFunctionMethodHandler<>(
+            ContainerScreen.class,
+            "func_184098_a",
+            Slot.class,
+            int.class,
+            int.class,
+            ClickType.class);
     private static final FieldHandler<ContainerScreen, Boolean> IGNORE_MOUSE_UP = new FieldHandler<>(ContainerScreen.class, "field_146995_H");
     private static final FieldHandler<ContainerScreen, Boolean> DRAG_SPLITTING = new FieldHandler<>(ContainerScreen.class, "field_147007_t");
     private static final FieldHandler<ContainerScreen, Integer> DRAG_SPLITTING_BUTTON = new FieldHandler<>(ContainerScreen.class, "field_146988_G");
-    private static final MethodHandler<ContainerScreen, Slot> GET_SELECTED_SLOT = new MethodHandler<>(ContainerScreen.class,
-                                                                                                      "func_195360_a",
-                                                                                                      double.class,
-                                                                                                      double.class);
+    private static final BiFunctionMethodHandler<ContainerScreen, Slot, Double, Double> GET_SELECTED_SLOT = new BiFunctionMethodHandler<>(
+            ContainerScreen.class,
+            "func_195360_a",
+            double.class,
+            double.class);
     protected final Minecraft mc;
     private final ContainerScreen<?> guiContainer;
 

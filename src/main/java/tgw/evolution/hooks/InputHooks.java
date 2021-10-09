@@ -8,12 +8,11 @@ import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketCSLungeAnim;
 import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.reflection.MethodHandler;
+import tgw.evolution.util.reflection.SupplierMethodHandler;
 
 public final class InputHooks {
 
-    private static final MethodHandler<KeyBinding, Void> UNPRESS_KEY = new MethodHandler<>(KeyBinding.class, "func_74505_d");
-
+    private static final SupplierMethodHandler<KeyBinding, Void> UNPRESS_KEY = new SupplierMethodHandler<>(KeyBinding.class, "func_74505_d");
     public static boolean isMainhandLungeInProgress;
     public static boolean isMainhandLunging;
     public static boolean isOffhandLungeInProgress;

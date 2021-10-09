@@ -6,7 +6,7 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-public class MethodHandler<Owner, Type> implements IReflectionHandler {
+public abstract class MethodHandler<Owner, Type> implements IReflectionHandler {
 
     private final String methodName;
     private final Class<Owner> methodOwner;
@@ -24,7 +24,7 @@ public class MethodHandler<Owner, Type> implements IReflectionHandler {
     }
 
     @Nullable
-    public final Type call(Owner methodInstance, Object... methodParams) {
+    protected Type call(Owner methodInstance, Object... methodParams) {
         this.init();
         try {
             return (Type) this.methodAccess.invoke(methodInstance, methodParams);
@@ -43,7 +43,7 @@ public class MethodHandler<Owner, Type> implements IReflectionHandler {
     }
 
     @Nullable
-    public final Type call(Owner methodInstance) {
+    protected Type call(Owner methodInstance) {
         return this.call(methodInstance, EMPTY_ARGS);
     }
 
