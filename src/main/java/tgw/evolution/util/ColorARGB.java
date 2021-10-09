@@ -14,6 +14,10 @@ public class ColorARGB implements IColor {
         return (a & 0xFF) << 24 | (r & 0xFF) << 16 | (g & 0xFF) << 8 | b & 0xFF;
     }
 
+    public static int toABGR(int color) {
+        return Integer.reverseBytes(color << 8);
+    }
+
     /**
      * Re-packs the ARGB color into a aBGR color with the specified alpha component.
      */
@@ -21,13 +25,9 @@ public class ColorARGB implements IColor {
         return Integer.reverseBytes(color << 8 | alpha);
     }
 
-    public static int toABGR(int color) {
-        return Integer.reverseBytes(color << 8);
-    }
-
     /**
      * @param color The packed 32-bit ARGB color to unpack
-     * @return The red color component in the range of 0..255
+     * @return The red color component in the range of [0;255]
      */
     public static int unpackAlpha(int color) {
         return color >> 24 & 0xFF;
@@ -35,7 +35,7 @@ public class ColorARGB implements IColor {
 
     /**
      * @param color The packed 32-bit ARGB color to unpack
-     * @return The blue color component in the range of 0..255
+     * @return The blue color component in the range of [0;255]
      */
     public static int unpackBlue(int color) {
         return color & 0xFF;
@@ -43,7 +43,7 @@ public class ColorARGB implements IColor {
 
     /**
      * @param color The packed 32-bit ARGB color to unpack
-     * @return The green color component in the range of 0..255
+     * @return The green color component in the range of [0;255]
      */
     public static int unpackGreen(int color) {
         return color >> 8 & 0xFF;
@@ -51,7 +51,7 @@ public class ColorARGB implements IColor {
 
     /**
      * @param color The packed 32-bit ARGB color to unpack
-     * @return The red color component in the range of 0..255
+     * @return The red color component in the range of [0;255]
      */
     public static int unpackRed(int color) {
         return color >> 16 & 0xFF;

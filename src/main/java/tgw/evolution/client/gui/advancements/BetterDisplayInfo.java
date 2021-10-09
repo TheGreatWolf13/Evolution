@@ -5,27 +5,22 @@ import net.minecraft.client.gui.advancements.AdvancementState;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import tgw.evolution.client.gui.ColorHelper;
 
 import javax.annotation.Nullable;
 
 @OnlyIn(Dist.CLIENT)
 public class BetterDisplayInfo implements IBetterDisplayInfo {
-    public static final String DEFAULT_MINECRAFT_COMPLETED_ICON_COLOR = "#DBA213";
-    public static final String DEFAULT_MINECRAFT_UNCOMPLETED_ICON_COLOR = "#FFFFFF";
-    public static final String DEFAULT_MINECRAFT_COMPLETED_TITLE_COLOR = "#DBA213";
-    public static final String DEFAULT_MINECRAFT_UNCOMPLETED_TITLE_COLOR = "#0489C1";
-    private static final int WHITE = ColorHelper.RGB(1.0f, 1.0f, 1.0f);
-    private static final int MINECRAFT_COMPLETED_ICON_COLOR = ColorHelper.RGB(DEFAULT_MINECRAFT_COMPLETED_ICON_COLOR);
-    public static int defaultCompletedIconColor = MINECRAFT_COMPLETED_ICON_COLOR;
-    private static final int MINECRAFT_UNCOMPLETED_ICON_COLOR = ColorHelper.RGB(DEFAULT_MINECRAFT_UNCOMPLETED_ICON_COLOR);
-    public static int defaultUncompletedIconColor = MINECRAFT_UNCOMPLETED_ICON_COLOR;
-    private static final int MINECRAFT_COMPLETED_TITLE_COLOR = ColorHelper.RGB(DEFAULT_MINECRAFT_COMPLETED_TITLE_COLOR);
+    private static final int WHITE = 0xff_ffff;
+    private static final int MINECRAFT_COMPLETED_ICON_COLOR = 0xDB_A213;
+    private static final int MINECRAFT_UNCOMPLETED_ICON_COLOR = 0xFF_FFFF;
+    private static final int MINECRAFT_COMPLETED_TITLE_COLOR = 0xDB_A213;
+    private static final int MINECRAFT_UNCOMPLETED_TITLE_COLOR = 0x04_89C1;
     public static int defaultCompletedTitleColor = MINECRAFT_COMPLETED_TITLE_COLOR;
-    private static final int MINECRAFT_UNCOMPLETED_TITLE_COLOR = ColorHelper.RGB(DEFAULT_MINECRAFT_UNCOMPLETED_TITLE_COLOR);
     public static int defaultUncompletedTitleColor = MINECRAFT_UNCOMPLETED_TITLE_COLOR;
-    public static int defaultCompletedLineColor = ColorHelper.RGB("#FFFFFF");
-    public static int defaultUncompletedLineColor = ColorHelper.RGB("#333333");
+    public static int defaultUncompletedIconColor = MINECRAFT_UNCOMPLETED_ICON_COLOR;
+    public static int defaultCompletedIconColor = MINECRAFT_COMPLETED_ICON_COLOR;
+    public static int defaultCompletedLineColor = 0xff_ffff;
+    public static int defaultUncompletedLineColor = 0x33_3333;
     private final ResourceLocation id;
     private boolean allowDragging;
     private int completedIconColor;

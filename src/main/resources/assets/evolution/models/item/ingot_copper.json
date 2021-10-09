@@ -1,6 +1,7 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "evolution:item/ingot_copper"
+    "layer0": "evolution:item/ingot_copper",
+	"layer1": "evolution:item/ingot_copper_temp"
   }
 }

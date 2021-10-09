@@ -524,7 +524,7 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> block_metal_copper_oxidized = ITEMS.register("block_metal_copper_oxidized",
                                                                                           () -> itemBlock(BLOCK_METAL_COPPER_OXID, propMetal()));
     //Metal Ingots
-    public static final RegistryObject<Item> ingot_copper = ITEMS.register("ingot_copper", () -> item(propMisc()));
+    public static final RegistryObject<Item> ingot_copper = ITEMS.register("ingot_copper", () -> new ItemIngot(propMetal()));
     //Metal Nuggets
     public static final RegistryObject<Item> nugget_copper = ITEMS.register("nugget_copper", () -> item(propMisc()));
     //Shovel Heads

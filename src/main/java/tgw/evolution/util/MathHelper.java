@@ -57,7 +57,7 @@ public final class MathHelper {
     public static final float SQRT_2 = sqrt(2.0f);
     public static final float SQRT_2_OVER_2 = SQRT_2 / 2.0f;
     public static final Random RANDOM = new Random();
-
+    public static final float[] BASE_BRIGHTNESS = {1.0f, 1.0f, 1.0f, 1.0f};
     public static final DirectionDiagonal[][] DIAGONALS = {{DirectionDiagonal.NORTH_WEST, DirectionDiagonal.NORTH_EAST},
                                                            {DirectionDiagonal.SOUTH_WEST, DirectionDiagonal.SOUTH_EAST}};
     public static final Hand[] HANDS_LEFT_PRIORITY = {Hand.OFF_HAND, Hand.MAIN_HAND};

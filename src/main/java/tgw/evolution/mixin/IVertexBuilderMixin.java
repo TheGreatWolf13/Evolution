@@ -44,20 +44,20 @@ public interface IVertexBuilderMixin extends IForgeVertexBuilder {
      * @author MGSchultz
      */
     @Overwrite
-    default void putBulkData(MatrixStack.Entry matrices,
+    default void putBulkData(MatrixStack.Entry entry,
                              BakedQuad quad,
-                             float[] p_227890_3_,
-                             float p_227890_4_,
-                             float p_227890_5_,
-                             float p_227890_6_,
-                             int[] p_227890_7_,
-                             int p_227890_8_,
-                             boolean p_227890_9_) {
+                             float[] baseBrightness,
+                             float red,
+                             float green,
+                             float blue,
+                             int[] light,
+                             int overlay,
+                             boolean useBaseColors) {
         int[] aint = quad.getVertices();
         Vector3i vector3i = quad.getDirection().getNormal();
         Vector3f vector3f = new Vector3f(vector3i.getX(), vector3i.getY(), vector3i.getZ());
-        Matrix4f matrix4f = matrices.pose();
-        vector3f.transform(matrices.normal());
+        Matrix4f matrix4f = entry.pose();
+        vector3f.transform(entry.normal());
         int j = aint.length / 8;
         try (MemoryStack memorystack = MemoryStack.stackPush()) {
             ByteBuffer bytebuffer = memorystack.malloc(DefaultVertexFormats.BLOCK.getVertexSize());
@@ -71,28 +71,28 @@ public interface IVertexBuilderMixin extends IForgeVertexBuilder {
                 float f3;
                 float f4;
                 float f5;
-                if (p_227890_9_) {
+                if (useBaseColors) {
                     float f6 = (bytebuffer.get(12) & 255) / 255.0F;
                     float f7 = (bytebuffer.get(13) & 255) / 255.0F;
                     float f8 = (bytebuffer.get(14) & 255) / 255.0F;
-                    f3 = f6 * p_227890_3_[k] * p_227890_4_;
-                    f4 = f7 * p_227890_3_[k] * p_227890_5_;
-                    f5 = f8 * p_227890_3_[k] * p_227890_6_;
+                    f3 = f6 * baseBrightness[k] * red;
+                    f4 = f7 * baseBrightness[k] * green;
+                    f5 = f8 * baseBrightness[k] * blue;
                 }
                 else {
-                    f3 = p_227890_3_[k] * p_227890_4_;
-                    f4 = p_227890_3_[k] * p_227890_5_;
-                    f5 = p_227890_3_[k] * p_227890_6_;
+                    f3 = baseBrightness[k] * red;
+                    f4 = baseBrightness[k] * green;
+                    f5 = baseBrightness[k] * blue;
                 }
-                int l = this.applyBakedLighting(p_227890_7_[k], bytebuffer);
+                int l = this.applyBakedLighting(light[k], bytebuffer);
                 float f9 = bytebuffer.getFloat(16);
                 float f10 = bytebuffer.getFloat(20);
                 IMatrix4fPatch mat4 = MathHelper.getExtendedMatrix(matrix4f);
                 float x2 = mat4.transformVecX(f, f1, f2);
                 float y2 = mat4.transformVecY(f, f1, f2);
                 float z2 = mat4.transformVecZ(f, f1, f2);
-                this.applyBakedNormals(vector3f, bytebuffer, matrices.normal());
-                this.vertex(x2, y2, z2, f3, f4, f5, 1.0F, f9, f10, p_227890_8_, l, vector3f.x(), vector3f.y(), vector3f.z());
+                this.applyBakedNormals(vector3f, bytebuffer, entry.normal());
+                this.vertex(x2, y2, z2, f3, f4, f5, 1.0F, f9, f10, overlay, l, vector3f.x(), vector3f.y(), vector3f.z());
             }
         }
     }
