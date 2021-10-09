@@ -6,7 +6,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
 import net.minecraft.client.AbstractOption;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
@@ -19,10 +18,11 @@ import net.minecraft.client.gui.screen.inventory.CreativeScreen;
 import net.minecraft.client.gui.screen.inventory.InventoryScreen;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.ActiveRenderInfo;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.entity.PlayerRenderer;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ModelResourceLocation;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.PointOfView;
 import net.minecraft.client.util.ClientRecipeBook;
@@ -81,8 +81,7 @@ import tgw.evolution.client.gui.stats.ScreenStats;
 import tgw.evolution.client.gui.toast.ToastCustomRecipe;
 import tgw.evolution.client.layers.LayerBack;
 import tgw.evolution.client.layers.LayerBelt;
-import tgw.evolution.client.models.tile.BakedModelFirewoodPile;
-import tgw.evolution.client.models.tile.BakedModelKnapping;
+import tgw.evolution.client.models.ModelRegistry;
 import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
@@ -101,7 +100,10 @@ import tgw.evolution.items.*;
 import tgw.evolution.network.*;
 import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.stats.EvolutionStatisticsManager;
-import tgw.evolution.util.*;
+import tgw.evolution.util.AdvancedEntityRayTraceResult;
+import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.OptiFineHelper;
+import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.hitbox.BodyPart;
 import tgw.evolution.util.reflection.FieldHandler;
 import tgw.evolution.util.reflection.StaticFieldHandler;
@@ -336,49 +338,7 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void onModelBakeEvent(ModelBakeEvent event) {
-        for (RockVariant variant : RockVariant.VALUES) {
-            Block block;
-            try {
-                block = variant.getKnapping();
-            }
-            catch (IllegalStateException e) {
-                block = null;
-            }
-            if (block != null) {
-                for (BlockState state : block.getStateDefinition().getPossibleStates()) {
-                    //noinspection ObjectAllocationInLoop
-                    ModelResourceLocation variantMRL = BlockModelShapes.stateToModelLocation(state);
-                    IBakedModel existingModel = event.getModelRegistry().get(variantMRL);
-                    if (existingModel == null) {
-                        Evolution.LOGGER.warn("Did not find the expected vanilla baked model(s) for BlockKnapping in registry");
-                    }
-                    else if (existingModel instanceof BakedModelKnapping) {
-                        Evolution.LOGGER.warn("Tried to replace BakedModelKnapping twice");
-                    }
-                    else {
-                        //noinspection ObjectAllocationInLoop
-                        IBakedModel customModel = new BakedModelKnapping(existingModel, variant);
-                        event.getModelRegistry().put(variantMRL, customModel);
-                    }
-                }
-            }
-        }
-        for (BlockState state : EvolutionBlocks.FIREWOOD_PILE.get().getStateDefinition().getPossibleStates()) {
-            //noinspection ObjectAllocationInLoop
-            ModelResourceLocation variantMRL = BlockModelShapes.stateToModelLocation(state);
-            IBakedModel existingModel = event.getModelRegistry().get(variantMRL);
-            if (existingModel == null) {
-                Evolution.LOGGER.warn("Did not find the expected vanilla baked model(s) for BlockFirewoodPile in registry");
-            }
-            else if (existingModel instanceof BakedModelKnapping) {
-                Evolution.LOGGER.warn("Tried to replace BakedModelFirewoodPile twice");
-            }
-            else {
-                //noinspection ObjectAllocationInLoop
-                IBakedModel firewoodPileModel = new BakedModelFirewoodPile(existingModel);
-                event.getModelRegistry().put(variantMRL, firewoodPileModel);
-            }
-        }
+        ModelRegistry.register(event);
     }
 
     public static boolean removeEffect(List<ClientEffectInstance> list, Effect effect) {
