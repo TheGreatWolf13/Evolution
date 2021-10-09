@@ -19,6 +19,10 @@ public final class Temperature {
         return kelvin + 273;
     }
 
+    /**
+     * @return A color in a 32 bit, ARGB value. The 8 most significant bits represent alpha, while the least significant bits represent blue.
+     * This color is equivalent to the black body radiation, given a temperature in Kelvin.
+     */
     public static int getBlackBodySpectrumColor(double temperature) {
         temperature /= 100;
         int red;
@@ -35,20 +39,20 @@ public final class Temperature {
             red = (int) (255 * (temperature - 8));
             green = 0;
             blue = 0;
-            alpha = (int) (255 * (temperature - 8));
+            alpha = (int) (191 * (temperature - 8));
         }
         else if (temperature <= 10) {
             red = 255;
             green = (int) (68 * (temperature - 9));
             blue = 0;
-            alpha = 255;
+            alpha = 191;
         }
         else if (temperature <= 19) {
             red = 255;
             green = (int) (99.470_802_586_1 * Math.log(temperature) - 161.119_568_166_1);
             green = MathHelper.clamp(green, 0, 255);
             blue = 0;
-            alpha = 255;
+            alpha = (int) (191 + 64 * (temperature - 10) / 9.0);
         }
         else if (temperature <= 66) {
             red = 255;
