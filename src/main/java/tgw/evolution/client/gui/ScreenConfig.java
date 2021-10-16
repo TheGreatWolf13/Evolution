@@ -34,7 +34,7 @@ import org.lwjgl.opengl.GL11;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.reflection.FieldHandler;
 
 import javax.annotation.Nullable;
@@ -145,7 +145,7 @@ public class ScreenConfig extends Screen {
         for (int i = 0; i < words.length; i++) {
             words[i] = StringUtils.capitalize(words[i]);
         }
-        // Finally join words. Some mods have inputs like "Foo_Bar" and this causes a double space.
+        // Finally, join words. Some mods have inputs like "Foo_Bar" and this causes a double space.
         // To fix this any whitespace is replaced with a single space
         return new StringTextComponent(DOUBLE_SPACE.matcher(Strings.join(words, " ")).replaceAll(" "));
     }
@@ -201,7 +201,7 @@ public class ScreenConfig extends Screen {
 
     /**
      * Scans the given unmodifiable config and creates an entry for each scanned
-     * config value based on it's type.
+     * config value based on its type.
      *
      * @param values  the values to scan
      * @param spec    the spec of config
@@ -602,11 +602,12 @@ public class ScreenConfig extends Screen {
                 ForgeConfigSpec.EnumValue<?> enumValue = (ForgeConfigSpec.EnumValue<?>) value;
                 Class<? extends Enum<?>> clazz = CLAZZ.get(enumValue);
                 Enum<?>[] values = clazz.getEnumConstants();
-                lines.add(EvolutionTexts.configAllowedValues(Arrays.stream(values)
-                                                                   .map(o -> I18n.get(ScreenConfig.this.modId +
-                                                                                      ".config.enum_" +
-                                                                                      o.name().toLowerCase()))
-                                                                   .collect(Collectors.joining(", "))).getVisualOrderText());
+                ITextComponent allowedValues = EvolutionTexts.configAllowedValues(Arrays.stream(values)
+                                                                                        .map(o -> I18n.get(ScreenConfig.this.modId +
+                                                                                                           ".config.enum_" +
+                                                                                                           o.name().toLowerCase()))
+                                                                                        .collect(Collectors.joining(", ")));
+                lines.addAll(font.split(allowedValues, Math.max(ScreenConfig.this.width / 2 - 43, 170)));
             }
             if (value instanceof ForgeConfigSpec.IntValue ||
                 value instanceof ForgeConfigSpec.DoubleValue ||
