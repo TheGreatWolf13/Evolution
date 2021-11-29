@@ -117,8 +117,12 @@ public class LightTextureEv extends LightTexture {
             ClientWorld world = this.mc.level;
             if (world != null) {
                 float skyBrightness = getSunBrightness(world, partialTicks);
+                float skyFlash;
                 if (world.getSkyFlashTime() > 0) {
-                    skyBrightness = 1.0F;
+                    skyFlash = 1.0F;
+                }
+                else {
+                    skyFlash = skyBrightness;
                 }
                 float waterBrightness = this.mc.player.getWaterVision();
                 float nightVisionModifier;
@@ -131,19 +135,16 @@ public class LightTextureEv extends LightTexture {
                 else {
                     nightVisionModifier = 0.0F;
                 }
-                if (nightVisionModifier > 0) {
-                    skyBrightness = 1.0f;
-                }
                 VEC_0.set(skyBrightness, skyBrightness, skyBrightness);
                 VEC_0.lerp(LERP_0, 0.35F);
                 float f4 = this.torchFlicker + 1.5F;
                 for (int y = 0; y < 16; y++) {
                     for (int x = 0; x < 16; x++) {
-                        float skyLight = getLightBrightness(world, y) * skyBrightness;
-                        float blockLight = getLightBrightness(world, x) * f4;
-                        float f7 = blockLight * ((blockLight * 0.6F + 0.4F) * 0.6F + 0.4F);
-                        float f8 = blockLight * (blockLight * blockLight * 0.6F + 0.4F);
-                        VEC_1.set(blockLight, f7, f8);
+                        float skyLight = getLightBrightness(world, y) * skyFlash;
+                        float bLRed = getLightBrightness(world, x) * f4;
+                        float bLGreen = bLRed * ((bLRed * 0.6F + 0.4F) * 0.6F + 0.4F);
+                        float bLBlue = bLRed * (bLRed * bLRed * 0.6F + 0.4F);
+                        VEC_1.set(bLRed, bLGreen, bLBlue);
                         if (world.effects().forceBrightLightmap()) {
                             VEC_1.lerp(LERP_1, 0.25F);
                         }
@@ -164,7 +165,12 @@ public class LightTextureEv extends LightTexture {
                             if (f10 < 1.0F) {
                                 setVec(VEC_5, VEC_1);
                                 float f12 = 1.0F / f10;
-                                VEC_5.mul(f12);
+                                if (Float.isInfinite(f12)) {
+                                    VEC_5.set(1.0f, 1.0f, 1.0f);
+                                }
+                                else {
+                                    VEC_5.mul(f12);
+                                }
                                 VEC_1.lerp(VEC_5, nightVisionModifier);
                             }
                         }
