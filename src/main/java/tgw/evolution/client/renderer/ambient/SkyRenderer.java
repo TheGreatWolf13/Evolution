@@ -19,7 +19,11 @@ import org.lwjgl.opengl.GL11;
 import tgw.evolution.client.util.Blending;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.util.*;
+import tgw.evolution.util.earth.EarthHelper;
+import tgw.evolution.util.earth.MoonPhase;
+import tgw.evolution.util.earth.PlanetsHelper;
+import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Vec3f;
 import tgw.evolution.util.reflection.FieldHandler;
 import tgw.evolution.world.dimension.DimensionOverworld;
 
