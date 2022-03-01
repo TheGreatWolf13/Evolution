@@ -102,7 +102,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         double y = player.getY();
         double z = player.getZ();
         this.setPos(x, y, z);
-        this.setDeltaMovement(player.getDeltaMovement());
+        this.setDeltaMovement(x - player.xOld, y - player.yOld, z - player.zOld);
         this.xo = x;
         this.yo = y;
         this.zo = z;
