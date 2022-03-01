@@ -1,11 +1,11 @@
 package tgw.evolution.init;
 
-import net.minecraft.inventory.container.ContainerType;
-import net.minecraftforge.common.extensions.IForgeContainerType;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.Evolution;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.inventory.corpse.ContainerCorpse;
@@ -13,19 +13,19 @@ import tgw.evolution.inventory.extendedinventory.ContainerPlayerInventory;
 
 public final class EvolutionContainers {
 
-    public static final DeferredRegister<ContainerType<?>> CONTAINERS = DeferredRegister.create(ForgeRegistries.CONTAINERS, Evolution.MODID);
+    public static final DeferredRegister<MenuType<?>> CONTAINERS = DeferredRegister.create(ForgeRegistries.CONTAINERS, Evolution.MODID);
 
-    public static final RegistryObject<ContainerType<ContainerCorpse>> CORPSE;
-    public static final RegistryObject<ContainerType<ContainerPlayerInventory>> EXTENDED_INVENTORY;
+    public static final RegistryObject<MenuType<ContainerCorpse>> CORPSE;
+    public static final RegistryObject<MenuType<ContainerPlayerInventory>> EXTENDED_INVENTORY;
 
     static {
-        CORPSE = CONTAINERS.register("corpse", () -> IForgeContainerType.create((id, inv, data) -> {
+        CORPSE = CONTAINERS.register("corpse", () -> IForgeMenuType.create((id, inv, data) -> {
             int entityId = data.readInt();
             EntityPlayerCorpse corpse = (EntityPlayerCorpse) inv.player.level.getEntity(entityId);
             return new ContainerCorpse(id, corpse, inv);
         }));
         EXTENDED_INVENTORY = CONTAINERS.register("extended_inventory",
-                                                 () -> IForgeContainerType.create((id, inv, data) -> new ContainerPlayerInventory(id, inv)));
+                                                 () -> IForgeMenuType.create((id, inv, data) -> new ContainerPlayerInventory(id, inv)));
     }
 
     private EvolutionContainers() {

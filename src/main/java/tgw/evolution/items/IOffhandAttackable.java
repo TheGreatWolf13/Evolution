@@ -1,10 +1,12 @@
 package tgw.evolution.items;
 
+import net.minecraft.world.item.ItemStack;
+
 public interface IOffhandAttackable {
 
-    double getAttackSpeed();
+    double getAttackDamage(ItemStack stack);
 
-    double getReach();
+    double getAttackSpeed(ItemStack stack);
 
-    double getAttackDamage();
+    double getReach(ItemStack stack);
 }

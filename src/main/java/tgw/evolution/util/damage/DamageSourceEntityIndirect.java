@@ -1,11 +1,11 @@
 package tgw.evolution.util.damage;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.init.EvolutionDamage;
 
@@ -14,7 +14,7 @@ import javax.annotation.Nullable;
 public class DamageSourceEntityIndirect extends DamageSourceEntity implements IHitLocation {
     private final Entity trueSource;
     @Nullable
-    private EquipmentSlotType hitLocation;
+    private EquipmentSlot hitLocation;
 
     public DamageSourceEntityIndirect(String damage, Entity source, @Nullable Entity trueSource, EvolutionDamage.Type type) {
         super(damage, source, type);
@@ -35,14 +35,14 @@ public class DamageSourceEntityIndirect extends DamageSourceEntity implements IH
 
     @Override
     @Nullable
-    public EquipmentSlotType getHitLocation() {
+    public EquipmentSlot getHitLocation() {
         return this.hitLocation;
     }
 
     @Override
     @Nullable
-    public ITextComponent getItemDisplay() {
-        ItemStack heldStack = this.trueSource instanceof LivingEntity ? ((LivingEntity) this.trueSource).getMainHandItem() : ItemStack.EMPTY;
+    public Component getItemDisplay() {
+        ItemStack heldStack = this.trueSource instanceof LivingEntity living ? living.getMainHandItem() : ItemStack.EMPTY;
         if ("spear".equals(this.msgId)) {
             heldStack = ((EntitySpear) this.damageSourceEntity).getStack();
         }
@@ -50,22 +50,22 @@ public class DamageSourceEntityIndirect extends DamageSourceEntity implements IH
     }
 
     @Override
-    public ITextComponent getLocalizedDeathMessage(LivingEntity deadEntity) {
-        ITextComponent sourceComp = this.trueSource == null ? this.damageSourceEntity.getDisplayName() : this.trueSource.getDisplayName();
-        ITextComponent itemComp = this.getItemDisplay();
+    public Component getLocalizedDeathMessage(LivingEntity deadEntity) {
+        Component sourceComp = this.trueSource == null ? this.damageSourceEntity.getDisplayName() : this.trueSource.getDisplayName();
+        Component itemComp = this.getItemDisplay();
         String message = "death.attack." + this.msgId;
         if ("spear".equals(this.msgId)) {
             if (this.trueSource == null && itemComp != null) {
-                return new TranslationTextComponent(message, deadEntity.getDisplayName(), itemComp);
+                return new TranslatableComponent(message, deadEntity.getDisplayName(), itemComp);
             }
         }
         String messageItem = message + ".item";
         return itemComp != null ?
-               new TranslationTextComponent(messageItem, deadEntity.getDisplayName(), sourceComp, itemComp) :
-               new TranslationTextComponent(message, deadEntity.getDisplayName(), sourceComp);
+               new TranslatableComponent(messageItem, deadEntity.getDisplayName(), sourceComp, itemComp) :
+               new TranslatableComponent(message, deadEntity.getDisplayName(), sourceComp);
     }
 
-    public void setHitLocation(@Nullable EquipmentSlotType hitLocation) {
+    public void setHitLocation(@Nullable EquipmentSlot hitLocation) {
         this.hitLocation = hitLocation;
     }
 }

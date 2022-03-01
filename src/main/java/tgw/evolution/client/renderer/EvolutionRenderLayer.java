@@ -1,10 +1,10 @@
 package tgw.evolution.client.renderer;
 
-import net.minecraft.block.Block;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.RenderTypeLookup;
-import net.minecraft.fluid.Fluid;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionFluids;
 
@@ -15,35 +15,17 @@ public enum EvolutionRenderLayer {
 
     private static void set(RegistryObject<? extends Block> block, EvolutionRenderLayer layer) {
         switch (layer) {
-            case CUTOUT: {
-                RenderTypeLookup.setRenderLayer(block.get(), RenderType.cutout());
-                break;
-            }
-            case CUTOUT_MIPPED: {
-                RenderTypeLookup.setRenderLayer(block.get(), RenderType.cutoutMipped());
-                break;
-            }
-            case TRANSLUCENT: {
-                RenderTypeLookup.setRenderLayer(block.get(), RenderType.translucent());
-                break;
-            }
+            case CUTOUT -> ItemBlockRenderTypes.setRenderLayer(block.get(), RenderType.cutout());
+            case CUTOUT_MIPPED -> ItemBlockRenderTypes.setRenderLayer(block.get(), RenderType.cutoutMipped());
+            case TRANSLUCENT -> ItemBlockRenderTypes.setRenderLayer(block.get(), RenderType.translucent());
         }
     }
 
     private static void setFluid(RegistryObject<? extends Fluid> fluid, EvolutionRenderLayer layer) {
         switch (layer) {
-            case CUTOUT: {
-                RenderTypeLookup.setRenderLayer(fluid.get(), RenderType.cutout());
-                break;
-            }
-            case CUTOUT_MIPPED: {
-                RenderTypeLookup.setRenderLayer(fluid.get(), RenderType.cutoutMipped());
-                break;
-            }
-            case TRANSLUCENT: {
-                RenderTypeLookup.setRenderLayer(fluid.get(), RenderType.translucent());
-                break;
-            }
+            case CUTOUT -> ItemBlockRenderTypes.setRenderLayer(fluid.get(), RenderType.cutout());
+            case CUTOUT_MIPPED -> ItemBlockRenderTypes.setRenderLayer(fluid.get(), RenderType.cutoutMipped());
+            case TRANSLUCENT -> ItemBlockRenderTypes.setRenderLayer(fluid.get(), RenderType.translucent());
         }
     }
 

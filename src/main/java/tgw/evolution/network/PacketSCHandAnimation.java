@@ -1,28 +1,28 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Hand;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.InteractionHand;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.events.ClientEvents;
 
 import java.util.function.Supplier;
 
 public class PacketSCHandAnimation implements IPacket {
 
-    private final Hand hand;
+    private final InteractionHand hand;
 
-    public PacketSCHandAnimation(Hand hand) {
+    public PacketSCHandAnimation(InteractionHand hand) {
         this.hand = hand;
     }
 
-    public static PacketSCHandAnimation decode(PacketBuffer buffer) {
-        Hand hand = buffer.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND;
+    public static PacketSCHandAnimation decode(FriendlyByteBuf buffer) {
+        InteractionHand hand = buffer.readBoolean() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
         return new PacketSCHandAnimation(hand);
     }
 
-    public static void encode(PacketSCHandAnimation message, PacketBuffer buffer) {
-        buffer.writeBoolean(message.hand == Hand.MAIN_HAND);
+    public static void encode(PacketSCHandAnimation message, FriendlyByteBuf buffer) {
+        buffer.writeBoolean(message.hand == InteractionHand.MAIN_HAND);
     }
 
     public static void handle(PacketSCHandAnimation packet, Supplier<NetworkEvent.Context> context) {

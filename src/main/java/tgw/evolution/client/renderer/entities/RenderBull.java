@@ -57,7 +57,7 @@
 //            GlStateManager.rotatef(180.0F - rotationYaw, 0.0F, 1.0F, 0.0F);
 //        }
 //        if (entityLiving.getDeathTime() > 0) {
-//            float f = (tgw.evolution.util.MathHelper.clampMax(entityLiving.getDeathTime(), 20) + partialTicks - 1.0F) / 20.0F * 1.6F;
+//            float f = (tgw.evolution.util.math.MathHelper.clampMax(entityLiving.getDeathTime(), 20) + partialTicks - 1.0F) / 20.0F * 1.6F;
 //            f = MathHelper.sqrt(f);
 //            if (f > 1.0F) {
 //                f = 1.0F;

@@ -1,9 +1,9 @@
 package tgw.evolution.network;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.Evolution;
 
 import java.util.function.Supplier;
@@ -16,15 +16,15 @@ public class PacketSCUpdateCameraTilt implements IPacket {
         this.attackedAtYaw = attackedAtYaw;
     }
 
-    public PacketSCUpdateCameraTilt(PlayerEntity player) {
+    public PacketSCUpdateCameraTilt(Player player) {
         this.attackedAtYaw = player.hurtDir;
     }
 
-    public static PacketSCUpdateCameraTilt decode(PacketBuffer buffer) {
+    public static PacketSCUpdateCameraTilt decode(FriendlyByteBuf buffer) {
         return new PacketSCUpdateCameraTilt(buffer.readFloat());
     }
 
-    public static void encode(PacketSCUpdateCameraTilt packet, PacketBuffer buffer) {
+    public static void encode(PacketSCUpdateCameraTilt packet, FriendlyByteBuf buffer) {
         buffer.writeFloat(packet.attackedAtYaw);
     }
 

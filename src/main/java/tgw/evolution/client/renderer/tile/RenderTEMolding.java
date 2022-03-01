@@ -1,24 +1,23 @@
 package tgw.evolution.client.renderer.tile;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
-import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.client.models.tile.ModelTEMolding;
 import tgw.evolution.init.EvolutionResources;
 
-public class RenderTEMolding extends TileEntityRenderer<TEMolding> {
+public class RenderTEMolding implements BlockEntityRenderer<TEMolding> {
 
     private final ModelTEMolding model = new ModelTEMolding();
 
-    public RenderTEMolding(TileEntityRendererDispatcher dispatcher) {
-        super(dispatcher);
+    public RenderTEMolding(BlockEntityRendererProvider.Context context) {
     }
 
     @Override
-    public void render(TEMolding tile, float partialTicks, MatrixStack matrices, IRenderTypeBuffer buffer, int packedLight, int packedOverlay) {
+    public void render(TEMolding tile, float partialTicks, PoseStack matrices, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         matrices.pushPose();
         matrices.scale(0.5f, 0.5f, 0.5f);
 //        this.model.setupBase(tile.matrices[1] == null);
@@ -31,7 +30,7 @@ public class RenderTEMolding extends TileEntityRenderer<TEMolding> {
 //                this.model.setupLayers(tile.matrices[i], i);
 //            }
 //        }
-        IVertexBuilder modelBuffer = buffer.getBuffer(this.model.renderType(EvolutionResources.BLOCK_MOLDING));
+        VertexConsumer modelBuffer = buffer.getBuffer(this.model.renderType(EvolutionResources.BLOCK_MOLDING));
         this.model.renderToBuffer(matrices, modelBuffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
         matrices.popPose();
     }

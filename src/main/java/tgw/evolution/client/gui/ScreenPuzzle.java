@@ -1,16 +1,18 @@
 package tgw.evolution.client.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.chat.NarratorChatListener;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.blocks.tileentities.TEPuzzle;
-import tgw.evolution.client.gui.widgets.GuiCheckBox;
+import tgw.evolution.client.gui.widgets.CheckBoxAdv;
+import tgw.evolution.client.gui.widgets.EditBoxAdv;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketCSUpdatePuzzle;
@@ -18,12 +20,16 @@ import tgw.evolution.network.PacketCSUpdatePuzzle;
 @OnlyIn(Dist.CLIENT)
 public class ScreenPuzzle extends Screen {
 
+    private final Component textAttachmentType = new TranslatableComponent("evolution.gui.puzzle.attachmentType");
+    private final Component textCheckBB = new TranslatableComponent("evolution.gui.puzzle.checkBB");
+    private final Component textFinalState = new TranslatableComponent("evolution.gui.puzzle.finalState");
+    private final Component textTargetPool = new TranslatableComponent("evolution.gui.puzzle.targetPool");
     private final TEPuzzle tile;
-    private TextFieldWidget attachmentTypeText;
+    private EditBoxAdv attachmentTypeEdit;
     private boolean checkBB;
     private Button doneButton;
-    private TextFieldWidget finalStateText;
-    private TextFieldWidget targetPoolText;
+    private EditBoxAdv finalStateEdit;
+    private EditBoxAdv targetPoolEdit;
 
     public ScreenPuzzle(TEPuzzle tile) {
         super(NarratorChatListener.NO_TITLE);
@@ -35,56 +41,63 @@ public class ScreenPuzzle extends Screen {
     }
 
     protected void checkValid() {
-        this.doneButton.active = ResourceLocation.isValidResourceLocation(this.attachmentTypeText.getValue()) &
-                                 ResourceLocation.isValidResourceLocation(this.targetPoolText.getValue());
+        this.doneButton.active = ResourceLocation.isValidResourceLocation(this.attachmentTypeEdit.getValue()) &
+                                 ResourceLocation.isValidResourceLocation(this.targetPoolEdit.getValue());
     }
 
     @Override
     protected void init() {
         this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
-        this.doneButton = this.addButton(new Button(this.width / 2 - 4 - 150,
-                                                    210,
-                                                    150,
-                                                    20,
-                                                    EvolutionTexts.GUI_GENERAL_DONE,
-                                                    button -> this.sendUpdatesToServer()));
-        this.addButton(new Button(this.width / 2 + 4, 210, 150, 20, EvolutionTexts.GUI_GENERAL_CANCEL, p_214252_1_ -> this.onClose()));
+        this.doneButton = this.addRenderableWidget(new Button(this.width / 2 - 4 - 150,
+                                                              210,
+                                                              150,
+                                                              20,
+                                                              EvolutionTexts.GUI_GENERAL_DONE,
+                                                              button -> this.sendUpdatesToServer()));
+        this.addRenderableWidget(new Button(this.width / 2 + 4, 210, 150, 20, EvolutionTexts.GUI_GENERAL_CANCEL, p_214252_1_ -> this.onClose()));
         this.checkBB = this.tile.getCheckBB();
-        this.addButton(new GuiCheckBox(this.width / 2 - 4 - 150 + 1, 150, EvolutionTexts.GUI_PUZZLE_CHECKBB, this.checkBB, true) {
-            @Override
-            public void onPress() {
-                super.onPress();
-                ScreenPuzzle.this.checkBB = !ScreenPuzzle.this.checkBB;
-            }
-        });
-        this.targetPoolText = new TextFieldWidget(this.font, this.width / 2 - 152, 40, 300, 20, EvolutionTexts.GUI_PUZZLE_TARGET_POOL);
-        this.targetPoolText.setMaxLength(128);
-        this.targetPoolText.setValue(this.tile.getTargetPool().toString());
-        this.targetPoolText.setResponder(string -> this.checkValid());
-        this.children.add(this.targetPoolText);
-        this.attachmentTypeText = new TextFieldWidget(this.font, this.width / 2 - 152, 80, 300, 20, EvolutionTexts.GUI_PUZZLE_ATTACHMENT_TYPE);
-        this.attachmentTypeText.setMaxLength(128);
-        this.attachmentTypeText.setValue(this.tile.getAttachmentType().toString());
-        this.attachmentTypeText.setResponder(string -> this.checkValid());
-        this.children.add(this.attachmentTypeText);
-        this.finalStateText = new TextFieldWidget(this.font, this.width / 2 - 152, 120, 300, 20, EvolutionTexts.GUI_PUZZLE_FINAL_STATE);
-        this.finalStateText.setMaxLength(256);
-        this.finalStateText.setValue(this.tile.getFinalState());
-        this.children.add(this.finalStateText);
-        this.setInitialFocus(this.targetPoolText);
+        this.addRenderableWidget(new CheckBoxAdv(this.width / 2 - 4 - 150 + 1,
+                                                 150,
+                                                 this.textCheckBB,
+                                                 this.checkBB,
+                                                 true,
+                                                 b -> this.checkBB = !this.checkBB));
+        this.targetPoolEdit = new EditBoxAdv(this.font, this.width / 2 - 152, 40, 300, 20, EvolutionTexts.EMPTY);
+        this.targetPoolEdit.setMaxLength(128);
+        this.targetPoolEdit.setValue(this.tile.getTargetPool().toString());
+        this.targetPoolEdit.setResponder(string -> this.checkValid());
+        this.addWidget(this.targetPoolEdit);
+        this.attachmentTypeEdit = new EditBoxAdv(this.font, this.width / 2 - 152, 80, 300, 20, EvolutionTexts.EMPTY);
+        this.attachmentTypeEdit.setMaxLength(128);
+        this.attachmentTypeEdit.setValue(this.tile.getAttachmentType().toString());
+        this.attachmentTypeEdit.setResponder(string -> this.checkValid());
+        this.addWidget(this.attachmentTypeEdit);
+        this.finalStateEdit = new EditBoxAdv(this.font, this.width / 2 - 152, 120, 300, 20, EvolutionTexts.EMPTY);
+        this.finalStateEdit.setMaxLength(256);
+        this.finalStateEdit.setValue(this.tile.getFinalState());
+        this.addWidget(this.finalStateEdit);
+        this.setInitialFocus(this.targetPoolEdit);
         this.checkValid();
     }
 
     @Override
-    public boolean keyPressed(int p_keyPressed_1_, int p_keyPressed_2_, int p_keyPressed_3_) {
-        if (super.keyPressed(p_keyPressed_1_, p_keyPressed_2_, p_keyPressed_3_)) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (super.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
         }
-        if (!this.doneButton.active || p_keyPressed_1_ != 257 && p_keyPressed_1_ != 335) {
+        if (!this.doneButton.active || keyCode != 257 && keyCode != 335) {
             return false;
         }
         this.sendUpdatesToServer();
         return true;
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        this.attachmentTypeEdit.setFocus(false);
+        this.targetPoolEdit.setFocus(false);
+        this.finalStateEdit.setFocus(false);
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
@@ -94,32 +107,32 @@ public class ScreenPuzzle extends Screen {
     }
 
     @Override
-    public void render(MatrixStack matrices, int x, int y, float partialTicks) {
+    public void render(PoseStack matrices, int x, int y, float partialTicks) {
         this.renderBackground(matrices);
-        drawString(matrices, this.font, EvolutionTexts.GUI_PUZZLE_TARGET_POOL, this.width / 2 - 153, 30, 0xa0_a0a0);
-        this.targetPoolText.render(matrices, x, y, partialTicks);
-        drawString(matrices, this.font, EvolutionTexts.GUI_PUZZLE_ATTACHMENT_TYPE, this.width / 2 - 153, 70, 0xa0_a0a0);
-        this.attachmentTypeText.render(matrices, x, y, partialTicks);
-        drawString(matrices, this.font, EvolutionTexts.GUI_PUZZLE_FINAL_STATE, this.width / 2 - 153, 110, 0xa0_a0a0);
-        this.finalStateText.render(matrices, x, y, partialTicks);
+        drawString(matrices, this.font, this.textTargetPool, this.width / 2 - 153, 30, 0xa0_a0a0);
+        this.targetPoolEdit.render(matrices, x, y, partialTicks);
+        drawString(matrices, this.font, this.textAttachmentType, this.width / 2 - 153, 70, 0xa0_a0a0);
+        this.attachmentTypeEdit.render(matrices, x, y, partialTicks);
+        drawString(matrices, this.font, this.textFinalState, this.width / 2 - 153, 110, 0xa0_a0a0);
+        this.finalStateEdit.render(matrices, x, y, partialTicks);
         super.render(matrices, x, y, partialTicks);
     }
 
     @Override
     public void resize(Minecraft mc, int width, int height) {
-        String attachmentType = this.attachmentTypeText.getValue();
-        String targetPool = this.targetPoolText.getValue();
-        String finalState = this.finalStateText.getValue();
+        String attachmentType = this.attachmentTypeEdit.getValue();
+        String targetPool = this.targetPoolEdit.getValue();
+        String finalState = this.finalStateEdit.getValue();
         this.init(mc, width, height);
-        this.attachmentTypeText.setValue(attachmentType);
-        this.targetPoolText.setValue(targetPool);
-        this.finalStateText.setValue(finalState);
+        this.attachmentTypeEdit.setValue(attachmentType);
+        this.targetPoolEdit.setValue(targetPool);
+        this.finalStateEdit.setValue(finalState);
     }
 
     private void sendUpdatesToServer() {
-        ResourceLocation targetPool = new ResourceLocation(this.targetPoolText.getValue());
-        ResourceLocation attachmentType = new ResourceLocation(this.attachmentTypeText.getValue());
-        String finalState = this.finalStateText.getValue();
+        ResourceLocation targetPool = new ResourceLocation(this.targetPoolEdit.getValue());
+        ResourceLocation attachmentType = new ResourceLocation(this.attachmentTypeEdit.getValue());
+        String finalState = this.finalStateEdit.getValue();
         this.tile.setTargetPool(targetPool);
         this.tile.setAttachmentType(attachmentType);
         this.tile.setFinalState(finalState);
@@ -134,8 +147,8 @@ public class ScreenPuzzle extends Screen {
 
     @Override
     public void tick() {
-        this.attachmentTypeText.tick();
-        this.targetPoolText.tick();
-        this.finalStateText.tick();
+        this.attachmentTypeEdit.tick();
+        this.targetPoolEdit.tick();
+        this.finalStateEdit.tick();
     }
 }

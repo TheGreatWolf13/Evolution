@@ -1,33 +1,30 @@
 package tgw.evolution.blocks.fluids;
 
 import com.google.common.collect.Lists;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.item.ItemStack;
-import net.minecraft.loot.LootContext;
-import net.minecraft.pathfinding.PathType;
-import net.minecraft.state.BooleanProperty;
-import net.minecraft.state.IntegerProperty;
-import net.minecraft.state.StateContainer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.pathfinder.PathComputationType;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.ForgeEventFactory;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.*;
@@ -35,9 +32,9 @@ import tgw.evolution.blocks.tileentities.TELiquid;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.init.EvolutionBStates;
-import tgw.evolution.util.DirectionList;
-import tgw.evolution.util.DirectionUtil;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.DirectionList;
+import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -45,10 +42,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
 
-import static net.minecraft.fluid.FlowingFluid.FALLING;
 import static tgw.evolution.init.EvolutionBStates.LEVEL_1_8;
 
-public abstract class BlockGenericFluid extends BlockMass implements IBlockFluidContainer, IReplaceable {
+public abstract class BlockGenericFluid extends BlockMass implements IBlockFluidContainer, IReplaceable, EntityBlock {
     public static final IntegerProperty LEVEL = LEVEL_1_8;
     public static final BooleanProperty FULL = EvolutionBStates.FULL;
     private final List<FluidState> fluidStateCache;
@@ -62,7 +58,7 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
         this.supplier = fluid;
     }
 
-    public static int getFluidAmount(World world, BlockPos pos, BlockState state, FluidState fluid) {
+    public static int getFluidAmount(Level level, BlockPos pos, BlockState state, FluidState fluid) {
         if (fluid.isEmpty()) {
             return 0;
         }
@@ -70,29 +66,29 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
         if (block instanceof BlockGenericFluid) {
             int layers = fluid.getValue(LEVEL_1_8);
             int amount = 12_500 * layers;
-            if (!fluid.getValue(FALLING)) {
-                TileEntity tile = world.getBlockEntity(pos);
-                if (tile instanceof TELiquid) {
-                    amount -= ((TELiquid) tile).getMissingLiquid();
+            if (!fluid.getValue(EvolutionBStates.FALL)) {
+                BlockEntity tile = level.getBlockEntity(pos);
+                if (tile instanceof TELiquid teLiquid) {
+                    amount -= teLiquid.getMissingLiquid();
                 }
                 else {
-                    Evolution.LOGGER.warn("Invalid tile entity for block at {}: {}", pos, tile);
+                    Evolution.warn("Invalid tile entity for block at {}: {}", pos, tile);
                 }
             }
             return amount;
         }
-        if (block instanceof IFluidLoggable) {
-            return ((IFluidLoggable) block).getCurrentAmount(world, pos, state);
+        if (block instanceof IFluidLoggable fluidLoggable) {
+            return fluidLoggable.getCurrentAmount(level, pos, state);
         }
         return 0;
     }
 
-    public static void place(World world, BlockPos pos, FluidGeneric fluid, int amount) {
-        fluid.setBlockState(world, pos, amount);
+    public static void place(Level level, BlockPos pos, FluidGeneric fluid, int amount) {
+        fluid.setBlockState(level, pos, amount);
     }
 
-    private static void triggerMixEffects(IWorld world, BlockPos pos) {
-        world.levelEvent(Constants.WorldEvents.LAVA_EXTINGUISH, pos, 0);
+    private static void triggerMixEffects(LevelAccessor level, BlockPos pos) {
+        level.levelEvent(LevelEvent.LAVA_FIZZ, pos, 0);
     }
 
     @Override
@@ -109,35 +105,29 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(LEVEL, FULL);
     }
 
-    @Nullable
     @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return new TELiquid();
-    }
-
-    @Override
-    public int getAmountRemoved(World world, BlockPos pos, int maxAmount) {
-        FluidState stateAtPos = world.getFluidState(pos);
-        int amountAtPos = FluidGeneric.getFluidAmount(world, pos, stateAtPos);
-        int amountRemoved = MathHelper.clampMax(amountAtPos, maxAmount);
+    public int getAmountRemoved(Level level, BlockPos pos, int maxAmount) {
+        FluidState stateAtPos = level.getFluidState(pos);
+        int amountAtPos = FluidGeneric.getFluidAmount(level, pos, stateAtPos);
+        int amountRemoved = Math.min(amountAtPos, maxAmount);
         amountAtPos -= amountRemoved;
-        this.getFluid().setBlockState(world, pos, amountAtPos);
+        this.getFluid().setBlockState(level, pos, amountAtPos);
         for (Direction dir : DirectionUtil.ALL) {
             BlockPos offsetPos = pos.relative(dir);
-            BlockState stateAtOffset = world.getBlockState(offsetPos);
+            BlockState stateAtOffset = level.getBlockState(offsetPos);
             if (stateAtOffset.getBlock() instanceof IFluidLoggable) {
-                BlockUtils.scheduleBlockTick(world, offsetPos, 2);
+                BlockUtils.scheduleBlockTick(level, offsetPos, 2);
             }
         }
         return amountRemoved;
     }
 
     @Override
-    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
         return NonNullList.of(ItemStack.EMPTY);
     }
 
@@ -147,7 +137,7 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    public FluidGeneric getFluid(IBlockReader world, BlockPos pos) {
+    public FluidGeneric getFluid(BlockGetter level, BlockPos pos) {
         return this.supplier.get();
     }
 
@@ -168,7 +158,7 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    public int getMass(World world, BlockPos pos, BlockState state) {
+    public int getMass(Level level, BlockPos pos, BlockState state) {
         return this.getMass(state);
     }
 
@@ -178,18 +168,13 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    public BlockRenderType getRenderShape(BlockState state) {
-        return BlockRenderType.INVISIBLE;
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.INVISIBLE;
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
-        return VoxelShapes.empty();
-    }
-
-    @Override
-    public boolean hasTileEntity(BlockState state) {
-        return !state.getValue(FULL);
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return Shapes.empty();
     }
 
     protected synchronized void initFluidStateCache() {
@@ -205,7 +190,7 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    public boolean isPathfindable(BlockState state, IBlockReader world, BlockPos pos, PathType type) {
+    public boolean isPathfindable(BlockState state, BlockGetter level, BlockPos pos, PathComputationType type) {
         return !this.getFluid().is(FluidTags.LAVA);
     }
 
@@ -215,21 +200,27 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (this.reactWithNeighbors(world, pos)) {
-            BlockUtils.scheduleFluidTick(world, pos);
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (this.reactWithNeighbors(level, pos)) {
+            BlockUtils.scheduleFluidTick(level, pos);
+        }
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new TELiquid(pos, state);
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (this.reactWithNeighbors(level, pos)) {
+            BlockUtils.scheduleFluidTick(level, pos);
         }
     }
 
     @Override
-    public void onPlace(BlockState state, World world, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (this.reactWithNeighbors(world, pos)) {
-            BlockUtils.scheduleFluidTick(world, pos);
-        }
-    }
-
-    @Override
-    public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (isMoving) {
             return;
         }
@@ -239,76 +230,76 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
         }
         FluidState fluidState;
         if (!(state.getBlock() instanceof BlockGenericFluid)) {
-            fluidState = world.getFluidState(pos);
+            fluidState = level.getFluidState(pos);
         }
         else {
             fluidState = state.getFluidState();
         }
-        int currentAmount = getFluidAmount(world, pos, state, fluidState);
+        int currentAmount = getFluidAmount(level, pos, state, fluidState);
         if (currentAmount == 0) {
             return;
         }
-        if (newBlock instanceof IFluidLoggable) {
-            int maxAmount = ((IFluidLoggable) newBlock).getFluidCapacity(newState);
-            int placed = MathHelper.clampMax(currentAmount, maxAmount);
-            ((IFluidLoggable) newBlock).setBlockState(world, pos, newState, this.getFluid(), placed);
+        if (newBlock instanceof IFluidLoggable fluidLoggable) {
+            int maxAmount = fluidLoggable.getFluidCapacity(newState);
+            int placed = Math.min(currentAmount, maxAmount);
+            ((IFluidLoggable) newBlock).setBlockState(level, pos, newState, this.getFluid(), placed);
             currentAmount -= placed;
         }
         if (currentAmount == 0) {
             return;
         }
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         DirectionList list = new DirectionList();
         list.fillHorizontal();
         //Try placing liquid to the sides
         while (!list.isEmpty()) {
-            currentAmount = this.tryDisplaceToDirection(world, pos, list.getRandomAndRemove(MathHelper.RANDOM), currentAmount, 16);
+            currentAmount = this.tryDisplaceToDirection(level, pos, list.getRandomAndRemove(MathHelper.RANDOM), currentAmount, 16);
             if (currentAmount == 0) {
                 return;
             }
         }
         mutablePos.set(pos);
         //try placing liquid up
-        currentAmount = this.tryDisplaceToDirection(world, pos, Direction.UP, currentAmount, 255 - pos.getY());
+        currentAmount = this.tryDisplaceToDirection(level, pos, Direction.UP, currentAmount, 255 - pos.getY());
         if (currentAmount == 0) {
             return;
         }
-        CapabilityChunkStorage.add(world.getChunkAt(pos), EnumStorage.WATER, currentAmount);
+        CapabilityChunkStorage.add(level.getChunkAt(pos), EnumStorage.WATER, currentAmount);
     }
 
     @Override
-    public void onReplaced(BlockState state, World world, BlockPos pos) {
+    public void onReplaced(BlockState state, Level level, BlockPos pos) {
     }
 
     @Override
-    public boolean propagatesSkylightDown(BlockState state, IBlockReader reader, BlockPos pos) {
+    public boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos) {
         return false;
     }
 
     @Override
-    public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-        world.getFluidState(pos).randomTick(world, pos, random);
+    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
+        level.getFluidState(pos).randomTick(level, pos, random);
     }
 
-    public boolean reactWithNeighbors(World world, BlockPos pos) {
+    public boolean reactWithNeighbors(Level level, BlockPos pos) {
         if (this.getFluid().is(FluidTags.LAVA)) {
             boolean flag = false;
             for (Direction direction : DirectionUtil.ALL) {
-                if (direction != Direction.DOWN && world.getFluidState(pos.relative(direction)).is(FluidTags.WATER)) {
+                if (direction != Direction.DOWN && level.getFluidState(pos.relative(direction)).is(FluidTags.WATER)) {
                     flag = true;
                     break;
                 }
             }
             if (flag) {
-                FluidState ifluidstate = world.getFluidState(pos);
+                FluidState ifluidstate = level.getFluidState(pos);
                 if (ifluidstate.isSource()) {
-                    world.setBlockAndUpdate(pos, ForgeEventFactory.fireFluidPlaceBlockEvent(world, pos, pos, Blocks.OBSIDIAN.defaultBlockState()));
-                    triggerMixEffects(world, pos);
+                    level.setBlockAndUpdate(pos, ForgeEventFactory.fireFluidPlaceBlockEvent(level, pos, pos, Blocks.OBSIDIAN.defaultBlockState()));
+                    triggerMixEffects(level, pos);
                     return false;
                 }
-                if (ifluidstate.getHeight(world, pos) >= 0.444_444_45F) {
-                    world.setBlockAndUpdate(pos, ForgeEventFactory.fireFluidPlaceBlockEvent(world, pos, pos, Blocks.COBBLESTONE.defaultBlockState()));
-                    triggerMixEffects(world, pos);
+                if (ifluidstate.getHeight(level, pos) >= 0.444_444_45F) {
+                    level.setBlockAndUpdate(pos, ForgeEventFactory.fireFluidPlaceBlockEvent(level, pos, pos, Blocks.COBBLESTONE.defaultBlockState()));
+                    triggerMixEffects(level, pos);
                     return false;
                 }
             }
@@ -317,16 +308,16 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    public int receiveFluid(World world, BlockPos pos, BlockState originalState, FluidGeneric fluid, int amount) {
+    public int receiveFluid(Level level, BlockPos pos, BlockState originalState, FluidGeneric fluid, int amount) {
         FluidState stateAtPos = originalState.getFluidState();
         FluidGeneric fluidAtPos = this.getFluid();
         if (fluidAtPos == fluid) {
-            int amountAtPos = FluidGeneric.getFluidAmount(world, pos, stateAtPos);
-            int amountToReplace = MathHelper.clampMax(amountAtPos + amount, 100_000);
-            fluid.setBlockState(world, pos, amountToReplace);
+            int amountAtPos = FluidGeneric.getFluidAmount(level, pos, stateAtPos);
+            int amountToReplace = Math.min(amountAtPos + amount, 100_000);
+            fluid.setBlockState(level, pos, amountToReplace);
             return amountToReplace - amountAtPos;
         }
-        Evolution.LOGGER.warn("Fluids are different, handle them!");
+        Evolution.warn("Fluids are different, handle them!");
         return 0;
     }
 
@@ -336,55 +327,60 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
         return adjacentBlockState.getFluidState().getType().isSame(this.getFluid()) || state.canOcclude();
     }
 
-    public abstract int tryDisplaceIn(World world, BlockPos pos, BlockState stateAtPos, FluidGeneric otherFluid, int amount);
+    public abstract int tryDisplaceIn(Level level, BlockPos pos, BlockState stateAtPos, FluidGeneric otherFluid, int amount);
 
-    public int tryDisplaceToDirection(World world, BlockPos origin, Direction direction, int amount, int maxDistance) {
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+    public int tryDisplaceToDirection(Level level, BlockPos origin, Direction direction, int amount, int maxDistance) {
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         mutablePos.set(origin);
         for (int offset = 1; offset <= maxDistance; offset++) {
-            BlockState stateAtPos = world.getBlockState(mutablePos);
+            BlockState stateAtPos = level.getBlockState(mutablePos);
             if (!FluidGeneric.canSendToOrReceiveFrom(stateAtPos, direction)) {
                 return amount;
             }
             mutablePos.move(direction);
-            stateAtPos = world.getBlockState(mutablePos);
+            stateAtPos = level.getBlockState(mutablePos);
             if (!FluidGeneric.canSendToOrReceiveFrom(stateAtPos, direction.getOpposite())) {
                 return amount;
             }
-            if (FluidGeneric.isFull(world, mutablePos)) {
+            if (FluidGeneric.isFull(level, mutablePos)) {
                 continue;
             }
             if (!BlockUtils.canBeReplacedByFluid(stateAtPos)) {
                 return amount;
             }
-            if (this.getFluid().isEquivalentOrEmpty(world, mutablePos)) {
-                int amountAlreadyAtPos = FluidGeneric.getFluidAmount(world, mutablePos, world.getFluidState(mutablePos));
+            if (this.getFluid().isEquivalentOrEmpty(level, mutablePos)) {
+                int amountAlreadyAtPos = FluidGeneric.getFluidAmount(level, mutablePos, level.getFluidState(mutablePos));
                 int capacity = FluidGeneric.getCapacity(stateAtPos);
-                int placed = MathHelper.clampMax(amountAlreadyAtPos + amount, capacity);
-                this.getFluid().setBlockState(world, mutablePos, placed);
-                FluidGeneric.onReplace(world, mutablePos, stateAtPos);
+                int placed = Math.min(amountAlreadyAtPos + amount, capacity);
+                this.getFluid().setBlockState(level, mutablePos, placed);
+                FluidGeneric.onReplace(level, mutablePos, stateAtPos);
                 amount = amount - placed + amountAlreadyAtPos;
                 if (amount == 0) {
                     return 0;
                 }
                 continue;
             }
-            Fluid otherFluid = world.getFluidState(mutablePos).getType();
-            if (otherFluid instanceof FluidGeneric) {
-                amount = this.tryDisplaceIn(world, mutablePos, stateAtPos, (FluidGeneric) otherFluid, amount);
+            Fluid otherFluid = level.getFluidState(mutablePos).getType();
+            if (otherFluid instanceof FluidGeneric fluidGeneric) {
+                amount = this.tryDisplaceIn(level, mutablePos, stateAtPos, fluidGeneric, amount);
                 if (amount == 0) {
                     return 0;
                 }
                 continue;
             }
-            Evolution.LOGGER.warn("Invalid fluid at {}: {}", mutablePos, otherFluid);
+            Evolution.warn("Invalid fluid at {}: {}", mutablePos, otherFluid);
         }
         return amount;
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
-        BlockUtils.scheduleFluidTick(world, currentPos);
-        return super.updateShape(state, facing, facingState, world, currentPos, facingPos);
+    public BlockState updateShape(BlockState state,
+                                  Direction facing,
+                                  BlockState facingState,
+                                  LevelAccessor level,
+                                  BlockPos currentPos,
+                                  BlockPos facingPos) {
+        BlockUtils.scheduleFluidTick(level, currentPos);
+        return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 }

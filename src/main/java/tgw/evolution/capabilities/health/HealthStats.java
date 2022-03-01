@@ -1,10 +1,10 @@
 package tgw.evolution.capabilities.health;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.Effects;
-import net.minecraft.world.GameRules;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.GameRules;
 import tgw.evolution.init.EvolutionEffects;
 
 public class HealthStats implements IHealth {
@@ -13,21 +13,24 @@ public class HealthStats implements IHealth {
     public static final float REGEN_FACTOR = 0.01f;
     private int tick;
 
-    public boolean canNaturalRegen(ServerPlayerEntity player) {
+    public boolean canNaturalRegen(ServerPlayer player) {
         if (!player.level.getGameRules().getBoolean(GameRules.RULE_NATURAL_REGENERATION)) {
+            return false;
+        }
+        if (player.hasEffect(EvolutionEffects.STARVATION.get())) {
             return false;
         }
         return !player.hasEffect(EvolutionEffects.DEHYDRATION.get());
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT nbt) {
+    public void deserializeNBT(CompoundTag nbt) {
         this.tick = nbt.getByte("Tick");
     }
 
-    public void forcedRegen(ServerPlayerEntity player) {
-        if (player.hasEffect(Effects.REGENERATION)) {
-            EffectInstance regenInstance = player.getEffect(Effects.REGENERATION);
+    public void forcedRegen(ServerPlayer player) {
+        if (player.hasEffect(MobEffects.REGENERATION)) {
+            MobEffectInstance regenInstance = player.getEffect(MobEffects.REGENERATION);
             int timer = 50 >> regenInstance.getAmplifier();
             if (timer < 1) {
                 timer = 1;
@@ -38,7 +41,7 @@ public class HealthStats implements IHealth {
         }
     }
 
-    public void naturalRegen(ServerPlayerEntity player) {
+    public void naturalRegen(ServerPlayer player) {
         float currentHealth = player.getHealth();
         player.setHealth(currentHealth + REGEN_FACTOR * currentHealth);
     }
@@ -48,14 +51,14 @@ public class HealthStats implements IHealth {
     }
 
     @Override
-    public CompoundNBT serializeNBT() {
-        CompoundNBT nbt = new CompoundNBT();
+    public CompoundTag serializeNBT() {
+        CompoundTag nbt = new CompoundTag();
         nbt.putByte("Tick", (byte) this.tick);
         return nbt;
     }
 
     @Override
-    public void tick(ServerPlayerEntity player) {
+    public void tick(ServerPlayer player) {
         if (player.isAlive()) {
             if (this.tick < REGEN_TICKS) {
                 this.tick++;

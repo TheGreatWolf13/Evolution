@@ -1,28 +1,32 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.StateContainer;
-import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.util.BlockFlags;
-import tgw.evolution.util.DirectionUtil;
-import tgw.evolution.util.HarvestLevel;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.math.MathHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,38 +38,38 @@ import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRopeSupport {
 
     public BlockClimbingHook() {
-        super(Properties.of(Material.METAL).sound(SoundType.METAL).strength(0.0f).noCollission().harvestLevel(HarvestLevel.UNBREAKABLE));
+        super(Properties.of(Material.METAL).sound(SoundType.METAL).strength(0.0f).noCollission());
         this.registerDefaultState(this.defaultBlockState().setValue(DIRECTION_HORIZONTAL, Direction.NORTH).setValue(ATTACHED, false));
     }
 
-    public static void checkSides(BlockState state, World world, BlockPos pos) {
+    public static void checkSides(BlockState state, Level level, BlockPos pos) {
         Direction direction = state.getValue(DIRECTION_HORIZONTAL);
-        BlockState stateTest = world.getBlockState(pos.relative(direction));
+        BlockState stateTest = level.getBlockState(pos.relative(direction));
         if (stateTest.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
             if (DirectionUtil.getOpposite(stateTest.getValue(DIRECTION_HORIZONTAL)) == direction) {
                 return;
             }
         }
         else if (BlockUtils.isReplaceable(stateTest)) {
-            stateTest = world.getBlockState(pos.relative(direction).below());
+            stateTest = level.getBlockState(pos.relative(direction).below());
             if (stateTest.getBlock() == EvolutionBlocks.ROPE.get()) {
                 if (DirectionUtil.getOpposite(stateTest.getValue(DIRECTION_HORIZONTAL)) == direction) {
                     return;
                 }
             }
         }
-        world.setBlockAndUpdate(pos, state.setValue(ATTACHED, false));
+        level.setBlockAndUpdate(pos, state.setValue(ATTACHED, false));
     }
 
     @Override
-    public void attack(BlockState state, World world, BlockPos pos, PlayerEntity player) {
-        if (!world.isClientSide) {
-            int rope = this.removeRope(state, world, pos);
-            BlockUtils.dropItemStack(world, pos, new ItemStack(EvolutionItems.rope.get(), rope));
+    public void attack(BlockState state, Level level, BlockPos pos, Player player) {
+        if (!level.isClientSide) {
+            int rope = this.removeRope(state, level, pos);
+            BlockUtils.dropItemStack(level, pos, new ItemStack(EvolutionItems.rope.get(), rope));
         }
-        world.removeBlock(pos, true);
-        dropResources(state, world, pos);
-        world.playSound(player, pos, SoundEvents.METAL_BREAK, SoundCategory.BLOCKS, 1.0f, 1.0f);
+        level.removeBlock(pos, true);
+        dropResources(state, level, pos);
+        level.playSound(player, pos, SoundEvents.METAL_BREAK, SoundSource.BLOCKS, 1.0f, 1.0f);
     }
 
     @Override
@@ -84,17 +88,22 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
     }
 
     @Override
-    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
-        return BlockUtils.hasSolidSide(world, pos.below(), Direction.UP);
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        return BlockUtils.hasSolidSide(level, pos.below(), Direction.UP);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(DIRECTION_HORIZONTAL, ATTACHED);
     }
 
     @Override
-    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(BlockState state, HitResult hitResult, BlockGetter level, BlockPos pos, Player player) {
+        return new ItemStack(EvolutionItems.climbing_hook.get());
+    }
+
+    @Override
+    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
         return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.climbing_hook.get()));
     }
 
@@ -104,28 +113,23 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
     }
 
     @Override
-    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
-        return new ItemStack(EvolutionItems.climbing_hook.get());
-    }
-
-    @Override
     public int getRopeLength() {
         return 8;
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         switch (state.getValue(DIRECTION_HORIZONTAL)) {
-            case NORTH: {
+            case NORTH -> {
                 return EvolutionHitBoxes.HOOK_NORTH;
             }
-            case EAST: {
+            case EAST -> {
                 return EvolutionHitBoxes.HOOK_EAST;
             }
-            case SOUTH: {
+            case SOUTH -> {
                 return EvolutionHitBoxes.HOOK_SOUTH;
             }
-            case WEST: {
+            case WEST -> {
                 return EvolutionHitBoxes.HOOK_WEST;
             }
         }
@@ -143,25 +147,25 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
     }
 
     @Override
-    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!world.isClientSide) {
-            if (!state.canSurvive(world, pos)) {
-                dropResources(state, world, pos);
-                world.removeBlock(pos, false);
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!level.isClientSide) {
+            if (!state.canSurvive(level, pos)) {
+                dropResources(state, level, pos);
+                level.removeBlock(pos, false);
             }
-            checkSides(state, world, pos);
+            checkSides(state, level, pos);
         }
     }
 
     @Override
-    public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!world.isClientSide && !isMoving && state.getBlock() != newState.getBlock()) {
-            BlockUtils.scheduleBlockTick(world, pos.below().relative(state.getValue(DIRECTION_HORIZONTAL)), BlockFlags.BLOCK_UPDATE);
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!level.isClientSide && !isMoving && state.getBlock() != newState.getBlock()) {
+            BlockUtils.scheduleBlockTick(level, pos.below().relative(state.getValue(DIRECTION_HORIZONTAL)), BlockFlags.BLOCK_UPDATE);
         }
     }
 
-    public int removeRope(BlockState state, World world, BlockPos pos) {
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+    public int removeRope(BlockState state, Level level, BlockPos pos) {
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         Direction direction = state.getValue(DIRECTION_HORIZONTAL);
         mutablePos.set(pos);
         Direction movement = direction;
@@ -169,7 +173,7 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
         int count = 0;
         for (int removingRope = 1; removingRope <= this.getRopeLength(); removingRope++) {
             mutablePos.move(movement);
-            BlockState temp = world.getBlockState(mutablePos);
+            BlockState temp = level.getBlockState(mutablePos);
             if (movement != Direction.DOWN && temp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
                 if (temp.getValue(DIRECTION_HORIZONTAL) == DirectionUtil.getOpposite(movement)) {
                     count++;
@@ -181,7 +185,7 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
             if (movement != Direction.DOWN && BlockUtils.isReplaceable(temp)) {
                 movement = Direction.DOWN;
                 mutablePos.move(Direction.DOWN);
-                temp = world.getBlockState(mutablePos);
+                temp = level.getBlockState(mutablePos);
                 if (temp.getBlock() == EvolutionBlocks.ROPE.get()) {
                     if (temp.getValue(DIRECTION_HORIZONTAL) == DirectionUtil.getOpposite(direction)) {
                         count++;
@@ -200,7 +204,7 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
             }
             break;
         }
-        MathHelper.iterateReverse(toRemove, removing -> world.removeBlock(removing, false));
+        MathHelper.iterateReverse(toRemove, removing -> level.removeBlock(removing, false));
         return count;
     }
 
@@ -210,9 +214,9 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
     }
 
     @Override
-    public void tick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-        if (!world.isClientSide) {
-            checkSides(state, world, pos);
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
+        if (!level.isClientSide) {
+            checkSides(state, level, pos);
         }
     }
 }

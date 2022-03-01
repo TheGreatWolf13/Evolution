@@ -1,12 +1,12 @@
 package tgw.evolution.init;
 
-import net.minecraft.block.Block;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.tileentity.TileEntityType.Builder;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.BlockEntityType.Builder;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockChopping;
 import tgw.evolution.blocks.BlockKnapping;
@@ -21,19 +21,19 @@ import static tgw.evolution.init.EvolutionBlocks.*;
 
 public final class EvolutionTEs {
 
-    public static final DeferredRegister<TileEntityType<?>> TILES = DeferredRegister.create(ForgeRegistries.TILE_ENTITIES, Evolution.MODID);
+    public static final DeferredRegister<BlockEntityType<?>> TILES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITIES, Evolution.MODID);
 
-    public static final RegistryObject<TileEntityType<TEChopping>> CHOPPING;
-    public static final RegistryObject<TileEntityType<TEFirewoodPile>> FIREWOOD_PILE;
-    public static final RegistryObject<TileEntityType<TEKnapping>> KNAPPING;
-    public static final RegistryObject<TileEntityType<TELiquid>> LIQUID;
-    public static final RegistryObject<TileEntityType<TELoggable>> LOGGABLE;
-    public static final RegistryObject<TileEntityType<TEMetal>> METAL;
-    public static final RegistryObject<TileEntityType<TEMolding>> MOLDING;
-    public static final RegistryObject<TileEntityType<TEPitKiln>> PIT_KILN;
-    public static final RegistryObject<TileEntityType<TEPuzzle>> PUZZLE;
-    public static final RegistryObject<TileEntityType<TESchematic>> SCHEMATIC;
-    public static final RegistryObject<TileEntityType<TETorch>> TORCH;
+    public static final RegistryObject<BlockEntityType<TEChopping>> CHOPPING;
+    public static final RegistryObject<BlockEntityType<TEFirewoodPile>> FIREWOOD_PILE;
+    public static final RegistryObject<BlockEntityType<TEKnapping>> KNAPPING;
+    public static final RegistryObject<BlockEntityType<TELiquid>> LIQUID;
+    public static final RegistryObject<BlockEntityType<TELoggable>> LOGGABLE;
+    public static final RegistryObject<BlockEntityType<TEMetal>> METAL;
+    public static final RegistryObject<BlockEntityType<TEMolding>> MOLDING;
+    public static final RegistryObject<BlockEntityType<TEPitKiln>> PIT_KILN;
+    public static final RegistryObject<BlockEntityType<TEPuzzle>> PUZZLE;
+    public static final RegistryObject<BlockEntityType<TESchematic>> SCHEMATIC;
+    public static final RegistryObject<BlockEntityType<TETorch>> TORCH;
 
     static {
         CHOPPING = TILES.register("te_chopping", () -> Builder.of(TEChopping::new, getMatchingBlocks(BlockChopping.class)).build(null));

@@ -10,13 +10,9 @@ public enum ArmPose {
     CROSSBOW_HOLD;
 
     public boolean isTwoHanded() {
-        switch (this) {
-            case CROSSBOW_CHARGE:
-            case BOW_AND_ARROW:
-            case CROSSBOW_HOLD: {
-                return true;
-            }
-        }
-        return false;
+        return switch (this) {
+            case CROSSBOW_CHARGE, BOW_AND_ARROW, CROSSBOW_HOLD -> true;
+            default -> false;
+        };
     }
 }

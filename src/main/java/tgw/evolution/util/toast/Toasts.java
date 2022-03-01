@@ -4,13 +4,13 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.KnappingRecipe;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.util.RockVariant;
-import tgw.evolution.util.WoodVariant;
+import tgw.evolution.util.constants.RockVariant;
+import tgw.evolution.util.constants.WoodVariant;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +59,7 @@ public final class Toasts {
             //noinspection ObjectAllocationInLoop
             registerRecipe(woodItem, new ToastHolderRecipe(chopping, wood.getFirewood()));
         }
-        Evolution.LOGGER.info("Registered custom toasts");
+        Evolution.info("Registered custom toasts");
     }
 
     public static void registerRecipe(Item trigger, ToastHolderRecipe... toasts) {

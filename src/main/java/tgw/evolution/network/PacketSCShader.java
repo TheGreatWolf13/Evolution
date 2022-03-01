@@ -1,8 +1,8 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.events.ClientEvents;
 
 import java.util.function.Supplier;
@@ -17,11 +17,11 @@ public class PacketSCShader implements IPacket {
         this.shaderId = shaderId;
     }
 
-    public static PacketSCShader decode(PacketBuffer buffer) {
+    public static PacketSCShader decode(FriendlyByteBuf buffer) {
         return new PacketSCShader(buffer.readVarInt());
     }
 
-    public static void encode(PacketSCShader packet, PacketBuffer buffer) {
+    public static void encode(PacketSCShader packet, FriendlyByteBuf buffer) {
         buffer.writeVarInt(packet.shaderId);
     }
 

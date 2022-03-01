@@ -1,0 +1,6 @@
+{
+  "parent": "evolution:item/modular/head/axe__sharp",
+  "textures": {
+    "0": "evolution:item/modular/head/axe_copper"
+  }
+}

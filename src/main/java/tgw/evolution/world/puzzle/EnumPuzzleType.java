@@ -1,6 +1,6 @@
 package tgw.evolution.world.puzzle;
 
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nullable;
 
@@ -20,27 +20,15 @@ public enum EnumPuzzleType {
 
     @Nullable
     public static EnumPuzzleType byId(int id) {
-        switch (id) {
-            case 0: {
-                return EMPTY;
-            }
-            case 1: {
-                return SINGLE;
-            }
-            case 2: {
-                return FEATURE;
-            }
-            case 3: {
-                return LIST;
-            }
-            case 4: {
-                return CONFIGURED;
-            }
-            case 5: {
-                return CAVE;
-            }
-        }
-        return null;
+        return switch (id) {
+            case 0 -> EMPTY;
+            case 1 -> SINGLE;
+            case 2 -> FEATURE;
+            case 3 -> LIST;
+            case 4 -> CONFIGURED;
+            case 5 -> CAVE;
+            default -> null;
+        };
     }
 
     public byte getId() {

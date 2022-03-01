@@ -1,39 +1,39 @@
 package tgw.evolution.client.gui.advancements;
 
-import com.google.common.collect.Maps;
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.renderer.ItemRenderer;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.opengl.GL11;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nullable;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)
-public class GuiAdvancementTab extends AbstractGui {
+public class GuiAdvancementTab extends GuiComponent {
 
-    public static boolean doFade = true;
-    protected final Map<Advancement, GuiAdvancementEntry> guis = Maps.newLinkedHashMap();
+    protected final Map<Advancement, GuiAdvancementEntry> guis = new LinkedHashMap<>();
     private final Advancement advancement;
-    private final BetterDisplayInfoRegistry betterDisplayInfos;
     private final DisplayInfo display;
     private final ItemStack icon;
     private final int index;
     private final Minecraft minecraft;
     private final GuiAdvancementEntry root;
     private final ScreenAdvancements screen;
-    private final ITextComponent title;
+    private final Component title;
     private final AdvancementTabType type;
     protected int scrollX;
     protected int scrollY;
@@ -58,7 +58,6 @@ public class GuiAdvancementTab extends AbstractGui {
         this.display = displayInfo;
         this.icon = displayInfo.getIcon();
         this.title = displayInfo.getTitle();
-        this.betterDisplayInfos = new BetterDisplayInfoRegistry();
         this.root = new GuiAdvancementEntry(this, mc, advancement, displayInfo);
         this.addGuiAdvancement(this.root, advancement);
     }
@@ -102,30 +101,31 @@ public class GuiAdvancementTab extends AbstractGui {
         }
     }
 
-    public void drawContents(MatrixStack matrices, int width, int height) {
+    public void drawContents(PoseStack matrices, int width, int height) {
         if (!this.centered) {
             this.scrollX = (width - (this.maxX + this.minX)) / 2;
             this.scrollY = (height - (this.maxY + this.minY)) / 2;
             this.centered = true;
         }
         matrices.pushPose();
-        RenderSystem.enableDepthTest();
         matrices.translate(0, 0, 950);
+        RenderSystem.enableDepthTest();
         RenderSystem.colorMask(false, false, false, false);
         fill(matrices, 4_680, 2_260, -4_680, -2_260, 0xff00_0000);
         RenderSystem.colorMask(true, true, true, true);
         matrices.translate(0, 0, -950);
         RenderSystem.depthFunc(GL11.GL_GEQUAL);
-        fill(matrices, 0, 0, width, height, 0xff00_0000);
+        fill(matrices, width, height, 0, 0, 0xff00_0000);
         RenderSystem.depthFunc(GL11.GL_LEQUAL);
-        ResourceLocation resourcelocation = this.display.getBackground();
-        if (resourcelocation != null) {
-            this.minecraft.getTextureManager().bind(resourcelocation);
+        ResourceLocation background = this.display.getBackground();
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        if (background != null) {
+            RenderSystem.setShaderTexture(0, background);
         }
         else {
-            this.minecraft.getTextureManager().bind(TextureManager.INTENTIONAL_MISSING_TEXTURE);
+            RenderSystem.setShaderTexture(0, TextureManager.INTENTIONAL_MISSING_TEXTURE);
         }
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         int i = this.scrollX % 16;
         int j = this.scrollY % 16;
         for (int k = -1; k <= 1 + width / 16; k++) {
@@ -143,7 +143,6 @@ public class GuiAdvancementTab extends AbstractGui {
         RenderSystem.colorMask(false, false, false, false);
         fill(matrices, 4_680, 2_260, -4_680, -2_260, 0xff00_0000);
         RenderSystem.colorMask(true, true, true, true);
-        matrices.translate(0, 0, 950);
         RenderSystem.depthFunc(GL11.GL_LEQUAL);
         matrices.popPose();
     }
@@ -152,12 +151,12 @@ public class GuiAdvancementTab extends AbstractGui {
         this.type.drawIcon(left, top, width, height, this.index, renderItem, this.icon);
     }
 
-    public void drawTab(MatrixStack matrices, int left, int top, int width, int height, boolean selected) {
+    public void drawTab(PoseStack matrices, int left, int top, int width, int height, boolean selected) {
         this.type.draw(matrices, this, left, top, width, height, selected, this.index);
     }
 
-    public void drawToolTips(MatrixStack matrices, int mouseX, int mouseY, int left, int top, int width, int height) {
-        fill(matrices, 0, 0, width, height, MathHelper.floor(this.fade * 255.0F) << 24);
+    public void drawToolTips(PoseStack matrices, int mouseX, int mouseY, int left, int top, int width, int height) {
+        fill(matrices, 0, 0, width, height, Mth.floor(this.fade * 255.0F) << 24);
         boolean flag = false;
         if (mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) {
             for (GuiAdvancementEntry betterAdvancementEntryGui : this.guis.values()) {
@@ -168,7 +167,7 @@ public class GuiAdvancementTab extends AbstractGui {
                 }
             }
         }
-        if (doFade && flag) {
+        if (flag) {
             this.fade = MathHelper.clamp(this.fade + 0.02F, 0.0F, 0.3F);
         }
         else {
@@ -185,15 +184,11 @@ public class GuiAdvancementTab extends AbstractGui {
         return this.guis.get(advancement);
     }
 
-    public BetterDisplayInfo getBetterDisplayInfo(Advancement advancement) {
-        return this.betterDisplayInfos.get(advancement);
-    }
-
     public ScreenAdvancements getScreen() {
         return this.screen;
     }
 
-    public ITextComponent getTitle() {
+    public Component getTitle() {
         return this.title;
     }
 

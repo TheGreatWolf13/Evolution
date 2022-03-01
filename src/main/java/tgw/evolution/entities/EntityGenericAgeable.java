@@ -1,35 +1,34 @@
 package tgw.evolution.entities;
 
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.Pose;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.world.World;
-import tgw.evolution.init.EvolutionParticles;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.level.Level;
 
 public abstract class EntityGenericAgeable<T extends EntityGenericAgeable<T>> extends EntityGenericCreature<T> {
 
-    private static final DataParameter<Integer> AGE = EntityDataManager.defineId(EntityGenericAgeable.class, DataSerializers.INT);
-    private static final DataParameter<Boolean> SLEEPING = EntityDataManager.defineId(EntityGenericAgeable.class, DataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> AGE = SynchedEntityData.defineId(EntityGenericAgeable.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> SLEEPING = SynchedEntityData.defineId(EntityGenericAgeable.class, EntityDataSerializers.BOOLEAN);
     protected int sleepTime;
     private int lifeSpan;
     private boolean slept;
 
-    protected EntityGenericAgeable(EntityType<T> type, World world) {
-        super(type, world);
+    protected EntityGenericAgeable(EntityType<T> type, Level level) {
+        super(type, level);
         this.lifeSpan = this.computeLifeSpan();
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundNBT compound) {
-        super.addAdditionalSaveData(compound);
-        compound.putInt("Age", this.entityData.get(AGE));
-        compound.putInt("LifeSpan", this.lifeSpan);
-        compound.putBoolean("Sleeping", this.entityData.get(SLEEPING));
-        compound.putBoolean("Slept", this.slept);
-        compound.putInt("SleepTime", this.sleepTime);
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt("Age", this.entityData.get(AGE));
+        tag.putInt("LifeSpan", this.lifeSpan);
+        tag.putBoolean("Sleeping", this.entityData.get(SLEEPING));
+        tag.putBoolean("Slept", this.slept);
+        tag.putInt("SleepTime", this.sleepTime);
     }
 
     @Override
@@ -45,13 +44,13 @@ public abstract class EntityGenericAgeable<T extends EntityGenericAgeable<T>> ex
                 if (this.level.isClientSide) {
                     if (this.tickCount % 100 == 0) {
                         for (int i = 0; i < 3; i++) {
-                            this.level.addParticle(EvolutionParticles.SLEEP.get(),
-                                                   this.getX() + this.random.nextFloat() * this.getBbWidth() * 2 - this.getBbWidth(),
-                                                   this.getY() + 0.5 + this.random.nextFloat() * this.getBbHeight(),
-                                                   this.getZ() + this.random.nextFloat() * this.getBbWidth() * 2 - this.getBbWidth(),
-                                                   this.random.nextGaussian() * 0.02,
-                                                   this.random.nextGaussian() * 0.02,
-                                                   this.random.nextGaussian() * 0.02);
+//                            this.level.addParticle(EvolutionParticles.SLEEP.get(),
+//                                                   this.getX() + this.random.nextFloat() * this.getBbWidth() * 2 - this.getBbWidth(),
+//                                                   this.getY() + 0.5 + this.random.nextFloat() * this.getBbHeight(),
+//                                                   this.getZ() + this.random.nextFloat() * this.getBbWidth() * 2 - this.getBbWidth(),
+//                                                   this.random.nextGaussian() * 0.02,
+//                                                   this.random.nextGaussian() * 0.02,
+//                                                   this.random.nextGaussian() * 0.02);
                         }
                     }
                 }
@@ -140,7 +139,7 @@ public abstract class EntityGenericAgeable<T extends EntityGenericAgeable<T>> ex
     public abstract float mortallyRate();
 
     @Override
-    public void onSyncedDataUpdated(DataParameter<?> key) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
         if (AGE.equals(key)) {
             this.refreshDimensions();
         }
@@ -148,13 +147,13 @@ public abstract class EntityGenericAgeable<T extends EntityGenericAgeable<T>> ex
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundNBT compound) {
-        super.readAdditionalSaveData(compound);
-        this.entityData.set(AGE, compound.getInt("Age"));
-        this.lifeSpan = compound.getInt("LifeSpan");
-        this.setSleeping(compound.getBoolean("Sleeping"));
-        this.slept = compound.getBoolean("Slept");
-        this.sleepTime = compound.getInt("SleepTime");
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.entityData.set(AGE, tag.getInt("Age"));
+        this.lifeSpan = tag.getInt("LifeSpan");
+        this.setSleeping(tag.getBoolean("Sleeping"));
+        this.slept = tag.getBoolean("Slept");
+        this.sleepTime = tag.getInt("SleepTime");
     }
 
     public void setAge(int age) {

@@ -1,0 +1,6 @@
+{
+  "parent": "evolution:item/modular/blade/arming_sword__sharp",
+  "textures": {
+    "0": "evolution:item/modular/blade/arming_sword_lead"
+  }
+}

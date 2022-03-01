@@ -1,8 +1,8 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.events.ClientEvents;
 
 import java.util.function.Supplier;
@@ -15,11 +15,11 @@ public class PacketSCChangeTickrate implements IPacket {
         this.tickrate = tickrate;
     }
 
-    public static PacketSCChangeTickrate decode(PacketBuffer buffer) {
+    public static PacketSCChangeTickrate decode(FriendlyByteBuf buffer) {
         return new PacketSCChangeTickrate(buffer.readFloat());
     }
 
-    public static void encode(PacketSCChangeTickrate packet, PacketBuffer buffer) {
+    public static void encode(PacketSCChangeTickrate packet, FriendlyByteBuf buffer) {
         buffer.writeFloat(packet.tickrate);
     }
 

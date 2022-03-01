@@ -1,17 +1,17 @@
 package tgw.evolution.client.renderer.entities;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.entity.EntityRendererManager;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 
 public class RenderDummy<E extends Entity> extends EntityRenderer<E> {
 
-    public RenderDummy(EntityRendererManager manager) {
-        super(manager);
+    public RenderDummy(EntityRendererProvider.Context context) {
+        super(context);
     }
 
     @Override
@@ -20,6 +20,6 @@ public class RenderDummy<E extends Entity> extends EntityRenderer<E> {
     }
 
     @Override
-    public void render(E entity, float yaw, float partialTicks, MatrixStack matrices, IRenderTypeBuffer buffer, int packedLight) {
+    public void render(E entity, float yaw, float partialTicks, PoseStack matrices, MultiBufferSource buffer, int packedLight) {
     }
 }

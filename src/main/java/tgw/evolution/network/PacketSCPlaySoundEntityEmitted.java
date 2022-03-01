@@ -1,9 +1,9 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.SoundCategory;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.sounds.SoundSource;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.Evolution;
 
 import javax.annotation.Nonnull;
@@ -11,14 +11,14 @@ import java.util.function.Supplier;
 
 public class PacketSCPlaySoundEntityEmitted implements IPacket {
     @Nonnull
-    protected final SoundCategory category;
+    protected final SoundSource category;
     protected final int entityId;
     protected final float pitch;
     @Nonnull
     protected final String sound;
     protected final float volume;
 
-    public PacketSCPlaySoundEntityEmitted(int entityId, @Nonnull String sound, @Nonnull SoundCategory category, float volume, float pitch) {
+    public PacketSCPlaySoundEntityEmitted(int entityId, @Nonnull String sound, @Nonnull SoundSource category, float volume, float pitch) {
         this.entityId = entityId;
         this.sound = sound;
         this.category = category;
@@ -26,16 +26,16 @@ public class PacketSCPlaySoundEntityEmitted implements IPacket {
         this.pitch = pitch;
     }
 
-    public static PacketSCPlaySoundEntityEmitted decode(PacketBuffer buffer) {
+    public static PacketSCPlaySoundEntityEmitted decode(FriendlyByteBuf buffer) {
         int entityId = buffer.readVarInt();
         String sound = buffer.readUtf();
-        SoundCategory category = buffer.readEnum(SoundCategory.class);
+        SoundSource category = buffer.readEnum(SoundSource.class);
         float volume = buffer.readFloat();
         float pitch = buffer.readFloat();
         return new PacketSCPlaySoundEntityEmitted(entityId, sound, category, volume, pitch);
     }
 
-    public static void encode(PacketSCPlaySoundEntityEmitted packet, PacketBuffer buffer) {
+    public static void encode(PacketSCPlaySoundEntityEmitted packet, FriendlyByteBuf buffer) {
         buffer.writeVarInt(packet.entityId);
         buffer.writeUtf(packet.sound);
         buffer.writeEnum(packet.category);

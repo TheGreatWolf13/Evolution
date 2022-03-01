@@ -1,22 +1,22 @@
 package tgw.evolution.entities.projectiles;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.IPacket;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.FMLPlayMessages;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.network.PlayMessages;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.tileentities.TETorch;
@@ -24,8 +24,8 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.ItemTorch;
-import tgw.evolution.util.MathHelper;
 import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nullable;
 
@@ -33,28 +33,27 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
 
     private long timeCreated;
 
-    public EntityTorch(World worldIn, LivingEntity shooter, long timeCreated) {
-        super(EvolutionEntities.TORCH.get(), shooter, worldIn, 0.2);
+    public EntityTorch(Level level, LivingEntity shooter, long timeCreated) {
+        super(EvolutionEntities.TORCH.get(), shooter, level, 0.2);
         this.timeCreated = timeCreated;
     }
 
-    @SuppressWarnings("unused")
-    public EntityTorch(FMLPlayMessages.SpawnEntity spawnEntity, World worldIn) {
-        this(EvolutionEntities.TORCH.get(), worldIn);
+    public EntityTorch(EntityType<EntityTorch> type, Level level) {
+        super(type, level);
     }
 
-    public EntityTorch(EntityType<EntityTorch> type, World worldIn) {
-        super(type, worldIn);
-    }
-
-    @Override
-    public void addAdditionalSaveData(CompoundNBT compound) {
-        super.addAdditionalSaveData(compound);
-        compound.putLong("TimeCreated", this.timeCreated);
+    public EntityTorch(PlayMessages.SpawnEntity spawnEntity, Level level) {
+        this(EvolutionEntities.TORCH.get(), level);
     }
 
     @Override
-    public IPacket<?> getAddEntityPacket() {
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putLong("TimeCreated", this.timeCreated);
+    }
+
+    @Override
+    public Packet<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
@@ -75,18 +74,18 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
     }
 
     @Override
-    protected void onEntityHit(EntityRayTraceResult rayTraceResult) {
+    protected void onEntityHit(EntityHitResult rayTraceResult) {
         SoundEvent soundevent = SoundEvents.ARROW_HIT;
         this.playSound(soundevent, 1.0F, 1.0F);
         Evolution.usingPlaceholder(this.level.getNearestPlayer(this, 128), "sound");
         BlockUtils.dropItemStack(this.level, this.blockPosition(), this.getArrowStack());
-        this.remove();
+        this.discard();
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundNBT compound) {
-        super.readAdditionalSaveData(compound);
-        this.timeCreated = compound.getLong("TimeCreated");
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.timeCreated = tag.getLong("TimeCreated");
     }
 
     @Override
@@ -97,16 +96,16 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
             this.level.playSound(null,
                                  pos,
                                  SoundEvents.FIRE_EXTINGUISH,
-                                 SoundCategory.BLOCKS,
+                                 SoundSource.BLOCKS,
                                  1.0F,
                                  2.6F + (this.random.nextFloat() - this.random.nextFloat()) * 0.8F);
             BlockUtils.dropItemStack(this.level, pos, new ItemStack(EvolutionItems.torch_unlit.get()));
-            this.remove();
+            this.discard();
             return;
         }
         if (this.timeInGround > 0) {
             this.tryPlaceBlock();
-            this.remove();
+            this.discard();
         }
     }
 
@@ -120,15 +119,15 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
         }
         BlockPos pos = this.blockPosition();
         if (this.level.isEmptyBlock(pos)) {
-            BlockRayTraceResult rayTrace = MathHelper.rayTraceBlocksFromYawAndPitch(this, 1, false);
-            Direction face = rayTrace.getDirection();
+            BlockHitResult hitResult = MathHelper.rayTraceBlocksFromYawAndPitch(this, 1, false);
+            Direction face = hitResult.getDirection();
             if (BlockUtils.hasSolidSide(this.level, pos.relative(face.getOpposite()), face)) {
                 if (face == Direction.UP) {
                     BlockState state = EvolutionBlocks.TORCH.get().defaultBlockState();
                     this.level.setBlockAndUpdate(pos, state);
-                    TileEntity tile = this.level.getBlockEntity(pos);
-                    if (tile instanceof TETorch) {
-                        ((TETorch) tile).setTimePlaced(this.timeCreated);
+                    BlockEntity tile = this.level.getBlockEntity(pos);
+                    if (tile instanceof TETorch teTorch) {
+                        teTorch.setTimePlaced(this.timeCreated);
                     }
                     return;
                 }

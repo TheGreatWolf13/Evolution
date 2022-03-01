@@ -1,14 +1,14 @@
 package tgw.evolution.items;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionNetwork;
@@ -24,7 +24,7 @@ public class ItemClay extends ItemGenericPlaceable {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(EvolutionTexts.TOOLTIP_CLAY_MOLD);
     }
 
@@ -34,18 +34,18 @@ public class ItemClay extends ItemGenericPlaceable {
     }
 
     @Override
-    public BlockState getCustomState(BlockItemUseContext context) {
+    public BlockState getCustomState(BlockPlaceContext context) {
         return null;
     }
 
     @Override
-    public BlockState getSneakingState(BlockItemUseContext context) {
+    public BlockState getSneakingState(BlockPlaceContext context) {
         return EvolutionBlocks.MOLDING.get().defaultBlockState();
     }
 
     @Override
-    public void sucessPlaceLogic(BlockItemUseContext context) {
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) context.getPlayer()),
+    public void sucessPlaceLogic(BlockPlaceContext context) {
+        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) context.getPlayer()),
                                        new PacketSCOpenMoldingGui(context.getClickedPos()));
     }
 }

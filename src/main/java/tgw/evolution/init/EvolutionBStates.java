@@ -1,12 +1,7 @@
 package tgw.evolution.init;
 
-import net.minecraft.state.BooleanProperty;
-import net.minecraft.state.DirectionProperty;
-import net.minecraft.state.EnumProperty;
-import net.minecraft.state.IntegerProperty;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.state.properties.DoubleBlockHalf;
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.properties.*;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 
 public final class EvolutionBStates {
@@ -18,6 +13,7 @@ public final class EvolutionBStates {
     public static final IntegerProperty FIREWOOD_COUNT = IntegerProperty.create("log_count", 1, 16);
     public static final BooleanProperty HIT = BooleanProperty.create("hit");
     public static final IntegerProperty LEVEL_1_8 = IntegerProperty.create("level", 1, 8);
+    public static final BooleanProperty FALL = BooleanProperty.create("fall");
     public static final BooleanProperty FULL = BooleanProperty.create("full");
     public static final BooleanProperty FLUID_LOGGED = BooleanProperty.create("fluid_logged");
     public static final BooleanProperty OCCUPIED = BlockStateProperties.OCCUPIED;
@@ -43,26 +39,13 @@ public final class EvolutionBStates {
     }
 
     public static BooleanProperty directionToProperty(Direction direction) {
-        switch (direction) {
-            case UP: {
-                return UP;
-            }
-            case DOWN: {
-                return DOWN;
-            }
-            case EAST: {
-                return EAST;
-            }
-            case WEST: {
-                return WEST;
-            }
-            case NORTH: {
-                return NORTH;
-            }
-            case SOUTH: {
-                return SOUTH;
-            }
-        }
-        throw new IllegalStateException("Unknown direction: " + direction);
+        return switch (direction) {
+            case UP -> UP;
+            case DOWN -> DOWN;
+            case EAST -> EAST;
+            case WEST -> WEST;
+            case NORTH -> NORTH;
+            case SOUTH -> SOUTH;
+        };
     }
 }

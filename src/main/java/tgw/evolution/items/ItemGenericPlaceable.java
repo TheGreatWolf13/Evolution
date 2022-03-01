@@ -1,24 +1,26 @@
 package tgw.evolution.items;
 
 import net.minecraft.advancements.CriteriaTriggers;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUseContext;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraftforge.common.extensions.IForgeBlockState;
+import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCHandAnimation;
-import tgw.evolution.util.BlockFlags;
+import tgw.evolution.util.constants.BlockFlags;
 
 import javax.annotation.Nullable;
 
@@ -28,37 +30,37 @@ public abstract class ItemGenericPlaceable extends ItemEv {
         super(properties);
     }
 
-    protected static boolean canPlace(BlockItemUseContext context, BlockState state) {
-        PlayerEntity playerentity = context.getPlayer();
-        ISelectionContext selectionContext = playerentity == null ? ISelectionContext.empty() : ISelectionContext.of(playerentity);
+    protected static boolean canPlace(BlockPlaceContext context, BlockState state) {
+        Player playerentity = context.getPlayer();
+        CollisionContext collisionContext = playerentity == null ? CollisionContext.empty() : CollisionContext.of(playerentity);
         return state.canSurvive(context.getLevel(), context.getClickedPos()) &&
-               context.getLevel().isUnobstructed(state, context.getClickedPos(), selectionContext);
+               context.getLevel().isUnobstructed(state, context.getClickedPos(), collisionContext);
     }
 
-    protected static SoundEvent getPlaceSound(BlockState state, World world, BlockPos pos, PlayerEntity entity) {
-        return state.getSoundType(world, pos, entity).getPlaceSound();
+    protected static SoundEvent getPlaceSound(IForgeBlockState state, LevelReader level, BlockPos pos, Player entity) {
+        return state.getSoundType(level, pos, entity).getPlaceSound();
     }
 
-    protected static boolean placeBlock(BlockItemUseContext context, BlockState state) {
+    protected static boolean placeBlock(BlockPlaceContext context, BlockState state) {
         return context.getLevel().setBlock(context.getClickedPos(), state, BlockFlags.NOTIFY_UPDATE_AND_RERENDER);
     }
 
     public abstract boolean customCondition(Block block);
 
     @Nullable
-    public abstract BlockState getCustomState(BlockItemUseContext context);
+    public abstract BlockState getCustomState(BlockPlaceContext context);
 
     @Nullable
-    public abstract BlockState getSneakingState(BlockItemUseContext context);
+    public abstract BlockState getSneakingState(BlockPlaceContext context);
 
-    public abstract void sucessPlaceLogic(BlockItemUseContext context);
+    public abstract void sucessPlaceLogic(BlockPlaceContext context);
 
-    public ActionResultType tryPlace(BlockItemUseContext context) {
+    public InteractionResult tryPlace(BlockPlaceContext context) {
         if (context == null) {
-            return ActionResultType.FAIL;
+            return InteractionResult.FAIL;
         }
         if (context.getLevel().isClientSide) {
-            return ActionResultType.FAIL;
+            return InteractionResult.FAIL;
         }
         BlockState stateForPlacement = null;
         if (context.isSecondaryUseActive()) {
@@ -68,48 +70,48 @@ public abstract class ItemGenericPlaceable extends ItemEv {
             stateForPlacement = this.getCustomState(context);
         }
         if (stateForPlacement == null) {
-            return ActionResultType.FAIL;
+            return InteractionResult.FAIL;
         }
         if (!context.canPlace()) {
-            return ActionResultType.FAIL;
+            return InteractionResult.FAIL;
         }
         if (!canPlace(context, stateForPlacement)) {
-            return ActionResultType.FAIL;
+            return InteractionResult.FAIL;
         }
         if (!stateForPlacement.canSurvive(context.getLevel(), context.getClickedPos())) {
-            return ActionResultType.FAIL;
+            return InteractionResult.FAIL;
         }
         if (!placeBlock(context, stateForPlacement)) {
-            return ActionResultType.FAIL;
+            return InteractionResult.FAIL;
         }
         BlockPos pos = context.getClickedPos();
-        World world = context.getLevel();
-        ServerPlayerEntity player = (ServerPlayerEntity) context.getPlayer();
+        Level level = context.getLevel();
+        ServerPlayer player = (ServerPlayer) context.getPlayer();
         ItemStack stack = context.getItemInHand();
-        BlockState stateInPos = world.getBlockState(pos);
+        BlockState stateInPos = level.getBlockState(pos);
         Block blockInPos = stateInPos.getBlock();
         if (blockInPos == stateForPlacement.getBlock()) {
-            blockInPos.setPlacedBy(world, pos, stateInPos, player, stack);
+            blockInPos.setPlacedBy(level, pos, stateInPos, player, stack);
             CriteriaTriggers.PLACED_BLOCK.trigger(player, pos, stack);
         }
         this.sucessPlaceLogic(context);
-        SoundType soundtype = stateInPos.getSoundType(world, pos, context.getPlayer());
+        SoundType soundtype = stateInPos.getSoundType(level, pos, context.getPlayer());
         player.swing(context.getHand());
         EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCHandAnimation(context.getHand()));
-        world.playSound(null,
+        level.playSound(null,
                         pos,
-                        getPlaceSound(stateInPos, world, pos, context.getPlayer()),
-                        SoundCategory.BLOCKS,
+                        getPlaceSound(stateInPos, level, pos, context.getPlayer()),
+                        SoundSource.BLOCKS,
                         (soundtype.getVolume() + 1.0F) / 2.0F,
                         soundtype.getPitch() * 0.8F);
         stack.shrink(1);
-        return ActionResultType.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     @Override
-    public ActionResultType useOn(ItemUseContext context) {
-        ActionResultType resultType = this.tryPlace(new BlockItemUseContext(context));
-        return resultType != ActionResultType.SUCCESS && this.isEdible() ?
+    public InteractionResult useOn(UseOnContext context) {
+        InteractionResult resultType = this.tryPlace(new BlockPlaceContext(context));
+        return resultType != InteractionResult.SUCCESS && this.isEdible() ?
                this.use(context.getLevel(), context.getPlayer(), context.getHand()).getResult() :
                resultType;
     }

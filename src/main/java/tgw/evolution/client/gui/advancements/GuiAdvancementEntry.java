@@ -1,31 +1,29 @@
 package tgw.evolution.client.gui.advancements;
 
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.gui.advancements.AdvancementState;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.IReorderingProcessor;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.screens.advancements.AdvancementWidgetType;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.GUIUtils;
-import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.util.MathHelper;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
-public class GuiAdvancementEntry extends AbstractGui {
+public class GuiAdvancementEntry extends GuiComponent {
 
     protected static final int ADVANCEMENT_SIZE = 26;
     private static final int CORNER_SIZE = 10;
@@ -34,33 +32,30 @@ public class GuiAdvancementEntry extends AbstractGui {
     private static final int TITLE_SIZE = 32;
     private static final int ICON_OFFSET = 128;
     private static final int ICON_SIZE = 26;
-    protected final BetterDisplayInfo betterDisplayInfo;
     private final Advancement advancement;
     private final GuiAdvancementTab betterAdvancementTabGui;
     private final List<GuiAdvancementEntry> children = Lists.newArrayList();
     private final DisplayInfo displayInfo;
     private final Minecraft mc;
-    private final int screenScale;
+    private final ResourceLocation resWidgets = Evolution.getResource("textures/gui/widgets.png");
     private final String title;
     protected int x;
     protected int y;
     private AdvancementProgress advancementProgress;
     private CriterionGrid criterionGrid;
-    private List<IReorderingProcessor> description;
+    private List<FormattedCharSequence> description;
     private GuiAdvancementEntry parent;
     private int width;
 
     public GuiAdvancementEntry(GuiAdvancementTab advancementTab, Minecraft mc, Advancement advancement, DisplayInfo displayInfo) {
         this.betterAdvancementTabGui = advancementTab;
         this.advancement = advancement;
-        this.betterDisplayInfo = advancementTab.getBetterDisplayInfo(advancement);
         this.displayInfo = displayInfo;
         this.mc = mc;
         this.title = displayInfo.getTitle().getString(163);
-        this.x = this.betterDisplayInfo.getPosX() != null ? this.betterDisplayInfo.getPosX() : MathHelper.floor(displayInfo.getX() * 32.0F);
-        this.y = this.betterDisplayInfo.getPosY() != null ? this.betterDisplayInfo.getPosY() : MathHelper.floor(displayInfo.getY() * 27.0F);
+        this.x = Mth.floor(displayInfo.getX() * 32.0F);
+        this.y = Mth.floor(displayInfo.getY() * 27.0F);
         this.refreshHover();
-        this.screenScale = mc.getWindow().calculateScale(0, false);
     }
 
     public void addGuiAdvancement(GuiAdvancementEntry betterAdvancementEntryGui) {
@@ -76,26 +71,26 @@ public class GuiAdvancementEntry extends AbstractGui {
         }
     }
 
-    public void draw(MatrixStack matrices, int scrollX, int scrollY) {
+    public void draw(PoseStack matrices, int scrollX, int scrollY) {
         if (!this.displayInfo.isHidden() || this.advancementProgress != null && this.advancementProgress.isDone()) {
             float percent = this.advancementProgress == null ? 0.0F : this.advancementProgress.getPercent();
-            AdvancementState advancementState = percent >= 1.0f ? AdvancementState.OBTAINED : AdvancementState.UNOBTAINED;
-            this.mc.getTextureManager().bind(EvolutionResources.GUI_WIDGETS);
-            GUIUtils.setColor(this.betterDisplayInfo.getIconColor(advancementState));
+            AdvancementWidgetType advancementState = percent >= 1.0f ? AdvancementWidgetType.OBTAINED : AdvancementWidgetType.UNOBTAINED;
+            RenderSystem.setShaderTexture(0, this.resWidgets);
+            GUIUtils.setColor(0xff_ffff);
             RenderSystem.enableBlend();
             this.setBlitOffset(1);
             this.blit(matrices,
                       scrollX + this.x + 3,
                       scrollY + this.y,
                       this.displayInfo.getFrame().getTexture(),
-                      ICON_OFFSET + ICON_SIZE * this.betterDisplayInfo.getIconYMultiplier(advancementState),
+                      ICON_OFFSET + ICON_SIZE * (advancementState == AdvancementWidgetType.OBTAINED ? 0 : 1),
                       ICON_SIZE,
                       ICON_SIZE);
             this.setBlitOffset(0);
-            this.renderItemAndEffectIntoGui(matrices, this.displayInfo.getIcon(), scrollX + this.x + 8, scrollY + this.y + 5);
+            this.mc.getItemRenderer().renderAndDecorateFakeItem(this.displayInfo.getIcon(), scrollX + this.x + 8, scrollY + this.y + 5);
         }
         else if (this.displayInfo.isHidden()) {
-            this.mc.getTextureManager().bind(EvolutionResources.GUI_WIDGETS);
+            RenderSystem.setShaderTexture(0, this.resWidgets);
             RenderSystem.enableBlend();
             this.setBlitOffset(1);
             this.blit(matrices,
@@ -106,149 +101,96 @@ public class GuiAdvancementEntry extends AbstractGui {
                       ICON_SIZE,
                       ICON_SIZE);
             this.setBlitOffset(0);
-            this.renderItemAndEffectIntoGui(matrices, this.displayInfo.getIcon(), scrollX + this.x + 8, scrollY + this.y + 5, 0);
+            GUIUtils.renderAndDecorateFakeItemLighting(this.mc.getItemRenderer(),
+                                                       this.displayInfo.getIcon(),
+                                                       scrollX + this.x + 8,
+                                                       scrollY + this.y + 5,
+                                                       0);
         }
         for (GuiAdvancementEntry advancementEntry : this.children) {
             advancementEntry.draw(matrices, scrollX, scrollY);
         }
     }
 
-    public void drawConnection(MatrixStack matrices, GuiAdvancementEntry parent, int scrollX, int scrollY, boolean drawInside) {
+    public void drawConnection(PoseStack matrices, GuiAdvancementEntry parent, int scrollX, int scrollY, boolean drawInside) {
         boolean isCompleted = this.advancementProgress != null && this.advancementProgress.isDone();
-        int innerLineColor = isCompleted ? this.betterDisplayInfo.getCompletedLineColor() : this.betterDisplayInfo.getUnCompletedLineColor();
-        int borderLineColor = 0xFF00_0000;
-        if (this.betterDisplayInfo.drawDirectLines()) {
-            double x1 = scrollX + this.x + ADVANCEMENT_SIZE / 2.0 + 3;
-            double y1 = scrollY + this.y + ADVANCEMENT_SIZE / 2.0;
-            double x2 = scrollX + parent.x + ADVANCEMENT_SIZE / 2.0 + 3;
-            double y2 = scrollY + parent.y + ADVANCEMENT_SIZE / 2.0;
-            double width;
-            boolean perpendicular = x1 == x2 || y1 == y2;
-            if (!perpendicular) {
-                switch (this.screenScale) {
-                    case 1: {
-                        width = drawInside ? 1.5 : 0.5;
-                        break;
-                    }
-                    case 2: {
-                        width = drawInside ? 2.25 : 0.75;
-                        break;
-                    }
-                    case 3: {
-                        width = drawInside ? 2 : 0.666_666_666_666_666_7;
-                        break;
-                    }
-                    case 4: {
-                        width = drawInside ? 2.125 : 0.625;
-                        break;
-                    }
-                    default: {
-                        width = drawInside ? 3 : 1;
-                        break;
-                    }
-                }
-                if (drawInside) {
-                    GUIUtils.drawRect(x1 - 0.75, y1 - 0.75, x2 - 0.75, y2 - 0.75, width, borderLineColor);
-                }
-                else {
-                    GUIUtils.drawRect(x1, y1, x2, y2, width, innerLineColor, isCompleted);
-                }
-            }
-            else {
-                width = drawInside ? 3 : 1;
-                if (drawInside) {
-                    GUIUtils.drawRect(x1 - 1, y1 - 1, x2 - 1, y2 - 1, width, borderLineColor);
-                }
-                else {
-                    GUIUtils.drawRect(x1, y1, x2, y2, width, innerLineColor, isCompleted);
-                }
-            }
+        int innerLineColor = isCompleted ? 0xffff_ffff : 0xff33_3333;
+        int startX = scrollX + parent.x + ADVANCEMENT_SIZE / 2;
+        int endXHalf = scrollX + parent.x + ADVANCEMENT_SIZE + 6;
+        int startY = scrollY + parent.y + ADVANCEMENT_SIZE / 2;
+        int endX = scrollX + this.x + ADVANCEMENT_SIZE / 2;
+        int endY = scrollY + this.y + ADVANCEMENT_SIZE / 2;
+        if (drawInside) {
+            int borderLineColor = 0xFF00_0000;
+            this.hLine(matrices, endXHalf + 1, startX, startY - 1, borderLineColor);
+            this.hLine(matrices, endXHalf + 1, startX, startY, borderLineColor);
+            this.hLine(matrices, endXHalf, startX, startY + 1, borderLineColor);
+            this.hLine(matrices, endX, endXHalf - 1, endY - 1, borderLineColor);
+            this.hLine(matrices, endX, endXHalf - 1, endY, borderLineColor);
+            this.hLine(matrices, endX, endXHalf - 1, endY + 1, borderLineColor);
+            this.vLine(matrices, endXHalf - 1, endY, startY, borderLineColor);
+            this.vLine(matrices, endXHalf + 1, endY, startY, borderLineColor);
         }
         else {
-            int startX = scrollX + parent.x + ADVANCEMENT_SIZE / 2;
-            int endXHalf = scrollX + parent.x + ADVANCEMENT_SIZE + 6; // 6 = 32 - 26
-            int startY = scrollY + parent.y + ADVANCEMENT_SIZE / 2;
-            int endX = scrollX + this.x + ADVANCEMENT_SIZE / 2;
-            int endY = scrollY + this.y + ADVANCEMENT_SIZE / 2;
-            if (drawInside) {
-                this.hLine(matrices, endXHalf, startX, startY - 1, borderLineColor);
-                this.hLine(matrices, endXHalf + 1, startX, startY, borderLineColor);
-                this.hLine(matrices, endXHalf, startX, startY + 1, borderLineColor);
-                this.hLine(matrices, endX, endXHalf - 1, endY - 1, borderLineColor);
-                this.hLine(matrices, endX, endXHalf - 1, endY, borderLineColor);
-                this.hLine(matrices, endX, endXHalf - 1, endY + 1, borderLineColor);
-                this.vLine(matrices, endXHalf - 1, endY, startY, borderLineColor);
-                this.vLine(matrices, endXHalf + 1, endY, startY, borderLineColor);
-            }
-            else {
-                GUIUtils.hLine(matrices, endXHalf, startX, startY, innerLineColor, isCompleted);
-                GUIUtils.hLine(matrices, endX, endXHalf, endY, innerLineColor, isCompleted);
-                GUIUtils.vLine(matrices, endXHalf, endY, startY, innerLineColor, isCompleted);
-            }
+            GUIUtils.hLine(matrices, endXHalf, startX, startY, innerLineColor, isCompleted);
+            GUIUtils.hLine(matrices, endX, endXHalf, endY, innerLineColor, isCompleted);
+            GUIUtils.vLine(matrices, endXHalf, endY, startY, innerLineColor, isCompleted);
         }
     }
 
-    public void drawConnectivity(MatrixStack matrices, int scrollX, int scrollY, boolean drawInside) {
-        if (!this.betterDisplayInfo.hideLines()) {
-            if (this.parent != null) {
-                this.drawConnection(matrices, this.parent, scrollX, scrollY, drawInside);
-            }
+    public void drawConnectivity(PoseStack matrices, int scrollX, int scrollY, boolean drawInside) {
+        if (this.parent != null) {
+            this.drawConnection(matrices, this.parent, scrollX, scrollY, drawInside);
         }
         for (GuiAdvancementEntry advancementEntry : this.children) {
             advancementEntry.drawConnectivity(matrices, scrollX, scrollY, drawInside);
         }
     }
 
-    public void drawHover(MatrixStack matrices, int scrollX, int scrollY, int left, int top) {
+    public void drawHover(PoseStack matrices, int scrollX, int scrollY, int left, int top) {
         this.refreshHover();
-        boolean drawLeft = left + scrollX + this.x + this.width + ADVANCEMENT_SIZE >= this.betterAdvancementTabGui.getScreen().internalWidth;
+        boolean drawLeft = left + scrollX + this.x + this.width + ADVANCEMENT_SIZE >= this.betterAdvancementTabGui.getScreen().width;
         String s = this.advancementProgress == null ? null : this.advancementProgress.getProgressText();
         int i = s == null ? 0 : this.mc.font.width(s);
         boolean drawTop;
-        if (!CriterionGrid.requiresShift || Screen.hasShiftDown()) {
-            if (this.criterionGrid.height < this.betterAdvancementTabGui.getScreen().height) {
-                drawTop = top + scrollY + this.y + this.description.size() * (this.mc.font.lineHeight + 1) + this.criterionGrid.height + 50 >=
-                          this.betterAdvancementTabGui.getScreen().height;
-            }
-            else {
-                drawTop = false;
-            }
-        }
-        else {
-            drawTop = top + scrollY + this.y + this.description.size() * (this.mc.font.lineHeight + 1) + 50 >=
+        if (this.criterionGrid.height < this.betterAdvancementTabGui.getScreen().height) {
+            drawTop = top + scrollY + this.y + this.description.size() * (this.mc.font.lineHeight + 1) + this.criterionGrid.height + 50 >=
                       this.betterAdvancementTabGui.getScreen().height;
         }
+        else {
+            drawTop = false;
+        }
         float percentageObtained = this.advancementProgress == null ? 0.0F : this.advancementProgress.getPercent();
-        int j = MathHelper.floor(percentageObtained * this.width);
-        AdvancementState stateTitleLeft;
-        AdvancementState stateTitleRight;
-        AdvancementState stateIcon;
+        int j = Mth.floor(percentageObtained * this.width);
+        AdvancementWidgetType stateTitleLeft;
+        AdvancementWidgetType stateTitleRight;
+        AdvancementWidgetType stateIcon;
         if (percentageObtained >= 1.0F) {
             j = this.width / 2;
-            stateTitleLeft = AdvancementState.OBTAINED;
-            stateTitleRight = AdvancementState.OBTAINED;
-            stateIcon = AdvancementState.OBTAINED;
+            stateTitleLeft = AdvancementWidgetType.OBTAINED;
+            stateTitleRight = AdvancementWidgetType.OBTAINED;
+            stateIcon = AdvancementWidgetType.OBTAINED;
         }
         else if (j < 2) {
             j = this.width / 2;
-            stateTitleLeft = AdvancementState.UNOBTAINED;
-            stateTitleRight = AdvancementState.UNOBTAINED;
-            stateIcon = AdvancementState.UNOBTAINED;
+            stateTitleLeft = AdvancementWidgetType.UNOBTAINED;
+            stateTitleRight = AdvancementWidgetType.UNOBTAINED;
+            stateIcon = AdvancementWidgetType.UNOBTAINED;
         }
         else if (j > this.width - 2) {
             j = this.width / 2;
-            stateTitleLeft = AdvancementState.OBTAINED;
-            stateTitleRight = AdvancementState.OBTAINED;
-            stateIcon = AdvancementState.UNOBTAINED;
+            stateTitleLeft = AdvancementWidgetType.OBTAINED;
+            stateTitleRight = AdvancementWidgetType.OBTAINED;
+            stateIcon = AdvancementWidgetType.UNOBTAINED;
         }
         else {
-            stateTitleLeft = AdvancementState.OBTAINED;
-            stateTitleRight = AdvancementState.UNOBTAINED;
-            stateIcon = AdvancementState.UNOBTAINED;
+            stateTitleLeft = AdvancementWidgetType.OBTAINED;
+            stateTitleRight = AdvancementWidgetType.UNOBTAINED;
+            stateIcon = AdvancementWidgetType.UNOBTAINED;
         }
         int k = this.width - j;
-        this.mc.getTextureManager().bind(EvolutionResources.GUI_WIDGETS);
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderTexture(0, this.resWidgets);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.enableBlend();
         int drawY = scrollY + this.y;
         int drawX;
@@ -258,13 +200,7 @@ public class GuiAdvancementEntry extends AbstractGui {
         else {
             drawX = scrollX + this.x;
         }
-        int boxHeight;
-        if (!CriterionGrid.requiresShift || Screen.hasShiftDown()) {
-            boxHeight = TITLE_SIZE + this.description.size() * (this.mc.font.lineHeight + 1) + this.criterionGrid.height;
-        }
-        else {
-            boxHeight = TITLE_SIZE + this.description.size() * (this.mc.font.lineHeight + 1);
-        }
+        int boxHeight = TITLE_SIZE + this.description.size() * (this.mc.font.lineHeight + 1) + this.criterionGrid.height;
         if (!this.description.isEmpty()) {
             if (drawTop) {
                 this.render9Sprite(matrices,
@@ -282,42 +218,42 @@ public class GuiAdvancementEntry extends AbstractGui {
                 this.render9Sprite(matrices, drawX, drawY, this.width, boxHeight, CORNER_SIZE, WIDGET_WIDTH, WIDGET_HEIGHT, 0, 52);
             }
         }
-        GUIUtils.setColor(this.betterDisplayInfo.getTitleColor(stateTitleLeft));
+        GUIUtils.setColor(0xff_ffff);
         int leftSide = Math.min(j, WIDGET_WIDTH - 16);
-        this.blit(matrices, drawX, drawY, 0, this.betterDisplayInfo.getTitleYMultiplier(stateTitleLeft) * WIDGET_HEIGHT, leftSide, WIDGET_HEIGHT);
+        this.blit(matrices, drawX, drawY, 0, (stateTitleLeft == AdvancementWidgetType.OBTAINED ? 0 : 1) * WIDGET_HEIGHT, leftSide, WIDGET_HEIGHT);
         if (leftSide < j) {
             this.blit(matrices,
                       drawX + leftSide,
                       drawY,
                       16,
-                      this.betterDisplayInfo.getTitleYMultiplier(stateTitleLeft) * WIDGET_HEIGHT,
+                      (stateTitleLeft == AdvancementWidgetType.OBTAINED ? 0 : 1) * WIDGET_HEIGHT,
                       j - leftSide,
                       WIDGET_HEIGHT);
         }
-        GUIUtils.setColor(this.betterDisplayInfo.getTitleColor(stateTitleRight));
-        int rightSide = Math.min(k, WIDGET_WIDTH - 16);
+        GUIUtils.setColor(0xff_ffff);
+        int rightSide = Math.min(k, WIDGET_WIDTH - 4);
         this.blit(matrices,
                   drawX + j,
                   drawY,
                   WIDGET_WIDTH - rightSide,
-                  this.betterDisplayInfo.getTitleYMultiplier(stateTitleRight) * WIDGET_HEIGHT,
+                  (stateTitleRight == AdvancementWidgetType.OBTAINED ? 0 : 1) * WIDGET_HEIGHT,
                   rightSide,
                   WIDGET_HEIGHT);
         if (rightSide < k) {
             this.blit(matrices,
-                      drawX + j + rightSide,
+                      drawX + j + rightSide - 2,
                       drawY,
-                      WIDGET_WIDTH - k + rightSide,
-                      this.betterDisplayInfo.getTitleYMultiplier(stateTitleRight) * WIDGET_HEIGHT,
-                      k - rightSide,
+                      WIDGET_WIDTH - k + rightSide - 2,
+                      (stateTitleRight == AdvancementWidgetType.OBTAINED ? 0 : 1) * WIDGET_HEIGHT,
+                      k - rightSide + 2,
                       WIDGET_HEIGHT);
         }
-        GUIUtils.setColor(this.betterDisplayInfo.getIconColor(stateIcon));
+        GUIUtils.setColor(0xff_ffff);
         this.blit(matrices,
                   scrollX + this.x + 3,
                   scrollY + this.y,
                   this.displayInfo.getFrame().getTexture(),
-                  ICON_OFFSET + ICON_SIZE * this.betterDisplayInfo.getIconYMultiplier(stateIcon),
+                  ICON_OFFSET + ICON_SIZE * (stateIcon == AdvancementWidgetType.OBTAINED ? 0 : 1),
                   ICON_SIZE,
                   ICON_SIZE);
         if (drawLeft) {
@@ -342,30 +278,30 @@ public class GuiAdvancementEntry extends AbstractGui {
         for (int k1 = 0; k1 < this.description.size(); ++k1) {
             this.mc.font.draw(matrices, this.description.get(k1), drawX + 5, yOffset + k1 * (this.mc.font.lineHeight + 1), 0xffaa_aaaa);
         }
-        if (this.criterionGrid != null && !CriterionGrid.requiresShift || Screen.hasShiftDown()) {
-            int xOffset = drawX + 5;
+        if (this.criterionGrid != null) {
             yOffset += this.description.size() * (this.mc.font.lineHeight + 1);
+            int xOffset = drawX + 5;
             for (int colIndex = 0; colIndex < this.criterionGrid.columns.size(); colIndex++) {
                 CriterionGrid.Column col = this.criterionGrid.columns.get(colIndex);
-                for (int rowIndex = 0; rowIndex < col.cells.size(); rowIndex++) {
-                    this.mc.font.draw(matrices, col.cells.get(rowIndex), xOffset, yOffset + rowIndex * (this.mc.font.lineHeight + 1), 0xffaa_aaaa);
+                for (int rowIndex = 0; rowIndex < col.cells().size(); rowIndex++) {
+                    this.mc.font.draw(matrices, col.cells().get(rowIndex), xOffset, yOffset + rowIndex * (this.mc.font.lineHeight + 1), 0xffaa_aaaa);
                 }
-                xOffset += col.width;
+                xOffset += col.width();
             }
         }
-        this.renderItemAndEffectIntoGui(matrices, this.displayInfo.getIcon(), scrollX + this.x + 8, scrollY + this.y + 5);
+        this.mc.getItemRenderer().renderAndDecorateFakeItem(this.displayInfo.getIcon(), scrollX + this.x + 8, scrollY + this.y + 5);
     }
 
-    private List<IReorderingProcessor> findOptimalLines(ITextComponent line, int width) {
+    private List<FormattedCharSequence> findOptimalLines(FormattedText line, int width) {
         if (line.getString().isEmpty()) {
             return Collections.emptyList();
         }
-        List<IReorderingProcessor> list = this.mc.font.split(line, width);
+        List<FormattedCharSequence> list = this.mc.font.split(line, width);
         if (list.size() > 1) {
-            width = Math.max(width, this.betterAdvancementTabGui.getScreen().internalWidth / 4);
+            width = Math.max(width, this.betterAdvancementTabGui.getScreen().width / 4);
             list = this.mc.font.split(line, width);
         }
-        while (list.size() > 5 && width < WIDGET_WIDTH * 1.5 && width < this.betterAdvancementTabGui.getScreen().internalWidth / 2.5) {
+        while (list.size() > 5 && width < WIDGET_WIDTH * 1.5 && width < this.betterAdvancementTabGui.getScreen().width / 2.5) {
             width += width / 4;
             list = this.mc.font.split(line, width);
         }
@@ -420,21 +356,15 @@ public class GuiAdvancementEntry extends AbstractGui {
         int titleWidth = 29 + this.mc.font.width(this.title) + k;
         ScreenAdvancements screen = this.betterAdvancementTabGui.getScreen();
         this.criterionGrid = CriterionGrid.findOptimalCriterionGrid(this.advancement, this.advancementProgress, screen.width / 2, this.mc.font);
-        int maxWidth;
-        if (!CriterionGrid.requiresShift || Screen.hasShiftDown()) {
-            maxWidth = Math.max(titleWidth, this.criterionGrid.width);
-        }
-        else {
-            maxWidth = titleWidth;
-        }
+        int maxWidth = Math.max(titleWidth, this.criterionGrid.width);
         this.description = this.findOptimalLines(this.displayInfo.getDescription(), maxWidth);
-        for (IReorderingProcessor line : this.description) {
+        for (FormattedCharSequence line : this.description) {
             maxWidth = Math.max(maxWidth, this.mc.font.width(line));
         }
         this.width = maxWidth + 8;
     }
 
-    protected void render9Sprite(MatrixStack matrices,
+    protected void render9Sprite(PoseStack matrices,
                                  int x,
                                  int y,
                                  int width,
@@ -513,20 +443,5 @@ public class GuiAdvancementEntry extends AbstractGui {
                                  textureY + textureHeight,
                                  textureWidth,
                                  textureDistance - textureHeight - textureHeight);
-    }
-
-    private void renderItemAndEffectIntoGui(MatrixStack matrices, ItemStack icon, int x, int y) {
-        this.renderItemAndEffectIntoGui(matrices, icon, x, y, 0xf0_00f0);
-    }
-
-    private void renderItemAndEffectIntoGui(MatrixStack matrices, ItemStack icon, int x, int y, int packedLight) {
-        matrices.pushPose();
-        RenderSystem.pushMatrix();
-        RenderSystem.multMatrix(matrices.last().pose());
-        RenderHelper.turnBackOn();
-        GUIUtils.renderItemAndEffectIntoGuiWithoutEntity(this.mc.getItemRenderer(), icon, x, y, packedLight);
-        RenderHelper.turnOff();
-        RenderSystem.popMatrix();
-        matrices.popPose();
     }
 }

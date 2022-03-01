@@ -1,8 +1,8 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.events.ClientEvents;
 
 import java.util.function.Supplier;
@@ -15,11 +15,11 @@ public class PacketSCHitmarker implements IPacket {
         this.isKill = isKill;
     }
 
-    public static PacketSCHitmarker decode(PacketBuffer buffer) {
+    public static PacketSCHitmarker decode(FriendlyByteBuf buffer) {
         return new PacketSCHitmarker(buffer.readBoolean());
     }
 
-    public static void encode(PacketSCHitmarker packet, PacketBuffer buffer) {
+    public static void encode(PacketSCHitmarker packet, FriendlyByteBuf buffer) {
         buffer.writeBoolean(packet.isKill);
     }
 

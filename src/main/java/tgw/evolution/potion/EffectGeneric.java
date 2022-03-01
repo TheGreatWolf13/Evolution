@@ -1,11 +1,11 @@
 package tgw.evolution.potion;
 
-import net.minecraft.potion.Effect;
-import net.minecraft.potion.EffectType;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
 
-public class EffectGeneric extends Effect {
+public class EffectGeneric extends MobEffect {
 
-    public EffectGeneric(EffectType type, int liquidColor) {
-        super(type, liquidColor);
+    public EffectGeneric(MobEffectCategory category, int liquidColor) {
+        super(category, liquidColor);
     }
 }

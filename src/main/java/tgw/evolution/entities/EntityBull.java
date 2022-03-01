@@ -10,7 +10,7 @@
 //import net.minecraftforge.api.distmarker.OnlyIn;
 //import tgw.evolution.entities.ai.*;
 //import tgw.evolution.util.EnumFoodNutrients;
-//import tgw.evolution.util.Time;
+//import tgw.evolution.util.time.Time;
 //
 //public class EntityBull extends AnimalEntity {
 //

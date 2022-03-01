@@ -1,9 +1,9 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.client.gui.ScreenMolding;
 
 import java.util.function.Supplier;
@@ -16,11 +16,11 @@ public class PacketSCOpenMoldingGui implements IPacket {
         this.pos = pos;
     }
 
-    public static PacketSCOpenMoldingGui decode(PacketBuffer buffer) {
+    public static PacketSCOpenMoldingGui decode(FriendlyByteBuf buffer) {
         return new PacketSCOpenMoldingGui(buffer.readBlockPos());
     }
 
-    public static void encode(PacketSCOpenMoldingGui packet, PacketBuffer buffer) {
+    public static void encode(PacketSCOpenMoldingGui packet, FriendlyByteBuf buffer) {
         buffer.writeBlockPos(packet.pos);
     }
 

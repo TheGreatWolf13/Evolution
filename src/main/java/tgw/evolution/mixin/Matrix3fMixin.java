@@ -1,13 +1,13 @@
 package tgw.evolution.mixin;
 
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.vector.Matrix3f;
-import net.minecraft.util.math.vector.Quaternion;
-import net.minecraft.util.math.vector.Vector3i;
+import com.mojang.math.Matrix3f;
+import com.mojang.math.Quaternion;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.patches.IMatrix3fPatch;
-import tgw.evolution.util.Norm3b;
+import tgw.evolution.util.math.Norm3b;
 
 @Mixin(Matrix3f.class)
 public abstract class Matrix3fMixin implements IMatrix3fPatch {
@@ -41,7 +41,7 @@ public abstract class Matrix3fMixin implements IMatrix3fPatch {
 
     @Override
     public int computeNormal(Direction dir) {
-        Vector3i faceNorm = dir.getNormal();
+        Vec3i faceNorm = dir.getNormal();
         float x = faceNorm.getX();
         float y = faceNorm.getY();
         float z = faceNorm.getZ();

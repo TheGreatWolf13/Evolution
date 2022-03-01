@@ -1,8 +1,8 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.events.ClientEvents;
 
 import java.util.function.Supplier;
@@ -15,11 +15,11 @@ public class PacketSCToast implements IPacket {
         this.id = id;
     }
 
-    public static PacketSCToast decode(PacketBuffer buffer) {
+    public static PacketSCToast decode(FriendlyByteBuf buffer) {
         return new PacketSCToast(buffer.readVarInt());
     }
 
-    public static void encode(PacketSCToast packet, PacketBuffer buffer) {
+    public static void encode(PacketSCToast packet, FriendlyByteBuf buffer) {
         buffer.writeVarInt(packet.id);
     }
 

@@ -1,20 +1,22 @@
 package tgw.evolution.init;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.Hand;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
-import tgw.evolution.util.damage.*;
+import tgw.evolution.util.damage.DamageSourceEntity;
+import tgw.evolution.util.damage.DamageSourceEntityIndirect;
+import tgw.evolution.util.damage.DamageSourceEv;
+import tgw.evolution.util.damage.DamageSourcePlayer;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 public final class EvolutionDamage {
 
@@ -26,9 +28,10 @@ public final class EvolutionDamage {
                                                                   type != Type.SLASHING)
                                                   .toArray(Type[]::new);
     public static final Type[] ALL = Arrays.stream(Type.values()).filter(type -> type != Type.GENERIC).toArray(Type[]::new);
-    public static final Set<String> ALL_SOURCES = new HashSet<>();
+    public static final ObjectSet<String> ALL_SOURCES = new ObjectOpenHashSet<>();
     public static final DamageSource DEHYDRATION = createSrc(new DamageSourceEv("dehydration", Type.SICKNESS).bypassArmor().absolute());
     public static final DamageSource DROWN = createSrc(new DamageSourceEv("drown", Type.DROWNING).bypassArmor());
+    public static final DamageSource EFFICIENCY = createSrc(new DamageSourceEv("efficiency", Type.VOID).bypassArmor().bypassInvul().absolute());
     public static final DamageSource FALL = new DamageSourceEv("fall_damage", Type.IMPACT).bypassArmor();
     public static final DamageSource FALLING_METAL = createSrc(new DamageSourceEv("falling_metal", Type.CRUSHING).bypassArmor());
     public static final DamageSource FALLING_ROCK = createSrc(new DamageSourceEv("falling_rock", Type.CRUSHING).bypassArmor());
@@ -64,16 +67,11 @@ public final class EvolutionDamage {
         return new DamageSourceEntityIndirect("hook", source, trueSource, Type.PIERCING).projectile();
     }
 
-    //TODO
-    public static DamageSourceEv causeMobDamage(LivingEntity mob) {
-        return new DamageSourceEntity("mob", mob, Type.GENERIC);
+    public static DamageSourceEv causeMobMeleeDamage(LivingEntity mob, Type type, InteractionHand hand) {
+        return new DamageSourceEntity("mob", mob, type);
     }
 
-    public static DamageSourceEv causePVPMeleeDamage(PlayerEntity player, Type type, Hand hand, EquipmentSlotType slot) {
-        return new DamageSourcePVP("player", player, type, hand, slot);
-    }
-
-    public static DamageSourceEv causePlayerMeleeDamage(PlayerEntity player, Type type, Hand hand) {
+    public static DamageSourceEv causePlayerMeleeDamage(Player player, Type type, InteractionHand hand) {
         return new DamageSourcePlayer("player", player, type, hand);
     }
 
@@ -104,13 +102,13 @@ public final class EvolutionDamage {
         private final String name;
         private final int texX;
         private final int texY;
-        private final ITextComponent textComponent;
+        private final Component textComponent;
         private final String translationKey;
 
         Type(String name, int texX, int texY) {
             this.name = name;
             this.translationKey = "evolution.tooltip.damage." + name;
-            this.textComponent = new TranslationTextComponent(this.translationKey);
+            this.textComponent = new TranslatableComponent(this.translationKey);
             this.texX = texX;
             this.texY = texY;
         }
@@ -127,7 +125,7 @@ public final class EvolutionDamage {
             return this.texY;
         }
 
-        public ITextComponent getTextComponent() {
+        public Component getTextComponent() {
             return this.textComponent;
         }
 

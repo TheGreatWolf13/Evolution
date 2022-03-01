@@ -1,39 +1,53 @@
 package tgw.evolution.client.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gui.recipebook.IRecipeShownListener;
-import net.minecraft.client.gui.recipebook.RecipeBookGui;
-import net.minecraft.client.gui.screen.inventory.CreativeScreen;
-import net.minecraft.client.gui.screen.inventory.InventoryScreen;
-import net.minecraft.client.gui.widget.button.ImageButton;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.container.ClickType;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.util.text.ITextComponent;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
+import net.minecraft.client.gui.screens.recipebook.RecipeUpdateListener;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.extendedinventory.ContainerPlayerInventory;
 
 @OnlyIn(Dist.CLIENT)
-public class ScreenInventoryExtended extends ScreenDisplayEffects<ContainerPlayerInventory> implements IRecipeShownListener {
+public class ScreenInventoryExtended extends ScreenDisplayEffects<ContainerPlayerInventory> implements RecipeUpdateListener {
 
-    private final RecipeBookGui recipeBookGui = new RecipeBookGui();
+    private final RecipeBookComponent recipeBookGui = new RecipeBookComponent();
+    private final ResourceLocation resRecipeButton = new ResourceLocation("textures/gui/recipe_button.png");
     private boolean buttonClicked;
     private float oldMouseX;
     private float oldMouseY;
     private boolean removeRecipeBookGui;
     private boolean widthTooNarrow;
 
-    public ScreenInventoryExtended(ContainerPlayerInventory container, PlayerInventory inv, ITextComponent name) {
+    public ScreenInventoryExtended(ContainerPlayerInventory container, Inventory inv, Component name) {
         super(container, inv, name);
         this.passEvents = true;
         this.imageWidth = 212;
     }
 
     @Override
-    public RecipeBookGui getRecipeBookComponent() {
+    public void containerTick() {
+        if (this.minecraft.gameMode.hasInfiniteItems()) {
+            this.minecraft.setScreen(new CreativeModeInventoryScreen(this.minecraft.player));
+        }
+        else {
+            this.recipeBookGui.tick();
+            super.containerTick();
+        }
+    }
+
+    @Override
+    public RecipeBookComponent getRecipeBookComponent() {
         return this.recipeBookGui;
     }
 
@@ -46,34 +60,23 @@ public class ScreenInventoryExtended extends ScreenDisplayEffects<ContainerPlaye
 
     @Override
     protected void init() {
-        if (this.minecraft.gameMode.hasFarPickRange()) {
-            this.minecraft.setScreen(new CreativeScreen(this.minecraft.player));
+        if (this.minecraft.gameMode.hasInfiniteItems()) {
+            this.minecraft.setScreen(new CreativeModeInventoryScreen(this.minecraft.player));
         }
         else {
             super.init();
             this.widthTooNarrow = this.width < 395;
             this.recipeBookGui.init(this.width - 34, this.height, this.minecraft, this.widthTooNarrow, this.menu);
             this.removeRecipeBookGui = true;
-            this.leftPos = this.recipeBookGui.updateScreenPosition(this.widthTooNarrow, this.width, this.imageWidth);
-            this.children.add(this.recipeBookGui);
+            this.leftPos = this.recipeBookGui.updateScreenPosition(this.width, this.imageWidth);
+            this.addWidget(this.recipeBookGui);
             this.setInitialFocus(this.recipeBookGui);
-            this.addButton(new ImageButton(this.leftPos + 137,
-                                           this.height / 2 - 31,
-                                           20,
-                                           18,
-                                           0,
-                                           0,
-                                           19,
-                                           EvolutionResources.GUI_RECIPE_BUTTON,
-                                           button -> {
-                                               this.recipeBookGui.initVisuals(this.widthTooNarrow);
-                                               this.recipeBookGui.toggleVisibility();
-                                               this.leftPos = this.recipeBookGui.updateScreenPosition(this.widthTooNarrow,
-                                                                                                      this.width,
-                                                                                                      this.imageWidth);
-                                               ((ImageButton) button).setPosition(this.leftPos + 137, this.height / 2 - 31);
-                                               this.buttonClicked = true;
-                                           }));
+            this.addRenderableWidget(new ImageButton(this.leftPos + 137, this.height / 2 - 31, 20, 18, 0, 0, 19, this.resRecipeButton, button -> {
+                this.recipeBookGui.toggleVisibility();
+                this.leftPos = this.recipeBookGui.updateScreenPosition(this.width, this.imageWidth);
+                ((ImageButton) button).setPosition(this.leftPos + 137, this.height / 2 - 31);
+                this.buttonClicked = true;
+            }));
         }
     }
 
@@ -114,7 +117,7 @@ public class ScreenInventoryExtended extends ScreenDisplayEffects<ContainerPlaye
     }
 
     @Override
-    public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
+    public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(matrices);
         if (this.recipeBookGui.isVisible() && this.widthTooNarrow) {
             this.recipeBookGui.toggleVisibility();
@@ -138,9 +141,10 @@ public class ScreenInventoryExtended extends ScreenDisplayEffects<ContainerPlaye
     }
 
     @Override
-    protected void renderBg(MatrixStack matrices, float partialTicks, int mouseX, int mouseY) {
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.minecraft.getTextureManager().bind(EvolutionResources.GUI_INVENTORY);
+    protected void renderBg(PoseStack matrices, float partialTicks, int mouseX, int mouseY) {
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderTexture(0, EvolutionResources.GUI_INVENTORY);
         int i = this.leftPos;
         int j = this.topPos;
         this.blit(matrices, i, j, 0, 0, this.imageWidth, this.imageHeight);
@@ -164,23 +168,12 @@ public class ScreenInventoryExtended extends ScreenDisplayEffects<ContainerPlaye
     }
 
     @Override
-    protected void renderLabels(MatrixStack matrices, int mouseX, int mouseY) {
+    protected void renderLabels(PoseStack matrices, int mouseX, int mouseY) {
     }
 
     @Override
     protected void slotClicked(Slot slot, int slotId, int mouseButton, ClickType type) {
         super.slotClicked(slot, slotId, mouseButton, type);
         this.recipeBookGui.slotClicked(slot);
-    }
-
-    @Override
-    public void tick() {
-        if (this.minecraft.gameMode.hasFarPickRange()) {
-            this.minecraft.setScreen(new CreativeScreen(this.minecraft.player));
-        }
-        else {
-            this.recipeBookGui.tick();
-            super.tick();
-        }
     }
 }

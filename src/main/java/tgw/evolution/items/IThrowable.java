@@ -1,6 +1,6 @@
 package tgw.evolution.items;
 
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.player.Player;
 import tgw.evolution.init.EvolutionStats;
 
 /**
@@ -8,7 +8,9 @@ import tgw.evolution.init.EvolutionStats;
  */
 public interface IThrowable {
 
-    default void addStat(PlayerEntity player) {
+    default void addStat(Player player) {
         player.awardStat(EvolutionStats.ITEMS_THROWN);
     }
+
+    boolean isCancelable();
 }

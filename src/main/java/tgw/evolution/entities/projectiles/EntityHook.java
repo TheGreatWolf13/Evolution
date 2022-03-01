@@ -1,25 +1,25 @@
 package tgw.evolution.entities.projectiles;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.IPacket;
-import net.minecraft.util.Direction;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.network.FMLPlayMessages;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.network.PlayMessages;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockClimbingStake;
 import tgw.evolution.blocks.BlockUtils;
@@ -40,22 +40,21 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
 
     private Direction facing = Direction.NORTH;
 
-    public EntityHook(World world, LivingEntity thrower) {
-        super(EvolutionEntities.HOOK.get(), thrower, world, 1);
+    public EntityHook(Level level, LivingEntity thrower) {
+        super(EvolutionEntities.HOOK.get(), thrower, level, 1);
         this.facing = thrower.getDirection();
     }
 
-    @SuppressWarnings("unused")
-    public EntityHook(FMLPlayMessages.SpawnEntity spawnEntity, World worldIn) {
-        this(EvolutionEntities.HOOK.get(), worldIn);
+    public EntityHook(EntityType<EntityHook> type, Level level) {
+        super(type, level);
     }
 
-    public EntityHook(EntityType<EntityHook> type, World worldIn) {
-        super(type, worldIn);
+    public EntityHook(PlayMessages.SpawnEntity spawnEntity, Level level) {
+        this(EvolutionEntities.HOOK.get(), level);
     }
 
-    public static int tryPlaceRopes(World world, BlockPos pos, Direction support, int count) {
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+    public static int tryPlaceRopes(Level level, BlockPos pos, Direction support, int count) {
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         mutablePos.set(pos);
         Direction currentMovement = support.getOpposite();
         int ropeCount = 0;
@@ -64,7 +63,7 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
                 return count;
             }
             mutablePos.move(currentMovement);
-            BlockState stateTemp = world.getBlockState(mutablePos);
+            BlockState stateTemp = level.getBlockState(mutablePos);
             if (!BlockUtils.isReplaceable(stateTemp)) {
                 return ropeCount;
             }
@@ -74,8 +73,8 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
                 }
                 return ropeCount;
             }
-            if (stateTemp.getBlock() instanceof IReplaceable) {
-                if (!((IReplaceable) stateTemp.getBlock()).canBeReplacedByRope(stateTemp)) {
+            if (stateTemp.getBlock() instanceof IReplaceable replaceable) {
+                if (!replaceable.canBeReplacedByRope(stateTemp)) {
                     return ropeCount;
                 }
             }
@@ -85,9 +84,9 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
                 }
                 return ropeCount;
             }
-            if (currentMovement != Direction.DOWN && BlockClimbingStake.canGoDown(world, mutablePos)) {
+            if (currentMovement != Direction.DOWN && BlockClimbingStake.canGoDown(level, mutablePos)) {
                 currentMovement = Direction.DOWN;
-                stateTemp = world.getBlockState(mutablePos.move(Direction.DOWN));
+                stateTemp = level.getBlockState(mutablePos.move(Direction.DOWN));
                 if (stateTemp.getBlock() == EvolutionBlocks.ROPE.get()) {
                     if (stateTemp.getValue(DIRECTION_HORIZONTAL) == support) {
                         continue;
@@ -97,39 +96,39 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
                 if (stateTemp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
                     return ropeCount;
                 }
-                if (stateTemp.getBlock() instanceof IReplaceable) {
-                    for (ItemStack stack : ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp)) {
-                        BlockUtils.dropItemStack(world, mutablePos, stack);
+                if (stateTemp.getBlock() instanceof IReplaceable replaceable) {
+                    for (ItemStack stack : replaceable.getDrops(level, mutablePos, stateTemp)) {
+                        BlockUtils.dropItemStack(level, mutablePos, stack);
                     }
                 }
-                world.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
+                level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
                 ropeCount++;
                 continue;
             }
-            if (stateTemp.getBlock() instanceof IReplaceable) {
-                for (ItemStack stack : ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp)) {
-                    BlockUtils.dropItemStack(world, mutablePos, stack);
+            if (stateTemp.getBlock() instanceof IReplaceable replaceable) {
+                for (ItemStack stack : replaceable.getDrops(level, mutablePos, stateTemp)) {
+                    BlockUtils.dropItemStack(level, mutablePos, stack);
                 }
             }
             if (currentMovement == Direction.DOWN) {
-                world.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
+                level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
                 ropeCount++;
                 continue;
             }
-            world.setBlockAndUpdate(mutablePos, EvolutionBlocks.GROUND_ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
+            level.setBlockAndUpdate(mutablePos, EvolutionBlocks.GROUND_ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
             ropeCount++;
         }
         return ropeCount;
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundNBT compound) {
-        super.addAdditionalSaveData(compound);
-        compound.putByte("Facing", (byte) this.facing.get3DDataValue());
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putByte("Facing", (byte) this.facing.get3DDataValue());
     }
 
     @Override
-    public IPacket<?> getAddEntityPacket() {
+    public Packet<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
@@ -155,20 +154,19 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
     }
 
     @Override
-    protected void onEntityHit(EntityRayTraceResult rayTraceResult) {
+    protected void onEntityHit(EntityHitResult rayTraceResult) {
         Entity entity = rayTraceResult.getEntity();
         if (!this.hitEntities.contains(entity.getId())) {
             this.hitEntities.add(entity.getId());
             Entity shooter = this.getShooter();
             DamageSourceEv source = EvolutionDamage.causeHookDamage(this, shooter == null ? this : shooter);
-            float damage = MathHelper.ceil(4 * this.getDeltaMovement().length());
-            if (entity instanceof LivingEntity && entity.isAttackable()) {
-                LivingEntity living = (LivingEntity) entity;
+            float damage = Mth.ceil(4 * this.getDeltaMovement().length());
+            if (entity instanceof LivingEntity living && entity.isAttackable()) {
                 float oldHealth = living.getHealth();
                 living.hurt(source, damage);
-                if (shooter instanceof ServerPlayerEntity) {
-                    this.applyDamageRaw((ServerPlayerEntity) shooter, damage, source.getType());
-                    this.applyDamageActual((ServerPlayerEntity) shooter, oldHealth - living.getHealth(), source.getType(), living);
+                if (shooter instanceof ServerPlayer shooterPlayer) {
+                    this.applyDamageRaw(shooterPlayer, damage, source.getType());
+                    this.applyDamageActual(shooterPlayer, oldHealth - living.getHealth(), source.getType(), living);
                 }
             }
             this.setDeltaMovement(this.getDeltaMovement().multiply(-0.1, -0.1, -0.1));
@@ -178,9 +176,9 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundNBT compound) {
-        super.readAdditionalSaveData(compound);
-        this.facing = Direction.from3DDataValue(compound.getByte("Facing"));
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.facing = Direction.from3DDataValue(tag.getByte("Facing"));
     }
 
     @Override
@@ -194,7 +192,7 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
         super.tick();
         if (this.timeInGround > 0) {
             this.tryPlaceBlock();
-            this.remove();
+            this.discard();
         }
     }
 
@@ -211,7 +209,7 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
                                                                       .defaultBlockState()
                                                                       .setValue(DIRECTION_HORIZONTAL, this.facing.getOpposite()));
             LivingEntity shooter = this.getShooter();
-            if (this.getShooter() instanceof PlayerEntity) {
+            if (this.getShooter() instanceof Player) {
                 ItemStack stack = shooter.getOffhandItem();
                 if (stack.getItem() == EvolutionItems.rope.get()) {
                     int count = stack.getCount();

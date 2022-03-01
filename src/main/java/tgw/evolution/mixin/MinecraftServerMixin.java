@@ -1,31 +1,30 @@
 package tgw.evolution.mixin;
 
 import com.mojang.authlib.GameProfile;
-import net.minecraft.advancements.FunctionManager;
-import net.minecraft.crash.CrashReport;
-import net.minecraft.crash.ReportedException;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.NetworkSystem;
-import net.minecraft.network.ServerStatusResponse;
-import net.minecraft.network.play.server.SUpdateTimePacket;
-import net.minecraft.profiler.IProfiler;
-import net.minecraft.profiler.Snooper;
+import net.minecraft.CrashReport;
+import net.minecraft.ReportedException;
+import net.minecraft.SharedConstants;
+import net.minecraft.Util;
+import net.minecraft.gametest.framework.GameTestTicker;
+import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
+import net.minecraft.network.protocol.status.ServerStatus;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.ServerFunctionManager;
+import net.minecraft.server.TickTask;
 import net.minecraft.server.dedicated.DedicatedServer;
-import net.minecraft.server.management.PlayerList;
-import net.minecraft.test.TestCollection;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerConnectionListener;
+import net.minecraft.server.players.PlayerList;
 import net.minecraft.util.FrameTimer;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.SharedConstants;
-import net.minecraft.util.Util;
-import net.minecraft.util.concurrent.RecursiveEventLoop;
-import net.minecraft.util.concurrent.TickDelayedTask;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.fml.hooks.BasicEventHooks;
-import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraft.util.Mth;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.util.thread.ReentrantBlockableEventLoop;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.network.PacketDistributor;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -45,8 +44,11 @@ import java.util.*;
 import java.util.function.BooleanSupplier;
 
 @Mixin(MinecraftServer.class)
-public abstract class MinecraftServerMixin extends RecursiveEventLoop<TickDelayedTask> implements IMinecraftServerPatch {
+public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask> implements IMinecraftServerPatch {
 
+    @Shadow
+    @Final
+    public static GameProfile ANONYMOUS_PLAYER_PROFILE;
     @Shadow
     @Final
     private static Logger LOGGER;
@@ -62,20 +64,17 @@ public abstract class MinecraftServerMixin extends RecursiveEventLoop<TickDelaye
     @Shadow
     private long lastServerStatus;
     @Shadow
-    private Map<RegistryKey<World>, long[]> perWorldTickTimes;
+    private Map<ResourceKey<Level>, long[]> perWorldTickTimes;
     @Shadow
     private PlayerList playerList;
     @Shadow
-    private IProfiler profiler;
+    private ProfilerFiller profiler;
     @Shadow
     @Final
     private Random random;
     @Shadow
     @Final
-    private Snooper snooper;
-    @Shadow
-    @Final
-    private ServerStatusResponse status;
+    private ServerStatus status;
     @Shadow
     private int tickCount;
     @Shadow
@@ -89,10 +88,10 @@ public abstract class MinecraftServerMixin extends RecursiveEventLoop<TickDelaye
 
     @Shadow
     @Nullable
-    public abstract NetworkSystem getConnection();
+    public abstract ServerConnectionListener getConnection();
 
     @Shadow
-    public abstract FunctionManager getFunctions();
+    public abstract ServerFunctionManager getFunctions();
 
     @Shadow
     public abstract int getMaxPlayers();
@@ -104,7 +103,10 @@ public abstract class MinecraftServerMixin extends RecursiveEventLoop<TickDelaye
     public abstract PlayerList getPlayerList();
 
     @Shadow
-    protected abstract ServerWorld[] getWorldArray();
+    protected abstract ServerLevel[] getWorldArray();
+
+    @Shadow
+    public abstract boolean hidesOnlinePlayers();
 
     @Override
     public boolean isMultiplayerPaused() {
@@ -117,23 +119,23 @@ public abstract class MinecraftServerMixin extends RecursiveEventLoop<TickDelaye
     @Inject(method = "tickServer", at = @At("HEAD"))
     private void onTickServer(BooleanSupplier supplier, CallbackInfo ci) {
         if ((Object) this instanceof DedicatedServer) {
-            for (ServerPlayerEntity player : this.getPlayerList().getPlayers()) {
+            for (ServerPlayer player : this.getPlayerList().getPlayers()) {
                 player.awardStat(EvolutionStats.TIME_WITH_WORLD_OPEN);
             }
         }
     }
 
     @Shadow
-    public abstract boolean saveAllChunks(boolean p_213211_1_, boolean p_213211_2_, boolean p_213211_3_);
+    public abstract boolean saveEverything(boolean p_195515_, boolean p_195516_, boolean p_195517_);
 
     @Override
     public void setMultiplayerPaused(boolean paused) {
         this.isMultiplayerPaused = paused;
         if (paused) {
-            Evolution.LOGGER.info("Pausing Multiplayer Server");
+            Evolution.info("Pausing Multiplayer Server");
         }
         else {
-            Evolution.LOGGER.info("Resuming Multiplayer Server");
+            Evolution.info("Resuming Multiplayer Server");
         }
         EvolutionNetwork.INSTANCE.send(PacketDistributor.ALL.noArg(), new PacketSCMultiplayerPause(paused));
     }
@@ -144,28 +146,28 @@ public abstract class MinecraftServerMixin extends RecursiveEventLoop<TickDelaye
      * Overwrite to handle multiplayer pause.
      */
     @Overwrite
-    protected void tickChildren(BooleanSupplier booleanSupplier) {
+    public void tickChildren(BooleanSupplier booleanSupplier) {
         this.profiler.push("commandFunctions");
         if (!this.isMultiplayerPaused) { //Added check for multiplayer pause
             this.getFunctions().tick();
         }
         this.profiler.popPush("levels");
-        for (ServerWorld serverworld : this.getWorldArray()) {
+        for (ServerLevel serverworld : this.getWorldArray()) {
             long tickStart = Util.getNanos();
             //noinspection ObjectAllocationInLoop
             this.profiler.push(() -> serverworld + " " + serverworld.dimension().location());
             if (this.tickCount % 20 == 0 || !this.wasPaused && this.isMultiplayerPaused) { //Added check for multiplayer pause
                 this.profiler.push("timeSync");
                 //noinspection ObjectAllocationInLoop
-                this.playerList.broadcastAll(new SUpdateTimePacket(serverworld.getGameTime(),
-                                                                   serverworld.getDayTime(),
-                                                                   serverworld.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)),
+                this.playerList.broadcastAll(new ClientboundSetTimePacket(serverworld.getGameTime(),
+                                                                          serverworld.getDayTime(),
+                                                                          serverworld.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)),
                                              serverworld.dimension());
                 this.profiler.pop();
             }
             this.profiler.push("tick");
             if (!this.isMultiplayerPaused) { //Added check for multiplayer pause
-                BasicEventHooks.onPreWorldTick(serverworld);
+                ForgeEventFactory.onPreWorldTick(serverworld);
                 try {
                     serverworld.tick(booleanSupplier);
                 }
@@ -174,7 +176,7 @@ public abstract class MinecraftServerMixin extends RecursiveEventLoop<TickDelaye
                     serverworld.fillReportDetails(crashreport);
                     throw new ReportedException(crashreport);
                 }
-                BasicEventHooks.onPostWorldTick(serverworld);
+                ForgeEventFactory.onPostWorldTick(serverworld);
             }
             this.profiler.pop();
             this.profiler.pop();
@@ -186,7 +188,7 @@ public abstract class MinecraftServerMixin extends RecursiveEventLoop<TickDelaye
         this.profiler.popPush("players");
         this.playerList.tick();
         if (SharedConstants.IS_RUNNING_IN_IDE) {
-            TestCollection.singleton.tick();
+            GameTestTicker.SINGLETON.tick();
         }
         this.profiler.popPush("server gui refresh");
         for (Runnable tickable : this.tickables) {
@@ -201,48 +203,47 @@ public abstract class MinecraftServerMixin extends RecursiveEventLoop<TickDelaye
      * Overwrite to handle multiplayer pausing.
      */
     @Overwrite
-    protected void tickServer(BooleanSupplier booleanSupplier) {
+    public void tickServer(BooleanSupplier booleanSupplier) {
         long i = Util.getNanos();
-        BasicEventHooks.onPreServerTick();
+        ForgeEventFactory.onPreServerTick();
         if (!this.isMultiplayerPaused) { //Added check for multiplayer pause
             ++this.tickCount;
         }
         this.tickChildren(booleanSupplier);
         if (i - this.lastServerStatus >= 5_000_000_000L) {
             this.lastServerStatus = i;
-            this.status.setPlayers(new ServerStatusResponse.Players(this.getMaxPlayers(), this.getPlayerCount()));
-            GameProfile[] agameprofile = new GameProfile[Math.min(this.getPlayerCount(), 12)];
-            int j = MathHelper.nextInt(this.random, 0, this.getPlayerCount() - agameprofile.length);
-            for (int k = 0; k < agameprofile.length; ++k) {
-                agameprofile[k] = this.playerList.getPlayers().get(j + k).getGameProfile();
+            this.status.setPlayers(new ServerStatus.Players(this.getMaxPlayers(), this.getPlayerCount()));
+            if (!this.hidesOnlinePlayers()) {
+                GameProfile[] agameprofile = new GameProfile[Math.min(this.getPlayerCount(), 12)];
+                int j = Mth.nextInt(this.random, 0, this.getPlayerCount() - agameprofile.length);
+                for (int k = 0; k < agameprofile.length; ++k) {
+                    ServerPlayer serverplayer = this.playerList.getPlayers().get(j + k);
+                    if (serverplayer.allowsListing()) {
+                        agameprofile[k] = serverplayer.getGameProfile();
+                    }
+                    else {
+                        agameprofile[k] = ANONYMOUS_PLAYER_PROFILE;
+                    }
+                }
+                Collections.shuffle(Arrays.asList(agameprofile));
+                this.status.getPlayers().setSample(agameprofile);
             }
-            Collections.shuffle(Arrays.asList(agameprofile));
-            this.status.getPlayers().setSample(agameprofile);
             this.status.invalidateJson();
         }
         if (this.tickCount % 6_000 == 0 || !this.wasPaused && this.isMultiplayerPaused) { //Added check for multiplayer pause
             LOGGER.debug("Autosave started");
             this.profiler.push("save");
-            this.playerList.saveAll();
-            this.saveAllChunks(true, false, false);
+            this.saveEverything(true, false, false);
             this.profiler.pop();
             LOGGER.debug("Autosave finished");
         }
-        this.profiler.push("snooper");
-        if (!this.snooper.isStarted() && this.tickCount > 100) {
-            this.snooper.start();
-        }
-        if (this.tickCount % 6_000 == 0) {
-            this.snooper.prepare();
-        }
-        this.profiler.pop();
         this.profiler.push("tallying");
         long l = this.tickTimes[this.tickCount % 100] = Util.getNanos() - i;
         this.averageTickTime = this.averageTickTime * 0.8F + l / 1_000_000.0F * 0.199_999_99F;
         long i1 = Util.getNanos();
         this.frameTimer.logFrameDuration(i1 - i);
         this.profiler.pop();
-        BasicEventHooks.onPostServerTick();
+        ForgeEventFactory.onPostServerTick();
         this.wasPaused = this.isMultiplayerPaused; //Update wasPaused field
     }
 }

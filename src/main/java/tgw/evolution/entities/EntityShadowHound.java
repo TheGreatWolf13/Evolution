@@ -8,7 +8,7 @@
 //import net.minecraft.world.World;
 //import tgw.evolution.entities.ai.*;
 //import tgw.evolution.init.EvolutionEntities;
-//import tgw.evolution.util.Time;
+//import tgw.evolution.util.time.Time;
 //
 //public class EntityShadowHound extends MonsterEntity {
 //

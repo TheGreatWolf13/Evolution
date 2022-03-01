@@ -1,19 +1,19 @@
 package tgw.evolution.events;
 
-import net.minecraft.block.BlockState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.GameType;
-import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.gen.Heightmap;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
-import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 
 import javax.annotation.Nullable;
@@ -21,25 +21,27 @@ import javax.annotation.Nullable;
 public class WorldEvents {
 
     @Nullable
-    public static BlockPos findSpawn(World world, int posX, int posZ) {
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable(posX, 0, posZ);
-        Biome biome = world.getBiome(mutablePos);
-        BlockState biomeSurfaceState = biome.getGenerationSettings().getSurfaceBuilderConfig().getTopMaterial();
-        Chunk chunk = world.getChunk(posX >> 4, posZ >> 4);
-        int i = chunk.getHeight(Heightmap.Type.MOTION_BLOCKING, posX & 15, posZ & 15);
-        if (i < 0) {
+    public static BlockPos findSpawn(ServerLevel level, int posX, int posZ) {
+        boolean flag = level.dimensionType().hasCeiling();
+        LevelChunk levelchunk = level.getChunk(SectionPos.blockToSectionCoord(posX), SectionPos.blockToSectionCoord(posZ));
+        int i = flag ?
+                level.getChunkSource().getGenerator().getSpawnHeight(level) :
+                levelchunk.getHeight(Heightmap.Types.MOTION_BLOCKING, posX & 15, posZ & 15);
+        if (i < level.getMinBuildHeight()) {
             return null;
         }
-        if (chunk.getHeight(Heightmap.Type.WORLD_SURFACE, posX & 15, posZ & 15) > chunk.getHeight(Heightmap.Type.OCEAN_FLOOR, posX & 15, posZ & 15)) {
+        int j = levelchunk.getHeight(Heightmap.Types.WORLD_SURFACE, posX & 15, posZ & 15);
+        if (j <= i && j > levelchunk.getHeight(Heightmap.Types.OCEAN_FLOOR, posX & 15, posZ & 15)) {
             return null;
         }
-        for (int j = i + 1; j >= 0; --j) {
-            mutablePos.set(posX, j, posZ);
-            BlockState stateAtWorld = world.getBlockState(mutablePos);
-            if (!stateAtWorld.getFluidState().isEmpty()) {
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        for (int k = i + 1; k >= level.getMinBuildHeight(); --k) {
+            mutablePos.set(posX, k, posZ);
+            BlockState blockstate = level.getBlockState(mutablePos);
+            if (!blockstate.getFluidState().isEmpty()) {
                 break;
             }
-            if (BlockUtils.compareVanillaBlockStates(biomeSurfaceState, stateAtWorld)) {
+            if (Block.isFaceFull(blockstate.getCollisionShape(level, mutablePos), Direction.UP)) {
                 return mutablePos.above().immutable();
             }
         }
@@ -48,8 +50,7 @@ public class WorldEvents {
 
     @SubscribeEvent
     public void onWorldLoad(WorldEvent.Load event) {
-        if (event.getWorld() instanceof ServerWorld) {
-            ServerWorld world = (ServerWorld) event.getWorld();
+        if (event.getWorld() instanceof ServerLevel world) {
             MinecraftServer server = world.getServer();
             if (server.getWorldData().getGameType() != GameType.CREATIVE) {
                 world.getGameRules().getRule(GameRules.RULE_REDUCEDDEBUGINFO).set(true, server);
@@ -58,7 +59,7 @@ public class WorldEvents {
     }
 
     @SubscribeEvent
-    public void serverStart(FMLServerAboutToStartEvent event) {
+    public void serverStart(ServerAboutToStartEvent event) {
         MinecraftServer server = event.getServer();
         EntityPlayerCorpse.setProfileCache(server.getProfileCache());
         EntityPlayerCorpse.setSessionService(server.getSessionService());

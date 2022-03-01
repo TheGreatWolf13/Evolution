@@ -1,7 +1,7 @@
 package tgw.evolution.client.util;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 
 public class LungeChargeInfo {
 
@@ -12,8 +12,8 @@ public class LungeChargeInfo {
     private ItemStack offhandStack = ItemStack.EMPTY;
     private int offhandTime;
 
-    public LungeChargeInfo(Hand hand, ItemStack lungingStack, int duration) {
-        if (hand == Hand.MAIN_HAND) {
+    public LungeChargeInfo(InteractionHand hand, ItemStack lungingStack, int duration) {
+        if (hand == InteractionHand.MAIN_HAND) {
             this.mainhandDuration = duration;
             this.mainhandStack = lungingStack;
         }
@@ -23,8 +23,8 @@ public class LungeChargeInfo {
         }
     }
 
-    public void addInfo(Hand hand, ItemStack lungingStack, int duration) {
-        if (hand == Hand.MAIN_HAND) {
+    public void addInfo(InteractionHand hand, ItemStack lungingStack, int duration) {
+        if (hand == InteractionHand.MAIN_HAND) {
             this.mainhandDuration = duration;
             this.mainhandStack = lungingStack;
             this.mainhandTime = 0;
@@ -36,8 +36,8 @@ public class LungeChargeInfo {
         }
     }
 
-    public void checkItem(Hand hand, ItemStack stack) {
-        if (hand == Hand.MAIN_HAND) {
+    public void checkItem(InteractionHand hand, ItemStack stack) {
+        if (hand == InteractionHand.MAIN_HAND) {
             if (!this.mainhandStack.equals(stack, false)) {
                 this.mainhandStack = ItemStack.EMPTY;
             }
@@ -49,22 +49,22 @@ public class LungeChargeInfo {
         }
     }
 
-    public float getLungeMult(Hand hand) {
-        if (hand == Hand.MAIN_HAND) {
+    public float getLungeMult(InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND) {
             return (float) this.mainhandTime / this.mainhandDuration;
         }
         return (float) this.offhandTime / this.offhandDuration;
     }
 
-    public boolean isLungeInProgress(Hand hand) {
-        if (hand == Hand.MAIN_HAND) {
+    public boolean isLungeInProgress(InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND) {
             return !this.mainhandStack.isEmpty();
         }
         return !this.offhandStack.isEmpty();
     }
 
-    public void resetHand(Hand hand) {
-        if (hand == Hand.MAIN_HAND) {
+    public void resetHand(InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND) {
             this.mainhandStack = ItemStack.EMPTY;
         }
         else {

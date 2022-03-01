@@ -2,46 +2,49 @@ package tgw.evolution.items;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.attributes.Attribute;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.IItemTier;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
 import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.common.ToolType;
 import tgw.evolution.init.EvolutionAttributes;
+import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.inventory.SlotType;
 import tgw.evolution.util.PlayerHelper;
 
 import javax.annotation.Nonnull;
 import java.util.Set;
+import java.util.function.Consumer;
 
-public abstract class ItemGenericTool extends ItemTiered implements IDurability, IMelee, IMass {
+public abstract class ItemGenericTool extends ItemModular implements IDurability, IMelee, IMass {
 
     protected final float attackSpeed;
     protected final float efficiency;
     private final Set<Block> effectiveBlocks;
     private final Set<Material> effectiveMaterials;
+    private final ToolType tool;
 
     protected ItemGenericTool(float attackSpeed,
-                              IItemTier tier,
+                              ItemMaterial tier,
                               Set<Block> effectiveBlocks,
                               Set<Material> effectiveMaterials,
                               Item.Properties builder,
                               ToolType tool) {
-        super(tier, builder.addToolType(tool, tier.getLevel()));
+        super(builder);
         this.effectiveBlocks = effectiveBlocks;
         this.effectiveMaterials = effectiveMaterials;
-        this.efficiency = tier.getSpeed();
+        this.efficiency = 0 /*tier.getSpeed()*/;
         this.attackSpeed = attackSpeed;
+        this.tool = tool;
     }
 
     public abstract float baseDamage();
@@ -49,51 +52,33 @@ public abstract class ItemGenericTool extends ItemTiered implements IDurability,
     public abstract int blockDurabilityDamage();
 
     @Override
-    public boolean canAttackBlock(BlockState state, World worldIn, BlockPos pos, PlayerEntity player) {
+    public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
         return !player.isCreative();
     }
 
     public abstract int entityDurabilityDamage();
 
     @Override
-    public double getAttackDamage() {
-        return this.baseDamage() + this.getTier().getAttackDamageBonus();
+    public double getAttackDamage(ItemStack stack) {
+        return this.baseDamage()/* + this.getTier().getAttackDamageBonus()*/;
     }
 
     @Override
-    public double getAttackSpeed() {
+    public double getAttackSpeed(ItemStack stack) {
         return this.attackSpeed - PlayerHelper.ATTACK_SPEED;
     }
 
     @Override
-    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlotType slot, ItemStack stack) {
+    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
         ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
-        builder.putAll(this.getDefaultAttributeModifiers(slot));
-        if (slot == EquipmentSlotType.MAINHAND) {
-            builder.put(Attributes.ATTACK_DAMAGE,
-                        new AttributeModifier(BASE_ATTACK_DAMAGE_UUID,
-                                              "Damage modifier",
-                                              this.getAttackDamage(),
-                                              AttributeModifier.Operation.ADDITION));
-            builder.put(Attributes.ATTACK_SPEED,
-                        new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Tool modifier", this.getAttackSpeed(), AttributeModifier.Operation.ADDITION));
-            builder.put(ForgeMod.REACH_DISTANCE.get(),
-                        new AttributeModifier(EvolutionAttributes.REACH_DISTANCE_MODIFIER,
-                                              "Reach Modifier",
-                                              this.getReach(),
-                                              AttributeModifier.Operation.ADDITION));
-            builder.put(EvolutionAttributes.MASS.get(),
-                        new AttributeModifier(EvolutionAttributes.MASS_MODIFIER,
-                                              "Mass Modifier",
-                                              this.getMass(),
-                                              AttributeModifier.Operation.ADDITION));
-        }
-        else if (slot == EquipmentSlotType.OFFHAND) {
-            builder.put(EvolutionAttributes.MASS.get(),
-                        new AttributeModifier(EvolutionAttributes.MASS_MODIFIER_OFFHAND,
-                                              "Mass Modifier",
-                                              this.getMass(),
-                                              AttributeModifier.Operation.ADDITION));
+        switch (slot) {
+            case MAINHAND -> {
+                builder.put(Attributes.ATTACK_DAMAGE, EvolutionAttributes.attackDamageModifier(this.getAttackDamage(stack), SlotType.MAINHAND));
+                builder.put(Attributes.ATTACK_SPEED, EvolutionAttributes.attackSpeedModifier(this.getAttackSpeed(stack), SlotType.MAINHAND));
+                builder.put(ForgeMod.REACH_DISTANCE.get(), EvolutionAttributes.reachModifier(this.getReach(stack), SlotType.MAINHAND));
+                builder.put(EvolutionAttributes.MASS.get(), EvolutionAttributes.massModifier(this.getMass(stack), SlotType.MAINHAND));
+            }
+            case OFFHAND -> builder.put(EvolutionAttributes.MASS.get(), EvolutionAttributes.massModifier(this.getMass(stack), SlotType.OFFHAND));
         }
         return builder.build();
     }
@@ -111,8 +96,14 @@ public abstract class ItemGenericTool extends ItemTiered implements IDurability,
     }
 
     @Override
-    public double getReach() {
+    public double getReach(ItemStack stack) {
         return this.reach() - PlayerHelper.REACH_DISTANCE;
+    }
+
+    @Override
+    public <T extends LivingEntity> void hurtAndBreak(ItemStack stack, DamageCause cause, T entity, Consumer<T> onBroken) {
+        //TODO implementation
+
     }
 
     @Override
@@ -122,16 +113,22 @@ public abstract class ItemGenericTool extends ItemTiered implements IDurability,
     }
 
     @Override
+    public boolean isBroken(ItemStack stack) {
+        //TODO implementation
+        return false;
+    }
+
+    @Override
     public boolean isCorrectToolForDrops(BlockState state) {
         if (this.effectiveMaterials.contains(state.getMaterial())) {
-            return this.getTier().getLevel() >= state.getHarvestLevel();
+//            return this.getTier().getLevel() >= ((IBlockPatch) state.getBlock()).getHarvestLevel(state);
         }
         return false;
     }
 
     @Override
-    public boolean mineBlock(ItemStack stack, @Nonnull World world, BlockState state, BlockPos pos, LivingEntity livingEntity) {
-        if (!world.isClientSide && state.getDestroySpeed(world, pos) != 0.0F) {
+    public boolean mineBlock(ItemStack stack, @Nonnull Level level, BlockState state, BlockPos pos, LivingEntity livingEntity) {
+        if (!level.isClientSide && state.getDestroySpeed(level, pos) != 0.0F) {
             stack.hurtAndBreak(this.blockDurabilityDamage(), livingEntity, entity -> entity.broadcastBreakEvent(entity.getUsedItemHand()));
         }
         return true;

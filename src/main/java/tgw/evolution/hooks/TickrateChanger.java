@@ -1,8 +1,7 @@
 package tgw.evolution.hooks;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.concurrent.TickDelayedTask;
-import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCChangeTickrate;
@@ -22,7 +21,7 @@ public final class TickrateChanger {
     }
 
     /**
-     * Hooks from {@link MinecraftServer#doRunTask(TickDelayedTask)}, replacing every LDC instruction that has {@code 50L} in it.
+     * Hooks from {@link MinecraftServer#runServer()}, replacing every LDC instruction that has {@code 50L} in it.
      */
     @EvolutionHook
     public static long getMSPT() {
@@ -33,7 +32,7 @@ public final class TickrateChanger {
         if (tickrate == currentTickrate) {
             return false;
         }
-        Evolution.LOGGER.info("Updating server tickrate to " + tickrate);
+        Evolution.info("Updating server tickrate to " + tickrate);
         currentTickrate = tickrate;
         mspt = (long) (1_000L / tickrate);
         EvolutionNetwork.INSTANCE.send(PacketDistributor.ALL.noArg(), new PacketSCChangeTickrate(tickrate));

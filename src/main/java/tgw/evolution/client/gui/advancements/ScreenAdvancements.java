@@ -1,34 +1,35 @@
 package tgw.evolution.client.gui.advancements;
 
-import com.google.common.collect.Maps;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.SimpleSound;
 import net.minecraft.client.gui.chat.NarratorChatListener;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.multiplayer.ClientAdvancementManager;
-import net.minecraft.client.network.play.ClientPlayNetHandler;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.network.play.client.CSeenAdvancementsPacket;
-import net.minecraft.util.SoundEvents;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ClientAdvancements;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.protocol.game.ServerboundSeenAdvancementsPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
+import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.GUIUtils;
 import tgw.evolution.init.EvolutionResources;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)
-public class ScreenAdvancements extends Screen implements ClientAdvancementManager.IListener {
+public class ScreenAdvancements extends Screen implements ClientAdvancements.Listener {
 
     private static final int WIDTH = 252;
     private static final int HEIGHT = 140;
@@ -40,12 +41,9 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
     private static final float MIN_ZOOM = 1;
     private static final float MAX_ZOOM = 2;
     private static final float ZOOM_STEP = 0.2F;
-    public static boolean showDebugCoordinates;
-    public static int uiScaling = 100;
-    private final ClientAdvancementManager advManager;
-    private final Map<Advancement, GuiAdvancementTab> tabs = Maps.newLinkedHashMap();
-    protected int internalHeight;
-    protected int internalWidth;
+    private final ClientAdvancements advManager;
+    private final ResourceLocation resWindow = Evolution.getResource("textures/gui/window.png");
+    private final Map<Advancement, GuiAdvancementTab> tabs = new LinkedHashMap<>();
     @Nullable
     private GuiAdvancementEntry advConnectedToMouse;
     private boolean isScrolling;
@@ -53,7 +51,7 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
     private GuiAdvancementTab selectedTab;
     private float zoom = MIN_ZOOM;
 
-    public ScreenAdvancements(ClientAdvancementManager advManager) {
+    public ScreenAdvancements(ClientAdvancements advManager) {
         super(NarratorChatListener.NO_TITLE);
         this.advManager = advManager;
     }
@@ -74,8 +72,6 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
 
     @Override
     protected void init() {
-        this.internalHeight = this.height * uiScaling / 100;
-        this.internalWidth = this.width * uiScaling / 100;
         this.tabs.clear();
         this.selectedTab = null;
         this.advManager.setListener(this);
@@ -99,15 +95,9 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
-            int left = SIDE + (this.width - this.internalWidth) / 2;
-            int top = TOP + (this.height - this.internalHeight) / 2;
+            int top = TOP;
             for (GuiAdvancementTab betterAdvancementTabGui : this.tabs.values()) {
-                if (betterAdvancementTabGui.isMouseOver(left,
-                                                        top,
-                                                        this.internalWidth - 2 * SIDE,
-                                                        this.internalHeight - top - BOTTOM,
-                                                        mouseX,
-                                                        mouseY)) {
+                if (betterAdvancementTabGui.isMouseOver(SIDE, top, this.width - 2 * SIDE, this.height - top - BOTTOM, mouseX, mouseY)) {
                     this.advManager.setSelectedTab(betterAdvancementTabGui.getAdvancement(), true);
                     return true;
                 }
@@ -118,33 +108,12 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double mouseDeltaX, double mouseDeltaY) {
-        int left = SIDE + (this.width - this.internalWidth) / 2;
-        int top = TOP + (this.height - this.internalHeight) / 2;
         if (button != 0) {
             this.isScrolling = false;
             return false;
         }
         if (!this.isScrolling) {
-            if (this.advConnectedToMouse == null) {
-                boolean inGui = mouseX < left + this.internalWidth - 2 * SIDE - PADDING &&
-                                mouseX > left + PADDING &&
-                                mouseY < top + this.internalHeight - TOP + 1 &&
-                                mouseY > top + 2 * PADDING;
-                if (this.selectedTab != null && inGui) {
-                    for (GuiAdvancementEntry betterAdvancementEntryGui : this.selectedTab.guis.values()) {
-                        if (betterAdvancementEntryGui.isMouseOver(this.selectedTab.scrollX,
-                                                                  this.selectedTab.scrollY,
-                                                                  mouseX - left - PADDING,
-                                                                  mouseY - top - 2 * PADDING)) {
-                            if (betterAdvancementEntryGui.betterDisplayInfo.allowDragging()) {
-                                this.advConnectedToMouse = betterAdvancementEntryGui;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            else {
+            if (this.advConnectedToMouse != null) {
                 this.advConnectedToMouse.x = (int) Math.round(this.advConnectedToMouse.x + mouseDeltaX);
                 this.advConnectedToMouse.y = (int) Math.round(this.advConnectedToMouse.y + mouseDeltaY);
             }
@@ -157,10 +126,7 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
                 this.isScrolling = true;
             }
             else if (this.selectedTab != null) {
-                this.selectedTab.scroll(mouseDeltaX,
-                                        mouseDeltaY,
-                                        this.internalWidth - 2 * SIDE - 3 * PADDING,
-                                        this.internalHeight - TOP - BOTTOM - 3 * PADDING);
+                this.selectedTab.scroll(mouseDeltaX, mouseDeltaY, this.width - 2 * SIDE - 3 * PADDING, this.height - TOP - BOTTOM - 3 * PADDING);
             }
         }
         return true;
@@ -184,8 +150,8 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
                                                                     this,
                                                                     this.tabs.size(),
                                                                     advancement,
-                                                                    this.internalWidth - 2 * SIDE,
-                                                                    this.internalHeight - TOP - SIDE);
+                                                                    this.width - 2 * SIDE,
+                                                                    this.height - TOP - SIDE);
         if (advancementTab != null) {
             this.tabs.put(advancement, advancementTab);
         }
@@ -208,9 +174,9 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
     @Override
     public void onClose() {
         this.advManager.setListener(null);
-        ClientPlayNetHandler clientPlayNetHandler = this.minecraft.getConnection();
+        ClientPacketListener clientPlayNetHandler = this.minecraft.getConnection();
         if (clientPlayNetHandler != null) {
-            clientPlayNetHandler.send(CSeenAdvancementsPacket.closedScreen());
+            clientPlayNetHandler.send(ServerboundSeenAdvancementsPacket.closedScreen());
         }
         super.onClose();
     }
@@ -227,7 +193,7 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
     public void onSelectedTabChanged(@Nullable Advancement advancement) {
         //noinspection VariableNotUsedInsideIf
         if (this.selectedTab != null) {
-            Minecraft.getInstance().getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
         }
         this.selectedTab = this.tabs.get(advancement);
     }
@@ -241,12 +207,12 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
     }
 
     @Override
-    public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
-        int left = SIDE + (this.width - this.internalWidth) / 2;
-        int top = TOP + (this.height - this.internalHeight) / 2;
-        int right = this.internalWidth - SIDE + (this.width - this.internalWidth) / 2;
-        int bottom = this.internalHeight - SIDE + (this.height - this.internalHeight) / 2;
+    public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
+        int right = this.width - SIDE;
+        int bottom = this.height - SIDE;
         this.renderBackground(matrices);
+        int top = TOP;
+        int left = SIDE;
         this.renderInside(matrices, left, top, right, bottom);
         this.renderWindow(matrices, left, top, right, bottom);
         if (this.advConnectedToMouse == null) {
@@ -466,7 +432,7 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
         }
     }
 
-    private void renderInside(MatrixStack matrices, int left, int top, int right, int bottom) {
+    private void renderInside(PoseStack matrices, int left, int top, int right, int bottom) {
         GuiAdvancementTab advancementTab = this.selectedTab;
         int boxLeft = left + PADDING;
         int boxTop = top + 2 * PADDING;
@@ -486,22 +452,26 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
                            0xffff_ffff);
         }
         else {
-            matrices.pushPose();
-            matrices.translate(boxLeft, boxTop, 0);
-            RenderSystem.enableDepthTest();
+            PoseStack internalMat = RenderSystem.getModelViewStack();
+            internalMat.pushPose();
+            internalMat.translate(boxLeft, boxTop, 0);
+            RenderSystem.applyModelViewMatrix();
             advancementTab.drawContents(matrices, width, height);
-            matrices.popPose();
+            internalMat.popPose();
+            RenderSystem.applyModelViewMatrix();
             RenderSystem.depthFunc(GL11.GL_LEQUAL);
             RenderSystem.disableDepthTest();
         }
     }
 
-    private void renderToolTips(MatrixStack matrices, int mouseX, int mouseY, int left, int top, int right, int bottom) {
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+    private void renderToolTips(PoseStack matrices, int mouseX, int mouseY, int left, int top, int right, int bottom) {
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         if (this.selectedTab != null) {
-            matrices.pushPose();
+            PoseStack internalMat = RenderSystem.getModelViewStack();
+            internalMat.pushPose();
+            internalMat.translate(left + PADDING, top + 2 * PADDING, 400);
+            RenderSystem.applyModelViewMatrix();
             RenderSystem.enableDepthTest();
-            matrices.translate(left + PADDING, top + 2 * PADDING, 400);
             this.selectedTab.drawToolTips(matrices,
                                           mouseX - left - PADDING,
                                           mouseY - top - 2 * PADDING,
@@ -510,7 +480,8 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
                                           right - left - 2 * PADDING,
                                           bottom - top - 3 * PADDING);
             RenderSystem.disableDepthTest();
-            matrices.popPose();
+            internalMat.popPose();
+            RenderSystem.applyModelViewMatrix();
         }
         if (this.tabs.size() > 1) {
             int width = right - left;
@@ -523,11 +494,11 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
         }
     }
 
-    public void renderWindow(MatrixStack matrices, int left, int top, int right, int bottom) {
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+    public void renderWindow(PoseStack matrices, int left, int top, int right, int bottom) {
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.enableBlend();
-        RenderHelper.turnOff();
-        this.minecraft.getTextureManager().bind(EvolutionResources.GUI_WINDOW);
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderTexture(0, this.resWindow);
         // Top left corner
         this.blit(matrices, left, top, 0, 0, CORNER_SIZE, CORNER_SIZE);
         // Top side
@@ -535,7 +506,7 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
                                  this,
                                  left + CORNER_SIZE,
                                  top,
-                                 this.internalWidth - CORNER_SIZE - 2 * SIDE - CORNER_SIZE,
+                                 this.width - CORNER_SIZE - 2 * SIDE - CORNER_SIZE,
                                  CORNER_SIZE,
                                  CORNER_SIZE,
                                  0,
@@ -572,7 +543,7 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
                                  this,
                                  left + CORNER_SIZE,
                                  bottom - CORNER_SIZE,
-                                 this.internalWidth - CORNER_SIZE - 2 * SIDE - CORNER_SIZE,
+                                 this.width - CORNER_SIZE - 2 * SIDE - CORNER_SIZE,
                                  CORNER_SIZE,
                                  CORNER_SIZE,
                                  HEIGHT - CORNER_SIZE,
@@ -581,18 +552,14 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
         // Bottom right corner
         this.blit(matrices, right - CORNER_SIZE, bottom - CORNER_SIZE, WIDTH - CORNER_SIZE, HEIGHT - CORNER_SIZE, CORNER_SIZE, CORNER_SIZE);
         if (this.tabs.size() > 1) {
-            this.minecraft.getTextureManager().bind(EvolutionResources.GUI_TABS);
+            RenderSystem.setShader(GameRenderer::getPositionTexShader);
+            RenderSystem.setShaderTexture(0, EvolutionResources.GUI_TABS);
             int width = right - left;
             int height = bottom - top;
             for (GuiAdvancementTab tab : this.tabs.values()) {
                 tab.drawTab(matrices, left, top, width, height, tab == this.selectedTab);
             }
-            RenderSystem.enableRescaleNormal();
-            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-                                           GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                                           GlStateManager.SourceFactor.ONE,
-                                           GlStateManager.DestFactor.ZERO);
-            RenderHelper.turnBackOn();
+            RenderSystem.defaultBlendFunc();
             for (GuiAdvancementTab tab : this.tabs.values()) {
                 tab.drawIcon(left, top, width, height, this.itemRenderer);
             }
@@ -602,6 +569,6 @@ public class ScreenAdvancements extends Screen implements ClientAdvancementManag
         if (this.selectedTab != null) {
             windowTitle += " - " + this.selectedTab.getTitle().getString();
         }
-        this.font.draw(matrices, windowTitle, left + 8, top + 6, 4_210_752);
+        this.font.draw(matrices, windowTitle, left + 8, top + 6, 0x40_4040);
     }
 }

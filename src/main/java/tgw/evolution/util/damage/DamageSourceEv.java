@@ -1,6 +1,6 @@
 package tgw.evolution.util.damage;
 
-import net.minecraft.util.DamageSource;
+import net.minecraft.world.damagesource.DamageSource;
 import tgw.evolution.init.EvolutionDamage;
 
 public class DamageSourceEv extends DamageSource {

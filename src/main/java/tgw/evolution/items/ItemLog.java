@@ -1,7 +1,7 @@
 package tgw.evolution.items;
 
 import tgw.evolution.blocks.BlockLog;
-import tgw.evolution.util.WoodVariant;
+import tgw.evolution.util.constants.WoodVariant;
 
 public class ItemLog extends ItemBlock {
 

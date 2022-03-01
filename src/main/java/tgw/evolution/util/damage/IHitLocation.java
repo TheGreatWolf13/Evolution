@@ -1,8 +1,8 @@
 package tgw.evolution.util.damage;
 
-import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.world.entity.EquipmentSlot;
 
 public interface IHitLocation {
 
-    EquipmentSlotType getHitLocation();
+    EquipmentSlot getHitLocation();
 }

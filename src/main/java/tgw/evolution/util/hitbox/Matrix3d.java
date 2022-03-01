@@ -1,7 +1,7 @@
 package tgw.evolution.util.hitbox;
 
-import net.minecraft.util.math.vector.Vector3d;
-import tgw.evolution.util.MathHelper;
+import net.minecraft.world.phys.Vec3;
+import tgw.evolution.util.math.MathHelper;
 
 public class Matrix3d {
 
@@ -129,17 +129,29 @@ public class Matrix3d {
                '}';
     }
 
-    public Vector3d transform(Vector3d vec) {
+    public Vec3 transform(Vec3 vec) {
         double x = vec.x * this.m00 + vec.y * this.m01 + vec.z * this.m02;
         double y = vec.x * this.m10 + vec.y * this.m11 + vec.z * this.m12;
         double z = vec.x * this.m20 + vec.y * this.m21 + vec.z * this.m22;
-        return new Vector3d(x, y, z);
+        return new Vec3(x, y, z);
     }
 
     public void transform(double x, double y, double z, double[] answer) {
         answer[0] = x * this.m00 + y * this.m01 + z * this.m02;
         answer[1] = x * this.m10 + y * this.m11 + z * this.m12;
         answer[2] = x * this.m20 + y * this.m21 + z * this.m22;
+    }
+
+    public double transformX(double x, double y, double z) {
+        return x * this.m00 + y * this.m01 + z * this.m02;
+    }
+
+    public double transformY(double x, double y, double z) {
+        return x * this.m10 + y * this.m11 + z * this.m12;
+    }
+
+    public double transformZ(double x, double y, double z) {
+        return x * this.m20 + y * this.m21 + z * this.m22;
     }
 
     public Matrix3d transpose() {

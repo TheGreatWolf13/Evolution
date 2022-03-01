@@ -1,11 +1,11 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.TEPuzzle;
 
@@ -27,7 +27,7 @@ public class PacketCSUpdatePuzzle implements IPacket {
         this.checkBB = checkBB;
     }
 
-    public static PacketCSUpdatePuzzle decode(PacketBuffer buffer) {
+    public static PacketCSUpdatePuzzle decode(FriendlyByteBuf buffer) {
         return new PacketCSUpdatePuzzle(buffer.readBlockPos(),
                                         buffer.readResourceLocation(),
                                         buffer.readResourceLocation(),
@@ -35,7 +35,7 @@ public class PacketCSUpdatePuzzle implements IPacket {
                                         buffer.readBoolean());
     }
 
-    public static void encode(PacketCSUpdatePuzzle packet, PacketBuffer buffer) {
+    public static void encode(PacketCSUpdatePuzzle packet, FriendlyByteBuf buffer) {
         buffer.writeBlockPos(packet.pos);
         buffer.writeResourceLocation(packet.attachmentType);
         buffer.writeResourceLocation(packet.targetPool);
@@ -46,16 +46,15 @@ public class PacketCSUpdatePuzzle implements IPacket {
     public static void handle(PacketCSUpdatePuzzle packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
-                TileEntity tile = context.get().getSender().level.getBlockEntity(packet.pos);
-                if (!(tile instanceof TEPuzzle)) {
-                    Evolution.LOGGER.warn("Could not find TEPuzzle at " + packet.pos);
+                BlockEntity tile = context.get().getSender().level.getBlockEntity(packet.pos);
+                if (!(tile instanceof TEPuzzle puzzle)) {
+                    Evolution.warn("Could not find TEPuzzle at " + packet.pos);
                     return;
                 }
-                TEPuzzle tePuzzle = (TEPuzzle) tile;
-                tePuzzle.setAttachmentType(packet.attachmentType);
-                tePuzzle.setTargetPool(packet.targetPool);
-                tePuzzle.setFinalState(packet.finalState);
-                tePuzzle.setCheckBB(packet.checkBB);
+                puzzle.setAttachmentType(packet.attachmentType);
+                puzzle.setTargetPool(packet.targetPool);
+                puzzle.setFinalState(packet.finalState);
+                puzzle.setCheckBB(packet.checkBB);
             });
             context.get().setPacketHandled(true);
         }

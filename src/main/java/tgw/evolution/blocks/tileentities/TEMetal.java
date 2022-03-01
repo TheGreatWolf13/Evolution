@@ -1,19 +1,19 @@
 package tgw.evolution.blocks.tileentities;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionTEs;
-import tgw.evolution.util.DirectionUtil;
-import tgw.evolution.util.MetalVariant;
-import tgw.evolution.util.Oxidation;
+import tgw.evolution.util.constants.MetalVariant;
+import tgw.evolution.util.constants.Oxidation;
+import tgw.evolution.util.math.DirectionUtil;
 
-public class TEMetal extends TileEntity {
+public class TEMetal extends BlockEntity {
 
     /**
      * Bit 0: isExposed;<br>
@@ -25,8 +25,8 @@ public class TEMetal extends TileEntity {
     protected long oxidationTicks;
     protected byte partialOxidation;
 
-    public TEMetal() {
-        super(EvolutionTEs.METAL.get());
+    public TEMetal(BlockPos pos, BlockState state) {
+        super(EvolutionTEs.METAL.get(), pos, state);
     }
 
     public boolean isAirExposed() {
@@ -42,12 +42,12 @@ public class TEMetal extends TileEntity {
     }
 
     @Override
-    public void load(BlockState state, CompoundNBT compound) {
-        super.load(state, compound);
-        this.lastTick = compound.getLong("LastTick");
-        this.exposed = compound.getByte("Exposed");
-        this.oxidationTicks = compound.getLong("OxidationTicks");
-        this.partialOxidation = compound.getByte("PartialOxidation");
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        this.lastTick = tag.getLong("LastTick");
+        this.exposed = tag.getByte("Exposed");
+        this.oxidationTicks = tag.getLong("OxidationTicks");
+        this.partialOxidation = tag.getByte("PartialOxidation");
     }
 
     public void oxidationTick(MetalVariant metal, Oxidation oxidation) {
@@ -78,7 +78,7 @@ public class TEMetal extends TileEntity {
 
     public void refreshExposed() {
         this.exposed = 0;
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         boolean exp = false;
         boolean water = false;
         boolean air = false;
@@ -112,12 +112,12 @@ public class TEMetal extends TileEntity {
     }
 
     @Override
-    public CompoundNBT save(CompoundNBT compound) {
-        compound.putLong("LastTick", this.lastTick);
-        compound.putLong("OxidationTicks", this.oxidationTicks);
-        compound.putByte("Exposed", this.exposed);
-        compound.putByte("PartialOxidation", this.partialOxidation);
-        return super.save(compound);
+    public void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        tag.putLong("LastTick", this.lastTick);
+        tag.putLong("OxidationTicks", this.oxidationTicks);
+        tag.putByte("Exposed", this.exposed);
+        tag.putByte("PartialOxidation", this.partialOxidation);
     }
 
     public void setAirExposed(boolean airExposed) {

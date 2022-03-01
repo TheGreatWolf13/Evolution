@@ -1,6 +1,6 @@
 package tgw.evolution.items;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import tgw.evolution.util.Temperature;
 
 public interface IItemTemperature {

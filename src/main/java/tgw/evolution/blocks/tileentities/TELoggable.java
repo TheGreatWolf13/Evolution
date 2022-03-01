@@ -1,25 +1,26 @@
 package tgw.evolution.blocks.tileentities;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.init.EvolutionTEs;
 
 import javax.annotation.Nullable;
 
-public class TELoggable extends TileEntity implements ILoggable {
+public class TELoggable extends BlockEntity implements ILoggable {
 
     @Nullable
     private FluidGeneric fluid;
     private int fluidAmount;
 
-    public TELoggable() {
-        super(EvolutionTEs.LOGGABLE.get());
+    public TELoggable(BlockPos pos, BlockState state) {
+        super(EvolutionTEs.LOGGABLE.get(), pos, state);
     }
 
     @Override
@@ -33,33 +34,35 @@ public class TELoggable extends TileEntity implements ILoggable {
     }
 
     @Override
-    public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.worldPosition, 0, this.getUpdateTag());
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
-    public CompoundNBT getUpdateTag() {
-        return this.save(new CompoundNBT());
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = new CompoundTag();
+        this.saveAdditional(tag);
+        return tag;
     }
 
     @Override
-    public void load(BlockState state, CompoundNBT compound) {
-        super.load(state, compound);
-        this.fluidAmount = compound.getInt("Amount");
-        this.fluid = FluidGeneric.byId(compound.getByte("Fluid"));
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        this.fluidAmount = tag.getInt("Amount");
+        this.fluid = FluidGeneric.byId(tag.getByte("Fluid"));
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
-        this.handleUpdateTag(this.level.getBlockState(this.worldPosition), packet.getTag());
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        this.handleUpdateTag(packet.getTag());
         TEUtils.sendRenderUpdate(this);
     }
 
     @Override
-    public CompoundNBT save(CompoundNBT compound) {
-        compound.putInt("Amount", this.fluidAmount);
-        compound.putByte("Fluid", this.fluid == null ? 0 : this.fluid.getId());
-        return super.save(compound);
+    public void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        tag.putInt("Amount", this.fluidAmount);
+        tag.putByte("Fluid", this.fluid == null ? 0 : this.fluid.getId());
     }
 
     @Override

@@ -1,10 +1,10 @@
 package tgw.evolution.init;
 
-import net.minecraft.block.Block;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
-import tgw.evolution.util.MathHelper;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import tgw.evolution.util.math.MathHelper;
 
 public final class EvolutionHitBoxes {
 
@@ -59,15 +59,15 @@ public final class EvolutionHitBoxes {
     public static final VoxelShape LOG_TRIPLE_2 = Block.box(0, 0, 0, 12, 8, 16);
     public static final VoxelShape LOG_TRIPLE_3 = Block.box(0, 0, 0, 12, 12, 16);
     public static final VoxelShape LOG_TRIPLE_4 = Block.box(0, 0, 0, 12, 16, 16);
-    public static final VoxelShape[] LOG_PILE = {VoxelShapes.empty(), LOG_SINGLE_1, LOG_DOUBLE_1, LOG_TRIPLE_1,
+    public static final VoxelShape[] LOG_PILE = {Shapes.empty(), LOG_SINGLE_1, LOG_DOUBLE_1, LOG_TRIPLE_1,
                                                  QUARTER_SLAB_LOWER_1, LOG_SINGLE_2, LOG_DOUBLE_2, LOG_TRIPLE_2,
                                                  SLAB_LOWER, LOG_SINGLE_3, LOG_DOUBLE_3, LOG_TRIPLE_3,
                                                  QUARTER_SLAB_LOWER_3, LOG_SINGLE_4, LOG_DOUBLE_4, LOG_TRIPLE_4};
-    public static final VoxelShape[] PEAT = {VoxelShapes.empty(),
+    public static final VoxelShape[] PEAT = {Shapes.empty(),
                                              QUARTER_SLAB_LOWER_1,
                                              QUARTER_SLAB_LOWER_2,
                                              QUARTER_SLAB_LOWER_3,
-                                             VoxelShapes.block()};
+                                             Shapes.block()};
     public static final VoxelShape[] PIT_KILN = {SIXTEENTH_SLAB_LOWER_1,
                                                  SIXTEENTH_SLAB_LOWER_1,
                                                  SIXTEENTH_SLAB_LOWER_2,
@@ -84,7 +84,7 @@ public final class EvolutionHitBoxes {
                                                  MathHelper.union(LOG_SINGLE_4, QUARTER_SLAB_LOWER_3),
                                                  MathHelper.union(LOG_DOUBLE_4, QUARTER_SLAB_LOWER_3),
                                                  MathHelper.union(LOG_TRIPLE_4, QUARTER_SLAB_LOWER_3),
-                                                 VoxelShapes.block()};
+                                                 Shapes.block()};
     public static final VoxelShape ROPE_GROUND_X = Block.box(0, 0, 6, 16, 2, 10);
     public static final VoxelShape ROPE_GROUND_Z = MathHelper.rotateShape(Direction.EAST, Direction.NORTH, ROPE_GROUND_X);
     public static final VoxelShape ROPE_WALL_NORTH = Block.box(6, 0, 0, 10, 16, 2);
@@ -111,20 +111,20 @@ public final class EvolutionHitBoxes {
 
     public static final VoxelShape[] MOLD_CLAY = {MOLD_1, MOLD_2, MOLD_3, MOLD_4, MOLD_5};
 
-    private static final VoxelShape MOLD_BASE = VoxelShapes.box(0, 0, 0, 1, 0.5 / 16, 1);
-    private static final VoxelShape MOLD_BASE_N = VoxelShapes.box(0, 0, 0, 1, 3 / 16.0, 0.5 / 16);
-    private static final VoxelShape MOLD_BASE_S = VoxelShapes.box(0, 0, 15.5 / 16, 1, 3 / 16.0, 1);
-    private static final VoxelShape MOLD_BASE_W = VoxelShapes.box(0, 0, 0, 0.5 / 16, 3 / 16.0, 1);
-    private static final VoxelShape MOLD_BASE_E = VoxelShapes.box(15.5 / 16, 0, 0, 1, 3 / 16.0, 1);
-    public static final VoxelShape MOLD_TOTAL_BASE = VoxelShapes.or(MOLD_BASE, MOLD_BASE_N, MOLD_BASE_S, MOLD_BASE_W, MOLD_BASE_E);
+    private static final VoxelShape MOLD_BASE = Shapes.box(0, 0, 0, 1, 0.5 / 16, 1);
+    private static final VoxelShape MOLD_BASE_N = Shapes.box(0, 0, 0, 1, 3 / 16.0, 0.5 / 16);
+    private static final VoxelShape MOLD_BASE_S = Shapes.box(0, 0, 15.5 / 16, 1, 3 / 16.0, 1);
+    private static final VoxelShape MOLD_BASE_W = Shapes.box(0, 0, 0, 0.5 / 16, 3 / 16.0, 1);
+    private static final VoxelShape MOLD_BASE_E = Shapes.box(15.5 / 16, 0, 0, 1, 3 / 16.0, 1);
+    public static final VoxelShape MOLD_TOTAL_BASE = Shapes.or(MOLD_BASE, MOLD_BASE_N, MOLD_BASE_S, MOLD_BASE_W, MOLD_BASE_E);
     private static final VoxelShape PICKAXE1_THICK = Block.box(3.5, 0.5, 3.5, 12.5, 3, 6.5);
     private static final VoxelShape PICKAXE2_THICK = Block.box(0.5, 0.5, 6.5, 3.5, 3, 9.5);
     private static final VoxelShape PICKAXE3_THICK = Block.box(12.5, 0.5, 6.5, 15.5, 3, 9.5);
-    public static final VoxelShape PICKAXE_THICK = VoxelShapes.or(PICKAXE1_THICK, PICKAXE2_THICK, PICKAXE3_THICK);
+    public static final VoxelShape PICKAXE_THICK = Shapes.or(PICKAXE1_THICK, PICKAXE2_THICK, PICKAXE3_THICK);
     private static final VoxelShape AXE1_THICK = Block.box(0.5, 0.5, 3.5, 12.5, 3, 12.5);
     private static final VoxelShape AXE2_THICK = Block.box(12.5, 0.5, 6.5, 15.5, 3, 9.5);
     private static final VoxelShape AXE3_THICK = Block.box(3.5, 0.5, 0.5, 6.5, 3, 15.5);
-    public static final VoxelShape AXE_THICK = VoxelShapes.or(AXE1_THICK, AXE2_THICK, AXE3_THICK);
+    public static final VoxelShape AXE_THICK = Shapes.or(AXE1_THICK, AXE2_THICK, AXE3_THICK);
 
     private EvolutionHitBoxes() {
     }

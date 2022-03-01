@@ -1,9 +1,9 @@
 package tgw.evolution.items;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 
 public interface IItemFluidContainer {
 
@@ -33,7 +33,7 @@ public interface IItemFluidContainer {
 
     ItemStack getStack(int amount);
 
-    ItemStack getStackAfterPlacement(PlayerEntity player, ItemStack filledBucket, int amountPlaced);
+    ItemStack getStackAfterPlacement(Player player, ItemStack filledBucket, int amountPlaced);
 
     default boolean isEmpty(ItemStack stack) {
         return this.getFluid() == Fluids.EMPTY || this.getAmount(stack) == 0;

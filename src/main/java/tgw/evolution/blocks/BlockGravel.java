@@ -1,11 +1,11 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.util.SoundEvent;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.RockVariant;
+import tgw.evolution.util.constants.RockVariant;
 
 public class BlockGravel extends BlockGravity implements IRockVariant {
 

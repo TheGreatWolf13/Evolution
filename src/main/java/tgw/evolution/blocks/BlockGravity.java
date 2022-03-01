@@ -1,22 +1,29 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Direction.Axis;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.DimensionType;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockPos.MutableBlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Axis;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.AABB;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.*;
+import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.earth.Gravity;
+import tgw.evolution.util.math.DirectionList;
+import tgw.evolution.util.math.DirectionToIntMap;
+import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.math.MathHelper;
 
 import java.util.Random;
 
@@ -65,20 +72,20 @@ public class BlockGravity extends BlockMass {
         return this.getShearStrength() != 0;
     }
 
-    public final DirectionToIntMap checkBeams(World world, BlockPos pos, boolean nested) {
+    public final DirectionToIntMap checkBeams(Level level, BlockPos pos, boolean nested) {
         DirectionToIntMap beams = new DirectionToIntMap();
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+        MutableBlockPos mutablePos = new MutableBlockPos();
         mutablePos.set(pos);
-        for (Direction direction : this.beamDirections(world.getBlockState(pos))) {
+        for (Direction direction : this.beamDirections(level.getBlockState(pos))) {
             mutablePos.set(pos);
             for (int i = 1; i <= this.beamSize(); i++) {
-                BlockState check = world.getBlockState(mutablePos.move(direction));
+                BlockState check = level.getBlockState(mutablePos.move(direction));
                 if (check.getBlock() == this) {
-                    if (this.isPillar(check, world, mutablePos, nested)) {
+                    if (this.isPillar(check, level, mutablePos, nested)) {
                         beams.put(direction, i);
                         break;
                     }
-                    if (!this.beamCondition(check, world.getBlockState(pos))) {
+                    if (!this.beamCondition(check, level.getBlockState(pos))) {
                         break;
                     }
                 }
@@ -94,50 +101,50 @@ public class BlockGravity extends BlockMass {
         return beams;
     }
 
-    public final void checkPhysics(World world, BlockPos pos) {
-        if (this.shouldFall(world, pos)) {
+    public final void checkPhysics(Level level, BlockPos pos) {
+        if (this.shouldFall(level, pos)) {
             if (this.hasBeams()) {
-                DirectionToIntMap beams = this.checkBeams(world, pos, false);
+                DirectionToIntMap beams = this.checkBeams(level, pos, false);
                 if (beams.isEmpty()) {
-                    if (this.specialCondition(world, pos)) {
+                    if (this.specialCondition(level, pos)) {
                         return;
                     }
-                    this.fall(world, pos);
+                    this.fall(level, pos);
                     return;
                 }
-                if (BlockUtils.hasMass(world.getBlockState(pos.above()))) {
-                    if (!this.canSustainWeight(world.getBlockState(pos))) {
-                        this.fall(world, pos);
+                if (BlockUtils.hasMass(level.getBlockState(pos.above()))) {
+                    if (!this.canSustainWeight(level.getBlockState(pos))) {
+                        this.fall(level, pos);
                         return;
                     }
                     Axis beamAxis = BlockUtils.getSmallestBeam(beams);
                     if (beamAxis == null) {
-                        if (this.specialCondition(world, pos)) {
+                        if (this.specialCondition(level, pos)) {
                             return;
                         }
-                        this.fall(world, pos);
+                        this.fall(level, pos);
                         return;
                     }
-                    this.checkWeight(world, pos, beams, beamAxis, false);
+                    this.checkWeight(level, pos, beams, beamAxis, false);
                     return;
                 }
                 return;
             }
-            this.fall(world, pos);
+            this.fall(level, pos);
             return;
         }
         if (this.canSlope()) {
-            if (this.preventSlope(world, pos)) {
-                BlockUtils.scheduleBlockTick(world, pos.below(), 2);
+            if (this.preventSlope(level, pos)) {
+                BlockUtils.scheduleBlockTick(level, pos.below(), 2);
                 return;
             }
             if (this.RANDOM.nextFloat() < this.slopeChance()) {
                 DirectionList slopePossibility = new DirectionList();
-                BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+                MutableBlockPos mutablePos = new MutableBlockPos();
                 for (Direction slopeDirection : DirectionUtil.HORIZ_NESW) {
                     mutablePos.set(pos);
-                    if (BlockUtils.isReplaceable(world.getBlockState(mutablePos.move(slopeDirection)))) {
-                        if (BlockUtils.isReplaceable(world.getBlockState(mutablePos.move(Direction.DOWN)))) {
+                    if (BlockUtils.isReplaceable(level.getBlockState(mutablePos.move(slopeDirection)))) {
+                        if (BlockUtils.isReplaceable(level.getBlockState(mutablePos.move(Direction.DOWN)))) {
                             slopePossibility.add(slopeDirection);
                         }
                     }
@@ -145,8 +152,8 @@ public class BlockGravity extends BlockMass {
                 while (!slopePossibility.isEmpty()) {
                     Direction slopeDirection = slopePossibility.getRandomAndRemove(this.RANDOM);
                     //noinspection ObjectAllocationInLoop
-                    if (world.getEntitiesOfClass(EntityFallingWeight.class, new AxisAlignedBB(pos.relative(slopeDirection))).isEmpty()) {
-                        this.slope(world, pos, slopeDirection);
+                    if (level.getEntitiesOfClass(EntityFallingWeight.class, new AABB(pos.relative(slopeDirection))).isEmpty()) {
+                        this.slope(level, pos, slopeDirection);
                         return;
                     }
                     if (this.canSlopeFail()) {
@@ -157,29 +164,29 @@ public class BlockGravity extends BlockMass {
         }
     }
 
-    public void checkWeight(World world, BlockPos pos, DirectionToIntMap beams, Axis axis, boolean fallBelow) {
+    public void checkWeight(Level level, BlockPos pos, DirectionToIntMap beams, Axis axis, boolean fallBelow) {
         int positiveSide = beams.get(MathHelper.getPositiveAxis(axis));
         int negativeSide = beams.get(MathHelper.getNegativeAxis(axis));
         int beamSize = positiveSide + negativeSide;
         int min = Math.min(positiveSide, negativeSide);
-        int supportedMass = (int) ((this.beamSize() - min) / (double) beamSize * this.shearStrength(world.dimensionType()) / 64);
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+        int supportedMass = (int) ((this.beamSize() - min) / (double) beamSize * this.shearStrength(level.dimensionType()) / 64);
+        MutableBlockPos mutablePos = new MutableBlockPos();
         mutablePos.set(pos);
         int mass = 0;
         for (int i = pos.getY() + 1; i < 256; i++) {
-            BlockState stateUp = world.getBlockState(mutablePos.move(Direction.UP));
+            BlockState stateUp = level.getBlockState(mutablePos.move(Direction.UP));
             Block blockUp = stateUp.getBlock();
             if (!(blockUp instanceof BlockMass)) {
                 break;
             }
-            mass += ((BlockMass) blockUp).getMass(world, mutablePos, stateUp);
+            mass += ((BlockMass) blockUp).getMass(level, mutablePos, stateUp);
             if (mass > supportedMass) {
-                world.playSound(null, mutablePos, this.breakSound(), SoundCategory.BLOCKS, 2.0F, 1.0F);
+                level.playSound(null, mutablePos, this.breakSound(), SoundSource.BLOCKS, 2.0F, 1.0F);
                 if (fallBelow) {
-                    this.fall(world, pos.below());
+                    this.fall(level, pos.below());
                     return;
                 }
-                this.fall(world, pos);
+                this.fall(level, pos);
                 return;
             }
         }
@@ -188,18 +195,18 @@ public class BlockGravity extends BlockMass {
     /**
      * Executes when the block is determined to fall.
      */
-    public void fall(World world, BlockPos pos) {
-        EntityFallingWeight entity = new EntityFallingWeight(world,
+    public void fall(Level level, BlockPos pos) {
+        EntityFallingWeight entity = new EntityFallingWeight(level,
                                                              pos.getX() + 0.5,
                                                              pos.getY(),
                                                              pos.getZ() + 0.5,
-                                                             this.getStateForFalling(world.getBlockState(pos)));
-        world.removeBlock(pos, true);
+                                                             this.getStateForFalling(level.getBlockState(pos)));
+        level.removeBlock(pos, true);
         entity.fallTime = 1;
-        world.addFreshEntity(entity);
+        level.addFreshEntity(entity);
         entity.playSound(this.fallSound(), 0.25F, 1.0F);
         for (Direction dir : DirectionUtil.ALL_EXCEPT_DOWN) {
-            BlockUtils.scheduleBlockTick(world, pos.relative(dir), 2);
+            BlockUtils.scheduleBlockTick(level, pos.relative(dir), 2);
         }
     }
 
@@ -222,28 +229,28 @@ public class BlockGravity extends BlockMass {
         return this.beamSize() > 0;
     }
 
-    public boolean isPillar(BlockState state, World world, BlockPos pos, boolean nested) {
-        return !canFallThrough(world.getBlockState(pos.below()));
+    public boolean isPillar(BlockState state, Level level, BlockPos pos, boolean nested) {
+        return !canFallThrough(level.getBlockState(pos.below()));
     }
 
     @Override
-    public void playerWillDestroy(World world, BlockPos pos, BlockState state, PlayerEntity player) {
+    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         BlockPos up = pos.above();
-        BlockUtils.scheduleBlockTick(world, up, 2);
+        BlockUtils.scheduleBlockTick(level, up, 2);
         if (this.canSlope()) {
             for (Direction dir : DirectionUtil.HORIZ_NESW) {
-                BlockUtils.scheduleBlockTick(world, up.relative(dir), 2);
+                BlockUtils.scheduleBlockTick(level, up.relative(dir), 2);
             }
         }
         else if (this.hasBeams()) {
             for (Direction dir : DirectionUtil.HORIZ_NESW) {
-                BlockUtils.scheduleBlockTick(world, pos.relative(dir), 2);
+                BlockUtils.scheduleBlockTick(level, pos.relative(dir), 2);
             }
         }
-        super.playerWillDestroy(world, pos, state, player);
+        super.playerWillDestroy(level, pos, state, player);
     }
 
-    public boolean preventSlope(World world, BlockPos pos) {
+    public boolean preventSlope(Level level, BlockPos pos) {
         return false;
     }
 
@@ -251,25 +258,25 @@ public class BlockGravity extends BlockMass {
         return (int) (this.getShearStrength() / (Gravity.gravity(dim) * 400));
     }
 
-    public boolean shouldFall(World world, BlockPos pos) {
-        return canFallThrough(world.getBlockState(pos.below())) && pos.getY() >= 0;
+    public boolean shouldFall(BlockGetter level, BlockPos pos) {
+        return canFallThrough(level.getBlockState(pos.below())) && pos.getY() >= 0;
     }
 
-    public void slope(World world, BlockPos pos, Direction offset) {
-        EntityFallingWeight entity = new EntityFallingWeight(world,
+    public void slope(Level level, BlockPos pos, Direction offset) {
+        EntityFallingWeight entity = new EntityFallingWeight(level,
                                                              pos.getX() + offset.getStepX() + 0.5,
                                                              pos.getY(),
                                                              pos.getZ() + offset.getStepZ() + 0.5,
-                                                             this.getStateForFalling(world.getBlockState(pos)));
-        world.setBlock(pos, Blocks.AIR.defaultBlockState(), BlockFlags.IS_MOVING + BlockFlags.NOTIFY_AND_UPDATE);
+                                                             this.getStateForFalling(level.getBlockState(pos)));
+        level.setBlock(pos, Blocks.AIR.defaultBlockState(), BlockFlags.IS_MOVING + BlockFlags.NOTIFY_AND_UPDATE);
         entity.fallTime = 1;
-        world.addFreshEntity(entity);
+        level.addFreshEntity(entity);
         entity.playSound(this.fallSound(), 0.125F, 1.0F);
-        BlockUtils.scheduleBlockTick(world, pos.below(), 2);
+        BlockUtils.scheduleBlockTick(level, pos.below(), 2);
         BlockPos up = pos.above();
-        BlockUtils.scheduleBlockTick(world, up, 2);
+        BlockUtils.scheduleBlockTick(level, up, 2);
         for (Direction dir : DirectionUtil.HORIZ_NESW) {
-            BlockUtils.scheduleBlockTick(world, up.relative(dir), 2);
+            BlockUtils.scheduleBlockTick(level, up.relative(dir), 2);
         }
     }
 
@@ -281,11 +288,11 @@ public class BlockGravity extends BlockMass {
     }
 
     /**
-     * @param world The World
+     * @param level The World
      * @param pos   The BlockPos where physics is being calculated.
      *              Used by stone blocks to sustain blocks under a beam.
      */
-    public boolean specialCondition(World world, BlockPos pos) {
+    public boolean specialCondition(Level level, BlockPos pos) {
         return false;
     }
 
@@ -294,7 +301,7 @@ public class BlockGravity extends BlockMass {
     }
 
     @Override
-    public void tick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-        this.checkPhysics(world, pos);
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
+        this.checkPhysics(level, pos);
     }
 }

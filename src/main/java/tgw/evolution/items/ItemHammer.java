@@ -1,10 +1,12 @@
 package tgw.evolution.items;
 
 import com.google.common.collect.Sets;
-import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
-import net.minecraft.item.IItemTier;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.material.Material;
+import tgw.evolution.capabilities.modular.IModular;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.init.ItemMaterial;
 
 import javax.annotation.Nonnull;
 import java.util.Set;
@@ -13,10 +15,11 @@ public class ItemHammer extends ItemGenericTool implements IHeavyAttack {
 
     private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet();
     private static final Set<Material> EFFECTIVE_MAT = Sets.newHashSet();
+
     private final double mass;
 
-    public ItemHammer(IItemTier tier, float attackSpeed, Properties builder, double mass) {
-        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MAT, builder, ToolTypeEv.HAMMER);
+    public ItemHammer(ItemMaterial tier, float attackSpeed, Properties builder, double mass) {
+        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MAT, builder, ToolType.HAMMER);
         this.mass = mass;
     }
 
@@ -37,7 +40,7 @@ public class ItemHammer extends ItemGenericTool implements IHeavyAttack {
 
     @Nonnull
     @Override
-    public EvolutionDamage.Type getDamageType() {
+    public EvolutionDamage.Type getDamageType(ItemStack stack) {
         return EvolutionDamage.Type.CRUSHING;
     }
 
@@ -52,8 +55,13 @@ public class ItemHammer extends ItemGenericTool implements IHeavyAttack {
     }
 
     @Override
-    public double getMass() {
+    public double getMass(ItemStack stack) {
         return this.mass;
+    }
+
+    @Override
+    public IModular getModularCap(ItemStack stack) {
+        return IModular.NULL;
     }
 
     @Override

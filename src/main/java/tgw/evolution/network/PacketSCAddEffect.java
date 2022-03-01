@@ -1,10 +1,10 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.potion.Effect;
-import net.minecraft.potion.EffectInstance;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.client.util.ClientEffectInstance;
 import tgw.evolution.events.ClientEvents;
 
@@ -15,7 +15,7 @@ public class PacketSCAddEffect implements IPacket {
     private final ClientEffectInstance instance;
     private final Logic logic;
 
-    public PacketSCAddEffect(EffectInstance instance, Logic logic) {
+    public PacketSCAddEffect(MobEffectInstance instance, Logic logic) {
         this.logic = logic;
         this.instance = new ClientEffectInstance(instance);
     }
@@ -25,8 +25,8 @@ public class PacketSCAddEffect implements IPacket {
         this.logic = logic;
     }
 
-    public static PacketSCAddEffect decode(PacketBuffer buffer) {
-        Effect effect = Effect.byId(buffer.readVarInt());
+    public static PacketSCAddEffect decode(FriendlyByteBuf buffer) {
+        MobEffect effect = MobEffect.byId(buffer.readVarInt());
         boolean hasHiddenInstance = true;
         ClientEffectInstance instance = new ClientEffectInstance(effect);
         ClientEffectInstance returnInstance = instance;
@@ -49,8 +49,8 @@ public class PacketSCAddEffect implements IPacket {
         return new PacketSCAddEffect(returnInstance, logic);
     }
 
-    public static void encode(PacketSCAddEffect packet, PacketBuffer buffer) {
-        buffer.writeVarInt(Effect.getId(packet.instance.getEffect()));
+    public static void encode(PacketSCAddEffect packet, FriendlyByteBuf buffer) {
+        buffer.writeVarInt(MobEffect.getId(packet.instance.getEffect()));
         ClientEffectInstance instance = packet.instance;
         boolean hasHiddenInstance = true;
         while (hasHiddenInstance) {
@@ -85,27 +85,20 @@ public class PacketSCAddEffect implements IPacket {
         UPDATE;
 
         public static Logic byId(int id) {
-            switch (id) {
-                case 0:
-                    return ADD;
-                case 1:
-                    return REPLACE;
-                case 2:
-                    return UPDATE;
-            }
-            throw new IllegalStateException("Unknown Logic Id: " + id);
+            return switch (id) {
+                case 0 -> ADD;
+                case 1 -> REPLACE;
+                case 2 -> UPDATE;
+                default -> throw new IllegalStateException("Unknown Logic Id: " + id);
+            };
         }
 
         public byte getFlag() {
-            switch (this) {
-                case ADD:
-                    return 0;
-                case REPLACE:
-                    return 1;
-                case UPDATE:
-                    return 2;
-            }
-            throw new IllegalStateException("Unknown Logic: " + this);
+            return switch (this) {
+                case ADD -> (byte) 0;
+                case REPLACE -> (byte) 1;
+                case UPDATE -> (byte) 2;
+            };
         }
     }
 }

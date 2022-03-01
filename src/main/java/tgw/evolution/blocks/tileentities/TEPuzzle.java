@@ -1,25 +1,26 @@
 package tgw.evolution.blocks.tileentities;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTEs;
 
 import javax.annotation.Nullable;
 
-public class TEPuzzle extends TileEntity {
+public class TEPuzzle extends BlockEntity {
 
     private ResourceLocation attachmentType = EvolutionResources.EMPTY;
     private boolean checkBB = true;
     private String finalState = "minecraft:air";
     private ResourceLocation targetPool = EvolutionResources.EMPTY;
 
-    public TEPuzzle() {
-        super(EvolutionTEs.PUZZLE.get());
+    public TEPuzzle(BlockPos pos, BlockState state) {
+        super(EvolutionTEs.PUZZLE.get(), pos, state);
     }
 
     public ResourceLocation getAttachmentType() {
@@ -40,37 +41,38 @@ public class TEPuzzle extends TileEntity {
 
     @Override
     @Nullable
-    public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.worldPosition, 12, this.getUpdateTag());
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
-    public CompoundNBT getUpdateTag() {
-        return this.save(new CompoundNBT());
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = new CompoundTag();
+        this.saveAdditional(tag);
+        return tag;
     }
 
     @Override
-    public void load(BlockState state, CompoundNBT compound) {
-        super.load(state, compound);
-        this.attachmentType = new ResourceLocation(compound.getString("AttachementType"));
-        this.targetPool = new ResourceLocation(compound.getString("TargetPool"));
-        this.finalState = compound.getString("FinalState");
-        this.checkBB = compound.getBoolean("CheckBB");
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        this.attachmentType = new ResourceLocation(tag.getString("AttachmentType"));
+        this.targetPool = new ResourceLocation(tag.getString("TargetPool"));
+        this.finalState = tag.getString("FinalState");
+        this.checkBB = tag.getBoolean("CheckBB");
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-        this.handleUpdateTag(this.level.getBlockState(this.worldPosition), pkt.getTag());
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
+        this.handleUpdateTag(pkt.getTag());
     }
 
     @Override
-    public CompoundNBT save(CompoundNBT compound) {
-        super.save(compound);
-        compound.putString("AttachementType", this.attachmentType.toString());
-        compound.putString("TargetPool", this.targetPool.toString());
-        compound.putString("FinalState", this.finalState);
-        compound.putBoolean("CheckBB", this.checkBB);
-        return compound;
+    public void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        tag.putString("AttachmentType", this.attachmentType.toString());
+        tag.putString("TargetPool", this.targetPool.toString());
+        tag.putString("FinalState", this.finalState);
+        tag.putBoolean("CheckBB", this.checkBB);
     }
 
     public void setAttachmentType(ResourceLocation attachmentType) {

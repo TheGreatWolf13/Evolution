@@ -1,21 +1,23 @@
 package tgw.evolution.client.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.util.Mirror;
-import net.minecraft.util.Rotation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 import tgw.evolution.blocks.tileentities.TESchematic;
+import tgw.evolution.client.gui.widgets.EditBoxAdv;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
@@ -29,37 +31,49 @@ import java.util.Locale;
 public class ScreenSchematic extends Screen {
 
     private final DecimalFormat decimalFormat = new DecimalFormat("0.0###");
+    private final Component textDetectSize = new TranslatableComponent("evolution.gui.schematic.detectSize");
+    private final Component textEntities = new TranslatableComponent("evolution.gui.schematic.entities");
+    private final Component textIntegrity = new TranslatableComponent("evolution.gui.schematic.integrity");
+    private final Component textLoad = new TranslatableComponent("evolution.gui.schematic.load");
+    private final Component textMirror = new TranslatableComponent("evolution.gui.schematic.mirror");
+    private final Component textMode = new TranslatableComponent("evolution.gui.schematic.mode");
+    private final Component textName = new TranslatableComponent("evolution.gui.schematic.name");
+    private final Component textPos = new TranslatableComponent("evolution.gui.schematic.pos");
+    private final Component textSave = new TranslatableComponent("evolution.gui.schematic.save");
+    private final Component textShowAir = new TranslatableComponent("evolution.gui.schematic.showAir");
+    private final Component textShowBB = new TranslatableComponent("evolution.gui.schematic.showBB");
+    private final Component textSize = new TranslatableComponent("evolution.gui.schematic.size");
     private final TESchematic tile;
     private Button detectSizeButton;
     private boolean ignoreEntities;
-    private TextFieldWidget integrityEdit;
+    private EditBoxAdv integrityEdit;
     private Button loadButton;
     private Mirror mirror = Mirror.NONE;
     private Button mirrorButton;
     private SchematicMode mode = SchematicMode.SAVE;
     private Button modeButton;
-    private TextFieldWidget nameEdit;
-    private TextFieldWidget posXEdit;
-    private TextFieldWidget posYEdit;
-    private TextFieldWidget posZEdit;
+    private EditBoxAdv nameEdit;
+    private EditBoxAdv posXEdit;
+    private EditBoxAdv posYEdit;
+    private EditBoxAdv posZEdit;
     private Button rotate180DegreesButton;
     private Button rotate270DegressButton;
     private Button rotateNinetyDegreesButton;
     private Button rotateZeroDegreesButton;
     private Rotation rotation = Rotation.NONE;
     private Button saveButton;
-    private TextFieldWidget seedEdit;
+    private EditBoxAdv seedEdit;
     private boolean showAir;
     private Button showAirButton;
     private boolean showBoundingBox;
     private Button showBoundingBoxButton;
     private Button showEntitiesButton;
-    private TextFieldWidget sizeXEdit;
-    private TextFieldWidget sizeYEdit;
-    private TextFieldWidget sizeZEdit;
+    private EditBoxAdv sizeXEdit;
+    private EditBoxAdv sizeYEdit;
+    private EditBoxAdv sizeZEdit;
 
     public ScreenSchematic(TESchematic tile) {
-        super(new TranslationTextComponent(EvolutionBlocks.SCHEMATIC_BLOCK.get().getDescriptionId()));
+        super(new TranslatableComponent(EvolutionBlocks.SCHEMATIC_BLOCK.get().getDescriptionId()));
         this.tile = tile;
         this.decimalFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.ROOT));
     }
@@ -114,135 +128,130 @@ public class ScreenSchematic extends Screen {
     @Override
     protected void init() {
         this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
-        this.addButton(new Button(this.width / 2 - 4 - 150, 210, 150, 20, EvolutionTexts.GUI_GENERAL_DONE, button -> this.done()));
-        this.addButton(new Button(this.width / 2 + 4, 210, 150, 20, EvolutionTexts.GUI_GENERAL_CANCEL, button -> this.cancel()));
-        this.saveButton = this.addButton(new Button(this.width / 2 + 4 + 100, 185, 50, 20, EvolutionTexts.GUI_SCHEMATIC_SAVE, button -> {
+        this.addRenderableWidget(new Button(this.width / 2 - 4 - 150, 210, 150, 20, EvolutionTexts.GUI_GENERAL_DONE, button -> this.done()));
+        this.addRenderableWidget(new Button(this.width / 2 + 4, 210, 150, 20, EvolutionTexts.GUI_GENERAL_CANCEL, button -> this.cancel()));
+        this.saveButton = this.addRenderableWidget(new Button(this.width / 2 + 4 + 100, 185, 50, 20, this.textSave, button -> {
             if (this.tile.getMode() == SchematicMode.SAVE) {
                 this.sendUpdates(TESchematic.UpdateCommand.SAVE_AREA);
                 this.minecraft.setScreen(null);
             }
         }));
-        this.loadButton = this.addButton(new Button(this.width / 2 + 4 + 100, 185, 50, 20, EvolutionTexts.GUI_SCHEMATIC_LOAD, button -> {
+        this.loadButton = this.addRenderableWidget(new Button(this.width / 2 + 4 + 100, 185, 50, 20, this.textLoad, button -> {
             if (this.tile.getMode() == SchematicMode.LOAD) {
                 this.sendUpdates(TESchematic.UpdateCommand.LOAD_AREA);
                 this.minecraft.setScreen(null);
             }
         }));
-        this.modeButton = this.addButton(new Button(this.width / 2 - 4 - 150, 185, 50, 20, EvolutionTexts.GUI_SCHEMATIC_MODE, button -> {
+        this.modeButton = this.addRenderableWidget(new Button(this.width / 2 - 4 - 150, 185, 50, 20, this.textMode, button -> {
             this.tile.nextMode();
             this.updateMode();
         }));
-        this.detectSizeButton = this.addButton(new Button(this.width / 2 + 4 + 100, 120, 50, 20, EvolutionTexts.GUI_SCHEMATIC_DETECT_SIZE, button -> {
+        this.detectSizeButton = this.addRenderableWidget(new Button(this.width / 2 + 4 + 100, 120, 50, 20, this.textDetectSize, button -> {
             if (this.tile.getMode() == SchematicMode.SAVE) {
                 this.sendUpdates(TESchematic.UpdateCommand.SCAN_AREA);
                 this.minecraft.setScreen(null);
             }
         }));
-        this.showEntitiesButton = this.addButton(new Button(this.width / 2 + 4 + 100, 160, 50, 20, EvolutionTexts.GUI_SCHEMATIC_ENTITIES, button -> {
+        this.showEntitiesButton = this.addRenderableWidget(new Button(this.width / 2 + 4 + 100, 160, 50, 20, this.textEntities, button -> {
             this.tile.setIgnoresEntities(!this.tile.ignoresEntities());
             this.updateEntitiesButton();
         }));
-        this.mirrorButton = this.addButton(new Button(this.width / 2 - 20, 185, 40, 20, EvolutionTexts.GUI_SCHEMATIC_MIRROR, button -> {
+        this.mirrorButton = this.addRenderableWidget(new Button(this.width / 2 - 20, 185, 40, 20, this.textMirror, button -> {
             switch (this.tile.getMirror()) {
-                case NONE:
-                    this.tile.setMirror(Mirror.LEFT_RIGHT);
-                    break;
-                case LEFT_RIGHT:
-                    this.tile.setMirror(Mirror.FRONT_BACK);
-                    break;
-                case FRONT_BACK:
-                    this.tile.setMirror(Mirror.NONE);
+                case NONE -> this.tile.setMirror(Mirror.LEFT_RIGHT);
+                case LEFT_RIGHT -> this.tile.setMirror(Mirror.FRONT_BACK);
+                case FRONT_BACK -> this.tile.setMirror(Mirror.NONE);
             }
             this.updateMirrorButton();
         }));
-        this.showAirButton = this.addButton(new Button(this.width / 2 + 4 + 100, 80, 50, 20, EvolutionTexts.GUI_SCHEMATIC_SHOW_AIR, button -> {
+        this.showAirButton = this.addRenderableWidget(new Button(this.width / 2 + 4 + 100, 80, 50, 20, this.textShowAir, button -> {
             this.tile.setShowAir(!this.tile.showsAir());
             this.updateToggleAirButton();
         }));
-        this.showBoundingBoxButton = this.addButton(new Button(this.width / 2 + 4 + 100, 80, 50, 20, EvolutionTexts.GUI_SCHEMATIC_SHOW_BB, button -> {
+        this.showBoundingBoxButton = this.addRenderableWidget(new Button(this.width / 2 + 4 + 100, 80, 50, 20, this.textShowBB, button -> {
             this.tile.setShowBoundingBox(!this.tile.showsBoundingBox());
             this.updateToggleBoundingBox();
         }));
-        this.rotateZeroDegreesButton = this.addButton(new Button(this.width / 2 - 1 - 40 - 1 - 40 - 20,
-                                                                 185,
-                                                                 40,
-                                                                 20,
-                                                                 new StringTextComponent("0\u00B0"),
-                                                                 button -> {
-                                                                     this.tile.setRotation(Rotation.NONE);
-                                                                     this.updateDirectionButtons();
-                                                                 }));
-        this.rotateNinetyDegreesButton = this.addButton(new Button(this.width / 2 - 1 - 40 - 20,
-                                                                   185,
-                                                                   40,
-                                                                   20,
-                                                                   new StringTextComponent("90\u00B0"),
-                                                                   button -> {
-                                                                       this.tile.setRotation(Rotation.CLOCKWISE_90);
-                                                                       this.updateDirectionButtons();
-                                                                   }));
-        this.rotate180DegreesButton = this.addButton(new Button(this.width / 2 + 1 + 20,
-                                                                185,
-                                                                40,
-                                                                20,
-                                                                new StringTextComponent("180\u00B0"),
-                                                                button -> {
-                                                                    this.tile.setRotation(Rotation.CLOCKWISE_180);
-                                                                    this.updateDirectionButtons();
-                                                                }));
-        this.rotate270DegressButton = this.addButton(new Button(this.width / 2 + 1 + 40 + 1 + 20,
-                                                                185,
-                                                                40,
-                                                                20,
-                                                                new StringTextComponent("270\u00B0"),
-                                                                button -> {
-                                                                    this.tile.setRotation(Rotation.COUNTERCLOCKWISE_90);
-                                                                    this.updateDirectionButtons();
-                                                                }));
-        this.nameEdit = new TextFieldWidget(this.font, this.width / 2 - 152, 40, 300, 20, EvolutionTexts.GUI_SCHEMATIC_NAME) {
+        this.rotateZeroDegreesButton = this.addRenderableWidget(new Button(this.width / 2 - 1 - 40 - 1 - 40 - 20,
+                                                                           185,
+                                                                           40,
+                                                                           20,
+                                                                           new TextComponent("0\u00B0"),
+                                                                           button -> {
+                                                                               this.tile.setRotation(Rotation.NONE);
+                                                                               this.updateDirectionButtons();
+                                                                           }));
+        this.rotateNinetyDegreesButton = this.addRenderableWidget(new Button(this.width / 2 - 1 - 40 - 20,
+                                                                             185,
+                                                                             40,
+                                                                             20,
+                                                                             new TextComponent("90\u00B0"),
+                                                                             button -> {
+                                                                                 this.tile.setRotation(Rotation.CLOCKWISE_90);
+                                                                                 this.updateDirectionButtons();
+                                                                             }));
+        this.rotate180DegreesButton = this.addRenderableWidget(new Button(this.width / 2 + 1 + 20,
+                                                                          185,
+                                                                          40,
+                                                                          20,
+                                                                          new TextComponent("180\u00B0"),
+                                                                          button -> {
+                                                                              this.tile.setRotation(Rotation.CLOCKWISE_180);
+                                                                              this.updateDirectionButtons();
+                                                                          }));
+        this.rotate270DegressButton = this.addRenderableWidget(new Button(this.width / 2 + 1 + 40 + 1 + 20,
+                                                                          185,
+                                                                          40,
+                                                                          20,
+                                                                          new TextComponent("270\u00B0"),
+                                                                          button -> {
+                                                                              this.tile.setRotation(Rotation.COUNTERCLOCKWISE_90);
+                                                                              this.updateDirectionButtons();
+                                                                          }));
+        this.nameEdit = new EditBoxAdv(this.font, this.width / 2 - 152, 40, 300, 20, EvolutionTexts.EMPTY) {
             @Override
-            public boolean charTyped(char p_charTyped_1_, int p_charTyped_2_) {
-                return ScreenSchematic.this.isValidCharacterForName(this.getValue(), p_charTyped_1_, this.getCursorPosition()) &&
-                       super.charTyped(p_charTyped_1_, p_charTyped_2_);
+            public boolean charTyped(char codePoint, int modifiers) {
+                return ScreenSchematic.this.isValidCharacterForName(this.getValue(), codePoint, this.getCursorPosition()) &&
+                       super.charTyped(codePoint, modifiers);
             }
         };
         this.nameEdit.setMaxLength(64);
         this.nameEdit.setValue(this.tile.getName());
-        this.children.add(this.nameEdit);
+        this.addWidget(this.nameEdit);
         BlockPos schematicPos = this.tile.getSchematicPos();
-        this.posXEdit = new TextFieldWidget(this.font, this.width / 2 - 152, 80, 80, 20, EvolutionTexts.GUI_SCHEMATIC_POS_X);
+        this.posXEdit = new EditBoxAdv(this.font, this.width / 2 - 152, 80, 80, 20, EvolutionTexts.EMPTY);
         this.posXEdit.setMaxLength(15);
         this.posXEdit.setValue(Integer.toString(schematicPos.getX()));
-        this.children.add(this.posXEdit);
-        this.posYEdit = new TextFieldWidget(this.font, this.width / 2 - 72, 80, 80, 20, EvolutionTexts.GUI_SCHEMATIC_POS_Y);
+        this.addWidget(this.posXEdit);
+        this.posYEdit = new EditBoxAdv(this.font, this.width / 2 - 72, 80, 80, 20, EvolutionTexts.EMPTY);
         this.posYEdit.setMaxLength(15);
         this.posYEdit.setValue(Integer.toString(schematicPos.getY()));
-        this.children.add(this.posYEdit);
-        this.posZEdit = new TextFieldWidget(this.font, this.width / 2 + 8, 80, 80, 20, EvolutionTexts.GUI_SCHEMATIC_POS_Z);
+        this.addWidget(this.posYEdit);
+        this.posZEdit = new EditBoxAdv(this.font, this.width / 2 + 8, 80, 80, 20, EvolutionTexts.EMPTY);
         this.posZEdit.setMaxLength(15);
         this.posZEdit.setValue(Integer.toString(schematicPos.getZ()));
-        this.children.add(this.posZEdit);
-        BlockPos size = this.tile.getStructureSize();
-        this.sizeXEdit = new TextFieldWidget(this.font, this.width / 2 - 152, 120, 80, 20, EvolutionTexts.GUI_SCHEMATIC_SIZE_X);
+        this.addWidget(this.posZEdit);
+        Vec3i size = this.tile.getStructureSize();
+        this.sizeXEdit = new EditBoxAdv(this.font, this.width / 2 - 152, 120, 80, 20, EvolutionTexts.EMPTY);
         this.sizeXEdit.setMaxLength(15);
         this.sizeXEdit.setValue(Integer.toString(size.getX()));
-        this.children.add(this.sizeXEdit);
-        this.sizeYEdit = new TextFieldWidget(this.font, this.width / 2 - 72, 120, 80, 20, EvolutionTexts.GUI_SCHEMATIC_SIZE_Y);
+        this.addWidget(this.sizeXEdit);
+        this.sizeYEdit = new EditBoxAdv(this.font, this.width / 2 - 72, 120, 80, 20, EvolutionTexts.EMPTY);
         this.sizeYEdit.setMaxLength(15);
         this.sizeYEdit.setValue(Integer.toString(size.getY()));
-        this.children.add(this.sizeYEdit);
-        this.sizeZEdit = new TextFieldWidget(this.font, this.width / 2 + 8, 120, 80, 20, EvolutionTexts.GUI_SCHEMATIC_SIZE_Z);
+        this.addWidget(this.sizeYEdit);
+        this.sizeZEdit = new EditBoxAdv(this.font, this.width / 2 + 8, 120, 80, 20, EvolutionTexts.EMPTY);
         this.sizeZEdit.setMaxLength(15);
         this.sizeZEdit.setValue(Integer.toString(size.getZ()));
-        this.children.add(this.sizeZEdit);
-        this.integrityEdit = new TextFieldWidget(this.font, this.width / 2 - 152, 120, 80, 20, EvolutionTexts.GUI_SCHEMATIC_INTEGRITY);
+        this.addWidget(this.sizeZEdit);
+        this.integrityEdit = new EditBoxAdv(this.font, this.width / 2 - 152, 120, 80, 20, EvolutionTexts.EMPTY);
         this.integrityEdit.setMaxLength(15);
         this.integrityEdit.setValue(this.decimalFormat.format(this.tile.getIntegrity()));
-        this.children.add(this.integrityEdit);
-        this.seedEdit = new TextFieldWidget(this.font, this.width / 2 - 72, 120, 80, 20, EvolutionTexts.GUI_SCHEMATIC_SEED);
+        this.addWidget(this.integrityEdit);
+        this.seedEdit = new EditBoxAdv(this.font, this.width / 2 - 72, 120, 80, 20, EvolutionTexts.EMPTY);
         this.seedEdit.setMaxLength(31);
         this.seedEdit.setValue(Long.toString(this.tile.getSeed()));
-        this.children.add(this.seedEdit);
+        this.addWidget(this.seedEdit);
         this.mirror = this.tile.getMirror();
         this.updateMirrorButton();
         this.rotation = this.tile.getRotation();
@@ -264,15 +273,29 @@ public class ScreenSchematic extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int p_keyPressed_1_, int p_keyPressed_2_, int p_keyPressed_3_) {
-        if (super.keyPressed(p_keyPressed_1_, p_keyPressed_2_, p_keyPressed_3_)) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (super.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
         }
-        if (p_keyPressed_1_ != GLFW.GLFW_KEY_ENTER && p_keyPressed_1_ != GLFW.GLFW_KEY_KP_ENTER) {
+        if (keyCode != GLFW.GLFW_KEY_ENTER && keyCode != GLFW.GLFW_KEY_KP_ENTER) {
             return false;
         }
         this.done();
         return true;
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        this.integrityEdit.setFocus(false);
+        this.nameEdit.setFocus(false);
+        this.seedEdit.setFocus(false);
+        this.posXEdit.setFocus(false);
+        this.posYEdit.setFocus(false);
+        this.posZEdit.setFocus(false);
+        this.sizeXEdit.setFocus(false);
+        this.sizeYEdit.setFocus(false);
+        this.sizeZEdit.setFocus(false);
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
@@ -282,36 +305,36 @@ public class ScreenSchematic extends Screen {
     }
 
     @Override
-    public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
+    public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(matrices);
         SchematicMode schematicMode = this.tile.getMode();
         drawCenteredString(matrices, this.font, this.title, this.width / 2, 10, 0xa0_a0a0);
-        drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_NAME, this.width / 2 - 153, 30, 0xa0_a0a0);
+        drawString(matrices, this.font, this.textName, this.width / 2 - 153, 30, 0xa0_a0a0);
         this.nameEdit.render(matrices, mouseX, mouseY, partialTicks);
         if (schematicMode == SchematicMode.LOAD || schematicMode == SchematicMode.SAVE) {
-            drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_POS, this.width / 2 - 153, 70, 0xa0_a0a0);
+            drawString(matrices, this.font, this.textPos, this.width / 2 - 153, 70, 0xa0_a0a0);
             this.posXEdit.render(matrices, mouseX, mouseY, partialTicks);
             this.posYEdit.render(matrices, mouseX, mouseY, partialTicks);
             this.posZEdit.render(matrices, mouseX, mouseY, partialTicks);
-            int textWidth = this.font.width(EvolutionTexts.GUI_SCHEMATIC_ENTITIES);
-            drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_ENTITIES, this.width / 2 + 154 - textWidth, 150, 0xa0_a0a0);
+            int textWidth = this.font.width(this.textEntities);
+            drawString(matrices, this.font, this.textEntities, this.width / 2 + 154 - textWidth, 150, 0xa0_a0a0);
         }
         if (schematicMode == SchematicMode.SAVE) {
-            drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_SIZE, this.width / 2 - 153, 110, 0xa0_a0a0);
+            drawString(matrices, this.font, this.textSize, this.width / 2 - 153, 110, 0xa0_a0a0);
             this.sizeXEdit.render(matrices, mouseX, mouseY, partialTicks);
             this.sizeYEdit.render(matrices, mouseX, mouseY, partialTicks);
             this.sizeZEdit.render(matrices, mouseX, mouseY, partialTicks);
-            int textWidth = this.font.width(EvolutionTexts.GUI_SCHEMATIC_DETECT_SIZE);
-            drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_DETECT_SIZE, this.width / 2 + 154 - textWidth, 110, 0xa0_a0a0);
-            textWidth = this.font.width(EvolutionTexts.GUI_SCHEMATIC_SHOW_AIR);
-            drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_SHOW_AIR, this.width / 2 + 154 - textWidth, 70, 0xa0_a0a0);
+            int textWidth = this.font.width(this.textDetectSize);
+            drawString(matrices, this.font, this.textDetectSize, this.width / 2 + 154 - textWidth, 110, 0xa0_a0a0);
+            textWidth = this.font.width(this.textShowAir);
+            drawString(matrices, this.font, this.textShowAir, this.width / 2 + 154 - textWidth, 70, 0xa0_a0a0);
         }
         if (schematicMode == SchematicMode.LOAD) {
-            drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_INTEGRITY, this.width / 2 - 153, 110, 0xa0_a0a0);
+            drawString(matrices, this.font, this.textIntegrity, this.width / 2 - 153, 110, 0xa0_a0a0);
             this.integrityEdit.render(matrices, mouseX, mouseY, partialTicks);
             this.seedEdit.render(matrices, mouseX, mouseY, partialTicks);
-            int textWidth = this.font.width(EvolutionTexts.GUI_SCHEMATIC_SHOW_BB);
-            drawString(matrices, this.font, EvolutionTexts.GUI_SCHEMATIC_SHOW_BB, this.width / 2 + 154 - textWidth, 70, 0xa0_a0a0);
+            int textWidth = this.font.width(this.textShowBB);
+            drawString(matrices, this.font, this.textShowBB, this.width / 2 + 154 - textWidth, 70, 0xa0_a0a0);
         }
         String modeInfo = "evolution.gui.schematic.modeInfo." + schematicMode.getSerializedName();
         drawString(matrices, this.font, I18n.get(modeInfo), this.width / 2 - 153, 174, 0xa0_a0a0);
@@ -385,21 +408,10 @@ public class ScreenSchematic extends Screen {
         this.rotate180DegreesButton.active = true;
         this.rotate270DegressButton.active = true;
         switch (this.tile.getRotation()) {
-            case NONE: {
-                this.rotateZeroDegreesButton.active = false;
-                break;
-            }
-            case CLOCKWISE_180: {
-                this.rotate180DegreesButton.active = false;
-                break;
-            }
-            case COUNTERCLOCKWISE_90: {
-                this.rotate270DegressButton.active = false;
-                break;
-            }
-            case CLOCKWISE_90: {
-                this.rotateNinetyDegreesButton.active = false;
-            }
+            case NONE -> this.rotateZeroDegreesButton.active = false;
+            case CLOCKWISE_180 -> this.rotate180DegreesButton.active = false;
+            case COUNTERCLOCKWISE_90 -> this.rotate270DegressButton.active = false;
+            case CLOCKWISE_90 -> this.rotateNinetyDegreesButton.active = false;
         }
     }
 
@@ -414,17 +426,9 @@ public class ScreenSchematic extends Screen {
 
     private void updateMirrorButton() {
         switch (this.tile.getMirror()) {
-            case NONE: {
-                this.mirrorButton.setMessage(new StringTextComponent("|"));
-                break;
-            }
-            case LEFT_RIGHT: {
-                this.mirrorButton.setMessage(new StringTextComponent("< >"));
-                break;
-            }
-            case FRONT_BACK: {
-                this.mirrorButton.setMessage(new StringTextComponent("^ v"));
-            }
+            case NONE -> this.mirrorButton.setMessage(new TextComponent("|"));
+            case LEFT_RIGHT -> this.mirrorButton.setMessage(new TextComponent("< >"));
+            case FRONT_BACK -> this.mirrorButton.setMessage(new TextComponent("^ v"));
         }
     }
 
@@ -450,7 +454,7 @@ public class ScreenSchematic extends Screen {
         this.showAirButton.visible = false;
         this.showBoundingBoxButton.visible = false;
         switch (this.tile.getMode()) {
-            case SAVE: {
+            case SAVE -> {
                 this.nameEdit.setVisible(true);
                 this.posXEdit.setVisible(true);
                 this.posYEdit.setVisible(true);
@@ -462,9 +466,8 @@ public class ScreenSchematic extends Screen {
                 this.detectSizeButton.visible = true;
                 this.showEntitiesButton.visible = true;
                 this.showAirButton.visible = true;
-                break;
             }
-            case LOAD: {
+            case LOAD -> {
                 this.nameEdit.setVisible(true);
                 this.posXEdit.setVisible(true);
                 this.posYEdit.setVisible(true);
@@ -480,14 +483,10 @@ public class ScreenSchematic extends Screen {
                 this.rotate270DegressButton.visible = true;
                 this.showBoundingBoxButton.visible = true;
                 this.updateDirectionButtons();
-                break;
             }
-            case CORNER: {
-                this.nameEdit.setVisible(true);
-                break;
-            }
+            case CORNER -> this.nameEdit.setVisible(true);
         }
-        this.modeButton.setMessage(new TranslationTextComponent("evolution.gui.schematic.mode." + this.tile.getMode().getSerializedName()));
+        this.modeButton.setMessage(new TranslatableComponent("evolution.gui.schematic.mode." + this.tile.getMode().getSerializedName()));
     }
 
     private void updateToggleAirButton() {

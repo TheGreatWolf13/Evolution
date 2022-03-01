@@ -1,16 +1,16 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.IForgeShearable;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.init.EvolutionBlocks;
@@ -24,17 +24,17 @@ public class BlockTallGrass extends BlockBush implements IForgeShearable {
     }
 
     @Override
-    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
         return NonNullList.of(ItemStack.EMPTY);
     }
 
     @Override
-    public int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+    public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
         return EvolutionBlocks.FIRE.get().getActualEncouragement(state);
     }
 
     @Override
-    public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+    public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
         return EvolutionBlocks.FIRE.get().getActualFlammability(state);
     }
 
@@ -44,13 +44,13 @@ public class BlockTallGrass extends BlockBush implements IForgeShearable {
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return EvolutionHitBoxes.GRASS;
     }
 
     @Override
-    public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        CapabilityChunkStorage.getChunkStorage(worldIn, worldIn.getChunk(pos).getPos())
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        CapabilityChunkStorage.getChunkStorage(level, level.getChunk(pos).getPos())
                               .ifPresent(chunkStorages -> chunkStorages.addMany(NutrientHelper.DECAY_TALL_GRASS));
     }
 }

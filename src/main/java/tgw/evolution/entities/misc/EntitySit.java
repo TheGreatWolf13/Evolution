@@ -1,22 +1,22 @@
 package tgw.evolution.entities.misc;
 
-import net.minecraft.block.Block;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.Pose;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTUtil;
-import net.minecraft.network.IPacket;
-import net.minecraft.util.Direction;
-import net.minecraft.util.TransportationHelper;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.FMLPlayMessages;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.DismountHelper;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.network.PlayMessages;
 import tgw.evolution.blocks.ISittable;
 import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionBStates;
@@ -29,18 +29,13 @@ public class EntitySit extends Entity implements IEvolutionEntity<EntitySit> {
 
     private BlockPos source;
 
-    @SuppressWarnings("unused")
-    public EntitySit(FMLPlayMessages.SpawnEntity spawn, World world) {
-        this(EvolutionEntities.SIT.get(), world);
-    }
-
-    public EntitySit(EntityType<?> entityType, World world) {
-        super(entityType, world);
+    public EntitySit(EntityType<?> entityType, Level level) {
+        super(entityType, level);
         this.noPhysics = true;
         this.blocksBuilding = true;
     }
 
-    public EntitySit(World world, BlockPos pos, double yOffset) {
+    public EntitySit(Level world, BlockPos pos, double yOffset) {
         this(EvolutionEntities.SIT.get(), world);
         this.setPos(pos.getX() + 0.5, pos.getY() + yOffset, pos.getZ() + 0.5);
         this.source = pos;
@@ -49,12 +44,16 @@ public class EntitySit extends Entity implements IEvolutionEntity<EntitySit> {
         this.zo = pos.getZ() + 0.5;
     }
 
-    public static boolean create(World world, BlockPos pos, PlayerEntity player) {
-        Block block = world.getBlockState(pos).getBlock();
-        if (block instanceof ISittable) {
-            if (!world.isClientSide) {
-                EntitySit seat = new EntitySit(world, pos, ((ISittable) block).getYOffset());
-                world.addFreshEntity(seat);
+    public EntitySit(PlayMessages.SpawnEntity spawnEntity, Level level) {
+        this(EvolutionEntities.SIT.get(), level);
+    }
+
+    public static boolean create(Level level, BlockPos pos, Player player) {
+        Block block = level.getBlockState(pos).getBlock();
+        if (block instanceof ISittable sittable) {
+            if (!level.isClientSide) {
+                EntitySit seat = new EntitySit(level, pos, sittable.getYOffset());
+                level.addFreshEntity(seat);
                 player.startRiding(seat, false);
             }
             return true;
@@ -63,8 +62,8 @@ public class EntitySit extends Entity implements IEvolutionEntity<EntitySit> {
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundNBT compound) {
-        compound.put("Source", NBTUtil.writeBlockPos(this.source));
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        compound.put("Source", NbtUtils.writeBlockPos(this.source));
     }
 
     //TODO
@@ -78,28 +77,28 @@ public class EntitySit extends Entity implements IEvolutionEntity<EntitySit> {
     }
 
     @Override
-    public IPacket<?> getAddEntityPacket() {
+    public Packet<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
     @Override
-    public Vector3d getDismountLocationForPassenger(LivingEntity entity) {
+    public Vec3 getDismountLocationForPassenger(LivingEntity entity) {
         Direction facing = entity.getDirection();
         if (facing.getAxis() == Direction.Axis.Y) {
             return super.getDismountLocationForPassenger(entity);
         }
-        int[][] offsets = TransportationHelper.offsetsForDirection(facing.getCounterClockWise());
+        int[][] offsets = DismountHelper.offsetsForDirection(facing.getCounterClockWise());
         BlockPos pos = this.blockPosition();
-        BlockPos.Mutable mutable = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         for (Pose pose : entity.getDismountPoses()) {
-            AxisAlignedBB bb = entity.getLocalBoundsForPose(pose);
+            AABB bb = entity.getLocalBoundsForPose(pose);
             for (int[] offset : offsets) {
                 mutable.set(pos.getX() + offset[0], pos.getY(), pos.getZ() + offset[1]);
                 double d0 = this.level.getBlockFloorHeight(mutable);
-                if (TransportationHelper.isBlockFloorValid(d0)) {
+                if (DismountHelper.isBlockFloorValid(d0)) {
                     //noinspection ObjectAllocationInLoop
-                    Vector3d vector3d = Vector3d.upFromBottomCenterOf(mutable, d0);
-                    if (TransportationHelper.canDismountTo(this.level, entity, bb.move(vector3d))) {
+                    Vec3 vector3d = Vec3.upFromBottomCenterOf(mutable, d0);
+                    if (DismountHelper.canDismountTo(this.level, entity, bb.move(vector3d))) {
                         entity.setPose(pose);
                         return vector3d;
                     }
@@ -126,8 +125,8 @@ public class EntitySit extends Entity implements IEvolutionEntity<EntitySit> {
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundNBT compound) {
-        this.source = NBTUtil.readBlockPos(compound.getCompound("Source"));
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        this.source = NbtUtils.readBlockPos(compound.getCompound("Source"));
     }
 
     @Override
@@ -138,11 +137,11 @@ public class EntitySit extends Entity implements IEvolutionEntity<EntitySit> {
         }
         if (!this.level.isClientSide) {
             if (!(this.level.getBlockState(this.source).getBlock() instanceof ISittable)) {
-                this.remove();
+                this.discard();
             }
             if (this.getPassengers().isEmpty()) {
                 this.level.setBlockAndUpdate(this.source, this.level.getBlockState(this.source).setValue(EvolutionBStates.OCCUPIED, false));
-                this.remove();
+                this.discard();
             }
         }
     }

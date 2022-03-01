@@ -1,21 +1,26 @@
 package tgw.evolution.items;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.UseAction;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.world.World;
-import net.minecraftforge.common.util.Constants;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.LevelEvent;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.TETorch;
 import tgw.evolution.config.EvolutionConfig;
@@ -25,8 +30,8 @@ import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.Time;
+import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.time.Time;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -37,15 +42,15 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
         super(EvolutionBlocks.TORCH.get(), EvolutionBlocks.WALL_TORCH.get(), properties);
     }
 
-    public static ItemStack createStack(World world, int count) {
-        return createStack(world.getDayTime(), count);
+    public static ItemStack createStack(Level level, int count) {
+        return createStack(level.getDayTime(), count);
     }
 
     public static ItemStack createStack(long timeCreated, int count) {
-        CompoundNBT nbt = new CompoundNBT();
-        nbt.putLong("TimeCreated", Time.roundToLastFullHour(timeCreated));
+        CompoundTag tag = new CompoundTag();
+        tag.putLong("TimeCreated", Time.roundToLastFullHour(timeCreated));
         ItemStack stack = new ItemStack(EvolutionItems.torch.get(), count);
-        stack.setTag(nbt);
+        stack.setTag(tag);
         return stack;
     }
 
@@ -57,15 +62,15 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     public static int getRemainingTime(long timeNow, long timePlaced) {
-        int torchTime = EvolutionConfig.COMMON.torchTime.get();
+        int torchTime = EvolutionConfig.SERVER.torchTime.get();
         long timeNowRounded = Time.roundToLastFullHour(timeNow);
         long timeCreated = Time.roundToLastFullHour(timePlaced);
         int deltaTime = (int) (timeNowRounded - timeCreated) / 1_000;
-        return MathHelper.clampMin(torchTime - deltaTime, 0);
+        return Math.max(torchTime - deltaTime, 0);
     }
 
-    public static int getRemainingTime(World world, ItemStack stack) {
-        return getRemainingTime(world.getDayTime(), stack.getTag().getLong("TimeCreated"));
+    public static int getRemainingTime(Level level, ItemStack stack) {
+        return getRemainingTime(level.getDayTime(), stack.getTag().getLong("TimeCreated"));
     }
 
     public static int getRemainingTime(TETorch tile) {
@@ -73,17 +78,17 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
         if (!stack.hasTag()) {
             return;
         }
-        int remainingTime = getRemainingTime(world, stack);
+        int remainingTime = getRemainingTime(level, stack);
         tooltip.add(EvolutionTexts.torch(remainingTime));
     }
 
     @Override
-    public void fillItemCategory(ItemGroup group, NonNullList<ItemStack> items) {
-        if (this.allowdedIn(group)) {
+    public void fillItemCategory(CreativeModeTab tab, NonNullList<ItemStack> items) {
+        if (this.allowdedIn(tab)) {
             items.add(this.getDefaultInstance());
         }
     }
@@ -104,8 +109,8 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     @Override
-    public UseAction getUseAnimation(ItemStack stack) {
-        return UseAction.BOW;
+    public UseAnim getUseAnimation(ItemStack stack) {
+        return UseAnim.BOW;
     }
 
     @Override
@@ -114,22 +119,27 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean isSelected) {
-        long ticks = world.getDayTime();
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean isSelected) {
+        long ticks = level.getDayTime();
         if (ticks % 10 == 0) {
             if (!stack.hasTag()) {
                 return;
             }
-            if (getRemainingTime(world, stack) <= 0) {
-                entity.setSlot(slot, new ItemStack(EvolutionItems.torch_unlit.get(), stack.getCount()));
+            if (getRemainingTime(level, stack) <= 0) {
+                //TODO
+//                entity.setSlot(slot, new ItemStack(EvolutionItems.torch_unlit.get(), stack.getCount()));
             }
         }
     }
 
     @Override
-    public void releaseUsing(ItemStack stack, World world, LivingEntity livingEntity, int timeLeft) {
-        if (livingEntity instanceof PlayerEntity) {
-            PlayerEntity player = (PlayerEntity) livingEntity;
+    public boolean isCancelable() {
+        return true;
+    }
+
+    @Override
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity living, int timeLeft) {
+        if (living instanceof Player player) {
             int charge = this.getUseDuration(stack) - timeLeft;
             if (charge < 0) {
                 return;
@@ -138,21 +148,21 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
             if (strength < 0.1) {
                 return;
             }
-            if (!world.isClientSide) {
+            if (!level.isClientSide) {
                 long timeCreated;
                 if (stack.hasTag()) {
                     timeCreated = stack.getTag().getLong("TimeCreated");
                 }
                 else {
-                    timeCreated = world.getDayTime();
+                    timeCreated = level.getDayTime();
                 }
-                EntityTorch torch = new EntityTorch(world, player, timeCreated);
-                torch.shoot(player, player.xRot, player.yRot, 0.6f * strength, 1.0F);
+                EntityTorch torch = new EntityTorch(level, player, timeCreated);
+                torch.shoot(player, player.getXRot(), player.getYRot(), 0.6f * strength, 1.0F);
                 torch.pickupStatus = EntityGenericProjectile.PickupStatus.CREATIVE_ONLY;
-                world.addFreshEntity(torch);
-                world.playSound(null, torch, SoundEvents.CROSSBOW_SHOOT, SoundCategory.PLAYERS, 1.0F, 1.0F);
+                level.addFreshEntity(torch);
+                level.playSound(null, torch, SoundEvents.CROSSBOW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F);
                 Evolution.usingPlaceholder(player, "sound");
-                if (!player.abilities.instabuild) {
+                if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
             }
@@ -162,29 +172,29 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     @Override
-    protected boolean updateCustomBlockEntityTag(BlockPos pos, World world, @Nullable PlayerEntity player, ItemStack stack, BlockState state) {
+    protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, @Nullable Player player, ItemStack stack, BlockState state) {
         if (!state.getValue(EvolutionBStates.LIT)) {
-            world.levelEvent(Constants.WorldEvents.FIRE_EXTINGUISH_SOUND, pos, 0);
+            level.levelEvent(LevelEvent.SOUND_EXTINGUISH_FIRE, pos, 0);
         }
-        TileEntity tile = world.getBlockEntity(pos);
-        if (tile instanceof TETorch) {
+        BlockEntity tile = level.getBlockEntity(pos);
+        if (tile instanceof TETorch teTorch) {
             if (stack.hasTag()) {
-                ((TETorch) tile).setTimePlaced(stack.getTag().getLong("TimeCreated"));
+                teTorch.setTimePlaced(stack.getTag().getLong("TimeCreated"));
             }
             else {
-                ((TETorch) tile).setTimePlaced(world.getDayTime());
+                teTorch.setTimePlaced(level.getDayTime());
             }
         }
-        return super.updateCustomBlockEntityTag(pos, world, player, stack, state);
+        return super.updateCustomBlockEntityTag(pos, level, player, stack, state);
     }
 
     @Override
-    public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (hand == Hand.OFF_HAND) {
-            return new ActionResult<>(ActionResultType.FAIL, stack);
+        if (hand == InteractionHand.OFF_HAND) {
+            return new InteractionResultHolder<>(InteractionResult.FAIL, stack);
         }
         player.startUsingItem(hand);
-        return new ActionResult<>(ActionResultType.CONSUME, stack);
+        return new InteractionResultHolder<>(InteractionResult.CONSUME, stack);
     }
 }

@@ -1,13 +1,13 @@
 package tgw.evolution.items;
 
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -19,14 +19,14 @@ public class ItemIngot extends ItemEv implements IItemTemperature {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flags) {
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flags) {
         if (stack.hasTag()) {
-            tooltip.add(new StringTextComponent("Temperature: " + this.getTemperature(stack) + "K"));
+            tooltip.add(new TextComponent("Temperature: " + this.getTemperature(stack) + "K"));
         }
     }
 
     @Override
-    public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         double currentTemperature = this.getTemperature(stack);
         if (player.isCrouching()) {
@@ -36,6 +36,6 @@ public class ItemIngot extends ItemEv implements IItemTemperature {
             currentTemperature += 10;
         }
         this.setTemperature(stack, currentTemperature);
-        return ActionResult.success(stack);
+        return InteractionResultHolder.success(stack);
     }
 }

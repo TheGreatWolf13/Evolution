@@ -1,6 +1,6 @@
 package tgw.evolution.patches;
 
-import net.minecraft.util.math.vector.Quaternion;
+import com.mojang.math.Quaternion;
 
 public interface IMatrix4fPatch {
 

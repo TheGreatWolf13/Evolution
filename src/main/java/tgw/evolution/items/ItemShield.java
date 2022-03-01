@@ -1,14 +1,13 @@
 package tgw.evolution.items;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.UseAction;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.world.World;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 
@@ -20,13 +19,13 @@ public class ItemShield extends ItemEv implements IDurability {
 
     @Nullable
     @Override
-    public EquipmentSlotType getEquipmentSlot(ItemStack stack) {
-        return EquipmentSlotType.OFFHAND;
+    public EquipmentSlot getEquipmentSlot(ItemStack stack) {
+        return EquipmentSlot.OFFHAND;
     }
 
     @Override
-    public UseAction getUseAnimation(ItemStack stack) {
-        return UseAction.BLOCK;
+    public UseAnim getUseAnimation(ItemStack stack) {
+        return UseAnim.BLOCK;
     }
 
     @Override
@@ -35,14 +34,9 @@ public class ItemShield extends ItemEv implements IDurability {
     }
 
     @Override
-    public boolean isShield(ItemStack stack, @Nullable LivingEntity entity) {
-        return true;
-    }
-
-    @Override
-    public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         player.startUsingItem(hand);
-        return new ActionResult<>(ActionResultType.CONSUME, stack);
+        return new InteractionResultHolder<>(InteractionResult.CONSUME, stack);
     }
 }

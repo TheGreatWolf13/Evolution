@@ -1,24 +1,24 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.util.Direction;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.HarvestLevel;
-import tgw.evolution.util.WoodVariant;
+import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.constants.WoodVariant;
 
 public class BlockPlanks extends BlockGravity {
 
     private final WoodVariant variant;
 
     public BlockPlanks(WoodVariant variant) {
-        super(Properties.of(Material.WOOD).strength(6.0f, 2.0f).sound(SoundType.WOOD).harvestLevel(HarvestLevel.STONE), variant.getMass() / 4);
+        super(Properties.of(Material.WOOD).strength(6.0f, 2.0f).sound(SoundType.WOOD), variant.getMass() / 4);
         this.variant = variant;
     }
 
@@ -38,18 +38,23 @@ public class BlockPlanks extends BlockGravity {
     }
 
     @Override
-    public int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+    public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
         return EvolutionBlocks.FIRE.get().getActualEncouragement(state);
     }
 
     @Override
-    public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+    public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
         return EvolutionBlocks.FIRE.get().getActualFlammability(state);
     }
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
         return 0.62f;
+    }
+
+    @Override
+    public int getHarvestLevel(BlockState state) {
+        return HarvestLevel.STONE;
     }
 
     @Override

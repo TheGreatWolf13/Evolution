@@ -2,12 +2,12 @@ package tgw.evolution.network;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.core.Registry;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
-import net.minecraft.util.registry.Registry;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.Evolution;
 
 import java.util.function.Supplier;
@@ -20,7 +20,7 @@ public class PacketSCStatistics implements IPacket {
         this.statsData = statsData;
     }
 
-    public static PacketSCStatistics decode(PacketBuffer buffer) {
+    public static PacketSCStatistics decode(FriendlyByteBuf buffer) {
         int size = buffer.readVarInt();
         Object2LongMap<Stat<?>> statisticMap = new Object2LongOpenHashMap<>(size);
         for (int i = 0; i < size; ++i) {
@@ -29,7 +29,7 @@ public class PacketSCStatistics implements IPacket {
         return new PacketSCStatistics(statisticMap);
     }
 
-    public static void encode(PacketSCStatistics packet, PacketBuffer buffer) {
+    public static void encode(PacketSCStatistics packet, FriendlyByteBuf buffer) {
         buffer.writeVarInt(packet.statsData.size());
         for (Object2LongMap.Entry<Stat<?>> entry : packet.statsData.object2LongEntrySet()) {
             Stat<?> stat = entry.getKey();
@@ -50,7 +50,7 @@ public class PacketSCStatistics implements IPacket {
         }
     }
 
-    private static <T> void readValues(Object2LongMap<Stat<?>> map, StatType<T> statType, PacketBuffer buffer) {
+    private static <T> void readValues(Object2LongMap<Stat<?>> map, StatType<T> statType, FriendlyByteBuf buffer) {
         int statId = buffer.readVarInt();
         long amount = buffer.readLong();
         map.put(statType.get(statType.getRegistry().byId(statId)), amount);

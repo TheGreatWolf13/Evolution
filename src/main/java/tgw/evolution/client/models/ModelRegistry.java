@@ -1,16 +1,19 @@
 package tgw.evolution.client.models;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.BlockModelShapes;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ModelResourceLocation;
+import net.minecraft.client.renderer.block.BlockModelShaper;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.event.ModelBakeEvent;
 import tgw.evolution.Evolution;
+import tgw.evolution.client.models.item.BakedModelModularTool;
 import tgw.evolution.client.models.tile.BakedModelFirewoodPile;
 import tgw.evolution.client.models.tile.BakedModelKnapping;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.util.RockVariant;
+import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.util.constants.RockVariant;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -32,15 +35,22 @@ public final class ModelRegistry {
             registerModel(event, block, variant, BakedModelKnapping::new);
         }
         registerModel(event, EvolutionBlocks.FIREWOOD_PILE.get(), BakedModelFirewoodPile::new);
+        registerModel(event, EvolutionItems.modular_tool.get(), BakedModelModularTool::new);
     }
 
-    private static void registerModel(ModelBakeEvent event, Block block, Function<IBakedModel, IBakedModel> newModel) {
+    private static void registerModel(ModelBakeEvent event, Item item, Function<BakedModel, BakedModel> newModel) {
+        ModelResourceLocation modelResLoc = new ModelResourceLocation(item.getRegistryName(), "inventory");
+        BakedModel oldModel = event.getModelManager().getModel(modelResLoc);
+        event.getModelRegistry().put(modelResLoc, newModel.apply(oldModel));
+    }
+
+    private static void registerModel(ModelBakeEvent event, Block block, Function<BakedModel, BakedModel> newModel) {
         for (BlockState state : block.getStateDefinition().getPossibleStates()) {
             //noinspection ObjectAllocationInLoop
-            ModelResourceLocation modelResLoc = BlockModelShapes.stateToModelLocation(state);
-            IBakedModel existingModel = event.getModelRegistry().get(modelResLoc);
+            ModelResourceLocation modelResLoc = BlockModelShaper.stateToModelLocation(state);
+            BakedModel existingModel = event.getModelRegistry().get(modelResLoc);
             if (existingModel == null) {
-                Evolution.LOGGER.warn("Did not find the expected vanilla baked model(s) for {} in registry", block);
+                Evolution.warn("Did not find the expected vanilla baked model(s) for {} in registry", block);
             }
             else {
                 event.getModelRegistry().put(modelResLoc, newModel.apply(existingModel));
@@ -48,13 +58,13 @@ public final class ModelRegistry {
         }
     }
 
-    private static <T> void registerModel(ModelBakeEvent event, Block block, T t, BiFunction<IBakedModel, T, IBakedModel> newModel) {
+    private static <T> void registerModel(ModelBakeEvent event, Block block, T t, BiFunction<BakedModel, T, BakedModel> newModel) {
         for (BlockState state : block.getStateDefinition().getPossibleStates()) {
             //noinspection ObjectAllocationInLoop
-            ModelResourceLocation modelResLoc = BlockModelShapes.stateToModelLocation(state);
-            IBakedModel existingModel = event.getModelRegistry().get(modelResLoc);
+            ModelResourceLocation modelResLoc = BlockModelShaper.stateToModelLocation(state);
+            BakedModel existingModel = event.getModelRegistry().get(modelResLoc);
             if (existingModel == null) {
-                Evolution.LOGGER.warn("Did not find the expected vanilla baked model(s) for {} in registry", block);
+                Evolution.warn("Did not find the expected vanilla baked model(s) for {} in registry", block);
             }
             else {
                 event.getModelRegistry().put(modelResLoc, newModel.apply(existingModel, t));

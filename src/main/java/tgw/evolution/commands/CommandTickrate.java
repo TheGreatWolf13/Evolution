@@ -4,17 +4,17 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.TranslatableComponent;
 import tgw.evolution.hooks.TickrateChanger;
 
-public class CommandTickrate implements Command<CommandSource> {
+public class CommandTickrate implements Command<CommandSourceStack> {
 
-    private static final Command<CommandSource> CMD = new CommandTickrate();
+    private static final Command<CommandSourceStack> CMD = new CommandTickrate();
     private static final FloatArgumentType TPS = FloatArgumentType.floatArg(TickrateChanger.MIN_TICKRATE, TickrateChanger.MAX_TICKRATE);
 
-    public static void register(CommandDispatcher<CommandSource> dispatcher) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("tickrate")
                                     .requires(cs -> cs.hasPermission(3))
                                     .executes(CMD)
@@ -23,19 +23,16 @@ public class CommandTickrate implements Command<CommandSource> {
     }
 
     @Override
-    public int run(CommandContext<CommandSource> context) {
+    public int run(CommandContext<CommandSourceStack> context) {
         String input = context.getInput();
-        CommandSource source = context.getSource();
+        CommandSourceStack source = context.getSource();
         float tickrate = Float.NaN;
         switch (input) {
-            case "/tickrate": {
-                source.sendSuccess(new TranslationTextComponent("command.evolution.tickrate.current", TickrateChanger.getCurrentTickrate()), false);
+            case "/tickrate" -> {
+                source.sendSuccess(new TranslatableComponent("command.evolution.tickrate.current", TickrateChanger.getCurrentTickrate()), false);
                 return SINGLE_SUCCESS;
             }
-            case "/tickrate default": {
-                tickrate = 20;
-                break;
-            }
+            case "/tickrate default" -> tickrate = 20;
         }
         if (Float.isNaN(tickrate)) {
             tickrate = FloatArgumentType.getFloat(context, "tps");
@@ -44,7 +41,7 @@ public class CommandTickrate implements Command<CommandSource> {
         if (!change) {
             return 0;
         }
-        source.sendSuccess(new TranslationTextComponent("command.evolution.tickrate.change", tickrate), true);
+        source.sendSuccess(new TranslatableComponent("command.evolution.tickrate.change", tickrate), true);
         return SINGLE_SUCCESS;
     }
 }

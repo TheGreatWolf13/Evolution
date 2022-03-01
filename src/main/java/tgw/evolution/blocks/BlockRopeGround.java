@@ -1,23 +1,23 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.StateContainer;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Mirror;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.Rotation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
@@ -31,12 +31,12 @@ public class BlockRopeGround extends BlockGeneric implements IReplaceable {
         this.registerDefaultState(this.defaultBlockState().setValue(DIRECTION_HORIZONTAL, Direction.NORTH));
     }
 
-    public static boolean isSupported(IWorldReader world, BlockPos pos, Direction facing) {
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+    public static boolean isSupported(BlockGetter level, BlockPos pos, Direction facing) {
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         mutablePos.set(pos);
         for (int ropeCount = 1; ropeCount < 64; ropeCount++) {
             mutablePos = mutablePos.move(facing);
-            BlockState currentState = world.getBlockState(mutablePos);
+            BlockState currentState = level.getBlockState(mutablePos);
             if (currentState.getBlock() instanceof IRopeSupport) {
                 if (!((IRopeSupport) currentState.getBlock()).canSupport(currentState, facing.getOpposite())) {
                     return false;
@@ -65,7 +65,7 @@ public class BlockRopeGround extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+    public boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
         if (!isSupported(world, pos, state.getValue(DIRECTION_HORIZONTAL))) {
             return false;
         }
@@ -73,12 +73,17 @@ public class BlockRopeGround extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(DIRECTION_HORIZONTAL);
     }
 
     @Override
-    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
+        return new ItemStack(EvolutionItems.rope.get());
+    }
+
+    @Override
+    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
         return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.rope.get()));
     }
 
@@ -88,12 +93,7 @@ public class BlockRopeGround extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
-        return new ItemStack(EvolutionItems.rope.get());
-    }
-
-    @Override
-    public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
         return state.getValue(DIRECTION_HORIZONTAL).getAxis() == Direction.Axis.X ? EvolutionHitBoxes.ROPE_GROUND_X : EvolutionHitBoxes.ROPE_GROUND_Z;
     }
 
@@ -108,21 +108,21 @@ public class BlockRopeGround extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!world.isClientSide) {
-            if (!state.canSurvive(world, pos)) {
-                dropResources(state, world, pos);
-                world.removeBlock(pos, false);
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!level.isClientSide) {
+            if (!state.canSurvive(level, pos)) {
+                dropResources(state, level, pos);
+                level.removeBlock(pos, false);
             }
         }
     }
 
     @Override
-    public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!world.isClientSide) {
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!level.isClientSide) {
             Direction opposite = state.getValue(DIRECTION_HORIZONTAL).getOpposite();
-            if (!(world.getBlockState(pos.relative(opposite)).getBlock() == this)) {
-                BlockUtils.scheduleBlockTick(world, pos.below().relative(opposite), 2);
+            if (!(level.getBlockState(pos.relative(opposite)).getBlock() == this)) {
+                BlockUtils.scheduleBlockTick(level, pos.below().relative(opposite), 2);
             }
         }
     }

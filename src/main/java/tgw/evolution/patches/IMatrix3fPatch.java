@@ -1,8 +1,8 @@
 package tgw.evolution.patches;
 
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.vector.Quaternion;
-import net.minecraft.util.math.vector.Vector3f;
+import com.mojang.math.Quaternion;
+import com.mojang.math.Vector3f;
+import net.minecraft.core.Direction;
 
 public interface IMatrix3fPatch {
 

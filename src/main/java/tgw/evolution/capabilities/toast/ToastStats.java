@@ -1,22 +1,22 @@
 package tgw.evolution.capabilities.toast;
 
+import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCToast;
 import tgw.evolution.util.toast.Toasts;
 
 public class ToastStats implements IToastData {
 
-    private final IntSet unlocked = new IntOpenHashSet();
+    private final IntCollection unlocked = new IntOpenHashSet();
 
     @Override
-    public void deserializeNBT(CompoundNBT nbt) {
+    public void deserializeNBT(CompoundTag nbt) {
         this.unlocked.clear();
         int[] unlocked = nbt.getIntArray("Unlocked");
         for (int id : unlocked) {
@@ -25,14 +25,14 @@ public class ToastStats implements IToastData {
     }
 
     @Override
-    public CompoundNBT serializeNBT() {
-        CompoundNBT nbt = new CompoundNBT();
+    public CompoundTag serializeNBT() {
+        CompoundTag nbt = new CompoundTag();
         nbt.putIntArray("Unlocked", this.unlocked.toIntArray());
         return nbt;
     }
 
     @Override
-    public void trigger(ServerPlayerEntity player, ItemStack stack) {
+    public void trigger(ServerPlayer player, ItemStack stack) {
         Item trigger = stack.getItem();
         int id = Toasts.getRecipeIdFor(trigger);
         if (id != -1) {

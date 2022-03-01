@@ -1,8 +1,8 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.Evolution;
 
 import java.util.function.Supplier;
@@ -15,11 +15,11 @@ public class PacketSCMultiplayerPause implements IPacket {
         this.paused = paused;
     }
 
-    public static PacketSCMultiplayerPause decode(PacketBuffer buffer) {
+    public static PacketSCMultiplayerPause decode(FriendlyByteBuf buffer) {
         return new PacketSCMultiplayerPause(buffer.readBoolean());
     }
 
-    public static void encode(PacketSCMultiplayerPause packet, PacketBuffer buffer) {
+    public static void encode(PacketSCMultiplayerPause packet, FriendlyByteBuf buffer) {
         buffer.writeBoolean(packet.paused);
     }
 

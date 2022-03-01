@@ -1,7 +1,7 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.advancements.DisplayInfo;
-import net.minecraft.advancements.PlayerAdvancements;
+import net.minecraft.server.PlayerAdvancements;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;

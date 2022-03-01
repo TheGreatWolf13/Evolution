@@ -1,26 +1,27 @@
 package tgw.evolution.blocks.tileentities;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.item.Item;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.items.ItemFirewood;
-import tgw.evolution.util.BlockFlags;
-import tgw.evolution.util.WoodVariant;
+import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.constants.WoodVariant;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
 
-public class TEFirewoodPile extends TileEntity {
+public class TEFirewoodPile extends BlockEntity {
 
     private int currentIndex;
     private byte[] firewood = new byte[16];
 
-    public TEFirewoodPile() {
-        super(EvolutionTEs.FIREWOOD_PILE.get());
+    public TEFirewoodPile(BlockPos pos, BlockState state) {
+        super(EvolutionTEs.FIREWOOD_PILE.get(), pos, state);
         Arrays.fill(this.firewood, (byte) -1);
     }
 
@@ -44,18 +45,20 @@ public class TEFirewoodPile extends TileEntity {
 
     @Nullable
     @Override
-    public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.worldPosition, 30, this.getUpdateTag());
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
-    public CompoundNBT getUpdateTag() {
-        return this.save(new CompoundNBT());
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = new CompoundTag();
+        this.saveAdditional(tag);
+        return tag;
     }
 
     @Override
-    public void load(BlockState state, CompoundNBT compound) {
-        super.load(state, compound);
+    public void load(CompoundTag compound) {
+        super.load(compound);
         this.firewood = compound.getByteArray("Firewood");
         int i;
         for (i = 0; i < 16; i++) {
@@ -67,8 +70,8 @@ public class TEFirewoodPile extends TileEntity {
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
-        this.handleUpdateTag(this.level.getBlockState(this.worldPosition), packet.getTag());
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        this.handleUpdateTag(packet.getTag());
         this.level.sendBlockUpdated(this.worldPosition,
                                     this.level.getBlockState(this.worldPosition),
                                     this.level.getBlockState(this.worldPosition),
@@ -89,9 +92,9 @@ public class TEFirewoodPile extends TileEntity {
     }
 
     @Override
-    public CompoundNBT save(CompoundNBT compound) {
+    protected void saveAdditional(CompoundTag compound) {
+        super.saveAdditional(compound);
         compound.putByteArray("Firewood", this.firewood);
-        return super.save(compound);
     }
 
     public void sendRenderUpdate() {

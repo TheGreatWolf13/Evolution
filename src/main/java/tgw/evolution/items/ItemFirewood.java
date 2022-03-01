@@ -1,21 +1,21 @@
 package tgw.evolution.items;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.blocks.BlockFirewoodPile;
 import tgw.evolution.blocks.tileentities.TEFirewoodPile;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.util.WoodVariant;
+import tgw.evolution.util.constants.WoodVariant;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -32,7 +32,7 @@ public class ItemFirewood extends ItemGenericPlaceable {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(EvolutionTexts.TOOLTIP_FIREWOOD_PILE);
     }
 
@@ -43,10 +43,10 @@ public class ItemFirewood extends ItemGenericPlaceable {
 
     @Nullable
     @Override
-    public BlockState getCustomState(BlockItemUseContext context) {
-        World world = context.getLevel();
+    public BlockState getCustomState(BlockPlaceContext context) {
+        Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
-        BlockState state = world.getBlockState(pos);
+        BlockState state = level.getBlockState(pos);
         int count = state.getValue(EvolutionBStates.FIREWOOD_COUNT);
         if (count < 16) {
             return state.setValue(EvolutionBStates.FIREWOOD_COUNT, count + 1);
@@ -56,7 +56,7 @@ public class ItemFirewood extends ItemGenericPlaceable {
 
     @Nullable
     @Override
-    public BlockState getSneakingState(BlockItemUseContext context) {
+    public BlockState getSneakingState(BlockPlaceContext context) {
         return EvolutionBlocks.FIREWOOD_PILE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, context.getHorizontalDirection());
     }
 
@@ -65,14 +65,14 @@ public class ItemFirewood extends ItemGenericPlaceable {
     }
 
     @Override
-    public void sucessPlaceLogic(BlockItemUseContext context) {
+    public void sucessPlaceLogic(BlockPlaceContext context) {
         ItemStack stack = context.getItemInHand();
         Item item = stack.getItem();
-        if (item instanceof ItemFirewood) {
-            World world = context.getLevel();
+        if (item instanceof ItemFirewood firewood) {
+            Level level = context.getLevel();
             BlockPos pos = context.getClickedPos();
-            TEFirewoodPile tile = (TEFirewoodPile) world.getBlockEntity(pos);
-            tile.addFirewood((ItemFirewood) item);
+            TEFirewoodPile tile = (TEFirewoodPile) level.getBlockEntity(pos);
+            tile.addFirewood(firewood);
         }
     }
 }

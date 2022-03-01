@@ -1,29 +1,27 @@
 package tgw.evolution.init;
 
-import net.minecraft.block.Block;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.item.Item;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockLog;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
-import tgw.evolution.client.renderer.item.RenderStackItemJavelin;
 import tgw.evolution.items.*;
-import tgw.evolution.test.ItemChessboard;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.RockVariant;
-import tgw.evolution.util.WoodVariant;
+import tgw.evolution.util.constants.RockVariant;
+import tgw.evolution.util.constants.WoodVariant;
+import tgw.evolution.util.math.MathHelper;
 
 import java.util.function.Supplier;
 
 import static tgw.evolution.init.EvolutionBlocks.*;
-import static tgw.evolution.util.RockVariant.*;
-import static tgw.evolution.util.WoodVariant.*;
+import static tgw.evolution.util.constants.RockVariant.*;
+import static tgw.evolution.util.constants.WoodVariant.*;
 
 @SuppressWarnings("unused")
 @EventBusSubscriber
@@ -31,10 +29,14 @@ public final class EvolutionItems {
 
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Evolution.MODID);
     //Dev
-    public static final RegistryObject<Item> dev_drink = ITEMS.register("dev_drink", () -> new ItemDevDrink(propDev()));
-    public static final RegistryObject<Item> chessboard = ITEMS.register("mbe15_item_chessboard_registry_name", ItemChessboard::new);
+    public static final RegistryObject<Item> modular_tool = ITEMS.register("modular_tool", () -> new ItemModularTool(propDev()));
+    public static final RegistryObject<Item> dev_food = ITEMS.register("dev_food",
+                                                                       () -> new ItemFood(propDev(), new IConsumable.FoodProperties(250)));
+    public static final RegistryObject<Item> dev_drink = ITEMS.register("dev_drink",
+                                                                        () -> new ItemDrink(propDev(), new IConsumable.DrinkProperties(250)));
     public static final RegistryObject<Item> debug_item = ITEMS.register("debug_item", () -> item(propDev()));
     public static final RegistryObject<Item> placeholder_block = ITEMS.register("placeholder_block", () -> itemBlock(PLACEHOLDER_BLOCK, propDev()));
+    public static final RegistryObject<Item> cricket = ITEMS.register("cricket", () -> new ItemCricket(propDev()));
     //Stick
     public static final RegistryObject<Item> stick = ITEMS.register("stick", () -> new ItemStick(STICK.get(), propTreesAndWood()));
     //Stone
@@ -387,59 +389,50 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> axe_head_shale = ITEMS.register("axe_head_shale", EvolutionItems::stoneHeads);
     public static final RegistryObject<Item> axe_head_slate = ITEMS.register("axe_head_slate", EvolutionItems::stoneHeads);
     //Axes
-    public static final RegistryObject<Item> axe_andesite = ITEMS.register("axe_andesite", () -> axeStone(EvolutionToolMaterials.STONE_ANDESITE));
-    public static final RegistryObject<Item> axe_basalt = ITEMS.register("axe_basalt", () -> axeStone(EvolutionToolMaterials.STONE_BASALT));
-    public static final RegistryObject<Item> axe_chalk = ITEMS.register("axe_chalk", () -> axeStone(EvolutionToolMaterials.STONE_CHALK));
-    public static final RegistryObject<Item> axe_chert = ITEMS.register("axe_chert", () -> axeStone(EvolutionToolMaterials.STONE_CHERT));
-    public static final RegistryObject<Item> axe_conglomerate = ITEMS.register("axe_conglomerate",
-                                                                               () -> axeStone(EvolutionToolMaterials.STONE_CONGLOMERATE));
-    public static final RegistryObject<Item> axe_dacite = ITEMS.register("axe_dacite", () -> axeStone(EvolutionToolMaterials.STONE_DACITE));
-    public static final RegistryObject<Item> axe_diorite = ITEMS.register("axe_diorite", () -> axeStone(EvolutionToolMaterials.STONE_DIORITE));
-    public static final RegistryObject<Item> axe_dolomite = ITEMS.register("axe_dolomite", () -> axeStone(EvolutionToolMaterials.STONE_DOLOMITE));
-    public static final RegistryObject<Item> axe_gabbro = ITEMS.register("axe_gabbro", () -> axeStone(EvolutionToolMaterials.STONE_GABBRO));
-    public static final RegistryObject<Item> axe_gneiss = ITEMS.register("axe_gneiss", () -> axeStone(EvolutionToolMaterials.STONE_GNEISS));
-    public static final RegistryObject<Item> axe_granite = ITEMS.register("axe_granite", () -> axeStone(EvolutionToolMaterials.STONE_GRANITE));
-    public static final RegistryObject<Item> axe_limestone = ITEMS.register("axe_limestone", () -> axeStone(EvolutionToolMaterials.STONE_LIMESTONE));
-    public static final RegistryObject<Item> axe_marble = ITEMS.register("axe_marble", () -> axeStone(EvolutionToolMaterials.STONE_MARBLE));
-    public static final RegistryObject<Item> axe_phyllite = ITEMS.register("axe_phyllite", () -> axeStone(EvolutionToolMaterials.STONE_PHYLLITE));
-    public static final RegistryObject<Item> axe_quartzite = ITEMS.register("axe_quartzite", () -> axeStone(EvolutionToolMaterials.STONE_QUARTZITE));
+    public static final RegistryObject<Item> axe_andesite = ITEMS.register("axe_andesite", () -> axeStone(ItemMaterial.STONE_ANDESITE));
+    public static final RegistryObject<Item> axe_basalt = ITEMS.register("axe_basalt", () -> axeStone(ItemMaterial.STONE_BASALT));
+    public static final RegistryObject<Item> axe_chalk = ITEMS.register("axe_chalk", () -> axeStone(ItemMaterial.STONE_CHALK));
+    public static final RegistryObject<Item> axe_chert = ITEMS.register("axe_chert", () -> axeStone(ItemMaterial.STONE_CHERT));
+    public static final RegistryObject<Item> axe_conglomerate = ITEMS.register("axe_conglomerate", () -> axeStone(ItemMaterial.STONE_CONGLOMERATE));
+    public static final RegistryObject<Item> axe_dacite = ITEMS.register("axe_dacite", () -> axeStone(ItemMaterial.STONE_DACITE));
+    public static final RegistryObject<Item> axe_diorite = ITEMS.register("axe_diorite", () -> axeStone(ItemMaterial.STONE_DIORITE));
+    public static final RegistryObject<Item> axe_dolomite = ITEMS.register("axe_dolomite", () -> axeStone(ItemMaterial.STONE_DOLOMITE));
+    public static final RegistryObject<Item> axe_gabbro = ITEMS.register("axe_gabbro", () -> axeStone(ItemMaterial.STONE_GABBRO));
+    public static final RegistryObject<Item> axe_gneiss = ITEMS.register("axe_gneiss", () -> axeStone(ItemMaterial.STONE_GNEISS));
+    public static final RegistryObject<Item> axe_granite = ITEMS.register("axe_granite", () -> axeStone(ItemMaterial.STONE_GRANITE));
+    public static final RegistryObject<Item> axe_limestone = ITEMS.register("axe_limestone", () -> axeStone(ItemMaterial.STONE_LIMESTONE));
+    public static final RegistryObject<Item> axe_marble = ITEMS.register("axe_marble", () -> axeStone(ItemMaterial.STONE_MARBLE));
+    public static final RegistryObject<Item> axe_phyllite = ITEMS.register("axe_phyllite", () -> axeStone(ItemMaterial.STONE_PHYLLITE));
+    public static final RegistryObject<Item> axe_quartzite = ITEMS.register("axe_quartzite", () -> axeStone(ItemMaterial.STONE_QUARTZITE));
     public static final RegistryObject<Item> axe_red_sandstone = ITEMS.register("axe_red_sandstone",
-                                                                                () -> axeStone(EvolutionToolMaterials.STONE_RED_SANDSTONE));
-    public static final RegistryObject<Item> axe_sandstone = ITEMS.register("axe_sandstone", () -> axeStone(EvolutionToolMaterials.STONE_SANDSTONE));
-    public static final RegistryObject<Item> axe_schist = ITEMS.register("axe_schist", () -> axeStone(EvolutionToolMaterials.STONE_SCHIST));
-    public static final RegistryObject<Item> axe_shale = ITEMS.register("axe_shale", () -> axeStone(EvolutionToolMaterials.STONE_SHALE));
-    public static final RegistryObject<Item> axe_slate = ITEMS.register("axe_slate", () -> axeStone(EvolutionToolMaterials.STONE_SLATE));
+                                                                                () -> axeStone(ItemMaterial.STONE_RED_SANDSTONE));
+    public static final RegistryObject<Item> axe_sandstone = ITEMS.register("axe_sandstone", () -> axeStone(ItemMaterial.STONE_SANDSTONE));
+    public static final RegistryObject<Item> axe_schist = ITEMS.register("axe_schist", () -> axeStone(ItemMaterial.STONE_SCHIST));
+    public static final RegistryObject<Item> axe_shale = ITEMS.register("axe_shale", () -> axeStone(ItemMaterial.STONE_SHALE));
+    public static final RegistryObject<Item> axe_slate = ITEMS.register("axe_slate", () -> axeStone(ItemMaterial.STONE_SLATE));
     //Shovels
-    public static final RegistryObject<Item> shovel_andesite = ITEMS.register("shovel_andesite",
-                                                                              () -> shovelStone(EvolutionToolMaterials.STONE_ANDESITE));
-    public static final RegistryObject<Item> shovel_basalt = ITEMS.register("shovel_basalt", () -> shovelStone(EvolutionToolMaterials.STONE_BASALT));
-    public static final RegistryObject<Item> shovel_chalk = ITEMS.register("shovel_chalk", () -> shovelStone(EvolutionToolMaterials.STONE_CHALK));
-    public static final RegistryObject<Item> shovel_chert = ITEMS.register("shovel_chert", () -> shovelStone(EvolutionToolMaterials.STONE_CHERT));
+    public static final RegistryObject<Item> shovel_andesite = ITEMS.register("shovel_andesite", () -> shovelStone(ItemMaterial.STONE_ANDESITE));
+    public static final RegistryObject<Item> shovel_basalt = ITEMS.register("shovel_basalt", () -> shovelStone(ItemMaterial.STONE_BASALT));
+    public static final RegistryObject<Item> shovel_chalk = ITEMS.register("shovel_chalk", () -> shovelStone(ItemMaterial.STONE_CHALK));
+    public static final RegistryObject<Item> shovel_chert = ITEMS.register("shovel_chert", () -> shovelStone(ItemMaterial.STONE_CHERT));
     public static final RegistryObject<Item> shovel_conglomerate = ITEMS.register("shovel_conglomerate",
-                                                                                  () -> shovelStone(EvolutionToolMaterials.STONE_CONGLOMERATE));
-    public static final RegistryObject<Item> shovel_dacite = ITEMS.register("shovel_dacite", () -> shovelStone(EvolutionToolMaterials.STONE_DACITE));
-    public static final RegistryObject<Item> shovel_diorite = ITEMS.register("shovel_diorite",
-                                                                             () -> shovelStone(EvolutionToolMaterials.STONE_DIORITE));
-    public static final RegistryObject<Item> shovel_dolomite = ITEMS.register("shovel_dolomite",
-                                                                              () -> shovelStone(EvolutionToolMaterials.STONE_DOLOMITE));
-    public static final RegistryObject<Item> shovel_gabbro = ITEMS.register("shovel_gabbro", () -> shovelStone(EvolutionToolMaterials.STONE_GABBRO));
-    public static final RegistryObject<Item> shovel_gneiss = ITEMS.register("shovel_gneiss", () -> shovelStone(EvolutionToolMaterials.STONE_GNEISS));
-    public static final RegistryObject<Item> shovel_granite = ITEMS.register("shovel_granite",
-                                                                             () -> shovelStone(EvolutionToolMaterials.STONE_GRANITE));
-    public static final RegistryObject<Item> shovel_limestone = ITEMS.register("shovel_limestone",
-                                                                               () -> shovelStone(EvolutionToolMaterials.STONE_LIMESTONE));
-    public static final RegistryObject<Item> shovel_marble = ITEMS.register("shovel_marble", () -> shovelStone(EvolutionToolMaterials.STONE_MARBLE));
-    public static final RegistryObject<Item> shovel_phyllite = ITEMS.register("shovel_phyllite",
-                                                                              () -> shovelStone(EvolutionToolMaterials.STONE_PHYLLITE));
-    public static final RegistryObject<Item> shovel_quartzite = ITEMS.register("shovel_quartzite",
-                                                                               () -> shovelStone(EvolutionToolMaterials.STONE_QUARTZITE));
+                                                                                  () -> shovelStone(ItemMaterial.STONE_CONGLOMERATE));
+    public static final RegistryObject<Item> shovel_dacite = ITEMS.register("shovel_dacite", () -> shovelStone(ItemMaterial.STONE_DACITE));
+    public static final RegistryObject<Item> shovel_diorite = ITEMS.register("shovel_diorite", () -> shovelStone(ItemMaterial.STONE_DIORITE));
+    public static final RegistryObject<Item> shovel_dolomite = ITEMS.register("shovel_dolomite", () -> shovelStone(ItemMaterial.STONE_DOLOMITE));
+    public static final RegistryObject<Item> shovel_gabbro = ITEMS.register("shovel_gabbro", () -> shovelStone(ItemMaterial.STONE_GABBRO));
+    public static final RegistryObject<Item> shovel_gneiss = ITEMS.register("shovel_gneiss", () -> shovelStone(ItemMaterial.STONE_GNEISS));
+    public static final RegistryObject<Item> shovel_granite = ITEMS.register("shovel_granite", () -> shovelStone(ItemMaterial.STONE_GRANITE));
+    public static final RegistryObject<Item> shovel_limestone = ITEMS.register("shovel_limestone", () -> shovelStone(ItemMaterial.STONE_LIMESTONE));
+    public static final RegistryObject<Item> shovel_marble = ITEMS.register("shovel_marble", () -> shovelStone(ItemMaterial.STONE_MARBLE));
+    public static final RegistryObject<Item> shovel_phyllite = ITEMS.register("shovel_phyllite", () -> shovelStone(ItemMaterial.STONE_PHYLLITE));
+    public static final RegistryObject<Item> shovel_quartzite = ITEMS.register("shovel_quartzite", () -> shovelStone(ItemMaterial.STONE_QUARTZITE));
     public static final RegistryObject<Item> shovel_red_sandstone = ITEMS.register("shovel_red_sandstone",
-                                                                                   () -> shovelStone(EvolutionToolMaterials.STONE_RED_SANDSTONE));
-    public static final RegistryObject<Item> shovel_sandstone = ITEMS.register("shovel_sandstone",
-                                                                               () -> shovelStone(EvolutionToolMaterials.STONE_SANDSTONE));
-    public static final RegistryObject<Item> shovel_schist = ITEMS.register("shovel_schist", () -> shovelStone(EvolutionToolMaterials.STONE_SCHIST));
-    public static final RegistryObject<Item> shovel_shale = ITEMS.register("shovel_shale", () -> shovelStone(EvolutionToolMaterials.STONE_SHALE));
-    public static final RegistryObject<Item> shovel_slate = ITEMS.register("shovel_slate", () -> shovelStone(EvolutionToolMaterials.STONE_SLATE));
+                                                                                   () -> shovelStone(ItemMaterial.STONE_RED_SANDSTONE));
+    public static final RegistryObject<Item> shovel_sandstone = ITEMS.register("shovel_sandstone", () -> shovelStone(ItemMaterial.STONE_SANDSTONE));
+    public static final RegistryObject<Item> shovel_schist = ITEMS.register("shovel_schist", () -> shovelStone(ItemMaterial.STONE_SCHIST));
+    public static final RegistryObject<Item> shovel_shale = ITEMS.register("shovel_shale", () -> shovelStone(ItemMaterial.STONE_SHALE));
+    public static final RegistryObject<Item> shovel_slate = ITEMS.register("shovel_slate", () -> shovelStone(ItemMaterial.STONE_SLATE));
     //Planks
     public static final RegistryObject<Item> planks_acacia = ITEMS.register("planks_acacia", () -> woodBlock(PLANKS_ACACIA));
     public static final RegistryObject<Item> planks_aspen = ITEMS.register("planks_aspen", () -> woodBlock(PLANKS_ASPEN));
@@ -486,34 +479,28 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> javelin_head_shale = ITEMS.register("javelin_head_shale", EvolutionItems::stoneHeads);
     public static final RegistryObject<Item> javelin_head_slate = ITEMS.register("javelin_head_slate", EvolutionItems::stoneHeads);
     //Javelins
-    public static final RegistryObject<Item> javelin_andesite = ITEMS.register("javelin_andesite",
-                                                                               () -> javelin(EvolutionToolMaterials.STONE_ANDESITE));
-    public static final RegistryObject<Item> javelin_basalt = ITEMS.register("javelin_basalt", () -> javelin(EvolutionToolMaterials.STONE_BASALT));
-    public static final RegistryObject<Item> javelin_chalk = ITEMS.register("javelin_chalk", () -> javelin(EvolutionToolMaterials.STONE_CHALK));
-    public static final RegistryObject<Item> javelin_chert = ITEMS.register("javelin_chert", () -> javelin(EvolutionToolMaterials.STONE_CHERT));
+    public static final RegistryObject<Item> javelin_andesite = ITEMS.register("javelin_andesite", () -> javelin(ItemMaterial.STONE_ANDESITE));
+    public static final RegistryObject<Item> javelin_basalt = ITEMS.register("javelin_basalt", () -> javelin(ItemMaterial.STONE_BASALT));
+    public static final RegistryObject<Item> javelin_chalk = ITEMS.register("javelin_chalk", () -> javelin(ItemMaterial.STONE_CHALK));
+    public static final RegistryObject<Item> javelin_chert = ITEMS.register("javelin_chert", () -> javelin(ItemMaterial.STONE_CHERT));
     public static final RegistryObject<Item> javelin_conglomerate = ITEMS.register("javelin_conglomerate",
-                                                                                   () -> javelin(EvolutionToolMaterials.STONE_CONGLOMERATE));
-    public static final RegistryObject<Item> javelin_dacite = ITEMS.register("javelin_dacite", () -> javelin(EvolutionToolMaterials.STONE_DACITE));
-    public static final RegistryObject<Item> javelin_diorite = ITEMS.register("javelin_diorite", () -> javelin(EvolutionToolMaterials.STONE_DIORITE));
-    public static final RegistryObject<Item> javelin_dolomite = ITEMS.register("javelin_dolomite",
-                                                                               () -> javelin(EvolutionToolMaterials.STONE_DOLOMITE));
-    public static final RegistryObject<Item> javelin_gabbro = ITEMS.register("javelin_gabbro", () -> javelin(EvolutionToolMaterials.STONE_GABBRO));
-    public static final RegistryObject<Item> javelin_gneiss = ITEMS.register("javelin_gneiss", () -> javelin(EvolutionToolMaterials.STONE_GNEISS));
-    public static final RegistryObject<Item> javelin_granite = ITEMS.register("javelin_granite", () -> javelin(EvolutionToolMaterials.STONE_GRANITE));
-    public static final RegistryObject<Item> javelin_limestone = ITEMS.register("javelin_limestone",
-                                                                                () -> javelin(EvolutionToolMaterials.STONE_LIMESTONE));
-    public static final RegistryObject<Item> javelin_marble = ITEMS.register("javelin_marble", () -> javelin(EvolutionToolMaterials.STONE_MARBLE));
-    public static final RegistryObject<Item> javelin_phyllite = ITEMS.register("javelin_phyllite",
-                                                                               () -> javelin(EvolutionToolMaterials.STONE_PHYLLITE));
-    public static final RegistryObject<Item> javelin_quartzite = ITEMS.register("javelin_quartzite",
-                                                                                () -> javelin(EvolutionToolMaterials.STONE_QUARTZITE));
+                                                                                   () -> javelin(ItemMaterial.STONE_CONGLOMERATE));
+    public static final RegistryObject<Item> javelin_dacite = ITEMS.register("javelin_dacite", () -> javelin(ItemMaterial.STONE_DACITE));
+    public static final RegistryObject<Item> javelin_diorite = ITEMS.register("javelin_diorite", () -> javelin(ItemMaterial.STONE_DIORITE));
+    public static final RegistryObject<Item> javelin_dolomite = ITEMS.register("javelin_dolomite", () -> javelin(ItemMaterial.STONE_DOLOMITE));
+    public static final RegistryObject<Item> javelin_gabbro = ITEMS.register("javelin_gabbro", () -> javelin(ItemMaterial.STONE_GABBRO));
+    public static final RegistryObject<Item> javelin_gneiss = ITEMS.register("javelin_gneiss", () -> javelin(ItemMaterial.STONE_GNEISS));
+    public static final RegistryObject<Item> javelin_granite = ITEMS.register("javelin_granite", () -> javelin(ItemMaterial.STONE_GRANITE));
+    public static final RegistryObject<Item> javelin_limestone = ITEMS.register("javelin_limestone", () -> javelin(ItemMaterial.STONE_LIMESTONE));
+    public static final RegistryObject<Item> javelin_marble = ITEMS.register("javelin_marble", () -> javelin(ItemMaterial.STONE_MARBLE));
+    public static final RegistryObject<Item> javelin_phyllite = ITEMS.register("javelin_phyllite", () -> javelin(ItemMaterial.STONE_PHYLLITE));
+    public static final RegistryObject<Item> javelin_quartzite = ITEMS.register("javelin_quartzite", () -> javelin(ItemMaterial.STONE_QUARTZITE));
     public static final RegistryObject<Item> javelin_red_sandstone = ITEMS.register("javelin_red_sandstone",
-                                                                                    () -> javelin(EvolutionToolMaterials.STONE_RED_SANDSTONE));
-    public static final RegistryObject<Item> javelin_sandstone = ITEMS.register("javelin_sandstone",
-                                                                                () -> javelin(EvolutionToolMaterials.STONE_SANDSTONE));
-    public static final RegistryObject<Item> javelin_schist = ITEMS.register("javelin_schist", () -> javelin(EvolutionToolMaterials.STONE_SCHIST));
-    public static final RegistryObject<Item> javelin_shale = ITEMS.register("javelin_shale", () -> javelin(EvolutionToolMaterials.STONE_SHALE));
-    public static final RegistryObject<Item> javelin_slate = ITEMS.register("javelin_slate", () -> javelin(EvolutionToolMaterials.STONE_SLATE));
+                                                                                    () -> javelin(ItemMaterial.STONE_RED_SANDSTONE));
+    public static final RegistryObject<Item> javelin_sandstone = ITEMS.register("javelin_sandstone", () -> javelin(ItemMaterial.STONE_SANDSTONE));
+    public static final RegistryObject<Item> javelin_schist = ITEMS.register("javelin_schist", () -> javelin(ItemMaterial.STONE_SCHIST));
+    public static final RegistryObject<Item> javelin_shale = ITEMS.register("javelin_shale", () -> javelin(ItemMaterial.STONE_SHALE));
+    public static final RegistryObject<Item> javelin_slate = ITEMS.register("javelin_slate", () -> javelin(ItemMaterial.STONE_SLATE));
     //Metal Blocks
     public static final RegistryObject<Item> block_metal_copper = ITEMS.register("block_metal_copper",
                                                                                  () -> itemBlock(BLOCK_METAL_COPPER, propMetal()));
@@ -601,7 +588,7 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> plank_spruce = ITEMS.register("plank_spruce", EvolutionItems::wood);
     public static final RegistryObject<Item> plank_willow = ITEMS.register("plank_willow", EvolutionItems::wood);
     //Pickaxes
-    public static final RegistryObject<Item> pickaxe_copper = ITEMS.register("pickaxe_copper", () -> pickaxe(EvolutionToolMaterials.COPPER));
+    public static final RegistryObject<Item> pickaxe_copper = ITEMS.register("pickaxe_copper", () -> pickaxe(ItemMaterial.COPPER));
     //Chopping Blocks
     public static final RegistryObject<Item> chopping_block_acacia = ITEMS.register("chopping_block_acacia", () -> woodBlock(CHOPPING_BLOCK_ACACIA));
     public static final RegistryObject<Item> chopping_block_aspen = ITEMS.register("chopping_block_aspen", () -> woodBlock(CHOPPING_BLOCK_ASPEN));
@@ -696,36 +683,28 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> climbing_stake = ITEMS.register("climbing_stake", () -> itemBlock(CLIMBING_STAKE));
     public static final RegistryObject<Item> climbing_hook = ITEMS.register("climbing_hook", ItemClimbingHook::new);
     //Hammer
-    public static final RegistryObject<Item> hammer_andesite = ITEMS.register("hammer_andesite",
-                                                                              () -> hammerStone(EvolutionToolMaterials.STONE_ANDESITE));
-    public static final RegistryObject<Item> hammer_basalt = ITEMS.register("hammer_basalt", () -> hammerStone(EvolutionToolMaterials.STONE_BASALT));
-    public static final RegistryObject<Item> hammer_chalk = ITEMS.register("hammer_chalk", () -> hammerStone(EvolutionToolMaterials.STONE_CHALK));
-    public static final RegistryObject<Item> hammer_chert = ITEMS.register("hammer_chert", () -> hammerStone(EvolutionToolMaterials.STONE_CHERT));
+    public static final RegistryObject<Item> hammer_andesite = ITEMS.register("hammer_andesite", () -> hammerStone(ItemMaterial.STONE_ANDESITE));
+    public static final RegistryObject<Item> hammer_basalt = ITEMS.register("hammer_basalt", () -> hammerStone(ItemMaterial.STONE_BASALT));
+    public static final RegistryObject<Item> hammer_chalk = ITEMS.register("hammer_chalk", () -> hammerStone(ItemMaterial.STONE_CHALK));
+    public static final RegistryObject<Item> hammer_chert = ITEMS.register("hammer_chert", () -> hammerStone(ItemMaterial.STONE_CHERT));
     public static final RegistryObject<Item> hammer_conglomerate = ITEMS.register("hammer_conglomerate",
-                                                                                  () -> hammerStone(EvolutionToolMaterials.STONE_CONGLOMERATE));
-    public static final RegistryObject<Item> hammer_dacite = ITEMS.register("hammer_dacite", () -> hammerStone(EvolutionToolMaterials.STONE_DACITE));
-    public static final RegistryObject<Item> hammer_diorite = ITEMS.register("hammer_diorite",
-                                                                             () -> hammerStone(EvolutionToolMaterials.STONE_DIORITE));
-    public static final RegistryObject<Item> hammer_dolomite = ITEMS.register("hammer_dolomite",
-                                                                              () -> hammerStone(EvolutionToolMaterials.STONE_DOLOMITE));
-    public static final RegistryObject<Item> hammer_gabbro = ITEMS.register("hammer_gabbro", () -> hammerStone(EvolutionToolMaterials.STONE_GABBRO));
-    public static final RegistryObject<Item> hammer_gneiss = ITEMS.register("hammer_gneiss", () -> hammerStone(EvolutionToolMaterials.STONE_GNEISS));
-    public static final RegistryObject<Item> hammer_granite = ITEMS.register("hammer_granite",
-                                                                             () -> hammerStone(EvolutionToolMaterials.STONE_GRANITE));
-    public static final RegistryObject<Item> hammer_limestone = ITEMS.register("hammer_limestone",
-                                                                               () -> hammerStone(EvolutionToolMaterials.STONE_LIMESTONE));
-    public static final RegistryObject<Item> hammer_marble = ITEMS.register("hammer_marble", () -> hammerStone(EvolutionToolMaterials.STONE_MARBLE));
-    public static final RegistryObject<Item> hammer_phyllite = ITEMS.register("hammer_phyllite",
-                                                                              () -> hammerStone(EvolutionToolMaterials.STONE_PHYLLITE));
-    public static final RegistryObject<Item> hammer_quartzite = ITEMS.register("hammer_quartzite",
-                                                                               () -> hammerStone(EvolutionToolMaterials.STONE_QUARTZITE));
+                                                                                  () -> hammerStone(ItemMaterial.STONE_CONGLOMERATE));
+    public static final RegistryObject<Item> hammer_dacite = ITEMS.register("hammer_dacite", () -> hammerStone(ItemMaterial.STONE_DACITE));
+    public static final RegistryObject<Item> hammer_diorite = ITEMS.register("hammer_diorite", () -> hammerStone(ItemMaterial.STONE_DIORITE));
+    public static final RegistryObject<Item> hammer_dolomite = ITEMS.register("hammer_dolomite", () -> hammerStone(ItemMaterial.STONE_DOLOMITE));
+    public static final RegistryObject<Item> hammer_gabbro = ITEMS.register("hammer_gabbro", () -> hammerStone(ItemMaterial.STONE_GABBRO));
+    public static final RegistryObject<Item> hammer_gneiss = ITEMS.register("hammer_gneiss", () -> hammerStone(ItemMaterial.STONE_GNEISS));
+    public static final RegistryObject<Item> hammer_granite = ITEMS.register("hammer_granite", () -> hammerStone(ItemMaterial.STONE_GRANITE));
+    public static final RegistryObject<Item> hammer_limestone = ITEMS.register("hammer_limestone", () -> hammerStone(ItemMaterial.STONE_LIMESTONE));
+    public static final RegistryObject<Item> hammer_marble = ITEMS.register("hammer_marble", () -> hammerStone(ItemMaterial.STONE_MARBLE));
+    public static final RegistryObject<Item> hammer_phyllite = ITEMS.register("hammer_phyllite", () -> hammerStone(ItemMaterial.STONE_PHYLLITE));
+    public static final RegistryObject<Item> hammer_quartzite = ITEMS.register("hammer_quartzite", () -> hammerStone(ItemMaterial.STONE_QUARTZITE));
     public static final RegistryObject<Item> hammer_red_sandstone = ITEMS.register("hammer_red_sandstone",
-                                                                                   () -> hammerStone(EvolutionToolMaterials.STONE_RED_SANDSTONE));
-    public static final RegistryObject<Item> hammer_sandstone = ITEMS.register("hammer_sandstone",
-                                                                               () -> hammerStone(EvolutionToolMaterials.STONE_SANDSTONE));
-    public static final RegistryObject<Item> hammer_schist = ITEMS.register("hammer_schist", () -> hammerStone(EvolutionToolMaterials.STONE_SCHIST));
-    public static final RegistryObject<Item> hammer_shale = ITEMS.register("hammer_shale", () -> hammerStone(EvolutionToolMaterials.STONE_SHALE));
-    public static final RegistryObject<Item> hammer_slate = ITEMS.register("hammer_slate", () -> hammerStone(EvolutionToolMaterials.STONE_SLATE));
+                                                                                   () -> hammerStone(ItemMaterial.STONE_RED_SANDSTONE));
+    public static final RegistryObject<Item> hammer_sandstone = ITEMS.register("hammer_sandstone", () -> hammerStone(ItemMaterial.STONE_SANDSTONE));
+    public static final RegistryObject<Item> hammer_schist = ITEMS.register("hammer_schist", () -> hammerStone(ItemMaterial.STONE_SCHIST));
+    public static final RegistryObject<Item> hammer_shale = ITEMS.register("hammer_shale", () -> hammerStone(ItemMaterial.STONE_SHALE));
+    public static final RegistryObject<Item> hammer_slate = ITEMS.register("hammer_slate", () -> hammerStone(ItemMaterial.STONE_SLATE));
     //Stone Bricks
     public static final RegistryObject<Item> stone_bricks_andesite = ITEMS.register("stone_bricks_andesite", () -> itemBlock(STONE_BRICKS_ANDESITE));
     public static final RegistryObject<Item> stone_bricks_basalt = ITEMS.register("stone_bricks_basalt", () -> itemBlock(STONE_BRICKS_BASALT));
@@ -766,15 +745,15 @@ public final class EvolutionItems {
                                                                                          () -> bucketCreative(EvolutionFluids.SALT_WATER));
     public static final RegistryObject<Item> sword_dev = ITEMS.register("sword_dev",
                                                                         () -> new ItemSword(MathHelper.attackSpeed(0.7f),
-                                                                                            EvolutionToolMaterials.COPPER,
+                                                                                            ItemMaterial.COPPER,
                                                                                             propDev(),
-                                                                                            EvolutionToolMaterials.COPPER.getSwordMass()));
+                                                                                            ItemMaterial.COPPER.getSwordMass()));
     public static final RegistryObject<Item> shield_dev = ITEMS.register("shield_dev", () -> new ItemShield(propDev().durability(400)));
 
     private EvolutionItems() {
     }
 
-    private static Item axeStone(EvolutionToolMaterials tier) {
+    private static Item axeStone(ItemMaterial tier) {
         return new ItemAxe(tier, MathHelper.attackSpeed(1.25F), propStoneTool(), tier.getAxeMass());
     }
 
@@ -796,7 +775,7 @@ public final class EvolutionItems {
         return new ItemFirewood(variant);
     }
 
-    private static Item hammerStone(EvolutionToolMaterials tier) {
+    private static Item hammerStone(ItemMaterial tier) {
         return new ItemHammer(tier, MathHelper.attackSpeed(1.25F), propStoneTool(), tier.getHammerMass());
     }
 
@@ -820,16 +799,12 @@ public final class EvolutionItems {
         return new ItemRock(block.get(), propMisc(), name);
     }
 
-    private static Item javelin(EvolutionToolMaterials tier) {
-        return new ItemJavelin(MathHelper.attackSpeed(1.15f),
-                               tier,
-                               propStoneTool().durability(tier.getUses()).setISTER(() -> RenderStackItemJavelin::new),
-                               tier.getAttackDamageBonus(),
-                               tier.getJavelinMass(),
-                               tier.getName());
+    private static Item javelin(ItemMaterial tier) {
+        return new ItemJavelin(MathHelper.attackSpeed(1.15f), tier, propStoneTool().durability(/*tier.getUses()*/1),
+                /*tier.getAttackDamageBonus()*/0, tier.getJavelinMass(), tier.getName());
     }
 
-    private static Item pickaxe(EvolutionToolMaterials tier) {
+    private static Item pickaxe(ItemMaterial tier) {
         return new ItemPickaxe(tier, MathHelper.attackSpeed(0.85F), propMisc(), tier.getPickaxeMass());
     }
 
@@ -865,7 +840,7 @@ public final class EvolutionItems {
         ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
     }
 
-    private static Item shovelStone(EvolutionToolMaterials tier) {
+    private static Item shovelStone(ItemMaterial tier) {
         return new ItemShovel(tier, MathHelper.attackSpeed(1.0F), propStoneTool(), tier.getShovelMass());
     }
 

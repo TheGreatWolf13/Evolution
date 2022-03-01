@@ -1,28 +1,28 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.potion.Effect;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.events.ClientEvents;
 
 import java.util.function.Supplier;
 
 public class PacketSCRemoveEffect implements IPacket {
 
-    private final Effect effect;
+    private final MobEffect effect;
 
-    public PacketSCRemoveEffect(Effect effect) {
+    public PacketSCRemoveEffect(MobEffect effect) {
         this.effect = effect;
     }
 
-    public static PacketSCRemoveEffect decode(PacketBuffer buffer) {
-        Effect effect = Effect.byId(buffer.readVarInt());
+    public static PacketSCRemoveEffect decode(FriendlyByteBuf buffer) {
+        MobEffect effect = MobEffect.byId(buffer.readVarInt());
         return new PacketSCRemoveEffect(effect);
     }
 
-    public static void encode(PacketSCRemoveEffect packet, PacketBuffer buffer) {
-        buffer.writeVarInt(Effect.getId(packet.effect));
+    public static void encode(PacketSCRemoveEffect packet, FriendlyByteBuf buffer) {
+        buffer.writeVarInt(MobEffect.getId(packet.effect));
     }
 
     public static void handle(PacketSCRemoveEffect packet, Supplier<NetworkEvent.Context> context) {

@@ -1,17 +1,17 @@
 package tgw.evolution.util.damage;
 
 import com.google.common.collect.Lists;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.CombatTracker;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.CombatTracker;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
@@ -86,87 +86,87 @@ public class CombatTrackerEv extends CombatTracker {
     }
 
     @Override
-    public ITextComponent getDeathMessage() {
+    public Component getDeathMessage() {
         if (this.entries.isEmpty()) {
-            return new TranslationTextComponent("death.attack.generic", this.fighter.getDisplayName());
+            return new TranslatableComponent("death.attack.generic", this.fighter.getDisplayName());
         }
         CombatEntryEv bestEntry = this.getBestCombatEntry();
         CombatEntryEv lastEntry = this.entries.get(this.entries.size() - 1);
         Entity lastEntity = lastEntry.getDamageSrc().getEntity();
         //hit then fall
         if (bestEntry != null && lastEntry.getDamageSrc() == EvolutionDamage.FALL) {
-            ITextComponent bestEntryDisplay = bestEntry.getDamageSrcDisplayName();
+            Component bestEntryDisplay = bestEntry.getDamageSrcDisplayName();
             if (bestEntry.getDamageSrc() != EvolutionDamage.FALL && bestEntry.getDamageSrc() != EvolutionDamage.VOID) {
                 if (bestEntryDisplay != null) {
                     DamageSource bestDamageSource = bestEntry.getDamageSrc();
-                    ITextComponent itemComp;
-                    if (bestDamageSource instanceof DamageSourceEntity) {
-                        itemComp = ((DamageSourceEntity) bestDamageSource).getItemDisplay();
+                    Component itemComp;
+                    if (bestDamageSource instanceof DamageSourceEntity dse) {
+                        itemComp = dse.getItemDisplay();
                     }
                     else {
                         Entity bestEntity = bestDamageSource.getEntity();
-                        ItemStack bestStack = bestEntity instanceof LivingEntity ? ((LivingEntity) bestEntity).getMainHandItem() : ItemStack.EMPTY;
+                        ItemStack bestStack = bestEntity instanceof LivingEntity living ? living.getMainHandItem() : ItemStack.EMPTY;
                         itemComp = bestStack.getItem() instanceof IMelee ? bestStack.getHoverName() : null;
                     }
                     //was doomed to fall by using
                     if (itemComp != null) {
-                        if (this.fighter instanceof ServerPlayerEntity) {
-                            ((ServerPlayerEntity) this.fighter).awardStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
+                        if (this.fighter instanceof ServerPlayer serverPlayer) {
+                            serverPlayer.awardStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
                         }
-                        return new TranslationTextComponent("death.fell.assist.item." + getFallSuffix(bestEntry),
-                                                            this.fighter.getDisplayName(),
-                                                            bestEntryDisplay,
-                                                            itemComp);
+                        return new TranslatableComponent("death.fell.assist.item." + getFallSuffix(bestEntry),
+                                                         this.fighter.getDisplayName(),
+                                                         bestEntryDisplay,
+                                                         itemComp);
                     }
                     //was doomed to fall by
-                    if (this.fighter instanceof ServerPlayerEntity) {
-                        ((ServerPlayerEntity) this.fighter).awardStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
+                    if (this.fighter instanceof ServerPlayer serverPlayer) {
+                        serverPlayer.awardStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
                     }
-                    return new TranslationTextComponent("death.fell.assist." + getFallSuffix(bestEntry),
-                                                        this.fighter.getDisplayName(),
-                                                        bestEntryDisplay);
+                    return new TranslatableComponent("death.fell.assist." + getFallSuffix(bestEntry),
+                                                     this.fighter.getDisplayName(),
+                                                     bestEntryDisplay);
                 }
                 //was doomed to fall
-                if (this.fighter instanceof ServerPlayerEntity) {
-                    ((ServerPlayerEntity) this.fighter).awardStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
+                if (this.fighter instanceof ServerPlayer serverPlayer) {
+                    serverPlayer.awardStat(EvolutionStats.DEATH_SOURCE.get("doomed_to_fall"));
                 }
-                return new TranslationTextComponent("death.fell.killer." + getFallSuffix(bestEntry), this.fighter.getDisplayName());
+                return new TranslatableComponent("death.fell.killer." + getFallSuffix(bestEntry), this.fighter.getDisplayName());
             }
         }
         //fall then hit
         if (bestEntry != null && bestEntry.getDamageSrc() == EvolutionDamage.FALL) {
-            ITextComponent lastEntryDisplay = lastEntry.getDamageSrcDisplayName();
+            Component lastEntryDisplay = lastEntry.getDamageSrcDisplayName();
             if (lastEntryDisplay != null) {
                 DamageSource lastSource = lastEntry.getDamageSrc();
-                ITextComponent itemComp;
-                if (lastSource instanceof DamageSourceEntity) {
-                    itemComp = ((DamageSourceEntity) lastSource).getItemDisplay();
+                Component itemComp;
+                if (lastSource instanceof DamageSourceEntity dse) {
+                    itemComp = dse.getItemDisplay();
                 }
                 else {
-                    ItemStack lastStack = lastEntity instanceof LivingEntity ? ((LivingEntity) lastEntity).getMainHandItem() : ItemStack.EMPTY;
+                    ItemStack lastStack = lastEntity instanceof LivingEntity living ? living.getMainHandItem() : ItemStack.EMPTY;
                     itemComp = lastStack.getItem() instanceof IMelee ? lastStack.getHoverName() : null;
                 }
                 //fell too far and was finished by using
                 if (itemComp != null) {
-                    if (this.fighter instanceof ServerPlayerEntity) {
-                        ((ServerPlayerEntity) this.fighter).awardStat(EvolutionStats.DEATH_SOURCE.get("fall_then_finished"));
+                    if (this.fighter instanceof ServerPlayer serverPlayer) {
+                        serverPlayer.awardStat(EvolutionStats.DEATH_SOURCE.get("fall_then_finished"));
                     }
-                    return new TranslationTextComponent("death.fell.finish.item." + getFallSuffix(bestEntry),
-                                                        this.fighter.getDisplayName(),
-                                                        lastEntryDisplay,
-                                                        itemComp);
+                    return new TranslatableComponent("death.fell.finish.item." + getFallSuffix(bestEntry),
+                                                     this.fighter.getDisplayName(),
+                                                     lastEntryDisplay,
+                                                     itemComp);
                 }
                 //fell too far and was finished by
-                if (this.fighter instanceof ServerPlayerEntity) {
-                    ((ServerPlayerEntity) this.fighter).awardStat(EvolutionStats.DEATH_SOURCE.get("fall_then_finished"));
+                if (this.fighter instanceof ServerPlayer serverPlayer) {
+                    serverPlayer.awardStat(EvolutionStats.DEATH_SOURCE.get("fall_then_finished"));
                 }
-                return new TranslationTextComponent("death.fell.finish." + getFallSuffix(bestEntry), this.fighter.getDisplayName(), lastEntryDisplay);
+                return new TranslatableComponent("death.fell.finish." + getFallSuffix(bestEntry), this.fighter.getDisplayName(), lastEntryDisplay);
             }
             //Fell from a high place, ladder, rope, vine
-            if (this.fighter instanceof ServerPlayerEntity) {
-                ((ServerPlayerEntity) this.fighter).awardStat(EvolutionStats.DEATH_SOURCE.get("fall"));
+            if (this.fighter instanceof ServerPlayer serverPlayer) {
+                serverPlayer.awardStat(EvolutionStats.DEATH_SOURCE.get("fall"));
             }
-            return new TranslationTextComponent("death.fell.accident." + getFallSuffix(bestEntry), this.fighter.getDisplayName());
+            return new TranslatableComponent("death.fell.accident." + getFallSuffix(bestEntry), this.fighter.getDisplayName());
         }
         return lastEntry.getDamageSrc().getLocalizedDeathMessage(this.fighter);
     }
@@ -175,13 +175,13 @@ public class CombatTrackerEv extends CombatTracker {
     @Nullable
     public LivingEntity getKiller() {
         LivingEntity livingEntity = null;
-        PlayerEntity player = null;
+        Player player = null;
         float livingDamage = 0.0F;
         float playerDamage = 0.0F;
         for (CombatEntryEv entry : this.entries) {
-            if (entry.getDamageSrc().getEntity() instanceof PlayerEntity && (player == null || entry.getDamage() > playerDamage)) {
+            if (entry.getDamageSrc().getEntity() instanceof Player && (player == null || entry.getDamage() > playerDamage)) {
                 playerDamage = entry.getDamage();
-                player = (PlayerEntity) entry.getDamageSrc().getEntity();
+                player = (Player) entry.getDamageSrc().getEntity();
             }
             if (entry.getDamageSrc().getEntity() instanceof LivingEntity && (livingEntity == null || entry.getDamage() > livingDamage)) {
                 livingDamage = entry.getDamage();
@@ -213,7 +213,7 @@ public class CombatTrackerEv extends CombatTracker {
                 this.fallSuffix = "vines";
             }
             else {
-                Evolution.LOGGER.warn("Missing fall suffix for {}", this.fallSuffixBlock);
+                Evolution.warn("Missing fall suffix for {}", this.fallSuffixBlock);
             }
             this.fallSuffixBlock = null;
         }

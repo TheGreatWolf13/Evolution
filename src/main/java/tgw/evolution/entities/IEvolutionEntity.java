@@ -1,6 +1,6 @@
 package tgw.evolution.entities;
 
-import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.Entity;
 import tgw.evolution.util.hitbox.HitboxEntity;
 
 import javax.annotation.Nullable;

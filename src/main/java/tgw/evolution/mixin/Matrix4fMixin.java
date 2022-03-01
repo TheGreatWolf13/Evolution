@@ -1,7 +1,7 @@
 package tgw.evolution.mixin;
 
-import net.minecraft.util.math.vector.Matrix4f;
-import net.minecraft.util.math.vector.Quaternion;
+import com.mojang.math.Matrix4f;
+import com.mojang.math.Quaternion;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.patches.IMatrix4fPatch;

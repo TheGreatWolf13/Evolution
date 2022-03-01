@@ -1,25 +1,25 @@
 package tgw.evolution.potion;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.attributes.AttributeModifierManager;
-import net.minecraft.potion.Effect;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.EffectType;
-import net.minecraft.potion.Effects;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.patches.IEffectInstancePatch;
 
-public class EffectDehydration extends Effect {
+public class EffectDehydration extends MobEffect {
 
     public EffectDehydration() {
-        super(EffectType.HARMFUL, 0);
+        super(MobEffectCategory.HARMFUL, 0);
     }
 
     @Override
-    public void addAttributeModifiers(LivingEntity entity, AttributeModifierManager attributes, int amplifier) {
+    public void addAttributeModifiers(LivingEntity entity, AttributeMap attributes, int amplifier) {
         if (amplifier >= 1) {
-            entity.addEffect(IEffectInstancePatch.newInfinite(Effects.MOVEMENT_SLOWDOWN, amplifier - 1, false, false, false));
+            entity.addEffect(IEffectInstancePatch.newInfinite(MobEffects.MOVEMENT_SLOWDOWN, amplifier - 1, false, false, false));
         }
         super.addAttributeModifiers(entity, attributes, amplifier);
     }
@@ -29,11 +29,11 @@ public class EffectDehydration extends Effect {
         if (amplifier >= 2) {
             entity.hurt(EvolutionDamage.DEHYDRATION, 1.0f);
         }
-        if (amplifier >= 1 && !entity.hasEffect(Effects.MOVEMENT_SLOWDOWN)) {
-            entity.addEffect(IEffectInstancePatch.newInfinite(Effects.MOVEMENT_SLOWDOWN, amplifier - 1, false, false, false));
+        if (amplifier >= 1 && !entity.hasEffect(MobEffects.MOVEMENT_SLOWDOWN)) {
+            entity.addEffect(IEffectInstancePatch.newInfinite(MobEffects.MOVEMENT_SLOWDOWN, amplifier - 1, false, false, false));
         }
         if (!entity.hasEffect(EvolutionEffects.DIZZINESS.get()) && entity.getRandom().nextFloat() < 0.05 * (amplifier + 1)) {
-            entity.addEffect(new EffectInstance(EvolutionEffects.DIZZINESS.get(), 400 * (amplifier + 1), amplifier, false, false, false));
+            entity.addEffect(new MobEffectInstance(EvolutionEffects.DIZZINESS.get(), 400 * (amplifier + 1), amplifier, false, false, false));
         }
     }
 
@@ -46,9 +46,9 @@ public class EffectDehydration extends Effect {
     }
 
     @Override
-    public void removeAttributeModifiers(LivingEntity entity, AttributeModifierManager attributes, int amplifier) {
+    public void removeAttributeModifiers(LivingEntity entity, AttributeMap attributes, int amplifier) {
         if (amplifier >= 1) {
-            entity.removeEffect(Effects.MOVEMENT_SLOWDOWN);
+            entity.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
         }
         super.removeAttributeModifiers(entity, attributes, amplifier);
     }

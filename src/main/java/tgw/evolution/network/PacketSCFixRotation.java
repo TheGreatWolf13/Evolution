@@ -1,12 +1,12 @@
 package tgw.evolution.network;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.world.World;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.Evolution;
-import tgw.evolution.util.MathHelper;
 
 import java.util.function.Supplier;
 
@@ -26,16 +26,16 @@ public class PacketSCFixRotation implements IPacket {
 
     public PacketSCFixRotation(Entity entity) {
         this.entityId = entity.getId();
-        this.xRot = (byte) MathHelper.floor(entity.xRot * 256.0f / 360.0f);
-        this.yRot = (byte) MathHelper.floor(entity.yRot * 256.0f / 360.0f);
-        this.yHeadRot = (byte) MathHelper.floor(entity.getYHeadRot() * 256.0f / 360.0f);
+        this.xRot = (byte) Mth.floor(entity.getXRot() * 256.0f / 360.0f);
+        this.yRot = (byte) Mth.floor(entity.getYRot() * 256.0f / 360.0f);
+        this.yHeadRot = (byte) Mth.floor(entity.getYHeadRot() * 256.0f / 360.0f);
     }
 
-    public static PacketSCFixRotation decode(PacketBuffer buffer) {
+    public static PacketSCFixRotation decode(FriendlyByteBuf buffer) {
         return new PacketSCFixRotation(buffer.readVarInt(), buffer.readByte(), buffer.readByte(), buffer.readByte());
     }
 
-    public static void encode(PacketSCFixRotation packet, PacketBuffer buffer) {
+    public static void encode(PacketSCFixRotation packet, FriendlyByteBuf buffer) {
         buffer.writeVarInt(packet.entityId);
         buffer.writeByte(packet.xRot);
         buffer.writeByte(packet.yRot);
@@ -45,8 +45,8 @@ public class PacketSCFixRotation implements IPacket {
     public static void handle(PacketSCFixRotation packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
-                World world = Evolution.PROXY.getClientWorld();
-                Entity entity = world.getEntity(packet.entityId);
+                Level level = Evolution.PROXY.getClientLevel();
+                Entity entity = level.getEntity(packet.entityId);
                 if (entity != null) {
                     float yRot = (packet.yRot * 360) / 256.0F;
                     float xRot = (packet.xRot * 360) / 256.0f;

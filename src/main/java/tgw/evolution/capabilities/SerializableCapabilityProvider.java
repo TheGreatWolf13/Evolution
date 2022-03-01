@@ -1,13 +1,15 @@
 package tgw.evolution.capabilities;
 
-import net.minecraft.nbt.INBT;
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.Tag;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.INBTSerializable;
 
 import javax.annotation.Nullable;
 
-public class SerializableCapabilityProvider<HANDLER> extends SimpleCapabilityProvider<HANDLER> implements INBTSerializable<INBT> {
+public class SerializableCapabilityProvider<C extends INBTSerializable<N>, N extends Tag> extends SimpleCapabilityProvider<C> implements
+                                                                                                                              ICapabilitySerializable<N> {
 
     /**
      * Create a provider for the specified handler instance.
@@ -16,30 +18,30 @@ public class SerializableCapabilityProvider<HANDLER> extends SimpleCapabilityPro
      * @param facing     The Direction to provide the handler for
      * @param instance   The handler instance to provide
      */
-    public SerializableCapabilityProvider(Capability<HANDLER> capability, @Nullable Direction facing, @Nullable HANDLER instance) {
+    public SerializableCapabilityProvider(Capability<C> capability, @Nullable Direction facing, @Nullable C instance) {
         super(capability, facing, instance);
     }
 
-    public SerializableCapabilityProvider(Capability<HANDLER> capability, @Nullable HANDLER instance) {
+    public SerializableCapabilityProvider(Capability<C> capability, @Nullable C instance) {
         super(capability, null, instance);
     }
 
     @Override
-    public void deserializeNBT(INBT nbt) {
-        HANDLER instance = this.getHandler();
+    public void deserializeNBT(N nbt) {
+        C instance = this.getHandler();
         if (instance == null) {
             return;
         }
-        this.getCapability().readNBT(instance, this.getFacing(), nbt);
+        instance.deserializeNBT(nbt);
     }
 
     @Nullable
     @Override
-    public INBT serializeNBT() {
-        HANDLER instance = this.getHandler();
+    public N serializeNBT() {
+        C instance = this.getHandler();
         if (instance == null) {
             return null;
         }
-        return this.getCapability().writeNBT(instance, this.getFacing());
+        return instance.serializeNBT();
     }
 }

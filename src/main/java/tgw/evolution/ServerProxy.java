@@ -1,11 +1,12 @@
 package tgw.evolution;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.stats.Stat;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
-import tgw.evolution.util.SkinType;
+import tgw.evolution.util.constants.SkinType;
 
 public class ServerProxy implements IProxy {
 
@@ -15,12 +16,12 @@ public class ServerProxy implements IProxy {
     }
 
     @Override
-    public PlayerEntity getClientPlayer() {
+    public Level getClientLevel() {
         throw new AssertionError("Should only run on the client!");
     }
 
     @Override
-    public World getClientWorld() {
+    public Player getClientPlayer() {
         throw new AssertionError("Should only run on the client!");
     }
 
@@ -32,7 +33,12 @@ public class ServerProxy implements IProxy {
     @Override
     public void init() {
         IProxy.super.init();
-        Evolution.LOGGER.info("ServerProxy: Finished loading!");
+        Evolution.info("ServerProxy: Finished loading!");
+    }
+
+    @Override
+    public void registerModels(ModelRegistryEvent event) {
+        throw new AssertionError("Should only run on the client!");
     }
 
     @Override

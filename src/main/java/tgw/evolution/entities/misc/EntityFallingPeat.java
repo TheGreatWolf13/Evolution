@@ -1,57 +1,53 @@
 package tgw.evolution.entities.misc;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.*;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.IPacket;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
-import net.minecraftforge.fml.network.FMLPlayMessages;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraftforge.entity.IEntityAdditionalSpawnData;
+import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.network.PlayMessages;
 import tgw.evolution.blocks.BlockPeat;
 import tgw.evolution.blocks.IReplaceable;
 import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionEntities;
-import tgw.evolution.util.Gravity;
-import tgw.evolution.util.NBTTypes;
+import tgw.evolution.util.constants.NBTTypes;
+import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.hitbox.HitboxEntity;
 
 import javax.annotation.Nullable;
 
 public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnData, IEvolutionEntity<EntityFallingPeat> {
 
-    public static final EntitySize[] SIZES = {EntitySize.scalable(1.0f, 0.25f),
-                                              EntitySize.scalable(1.0f, 0.5f),
-                                              EntitySize.scalable(1.0f, 0.75f),
-                                              EntitySize.scalable(1.0f, 1.0f)};
+    public static final EntityDimensions[] DIMENSIONS = {EntityDimensions.scalable(1.0f, 0.25f),
+                                                         EntityDimensions.scalable(1.0f, 0.5f),
+                                                         EntityDimensions.scalable(1.0f, 0.75f),
+                                                         EntityDimensions.scalable(1.0f, 1.0f)};
     public int fallTime;
     private boolean isSizeCorrect;
     private int layers;
     private int mass = 289;
     private BlockPos prevPos;
 
-    public EntityFallingPeat(@SuppressWarnings("unused") FMLPlayMessages.SpawnEntity spawnEntity, World world) {
-        this(EvolutionEntities.FALLING_PEAT.get(), world);
+    public EntityFallingPeat(EntityType<EntityFallingPeat> type, Level level) {
+        super(type, level);
     }
 
-    public EntityFallingPeat(EntityType<EntityFallingPeat> type, World world) {
-        super(type, world);
-    }
-
-    public EntityFallingPeat(World world, double x, double y, double z, int layers) {
-        super(EvolutionEntities.FALLING_PEAT.get(), world);
+    public EntityFallingPeat(Level level, double x, double y, double z, int layers) {
+        super(EvolutionEntities.FALLING_PEAT.get(), level);
         this.blocksBuilding = true;
         this.setPos(x, y, z);
-        this.setDeltaMovement(Vector3d.ZERO);
+        this.setDeltaMovement(Vec3.ZERO);
         this.xo = x;
         this.yo = y;
         this.zo = z;
@@ -60,10 +56,14 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
         this.prevPos = this.blockPosition();
     }
 
+    public EntityFallingPeat(PlayMessages.SpawnEntity spawnEntity, Level level) {
+        this(EvolutionEntities.FALLING_PEAT.get(), level);
+    }
+
     @Override
-    protected void addAdditionalSaveData(CompoundNBT compound) {
-        compound.putInt("Time", this.fallTime);
-        compound.putByte("Layers", (byte) this.layers);
+    protected void addAdditionalSaveData(CompoundTag tag) {
+        tag.putInt("Time", this.fallTime);
+        tag.putByte("Layers", (byte) this.layers);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
 //    }
 
     @Override
-    public IPacket<?> getAddEntityPacket() {
+    public Packet<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
@@ -97,8 +97,8 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     }
 
     @Override
-    public EntitySize getDimensions(Pose pose) {
-        return SIZES[this.layers - 1];
+    public EntityDimensions getDimensions(Pose pose) {
+        return DIMENSIONS[this.layers - 1];
     }
 
     @Nullable
@@ -117,21 +117,21 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
         return false;
     }
 
-    @Override
-    protected boolean isMovementNoisy() {
-        return false;
-    }
+//    @Override
+//    protected boolean isMovementNoisy() {
+//        return false;
+//    }
 
     @Override
-    protected void readAdditionalSaveData(CompoundNBT compound) {
-        this.fallTime = compound.getInt("Time");
-        if (compound.contains("Layers", NBTTypes.BYTE)) {
-            this.layers = compound.getByte("Layers");
+    protected void readAdditionalSaveData(CompoundTag tag) {
+        this.fallTime = tag.getInt("Time");
+        if (tag.contains("Layers", NBTTypes.BYTE)) {
+            this.layers = tag.getByte("Layers");
         }
     }
 
     @Override
-    public void readSpawnData(PacketBuffer buffer) {
+    public void readSpawnData(FriendlyByteBuf buffer) {
         this.layers = buffer.readByte();
     }
 
@@ -145,7 +145,7 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
         this.yo = this.getY();
         this.zo = this.getZ();
         ++this.fallTime;
-        Vector3d motion = this.getDeltaMovement();
+        Vec3 motion = this.getDeltaMovement();
         double motionX = motion.x;
         double motionY = motion.y;
         double motionZ = motion.z;
@@ -185,7 +185,7 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
         if (!this.level.isClientSide) {
             if (!this.onGround) {
                 if (this.fallTime > 100 && (pos.getY() < 1 || pos.getY() > 256) || this.fallTime > 600) {
-                    this.remove();
+                    this.discard();
                 }
                 else if (!pos.equals(this.prevPos)) {
                     this.prevPos = pos;
@@ -200,14 +200,14 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
                             this.spawnAtLocation(stack);
                         }
                     }
-                    this.remove();
+                    this.discard();
                 }
             }
         }
     }
 
     @Override
-    public void writeSpawnData(PacketBuffer buffer) {
+    public void writeSpawnData(FriendlyByteBuf buffer) {
         buffer.writeByte(this.layers);
     }
 }

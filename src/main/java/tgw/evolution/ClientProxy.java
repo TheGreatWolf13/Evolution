@@ -1,52 +1,67 @@
 package tgw.evolution;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.client.gui.IProgressMeter;
-import net.minecraft.client.gui.ScreenManager;
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.client.util.InputMappings;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemModelsProperties;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.gui.screens.achievement.StatsUpdateListener;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.stats.Stat;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.client.ClientRegistry;
+import net.minecraftforge.client.MinecraftForgeClient;
+import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
+import net.minecraftforge.client.gui.ForgeIngameGui;
+import net.minecraftforge.client.gui.OverlayRegistry;
+import net.minecraftforge.client.model.ForgeModelBakery;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.ScreenCorpse;
 import tgw.evolution.client.gui.ScreenInventoryExtended;
+import tgw.evolution.client.tooltip.*;
 import tgw.evolution.events.ClientEvents;
-import tgw.evolution.events.ItemEvents;
-import tgw.evolution.init.*;
-import tgw.evolution.stats.EvolutionStatisticsManager;
-import tgw.evolution.util.RockVariant;
-import tgw.evolution.util.SkinType;
+import tgw.evolution.init.EvolutionContainers;
+import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionRenderer;
+import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.patches.ILivingEntityPatch;
+import tgw.evolution.stats.EvolutionStatsCounter;
+import tgw.evolution.util.constants.RockVariant;
+import tgw.evolution.util.constants.SkinType;
 
 import java.util.Map;
 
 public class ClientProxy implements IProxy {
 
-    public static final KeyBinding TOGGLE_PRONE = new KeyBinding("key.prone.toggle",
+    public static final KeyMapping TOGGLE_PRONE = new KeyMapping("key.prone.toggle",
                                                                  KeyConflictContext.IN_GAME,
-                                                                 InputMappings.Type.KEYSYM,
+                                                                 InputConstants.Type.KEYSYM,
                                                                  GLFW.GLFW_KEY_X,
                                                                  "key.categories.movement");
-    public static final KeyBinding BUILDING_ASSIST = new KeyBinding("key.build_assist",
+    public static final KeyMapping BUILDING_ASSIST = new KeyMapping("key.build_assist",
                                                                     KeyConflictContext.IN_GAME,
-                                                                    InputMappings.Type.KEYSYM,
+                                                                    InputConstants.Type.KEYSYM,
                                                                     GLFW.GLFW_KEY_BACKSLASH,
                                                                     "key.categories.creative");
 
     private static void addOverrides() {
-        ItemModelsProperties.register(EvolutionItems.shield_dev.get(),
-                                      new ResourceLocation("blocking"),
-                                      (stack, world, entity) -> entity != null && entity.isUsingItem() && entity.getUseItem() == stack ? 1.0F : 0.0F);
+        ItemProperties.register(EvolutionItems.sword_dev.get(),
+                                new ResourceLocation("attack"),
+                                (stack, level, entity, seed) -> entity != null &&
+                                                                ((ILivingEntityPatch) entity).renderMainhandCustomAttack() &&
+                                                                entity.getMainHandItem() == stack ? 1.0f : 0.0f);
+        ItemProperties.register(EvolutionItems.shield_dev.get(),
+                                new ResourceLocation("blocking"),
+                                (stack, level, entity, seed) -> entity != null && entity.isUsingItem() && entity.getUseItem() == stack ? 1.0F : 0.0F);
         ResourceLocation throwing = new ResourceLocation("throwing");
         for (RockVariant variant : RockVariant.VALUES) {
             Item item;
@@ -57,9 +72,9 @@ public class ClientProxy implements IProxy {
                 item = null;
             }
             if (item != null) {
-                ItemModelsProperties.register(item,
-                                              throwing,
-                                              (stack, world, entity) -> entity != null && entity.isUsingItem() && entity.getUseItem() == stack ?
+                ItemProperties.register(item,
+                                        throwing,
+                                        (stack, level, entity, seed) -> entity != null && entity.isUsingItem() && entity.getUseItem() == stack ?
                                                                         1.0F :
                                                                         0.0F);
             }
@@ -67,7 +82,7 @@ public class ClientProxy implements IProxy {
     }
 
     public static void changeWorldOrders() {
-        Evolution.LOGGER.warn("Change world order");
+        Evolution.warn("Change world order");
 //        int evId = 0;
 //        for (WorldType worldType : WorldType.WORLD_TYPES) {
 //            if (worldType != null && "ev_default".equals(worldType.getName())) {
@@ -80,6 +95,58 @@ public class ClientProxy implements IProxy {
 //        WorldType.WORLD_TYPES[0] = evWorld;
     }
 
+    private static void registerHUDOverlays() {
+        OverlayRegistry.enableOverlay(ForgeIngameGui.PLAYER_HEALTH_ELEMENT, false);
+        OverlayRegistry.enableOverlay(ForgeIngameGui.ARMOR_LEVEL_ELEMENT, false);
+        OverlayRegistry.enableOverlay(ForgeIngameGui.FOOD_LEVEL_ELEMENT, false);
+        OverlayRegistry.enableOverlay(ForgeIngameGui.EXPERIENCE_BAR_ELEMENT, false);
+        OverlayRegistry.enableOverlay(ForgeIngameGui.CROSSHAIR_ELEMENT, false);
+        OverlayRegistry.enableOverlay(ForgeIngameGui.POTION_ICONS_ELEMENT, false);
+    }
+
+    private static void registerKeyBinds() {
+        ClientRegistry.registerKeyBinding(TOGGLE_PRONE);
+        ClientRegistry.registerKeyBinding(BUILDING_ASSIST);
+    }
+
+    private static void registerScreens() {
+        MenuScreens.register(EvolutionContainers.EXTENDED_INVENTORY.get(), ScreenInventoryExtended::new);
+        MenuScreens.register(EvolutionContainers.CORPSE.get(), ScreenCorpse::new);
+    }
+
+    private static void registerTooltips() {
+        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipFood.class, EvolutionTooltipRenderer.FOOD::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipDrink.class, EvolutionTooltipRenderer.DRINK::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipDurability.class, t -> {
+            if (t == EvolutionTooltipDurability.MAIN) {
+                return EvolutionTooltipRenderer.DURABILITY.setTooltip(t);
+            }
+            for (int i = 0; i < 4; i++) {
+                if (t == EvolutionTooltipDurability.PARTS[i]) {
+                    return EvolutionTooltipRenderer.DURABILITY_PARTS[i].setTooltip(t);
+                }
+            }
+            throw new IllegalStateException("Should never reach here!");
+        });
+        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipMass.class, t -> {
+            if (t == EvolutionTooltipMass.MAIN) {
+                return EvolutionTooltipRenderer.MASS.setTooltip(t);
+            }
+            for (int i = 0; i < 4; i++) {
+                if (t == EvolutionTooltipMass.PARTS[i]) {
+                    return EvolutionTooltipRenderer.MASS_PARTS[i].setTooltip(t);
+                }
+            }
+            throw new IllegalStateException("Should never reach here!");
+        });
+        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipDamage.class, EvolutionTooltipRenderer.DAMAGE::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipSpeed.class, EvolutionTooltipRenderer.SPEED::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipReach.class, EvolutionTooltipRenderer.REACH::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipMining.class, EvolutionTooltipRenderer.MINING::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipHeat.class, EvolutionTooltipRenderer.HEAT::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipCold.class, EvolutionTooltipRenderer.COLD::setTooltip);
+    }
+
     @Override
     public void addTextures(TextureStitchEvent.Pre event) {
         for (ResourceLocation resLoc : EvolutionResources.SLOT_EXTENDED) {
@@ -88,18 +155,18 @@ public class ClientProxy implements IProxy {
     }
 
     @Override
-    public PlayerEntity getClientPlayer() {
-        return Minecraft.getInstance().player;
-    }
-
-    @Override
-    public World getClientWorld() {
+    public Level getClientLevel() {
         return Minecraft.getInstance().level;
     }
 
     @Override
+    public Player getClientPlayer() {
+        return Minecraft.getInstance().player;
+    }
+
+    @Override
     public SkinType getSkinType() {
-        return "default".equals(((AbstractClientPlayerEntity) this.getClientPlayer()).getModelName()) ? SkinType.STEVE : SkinType.ALEX;
+        return "default".equals(((AbstractClientPlayer) this.getClientPlayer()).getModelName()) ? SkinType.STEVE : SkinType.ALEX;
     }
 
     @Override
@@ -107,18 +174,24 @@ public class ClientProxy implements IProxy {
         IProxy.super.init();
         EvolutionRenderer.registryEntityRenders();
         addOverrides();
-        ScreenManager.register(EvolutionContainers.EXTENDED_INVENTORY.get(), ScreenInventoryExtended::new);
-        ScreenManager.register(EvolutionContainers.CORPSE.get(), ScreenCorpse::new);
+        registerScreens();
         ColorManager.registerBlockColorHandlers(Minecraft.getInstance().getBlockColors());
         ColorManager.registerItemColorHandlers(Minecraft.getInstance().getItemColors());
         FMLJavaModLoadingContext.get().getModEventBus().addListener(ClientEvents::onModelBakeEvent);
         MinecraftForge.EVENT_BUS.register(new ClientEvents(Minecraft.getInstance()));
-        MinecraftForge.EVENT_BUS.register(new ItemEvents());
-        ClientRegistry.registerKeyBinding(TOGGLE_PRONE);
-        ClientRegistry.registerKeyBinding(BUILDING_ASSIST);
+        registerKeyBinds();
         changeWorldOrders();
-        EvolutionParticles.register();
-        Evolution.LOGGER.info("ClientProxy: Finished loading!");
+//        EvolutionParticles.register();
+        registerTooltips();
+        registerHUDOverlays();
+        Evolution.info("ClientProxy: Finished loading!");
+    }
+
+    @Override
+    public void registerModels(ModelRegistryEvent event) {
+        for (ModelResourceLocation model : EvolutionResources.MODULAR_MODELS) {
+            ForgeModelBakery.addSpecialModel(model);
+        }
     }
 
     @Override
@@ -126,10 +199,10 @@ public class ClientProxy implements IProxy {
         for (Map.Entry<Stat<?>, Long> entry : statsData.object2LongEntrySet()) {
             Stat<?> stat = entry.getKey();
             long i = entry.getValue();
-            ((EvolutionStatisticsManager) Minecraft.getInstance().player.getStats()).setValueLong(stat, i);
+            ((EvolutionStatsCounter) Minecraft.getInstance().player.getStats()).setValueLong(stat, i);
         }
-        if (Minecraft.getInstance().screen instanceof IProgressMeter) {
-            ((IProgressMeter) Minecraft.getInstance().screen).onStatsUpdated();
+        if (Minecraft.getInstance().screen instanceof StatsUpdateListener) {
+            ((StatsUpdateListener) Minecraft.getInstance().screen).onStatsUpdated();
         }
     }
 }

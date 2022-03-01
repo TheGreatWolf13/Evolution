@@ -1,6 +1,6 @@
 package tgw.evolution.client.gui.controls;
 
-import net.minecraft.client.resources.I18n;
+import net.minecraft.client.resources.language.I18n;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -11,12 +11,12 @@ public enum SortOrder {
     NONE(entries -> {
     }),
     AZ(entries -> {
-        entries.sort((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(((ListKeyBinding.KeyEntry) o1).getKeyDesc().getString(),
-                                                                       ((ListKeyBinding.KeyEntry) o2).getKeyDesc().getString()));
+        entries.sort((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(((ListKeyBinds.KeyEntry) o1).getName().getString(),
+                                                                       ((ListKeyBinds.KeyEntry) o2).getName().getString()));
     }),
     ZA(entries -> {
-        entries.sort((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(((ListKeyBinding.KeyEntry) o2).getKeyDesc().getString(),
-                                                                       ((ListKeyBinding.KeyEntry) o1).getKeyDesc().getString()));
+        entries.sort((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(((ListKeyBinds.KeyEntry) o2).getName().getString(),
+                                                                       ((ListKeyBinds.KeyEntry) o1).getName().getString()));
     });
 
     public static final SortOrder[] VALUES = values();
@@ -45,7 +45,7 @@ public enum SortOrder {
         }
     }
 
-    public void sort(List<ListKeyBinding.Entry> list) {
+    public void sort(List<ListKeyBinds.Entry> list) {
         this.sorter.sort(list);
     }
 }

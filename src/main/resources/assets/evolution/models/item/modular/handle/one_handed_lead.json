@@ -1,0 +1,6 @@
+{
+  "parent": "evolution:item/modular/handle/one_handed",
+  "textures": {
+    "0": "evolution:item/modular/handle/one_handed_lead"
+  }
+}

@@ -1,18 +1,18 @@
 package tgw.evolution.init;
 
-import net.minecraft.entity.CreatureEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.item.Item;
-import net.minecraft.world.biome.Biome;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
-import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.Evolution;
 import tgw.evolution.entities.EntityCow;
 import tgw.evolution.entities.misc.EntityFallingPeat;
@@ -27,8 +27,8 @@ import tgw.evolution.util.PlayerHelper;
 
 import java.util.function.Supplier;
 
-import static net.minecraft.entity.EntityClassification.CREATURE;
-import static net.minecraft.entity.EntityClassification.MISC;
+import static net.minecraft.world.entity.MobCategory.CREATURE;
+import static net.minecraft.world.entity.MobCategory.MISC;
 
 public final class EvolutionEntities {
 
@@ -110,6 +110,8 @@ public final class EvolutionEntities {
         event.add(EntityType.PLAYER, ForgeMod.REACH_DISTANCE.get(), PlayerHelper.REACH_DISTANCE);
         event.add(EntityType.PLAYER, Attributes.MOVEMENT_SPEED, PlayerHelper.WALK_FORCE);
         event.add(EntityType.PLAYER, EvolutionAttributes.FRICTION.get());
+        event.add(EntityType.PLAYER, EvolutionAttributes.COLD_RESISTANCE.get());
+        event.add(EntityType.PLAYER, EvolutionAttributes.HEAT_RESISTANCE.get());
         for (EntityType type : ForgeRegistries.ENTITIES.getValues()) {
             event.add(type, EvolutionAttributes.MASS.get());
         }
@@ -125,7 +127,7 @@ public final class EvolutionEntities {
     }
 
     public static void registerEntityAttribute(EntityAttributeCreationEvent event) {
-        event.put(COW.get(), CreatureEntity.createMobAttributes().build());
+        event.put(COW.get(), PathfinderMob.createMobAttributes().build());
     }
 
     /**
@@ -138,7 +140,7 @@ public final class EvolutionEntities {
 //                biome.getSpawns(entity.get().getClassification()).add(new SpawnListEntry(entity.get(), weight, minCount, maxCount));
 //            }
 //        }
-        Evolution.LOGGER.warn("Register entity world spawn");
+        Evolution.warn("Register entity world spawn");
     }
 
     /**

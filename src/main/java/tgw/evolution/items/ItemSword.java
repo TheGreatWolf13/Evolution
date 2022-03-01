@@ -1,29 +1,30 @@
 package tgw.evolution.items;
 
 import com.google.common.collect.Sets;
-import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.IItemTier;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.UseAction;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.world.World;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.material.Material;
+import tgw.evolution.capabilities.modular.IModular;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.init.ItemMaterial;
 
 import javax.annotation.Nonnull;
 import java.util.Set;
 
-public class ItemSword extends ItemGenericTool implements IOffhandAttackable, ISweepAttack, IParry, ILunge, IBeltWeapon {
+public class ItemSword extends ItemGenericTool implements IOffhandAttackable, ISweepAttack, IParry, ILunge, IBeltWeapon, ICustomAttack {
 
     private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet();
     private static final Set<Material> EFFECTIVE_MATS = Sets.newHashSet();
     private final double mass;
 
-    public ItemSword(float attackSpeed, IItemTier tier, Properties builder, double mass) {
-        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MATS, builder, ToolTypeEv.SWORD);
+    public ItemSword(float attackSpeed, ItemMaterial tier, Properties builder, double mass) {
+        super(attackSpeed, tier, EFFECTIVE_ON, EFFECTIVE_MATS, builder, ToolType.SWORD);
         this.mass = mass;
     }
 
@@ -44,7 +45,13 @@ public class ItemSword extends ItemGenericTool implements IOffhandAttackable, IS
 
     @Nonnull
     @Override
-    public EvolutionDamage.Type getDamageType() {
+    public AttackType getAttackType() {
+        return AttackType.SWORD;
+    }
+
+    @Nonnull
+    @Override
+    public EvolutionDamage.Type getDamageType(ItemStack stack) {
         return EvolutionDamage.Type.SLASHING;
     }
 
@@ -59,13 +66,18 @@ public class ItemSword extends ItemGenericTool implements IOffhandAttackable, IS
     }
 
     @Override
-    public double getMass() {
+    public double getMass(ItemStack stack) {
         return this.mass;
     }
 
     @Override
     public int getMinLungeTime() {
         return 4;
+    }
+
+    @Override
+    public IModular getModularCap(ItemStack stack) {
+        return IModular.NULL;
     }
 
     @Override
@@ -84,8 +96,8 @@ public class ItemSword extends ItemGenericTool implements IOffhandAttackable, IS
     }
 
     @Override
-    public UseAction getUseAnimation(ItemStack stack) {
-        return UseAction.BLOCK;
+    public UseAnim getUseAnimation(ItemStack stack) {
+        return UseAnim.BLOCK;
     }
 
     @Override
@@ -99,10 +111,10 @@ public class ItemSword extends ItemGenericTool implements IOffhandAttackable, IS
     }
 
     @Override
-    public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         player.startUsingItem(hand);
-        return new ActionResult<>(ActionResultType.CONSUME, stack);
+        return new InteractionResultHolder<>(InteractionResult.CONSUME, stack);
     }
 
     @Override

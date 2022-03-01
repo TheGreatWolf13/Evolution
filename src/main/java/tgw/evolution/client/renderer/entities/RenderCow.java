@@ -1,16 +1,16 @@
 package tgw.evolution.client.renderer.entities;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.renderer.entity.EntityRendererManager;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Vector3f;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.vector.Vector3f;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.models.entities.ModelCow;
 import tgw.evolution.entities.EntityCow;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.MathHelper;
 
 @OnlyIn(Dist.CLIENT)
 public class RenderCow extends MobRenderer<EntityCow, ModelCow> {
@@ -21,8 +21,8 @@ public class RenderCow extends MobRenderer<EntityCow, ModelCow> {
     private static final ResourceLocation DEAD = Evolution.getResource("textures/entity/cattle/cow_dead.png");
     private static final ResourceLocation SKELETON = Evolution.getResource("textures/entity/cattle/cow_skeleton.png");
 
-    public RenderCow(EntityRendererManager manager) {
-        super(manager, MODEL, 0.7F);
+    public RenderCow(EntityRendererProvider.Context context) {
+        super(context, MODEL, 0.7F);
     }
 
     @Override
@@ -40,10 +40,10 @@ public class RenderCow extends MobRenderer<EntityCow, ModelCow> {
     }
 
     @Override
-    protected void setupRotations(EntityCow cow, MatrixStack matrices, float ageInTicks, float rotationYaw, float partialTicks) {
+    protected void setupRotations(EntityCow cow, PoseStack matrices, float ageInTicks, float rotationYaw, float partialTicks) {
         matrices.mulPose(Vector3f.YP.rotationDegrees(180.0F - rotationYaw));
         if (cow.isDead()) {
-            float f = (MathHelper.clampMax(cow.getDeathTime(), 20) + partialTicks - 1.0F) / 20.0F * 1.6F;
+            float f = (Math.min(cow.getDeathTime(), 20) + partialTicks - 1.0F) / 20.0F * 1.6F;
             f = MathHelper.sqrt(f);
             if (f > 1.0F) {
                 f = 1.0F;

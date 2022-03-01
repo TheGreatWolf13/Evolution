@@ -7,7 +7,7 @@
 //import tgw.evolution.Evolution;
 //import tgw.evolution.client.models.entities.ModelShadowHound;
 //import tgw.evolution.entities.EntityShadowHound;
-//import tgw.evolution.util.MathHelper;
+//import tgw.evolution.util.math.MathHelper;
 //
 //public class RenderShadowHound extends MobRenderer<EntityShadowHound, ModelShadowHound> {
 //

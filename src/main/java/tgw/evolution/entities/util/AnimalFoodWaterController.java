@@ -1,6 +1,6 @@
 package tgw.evolution.entities.util;
 
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompoundTag;
 import tgw.evolution.entities.EntityGenericAnimal;
 
 public class AnimalFoodWaterController {
@@ -9,36 +9,17 @@ public class AnimalFoodWaterController {
      * Each unit of food represents 10 g.
      */
     private short food;
-    private short processedFood;
     private int foodConsumption;
+    private short processedFood;
+    private short processedWater;
     /**
      * Each unit of water represents 10 mL
      */
     private short water;
-    private short processedWater;
     private int waterConsumption;
 
     public AnimalFoodWaterController(EntityGenericAnimal animal) {
         this.animal = animal;
-    }
-
-    public void readFromNBT(CompoundNBT nbt) {
-        this.food = nbt.getShort("Food");
-        this.processedFood = nbt.getShort("ProcFood");
-        this.water = nbt.getShort("Water");
-        this.processedWater = nbt.getShort("ProcWater");
-    }
-
-    public void writeToNBT(CompoundNBT nbt) {
-        nbt.putShort("Food", this.food);
-        nbt.putShort("ProcFood", this.processedFood);
-        nbt.putShort("Water", this.water);
-        nbt.putShort("ProcWater", this.processedWater);
-    }
-
-    public void tick() {
-        this.consumeFood();
-        this.consumeWater();
     }
 
     private void consumeFood() {
@@ -59,11 +40,30 @@ public class AnimalFoodWaterController {
         this.processedWater += this.waterConsumption;
     }
 
+    private void dehydrate() {
+        //TODO
+    }
+
+    public void readFromNBT(CompoundTag tag) {
+        this.food = tag.getShort("Food");
+        this.processedFood = tag.getShort("ProcFood");
+        this.water = tag.getShort("Water");
+        this.processedWater = tag.getShort("ProcWater");
+    }
+
     private void starve() {
         //TODO
     }
 
-    private void dehydrate() {
-        //TODO
+    public void tick() {
+        this.consumeFood();
+        this.consumeWater();
+    }
+
+    public void writeToNBT(CompoundTag tag) {
+        tag.putShort("Food", this.food);
+        tag.putShort("ProcFood", this.processedFood);
+        tag.putShort("Water", this.water);
+        tag.putShort("ProcWater", this.processedWater);
     }
 }

@@ -1,18 +1,18 @@
 package tgw.evolution.client.audio;
 
-import net.minecraft.client.audio.TickableSound;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public class SoundEntityEmitted extends TickableSound {
+public class SoundEntityEmitted extends AbstractTickableSoundInstance {
 
     private final Entity entity;
 
-    public SoundEntityEmitted(Entity entity, SoundEvent soundEvent, SoundCategory category, float volume, float pitch) {
+    public SoundEntityEmitted(Entity entity, SoundEvent soundEvent, SoundSource category, float volume, float pitch) {
         super(soundEvent, category);
         this.entity = entity;
         this.volume = volume;
@@ -24,7 +24,7 @@ public class SoundEntityEmitted extends TickableSound {
 
     @Override
     public void tick() {
-        if (this.entity.removed) {
+        if (this.entity.isRemoved()) {
             this.stop();
         }
         else {

@@ -1,44 +1,51 @@
 package tgw.evolution.inventory.extendedinventory;
 
-import com.google.common.collect.*;
-import net.minecraft.client.gui.recipebook.RecipeList;
-import net.minecraft.client.util.ClientRecipeBook;
-import net.minecraft.client.util.RecipeBookCategories;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.IRecipeType;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Table;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.client.ClientRecipeBook;
+import net.minecraft.client.RecipeBookCategories;
+import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeType;
 import tgw.evolution.items.IAdditionalEquipment;
 import tgw.evolution.items.IItemFluidContainer;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.items.ItemBlock;
 
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
 public class EvolutionRecipeBook extends ClientRecipeBook {
 
-    private List<RecipeList> allCollections = Lists.newArrayList();
-    private Map<RecipeBookCategories, List<RecipeList>> collectionsByTab = Maps.newHashMap();
+    private List<RecipeCollection> allCollections = new ObjectArrayList<>();
+    private Map<RecipeBookCategories, List<RecipeCollection>> collectionsByTab = new EnumMap<>(RecipeBookCategories.class);
 
-    private static Map<RecipeBookCategories, List<List<IRecipe<?>>>> categorizeAndGroupRecipes(Iterable<IRecipe<?>> recipes) {
-        Map<RecipeBookCategories, List<List<IRecipe<?>>>> recipeLists = Maps.newHashMap();
-        Table<RecipeBookCategories, String, List<IRecipe<?>>> table = HashBasedTable.create();
-        for (IRecipe<?> recipe : recipes) {
+    private static Map<RecipeBookCategories, List<List<Recipe<?>>>> categorizeAndGroupRecipes(Iterable<Recipe<?>> recipes) {
+        Map<RecipeBookCategories, List<List<Recipe<?>>>> recipeLists = new EnumMap<>(RecipeBookCategories.class);
+        Table<RecipeBookCategories, String, List<Recipe<?>>> table = HashBasedTable.create();
+        for (Recipe<?> recipe : recipes) {
             if (!recipe.isSpecial()) {
                 RecipeBookCategories category = getCategory(recipe);
                 String group = recipe.getGroup();
                 if (group.isEmpty()) {
-                    recipeLists.computeIfAbsent(category, cat -> Lists.newArrayList()).add(ImmutableList.of(recipe));
+                    //noinspection ObjectAllocationInLoop
+                    recipeLists.computeIfAbsent(category, cat -> new ObjectArrayList<>()).add(ImmutableList.of(recipe));
                 }
                 else {
-                    List<IRecipe<?>> recipeList = table.get(category, group);
+                    List<Recipe<?>> recipeList = table.get(category, group);
                     if (recipeList == null) {
-                        recipeList = Lists.newArrayList();
+                        recipeList = new ObjectArrayList<>();
                         table.put(category, group, recipeList);
-                        recipeLists.computeIfAbsent(category, cat -> Lists.newArrayList()).add(recipeList);
+                        //noinspection ObjectAllocationInLoop
+                        recipeLists.computeIfAbsent(category, cat -> new ObjectArrayList<>()).add(recipeList);
                     }
                     recipeList.add(recipe);
                 }
@@ -47,26 +54,26 @@ public class EvolutionRecipeBook extends ClientRecipeBook {
         return recipeLists;
     }
 
-    private static RecipeBookCategories getCategory(IRecipe<?> recipe) {
-        IRecipeType<?> irecipetype = recipe.getType();
-        if (irecipetype == IRecipeType.SMELTING) {
+    private static RecipeBookCategories getCategory(Recipe<?> recipe) {
+        RecipeType<?> irecipetype = recipe.getType();
+        if (irecipetype == RecipeType.SMELTING) {
             if (recipe.getResultItem().getItem().isEdible()) {
                 return RecipeBookCategories.FURNACE_FOOD;
             }
             return recipe.getResultItem().getItem() instanceof BlockItem ? RecipeBookCategories.FURNACE_BLOCKS : RecipeBookCategories.FURNACE_MISC;
         }
-        if (irecipetype == IRecipeType.BLASTING) {
+        if (irecipetype == RecipeType.BLASTING) {
             return recipe.getResultItem().getItem() instanceof BlockItem ?
                    RecipeBookCategories.BLAST_FURNACE_BLOCKS :
                    RecipeBookCategories.BLAST_FURNACE_MISC;
         }
-        if (irecipetype == IRecipeType.SMOKING) {
+        if (irecipetype == RecipeType.SMOKING) {
             return RecipeBookCategories.SMOKER_FOOD;
         }
-        if (irecipetype == IRecipeType.STONECUTTING) {
+        if (irecipetype == RecipeType.STONECUTTING) {
             return RecipeBookCategories.STONECUTTER;
         }
-        if (irecipetype == IRecipeType.CAMPFIRE_COOKING) {
+        if (irecipetype == RecipeType.CAMPFIRE_COOKING) {
             return RecipeBookCategories.CAMPFIRE;
         }
         Item item = recipe.getResultItem().getItem();
@@ -80,37 +87,33 @@ public class EvolutionRecipeBook extends ClientRecipeBook {
     }
 
     @Override
-    public List<RecipeList> getCollection(RecipeBookCategories category) {
+    public List<RecipeCollection> getCollection(RecipeBookCategories category) {
         return this.collectionsByTab.getOrDefault(category, Collections.emptyList());
     }
 
     @Override
-    public List<RecipeList> getCollections() {
+    public List<RecipeCollection> getCollections() {
         return this.allCollections;
     }
 
     @Override
-    public void setupCollections(Iterable<IRecipe<?>> recipes) {
-        Map<RecipeBookCategories, List<List<IRecipe<?>>>> recipeLists = categorizeAndGroupRecipes(recipes);
-        Map<RecipeBookCategories, List<RecipeList>> listOfRecipeLists = Maps.newHashMap();
-        ImmutableList.Builder<RecipeList> builder = ImmutableList.builder();
+    public void setupCollections(Iterable<Recipe<?>> recipes) {
+        Map<RecipeBookCategories, List<List<Recipe<?>>>> recipeLists = categorizeAndGroupRecipes(recipes);
+        Map<RecipeBookCategories, List<RecipeCollection>> listOfRecipeLists = new EnumMap<>(RecipeBookCategories.class);
+        ImmutableList.Builder<RecipeCollection> builder = ImmutableList.builder();
         recipeLists.forEach((category, lists) -> {
-            Stream<RecipeList> recipeStream = lists.stream().map(RecipeList::new);
+            Stream<RecipeCollection> recipeStream = lists.stream().map(RecipeCollection::new);
             listOfRecipeLists.put(category, recipeStream.peek(builder::add).collect(ImmutableList.toImmutableList()));
         });
         RecipeBookCategories.AGGREGATE_CATEGORIES.forEach((category, categoryList) -> listOfRecipeLists.put(category,
-                                                                                                            (List<RecipeList>) categoryList.stream()
-                                                                                                                                           .flatMap(
-                                                                                                                                                   cat -> ((List) listOfRecipeLists.getOrDefault(
-                                                                                                                                                           cat,
-                                                                                                                                                           ImmutableList.of())).stream())
-                                                                                                                                           .collect(
-                                                                                                                                                   ImmutableList.toImmutableList())));
+                                                                                                            (List<RecipeCollection>) categoryList.stream()
+                                                                                                                                                 .flatMap(
+                                                                                                                                                         cat -> ((List) listOfRecipeLists.getOrDefault(
+                                                                                                                                                                 cat,
+                                                                                                                                                                 ImmutableList.of())).stream())
+                                                                                                                                                 .collect(
+                                                                                                                                                         ImmutableList.toImmutableList())));
         this.collectionsByTab = ImmutableMap.copyOf(listOfRecipeLists);
         this.allCollections = builder.build();
-    }
-
-    private void setupList(RecipeBookCategories category, RecipeList recipeList) {
-        this.collectionsByTab.computeIfAbsent(category, categories -> Lists.newArrayList()).add(recipeList);
     }
 }

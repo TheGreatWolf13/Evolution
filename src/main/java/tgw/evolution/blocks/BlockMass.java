@@ -1,11 +1,13 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockPos.MutableBlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import tgw.evolution.init.EvolutionDamage;
 
 public class BlockMass extends BlockGeneric {
 
@@ -16,15 +18,15 @@ public class BlockMass extends BlockGeneric {
         this.mass = mass;
     }
 
-    public static void updateWeight(World world, BlockPos pos) {
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+    public static void updateWeight(Level level, BlockPos pos) {
+        MutableBlockPos mutablePos = new MutableBlockPos();
         mutablePos.set(pos);
         for (int i = pos.getY() - 1; i >= 0; i--) {
             mutablePos.setY(i);
-            BlockState down = world.getBlockState(mutablePos);
+            BlockState down = level.getBlockState(mutablePos);
             if (BlockUtils.isReplaceable(down)) {
-                BlockUtils.scheduleBlockTick(world, mutablePos.above(), 10);
-                BlockUtils.scheduleBlockTick(world, mutablePos, 10);
+                BlockUtils.scheduleBlockTick(level, mutablePos.above(), 10);
+                BlockUtils.scheduleBlockTick(level, mutablePos, 10);
                 return;
             }
             if (down.getBlock() instanceof BlockStone || down.getBlock() == Blocks.BEDROCK) {
@@ -34,9 +36,10 @@ public class BlockMass extends BlockGeneric {
     }
 
     @Override
-    public void fallOn(World world, BlockPos pos, Entity entity, float fallDistance) {
+    public void fallOn(Level level, BlockState state, BlockPos pos, Entity entity, float fallDistance) {
         entity.causeFallDamage(fallDistance,
-                               this instanceof ICollisionBlock ? ((ICollisionBlock) this).getSlowdownTop(world.getBlockState(pos)) : 1.0f);
+                               this instanceof ICollisionBlock collisionBlock ? collisionBlock.getSlowdownTop(state) : 1.0f,
+                               EvolutionDamage.FALL);
     }
 
     public int getBaseMass() {
@@ -48,7 +51,7 @@ public class BlockMass extends BlockGeneric {
         return 0.85F;
     }
 
-    public int getMass(World world, BlockPos pos, BlockState state) {
+    public int getMass(Level level, BlockPos pos, BlockState state) {
         return this.getMass(state);
     }
 
@@ -57,18 +60,18 @@ public class BlockMass extends BlockGeneric {
     }
 
     @Override
-    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!world.isClientSide) {
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!level.isClientSide) {
             if (pos.above().equals(fromPos)) {
-                updateWeight(world, pos);
+                updateWeight(level, pos);
             }
         }
     }
 
     @Override
-    public void onPlace(BlockState state, World world, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (!world.isClientSide) {
-            BlockUtils.scheduleBlockTick(world, pos, 2);
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!level.isClientSide) {
+            BlockUtils.scheduleBlockTick(level, pos, 2);
         }
     }
 }

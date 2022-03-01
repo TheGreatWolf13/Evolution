@@ -1,12 +1,12 @@
 package tgw.evolution.entities.ai;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.RandomPositionGenerator;
-import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.util.DefaultRandomPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.entity.EntityAccess;
+import net.minecraft.world.phys.Vec3;
 import tgw.evolution.entities.EntityGenericAgeable;
 
 import javax.annotation.Nullable;
@@ -28,24 +28,24 @@ public class GoalPanic extends Goal {
     }
 
     @Nullable
-    protected static BlockPos lookForWater(IBlockReader world, Entity entity, int horizontalRange, int verticalRange) {
+    protected static BlockPos lookForWater(BlockGetter level, EntityAccess entity, int horizontalRange, int verticalRange) {
         BlockPos entityPos = entity.blockPosition();
         int entityX = entityPos.getX();
         int entityY = entityPos.getY();
         int entityZ = entityPos.getZ();
         float maxRange = horizontalRange * horizontalRange * verticalRange * 2;
-        BlockPos.Mutable chosenPos = null;
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos chosenPos = null;
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         for (int x = entityX - horizontalRange; x <= entityX + horizontalRange; ++x) {
             for (int y = entityY - verticalRange; y <= entityY + verticalRange; ++y) {
                 for (int z = entityZ - horizontalRange; z <= entityZ + horizontalRange; ++z) {
                     mutablePos.set(x, y, z);
-                    if (world.getFluidState(mutablePos).is(FluidTags.WATER)) {
+                    if (level.getFluidState(mutablePos).is(FluidTags.WATER)) {
                         float distanceToBlock = (x - entityX) * (x - entityX) + (y - entityY) * (y - entityY) + (z - entityZ) * (z - entityZ);
                         if (distanceToBlock < maxRange) {
                             maxRange = distanceToBlock;
                             //noinspection ObjectAllocationInLoop
-                            chosenPos = chosenPos == null ? new BlockPos.Mutable().set(mutablePos) : chosenPos.set(mutablePos);
+                            chosenPos = chosenPos == null ? new BlockPos.MutableBlockPos().set(mutablePos) : chosenPos.set(mutablePos);
                         }
                     }
                 }
@@ -83,7 +83,7 @@ public class GoalPanic extends Goal {
     }
 
     protected boolean findRandomPosition() {
-        Vector3d vec3d = RandomPositionGenerator.getPos(this.creature, 5, 4);
+        Vec3 vec3d = DefaultRandomPos.getPos(this.creature, 5, 4);
         if (vec3d == null) {
             return false;
         }

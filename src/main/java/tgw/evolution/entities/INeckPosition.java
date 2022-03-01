@@ -1,6 +1,6 @@
 package tgw.evolution.entities;
 
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.phys.Vec3;
 
 public interface INeckPosition {
 
@@ -8,5 +8,5 @@ public interface INeckPosition {
 
     float getCameraZOffset();
 
-    Vector3d getNeckPoint();
+    Vec3 getNeckPoint();
 }

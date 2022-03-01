@@ -1,21 +1,21 @@
 package tgw.evolution.items;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.util.BlockFlags;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.math.MathHelper;
 
 public class ItemClayMolded extends ItemBlock {
 
@@ -31,51 +31,51 @@ public class ItemClayMolded extends ItemBlock {
     }
 
     @Override
-    public ActionResultType place(BlockItemUseContext context) {
+    public InteractionResult place(BlockPlaceContext context) {
         if (context.isSecondaryUseActive()) {
             if (!context.canPlace()) {
-                return ActionResultType.FAIL;
+                return InteractionResult.FAIL;
             }
-            World world = context.getLevel();
+            Level level = context.getLevel();
             BlockPos pos = context.getClickedPos();
-            BlockState state = world.getBlockState(pos.below());
-            if (!state.isFaceSturdy(world, pos, Direction.UP)) {
-                return ActionResultType.FAIL;
+            BlockState state = level.getBlockState(pos.below());
+            if (!state.isFaceSturdy(level, pos, Direction.UP)) {
+                return InteractionResult.FAIL;
             }
-            ISelectionContext selectionContext = context.getPlayer() == null ? ISelectionContext.empty() : ISelectionContext.of(context.getPlayer());
-            if (!world.isUnobstructed(EvolutionBlocks.PIT_KILN.get().defaultBlockState(), pos, selectionContext)) {
-                return ActionResultType.FAIL;
+            CollisionContext selectionContext = context.getPlayer() == null ? CollisionContext.empty() : CollisionContext.of(context.getPlayer());
+            if (!level.isUnobstructed(EvolutionBlocks.PIT_KILN.get().defaultBlockState(), pos, selectionContext)) {
+                return InteractionResult.FAIL;
             }
-            if (!world.setBlock(pos, EvolutionBlocks.PIT_KILN.get().defaultBlockState(), BlockFlags.NOTIFY_UPDATE_AND_RERENDER)) {
-                return ActionResultType.FAIL;
+            if (!level.setBlock(pos, EvolutionBlocks.PIT_KILN.get().defaultBlockState(), BlockFlags.NOTIFY_UPDATE_AND_RERENDER)) {
+                return InteractionResult.FAIL;
             }
-            TEPitKiln tile = (TEPitKiln) world.getBlockEntity(pos);
+            TEPitKiln tile = (TEPitKiln) level.getBlockEntity(pos);
             if (this.single) {
                 tile.setNWStack(context.getItemInHand());
                 tile.setSingle(true);
-                world.playSound(context.getPlayer(), pos, SoundEvents.GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0F, 0.75F);
-                return ActionResultType.SUCCESS;
+                level.playSound(context.getPlayer(), pos, SoundEvents.GRAVEL_PLACE, SoundSource.BLOCKS, 1.0F, 0.75F);
+                return InteractionResult.SUCCESS;
             }
             int x = MathHelper.getIndex(2, 0, 16, (context.getClickLocation().x - pos.getX()) * 16);
             int z = MathHelper.getIndex(2, 0, 16, (context.getClickLocation().z - pos.getZ()) * 16);
             if (x == 0) {
                 if (z == 0) {
                     tile.setNWStack(context.getItemInHand());
-                    world.playSound(context.getPlayer(), pos, SoundEvents.GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0F, 0.75F);
-                    return ActionResultType.SUCCESS;
+                    level.playSound(context.getPlayer(), pos, SoundEvents.GRAVEL_PLACE, SoundSource.BLOCKS, 1.0F, 0.75F);
+                    return InteractionResult.SUCCESS;
                 }
                 tile.setSWStack(context.getItemInHand());
-                world.playSound(context.getPlayer(), pos, SoundEvents.GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0F, 0.75F);
-                return ActionResultType.SUCCESS;
+                level.playSound(context.getPlayer(), pos, SoundEvents.GRAVEL_PLACE, SoundSource.BLOCKS, 1.0F, 0.75F);
+                return InteractionResult.SUCCESS;
             }
             if (z == 0) {
                 tile.setNEStack(context.getItemInHand());
-                world.playSound(context.getPlayer(), pos, SoundEvents.GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0F, 0.75F);
-                return ActionResultType.SUCCESS;
+                level.playSound(context.getPlayer(), pos, SoundEvents.GRAVEL_PLACE, SoundSource.BLOCKS, 1.0F, 0.75F);
+                return InteractionResult.SUCCESS;
             }
             tile.setSEStack(context.getItemInHand());
-            world.playSound(context.getPlayer(), pos, SoundEvents.GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0F, 0.75F);
-            return ActionResultType.SUCCESS;
+            level.playSound(context.getPlayer(), pos, SoundEvents.GRAVEL_PLACE, SoundSource.BLOCKS, 1.0F, 0.75F);
+            return InteractionResult.SUCCESS;
         }
         return super.place(context);
     }

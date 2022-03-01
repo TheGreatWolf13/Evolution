@@ -1,9 +1,9 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.NetworkHooks;
 import tgw.evolution.inventory.extendedinventory.ContainerPlayerInventoryProvider;
 
 import java.util.function.Supplier;
@@ -11,12 +11,12 @@ import java.util.function.Supplier;
 public class PacketCSOpenExtendedInventory implements IPacket {
 
     @SuppressWarnings("unused")
-    public static PacketCSOpenExtendedInventory decode(PacketBuffer buffer) {
+    public static PacketCSOpenExtendedInventory decode(FriendlyByteBuf buffer) {
         return new PacketCSOpenExtendedInventory();
     }
 
     @SuppressWarnings("unused")
-    public static void encode(PacketCSOpenExtendedInventory message, PacketBuffer buffer) {
+    public static void encode(PacketCSOpenExtendedInventory message, FriendlyByteBuf buffer) {
     }
 
     public static void handle(PacketCSOpenExtendedInventory packet, Supplier<NetworkEvent.Context> context) {

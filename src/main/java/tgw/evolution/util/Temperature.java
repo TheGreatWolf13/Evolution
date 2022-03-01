@@ -1,22 +1,56 @@
 package tgw.evolution.util;
 
+import tgw.evolution.util.earth.ClimateZone;
+import tgw.evolution.util.math.MathHelper;
+
 public final class Temperature {
 
     private Temperature() {
+    }
+
+    public static double C2F(double value) {
+        return value * 9 / 5 + 32;
+    }
+
+    public static double C2FRelative(double value) {
+        return value * 9 / 5;
     }
 
     /**
      * @return Converts a temperature given in degrees Celsius to Kelvin.
      */
     public static double C2K(double celsius) {
-        return celsius - 273;
+        return celsius + 273.15;
+    }
+
+    public static double C2KRelative(double value) {
+        return value;
+    }
+
+    public static double C2R(double value) {
+        return value * 9 / 5 + 491.67;
+    }
+
+    public static double C2RRelative(double value) {
+        return value * 9 / 5;
     }
 
     /**
      * @return Converts a temperature given in Kelvin to degrees Celsius.
      */
     public static double K2C(double kelvin) {
-        return kelvin + 273;
+        return kelvin - 273.15;
+    }
+
+    public static double getBaseTemperatureForRegion(ClimateZone.Region region) {
+        if (region == null) {
+            return 0;
+        }
+        return switch (region) {
+            case POLAR -> 15;
+            case TEMPERATE -> 20;
+            case TROPICAL -> 25;
+        };
     }
 
     /**
@@ -71,5 +105,27 @@ public final class Temperature {
             alpha = 255;
         }
         return alpha << 24 | red << 16 | green << 8 | blue;
+    }
+
+    public static int getMaxComfortForRegion(ClimateZone.Region region) {
+        if (region == null) {
+            return 0;
+        }
+        return switch (region) {
+            case POLAR -> 20;
+            case TEMPERATE -> 25;
+            case TROPICAL -> 30;
+        };
+    }
+
+    public static int getMinComfortForRegion(ClimateZone.Region region) {
+        if (region == null) {
+            return 0;
+        }
+        return switch (region) {
+            case POLAR -> 10;
+            case TEMPERATE -> 15;
+            case TROPICAL -> 20;
+        };
     }
 }

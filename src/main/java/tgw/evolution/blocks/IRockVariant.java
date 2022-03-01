@@ -1,6 +1,6 @@
 package tgw.evolution.blocks;
 
-import tgw.evolution.util.RockVariant;
+import tgw.evolution.util.constants.RockVariant;
 
 public interface IRockVariant {
 

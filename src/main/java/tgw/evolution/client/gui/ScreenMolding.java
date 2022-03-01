@@ -1,24 +1,26 @@
 package tgw.evolution.client.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.EnumMolding;
 import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketCSSetMoldingType;
 
 import javax.annotation.Nullable;
-import java.util.HashMap;
 import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)
@@ -26,22 +28,18 @@ public class ScreenMolding extends Screen {
 
     private static final int WIDTH = 190;
     private static final int HEIGHT = 78;
-    private static final ItemStack[] STACKS;
-    private static final Map<Button, ItemStack> BUTTONS = new HashMap<>();
-
-    static {
-        EnumMolding[] values = EnumMolding.values();
-        STACKS = new ItemStack[values.length - 1];
-        for (int i = 0; i < STACKS.length; i++) {
-            STACKS[i] = values[i + 1].getStack();
-        }
-    }
-
+    private final Object2ObjectMap<Button, ItemStack> buttons = new Object2ObjectOpenHashMap<>();
     private final BlockPos pos;
+    private final ResourceLocation resBackground = Evolution.getResource("textures/gui/molding.png");
+    private final ItemStack[] stacks;
 
     public ScreenMolding(BlockPos pos) {
-        super(new TranslationTextComponent("evolution.gui.molding"));
+        super(new TranslatableComponent("evolution.gui.molding"));
         this.pos = pos;
+        this.stacks = new ItemStack[EnumMolding.VALUES.length - 1];
+        for (int i = 0; i < this.stacks.length; i++) {
+            this.stacks[i] = EnumMolding.VALUES[i + 1].getStack();
+        }
     }
 
     public static void open(BlockPos pos) {
@@ -49,31 +47,28 @@ public class ScreenMolding extends Screen {
     }
 
     private void drawItemStack(ItemStack stack, int x, int y, @Nullable String altText) {
-        RenderSystem.translatef(0.0F, 0.0F, 32.0F);
-        RenderHelper.turnBackOn();
-        RenderSystem.disableLighting();
+        PoseStack internalMat = RenderSystem.getModelViewStack();
+        internalMat.translate(0, 0, 32);
         this.setBlitOffset(200);
         this.itemRenderer.blitOffset = 200.0F;
         this.itemRenderer.renderGuiItem(stack, x, y);
         this.itemRenderer.renderGuiItemDecorations(this.font, stack, x, y, altText);
         this.setBlitOffset(0);
         this.itemRenderer.blitOffset = 0.0F;
-        RenderSystem.enableLighting();
-        RenderHelper.turnOff();
+        RenderSystem.applyModelViewMatrix();
     }
 
     @Override
     protected void init() {
-        BUTTONS.clear();
-        int nButtons = STACKS.length;
+        this.buttons.clear();
+        int nButtons = this.stacks.length;
         int xSize = 20 * nButtons + 5 * (nButtons - 1);
         int relX = (this.width - xSize) / 2;
         int relY = (this.height - 20) / 2;
-        EnumMolding[] values = EnumMolding.values();
-        BUTTONS.put(new Button(relX, relY, 20, 20, EvolutionTexts.EMPTY, button -> this.setTile(values[1])), STACKS[0]);
-        BUTTONS.put(new Button(relX + 25, relY, 20, 20, EvolutionTexts.EMPTY, button -> this.setTile(values[2])), STACKS[1]);
-        for (Button button : BUTTONS.keySet()) {
-            this.addButton(button);
+        this.buttons.put(new Button(relX, relY, 20, 20, EvolutionTexts.EMPTY, button -> this.setTile(EnumMolding.VALUES[1])), this.stacks[0]);
+        this.buttons.put(new Button(relX + 25, relY, 20, 20, EvolutionTexts.EMPTY, button -> this.setTile(EnumMolding.VALUES[2])), this.stacks[1]);
+        for (Button button : this.buttons.keySet()) {
+            this.addRenderableWidget(button);
         }
     }
 
@@ -83,23 +78,24 @@ public class ScreenMolding extends Screen {
     }
 
     @Override
-    public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
+    public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(matrices);
-        RenderSystem.color4f(1, 1, 1, 1);
-        this.minecraft.getTextureManager().bind(EvolutionResources.GUI_MOLDING);
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+        RenderSystem.setShaderTexture(0, this.resBackground);
         int cornerX = (this.width - WIDTH) / 2;
         int cornerY = (this.height - HEIGHT) / 2;
         this.blit(matrices, cornerX, cornerY, 0, 0, WIDTH, HEIGHT);
-        int nButtons = BUTTONS.keySet().size();
+        int nButtons = this.buttons.keySet().size();
         int xSize = 20 * nButtons + 5 * (nButtons - 1);
         int relX = (this.width - xSize) / 2;
         int relY = (this.height - 20) / 2;
         drawCenteredString(matrices, this.font, this.title, this.width, cornerY + 5, 0x40_4040);
         super.render(matrices, mouseX, mouseY, partialTicks);
-        for (int i = 0; i < STACKS.length; i++) {
-            this.drawItemStack(STACKS[i], 2 + relX + 25 * i, 2 + relY, null);
+        for (int i = 0; i < this.stacks.length; i++) {
+            this.drawItemStack(this.stacks[i], 2 + relX + 25 * i, 2 + relY, null);
         }
-        for (Map.Entry<Button, ItemStack> entry : BUTTONS.entrySet()) {
+        for (Map.Entry<Button, ItemStack> entry : this.buttons.object2ObjectEntrySet()) {
             if (entry.getKey().isMouseOver(mouseX, mouseY)) {
                 this.renderTooltip(matrices, entry.getValue(), mouseX, mouseY);
             }

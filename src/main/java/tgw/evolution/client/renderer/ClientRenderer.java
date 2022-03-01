@@ -1,61 +1,63 @@
 package tgw.evolution.client.renderer;
 
-import com.google.common.collect.Multimap;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.GameSettings;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.renderer.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Matrix3f;
+import com.mojang.math.Matrix4f;
+import com.mojang.math.Vector3f;
+import net.minecraft.Util;
+import net.minecraft.client.*;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.entity.EntityRendererManager;
-import net.minecraft.client.renderer.entity.PlayerRenderer;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.texture.PotionSpriteUploader;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.settings.AttackIndicatorStatus;
-import net.minecraft.client.settings.PointOfView;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.attributes.Attribute;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.inventory.container.INamedContainerProvider;
-import net.minecraft.item.*;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.potion.Effect;
-import net.minecraft.potion.EffectType;
-import net.minecraft.potion.EffectUtils;
-import net.minecraft.potion.Effects;
-import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.vector.Matrix4f;
-import net.minecraft.util.math.vector.Vector3f;
-import net.minecraft.world.GameType;
-import net.minecraft.world.World;
-import net.minecraft.world.storage.MapData;
+import net.minecraft.client.resources.MobEffectTextureManager;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.effect.MobEffectUtil;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.npc.InventoryCarrier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.*;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
-import net.minecraftforge.client.event.RenderTooltipEvent;
 import net.minecraftforge.client.gui.ForgeIngameGui;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
+import tgw.evolution.capabilities.food.HungerStats;
+import tgw.evolution.capabilities.food.IHunger;
+import tgw.evolution.capabilities.temperature.TemperatureClient;
 import tgw.evolution.capabilities.thirst.IThirst;
 import tgw.evolution.capabilities.thirst.ThirstStats;
 import tgw.evolution.client.audio.SoundEntityEmitted;
@@ -67,16 +69,18 @@ import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.InputHooks;
 import tgw.evolution.init.*;
-import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.*;
 import tgw.evolution.network.PacketCSPlaySoundEntityEmitted;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.NBTTypes;
+import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.Matrix3d;
+import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientRenderer {
@@ -87,19 +91,22 @@ public class ClientRenderer {
     public static ClientRenderer instance;
     private static int slotMainHand;
     private final ClientEvents client;
-    private final EntityRendererManager entityRendererManager;
+    private final List<ClientEffectInstance> effects = new ArrayList<>();
+    private final EntityRenderDispatcher entityRenderDispatcher;
+    private final byte[] hungerShakeAligment = new byte[10];
     private final ItemRenderer itemRenderer;
     private final Minecraft mc;
     private final Random rand = new Random();
+    private final List<Runnable> runnables = new ArrayList<>();
     private final byte[] thirstShakeAligment = new byte[10];
     public boolean isAddingEffect;
     public boolean isRenderingPlayer;
-    private byte alphaDir = 1;
     private ItemStack currentMainhandItem = ItemStack.EMPTY;
     private ItemStack currentOffhandItem = ItemStack.EMPTY;
-    private float flashAlpha;
     private long healthUpdateCounter;
     private int hitmarkerTick;
+    private byte hungerAlphaDir = 1;
+    private float hungerFlashAlpha;
     private int killmarkerTick;
     private int lastBeneficalCount;
     private int lastNeutralCount;
@@ -123,17 +130,20 @@ public class ClientRenderer {
     private float offhandSwingProgress;
     private int offhandSwingProgressInt;
     private float playerDisplayedHealth;
+    private byte thirstAlphaDir = 1;
+    private float thirstFlashAlpha;
 
     public ClientRenderer(Minecraft mc, ClientEvents client) {
         instance = this;
         this.mc = mc;
         this.client = client;
-        this.entityRendererManager = mc.getEntityRenderDispatcher();
+        this.entityRenderDispatcher = mc.getEntityRenderDispatcher();
         this.itemRenderer = mc.getItemRenderer();
+        EvolutionOverlays.init();
     }
 
-    private static void blit(MatrixStack matrices, int x, int y, int textureX, int textureY, int sizeX, int sizeY) {
-        AbstractGui.blit(matrices, x, y, 20, textureX, textureY, sizeX, sizeY, 256, 256);
+    private static void blit(PoseStack matrices, int x, int y, int textureX, int textureY, int sizeX, int sizeY) {
+        GuiComponent.blit(matrices, x, y, 20, textureX, textureY, sizeX, sizeY, 256, 256);
     }
 
     public static void disableAlpha(float alpha) {
@@ -141,11 +151,11 @@ public class ClientRenderer {
         if (alpha == 1.0f) {
             return;
         }
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    public static void drawHitbox(MatrixStack matrices,
-                                  IVertexBuilder buffer,
+    public static void drawHitbox(PoseStack matrices,
+                                  VertexConsumer buffer,
                                   Hitbox hitbox,
                                   double x,
                                   double y,
@@ -160,8 +170,10 @@ public class ClientRenderer {
                             Minecraft.getInstance().player.getOffhandItem().getItem() == EvolutionItems.debug_item.get();
         hitbox.getParent().init(entity, partialTicks);
         Matrix3d mainTransform = hitbox.getParent().getTransform().transpose();
-        final double[] points = new double[3];
-        Matrix4f mat = matrices.last().pose();
+        final double[] points0 = new double[3];
+        final double[] points1 = new double[3];
+        Matrix4f pose = matrices.last().pose();
+        Matrix3f normal = matrices.last().normal();
         for (Hitbox box : hitbox.getParent().getBoxes()) {
             if (!renderAll) {
                 box = hitbox;
@@ -170,29 +182,77 @@ public class ClientRenderer {
             Matrix3d transform = finalBox.getTransformation().transpose();
             //noinspection ObjectAllocationInLoop
             finalBox.forEachEdge((x0, y0, z0, x1, y1, z1) -> {
-                transform.transform(x0, y0, z0, points);
-                finalBox.doOffset(points);
-                mainTransform.transform(points[0], points[1], points[2], points);
-                finalBox.getParent().doOffset(points);
-                buffer.vertex(mat, (float) (points[0] + x), (float) (points[1] + y), (float) (points[2] + z))
+                //Transform 0 coordinates
+                transform.transform(x0, y0, z0, points0);
+                finalBox.doOffset(points0);
+                mainTransform.transform(points0[0], points0[1], points0[2], points0);
+                finalBox.getParent().doOffset(points0);
+                //Transform 1 coordinates
+                transform.transform(x1, y1, z1, points1);
+                finalBox.doOffset(points1);
+                mainTransform.transform(points1[0], points1[1], points1[2], points1);
+                finalBox.getParent().doOffset(points1);
+                //Calculate normals
+                float nx = (float) (points1[0] - points0[0]);
+                float ny = (float) (points1[1] - points0[1]);
+                float nz = (float) (points1[2] - points0[2]);
+                float length = Mth.sqrt(nx * nx + ny * ny + nz * nz);
+                nx /= length;
+                ny /= length;
+                nz /= length;
+                //Fill vertices
+                buffer.vertex(pose, (float) (points0[0] + x), (float) (points0[1] + y), (float) (points0[2] + z))
                       .color(red, green, blue, alpha)
+                      .normal(normal, nx, ny, nz)
                       .endVertex();
-                transform.transform(x1, y1, z1, points);
-                finalBox.doOffset(points);
-                mainTransform.transform(points[0], points[1], points[2], points);
-                finalBox.getParent().doOffset(points);
-                buffer.vertex(mat, (float) (points[0] + x), (float) (points[1] + y), (float) (points[2] + z))
+                buffer.vertex(pose, (float) (points1[0] + x), (float) (points1[1] + y), (float) (points1[2] + z))
                       .color(red, green, blue, alpha)
+                      .normal(normal, nx, ny, nz)
                       .endVertex();
             });
             if (!renderAll) {
                 break;
             }
         }
+        if (renderAll) {
+            for (Hitbox box : hitbox.getParent().getEquipment()) {
+                Matrix3d transform = box.getTransformation().transpose();
+                //noinspection ObjectAllocationInLoop
+                box.forEachEdge((x0, y0, z0, x1, y1, z1) -> {
+                    //Transform 0 coordinates
+                    transform.transform(x0, y0, z0, points0);
+                    box.doOffset(points0);
+                    mainTransform.transform(points0[0], points0[1], points0[2], points0);
+                    box.getParent().doOffset(points0);
+                    //Transform 1 coordinates
+                    transform.transform(x1, y1, z1, points1);
+                    box.doOffset(points1);
+                    mainTransform.transform(points1[0], points1[1], points1[2], points1);
+                    box.getParent().doOffset(points1);
+                    //Calculate normals
+                    float nx = (float) (points1[0] - points0[0]);
+                    float ny = (float) (points1[1] - points0[1]);
+                    float nz = (float) (points1[2] - points0[2]);
+                    float length = Mth.sqrt(nx * nx + ny * ny + nz * nz);
+                    nx /= length;
+                    ny /= length;
+                    nz /= length;
+                    //Fill vertices
+                    buffer.vertex(pose, (float) (points0[0] + x), (float) (points0[1] + y), (float) (points0[2] + z))
+                          .color(1.0f, 0.0f, 1.0f, 1.0f)
+                          .normal(normal, nx, ny, nz)
+                          .endVertex();
+                    buffer.vertex(pose, (float) (points1[0] + x), (float) (points1[1] + y), (float) (points1[2] + z))
+                          .color(1.0f, 0.0f, 1.0f, 1.0f)
+                          .normal(normal, nx, ny, nz)
+                          .endVertex();
+                });
+            }
+        }
     }
 
-    private static void drawSelectionBox(MatrixStack matrices,
-                                         IVertexBuilder buffer,
+    private static void drawSelectionBox(PoseStack matrices,
+                                         VertexConsumer buffer,
                                          Entity entity,
                                          double x,
                                          double y,
@@ -201,7 +261,7 @@ public class ClientRenderer {
                                          BlockState state) {
         drawShape(matrices,
                   buffer,
-                  state.getShape(entity.level, pos, ISelectionContext.of(entity)),
+                  state.getShape(entity.level, pos, CollisionContext.of(entity)),
                   pos.getX() - x,
                   pos.getY() - y,
                   pos.getZ() - z,
@@ -211,8 +271,8 @@ public class ClientRenderer {
                   0.4F);
     }
 
-    private static void drawShape(MatrixStack matrices,
-                                  IVertexBuilder buffer,
+    private static void drawShape(PoseStack matrices,
+                                  VertexConsumer buffer,
                                   VoxelShape shape,
                                   double x,
                                   double y,
@@ -222,9 +282,23 @@ public class ClientRenderer {
                                   float blue,
                                   float alpha) {
         Matrix4f mat = matrices.last().pose();
+        Matrix3f normal = matrices.last().normal();
         shape.forAllEdges((x0, y0, z0, x1, y1, z1) -> {
-            buffer.vertex(mat, (float) (x0 + x), (float) (y0 + y), (float) (z0 + z)).color(red, green, blue, alpha).endVertex();
-            buffer.vertex(mat, (float) (x1 + x), (float) (y1 + y), (float) (z1 + z)).color(red, green, blue, alpha).endVertex();
+            float nx = (float) (x1 - x0);
+            float ny = (float) (y1 - y0);
+            float nz = (float) (z1 - z0);
+            float length = Mth.sqrt(nx * nx + ny * ny + nz * nz);
+            nx /= length;
+            ny /= length;
+            nz /= length;
+            buffer.vertex(mat, (float) (x0 + x), (float) (y0 + y), (float) (z0 + z))
+                  .color(red, green, blue, alpha)
+                  .normal(normal, nx, ny, nz)
+                  .endVertex();
+            buffer.vertex(mat, (float) (x1 + x), (float) (y1 + y), (float) (z1 + z))
+                  .color(red, green, blue, alpha)
+                  .normal(normal, nx, ny, nz)
+                  .endVertex();
         });
     }
 
@@ -233,15 +307,15 @@ public class ClientRenderer {
         if (alpha == 1.0f) {
             return;
         }
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, alpha);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
         RenderSystem.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
     }
 
-    private static void floatBlit(MatrixStack matrices, float x, float y, int textureX, int textureY, int sizeX, int sizeY, int blitOffset) {
+    private static void floatBlit(PoseStack matrices, float x, float y, int textureX, int textureY, int sizeX, int sizeY, int blitOffset) {
         GUIUtils.floatBlit(matrices, x, y, blitOffset, textureX, textureY, sizeX, sizeY, 256, 256);
     }
 
-    public static void floatBlit(MatrixStack matrices, float x, float y, int blitOffset, int width, int height, TextureAtlasSprite sprite) {
+    public static void floatBlit(PoseStack matrices, float x, float y, int blitOffset, int width, int height, TextureAtlasSprite sprite) {
         GUIUtils.innerFloatBlit(matrices.last().pose(),
                                 x,
                                 x + width,
@@ -262,11 +336,7 @@ public class ClientRenderer {
     }
 
     private static float roundToHearts(float currentHealth) {
-        return MathHelper.ceil(currentHealth * 0.4F) / 0.4F;
-    }
-
-    private static int shiftTextByLines(int desiredLine, int y) {
-        return y + 10 * (desiredLine - 1) + 1;
+        return Mth.ceil(currentHealth * 0.4F) / 0.4F;
     }
 
     public static boolean shouldCauseReequipAnimation(@Nonnull ItemStack from, @Nonnull ItemStack to, int slot) {
@@ -293,8 +363,8 @@ public class ClientRenderer {
         return entity.isAttackable() && entity.isAlive();
     }
 
-    private static void transformFirstPerson(MatrixStack matrices, HandSide hand, float swingProgress) {
-        int sideOffset = hand == HandSide.RIGHT ? 1 : -1;
+    private static void transformFirstPerson(PoseStack matrices, HumanoidArm hand, float swingProgress) {
+        int sideOffset = hand == HumanoidArm.RIGHT ? 1 : -1;
         float f = MathHelper.sin(swingProgress * swingProgress * MathHelper.PI);
         matrices.mulPose(Vector3f.YP.rotationDegrees(sideOffset * (45.0F + f * -20.0F)));
         float f1 = MathHelper.sin(MathHelper.sqrt(swingProgress) * MathHelper.PI);
@@ -303,14 +373,18 @@ public class ClientRenderer {
         matrices.mulPose(Vector3f.YP.rotationDegrees(sideOffset * -45.0F));
     }
 
-    private static void transformLungeFirstPerson(MatrixStack matrices, float partialTicks, Hand hand, HandSide handSide, ItemStack stack) {
+    private static void transformLungeFirstPerson(PoseStack matrices,
+                                                  float partialTicks,
+                                                  InteractionHand hand,
+                                                  HumanoidArm handSide,
+                                                  ItemStack stack) {
         Item item = stack.getItem();
         if (item instanceof ILunge) {
             float lungeTime = InputHooks.getLungeTime(hand) + partialTicks;
             int minLunge = ((ILunge) item).getMinLungeTime();
             int fullLunge = ((ILunge) item).getFullLungeTime();
             float relativeLunge = MathHelper.relativize(lungeTime, minLunge, fullLunge);
-            matrices.mulPose(Vector3f.YP.rotationDegrees(handSide == HandSide.RIGHT ? -5.0F : 5.0F));
+            matrices.mulPose(Vector3f.YP.rotationDegrees(handSide == HumanoidArm.RIGHT ? -5.0F : 5.0F));
             float relativeRotation = MathHelper.clamp(relativeLunge * 3.0f, 0.0f, 1.0f);
             matrices.mulPose(Vector3f.XP.rotationDegrees(-100.0F * relativeRotation));
             if (relativeLunge > 0.333f) {
@@ -320,13 +394,13 @@ public class ClientRenderer {
         }
     }
 
-    private static void transformSideFirstPerson(MatrixStack matrices, HandSide hand, float equippedProg) {
-        int sideOffset = hand == HandSide.RIGHT ? 1 : -1;
+    private static void transformSideFirstPerson(PoseStack matrices, HumanoidArm arm, float equippedProg) {
+        int sideOffset = arm == HumanoidArm.RIGHT ? 1 : -1;
         matrices.translate(sideOffset * 0.56, -0.52 + equippedProg * -0.6, -0.72);
     }
 
-    private static void transformSideFirstPersonParry(MatrixStack matrices, HandSide hand, float equippedProg) {
-        int sideOffset = hand == HandSide.RIGHT ? 1 : -1;
+    private static void transformSideFirstPersonParry(PoseStack matrices, HumanoidArm arm, float equippedProg) {
+        int sideOffset = arm == HumanoidArm.RIGHT ? 1 : -1;
         matrices.translate(sideOffset * 0.56, -0.52 + equippedProg * -0.6, -0.72);
         matrices.translate(sideOffset * -0.141_421_36, 0.08, 0.141_421_36);
         matrices.mulPose(Vector3f.XP.rotationDegrees(-102.25F));
@@ -334,14 +408,51 @@ public class ClientRenderer {
         matrices.mulPose(Vector3f.ZP.rotationDegrees(sideOffset * 78.05F));
     }
 
-    public void drawHydrationOverlay(MatrixStack matrices, int hydrationGained, int hydrationLevel, int left, int top, float alpha) {
+    private static void transformSwordFirstPerson(PoseStack matrices,
+                                                  Player player,
+                                                  float partialTicks,
+                                                  InteractionHand hand,
+                                                  HumanoidArm arm,
+                                                  ItemStack stack) {
+        float progress = ((ILivingEntityPatch) player).getMainhandCustomAttackProgress(partialTicks);
+        matrices.mulPose(Vector3f.XP.rotationDegrees(-90));
+        matrices.mulPose(Vector3f.YP.rotationDegrees(-90));
+        matrices.translate(progress / 2, 0, progress);
+    }
+
+    private void drawHungerOverlay(PoseStack matrices, int hungerGained, int hungerLevel, int left, int top, float alpha) {
+        if (hungerGained == 0) {
+            return;
+        }
+        int endBar = Mth.ceil(Math.min(hungerLevel + hungerGained, HungerStats.HUNGER_CAPACITY) / HungerStats.HUNGER_SCALE);
+        enableAlpha(alpha);
+        int startBar = hungerLevel / (int) HungerStats.HUNGER_SCALE;
+        int barsNeeded = endBar - startBar;
+        for (int i = startBar; i < startBar + barsNeeded; i++) {
+            int idx = i * 2 + 1;
+            int x = left - i * 8 - 9;
+            int y = top + this.hungerShakeAligment[i];
+            int icon = 16;
+            if (this.mc.player.hasEffect(MobEffects.HUNGER)) {
+                icon += 36;
+            }
+            if (idx < hungerLevel + hungerGained) {
+                blit(matrices, x, y, icon + 36, 27, 9, 9);
+            }
+            else if (idx == hungerLevel + hungerGained) {
+                blit(matrices, x, y, icon + 45, 27, 9, 9);
+            }
+        }
+        disableAlpha(alpha);
+    }
+
+    public void drawHydrationOverlay(PoseStack matrices, int hydrationGained, int hydrationLevel, int left, int top, float alpha) {
         for (int j = 0; j < 3; j++) {
             if (hydrationLevel + hydrationGained <= 0) {
                 return;
             }
             int startBar = hydrationGained != 0 ? hydrationLevel / (int) ThirstStats.HYDRATION_SCALE : 0;
-            int endBar = MathHelper.ceil(MathHelper.clampMax(ThirstStats.INTOXICATION, hydrationLevel + hydrationGained) /
-                                         ThirstStats.HYDRATION_SCALE);
+            int endBar = Mth.ceil(Math.min(hydrationLevel + hydrationGained, ThirstStats.INTOXICATION) / ThirstStats.HYDRATION_SCALE);
             enableAlpha(alpha);
             int barsNeeded = endBar - startBar;
             for (int i = startBar; i < startBar + barsNeeded; i++) {
@@ -375,11 +486,51 @@ public class ClientRenderer {
         }
     }
 
-    public void drawThirstOverlay(MatrixStack matrices, int thirstRestored, int thirstLevel, int left, int top, float alpha) {
+    private void drawSaturationOverlay(PoseStack matrices, int saturationGained, int saturationLevel, int left, int top, float alpha) {
+        for (int j = 0; j < 3; j++) {
+            if (saturationLevel + saturationGained <= 0) {
+                return;
+            }
+            int startBar = saturationGained != 0 ? saturationLevel / (int) HungerStats.SATURATION_SCALE : 0;
+            int endBar = Mth.ceil(Math.min(saturationLevel + saturationGained, HungerStats.OVEREAT) / HungerStats.SATURATION_SCALE);
+            enableAlpha(alpha);
+            int barsNeeded = endBar - startBar;
+            for (int i = startBar; i < startBar + barsNeeded; i++) {
+                int x = left - i * 8 - 9;
+                int y = top + this.hungerShakeAligment[i];
+                float effectiveSaturationOfBar = (saturationLevel + saturationGained) / HungerStats.SATURATION_SCALE - i;
+                if (effectiveSaturationOfBar > 0.75) {
+                    blit(matrices, x, y, 169 + 36 * j, 27, 9, 9);
+                }
+                else if (effectiveSaturationOfBar > 0.5) {
+                    blit(matrices, x, y, 160 + 36 * j, 27, 9, 9);
+                }
+                else if (effectiveSaturationOfBar > 0.25) {
+                    blit(matrices, x, y, 151 + 36 * j, 27, 9, 9);
+                }
+                else if (effectiveSaturationOfBar > 0) {
+                    blit(matrices, x, y, 142 + 36 * j, 27, 9, 9);
+                }
+            }
+            if (saturationLevel >= 1_000) {
+                saturationLevel -= 1_000;
+            }
+            else {
+                saturationGained -= 1_000 - saturationLevel;
+                if (saturationGained < 0) {
+                    saturationGained = 0;
+                }
+                saturationLevel = 0;
+            }
+            disableAlpha(alpha);
+        }
+    }
+
+    public void drawThirstOverlay(PoseStack matrices, int thirstRestored, int thirstLevel, int left, int top, float alpha) {
         if (thirstRestored == 0) {
             return;
         }
-        int endBar = MathHelper.ceil(MathHelper.clampMax(ThirstStats.THIRST_CAPACITY, thirstLevel + thirstRestored) / ThirstStats.THIRST_SCALE);
+        int endBar = Mth.ceil(Math.min(thirstLevel + thirstRestored, ThirstStats.THIRST_CAPACITY) / ThirstStats.THIRST_SCALE);
         enableAlpha(alpha);
         int startBar = thirstLevel / (int) ThirstStats.THIRST_SCALE;
         int barsNeeded = endBar - startBar;
@@ -402,14 +553,23 @@ public class ClientRenderer {
     }
 
     public void endTick() {
-        this.flashAlpha += this.alphaDir * 0.125f;
-        if (this.flashAlpha >= 1.5f) {
-            this.flashAlpha = 1.0f;
-            this.alphaDir = -1;
+        this.hungerFlashAlpha += this.hungerAlphaDir * 0.125f;
+        this.thirstFlashAlpha += this.thirstAlphaDir * 0.125f;
+        if (this.hungerFlashAlpha >= 1.5f) {
+            this.hungerFlashAlpha = 1.0f;
+            this.hungerAlphaDir = -1;
         }
-        else if (this.flashAlpha <= -0.5f) {
-            this.flashAlpha = 0.0f;
-            this.alphaDir = 1;
+        else if (this.hungerFlashAlpha <= -0.5f) {
+            this.hungerFlashAlpha = 0.0f;
+            this.hungerAlphaDir = 1;
+        }
+        if (this.thirstFlashAlpha >= 1.5f) {
+            this.thirstFlashAlpha = 1.0f;
+            this.thirstAlphaDir = -1;
+        }
+        else if (this.thirstFlashAlpha <= -0.5f) {
+            this.thirstFlashAlpha = 0.0f;
+            this.thirstAlphaDir = 1;
         }
         if (this.hitmarkerTick > 0) {
             this.hitmarkerTick--;
@@ -420,10 +580,10 @@ public class ClientRenderer {
     }
 
     private int getArmSwingAnimationEnd() {
-        if (EffectUtils.hasDigSpeed(this.mc.player)) {
-            return 6 - (1 + EffectUtils.getDigSpeedAmplification(this.mc.player));
+        if (MobEffectUtil.hasDigSpeed(this.mc.player)) {
+            return 6 - (1 + MobEffectUtil.getDigSpeedAmplification(this.mc.player));
         }
-        return this.mc.player.hasEffect(Effects.DIG_SLOWDOWN) ? 6 + (1 + this.mc.player.getEffect(Effects.DIG_SLOWDOWN).getAmplifier()) * 2 : 6;
+        return this.mc.player.hasEffect(MobEffects.DIG_SLOWDOWN) ? 6 + (1 + this.mc.player.getEffect(MobEffects.DIG_SLOWDOWN).getAmplifier()) * 2 : 6;
     }
 
     private float getMainhandSwingProgress(float partialTickTime) {
@@ -442,7 +602,7 @@ public class ClientRenderer {
         return this.offhandPrevSwingProgress + swingedProgress * partialTickTime;
     }
 
-    private float getYPosForEffect(Effect effect) {
+    private float getYPosForEffect(MobEffect effect) {
         float y = 1;
         if (this.mc.isDemo()) {
             y += 15;
@@ -465,32 +625,32 @@ public class ClientRenderer {
         return y;
     }
 
-    private boolean rayTraceMouse(RayTraceResult rayTraceResult) {
+    private boolean rayTraceMouse(HitResult rayTraceResult) {
         if (rayTraceResult == null) {
             return false;
         }
-        if (rayTraceResult.getType() == RayTraceResult.Type.ENTITY) {
-            return ((EntityRayTraceResult) rayTraceResult).getEntity() instanceof INamedContainerProvider;
+        if (rayTraceResult.getType() == HitResult.Type.ENTITY) {
+            return ((EntityHitResult) rayTraceResult).getEntity() instanceof InventoryCarrier;
         }
-        if (rayTraceResult.getType() == RayTraceResult.Type.BLOCK) {
-            BlockPos blockpos = ((BlockRayTraceResult) rayTraceResult).getBlockPos();
-            World world = this.mc.level;
-            return world.getBlockState(blockpos).getMenuProvider(world, blockpos) != null;
+        if (rayTraceResult.getType() == HitResult.Type.BLOCK) {
+            BlockPos blockpos = ((BlockHitResult) rayTraceResult).getBlockPos();
+            Level level = this.mc.level;
+            return level.getBlockState(blockpos).getMenuProvider(level, blockpos) != null;
         }
         return false;
     }
 
-    private void renderArm(MatrixStack matrices, IRenderTypeBuffer buffer, int packedLight, HandSide side) {
-        this.mc.getTextureManager().bind(this.mc.player.getSkinTextureLocation());
-        EntityRenderer<? super ClientPlayerEntity> renderer = this.entityRendererManager.getRenderer(this.mc.player);
+    private void renderArm(PoseStack matrices, MultiBufferSource buffer, int packedLight, HumanoidArm arm) {
+        RenderSystem.setShaderTexture(0, this.mc.player.getSkinTextureLocation());
+        EntityRenderer<? super LocalPlayer> renderer = this.entityRenderDispatcher.getRenderer(this.mc.player);
         PlayerRenderer playerRenderer = (PlayerRenderer) renderer;
         matrices.pushPose();
-        float sideOffset = side == HandSide.RIGHT ? 1.0F : -1.0F;
+        float sideOffset = arm == HumanoidArm.RIGHT ? 1.0F : -1.0F;
         matrices.mulPose(Vector3f.YP.rotationDegrees(92.0f));
         matrices.mulPose(Vector3f.XP.rotationDegrees(45.0F));
         matrices.mulPose(Vector3f.ZP.rotationDegrees(sideOffset * -41.0F));
         matrices.translate(sideOffset * 0.3, -1.1, 0.45);
-        if (side == HandSide.RIGHT) {
+        if (arm == HumanoidArm.RIGHT) {
             playerRenderer.renderRightHand(matrices, buffer, packedLight, this.mc.player);
         }
         else {
@@ -499,13 +659,13 @@ public class ClientRenderer {
         matrices.popPose();
     }
 
-    public void renderArmFirstPerson(MatrixStack matrices,
-                                     IRenderTypeBuffer buffer,
+    public void renderArmFirstPerson(PoseStack matrices,
+                                     MultiBufferSource buffer,
                                      int packedLight,
                                      float equippedProgress,
                                      float swingProgress,
-                                     HandSide side) {
-        boolean right = side == HandSide.RIGHT;
+                                     HumanoidArm arm) {
+        boolean right = arm == HumanoidArm.RIGHT;
         float sideOffset = right ? 1.0F : -1.0F;
         float sqrtSwingProgress = MathHelper.sqrt(swingProgress);
         float f2 = -0.3F * MathHelper.sin(sqrtSwingProgress * MathHelper.PI);
@@ -517,14 +677,14 @@ public class ClientRenderer {
         float f6 = MathHelper.sin(sqrtSwingProgress * MathHelper.PI);
         matrices.mulPose(Vector3f.YP.rotationDegrees(sideOffset * f6 * 70.0F));
         matrices.mulPose(Vector3f.ZP.rotationDegrees(sideOffset * f5 * -20.0F));
-        AbstractClientPlayerEntity player = this.mc.player;
-        this.mc.getTextureManager().bind(player.getSkinTextureLocation());
+        AbstractClientPlayer player = this.mc.player;
+        RenderSystem.setShaderTexture(0, player.getSkinTextureLocation());
         matrices.translate(sideOffset * -1, 3.6, 3.5);
         matrices.mulPose(Vector3f.ZP.rotationDegrees(sideOffset * 120.0F));
         matrices.mulPose(Vector3f.XP.rotationDegrees(200.0F));
         matrices.mulPose(Vector3f.YP.rotationDegrees(sideOffset * -135.0F));
         matrices.translate(sideOffset * 5.6, 0, 0);
-        PlayerRenderer playerRenderer = (PlayerRenderer) this.entityRendererManager.getRenderer(player);
+        PlayerRenderer playerRenderer = (PlayerRenderer) this.entityRenderDispatcher.getRenderer(player);
         if (right) {
             playerRenderer.renderRightHand(matrices, buffer, packedLight, player);
         }
@@ -533,15 +693,15 @@ public class ClientRenderer {
         }
     }
 
-    public void renderBlockOutlines(MatrixStack matrices, IRenderTypeBuffer buffer, ActiveRenderInfo camera, BlockPos hitPos) {
+    public void renderBlockOutlines(PoseStack matrices, MultiBufferSource buffer, Camera camera, BlockPos hitPos) {
         BlockState state = this.mc.level.getBlockState(hitPos);
-        if (!state.isAir(this.mc.level, hitPos) && this.mc.level.getWorldBorder().isWithinBounds(hitPos)) {
+        if (!state.isAir() && this.mc.level.getWorldBorder().isWithinBounds(hitPos)) {
             RenderSystem.enableBlend();
             Blending.DEFAULT.apply();
             RenderSystem.lineWidth(Math.max(2.5F, this.mc.getWindow().getWidth() / 1_920.0F * 2.5F));
             RenderSystem.disableTexture();
             matrices.pushPose();
-            RenderSystem.scalef(1.0F, 1.0F, 1.0F);
+//            RenderSystem.scalef(1.0F, 1.0F, 1.0F);
             double projX = camera.getPosition().x;
             double projY = camera.getPosition().y;
             double projZ = camera.getPosition().z;
@@ -552,66 +712,65 @@ public class ClientRenderer {
         }
     }
 
-    public void renderCrosshair(MatrixStack matrices, float partialTicks) {
-        GameSettings gamesettings = this.mc.options;
+    public void renderCrosshair(PoseStack matrices, float partialTicks, int width, int height) {
+        Options options = this.mc.options;
         boolean offhandValid = this.mc.player.getOffhandItem().getItem() instanceof IOffhandAttackable;
-        this.mc.getTextureManager().bind(EvolutionResources.GUI_ICONS);
-        int scaledWidth = this.mc.getWindow().getGuiScaledWidth();
-        int scaledHeight = this.mc.getWindow().getGuiScaledHeight();
-        if (gamesettings.getCameraType() == PointOfView.FIRST_PERSON) {
+        RenderSystem.setShaderTexture(0, EvolutionResources.GUI_ICONS);
+        if (options.getCameraType() == CameraType.FIRST_PERSON) {
             if (this.mc.gameMode.getPlayerMode() != GameType.SPECTATOR || this.rayTraceMouse(this.mc.hitResult)) {
-                if (gamesettings.renderDebug && !gamesettings.hideGui && !this.mc.player.isReducedDebugInfo() && !gamesettings.reducedDebugInfo) {
-                    RenderSystem.pushMatrix();
-                    int blitOffset = 0;
-                    RenderSystem.translatef(scaledWidth / 2.0F, scaledHeight / 2.0F, blitOffset);
-                    ActiveRenderInfo camera = this.mc.gameRenderer.getMainCamera();
-                    RenderSystem.rotatef(camera.getXRot(), -1.0f, 0.0F, 0.0F);
-                    RenderSystem.rotatef(camera.getYRot(), 0.0F, 1.0F, 0.0F);
-                    RenderSystem.scalef(-1.0f, -1.0f, -1.0f);
+                if (options.renderDebug && !options.hideGui && !this.mc.player.isReducedDebugInfo() && !options.reducedDebugInfo) {
+                    PoseStack internalMat = RenderSystem.getModelViewStack();
+                    internalMat.pushPose();
+                    internalMat.translate(width / 2.0, height / 2.0, this.mc.gui.getBlitOffset());
+                    Camera camera = this.mc.gameRenderer.getMainCamera();
+                    internalMat.mulPose(Vector3f.XN.rotationDegrees(camera.getXRot()));
+                    internalMat.mulPose(Vector3f.YP.rotationDegrees(camera.getYRot()));
+                    internalMat.scale(-1.0f, -1.0f, -1.0f);
+                    RenderSystem.applyModelViewMatrix();
                     RenderSystem.renderCrosshair(10);
-                    RenderSystem.popMatrix();
+                    internalMat.popPose();
+                    RenderSystem.applyModelViewMatrix();
                 }
                 else {
                     RenderSystem.enableBlend();
-                    RenderSystem.enableAlphaTest();
+                    //enable alpha test
                     if (EvolutionConfig.CLIENT.hitmarkers.get()) {
                         if (this.killmarkerTick > 0) {
                             if (this.killmarkerTick > 10) {
-                                blit(matrices, (scaledWidth - 17) / 2, (scaledHeight - 17) / 2, 102, 94, 17, 17);
+                                blit(matrices, (width - 17) / 2, (height - 17) / 2, 102, 94, 17, 17);
                             }
                             else if (this.killmarkerTick > 5) {
-                                blit(matrices, (scaledWidth - 17) / 2, (scaledHeight - 17) / 2, 120, 94, 17, 17);
+                                blit(matrices, (width - 17) / 2, (height - 17) / 2, 120, 94, 17, 17);
                             }
                             else {
-                                RenderSystem.color4f(1.0f, 1.0f, 1.0f, (this.killmarkerTick - partialTicks) / 5);
-                                blit(matrices, (scaledWidth - 17) / 2, (scaledHeight - 17) / 2, 120, 94, 17, 17);
+                                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, (this.killmarkerTick - partialTicks) / 5);
+                                blit(matrices, (width - 17) / 2, (height - 17) / 2, 120, 94, 17, 17);
                             }
                         }
                         else if (this.hitmarkerTick > 0) {
                             if (this.hitmarkerTick <= 5) {
-                                RenderSystem.color4f(1.0f, 1.0f, 1.0f, (this.hitmarkerTick - partialTicks) / 5);
+                                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, (this.hitmarkerTick - partialTicks) / 5);
                             }
-                            blit(matrices, (scaledWidth - 17) / 2, (scaledHeight - 17) / 2, 84, 94, 17, 17);
+                            blit(matrices, (width - 17) / 2, (height - 17) / 2, 84, 94, 17, 17);
                         }
                     }
-                    RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
+                    RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
                     Blending.INVERTED_ADD.apply();
                     RenderSystem.blendEquation(GL14.GL_FUNC_SUBTRACT);
-                    blit(matrices, (scaledWidth - 15) / 2, (scaledHeight - 15) / 2, 0, 0, 15, 15);
+                    blit(matrices, (width - 15) / 2, (height - 15) / 2, 0, 0, 15, 15);
                     if (this.mc.options.attackIndicator == AttackIndicatorStatus.CROSSHAIR) {
                         float leftCooledAttackStrength = this.client.getMainhandCooledAttackStrength(partialTicks);
                         boolean shouldShowLeftAttackIndicator = false;
                         if (this.client.leftPointedEntity instanceof LivingEntity && leftCooledAttackStrength >= 1) {
-                            shouldShowLeftAttackIndicator = this.mc.player.getCurrentItemAttackStrengthDelay() > 5;
-                            shouldShowLeftAttackIndicator &= shouldShowAttackIndicator(this.client.leftPointedEntity);
-                            if (this.mc.hitResult.getType() == RayTraceResult.Type.BLOCK) {
+                            shouldShowLeftAttackIndicator = shouldShowAttackIndicator(this.client.leftPointedEntity);
+                            if (this.mc.hitResult.getType() == HitResult.Type.BLOCK) {
                                 shouldShowLeftAttackIndicator = false;
                             }
                         }
-                        int sideOffset = this.mc.player.getMainArm() == HandSide.RIGHT ? 1 : -1;
-                        int x = scaledWidth / 2 - 8;
+                        int sideOffset = this.mc.player.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
+                        int x = width / 2 - 8;
                         x = offhandValid ? x + 10 * sideOffset : x;
-                        int y = scaledHeight / 2 - 7 + 16;
+                        int y = height / 2 - 7 + 16;
                         if (shouldShowLeftAttackIndicator) {
                             blit(matrices, x, y, 68, 94, 16, 16);
                         }
@@ -622,11 +781,11 @@ public class ClientRenderer {
                         }
                         if (offhandValid) {
                             boolean shouldShowRightAttackIndicator = false;
-                            float rightCooledAttackStrength = this.client.getOffhandCooledAttackStrength(this.mc.player.getOffhandItem().getItem(),
+                            float rightCooledAttackStrength = this.client.getOffhandCooledAttackStrength(this.mc.player.getOffhandItem(),
                                                                                                          partialTicks);
                             if (this.client.rightPointedEntity instanceof LivingEntity && rightCooledAttackStrength >= 1) {
                                 shouldShowRightAttackIndicator = shouldShowAttackIndicator(this.client.rightPointedEntity);
-                                if (this.mc.hitResult.getType() == RayTraceResult.Type.BLOCK) {
+                                if (this.mc.hitResult.getType() == HitResult.Type.BLOCK) {
                                     shouldShowRightAttackIndicator = false;
                                 }
                             }
@@ -640,8 +799,8 @@ public class ClientRenderer {
                                 blit(matrices, x, y, 52, 110, l, 4);
                             }
                         }
-                        RenderSystem.disableAlphaTest();
                     }
+                    //Disable alpha test
                     RenderSystem.blendEquation(GL14.GL_FUNC_ADD);
                 }
             }
@@ -649,17 +808,17 @@ public class ClientRenderer {
     }
 
     public void renderFog(EntityViewRenderEvent.FogDensity event) {
-        if (this.mc.player != null && this.mc.player.hasEffect(Effects.BLINDNESS)) {
+        if (this.mc.player != null && this.mc.player.hasEffect(MobEffects.BLINDNESS)) {
             float f1 = 5.0F;
-            int duration = this.mc.player.getEffect(Effects.BLINDNESS).getDuration();
-            int amplifier = this.mc.player.getEffect(Effects.BLINDNESS).getAmplifier() + 1;
+            int duration = this.mc.player.getEffect(MobEffects.BLINDNESS).getDuration();
+            int amplifier = this.mc.player.getEffect(MobEffects.BLINDNESS).getAmplifier() + 1;
             if (duration < 20) {
                 f1 = 5.0F + (this.mc.options.renderDistance * 16 - 5.0F) * (1.0F - duration / 20.0F);
             }
-            RenderSystem.fogMode(GlStateManager.FogMode.LINEAR);
+//            RenderSystem.fogMode(GlStateManager.FogMode.LINEAR);
             float multiplier = 0.25F / amplifier;
-            RenderSystem.fogStart(f1 * multiplier);
-            RenderSystem.fogEnd(f1 * multiplier * 4.0F);
+//            RenderSystem.fogStart(f1 * multiplier);
+//            RenderSystem.fogEnd(f1 * multiplier * 4.0F);
             if (GL.getCapabilities().GL_NV_fog_distance) {
                 GL11.glFogi(0x855a, 0x855b);
             }
@@ -668,30 +827,33 @@ public class ClientRenderer {
         }
     }
 
-    public void renderFoodAndThirst(MatrixStack matrices) {
+    public void renderFoodAndThirst(PoseStack matrices, int width, int height) {
         this.mc.getProfiler().push("food");
+        Player player = (Player) this.mc.getCameraEntity();
         RenderSystem.enableBlend();
-        final int width = this.mc.getWindow().getGuiScaledWidth();
-        final int height = this.mc.getWindow().getGuiScaledHeight();
-        int top = height - ForgeIngameGui.right_height;
-        ForgeIngameGui.right_height += 10;
-        FoodStats stats = this.mc.player.getFoodData();
-        int level = stats.getFoodLevel();
-        float saturation = stats.getSaturationLevel();
+        ForgeIngameGui gui = (ForgeIngameGui) this.mc.gui;
+        int top = height - gui.right_height;
+        gui.right_height += 10;
+        IHunger hunger = HungerStats.CLIENT_INSTANCE;
+        int level = Mth.ceil(hunger.getHungerLevel() / (HungerStats.HUNGER_SCALE / 2));
         int left = width / 2 + 91;
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 10; i++) {
             int idx = i * 2 + 1;
             int x = left - i * 8 - 9;
             int icon = 16;
             byte background = 0;
-            if (this.mc.player.hasEffect(Effects.HUNGER)) {
+            if (this.mc.player.hasEffect(MobEffects.HUNGER)) {
                 icon += 36;
                 background = 13;
             }
-            int y = top;
-            if (saturation <= 0.0F && this.client.getTickCount() % Math.max(level * level, 1) == 0) {
-                y = top + this.rand.nextInt(3) - 1;
+            if (this.client.getTickCount() % Math.max(level * level, 1) == 0) {
+                int shake = this.rand.nextInt(3) - 1;
+                this.hungerShakeAligment[i] = (byte) shake;
             }
+            else {
+                this.hungerShakeAligment[i] = 0;
+            }
+            int y = top + this.hungerShakeAligment[i];
             blit(matrices, x, y, 16 + background * 9, 27, 9, 9);
             if (idx < level) {
                 blit(matrices, x, y, icon + 36, 27, 9, 9);
@@ -700,11 +862,26 @@ public class ClientRenderer {
                 blit(matrices, x, y, icon + 45, 27, 9, 9);
             }
         }
+        //Saturation
+        ItemStack heldStack = player.getMainHandItem();
+        if (!(heldStack.getItem() instanceof IFood)) {
+            heldStack = player.getOffhandItem();
+        }
+        //Saturation overlay
+        this.drawSaturationOverlay(matrices, 0, hunger.getSaturationLevel(), left, top, 1.0f);
+        if (heldStack.isEmpty() || !(heldStack.getItem() instanceof IFood food)) {
+            this.hungerFlashAlpha = 0;
+            this.hungerAlphaDir = 1;
+        }
+        else {
+            //Restored hunger/saturation overlay while holding food
+            this.drawHungerOverlay(matrices, food.getHunger(), hunger.getHungerLevel(), left, top, this.hungerFlashAlpha);
+            this.drawSaturationOverlay(matrices, food.getHunger(), hunger.getSaturationLevel(), left, top, this.hungerFlashAlpha);
+        }
         this.mc.getProfiler().popPush("thirst");
-        PlayerEntity player = (PlayerEntity) this.mc.getCameraEntity();
         IThirst thirst = ThirstStats.CLIENT_INSTANCE;
-        top = height - ForgeIngameGui.right_height;
-        level = MathHelper.ceil(thirst.getThirstLevel() / (ThirstStats.THIRST_SCALE / 2));
+        top = height - gui.right_height;
+        level = Mth.ceil(thirst.getThirstLevel() / (ThirstStats.THIRST_SCALE / 2));
         left = width / 2 + 91;
         for (int i = 0; i < 10; i++) {
             int idx = i * 2 + 1;
@@ -732,36 +909,33 @@ public class ClientRenderer {
             }
         }
         //Hydration
-        ItemStack heldStack = player.getMainHandItem();
+        heldStack = player.getMainHandItem();
         if (!(heldStack.getItem() instanceof IDrink)) {
             heldStack = player.getOffhandItem();
         }
         left = width / 2 + 91;
-        top = height - ForgeIngameGui.right_height;
-        ForgeIngameGui.right_height += 10;
+        top = height - gui.right_height;
+        gui.right_height += 10;
         //Hydration overlay
         this.drawHydrationOverlay(matrices, 0, thirst.getHydrationLevel(), left, top, 1.0f);
-        if (heldStack.isEmpty() || !(heldStack.getItem() instanceof IDrink)) {
-            this.flashAlpha = 0;
-            this.alphaDir = 1;
+        if (heldStack.isEmpty() || !(heldStack.getItem() instanceof IDrink drink)) {
+            this.thirstFlashAlpha = 0;
+            this.thirstAlphaDir = 1;
         }
         else {
             //Restored thirst/hydration overlay while holding drink
-            IDrink drink = (IDrink) heldStack.getItem();
-            this.drawThirstOverlay(matrices, drink.getThirst(), thirst.getThirstLevel(), left, top, this.flashAlpha);
-            this.drawHydrationOverlay(matrices, drink.getThirst(), thirst.getHydrationLevel(), left, top, this.flashAlpha);
+            this.drawThirstOverlay(matrices, drink.getThirst(), thirst.getThirstLevel(), left, top, this.thirstFlashAlpha);
+            this.drawHydrationOverlay(matrices, drink.getThirst(), thirst.getHydrationLevel(), left, top, this.thirstFlashAlpha);
         }
         RenderSystem.disableBlend();
         this.mc.getProfiler().pop();
     }
 
-    public void renderHealth(MatrixStack matrices) {
+    public void renderHealth(PoseStack matrices, int width, int height) {
         this.mc.getProfiler().push("health");
-        this.mc.getTextureManager().bind(EvolutionResources.GUI_ICONS);
-        int width = this.mc.getWindow().getGuiScaledWidth();
-        int height = this.mc.getWindow().getGuiScaledHeight();
+        RenderSystem.setShaderTexture(0, EvolutionResources.GUI_ICONS);
         RenderSystem.enableBlend();
-        PlayerEntity player = (PlayerEntity) this.mc.getCameraEntity();
+        Player player = (Player) this.mc.getCameraEntity();
         float currentHealth = player.getHealth();
         boolean updateHealth = false;
         //Take damage
@@ -789,16 +963,17 @@ public class ClientRenderer {
         boolean highlight = this.healthUpdateCounter > this.client.getTickCount() &&
                             (this.healthUpdateCounter - this.client.getTickCount()) / 3L % 2L != 0L;
         float healthLast = this.lastPlayerHealth;
-        float absorb = MathHelper.ceil(player.getAbsorptionAmount());
-        int healthRows = MathHelper.ceil((healthMax + absorb) / 100.0F);
-        int top = height - ForgeIngameGui.left_height;
+        float absorb = Mth.ceil(player.getAbsorptionAmount());
+        int healthRows = Mth.ceil((healthMax + absorb) / 100.0F);
+        ForgeIngameGui gui = (ForgeIngameGui) this.mc.gui;
+        int top = height - gui.left_height;
         int rowHeight = Math.max(10 - (healthRows - 2), 3);
-        ForgeIngameGui.left_height += healthRows * rowHeight;
+        gui.left_height += healthRows * rowHeight;
         if (rowHeight != 10) {
-            ForgeIngameGui.left_height += 10 - rowHeight;
+            gui.left_height += 10 - rowHeight;
         }
         int regen = -1;
-        if (player.hasEffect(Effects.REGENERATION)) {
+        if (player.hasEffect(MobEffects.REGENERATION)) {
             regen = this.client.getTickCount() % 25;
         }
         boolean hardcore = this.mc.level.getLevelData().isHardcore();
@@ -806,15 +981,15 @@ public class ClientRenderer {
         final int absorbHeartTextureYPos = hardcore ? 36 : 9;
         final int heartBackgroundXPos = highlight ? 25 : 16;
         int margin = 16;
-        if (player.hasEffect(Effects.POISON)) {
+        if (player.hasEffect(MobEffects.POISON)) {
             margin += 72;
         }
         //TODO anaemia
-        int absorbRemaining = MathHelper.ceil(absorb);
+        int absorbRemaining = Mth.ceil(absorb);
         this.rand.setSeed(312_871L * this.client.getTickCount());
         int left = width / 2 - 91;
-        for (int currentHeart = MathHelper.ceil((healthMax + absorb) / 10.0F) - 1; currentHeart >= 0; --currentHeart) {
-            int row = MathHelper.ceil((currentHeart + 1) / 10.0F) - 1;
+        for (int currentHeart = Mth.ceil((healthMax + absorb) / 10.0F) - 1; currentHeart >= 0; --currentHeart) {
+            int row = Mth.ceil((currentHeart + 1) / 10.0F) - 1;
             int x = left + currentHeart % 10 * 8;
             int y = top - row * rowHeight;
             //Shake hearts if 20% HP
@@ -846,24 +1021,10 @@ public class ClientRenderer {
             if (absorbRemaining > 0) {
                 int absorbHeart = absorbRemaining % 10;
                 switch (absorbHeart) {
-                    case 1:
-                    case 2:
-                        blit(matrices, x, y, 169, absorbHeartTextureYPos, 9, 9);
-                        break;
-                    case 3:
-                    case 4:
-                    case 5:
-                        blit(matrices, x, y, 160, absorbHeartTextureYPos, 9, 9);
-                        break;
-                    case 6:
-                    case 7:
-                        blit(matrices, x, y, 151, absorbHeartTextureYPos, 9, 9);
-                        break;
-                    case 8:
-                    case 9:
-                    case 0:
-                        blit(matrices, x, y, 142, absorbHeartTextureYPos, 9, 9);
-                        break;
+                    case 1, 2 -> blit(matrices, x, y, 169, absorbHeartTextureYPos, 9, 9);
+                    case 3, 4, 5 -> blit(matrices, x, y, 160, absorbHeartTextureYPos, 9, 9);
+                    case 6, 7 -> blit(matrices, x, y, 151, absorbHeartTextureYPos, 9, 9);
+                    case 8, 9, 0 -> blit(matrices, x, y, 142, absorbHeartTextureYPos, 9, 9);
                 }
                 if (absorbHeart == 0) {
                     absorbRemaining -= 10;
@@ -895,23 +1056,17 @@ public class ClientRenderer {
         this.mc.getProfiler().pop();
     }
 
-    public void renderHitbox(MatrixStack matrices,
-                             IRenderTypeBuffer buffer,
-                             Entity entity,
-                             Hitbox hitbox,
-                             ActiveRenderInfo camera,
-                             float partialTicks) {
+    public void renderHitbox(PoseStack matrices, MultiBufferSource buffer, Entity entity, Hitbox hitbox, Camera camera, float partialTicks) {
         RenderSystem.enableBlend();
         Blending.DEFAULT.apply();
         RenderSystem.lineWidth(Math.max(2.5F, this.mc.getWindow().getWidth() / 1_920.0F * 2.5F));
         RenderSystem.disableTexture();
-        RenderSystem.scalef(1.0F, 1.0F, 0.999F);
         double projX = camera.getPosition().x;
         double projY = camera.getPosition().y;
         double projZ = camera.getPosition().z;
-        double posX = MathHelper.lerp(partialTicks, entity.xOld, entity.getX());
-        double posY = MathHelper.lerp(partialTicks, entity.yOld, entity.getY());
-        double posZ = MathHelper.lerp(partialTicks, entity.zOld, entity.getZ());
+        double posX = Mth.lerp(partialTicks, entity.xOld, entity.getX());
+        double posY = Mth.lerp(partialTicks, entity.yOld, entity.getY());
+        double posZ = Mth.lerp(partialTicks, entity.zOld, entity.getZ());
         drawHitbox(matrices,
                    buffer.getBuffer(RenderType.lines()),
                    hitbox,
@@ -928,22 +1083,22 @@ public class ClientRenderer {
         RenderSystem.disableBlend();
     }
 
-    public void renderItemInFirstPerson(MatrixStack matrices, IRenderTypeBuffer buffer, int packedLight, float partialTicks) {
+    public void renderItemInFirstPerson(PoseStack matrices, MultiBufferSource buffer, int packedLight, float partialTicks) {
         if (this.client.shouldRenderPlayer() || !this.mc.player.isAlive()) {
             return;
         }
-        AbstractClientPlayerEntity player = this.mc.player;
-        float interpPitch = MathHelper.lerp(partialTicks, player.xRotO, player.xRot);
+        AbstractClientPlayer player = this.mc.player;
+        float interpPitch = Mth.lerp(partialTicks, player.xRotO, player.getXRot());
         boolean mainHand = true;
         boolean offHand = true;
         if (player.isUsingItem()) {
             ItemStack activeStack = player.getUseItem();
-            if (activeStack.getItem() instanceof ShootableItem) {
-                mainHand = player.getUsedItemHand() == Hand.MAIN_HAND;
+            if (activeStack.getItem() instanceof ProjectileWeaponItem) {
+                mainHand = player.getUsedItemHand() == InteractionHand.MAIN_HAND;
                 offHand = !mainHand;
             }
-            Hand activeHand = player.getUsedItemHand();
-            if (activeHand == Hand.MAIN_HAND) {
+            InteractionHand activeHand = player.getUsedItemHand();
+            if (activeHand == InteractionHand.MAIN_HAND) {
                 ItemStack offHandStack = player.getOffhandItem();
                 if (offHandStack.getItem() instanceof CrossbowItem && CrossbowItem.isCharged(offHandStack)) {
                     offHand = false;
@@ -963,55 +1118,55 @@ public class ClientRenderer {
         }
         if (mainHand) {
             float swingProg = this.getMainhandSwingProgress(partialTicks);
-            float equippedProgress = 1.0F - MathHelper.lerp(partialTicks, this.mainhandPrevEquipProgress, this.mainhandEquipProgress);
+            float equippedProgress = 1.0F - Mth.lerp(partialTicks, this.mainhandPrevEquipProgress, this.mainhandEquipProgress);
             this.renderItemInFirstPerson(matrices,
                                          buffer,
                                          packedLight,
                                          player,
                                          partialTicks,
                                          interpPitch,
-                                         Hand.MAIN_HAND,
+                                         InteractionHand.MAIN_HAND,
                                          swingProg,
                                          this.mainHandStack,
                                          equippedProgress);
         }
         if (offHand) {
             float swingProg = this.getOffhandSwingProgress(partialTicks);
-            float equippedProgress = 1.0F - MathHelper.lerp(partialTicks, this.offhandPrevEquipProgress, this.offhandEquipProgress);
+            float equippedProgress = 1.0F - Mth.lerp(partialTicks, this.offhandPrevEquipProgress, this.offhandEquipProgress);
             this.renderItemInFirstPerson(matrices,
                                          buffer,
                                          packedLight,
                                          player,
                                          partialTicks,
                                          interpPitch,
-                                         Hand.OFF_HAND,
+                                         InteractionHand.OFF_HAND,
                                          swingProg,
                                          this.offhandStack,
                                          equippedProgress);
         }
-        RenderSystem.disableRescaleNormal();
-        RenderHelper.turnOff();
+//        RenderSystem.disableRescaleNormal();
+//        RenderHelper.turnOff();
     }
 
-    public void renderItemInFirstPerson(MatrixStack matrices,
-                                        IRenderTypeBuffer buffer,
+    public void renderItemInFirstPerson(PoseStack matrices,
+                                        MultiBufferSource buffer,
                                         int packedLight,
-                                        AbstractClientPlayerEntity player,
+                                        AbstractClientPlayer player,
                                         float partialTicks,
                                         float pitch,
-                                        Hand hand,
+                                        InteractionHand hand,
                                         float swingProgress,
                                         ItemStack stack,
                                         float equippedProgress) {
-        boolean mainHand = hand == Hand.MAIN_HAND;
-        HandSide handSide = mainHand ? player.getMainArm() : player.getMainArm().getOpposite();
+        boolean mainHand = hand == InteractionHand.MAIN_HAND;
+        HumanoidArm handSide = mainHand ? player.getMainArm() : player.getMainArm().getOpposite();
         matrices.pushPose();
         if (stack.isEmpty()) {
             if (mainHand && !player.isInvisible()) {
                 this.renderArmFirstPerson(matrices, buffer, packedLight, equippedProgress, swingProgress, handSide);
             }
         }
-        else if (stack.getItem() instanceof FilledMapItem) {
+        else if (stack.getItem() instanceof MapItem) {
             if (mainHand && this.offhandStack.isEmpty()) {
                 this.renderMapFirstPerson(matrices, buffer, packedLight, pitch, equippedProgress, swingProgress);
             }
@@ -1021,7 +1176,7 @@ public class ClientRenderer {
         }
         else if (stack.getItem() == Items.CROSSBOW) {
             boolean isCrossbowCharged = CrossbowItem.isCharged(stack);
-            boolean isRightSide = handSide == HandSide.RIGHT;
+            boolean isRightSide = handSide == HumanoidArm.RIGHT;
             int sideOffset = isRightSide ? 1 : -1;
             if (player.isUsingItem() && player.getTicksUsingItem() > 0 && player.getUsedItemHand() == hand) {
                 transformSideFirstPerson(matrices, handSide, equippedProgress);
@@ -1063,35 +1218,29 @@ public class ClientRenderer {
                                 player,
                                 stack,
                                 isRightSide ?
-                                ItemCameraTransforms.TransformType.FIRST_PERSON_RIGHT_HAND :
-                                ItemCameraTransforms.TransformType.FIRST_PERSON_LEFT_HAND,
+                                ItemTransforms.TransformType.FIRST_PERSON_RIGHT_HAND :
+                                ItemTransforms.TransformType.FIRST_PERSON_LEFT_HAND,
                                 !isRightSide);
         }
         else {
-            boolean rightSide = handSide == HandSide.RIGHT;
+            boolean rightSide = handSide == HumanoidArm.RIGHT;
             if (player.isUsingItem() && player.getTicksUsingItem() > 0 && player.getUsedItemHand() == hand) {
                 int sideOffset = rightSide ? 1 : -1;
                 switch (stack.getUseAnimation()) {
-                    case NONE: {
-                        transformSideFirstPerson(matrices, handSide, equippedProgress);
-                        break;
-                    }
-                    case BLOCK: {
+                    case NONE -> transformSideFirstPerson(matrices, handSide, equippedProgress);
+                    case BLOCK -> {
                         if (stack.getItem() instanceof IParry) {
                             transformSideFirstPersonParry(matrices, handSide, equippedProgress);
                         }
                         else {
                             transformSideFirstPerson(matrices, handSide, equippedProgress);
                         }
-                        break;
                     }
-                    case EAT:
-                    case DRINK: {
+                    case EAT, DRINK -> {
                         this.transformEatFirstPerson(matrices, partialTicks, handSide, stack);
                         transformSideFirstPerson(matrices, handSide, equippedProgress);
-                        break;
                     }
-                    case BOW: {
+                    case BOW -> {
                         transformSideFirstPerson(matrices, handSide, equippedProgress);
                         matrices.translate(sideOffset * -0.278_568_2, 0.183_443_87, 0.157_315_31);
                         matrices.mulPose(Vector3f.XP.rotationDegrees(-13.935F));
@@ -1112,9 +1261,8 @@ public class ClientRenderer {
                         matrices.translate(0, 0, f12 * 0.04);
                         matrices.scale(1.0F, 1.0F, 1.0F + f12 * 0.2F);
                         matrices.mulPose(Vector3f.YN.rotationDegrees(sideOffset * 45.0F));
-                        break;
                     }
-                    case SPEAR: {
+                    case SPEAR -> {
                         transformSideFirstPerson(matrices, handSide, equippedProgress);
                         matrices.translate(sideOffset * -0.5, 0.7, 0.1);
                         matrices.mulPose(Vector3f.XP.rotationDegrees(-55.0F));
@@ -1152,12 +1300,17 @@ public class ClientRenderer {
                 matrices.translate(sideOffset * f5, f6, f10);
                 transformSideFirstPerson(matrices, handSide, equippedProgress);
                 transformFirstPerson(matrices, handSide, swingProgress);
-                if (hand == Hand.MAIN_HAND) {
+                if (hand == InteractionHand.MAIN_HAND) {
                     if (InputHooks.isMainhandLungeInProgress) {
                         transformLungeFirstPerson(matrices, partialTicks, hand, handSide, stack);
                     }
                     else if (InputHooks.isMainhandLunging) {
                         this.transformLungingFirstPerson(matrices, partialTicks, hand, stack);
+                    }
+                    else if (this.client.isMainhandCustomAttacking()) {
+                        if (((ILivingEntityPatch) player).getMainhandCustomAttackType() == ICustomAttack.AttackType.SWORD) {
+                            transformSwordFirstPerson(matrices, player, partialTicks, hand, handSide, stack);
+                        }
                     }
                 }
                 else {
@@ -1176,28 +1329,28 @@ public class ClientRenderer {
                                 player,
                                 stack,
                                 rightSide ?
-                                ItemCameraTransforms.TransformType.FIRST_PERSON_RIGHT_HAND :
-                                ItemCameraTransforms.TransformType.FIRST_PERSON_LEFT_HAND,
+                                ItemTransforms.TransformType.FIRST_PERSON_RIGHT_HAND :
+                                ItemTransforms.TransformType.FIRST_PERSON_LEFT_HAND,
                                 !rightSide);
         }
         matrices.popPose();
     }
 
-    public void renderItemSide(MatrixStack matrices,
-                               IRenderTypeBuffer buffer,
+    public void renderItemSide(PoseStack matrices,
+                               MultiBufferSource buffer,
                                int packedLight,
                                int packedOverlay,
                                LivingEntity entity,
                                ItemStack stack,
-                               ItemCameraTransforms.TransformType transform,
+                               ItemTransforms.TransformType transform,
                                boolean leftHanded) {
         if (!stack.isEmpty()) {
-            this.itemRenderer.renderStatic(entity, stack, transform, leftHanded, matrices, buffer, entity.level, packedLight, packedOverlay);
+            this.itemRenderer.renderStatic(entity, stack, transform, leftHanded, matrices, buffer, entity.level, packedLight, packedOverlay, 0);
         }
     }
 
-    private void renderMapFirstPerson(MatrixStack matrices,
-                                      IRenderTypeBuffer buffer,
+    private void renderMapFirstPerson(PoseStack matrices,
+                                      MultiBufferSource buffer,
                                       int packedLight,
                                       float pitch,
                                       float equippedProgress,
@@ -1212,8 +1365,8 @@ public class ClientRenderer {
         if (!this.mc.player.isInvisible()) {
             matrices.pushPose();
             matrices.mulPose(Vector3f.YP.rotationDegrees(90.0F));
-            this.renderArm(matrices, buffer, packedLight, HandSide.RIGHT);
-            this.renderArm(matrices, buffer, packedLight, HandSide.LEFT);
+            this.renderArm(matrices, buffer, packedLight, HumanoidArm.RIGHT);
+            this.renderArm(matrices, buffer, packedLight, HumanoidArm.LEFT);
             matrices.popPose();
         }
         float f4 = MathHelper.sin(sqrtSwingProg * MathHelper.PI);
@@ -1222,38 +1375,38 @@ public class ClientRenderer {
         this.renderMapFirstPerson(matrices, buffer, packedLight, this.mainHandStack);
     }
 
-    private void renderMapFirstPerson(MatrixStack matrices, IRenderTypeBuffer buffer, int packedLight, ItemStack stack) {
+    private void renderMapFirstPerson(PoseStack matrices, MultiBufferSource buffer, int packedLight, ItemStack stack) {
         matrices.mulPose(Vector3f.YP.rotationDegrees(180.0F));
         matrices.mulPose(Vector3f.ZP.rotationDegrees(180.0F));
         matrices.scale(0.38F, 0.38F, 0.38F);
         matrices.translate(-0.5, -0.5, 0);
         matrices.scale(0.007_812_5F, 0.007_812_5F, 0.007_812_5F);
-        MapData mapData = FilledMapItem.getSavedData(stack, this.mc.level);
+        MapItemSavedData mapData = MapItem.getSavedData(stack, this.mc.level);
         //noinspection VariableNotUsedInsideIf
-        IVertexBuilder builder = buffer.getBuffer(mapData == null ? MAP_BACKGROUND : MAP_BACKGROUND_CHECKERBOARD);
+        VertexConsumer consumer = buffer.getBuffer(mapData == null ? MAP_BACKGROUND : MAP_BACKGROUND_CHECKERBOARD);
         Matrix4f mat = matrices.last().pose();
-        builder.vertex(mat, -7.0F, 135.0F, 0.0F).color(255, 255, 255, 255).uv(0.0F, 1.0F).uv2(packedLight).endVertex();
-        builder.vertex(mat, 135.0F, 135.0F, 0.0F).color(255, 255, 255, 255).uv(1.0F, 1.0F).uv2(packedLight).endVertex();
-        builder.vertex(mat, 135.0F, -7.0F, 0.0F).color(255, 255, 255, 255).uv(1.0F, 0.0F).uv2(packedLight).endVertex();
-        builder.vertex(mat, -7.0F, -7.0F, 0.0F).color(255, 255, 255, 255).uv(0.0F, 0.0F).uv2(packedLight).endVertex();
+        consumer.vertex(mat, -7.0F, 135.0F, 0.0F).color(255, 255, 255, 255).uv(0.0F, 1.0F).uv2(packedLight).endVertex();
+        consumer.vertex(mat, 135.0F, 135.0F, 0.0F).color(255, 255, 255, 255).uv(1.0F, 1.0F).uv2(packedLight).endVertex();
+        consumer.vertex(mat, 135.0F, -7.0F, 0.0F).color(255, 255, 255, 255).uv(1.0F, 0.0F).uv2(packedLight).endVertex();
+        consumer.vertex(mat, -7.0F, -7.0F, 0.0F).color(255, 255, 255, 255).uv(0.0F, 0.0F).uv2(packedLight).endVertex();
         if (mapData != null) {
-            this.mc.gameRenderer.getMapRenderer().render(matrices, buffer, mapData, false, packedLight);
+            this.mc.gameRenderer.getMapRenderer().render(matrices, buffer, MapItem.getMapId(stack), mapData, false, packedLight);
         }
     }
 
-    private void renderMapFirstPersonSide(MatrixStack matrices,
-                                          IRenderTypeBuffer buffer,
+    private void renderMapFirstPersonSide(PoseStack matrices,
+                                          MultiBufferSource buffer,
                                           int packedLight,
                                           float equippedProgress,
-                                          HandSide hand,
+                                          HumanoidArm arm,
                                           float swingProgress,
                                           ItemStack stack) {
-        float sideOffset = hand == HandSide.RIGHT ? 1.0F : -1.0F;
+        float sideOffset = arm == HumanoidArm.RIGHT ? 1.0F : -1.0F;
         matrices.translate(sideOffset * 0.125F, -0.125F, 0.0F);
         if (!this.mc.player.isInvisible()) {
             matrices.pushPose();
             matrices.mulPose(Vector3f.ZP.rotationDegrees(sideOffset * 10.0F));
-            this.renderArmFirstPerson(matrices, buffer, packedLight, equippedProgress, swingProgress, hand);
+            this.renderArmFirstPerson(matrices, buffer, packedLight, equippedProgress, swingProgress, arm);
             matrices.popPose();
         }
         matrices.pushPose();
@@ -1270,13 +1423,12 @@ public class ClientRenderer {
         matrices.popPose();
     }
 
-    public void renderOutlines(MatrixStack matrices, IRenderTypeBuffer buffer, VoxelShape shape, ActiveRenderInfo info, BlockPos pos) {
+    public void renderOutlines(PoseStack matrices, MultiBufferSource buffer, VoxelShape shape, Camera info, BlockPos pos) {
         RenderSystem.enableBlend();
         Blending.DEFAULT.apply();
         RenderSystem.lineWidth(Math.max(2.5F, this.mc.getWindow().getWidth() / 1_920.0F * 2.5F));
         RenderSystem.disableTexture();
         matrices.pushPose();
-        RenderSystem.scalef(1.0F, 1.0F, 1.0F);
         double projX = info.getPosition().x;
         double projY = info.getPosition().y;
         double projZ = info.getPosition().z;
@@ -1295,13 +1447,13 @@ public class ClientRenderer {
         RenderSystem.disableBlend();
     }
 
-    public void renderPotionIcons(MatrixStack matrices, float partialTicks) {
-        PotionSpriteUploader potionSprite = this.mc.getMobEffectTextures();
+    public void renderPotionIcons(PoseStack matrices, float partialTicks, int width, int height) {
+        MobEffectTextureManager effectTextures = this.mc.getMobEffectTextures();
         ClientEffectInstance movingInstance = null;
         Runnable runnable = null;
         while (!ClientEvents.EFFECTS_TO_ADD.isEmpty()) {
             ClientEffectInstance addingInstance = ClientEvents.EFFECTS_TO_ADD.get(0);
-            Effect addingEffect = addingInstance.getEffect();
+            MobEffect addingEffect = addingInstance.getEffect();
             if (!addingInstance.isShowIcon()) {
                 ClientEvents.EFFECTS_TO_ADD.remove(addingInstance);
                 ClientEvents.EFFECTS.add(addingInstance);
@@ -1313,8 +1465,8 @@ public class ClientRenderer {
                 this.client.effectToAddTicks = 0;
             }
             float alpha;
-            float x0 = (this.mc.getWindow().getGuiScaledWidth() - 24) / 2.0f;
-            float y0 = Math.max((this.mc.getWindow().getGuiScaledHeight() - 24) / 3.0f, 1 + 26 * 3 + 12 + (this.mc.isDemo() ? 15 : 0));
+            float x0 = (width - 24) / 2.0f;
+            float y0 = Math.max((height - 24) / 3.0f, 1 + 26 * 3 + 12 + (this.mc.isDemo() ? 15 : 0));
             float x = x0;
             float y = y0;
             if (this.client.effectToAddTicks < 5) {
@@ -1329,7 +1481,7 @@ public class ClientRenderer {
             else {
                 movingInstance = addingInstance;
                 alpha = 1.0f;
-                float x1 = this.mc.getWindow().getGuiScaledWidth() - 25 * this.movingFinalCount;
+                float x1 = width - 25 * this.movingFinalCount;
                 float t = (this.client.effectToAddTicks - 15 + partialTicks) / 5.0f;
                 t = MathHelper.clamp(t, 0, 1);
                 x = (x1 - x0) * t + x0;
@@ -1339,8 +1491,9 @@ public class ClientRenderer {
             float finalX = x;
             float finalY = y;
             runnable = () -> {
-                this.mc.getTextureManager().bind(EvolutionResources.GUI_INVENTORY);
-                RenderSystem.color4f(1.0F, 1.0F, 1.0F, alpha);
+                RenderSystem.setShader(GameRenderer::getPositionTexShader);
+                RenderSystem.setShaderTexture(0, EvolutionResources.GUI_INVENTORY);
+                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
                 RenderSystem.enableBlend();
                 if (addingInstance.isAmbient()) {
                     floatBlit(matrices, finalX, finalY, 24, 198, 24, 24, -80);
@@ -1348,26 +1501,26 @@ public class ClientRenderer {
                 else {
                     floatBlit(matrices, finalX, finalY, 0, 198, 24, 24, -80);
                 }
-                TextureAtlasSprite atlasSprite = potionSprite.get(addingEffect);
-                this.mc.getTextureManager().bind(atlasSprite.atlas().location());
-                RenderSystem.color4f(1.0F, 1.0F, 1.0F, alpha);
+                TextureAtlasSprite atlasSprite = effectTextures.get(addingEffect);
+                RenderSystem.setShaderTexture(0, atlasSprite.atlas().location());
+                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
                 floatBlit(matrices, finalX + 3, finalY + 3, -79, 18, 18, atlasSprite);
                 if (addingInstance.getAmplifier() != 0) {
-                    RenderSystem.pushMatrix();
-                    RenderSystem.scalef(0.5f, 0.5f, 0.5f);
+                    matrices.pushPose();
+                    matrices.scale(0.5f, 0.5f, 0.5f);
                     this.mc.font.drawShadow(matrices,
                                             MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(addingInstance) + 1),
                                             (finalX + 3) * 2,
                                             (finalY + 17) * 2,
                                             0xffff_ffff);
-                    RenderSystem.popMatrix();
+                    matrices.popPose();
                 }
             };
             if (this.client.effectToAddTicks >= 20) {
                 movingInstance = null;
                 this.client.effectToAddTicks = 0;
                 this.isAddingEffect = false;
-                ClientEvents.removeEffect(ClientEvents.EFFECTS, addingEffect.getEffect());
+                ClientEvents.removeEffect(ClientEvents.EFFECTS, addingEffect);
                 for (ClientEffectInstance instance : ClientEvents.EFFECTS_TO_ADD) {
                     for (int i = 0; i < 20; i++) {
                         instance.tick();
@@ -1380,94 +1533,93 @@ public class ClientRenderer {
         }
         if (!ClientEvents.EFFECTS.isEmpty()) {
             RenderSystem.enableBlend();
-            List<ClientEffectInstance> effects = new ArrayList<>(ClientEvents.EFFECTS);
-            EffectType movingType = null;
-            Effect repeated = null;
+            this.effects.clear();
+            this.effects.addAll(ClientEvents.EFFECTS);
+            MobEffectCategory movingCategory = null;
+            MobEffect repeated = null;
             if (movingInstance != null) {
-                if (ClientEvents.containsEffect(effects, movingInstance.getEffect())) {
+                if (ClientEvents.containsEffect(this.effects, movingInstance.getEffect())) {
                     repeated = movingInstance.getEffect();
                 }
                 else {
-                    effects.add(movingInstance);
-                    movingType = movingInstance.getEffect().getCategory();
+                    this.effects.add(movingInstance);
+                    movingCategory = movingInstance.getEffect().getCategory();
                 }
             }
-            Collections.sort(effects);
-            Collections.reverse(effects);
+            Collections.sort(this.effects);
+            Collections.reverse(this.effects);
+            this.runnables.clear();
             int beneficalCount = 0;
             int neutralCount = 0;
             int harmfulCount = 0;
             boolean isMoving = false;
-            List<Runnable> runnables = new ArrayList<>(effects.size());
-            for (ClientEffectInstance effectInstance : effects) {
+            for (ClientEffectInstance effectInstance : this.effects) {
                 if (!effectInstance.isShowIcon()) {
                     continue;
                 }
-                Effect effect = effectInstance.getEffect();
+                MobEffect effect = effectInstance.getEffect();
                 if (effectInstance == movingInstance) {
                     isMoving = true;
                 }
-                float x = this.mc.getWindow().getGuiScaledWidth();
                 float y = 1;
                 if (this.mc.isDemo()) {
                     y += 15;
                 }
+                float x = width;
                 switch (effect.getCategory()) {
-                    case BENEFICIAL: {
+                    case BENEFICIAL -> {
                         beneficalCount++;
                         x -= 25 * beneficalCount;
                         if (effectInstance == movingInstance || effect == repeated) {
                             this.movingFinalCount = beneficalCount;
                         }
-                        if (isMoving && movingType == EffectType.BENEFICIAL) {
-                            x += 25 * MathHelper.clampMax(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
+                        if (isMoving && movingCategory == MobEffectCategory.BENEFICIAL) {
+                            x += 25 * Math.min(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
                         }
-                        break;
                     }
-                    case NEUTRAL: {
+                    case NEUTRAL -> {
                         neutralCount++;
                         x -= 25 * neutralCount;
                         if (this.lastBeneficalCount > 0) {
                             y += 26;
-                            if (this.lastBeneficalCount == 1 && movingType == EffectType.BENEFICIAL) {
-                                y -= 26 * MathHelper.clampMax(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
+                            if (this.lastBeneficalCount == 1 && movingCategory == MobEffectCategory.BENEFICIAL) {
+                                y -= 26 * Math.min(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
                             }
                         }
                         if (effectInstance == movingInstance || effect == repeated) {
                             this.movingFinalCount = neutralCount;
                         }
-                        if (isMoving && movingType == EffectType.NEUTRAL) {
-                            x += 25 * MathHelper.clampMax(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
+                        if (isMoving && movingCategory == MobEffectCategory.NEUTRAL) {
+                            x += 25 * Math.min(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
                         }
-                        break;
                     }
-                    case HARMFUL: {
+                    case HARMFUL -> {
                         harmfulCount++;
                         x -= 25 * harmfulCount;
                         if (this.lastBeneficalCount > 0) {
                             y += 26;
-                            if (this.lastBeneficalCount == 1 && movingType == EffectType.BENEFICIAL) {
-                                y -= 26 * MathHelper.clampMax(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
+                            if (this.lastBeneficalCount == 1 && movingCategory == MobEffectCategory.BENEFICIAL) {
+                                y -= 26 * Math.min(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
                             }
                         }
                         if (this.lastNeutralCount > 0) {
                             y += 26;
-                            if (this.lastNeutralCount == 1 && movingType == EffectType.NEUTRAL) {
-                                y -= 26 * MathHelper.clampMax(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
+                            if (this.lastNeutralCount == 1 && movingCategory == MobEffectCategory.NEUTRAL) {
+                                y -= 26 * Math.min(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
                             }
                         }
                         if (effectInstance == movingInstance || effect == repeated) {
                             this.movingFinalCount = harmfulCount;
                         }
-                        if (isMoving && movingType == EffectType.HARMFUL) {
-                            x += 25 * MathHelper.clampMax(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
+                        if (isMoving && movingCategory == MobEffectCategory.HARMFUL) {
+                            x += 25 * Math.min(1.0f - (this.client.effectToAddTicks + partialTicks - 15) / 5.0f, 1);
                         }
-                        break;
                     }
                 }
                 if (effectInstance != movingInstance && !this.mc.options.renderDebug) {
-                    this.mc.getTextureManager().bind(ContainerScreen.INVENTORY_LOCATION);
-                    RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+                    RenderSystem.setShader(GameRenderer::getPositionTexShader);
+                    RenderSystem.setShaderTexture(0, ContainerScreen.INVENTORY_LOCATION);
+                    RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
                     float alpha = 1.0F;
                     if (effectInstance.isAmbient()) {
                         floatBlit(matrices, x, y, 165, 166, 24, 24, 0);
@@ -1481,30 +1633,30 @@ public class ClientRenderer {
                                     MathHelper.clamp(remainingSeconds / 40.0F, 0.0F, 0.25F);
                         }
                     }
-                    TextureAtlasSprite atlasSprite = potionSprite.get(effect);
-                    this.mc.getTextureManager().bind(atlasSprite.atlas().location());
-                    RenderSystem.color4f(1.0f, 1.0f, 1.0f, alpha);
+                    TextureAtlasSprite atlasSprite = effectTextures.get(effect);
+                    RenderSystem.setShaderTexture(0, atlasSprite.atlas().location());
+                    RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, alpha);
                     floatBlit(matrices, x + 3, y + 3, 0, 18, 18, atlasSprite);
                     if (effectInstance.getAmplifier() != 0) {
                         float finalX = x;
                         float finalY = y;
                         //noinspection ObjectAllocationInLoop
-                        runnables.add(() -> this.mc.font.drawShadow(matrices,
-                                                                    MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(effectInstance) +
-                                                                                              1),
-                                                                    (finalX + 3) * 2,
-                                                                    (finalY + 17) * 2,
-                                                                    0xff_ffff));
+                        this.runnables.add(() -> this.mc.font.drawShadow(matrices,
+                                                                         MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(
+                                                                                 effectInstance) + 1),
+                                                                         (finalX + 3) * 2,
+                                                                         (finalY + 17) * 2,
+                                                                         0xff_ffff));
                     }
                 }
             }
-            for (Runnable run : runnables) {
-                RenderSystem.pushMatrix();
-                RenderSystem.scalef(0.5f, 0.5f, 0.5f);
+            for (Runnable run : this.runnables) {
+                matrices.pushPose();
+                matrices.scale(0.5f, 0.5f, 0.5f);
                 if (run != null) {
                     run.run();
                 }
-                RenderSystem.popMatrix();
+                matrices.popPose();
             }
             this.lastBeneficalCount = beneficalCount;
             this.lastNeutralCount = neutralCount;
@@ -1519,220 +1671,53 @@ public class ClientRenderer {
         }
     }
 
-    public void renderTooltip(RenderTooltipEvent.PostText event) {
-        MatrixStack matrices = event.getMatrixStack();
-        ItemStack stack = event.getStack();
-        Item item = stack.getItem();
-        if (item instanceof IEvolutionItem) {
-            RenderSystem.pushMatrix();
-            RenderSystem.color3f(1.0F, 1.0F, 1.0F);
-            Minecraft mc = Minecraft.getInstance();
-            mc.getTextureManager().bind(EvolutionResources.GUI_ICONS);
-            boolean hasMass = false;
-            boolean hasDamage = false;
-            boolean hasSpeed = false;
-            boolean hasReach = false;
-            for (EquipmentSlotType slot : SlotType.SLOTS) {
-                Multimap<Attribute, AttributeModifier> multimap = stack.getAttributeModifiers(slot);
-                if (!multimap.isEmpty()) {
-                    for (Map.Entry<Attribute, AttributeModifier> entry : multimap.entries()) {
-                        AttributeModifier attributemodifier = entry.getValue();
-                        if (attributemodifier.getId().compareTo(EvolutionAttributes.ATTACK_DAMAGE_MODIFIER) == 0) {
-                            hasDamage = true;
-                            continue;
-                        }
-                        if (attributemodifier.getId().compareTo(EvolutionAttributes.ATTACK_SPEED_MODIFIER) == 0) {
-                            hasSpeed = true;
-                            continue;
-                        }
-                        if (attributemodifier.getId() == EvolutionAttributes.REACH_DISTANCE_MODIFIER) {
-                            hasReach = true;
-                            continue;
-                        }
-                        if (attributemodifier.getId() == EvolutionAttributes.MASS_MODIFIER ||
-                            attributemodifier.getId() == EvolutionAttributes.MASS_MODIFIER_OFFHAND) {
-                            hasMass = true;
-                        }
-                    }
-                    break;
-                }
+    public void renderTemperature(PoseStack matrices, int width, int height) {
+        if (this.mc.gameMode.hasExperience()) {
+            this.mc.getProfiler().push("temperature");
+            RenderSystem.setShaderTexture(0, EvolutionResources.GUI_ICONS);
+            TemperatureClient temperature = TemperatureClient.CLIENT_INSTANCE;
+            int currentTemp = temperature.getCurrentTemperature();
+            int minComf = temperature.getCurrentMinComfort() + 70;
+            int maxComf = temperature.getCurrentMaxComfort() + 70;
+            if (minComf != maxComf) {
+                //Draw Comfort zone
+                blit(matrices, width / 2 - 90 + minComf, height - 29, 1, 120, maxComf - minComf, 5);
             }
-            int line = 1;
-            if (item instanceof IFireAspect) {
-                line++;
+            if (minComf > 0) {
+                //Draw Cold zone
+                blit(matrices, width / 2 - 90, height - 29, 1 + 180 - minComf, 125, minComf, 5);
             }
-            if (item instanceof IHeavyAttack) {
-                line++;
+            if (maxComf < 180) {
+                //Draw Hot zone
+                blit(matrices, width / 2 - 90 + maxComf, height - 29, 1, 130, 180 - maxComf, 5);
             }
-            if (item instanceof IKnockback) {
-                line++;
+            //Draw bar
+            blit(matrices, width / 2 - 91, height - 29, 0, 64, 182, 5);
+            if (currentTemp > -69 && currentTemp < 109) {
+                currentTemp += 69;
+                //Draw meter
+                blit(matrices, width / 2 - 93 + currentTemp, height - 29, 0, 69, 8, 5);
             }
-            if (item instanceof ISweepAttack) {
-                line++;
+            else if (currentTemp < 0) {
+                //Draw too cold indicator
+                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, MathHelper.sinDeg(this.client.getTickCount() * 9));
+                RenderSystem.enableBlend();
+                blit(matrices, width / 2 - 97, height - 29, 9, 69, 5, 5);
+                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
             }
-            if (stack.hasTag()) {
-                if (stack.getTag().contains("display", NBTTypes.COMPOUND_NBT)) {
-                    CompoundNBT display = stack.getTag().getCompound("display");
-                    if (display.contains("color", NBTTypes.INT)) {
-                        line++;
-                    }
-                    if (display.getTagType("Lore") == NBTTypes.LIST_NBT) {
-                        for (int j = 0; j < display.getList("Lore", NBTTypes.STRING).size(); ++j) {
-                            line++;
-                        }
-                    }
-                }
+            else {
+                //Draw too hot indicator
+                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, MathHelper.sinDeg(this.client.getTickCount() * 9));
+                RenderSystem.enableBlend();
+                blit(matrices, width / 2 + 92, height - 29, 15, 69, 5, 5);
+                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
             }
-            if (hasMass) {
-                line++;
-                //Mass line
-                int x = event.getX();
-                int y = shiftTextByLines(line, event.getY() + 10);
-                int textureX = 0;
-                int textureY = 247;
-                blit(matrices, x, y, textureX, textureY, 9, 9);
-                line++;
-            }
-            boolean hasAddedLine = false;
-            //Two Handed line
-            if (item instanceof ITwoHanded) {
-                line += 2;
-                hasAddedLine = true;
-            }
-            //Throwable line
-            if (item instanceof IThrowable) {
-                if (hasAddedLine) {
-                    line++;
-                }
-                else {
-                    line += 2;
-                }
-                hasAddedLine = true;
-            }
-            //Lunge line
-            if (item instanceof ILunge) {
-                if (hasAddedLine) {
-                    line++;
-                }
-                else {
-                    line += 2;
-                }
-                hasAddedLine = true;
-            }
-            //Parry line
-            if (item instanceof IParry) {
-                if (hasAddedLine) {
-                    line++;
-                }
-                else {
-                    line += 2;
-                }
-                hasAddedLine = true;
-            }
-            //Consumable
-            if (item instanceof IConsumable) {
-                if (hasAddedLine) {
-                    line++;
-                }
-                else {
-                    line += 2;
-                }
-                hasAddedLine = true;
-                if (item instanceof IFood) {
-                    int x = event.getX() + 4;
-                    int y = shiftTextByLines(line, event.getY() + 10);
-                    int textureX = 81;
-                    int textureY = 247;
-                    blit(matrices, x, y, textureX, textureY, 9, 9);
-                    line++;
-                }
-                if (item instanceof IDrink) {
-                    int x = event.getX() + 4;
-                    int y = shiftTextByLines(line, event.getY() + 10);
-                    int textureX = 90;
-                    int textureY = 247;
-                    blit(matrices, x, y, textureX, textureY, 9, 9);
-                    line++;
-                }
-            }
-            //Attributes
-            boolean hasAttributes = hasSpeed || hasDamage || hasReach;
-            if (!hasAddedLine) {
-                if (hasAttributes) {
-                    line++;
-                }
-            }
-            if (hasAttributes) {
-                //Slot name
-                line++;
-            }
-            //Attack Speed
-            if (hasSpeed) {
-                int x = event.getX() + 4;
-                int y = shiftTextByLines(line, event.getY() + 10);
-                int textureX = 63;
-                int textureY = 247;
-                blit(matrices, x, y, textureX, textureY, 9, 9);
-                line++;
-            }
-            //Attack Damage
-            if (hasDamage) {
-                int textureX = 54;
-                if (item instanceof IMelee) {
-                    switch (((IMelee) item).getDamageType()) {
-                        case CRUSHING:
-                            textureX = 36;
-                            break;
-                        case PIERCING:
-                            textureX = 45;
-                            break;
-                        case SLASHING:
-                            textureX = 27;
-                            break;
-                    }
-                }
-                int x = event.getX() + 4;
-                int y = shiftTextByLines(line, event.getY() + 10);
-                int textureY = 247;
-                blit(matrices, x, y, textureX, textureY, 9, 9);
-                line++;
-            }
-            //Reach distance
-            if (hasReach) {
-                int x = event.getX() + 4;
-                int y = shiftTextByLines(line, event.getY() + 10);
-                int textureX = 18;
-                int textureY = 247;
-                blit(matrices, x, y, textureX, textureY, 9, 9);
-                line++;
-            }
-            //Mining Speed
-            if (item instanceof ItemGenericTool && ((ItemGenericTool) item).getEfficiency() > 0) {
-                int x = event.getX() + 4;
-                int y = shiftTextByLines(line, event.getY() + 10);
-                int textureX = 9;
-                int textureY = 247;
-                blit(matrices, x, y, textureX, textureY, 9, 9);
-                line++;
-            }
-            //Unbreakable
-            if (stack.hasTag() && stack.getTag().getBoolean("Unbreakable")) {
-                line++;
-            }
-            //Durability
-            if (stack.getItem() instanceof IDurability) {
-                int x = event.getX();
-                int y = shiftTextByLines(line, event.getY() + 10);
-                int textureX = 72;
-                int textureY = 247;
-                blit(matrices, x, y, textureX, textureY, 9, 9);
-            }
-            RenderSystem.popMatrix();
+            this.mc.getProfiler().pop();
         }
     }
 
-    public void resetEquipProgress(Hand hand) {
-        if (hand == Hand.MAIN_HAND) {
+    public void resetEquipProgress(InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND) {
             this.mainhandEquipProgress = 0;
         }
         else {
@@ -1740,8 +1725,8 @@ public class ClientRenderer {
         }
     }
 
-    public void resetFullEquipProgress(Hand hand) {
-        if (hand == Hand.MAIN_HAND) {
+    public void resetFullEquipProgress(InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND) {
             this.mainhandEquipProgress = 0;
             this.mainhandPrevEquipProgress = 0;
         }
@@ -1757,7 +1742,7 @@ public class ClientRenderer {
         this.mainhandPrevSwingProgress = this.mainhandSwingProgress;
         this.offhandPrevSwingProgress = this.offhandSwingProgress;
         this.updateArmSwingProgress();
-        ClientPlayerEntity player = this.mc.player;
+        LocalPlayer player = this.mc.player;
         ItemStack mainhandStack = player.getMainHandItem();
         ItemStack offhandStack = player.getOffhandItem();
         if (player.isHandsBusy()) {
@@ -1765,7 +1750,7 @@ public class ClientRenderer {
             this.offhandEquipProgress = MathHelper.clamp(this.offhandEquipProgress - 0.4F, 0.0F, 1.0F);
         }
         else {
-            boolean requipM = shouldCauseReequipAnimation(this.mainHandStack, mainhandStack, player.inventory.selected);
+            boolean requipM = shouldCauseReequipAnimation(this.mainHandStack, mainhandStack, player.getInventory().selected);
             boolean requipO = shouldCauseReequipAnimation(this.offhandStack, offhandStack, -1);
             if (requipM) {
                 this.client.mainhandTimeSinceLastHit = 0;
@@ -1773,14 +1758,10 @@ public class ClientRenderer {
                     this.currentMainhandItem = mainhandStack;
                     if (this.currentMainhandItem.getItem() instanceof ItemSword) {
                         this.mc.getSoundManager()
-                               .play(new SoundEntityEmitted(this.mc.player,
-                                                            EvolutionSounds.SWORD_UNSHEATHE.get(),
-                                                            SoundCategory.PLAYERS,
-                                                            0.8f,
-                                                            1.0f));
+                               .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
                         EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlaySoundEntityEmitted(this.mc.player,
                                                                                                   EvolutionSounds.SWORD_UNSHEATHE.get(),
-                                                                                                  SoundCategory.PLAYERS,
+                                                                                                  SoundSource.PLAYERS,
                                                                                                   0.8f,
                                                                                                   1.0f));
                     }
@@ -1796,14 +1777,10 @@ public class ClientRenderer {
                     this.currentOffhandItem = offhandStack;
                     if (this.currentOffhandItem.getItem() instanceof ItemSword) {
                         this.mc.getSoundManager()
-                               .play(new SoundEntityEmitted(this.mc.player,
-                                                            EvolutionSounds.SWORD_UNSHEATHE.get(),
-                                                            SoundCategory.PLAYERS,
-                                                            0.8f,
-                                                            1.0f));
+                               .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
                         EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlaySoundEntityEmitted(this.mc.player,
                                                                                                   EvolutionSounds.SWORD_UNSHEATHE.get(),
-                                                                                                  SoundCategory.PLAYERS,
+                                                                                                  SoundSource.PLAYERS,
                                                                                                   0.8f,
                                                                                                   1.0f));
                     }
@@ -1813,7 +1790,7 @@ public class ClientRenderer {
                 this.offhandStack = offhandStack.copy();
                 this.client.offhandTimeSinceLastHit++;
             }
-            float cooledAttackStrength = this.client.getOffhandCooledAttackStrength(this.mc.player.getOffhandItem().getItem(), 1.0F);
+            float cooledAttackStrength = this.client.getOffhandCooledAttackStrength(this.mc.player.getOffhandItem(), 1.0F);
             this.offhandEquipProgress += MathHelper.clamp((!requipO ? cooledAttackStrength * cooledAttackStrength * cooledAttackStrength : 0.0F) -
                                                           this.offhandEquipProgress, -0.4f, 0.4F);
             cooledAttackStrength = this.client.getMainhandCooledAttackStrength(1.0F);
@@ -1828,7 +1805,7 @@ public class ClientRenderer {
             this.offhandStack = offhandStack.copy();
         }
         if (InputHooks.isMainhandLunging) {
-            ClientEvents.LEFT_COUNTER_FIELD.set(this.mc, 1);
+            ClientEvents.MISS_TIME.set(this.mc, 1);
             this.client.performLungeMovement();
             this.mainhandLungingTicks++;
             if (this.mainhandLungingTicks == 4) {
@@ -1854,8 +1831,8 @@ public class ClientRenderer {
         }
     }
 
-    public void swingArm(Hand hand) {
-        if (hand == Hand.OFF_HAND) {
+    public void swingArm(InteractionHand hand) {
+        if (hand == InteractionHand.OFF_HAND) {
             if (!this.offhandIsSwingInProgress ||
                 this.offhandSwingProgressInt >= this.getArmSwingAnimationEnd() / 2 ||
                 this.offhandSwingProgressInt < 0) {
@@ -1873,7 +1850,7 @@ public class ClientRenderer {
         }
     }
 
-    private void transformEatFirstPerson(MatrixStack matrices, float partialTicks, HandSide hand, ItemStack stack) {
+    private void transformEatFirstPerson(PoseStack matrices, float partialTicks, HumanoidArm hand, ItemStack stack) {
         float useTime = this.mc.player.getTicksUsingItem() - partialTicks + 1.0F;
         float relativeUse = useTime / stack.getUseDuration();
         if (relativeUse < 0.8F) {
@@ -1881,17 +1858,17 @@ public class ClientRenderer {
             matrices.translate(0, f2, 0);
         }
         float f3 = 1.0F - (float) Math.pow(relativeUse, 27);
-        int sideOffset = hand == HandSide.RIGHT ? 1 : -1;
+        int sideOffset = hand == HumanoidArm.RIGHT ? 1 : -1;
         matrices.translate(f3 * 0.6 * sideOffset, f3 * -0.5, 0);
         matrices.mulPose(Vector3f.YP.rotationDegrees(sideOffset * f3 * 90.0F));
         matrices.mulPose(Vector3f.XP.rotationDegrees(f3 * 10.0F));
         matrices.mulPose(Vector3f.ZP.rotationDegrees(sideOffset * f3 * 30.0F));
     }
 
-    private void transformLungingFirstPerson(MatrixStack matrices, float partialTicks, Hand hand, ItemStack stack) {
+    private void transformLungingFirstPerson(PoseStack matrices, float partialTicks, InteractionHand hand, ItemStack stack) {
         Item item = stack.getItem();
         if (item instanceof ILunge) {
-            if (hand == Hand.MAIN_HAND) {
+            if (hand == InteractionHand.MAIN_HAND) {
                 float lungeTime = this.mainhandLungingTicks + partialTicks;
                 float relativeLunge = MathHelper.relativize(lungeTime, 0.0f, 5.0f);
                 matrices.mulPose(Vector3f.YP.rotationDegrees(-5.0F));

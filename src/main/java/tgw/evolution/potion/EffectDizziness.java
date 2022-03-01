@@ -2,19 +2,19 @@ package tgw.evolution.potion;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.attributes.AttributeModifierManager;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.potion.Effect;
-import net.minecraft.potion.EffectType;
-import tgw.evolution.util.MathHelper;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
+import net.minecraft.world.entity.player.Player;
+import tgw.evolution.util.math.MathHelper;
 
-public class EffectDizziness extends Effect {
+public class EffectDizziness extends MobEffect {
 
     private static final Int2IntMap AFFECTED = new Int2IntOpenHashMap();
 
     public EffectDizziness() {
-        super(EffectType.HARMFUL, 0x3a_5785);
+        super(MobEffectCategory.HARMFUL, 0x3a_5785);
     }
 
     @Override
@@ -22,7 +22,7 @@ public class EffectDizziness extends Effect {
         if (entity.level.isClientSide) {
             return;
         }
-        if (entity instanceof PlayerEntity) {
+        if (entity instanceof Player) {
             return;
         }
         int tick = AFFECTED.getOrDefault(entity.getId(), 0);
@@ -37,7 +37,7 @@ public class EffectDizziness extends Effect {
     }
 
     @Override
-    public void removeAttributeModifiers(LivingEntity entity, AttributeModifierManager attributes, int amplifier) {
+    public void removeAttributeModifiers(LivingEntity entity, AttributeMap attributes, int amplifier) {
         AFFECTED.remove(entity.getId());
         super.removeAttributeModifiers(entity, attributes, amplifier);
     }

@@ -1,14 +1,14 @@
 package tgw.evolution.init;
 
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.IArmorMaterial;
-import net.minecraft.item.Item;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.crafting.Ingredient;
 import tgw.evolution.Evolution;
 
-public enum EvolutionArmorMaterials implements IArmorMaterial {
+public enum EvolutionArmorMaterials implements ArmorMaterial {
     generic("placeholder", 400, new int[]{8, 10, 9, 7}, 25, EvolutionItems.debug_item.get(), "entity.ender_dragon.growl", 0.0f, 0.0f);
 
     private static final int[] MAX_DAMAGE_ARRAY = {13, 15, 16, 11};
@@ -40,12 +40,12 @@ public enum EvolutionArmorMaterials implements IArmorMaterial {
     }
 
     @Override
-    public int getDefenseForSlot(EquipmentSlotType slot) {
+    public int getDefenseForSlot(EquipmentSlot slot) {
         return this.damageReduction[slot.getIndex()];
     }
 
     @Override
-    public int getDurabilityForSlot(EquipmentSlotType slot) {
+    public int getDurabilityForSlot(EquipmentSlot slot) {
         return MAX_DAMAGE_ARRAY[slot.getIndex()] * this.durability;
     }
 

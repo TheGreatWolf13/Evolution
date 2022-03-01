@@ -1,6 +1,6 @@
 package tgw.evolution.client.gui;
 
-import net.minecraft.inventory.container.Slot;
+import net.minecraft.world.inventory.Slot;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -20,8 +20,4 @@ public interface IGuiScreenHandler {
     boolean isCraftingOutput(Slot slot);
 
     boolean isIgnored(Slot slot);
-
-    boolean isMouseTweaksDisabled();
-
-    boolean isWheelTweakDisabled();
 }

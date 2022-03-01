@@ -2,44 +2,44 @@ package tgw.evolution.blocks;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.client.particle.ParticleManager;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.state.BooleanProperty;
-import net.minecraft.state.StateContainer;
-import net.minecraft.util.Direction;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.IBooleanFunction;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.world.*;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.*;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
-import tgw.evolution.entities.IEntityPatch;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionHitBoxes;
-import tgw.evolution.util.BlockFlags;
-import tgw.evolution.util.DirectionUtil;
-import tgw.evolution.util.WoodVariant;
+import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.constants.WoodVariant;
+import tgw.evolution.util.math.DirectionUtil;
 
 import javax.annotation.Nullable;
 import java.util.Random;
+import java.util.random.RandomGenerator;
 
 import static tgw.evolution.init.EvolutionBStates.*;
 
@@ -66,19 +66,19 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
                                       .setValue(UP, false));
     }
 
-    private static int getNeighborEncouragement(IWorldReader world, BlockPos pos) {
-        if (!world.isEmptyBlock(pos)) {
+    private static int getNeighborEncouragement(LevelReader level, BlockPos pos) {
+        if (!level.isEmptyBlock(pos)) {
             return 0;
         }
         int i = 0;
         for (Direction direction : DirectionUtil.ALL) {
-            BlockState blockstate = world.getBlockState(pos.relative(direction));
-            i = Math.max(blockstate.getFlammability(world, pos.relative(direction), DirectionUtil.getOpposite(direction)), i);
+            BlockState blockstate = level.getBlockState(pos.relative(direction));
+            i = Math.max(blockstate.getFlammability(level, pos.relative(direction), DirectionUtil.getOpposite(direction)), i);
         }
         return i;
     }
 
-    private static int getTickCooldown(Random random) {
+    private static int getTickCooldown(RandomGenerator random) {
         return 30 + random.nextInt(10);
     }
 
@@ -112,65 +112,65 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
         //        fire.setFireInfo(Blocks.SWEET_BERRY_BUSH, 60, 100);
     }
 
-    @Override
-    @OnlyIn(Dist.CLIENT)
-    public boolean addDestroyEffects(BlockState state, World world, BlockPos pos, ParticleManager manager) {
-        return true;
-    }
+//    @Override
+//    @OnlyIn(Dist.CLIENT)
+//    public boolean addDestroyEffects(BlockState state, Level level, BlockPos pos, ParticleManager manager) {
+//        return true;
+//    }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void animateTick(BlockState state, World world, BlockPos pos, Random rand) {
+    public void animateTick(BlockState state, Level level, BlockPos pos, Random rand) {
         if (rand.nextInt(8) == 0) {
-            world.playLocalSound(pos.getX() + 0.5,
+            level.playLocalSound(pos.getX() + 0.5,
                                  pos.getY() + 0.5,
                                  pos.getZ() + 0.5,
                                  SoundEvents.FIRE_AMBIENT,
-                                 SoundCategory.BLOCKS,
+                                 SoundSource.BLOCKS,
                                  1.0F + rand.nextFloat(),
                                  rand.nextFloat() * 0.7F + 0.3F,
                                  false);
         }
         BlockPos posDown = pos.below();
-        if (!this.canCatchFire(world, posDown, Direction.UP) && !BlockUtils.hasSolidSide(world, posDown, Direction.UP)) {
-            if (this.canCatchFire(world, posDown.west(), Direction.EAST)) {
+        if (!this.canCatchFire(level, posDown, Direction.UP) && !BlockUtils.hasSolidSide(level, posDown, Direction.UP)) {
+            if (this.canCatchFire(level, posDown.west(), Direction.EAST)) {
                 for (int j = 0; j < 2; ++j) {
                     double x = pos.getX() + rand.nextDouble() * 0.1;
                     double y = pos.getY() + rand.nextDouble();
                     double z = pos.getZ() + rand.nextDouble();
-                    world.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
                 }
             }
-            if (this.canCatchFire(world, pos.east(), Direction.WEST)) {
+            if (this.canCatchFire(level, pos.east(), Direction.WEST)) {
                 for (int k = 0; k < 2; ++k) {
                     double x = (pos.getX() + 1) - rand.nextDouble() * 0.1;
                     double y = pos.getY() + rand.nextDouble();
                     double z = pos.getZ() + rand.nextDouble();
-                    world.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
                 }
             }
-            if (this.canCatchFire(world, pos.north(), Direction.SOUTH)) {
+            if (this.canCatchFire(level, pos.north(), Direction.SOUTH)) {
                 for (int l = 0; l < 2; ++l) {
                     double x = pos.getX() + rand.nextDouble();
                     double y = pos.getY() + rand.nextDouble();
                     double z = pos.getZ() + rand.nextDouble() * 0.1;
-                    world.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
                 }
             }
-            if (this.canCatchFire(world, pos.south(), Direction.NORTH)) {
+            if (this.canCatchFire(level, pos.south(), Direction.NORTH)) {
                 for (int i1 = 0; i1 < 2; ++i1) {
                     double x = pos.getX() + rand.nextDouble();
                     double y = pos.getY() + rand.nextDouble();
                     double z = (pos.getZ() + 1) - rand.nextDouble() * 0.1;
-                    world.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
                 }
             }
-            if (this.canCatchFire(world, pos.above(), Direction.DOWN)) {
+            if (this.canCatchFire(level, pos.above(), Direction.DOWN)) {
                 for (int j1 = 0; j1 < 2; ++j1) {
                     double x = pos.getX() + rand.nextDouble();
                     double y = (pos.getY() + 1) - rand.nextDouble() * 0.1;
                     double z = pos.getZ() + rand.nextDouble();
-                    world.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
                 }
             }
         }
@@ -179,14 +179,14 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
                 double x = pos.getX() + rand.nextDouble();
                 double y = pos.getY() + rand.nextDouble() * 0.5 + 0.5;
                 double z = pos.getZ() + rand.nextDouble();
-                world.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
+                level.addParticle(ParticleTypes.LARGE_SMOKE, x, y, z, 0, 0, 0);
             }
         }
     }
 
-    private boolean areNeighborsFlammable(IBlockReader world, BlockPos pos) {
+    private boolean areNeighborsFlammable(BlockGetter level, BlockPos pos) {
         for (Direction direction : DirectionUtil.ALL) {
-            if (this.canCatchFire(world, pos.relative(direction), DirectionUtil.getOpposite(direction))) {
+            if (this.canCatchFire(level, pos.relative(direction), DirectionUtil.getOpposite(direction))) {
                 return true;
             }
         }
@@ -211,35 +211,35 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     /**
      * Side sensitive version that calls the block function.
      *
-     * @param world The current world
+     * @param level The current level
      * @param pos   Block position
      * @param face  The side the fire is coming from
      * @return True if the face can catch fire.
      */
-    public boolean canCatchFire(IBlockReader world, BlockPos pos, Direction face) {
-        return world.getBlockState(pos).isFlammable(world, pos, face);
+    public boolean canCatchFire(BlockGetter level, BlockPos pos, Direction face) {
+        return level.getBlockState(pos).isFlammable(level, pos, face);
     }
 
-    protected boolean canDie(World world, BlockPos pos) {
-        return world.isRainingAt(pos) ||
-               world.isRainingAt(pos.west()) ||
-               world.isRainingAt(pos.east()) ||
-               world.isRainingAt(pos.north()) ||
-               world.isRainingAt(pos.south());
-    }
-
-    @Override
-    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
-        return BlockUtils.hasSolidSide(world, pos.below(), Direction.UP) || this.areNeighborsFlammable(world, pos);
+    protected boolean canDie(Level level, BlockPos pos) {
+        return level.isRainingAt(pos) ||
+               level.isRainingAt(pos.west()) ||
+               level.isRainingAt(pos.east()) ||
+               level.isRainingAt(pos.north()) ||
+               level.isRainingAt(pos.south());
     }
 
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        return BlockUtils.hasSolidSide(level, pos.below(), Direction.UP) || this.areNeighborsFlammable(level, pos);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(AGE_0_15, NORTH, EAST, SOUTH, WEST, UP);
     }
 
     @Override
-    public void entityInside(BlockState state, World world, BlockPos pos, Entity entity) {
+    public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
         if (!entity.fireImmune()) {
             entity.setRemainingFireTicks(entity.getRemainingFireTicks() + 1);
             if (entity.getRemainingFireTicks() == 0) {
@@ -250,7 +250,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
                 ((IEntityPatch) entity).setFireDamageImmunity(10);
             }
         }
-        super.entityInside(state, world, pos, entity);
+        super.entityInside(state, level, pos, entity);
     }
 
     public int getActualEncouragement(BlockState state) {
@@ -262,7 +262,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     @Override
-    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
         return NonNullList.of(ItemStack.EMPTY);
     }
 
@@ -272,24 +272,24 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
-        VoxelShape shape = VoxelShapes.empty();
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        VoxelShape shape = Shapes.empty();
         if (state.getValue(NORTH)) {
             shape = EvolutionHitBoxes.SIXTEENTH_SLAB_NORTH_1;
         }
         if (state.getValue(SOUTH)) {
-            shape = VoxelShapes.join(shape, EvolutionHitBoxes.SIXTEENTH_SLAB_SOUTH_1, IBooleanFunction.OR);
+            shape = Shapes.join(shape, EvolutionHitBoxes.SIXTEENTH_SLAB_SOUTH_1, BooleanOp.OR);
         }
         if (state.getValue(EAST)) {
-            shape = VoxelShapes.join(shape, EvolutionHitBoxes.SIXTEENTH_SLAB_EAST_1, IBooleanFunction.OR);
+            shape = Shapes.join(shape, EvolutionHitBoxes.SIXTEENTH_SLAB_EAST_1, BooleanOp.OR);
         }
         if (state.getValue(WEST)) {
-            shape = VoxelShapes.join(shape, EvolutionHitBoxes.SIXTEENTH_SLAB_WEST_1, IBooleanFunction.OR);
+            shape = Shapes.join(shape, EvolutionHitBoxes.SIXTEENTH_SLAB_WEST_1, BooleanOp.OR);
         }
         if (state.getValue(UP)) {
-            shape = VoxelShapes.join(shape, EvolutionHitBoxes.SIXTEENTH_SLAB_UPPER_1, IBooleanFunction.OR);
+            shape = Shapes.join(shape, EvolutionHitBoxes.SIXTEENTH_SLAB_UPPER_1, BooleanOp.OR);
         }
-        if (shape == VoxelShapes.empty()) {
+        if (shape == Shapes.empty()) {
             return EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_1;
         }
         return shape;
@@ -297,18 +297,18 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
 
     @Override
     @Nullable
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         return this.getStateForPlacement(context.getLevel(), context.getClickedPos());
     }
 
-    public BlockState getStateForPlacement(IBlockReader world, BlockPos pos) {
+    public BlockState getStateForPlacement(BlockGetter level, BlockPos pos) {
         BlockPos posDown = pos.below();
-        if (!this.canCatchFire(world, pos, Direction.UP) && !BlockUtils.hasSolidSide(world, posDown, Direction.UP)) {
+        if (!this.canCatchFire(level, pos, Direction.UP) && !BlockUtils.hasSolidSide(level, posDown, Direction.UP)) {
             BlockState state = this.defaultBlockState();
             for (Direction direction : DirectionUtil.ALL_EXCEPT_DOWN) {
                 BooleanProperty booleanProperty = directionToProperty(direction);
                 if (booleanProperty != null) {
-                    state = state.setValue(booleanProperty, this.canCatchFire(world, pos.relative(direction), DirectionUtil.getOpposite(direction)));
+                    state = state.setValue(booleanProperty, this.canCatchFire(level, pos.relative(direction), DirectionUtil.getOpposite(direction)));
                 }
             }
             return state;
@@ -317,7 +317,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     @Override
-    public boolean isBurning(BlockState state, IBlockReader world, BlockPos pos) {
+    public boolean isBurning(BlockState state, BlockGetter level, BlockPos pos) {
         return true;
     }
 
@@ -332,17 +332,17 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     @Override
-    public void onPlace(BlockState state, World world, BlockPos pos, BlockState oldState, boolean isMoving) {
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         if (oldState.getBlock() != state.getBlock()) {
-            if (!state.canSurvive(world, pos)) {
-                world.removeBlock(pos, false);
+            if (!state.canSurvive(level, pos)) {
+                level.removeBlock(pos, false);
             }
             else {
-                world.getBlockTicks().scheduleTick(pos, this, getTickCooldown(world.random));
-                BlockState stateDown = world.getBlockState(pos.below());
+                level.scheduleTick(pos, this, getTickCooldown(level.random));
+                BlockState stateDown = level.getBlockState(pos.below());
                 if (stateDown.getBlock() == EvolutionBlocks.PIT_KILN.get() && stateDown.getValue(LAYERS_0_16) == 16) {
-                    if (BlockPitKiln.canBurn(world, pos.below())) {
-                        TEPitKiln tile = (TEPitKiln) world.getBlockEntity(pos.below());
+                    if (BlockPitKiln.canBurn(level, pos.below())) {
+                        TEPitKiln tile = (TEPitKiln) level.getBlockEntity(pos.below());
                         tile.start();
                     }
                 }
@@ -359,48 +359,48 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     @Override
-    public void tick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-        if (world.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) {
-            if (!world.isAreaLoaded(pos, 2)) {
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
+        if (level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) {
+            if (!level.isAreaLoaded(pos, 2)) {
                 return;
             }
-            if (!state.canSurvive(world, pos)) {
-                world.removeBlock(pos, false);
+            if (!state.canSurvive(level, pos)) {
+                level.removeBlock(pos, false);
             }
-            BlockState stateDown = world.getBlockState(pos.below());
-            boolean isDownFireSource = stateDown.isFireSource(world, pos.below(), Direction.UP);
+            BlockState stateDown = level.getBlockState(pos.below());
+            boolean isDownFireSource = stateDown.isFireSource(level, pos.below(), Direction.UP);
             int age = state.getValue(AGE_0_15);
-            if (world.isRaining() && this.canDie(world, pos) && random.nextFloat() < 0.2F + age * 0.03F) {
-                world.removeBlock(pos, false);
+            if (level.isRaining() && this.canDie(level, pos) && random.nextFloat() < 0.2F + age * 0.03F) {
+                level.removeBlock(pos, false);
             }
             else {
                 int j = Math.min(15, age + random.nextInt(3) / 2);
                 if (age != j) {
                     state = state.setValue(AGE_0_15, j);
-                    world.setBlock(pos, state, BlockFlags.NO_RERENDER);
+                    level.setBlock(pos, state, BlockFlags.NO_RERENDER);
                 }
                 if (!isDownFireSource) {
-                    world.getBlockTicks().scheduleTick(pos, this, getTickCooldown(world.random));
-                    if (!this.areNeighborsFlammable(world, pos)) {
-                        if (!BlockUtils.hasSolidSide(world, pos.below(), Direction.UP) || age > 3) {
-                            world.removeBlock(pos, false);
+                    level.scheduleTick(pos, this, getTickCooldown(level.random));
+                    if (!this.areNeighborsFlammable(level, pos)) {
+                        if (!BlockUtils.hasSolidSide(level, pos.below(), Direction.UP) || age > 3) {
+                            level.removeBlock(pos, false);
                         }
                         return;
                     }
-                    if (age == 15 && random.nextInt(4) == 0 && !this.canCatchFire(world, pos.below(), Direction.UP)) {
-                        world.removeBlock(pos, false);
+                    if (age == 15 && random.nextInt(4) == 0 && !this.canCatchFire(level, pos.below(), Direction.UP)) {
+                        level.removeBlock(pos, false);
                         return;
                     }
                 }
-                boolean isHighHumidity = world.isHumidAt(pos);
+                boolean isHighHumidity = level.isHumidAt(pos);
                 int humidyModifier = isHighHumidity ? -50 : 0;
-                this.tryCatchFire(world, pos.east(), 300 + humidyModifier, random, age, Direction.WEST);
-                this.tryCatchFire(world, pos.west(), 300 + humidyModifier, random, age, Direction.EAST);
-                this.tryCatchFire(world, pos.below(), 250 + humidyModifier, random, age, Direction.UP);
-                this.tryCatchFire(world, pos.above(), 250 + humidyModifier, random, age, Direction.DOWN);
-                this.tryCatchFire(world, pos.north(), 300 + humidyModifier, random, age, Direction.SOUTH);
-                this.tryCatchFire(world, pos.south(), 300 + humidyModifier, random, age, Direction.NORTH);
-                BlockPos.Mutable mutableBlockPos = new BlockPos.Mutable();
+                this.tryCatchFire(level, pos.east(), 300 + humidyModifier, random, age, Direction.WEST);
+                this.tryCatchFire(level, pos.west(), 300 + humidyModifier, random, age, Direction.EAST);
+                this.tryCatchFire(level, pos.below(), 250 + humidyModifier, random, age, Direction.UP);
+                this.tryCatchFire(level, pos.above(), 250 + humidyModifier, random, age, Direction.DOWN);
+                this.tryCatchFire(level, pos.north(), 300 + humidyModifier, random, age, Direction.SOUTH);
+                this.tryCatchFire(level, pos.south(), 300 + humidyModifier, random, age, Direction.NORTH);
+                BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
                 for (int x = -1; x <= 1; ++x) {
                     for (int z = -1; z <= 1; ++z) {
                         for (int y = -1; y <= 4; ++y) {
@@ -410,16 +410,16 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
                                     k1 += (y - 1) * 100;
                                 }
                                 mutableBlockPos.set(pos).move(x, y, z);
-                                int l1 = getNeighborEncouragement(world, mutableBlockPos);
+                                int l1 = getNeighborEncouragement(level, mutableBlockPos);
                                 if (l1 > 0) {
-                                    int i2 = (l1 + 40 + world.getDifficulty().getId() * 7) / (age + 30);
+                                    int i2 = (l1 + 40 + level.getDifficulty().getId() * 7) / (age + 30);
                                     if (isHighHumidity) {
                                         i2 /= 2;
                                     }
-                                    if (i2 > 0 && random.nextInt(k1) <= i2 && (!world.isRaining() || !this.canDie(world, mutableBlockPos))) {
+                                    if (i2 > 0 && random.nextInt(k1) <= i2 && (!level.isRaining() || !this.canDie(level, mutableBlockPos))) {
                                         int j2 = Math.min(15, age + random.nextInt(5) / 4);
-                                        world.setBlock(mutableBlockPos,
-                                                       this.getStateForPlacement(world, mutableBlockPos).setValue(AGE_0_15, j2),
+                                        level.setBlock(mutableBlockPos,
+                                                       this.getStateForPlacement(level, mutableBlockPos).setValue(AGE_0_15, j2),
                                                        BlockFlags.NOTIFY_AND_UPDATE);
                                     }
                                 }
@@ -431,28 +431,33 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
         }
     }
 
-    private void tryCatchFire(World world, BlockPos pos, int chance, Random random, int age, Direction face) {
-        int i = world.getBlockState(pos).getFlammability(world, pos, face);
+    private void tryCatchFire(Level level, BlockPos pos, int chance, RandomGenerator random, int age, Direction face) {
+        int i = level.getBlockState(pos).getFlammability(level, pos, face);
         if (random.nextInt(chance) < i) {
-            BlockState state = world.getBlockState(pos);
-            if (random.nextInt(age + 10) < 5 && !world.isRainingAt(pos)) {
+            BlockState state = level.getBlockState(pos);
+            if (random.nextInt(age + 10) < 5 && !level.isRainingAt(pos)) {
                 int j = Math.min(age + random.nextInt(5) / 4, 15);
-                world.setBlockAndUpdate(pos, this.getStateForPlacement(world, pos).setValue(AGE_0_15, j));
+                level.setBlockAndUpdate(pos, this.getStateForPlacement(level, pos).setValue(AGE_0_15, j));
             }
             else {
-                world.removeBlock(pos, false);
+                level.removeBlock(pos, false);
             }
-            state.catchFire(world, pos, face, null);
+            state.onCaughtFire(level, pos, face, null);
         }
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
-        return this.canSurvive(state, world, currentPos) &&
-               CapabilityChunkStorage.contains(world.getChunkSource().getChunk(currentPos.getX() >> 4, currentPos.getZ() >> 4, false),
+    public BlockState updateShape(BlockState state,
+                                  Direction facing,
+                                  BlockState facingState,
+                                  LevelAccessor level,
+                                  BlockPos currentPos,
+                                  BlockPos facingPos) {
+        return this.canSurvive(state, level, currentPos) &&
+               CapabilityChunkStorage.contains(level.getChunkSource().getChunk(currentPos.getX() >> 4, currentPos.getZ() >> 4, false),
                                                EnumStorage.OXYGEN,
                                                1) ?
-               this.getStateForPlacement(world, currentPos).setValue(AGE_0_15, state.getValue(AGE_0_15)) :
+               this.getStateForPlacement(level, currentPos).setValue(AGE_0_15, state.getValue(AGE_0_15)) :
                Blocks.AIR.defaultBlockState();
     }
 }

@@ -1,25 +1,26 @@
 package tgw.evolution.blocks.tileentities;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionTEs;
-import tgw.evolution.util.BlockFlags;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nullable;
+import java.util.function.Supplier;
 
-public class TEMolding extends TileEntity {
+public class TEMolding extends BlockEntity {
 
     public EnumMolding molding = EnumMolding.NULL;
     @Nullable
@@ -33,8 +34,8 @@ public class TEMolding extends TileEntity {
                             Patterns.MATRIX_FALSE,
                             Patterns.MATRIX_FALSE};
 
-    public TEMolding() {
-        super(EvolutionTEs.MOLDING.get());
+    public TEMolding(BlockPos pos, BlockState state) {
+        super(EvolutionTEs.MOLDING.get(), pos, state);
     }
 
     public void addLayer(int layer) {
@@ -110,7 +111,7 @@ public class TEMolding extends TileEntity {
     }
 
     public void computeHitbox(BlockState state) {
-        VoxelShape shape = VoxelShapes.empty();
+        VoxelShape shape = Shapes.empty();
         if (state.getValue(EvolutionBStates.LAYERS_1_5) == 1) {
             shape = EvolutionHitBoxes.MOLD_TOTAL_BASE;
         }
@@ -160,43 +161,45 @@ public class TEMolding extends TileEntity {
     }
 
     @Override
-    public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.worldPosition, 1, this.getUpdateTag());
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
-    public CompoundNBT getUpdateTag() {
-        return this.save(new CompoundNBT());
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = new CompoundTag();
+        this.saveAdditional(tag);
+        return tag;
     }
 
     @Override
-    public void load(BlockState state, CompoundNBT compound) {
-        super.load(state, compound);
-        this.molding = EnumMolding.byId(compound.getByte("Type"));
-//        this.encoded[0] = compound.getInt("Part1");
-//        this.encoded[1] = compound.getInt("Part2");
-//        this.encoded[2] = compound.getInt("Part3");
-//        this.encoded[3] = compound.getInt("Part4");
-//        this.encoded[4] = compound.getInt("Part5");
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        this.molding = EnumMolding.byId(tag.getByte("Type"));
+//        this.encoded[0] = tag.getInt("Part1");
+//        this.encoded[1] = tag.getInt("Part2");
+//        this.encoded[2] = tag.getInt("Part3");
+//        this.encoded[3] = tag.getInt("Part4");
+//        this.encoded[4] = tag.getInt("Part5");
 //        this.deserializeToMatrices();
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
         this.hitbox = null;
-        this.handleUpdateTag(this.level.getBlockState(this.worldPosition), packet.getTag());
+        this.handleUpdateTag(packet.getTag());
     }
 
     @Override
-    public CompoundNBT save(CompoundNBT compound) {
+    public void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
 //        this.serializeToInts();
-//        compound.putInt("Part1", this.encoded[0]);
-//        compound.putInt("Part2", this.encoded[1]);
-//        compound.putInt("Part3", this.encoded[2]);
-//        compound.putInt("Part4", this.encoded[3]);
-//        compound.putInt("Part5", this.encoded[4]);
-        compound.putByte("Type", this.molding.getId());
-        return super.save(compound);
+//        tag.putInt("Part1", this.encoded[0]);
+//        tag.putInt("Part2", this.encoded[1]);
+//        tag.putInt("Part3", this.encoded[2]);
+//        tag.putInt("Part4", this.encoded[3]);
+//        tag.putInt("Part5", this.encoded[4]);
+        tag.putByte("Type", this.molding.getId());
     }
 
 //    private void serializeToInts() {
@@ -231,11 +234,11 @@ public class TEMolding extends TileEntity {
         this.sendRenderUpdate();
     }
 
-    private void spawnDrops(RegistryObject<Item> item) {
+    private void spawnDrops(Supplier<Item> item) {
         this.spawnDrops(item, 1);
     }
 
-    private void spawnDrops(RegistryObject<Item> item, int count) {
+    private void spawnDrops(Supplier<Item> item, int count) {
         Block.popResource(this.level, this.worldPosition, new ItemStack(item.get(), count));
         this.level.removeBlock(this.worldPosition, false);
     }

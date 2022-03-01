@@ -1,6 +1,6 @@
 package tgw.evolution.util.toast;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 
 public abstract class ToastHolder {
 

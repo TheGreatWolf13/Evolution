@@ -1,14 +1,14 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.state.StateContainer.Builder;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
 
 import static tgw.evolution.init.EvolutionBStates.SNOWY;
 
@@ -24,7 +24,7 @@ public abstract class BlockGenericSlowable extends BlockGravity implements IColl
     }
 
     @Override
-    protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(SNOWY);
     }
 
@@ -42,16 +42,21 @@ public abstract class BlockGenericSlowable extends BlockGravity implements IColl
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         Block block = context.getLevel().getBlockState(context.getClickedPos().above()).getBlock();
         //TODO proper snow
         return this.defaultBlockState().setValue(SNOWY, block == Blocks.SNOW_BLOCK || block == Blocks.SNOW);
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
+    public BlockState updateShape(BlockState state,
+                                  Direction facing,
+                                  BlockState facingState,
+                                  LevelAccessor level,
+                                  BlockPos currentPos,
+                                  BlockPos facingPos) {
         if (facing != Direction.UP) {
-            return super.updateShape(state, facing, facingState, world, currentPos, facingPos);
+            return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
         }
         Block block = facingState.getBlock();
         //TODO proper snow

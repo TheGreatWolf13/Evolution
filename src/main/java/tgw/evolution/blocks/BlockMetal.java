@@ -1,46 +1,35 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
 import tgw.evolution.blocks.tileentities.TEMetal;
-import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.MetalVariant;
-import tgw.evolution.util.Oxidation;
+import tgw.evolution.util.constants.MetalVariant;
+import tgw.evolution.util.constants.Oxidation;
 
 import javax.annotation.Nullable;
 import java.util.Random;
 
-public class BlockMetal extends BlockGravity {
+public class BlockMetal extends BlockGravity implements EntityBlock {
 
     private final MetalVariant metal;
     private final Oxidation oxidation;
 
     public BlockMetal(MetalVariant variant, Oxidation oxidation) {
         super(Properties.of(Material.METAL)
-                        .harvestLevel(variant.getHarvestLevel())
-                        .sound(variant == MetalVariant.COPPER ? EvolutionSounds.COPPER : SoundType.METAL)
+                        .sound(variant == MetalVariant.COPPER ? SoundType.COPPER : SoundType.METAL)
                         .strength(variant.getHardness(oxidation), variant.getResistance(oxidation)), variant.getDensity());
         this.metal = variant;
         this.oxidation = oxidation;
-    }
-
-    @Nullable
-    @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        if (this.metal.doesOxidize()) {
-            return new TEMetal();
-        }
-        return super.createTileEntity(state, world);
     }
 
     @Override
@@ -53,6 +42,12 @@ public class BlockMetal extends BlockGravity {
         return this.metal.getFrictionCoefficient();
     }
 
+    @SuppressWarnings("MagicConstant")
+    @Override
+    public int getHarvestLevel(BlockState state) {
+        return this.metal.getHarvestLevel();
+    }
+
     public MetalVariant getMetal() {
         return this.metal;
     }
@@ -62,44 +57,48 @@ public class BlockMetal extends BlockGravity {
     }
 
     @Override
-    public boolean hasTileEntity(BlockState state) {
-        return this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED;
-    }
-
-    @Override
     public boolean isRandomlyTicking(BlockState state) {
         return this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED;
     }
 
+    @Nullable
     @Override
-    public void onPlace(BlockState state, World world, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (!world.isClientSide && this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED) {
-            TEMetal tile = (TEMetal) world.getBlockEntity(pos);
-            tile.oxidationTick(this.metal, this.oxidation);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        if (this.metal.doesOxidize()) {
+            return new TEMetal(pos, state);
         }
-        super.onPlace(state, world, pos, oldState, isMoving);
+        return null;
     }
 
     @Override
-    public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random rand) {
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!level.isClientSide && this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED) {
+            TEMetal tile = (TEMetal) level.getBlockEntity(pos);
+            tile.oxidationTick(this.metal, this.oxidation);
+        }
+        super.onPlace(state, level, pos, oldState, isMoving);
+    }
+
+    @Override
+    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random rand) {
         if (this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED) {
-            TEMetal tile = (TEMetal) world.getBlockEntity(pos);
+            TEMetal tile = (TEMetal) level.getBlockEntity(pos);
             tile.oxidationTick(this.metal, this.oxidation);
         }
     }
 
     @Override
-    public boolean triggerEvent(BlockState state, World world, BlockPos pos, int paramA, int paramB) {
-        if (!world.isClientSide && this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED) {
-            TEMetal currentTile = (TEMetal) world.getBlockEntity(pos);
+    public boolean triggerEvent(BlockState state, Level level, BlockPos pos, int paramA, int paramB) {
+        if (!level.isClientSide && this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED) {
+            TEMetal currentTile = (TEMetal) level.getBlockEntity(pos);
             if (currentTile.shouldOxidize(this.metal, this.oxidation)) {
                 Oxidation nextOxidation = this.oxidation.getNextStage();
-                world.setBlockAndUpdate(pos, this.metal.getBlock(nextOxidation).defaultBlockState());
+                level.setBlockAndUpdate(pos, this.metal.getBlock(nextOxidation).defaultBlockState());
                 if (nextOxidation != Oxidation.OXIDIZED) {
-                    TEMetal newTile = (TEMetal) world.getBlockEntity(pos);
+                    TEMetal newTile = (TEMetal) level.getBlockEntity(pos);
                     newTile.updateFromOld(currentTile);
                     newTile.oxidationTick(this.metal, nextOxidation);
-                    world.blockEvent(pos, world.getBlockState(pos).getBlock(), 0, 0);
+                    level.blockEvent(pos, level.getBlockState(pos).getBlock(), 0, 0);
                 }
                 return true;
             }
@@ -108,13 +107,13 @@ public class BlockMetal extends BlockGravity {
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction dir, BlockState facingState, IWorld world, BlockPos pos, BlockPos facingPos) {
-        if (!world.isClientSide() && this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED) {
-            TEMetal tile = (TEMetal) world.getBlockEntity(pos);
+    public BlockState updateShape(BlockState state, Direction dir, BlockState facingState, LevelAccessor level, BlockPos pos, BlockPos facingPos) {
+        if (!level.isClientSide() && this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED) {
+            TEMetal tile = (TEMetal) level.getBlockEntity(pos);
             if (tile != null) {
                 tile.oxidationTick(this.metal, this.oxidation);
             }
         }
-        return super.updateShape(state, dir, facingState, world, pos, facingPos);
+        return super.updateShape(state, dir, facingState, level, pos, facingPos);
     }
 }

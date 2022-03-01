@@ -1,32 +1,32 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.state.StateContainer;
-import net.minecraft.util.Direction;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.IForgeShearable;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.util.BlockFlags;
-import tgw.evolution.util.DirectionUtil;
+import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.math.DirectionUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +37,7 @@ import static tgw.evolution.init.EvolutionBStates.TREE;
 
 public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShearable {
 
-    private static final Vector3d MOTION_MULTIPLIER = new Vector3d(0.5, 1, 0.5);
+    private static final Vec3 MOTION_MULTIPLIER = new Vec3(0.5, 1, 0.5);
 
     public BlockLeaves() {
         super(Properties.of(Material.LEAVES).strength(0.2F, 0.2F).sound(SoundType.GRASS).noCollission());
@@ -56,9 +56,9 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
     /**
      * Called when this block should fall.
      */
-    private static void fall(World world, BlockPos pos) {
-        EntityFallingWeight entity = new EntityFallingWeight(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, world.getBlockState(pos));
-        world.addFreshEntity(entity);
+    private static void fall(Level level, BlockPos pos) {
+        EntityFallingWeight entity = new EntityFallingWeight(level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.getBlockState(pos));
+        level.addFreshEntity(entity);
     }
 
     /**
@@ -74,12 +74,12 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
     /**
      * Updates this blockstate in accordance with the distance away from logs.
      */
-    private static BlockState updateDistance(BlockState state, IWorld world, BlockPos pos) {
+    private static BlockState updateDistance(BlockState state, BlockGetter level, BlockPos pos) {
         int i = 7;
-        BlockPos.Mutable mutable = new BlockPos.Mutable();
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         for (Direction direction : DirectionUtil.ALL) {
             mutable.setWithOffset(pos, direction);
-            i = Math.min(i, getDistance(world.getBlockState(mutable)) + 1);
+            i = Math.min(i, getDistance(level.getBlockState(mutable)) + 1);
             if (i == 1) {
                 break;
             }
@@ -89,12 +89,12 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void animateTick(BlockState state, World world, BlockPos pos, Random rand) {
-        if (world.isRainingAt(pos.above()) && !world.getBlockState(pos.below()).canOcclude() && rand.nextInt(15) == 1) {
+    public void animateTick(BlockState state, Level level, BlockPos pos, Random rand) {
+        if (level.isRainingAt(pos.above()) && !level.getBlockState(pos.below()).canOcclude() && rand.nextInt(15) == 1) {
             double x = pos.getX() + rand.nextFloat();
             double y = pos.getY() - 0.05;
             double z = pos.getZ() + rand.nextFloat();
-            world.addParticle(ParticleTypes.DRIPPING_WATER, x, y, z, 0, 0, 0);
+            level.addParticle(ParticleTypes.DRIPPING_WATER, x, y, z, 0, 0, 0);
         }
     }
 
@@ -111,55 +111,55 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
     /**
      * Checks whether this block should fall.
      */
-    private void checkFallable(World world, BlockPos pos) {
-        if (canFallThrough(world.getBlockState(pos.below())) && pos.getY() >= 0) {
-            if (world.isAreaLoaded(pos, 32)) {
-                if (!world.isClientSide) {
-                    fall(world, pos);
+    private void checkFallable(Level level, BlockPos pos) {
+        if (canFallThrough(level.getBlockState(pos.below())) && pos.getY() >= 0) {
+            if (level.isAreaLoaded(pos, 32)) {
+                if (!level.isClientSide) {
+                    fall(level, pos);
                 }
             }
             else {
                 BlockState state = this.defaultBlockState();
-                if (world.getBlockState(pos).getBlock() == this) {
-                    state = world.getBlockState(pos);
-                    world.removeBlock(pos, false);
+                if (level.getBlockState(pos).getBlock() == this) {
+                    state = level.getBlockState(pos);
+                    level.removeBlock(pos, false);
                 }
-                BlockPos.Mutable posDown = new BlockPos.Mutable();
+                BlockPos.MutableBlockPos posDown = new BlockPos.MutableBlockPos();
                 posDown.setWithOffset(pos, Direction.DOWN);
-                while (canFallThrough(world.getBlockState(posDown)) && posDown.getY() > 0) {
+                while (canFallThrough(level.getBlockState(posDown)) && posDown.getY() > 0) {
                     posDown.move(Direction.DOWN);
                 }
                 if (posDown.getY() > 0) {
-                    world.setBlockAndUpdate(posDown.move(Direction.UP), state);
+                    level.setBlockAndUpdate(posDown.move(Direction.UP), state);
                 }
             }
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(DISTANCE_0_7, TREE);
     }
 
     @Override
-    public void entityInside(BlockState state, World world, BlockPos pos, Entity entity) {
+    public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
         if (entity instanceof LivingEntity) {
             entity.makeStuckInBlock(state, MOTION_MULTIPLIER);
         }
     }
 
     @Override
-    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
         return NonNullList.of(ItemStack.EMPTY);
     }
 
     @Override
-    public int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+    public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
         return EvolutionBlocks.FIRE.get().getActualEncouragement(state);
     }
 
     @Override
-    public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+    public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
         return EvolutionBlocks.FIRE.get().getActualFlammability(state);
     }
 
@@ -169,12 +169,12 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
     }
 
     @Override
-    public int getLightBlock(BlockState state, IBlockReader world, BlockPos pos) {
+    public int getLightBlock(BlockState state, BlockGetter level, BlockPos pos) {
         return 1;
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         return updateDistance(this.defaultBlockState().setValue(TREE, false), context.getLevel(), context.getClickedPos());
     }
 
@@ -189,39 +189,44 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
     }
 
     @Override
-    public void onPlace(BlockState state, World world, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (!world.isClientSide) {
-            world.getBlockTicks().scheduleTick(pos, this, 2);
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!level.isClientSide) {
+            level.scheduleTick(pos, this, 2);
         }
     }
 
     @Override
-    public List<ItemStack> onSheared(PlayerEntity player, ItemStack item, World world, BlockPos pos, int fortune) {
-        world.setBlock(pos, Blocks.AIR.defaultBlockState(), BlockFlags.NOTIFY_UPDATE_AND_RERENDER);
+    public List<ItemStack> onSheared(Player player, ItemStack item, Level level, BlockPos pos, int fortune) {
+        level.setBlock(pos, Blocks.AIR.defaultBlockState(), BlockFlags.NOTIFY_UPDATE_AND_RERENDER);
         return Collections.singletonList(new ItemStack(this));
     }
 
     @Override
-    public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
         if (state.getValue(TREE) && state.getValue(DISTANCE_0_7) == 7) {
-            dropResources(state, world, pos);
-            world.removeBlock(pos, false);
+            dropResources(state, level, pos);
+            level.removeBlock(pos, false);
         }
     }
 
     @Override
-    public void tick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-        world.setBlockAndUpdate(pos, updateDistance(state, world, pos));
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
+        level.setBlockAndUpdate(pos, updateDistance(state, level, pos));
         if (!state.getValue(TREE) && state.getValue(DISTANCE_0_7) == 7) {
-            this.checkFallable(world, pos);
+            this.checkFallable(level, pos);
         }
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
+    public BlockState updateShape(BlockState state,
+                                  Direction facing,
+                                  BlockState facingState,
+                                  LevelAccessor level,
+                                  BlockPos currentPos,
+                                  BlockPos facingPos) {
         int i = getDistance(facingState) + 1;
         if (i != 1 || state.getValue(DISTANCE_0_7) != i) {
-            world.getBlockTicks().scheduleTick(currentPos, this, 1);
+            level.scheduleTick(currentPos, this, 1);
         }
         return state;
     }

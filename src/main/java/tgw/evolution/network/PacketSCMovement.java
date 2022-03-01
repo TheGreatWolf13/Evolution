@@ -1,8 +1,8 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.Evolution;
 
 import java.util.function.Supplier;
@@ -19,11 +19,11 @@ public class PacketSCMovement implements IPacket {
         this.motionZ = motionZ;
     }
 
-    public static PacketSCMovement decode(PacketBuffer buffer) {
+    public static PacketSCMovement decode(FriendlyByteBuf buffer) {
         return new PacketSCMovement(buffer.readDouble(), buffer.readDouble(), buffer.readDouble());
     }
 
-    public static void encode(PacketSCMovement packet, PacketBuffer buffer) {
+    public static void encode(PacketSCMovement packet, FriendlyByteBuf buffer) {
         buffer.writeDouble(packet.motionX);
         buffer.writeDouble(packet.motionY);
         buffer.writeDouble(packet.motionZ);

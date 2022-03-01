@@ -9,7 +9,7 @@
 //import net.minecraft.world.IWorld;
 //import net.minecraft.world.gen.feature.template.Template;
 //import net.minecraft.world.gen.feature.template.TemplateManager;
-//import tgw.evolution.util.NBTHelper;
+//import tgw.evolution.util.constants.NBTHelper;
 //import tgw.evolution.world.puzzle.EnumPuzzleType;
 //import tgw.evolution.world.puzzle.PuzzleDeserializerHelper;
 //import tgw.evolution.world.puzzle.PuzzlePiece;

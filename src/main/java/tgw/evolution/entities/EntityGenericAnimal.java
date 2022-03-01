@@ -1,57 +1,58 @@
 package tgw.evolution.entities;
 
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.IPacket;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraftforge.entity.IEntityAdditionalSpawnData;
+import net.minecraftforge.network.NetworkHooks;
 import tgw.evolution.blocks.BlockGenericSlowable;
 import tgw.evolution.entities.util.AnimalFoodWaterController;
 import tgw.evolution.entities.util.Gender;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.util.EntityStates;
-import tgw.evolution.util.Time;
+import tgw.evolution.util.constants.EntityStates;
+import tgw.evolution.util.time.Time;
 
 public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> extends EntityGenericAgeable<T> implements IEntityAdditionalSpawnData {
 
-    private static final DataParameter<Integer> PREGNANCY_TIME = EntityDataManager.defineId(EntityGenericAgeable.class, DataSerializers.INT);
+    private static final EntityDataAccessor<Integer> PREGNANCY_TIME = SynchedEntityData.defineId(EntityGenericAgeable.class,
+                                                                                                 EntityDataSerializers.INT);
     private final AnimalFoodWaterController foodController;
     private Gender gender = Gender.MALE;
     private boolean inLove;
 
-    protected EntityGenericAnimal(EntityType<T> type, World worldIn) {
-        super(type, worldIn);
+    protected EntityGenericAnimal(EntityType<T> type, Level level) {
+        super(type, level);
         this.foodController = new AnimalFoodWaterController(this);
         this.gender = Gender.fromBoolean(this.random.nextBoolean());
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundNBT compound) {
-        super.addAdditionalSaveData(compound);
-        compound.putBoolean("InLove", this.inLove);
-        compound.putInt("PregnancyTime", this.entityData.get(PREGNANCY_TIME));
-        compound.putBoolean("Gender", this.gender.toBoolean());
-        this.foodController.writeToNBT(compound);
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putBoolean("InLove", this.inLove);
+        tag.putInt("PregnancyTime", this.entityData.get(PREGNANCY_TIME));
+        tag.putBoolean("Gender", this.gender.toBoolean());
+        this.foodController.writeToNBT(tag);
         if (this instanceof IMammal) {
-            compound.putInt("LactationTime", ((IMammal) this).getLactationTime());
+            tag.putInt("LactationTime", ((IMammal) this).getLactationTime());
         }
     }
 
@@ -82,7 +83,7 @@ public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> exte
         }
     }
 
-    public abstract void appendDebugInfo(IFormattableTextComponent text);
+    public abstract void appendDebugInfo(MutableComponent text);
 
     public abstract boolean canBeInLove();
 
@@ -112,7 +113,7 @@ public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> exte
     }
 
     @Override
-    public IPacket<?> getAddEntityPacket() {
+    public Packet<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
@@ -138,8 +139,8 @@ public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> exte
     }
 
     @Override
-    public float getWalkTargetValue(BlockPos pos, IWorldReader worldIn) {
-        return worldIn.getBlockState(pos.below()).getBlock() instanceof BlockGenericSlowable ? 10.0F : worldIn.getBrightness(pos) - 0.5F;
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
+        return level.getBlockState(pos.below()).getBlock() instanceof BlockGenericSlowable ? 10.0F : level.getBrightness(pos) - 0.5F;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -182,13 +183,12 @@ public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> exte
     }
 
     @Override
-    public ActionResultType mobInteract(PlayerEntity player, Hand hand) {
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
         if (itemstack.getItem() == EvolutionItems.debug_item.get()) {
             if (!this.level.isClientSide) {
-                IFormattableTextComponent debug = new StringTextComponent("[EntityDebug]").withStyle(TextFormatting.YELLOW)
-                                                                                          .withStyle(TextFormatting.BOLD);
-                IFormattableTextComponent text = new StringTextComponent("Gender = " + this.gender + "\n");
+                MutableComponent debug = new TextComponent("[EntityDebug]").withStyle(ChatFormatting.YELLOW).withStyle(ChatFormatting.BOLD);
+                MutableComponent text = new TextComponent("Gender = " + this.gender + "\n");
                 text.append("Health = " + this.getHealth() + "/" + this.getMaxHealth() + "\n")
                     .append("Age = " + Time.getFormattedTime(this.getAge()) + "\n")
                     .append("LifeSpan =" + " " + Time.getFormattedTime(this.getLifeSpan()) + "\n")
@@ -202,25 +202,25 @@ public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> exte
                 player.displayClientMessage(debug, false);
                 player.displayClientMessage(text, false);
             }
-            return ActionResultType.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
         return super.mobInteract(player, hand);
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundNBT compound) {
-        super.readAdditionalSaveData(compound);
-        this.inLove = compound.getBoolean("InLove");
-        this.entityData.set(PREGNANCY_TIME, compound.getInt("PregnancyTime"));
-        this.gender = Gender.fromBoolean(compound.getBoolean("Gender"));
-        this.foodController.readFromNBT(compound);
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.inLove = tag.getBoolean("InLove");
+        this.entityData.set(PREGNANCY_TIME, tag.getInt("PregnancyTime"));
+        this.gender = Gender.fromBoolean(tag.getBoolean("Gender"));
+        this.foodController.readFromNBT(tag);
         if (this instanceof IMammal) {
-            ((IMammal) this).setLactationTime(compound.getInt("LactationTime"));
+            ((IMammal) this).setLactationTime(tag.getInt("LactationTime"));
         }
     }
 
     @Override
-    public void readSpawnData(PacketBuffer buffer) {
+    public void readSpawnData(FriendlyByteBuf buffer) {
         this.gender = Gender.fromBoolean(buffer.readBoolean());
     }
 
@@ -235,7 +235,7 @@ public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> exte
     public abstract void spawnBaby();
 
     @Override
-    public void writeSpawnData(PacketBuffer buffer) {
+    public void writeSpawnData(FriendlyByteBuf buffer) {
         buffer.writeBoolean(this.gender.toBoolean());
     }
 }

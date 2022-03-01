@@ -1,10 +1,18 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import tgw.evolution.patches.IBlockPatch;
+import tgw.evolution.util.constants.HarvestLevel;
 
-public abstract class BlockGeneric extends Block implements IFriction {
+public abstract class BlockGeneric extends Block implements IBlockPatch {
 
     public BlockGeneric(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public int getHarvestLevel(BlockState state) {
+        return HarvestLevel.HAND;
     }
 }

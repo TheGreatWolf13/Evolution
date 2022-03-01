@@ -1,9 +1,9 @@
 package tgw.evolution.init;
 
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import tgw.evolution.client.renderer.entities.*;
 import tgw.evolution.client.renderer.tile.RenderTEChopping;
 import tgw.evolution.client.renderer.tile.RenderTEMolding;
@@ -17,17 +17,17 @@ public final class EvolutionRenderer {
     }
 
     public static void registryEntityRenders() {
-        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.COW.get(), RenderCow::new);
-        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.FALLING_PEAT.get(), RenderFallingPeat::new);
-        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.FALLING_WEIGHT.get(), RenderFallingWeight::new);
-        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.HOOK.get(), RenderHook::new);
-        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.PLAYER_CORPSE.get(), RenderPlayerCorpse::new);
-        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.SIT.get(), RenderDummy::new);
-        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.SPEAR.get(), RenderSpear::new);
-        RenderingRegistry.registerEntityRenderingHandler(EvolutionEntities.TORCH.get(), RenderTorch::new);
-        ClientRegistry.bindTileEntityRenderer(EvolutionTEs.CHOPPING.get(), RenderTEChopping::new);
-        ClientRegistry.bindTileEntityRenderer(EvolutionTEs.MOLDING.get(), RenderTEMolding::new);
-        ClientRegistry.bindTileEntityRenderer(EvolutionTEs.PIT_KILN.get(), RenderTEPitKiln::new);
-        ClientRegistry.bindTileEntityRenderer(EvolutionTEs.SCHEMATIC.get(), RenderTESchematic::new);
+        EntityRenderers.register(EvolutionEntities.COW.get(), RenderCow::new);
+        EntityRenderers.register(EvolutionEntities.FALLING_PEAT.get(), RenderFallingPeat::new);
+        EntityRenderers.register(EvolutionEntities.FALLING_WEIGHT.get(), RenderFallingWeight::new);
+        EntityRenderers.register(EvolutionEntities.HOOK.get(), RenderHook::new);
+        EntityRenderers.register(EvolutionEntities.PLAYER_CORPSE.get(), RenderPlayerCorpse::new);
+        EntityRenderers.register(EvolutionEntities.SIT.get(), RenderDummy::new);
+        EntityRenderers.register(EvolutionEntities.SPEAR.get(), RenderSpear::new);
+        EntityRenderers.register(EvolutionEntities.TORCH.get(), RenderTorch::new);
+        BlockEntityRenderers.register(EvolutionTEs.CHOPPING.get(), RenderTEChopping::new);
+        BlockEntityRenderers.register(EvolutionTEs.MOLDING.get(), RenderTEMolding::new);
+        BlockEntityRenderers.register(EvolutionTEs.PIT_KILN.get(), RenderTEPitKiln::new);
+        BlockEntityRenderers.register(EvolutionTEs.SCHEMATIC.get(), RenderTESchematic::new);
     }
 }

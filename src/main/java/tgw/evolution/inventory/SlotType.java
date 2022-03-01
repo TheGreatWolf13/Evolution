@@ -1,37 +1,31 @@
 package tgw.evolution.inventory;
 
-import net.minecraft.inventory.EquipmentSlotType;
-import tgw.evolution.init.EvolutionResources;
+import net.minecraft.world.entity.EquipmentSlot;
 
 public enum SlotType {
-    HAT(EvolutionResources.HAT),
-    BODY(EvolutionResources.BODY),
-    LEGS(EvolutionResources.LEGS),
-    FEET(EvolutionResources.FEET),
-    CLOAK(EvolutionResources.CLOAK),
-    MASK(EvolutionResources.MASK),
-    BACK(EvolutionResources.BACK),
-    TACTICAL(EvolutionResources.TACTICAL);
+    MAINHAND,
+    OFFHAND,
+    HELMET,
+    CHESTPLATE,
+    LEGGINGS,
+    BOOTS,
+    HAT,
+    BODY,
+    LEGS,
+    FEET,
+    CLOAK,
+    MASK,
+    BACK,
+    TACTICAL;
 
-    public static final SlotType[] VALUES = values();
-    public static final EquipmentSlotType[] SLOTS = EquipmentSlotType.values();
-
-    private final int[] validSlots;
-
-    SlotType(int... validSlots) {
-        this.validSlots = validSlots;
-    }
-
-    public int[] getValidSlots() {
-        return this.validSlots;
-    }
-
-    public boolean hasSlot(int slot) {
-        for (int s : this.validSlots) {
-            if (s == slot) {
-                return true;
-            }
-        }
-        return false;
+    public static SlotType byEquipment(EquipmentSlot slot) {
+        return switch (slot) {
+            case MAINHAND -> MAINHAND;
+            case OFFHAND -> OFFHAND;
+            case FEET -> BOOTS;
+            case LEGS -> LEGGINGS;
+            case CHEST -> CHESTPLATE;
+            case HEAD -> HELMET;
+        };
     }
 }

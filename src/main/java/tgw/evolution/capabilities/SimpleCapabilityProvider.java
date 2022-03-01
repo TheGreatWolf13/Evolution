@@ -1,18 +1,18 @@
 package tgw.evolution.capabilities;
 
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 
 import javax.annotation.Nullable;
 
-public class SimpleCapabilityProvider<HANDLER> implements ICapabilityProvider {
+public class SimpleCapabilityProvider<C> implements ICapabilityProvider {
 
     /**
      * The {@link Capability} instance to provide the handler for.
      */
-    protected final Capability<HANDLER> capability;
+    protected final Capability<C> capability;
 
     /**
      * The {@link Direction} to provide the handler for.
@@ -22,14 +22,14 @@ public class SimpleCapabilityProvider<HANDLER> implements ICapabilityProvider {
     /**
      * The handler instance to provide.
      */
-    protected final HANDLER handler;
+    protected final C handler;
 
     /**
      * A lazy optional containing handler instance to provide.
      */
-    protected final LazyOptional<HANDLER> lazyOptional;
+    protected final LazyOptional<C> lazyOptional;
 
-    public SimpleCapabilityProvider(Capability<HANDLER> capability, @Nullable Direction facing, @Nullable HANDLER handler) {
+    public SimpleCapabilityProvider(Capability<C> capability, @Nullable Direction facing, @Nullable C handler) {
         this.capability = capability;
         this.facing = facing;
         this.handler = handler;
@@ -61,7 +61,7 @@ public class SimpleCapabilityProvider<HANDLER> implements ICapabilityProvider {
      *
      * @return The Capability instance
      */
-    public final Capability<HANDLER> getCapability() {
+    public final Capability<C> getCapability() {
         return this.capability;
     }
 
@@ -81,7 +81,7 @@ public class SimpleCapabilityProvider<HANDLER> implements ICapabilityProvider {
      * @return A lazy optional containing the handler instance
      */
     @Nullable
-    public final HANDLER getHandler() {
+    public final C getHandler() {
         return this.handler;
     }
 }

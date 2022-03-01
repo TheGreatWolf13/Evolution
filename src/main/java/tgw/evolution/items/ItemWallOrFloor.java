@@ -1,13 +1,13 @@
 package tgw.evolution.items;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.Item;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.world.IWorldReader;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -23,21 +23,21 @@ public class ItemWallOrFloor extends ItemBlock {
 
     @Override
     @Nullable
-    protected BlockState getPlacementState(BlockItemUseContext context) {
+    protected BlockState getPlacementState(BlockPlaceContext context) {
         BlockState wallState = this.wallBlock.getStateForPlacement(context);
         BlockState stateForPlacement = null;
-        IWorldReader world = context.getLevel();
+        LevelReader level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         for (Direction direction : context.getNearestLookingDirections()) {
             if (direction != Direction.UP) {
                 BlockState floorState = direction == Direction.DOWN ? this.getBlock().getStateForPlacement(context) : wallState;
-                if (floorState != null && floorState.canSurvive(world, pos)) {
+                if (floorState != null && floorState.canSurvive(level, pos)) {
                     stateForPlacement = floorState;
                     break;
                 }
             }
         }
-        return stateForPlacement != null && world.isUnobstructed(stateForPlacement, pos, ISelectionContext.empty()) ? stateForPlacement : null;
+        return stateForPlacement != null && level.isUnobstructed(stateForPlacement, pos, CollisionContext.empty()) ? stateForPlacement : null;
     }
 
     @Override

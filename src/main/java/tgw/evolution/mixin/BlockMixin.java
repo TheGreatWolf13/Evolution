@@ -1,13 +1,14 @@
 package tgw.evolution.mixin;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
-import tgw.evolution.blocks.IFriction;
+import tgw.evolution.patches.IBlockPatch;
+import tgw.evolution.util.constants.HarvestLevel;
 
 @Mixin(Block.class)
-public abstract class BlockMixin extends AbstractBlock implements IFriction {
+public abstract class BlockMixin extends BlockBehaviour implements IBlockPatch {
 
     public BlockMixin(Properties properties) {
         super(properties);
@@ -16,5 +17,10 @@ public abstract class BlockMixin extends AbstractBlock implements IFriction {
     @Override
     public float getFrictionCoefficient(BlockState state) {
         return 0.85f;
+    }
+
+    @Override
+    public int getHarvestLevel(BlockState state) {
+        return HarvestLevel.HAND;
     }
 }

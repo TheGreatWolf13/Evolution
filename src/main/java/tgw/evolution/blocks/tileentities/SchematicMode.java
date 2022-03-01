@@ -1,9 +1,9 @@
 package tgw.evolution.blocks.tileentities;
 
-import net.minecraft.util.IStringSerializable;
-import tgw.evolution.util.MathHelper;
+import net.minecraft.util.StringRepresentable;
+import tgw.evolution.util.math.MathHelper;
 
-public enum SchematicMode implements IStringSerializable {
+public enum SchematicMode implements StringRepresentable {
     SAVE(0, "save"),
     LOAD(1, "load"),
     CORNER(2, "corner");

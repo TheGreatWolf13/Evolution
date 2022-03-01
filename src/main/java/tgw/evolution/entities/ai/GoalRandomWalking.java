@@ -1,8 +1,8 @@
 package tgw.evolution.entities.ai;
 
-import net.minecraft.entity.ai.RandomPositionGenerator;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.util.DefaultRandomPos;
+import net.minecraft.world.phys.Vec3;
 import tgw.evolution.entities.EntityGenericCreature;
 
 import javax.annotation.Nullable;
@@ -52,7 +52,7 @@ public class GoalRandomWalking extends Goal {
                 return false;
             }
         }
-        Vector3d vec3d = this.getPosition();
+        Vec3 vec3d = this.getPosition();
         if (vec3d == null) {
             return false;
         }
@@ -64,8 +64,8 @@ public class GoalRandomWalking extends Goal {
     }
 
     @Nullable
-    protected Vector3d getPosition() {
-        return RandomPositionGenerator.getPos(this.creature, 10, 7);
+    protected Vec3 getPosition() {
+        return DefaultRandomPos.getPos(this.creature, 10, 7);
     }
 
     /**

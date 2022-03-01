@@ -4,20 +4,20 @@ import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
 import it.unimi.dsi.fastutil.ints.Int2BooleanMaps;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.client.gui.Font;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.event.ParticleFactoryRegisterEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.world.ForgeWorldType;
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -25,12 +25,11 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLLoader;
-import net.minecraftforge.fml.network.FMLNetworkConstants;
 import net.minecraftforge.registries.DataSerializerEntry;
-import net.minecraftforge.registries.ForgeRegistries;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
 import tgw.evolution.blocks.BlockFire;
 import tgw.evolution.client.renderer.EvolutionRenderLayer;
 import tgw.evolution.config.EvolutionConfig;
@@ -42,20 +41,18 @@ import tgw.evolution.init.*;
 import tgw.evolution.network.IPacketHandler;
 import tgw.evolution.network.PacketHandlerClient;
 import tgw.evolution.network.PacketHandlerDummy;
-import tgw.evolution.util.DataSerializer;
+import tgw.evolution.util.EvolutionDataSerializers;
 import tgw.evolution.util.reflection.FieldHandler;
-import tgw.evolution.world.WorldEvolutionDefault;
-import tgw.evolution.world.WorldEvolutionFlat;
-import tgw.evolution.world.feature.EvolutionFeatures;
 
 @Mod("evolution")
 public final class Evolution {
 
     public static final String MODID = "evolution";
-    public static final Logger LOGGER = LogManager.getLogger(MODID);
     public static final IProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> ServerProxy::new);
     public static final IPacketHandler PACKET_HANDLER = DistExecutor.safeRunForDist(() -> PacketHandlerClient::new, () -> PacketHandlerDummy::new);
     public static final Int2BooleanMap PRONED_PLAYERS = Int2BooleanMaps.synchronize(new Int2BooleanOpenHashMap());
+    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Marker MARKER = MarkerManager.getMarker("Evolution");
     public static Evolution instance;
 
     public Evolution() {
@@ -65,7 +62,7 @@ public final class Evolution {
         EvolutionItems.register();
         EvolutionFluids.register();
 //        EvolutionCarvers.register();
-        EvolutionFeatures.register();
+//        EvolutionFeatures.register();
         EvolutionEntities.register();
         EvolutionTEs.register();
         EvolutionSounds.register();
@@ -74,34 +71,52 @@ public final class Evolution {
         EvolutionBiomes.register();
         EvolutionAttributes.register();
         EvolutionStats.register();
-        EvolutionParticles.register();
-        ForgeWorldType defaultWorldType = new WorldEvolutionDefault();
-        defaultWorldType.setRegistryName(getResource("default"));
-        ForgeRegistries.WORLD_TYPES.register(defaultWorldType);
-        ForgeWorldType flatWorldType = new WorldEvolutionFlat();
-        flatWorldType.setRegistryName(getResource("flat"));
-        ForgeRegistries.WORLD_TYPES.register(flatWorldType);
+//        EvolutionParticles.register();
+//        ForgeWorldType defaultWorldType = new WorldEvolutionDefault();
+//        defaultWorldType.setRegistryName(getResource("default"));
+//        ForgeRegistries.WORLD_TYPES.register(defaultWorldType);
+//        ForgeWorldType flatWorldType = new WorldEvolutionFlat();
+//        flatWorldType.setRegistryName(getResource("flat"));
+//        ForgeRegistries.WORLD_TYPES.register(flatWorldType);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::registerParticleFactories);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::setup);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::registerCapabilities);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::onClientSetup);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::loadComplete);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::onEntityAttributeCreation);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::onEntityAttributeModification);
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
                                      () -> () -> FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::onTexturePreStitch));
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                                     () -> () -> FMLJavaModLoadingContext.get().getModEventBus().addListener(Evolution::onModelRegistry));
         FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(DataSerializerEntry.class, Evolution::registerSerializers);
         MinecraftForge.EVENT_BUS.register(this);
-        ModLoadingContext.get()
-                         .registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
-                                                 () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (s, b) -> true));
+//        ModLoadingContext.get()
+//                         .registerExtensionPoint(ExtensionPoint.DISPLAYTEST,
+//                                                 () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (s, b) -> true));
+    }
+
+    public static void debug(String message, Object... objects) {
+        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
+        LOGGER.debug(MARKER, "[" + clazz + "]: " + message, objects);
+    }
+
+    public static void error(String message, Object... objects) {
+        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
+        LOGGER.error(MARKER, "[" + clazz + "]: " + message, objects);
     }
 
     public static ResourceLocation getResource(String name) {
         return new ResourceLocation(MODID, name);
     }
 
+    public static void info(String message, Object... objects) {
+        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
+        LOGGER.info(MARKER, "[" + clazz + "]: " + message, objects);
+    }
+
     private static void loadComplete(FMLLoadCompleteEvent event) {
-        EvolutionBiomes.registerBiomes();
+//        EvolutionBiomes.registerBiomes();
         EvolutionEntities.registerEntityWorldSpawns();
         BlockFire.init();
         if (FMLLoader.getDist() == Dist.CLIENT) {
@@ -109,17 +124,10 @@ public final class Evolution {
         }
     }
 
-    public static void log(boolean log, String message, Object... args) {
-        if (log) {
-            LOGGER.debug(message, args);
-        }
-    }
-
     private static void onClientSetup(FMLClientSetupEvent event) {
         EvolutionRenderLayer.setup();
         ClientEvents.fixInputMappings();
-        ClientEvents.fixAccessibilityScreen();
-        FieldHandler<FontRenderer, Integer> fontHeight = new FieldHandler<>(FontRenderer.class, "field_78288_b");
+        FieldHandler<Font, Integer> fontHeight = new FieldHandler<>(Font.class, "f_92710_");
         fontHeight.set(Minecraft.getInstance().font, 10);
     }
 
@@ -131,29 +139,41 @@ public final class Evolution {
         EvolutionEntities.modifyEntityAttribute(event);
     }
 
+    private static void onModelRegistry(ModelRegistryEvent event) {
+        PROXY.registerModels(event);
+    }
+
     private static void onTexturePreStitch(TextureStitchEvent.Pre event) {
         PROXY.addTextures(event);
     }
 
+    private static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        EvolutionCapabilities.register(event);
+    }
+
     private static void registerParticleFactories(ParticleFactoryRegisterEvent event) {
-        EvolutionParticles.registerFactories(Minecraft.getInstance().particleEngine);
+//        EvolutionParticles.registerFactories(Minecraft.getInstance().particleEngine);
     }
 
     private static void registerSerializers(RegistryEvent.Register<DataSerializerEntry> event) {
-        DataSerializer.register(event, getResource("item_list"));
+        EvolutionDataSerializers.register(event, getResource("item_list"));
     }
 
     private static void setup(FMLCommonSetupEvent event) {
         PROXY.init();
         EvolutionNetwork.registerMessages();
-        EvolutionCapabilities.register();
         MinecraftForge.EVENT_BUS.register(new WorldEvents());
         MinecraftForge.EVENT_BUS.register(new ChunkEvents());
         MinecraftForge.EVENT_BUS.register(new EntityEvents());
-        LOGGER.info("Setup registries done.");
+        LOGGER.info(MARKER, "Setup registries done.");
     }
 
-    public static void usingPlaceholder(PlayerEntity player, String obj) {
-        player.displayClientMessage(new StringTextComponent("[DEBUG] Using placeholder " + obj + "!"), false);
+    public static void usingPlaceholder(Player player, String obj) {
+        player.displayClientMessage(new TextComponent("[DEBUG] Using placeholder " + obj + "!"), false);
+    }
+
+    public static void warn(String message, Object... objects) {
+        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
+        LOGGER.warn(MARKER, "[" + clazz + "]: " + message, objects);
     }
 }

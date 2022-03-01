@@ -1,15 +1,15 @@
 package tgw.evolution.util.hitbox;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.vector.Vector3d;
-import tgw.evolution.util.ILineConsumer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import tgw.evolution.util.math.ILineConsumer;
 
 public class Hitbox implements IHitbox {
 
-    private final AxisAlignedBB aabb;
+    private final AABB aabb;
     private final HitboxEntity<? extends Entity> parent;
-    private final BodyPart part;
+    private final HitboxType part;
     protected float pivotX;
     protected float pivotY;
     protected float pivotZ;
@@ -17,7 +17,7 @@ public class Hitbox implements IHitbox {
     protected float rotationY;
     protected float rotationZ;
 
-    public Hitbox(BodyPart part, AxisAlignedBB aabb, HitboxEntity<? extends Entity> parent) {
+    public Hitbox(HitboxType part, AABB aabb, HitboxEntity<? extends Entity> parent) {
         this.part = part;
         this.aabb = aabb;
         this.parent = parent;
@@ -62,19 +62,19 @@ public class Hitbox implements IHitbox {
         consumer.consume(this.aabb.maxX, this.aabb.maxY, this.aabb.minZ, this.aabb.maxX, this.aabb.maxY, this.aabb.maxZ);
     }
 
-    public AxisAlignedBB getAABB() {
+    public AABB getAABB() {
         return this.aabb;
     }
 
-    public Vector3d getOffset() {
-        return new Vector3d(this.pivotX, this.pivotY, this.pivotZ);
+    public Vec3 getOffset() {
+        return new Vec3(this.pivotX, this.pivotY, this.pivotZ);
     }
 
     public <T extends Entity> HitboxEntity<T> getParent() {
         return (HitboxEntity<T>) this.parent;
     }
 
-    public BodyPart getPart() {
+    public HitboxType getPart() {
         return this.part;
     }
 

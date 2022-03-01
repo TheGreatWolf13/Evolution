@@ -1,9 +1,9 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Hand;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.InteractionHand;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.events.ClientEvents;
 
 import java.util.function.Supplier;
@@ -11,20 +11,20 @@ import java.util.function.Supplier;
 public class PacketSCLungeAnim implements IPacket {
 
     private final int entityId;
-    private final Hand hand;
+    private final InteractionHand hand;
 
-    public PacketSCLungeAnim(int entityId, Hand hand) {
+    public PacketSCLungeAnim(int entityId, InteractionHand hand) {
         this.entityId = entityId;
         this.hand = hand;
     }
 
-    public static PacketSCLungeAnim decode(PacketBuffer buffer) {
-        return new PacketSCLungeAnim(buffer.readVarInt(), buffer.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND);
+    public static PacketSCLungeAnim decode(FriendlyByteBuf buffer) {
+        return new PacketSCLungeAnim(buffer.readVarInt(), buffer.readBoolean() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND);
     }
 
-    public static void encode(PacketSCLungeAnim packet, PacketBuffer buffer) {
+    public static void encode(PacketSCLungeAnim packet, FriendlyByteBuf buffer) {
         buffer.writeVarInt(packet.entityId);
-        buffer.writeBoolean(packet.hand == Hand.MAIN_HAND);
+        buffer.writeBoolean(packet.hand == InteractionHand.MAIN_HAND);
     }
 
     public static void handle(PacketSCLungeAnim packet, Supplier<NetworkEvent.Context> context) {

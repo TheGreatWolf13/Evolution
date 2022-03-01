@@ -1,7 +1,7 @@
 package tgw.evolution.init;
 
-import net.minecraftforge.fml.network.NetworkRegistry;
-import net.minecraftforge.fml.network.simple.SimpleChannel;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.simple.SimpleChannel;
 import tgw.evolution.Evolution;
 import tgw.evolution.network.*;
 
@@ -186,5 +186,35 @@ public final class EvolutionNetwork {
                                  PacketSCFixRotation::handle);
         INSTANCE.registerMessage(increaseId(), PacketSCShader.class, PacketSCShader::encode, PacketSCShader::decode, PacketSCShader::handle);
         INSTANCE.registerMessage(increaseId(), PacketSCToast.class, PacketSCToast::encode, PacketSCToast::decode, PacketSCToast::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCHungerData.class,
+                                 PacketSCHungerData::encode,
+                                 PacketSCHungerData::decode,
+                                 PacketSCHungerData::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCTemperatureData.class,
+                                 PacketSCTemperatureData::encode,
+                                 PacketSCTemperatureData::decode,
+                                 PacketSCTemperatureData::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketCSHitInformation.class,
+                                 PacketCSHitInformation::encode,
+                                 PacketCSHitInformation::decode,
+                                 PacketCSHitInformation::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketCSStopUsingItem.class,
+                                 PacketCSStopUsingItem::encode,
+                                 PacketCSStopUsingItem::decode,
+                                 PacketCSStopUsingItem::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketSCSyncServerConfig.class,
+                                 PacketSCSyncServerConfig::encode,
+                                 PacketSCSyncServerConfig::decode,
+                                 PacketSCSyncServerConfig::handle);
+        INSTANCE.registerMessage(increaseId(),
+                                 PacketCSSyncServerConfig.class,
+                                 PacketCSSyncServerConfig::encode,
+                                 PacketCSSyncServerConfig::decode,
+                                 PacketCSSyncServerConfig::handle);
     }
 }

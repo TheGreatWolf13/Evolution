@@ -1,19 +1,19 @@
 package tgw.evolution.client.renderer;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Matrix3f;
+import com.mojang.math.Matrix4f;
+import com.mojang.math.Vector3f;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Matrix3f;
-import net.minecraft.util.math.vector.Matrix4f;
-import net.minecraft.util.math.vector.Vector3f;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
 import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.util.Vec2f;
+import tgw.evolution.util.math.Vec2f;
 
 public final class RenderQuads {
 
@@ -25,7 +25,7 @@ public final class RenderQuads {
     private static final Vec2f BOTTOM_RIGHT_UV_POS = new Vec2f();
     private static final Vec2f TOP_LEFT_UV_POS = new Vec2f();
     private static final Vec2f TOP_RIGHT_UV_POS = new Vec2f();
-    private static final BlockPos.Mutable POS = new BlockPos.Mutable();
+    private static final BlockPos.MutableBlockPos POS = new BlockPos.MutableBlockPos();
 
     private RenderQuads() {
     }
@@ -33,7 +33,7 @@ public final class RenderQuads {
     private static void addFace(Direction whichFace,
                                 Matrix4f matrixPos,
                                 Matrix3f matrixNormal,
-                                IVertexBuilder renderBuffer,
+                                VertexConsumer vertexConsumer,
                                 int r,
                                 int g,
                                 int b,
@@ -58,39 +58,31 @@ public final class RenderQuads {
         Vector3f leftToRightDirection;
         Vector3f bottomToTopDirection;
         switch (whichFace) {
-            case NORTH: {
+            case NORTH -> {
                 leftToRightDirection = Vector3f.XN;
                 bottomToTopDirection = Vector3f.YP;
-                break;
             }
-            case SOUTH: {
+            case SOUTH -> {
                 leftToRightDirection = Vector3f.XP;
                 bottomToTopDirection = Vector3f.YP;
-                break;
             }
-            case EAST: {
+            case EAST -> {
                 leftToRightDirection = Vector3f.ZN;
                 bottomToTopDirection = Vector3f.YP;
-                break;
             }
-            case WEST: {
+            case WEST -> {
                 leftToRightDirection = Vector3f.ZP;
                 bottomToTopDirection = Vector3f.YP;
-                break;
             }
-            case UP: { // bottom left is southwest by minecraft block convention
+            case UP -> { // bottom left is southwest by minecraft block convention
                 leftToRightDirection = Vector3f.XN;
                 bottomToTopDirection = Vector3f.ZP;
-                break;
             }
-            case DOWN: { // bottom left is northwest by minecraft block convention
+            case DOWN -> { // bottom left is northwest by minecraft block convention
                 leftToRightDirection = Vector3f.XP;
                 bottomToTopDirection = Vector3f.ZP;
-                break;
             }
-            default: {
-                throw new IllegalStateException("Unknown Direction: " + whichFace);
-            }
+            default -> throw new IllegalStateException("Unknown Direction: " + whichFace);
         }
         // calculate the four vertices based on the centre of the face
         float leftX = leftToRightDirection.x() * width * 0.5f;
@@ -120,7 +112,7 @@ public final class RenderQuads {
         if (whichFace.get2DDataValue() != -1) {
             addQuad(matrixPos,
                     matrixNormal,
-                    renderBuffer,
+                    vertexConsumer,
                     BOTTOM_LEFT_POS,
                     BOTTOM_RIGHT_POS,
                     TOP_RIGHT_POS,
@@ -141,7 +133,7 @@ public final class RenderQuads {
         else {
             addQuad(matrixPos,
                     matrixNormal,
-                    renderBuffer,
+                    vertexConsumer,
                     BOTTOM_LEFT_POS,
                     BOTTOM_RIGHT_POS,
                     TOP_RIGHT_POS,
@@ -173,7 +165,7 @@ public final class RenderQuads {
      */
     private static void addQuad(Matrix4f matrixPos,
                                 Matrix3f matrixNormal,
-                                IVertexBuilder renderBuffer,
+                                VertexConsumer vertexConsumer,
                                 Vector3f blpos,
                                 Vector3f brpos,
                                 Vector3f trpos,
@@ -190,15 +182,15 @@ public final class RenderQuads {
                                 int b,
                                 int a,
                                 int lightmapValue) {
-        addQuadVertex(matrixPos, matrixNormal, renderBuffer, blpos, blUVpos, normalX, normalY, normalZ, r, g, b, a, lightmapValue);
-        addQuadVertex(matrixPos, matrixNormal, renderBuffer, brpos, brUVpos, normalX, normalY, normalZ, r, g, b, a, lightmapValue);
-        addQuadVertex(matrixPos, matrixNormal, renderBuffer, trpos, trUVpos, normalX, normalY, normalZ, r, g, b, a, lightmapValue);
-        addQuadVertex(matrixPos, matrixNormal, renderBuffer, tlpos, tlUVpos, normalX, normalY, normalZ, r, g, b, a, lightmapValue);
+        addQuadVertex(matrixPos, matrixNormal, vertexConsumer, blpos, blUVpos, normalX, normalY, normalZ, r, g, b, a, lightmapValue);
+        addQuadVertex(matrixPos, matrixNormal, vertexConsumer, brpos, brUVpos, normalX, normalY, normalZ, r, g, b, a, lightmapValue);
+        addQuadVertex(matrixPos, matrixNormal, vertexConsumer, trpos, trUVpos, normalX, normalY, normalZ, r, g, b, a, lightmapValue);
+        addQuadVertex(matrixPos, matrixNormal, vertexConsumer, tlpos, tlUVpos, normalX, normalY, normalZ, r, g, b, a, lightmapValue);
     }
 
     private static void addQuadVertex(Matrix4f matrixPos,
                                       Matrix3f matrixNormal,
-                                      IVertexBuilder renderBuffer,
+                                      VertexConsumer vertexConsumer,
                                       Vector3f pos,
                                       Vec2f texUV,
                                       float normalX,
@@ -209,16 +201,16 @@ public final class RenderQuads {
                                       int b,
                                       int a,
                                       int lightmapValue) {
-        renderBuffer.vertex(matrixPos, pos.x(), pos.y(), pos.z())                 // position coordinate
-                    .color(r, g, b, a)                                            // color
-                    .uv(texUV.getX(), texUV.getY())                               // texel coordinate
-                    .overlayCoords(OverlayTexture.NO_OVERLAY)                     // only relevant for rendering Entities (Living)
-                    .uv2(lightmapValue)                                           // lightmap with full brightness
-                    .normal(matrixNormal, normalX, normalY, normalZ).endVertex();
+        vertexConsumer.vertex(matrixPos, pos.x(), pos.y(), pos.z())                 // position coordinate
+                      .color(r, g, b, a)                                            // color
+                      .uv(texUV.getX(), texUV.getY())                               // texel coordinate
+                      .overlayCoords(OverlayTexture.NO_OVERLAY)                     // only relevant for rendering Entities (Living)
+                      .uv2(lightmapValue)                                           // lightmap with full brightness
+                      .normal(matrixNormal, normalX, normalY, normalZ).endVertex();
     }
 
-    public static void drawKnapping(TEKnapping tile, int id, MatrixStack matrices, IRenderTypeBuffer renderBuffer, int color, int combinedLight) {
-        IVertexBuilder vertexBuilderBlockQuads = renderBuffer.getBuffer(RenderType.entitySolid(EvolutionResources.BLOCK_KNAPPING[id]));
+    public static void drawKnapping(TEKnapping tile, int id, PoseStack matrices, MultiBufferSource renderBuffer, int color, int combinedLight) {
+        VertexConsumer vertexBuilderBlockQuads = renderBuffer.getBuffer(RenderType.entitySolid(EvolutionResources.BLOCK_KNAPPING[id]));
         // other typical RenderTypes used by TER are:
         // getEntityCutout, getBeaconBeam (which has translucency),
         Matrix4f matrixPos = matrices.last().pose();
@@ -228,13 +220,13 @@ public final class RenderQuads {
         float horizHeight = 1 / 8.0f;
         final float width = 1 / 8.0f;
         final float height = 1 / 16.0f;
-        World world = tile.getLevel();
+        Level level = tile.getLevel();
         BlockPos pos = tile.getBlockPos();
-        boolean solidDown = world.getBlockState(POS.setWithOffset(pos, Direction.DOWN)).canOcclude();
-        boolean solidNorth = world.getBlockState(POS.setWithOffset(pos, Direction.NORTH)).canOcclude();
-        boolean solidSouth = world.getBlockState(POS.setWithOffset(pos, Direction.SOUTH)).canOcclude();
-        boolean solidEast = world.getBlockState(POS.setWithOffset(pos, Direction.EAST)).canOcclude();
-        boolean solidWest = world.getBlockState(POS.setWithOffset(pos, Direction.WEST)).canOcclude();
+        boolean solidDown = level.getBlockState(POS.setWithOffset(pos, Direction.DOWN)).canOcclude();
+        boolean solidNorth = level.getBlockState(POS.setWithOffset(pos, Direction.NORTH)).canOcclude();
+        boolean solidSouth = level.getBlockState(POS.setWithOffset(pos, Direction.SOUTH)).canOcclude();
+        boolean solidEast = level.getBlockState(POS.setWithOffset(pos, Direction.EAST)).canOcclude();
+        boolean solidWest = level.getBlockState(POS.setWithOffset(pos, Direction.WEST)).canOcclude();
         int a = color >> 24 & 0xff;
         int r = color >> 16 & 0xff;
         int g = color >> 8 & 0xff;

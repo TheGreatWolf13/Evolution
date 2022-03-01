@@ -1,20 +1,17 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import tgw.evolution.util.HarvestLevel;
-import tgw.evolution.util.RockVariant;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.constants.RockVariant;
 
 public class BlockStoneBricks extends BlockGravity implements IRockVariant {
 
     private final RockVariant variant;
 
     public BlockStoneBricks(RockVariant variant) {
-        super(Properties.of(Material.STONE)
-                        .strength(variant.getRockType().getHardness(), 8.0F)
-                        .sound(SoundType.STONE)
-                        .harvestLevel(HarvestLevel.COPPER), variant.getMass());
+        super(Properties.of(Material.STONE).strength(variant.getRockType().getHardness(), 8.0F).sound(SoundType.STONE), variant.getMass());
         this.variant = variant;
     }
 
@@ -26,6 +23,11 @@ public class BlockStoneBricks extends BlockGravity implements IRockVariant {
     @Override
     public float getFrictionCoefficient(BlockState state) {
         return 1.0f;
+    }
+
+    @Override
+    public int getHarvestLevel(BlockState state) {
+        return HarvestLevel.LOW_METAL;
     }
 
     @Override

@@ -1,7 +1,7 @@
 package tgw.evolution.entities.ai;
 
-import net.minecraft.entity.ai.RandomPositionGenerator;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.entity.ai.util.LandRandomPos;
+import net.minecraft.world.phys.Vec3;
 import tgw.evolution.entities.EntityGenericCreature;
 
 import javax.annotation.Nullable;
@@ -20,13 +20,11 @@ public class GoalWaterAvoidingRandomWalking extends GoalRandomWalking {
 
     @Override
     @Nullable
-    protected Vector3d getPosition() {
+    protected Vec3 getPosition() {
         if (this.creature.isInWaterOrBubble()) {
-            Vector3d vec3d = RandomPositionGenerator.getLandPos(this.creature, 15, 7);
+            Vec3 vec3d = LandRandomPos.getPos(this.creature, 15, 7);
             return vec3d == null ? super.getPosition() : vec3d;
         }
-        return this.creature.getRandom().nextFloat() >= this.probability ?
-               RandomPositionGenerator.getLandPos(this.creature, 10, 7) :
-               super.getPosition();
+        return this.creature.getRandom().nextFloat() >= this.probability ? LandRandomPos.getPos(this.creature, 10, 7) : super.getPosition();
     }
 }

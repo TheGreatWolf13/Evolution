@@ -1,11 +1,7 @@
 package tgw.evolution.mixin;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.vertex.DefaultColorVertexBuilder;
-import com.mojang.blaze3d.vertex.IVertexConsumer;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
+import com.mojang.blaze3d.vertex.*;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -13,7 +9,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import javax.annotation.Nullable;
 
 @Mixin(BufferBuilder.class)
-public abstract class BufferBuilderMixin extends DefaultColorVertexBuilder implements IVertexConsumer {
+public abstract class BufferBuilderMixin extends DefaultedVertexConsumer implements BufferVertexConsumer {
 
     @Shadow
     @Nullable
@@ -27,7 +23,8 @@ public abstract class BufferBuilderMixin extends DefaultColorVertexBuilder imple
 
     /**
      * @author JellySquid
-     * @reason Remove modulo operations and recursion
+     * <p>
+     * Remove modulo operations and recursion
      */
     @Override
     @Overwrite
@@ -42,7 +39,7 @@ public abstract class BufferBuilderMixin extends DefaultColorVertexBuilder imple
             this.currentElement = elements.get(this.elementIndex);
         } while (this.currentElement.getUsage() == VertexFormatElement.Usage.PADDING);
         if (this.defaultColorSet && this.currentElement.getUsage() == VertexFormatElement.Usage.COLOR) {
-            IVertexConsumer.super.color(this.defaultR, this.defaultG, this.defaultB, this.defaultA);
+            BufferVertexConsumer.super.color(this.defaultR, this.defaultG, this.defaultB, this.defaultA);
         }
     }
 }

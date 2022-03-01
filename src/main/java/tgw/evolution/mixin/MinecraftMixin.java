@@ -1,73 +1,70 @@
 package tgw.evolution.mixin;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.CrashReport;
+import net.minecraft.CrashReportCategory;
+import net.minecraft.ReportedException;
+import net.minecraft.Util;
 import net.minecraft.client.*;
-import net.minecraft.client.audio.MusicTicker;
-import net.minecraft.client.audio.SoundHandler;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.gui.IngameGui;
-import net.minecraft.client.gui.LoadingGui;
-import net.minecraft.client.gui.ResourceLoadProgressGui;
-import net.minecraft.client.gui.advancements.AdvancementsScreen;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.chat.NarratorChatListener;
-import net.minecraft.client.gui.screen.DeathScreen;
-import net.minecraft.client.gui.screen.DirtMessageScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.SleepInMultiplayerScreen;
-import net.minecraft.client.gui.screen.inventory.CreativeScreen;
-import net.minecraft.client.gui.screen.inventory.InventoryScreen;
-import net.minecraft.client.gui.social.SocialInteractionsScreen;
-import net.minecraft.client.gui.toasts.ToastGui;
-import net.minecraft.client.gui.toasts.TutorialToast;
-import net.minecraft.client.multiplayer.PlayerController;
-import net.minecraft.client.network.play.ClientPlayNetHandler;
-import net.minecraft.client.particle.ParticleManager;
+import net.minecraft.client.gui.components.toasts.ToastComponent;
+import net.minecraft.client.gui.components.toasts.TutorialToast;
+import net.minecraft.client.gui.screens.*;
+import net.minecraft.client.gui.screens.advancements.AdvancementsScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.screens.social.SocialInteractionsScreen;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.particle.ParticleEngine;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.client.settings.CloudOption;
-import net.minecraft.client.settings.PointOfView;
-import net.minecraft.client.shader.Framebuffer;
+import net.minecraft.client.server.IntegratedServer;
+import net.minecraft.client.sounds.MusicManager;
+import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.tutorial.Tutorial;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.crash.CrashReport;
-import net.minecraft.crash.CrashReportCategory;
-import net.minecraft.crash.ReportedException;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.ChatVisibility;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.client.CPlayerDiggingPacket;
-import net.minecraft.profiler.IProfileResult;
-import net.minecraft.profiler.IProfiler;
-import net.minecraft.profiler.LongTickDetector;
-import net.minecraft.profiler.Snooper;
-import net.minecraft.server.integrated.IntegratedServer;
-import net.minecraft.util.*;
-import net.minecraft.util.concurrent.RecursiveEventLoop;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.GameType;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.util.FrameTimer;
+import net.minecraft.util.MemoryReserve;
+import net.minecraft.util.profiling.ProfileResults;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.util.profiling.SingleTickProfiler;
+import net.minecraft.util.profiling.metrics.profiling.MetricsRecorder;
+import net.minecraft.util.thread.ReentrantBlockableEventLoop;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.ChatVisiblity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.fml.hooks.BasicEventHooks;
-import net.minecraftforge.fml.server.ServerLifecycleHooks;
+import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.server.ServerLifecycleHooks;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.client.gui.ScreenCrash;
 import tgw.evolution.client.gui.ScreenOutOfMemory;
 import tgw.evolution.client.renderer.ClientRenderer;
@@ -75,12 +72,11 @@ import tgw.evolution.client.util.LungeChargeInfo;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.hooks.InputHooks;
 import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.items.ILunge;
-import tgw.evolution.items.IOffhandAttackable;
-import tgw.evolution.items.IParry;
+import tgw.evolution.items.*;
 import tgw.evolution.network.PacketCSStartLunge;
+import tgw.evolution.network.PacketCSStopUsingItem;
 import tgw.evolution.patches.IMinecraftPatch;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -88,18 +84,18 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 @Mixin(Minecraft.class)
-public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implements IMinecraftPatch {
+public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnable> implements IMinecraftPatch {
 
-    @Shadow
-    public static byte[] reserve;
     @Shadow
     @Final
     public static boolean ON_OSX;
     @Shadow
     @Final
-    private static ITextComponent SOCIAL_INTERACTIONS_NOT_AVAILABLE;
+    private static Component SOCIAL_INTERACTIONS_NOT_AVAILABLE;
     @Shadow
     @Final
     private static Logger LOGGER;
@@ -115,42 +111,39 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
     public FrameTimer frameTimer;
     @Shadow
     @Nullable
-    public PlayerController gameMode;
+    public MultiPlayerGameMode gameMode;
     @Shadow
     @Final
     public GameRenderer gameRenderer;
     @Shadow
     @Final
-    public IngameGui gui;
+    public Gui gui;
     @Shadow
     @Nullable
-    public RayTraceResult hitResult;
+    public HitResult hitResult;
     @Shadow
     @Final
-    public KeyboardListener keyboardHandler;
+    public KeyboardHandler keyboardHandler;
     @Shadow
     @Nullable
-    public ClientWorld level;
+    public ClientLevel level;
     @Shadow
     @Final
-    public WorldRenderer levelRenderer;
+    public LevelRenderer levelRenderer;
     @Shadow
     @Final
-    public MouseHelper mouseHandler;
+    public MouseHandler mouseHandler;
     @Shadow
     public boolean noRender;
     @Shadow
     @Final
-    public GameSettings options;
-    @Shadow
-    @Nullable
-    public LoadingGui overlay;
+    public Options options;
     @Shadow
     @Final
-    public ParticleManager particleEngine;
+    public ParticleEngine particleEngine;
     @Shadow
     @Nullable
-    public ClientPlayerEntity player;
+    public LocalPlayer player;
     @Shadow
     @Nullable
     public Screen screen;
@@ -159,12 +152,13 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
     public TextureManager textureManager;
     @Shadow
     protected int missTime;
+    private int cancelUseCooldown;
     @Shadow
     @Nullable
-    private CrashReport delayedCrash;
+    private Supplier<CrashReport> delayedCrash;
     @Shadow
     @Nullable
-    private IProfileResult fpsPieResults;
+    private ProfileResults fpsPieResults;
     @Shadow
     private int frames;
     @Shadow
@@ -177,23 +171,28 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
     private long lastTime;
     @Shadow
     @Final
-    private Framebuffer mainRenderTarget;
+    private RenderTarget mainRenderTarget;
+    @Shadow
+    private MetricsRecorder metricsRecorder;
     private boolean multiplayerPause;
     @Shadow
     @Final
-    private MusicTicker musicManager;
+    private MusicManager musicManager;
+    @Shadow
+    @Nullable
+    private Overlay overlay;
     @Shadow
     private boolean pause;
     @Shadow
     private float pausePartialTick;
     @Shadow
     @Nullable
-    private NetworkManager pendingConnection;
+    private Connection pendingConnection;
     @Shadow
     @Nullable
     private CompletableFuture<Void> pendingReload;
     @Shadow
-    private IProfiler profiler;
+    private ProfilerFiller profiler;
     @Shadow
     @Final
     private Queue<Runnable> progressTasks;
@@ -205,26 +204,23 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
     @Nullable
     private IntegratedServer singleplayerServer;
     @Shadow
-    @Final
-    private Snooper snooper;
-    @Shadow
     @Nullable
     private TutorialToast socialInteractionsToast;
     @Shadow
     @Final
-    private SoundHandler soundManager;
+    private SoundManager soundManager;
     @Shadow
     @Final
     private Timer timer;
     @Shadow
     @Final
-    private ToastGui toast;
+    private ToastComponent toast;
     @Shadow
     @Final
     private Tutorial tutorial;
     @Shadow
     @Final
-    private MainWindow window;
+    private Window window;
 
     public MinecraftMixin(String name) {
         super(name);
@@ -259,6 +255,9 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
     @Shadow
     public abstract void clearLevel(Screen p_213231_1_);
 
+    @Shadow
+    protected abstract ProfilerFiller constructProfiler(boolean p_167971_, @Nullable SingleTickProfiler p_167972_);
+
     /**
      * @author MGSchultz
      * <p>
@@ -270,16 +269,16 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
             this.missTime = 0;
         }
         if (this.missTime <= 0 && !this.player.isUsingItem()) {
-            if (leftClick && this.hitResult != null && this.hitResult.getType() == RayTraceResult.Type.BLOCK) {
-                BlockRayTraceResult blockRayTrace = (BlockRayTraceResult) this.hitResult;
+            if (leftClick && this.hitResult != null && this.hitResult.getType() == HitResult.Type.BLOCK) {
+                BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
                 BlockPos hitPos = blockRayTrace.getBlockPos();
                 if (!this.level.isEmptyBlock(hitPos)) {
-                    InputEvent.ClickInputEvent inputEvent = ForgeHooksClient.onClickInput(0, this.options.keyAttack, Hand.MAIN_HAND);
+                    InputEvent.ClickInputEvent inputEvent = ForgeHooksClient.onClickInput(0, this.options.keyAttack, InteractionHand.MAIN_HAND);
                     if (inputEvent.isCanceled()) {
                         if (inputEvent.shouldSwingHand()) {
                             this.particleEngine.addBlockHitEffects(hitPos, blockRayTrace);
-                            this.player.swing(Hand.MAIN_HAND);
-                            ClientEvents.getInstance().swingArm(Hand.MAIN_HAND);
+                            this.player.swing(InteractionHand.MAIN_HAND);
+                            ClientEvents.getInstance().swingArm(InteractionHand.MAIN_HAND);
                         }
                         return;
                     }
@@ -287,8 +286,8 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                     if (this.gameMode.continueDestroyBlock(hitPos, face)) {
                         if (inputEvent.shouldSwingHand()) {
                             this.particleEngine.addBlockHitEffects(hitPos, blockRayTrace);
-                            this.player.swing(Hand.MAIN_HAND);
-                            ClientEvents.getInstance().swingArm(Hand.MAIN_HAND);
+                            this.player.swing(InteractionHand.MAIN_HAND);
+                            ClientEvents.getInstance().swingArm(InteractionHand.MAIN_HAND);
                         }
                     }
                 }
@@ -298,6 +297,9 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
             }
         }
     }
+
+    @Shadow
+    public abstract boolean debugClientMetricsStart(Consumer<TranslatableComponent> p_167947_);
 
     private void displayCrashScreen(CrashReport report) {
         try {
@@ -325,9 +327,7 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
     public void emergencySave() {
         try {
             try {
-                if (reserve != null) {
-                    reserve = null;
-                }
+                MemoryReserve.release();
                 this.levelRenderer.clear();
             }
             catch (Throwable ignored) {
@@ -337,16 +337,19 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                 if (this.isLocalServer && this.singleplayerServer != null) {
                     this.singleplayerServer.halt(true);
                 }
-                this.clearLevel(new DirtMessageScreen(new TranslationTextComponent("menu.savingLevel")));
+                this.clearLevel(new GenericDirtMessageScreen(new TranslatableComponent("menu.savingLevel")));
             }
-            catch (Throwable ignored) {
+            catch (Throwable t) {
+                LOGGER.fatal("Exception thrown while trying to recover from crash!", t);
+                crash(new CrashReport("Exception thrown while trying to recover from crash!", t));
+                return;
             }
             if (this.getConnection() != null) {
-                this.getConnection().getConnection().disconnect(new StringTextComponent("Client crashed"));
+                this.getConnection().getConnection().disconnect(new TextComponent("Client crashed"));
             }
             this.gameRenderer.shutdownEffect();
             try {
-                reserve = new byte[10_485_760];
+                MemoryReserve.allocate();
             }
             catch (Throwable ignored) {
             }
@@ -361,7 +364,7 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
     public abstract CrashReport fillReport(CrashReport p_71396_1_);
 
     @Shadow
-    protected abstract void finishProfilers(boolean p_238210_1_, @Nullable LongTickDetector p_238210_2_);
+    protected abstract void finishProfilers(boolean p_91339_, @Nullable SingleTickProfiler p_91340_);
 
     @Shadow
     @Nullable
@@ -369,7 +372,7 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
 
     @Shadow
     @Nullable
-    public abstract ClientPlayNetHandler getConnection();
+    public abstract ClientPacketListener getConnection();
 
     @Shadow
     protected abstract int getFramerateLimit();
@@ -383,7 +386,7 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
     @Overwrite
     private void handleKeybinds() {
         for (; this.options.keyTogglePerspective.consumeClick(); this.levelRenderer.needsUpdate()) {
-            PointOfView view = this.options.getCameraType();
+            CameraType view = this.options.getCameraType();
             this.options.setCameraType(view.cycle());
             if (view.isFirstPerson() != this.options.getCameraType().isFirstPerson()) {
                 this.gameRenderer.checkEntityPostEffect(this.options.getCameraType().isFirstPerson() ? this.getCameraEntity() : null);
@@ -396,15 +399,15 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
             boolean isSaveToolbarDown = this.options.keySaveHotbarActivator.isDown();
             boolean isLoadToolbarDown = this.options.keyLoadHotbarActivator.isDown();
             if (this.options.keyHotbarSlots[slot].consumeClick()) {
-                if (!this.multiplayerPause) {
+                if (!this.multiplayerPause && !ClientEvents.getInstance().isMainhandCustomAttacking()) {
                     if (this.player.isSpectator()) {
                         this.gui.getSpectatorGui().onHotbarSelected(slot);
                     }
                     else if (!this.player.isCreative() || this.screen != null || !isLoadToolbarDown && !isSaveToolbarDown) {
-                        this.player.inventory.selected = slot;
+                        this.player.getInventory().selected = slot;
                     }
                     else {
-                        CreativeScreen.handleHotbarLoadOrSave((Minecraft) (Object) this, slot, isLoadToolbarDown, isSaveToolbarDown);
+                        CreativeModeInventoryScreen.handleHotbarLoadOrSave((Minecraft) (Object) this, slot, isLoadToolbarDown, isSaveToolbarDown);
                     }
                 }
             }
@@ -444,18 +447,20 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                 if (!this.player.isSpectator()) {
                     //noinspection ObjectAllocationInLoop
                     this.getConnection()
-                        .send(new CPlayerDiggingPacket(CPlayerDiggingPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ZERO, Direction.DOWN));
+                        .send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND,
+                                                                BlockPos.ZERO,
+                                                                Direction.DOWN));
                 }
             }
         }
         while (this.options.keyDrop.consumeClick()) {
             if (!this.multiplayerPause) {
                 if (!this.player.isSpectator() && this.player.drop(Screen.hasControlDown())) {
-                    this.player.swing(Hand.MAIN_HAND);
+                    this.player.swing(InteractionHand.MAIN_HAND);
                 }
             }
         }
-        boolean isChatVisible = this.options.chatVisibility != ChatVisibility.HIDDEN;
+        boolean isChatVisible = this.options.chatVisibility != ChatVisiblity.HIDDEN;
         if (isChatVisible) {
             while (this.options.keyChat.consumeClick()) {
                 this.openChatScreen("");
@@ -464,7 +469,7 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                 this.openChatScreen("/");
             }
         }
-        Item offhandItem = this.player.getOffhandItem().getItem();
+        ItemStack offhandStack = this.player.getOffhandItem();
         if (this.player.isUsingItem()) {
             if (!this.options.keyUse.isDown()) {
                 if (!this.multiplayerPause) {
@@ -472,7 +477,18 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                 }
             }
             while (this.options.keyAttack.consumeClick()) {
-                //TODO shield bash
+                if (!this.multiplayerPause) {
+                    Item usedItem = this.player.getUseItem().getItem();
+                    if (usedItem instanceof IThrowable) {
+                        if (((IThrowable) usedItem).isCancelable() && this.cancelUseCooldown == 0) {
+                            this.player.stopUsingItem();
+                            this.cancelUseCooldown = 20;
+                            //noinspection ObjectAllocationInLoop
+                            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSStopUsingItem());
+                        }
+                    }
+                    //TODO shield bash
+                }
             }
             while (this.options.keyUse.consumeClick()) {
             }
@@ -495,14 +511,15 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                                     LungeChargeInfo lunge = ClientEvents.ABOUT_TO_LUNGE_PLAYERS.get(this.player.getId());
                                     if (lunge == null) {
                                         ClientEvents.ABOUT_TO_LUNGE_PLAYERS.put(this.player.getId(),
-                                                                                new LungeChargeInfo(Hand.MAIN_HAND,
+                                                                                new LungeChargeInfo(InteractionHand.MAIN_HAND,
                                                                                                     this.player.getMainHandItem(),
                                                                                                     lungeFullTime - lungeMinTime));
                                     }
                                     else {
-                                        lunge.addInfo(Hand.MAIN_HAND, this.player.getMainHandItem(), lungeFullTime - lungeMinTime);
+                                        lunge.addInfo(InteractionHand.MAIN_HAND, this.player.getMainHandItem(), lungeFullTime - lungeMinTime);
                                     }
-                                    EvolutionNetwork.INSTANCE.sendToServer(new PacketCSStartLunge(Hand.MAIN_HAND, lungeFullTime - lungeMinTime));
+                                    EvolutionNetwork.INSTANCE.sendToServer(new PacketCSStartLunge(InteractionHand.MAIN_HAND,
+                                                                                                  lungeFullTime - lungeMinTime));
                                 }
                             }
                             if (InputHooks.getAttackKeyDownTicks() >= lungeFullTime) {
@@ -537,12 +554,12 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                     }
                 }
             }
-            if (offhandItem instanceof ILunge && this.mouseHandler.isMouseGrabbed()) {
-                int lungeFullTime = ((ILunge) offhandItem).getFullLungeTime();
-                int lungeMinTime = ((ILunge) offhandItem).getMinLungeTime();
+            if (offhandStack.getItem() instanceof ILunge iLunge && this.mouseHandler.isMouseGrabbed()) {
+                int lungeFullTime = iLunge.getFullLungeTime();
+                int lungeMinTime = iLunge.getMinLungeTime();
                 if (this.options.keyUse.isDown()) {
                     if (!this.multiplayerPause) {
-                        if (ClientEvents.getInstance().getOffhandCooledAttackStrength(offhandItem, 0.0f) >= 1.0f && InputHooks.useKeyReleased) {
+                        if (ClientEvents.getInstance().getOffhandCooledAttackStrength(offhandStack, 0.0f) >= 1.0f && InputHooks.useKeyReleased) {
                             InputHooks.useKeyDownTicks++;
                             if (InputHooks.useKeyDownTicks >= lungeMinTime) {
                                 if (!InputHooks.isOffhandLungeInProgress) {
@@ -550,14 +567,15 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                                     LungeChargeInfo lunge = ClientEvents.ABOUT_TO_LUNGE_PLAYERS.get(this.player.getId());
                                     if (lunge == null) {
                                         ClientEvents.ABOUT_TO_LUNGE_PLAYERS.put(this.player.getId(),
-                                                                                new LungeChargeInfo(Hand.OFF_HAND,
+                                                                                new LungeChargeInfo(InteractionHand.OFF_HAND,
                                                                                                     this.player.getOffhandItem(),
                                                                                                     lungeFullTime - lungeMinTime));
                                     }
                                     else {
-                                        lunge.addInfo(Hand.OFF_HAND, this.player.getOffhandItem(), lungeFullTime - lungeMinTime);
+                                        lunge.addInfo(InteractionHand.OFF_HAND, this.player.getOffhandItem(), lungeFullTime - lungeMinTime);
                                     }
-                                    EvolutionNetwork.INSTANCE.sendToServer(new PacketCSStartLunge(Hand.OFF_HAND, lungeFullTime - lungeMinTime));
+                                    EvolutionNetwork.INSTANCE.sendToServer(new PacketCSStartLunge(InteractionHand.OFF_HAND,
+                                                                                                  lungeFullTime - lungeMinTime));
                                 }
                             }
                             if (InputHooks.useKeyDownTicks >= lungeFullTime) {
@@ -598,7 +616,10 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                 }
             }
         }
-        if (!(offhandItem instanceof IOffhandAttackable) && this.options.keyUse.isDown() && this.rightClickDelay == 0 && !this.player.isUsingItem()) {
+        if (!(offhandStack.getItem() instanceof IOffhandAttackable) &&
+            this.options.keyUse.isDown() &&
+            this.rightClickDelay == 0 &&
+            !this.player.isUsingItem()) {
             if (!this.multiplayerPause) {
                 this.startUseItem();
             }
@@ -627,8 +648,8 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
      */
     @Overwrite
     private void pickBlock() {
-        if (this.hitResult != null && this.hitResult.getType() != RayTraceResult.Type.MISS) {
-            if (!ForgeHooksClient.onClickInput(2, this.options.keyPickItem, Hand.MAIN_HAND).isCanceled()) {
+        if (this.hitResult != null && this.hitResult.getType() != HitResult.Type.MISS) {
+            if (!ForgeHooksClient.onClickInput(2, this.options.keyPickItem, InteractionHand.MAIN_HAND).isCanceled()) {
                 ForgeHooks.onPickBlock(this.hitResult, this.player, this.level);
             }
         }
@@ -640,7 +661,7 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
     public abstract CompletableFuture<Void> reloadResourcePacks();
 
     @Shadow
-    protected abstract void renderFpsMeter(MatrixStack p_238183_1_, IProfileResult p_238183_2_);
+    protected abstract void renderFpsMeter(PoseStack p_91141_, ProfileResults p_91142_);
 
     /**
      * @author MGSchultz
@@ -650,21 +671,26 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
     @Overwrite
     public void run() {
         this.gameThread = Thread.currentThread();
+        if (Runtime.getRuntime().availableProcessors() > 4) {
+            this.gameThread.setPriority(10);
+        }
         try {
             boolean hasAlreadyBeenOutOfMemory = false;
             while (this.running) {
                 if (this.delayedCrash != null) {
-                    crash(this.delayedCrash);
+                    crash(this.delayedCrash.get());
                     return;
                 }
                 try {
-                    LongTickDetector longTickDetector = LongTickDetector.createTickProfiler("Renderer");
+                    SingleTickProfiler singleTickProfiler = SingleTickProfiler.createTickProfiler("Renderer");
                     boolean debugMode = this.shouldRenderFpsPie();
-                    this.startProfilers(debugMode, longTickDetector);
+                    this.profiler = this.constructProfiler(debugMode, singleTickProfiler);
                     this.profiler.startTick();
+                    this.metricsRecorder.startTick();
                     this.runTick(true);
+                    this.metricsRecorder.endTick();
                     this.profiler.endTick();
-                    this.finishProfilers(debugMode, longTickDetector);
+                    this.finishProfilers(debugMode, singleTickProfiler);
                 }
                 catch (OutOfMemoryError outOfMemory) {
                     this.emergencySave();
@@ -715,7 +741,7 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
         if (this.window.shouldClose()) {
             this.stop();
         }
-        if (this.pendingReload != null && !(this.overlay instanceof ResourceLoadProgressGui)) {
+        if (this.pendingReload != null && !(this.overlay instanceof LoadingOverlay)) {
             CompletableFuture<Void> completablefuture = this.pendingReload;
             this.pendingReload = null;
             this.reloadResourcePacks().thenRun(() -> completablefuture.complete(null));
@@ -742,7 +768,9 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
         this.soundManager.updateSource(this.gameRenderer.getMainCamera());
         this.profiler.pop();
         this.profiler.push("render");
-        RenderSystem.pushMatrix();
+        PoseStack matrices = RenderSystem.getModelViewStack();
+        matrices.pushPose();
+        RenderSystem.applyModelViewMatrix();
         RenderSystem.clear(16_640, ON_OSX);
         this.mainRenderTarget.bindWrite(true);
         FogRenderer.setupNoFog();
@@ -751,29 +779,31 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
         RenderSystem.enableCull();
         this.profiler.pop();
         if (!this.noRender) {
-            BasicEventHooks.onRenderTickStart(this.pause ? this.pausePartialTick : this.timer.partialTick);
+            ForgeEventFactory.onRenderTickStart(this.pause ? this.pausePartialTick : this.timer.partialTick);
             this.profiler.popPush("gameRenderer");
             this.gameRenderer.render(this.pause ? this.pausePartialTick : this.timer.partialTick, i, shouldRender);
             this.profiler.popPush("toasts");
-            this.toast.render(new MatrixStack());
+            this.toast.render(new PoseStack());
             this.profiler.pop();
-            BasicEventHooks.onRenderTickEnd(this.pause ? this.pausePartialTick : this.timer.partialTick);
+            ForgeEventFactory.onRenderTickEnd(this.pause ? this.pausePartialTick : this.timer.partialTick);
         }
         if (this.fpsPieResults != null) {
             this.profiler.push("fpsPie");
-            this.renderFpsMeter(new MatrixStack(), this.fpsPieResults);
+            this.renderFpsMeter(new PoseStack(), this.fpsPieResults);
             this.profiler.pop();
         }
         this.profiler.push("blit");
         this.mainRenderTarget.unbindWrite();
-        RenderSystem.popMatrix();
-        RenderSystem.pushMatrix();
+        matrices.popPose();
+        matrices.pushPose();
+        RenderSystem.applyModelViewMatrix();
         this.mainRenderTarget.blitToScreen(this.window.getWidth(), this.window.getHeight());
-        RenderSystem.popMatrix();
+        matrices.popPose();
+        RenderSystem.applyModelViewMatrix();
         this.profiler.popPush("updateDisplay");
         this.window.updateDisplay();
         int i1 = this.getFramerateLimit();
-        if (i1 < AbstractOption.FRAMERATE_LIMIT.getMaxValue()) {
+        if (i1 < Option.FRAMERATE_LIMIT.getMaxValue()) {
             RenderSystem.limitDisplayFPS(i1);
         }
         this.profiler.popPush("yield");
@@ -802,21 +832,15 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
             fps = this.frames;
             this.fpsString = String.format("%d fps T: %s%s%s%s B: %d",
                                            fps,
-                                           this.options.framerateLimit == AbstractOption.FRAMERATE_LIMIT.getMaxValue() ?
-                                           "inf" :
-                                           this.options.framerateLimit,
+                                           this.options.framerateLimit == Option.FRAMERATE_LIMIT.getMaxValue() ? "inf" : this.options.framerateLimit,
                                            this.options.enableVsync ? " vsync" : "",
-                                           this.options.graphicsMode.toString(),
-                                           this.options.renderClouds == CloudOption.OFF ?
+                                           this.options.graphicsMode,
+                                           this.options.renderClouds == CloudStatus.OFF ?
                                            "" :
-                                           this.options.renderClouds == CloudOption.FAST ? " fast-clouds" : " fancy-clouds",
+                                           this.options.renderClouds == CloudStatus.FAST ? " fast-clouds" : " fancy-clouds",
                                            this.options.biomeBlendRadius);
             this.lastTime += 1_000L;
             this.frames = 0;
-            this.snooper.prepare();
-            if (!this.snooper.isStarted()) {
-                this.snooper.start();
-            }
         }
         this.profiler.pop();
     }
@@ -848,12 +872,21 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                 return;
             }
             if (!this.player.isHandsBusy()) {
-                InputEvent.ClickInputEvent inputEvent = ForgeHooksClient.onClickInput(0, this.options.keyAttack, Hand.MAIN_HAND);
+                InputEvent.ClickInputEvent inputEvent = ForgeHooksClient.onClickInput(0, this.options.keyAttack, InteractionHand.MAIN_HAND);
+                ItemStack mainhandStack = this.player.getMainHandItem();
+                Item mainhandItem = mainhandStack.getItem();
+                boolean hasCustomAttack = mainhandItem instanceof ICustomAttack;
                 if (!inputEvent.isCanceled()) {
                     switch (this.hitResult.getType()) {
                         case ENTITY: {
                             if (this.gameMode.getPlayerMode() != GameType.SPECTATOR) {
-                                ClientEvents.getInstance().leftMouseClick();
+                                if (!hasCustomAttack) {
+                                    ClientEvents.getInstance().leftMouseClick();
+                                }
+                                else {
+                                    ClientEvents.getInstance()
+                                                .startCustomAttack(((ICustomAttack) mainhandItem).getAttackType(), InteractionHand.MAIN_HAND);
+                                }
                             }
                             else {
                                 this.gameMode.attack(this.player, this.crosshairPickEntity);
@@ -861,10 +894,14 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                             break;
                         }
                         case BLOCK: {
-                            BlockRayTraceResult blockRayTrace = (BlockRayTraceResult) this.hitResult;
+                            BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
                             BlockPos hitPos = blockRayTrace.getBlockPos();
                             if (!this.level.isEmptyBlock(hitPos)) {
                                 this.gameMode.startDestroyBlock(hitPos, blockRayTrace.getDirection());
+                                if (hasCustomAttack) {
+                                    ClientEvents.getInstance()
+                                                .startCustomAttack(((ICustomAttack) mainhandItem).getAttackType(), InteractionHand.MAIN_HAND);
+                                }
                                 break;
                             }
                         }
@@ -872,22 +909,27 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                             if (this.gameMode.hasMissTime()) {
                                 this.missTime = 10;
                             }
-                            ClientEvents.getInstance().leftMouseClick();
-                            ForgeHooks.onEmptyLeftClick(this.player);
+                            if (!hasCustomAttack) {
+                                ClientEvents.getInstance().leftMouseClick();
+                                ForgeHooks.onEmptyLeftClick(this.player);
+                            }
+                            else {
+                                ClientEvents.getInstance()
+                                            .startCustomAttack(((ICustomAttack) mainhandItem).getAttackType(), InteractionHand.MAIN_HAND);
+                            }
                             break;
                         }
                     }
                 }
                 if (inputEvent.shouldSwingHand()) {
-                    ClientEvents.getInstance().swingArm(Hand.MAIN_HAND);
-                    this.player.swing(Hand.MAIN_HAND);
+                    if (!hasCustomAttack) {
+                        ClientEvents.getInstance().swingArm(InteractionHand.MAIN_HAND);
+                        this.player.swing(InteractionHand.MAIN_HAND);
+                    }
                 }
             }
         }
     }
-
-    @Shadow
-    protected abstract void startProfilers(boolean p_238201_1_, @Nullable LongTickDetector p_238201_2_);
 
     /**
      * @author MGSchultz
@@ -903,7 +945,10 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                     LOGGER.warn("Null returned as 'hitResult', this shouldn't happen!");
                     return;
                 }
-                for (Hand hand : Hand.values()) {
+                if (this.cancelUseCooldown > 0) {
+                    return;
+                }
+                for (InteractionHand hand : InteractionHand.values()) {
                     //noinspection ObjectAllocationInLoop
                     InputEvent.ClickInputEvent inputEvent = ForgeHooksClient.onClickInput(1, this.options.keyUse, hand);
                     if (inputEvent.isCanceled()) {
@@ -915,10 +960,10 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                     }
                     ItemStack stack = this.player.getItemInHand(hand);
                     switch (this.hitResult.getType()) {
-                        case ENTITY: {
-                            EntityRayTraceResult entityRayTrace = (EntityRayTraceResult) this.hitResult;
+                        case ENTITY -> {
+                            EntityHitResult entityRayTrace = (EntityHitResult) this.hitResult;
                             Entity entity = entityRayTrace.getEntity();
-                            ActionResultType actionResult = this.gameMode.interactAt(this.player, entity, entityRayTrace, hand);
+                            InteractionResult actionResult = this.gameMode.interactAt(this.player, entity, entityRayTrace, hand);
                             if (!actionResult.consumesAction()) {
                                 actionResult = this.gameMode.interact(this.player, entity, hand);
                             }
@@ -931,12 +976,11 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                                 }
                                 return;
                             }
-                            break;
                         }
-                        case BLOCK: {
-                            BlockRayTraceResult blockRayTrace = (BlockRayTraceResult) this.hitResult;
+                        case BLOCK -> {
+                            BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
                             int count = stack.getCount();
-                            ActionResultType actResult = this.gameMode.useItemOn(this.player, this.level, hand, blockRayTrace);
+                            InteractionResult actResult = this.gameMode.useItemOn(this.player, this.level, hand, blockRayTrace);
                             if (actResult.consumesAction()) {
                                 if (actResult.shouldSwing()) {
                                     if (inputEvent.shouldSwingHand()) {
@@ -950,7 +994,7 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                                 }
                                 return;
                             }
-                            if (actResult == ActionResultType.FAIL) {
+                            if (actResult == InteractionResult.FAIL) {
                                 return;
                             }
                         }
@@ -959,17 +1003,20 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                 ItemStack stackOffhand = this.player.getOffhandItem();
                 Item itemOffhand = stackOffhand.getItem();
                 if (itemOffhand instanceof IOffhandAttackable) {
-                    ClientEvents.getInstance().rightMouseClick((IOffhandAttackable) itemOffhand);
+                    ClientEvents.getInstance().rightMouseClick((IOffhandAttackable) itemOffhand, stackOffhand);
                     return;
                 }
                 boolean isLungingMainhand = InputHooks.isMainhandLungeInProgress || InputHooks.isMainhandLunging;
-                boolean isOffhandShield = this.player.getOffhandItem().isShield(this.player);
-                for (Hand hand : MathHelper.HANDS_LEFT_PRIORITY) {
+                //TODO use a IShield interface
+                //this.player.getOffhandItem().isShield(this.player);
+                boolean isOffhandShield = false;
+                for (InteractionHand hand : MathHelper.HANDS_LEFT_PRIORITY) {
                     ItemStack stack = this.player.getItemInHand(hand);
-                    if (stack.isEmpty() && this.hitResult.getType() == RayTraceResult.Type.MISS) {
+                    if (stack.isEmpty() && this.hitResult.getType() == HitResult.Type.MISS) {
                         ForgeHooks.onEmptyClick(this.player, hand);
                     }
-                    if (hand == Hand.MAIN_HAND && (isLungingMainhand || ClientEvents.getInstance().getMainhandCooledAttackStrength(0.0f) < 1.0f)) {
+                    if (hand == InteractionHand.MAIN_HAND &&
+                        (isLungingMainhand || ClientEvents.getInstance().getMainhandCooledAttackStrength(0.0f) < 1.0f)) {
                         return;
                     }
                     if (isLungingMainhand && isOffhandShield) {
@@ -981,7 +1028,7 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                         }
                     }
                     if (!stack.isEmpty()) {
-                        ActionResultType actionResult = this.gameMode.useItem(this.player, this.level, hand);
+                        InteractionResult actionResult = this.gameMode.useItem(this.player, this.level, hand);
                         if (actionResult.consumesAction()) {
                             if (actionResult.shouldSwing()) {
                                 this.player.swing(hand);
@@ -1014,17 +1061,18 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
             --this.rightClickDelay;
         }
         this.profiler.push("preTick");
-        BasicEventHooks.onPreClientTick();
+        ForgeEventFactory.onPreClientTick();
         this.profiler.popPush("gui");
-        if (!this.pause) {
-            this.gui.tick();
-        }
+        this.gui.tick(this.pause);
         this.profiler.pop();
-        this.gameRenderer.pick(1.0F);
         this.tutorial.onLookAt(this.level, this.hitResult);
         this.profiler.push("gameMode");
         if ((!this.pause || this.pause && this.multiplayerPause) && this.level != null) { //Added check for multiplayer pause
             this.gameMode.tick();
+            //Added decrement for use cancel cooldown
+            if (this.cancelUseCooldown > 0) {
+                this.cancelUseCooldown--;
+            }
         }
         this.profiler.popPush("textures");
         //noinspection VariableNotUsedInsideIf
@@ -1036,11 +1084,16 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
                 this.setScreen(null);
             }
             else if (this.player.isSleeping() && this.level != null) {
-                this.setScreen(new SleepInMultiplayerScreen());
+                this.setScreen(new InBedChatScreen());
             }
         }
-        else if (this.screen != null && this.screen instanceof SleepInMultiplayerScreen && !this.player.isSleeping()) {
-            this.setScreen(null);
+        else {
+            Screen screen = this.screen;
+            if (screen instanceof InBedChatScreen bedChatScreen) {
+                if (!this.player.isSleeping()) {
+                    bedChatScreen.onPlayerWokeUp();
+                }
+            }
         }
         //noinspection VariableNotUsedInsideIf
         if (this.screen != null) {
@@ -1086,9 +1139,9 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
         if (this.level != null) {
             if (!this.pause) {
                 if (!this.options.joinedFirstServer && this.isMultiplayerServer()) {
-                    ITextComponent itextcomponent = new TranslationTextComponent("tutorial.socialInteractions.title");
-                    ITextComponent itextcomponent1 = new TranslationTextComponent("tutorial.socialInteractions.description",
-                                                                                  Tutorial.key("socialInteractions"));
+                    Component itextcomponent = new TranslatableComponent("tutorial.socialInteractions.title");
+                    Component itextcomponent1 = new TranslatableComponent("tutorial.socialInteractions.description",
+                                                                          Tutorial.key("socialInteractions"));
                     this.socialInteractionsToast = new TutorialToast(TutorialToast.Icons.SOCIAL_INTERACTIONS, itextcomponent, itextcomponent1, true);
                     this.tutorial.addTimedToast(this.socialInteractionsToast, 160);
                     this.options.joinedFirstServer = true;
@@ -1112,9 +1165,7 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
             }
             this.profiler.popPush("animateTick");
             if (!this.pause && this.level != null) {
-                this.level.animateTick(MathHelper.floor(this.player.getX()),
-                                       MathHelper.floor(this.player.getY()),
-                                       MathHelper.floor(this.player.getZ()));
+                this.level.animateTick(this.player.getBlockX(), this.player.getBlockY(), this.player.getBlockZ());
             }
             this.profiler.popPush("particles");
             if (!this.pause) {
@@ -1128,12 +1179,7 @@ public abstract class MinecraftMixin extends RecursiveEventLoop<Runnable> implem
         this.profiler.popPush("keyboard");
         this.keyboardHandler.tick();
         this.profiler.popPush("postTick");
-        BasicEventHooks.onPostClientTick();
+        ForgeEventFactory.onPostClientTick();
         this.profiler.pop();
-    }
-
-    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;pick(F)V", ordinal = 0))
-    private void tickProxy(GameRenderer gameRenderer, float partialTicks) {
-        //Do nothing. getMouseOver is called twice every frame for the tutorial, which is not needed.
     }
 }

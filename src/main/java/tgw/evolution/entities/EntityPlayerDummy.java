@@ -1,30 +1,30 @@
 package tgw.evolution.entities;
 
 import com.mojang.authlib.GameProfile;
-import net.minecraft.client.entity.player.RemoteClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.player.PlayerModelPart;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.HandSide;
-import net.minecraft.util.NonNullList;
-import tgw.evolution.inventory.SlotType;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.RemotePlayer;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.player.PlayerModelPart;
+import net.minecraft.world.item.ItemStack;
+import tgw.evolution.inventory.AdditionalSlotType;
 
-public class EntityPlayerDummy extends RemoteClientPlayerEntity {
+public class EntityPlayerDummy extends RemotePlayer {
 
     private final byte model;
 
-    public EntityPlayerDummy(ClientWorld world, GameProfile profile, NonNullList<ItemStack> equipment, byte model) {
+    public EntityPlayerDummy(ClientLevel world, GameProfile profile, NonNullList<ItemStack> equipment, byte model) {
         super(world, profile);
         this.model = model;
-        for (EquipmentSlotType type : SlotType.SLOTS) {
+        for (EquipmentSlot type : AdditionalSlotType.SLOTS) {
             this.setItemSlot(type, equipment.get(type.ordinal()));
         }
     }
 
     @Override
-    public HandSide getMainArm() {
-        return (this.model & 1 << 7) != 0 ? HandSide.RIGHT : HandSide.LEFT;
+    public HumanoidArm getMainArm() {
+        return (this.model & 1 << 7) != 0 ? HumanoidArm.RIGHT : HumanoidArm.LEFT;
     }
 
     @Override

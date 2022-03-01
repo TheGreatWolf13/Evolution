@@ -5,7 +5,7 @@
 //import net.minecraft.nbt.INBT;
 //import net.minecraft.nbt.ShortNBT;
 //import net.minecraft.nbt.StringNBT;
-//import tgw.evolution.util.NBTHelper;
+//import tgw.evolution.util.constants.NBTHelper;
 //import tgw.evolution.world.feature.structures.config.IConfigStruct;
 //import tgw.evolution.world.puzzle.EnumPuzzleType;
 //import tgw.evolution.world.puzzle.pieces.config.ConfigPuzzle;

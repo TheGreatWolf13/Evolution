@@ -1,23 +1,24 @@
 package tgw.evolution.blocks.tileentities;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.blocks.IRockVariant;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.init.EvolutionTEs;
-import tgw.evolution.util.BlockFlags;
+import tgw.evolution.util.constants.BlockFlags;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class TEKnapping extends TileEntity {
+public class TEKnapping extends BlockEntity {
 
     @Nullable
     public VoxelShape hitbox;
@@ -25,11 +26,11 @@ public class TEKnapping extends TileEntity {
     public KnappingRecipe type = KnappingRecipe.NULL;
     private long parts = Patterns.MATRIX_TRUE;
 
-    public TEKnapping() {
-        super(EvolutionTEs.KNAPPING.get());
+    public TEKnapping(BlockPos pos, BlockState state) {
+        super(EvolutionTEs.KNAPPING.get(), pos, state);
     }
 
-    public void checkParts(PlayerEntity player) {
+    public void checkParts(Player player) {
         if (!this.level.isClientSide) {
             IRockVariant block = (IRockVariant) this.level.getBlockState(this.worldPosition).getBlock();
             if (this.parts == this.type.getPattern()) {
@@ -52,33 +53,35 @@ public class TEKnapping extends TileEntity {
     }
 
     @Override
-    public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.worldPosition, 30, this.getUpdateTag());
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
-    public CompoundNBT getUpdateTag() {
-        return this.save(new CompoundNBT());
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = new CompoundTag();
+        this.saveAdditional(tag);
+        return tag;
     }
 
     @Override
-    public void load(BlockState state, CompoundNBT compound) {
-        super.load(state, compound);
-        this.parts = compound.getLong("Parts");
-        this.type = KnappingRecipe.byId(compound.getByte("Type"));
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        this.parts = tag.getLong("Parts");
+        this.type = KnappingRecipe.byId(tag.getByte("Type"));
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
         this.hitbox = null;
-        this.handleUpdateTag(this.level.getBlockState(this.worldPosition), packet.getTag());
+        this.handleUpdateTag(packet.getTag());
     }
 
     @Override
-    public CompoundNBT save(CompoundNBT compound) {
-        compound.putLong("Parts", this.parts);
-        compound.putByte("Type", this.type.getId());
-        return super.save(compound);
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        tag.putLong("Parts", this.parts);
+        tag.putByte("Type", this.type.getId());
     }
 
     public void sendRenderUpdate() {

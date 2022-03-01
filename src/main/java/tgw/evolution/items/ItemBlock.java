@@ -1,8 +1,8 @@
 package tgw.evolution.items;
 
-import net.minecraft.block.Block;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 
 public class ItemBlock extends BlockItem implements IEvolutionItem {
 

@@ -8,5 +8,5 @@ import java.util.List;
 @OnlyIn(Dist.CLIENT)
 public interface ISort {
 
-    void sort(List<ListKeyBinding.Entry> entries);
+    void sort(List<ListKeyBinds.Entry> entries);
 }

@@ -2,7 +2,7 @@
 //
 //import net.minecraft.nbt.INBT;
 //import tgw.evolution.Evolution;
-//import tgw.evolution.util.NBTHelper;
+//import tgw.evolution.util.constants.NBTHelper;
 //import tgw.evolution.world.puzzle.pieces.*;
 //
 //public final class PuzzleDeserializerHelper {

@@ -1,12 +1,12 @@
 package tgw.evolution.network;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.Evolution;
 import tgw.evolution.events.EntityEvents;
-import tgw.evolution.util.SkinType;
+import tgw.evolution.util.constants.SkinType;
 
 import java.util.function.Supplier;
 
@@ -22,18 +22,18 @@ public class PacketCSSkinType implements IPacket {
         this.skin = Evolution.PROXY.getSkinType();
     }
 
-    public static PacketCSSkinType decode(PacketBuffer buffer) {
+    public static PacketCSSkinType decode(FriendlyByteBuf buffer) {
         return new PacketCSSkinType(buffer.readEnum(SkinType.class));
     }
 
-    public static void encode(PacketCSSkinType packet, PacketBuffer buffer) {
+    public static void encode(PacketCSSkinType packet, FriendlyByteBuf buffer) {
         buffer.writeEnum(packet.skin);
     }
 
     public static void handle(PacketCSSkinType packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
-                PlayerEntity player = context.get().getSender();
+                Player player = context.get().getSender();
                 EntityEvents.SKIN_TYPE.put(player.getUUID(), packet.skin);
             });
             context.get().setPacketHandled(true);

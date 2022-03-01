@@ -1,7 +1,7 @@
 package tgw.evolution.capabilities.chunkstorage;
 
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 
 import java.util.Map;
 
@@ -30,11 +30,11 @@ public interface IChunkStorage {
     int getElementStored(EnumStorage element);
 
     /**
-     * Get the {@link World} containing this instance's chunk.
+     * Get the {@link Level} containing this instance's chunk.
      *
      * @return The World
      */
-    World getWorld();
+    Level getLevel();
 
     /**
      * Removes an element from the storage. Returns {@code true} if succeeded, {@code false} otherwise.

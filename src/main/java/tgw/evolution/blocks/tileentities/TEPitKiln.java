@@ -1,19 +1,20 @@
 package tgw.evolution.blocks.tileentities;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionTEs;
-import tgw.evolution.util.DirectionDiagonal;
-import tgw.evolution.util.WoodVariant;
+import tgw.evolution.util.constants.WoodVariant;
+import tgw.evolution.util.math.DirectionDiagonal;
 
 import javax.annotation.Nullable;
 
-public class TEPitKiln extends TileEntity {
+public class TEPitKiln extends BlockEntity {
 
     /**
      * Bit 0: burning;<br>
@@ -28,8 +29,8 @@ public class TEPitKiln extends TileEntity {
     private ItemStack swStack = ItemStack.EMPTY;
     private long timeStart = -1;
 
-    public TEPitKiln() {
-        super(EvolutionTEs.PIT_KILN.get());
+    public TEPitKiln(BlockPos pos, BlockState state) {
+        super(EvolutionTEs.PIT_KILN.get(), pos, state);
     }
 
     public void checkEmpty() {
@@ -65,17 +66,12 @@ public class TEPitKiln extends TileEntity {
     }
 
     public ItemStack getStack(DirectionDiagonal direction) {
-        switch (direction) {
-            case NORTH_EAST:
-                return this.neStack;
-            case NORTH_WEST:
-                return this.nwStack;
-            case SOUTH_EAST:
-                return this.seStack;
-            case SOUTH_WEST:
-                return this.swStack;
-        }
-        throw new IllegalStateException("This enum does not exist: " + direction);
+        return switch (direction) {
+            case NORTH_EAST -> this.neStack;
+            case NORTH_WEST -> this.nwStack;
+            case SOUTH_EAST -> this.seStack;
+            case SOUTH_WEST -> this.swStack;
+        };
     }
 
     public long getTimeStart() {
@@ -84,13 +80,15 @@ public class TEPitKiln extends TileEntity {
 
     @Nullable
     @Override
-    public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.worldPosition, 1, this.getUpdateTag());
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
-    public CompoundNBT getUpdateTag() {
-        return this.save(new CompoundNBT());
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = new CompoundTag();
+        this.saveAdditional(tag);
+        return tag;
     }
 
     public boolean hasFinished() {
@@ -106,24 +104,24 @@ public class TEPitKiln extends TileEntity {
     }
 
     @Override
-    public void load(BlockState state, CompoundNBT compound) {
-        super.load(state, compound);
-        this.flags = compound.getByte("Flags");
-        this.logs = compound.getByteArray("Logs");
-        this.nwStack = ItemStack.of(compound.getCompound("NW"));
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        this.flags = tag.getByte("Flags");
+        this.logs = tag.getByteArray("Logs");
+        this.nwStack = ItemStack.of(tag.getCompound("NW"));
         if (!this.isSingle()) {
-            this.neStack = ItemStack.of(compound.getCompound("NE"));
-            this.seStack = ItemStack.of(compound.getCompound("SE"));
-            this.swStack = ItemStack.of(compound.getCompound("SW"));
+            this.neStack = ItemStack.of(tag.getCompound("NE"));
+            this.seStack = ItemStack.of(tag.getCompound("SE"));
+            this.swStack = ItemStack.of(tag.getCompound("SW"));
         }
         if (this.isBurning()) {
-            this.timeStart = compound.getLong("TimeStart");
+            this.timeStart = tag.getLong("TimeStart");
         }
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-        this.handleUpdateTag(this.level.getBlockState(this.worldPosition), pkt.getTag());
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
+        this.handleUpdateTag(pkt.getTag());
     }
 
     public void onRemoved() {
@@ -151,19 +149,19 @@ public class TEPitKiln extends TileEntity {
     }
 
     @Override
-    public CompoundNBT save(CompoundNBT compound) {
-        compound.putByteArray("Logs", this.logs);
-        compound.putByte("Flags", this.flags);
-        compound.put("NW", this.nwStack.serializeNBT());
+    public void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        tag.putByteArray("Logs", this.logs);
+        tag.putByte("Flags", this.flags);
+        tag.put("NW", this.nwStack.serializeNBT());
         if (!this.isSingle()) {
-            compound.put("NE", this.neStack.serializeNBT());
-            compound.put("SW", this.swStack.serializeNBT());
-            compound.put("SE", this.seStack.serializeNBT());
+            tag.put("NE", this.neStack.serializeNBT());
+            tag.put("SW", this.swStack.serializeNBT());
+            tag.put("SE", this.seStack.serializeNBT());
         }
         if (this.isBurning()) {
-            compound.putLong("TimeStart", this.timeStart);
+            tag.putLong("TimeStart", this.timeStart);
         }
-        return super.save(compound);
     }
 
     private void setBurning(boolean burning) {
@@ -215,18 +213,10 @@ public class TEPitKiln extends TileEntity {
 
     public void setStack(ItemStack stack, DirectionDiagonal diagonal) {
         switch (diagonal) {
-            case NORTH_WEST:
-                this.setNWStack(stack);
-                break;
-            case NORTH_EAST:
-                this.setNEStack(stack);
-                break;
-            case SOUTH_WEST:
-                this.setSWStack(stack);
-                break;
-            case SOUTH_EAST:
-                this.setSEStack(stack);
-                break;
+            case NORTH_WEST -> this.setNWStack(stack);
+            case NORTH_EAST -> this.setNEStack(stack);
+            case SOUTH_WEST -> this.setSWStack(stack);
+            case SOUTH_EAST -> this.setSEStack(stack);
         }
     }
 

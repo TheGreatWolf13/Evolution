@@ -1,17 +1,17 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.item.ItemStack;
-import net.minecraft.pathfinding.PathType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraftforge.common.IPlantable;
 
 public class BlockBush extends BlockGeneric implements IPlantable, IReplaceable {
@@ -39,16 +39,16 @@ public class BlockBush extends BlockGeneric implements IPlantable, IReplaceable 
     }
 
     @Override
-    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
         BlockPos blockpos = pos.below();
         if (state.getBlock() == this) {
-            return BlockUtils.canSustainSapling(world.getBlockState(blockpos), this);
+            return BlockUtils.canSustainSapling(level.getBlockState(blockpos), this);
         }
-        return isValidGround(world.getBlockState(blockpos));
+        return isValidGround(level.getBlockState(blockpos));
     }
 
     @Override
-    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
         return NonNullList.of(ItemStack.EMPTY, new ItemStack(this));
     }
 
@@ -58,13 +58,13 @@ public class BlockBush extends BlockGeneric implements IPlantable, IReplaceable 
     }
 
     @Override
-    public int getLightBlock(BlockState state, IBlockReader world, BlockPos pos) {
+    public int getLightBlock(BlockState state, BlockGetter level, BlockPos pos) {
         return 0;
     }
 
     @Override
-    public BlockState getPlant(IBlockReader world, BlockPos pos) {
-        BlockState state = world.getBlockState(pos);
+    public BlockState getPlant(BlockGetter level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
         if (state.getBlock() != this) {
             return this.defaultBlockState();
         }
@@ -72,8 +72,8 @@ public class BlockBush extends BlockGeneric implements IPlantable, IReplaceable 
     }
 
     @Override
-    public boolean isPathfindable(BlockState state, IBlockReader world, BlockPos pos, PathType type) {
-        return type == PathType.AIR && !this.hasCollision || super.isPathfindable(state, world, pos, type);
+    public boolean isPathfindable(BlockState state, BlockGetter level, BlockPos pos, PathComputationType type) {
+        return type == PathComputationType.AIR && !this.hasCollision || super.isPathfindable(state, level, pos, type);
     }
 
     @Override
@@ -85,11 +85,11 @@ public class BlockBush extends BlockGeneric implements IPlantable, IReplaceable 
     public BlockState updateShape(BlockState state,
                                   Direction facing,
                                   BlockState facingState,
-                                  IWorld worldIn,
+                                  LevelAccessor level,
                                   BlockPos currentPos,
                                   BlockPos facingPos) {
-        return !state.canSurvive(worldIn, currentPos) ?
+        return !state.canSurvive(level, currentPos) ?
                Blocks.AIR.defaultBlockState() :
-               super.updateShape(state, facing, facingState, worldIn, currentPos, facingPos);
+               super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 }

@@ -1,6 +1,6 @@
 package tgw.evolution.entities.ai;
 
-import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.Goal;
 import tgw.evolution.entities.EntityGenericAnimal;
 
 import java.util.EnumSet;

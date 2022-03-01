@@ -1,7 +1,7 @@
 package tgw.evolution.blocks.tileentities;
 
 import tgw.evolution.Evolution;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nonnull;
 
@@ -100,6 +100,6 @@ public final class MoldingPatterns {
     }
 
     public static void load() {
-        Evolution.LOGGER.info("Loaded Molding Patterns");
+        Evolution.info("Loaded Molding Patterns");
     }
 }

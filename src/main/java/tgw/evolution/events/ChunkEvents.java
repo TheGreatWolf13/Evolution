@@ -1,7 +1,7 @@
 package tgw.evolution.events;
 
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.TickEvent.PlayerTickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -16,10 +16,10 @@ public class ChunkEvents {
     private static final int RANGE = 8;
     private static int tick = 200;
 
-    private static void doChunkActions(World world, ChunkPos chunkPos) {
+    private static void doChunkActions(Level level, ChunkPos chunkPos) {
         Integer[] amount = {0};
         Integer[] delta = {0};
-        CapabilityChunkStorage.getChunkStorage(world.getChunk(chunkPos.x, chunkPos.z)).ifPresent(chunkStorages -> {
+        CapabilityChunkStorage.getChunkStorage(level.getChunk(chunkPos.x, chunkPos.z)).ifPresent(chunkStorages -> {
             if (chunkStorages.getElementStored(EnumStorage.NITROGEN) < 10_000) {
                 if (chunkStorages.removeElement(EnumStorage.GAS_NITROGEN, 2)) {
                     chunkStorages.addElement(EnumStorage.NITROGEN, 4);
@@ -32,29 +32,30 @@ public class ChunkEvents {
                 chunkStorages.addElement(EnumStorage.WATER, amount[0]);
             }
             for (ChunkPos pos : getNeighbours(chunkPos)) {
-                if (world.getChunkSource().isEntityTickingChunk(pos)) {
-                    //noinspection ObjectAllocationInLoop
-                    CapabilityChunkStorage.getChunkStorage(world.getChunk(pos.x, pos.z)).ifPresent(storage -> {
-                        delta[0] = chunkStorages.getElementStored(EnumStorage.GAS_NITROGEN) - storage.getElementStored(EnumStorage.GAS_NITROGEN);
-                        if (delta[0] > 0) {
-                            if (chunkStorages.removeElement(EnumStorage.GAS_NITROGEN, delta[0] / 4)) {
-                                storage.addElement(EnumStorage.GAS_NITROGEN, delta[0] / 4);
-                            }
-                        }
-                        delta[0] = chunkStorages.getElementStored(EnumStorage.OXYGEN) - storage.getElementStored(EnumStorage.OXYGEN);
-                        if (delta[0] > 0) {
-                            if (chunkStorages.removeElement(EnumStorage.OXYGEN, delta[0] / 4)) {
-                                storage.addElement(EnumStorage.OXYGEN, delta[0] / 4);
-                            }
-                        }
-                        delta[0] = chunkStorages.getElementStored(EnumStorage.CARBON_DIOXIDE) - storage.getElementStored(EnumStorage.CARBON_DIOXIDE);
-                        if (delta[0] > 0) {
-                            if (chunkStorages.removeElement(EnumStorage.CARBON_DIOXIDE, delta[0] / 4)) {
-                                storage.addElement(EnumStorage.CARBON_DIOXIDE, delta[0] / 4);
-                            }
-                        }
-                    });
-                }
+//                if (level.getChunkSource().isEntityTickingChunk(pos)) {
+//                    //noinspection ObjectAllocationInLoop
+//                    CapabilityChunkStorage.getChunkStorage(level.getChunk(pos.x, pos.z)).ifPresent(storage -> {
+//                        delta[0] = chunkStorages.getElementStored(EnumStorage.GAS_NITROGEN) - storage.getElementStored(EnumStorage.GAS_NITROGEN);
+//                        if (delta[0] > 0) {
+//                            if (chunkStorages.removeElement(EnumStorage.GAS_NITROGEN, delta[0] / 4)) {
+//                                storage.addElement(EnumStorage.GAS_NITROGEN, delta[0] / 4);
+//                            }
+//                        }
+//                        delta[0] = chunkStorages.getElementStored(EnumStorage.OXYGEN) - storage.getElementStored(EnumStorage.OXYGEN);
+//                        if (delta[0] > 0) {
+//                            if (chunkStorages.removeElement(EnumStorage.OXYGEN, delta[0] / 4)) {
+//                                storage.addElement(EnumStorage.OXYGEN, delta[0] / 4);
+//                            }
+//                        }
+//                        delta[0] = chunkStorages.getElementStored(EnumStorage.CARBON_DIOXIDE) - storage.getElementStored(EnumStorage
+//                        .CARBON_DIOXIDE);
+//                        if (delta[0] > 0) {
+//                            if (chunkStorages.removeElement(EnumStorage.CARBON_DIOXIDE, delta[0] / 4)) {
+//                                storage.addElement(EnumStorage.CARBON_DIOXIDE, delta[0] / 4);
+//                            }
+//                        }
+//                    });
+//                }
             }
         });
     }
@@ -82,10 +83,10 @@ public class ChunkEvents {
         }
         if (tick-- == 0) {
             tick = 200;
-            ChunkPos chunkPos = getRandom(event.player.xChunk, event.player.zChunk, event.player.level.random);
-            if (event.player.level.getChunkSource().isEntityTickingChunk(chunkPos)) {
-                doChunkActions(event.player.level, chunkPos);
-            }
+            ChunkPos chunkPos = getRandom(event.player.chunkPosition().x, event.player.chunkPosition().z, event.player.level.random);
+//            if (event.player.level.getChunkSource().isEntityTickingChunk(chunkPos)) {
+//                doChunkActions(event.player.level, chunkPos);
+//            }
         }
     }
 }

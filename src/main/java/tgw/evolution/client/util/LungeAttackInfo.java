@@ -1,6 +1,6 @@
 package tgw.evolution.client.util;
 
-import net.minecraft.util.Hand;
+import net.minecraft.world.InteractionHand;
 
 public class LungeAttackInfo {
 
@@ -9,8 +9,8 @@ public class LungeAttackInfo {
     private int mainhandTime;
     private int offhandTime;
 
-    public LungeAttackInfo(Hand hand) {
-        if (hand == Hand.MAIN_HAND) {
+    public LungeAttackInfo(InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND) {
             this.isMainhandLunging = true;
         }
         else {
@@ -18,8 +18,8 @@ public class LungeAttackInfo {
         }
     }
 
-    public void addInfo(Hand hand) {
-        if (hand == Hand.MAIN_HAND) {
+    public void addInfo(InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND) {
             this.mainhandTime = 0;
             this.isMainhandLunging = true;
         }
@@ -29,15 +29,15 @@ public class LungeAttackInfo {
         }
     }
 
-    public float getLungeMult(Hand hand) {
-        if (hand == Hand.MAIN_HAND) {
+    public float getLungeMult(InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND) {
             return this.mainhandTime / 4.0f;
         }
         return this.offhandTime / 4.0f;
     }
 
-    public boolean isLungeInProgress(Hand hand) {
-        if (hand == Hand.MAIN_HAND) {
+    public boolean isLungeInProgress(InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND) {
             return this.isMainhandLunging;
         }
         return this.isOffhandLunging;

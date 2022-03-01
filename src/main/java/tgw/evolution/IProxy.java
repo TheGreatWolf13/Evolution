@@ -1,21 +1,22 @@
 package tgw.evolution;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.stats.Stat;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import tgw.evolution.blocks.tileentities.MoldingPatterns;
-import tgw.evolution.util.SkinType;
+import tgw.evolution.util.constants.SkinType;
 import tgw.evolution.util.toast.Toasts;
 
 public interface IProxy {
 
     void addTextures(TextureStitchEvent.Pre event);
 
-    PlayerEntity getClientPlayer();
+    Level getClientLevel();
 
-    World getClientWorld();
+    Player getClientPlayer();
 
     SkinType getSkinType();
 
@@ -23,6 +24,8 @@ public interface IProxy {
         MoldingPatterns.load();
         Toasts.register();
     }
+
+    void registerModels(ModelRegistryEvent event);
 
     void updateStats(Object2LongMap<Stat<?>> statsData);
 }

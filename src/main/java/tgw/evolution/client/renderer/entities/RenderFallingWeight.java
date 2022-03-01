@@ -1,55 +1,56 @@
 package tgw.evolution.client.renderer.entities;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.RenderTypeLookup;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.entity.EntityRendererManager;
-import net.minecraft.client.renderer.texture.AtlasTexture;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ForgeHooksClient;
 import tgw.evolution.entities.misc.EntityFallingWeight;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.MathHelper;
 
 @OnlyIn(Dist.CLIENT)
 public class RenderFallingWeight extends EntityRenderer<EntityFallingWeight> {
 
-    private static final BlockPos.Mutable MUTABLE_POS = new BlockPos.Mutable();
+    private static final BlockPos.MutableBlockPos MUTABLE_POS = new BlockPos.MutableBlockPos();
 
-    public RenderFallingWeight(EntityRendererManager manager) {
-        super(manager);
+    public RenderFallingWeight(EntityRendererProvider.Context context) {
+        super(context);
         this.shadowRadius = 0.5F;
     }
 
     @Override
     public ResourceLocation getTextureLocation(EntityFallingWeight entity) {
-        return AtlasTexture.LOCATION_BLOCKS;
+        return TextureAtlas.LOCATION_BLOCKS;
     }
 
     @Override
-    public void render(EntityFallingWeight entity, float yaw, float partialTicks, MatrixStack matrices, IRenderTypeBuffer buffer, int packedLight) {
+    public void render(EntityFallingWeight entity, float yaw, float partialTicks, PoseStack matrices, MultiBufferSource buffer, int packedLight) {
         BlockState state = entity.getBlockState();
-        if (state.getRenderShape() == BlockRenderType.MODEL) {
-            World world = entity.level;
+        if (state.getRenderShape() == RenderShape.MODEL) {
+            Level level = entity.level;
             matrices.pushPose();
             MUTABLE_POS.set(entity.getX(), entity.getBoundingBox().maxY, entity.getZ());
             matrices.translate(-0.5, 0, -0.5);
-            BlockRendererDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
+            BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
             for (RenderType type : RenderType.chunkBufferLayers()) {
-                if (RenderTypeLookup.canRenderInLayer(state, type)) {
-                    ForgeHooksClient.setRenderLayer(type);
+                if (ItemBlockRenderTypes.canRenderInLayer(state, type)) {
+                    ForgeHooksClient.setRenderType(type);
                     dispatcher.getModelRenderer()
-                              .tesselateBlock(world,
+                              .tesselateBlock(level,
                                               dispatcher.getBlockModel(state),
                                               state,
                                               MUTABLE_POS,
@@ -57,11 +58,11 @@ public class RenderFallingWeight extends EntityRenderer<EntityFallingWeight> {
                                               buffer.getBuffer(type),
                                               false,
                                               MathHelper.RANDOM,
-                                              MathHelper.getPositionRandom(MUTABLE_POS),
+                                              Mth.getSeed(MUTABLE_POS),
                                               OverlayTexture.NO_OVERLAY);
                 }
             }
-            ForgeHooksClient.setRenderLayer(null);
+            ForgeHooksClient.setRenderType(null);
             matrices.popPose();
             super.render(entity, yaw, partialTicks, matrices, buffer, packedLight);
         }

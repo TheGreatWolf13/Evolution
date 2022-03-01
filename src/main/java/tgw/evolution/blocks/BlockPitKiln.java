@@ -1,81 +1,90 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.StateContainer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.ItemClayMolded;
 import tgw.evolution.items.ItemLog;
-import tgw.evolution.util.*;
+import tgw.evolution.util.math.DirectionDiagonal;
+import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.time.Time;
 
 import javax.annotation.Nullable;
 import java.util.Random;
 
 import static tgw.evolution.init.EvolutionBStates.LAYERS_0_16;
 
-public class BlockPitKiln extends BlockGeneric implements IReplaceable {
+public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBlock {
 
     public BlockPitKiln() {
-        super(Properties.of(Material.GRASS).harvestLevel(HarvestLevel.UNBREAKABLE).randomTicks().noOcclusion());
+        super(Properties.of(Material.GRASS).randomTicks().noOcclusion());
         this.registerDefaultState(this.defaultBlockState().setValue(LAYERS_0_16, 0));
     }
 
-    public static boolean canBurn(World world, BlockPos pos) {
+    public static boolean canBurn(BlockGetter level, BlockPos pos) {
         for (Direction dir : DirectionUtil.HORIZ_NESW) {
-            if (!checkDirection(world, pos, dir)) {
+            if (!checkDirection(level, pos, dir)) {
                 return false;
             }
         }
-        return world.getBlockState(pos.above()).getBlock() == EvolutionBlocks.FIRE.get();
+        return level.getBlockState(pos.above()).getBlock() == EvolutionBlocks.FIRE.get();
     }
 
-    private static boolean checkDirection(World world, BlockPos pos, Direction direction) {
-        return BlockUtils.hasSolidSide(world, pos.relative(direction), direction.getOpposite());
+    private static boolean checkDirection(BlockGetter level, BlockPos pos, Direction direction) {
+        return BlockUtils.hasSolidSide(level, pos.relative(direction), direction.getOpposite());
     }
 
-    private static ActionResultType manageStack(TEPitKiln tile, ItemStack handStack, PlayerEntity player, DirectionDiagonal direction) {
+    private static InteractionResult manageStack(TEPitKiln tile, ItemStack handStack, Player player, DirectionDiagonal direction) {
         if (tile.getStack(direction).isEmpty() &&
             !tile.isSingle() &&
             handStack.getItem() instanceof ItemClayMolded &&
             !((ItemClayMolded) handStack.getItem()).single) {
             tile.setStack(handStack, direction);
             tile.setChanged();
-            return ActionResultType.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
         if (!tile.getStack(direction).isEmpty()) {
-            if (!tile.getLevel().isClientSide && !player.inventory.add(tile.getStack(direction))) {
+            if (!tile.getLevel().isClientSide && !player.getInventory().add(tile.getStack(direction))) {
                 BlockUtils.dropItemStack(tile.getLevel(), tile.getBlockPos(), tile.getStack(direction));
             }
             tile.setStack(ItemStack.EMPTY, direction);
             tile.setChanged();
             tile.checkEmpty();
-            return ActionResultType.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
-        return ActionResultType.PASS;
+        return InteractionResult.PASS;
     }
 
     @Override
-    public void attack(BlockState state, World worldIn, BlockPos pos, PlayerEntity player) {
-        if (worldIn.isClientSide) {
+    public void attack(BlockState state, Level level, BlockPos pos, Player player) {
+        if (level.isClientSide) {
             return;
         }
         int layers = state.getValue(LAYERS_0_16);
@@ -83,20 +92,20 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable {
             return;
         }
         if (layers <= 8) {
-            worldIn.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers - 1));
+            level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers - 1));
             ItemStack stack = new ItemStack(EvolutionItems.straw.get());
-            if (!player.inventory.add(stack)) {
-                BlockUtils.dropItemStack(worldIn, pos, stack);
+            if (!player.getInventory().add(stack)) {
+                BlockUtils.dropItemStack(level, pos, stack);
             }
             return;
         }
-        TEPitKiln tile = (TEPitKiln) worldIn.getBlockEntity(pos);
-        worldIn.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers - 1));
+        TEPitKiln tile = (TEPitKiln) level.getBlockEntity(pos);
+        level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers - 1));
         ItemStack stack = tile.getLogStack(layers - 9);
         tile.setLog(layers - 9, (byte) -1);
         tile.setChanged();
-        if (!player.inventory.add(stack)) {
-            BlockUtils.dropItemStack(worldIn, pos, stack);
+        if (!player.getInventory().add(stack)) {
+            BlockUtils.dropItemStack(level, pos, stack);
         }
     }
 
@@ -111,23 +120,22 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
-        return BlockUtils.hasSolidSide(world, pos.below(), Direction.UP);
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        return BlockUtils.hasSolidSide(level, pos.below(), Direction.UP);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(LAYERS_0_16);
     }
 
-    @Nullable
     @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return new TEPitKiln();
+    public ItemStack getCloneItemStack(BlockState state, HitResult hit, BlockGetter level, BlockPos pos, Player player) {
+        return new ItemStack(EvolutionItems.straw.get());
     }
 
     @Override
-    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
         return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.straw.get(), MathHelper.clamp(state.getValue(LAYERS_0_16), 0, 8)));
     }
 
@@ -137,17 +145,12 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
-        return new ItemStack(EvolutionItems.straw.get());
-    }
-
-    @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return EvolutionHitBoxes.PIT_KILN[state.getValue(LAYERS_0_16)];
     }
 
     @Override
-    public SoundType getSoundType(BlockState state, IWorldReader world, BlockPos pos, @Nullable Entity entity) {
+    public SoundType getSoundType(BlockState state, LevelReader level, BlockPos pos, @Nullable Entity entity) {
         if (state.getValue(LAYERS_0_16) == 0) {
             return SoundType.STONE;
         }
@@ -158,12 +161,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public boolean isFireSource(BlockState state, IWorldReader world, BlockPos pos, Direction side) {
+    public boolean isFireSource(BlockState state, LevelReader level, BlockPos pos, Direction side) {
         return side == Direction.UP && state.getValue(LAYERS_0_16) == 16;
     }
 
@@ -178,31 +176,37 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!world.isClientSide) {
-            if (!state.canSurvive(world, pos)) {
-                for (ItemStack stack : this.getDrops(world, pos, state)) {
-                    BlockUtils.dropItemStack(world, pos, stack);
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!level.isClientSide) {
+            if (!state.canSurvive(level, pos)) {
+                for (ItemStack stack : this.getDrops(level, pos, state)) {
+                    BlockUtils.dropItemStack(level, pos, stack);
                 }
-                world.removeBlock(pos, false);
+                level.removeBlock(pos, false);
             }
         }
     }
 
+    @Nullable
     @Override
-    public void onRemove(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (state.getBlock() != newState.getBlock()) {
-            ((TEPitKiln) worldIn.getBlockEntity(pos)).onRemoved();
-        }
-        super.onRemove(state, worldIn, pos, newState, isMoving);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new TEPitKiln(pos, state);
     }
 
     @Override
-    public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-        TEPitKiln tile = (TEPitKiln) world.getBlockEntity(pos);
-        if (canBurn(world, pos)) {
-            if (world.getDayTime() > tile.getTimeStart() + 8 * Time.HOUR_IN_TICKS) {
-                world.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, 0));
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (state.getBlock() != newState.getBlock()) {
+            ((TEPitKiln) level.getBlockEntity(pos)).onRemoved();
+        }
+        super.onRemove(state, level, pos, newState, isMoving);
+    }
+
+    @Override
+    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
+        TEPitKiln tile = (TEPitKiln) level.getBlockEntity(pos);
+        if (canBurn(level, pos)) {
+            if (level.getDayTime() > tile.getTimeStart() + 8 * Time.HOUR_IN_TICKS) {
+                level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, 0));
                 tile.finish();
             }
         }
@@ -212,21 +216,21 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable {
     }
 
     @Override
-    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         int layers = state.getValue(LAYERS_0_16);
-        TEPitKiln tile = (TEPitKiln) world.getBlockEntity(pos);
+        TEPitKiln tile = (TEPitKiln) level.getBlockEntity(pos);
         if (tile == null) {
-            return ActionResultType.PASS;
+            return InteractionResult.PASS;
         }
-        ItemStack stack = player.getItemInHand(handIn);
+        ItemStack stack = player.getItemInHand(hand);
         if (layers == 0) {
             if (stack.getItem() == EvolutionItems.straw.get() && !tile.hasFinished()) {
-                world.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, 1));
+                level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, 1));
                 if (!player.isCreative()) {
                     stack.shrink(1);
                 }
-                world.playSound(player, pos, SoundEvents.COMPOSTER_FILL_SUCCESS, SoundCategory.BLOCKS, 1.0F, 1.0F);
-                return ActionResultType.SUCCESS;
+                level.playSound(player, pos, SoundEvents.COMPOSTER_FILL_SUCCESS, SoundSource.BLOCKS, 1.0F, 1.0F);
+                return InteractionResult.SUCCESS;
             }
             if (tile.isSingle()) {
                 return manageStack(tile, stack, player, DirectionDiagonal.NORTH_WEST);
@@ -237,24 +241,24 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable {
         }
         if (layers < 8) {
             if (stack.getItem() == EvolutionItems.straw.get()) {
-                world.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers + 1));
+                level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers + 1));
                 if (!player.isCreative()) {
                     stack.shrink(1);
                 }
-                world.playSound(player, pos, SoundEvents.COMPOSTER_FILL_SUCCESS, SoundCategory.BLOCKS, 1.0F, 1.0F);
-                return ActionResultType.SUCCESS;
+                level.playSound(player, pos, SoundEvents.COMPOSTER_FILL_SUCCESS, SoundSource.BLOCKS, 1.0F, 1.0F);
+                return InteractionResult.SUCCESS;
             }
-            return ActionResultType.PASS;
+            return InteractionResult.PASS;
         }
         if (layers != 16 && stack.getItem() instanceof ItemLog) {
-            world.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers + 1));
+            level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers + 1));
             tile.setLog(layers - 8, ((ItemLog) stack.getItem()).variant.getId());
             if (!player.isCreative()) {
                 stack.shrink(1);
             }
-            world.playSound(player, pos, SoundEvents.WOOD_PLACE, SoundCategory.BLOCKS, 1.0F, 0.75F);
-            return ActionResultType.SUCCESS;
+            level.playSound(player, pos, SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.0F, 0.75F);
+            return InteractionResult.SUCCESS;
         }
-        return ActionResultType.PASS;
+        return InteractionResult.PASS;
     }
 }

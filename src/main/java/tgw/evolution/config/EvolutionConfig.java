@@ -4,14 +4,17 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 import org.apache.commons.lang3.tuple.Pair;
-import tgw.evolution.util.Time;
+import tgw.evolution.init.EvolutionFormatter;
+import tgw.evolution.util.time.Time;
 
 public final class EvolutionConfig {
 
     public static final Common COMMON;
     public static final Client CLIENT;
+    public static final Server SERVER;
     private static final ForgeConfigSpec COMMON_SPEC;
     private static final ForgeConfigSpec CLIENT_SPEC;
+    private static final ForgeConfigSpec SERVER_SPEC;
 
     static {
         final Pair<Common, ForgeConfigSpec> commonSpecPair = new ForgeConfigSpec.Builder().configure(Common::new);
@@ -20,6 +23,9 @@ public final class EvolutionConfig {
         final Pair<Client, ForgeConfigSpec> clientSpecPair = new ForgeConfigSpec.Builder().configure(Client::new);
         CLIENT_SPEC = clientSpecPair.getRight();
         CLIENT = clientSpecPair.getLeft();
+        final Pair<Server, ForgeConfigSpec> serverSpecPair = new ForgeConfigSpec.Builder().configure(Server::new);
+        SERVER_SPEC = serverSpecPair.getRight();
+        SERVER = serverSpecPair.getLeft();
     }
 
     private EvolutionConfig() {
@@ -28,39 +34,50 @@ public final class EvolutionConfig {
     public static void register(final ModLoadingContext context) {
         context.registerConfig(ModConfig.Type.COMMON, COMMON_SPEC);
         context.registerConfig(ModConfig.Type.CLIENT, CLIENT_SPEC);
+        context.registerConfig(ModConfig.Type.SERVER, SERVER_SPEC);
     }
 
     public static class Common {
-        public final ForgeConfigSpec.IntValue torchTime;
 
         Common(final ForgeConfigSpec.Builder builder) {
             builder.push("Common");
-            this.torchTime = builder.translation("evolution.config.torchTime")
-                                    .defineInRange("torchTime", 10, 0, Time.YEAR_IN_TICKS / Time.HOUR_IN_TICKS);
             builder.pop();
         }
     }
 
     public static class Client {
 
+        public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Temperature> bodyTemperature;
         public final ForgeConfigSpec.BooleanValue celestialEquator;
         public final ForgeConfigSpec.BooleanValue celestialForceAll;
         public final ForgeConfigSpec.BooleanValue celestialPoles;
         public final ForgeConfigSpec.BooleanValue crazyMode;
+        public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Drink> drink;
         public final ForgeConfigSpec.BooleanValue ecliptic;
         public final ForgeConfigSpec.BooleanValue firstPersonRenderer;
+        public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Food> food;
         public final ForgeConfigSpec.BooleanValue hitmarkers;
         public final ForgeConfigSpec.BooleanValue limitTimeUnitsToHour;
+        public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Mass> mass;
         public final ForgeConfigSpec.BooleanValue planets;
         public final ForgeConfigSpec.BooleanValue showPlanets;
+        public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Volume> volume;
 
         Client(final ForgeConfigSpec.Builder builder) {
             builder.push("Client");
             this.crazyMode = builder.translation("evolution.config.crazyMode").define("crazyMode", false);
-            this.limitTimeUnitsToHour = builder.translation("evolution.config.limitTimeUnitsToHour").define("limitTimeUnitsToHour", false);
             this.hitmarkers = builder.translation("evolution.config.hitmarkers").define("hitmarkers", true);
             this.firstPersonRenderer = builder.translation("evolution.config.firstPersonRenderer").define("firstPersonRenderer", true);
             this.showPlanets = builder.translation("evolution.config.showPlanets").define("showPlanets", true);
+            builder.push("units");
+            this.limitTimeUnitsToHour = builder.translation("evolution.config.limitTimeUnitsToHour").define("limitTimeUnitsToHour", false);
+            this.bodyTemperature = builder.translation("evolution.config.bodyTemperature")
+                                          .defineEnum("bodyTemperature", EvolutionFormatter.Temperature.CELSIUS);
+            this.food = builder.translation("evolution.config.food").defineEnum("food", EvolutionFormatter.Food.KILOCALORIE);
+            this.mass = builder.translation("evolution.config.mass").defineEnum("mass", EvolutionFormatter.Mass.KILOGRAM);
+            this.drink = builder.translation("evolution.config.drink").defineEnum("drink", EvolutionFormatter.Drink.MILLILITER);
+            this.volume = builder.translation("evolution.config.volume").defineEnum("volume", EvolutionFormatter.Volume.LITER);
+            builder.pop();
             builder.push("debug");
             builder.push("sky");
             this.celestialForceAll = builder.translation("evolution.config.celestialForceAll").define("celestialForceAll", false);
@@ -70,6 +87,18 @@ public final class EvolutionConfig {
             this.planets = builder.translation("evolution.config.planets").define("planets", false);
             builder.pop();
             builder.pop();
+            builder.pop();
+        }
+    }
+
+    public static class Server {
+
+        public final ForgeConfigSpec.IntValue torchTime;
+
+        Server(final ForgeConfigSpec.Builder builder) {
+            builder.push("Server");
+            this.torchTime = builder.translation("evolution.config.torchTime")
+                                    .defineInRange("torchTime", 10, 0, Time.YEAR_IN_TICKS / Time.HOUR_IN_TICKS);
             builder.pop();
         }
     }

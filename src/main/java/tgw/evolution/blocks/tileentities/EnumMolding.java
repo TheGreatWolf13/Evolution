@@ -1,15 +1,17 @@
 package tgw.evolution.blocks.tileentities;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
-import tgw.evolution.Evolution;
+import it.unimi.dsi.fastutil.ints.Int2ReferenceMap;
+import it.unimi.dsi.fastutil.ints.Int2ReferenceMaps;
+import it.unimi.dsi.fastutil.ints.Int2ReferenceOpenHashMap;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.MathHelper;
 
 public enum EnumMolding {
-    NULL(0, VoxelShapes.empty(), MoldingPatterns.NULL, ItemStack.EMPTY),
+    NULL(0, Shapes.empty(), MoldingPatterns.NULL, ItemStack.EMPTY),
     AXE(1,
         MathHelper.subtract(EvolutionHitBoxes.MOLD_1, EvolutionHitBoxes.AXE_THICK),
         MoldingPatterns.AXE,
@@ -19,6 +21,17 @@ public enum EnumMolding {
 //            MathHelper.subtract(EvolutionHitBoxes.MOLD_1, EvolutionHitBoxes.PICKAXE_THICK),
 //            MoldingPatterns.PICKAXE,
 //            new ItemStack(EvolutionItems.mold_clay_pickaxe.get()));
+
+    public static final EnumMolding[] VALUES = values();
+    private static final Int2ReferenceMap<EnumMolding> REGISTRY;
+
+    static {
+        Int2ReferenceMap<EnumMolding> map = new Int2ReferenceOpenHashMap<>();
+        for (EnumMolding molding : VALUES) {
+            map.put(molding.id, molding);
+        }
+        REGISTRY = Int2ReferenceMaps.unmodifiable(map);
+    }
 
     private final byte id;
     private final long[] pattern;
@@ -33,13 +46,7 @@ public enum EnumMolding {
     }
 
     public static EnumMolding byId(int id) {
-        for (EnumMolding molding : values()) {
-            if (molding.id == id) {
-                return molding;
-            }
-        }
-        Evolution.LOGGER.warn("Could not find EnumMolding with id {}, replacing with NULL", id);
-        return NULL;
+        return REGISTRY.getOrDefault(id, NULL);
     }
 
     public byte getId() {

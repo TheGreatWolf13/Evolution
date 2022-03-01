@@ -1,21 +1,21 @@
 package tgw.evolution.mixin;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MoverType;
-import net.minecraft.entity.Pose;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceContext;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.capabilities.CapabilityProvider;
@@ -29,12 +29,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import tgw.evolution.blocks.IClimbable;
-import tgw.evolution.entities.IEntityPatch;
 import tgw.evolution.entities.IEntityProperties;
 import tgw.evolution.entities.INeckPosition;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.patches.IMinecraftPatch;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nullable;
 
@@ -42,13 +42,9 @@ import javax.annotation.Nullable;
 public abstract class EntityMixin extends CapabilityProvider<Entity> implements IEntityProperties, IEntityPatch, INeckPosition {
 
     @Shadow
-    public World level;
-    @Shadow
-    public float xRot;
+    public Level level;
     @Shadow
     public float xRotO;
-    @Shadow
-    public float yRot;
     @Shadow
     public float yRotO;
     protected int fireDamageImmunity;
@@ -57,12 +53,17 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     @Nullable
     private Entity vehicle;
+    @Shadow
+    private float xRot;
+    @Shadow
+    private float yRot;
 
     protected EntityMixin(Class<Entity> baseClass) {
         super(baseClass);
     }
 
-    @Redirect(method = "baseTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;hurt(Lnet/minecraft/util/DamageSource;F)Z"))
+    @Redirect(method = "baseTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;hurt" +
+                                                                       "(Lnet/minecraft/world/damagesource/DamageSource;F)Z"))
     private boolean baseTickProxy(Entity entity, DamageSource source, float amount) {
         if (this.fireDamageImmunity > 0) {
             return false;
@@ -94,15 +95,15 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     }
 
     @Override
-    public Vector3d getNeckPoint() {
-        return Vector3d.ZERO;
+    public Vec3 getNeckPoint() {
+        return Vec3.ZERO;
     }
 
     @Shadow
     public abstract Pose getPose();
 
     @Shadow
-    public abstract Vector3d getViewVector(float partialTicks);
+    public abstract Vec3 getViewVector(float p_20253_);
 
     @Override
     public final boolean hasCollidedOnXAxis() {
@@ -112,6 +113,14 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Override
     public final boolean hasCollidedOnZAxis() {
         return this.hasCollidedOnZ;
+    }
+
+    @Shadow
+    public abstract boolean hurt(DamageSource p_19946_, float p_19947_);
+
+    @Override
+    public boolean hurtInternal(DamageSource source, float damage) {
+        return this.hurt(source, damage);
     }
 
     @Shadow
@@ -127,21 +136,21 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         }
     }
 
-    @Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/CompoundNBT;getShort(Ljava/lang/String;)S", ordinal = 0))
-    private void onLoad(CompoundNBT nbt, CallbackInfo ci) {
+    @Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/CompoundTag;getShort(Ljava/lang/String;)S", ordinal = 0))
+    private void onLoad(CompoundTag nbt, CallbackInfo ci) {
         this.fireDamageImmunity = nbt.getByte("FireImmunity");
     }
 
-    @Inject(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/profiler/IProfiler;push(Ljava/lang/String;)V", ordinal = 1),
-            locals = LocalCapture.CAPTURE_FAILHARD)
-    private void onMove(MoverType type, Vector3d pos, CallbackInfo ci, Vector3d allowedMovement) {
+    @Inject(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiling/ProfilerFiller;push(Ljava/lang/String;)V", ordinal
+            = 1), locals = LocalCapture.CAPTURE_FAILHARD)
+    private void onMove(MoverType type, Vec3 pos, CallbackInfo ci, Vec3 allowedMovement) {
         this.hasCollidedOnX = !MathHelper.epsilonEquals(pos.x, allowedMovement.x);
         this.hasCollidedOnZ = !MathHelper.epsilonEquals(pos.z, allowedMovement.z);
     }
 
-    @Inject(method = "saveWithoutId", at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/CompoundNBT;putShort(Ljava/lang/String;S)V", ordinal
+    @Inject(method = "saveWithoutId", at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/CompoundTag;putShort(Ljava/lang/String;S)V", ordinal
             = 0))
-    private void onSaveWithoutId(CompoundNBT nbt, CallbackInfoReturnable<CompoundNBT> cir) {
+    private void onSaveWithoutId(CompoundTag nbt, CallbackInfoReturnable<CompoundTag> cir) {
         nbt.putByte("FireImmunity", (byte) this.fireDamageImmunity);
     }
 
@@ -153,14 +162,14 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
             return;
         }
         if (!this.isOnGround()) {
-            if ((Object) this instanceof LivingEntity) {
-                boolean isPlayerFlying = (Object) this instanceof PlayerEntity && ((PlayerEntity) (Object) this).abilities.flying;
-                if (((LivingEntity) (Object) this).onClimbable() && !isPlayerFlying) {
+            if ((Object) this instanceof LivingEntity living) {
+                boolean isPlayerFlying = (Object) this instanceof Player && ((Player) (Object) this).getAbilities().flying;
+                if (living.onClimbable() && !isPlayerFlying) {
                     BlockState state = this.level.getBlockState(this.blockPosition());
                     Block block = state.getBlock();
-                    if (block instanceof IClimbable) {
-                        float sweepAngle = ((IClimbable) block).getSweepAngle();
-                        Direction dir = ((IClimbable) block).getDirection(state);
+                    if (block instanceof IClimbable climbable) {
+                        float sweepAngle = climbable.getSweepAngle();
+                        Direction dir = climbable.getDirection(state);
                         double dPitch = pitch * 0.15;
                         this.xRot += dPitch;
                         double dYaw = yaw * 0.15;
@@ -267,15 +276,15 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
      * Overwrite to handle camera pos.
      */
     @Overwrite
-    public RayTraceResult pick(double distance, float partialTicks, boolean checkFluids) {
-        Vector3d camera = MathHelper.getCameraPosition((Entity) (Object) this, partialTicks);
-        Vector3d viewVec = this.getViewVector(partialTicks);
-        Vector3d to = camera.add(viewVec.x * distance, viewVec.y * distance, viewVec.z * distance);
-        return this.level.clip(new RayTraceContext(camera,
-                                                   to,
-                                                   RayTraceContext.BlockMode.OUTLINE,
-                                                   checkFluids ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE,
-                                                   (Entity) (Object) this));
+    public HitResult pick(double distance, float partialTicks, boolean checkFluids) {
+        Vec3 camera = MathHelper.getCameraPosition((Entity) (Object) this, partialTicks);
+        Vec3 viewVec = this.getViewVector(partialTicks);
+        Vec3 to = camera.add(viewVec.x * distance, viewVec.y * distance, viewVec.z * distance);
+        return this.level.clip(new ClipContext(camera,
+                                               to,
+                                               ClipContext.Block.OUTLINE,
+                                               checkFluids ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE,
+                                               (Entity) (Object) this));
     }
 
     @Override

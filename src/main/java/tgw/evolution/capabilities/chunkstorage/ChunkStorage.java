@@ -1,21 +1,17 @@
 package tgw.evolution.capabilities.chunkstorage;
 
-import net.minecraft.nbt.LongArrayNBT;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
+import net.minecraft.nbt.LongArrayTag;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.util.INBTSerializable;
-import net.minecraftforge.fml.network.PacketDistributor;
-import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.network.PacketSCUpdateChunkStorage;
 
 import java.util.Map;
 
-public class ChunkStorage implements IChunkStorage, INBTSerializable<LongArrayNBT> {
+public class ChunkStorage implements IChunkStorage, INBTSerializable<LongArrayTag> {
 
     protected final int capacity;
     private final ChunkPos chunkPos;
-    private final World world;
+    private final Level level;
     protected int carbonDioxide;
     protected int gasNitrogen;
     protected int methane;
@@ -25,9 +21,9 @@ public class ChunkStorage implements IChunkStorage, INBTSerializable<LongArrayNB
     protected int potassium;
     protected int water;
 
-    public ChunkStorage(int capacity, World world, ChunkPos chunkPos) {
+    public ChunkStorage(int capacity, Level level, ChunkPos chunkPos) {
         this.capacity = capacity;
-        this.world = world;
+        this.level = level;
         this.chunkPos = chunkPos;
         this.nitrogen = 0;
         this.phosphorus = 0;
@@ -43,38 +39,38 @@ public class ChunkStorage implements IChunkStorage, INBTSerializable<LongArrayNB
     public int addElement(EnumStorage element, int amount) {
         int elementReceived = 0;
         switch (element) {
-            case NITROGEN:
+            case NITROGEN -> {
                 elementReceived = Math.min(this.capacity - this.nitrogen, amount);
                 this.nitrogen += elementReceived;
-                break;
-            case PHOSPHORUS:
+            }
+            case PHOSPHORUS -> {
                 elementReceived = Math.min(this.capacity - this.phosphorus, amount);
                 this.phosphorus += elementReceived;
-                break;
-            case POTASSIUM:
+            }
+            case POTASSIUM -> {
                 elementReceived = Math.min(this.capacity - this.potassium, amount);
                 this.potassium += elementReceived;
-                break;
-            case WATER:
+            }
+            case WATER -> {
                 elementReceived = Math.min(this.capacity - this.water, amount);
                 this.water += elementReceived;
-                break;
-            case CARBON_DIOXIDE:
+            }
+            case CARBON_DIOXIDE -> {
                 elementReceived = Math.min(this.capacity - this.carbonDioxide, amount);
                 this.carbonDioxide += elementReceived;
-                break;
-            case OXYGEN:
+            }
+            case OXYGEN -> {
                 elementReceived = Math.min(this.capacity - this.oxygen, amount);
                 this.oxygen += elementReceived;
-                break;
-            case GAS_NITROGEN:
+            }
+            case GAS_NITROGEN -> {
                 elementReceived = Math.min(this.capacity - this.gasNitrogen, amount);
                 this.gasNitrogen += elementReceived;
-                break;
-            case ORGANIC:
+            }
+            case ORGANIC -> {
                 elementReceived = Math.min(this.capacity - this.methane, amount);
                 this.methane += elementReceived;
-                break;
+            }
         }
         if (elementReceived != 0) {
             this.onElementChanged();
@@ -90,7 +86,7 @@ public class ChunkStorage implements IChunkStorage, INBTSerializable<LongArrayNB
     }
 
     @Override
-    public void deserializeNBT(LongArrayNBT nbt) {
+    public void deserializeNBT(LongArrayTag nbt) {
         this.nitrogen = nbt.get(EnumStorage.NITROGEN.getId()).getAsInt();
         this.phosphorus = nbt.get(EnumStorage.PHOSPHORUS.getId()).getAsInt();
         this.potassium = nbt.get(EnumStorage.POTASSIUM.getId()).getAsInt();
@@ -108,41 +104,32 @@ public class ChunkStorage implements IChunkStorage, INBTSerializable<LongArrayNB
 
     @Override
     public int getElementStored(EnumStorage element) {
-        switch (element) {
-            case NITROGEN:
-                return this.nitrogen;
-            case PHOSPHORUS:
-                return this.phosphorus;
-            case POTASSIUM:
-                return this.potassium;
-            case WATER:
-                return this.water;
-            case CARBON_DIOXIDE:
-                return this.carbonDioxide;
-            case OXYGEN:
-                return this.oxygen;
-            case GAS_NITROGEN:
-                return this.gasNitrogen;
-            case ORGANIC:
-                return this.methane;
-        }
-        return 0;
+        return switch (element) {
+            case NITROGEN -> this.nitrogen;
+            case PHOSPHORUS -> this.phosphorus;
+            case POTASSIUM -> this.potassium;
+            case WATER -> this.water;
+            case CARBON_DIOXIDE -> this.carbonDioxide;
+            case OXYGEN -> this.oxygen;
+            case GAS_NITROGEN -> this.gasNitrogen;
+            case ORGANIC -> this.methane;
+        };
     }
 
     @Override
-    public World getWorld() {
-        return this.world;
+    public Level getLevel() {
+        return this.level;
     }
 
     protected void onElementChanged() {
-        if (this.world.isClientSide) {
+        if (this.level.isClientSide) {
             return;
         }
-        if (this.world.getChunkSource().isEntityTickingChunk(this.chunkPos)) {
-            Chunk chunk = this.world.getChunk(this.chunkPos.x, this.chunkPos.z);
-            chunk.markUnsaved();
-            EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> chunk), new PacketSCUpdateChunkStorage(this));
-        }
+//        if (this.level.getChunkSource().isEntityTickingChunk(this.chunkPos)) {
+//            LevelChunk chunk = this.level.getChunk(this.chunkPos.x, this.chunkPos.z);
+//            chunk.markUnsaved();
+//            EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> chunk), new PacketSCUpdateChunkStorage(this));
+//        }
     }
 
     @Override
@@ -207,57 +194,56 @@ public class ChunkStorage implements IChunkStorage, INBTSerializable<LongArrayNB
     @Override
     public boolean removeMany(Map<EnumStorage, Integer> elementsAndAmounts) {
         boolean success = true;
-        outer:
         for (Map.Entry<EnumStorage, Integer> entry : elementsAndAmounts.entrySet()) {
             switch (entry.getKey()) {
-                case NITROGEN:
+                case NITROGEN -> {
                     if (this.nitrogen - entry.getValue() >= 0) {
                         continue;
                     }
                     success = false;
-                    break outer;
-                case CARBON_DIOXIDE:
+                }
+                case CARBON_DIOXIDE -> {
                     if (this.carbonDioxide - entry.getValue() >= 0) {
                         continue;
                     }
                     success = false;
-                    break outer;
-                case GAS_NITROGEN:
+                }
+                case GAS_NITROGEN -> {
                     if (this.gasNitrogen - entry.getValue() >= 0) {
                         continue;
                     }
                     success = false;
-                    break outer;
-                case OXYGEN:
+                }
+                case OXYGEN -> {
                     if (this.oxygen - entry.getValue() >= 0) {
                         continue;
                     }
                     success = false;
-                    break outer;
-                case PHOSPHORUS:
+                }
+                case PHOSPHORUS -> {
                     if (this.phosphorus - entry.getValue() >= 0) {
                         continue;
                     }
                     success = false;
-                    break outer;
-                case POTASSIUM:
+                }
+                case POTASSIUM -> {
                     if (this.potassium - entry.getValue() >= 0) {
                         continue;
                     }
                     success = false;
-                    break outer;
-                case WATER:
+                }
+                case WATER -> {
                     if (this.water - entry.getValue() >= 0) {
                         continue;
                     }
                     success = false;
-                    break outer;
-                case ORGANIC:
+                }
+                case ORGANIC -> {
                     if (this.methane - entry.getValue() >= 0) {
                         continue;
                     }
                     success = false;
-                    break outer;
+                }
             }
         }
         if (success) {
@@ -270,8 +256,8 @@ public class ChunkStorage implements IChunkStorage, INBTSerializable<LongArrayNB
     }
 
     @Override
-    public LongArrayNBT serializeNBT() {
-        return new LongArrayNBT(new long[]{this.getElementStored(EnumStorage.NITROGEN),
+    public LongArrayTag serializeNBT() {
+        return new LongArrayTag(new long[]{this.getElementStored(EnumStorage.NITROGEN),
                                            this.getElementStored(EnumStorage.PHOSPHORUS),
                                            this.getElementStored(EnumStorage.POTASSIUM),
                                            this.getElementStored(EnumStorage.WATER),
@@ -283,30 +269,14 @@ public class ChunkStorage implements IChunkStorage, INBTSerializable<LongArrayNB
 
     public void setElement(EnumStorage element, int amount) {
         switch (element) {
-            case NITROGEN:
-                this.nitrogen = amount;
-                break;
-            case PHOSPHORUS:
-                this.phosphorus = amount;
-                break;
-            case POTASSIUM:
-                this.potassium = amount;
-                break;
-            case WATER:
-                this.water = amount;
-                break;
-            case CARBON_DIOXIDE:
-                this.carbonDioxide = amount;
-                break;
-            case OXYGEN:
-                this.oxygen = amount;
-                break;
-            case GAS_NITROGEN:
-                this.gasNitrogen = amount;
-                break;
-            case ORGANIC:
-                this.methane = amount;
-                break;
+            case NITROGEN -> this.nitrogen = amount;
+            case PHOSPHORUS -> this.phosphorus = amount;
+            case POTASSIUM -> this.potassium = amount;
+            case WATER -> this.water = amount;
+            case CARBON_DIOXIDE -> this.carbonDioxide = amount;
+            case OXYGEN -> this.oxygen = amount;
+            case GAS_NITROGEN -> this.gasNitrogen = amount;
+            case ORGANIC -> this.methane = amount;
         }
         this.onElementChanged();
     }

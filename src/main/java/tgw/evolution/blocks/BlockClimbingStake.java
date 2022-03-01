@@ -1,32 +1,36 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.StateContainer;
-import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.ItemHammer;
-import tgw.evolution.util.DirectionUtil;
-import tgw.evolution.util.HarvestLevel;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -38,7 +42,7 @@ import static tgw.evolution.init.EvolutionBStates.*;
 public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IRopeSupport {
 
     public BlockClimbingStake() {
-        super(Properties.of(Material.METAL).sound(SoundType.METAL).strength(0.0f).noCollission().harvestLevel(HarvestLevel.UNBREAKABLE));
+        super(Properties.of(Material.METAL).sound(SoundType.METAL).strength(0.0f).noCollission());
         this.registerDefaultState(this.defaultBlockState()
                                       .setValue(EAST, false)
                                       .setValue(NORTH, false)
@@ -49,18 +53,18 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                                       .setValue(DIRECTION_EXCEPT_UP, Direction.DOWN));
     }
 
-    public static boolean canGoDown(World world, BlockPos pos) {
+    public static boolean canGoDown(BlockGetter level, BlockPos pos) {
         BlockPos posDown = pos.below();
-        return BlockUtils.isReplaceable(world.getBlockState(posDown));
+        return BlockUtils.isReplaceable(level.getBlockState(posDown));
     }
 
-    public static void checkSides(BlockState state, World world, BlockPos pos) {
+    public static void checkSides(BlockState state, Level level, BlockPos pos) {
         for (Direction direction : DirectionUtil.HORIZ_NESW) {
             if (state.getValue(directionToProperty(direction))) {
-                BlockState stateTest = world.getBlockState(pos.relative(direction));
+                BlockState stateTest = level.getBlockState(pos.relative(direction));
                 if (direction == Direction.DOWN) {
                     if (stateTest.getBlock() != EvolutionBlocks.ROPE.get()) {
-                        world.setBlockAndUpdate(pos, state.setValue(DOWN, false));
+                        level.setBlockAndUpdate(pos, state.setValue(DOWN, false));
                     }
                     continue;
                 }
@@ -70,45 +74,45 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                     }
                 }
                 else if (BlockUtils.isReplaceable(stateTest)) {
-                    stateTest = world.getBlockState(pos.relative(direction).below());
+                    stateTest = level.getBlockState(pos.relative(direction).below());
                     if (stateTest.getBlock() == EvolutionBlocks.ROPE.get()) {
                         if (DirectionUtil.getOpposite(stateTest.getValue(DIRECTION_HORIZONTAL)) == direction) {
                             continue;
                         }
                     }
                 }
-                world.setBlockAndUpdate(pos, state.setValue(directionToProperty(direction), false));
+                level.setBlockAndUpdate(pos, state.setValue(directionToProperty(direction), false));
             }
         }
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable IBlockReader world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(EvolutionTexts.TOOLTIP_ROPE);
     }
 
     @Override
-    public void attack(BlockState state, World world, BlockPos pos, PlayerEntity player) {
+    public void attack(BlockState state, Level level, BlockPos pos, Player player) {
         if (player.isOnGround() && player.getMainHandItem().getItem() instanceof ItemHammer) {
             if (!state.getValue(HIT)) {
-                world.playSound(player, pos, SoundEvents.ANVIL_HIT, SoundCategory.BLOCKS, 1.0f, 1.0f);
-                world.setBlockAndUpdate(pos, state.setValue(HIT, true));
-                player.getMainHandItem().hurtAndBreak(1, player, playerEntity -> playerEntity.broadcastBreakEvent(Hand.MAIN_HAND));
+                level.playSound(player, pos, SoundEvents.ANVIL_HIT, SoundSource.BLOCKS, 1.0f, 1.0f);
+                level.setBlockAndUpdate(pos, state.setValue(HIT, true));
+                player.getMainHandItem().hurtAndBreak(1, player, playerEntity -> playerEntity.broadcastBreakEvent(InteractionHand.MAIN_HAND));
             }
             return;
         }
-        if (!world.isClientSide) {
-            int rope = this.removeRope(state, world, pos);
+        if (!level.isClientSide) {
+            int rope = this.removeRope(state, level, pos);
             while (rope > 64) {
                 //noinspection ObjectAllocationInLoop
-                BlockUtils.dropItemStack(world, pos, new ItemStack(EvolutionItems.rope.get(), 64));
+                BlockUtils.dropItemStack(level, pos, new ItemStack(EvolutionItems.rope.get(), 64));
                 rope -= 64;
             }
-            BlockUtils.dropItemStack(world, pos, new ItemStack(EvolutionItems.rope.get(), rope));
+            BlockUtils.dropItemStack(level, pos, new ItemStack(EvolutionItems.rope.get(), rope));
         }
-        world.removeBlock(pos, true);
-        dropResources(state, world, pos);
-        world.playSound(player, pos, SoundEvents.METAL_BREAK, SoundCategory.BLOCKS, 1.0f, 1.0f);
+        level.removeBlock(pos, true);
+        dropResources(state, level, pos);
+        level.playSound(player, pos, SoundEvents.METAL_BREAK, SoundSource.BLOCKS, 1.0f, 1.0f);
     }
 
     @Override
@@ -130,18 +134,18 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
     }
 
     @Override
-    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
         Direction facing = state.getValue(DIRECTION_EXCEPT_UP);
-        return BlockUtils.hasSolidSide(world, pos.relative(facing), DirectionUtil.getOpposite(facing));
+        return BlockUtils.hasSolidSide(level, pos.relative(facing), DirectionUtil.getOpposite(facing));
     }
 
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(DIRECTION_EXCEPT_UP, HIT, DOWN, EAST, NORTH, SOUTH, WEST);
     }
 
     @Override
-    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
         return NonNullList.of(ItemStack.EMPTY, new ItemStack(this));
     }
 
@@ -156,19 +160,19 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         Direction dir = state.getValue(DIRECTION_EXCEPT_UP);
         switch (dir) {
-            case DOWN: {
+            case DOWN -> {
                 return EvolutionHitBoxes.TORCH;
             }
-            case NORTH: {
+            case NORTH -> {
                 return EvolutionHitBoxes.TORCH_SOUTH;
             }
-            case SOUTH: {
+            case SOUTH -> {
                 return EvolutionHitBoxes.TORCH_NORTH;
             }
-            case WEST: {
+            case WEST -> {
                 return EvolutionHitBoxes.TORCH_EAST;
             }
         }
@@ -177,7 +181,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         Direction face = DirectionUtil.getOpposite(context.getClickedFace());
         if (face == Direction.UP) {
             face = Direction.DOWN;
@@ -191,32 +195,32 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
     }
 
     @Override
-    public void neighborChanged(BlockState state, World world, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
-        if (!world.isClientSide) {
-            if (!state.canSurvive(world, pos)) {
-                world.destroyBlock(pos, true);
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+        if (!level.isClientSide) {
+            if (!state.canSurvive(level, pos)) {
+                level.destroyBlock(pos, true);
                 return;
             }
-            checkSides(state, world, pos);
+            checkSides(state, level, pos);
         }
     }
 
     @Override
-    public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!world.isClientSide && !isMoving && state.getBlock() != newState.getBlock()) {
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!level.isClientSide && !isMoving && state.getBlock() != newState.getBlock()) {
             if (state.getValue(DIRECTION_EXCEPT_UP) == Direction.DOWN) {
                 BlockPos downPos = pos.below();
                 for (Direction direction : DirectionUtil.HORIZ_NESW) {
                     if (state.getValue(directionToProperty(direction))) {
-                        BlockUtils.scheduleBlockTick(world, downPos.relative(direction), 2);
+                        BlockUtils.scheduleBlockTick(level, downPos.relative(direction), 2);
                     }
                 }
             }
         }
     }
 
-    public int removeRope(BlockState state, World world, BlockPos pos) {
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+    public int removeRope(BlockState state, Level level, BlockPos pos) {
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         mutablePos.set(pos);
         BlockState temp;
         int count = 0;
@@ -224,7 +228,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
         if (state.getValue(DIRECTION_EXCEPT_UP) != Direction.DOWN) {
             for (int removingRopes = 1; removingRopes <= this.getRopeLength(); removingRopes++) {
                 mutablePos.move(Direction.DOWN);
-                temp = world.getBlockState(mutablePos);
+                temp = level.getBlockState(mutablePos);
                 if (temp.getBlock() == EvolutionBlocks.ROPE.get()) {
                     if (temp.getValue(DIRECTION_HORIZONTAL) == state.getValue(DIRECTION_EXCEPT_UP)) {
                         count++;
@@ -235,7 +239,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                 break;
             }
             for (BlockPos removing : toRemove) {
-                world.removeBlock(removing, false);
+                level.removeBlock(removing, false);
             }
             return count;
         }
@@ -245,7 +249,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                 Direction movement = direction;
                 for (int removingRope = 1; removingRope <= this.getRopeLength(); removingRope++) {
                     mutablePos.move(movement);
-                    temp = world.getBlockState(mutablePos);
+                    temp = level.getBlockState(mutablePos);
                     if (movement != Direction.DOWN && temp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
                         if (temp.getValue(DIRECTION_HORIZONTAL) == DirectionUtil.getOpposite(movement)) {
                             count++;
@@ -257,7 +261,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                     if (movement != Direction.DOWN && BlockUtils.isReplaceable(temp)) {
                         movement = Direction.DOWN;
                         mutablePos.move(Direction.DOWN);
-                        temp = world.getBlockState(mutablePos);
+                        temp = level.getBlockState(mutablePos);
                         if (temp.getBlock() == EvolutionBlocks.ROPE.get()) {
                             if (temp.getValue(DIRECTION_HORIZONTAL) == DirectionUtil.getOpposite(direction)) {
                                 count++;
@@ -278,17 +282,17 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                 }
             }
         }
-        MathHelper.iterateReverse(toRemove, removing -> world.removeBlock(removing, false));
+        MathHelper.iterateReverse(toRemove, removing -> level.removeBlock(removing, false));
         return count;
     }
 
     @Override
-    public void tick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-        checkSides(state, world, pos);
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
+        checkSides(state, level, pos);
     }
 
-    public int tryPlaceRopes(World world, BlockPos pos, Direction movement, Direction support, int count) {
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+    public int tryPlaceRopes(Level level, BlockPos pos, Direction movement, Direction support, int count) {
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         mutablePos.set(pos);
         Direction currentMovement = movement;
         int ropeCount = 0;
@@ -297,7 +301,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                 return count;
             }
             mutablePos.move(currentMovement);
-            BlockState stateTemp = world.getBlockState(mutablePos);
+            BlockState stateTemp = level.getBlockState(mutablePos);
             if (!BlockUtils.isReplaceable(stateTemp)) {
                 return ropeCount;
             }
@@ -318,9 +322,9 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                 }
                 return ropeCount;
             }
-            if (currentMovement != Direction.DOWN && canGoDown(world, mutablePos)) {
+            if (currentMovement != Direction.DOWN && canGoDown(level, mutablePos)) {
                 currentMovement = Direction.DOWN;
-                stateTemp = world.getBlockState(mutablePos.move(Direction.DOWN));
+                stateTemp = level.getBlockState(mutablePos.move(Direction.DOWN));
                 if (stateTemp.getBlock() == EvolutionBlocks.ROPE.get()) {
                     if (stateTemp.getValue(DIRECTION_HORIZONTAL) == support) {
                         continue;
@@ -331,37 +335,37 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                     return ropeCount;
                 }
                 if (stateTemp.getBlock() instanceof IReplaceable) {
-                    for (ItemStack stack : ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp)) {
-                        BlockUtils.dropItemStack(world, mutablePos, stack);
+                    for (ItemStack stack : ((IReplaceable) stateTemp.getBlock()).getDrops(level, mutablePos, stateTemp)) {
+                        BlockUtils.dropItemStack(level, mutablePos, stack);
                     }
                 }
-                world.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
+                level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
                 ropeCount++;
                 continue;
             }
             if (stateTemp.getBlock() instanceof IReplaceable) {
-                for (ItemStack stack : ((IReplaceable) stateTemp.getBlock()).getDrops(world, mutablePos, stateTemp)) {
-                    BlockUtils.dropItemStack(world, mutablePos, stack);
+                for (ItemStack stack : ((IReplaceable) stateTemp.getBlock()).getDrops(level, mutablePos, stateTemp)) {
+                    BlockUtils.dropItemStack(level, mutablePos, stack);
                 }
             }
             if (currentMovement == Direction.DOWN) {
-                world.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
+                level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
                 ropeCount++;
                 continue;
             }
-            world.setBlockAndUpdate(mutablePos, EvolutionBlocks.GROUND_ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
+            level.setBlockAndUpdate(mutablePos, EvolutionBlocks.GROUND_ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
             ropeCount++;
         }
         return ropeCount;
     }
 
     @Override
-    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         ItemStack heldStack = player.getItemInHand(hand);
         if (heldStack.getItem() == EvolutionItems.rope.get()) {
             if (!state.getValue(HIT)) {
                 player.displayClientMessage(EvolutionTexts.ACTION_HIT_STAKE, true);
-                return ActionResultType.PASS;
+                return InteractionResult.PASS;
             }
             int count = heldStack.getCount();
             Direction movement = state.getValue(DIRECTION_EXCEPT_UP) != Direction.DOWN ? Direction.DOWN : player.getDirection();
@@ -370,17 +374,17 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                                 state.getValue(DIRECTION_EXCEPT_UP);
             Direction ropeDir = movement == Direction.DOWN ? Direction.DOWN : player.getDirection();
             boolean before = state.getValue(directionToProperty(ropeDir));
-            world.setBlockAndUpdate(pos, state.setValue(directionToProperty(ropeDir), true));
-            int shrink = this.tryPlaceRopes(world, pos, movement, support, count);
+            level.setBlockAndUpdate(pos, state.setValue(directionToProperty(ropeDir), true));
+            int shrink = this.tryPlaceRopes(level, pos, movement, support, count);
             if (!player.isCreative()) {
                 heldStack.shrink(shrink);
             }
             if (shrink > 0) {
-                return ActionResultType.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
-            world.setBlockAndUpdate(pos, state.setValue(directionToProperty(ropeDir), before));
-            return ActionResultType.PASS;
+            level.setBlockAndUpdate(pos, state.setValue(directionToProperty(ropeDir), before));
+            return InteractionResult.PASS;
         }
-        return ActionResultType.PASS;
+        return InteractionResult.PASS;
     }
 }

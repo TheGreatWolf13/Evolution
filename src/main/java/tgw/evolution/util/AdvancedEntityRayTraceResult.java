@@ -1,18 +1,18 @@
 package tgw.evolution.util;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 import tgw.evolution.util.hitbox.Hitbox;
 
 import javax.annotation.Nullable;
 
-public class AdvancedEntityRayTraceResult extends EntityRayTraceResult {
+public class AdvancedEntityRayTraceResult extends EntityHitResult {
 
     @Nullable
     private final Hitbox hitbox;
 
-    public AdvancedEntityRayTraceResult(Entity entity, Vector3d hitVec, @Nullable Hitbox hitbox) {
+    public AdvancedEntityRayTraceResult(Entity entity, Vec3 hitVec, @Nullable Hitbox hitbox) {
         super(entity, hitVec);
         this.hitbox = hitbox;
     }

@@ -1,8 +1,8 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.capabilities.thirst.IThirst;
 import tgw.evolution.capabilities.thirst.ThirstStats;
 
@@ -13,7 +13,7 @@ public class PacketSCThirstData implements IPacket {
     private final short hydrationLevel;
     private final short thirstLevel;
 
-    public PacketSCThirstData(ThirstStats thirst) {
+    public PacketSCThirstData(IThirst thirst) {
         this(thirst.getThirstLevel(), thirst.getHydrationLevel());
     }
 
@@ -22,11 +22,11 @@ public class PacketSCThirstData implements IPacket {
         this.hydrationLevel = (short) hydrationLevel;
     }
 
-    public static PacketSCThirstData decode(PacketBuffer buffer) {
+    public static PacketSCThirstData decode(FriendlyByteBuf buffer) {
         return new PacketSCThirstData(buffer.readShort(), buffer.readShort());
     }
 
-    public static void encode(PacketSCThirstData packet, PacketBuffer buffer) {
+    public static void encode(PacketSCThirstData packet, FriendlyByteBuf buffer) {
         buffer.writeShort(packet.thirstLevel);
         buffer.writeShort(packet.hydrationLevel);
     }

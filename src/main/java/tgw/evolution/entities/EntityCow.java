@@ -1,19 +1,19 @@
 package tgw.evolution.entities;
 
-import net.minecraft.entity.EntitySize;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.Pose;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.entities.ai.*;
-import tgw.evolution.util.EntityStates;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.Time;
+import tgw.evolution.util.constants.EntityStates;
 import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.time.Time;
 
 import javax.annotation.Nullable;
 
@@ -27,10 +27,10 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     private int tailTimerX;
     private int tailTimerZ;
 
-    public EntityCow(EntityType<EntityCow> type, World world) {
-        super(type, world);
+    public EntityCow(EntityType<EntityCow> type, Level level) {
+        super(type, level);
         super.setAge(this.getAdultAge());
-        if (!world.isClientSide) {
+        if (!level.isClientSide) {
             this.goalSleep.setSleepTimer();
         }
     }
@@ -47,7 +47,7 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     }
 
     @Override
-    public void appendDebugInfo(IFormattableTextComponent text) {
+    public void appendDebugInfo(MutableComponent text) {
         //TODO implementation
     }
 
@@ -101,16 +101,16 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     }
 
     @Override
-    public EntitySize getDimensions(Pose pose) {
+    public EntityDimensions getDimensions(Pose pose) {
         switch (pose) {
-            case DYING: {
-                return EntitySize.scalable(1.2F, 0.7F).scale(this.getScale());
+            case DYING -> {
+                return EntityDimensions.scalable(1.2F, 0.7F).scale(this.getScale());
             }
-            case SLEEPING: {
-                return EntitySize.scalable(0.9F, 0.7F).scale(this.getScale());
+            case SLEEPING -> {
+                return EntityDimensions.scalable(0.9F, 0.7F).scale(this.getScale());
             }
         }
-        return EntitySize.scalable(0.9F, 1.4F).scale(this.getScale());
+        return EntityDimensions.scalable(0.9F, 1.4F).scale(this.getScale());
     }
 
     @Override
@@ -133,7 +133,7 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
             float f = (this.eatTimer - 4 - partialTicks) / 32.0F;
             return MathHelper.PI / 5.0F + 0.219_911_49F * MathHelper.sin(f * 28.7F);
         }
-        return this.eatTimer > 0 ? MathHelper.PI / 5.0F : MathHelper.degToRad(this.xRot);
+        return this.eatTimer > 0 ? MathHelper.PI / 5.0F : MathHelper.degToRad(this.getXRot());
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -175,14 +175,14 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     }
 
     @Override
-    protected float getStandingEyeHeight(Pose poseIn, EntitySize sizeIn) {
-        if (poseIn == Pose.DYING) {
+    protected float getStandingEyeHeight(Pose pose, EntityDimensions dimensions) {
+        if (pose == Pose.DYING) {
             return 0.3F;
         }
-        if (poseIn == Pose.SLEEPING) {
+        if (pose == Pose.SLEEPING) {
             return 0.85F;
         }
-        return this.isBaby() ? sizeIn.height * 0.95F : 1.35F;
+        return this.isBaby() ? dimensions.height * 0.95F : 1.35F;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -225,8 +225,8 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundNBT compound) {
-        super.readAdditionalSaveData(compound);
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
         this.goalSleep.setSleepTime(this.sleepTime);
     }
 

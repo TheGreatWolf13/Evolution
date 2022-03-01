@@ -1,8 +1,8 @@
 package tgw.evolution.entities.ai;
 
-import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.Goal;
 import tgw.evolution.entities.EntityGenericCreature;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.MathHelper;
 
 import java.util.EnumSet;
 

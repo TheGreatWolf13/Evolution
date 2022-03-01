@@ -1,20 +1,20 @@
 package tgw.evolution;
 
-import net.minecraft.block.Block;
-import net.minecraft.client.renderer.color.BlockColors;
-import net.minecraft.client.renderer.color.IBlockColor;
-import net.minecraft.client.renderer.color.IItemColor;
-import net.minecraft.client.renderer.color.ItemColors;
-import net.minecraft.item.Item;
-import net.minecraft.util.IItemProvider;
-import net.minecraft.world.FoliageColors;
-import net.minecraft.world.GrassColors;
-import net.minecraft.world.biome.BiomeColors;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraft.client.color.block.BlockColor;
+import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.color.item.ItemColor;
+import net.minecraft.client.color.item.ItemColors;
+import net.minecraft.client.renderer.BiomeColors;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.FoliageColor;
+import net.minecraft.world.level.GrassColor;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
+import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.IItemTemperature;
-import tgw.evolution.util.RockVariant;
-import tgw.evolution.util.WoodVariant;
+import tgw.evolution.util.constants.RockVariant;
+import tgw.evolution.util.constants.WoodVariant;
 
 import static tgw.evolution.init.EvolutionBlocks.GRASS;
 import static tgw.evolution.init.EvolutionBlocks.TALLGRASS;
@@ -24,30 +24,30 @@ public final class ColorManager {
     private ColorManager() {
     }
 
-    private static void register(BlockColors colors, IBlockColor color, RegistryObject<Block> block) {
+    private static void register(BlockColors colors, BlockColor color, RegistryObject<Block> block) {
         colors.register(color, block.get());
     }
 
-    private static void register(BlockColors colors, IBlockColor color, Block block) {
+    private static void register(BlockColors colors, BlockColor color, Block block) {
         colors.register(color, block);
     }
 
-    private static void register(ItemColors colors, IItemColor color, RegistryObject<Block> block) {
+    private static void register(ItemColors colors, ItemColor color, RegistryObject<Block> block) {
         colors.register(color, block.get());
     }
 
-    private static void register(ItemColors colors, IItemColor color, IItemProvider item) {
+    private static void register(ItemColors colors, ItemColor color, ItemLike item) {
         colors.register(color, item);
     }
 
     public static void registerBlockColorHandlers(BlockColors colors) {
-        IBlockColor grass = (state, world, pos, color) -> BiomeColors.getAverageGrassColor(world, pos);
-        IBlockColor spruce = (state, world, pos, color) -> FoliageColors.getEvergreenColor();
-        IBlockColor birch = (state, world, pos, color) -> FoliageColors.getBirchColor();
-        IBlockColor aspen = (state, world, pos, color) -> 0xff_fc00;
-        IBlockColor leaves = (state, world, pos, color) -> world != null && pos != null ?
-                                                           BiomeColors.getAverageFoliageColor(world, pos) :
-                                                           FoliageColors.getDefaultColor();
+        BlockColor grass = (state, world, pos, color) -> BiomeColors.getAverageGrassColor(world, pos);
+        BlockColor spruce = (state, world, pos, color) -> FoliageColor.getEvergreenColor();
+        BlockColor birch = (state, world, pos, color) -> FoliageColor.getBirchColor();
+        BlockColor aspen = (state, world, pos, color) -> 0xff_fc00;
+        BlockColor leaves = (state, world, pos, color) -> world != null && pos != null ?
+                                                          BiomeColors.getAverageFoliageColor(world, pos) :
+                                                          FoliageColor.getDefaultColor();
         //Grass
         for (RockVariant rock : RockVariant.VALUES) {
             register(colors, grass, rock.getGrass());
@@ -62,18 +62,15 @@ public final class ColorManager {
         //Leaves
         for (WoodVariant wood : WoodVariant.VALUES) {
             switch (wood) {
-                case ASPEN: {
+                case ASPEN -> {
                     register(colors, aspen, wood.getLeaves());
                     continue;
                 }
-                case BIRCH: {
+                case BIRCH -> {
                     register(colors, birch, wood.getLeaves());
                     continue;
                 }
-                case EUCALYPTUS:
-                case FIR:
-                case PINE:
-                case SPRUCE: {
+                case EUCALYPTUS, FIR, PINE, SPRUCE -> {
                     register(colors, spruce, wood.getLeaves());
                     continue;
                 }
@@ -83,16 +80,16 @@ public final class ColorManager {
     }
 
     public static void registerItemColorHandlers(ItemColors colors) {
-        IItemColor grass = (stack, tint) -> GrassColors.get(0.5, 1.0);
-        IItemColor spruce = (stack, tint) -> FoliageColors.getEvergreenColor();
-        IItemColor birch = (stack, tint) -> FoliageColors.getBirchColor();
-        IItemColor leaves = (stack, tint) -> FoliageColors.getDefaultColor();
-        IItemColor aspen = (stack, tint) -> 0xff_fc00;
-        IItemColor temperature = (stack, tint) -> {
+        ItemColor grass = (stack, tint) -> GrassColor.get(0.5, 1.0);
+        ItemColor spruce = (stack, tint) -> FoliageColor.getEvergreenColor();
+        ItemColor birch = (stack, tint) -> FoliageColor.getBirchColor();
+        ItemColor leaves = (stack, tint) -> FoliageColor.getDefaultColor();
+        ItemColor aspen = (stack, tint) -> 0xff_fc00;
+        ItemColor temperature = (stack, tint) -> {
             if (tint == 1) {
                 Item item = stack.getItem();
-                if (item instanceof IItemTemperature) {
-                    return ((IItemTemperature) item).getTemperatureColor(stack);
+                if (item instanceof IItemTemperature itemTemperature) {
+                    return itemTemperature.getTemperatureColor(stack);
                 }
             }
             return 0xffff_ffff;
@@ -111,18 +108,15 @@ public final class ColorManager {
         //Leaves
         for (WoodVariant wood : WoodVariant.VALUES) {
             switch (wood) {
-                case ASPEN: {
+                case ASPEN -> {
                     register(colors, aspen, wood.getLeaves());
                     continue;
                 }
-                case BIRCH: {
+                case BIRCH -> {
                     register(colors, birch, wood.getLeaves());
                     continue;
                 }
-                case EUCALYPTUS:
-                case FIR:
-                case PINE:
-                case SPRUCE: {
+                case EUCALYPTUS, FIR, PINE, SPRUCE -> {
                     register(colors, spruce, wood.getLeaves());
                     continue;
                 }

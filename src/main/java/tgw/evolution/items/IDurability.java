@@ -1,18 +1,19 @@
 package tgw.evolution.items;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 
 public interface IDurability {
 
-    default int getMaxDmg(ItemStack stack) {
-        return stack.getItem().getMaxDamage();
+    default String displayDurability(ItemStack stack) {
+        int maxDamage = this.getMaxDmg(stack);
+        return (maxDamage - this.getDmg(stack)) + " / " + maxDamage;
     }
 
     default int getDmg(ItemStack stack) {
-        return !stack.hasTag() ? 0 : stack.getTag().getInt("Damage");
+        return stack.getItem().getDamage(stack);
     }
 
-    default String displayDurability(ItemStack stack) {
-        return (this.getMaxDmg(stack) - this.getDmg(stack)) + " / " + this.getMaxDmg(stack);
+    default int getMaxDmg(ItemStack stack) {
+        return stack.getItem().getMaxDamage(stack);
     }
 }

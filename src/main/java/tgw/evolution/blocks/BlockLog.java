@@ -1,21 +1,24 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.state.StateContainer.Builder;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Direction.Axis;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.material.Material;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.*;
+import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.constants.WoodVariant;
+import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.math.MathHelper;
 
 import java.util.Random;
 
@@ -27,7 +30,7 @@ public class BlockLog extends BlockXYZAxis {
     private final WoodVariant variant;
 
     public BlockLog(WoodVariant variant) {
-        super(Properties.of(Material.WOOD).strength(8.0F, 2.0F).sound(SoundType.WOOD).harvestLevel(HarvestLevel.STONE), variant.getMass());
+        super(Properties.of(Material.WOOD).strength(8.0F, 2.0F).sound(SoundType.WOOD), variant.getMass());
         this.variant = variant;
         this.registerDefaultState(this.defaultBlockState().setValue(TREE, false));
     }
@@ -54,11 +57,11 @@ public class BlockLog extends BlockXYZAxis {
 
     @Override
     protected boolean canSustainWeight(BlockState state) {
-        return state.getValue(AXIS) != Axis.Y && super.canSustainWeight(state);
+        return state.getValue(AXIS) != Direction.Axis.Y && super.canSustainWeight(state);
     }
 
     @Override
-    protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(TREE);
         super.createBlockStateDefinition(builder);
     }
@@ -69,12 +72,12 @@ public class BlockLog extends BlockXYZAxis {
     }
 
     @Override
-    public int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+    public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
         return EvolutionBlocks.FIRE.get().getActualEncouragement(state);
     }
 
     @Override
-    public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+    public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
         return EvolutionBlocks.FIRE.get().getActualFlammability(state);
     }
 
@@ -84,31 +87,36 @@ public class BlockLog extends BlockXYZAxis {
     }
 
     @Override
+    public int getHarvestLevel(BlockState state) {
+        return HarvestLevel.STONE;
+    }
+
+    @Override
     public int getShearStrength() {
         return this.variant.getShearStrength();
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         return super.getStateForPlacement(context).setValue(TREE, false);
     }
 
     @Override
-    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         if (state.getValue(TREE)) {
             BlockPos up = pos.above();
             for (Direction dir : DirectionUtil.HORIZ_NESW) {
-                state.updateNeighbourShapes(world, up.relative(dir), BlockFlags.NOTIFY_AND_UPDATE);
+                state.updateNeighbourShapes(level, up.relative(dir), BlockFlags.NOTIFY_AND_UPDATE);
             }
         }
-        super.neighborChanged(state, world, pos, block, fromPos, isMoving);
+        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
     }
 
     @Override
-    public void tick(BlockState state, ServerWorld world, BlockPos blockPos, Random random) {
-        OriginMutableBlockPos pos = new OriginMutableBlockPos(blockPos);
+    public void tick(BlockState state, ServerLevel level, BlockPos blockPos, Random random) {
+//        OriginMutableBlockPos pos = new OriginMutableBlockPos(blockPos);
         if (!state.getValue(TREE)) {
-            super.tick(state, world, blockPos, random);
+            super.tick(state, level, blockPos, random);
         }
         else {
             //                if (!BlockUtils.isTrunkSustained(worldIn, pos)) {
@@ -120,16 +128,16 @@ public class BlockLog extends BlockXYZAxis {
             //                    }
             //                    FallingEvents.chopEvent(worldIn, worldIn.getBlockState(pos.up().getPos()), pos.getPos(), direction);
             //                }
-            pos.reset();
-            if (world.getBlockState(pos.down().getPos()).getBlock() instanceof BlockLog && !world.getBlockState(pos.getPos()).getValue(TREE)) {
-                world.setBlock(pos.reset().getPos(), state.setValue(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
-            }
-            else if (world.getBlockState(pos.up().getPos()).getBlock() instanceof BlockLog && !world.getBlockState(pos.getPos()).getValue(TREE)) {
-                world.setBlock(pos.reset().getPos(), state.setValue(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
-            }
-            else if (!BlockUtils.isTrunkSustained(world, pos) && BlockUtils.isReplaceable(world.getBlockState(pos.up().getPos()))) {
-                world.setBlock(pos.reset().getPos(), state.setValue(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
-            }
+//            pos.reset();
+//            if (level.getBlockState(pos.down().getPos()).getBlock() instanceof BlockLog && !level.getBlockState(pos.getPos()).getValue(TREE)) {
+//                level.setBlock(pos.reset().getPos(), state.setValue(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
+//            }
+//            else if (level.getBlockState(pos.up().getPos()).getBlock() instanceof BlockLog && !level.getBlockState(pos.getPos()).getValue(TREE)) {
+//                level.setBlock(pos.reset().getPos(), state.setValue(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
+//            }
+//            else if (!BlockUtils.isTrunkSustained(level, pos) && BlockUtils.isReplaceable(level.getBlockState(pos.up().getPos()))) {
+//                level.setBlock(pos.reset().getPos(), state.setValue(TREE, false), BlockFlags.NOTIFY_AND_UPDATE);
+//            }
         }
     }
 }

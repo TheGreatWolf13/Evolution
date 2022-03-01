@@ -1,8 +1,8 @@
 package tgw.evolution.blocks.tileentities;
 
-import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.Evolution;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nonnull;
 
@@ -33,7 +33,7 @@ public enum KnappingRecipe {
                 return knapping;
             }
         }
-        Evolution.LOGGER.warn("Could not find KnappingRecipe with id {}, replacing with NULL", id);
+        Evolution.warn("Could not find KnappingRecipe with id {}, replacing with NULL", id);
         return NULL;
     }
 

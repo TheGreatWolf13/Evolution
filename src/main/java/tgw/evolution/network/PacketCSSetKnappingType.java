@@ -1,11 +1,11 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.KnappingRecipe;
 import tgw.evolution.blocks.tileentities.TEKnapping;
@@ -22,11 +22,11 @@ public class PacketCSSetKnappingType implements IPacket {
         this.type = type;
     }
 
-    public static PacketCSSetKnappingType decode(PacketBuffer buffer) {
+    public static PacketCSSetKnappingType decode(FriendlyByteBuf buffer) {
         return new PacketCSSetKnappingType(buffer.readBlockPos(), KnappingRecipe.byId(buffer.readByte()));
     }
 
-    public static void encode(PacketCSSetKnappingType packet, PacketBuffer buffer) {
+    public static void encode(PacketCSSetKnappingType packet, FriendlyByteBuf buffer) {
         buffer.writeBlockPos(packet.pos);
         buffer.writeByte(packet.type.getId());
     }
@@ -34,13 +34,13 @@ public class PacketCSSetKnappingType implements IPacket {
     public static void handle(PacketCSSetKnappingType packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
-                World world = context.get().getSender().level;
-                TileEntity tile = world.getBlockEntity(packet.pos);
-                if (tile instanceof TEKnapping) {
-                    ((TEKnapping) tile).setType(packet.type);
+                Level world = context.get().getSender().level;
+                BlockEntity tile = world.getBlockEntity(packet.pos);
+                if (tile instanceof TEKnapping knapping) {
+                    knapping.setType(packet.type);
                     return;
                 }
-                Evolution.LOGGER.warn("Could not find TEKnapping at {}", packet.pos);
+                Evolution.warn("Could not find TEKnapping at {}", packet.pos);
             });
             context.get().setPacketHandled(true);
         }

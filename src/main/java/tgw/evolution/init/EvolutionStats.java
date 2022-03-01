@@ -1,22 +1,23 @@
 package tgw.evolution.init;
 
-import net.minecraft.entity.EntityType;
-import net.minecraft.stats.IStatFormatter;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.stats.StatFormatter;
 import net.minecraft.stats.StatType;
 import net.minecraft.stats.Stats;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.registry.Registry;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraft.world.entity.EntityType;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.Evolution;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.stats.IEvoStatFormatter;
-import tgw.evolution.util.Metric;
+import tgw.evolution.util.math.Metric;
 
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.Map;
 
 public final class EvolutionStats {
@@ -29,7 +30,7 @@ public final class EvolutionStats {
 
         @Override
         public String format(int value) {
-            Evolution.LOGGER.warn("Incorrect stats method!");
+            Evolution.warn("Incorrect stats method!");
             return "null";
         }
     };
@@ -41,7 +42,7 @@ public final class EvolutionStats {
 
         @Override
         public String format(int value) {
-            Evolution.LOGGER.warn("Incorrect stats method!");
+            Evolution.warn("Incorrect stats method!");
             return "null";
         }
     };
@@ -53,7 +54,7 @@ public final class EvolutionStats {
 
         @Override
         public String format(int value) {
-            Evolution.LOGGER.warn("Incorrect stats method!");
+            Evolution.warn("Incorrect stats method!");
             return "null";
         }
     };
@@ -79,7 +80,7 @@ public final class EvolutionStats {
 
         @Override
         public String format(int value) {
-            Evolution.LOGGER.warn("Incorrect stats method!");
+            Evolution.warn("Incorrect stats method!");
             return "null";
         }
     };
@@ -91,7 +92,7 @@ public final class EvolutionStats {
 
         @Override
         public String format(int value) {
-            Evolution.LOGGER.warn("Incorrect stats method!");
+            Evolution.warn("Incorrect stats method!");
             return "null";
         }
     };
@@ -105,7 +106,7 @@ public final class EvolutionStats {
     public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_TAKEN_BLOCKED = genDamage("taken_blocked", EvolutionDamage.PLAYER);
     public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_TAKEN_RAW = genDamage("taken_raw", EvolutionDamage.ALL);
     //Deaths
-    public static final Map<String, ResourceLocation> DEATH_SOURCE = genDeath("death");
+    public static final Object2ObjectMap<String, ResourceLocation> DEATH_SOURCE = genDeath("death");
     public static final ResourceLocation DEATHS = registerCustom("death_total", DEFAULT);
     //Distance
     public static final ResourceLocation DISTANCE_CLIMBED = registerCustom("distance_climbed", DISTANCE);
@@ -157,8 +158,8 @@ public final class EvolutionStats {
         return map;
     }
 
-    private static Map<String, ResourceLocation> genDeath(String name) {
-        Map<String, ResourceLocation> map = new HashMap<>();
+    private static Object2ObjectMap<String, ResourceLocation> genDeath(String name) {
+        Object2ObjectMap<String, ResourceLocation> map = new Object2ObjectOpenHashMap<>();
         for (String src : EvolutionDamage.ALL_SOURCES) {
             //noinspection ObjectAllocationInLoop
             map.put(src, registerCustom(name + "_" + src, DEFAULT));
@@ -170,7 +171,7 @@ public final class EvolutionStats {
         STATS.register(FMLJavaModLoadingContext.get().getModEventBus());
     }
 
-    private static ResourceLocation registerCustom(String key, IStatFormatter formatter) {
+    private static ResourceLocation registerCustom(String key, StatFormatter formatter) {
         ResourceLocation resourceLocation = Evolution.getResource(key);
         Registry.register(Registry.CUSTOM_STAT, Evolution.MODID + ":" + key, resourceLocation);
         Stats.CUSTOM.get(resourceLocation, formatter);

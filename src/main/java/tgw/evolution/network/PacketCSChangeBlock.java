@@ -1,21 +1,21 @@
 package tgw.evolution.network;
 
-import net.minecraft.block.AbstractButtonBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemUseContext;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.ButtonBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
@@ -24,30 +24,30 @@ public class PacketCSChangeBlock implements IPacket {
     private final Direction direction;
     private final boolean isInside;
     private final BlockPos pos;
-    private final Vector3d vec;
+    private final Vec3 vec;
 
-    public PacketCSChangeBlock(BlockRayTraceResult result) {
+    public PacketCSChangeBlock(BlockHitResult result) {
         this.pos = result.getBlockPos();
         this.vec = result.getLocation();
         this.direction = result.getDirection();
         this.isInside = result.isInside();
     }
 
-    public PacketCSChangeBlock(Vector3d vec, Direction direction, BlockPos pos, boolean isInside) {
+    public PacketCSChangeBlock(Vec3 vec, Direction direction, BlockPos pos, boolean isInside) {
         this.direction = direction;
         this.isInside = isInside;
         this.pos = pos;
         this.vec = vec;
     }
 
-    public static PacketCSChangeBlock decode(PacketBuffer buffer) {
-        return new PacketCSChangeBlock(new Vector3d(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()),
+    public static PacketCSChangeBlock decode(FriendlyByteBuf buffer) {
+        return new PacketCSChangeBlock(new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()),
                                        buffer.readEnum(Direction.class),
                                        buffer.readBlockPos(),
                                        buffer.readBoolean());
     }
 
-    public static void encode(PacketCSChangeBlock packet, PacketBuffer buffer) {
+    public static void encode(PacketCSChangeBlock packet, FriendlyByteBuf buffer) {
         buffer.writeDouble(packet.vec.x);
         buffer.writeDouble(packet.vec.y);
         buffer.writeDouble(packet.vec.z);
@@ -59,18 +59,18 @@ public class PacketCSChangeBlock implements IPacket {
     public static void handle(PacketCSChangeBlock packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
-                PlayerEntity player = context.get().getSender();
+                Player player = context.get().getSender();
                 Item item = player.getMainHandItem().getItem();
-                if (item instanceof BlockItem) {
-                    World world = player.level;
-                    BlockRayTraceResult result = new BlockRayTraceResult(packet.vec, packet.direction, packet.pos, packet.isInside);
-                    ItemUseContext itemContext = new ItemUseContext(player, Hand.MAIN_HAND, result);
-                    BlockItemUseContext blockContext = new BlockItemUseContext(itemContext);
-                    BlockState state = ((BlockItem) item).getBlock().getStateForPlacement(blockContext);
-                    if (state.getBlock() instanceof AbstractButtonBlock) {
+                if (item instanceof BlockItem blockItem) {
+                    Level level = player.level;
+                    BlockHitResult result = new BlockHitResult(packet.vec, packet.direction, packet.pos, packet.isInside);
+                    UseOnContext itemContext = new UseOnContext(player, InteractionHand.MAIN_HAND, result);
+                    BlockPlaceContext blockContext = new BlockPlaceContext(itemContext);
+                    BlockState state = blockItem.getBlock().getStateForPlacement(blockContext);
+                    if (state.getBlock() instanceof ButtonBlock) {
                         return;
                     }
-                    world.setBlockAndUpdate(packet.pos, state);
+                    level.setBlockAndUpdate(packet.pos, state);
                 }
             });
             context.get().setPacketHandled(true);

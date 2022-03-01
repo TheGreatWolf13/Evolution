@@ -1,13 +1,16 @@
 package tgw.evolution.util.hitbox;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.CrossbowItem;
-import net.minecraft.util.Hand;
-import net.minecraft.util.HandSide;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.vector.Vector3d;
-import tgw.evolution.util.MathHelper;
+import com.mojang.math.Vector3d;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import tgw.evolution.items.ICustomAttack;
+import tgw.evolution.util.math.MathHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +18,7 @@ import java.util.List;
 public abstract class HitboxEntity<T extends Entity> {
 
     private final List<Hitbox> boxes;
+    private final List<Hitbox> equipment;
     protected float ageInTicks;
     protected float pivotX;
     protected float pivotY;
@@ -27,34 +31,57 @@ public abstract class HitboxEntity<T extends Entity> {
 
     public HitboxEntity() {
         this.boxes = new ArrayList<>();
+        this.equipment = new ArrayList<>();
     }
 
-    public static AxisAlignedBB aabb(double x0, double y0, double z0, double x1, double y1, double z1) {
-        return new AxisAlignedBB(x0 / 16, y0 / 16, z0 / 16, x1 / 16, y1 / 16, z1 / 16);
+    public static AABB aabb(double x0, double y0, double z0, double x1, double y1, double z1) {
+        return new AABB(x0 / 16, y0 / 16, z0 / 16, x1 / 16, y1 / 16, z1 / 16);
     }
 
-    public static AxisAlignedBB aabb(double x0, double y0, double z0, double x1, double y1, double z1, double scale) {
+    public static AABB aabb(double x0, double y0, double z0, double x1, double y1, double z1, double scale) {
         return aabb(x0 * scale, y0 * scale, z0 * scale, x1 * scale, y1 * scale, z1 * scale);
     }
 
-    public static boolean shouldPoseArm(LivingEntity entity, HandSide side) {
-        if (entity.getMainArm() == side) {
-            return entity.getUsedItemHand() == Hand.MAIN_HAND;
-        }
-        return entity.getUsedItemHand() == Hand.OFF_HAND;
+    protected static HumanoidArm getAttackArm(LivingEntity entity) {
+        HumanoidArm handside = entity.getMainArm();
+        return entity.swingingArm == InteractionHand.MAIN_HAND ? handside : handside.getOpposite();
     }
 
-    public static Vector3d v(double x, double y, double z) {
-        return new Vector3d(x / 16, y / 16, z / 16);
+    protected static float rotLerpRad(float partialTick, float old, float now) {
+        float f = (now - old) % MathHelper.TAU;
+        if (f < -MathHelper.PI) {
+            f += MathHelper.TAU;
+        }
+        if (f >= MathHelper.PI) {
+            f -= MathHelper.TAU;
+        }
+        return old + partialTick * f;
+    }
+
+    public static boolean shouldPoseArm(LivingEntity entity, HumanoidArm side) {
+        if (entity.getMainArm() == side) {
+            return entity.getUsedItemHand() == InteractionHand.MAIN_HAND;
+        }
+        return entity.getUsedItemHand() == InteractionHand.OFF_HAND;
     }
 
     public static Vector3d v(double x, double y, double z, double scale) {
         return v(x * scale, y * scale, z * scale);
     }
 
-    protected Hitbox addBox(BodyPart part, AxisAlignedBB aabb) {
+    public static Vector3d v(double x, double y, double z) {
+        return new Vector3d(x / 16, y / 16, z / 16);
+    }
+
+    protected Hitbox addBox(HitboxType part, AABB aabb) {
         Hitbox box = new Hitbox(part, aabb, this);
         this.boxes.add(box);
+        return box;
+    }
+
+    protected Hitbox addEquip(HitboxType part, AABB aabb) {
+        Hitbox box = new Hitbox(part, aabb, this);
+        this.equipment.add(box);
         return box;
     }
 
@@ -67,8 +94,8 @@ public abstract class HitboxEntity<T extends Entity> {
         float f = CrossbowItem.getChargeDuration(entity.getUseItem());
         float f1 = MathHelper.clamp(entity.getTicksUsingItem(), 0.0F, f);
         float f2 = f1 / f;
-        offArm.setRotationY(MathHelper.lerp(f2, 0.4F, 0.85F) * (rightHanded ? 1 : -1));
-        offArm.setRotationX(MathHelper.lerp(f2, offArm.getRotationX(), -MathHelper.PI_OVER_2));
+        offArm.setRotationY(Mth.lerp(f2, 0.4F, 0.85F) * (rightHanded ? 1 : -1));
+        offArm.setRotationX(Mth.lerp(f2, offArm.getRotationX(), -MathHelper.PI_OVER_2));
     }
 
     public void animateCrossbowHold(IHitbox rightArm, IHitbox leftArm, IHitbox head, boolean rightHanded) {
@@ -97,8 +124,14 @@ public abstract class HitboxEntity<T extends Entity> {
         return this.boxes;
     }
 
-    public Vector3d getOffset() {
-        return new Vector3d(this.pivotX, this.pivotY, this.pivotZ);
+    public List<Hitbox> getEquipment() {
+        return this.equipment;
+    }
+
+    public abstract Hitbox getEquipmentFor(ICustomAttack.AttackType type, InteractionHand hand);
+
+    public Vec3 getOffset() {
+        return new Vec3(this.pivotX, this.pivotY, this.pivotZ);
     }
 
     public Matrix3d getTransform() {
@@ -114,6 +147,9 @@ public abstract class HitboxEntity<T extends Entity> {
         this.setPivot(0, 0, 0);
         this.setRotation(0, 0, 0);
         for (Hitbox box : this.boxes) {
+            box.reset();
+        }
+        for (Hitbox box : this.equipment) {
             box.reset();
         }
     }

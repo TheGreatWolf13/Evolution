@@ -1,0 +1,6 @@
+{
+  "parent": "evolution:item/modular/blade/arming_sword",
+  "textures": {
+    "0": "evolution:item/modular/blade/arming_sword_copper"
+  }
+}

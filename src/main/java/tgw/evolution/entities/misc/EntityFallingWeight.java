@@ -1,43 +1,44 @@
 package tgw.evolution.entities.misc;
 
 import com.google.common.collect.Lists;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.FallingBlock;
-import net.minecraft.block.material.Material;
-import net.minecraft.crash.CrashReportCategory;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.MoverType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTUtil;
-import net.minecraft.network.IPacket;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.CrashReportCategory;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockPos.MutableBlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.RayTraceContext;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.World;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FallingBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
-import net.minecraftforge.fml.network.FMLPlayMessages;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraftforge.entity.IEntityAdditionalSpawnData;
+import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.network.PlayMessages;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.*;
 import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
-import tgw.evolution.util.Gravity;
+import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.hitbox.HitboxEntity;
 
 import javax.annotation.Nullable;
@@ -45,35 +46,35 @@ import java.util.List;
 
 public class EntityFallingWeight extends Entity implements IEntityAdditionalSpawnData, IEvolutionEntity<EntityFallingWeight> {
 
-    private final BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+    private final MutableBlockPos mutablePos = new MutableBlockPos();
     public int fallTime;
     private int mass = 500;
     private BlockState state = EvolutionBlocks.DESTROY_9.get().defaultBlockState();
 
-    public EntityFallingWeight(@SuppressWarnings("unused") FMLPlayMessages.SpawnEntity spawn, World world) {
-        this(EvolutionEntities.FALLING_WEIGHT.get(), world);
+    public EntityFallingWeight(EntityType<EntityFallingWeight> type, Level level) {
+        super(type, level);
     }
 
-    public EntityFallingWeight(EntityType<EntityFallingWeight> type, World world) {
-        super(type, world);
-    }
-
-    public EntityFallingWeight(World world, double x, double y, double z, BlockState state) {
-        this(EvolutionEntities.FALLING_WEIGHT.get(), world);
+    public EntityFallingWeight(Level level, double x, double y, double z, BlockState state) {
+        this(EvolutionEntities.FALLING_WEIGHT.get(), level);
         this.state = state;
         this.mass = this.state.getBlock() instanceof BlockMass ? ((BlockMass) this.state.getBlock()).getMass(this.state) : 500;
         this.blocksBuilding = true;
         this.setPos(x, y, z);
-        this.setDeltaMovement(Vector3d.ZERO);
+        this.setDeltaMovement(Vec3.ZERO);
         this.xo = x;
         this.yo = y;
         this.zo = z;
     }
 
+    public EntityFallingWeight(PlayMessages.SpawnEntity spawnEntity, Level level) {
+        this(EvolutionEntities.FALLING_WEIGHT.get(), level);
+    }
+
     @Override
-    protected void addAdditionalSaveData(CompoundNBT compound) {
-        compound.put("BlockState", NBTUtil.writeBlockState(this.state));
-        compound.putInt("Time", this.fallTime);
+    protected void addAdditionalSaveData(CompoundTag tag) {
+        tag.put("BlockState", NbtUtils.writeBlockState(this.state));
+        tag.putInt("Time", this.fallTime);
     }
 
     @Override
@@ -82,7 +83,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    public boolean causeFallDamage(float distance, float damageMultiplier) {
+    public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource initialSource) {
         if (this.level.isClientSide) {
             return false;
         }
@@ -101,7 +102,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
             source = EvolutionDamage.FALLING_METAL;
         }
         if (source == null) {
-            Evolution.LOGGER.warn("No falling damage for block {}", this.state);
+            Evolution.warn("No falling damage for block {}", this.state);
             return false;
         }
         float motionY = 20.0F * (float) this.getDeltaMovement().y;
@@ -135,7 +136,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    public IPacket<?> getAddEntityPacket() {
+    public Packet<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
@@ -168,30 +169,30 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         return false;
     }
 
-    @Override
-    protected boolean isMovementNoisy() {
-        return false;
-    }
+//    @Override
+//    protected boolean isMovementNoisy() {
+//        return false;
+//    }
 
     @Override
     public void push(Entity entity) {
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundNBT compound) {
-        this.state = NBTUtil.readBlockState(compound.getCompound("BlockState"));
-        this.fallTime = compound.getInt("Time");
+    protected void readAdditionalSaveData(CompoundTag tag) {
+        this.state = NbtUtils.readBlockState(tag.getCompound("BlockState"));
+        this.fallTime = tag.getInt("Time");
     }
 
     @Override
-    public void readSpawnData(PacketBuffer buffer) {
-        this.state = NBTUtil.readBlockState(buffer.readNbt());
+    public void readSpawnData(FriendlyByteBuf buffer) {
+        this.state = NbtUtils.readBlockState(buffer.readNbt());
     }
 
     @Override
     public void tick() {
         if (this.state.isAir()) {
-            this.remove();
+            this.discard();
             return;
         }
         this.xo = this.getX();
@@ -204,11 +205,11 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
                 this.level.removeBlock(pos, false);
             }
             else if (!this.level.isClientSide) {
-                this.remove();
+                this.discard();
                 return;
             }
         }
-        Vector3d motion = this.getDeltaMovement();
+        Vec3 motion = this.getDeltaMovement();
         double motionX = motion.x;
         double motionY = motion.y;
         double motionZ = motion.z;
@@ -248,7 +249,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         if (this.level.getBlockState(this.mutablePos.below()).getBlock() instanceof BlockLeaves) {
             if (this.state.getBlock() instanceof BlockLeaves) {
                 this.level.setBlockAndUpdate(this.mutablePos, this.state);
-                this.remove();
+                this.discard();
             }
         }
         if (this.level.getBlockState(this.mutablePos).getBlock() instanceof BlockLeaves) {
@@ -261,12 +262,12 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         boolean isInWater = this.level.getFluidState(this.mutablePos).is(FluidTags.WATER);
         double d0 = this.getDeltaMovement().lengthSqr();
         if (d0 > 1) {
-            BlockRayTraceResult raytraceresult = this.level.clip(new RayTraceContext(new Vector3d(this.xo, this.yo, this.zo),
-                                                                                     new Vector3d(this.getX(), this.getY(), this.getZ()),
-                                                                                     RayTraceContext.BlockMode.COLLIDER,
-                                                                                     RayTraceContext.FluidMode.SOURCE_ONLY,
-                                                                                     this));
-            if (raytraceresult.getType() != RayTraceResult.Type.MISS && this.level.getFluidState(raytraceresult.getBlockPos()).is(FluidTags.WATER)) {
+            BlockHitResult raytraceresult = this.level.clip(new ClipContext(new Vec3(this.xo, this.yo, this.zo),
+                                                                            new Vec3(this.getX(), this.getY(), this.getZ()),
+                                                                            ClipContext.Block.COLLIDER,
+                                                                            ClipContext.Fluid.SOURCE_ONLY,
+                                                                            this));
+            if (raytraceresult.getType() != HitResult.Type.MISS && this.level.getFluidState(raytraceresult.getBlockPos()).is(FluidTags.WATER)) {
                 this.mutablePos.set(raytraceresult.getBlockPos());
                 isInWater = true;
             }
@@ -282,7 +283,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
                         this.spawnAtLocation(carryingBlock);
                     }
                 }
-                this.remove();
+                this.discard();
             }
         }
         else {
@@ -295,7 +296,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
                 }
             }
             if ((!isInWater || this.onGround) && state.getBlock() != Blocks.MOVING_PISTON) {
-                this.remove();
+                this.discard();
                 if (BlockUtils.isReplaceable(state)) {
                     NonNullList<ItemStack> drops;
                     if (state.getBlock() instanceof IReplaceable) {
@@ -324,7 +325,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    public void writeSpawnData(PacketBuffer buffer) {
-        buffer.writeNbt(NBTUtil.writeBlockState(this.state));
+    public void writeSpawnData(FriendlyByteBuf buffer) {
+        buffer.writeNbt(NbtUtils.writeBlockState(this.state));
     }
 }

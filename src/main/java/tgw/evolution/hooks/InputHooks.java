@@ -1,18 +1,18 @@
 package tgw.evolution.hooks;
 
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketCSLungeAnim;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.reflection.SupplierMethodHandler;
 
 public final class InputHooks {
 
-    private static final SupplierMethodHandler<KeyBinding, Void> UNPRESS_KEY = new SupplierMethodHandler<>(KeyBinding.class, "func_74505_d");
+    private static final SupplierMethodHandler<KeyMapping, Void> RELEASE = new SupplierMethodHandler<>(KeyMapping.class, "m_90866_");
     public static boolean isMainhandLungeInProgress;
     public static boolean isMainhandLunging;
     public static boolean isOffhandLungeInProgress;
@@ -38,8 +38,8 @@ public final class InputHooks {
         return attackKeyDownTicks;
     }
 
-    public static int getLungeTime(Hand hand) {
-        if (hand == Hand.MAIN_HAND) {
+    public static int getLungeTime(InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND) {
             return attackKeyDownTicks;
         }
         return useKeyDownTicks;
@@ -50,8 +50,8 @@ public final class InputHooks {
         isMainhandLunging = true;
         lastMainhandLungeStrength = MathHelper.relativize(attackKeyDownTicks, minTime, fullTime);
         mainhandLungingStack = mc.player.getMainHandItem();
-        ClientEvents.addLungingPlayer(mc.player.getId(), Hand.MAIN_HAND);
-        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSLungeAnim(Hand.MAIN_HAND));
+        ClientEvents.addLungingPlayer(mc.player.getId(), InteractionHand.MAIN_HAND);
+        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSLungeAnim(InteractionHand.MAIN_HAND));
     }
 
     public static void parryCooldownTick() {
@@ -60,9 +60,9 @@ public final class InputHooks {
         }
     }
 
-    public static void releaseAttack(KeyBinding attack) {
+    public static void releaseAttack(KeyMapping attack) {
         if (attackKeyDownTicks != 0) {
-            UNPRESS_KEY.call(attack);
+            RELEASE.call(attack);
             attackKeyDownTicks = 0;
         }
     }
@@ -72,7 +72,7 @@ public final class InputHooks {
         isOffhandLunging = true;
         lastOffhandLungeStrength = MathHelper.relativize(useKeyDownTicks, minTime, fullTime);
         offhandLungingStack = mc.player.getOffhandItem();
-        ClientEvents.addLungingPlayer(mc.player.getId(), Hand.OFF_HAND);
-        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSLungeAnim(Hand.OFF_HAND));
+        ClientEvents.addLungingPlayer(mc.player.getId(), InteractionHand.OFF_HAND);
+        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSLungeAnim(InteractionHand.OFF_HAND));
     }
 }

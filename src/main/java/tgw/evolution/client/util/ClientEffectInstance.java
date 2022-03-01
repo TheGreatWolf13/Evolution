@@ -1,12 +1,12 @@
 package tgw.evolution.client.util;
 
-import net.minecraft.potion.Effect;
-import net.minecraft.potion.EffectInstance;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
 import tgw.evolution.patches.IEffectInstancePatch;
 
 public class ClientEffectInstance implements Comparable<ClientEffectInstance> {
 
-    private final Effect effect;
+    private final MobEffect effect;
     private int amplifier;
     private int duration;
     private ClientEffectInstance hiddenInstance;
@@ -14,28 +14,28 @@ public class ClientEffectInstance implements Comparable<ClientEffectInstance> {
     private boolean isInfinite;
     private boolean isShowIcon;
 
-    public ClientEffectInstance(Effect effect) {
+    public ClientEffectInstance(MobEffect effect) {
         this.effect = effect;
     }
 
-    public ClientEffectInstance(Effect effect, int amplifier, int duration) {
+    public ClientEffectInstance(MobEffect effect, int amplifier, int duration) {
         this.effect = effect;
         this.amplifier = amplifier;
         this.duration = duration;
     }
 
-    public ClientEffectInstance(Effect effect, int duration) {
+    public ClientEffectInstance(MobEffect effect, int duration) {
         this.effect = effect;
         this.duration = duration;
     }
 
-    public ClientEffectInstance(Effect effect, int amplifier, boolean isInfinite) {
+    public ClientEffectInstance(MobEffect effect, int amplifier, boolean isInfinite) {
         this.effect = effect;
         this.amplifier = amplifier;
         this.setInfinite(isInfinite);
     }
 
-    public ClientEffectInstance(EffectInstance instance) {
+    public ClientEffectInstance(MobEffectInstance instance) {
         this.effect = instance.getEffect();
         this.amplifier = instance.getAmplifier();
         this.duration = instance.getDuration();
@@ -52,10 +52,9 @@ public class ClientEffectInstance implements Comparable<ClientEffectInstance> {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof ClientEffectInstance)) {
+        if (!(o instanceof ClientEffectInstance other)) {
             return false;
         }
-        ClientEffectInstance other = (ClientEffectInstance) o;
         if (!this.effect.equals(other.effect)) {
             return false;
         }
@@ -79,7 +78,7 @@ public class ClientEffectInstance implements Comparable<ClientEffectInstance> {
         return this.duration;
     }
 
-    public Effect getEffect() {
+    public MobEffect getEffect() {
         return this.effect;
     }
 
@@ -126,7 +125,7 @@ public class ClientEffectInstance implements Comparable<ClientEffectInstance> {
         }
     }
 
-    public void setHiddenInstance(EffectInstance hiddenInstance) {
+    public void setHiddenInstance(MobEffectInstance hiddenInstance) {
         if (!this.isInfinite && hiddenInstance != null) {
             this.hiddenInstance = new ClientEffectInstance(hiddenInstance);
         }

@@ -1,19 +1,20 @@
 package tgw.evolution.blocks.tileentities;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.init.EvolutionTEs;
 
-public class TELiquid extends TileEntity {
+public class TELiquid extends BlockEntity {
 
     /**
      * In units of 10 mL. 1 block contains 1_000 L, a layer contains 125 L.
      */
     private int missingLiquid;
 
-    public TELiquid() {
-        super(EvolutionTEs.LIQUID.get());
+    public TELiquid(BlockPos pos, BlockState state) {
+        super(EvolutionTEs.LIQUID.get(), pos, state);
     }
 
     public int getMissingLiquid() {
@@ -21,15 +22,14 @@ public class TELiquid extends TileEntity {
     }
 
     @Override
-    public void load(BlockState state, CompoundNBT compound) {
-        super.load(state, compound);
-        this.setMissingLiquid(compound.getInt("MissingLiquid"));
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        this.setMissingLiquid(tag.getInt("MissingLiquid"));
     }
 
     @Override
-    public CompoundNBT save(CompoundNBT compound) {
-        compound.putInt("MissingLiquid", this.missingLiquid);
-        return super.save(compound);
+    protected void saveAdditional(CompoundTag tag) {
+        tag.putInt("MissingLiquid", this.missingLiquid);
     }
 
     public void setMissingLiquid(int missingLiquid) {

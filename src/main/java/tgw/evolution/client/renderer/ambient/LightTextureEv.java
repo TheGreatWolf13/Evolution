@@ -1,19 +1,17 @@
 package tgw.evolution.client.renderer.ambient;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.math.Vector3f;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.client.renderer.texture.NativeImage;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.potion.Effects;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.vector.Vector3f;
-import net.minecraft.world.World;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.LevelReader;
 import org.lwjgl.opengl.GL11C;
-import org.lwjgl.opengl.GL13C;
 import tgw.evolution.events.ClientEvents;
 
 public class LightTextureEv extends LightTexture {
@@ -49,14 +47,14 @@ public class LightTextureEv extends LightTexture {
         this.lightTexture.upload();
     }
 
-    private static float getLightBrightness(World world, int lightLevel) {
-        if (world.dimensionType().natural()) {
+    private static float getLightBrightness(LevelReader level, int lightLevel) {
+        if (level.dimensionType().natural()) {
             return ClientEvents.getInstance().getDimension().getAmbientLight(lightLevel);
         }
-        return world.dimensionType().brightness(lightLevel);
+        return level.dimensionType().brightness(lightLevel);
     }
 
-    private static float getSunBrightness(ClientWorld world, float partialTicks) {
+    private static float getSunBrightness(ClientLevel world, float partialTicks) {
         if (world.dimensionType().natural()) {
             return ClientEvents.getInstance().getDimension().getSkyBrightness(partialTicks);
         }
@@ -86,27 +84,16 @@ public class LightTextureEv extends LightTexture {
 
     @Override
     public void turnOffLightLayer() {
-        RenderSystem.activeTexture(GL13C.GL_TEXTURE2);
-        RenderSystem.disableTexture();
-        RenderSystem.activeTexture(GL13C.GL_TEXTURE0);
+        RenderSystem.setShaderTexture(2, 0);
     }
 
     @Override
     public void turnOnLightLayer() {
-        RenderSystem.activeTexture(GL13C.GL_TEXTURE2);
-        RenderSystem.matrixMode(GL11.GL_TEXTURE);
-        RenderSystem.loadIdentity();
-        RenderSystem.scalef(0.003_906_25F, 0.003_906_25F, 0.003_906_25F);
-        RenderSystem.translatef(8.0F, 8.0F, 8.0F);
-        RenderSystem.matrixMode(GL11.GL_MODELVIEW);
-        this.mc.getTextureManager().bind(this.lightTextureLocation);
+        RenderSystem.setShaderTexture(2, this.lightTextureLocation);
+        this.mc.getTextureManager().bindForSetup(this.lightTextureLocation);
         RenderSystem.texParameter(GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_MIN_FILTER, 0x2601);
         RenderSystem.texParameter(GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_MAG_FILTER, 0x2601);
-        RenderSystem.texParameter(GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_WRAP_S, 0x2900);
-        RenderSystem.texParameter(GL11C.GL_TEXTURE_2D, GL11C.GL_TEXTURE_WRAP_T, 0x2900);
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.enableTexture();
-        RenderSystem.activeTexture(GL13C.GL_TEXTURE0);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     @Override
@@ -114,11 +101,11 @@ public class LightTextureEv extends LightTexture {
         if (this.needsUpdate) {
             this.needsUpdate = false;
             this.mc.getProfiler().push("lightTex");
-            ClientWorld world = this.mc.level;
-            if (world != null) {
-                float skyBrightness = getSunBrightness(world, partialTicks);
+            ClientLevel level = this.mc.level;
+            if (level != null) {
+                float skyBrightness = getSunBrightness(level, partialTicks);
                 float skyFlash;
-                if (world.getSkyFlashTime() > 0) {
+                if (level.getSkyFlashTime() > 0) {
                     skyFlash = 1.0F;
                 }
                 else {
@@ -126,10 +113,10 @@ public class LightTextureEv extends LightTexture {
                 }
                 float waterBrightness = this.mc.player.getWaterVision();
                 float nightVisionModifier;
-                if (this.mc.player.hasEffect(Effects.NIGHT_VISION)) {
+                if (this.mc.player.hasEffect(MobEffects.NIGHT_VISION)) {
                     nightVisionModifier = GameRenderer.getNightVisionScale(this.mc.player, partialTicks);
                 }
-                else if (waterBrightness > 0.0F && this.mc.player.hasEffect(Effects.CONDUIT_POWER)) {
+                else if (waterBrightness > 0.0F && this.mc.player.hasEffect(MobEffects.CONDUIT_POWER)) {
                     nightVisionModifier = waterBrightness;
                 }
                 else {
@@ -140,12 +127,12 @@ public class LightTextureEv extends LightTexture {
                 float f4 = this.torchFlicker + 1.5F;
                 for (int y = 0; y < 16; y++) {
                     for (int x = 0; x < 16; x++) {
-                        float skyLight = getLightBrightness(world, y) * skyFlash;
-                        float bLRed = getLightBrightness(world, x) * f4;
+                        float skyLight = getLightBrightness(level, y) * skyFlash;
+                        float bLRed = getLightBrightness(level, x) * f4;
                         float bLGreen = bLRed * ((bLRed * 0.6F + 0.4F) * 0.6F + 0.4F);
                         float bLBlue = bLRed * (bLRed * bLRed * 0.6F + 0.4F);
                         VEC_1.set(bLRed, bLGreen, bLBlue);
-                        if (world.effects().forceBrightLightmap()) {
+                        if (level.effects().forceBrightLightmap()) {
                             VEC_1.lerp(LERP_1, 0.25F);
                         }
                         else {

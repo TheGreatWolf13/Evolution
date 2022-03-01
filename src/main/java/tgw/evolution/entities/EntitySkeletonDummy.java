@@ -1,28 +1,28 @@
 package tgw.evolution.entities;
 
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.monster.SkeletonEntity;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.HandSide;
-import net.minecraft.util.NonNullList;
-import net.minecraft.world.World;
-import tgw.evolution.inventory.SlotType;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.monster.Skeleton;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import tgw.evolution.inventory.AdditionalSlotType;
 
-public class EntitySkeletonDummy extends SkeletonEntity {
+public class EntitySkeletonDummy extends Skeleton {
 
-    private final HandSide mainArm;
+    private final HumanoidArm mainArm;
 
-    public EntitySkeletonDummy(World world, NonNullList<ItemStack> equipment, HandSide mainArm) {
-        super(EntityType.SKELETON, world);
-        for (EquipmentSlotType type : SlotType.SLOTS) {
+    public EntitySkeletonDummy(Level level, NonNullList<ItemStack> equipment, HumanoidArm mainArm) {
+        super(EntityType.SKELETON, level);
+        for (EquipmentSlot type : AdditionalSlotType.SLOTS) {
             this.setItemSlot(type, equipment.get(type.ordinal()));
         }
         this.mainArm = mainArm;
     }
 
     @Override
-    public HandSide getMainArm() {
+    public HumanoidArm getMainArm() {
         return this.mainArm;
     }
 }

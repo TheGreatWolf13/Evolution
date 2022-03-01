@@ -1,16 +1,16 @@
 package tgw.evolution.mixin;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
-import net.minecraft.client.renderer.ItemRenderer;
-import net.minecraft.client.renderer.color.ItemColors;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.vector.Vector3f;
-import net.minecraft.util.math.vector.Vector3i;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Vector3f;
+import net.minecraft.client.color.item.ItemColors;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import net.minecraft.world.item.ItemStack;
 import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,9 +18,9 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.items.IItemTemperature;
 import tgw.evolution.patches.IMatrix4fPatch;
-import tgw.evolution.util.DirectionUtil;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.XoRoShiRoRandom;
+import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.XoRoShiRoRandom;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -34,8 +34,8 @@ public abstract class ItemRendererMixin {
     @Final
     private ItemColors itemColors;
 
-    private static void addVertexDataTemperature(IVertexBuilder builder,
-                                                 MatrixStack.Entry entry,
+    private static void addVertexDataTemperature(VertexConsumer builder,
+                                                 PoseStack.Pose entry,
                                                  BakedQuad quad,
                                                  float red,
                                                  float green,
@@ -44,14 +44,14 @@ public abstract class ItemRendererMixin {
                                                  int light,
                                                  int overlay) {
         int[] vertices = quad.getVertices();
-        Vector3i faceNormal = quad.getDirection().getNormal();
+        Vec3i faceNormal = quad.getDirection().getNormal();
         Vector3f normal = new Vector3f(faceNormal.getX(), faceNormal.getY(), faceNormal.getZ());
         IMatrix4fPatch pose = MathHelper.getExtendedMatrix(entry.pose());
         normal.transform(entry.normal());
-        int intSize = DefaultVertexFormats.BLOCK.getIntegerSize();
+        int intSize = DefaultVertexFormat.BLOCK.getIntegerSize();
         int vertexCount = vertices.length / intSize;
         try (MemoryStack memory = MemoryStack.stackPush()) {
-            ByteBuffer buffer = memory.malloc(DefaultVertexFormats.BLOCK.getVertexSize());
+            ByteBuffer buffer = memory.malloc(DefaultVertexFormat.BLOCK.getVertexSize());
             IntBuffer intBuffer = buffer.asIntBuffer();
             for (int vertex = 0; vertex < vertexCount; ++vertex) {
                 intBuffer.clear();
@@ -80,11 +80,12 @@ public abstract class ItemRendererMixin {
     }
 
     /**
-     * @reason Avoid allocations
      * @author JellySquid
+     * <p>
+     * Avoid allocations
      */
     @Overwrite
-    public void renderModelLists(IBakedModel model, ItemStack stack, int light, int overlay, MatrixStack matrices, IVertexBuilder builder) {
+    public void renderModelLists(BakedModel model, ItemStack stack, int light, int overlay, PoseStack matrices, VertexConsumer builder) {
         XoRoShiRoRandom random = this.random;
         for (Direction direction : DirectionUtil.ALL) {
             this.renderQuadList(matrices, builder, model.getQuads(null, direction, random.setSeedAndReturn(42L)), stack, light, overlay);
@@ -98,9 +99,9 @@ public abstract class ItemRendererMixin {
      * Overwrite to implement a new method to calculate item colors.
      */
     @Overwrite
-    public void renderQuadList(MatrixStack matrices, IVertexBuilder builder, List<BakedQuad> quads, ItemStack stack, int light, int overlay) {
+    public void renderQuadList(PoseStack matrices, VertexConsumer builder, List<BakedQuad> quads, ItemStack stack, int light, int overlay) {
         boolean notEmpty = !stack.isEmpty();
-        MatrixStack.Entry entry = matrices.last();
+        PoseStack.Pose pose = matrices.last();
         for (BakedQuad quad : quads) {
             int color = 0xffff_ffff;
             if (notEmpty && quad.isTinted()) {
@@ -111,10 +112,10 @@ public abstract class ItemRendererMixin {
             float g = (color >> 8 & 255) / 255.0F;
             float b = (color & 255) / 255.0F;
             if (stack.getItem() instanceof IItemTemperature) {
-                addVertexDataTemperature(builder, entry, quad, r, g, b, a, light, overlay);
+                addVertexDataTemperature(builder, pose, quad, r, g, b, a, light, overlay);
             }
             else {
-                builder.addVertexData(entry, quad, r, g, b, light, overlay, true);
+                builder.putBulkData(pose, quad, r, g, b, light, overlay, true);
             }
         }
     }

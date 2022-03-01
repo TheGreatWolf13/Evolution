@@ -1,11 +1,11 @@
 package tgw.evolution.blocks.tileentities;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.Evolution;
-import tgw.evolution.util.BlockFlags;
+import tgw.evolution.util.constants.BlockFlags;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
@@ -16,22 +16,22 @@ public final class TEUtils {
     private TEUtils() {
     }
 
-    public static <T> void invokeIfInstance(TileEntity tile, Consumer<T> consumer) {
+    public static <T> void invokeIfInstance(BlockEntity tile, Consumer<T> consumer) {
         invokeIfInstance(tile, consumer, false);
     }
 
-    public static <T> void invokeIfInstance(TileEntity tile, Consumer<T> consumer, boolean showError) {
+    public static <T> void invokeIfInstance(BlockEntity tile, Consumer<T> consumer, boolean showError) {
         try {
             consumer.accept((T) tile);
         }
         catch (Throwable ignored) {
             if (showError) {
-                Evolution.LOGGER.warn("Error while invoking method on {} as it has failed the instance test", tile);
+                Evolution.warn("Error while invoking method on {} as it has failed the instance test", tile);
             }
         }
     }
 
-    public static <T, R> R returnIfInstance(TileEntity tile, Function<T, R> function, @Nullable R orElse) {
+    public static <T, R> R returnIfInstance(BlockEntity tile, Function<T, R> function, @Nullable R orElse) {
         try {
             return function.apply((T) tile);
         }
@@ -40,9 +40,9 @@ public final class TEUtils {
         }
     }
 
-    public static void sendRenderUpdate(TileEntity tile) {
+    public static void sendRenderUpdate(BlockEntity tile) {
         tile.setChanged();
-        World world = tile.getLevel();
+        Level world = tile.getLevel();
         BlockPos pos = tile.getBlockPos();
         BlockState state = world.getBlockState(pos);
         tile.getLevel().sendBlockUpdated(pos, state, state, BlockFlags.RERENDER);

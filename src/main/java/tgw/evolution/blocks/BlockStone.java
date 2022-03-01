@@ -1,29 +1,25 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Direction.Axis;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.World;
-import tgw.evolution.util.DirectionToIntMap;
-import tgw.evolution.util.DirectionUtil;
-import tgw.evolution.util.HarvestLevel;
-import tgw.evolution.util.RockVariant;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.constants.RockVariant;
+import tgw.evolution.util.math.DirectionToIntMap;
+import tgw.evolution.util.math.DirectionUtil;
 
 public class BlockStone extends BlockGravity implements IRockVariant {
 
     private final RockVariant variant;
 
     public BlockStone(RockVariant variant) {
-        super(Properties.of(Material.STONE)
-                        .strength(variant.getRockType().getHardness() / 2.0F, 6.0F)
-                        .sound(SoundType.STONE)
-                        .harvestLevel(HarvestLevel.COPPER), variant.getMass());
+        super(Properties.of(Material.STONE).strength(variant.getRockType().getHardness() / 2.0F, 6.0F).sound(SoundType.STONE), variant.getMass());
         this.variant = variant;
     }
 
@@ -33,11 +29,11 @@ public class BlockStone extends BlockGravity implements IRockVariant {
     }
 
     @Override
-    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         for (Direction dir : DirectionUtil.ALL) {
             mutablePos.setWithOffset(pos, dir);
-            if (BlockUtils.hasSolidSide(world, mutablePos, dir.getOpposite())) {
+            if (BlockUtils.hasSolidSide(level, mutablePos, dir.getOpposite())) {
                 return true;
             }
         }
@@ -47,6 +43,11 @@ public class BlockStone extends BlockGravity implements IRockVariant {
     @Override
     public float getFrictionCoefficient(BlockState state) {
         return 1.0f;
+    }
+
+    @Override
+    public int getHarvestLevel(BlockState state) {
+        return HarvestLevel.LOW_METAL;
     }
 
     @Override
@@ -65,52 +66,52 @@ public class BlockStone extends BlockGravity implements IRockVariant {
     }
 
     @Override
-    public boolean isPillar(BlockState state, World world, BlockPos pos, boolean nested) {
+    public boolean isPillar(BlockState state, Level level, BlockPos pos, boolean nested) {
         BlockPos down = pos.below();
-        if (canFallThrough(world.getBlockState(down))) {
+        if (canFallThrough(level.getBlockState(down))) {
             return false;
         }
-        if (canFallThrough(world.getBlockState(pos.below(2)))) {
+        if (canFallThrough(level.getBlockState(pos.below(2)))) {
             if (nested) {
                 return false;
             }
-            DirectionToIntMap map = this.checkBeams(world, down, true);
+            DirectionToIntMap map = this.checkBeams(level, down, true);
             if (map.isEmpty()) {
                 return false;
             }
-            Axis axis = BlockUtils.getSmallestBeam(map);
+            Direction.Axis axis = BlockUtils.getSmallestBeam(map);
             if (axis == null) {
                 return false;
             }
-            this.checkWeight(world, down, map, axis, false);
+            this.checkWeight(level, down, map, axis, false);
         }
         return true;
     }
 
     @Override
-    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!world.isClientSide) {
-            if (!state.canSurvive(world, pos)) {
-                popResource(world, pos, new ItemStack(this));
-                world.removeBlock(pos, false);
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!level.isClientSide) {
+            if (!state.canSurvive(level, pos)) {
+                popResource(level, pos, new ItemStack(this));
+                level.removeBlock(pos, false);
             }
         }
-        super.neighborChanged(state, world, pos, block, fromPos, isMoving);
+        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
     }
 
     @Override
-    public boolean specialCondition(World world, BlockPos pos) {
+    public boolean specialCondition(Level level, BlockPos pos) {
         BlockPos up = pos.above();
-        if (world.getBlockState(up).getBlock() == this) {
-            DirectionToIntMap map = this.checkBeams(world, up, true);
+        if (level.getBlockState(up).getBlock() == this) {
+            DirectionToIntMap map = this.checkBeams(level, up, true);
             if (map.isEmpty()) {
                 return false;
             }
-            Axis axis = BlockUtils.getSmallestBeam(map);
+            Direction.Axis axis = BlockUtils.getSmallestBeam(map);
             if (axis == null) {
                 return false;
             }
-            this.checkWeight(world, up, map, axis, true);
+            this.checkWeight(level, up, map, axis, true);
             return true;
         }
         return false;

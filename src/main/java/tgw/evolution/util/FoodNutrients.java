@@ -3,8 +3,8 @@ package tgw.evolution.util;
 public class FoodNutrients {
 
     private int food;
-    private int phosphorus;
     private int nitrogen;
+    private int phosphorus;
     private int potassium;
 
     public FoodNutrients(int food, int phosphorus, int nitrogen, int potassium) {
@@ -18,51 +18,30 @@ public class FoodNutrients {
         this(0, 0, 0, 0);
     }
 
-    public void set(EnumFoodNutrients nutrient, int value) {
+    public void add(EnumFoodNutrients nutrient, int value) {
         switch (nutrient) {
-            case FOOD:
-                this.food = value;
-                break;
-            case NITROGEN:
-                this.nitrogen = value;
-                break;
-            case PHOSPHORUS:
-                this.phosphorus = value;
-                break;
-            case POTASSIUM:
-                this.potassium = value;
-                break;
+            case FOOD -> this.food += value;
+            case NITROGEN -> this.nitrogen += value;
+            case PHOSPHORUS -> this.phosphorus += value;
+            case POTASSIUM -> this.potassium += value;
         }
     }
 
     public int get(EnumFoodNutrients nutrient) {
-        switch (nutrient) {
-            case FOOD:
-                return this.food;
-            case NITROGEN:
-                return this.nitrogen;
-            case PHOSPHORUS:
-                return this.phosphorus;
-            case POTASSIUM:
-                return this.potassium;
-        }
-        return 0;
+        return switch (nutrient) {
+            case FOOD -> this.food;
+            case NITROGEN -> this.nitrogen;
+            case PHOSPHORUS -> this.phosphorus;
+            case POTASSIUM -> this.potassium;
+        };
     }
 
-    public void add(EnumFoodNutrients nutrient, int value) {
+    public void set(EnumFoodNutrients nutrient, int value) {
         switch (nutrient) {
-            case FOOD:
-                this.food += value;
-                break;
-            case NITROGEN:
-                this.nitrogen += value;
-                break;
-            case PHOSPHORUS:
-                this.phosphorus += value;
-                break;
-            case POTASSIUM:
-                this.potassium += value;
-                break;
+            case FOOD -> this.food = value;
+            case NITROGEN -> this.nitrogen = value;
+            case PHOSPHORUS -> this.phosphorus = value;
+            case POTASSIUM -> this.potassium = value;
         }
     }
 

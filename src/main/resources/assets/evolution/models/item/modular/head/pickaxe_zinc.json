@@ -1,0 +1,6 @@
+{
+  "parent": "evolution:item/modular/head/pickaxe",
+  "textures": {
+    "0": "evolution:item/modular/head/pickaxe_zinc"
+  }
+}

@@ -5,6 +5,10 @@ package tgw.evolution.items;
  */
 public interface IEvolutionItem {
 
+    default int getTooltipLines() {
+        return 0;
+    }
+
     /**
      * @return Whether this item should prevent the player from sprinting and cancel the sprinting if it's being used.
      */

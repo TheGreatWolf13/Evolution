@@ -1,8 +1,8 @@
 package tgw.evolution.client.gui;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.inventory.container.*;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.inventory.*;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.util.reflection.BiFunctionMethodHandler;
@@ -13,77 +13,68 @@ import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 public class GuiContainerHandler implements IGuiScreenHandler {
-    private static final TetraFunctionMethodHandler<ContainerScreen, Void, Slot, Integer, Integer, ClickType> HANDLE_MOUSE_CLICK =
+    private static final TetraFunctionMethodHandler<AbstractContainerScreen, Void, Slot, Integer, Integer, ClickType> SLOT_CLICKED =
             new TetraFunctionMethodHandler<>(
-            ContainerScreen.class,
-            "func_184098_a",
+            AbstractContainerScreen.class,
+            "m_6597_",
             Slot.class,
             int.class,
             int.class,
             ClickType.class);
-    private static final FieldHandler<ContainerScreen, Boolean> IGNORE_MOUSE_UP = new FieldHandler<>(ContainerScreen.class, "field_146995_H");
-    private static final FieldHandler<ContainerScreen, Boolean> DRAG_SPLITTING = new FieldHandler<>(ContainerScreen.class, "field_147007_t");
-    private static final FieldHandler<ContainerScreen, Integer> DRAG_SPLITTING_BUTTON = new FieldHandler<>(ContainerScreen.class, "field_146988_G");
-    private static final BiFunctionMethodHandler<ContainerScreen, Slot, Double, Double> GET_SELECTED_SLOT = new BiFunctionMethodHandler<>(
-            ContainerScreen.class,
-            "func_195360_a",
+    private static final FieldHandler<AbstractContainerScreen, Boolean> SKIP_NEXT_RELEASE = new FieldHandler<>(AbstractContainerScreen.class,
+                                                                                                               "f_97719_");
+    private static final FieldHandler<AbstractContainerScreen, Boolean> IS_QUICK_CRAFTING = new FieldHandler<>(AbstractContainerScreen.class,
+                                                                                                               "f_97738_");
+    private static final FieldHandler<AbstractContainerScreen, Integer> QUICK_CRAFTING_BUTTON = new FieldHandler<>(AbstractContainerScreen.class,
+                                                                                                                   "f_97718_");
+    private static final BiFunctionMethodHandler<AbstractContainerScreen, Slot, Double, Double> FIND_SLOT = new BiFunctionMethodHandler<>(
+            AbstractContainerScreen.class,
+            "m_182417_",
             double.class,
             double.class);
     protected final Minecraft mc;
-    private final ContainerScreen<?> guiContainer;
+    private final AbstractContainerScreen<?> containerScreen;
 
-    public GuiContainerHandler(ContainerScreen<?> guiContainer) {
+    public GuiContainerHandler(AbstractContainerScreen<?> containerScreen) {
         this.mc = Minecraft.getInstance();
-        this.guiContainer = guiContainer;
+        this.containerScreen = containerScreen;
     }
 
     @Override
     public void clickSlot(Slot slot, MouseButton mouseButton, boolean shiftPressed) {
-        HANDLE_MOUSE_CLICK.call(this.guiContainer, slot, slot.index, mouseButton.getValue(), shiftPressed ? ClickType.QUICK_MOVE : ClickType.PICKUP);
+        SLOT_CLICKED.call(this.containerScreen, slot, slot.index, mouseButton.getValue(), shiftPressed ? ClickType.QUICK_MOVE : ClickType.PICKUP);
     }
 
     @Override
     public boolean disableRMBDraggingFunctionality() {
-        IGNORE_MOUSE_UP.set(this.guiContainer, true);
-        if (DRAG_SPLITTING.get(this.guiContainer)) {
-            if (DRAG_SPLITTING_BUTTON.get(this.guiContainer) == 1) {
-                DRAG_SPLITTING.set(this.guiContainer, false);
-                return true;
-            }
+        SKIP_NEXT_RELEASE.set(this.containerScreen, true);
+        if (IS_QUICK_CRAFTING.get(this.containerScreen) && QUICK_CRAFTING_BUTTON.get(this.containerScreen) == 1) {
+            IS_QUICK_CRAFTING.set(this.containerScreen, false);
+            return true;
         }
         return false;
     }
 
     @Override
     public Slot getSlotUnderMouse(double mouseX, double mouseY) {
-        return GET_SELECTED_SLOT.call(this.guiContainer, mouseX, mouseY);
+        return FIND_SLOT.call(this.containerScreen, mouseX, mouseY);
     }
 
     @Override
     public List<Slot> getSlots() {
-        return this.guiContainer.getMenu().slots;
+        return this.containerScreen.getMenu().slots;
     }
 
     @Override
     public boolean isCraftingOutput(Slot slot) {
-        return slot instanceof CraftingResultSlot ||
+        return slot instanceof ResultSlot ||
                slot instanceof FurnaceResultSlot ||
                slot instanceof MerchantResultSlot ||
-               this.guiContainer.getMenu() instanceof RepairContainer && slot.index == 2;
+               this.containerScreen.getMenu() instanceof ItemCombinerMenu && slot.index == 2;
     }
 
     @Override
     public boolean isIgnored(Slot slot) {
-        return false;
-    }
-
-    @Override
-    public boolean isMouseTweaksDisabled() {
-        return false;
-    }
-
-    @Override
-    public boolean isWheelTweakDisabled() {
         return false;
     }
 }

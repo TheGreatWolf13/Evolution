@@ -1,9 +1,9 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.SoundEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionSounds;
 
@@ -17,11 +17,11 @@ public class PacketSCParrySound implements IPacket {
         this.success = success;
     }
 
-    public static PacketSCParrySound decode(PacketBuffer buffer) {
+    public static PacketSCParrySound decode(FriendlyByteBuf buffer) {
         return new PacketSCParrySound(buffer.readBoolean());
     }
 
-    public static void encode(PacketSCParrySound packet, PacketBuffer buffer) {
+    public static void encode(PacketSCParrySound packet, FriendlyByteBuf buffer) {
         buffer.writeBoolean(packet.success);
     }
 
@@ -35,7 +35,7 @@ public class PacketSCParrySound implements IPacket {
                 else {
                     sound = EvolutionSounds.PARRY_FAIL.get();
                 }
-                Evolution.PROXY.getClientPlayer().playSound(sound, 0.4f, 0.8F + Evolution.PROXY.getClientWorld().random.nextFloat() * 0.4F);
+                Evolution.PROXY.getClientPlayer().playSound(sound, 0.4f, 0.8F + Evolution.PROXY.getClientLevel().random.nextFloat() * 0.4F);
             });
             context.get().setPacketHandled(true);
         }

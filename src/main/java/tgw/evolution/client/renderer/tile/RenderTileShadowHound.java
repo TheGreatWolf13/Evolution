@@ -7,7 +7,7 @@
 //import tgw.evolution.Evolution;
 //import tgw.evolution.blocks.tileentities.TEShadowHound;
 //import tgw.evolution.client.models.tile.ModelTileShadowHound;
-//import tgw.evolution.util.MathHelper;
+//import tgw.evolution.util.math.MathHelper;
 //
 //public class RenderTileShadowHound extends TileEntityRenderer<TEShadowHound> {
 //

@@ -1,8 +1,8 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.init.EvolutionDamage;
 
 import java.util.function.Supplier;
@@ -15,11 +15,11 @@ public class PacketCSImpactDamage implements IPacket {
         this.damage = damage;
     }
 
-    public static PacketCSImpactDamage decode(PacketBuffer buffer) {
+    public static PacketCSImpactDamage decode(FriendlyByteBuf buffer) {
         return new PacketCSImpactDamage(buffer.readFloat());
     }
 
-    public static void encode(PacketCSImpactDamage packet, PacketBuffer buffer) {
+    public static void encode(PacketCSImpactDamage packet, FriendlyByteBuf buffer) {
         buffer.writeFloat(packet.damage);
     }
 

@@ -1,25 +1,25 @@
 package tgw.evolution.patches;
 
-import net.minecraft.potion.Effect;
-import net.minecraft.potion.EffectInstance;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
 
 public interface IEffectInstancePatch {
 
-    static EffectInstance newInfinite(Effect effect, int amplifier, boolean isAmbient, boolean showParticles, boolean showIcon) {
-        EffectInstance instance = new EffectInstance(effect, 10, amplifier, isAmbient, showParticles, showIcon);
+    static MobEffectInstance newInfinite(MobEffect effect, int amplifier, boolean isAmbient, boolean showParticles, boolean showIcon) {
+        MobEffectInstance instance = new MobEffectInstance(effect, 10, amplifier, isAmbient, showParticles, showIcon);
         ((IEffectInstancePatch) instance).setInfinite(true);
         return instance;
     }
 
     int getAbsoluteDuration();
 
-    EffectInstance getHiddenEffect();
+    MobEffectInstance getHiddenEffect();
 
     boolean isInfinite();
 
     boolean isSpashPatch();
 
-    void setHiddenEffect(EffectInstance hiddenInstance);
+    void setHiddenEffect(MobEffectInstance hiddenInstance);
 
     void setInfinite(boolean infinite);
 

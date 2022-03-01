@@ -3,7 +3,7 @@
 //import net.minecraft.client.renderer.entity.model.EntityModel;
 //import net.minecraft.client.renderer.entity.model.RendererModel;
 //import tgw.evolution.entities.EntityShadowHound;
-//import tgw.evolution.util.MathHelper;
+//import tgw.evolution.util.math.MathHelper;
 //
 //public class ModelShadowHound extends EntityModel<EntityShadowHound> {
 //

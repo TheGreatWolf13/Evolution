@@ -1,23 +1,19 @@
 package tgw.evolution.client.renderer.entities;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.entity.EntityRendererManager;
-import net.minecraft.client.renderer.entity.PlayerRenderer;
-import net.minecraft.util.text.ITextComponent;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.network.chat.Component;
 
 public class RenderPlayerDummy extends PlayerRenderer {
 
-    public RenderPlayerDummy(EntityRendererManager manager, boolean smallArms) {
-        super(manager, smallArms);
+    public RenderPlayerDummy(EntityRendererProvider.Context context, boolean smallArms) {
+        super(context, smallArms);
     }
 
     @Override
-    protected void renderNameTag(AbstractClientPlayerEntity player,
-                                 ITextComponent name,
-                                 MatrixStack matrices,
-                                 IRenderTypeBuffer buffer,
-                                 int packedLight) {
+    protected void renderNameTag(AbstractClientPlayer player, Component name, PoseStack matrices, MultiBufferSource buffer, int packedLight) {
     }
 }

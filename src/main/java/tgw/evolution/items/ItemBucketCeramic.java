@@ -1,8 +1,8 @@
 package tgw.evolution.items;
 
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.init.EvolutionItems;
 

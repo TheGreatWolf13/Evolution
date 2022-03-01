@@ -1,11 +1,11 @@
 package tgw.evolution.network;
 
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.common.util.LogicalSidedProvider;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.LogicalSidedProvider;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
@@ -54,7 +54,7 @@ public class PacketSCUpdateChunkStorage implements IPacket {
         this.gasNitrogen = gasNitrogen;
     }
 
-    public static PacketSCUpdateChunkStorage decode(PacketBuffer buffer) {
+    public static PacketSCUpdateChunkStorage decode(FriendlyByteBuf buffer) {
         return new PacketSCUpdateChunkStorage(new ChunkPos(buffer.readVarInt(), buffer.readVarInt()),
                                               buffer.readVarInt(),
                                               buffer.readVarInt(),
@@ -65,7 +65,7 @@ public class PacketSCUpdateChunkStorage implements IPacket {
                                               buffer.readVarInt());
     }
 
-    public static void encode(PacketSCUpdateChunkStorage message, PacketBuffer buffer) {
+    public static void encode(PacketSCUpdateChunkStorage message, FriendlyByteBuf buffer) {
         buffer.writeVarInt(message.chunkPos.x);
         buffer.writeVarInt(message.chunkPos.z);
         buffer.writeVarInt(message.nitrogen);
@@ -80,18 +80,18 @@ public class PacketSCUpdateChunkStorage implements IPacket {
     public static void handle(PacketSCUpdateChunkStorage packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
-                Optional<World> optionalWorld = LogicalSidedProvider.CLIENTWORLD.get(context.get().getDirection().getReceptionSide());
-                optionalWorld.ifPresent(world -> CapabilityChunkStorage.getChunkStorage(world, packet.chunkPos).ifPresent(chunkStorage -> {
-                    if (!(chunkStorage instanceof ChunkStorage)) {
+                Optional<Level> optionalLevel = LogicalSidedProvider.CLIENTWORLD.get(context.get().getDirection().getReceptionSide());
+                optionalLevel.ifPresent(level -> CapabilityChunkStorage.getChunkStorage(level, packet.chunkPos).ifPresent(chunkStorage -> {
+                    if (!(chunkStorage instanceof ChunkStorage cs)) {
                         return;
                     }
-                    ((ChunkStorage) chunkStorage).setElement(EnumStorage.NITROGEN, packet.nitrogen);
-                    ((ChunkStorage) chunkStorage).setElement(EnumStorage.PHOSPHORUS, packet.phosphorus);
-                    ((ChunkStorage) chunkStorage).setElement(EnumStorage.POTASSIUM, packet.potassium);
-                    ((ChunkStorage) chunkStorage).setElement(EnumStorage.WATER, packet.water);
-                    ((ChunkStorage) chunkStorage).setElement(EnumStorage.CARBON_DIOXIDE, packet.carbonDioxide);
-                    ((ChunkStorage) chunkStorage).setElement(EnumStorage.OXYGEN, packet.oxygen);
-                    ((ChunkStorage) chunkStorage).setElement(EnumStorage.GAS_NITROGEN, packet.gasNitrogen);
+                    cs.setElement(EnumStorage.NITROGEN, packet.nitrogen);
+                    cs.setElement(EnumStorage.PHOSPHORUS, packet.phosphorus);
+                    cs.setElement(EnumStorage.POTASSIUM, packet.potassium);
+                    cs.setElement(EnumStorage.WATER, packet.water);
+                    cs.setElement(EnumStorage.CARBON_DIOXIDE, packet.carbonDioxide);
+                    cs.setElement(EnumStorage.OXYGEN, packet.oxygen);
+                    cs.setElement(EnumStorage.GAS_NITROGEN, packet.gasNitrogen);
                 }));
             });
             context.get().setPacketHandled(true);

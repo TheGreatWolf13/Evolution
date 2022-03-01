@@ -1,19 +1,19 @@
 package tgw.evolution.blocks.fluids;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraftforge.fluids.FluidAttributes;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionFluids;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.util.MathHelper;
 
 public abstract class FluidFreshWater extends FluidGeneric {
 
@@ -38,44 +38,45 @@ public abstract class FluidFreshWater extends FluidGeneric {
     }
 
     @Override
-    public ITextComponent getTextComp() {
+    public Component getTextComp() {
         return EvolutionTexts.FLUID_FRESH_WATER;
     }
 
     @Override
-    public boolean level(World world, BlockPos pos, FluidState fluidState, Direction direction, FluidGeneric otherFluid, int tolerance) {
-        BlockPos.Mutable auxPos = new BlockPos.Mutable();
+    public boolean level(Level level, BlockPos pos, FluidState fluidState, Direction direction, FluidGeneric otherFluid, int tolerance) {
+        BlockPos.MutableBlockPos auxPos = new BlockPos.MutableBlockPos();
         auxPos.set(pos).move(direction);
-        BlockState stateAtOffset = world.getBlockState(auxPos);
+        BlockState stateAtOffset = level.getBlockState(auxPos);
         //noinspection SwitchStatementWithTooFewBranches
         switch (otherFluid.getId()) {
-            case SALT_WATER:
-                int apAtPos = getApparentAmount(world, auxPos);
-                int apThis = getApparentAmount(world, pos);
+            case SALT_WATER -> {
+                int apAtPos = getApparentAmount(level, auxPos);
+                int apThis = getApparentAmount(level, pos);
                 if (apAtPos >= apThis - tolerance) {
                     return false;
                 }
-                int apMean = MathHelper.ceil((apAtPos + apThis) / 2.0);
-                int rlThis = getFluidAmount(world, pos, fluidState);
-                int rlAtPos = getFluidAmount(world, auxPos, world.getFluidState(auxPos));
-                int amountToSwap = MathHelper.clampMax(apMean - apAtPos, rlThis);
+                int apMean = Mth.ceil((apAtPos + apThis) / 2.0);
+                int rlThis = getFluidAmount(level, pos, fluidState);
+                int rlAtPos = getFluidAmount(level, auxPos, level.getFluidState(auxPos));
+                int amountToSwap = Math.min(apMean - apAtPos, rlThis);
                 if (amountToSwap == 0) {
                     return true;
                 }
                 int stay = rlThis - amountToSwap;
-                this.setBlockState(world, pos, stay);
-                onReplace(world, auxPos, stateAtOffset);
+                this.setBlockState(level, pos, stay);
+                onReplace(level, auxPos, stateAtOffset);
                 int receive = amountToSwap + rlAtPos;
-                EvolutionFluids.SALT_WATER.get().setBlockState(world, auxPos, receive);
+                EvolutionFluids.SALT_WATER.get().setBlockState(level, auxPos, receive);
                 return true;
+            }
         }
-        Evolution.LOGGER.warn("Level of " + this.getRegistryName() + " with " + otherFluid.getRegistryName() + " is not yet implemented!");
+        Evolution.warn("Level of " + this.getRegistryName() + " with " + otherFluid.getRegistryName() + " is not yet implemented!");
         return false;
     }
 
     @Override
-    public boolean tryFall(World world, BlockPos pos, Fluid otherFluid) {
-        Evolution.LOGGER.warn("Try fall of " + this.getRegistryName() + " with " + otherFluid.getRegistryName() + " is not yet implemented!");
+    public boolean tryFall(Level level, BlockPos pos, Fluid otherFluid) {
+        Evolution.warn("Try fall of " + this.getRegistryName() + " with " + otherFluid.getRegistryName() + " is not yet implemented!");
         return false;
     }
 

@@ -6,7 +6,7 @@
 //import net.minecraftforge.api.distmarker.Dist;
 //import net.minecraftforge.api.distmarker.OnlyIn;
 //import tgw.evolution.entities.EntityBull;
-//import tgw.evolution.util.MathHelper;
+//import tgw.evolution.util.math.MathHelper;
 //
 //@OnlyIn(Dist.CLIENT)
 //public class ModelBull extends EntityModel<EntityBull> {

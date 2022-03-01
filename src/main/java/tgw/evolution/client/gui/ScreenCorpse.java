@@ -1,66 +1,71 @@
 package tgw.evolution.client.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.SimpleSound;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.IReorderingProcessor;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.glfw.GLFW;
+import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.inventory.corpse.ContainerCorpse;
-import tgw.evolution.util.FullDate;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.Metric;
+import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Metric;
+import tgw.evolution.util.time.FullDate;
 
 import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
-public class ScreenCorpse extends ContainerScreen<ContainerCorpse> {
+public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
 
-    private static final ItemStack TAB_0_STACK = new ItemStack(Items.CHEST);
-    private static final ItemStack TAB_1_STACK = new ItemStack(Items.SKELETON_SKULL);
-    private final List<IReorderingProcessor> deathMessage;
-    private final ITextComponent gameDateOfDeath;
-    private final ITextComponent systemDateOfDeath;
+    private final List<FormattedCharSequence> deathMessage;
+    private final Component gameDateOfDeath;
+    private final ResourceLocation resDeath = Evolution.getResource("textures/gui/corpse_death.png");
+    private final ResourceLocation resInv = Evolution.getResource("textures/gui/corpse.png");
+    private final Component systemDateOfDeath;
+    private final ItemStack tab0Stack = new ItemStack(Items.CHEST);
+    private final ItemStack tab1Stack = new ItemStack(Items.SKELETON_SKULL);
+    private final Component textTabDeath = new TranslatableComponent("evolution.gui.corpse.tabDeath");
+    private final Component textTabInventory = new TranslatableComponent("evolution.gui.corpse.tabInventory");
     private int messageEnd;
     private int messageStart;
     private int selectedTab;
     private int tabX;
     private int tabY;
 
-    public ScreenCorpse(ContainerCorpse container, PlayerInventory inv, ITextComponent title) {
+    public ScreenCorpse(ContainerCorpse container, Inventory inv, Component title) {
         super(container, inv, title);
         this.imageHeight = 222;
         FullDate gameDate = new FullDate(container.getCorpse().getGameDeathTime());
         Date systemDate = new Date(container.getCorpse().getSystemDeathTime());
         this.deathMessage = Minecraft.getInstance().font.split(container.getCorpse().getDeathMessage(), this.imageWidth - 12);
-        this.gameDateOfDeath = new TranslationTextComponent("evolution.gui.corpse.gameDateOfDeath", gameDate.getDisplayName());
-        this.systemDateOfDeath = new TranslationTextComponent("evolution.gui.corpse.systemDateOfDeath",
-                                                              Metric.getDateFormatter(Minecraft.getInstance()
-                                                                                               .getLanguageManager()
-                                                                                               .getSelected()
-                                                                                               .getJavaLocale()).format(systemDate));
+        this.gameDateOfDeath = new TranslatableComponent("evolution.gui.corpse.gameDateOfDeath", gameDate.getDisplayName());
+        this.systemDateOfDeath = new TranslatableComponent("evolution.gui.corpse.systemDateOfDeath",
+                                                           Metric.getDateFormatter(Minecraft.getInstance()
+                                                                                            .getLanguageManager()
+                                                                                            .getSelected()
+                                                                                            .getJavaLocale()).format(systemDate));
     }
 
-    protected void drawTabs(MatrixStack matrices) {
-        this.minecraft.getTextureManager().bind(EvolutionResources.GUI_TABS);
+    protected void drawTabs(PoseStack matrices) {
+        RenderSystem.setShaderTexture(0, EvolutionResources.GUI_TABS);
         this.blit(matrices, this.tabX, this.tabY, 128, this.selectedTab == 0 ? 92 : 64, 32, 28);
         this.blit(matrices, this.tabX, this.tabY + 32, 128, this.selectedTab == 1 ? 92 : 64, 32, 28);
-        this.minecraft.getItemRenderer().renderAndDecorateItem(null, TAB_0_STACK, this.tabX + 6, this.tabY + 5);
-        this.minecraft.getItemRenderer().renderAndDecorateItem(null, TAB_1_STACK, this.tabX + 6, this.tabY + 32 + 5);
+        this.minecraft.getItemRenderer().renderAndDecorateItem(this.tab0Stack, this.tabX + 6, this.tabY + 5);
+        this.minecraft.getItemRenderer().renderAndDecorateItem(this.tab1Stack, this.tabX + 6, this.tabY + 32 + 5);
     }
 
     @Nullable
@@ -76,8 +81,8 @@ public class ScreenCorpse extends ContainerScreen<ContainerCorpse> {
     }
 
     @Override
-    public void init(Minecraft mc, int width, int height) {
-        super.init(mc, width, height);
+    protected void init() {
+        super.init();
         this.tabX = (this.width - this.imageWidth) / 2 + this.imageWidth - 4;
         this.tabY = (this.height - this.imageHeight) / 2 + 8;
     }
@@ -101,7 +106,7 @@ public class ScreenCorpse extends ContainerScreen<ContainerCorpse> {
     }
 
     @Override
-    public void render(MatrixStack matrices, int mouseX, int mouseY, float partialTicks) {
+    public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(matrices);
         if (this.selectedTab == 0) {
             super.render(matrices, mouseX, mouseY, partialTicks);
@@ -114,17 +119,17 @@ public class ScreenCorpse extends ContainerScreen<ContainerCorpse> {
     }
 
     @Override
-    protected void renderBg(MatrixStack matrices, float partialTicks, int mouseX, int mouseY) {
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.minecraft.getTextureManager().bind(EvolutionResources.GUI_CORPSE);
+    protected void renderBg(PoseStack matrices, float partialTicks, int mouseX, int mouseY) {
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderTexture(0, this.resInv);
         int relX = (this.width - this.imageWidth) / 2;
         int relY = (this.height - this.imageHeight) / 2;
         this.blit(matrices, relX, relY, 0, 0, this.imageWidth, this.imageHeight);
     }
 
-    protected void renderDeathTab(MatrixStack matrices) {
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.minecraft.getTextureManager().bind(EvolutionResources.GUI_CORPSE_DEATH);
+    protected void renderDeathTab(PoseStack matrices) {
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderTexture(0, this.resDeath);
         int relX = (this.width - this.imageWidth) / 2;
         int relY = (this.height - this.imageHeight) / 2;
         this.blit(matrices, relX, relY, 0, 0, this.imageWidth, this.imageHeight);
@@ -135,18 +140,18 @@ public class ScreenCorpse extends ContainerScreen<ContainerCorpse> {
                                             this.topPos + 6.0f,
                                             0x40_4040);
         float y = this.topPos + 20.0f;
-        for (IReorderingProcessor processor : this.font.split(this.gameDateOfDeath, this.imageWidth - 12)) {
+        for (FormattedCharSequence processor : this.font.split(this.gameDateOfDeath, this.imageWidth - 12)) {
             this.font.draw(matrices, processor, this.leftPos + 6.0f, y, 0x40_4040);
             y += 10;
         }
         y += 5;
-        for (IReorderingProcessor processor : this.font.split(this.systemDateOfDeath, this.imageWidth - 12)) {
+        for (FormattedCharSequence processor : this.font.split(this.systemDateOfDeath, this.imageWidth - 12)) {
             this.font.draw(matrices, processor, this.leftPos + 6.0f, y, 0x40_4040);
             y += 10;
         }
         y += 5;
         this.messageStart = (int) y;
-        for (IReorderingProcessor processor : this.deathMessage) {
+        for (FormattedCharSequence processor : this.deathMessage) {
             this.font.draw(matrices, processor, this.leftPos + 6.0f, y, 0x40_4040);
             y += 10;
         }
@@ -154,24 +159,24 @@ public class ScreenCorpse extends ContainerScreen<ContainerCorpse> {
     }
 
     @Override
-    protected void renderLabels(MatrixStack matrices, int mouseX, int mouseY) {
+    protected void renderLabels(PoseStack matrices, int mouseX, int mouseY) {
         GUIUtils.drawCenteredStringNoShadow(matrices, this.font, this.menu.getCorpse().getName(), this.imageWidth / 2.0f, 6.0f, 0x40_4040);
         GUIUtils.drawCenteredStringNoShadow(matrices,
                                             this.font,
-                                            this.inventory.getDisplayName(),
+                                            this.playerInventoryTitle,
                                             this.imageWidth / 2.0f,
                                             this.imageHeight - 94.0f,
                                             0x40_4040);
     }
 
     @Override
-    protected void renderTooltip(MatrixStack matrices, int mouseX, int mouseY) {
+    protected void renderTooltip(PoseStack matrices, int mouseX, int mouseY) {
         if (MathHelper.isMouseInsideBox(mouseX, mouseY, this.tabX, this.tabY, this.tabX + 32, this.tabY + 28)) {
-            this.renderTooltip(matrices, EvolutionTexts.GUI_CORPSE_TAB_INVENTORY, mouseX, mouseY);
+            this.renderTooltip(matrices, this.textTabInventory, mouseX, mouseY);
             return;
         }
         if (MathHelper.isMouseInsideBox(mouseX, mouseY, this.tabX, this.tabY + 32, this.tabX + 32, this.tabY + 32 + 28)) {
-            this.renderTooltip(matrices, EvolutionTexts.GUI_CORPSE_TAB_DEATH, mouseX, mouseY);
+            this.renderTooltip(matrices, this.textTabDeath, mouseX, mouseY);
             return;
         }
         if (this.selectedTab == 1) {
@@ -191,7 +196,7 @@ public class ScreenCorpse extends ContainerScreen<ContainerCorpse> {
 
     protected void setSelectedTab(int selectedTab) {
         if (this.selectedTab != selectedTab) {
-            Minecraft.getInstance().getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             this.selectedTab = selectedTab;
         }
     }

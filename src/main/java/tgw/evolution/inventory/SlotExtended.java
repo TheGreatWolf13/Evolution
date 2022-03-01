@@ -1,47 +1,47 @@
 package tgw.evolution.inventory;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.container.PlayerContainer;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.inventory.extendedinventory.IExtendedItemHandler;
+import tgw.evolution.inventory.extendedinventory.IExtendedInventory;
 
 public class SlotExtended extends SlotItemHandler {
 
-    private final PlayerEntity player;
+    private final Player player;
     private final int slot;
 
-    public SlotExtended(PlayerEntity player, IExtendedItemHandler handler, int index, int xPosition, int yPosition) {
+    public SlotExtended(Player player, IExtendedInventory handler, int index, int xPosition, int yPosition) {
         super(handler, index, xPosition, yPosition);
         this.player = player;
         this.slot = index;
-        this.setBackground(PlayerContainer.BLOCK_ATLAS, EvolutionResources.SLOT_EXTENDED[this.slot]);
+        this.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_EXTENDED[this.slot]);
     }
 
     protected boolean isBlocked() {
         switch (this.slot) {
-            case EvolutionResources.HAT: {
-                return !this.player.inventory.armor.get(EvolutionResources.HELMET).isEmpty();
+            case EvolutionResources.HAT -> {
+                return !this.player.getInventory().armor.get(EvolutionResources.HELMET).isEmpty();
             }
-            case EvolutionResources.BODY: {
-                if (!this.player.inventory.armor.get(EvolutionResources.CHESTPLATE).isEmpty()) {
+            case EvolutionResources.BODY -> {
+                if (!this.player.getInventory().armor.get(EvolutionResources.CHESTPLATE).isEmpty()) {
                     return true;
                 }
                 return !this.getItemHandler().getStackInSlot(EvolutionResources.CLOAK).isEmpty();
             }
-            case EvolutionResources.LEGS: {
-                return !this.player.inventory.armor.get(EvolutionResources.LEGGINGS).isEmpty();
+            case EvolutionResources.LEGS -> {
+                return !this.player.getInventory().armor.get(EvolutionResources.LEGGINGS).isEmpty();
             }
-            case EvolutionResources.FEET: {
-                return !this.player.inventory.armor.get(EvolutionResources.BOOTS).isEmpty();
+            case EvolutionResources.FEET -> {
+                return !this.player.getInventory().armor.get(EvolutionResources.BOOTS).isEmpty();
             }
         }
         return false;
     }
 
     @Override
-    public boolean mayPickup(PlayerEntity player) {
+    public boolean mayPickup(Player player) {
         if (this.isBlocked()) {
             return false;
         }
@@ -53,6 +53,6 @@ public class SlotExtended extends SlotItemHandler {
         if (this.isBlocked()) {
             return false;
         }
-        return ((IExtendedItemHandler) this.getItemHandler()).isItemValidForSlot(this.slot, stack, this.player);
+        return ((IExtendedInventory) this.getItemHandler()).isItemValidForSlot(this.slot, stack, this.player);
     }
 }

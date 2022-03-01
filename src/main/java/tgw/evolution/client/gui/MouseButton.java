@@ -19,13 +19,11 @@ public enum MouseButton {
 
     @Nullable
     public static MouseButton fromGLFW(int glfw) {
-        switch (glfw) {
-            case GLFW.GLFW_MOUSE_BUTTON_LEFT:
-                return LEFT;
-            case GLFW.GLFW_MOUSE_BUTTON_RIGHT:
-                return RIGHT;
-        }
-        return null;
+        return switch (glfw) {
+            case GLFW.GLFW_MOUSE_BUTTON_LEFT -> LEFT;
+            case GLFW.GLFW_MOUSE_BUTTON_RIGHT -> RIGHT;
+            default -> throw new IllegalArgumentException("Unknown MouseButton id: " + glfw);
+        };
     }
 
     public int getValue() {

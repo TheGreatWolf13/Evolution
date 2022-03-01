@@ -4,25 +4,25 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.server.command.EnumArgument;
-import tgw.evolution.util.Date;
-import tgw.evolution.util.FullDate;
-import tgw.evolution.util.Time;
+import tgw.evolution.util.time.Date;
+import tgw.evolution.util.time.FullDate;
+import tgw.evolution.util.time.Time;
 
-public class CommandDate implements Command<CommandSource> {
+public class CommandDate implements Command<CommandSourceStack> {
 
-    private static final Command<CommandSource> CMD = new CommandDate();
+    private static final Command<CommandSourceStack> CMD = new CommandDate();
     private static final IntegerArgumentType DAY = IntegerArgumentType.integer(1, Time.DAYS_IN_A_MONTH);
     private static final EnumArgument<Date.Month> MONTH = EnumArgument.enumArgument(Date.Month.class);
     private static final IntegerArgumentType YEAR = IntegerArgumentType.integer(1_000);
     private static final IntegerArgumentType HOUR = IntegerArgumentType.integer(0, 23);
     private static final IntegerArgumentType MINUTE = IntegerArgumentType.integer(0, 59);
 
-    public static void register(CommandDispatcher<CommandSource> dispatcher) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("date")
                                     .requires(cs -> cs.hasPermission(3))
                                     .then(Commands.argument("day", DAY)
@@ -36,7 +36,7 @@ public class CommandDate implements Command<CommandSource> {
     }
 
     @Override
-    public int run(CommandContext<CommandSource> context) {
+    public int run(CommandContext<CommandSourceStack> context) {
         int day = IntegerArgumentType.getInteger(context, "day");
         Date.Month month = context.getArgument("month", Date.Month.class);
         int year = IntegerArgumentType.getInteger(context, "year");
@@ -53,15 +53,15 @@ public class CommandDate implements Command<CommandSource> {
             Time time = new Time(hour, minute);
             FullDate fullDate = new FullDate(date, time);
             long ticks = fullDate.toTicks();
-            for (ServerWorld serverWorld : context.getSource().getServer().getAllLevels()) {
-                serverWorld.setDayTime(ticks);
+            for (ServerLevel level : context.getSource().getServer().getAllLevels()) {
+                level.setDayTime(ticks);
             }
-            context.getSource().sendSuccess(new TranslationTextComponent("command.evolution.date.success", fullDate.getDisplayName()), true);
+            context.getSource().sendSuccess(new TranslatableComponent("command.evolution.date.success", fullDate.getDisplayName()), true);
             return SINGLE_SUCCESS;
         }
         catch (IllegalStateException e) {
             context.getSource()
-                   .sendFailure(new TranslationTextComponent("command.evolution.date.error", Date.STARTING_DATE.getDisplayName(), Time.START_TIME));
+                   .sendFailure(new TranslatableComponent("command.evolution.date.error", Date.STARTING_DATE.getDisplayName(), Time.START_TIME));
             return 0;
         }
     }

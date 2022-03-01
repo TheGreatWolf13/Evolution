@@ -1,19 +1,19 @@
 package tgw.evolution.items;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUseContext;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.IFireSource;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
@@ -25,36 +25,36 @@ import java.util.List;
 
 public class ItemStick extends ItemBlock {
 
-    public ItemStick(Block blockIn, Properties builder) {
-        super(blockIn, builder);
+    public ItemStick(Block block, Properties builder) {
+        super(block, builder);
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(EvolutionTexts.TOOLTIP_STICK_LIT);
     }
 
     @Override
-    public ActionResultType useOn(ItemUseContext context) {
-        World world = context.getLevel();
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
-        BlockState state = world.getBlockState(pos);
+        BlockState state = level.getBlockState(pos);
         Block block = state.getBlock();
         if (block instanceof IFireSource && ((IFireSource) block).isFireSource(state)) {
-            Chunk chunk = world.getChunkAt(pos);
+            LevelChunk chunk = level.getChunkAt(pos);
             if (CapabilityChunkStorage.remove(chunk, EnumStorage.OXYGEN, 1)) {
                 CapabilityChunkStorage.add(chunk, EnumStorage.CARBON_DIOXIDE, 1);
-                PlayerEntity player = context.getPlayer();
+                Player player = context.getPlayer();
                 context.getItemInHand().shrink(1);
-                ItemStack stack = ItemTorch.createStack(world, 1);
-                if (!player.inventory.add(stack)) {
-                    BlockUtils.dropItemStack(world, pos, stack);
+                ItemStack stack = ItemTorch.createStack(level, 1);
+                if (!player.getInventory().add(stack)) {
+                    BlockUtils.dropItemStack(level, pos, stack);
                 }
-                world.playSound(player, pos, SoundEvents.FIRE_AMBIENT, SoundCategory.PLAYERS, 1.0F, world.random.nextFloat() * 0.7F + 0.3F);
+                level.playSound(player, pos, SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 1.0F, level.random.nextFloat() * 0.7F + 0.3F);
                 player.awardStat(Stats.ITEM_CRAFTED.get(EvolutionItems.torch.get()));
-                return ActionResultType.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
-            return ActionResultType.FAIL;
+            return InteractionResult.FAIL;
         }
         return super.useOn(context);
     }

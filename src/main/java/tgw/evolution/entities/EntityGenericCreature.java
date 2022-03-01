@@ -1,36 +1,37 @@
 package tgw.evolution.entities;
 
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.Direction;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ForgeHooks;
 import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.util.EntityStates;
+import tgw.evolution.util.constants.EntityStates;
 
-public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> extends CreatureEntity implements IEntityProperties,
-                                                                                                                  IEvolutionEntity<T> {
+public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> extends PathfinderMob implements IEntityProperties,
+                                                                                                                 IEvolutionEntity<T> {
 
-    protected static final DataParameter<Boolean> DEAD = EntityDataManager.defineId(EntityGenericCreature.class, DataSerializers.BOOLEAN);
-    protected static final DataParameter<Boolean> SKELETON = EntityDataManager.defineId(EntityGenericCreature.class, DataSerializers.BOOLEAN);
+    protected static final EntityDataAccessor<Boolean> DEAD = SynchedEntityData.defineId(EntityGenericCreature.class, EntityDataSerializers.BOOLEAN);
+    protected static final EntityDataAccessor<Boolean> SKELETON = SynchedEntityData.defineId(EntityGenericCreature.class,
+                                                                                             EntityDataSerializers.BOOLEAN);
     protected int deathTimer;
 
-    protected EntityGenericCreature(EntityType<T> type, World worldIn) {
-        super(type, worldIn);
+    protected EntityGenericCreature(EntityType<T> type, Level level) {
+        super(type, level);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundNBT compound) {
-        super.addAdditionalSaveData(compound);
-        compound.putInt("DeathTimer", this.deathTimer);
-        compound.putBoolean("Dead", this.entityData.get(DEAD));
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt("DeathTimer", this.deathTimer);
+        tag.putBoolean("Dead", this.entityData.get(DEAD));
     }
 
     @Override
@@ -48,7 +49,7 @@ public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> 
                         this.entityData.set(SKELETON, true);
                     }
                     else {
-                        this.remove();
+                        this.discard();
                     }
                 }
             }
@@ -84,8 +85,8 @@ public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> 
                     attackingEntity.awardKillScore(this, this.deathScore, cause);
                 }
                 Entity entity = cause.getEntity();
-                if (entity != null && this.level instanceof ServerWorld) {
-                    entity.killed((ServerWorld) this.level, this);
+                if (entity != null && this.level instanceof ServerLevel serverLevel) {
+                    entity.killed(serverLevel, this);
                 }
                 if (this.isSleeping()) {
                     this.stopSleeping();
@@ -103,8 +104,8 @@ public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> 
                 attackingEntity.awardKillScore(this, this.deathScore, cause);
             }
             Entity trueSource = cause.getEntity();
-            if (trueSource != null && this.level instanceof ServerWorld) {
-                trueSource.killed((ServerWorld) this.level, this);
+            if (trueSource != null && this.level instanceof ServerLevel serverLevel) {
+                trueSource.killed(serverLevel, this);
             }
             this.getCombatTracker().recheckStatus();
             this.level.broadcastEntityEvent(this, EntityStates.DEATH_SOUND);
@@ -129,7 +130,7 @@ public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> 
     }
 
     @Override
-    protected int getExperienceReward(PlayerEntity player) {
+    protected int getExperienceReward(Player player) {
         return 0;
     }
 
@@ -189,10 +190,10 @@ public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> 
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundNBT compound) {
-        super.readAdditionalSaveData(compound);
-        this.deathTimer = compound.getInt("DeathTimer");
-        this.entityData.set(DEAD, compound.getBoolean("Dead"));
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.deathTimer = tag.getInt("DeathTimer");
+        this.entityData.set(DEAD, tag.getBoolean("Dead"));
     }
 
     @Override

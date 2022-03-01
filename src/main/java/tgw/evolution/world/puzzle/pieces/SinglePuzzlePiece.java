@@ -15,7 +15,7 @@
 //import net.minecraft.world.IWorld;
 //import net.minecraft.world.gen.feature.template.*;
 //import tgw.evolution.init.EvolutionBlocks;
-//import tgw.evolution.util.NBTHelper;
+//import tgw.evolution.util.constants.NBTHelper;
 //import tgw.evolution.world.puzzle.EnumPuzzleType;
 //import tgw.evolution.world.puzzle.ProcessorPuzzleReplacement;
 //import tgw.evolution.world.puzzle.PuzzlePiece;

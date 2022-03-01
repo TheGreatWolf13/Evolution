@@ -1,71 +1,77 @@
 package tgw.evolution.events;
 
 import com.mojang.authlib.minecraft.MinecraftSessionService;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import net.minecraft.block.Block;
-import net.minecraft.client.AbstractOption;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.gui.AccessibilityScreen;
-import net.minecraft.client.gui.advancements.AdvancementsScreen;
-import net.minecraft.client.gui.screen.*;
-import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.gui.screen.inventory.CreativeScreen;
-import net.minecraft.client.gui.screen.inventory.InventoryScreen;
-import net.minecraft.client.gui.widget.Widget;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.renderer.ActiveRenderInfo;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
+import net.minecraft.client.Timer;
+import net.minecraft.client.*;
+import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.ConfirmLinkScreen;
+import net.minecraft.client.gui.screens.PauseScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.achievement.StatsScreen;
+import net.minecraft.client.gui.screens.advancements.AdvancementsScreen;
+import net.minecraft.client.gui.screens.controls.ControlsScreen;
+import net.minecraft.client.gui.screens.controls.KeyBindsScreen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.player.Input;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.entity.PlayerRenderer;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.client.settings.PointOfView;
-import net.minecraft.client.util.ClientRecipeBook;
-import net.minecraft.client.util.InputMappings;
-import net.minecraft.client.world.DimensionRenderInfo;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.Pose;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.potion.Effect;
-import net.minecraft.potion.Effects;
-import net.minecraft.server.management.PlayerProfileCache;
-import net.minecraft.stats.StatisticsManager;
-import net.minecraft.tileentity.SkullTileEntity;
-import net.minecraft.util.Timer;
-import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.EntityRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.DimensionType;
-import net.minecraft.world.GameType;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.StatsCounter;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.SkullBlockEntity;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.client.ConfigGuiHandler;
 import net.minecraftforge.client.event.*;
-import net.minecraftforge.client.gui.ForgeIngameGui;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.client.gui.ModListScreen;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.client.gui.screen.ModListScreen;
+import net.minecraftforge.fml.config.ConfigTracker;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.ClientProxy;
 import tgw.evolution.Evolution;
@@ -76,7 +82,8 @@ import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.client.audio.SoundEntityEmitted;
 import tgw.evolution.client.gui.*;
 import tgw.evolution.client.gui.advancements.ScreenAdvancements;
-import tgw.evolution.client.gui.controls.ScreenControls;
+import tgw.evolution.client.gui.config.ScreenModConfigSelection;
+import tgw.evolution.client.gui.controls.ScreenKeyBinds;
 import tgw.evolution.client.gui.stats.ScreenStats;
 import tgw.evolution.client.gui.toast.ToastCustomRecipe;
 import tgw.evolution.client.layers.LayerBack;
@@ -86,11 +93,10 @@ import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.client.util.ClientEffectInstance;
+import tgw.evolution.client.util.EvolutionInput;
 import tgw.evolution.client.util.LungeAttackInfo;
 import tgw.evolution.client.util.LungeChargeInfo;
-import tgw.evolution.client.util.MovementInputEvolution;
 import tgw.evolution.config.EvolutionConfig;
-import tgw.evolution.entities.IEntityPatch;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.hooks.InputHooks;
 import tgw.evolution.hooks.TickrateChanger;
@@ -98,13 +104,16 @@ import tgw.evolution.init.*;
 import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.items.*;
 import tgw.evolution.network.*;
+import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IMinecraftPatch;
-import tgw.evolution.stats.EvolutionStatisticsManager;
+import tgw.evolution.stats.EvolutionStatsCounter;
 import tgw.evolution.util.AdvancedEntityRayTraceResult;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.OptiFineHelper;
+import tgw.evolution.util.HitInformation;
 import tgw.evolution.util.PlayerHelper;
-import tgw.evolution.util.hitbox.BodyPart;
+import tgw.evolution.util.constants.OptiFineHelper;
+import tgw.evolution.util.hitbox.HitboxType;
+import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.reflection.FieldHandler;
 import tgw.evolution.util.reflection.StaticFieldHandler;
 import tgw.evolution.util.toast.ToastHolderRecipe;
@@ -114,37 +123,37 @@ import tgw.evolution.world.dimension.DimensionOverworld;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 public class ClientEvents {
 
-    public static final FieldHandler<Minecraft, Integer> LEFT_COUNTER_FIELD = new FieldHandler<>(Minecraft.class, "field_71429_W");
-    public static final List<ClientEffectInstance> EFFECTS_TO_ADD = new ArrayList<>();
-    public static final List<ClientEffectInstance> EFFECTS = new ArrayList<>();
+    public static final FieldHandler<Minecraft, Integer> MISS_TIME = new FieldHandler<>(Minecraft.class, "f_91078_");
+    public static final ObjectList<ClientEffectInstance> EFFECTS_TO_ADD = new ObjectArrayList<>();
+    public static final ObjectList<ClientEffectInstance> EFFECTS = new ObjectArrayList<>();
     public static final Int2ObjectMap<LungeChargeInfo> ABOUT_TO_LUNGE_PLAYERS = new Int2ObjectOpenHashMap<>();
     public static final Int2ObjectMap<LungeAttackInfo> LUNGING_PLAYERS = new Int2ObjectOpenHashMap<>();
     public static final Int2ObjectMap<ItemStack> BELT_ITEMS = new Int2ObjectOpenHashMap<>();
     public static final Int2ObjectMap<ItemStack> BACK_ITEMS = new Int2ObjectOpenHashMap<>();
+    private static final Int2ObjectMap<Set<HitboxType>> MAINHAND_HITS = new Int2ObjectOpenHashMap<>();
+    private static final BlockHitResult[] MAINHAND_HIT_RESULT = new BlockHitResult[1];
     private static final Map<PlayerRenderer, Object> INJECTED_PLAYER_RENDERERS = new WeakHashMap<>();
-    private static final StaticFieldHandler<SkullTileEntity, PlayerProfileCache> PLAYER_PROF_FIELD = new StaticFieldHandler<>(SkullTileEntity.class,
-                                                                                                                              "field_184298_j");
-    private static final StaticFieldHandler<SkullTileEntity, MinecraftSessionService> SESSION_FIELD = new StaticFieldHandler<>(SkullTileEntity.class,
-                                                                                                                               "field_184299_k");
-    private static final FieldHandler<GameRenderer, LightTexture> LIGHTMAP_FIELD = new FieldHandler<>(GameRenderer.class, "field_78513_d");
-    private static final FieldHandler<Minecraft, Timer> TIMER_FIELD = new FieldHandler<>(Minecraft.class, "field_71428_T");
-    private static final FieldHandler<Timer, Float> TICKRATE_FIELD = new FieldHandler<>(Timer.class, "field_194149_e");
-    private static final FieldHandler<ClientPlayerEntity, ClientRecipeBook> RECIPE_BOOK_FIELD = new FieldHandler<>(ClientPlayerEntity.class,
-                                                                                                                   "field_192036_cb");
-    private static final FieldHandler<ModContainer, EnumMap<ModConfig.Type, ModConfig>> CONFIGS = new FieldHandler<>(ModContainer.class, "configs");
-    private static final FieldHandler<ClientPlayerEntity, StatisticsManager> STATS = new FieldHandler<>(ClientPlayerEntity.class, "field_146108_bO");
-    private static final StaticFieldHandler<DimensionRenderInfo, Object2ObjectMap<ResourceLocation, DimensionRenderInfo>> RENDER_INFO =
-            new StaticFieldHandler<>(
-            DimensionRenderInfo.class,
-            "field_239208_a_");
-    private static final FieldHandler<GameRenderer, Boolean> EFFECT_ACTIVE = new FieldHandler<>(GameRenderer.class, "field_175083_ad");
+    private static final StaticFieldHandler<SkullBlockEntity, GameProfileCache> PROFILE_CACHE = new StaticFieldHandler<>(SkullBlockEntity.class,
+                                                                                                                         "f_59755_");
+    private static final StaticFieldHandler<SkullBlockEntity, MinecraftSessionService> SESSION_SERVICE =
+            new StaticFieldHandler<>(SkullBlockEntity.class,
+                                                                                                                                  "f_59756_");
+    private static final FieldHandler<GameRenderer, LightTexture> LIGHT_TEXTURE = new FieldHandler<>(GameRenderer.class, "f_109074_");
+    private static final FieldHandler<Minecraft, Timer> TIMER = new FieldHandler<>(Minecraft.class, "f_90991_");
+    private static final FieldHandler<Timer, Float> MS_PER_TICK = new FieldHandler<>(Timer.class, "f_92521_");
+    private static final FieldHandler<LocalPlayer, ClientRecipeBook> RECIPE_BOOK = new FieldHandler<>(LocalPlayer.class, "f_108592_");
+    private static final FieldHandler<LocalPlayer, StatsCounter> STATS = new FieldHandler<>(LocalPlayer.class, "f_108591_");
+    private static final StaticFieldHandler<DimensionSpecialEffects, Object2ObjectMap<ResourceLocation, DimensionSpecialEffects>> DIMENSION_EFFECTS = new StaticFieldHandler<>(
+            DimensionSpecialEffects.class,
+            "f_108857_");
+    private static final FieldHandler<GameRenderer, Boolean> EFFECT_ACTIVE = new FieldHandler<>(GameRenderer.class, "f_109053_");
     private static ClientEvents instance;
     @Nullable
     private static IGuiScreenHandler handler;
-    private static boolean disableWheelForThisContainer;
     @Nullable
     private static Slot oldSelectedSlot;
     private static double accumulatedScrollDelta;
@@ -156,24 +165,26 @@ public class ClientEvents {
     public int jumpTicks;
     @Nullable
     public Entity leftPointedEntity;
-    public EntityRayTraceResult leftRayTrace;
+    public EntityHitResult leftRayTrace;
     public int mainhandTimeSinceLastHit;
     public int offhandTimeSinceLastHit;
     @Nullable
     public Entity rightPointedEntity;
-    public EntityRayTraceResult rightRayTrace;
-    private Vector3d cameraPos = Vector3d.ZERO;
+    public EntityHitResult rightRayTrace;
+    private Vec3 cameraPos = Vec3.ZERO;
     private int currentShader;
     private int desiredShader;
     private DimensionOverworld dimension;
     private boolean initialized;
     private boolean inverted;
     private boolean isJumpPressed;
+    private boolean isMainhandCustomAttacking;
+    private boolean isOffhandCustomAttacking;
     private boolean isPreviousProned;
     private boolean isSneakPressed;
     private boolean lunging;
     private GameRenderer oldGameRenderer;
-    private PointOfView previousPointOfView;
+    private CameraType previousCameraType;
     private boolean previousPressed;
     private boolean proneToggle;
     private boolean sneakpreviousPressed;
@@ -191,7 +202,24 @@ public class ClientEvents {
         this.renderer = new ClientRenderer(mc, this);
     }
 
-    public static void addLungingPlayer(int entityId, Hand hand) {
+    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
+    private static void addConfigSetToMap(ModContainer container, ModConfig.Type type, Map<ModConfig.Type, Set<ModConfig>> configMap) {
+        if (type == ModConfig.Type.CLIENT && OptiFineHelper.isLoaded() && "forge".equals(container.getModId())) {
+            Evolution.info("Ignoring Forge's client config since OptiFine was detected");
+            return;
+        }
+        Set<ModConfig> configSet = getConfigSets().get(type);
+        synchronized (configSet) {
+            Set<ModConfig> filteredConfigSets = configSet.stream()
+                                                         .filter(config -> config.getModId().equals(container.getModId()))
+                                                         .collect(Collectors.toSet());
+            if (!filteredConfigSets.isEmpty()) {
+                configMap.put(type, filteredConfigSets);
+            }
+        }
+    }
+
+    public static void addLungingPlayer(int entityId, InteractionHand hand) {
         LungeChargeInfo lungeCharge = ABOUT_TO_LUNGE_PLAYERS.get(entityId);
         if (lungeCharge != null) {
             lungeCharge.resetHand(hand);
@@ -209,7 +237,7 @@ public class ClientEvents {
         return a.isEmpty() || b.isEmpty() || a.sameItem(b) && ItemStack.tagMatches(a, b);
     }
 
-    public static boolean containsEffect(List<ClientEffectInstance> list, Effect effect) {
+    public static boolean containsEffect(List<ClientEffectInstance> list, MobEffect effect) {
         for (ClientEffectInstance instance : list) {
             if (instance.getEffect() == effect) {
                 return true;
@@ -218,50 +246,45 @@ public class ClientEvents {
         return false;
     }
 
+    private static Map<ModConfig.Type, Set<ModConfig>> createConfigMap(ModContainer container) {
+        Map<ModConfig.Type, Set<ModConfig>> modConfigMap = new EnumMap<>(ModConfig.Type.class);
+        addConfigSetToMap(container, ModConfig.Type.CLIENT, modConfigMap);
+        addConfigSetToMap(container, ModConfig.Type.COMMON, modConfigMap);
+        addConfigSetToMap(container, ModConfig.Type.SERVER, modConfigMap);
+        return modConfigMap;
+    }
+
     @Nullable
     private static IGuiScreenHandler findHandler(Screen currentScreen) {
-        if (currentScreen instanceof CreativeScreen) {
-            return new GuiContainerCreativeHandler((CreativeScreen) currentScreen);
+        if (currentScreen instanceof CreativeModeInventoryScreen creativeScreen) {
+            return new GuiContainerCreativeHandler(creativeScreen);
         }
-        if (currentScreen instanceof ContainerScreen) {
-            return new GuiContainerHandler((ContainerScreen<?>) currentScreen);
+        if (currentScreen instanceof AbstractContainerScreen containerScreen) {
+            return new GuiContainerHandler(containerScreen);
         }
         return null;
     }
 
-    public static void fixAccessibilityScreen() {
-        StaticFieldHandler<AccessibilityScreen, AbstractOption[]> options = new StaticFieldHandler<>(AccessibilityScreen.class,
-                                                                                                     "field_212986_a",
-                                                                                                     true);
-        options.set(new AbstractOption[]{AbstractOption.NARRATOR,
-                                         AbstractOption.SHOW_SUBTITLES,
-                                         AbstractOption.TEXT_BACKGROUND_OPACITY,
-                                         AbstractOption.TEXT_BACKGROUND,
-                                         AbstractOption.CHAT_OPACITY,
-                                         AbstractOption.CHAT_LINE_SPACING,
-                                         AbstractOption.CHAT_DELAY,
-                                         AbstractOption.TOGGLE_CROUCH,
-                                         AbstractOption.TOGGLE_SPRINT,
-                                         AbstractOption.SCREEN_EFFECTS_SCALE,
-                                         AbstractOption.FOV_EFFECTS_SCALE});
-    }
-
     public static void fixInputMappings() {
-        FieldHandler<InputMappings.Type, BiFunction<Integer, String, ITextComponent>> function = new FieldHandler<>(InputMappings.Type.class,
-                                                                                                                    "field_237522_f_");
-        function.set(InputMappings.Type.KEYSYM, (keyCode, translationKey) -> {
+        FieldHandler<InputConstants.Type, BiFunction<Integer, String, Component>> displayTextSupplier = new FieldHandler<>(InputConstants.Type.class,
+                                                                                                                           "f_84887_");
+        displayTextSupplier.set(InputConstants.Type.KEYSYM, (keyCode, translationKey) -> {
             String formattedString = I18n.get(translationKey);
             if (formattedString.equals(translationKey)) {
                 String s = GLFW.glfwGetKeyName(keyCode, -1);
                 if (s != null) {
-                    return new StringTextComponent(s.toUpperCase(Locale.ROOT));
+                    return new TextComponent(s.toUpperCase(Locale.ROOT));
                 }
             }
-            return new TranslationTextComponent(translationKey);
+            return new TranslatableComponent(translationKey);
         });
     }
 
-    public static int getIndexAndRemove(List<ClientEffectInstance> list, Effect effect) {
+    private static EnumMap<ModConfig.Type, Set<ModConfig>> getConfigSets() {
+        return ObfuscationReflectionHelper.getPrivateValue(ConfigTracker.class, ConfigTracker.INSTANCE, "configSets");
+    }
+
+    public static int getIndexAndRemove(List<ClientEffectInstance> list, MobEffect effect) {
         Iterator<ClientEffectInstance> iterator = list.iterator();
         int i = -1;
         while (iterator.hasNext()) {
@@ -278,41 +301,28 @@ public class ClientEvents {
         return instance;
     }
 
-    private static float getRightCooldownPeriod(IOffhandAttackable item) {
-        double attackSpeed = item.getAttackSpeed() + PlayerHelper.ATTACK_SPEED;
+    private static float getRightCooldownPeriod(IOffhandAttackable item, ItemStack stack) {
+        double attackSpeed = item.getAttackSpeed(stack) + PlayerHelper.ATTACK_SPEED;
         return (float) (1 / attackSpeed * 20);
     }
 
     public static void onFinishLoading() {
-        Evolution.LOGGER.info("Creating config GUI factories...");
+        Evolution.info("Creating config GUI factories...");
         ModList.get().forEachModContainer((modId, container) -> {
-            // Ignore mods that already implement their own custom factory
-            if (container.getCustomExtension(ExtensionPoint.CONFIGGUIFACTORY).isPresent()) {
+            if (container.getCustomExtension(ConfigGuiHandler.ConfigGuiFactory.class).isPresent()) {
                 return;
             }
-            EnumMap<ModConfig.Type, ModConfig> configs = CONFIGS.get(container);
-            ModConfig clientConfig = configs.get(ModConfig.Type.CLIENT);
-            // Optifine basically breaks Forge's client config, so it's simply not added
-            if (OptiFineHelper.isLoaded() && "forge".equals(modId)) {
-                Evolution.LOGGER.info("Ignoring Forge's client config since OptiFine was detected");
-                clientConfig = null;
-            }
-            ModConfig commonConfig = configs.get(ModConfig.Type.COMMON);
-            ForgeConfigSpec clientSpec = clientConfig != null ? clientConfig.getSpec() : null;
-            ForgeConfigSpec commonSpec = commonConfig != null ? commonConfig.getSpec() : null;
-            if (clientSpec != null || commonSpec != null) {// Only add if at least one config exists
-                Evolution.LOGGER.info("Registering config factory for mod {} (client: {}, common: {})",
-                                      modId,
-                                      clientSpec != null,
-                                      commonSpec != null);
+            Map<ModConfig.Type, Set<ModConfig>> modConfigMap = createConfigMap(container);
+            if (!modConfigMap.isEmpty()) {
+                Evolution.info("Registering config factory for mod {}. Found {} client config(s) and {} common config(s)",
+                               modId,
+                               modConfigMap.getOrDefault(ModConfig.Type.CLIENT, Collections.emptySet()).size(),
+                               modConfigMap.getOrDefault(ModConfig.Type.COMMON, Collections.emptySet()).size());
                 String displayName = container.getModInfo().getDisplayName();
-                container.registerExtensionPoint(ExtensionPoint.CONFIGGUIFACTORY,
-                                                 () -> (mc, screen) -> new ScreenConfig(screen,
-                                                                                        modId,
-                                                                                        displayName,
-                                                                                        clientSpec,
-                                                                                        commonSpec,
-                                                                                        AbstractGui.BACKGROUND_LOCATION));
+                container.registerExtensionPoint(ConfigGuiHandler.ConfigGuiFactory.class,
+                                                 () -> new ConfigGuiHandler.ConfigGuiFactory((mc, screen) -> new ScreenModConfigSelection(screen,
+                                                                                                                                          displayName,
+                                                                                                                                          modConfigMap)));
             }
         });
     }
@@ -325,14 +335,6 @@ public class ClientEvents {
         canDoRMBDrag = false;
         if (newScreen != null) {
             handler = findHandler(newScreen);
-            if (handler == null) {
-                return;
-            }
-            boolean disableForThisContainer = handler.isMouseTweaksDisabled();
-            disableWheelForThisContainer = handler.isWheelTweakDisabled();
-            if (disableForThisContainer) {
-                handler = null;
-            }
         }
     }
 
@@ -341,7 +343,7 @@ public class ClientEvents {
         ModelRegistry.register(event);
     }
 
-    public static boolean removeEffect(List<ClientEffectInstance> list, Effect effect) {
+    public static boolean removeEffect(List<ClientEffectInstance> list, MobEffect effect) {
         Iterator<ClientEffectInstance> iterator = list.iterator();
         while (iterator.hasNext()) {
             if (iterator.next().getEffect() == effect) {
@@ -352,7 +354,7 @@ public class ClientEvents {
         return false;
     }
 
-    public static void removePotionEffect(Effect effect) {
+    public static void removePotionEffect(MobEffect effect) {
         removeEffect(EFFECTS, effect);
         if (removeEffect(EFFECTS_TO_ADD, effect)) {
             instance.effectToAddTicks = 0;
@@ -392,16 +394,19 @@ public class ClientEvents {
         EFFECTS.clear();
         EFFECTS_TO_ADD.clear();
         this.inverted = false;
-        this.dimension = null;
         ABOUT_TO_LUNGE_PLAYERS.clear();
         LUNGING_PLAYERS.clear();
         if (this.mc.level == null) {
             this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
             if (((IMinecraftPatch) this.mc).isMultiplayerPaused()) {
-                Evolution.LOGGER.info("Resuming client");
+                Evolution.info("Resuming client");
                 ((IMinecraftPatch) Minecraft.getInstance()).setMultiplayerPaused(false);
             }
             this.warmUpTicks = 0;
+        }
+        if (this.dimension != null) {
+            this.dimension = null;
+            System.gc();
         }
     }
 
@@ -411,13 +416,13 @@ public class ClientEvents {
         int endIndex = slots.size();
         int direction = 1;
         ItemStack selectedSlotStack = selectedSlot.getItem();
-        boolean findInPlayerInventory = selectedSlot.container != this.mc.player.inventory;
+        boolean findInPlayerInventory = selectedSlot.container != this.mc.player.getInventory();
         for (int i = startIndex; i != endIndex; i += direction) {
             Slot slot = slots.get(i);
             if (handler.isIgnored(slot)) {
                 continue;
             }
-            boolean slotInPlayerInventory = slot.container == this.mc.player.inventory;
+            boolean slotInPlayerInventory = slot.container == this.mc.player.getInventory();
             if (findInPlayerInventory != slotInPlayerInventory) {
                 continue;
             }
@@ -436,7 +441,7 @@ public class ClientEvents {
     @Nullable
     private List<Slot> findPushSlots(List<Slot> slots, Slot selectedSlot, int itemCount, boolean mustDistributeAll) {
         ItemStack selectedSlotStack = selectedSlot.getItem();
-        boolean findInPlayerInventory = selectedSlot.container != this.mc.player.inventory;
+        boolean findInPlayerInventory = selectedSlot.container != this.mc.player.getInventory();
         List<Slot> rv = new ArrayList<>();
         List<Slot> goodEmptySlots = new ArrayList<>();
         for (int i = 0; i != slots.size() && itemCount > 0; i++) {
@@ -444,7 +449,7 @@ public class ClientEvents {
             if (handler.isIgnored(slot)) {
                 continue;
             }
-            boolean slotInPlayerInventory = slot.container == this.mc.player.inventory;
+            boolean slotInPlayerInventory = slot.container == this.mc.player.getInventory();
             if (findInPlayerInventory != slotInPlayerInventory) {
                 continue;
             }
@@ -475,8 +480,17 @@ public class ClientEvents {
         return rv;
     }
 
-    public Vector3d getCameraPos() {
+    public Vec3 getCameraPos() {
         return this.cameraPos;
+    }
+
+    public float getCurrentItemAttackStrengthDelay() {
+        ItemStack stack = this.mc.player.getMainHandItem();
+        Item item = stack.getItem();
+        if (item instanceof ItemModularTool) {
+            return (float) (1 / ((ItemModularTool) item).getAttackSpeed(stack) * 20);
+        }
+        return (float) (1 / PlayerHelper.ATTACK_SPEED * 20);
     }
 
     public DimensionOverworld getDimension() {
@@ -491,15 +505,15 @@ public class ClientEvents {
     }
 
     public float getMainhandCooledAttackStrength(float partialTicks) {
-        return MathHelper.clamp((this.mainhandTimeSinceLastHit + partialTicks) / this.mc.player.getCurrentItemAttackStrengthDelay(), 0.0F, 1.0F);
+        return MathHelper.clamp((this.mainhandTimeSinceLastHit + partialTicks) / this.getCurrentItemAttackStrengthDelay(), 0.0F, 1.0F);
     }
 
-    public float getOffhandCooledAttackStrength(Item item, float adjustTicks) {
-        if (!(item instanceof IOffhandAttackable)) {
+    public float getOffhandCooledAttackStrength(ItemStack stack, float adjustTicks) {
+        if (!(stack.getItem() instanceof IOffhandAttackable offhandAttackable)) {
             float cooldown = (float) (1.0 / PlayerHelper.ATTACK_SPEED * 20.0);
             return MathHelper.clamp((this.offhandTimeSinceLastHit + adjustTicks) / cooldown, 0.0F, 1.0F);
         }
-        return MathHelper.clamp((this.offhandTimeSinceLastHit + adjustTicks) / getRightCooldownPeriod((IOffhandAttackable) item), 0.0F, 1.0F);
+        return MathHelper.clamp((this.offhandTimeSinceLastHit + adjustTicks) / getRightCooldownPeriod(offhandAttackable, stack), 0.0F, 1.0F);
     }
 
     public ClientRenderer getRenderer() {
@@ -508,21 +522,13 @@ public class ClientEvents {
 
     @Nullable
     public ResourceLocation getShader(int shaderId) {
-        switch (shaderId) {
-            case 1: {
-                return EvolutionResources.SHADER_MOTION_BLUR;
-            }
-            case 25: {
-                return EvolutionResources.SHADER_DESATURATE_25;
-            }
-            case 50: {
-                return EvolutionResources.SHADER_DESATURATE_50;
-            }
-            case 75: {
-                return EvolutionResources.SHADER_DESATURATE_75;
-            }
-        }
-        return null;
+        return switch (shaderId) {
+            case 1 -> EvolutionResources.SHADER_MOTION_BLUR;
+            case 25 -> EvolutionResources.SHADER_DESATURATE_25;
+            case 50 -> EvolutionResources.SHADER_DESATURATE_50;
+            case 75 -> EvolutionResources.SHADER_DESATURATE_75;
+            default -> null;
+        };
     }
 
     public int getTickCount() {
@@ -531,11 +537,11 @@ public class ClientEvents {
 
     public void handleShaderPacket(int shaderId) {
         switch (shaderId) {
-            case PacketSCShader.QUERY: {
-                this.mc.player.displayClientMessage(new TranslationTextComponent("command.evolution.shader.query", this.currentShader), false);
+            case PacketSCShader.QUERY -> {
+                this.mc.player.displayClientMessage(new TranslatableComponent("command.evolution.shader.query", this.currentShader), false);
                 return;
             }
-            case PacketSCShader.TOGGLE: {
+            case PacketSCShader.TOGGLE -> {
                 this.mc.gameRenderer.togglePostEffect();
                 if (EFFECT_ACTIVE.get(this.mc.gameRenderer)) {
                     this.mc.player.displayClientMessage(EvolutionTexts.COMMAND_SHADER_TOGGLE_ON, false);
@@ -545,20 +551,24 @@ public class ClientEvents {
                 }
                 return;
             }
-            case 0: {
+            case 0 -> {
                 this.mc.player.displayClientMessage(EvolutionTexts.COMMAND_SHADER_RESET, false);
                 this.desiredShader = 0;
                 return;
             }
         }
         if (this.hasShader(shaderId)) {
-            this.mc.player.displayClientMessage(new TranslationTextComponent("command.evolution.shader.success", shaderId), false);
+            this.mc.player.displayClientMessage(new TranslatableComponent("command.evolution.shader.success", shaderId), false);
             this.desiredShader = shaderId;
         }
         else {
-            this.mc.player.displayClientMessage(new TranslationTextComponent("command.evolution.shader.fail", shaderId).withStyle(TextFormatting.RED),
+            this.mc.player.displayClientMessage(new TranslatableComponent("command.evolution.shader.fail", shaderId).withStyle(ChatFormatting.RED),
                                                 false);
         }
+    }
+
+    public boolean hasCtrlDown() {
+        return Screen.hasControlDown();
     }
 
     public boolean hasShader(int shaderId) {
@@ -572,18 +582,26 @@ public class ClientEvents {
     public void init() {
         //Bind Sky Renderer
         this.dimension = new DimensionOverworld();
-        Object2ObjectMap<ResourceLocation, DimensionRenderInfo> renderInfos = RENDER_INFO.get();
-        DimensionRenderInfo overworldRenderInfo = renderInfos.get(DimensionType.OVERWORLD_EFFECTS);
-        overworldRenderInfo.setSkyRenderHandler(new SkyRenderer(this.mc.levelRenderer, this.dimension));
+        Object2ObjectMap<ResourceLocation, DimensionSpecialEffects> renderInfos = DIMENSION_EFFECTS.get();
+        DimensionSpecialEffects overworldRenderInfo = renderInfos.get(DimensionType.OVERWORLD_EFFECTS);
+        overworldRenderInfo.setSkyRenderHandler(new SkyRenderer(this.dimension));
         //Load skin for corpses
-        PlayerProfileCache playerProfile = PLAYER_PROF_FIELD.get();
-        MinecraftSessionService session = SESSION_FIELD.get();
+        GameProfileCache playerProfile = PROFILE_CACHE.get();
+        MinecraftSessionService session = SESSION_SERVICE.get();
         if (playerProfile != null && session != null) {
             EntityPlayerCorpse.setProfileCache(playerProfile);
             EntityPlayerCorpse.setSessionService(session);
         }
         //Replace MovementInput
-        this.mc.player.input = new MovementInputEvolution(this.mc.options);
+        this.mc.player.input = new EvolutionInput(this.mc.options);
+    }
+
+    public boolean isMainhandCustomAttacking() {
+        return this.isMainhandCustomAttacking;
+    }
+
+    public boolean isOffhandCustomAttacking() {
+        return this.isOffhandCustomAttacking;
     }
 
     public boolean isPlayerDizzy() {
@@ -594,19 +612,18 @@ public class ClientEvents {
     }
 
     public void leftMouseClick() {
-        float cooldown = this.mc.player.getCurrentItemAttackStrengthDelay();
-        if (this.mainhandTimeSinceLastHit >= cooldown) {
+        if (this.mainhandTimeSinceLastHit >= this.getCurrentItemAttackStrengthDelay()) {
             this.mainhandTimeSinceLastHit = 0;
             double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getLocation().y : Double.NaN;
             if (this.leftRayTrace instanceof AdvancedEntityRayTraceResult) {
-                BodyPart part = BodyPart.ALL;
+                HitboxType part = HitboxType.ALL;
                 if (((AdvancedEntityRayTraceResult) this.leftRayTrace).getHitbox() != null) {
                     part = ((AdvancedEntityRayTraceResult) this.leftRayTrace).getHitbox().getPart();
                 }
-                Evolution.LOGGER.debug("Part = {}", part);
+                Evolution.debug("Part = {}", part);
             }
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.leftPointedEntity, Hand.MAIN_HAND, rayTraceY));
-            this.swingArm(Hand.MAIN_HAND);
+            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.leftPointedEntity, InteractionHand.MAIN_HAND, rayTraceY));
+            this.swingArm(InteractionHand.MAIN_HAND);
         }
     }
 
@@ -651,7 +668,7 @@ public class ClientEvents {
             //Apply shaders
             this.mc.getProfiler().popPush("shaders");
             int shader = 0;
-            if (this.mc.options.getCameraType() == PointOfView.FIRST_PERSON && !this.mc.player.isCreative() && !this.mc.player.isSpectator()) {
+            if (this.mc.options.getCameraType() == CameraType.FIRST_PERSON && !this.mc.player.isCreative() && !this.mc.player.isSpectator()) {
                 float health = this.mc.player.getHealth();
                 if (health <= 12.5f) {
                     shader = 25;
@@ -675,14 +692,14 @@ public class ClientEvents {
                             this.mc.gameRenderer.loadEffect(shaderLoc);
                         }
                         else {
-                            Evolution.LOGGER.warn("Unregistered shader id: {}", shader);
+                            Evolution.warn("Unregistered shader id: {}", shader);
                         }
                     }
                 }
             }
             else {
-                if (this.mc.options.getCameraType() != this.previousPointOfView) {
-                    this.previousPointOfView = this.mc.options.getCameraType();
+                if (this.mc.options.getCameraType() != this.previousCameraType) {
+                    this.previousCameraType = this.mc.options.getCameraType();
                     this.currentShader = 0;
                 }
                 if (this.desiredShader != this.currentShader) {
@@ -692,7 +709,7 @@ public class ClientEvents {
                         this.mc.gameRenderer.loadEffect(shaderLoc);
                     }
                     else {
-                        Evolution.LOGGER.warn("Unregistered shader id: {}", this.desiredShader);
+                        Evolution.warn("Unregistered shader id: {}", this.desiredShader);
                     }
                 }
             }
@@ -700,7 +717,7 @@ public class ClientEvents {
             GameRenderer gameRenderer = this.mc.gameRenderer;
             if (gameRenderer != this.oldGameRenderer) {
                 this.oldGameRenderer = gameRenderer;
-                LIGHTMAP_FIELD.set(this.oldGameRenderer, new LightTextureEv(this.oldGameRenderer, this.mc));
+                LIGHT_TEXTURE.set(this.oldGameRenderer, new LightTextureEv(this.oldGameRenderer, this.mc));
             }
             this.mc.getProfiler().pop();
             if (!this.mc.isPaused()) {
@@ -740,17 +757,20 @@ public class ClientEvents {
                 }
                 //Handle two-handed items
                 this.mc.getProfiler().popPush("twoHanded");
-                if (this.mc.player.getMainHandItem().getItem() instanceof ITwoHanded && !this.mc.player.getOffhandItem().isEmpty()) {
+                ItemStack mainHandStack = this.mc.player.getMainHandItem();
+                if (mainHandStack.getItem() instanceof ITwoHanded twoHanded &&
+                    twoHanded.isTwoHanded(mainHandStack) &&
+                    !this.mc.player.getOffhandItem().isEmpty()) {
                     this.mainhandTimeSinceLastHit = 0;
-                    LEFT_COUNTER_FIELD.set(this.mc, Integer.MAX_VALUE);
+                    MISS_TIME.set(this.mc, Integer.MAX_VALUE);
                     this.mc.player.displayClientMessage(EvolutionTexts.ACTION_TWO_HANDED, true);
                 }
                 //Prevents the player from attacking if on cooldown
                 this.mc.getProfiler().popPush("cooldown");
                 if (this.getMainhandCooledAttackStrength(0.0F) != 1 &&
                     this.mc.hitResult != null &&
-                    this.mc.hitResult.getType() != RayTraceResult.Type.BLOCK) {
-                    LEFT_COUNTER_FIELD.set(this.mc, Integer.MAX_VALUE);
+                    this.mc.hitResult.getType() != HitResult.Type.BLOCK) {
+                    MISS_TIME.set(this.mc, Integer.MAX_VALUE);
                 }
                 this.mc.getProfiler().pop();
             }
@@ -765,7 +785,7 @@ public class ClientEvents {
                     Iterator<ClientEffectInstance> iterator = EFFECTS.iterator();
                     while (iterator.hasNext()) {
                         ClientEffectInstance instance = iterator.next();
-                        Effect effect = instance.getEffect();
+                        MobEffect effect = instance.getEffect();
                         if (instance.getDuration() == 0 || !this.mc.player.hasEffect(effect) && this.warmUpTicks >= 100) {
                             iterator.remove();
                         }
@@ -793,19 +813,19 @@ public class ClientEvents {
                 if (this.mc.player.onClimbable()) {
                     if (this.isSneakPressed && !this.sneakpreviousPressed) {
                         this.sneakpreviousPressed = true;
-                        this.mc.player.setDeltaMovement(Vector3d.ZERO);
+                        this.mc.player.setDeltaMovement(Vec3.ZERO);
                     }
                 }
                 //Handle creative features
                 this.mc.getProfiler().popPush("creative");
                 if (this.mc.player.isCreative() && ClientProxy.BUILDING_ASSIST.isDown()) {
                     if (this.mc.player.getMainHandItem().getItem() instanceof BlockItem) {
-                        if (this.mc.hitResult.getType() == RayTraceResult.Type.BLOCK) {
-                            BlockPos pos = ((BlockRayTraceResult) this.mc.hitResult).getBlockPos();
-                            if (!this.mc.level.getBlockState(pos).isAir(this.mc.level, pos)) {
-                                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSChangeBlock((BlockRayTraceResult) this.mc.hitResult));
-                                this.swingArm(Hand.MAIN_HAND);
-                                this.mc.player.swing(Hand.MAIN_HAND);
+                        if (this.mc.hitResult.getType() == HitResult.Type.BLOCK) {
+                            BlockPos pos = ((BlockHitResult) this.mc.hitResult).getBlockPos();
+                            if (!this.mc.level.getBlockState(pos).isAir()) {
+                                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSChangeBlock((BlockHitResult) this.mc.hitResult));
+                                this.swingArm(InteractionHand.MAIN_HAND);
+                                this.mc.player.swing(InteractionHand.MAIN_HAND);
                             }
                         }
                     }
@@ -814,9 +834,56 @@ public class ClientEvents {
                 this.mc.getProfiler().popPush("swing");
                 this.ticks++;
                 if (this.mc.gameMode.isDestroying()) {
-                    this.swingArm(Hand.MAIN_HAND);
+                    this.swingArm(InteractionHand.MAIN_HAND);
                 }
                 this.lunging = false;
+                this.isMainhandCustomAttacking = ((ILivingEntityPatch) this.mc.player).isMainhandCustomAttacking();
+                this.isOffhandCustomAttacking = ((ILivingEntityPatch) this.mc.player).isOffhandCustomAttacking();
+                if (this.isMainhandCustomAttacking) {
+                    List<HitInformation> hitInfos = MathHelper.collideOBBWithCollider(this.mc.player,
+                                                                                      ((IEntityPatch) this.mc.player).getHitboxes()
+                                                                                                                     .getEquipmentFor(((ILivingEntityPatch) this.mc.player).getMainhandCustomAttackType(),
+                                                                                                                                      InteractionHand.MAIN_HAND),
+                                                                                      1.0f,
+                                                                                      MAINHAND_HIT_RESULT,
+                                                                                      ((ILivingEntityPatch) this.mc.player).getMainhandCustomAttackTicks() >
+                                                                                      3);
+                    if (!hitInfos.isEmpty()) {
+                        for (HitInformation hitInfo : hitInfos) {
+                            Evolution.info("Collided with {} on {}",
+                                           hitInfo.getEntity(),
+                                           Arrays.toString(hitInfo.getHitboxes().toArray(HitboxType[]::new)));
+                            Set<HitboxType> boxes = MAINHAND_HITS.get(hitInfo.getEntity().getId());
+                            if (boxes == null) {
+                                boxes = EnumSet.noneOf(HitboxType.class);
+                                boxes.addAll(hitInfo.getHitboxes());
+                                //noinspection ObjectAllocationInLoop
+                                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSHitInformation(hitInfo.getEntity(),
+                                                                                                  InteractionHand.MAIN_HAND,
+                                                                                                  hitInfo.getHitboxes().toArray(HitboxType[]::new)));
+                            }
+                            else {
+                                for (HitboxType box : hitInfo.getHitboxes()) {
+                                    if (!boxes.contains(box)) {
+                                        boxes.add(box);
+                                        //noinspection ObjectAllocationInLoop
+                                        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSHitInformation(hitInfo.getEntity(),
+                                                                                                          InteractionHand.MAIN_HAND,
+                                                                                                          box));
+                                    }
+                                }
+                            }
+                            MAINHAND_HITS.put(hitInfo.getEntity().getId(), boxes);
+                        }
+                    }
+                    if (MAINHAND_HIT_RESULT[0] != null && MAINHAND_HIT_RESULT[0].getType() != HitResult.Type.MISS) {
+                        ((ILivingEntityPatch) this.mc.player).stopMainhandCustomAttack(ICustomAttack.StopReason.HIT_BLOCK);
+                    }
+                }
+                else {
+                    MAINHAND_HITS.clear();
+                    MAINHAND_HIT_RESULT[0] = null;
+                }
                 //Ticks renderer
                 this.mc.getProfiler().popPush("renderer");
                 this.renderer.endTick();
@@ -828,9 +895,9 @@ public class ClientEvents {
 
     @SubscribeEvent
     public void onEntityCreated(EntityJoinWorldEvent event) {
-        if (event.getEntity() instanceof ClientPlayerEntity && event.getEntity().equals(this.mc.player)) {
-            STATS.set(this.mc.player, new EvolutionStatisticsManager());
-            RECIPE_BOOK_FIELD.set(this.mc.player, new EvolutionRecipeBook());
+        if (event.getEntity() instanceof LocalPlayer && event.getEntity().equals(this.mc.player)) {
+            STATS.set(this.mc.player, new EvolutionStatsCounter());
+            RECIPE_BOOK.set(this.mc.player, new EvolutionRecipeBook());
         }
     }
 
@@ -840,7 +907,7 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
-    public void onGUIMouseClickedPre(GuiScreenEvent.MouseClickedEvent.Pre event) {
+    public void onGUIMouseClickedPre(ScreenEvent.MouseClickedEvent.Pre event) {
         MouseButton button = MouseButton.fromGLFW(event.getButton());
         if (button != null) {
             if (this.onMouseClicked(event.getMouseX(), event.getMouseY(), button)) {
@@ -850,7 +917,7 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
-    public void onGUIMouseDragPre(GuiScreenEvent.MouseDragEvent.Pre event) {
+    public void onGUIMouseDragPre(ScreenEvent.MouseDragEvent.Pre event) {
         MouseButton button = MouseButton.fromGLFW(event.getMouseButton());
         if (button != null) {
             if (this.onMouseDrag(event.getMouseX(), event.getMouseY(), button)) {
@@ -860,7 +927,7 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
-    public void onGUIMouseReleasedPre(GuiScreenEvent.MouseReleasedEvent.Pre event) {
+    public void onGUIMouseReleasedPre(ScreenEvent.MouseReleasedEvent.Pre event) {
         MouseButton button = MouseButton.fromGLFW(event.getButton());
         if (button != null) {
             if (this.onMouseReleased(button)) {
@@ -870,84 +937,88 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
-    public void onGUIMouseScrollPost(GuiScreenEvent.MouseScrollEvent.Post event) {
+    public void onGUIMouseScrollPost(ScreenEvent.MouseScrollEvent.Post event) {
         if (this.onMouseScrolled(event.getMouseX(), event.getMouseY(), event.getScrollDelta())) {
             event.setCanceled(true);
         }
     }
 
     @SubscribeEvent
-    public void onGUIOpen(GuiOpenEvent event) {
-        Screen screen = event.getGui();
+    public void onGUIOpen(ScreenOpenEvent event) {
+        Screen screen = event.getScreen();
         if (screen instanceof InventoryScreen) {
             event.setCanceled(true);
             EvolutionNetwork.INSTANCE.sendToServer(new PacketCSOpenExtendedInventory());
         }
         else if (screen instanceof AdvancementsScreen) {
-            event.setCanceled(true);
-            this.mc.setScreen(new ScreenAdvancements(this.mc.getConnection().getAdvancements()));
+            event.setScreen(new ScreenAdvancements(this.mc.getConnection().getAdvancements()));
         }
-        else if (screen instanceof ControlsScreen && !(screen instanceof ScreenControls)) {
-            event.setCanceled(true);
-            this.mc.setScreen(new ScreenControls((ControlsScreen) event.getGui(), this.mc.options));
+        else if (screen instanceof KeyBindsScreen && !(screen instanceof ScreenKeyBinds)) {
+            event.setScreen(new ScreenKeyBinds((KeyBindsScreen) screen, this.mc.options));
         }
         else if (screen instanceof StatsScreen) {
-            event.setCanceled(true);
-            this.mc.setScreen(new ScreenStats(this.mc.player.getStats()));
+            event.setScreen(new ScreenStats(this.mc.player.getStats()));
+        }
+        else if (screen instanceof ModListScreen) {
+            event.setScreen(new ScreenModList());
         }
         if (!event.isCanceled()) {
-            onGuiOpen(event.getGui());
+            onGuiOpen(event.getScreen());
         }
     }
 
     @SubscribeEvent
-    public void onGUIPostInit(GuiScreenEvent.InitGuiEvent.Post event) {
-        if (event.getGui() instanceof IngameMenuScreen) {
-            if (!event.getWidgetList().isEmpty()) {
-                event.addWidget(new Button(event.getWidgetList().get(6).x,
-                                           event.getWidgetList().get(6).y + 24,
-                                           event.getWidgetList().get(6).getWidth(),
-                                           event.getWidgetList().get(6).getHeight(),
-                                           EvolutionTexts.GUI_MENU_MOD_OPTIONS,
-                                           button -> this.mc.setScreen(new ModListScreen(event.getGui()))));
-                Widget shareToLan = event.getWidgetList().get(6);
-                shareToLan.x = event.getGui().width / 2 - 102;
+    public void onGUIPostInit(ScreenEvent.InitScreenEvent.Post event) {
+        if (event.getScreen() instanceof PauseScreen) {
+            if (!event.getListenersList().isEmpty()) {
+                AbstractButton shareToLan = (AbstractButton) event.getListenersList().get(6);
+                event.addListener(new Button(shareToLan.x,
+                                             shareToLan.y + 24,
+                                             shareToLan.getWidth(),
+                                             shareToLan.getHeight(),
+                                             EvolutionTexts.GUI_MENU_MOD_OPTIONS,
+                                             button -> this.mc.setScreen(new ModListScreen(event.getScreen()))));
+                shareToLan.x = event.getScreen().width / 2 - 102;
                 shareToLan.setWidth(204);
-                Widget returnToMenu = event.getWidgetList().get(7);
+                AbstractButton returnToMenu = (AbstractButton) event.getListenersList().get(7);
                 returnToMenu.y += 24;
-                Widget menuOptions = event.getWidgetList().get(5);
+                AbstractButton menuOptions = (AbstractButton) event.getListenersList().get(5);
                 menuOptions.y += 24;
-                Widget feedback = event.getWidgetList().get(3);
-                Widget bugs = event.getWidgetList().get(4);
-                event.removeWidget(feedback);
-                event.removeWidget(bugs);
+                GuiEventListener feedback = event.getListenersList().get(3);
+                GuiEventListener bugs = event.getListenersList().get(4);
+                event.removeListener(feedback);
+                event.removeListener(bugs);
                 String feedbackLink = "https://github.com/MGSchultz-13/Evolution/discussions/categories/feedback";
-                feedback = new Button(event.getGui().width / 2 - 102,
-                                      event.getGui().height / 4 + 72 - 16,
+                feedback = new Button(event.getScreen().width / 2 - 102,
+                                      event.getScreen().height / 4 + 72 - 16,
                                       98,
                                       20,
                                       EvolutionTexts.GUI_MENU_SEND_FEEDBACK,
-                                      button -> this.mc.setScreen(new ConfirmOpenLinkScreen(b -> {
+                                      button -> this.mc.setScreen(new ConfirmLinkScreen(b -> {
                                           if (b) {
                                               Util.getPlatform().openUri(feedbackLink);
                                           }
-                                          this.mc.setScreen(event.getGui());
+                                          this.mc.setScreen(event.getScreen());
                                       }, feedbackLink, true)));
                 String bugsLink = "https://github.com/MGSchultz-13/Evolution/issues";
-                bugs = new Button(event.getGui().width / 2 + 4,
-                                  event.getGui().height / 4 + 72 - 16,
+                bugs = new Button(event.getScreen().width / 2 + 4,
+                                  event.getScreen().height / 4 + 72 - 16,
                                   98,
                                   20,
                                   EvolutionTexts.GUI_MENU_REPORT_BUGS,
-                                  button -> this.mc.setScreen(new ConfirmOpenLinkScreen(b -> {
+                                  button -> this.mc.setScreen(new ConfirmLinkScreen(b -> {
                                       if (b) {
                                           Util.getPlatform().openUri(bugsLink);
                                       }
-                                      this.mc.setScreen(event.getGui());
+                                      this.mc.setScreen(event.getScreen());
                                   }, bugsLink, true)));
-                event.addWidget(feedback);
-                event.addWidget(bugs);
+                event.addListener(feedback);
+                event.addListener(bugs);
             }
+        }
+        else if (event.getScreen() instanceof ControlsScreen) {
+            GuiEventListener autoJumpButton = event.getListenersList().get(4);
+            event.removeListener(autoJumpButton);
         }
     }
 
@@ -957,7 +1028,7 @@ public class ClientEvents {
         }
         Slot selectedSlot = handler.getSlotUnderMouse(x, y);
         oldSelectedSlot = selectedSlot;
-        ItemStack stackOnMouse = this.mc.player.inventory.getCarried();
+        ItemStack stackOnMouse = this.mc.player.inventoryMenu.getCarried();
         if (button == MouseButton.LEFT) {
             if (stackOnMouse.isEmpty()) {
                 canDoLMBDrag = true;
@@ -991,7 +1062,7 @@ public class ClientEvents {
         if (handler.isIgnored(selectedSlot)) {
             return false;
         }
-        ItemStack stackOnMouse = this.mc.player.inventory.getCarried();
+        ItemStack stackOnMouse = this.mc.player.inventoryMenu.getCarried();
         if (button == MouseButton.LEFT) {
             if (!canDoLMBDrag) {
                 return false;
@@ -1054,7 +1125,7 @@ public class ClientEvents {
     }
 
     public boolean onMouseScrolled(double x, double y, double scrollDelta) {
-        if (handler == null || disableWheelForThisContainer) {
+        if (handler == null) {
             return false;
         }
         Slot selectedSlot = handler.getSlotUnderMouse(x, y);
@@ -1076,7 +1147,7 @@ public class ClientEvents {
         if (selectedSlotStack.isEmpty()) {
             return true;
         }
-        ItemStack stackOnMouse = this.mc.player.inventory.getCarried();
+        ItemStack stackOnMouse = this.mc.player.inventoryMenu.getCarried();
         int numItemsToMove = Math.abs(delta);
         boolean pushItems = delta < 0;
         if (handler.isCraftingOutput(selectedSlot)) {
@@ -1181,8 +1252,8 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
-    public void onPlayerInput(InputUpdateEvent event) {
-        MovementInput movementInput = event.getMovementInput();
+    public void onPlayerInput(MovementInputUpdateEvent event) {
+        Input movementInput = event.getInput();
         this.isJumpPressed = movementInput.jumping;
         this.isSneakPressed = movementInput.shiftKeyDown;
         if (!this.isSneakPressed) {
@@ -1214,8 +1285,8 @@ public class ClientEvents {
         }
         //Hide certain parts of the player model to not clip into the camera in certain situations
         if (this.renderer.isRenderingPlayer) {
-            boolean hasNausea = this.mc.player.hasEffect(Effects.CONFUSION);
-            float swimAnimation = MathHelper.getSwimAnimation(this.mc.player, event.getPartialRenderTick());
+            boolean hasNausea = this.mc.player.hasEffect(MobEffects.CONFUSION);
+            float swimAnimation = MathHelper.getSwimAnimation(this.mc.player, event.getPartialTick());
             boolean isInSwimAnimation = swimAnimation > 0 && swimAnimation < 1;
             boolean isInWater = this.mc.player.isInWater();
             if (hasNausea || isInSwimAnimation || this.wasPreviousInWater(7) != isInWater || isInWater && swimAnimation > 0) {
@@ -1236,12 +1307,8 @@ public class ClientEvents {
 
     public void onPotionAdded(ClientEffectInstance instance, PacketSCAddEffect.Logic logic) {
         switch (logic) {
-            case ADD:
-            case REPLACE: {
-                EFFECTS_TO_ADD.add(instance);
-                break;
-            }
-            case UPDATE: {
+            case ADD, REPLACE -> EFFECTS_TO_ADD.add(instance);
+            case UPDATE -> {
                 removeEffect(EFFECTS, instance.getEffect());
                 int index = getIndexAndRemove(EFFECTS_TO_ADD, instance.getEffect());
                 if (index != -1) {
@@ -1250,92 +1317,62 @@ public class ClientEvents {
                 else {
                     EFFECTS.add(instance);
                 }
-                break;
             }
         }
     }
 
     @SubscribeEvent
-    public void onRenderBlockHighlight(DrawHighlightEvent.HighlightBlock event) {
+    public void onRenderBlockHighlight(DrawSelectionEvent.HighlightBlock event) {
         this.onRenderHightlight(event);
     }
 
     @SubscribeEvent
-    public void onRenderEntityHighlight(DrawHighlightEvent.HighlightEntity event) {
+    public void onRenderEntityHighlight(DrawSelectionEvent.HighlightEntity event) {
         this.onRenderHightlight(event);
-    }
-
-    @SubscribeEvent
-    public void onRenderGameOverlay(RenderGameOverlayEvent.Pre event) {
-        if (this.mc.player.getVehicle() != null) {
-            ForgeIngameGui.renderFood = true;
-        }
-        if (event.getType() == RenderGameOverlayEvent.ElementType.CROSSHAIRS) {
-            event.setCanceled(true);
-            this.renderer.renderCrosshair(event.getMatrixStack(), event.getPartialTicks());
-            return;
-        }
-        if (event.getType() == RenderGameOverlayEvent.ElementType.HEALTH) {
-            event.setCanceled(true);
-            this.renderer.renderHealth(event.getMatrixStack());
-            return;
-        }
-        if (event.getType() == RenderGameOverlayEvent.ElementType.POTION_ICONS) {
-            event.setCanceled(true);
-            this.renderer.renderPotionIcons(event.getMatrixStack(), event.getPartialTicks());
-            return;
-        }
-        if (event.getType() == RenderGameOverlayEvent.ElementType.FOOD) {
-            event.setCanceled(true);
-            this.renderer.renderFoodAndThirst(event.getMatrixStack());
-        }
     }
 
     @SubscribeEvent
     public void onRenderHand(RenderHandEvent event) {
         event.setCanceled(true);
         boolean sleeping = this.mc.getCameraEntity() instanceof LivingEntity && ((LivingEntity) this.mc.getCameraEntity()).isSleeping();
-        if (this.mc.options.getCameraType() == PointOfView.FIRST_PERSON &&
+        if (this.mc.options.getCameraType() == CameraType.FIRST_PERSON &&
             !sleeping &&
             !this.mc.options.hideGui &&
             this.mc.gameMode.getPlayerMode() != GameType.SPECTATOR) {
             this.mc.gameRenderer.lightTexture().turnOnLightLayer();
-            this.renderer.renderItemInFirstPerson(event.getMatrixStack(), event.getBuffers(), event.getLight(), event.getPartialTicks());
+            this.renderer.renderItemInFirstPerson(event.getPoseStack(),
+                                                  event.getMultiBufferSource(),
+                                                  event.getPackedLight(),
+                                                  event.getPartialTicks());
             this.mc.gameRenderer.lightTexture().turnOffLightLayer();
         }
     }
 
-    private void onRenderHightlight(DrawHighlightEvent event) {
+    private void onRenderHightlight(DrawSelectionEvent event) {
         event.setCanceled(true);
-        MatrixStack matrices = event.getMatrix();
-        IRenderTypeBuffer buffer = event.getBuffers();
-        ActiveRenderInfo renderInfo = event.getInfo();
-        RayTraceResult rayTrace = this.mc.hitResult;
-        if (rayTrace != null && rayTrace.getType() == RayTraceResult.Type.BLOCK) {
-            BlockPos hitPos = ((BlockRayTraceResult) rayTrace).getBlockPos();
+        PoseStack matrices = event.getPoseStack();
+        MultiBufferSource buffer = event.getMultiBufferSource();
+        Camera camera = event.getCamera();
+        HitResult rayTrace = this.mc.hitResult;
+        if (rayTrace != null && rayTrace.getType() == HitResult.Type.BLOCK) {
+            BlockPos hitPos = ((BlockHitResult) rayTrace).getBlockPos();
             if (this.mc.level.getWorldBorder().isWithinBounds(hitPos)) {
                 Block block = this.mc.level.getBlockState(hitPos).getBlock();
                 if (block instanceof BlockKnapping) {
                     TEKnapping tile = (TEKnapping) this.mc.level.getBlockEntity(hitPos);
-                    this.renderer.renderOutlines(matrices, buffer, tile.type.getShape(), renderInfo, hitPos);
+                    this.renderer.renderOutlines(matrices, buffer, tile.type.getShape(), camera, hitPos);
                 }
                 else if (block instanceof BlockMolding) {
                     TEMolding tile = (TEMolding) this.mc.level.getBlockEntity(hitPos);
-                    this.renderer.renderOutlines(matrices, buffer, tile.molding.getShape(), renderInfo, hitPos);
+                    this.renderer.renderOutlines(matrices, buffer, tile.molding.getShape(), camera, hitPos);
                 }
-                this.renderer.renderBlockOutlines(matrices, buffer, renderInfo, hitPos);
+                this.renderer.renderBlockOutlines(matrices, buffer, camera, hitPos);
             }
         }
-        else if (rayTrace != null && rayTrace.getType() == RayTraceResult.Type.ENTITY) {
-            if (this.mc.getEntityRenderDispatcher().shouldRenderHitBoxes() && rayTrace instanceof AdvancedEntityRayTraceResult) {
-                AdvancedEntityRayTraceResult advRayTrace = (AdvancedEntityRayTraceResult) rayTrace;
+        else if (rayTrace != null && rayTrace.getType() == HitResult.Type.ENTITY) {
+            if (this.mc.getEntityRenderDispatcher().shouldRenderHitBoxes() && rayTrace instanceof AdvancedEntityRayTraceResult advRayTrace) {
                 if (advRayTrace.getHitbox() != null) {
-                    this.renderer.renderHitbox(matrices,
-                                               buffer,
-                                               advRayTrace.getEntity(),
-                                               advRayTrace.getHitbox(),
-                                               renderInfo,
-                                               event.getPartialTicks());
+                    this.renderer.renderHitbox(matrices, buffer, advRayTrace.getEntity(), advRayTrace.getHitbox(), camera, event.getPartialTicks());
                 }
             }
         }
@@ -1346,22 +1383,22 @@ public class ClientEvents {
                                        buffer,
                                        this.mc.player,
                                        ((IEntityPatch) this.mc.player).getHitboxes().getBoxes().get(0),
-                                       renderInfo,
+                                       camera,
                                        event.getPartialTicks());
         }
     }
 
     @SubscribeEvent
-    public void onRenderMissHighlight(DrawHighlightEvent event) {
+    public void onRenderMissHighlight(DrawSelectionEvent event) {
         this.onRenderHightlight(event);
     }
 
     public void performLungeMovement() {
         if (!this.lunging && this.mc.player.isOnGround() && this.mc.player.zza > 0) {
             this.lunging = true;
-            Vector3d oldMotion = this.mc.player.getDeltaMovement();
-            float sinFacing = MathHelper.sinDeg(this.mc.player.yRot);
-            float cosFacing = MathHelper.cosDeg(this.mc.player.yRot);
+            Vec3 oldMotion = this.mc.player.getDeltaMovement();
+            float sinFacing = MathHelper.sinDeg(this.mc.player.getYRot());
+            float cosFacing = MathHelper.cosDeg(this.mc.player.getYRot());
             double lungeBoost = 0.15;
             this.mc.player.setDeltaMovement(oldMotion.x - lungeBoost * sinFacing, oldMotion.y, oldMotion.z + lungeBoost * cosFacing);
         }
@@ -1369,72 +1406,79 @@ public class ClientEvents {
 
     public void performMainhandLunge(ItemStack mainhandStack, float strength) {
         this.mainhandTimeSinceLastHit = 0;
-        this.renderer.resetFullEquipProgress(Hand.MAIN_HAND);
+        this.renderer.resetFullEquipProgress(InteractionHand.MAIN_HAND);
         double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getLocation().y : Double.NaN;
         int slot = Integer.MIN_VALUE;
-        for (int i = 0; i < this.mc.player.inventory.items.size(); i++) {
-            if (this.mc.player.inventory.items.get(i).equals(mainhandStack, false)) {
+        for (int i = 0; i < this.mc.player.getInventory().items.size(); i++) {
+            if (this.mc.player.getInventory().items.get(i).equals(mainhandStack, false)) {
                 slot = i;
                 break;
             }
         }
         if (slot == Integer.MIN_VALUE) {
-            if (this.mc.player.inventory.items.get(0).equals(mainhandStack, false)) {
+            if (this.mc.player.getInventory().items.get(0).equals(mainhandStack, false)) {
                 slot = -1;
             }
         }
         if (slot != Integer.MIN_VALUE) {
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSLunge(this.leftPointedEntity, Hand.MAIN_HAND, rayTraceY, slot, strength));
+            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSLunge(this.leftPointedEntity, InteractionHand.MAIN_HAND, rayTraceY, slot, strength));
         }
         else {
-            Evolution.LOGGER.warn("Unable to find lunge stack: {}", mainhandStack);
+            Evolution.warn("Unable to find lunge stack: {}", mainhandStack);
         }
     }
 
     public void performOffhandLunge(ItemStack offhandStack, float strength) {
         this.offhandTimeSinceLastHit = 0;
-        this.renderer.resetFullEquipProgress(Hand.OFF_HAND);
+        this.renderer.resetFullEquipProgress(InteractionHand.OFF_HAND);
         double rayTraceY = this.rightRayTrace != null ? this.rightRayTrace.getLocation().y : Double.NaN;
         int slot = Integer.MIN_VALUE;
-        if (this.mc.player.inventory.offhand.get(0).equals(offhandStack, false)) {
+        if (this.mc.player.getInventory().offhand.get(0).equals(offhandStack, false)) {
             slot = -1;
         }
         if (slot == Integer.MIN_VALUE) {
-            for (int i = 0; i < this.mc.player.inventory.items.size(); i++) {
-                if (this.mc.player.inventory.items.get(i).equals(offhandStack, false)) {
+            for (int i = 0; i < this.mc.player.getInventory().items.size(); i++) {
+                if (this.mc.player.getInventory().items.get(i).equals(offhandStack, false)) {
                     slot = i;
                     break;
                 }
             }
         }
         if (slot != Integer.MIN_VALUE) {
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSLunge(this.rightPointedEntity, Hand.OFF_HAND, rayTraceY, slot, strength));
+            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSLunge(this.rightPointedEntity, InteractionHand.OFF_HAND, rayTraceY, slot, strength));
         }
         else {
-            Evolution.LOGGER.warn("Unable to find lunge stack: {}", offhandStack);
+            Evolution.warn("Unable to find lunge stack: {}", offhandStack);
         }
     }
 
     @SubscribeEvent
-    public void renderTooltip(RenderTooltipEvent.PostText event) {
-        this.renderer.renderTooltip(event);
+    public void renderTooltip(RenderTooltipEvent.GatherComponents event) {
+        if (event.isCanceled()) {
+            return;
+        }
+        Item item = event.getItemStack().getItem();
+        if (!(item instanceof IEvolutionItem)) {
+            return;
+        }
+        ItemEvents.makeEvolutionTooltip(event.getItemStack(), event.getTooltipElements());
     }
 
-    public void rightMouseClick(IOffhandAttackable item) {
-        float cooldown = getRightCooldownPeriod(item);
+    public void rightMouseClick(IOffhandAttackable item, ItemStack stack) {
+        float cooldown = getRightCooldownPeriod(item, stack);
         if (this.offhandTimeSinceLastHit >= cooldown) {
             this.offhandTimeSinceLastHit = 0;
             double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getLocation().y : Double.NaN;
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.rightPointedEntity, Hand.OFF_HAND, rayTraceY));
-            this.swingArm(Hand.OFF_HAND);
+            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.rightPointedEntity, InteractionHand.OFF_HAND, rayTraceY));
+            this.swingArm(InteractionHand.OFF_HAND);
         }
     }
 
-    public void setCameraPos(Vector3d cameraPos) {
+    public void setCameraPos(Vec3 cameraPos) {
         this.cameraPos = cameraPos;
     }
 
-    private boolean shouldBeProbe(PlayerEntity player) {
+    private boolean shouldBeProbe(Player player) {
         if (player.isInWater()) {
             return false;
         }
@@ -1452,13 +1496,34 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
-    public void shutDownInternalServer(FMLServerStoppedEvent event) {
+    public void shutDownInternalServer(ServerStoppedEvent event) {
         if (this.inverted) {
             this.inverted = false;
         }
     }
 
-    public void swingArm(Hand hand) {
+    public void startCustomAttack(ICustomAttack.AttackType attackType, InteractionHand hand) {
+        ILivingEntityPatch player = (ILivingEntityPatch) this.mc.player;
+        switch (hand) {
+            case MAIN_HAND -> {
+                if (player.isMainhandCustomAttacking()) {
+                    break;
+                }
+                this.isMainhandCustomAttacking = true;
+                this.mainhandTimeSinceLastHit = 0;
+                player.startMainhandCustomAttack(attackType);
+            }
+            case OFF_HAND -> {
+                if (player.isOffhandCustomAttacking()) {
+                    break;
+                }
+                this.isOffhandCustomAttacking = true;
+                player.startOffhandCustomAttack(attackType);
+            }
+        }
+    }
+
+    public void swingArm(InteractionHand hand) {
         ItemStack stack = this.mc.player.getItemInHand(hand);
         if (!stack.isEmpty() && stack.onEntitySwing(this.mc.player)) {
             return;
@@ -1471,10 +1536,10 @@ public class ClientEvents {
         int priority = Integer.MAX_VALUE;
         int chosen = -1;
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = this.mc.player.inventory.items.get(i);
-            if (stack.getItem() instanceof IBackWeapon) {
-                int stackPriority = ((IBackWeapon) stack.getItem()).getPriority();
-                if (priority > stackPriority) {
+            ItemStack stack = this.mc.player.getInventory().items.get(i);
+            if (stack.getItem() instanceof IBackWeapon backWeapon) {
+                int stackPriority = backWeapon.getPriority(stack);
+                if (stackPriority >= 0 && priority > stackPriority) {
                     backStack = stack;
                     priority = stackPriority;
                     chosen = i;
@@ -1484,7 +1549,7 @@ public class ClientEvents {
                 }
             }
         }
-        if (chosen == this.mc.player.inventory.selected) {
+        if (chosen == this.mc.player.getInventory().selected) {
             backStack = ItemStack.EMPTY;
         }
         BACK_ITEMS.put(this.mc.player.getId(), backStack);
@@ -1497,7 +1562,7 @@ public class ClientEvents {
         int priority = Integer.MAX_VALUE;
         int chosen = -1;
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = this.mc.player.inventory.items.get(i);
+            ItemStack stack = this.mc.player.getInventory().items.get(i);
             if (stack.getItem() instanceof IBeltWeapon) {
                 int stackPriority = ((IBeltWeapon) stack.getItem()).getPriority();
                 if (priority > stackPriority) {
@@ -1510,16 +1575,16 @@ public class ClientEvents {
                 }
             }
         }
-        if (chosen == this.mc.player.inventory.selected) {
+        if (chosen == this.mc.player.getInventory().selected) {
             beltStack = ItemStack.EMPTY;
         }
         if (!ItemStack.matches(beltStack, oldStack)) {
             if (beltStack.getItem() instanceof ItemSword) {
                 this.mc.getSoundManager()
-                       .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATHE.get(), SoundCategory.PLAYERS, 0.8f, 1.0f));
+                       .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
                 EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlaySoundEntityEmitted(this.mc.player,
                                                                                           EvolutionSounds.SWORD_SHEATHE.get(),
-                                                                                          SoundCategory.PLAYERS,
+                                                                                          SoundSource.PLAYERS,
                                                                                           0.8f,
                                                                                           1.0f));
             }
@@ -1528,7 +1593,7 @@ public class ClientEvents {
         }
     }
 
-    private void updateClientProneState(PlayerEntity player) {
+    private void updateClientProneState(Player player) {
         if (player != null) {
             boolean shouldBeProne = ClientProxy.TOGGLE_PRONE.isDown() != this.proneToggle;
             shouldBeProne = shouldBeProne && this.shouldBeProbe(player);
@@ -1545,10 +1610,10 @@ public class ClientEvents {
         if (this.tps == tickrate) {
             return;
         }
-        Evolution.LOGGER.info("Updating client tickrate to " + tickrate);
+        Evolution.info("Updating client tickrate to " + tickrate);
         this.tps = tickrate;
-        Timer timer = TIMER_FIELD.get(this.mc);
-        TICKRATE_FIELD.set(timer, 1_000.0F / tickrate);
+        Timer timer = TIMER.get(this.mc);
+        MS_PER_TICK.set(timer, 1_000.0F / tickrate);
     }
 
     private boolean wasPreviousInWater(int frame) {

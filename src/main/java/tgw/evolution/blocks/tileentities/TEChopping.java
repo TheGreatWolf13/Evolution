@@ -1,27 +1,30 @@
 package tgw.evolution.blocks.tileentities;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.stats.Stats;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Hand;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.items.ItemLog;
-import tgw.evolution.util.WoodVariant;
+import tgw.evolution.util.constants.WoodVariant;
 
 import javax.annotation.Nullable;
 
-public class TEChopping extends TileEntity implements ILoggable {
+public class TEChopping extends BlockEntity implements ILoggable {
 
     private byte breakProgress;
     @Nullable
@@ -29,16 +32,16 @@ public class TEChopping extends TileEntity implements ILoggable {
     private int fluidAmount;
     private byte id = -1;
 
-    public TEChopping() {
-        super(EvolutionTEs.CHOPPING.get());
+    public TEChopping(BlockPos pos, BlockState state) {
+        super(EvolutionTEs.CHOPPING.get(), pos, state);
     }
 
-    public void breakLog(PlayerEntity player) {
+    public void breakLog(Player player) {
         if (!this.level.isClientSide) {
             Item firewood = WoodVariant.byId(this.id).getFirewood();
             ItemStack stack = new ItemStack(firewood, 16);
             BlockUtils.dropItemStack(this.level, this.worldPosition, stack, 0.5);
-            player.getMainHandItem().hurtAndBreak(1, player, playerEntity -> playerEntity.getItemBySlot(EquipmentSlotType.MAINHAND));
+            player.getMainHandItem().hurtAndBreak(1, player, playerEntity -> playerEntity.getItemBySlot(EquipmentSlot.MAINHAND));
             player.awardStat(Stats.ITEM_CRAFTED.get(firewood), 16);
         }
         this.id = -1;
@@ -74,13 +77,15 @@ public class TEChopping extends TileEntity implements ILoggable {
     }
 
     @Override
-    public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.worldPosition, 0, this.getUpdateTag());
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
-    public CompoundNBT getUpdateTag() {
-        return this.save(new CompoundNBT());
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = new CompoundTag();
+        this.saveAdditional(tag);
+        return tag;
     }
 
     public boolean hasLog() {
@@ -94,8 +99,8 @@ public class TEChopping extends TileEntity implements ILoggable {
     }
 
     @Override
-    public void load(BlockState state, CompoundNBT compound) {
-        super.load(state, compound);
+    public void load(CompoundTag compound) {
+        super.load(compound);
         this.id = compound.getByte("Wood");
         this.breakProgress = compound.getByte("Break");
         this.fluid = FluidGeneric.byId(compound.getByte("Fluid"));
@@ -103,14 +108,14 @@ public class TEChopping extends TileEntity implements ILoggable {
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
-        this.handleUpdateTag(this.level.getBlockState(this.worldPosition), packet.getTag());
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
+        this.handleUpdateTag(packet.getTag());
         TEUtils.sendRenderUpdate(this);
     }
 
-    public void removeStack(PlayerEntity player) {
+    public void removeStack(Player player) {
         ItemStack stack = this.getItemStack();
-        if (!this.level.isClientSide && !player.inventory.add(stack)) {
+        if (!this.level.isClientSide && !player.getInventory().add(stack)) {
             BlockUtils.dropItemStack(this.level, this.worldPosition, stack);
         }
         this.id = -1;
@@ -119,12 +124,12 @@ public class TEChopping extends TileEntity implements ILoggable {
     }
 
     @Override
-    public CompoundNBT save(CompoundNBT compound) {
+    protected void saveAdditional(CompoundTag compound) {
+        super.saveAdditional(compound);
         compound.putByte("Wood", this.id);
         compound.putByte("Break", this.breakProgress);
         compound.putInt("Amount", this.fluidAmount);
         compound.putByte("Fluid", this.fluid == null ? 0 : this.fluid.getId());
-        return super.save(compound);
     }
 
     @Override
@@ -139,7 +144,7 @@ public class TEChopping extends TileEntity implements ILoggable {
         TEUtils.sendRenderUpdate(this);
     }
 
-    public void setStack(PlayerEntity player, Hand hand) {
+    public void setStack(Player player, InteractionHand hand) {
         this.id = ((ItemLog) player.getItemInHand(hand).getItem()).variant.getId();
         TEUtils.sendRenderUpdate(this);
         if (!player.isCreative()) {

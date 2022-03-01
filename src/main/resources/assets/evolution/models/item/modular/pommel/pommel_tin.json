@@ -1,0 +1,6 @@
+{
+  "parent": "evolution:item/modular/pommel/pommel",
+  "textures": {
+    "0": "evolution:item/modular/pommel/pommel_tin"
+  }
+}

@@ -1,9 +1,9 @@
 package tgw.evolution.network;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.events.ClientEvents;
 
 import javax.annotation.Nonnull;
@@ -22,11 +22,11 @@ public class PacketSCUpdateBeltBackItem implements IPacket {
         this.entityId = entityId;
     }
 
-    public static PacketSCUpdateBeltBackItem decode(PacketBuffer buffer) {
+    public static PacketSCUpdateBeltBackItem decode(FriendlyByteBuf buffer) {
         return new PacketSCUpdateBeltBackItem(buffer.readInt(), buffer.readBoolean(), buffer.readItem());
     }
 
-    public static void encode(PacketSCUpdateBeltBackItem packet, PacketBuffer buffer) {
+    public static void encode(PacketSCUpdateBeltBackItem packet, FriendlyByteBuf buffer) {
         buffer.writeInt(packet.entityId);
         buffer.writeBoolean(packet.back);
         buffer.writeItemStack(packet.stack, false);

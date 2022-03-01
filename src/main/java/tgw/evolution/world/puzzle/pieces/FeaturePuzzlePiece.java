@@ -19,7 +19,7 @@
 //import net.minecraftforge.registries.ForgeRegistries;
 //import tgw.evolution.blocks.BlockPuzzle;
 //import tgw.evolution.init.EvolutionBlocks;
-//import tgw.evolution.util.NBTHelper;
+//import tgw.evolution.util.constants.NBTHelper;
 //import tgw.evolution.world.puzzle.EnumPuzzleType;
 //import tgw.evolution.world.puzzle.PuzzlePiece;
 //import tgw.evolution.world.puzzle.pieces.config.PlacementType;

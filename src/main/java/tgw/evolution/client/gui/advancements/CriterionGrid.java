@@ -1,18 +1,18 @@
 package tgw.evolution.client.gui.advancements;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.Criterion;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.Item;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Util;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.biome.Biome;
+import net.minecraft.client.gui.Font;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -26,10 +26,8 @@ import java.util.Map;
 @OnlyIn(Dist.CLIENT)
 public class CriterionGrid {
     private static final CriterionGrid EMPTY = new CriterionGrid();
-    public static CriteriaDetail detailLevel = CriteriaDetail.DEFAULT;
-    public static boolean requiresShift;
     public final int numRows;
-    private final List<IFormattableTextComponent> cellContents;
+    private final List<MutableComponent> cellContents;
     private final int[] cellWidths;
     private final int fontHeight;
     private final int numColumns;
@@ -48,7 +46,7 @@ public class CriterionGrid {
         this.height = 0;
     }
 
-    public CriterionGrid(List<IFormattableTextComponent> cellContents, int[] cellWidths, int fontHeight, int numColumns) {
+    public CriterionGrid(List<MutableComponent> cellContents, int[] cellWidths, int fontHeight, int numColumns) {
         this.cellContents = cellContents;
         this.cellWidths = cellWidths;
         this.fontHeight = fontHeight;
@@ -58,8 +56,8 @@ public class CriterionGrid {
 
     // Of all the possible grids whose aspect ratio is less than the maximum, this method returns the one with the smallest number of rows.
     // If there is no such grid, this method returns a single-column grid.
-    public static CriterionGrid findOptimalCriterionGrid(Advancement advancement, AdvancementProgress progress, int maxWidth, FontRenderer font) {
-        if (progress == null || detailLevel == CriteriaDetail.OFF) {
+    public static CriterionGrid findOptimalCriterionGrid(Advancement advancement, AdvancementProgress progress, int maxWidth, Font font) {
+        if (progress == null) {
             return EMPTY;
         }
         Map<String, Criterion> criteria = advancement.getCriteria();
@@ -67,33 +65,20 @@ public class CriterionGrid {
             return EMPTY;
         }
         int numUnobtained = advancement.getMaxCriteraRequired();
-        List<IFormattableTextComponent> cellContents = new ArrayList<>();
+        List<MutableComponent> cellContents = new ArrayList<>();
         for (String criterion : criteria.keySet()) {
             if (progress.getCriterion(criterion).isDone()) {
-                if (detailLevel.showObtained()) {
-                    //noinspection ObjectAllocationInLoop
-                    IFormattableTextComponent text = new StringTextComponent(" + ").withStyle(TextFormatting.GREEN);
-                    IFormattableTextComponent text2 = getCriteriaTranslated(criterion).withStyle(TextFormatting.WHITE);
-                    text.append(text2);
-                    cellContents.add(text);
-                }
+                //noinspection ObjectAllocationInLoop
+                MutableComponent text = new TextComponent(" + ").withStyle(ChatFormatting.GREEN);
+                MutableComponent text2 = getCriteriaTranslated(criterion).withStyle(ChatFormatting.WHITE);
+                text.append(text2);
+                cellContents.add(text);
                 numUnobtained--;
             }
-            else {
-                if (detailLevel.showUnobtained()) {
-                    //noinspection ObjectAllocationInLoop
-                    IFormattableTextComponent text = new StringTextComponent(" x ").withStyle(TextFormatting.RED);
-                    IFormattableTextComponent text2 = getCriteriaTranslated(criterion).withStyle(TextFormatting.WHITE);
-                    text.append(text2);
-                    cellContents.add(text);
-                }
-            }
         }
-        if (!detailLevel.showUnobtained() && numUnobtained > 0) {
-            IFormattableTextComponent text = new StringTextComponent(" x ").withStyle(TextFormatting.RED);
-            IFormattableTextComponent text2 = EvolutionTexts.remaining(numUnobtained)
-                                                            .withStyle(TextFormatting.WHITE)
-                                                            .withStyle(TextFormatting.ITALIC);
+        if (numUnobtained > 0) {
+            MutableComponent text = new TextComponent(" x ").withStyle(ChatFormatting.RED);
+            MutableComponent text2 = EvolutionTexts.remaining(numUnobtained).withStyle(ChatFormatting.WHITE).withStyle(ChatFormatting.ITALIC);
             text.append(text2);
             cellContents.add(text);
         }
@@ -119,24 +104,24 @@ public class CriterionGrid {
         return prevGrid != null ? prevGrid : currGrid;
     }
 
-    private static IFormattableTextComponent getCriteriaTranslated(String criterion) {
+    private static MutableComponent getCriteriaTranslated(String criterion) {
         int endIndex = criterion.indexOf(':');
         String type = criterion.substring(0, endIndex == -1 ? 0 : endIndex);
         if (type.isEmpty()) {
-            return new StringTextComponent(criterion);
+            return new TextComponent(criterion);
         }
         switch (type) {
             case "item":
                 Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(criterion.substring(criterion.indexOf(':') + 1)));
-                return new TranslationTextComponent(item.getDescriptionId());
+                return new TranslatableComponent(item.getDescriptionId());
             case "entity":
                 EntityType<?> entity = ForgeRegistries.ENTITIES.getValue(new ResourceLocation(criterion.substring(criterion.indexOf(':') + 1)));
-                return (IFormattableTextComponent) entity.getDescription();
+                return (MutableComponent) entity.getDescription();
             case "biome":
                 Biome biome = ForgeRegistries.BIOMES.getValue(new ResourceLocation(criterion.substring(criterion.indexOf(':') + 1)));
-                return new TranslationTextComponent(Util.makeDescriptionId("biome", biome.getRegistryName()));
+                return new TranslatableComponent(Util.makeDescriptionId("biome", biome.getRegistryName()));
             case "minecraft":
-                return new StringTextComponent(criterion);
+                return new TextComponent(criterion);
         }
         throw new IllegalStateException("Unknown type: " + type);
     }
@@ -146,14 +131,14 @@ public class CriterionGrid {
         this.width = 0;
         for (int c = 0; c < this.numColumns; c++) {
             //noinspection ObjectAllocationInLoop
-            List<IFormattableTextComponent> column = new ArrayList<>();
+            List<MutableComponent> column = new ArrayList<>();
             int columnWidth = 0;
             for (int r = 0; r < this.numRows; r++) {
                 int cellIndex = c * this.numRows + r;
                 if (cellIndex >= this.cellContents.size()) {
                     break;
                 }
-                IFormattableTextComponent text = this.cellContents.get(cellIndex);
+                MutableComponent text = this.cellContents.get(cellIndex);
                 column.add(text);
                 columnWidth = Math.max(columnWidth, this.cellWidths[cellIndex]);
             }
@@ -164,13 +149,6 @@ public class CriterionGrid {
         this.height = this.numRows * (this.fontHeight + 1);
     }
 
-    public static class Column {
-        public final List<IFormattableTextComponent> cells;
-        public final int width;
-
-        public Column(List<IFormattableTextComponent> cells, int width) {
-            this.cells = cells;
-            this.width = width;
-        }
+    public record Column(List<MutableComponent> cells, int width) {
     }
 }

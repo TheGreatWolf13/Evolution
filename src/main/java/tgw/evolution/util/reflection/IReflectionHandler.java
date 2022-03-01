@@ -7,7 +7,7 @@ public interface IReflectionHandler {
     Class<?>[] EMPTY_CLAZZ = new Class[0];
 
     static void throwError(Exception exception, String message) {
-        Evolution.LOGGER.error(message + ": " + exception);
+        Evolution.error(message + ": " + exception);
     }
 
     void init();

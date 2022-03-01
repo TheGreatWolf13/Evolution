@@ -1,28 +1,28 @@
 package tgw.evolution.client.renderer.tile;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.WorldRenderer;
-import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
-import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 import tgw.evolution.blocks.tileentities.TESchematic;
 
-public class RenderTESchematic extends TileEntityRenderer<TESchematic> {
+public class RenderTESchematic implements BlockEntityRenderer<TESchematic> {
 
-    public RenderTESchematic(TileEntityRendererDispatcher dispatcher) {
-        super(dispatcher);
+    public RenderTESchematic(BlockEntityRendererProvider.Context context) {
     }
 
-    private static void renderInvisibleBlocks(TESchematic tile, IVertexBuilder buffer, BlockPos schematicPos, boolean bool, MatrixStack matrices) {
-        IBlockReader world = tile.getLevel();
+    private static void renderInvisibleBlocks(TESchematic tile, VertexConsumer buffer, BlockPos schematicPos, boolean bool, PoseStack matrices) {
+        LevelReader world = tile.getLevel();
         BlockPos tilePos = tile.getBlockPos();
         BlockPos schematicAbsPos = tilePos.offset(schematicPos);
         for (BlockPos mutable : BlockPos.betweenClosed(schematicAbsPos, schematicAbsPos.offset(tile.getStructureSize()).offset(-1, -1, -1))) {
@@ -38,23 +38,23 @@ public class RenderTESchematic extends TileEntityRenderer<TESchematic> {
                 double y1 = (mutable.getY() - tilePos.getY()) + 0.55F + size;
                 double z1 = (mutable.getZ() - tilePos.getZ()) + 0.55F + size;
                 if (bool) {
-                    WorldRenderer.renderLineBox(matrices, buffer, x0, y0, z0, x1, y1, z1, 0.0F, 0.0F, 0.0F, 1.0F);
+                    LevelRenderer.renderLineBox(matrices, buffer, x0, y0, z0, x1, y1, z1, 0.0F, 0.0F, 0.0F, 1.0F);
                 }
                 else if (isAir) {
-                    WorldRenderer.renderLineBox(matrices, buffer, x0, y0, z0, x1, y1, z1, 0.5F, 0.5F, 1.0F, 1.0F);
+                    LevelRenderer.renderLineBox(matrices, buffer, x0, y0, z0, x1, y1, z1, 0.5F, 0.5F, 1.0F, 1.0F);
                 }
                 else {
-                    WorldRenderer.renderLineBox(matrices, buffer, x0, y0, z0, x1, y1, z1, 1.0F, 0.25F, 0.25F, 1.0F);
+                    LevelRenderer.renderLineBox(matrices, buffer, x0, y0, z0, x1, y1, z1, 1.0F, 0.25F, 0.25F, 1.0F);
                 }
             }
         }
     }
 
     @Override
-    public void render(TESchematic tile, float partialTicks, MatrixStack matrices, IRenderTypeBuffer buffer, int packedLight, int packedOverlay) {
+    public void render(TESchematic tile, float partialTicks, PoseStack matrices, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         if (Minecraft.getInstance().player.canUseGameMasterBlocks() || Minecraft.getInstance().player.isSpectator()) {
             BlockPos schematicPos = tile.getSchematicPos();
-            BlockPos size = tile.getStructureSize();
+            Vec3i size = tile.getStructureSize();
             if (size.getX() >= 1 && size.getY() >= 1 && size.getZ() >= 1) {
                 if (tile.getMode() == SchematicMode.SAVE || tile.getMode() == SchematicMode.LOAD) {
                     double schematicPosX = schematicPos.getX();
@@ -64,50 +64,52 @@ public class RenderTESchematic extends TileEntityRenderer<TESchematic> {
                     double partialX;
                     double partialZ;
                     switch (tile.getMirror()) {
-                        case LEFT_RIGHT:
+                        case LEFT_RIGHT -> {
                             partialX = size.getX();
                             partialZ = -size.getZ();
-                            break;
-                        case FRONT_BACK:
+                        }
+                        case FRONT_BACK -> {
                             partialX = -size.getX();
                             partialZ = size.getZ();
-                            break;
-                        default:
+                        }
+                        default -> {
                             partialX = size.getX();
                             partialZ = size.getZ();
+                        }
                     }
                     double startingX;
                     double startingZ;
                     double endX;
                     double endZ;
                     switch (tile.getRotation()) {
-                        case CLOCKWISE_90:
+                        case CLOCKWISE_90 -> {
                             startingX = partialZ < 0 ? schematicPosX : schematicPosX + 1;
                             startingZ = partialX < 0 ? schematicPosZ + 1 : schematicPosZ;
                             endX = startingX - partialZ;
                             endZ = startingZ + partialX;
-                            break;
-                        case CLOCKWISE_180:
+                        }
+                        case CLOCKWISE_180 -> {
                             startingX = partialX < 0 ? schematicPosX : schematicPosX + 1;
                             startingZ = partialZ < 0 ? schematicPosZ : schematicPosZ + 1;
                             endX = startingX - partialX;
                             endZ = startingZ - partialZ;
-                            break;
-                        case COUNTERCLOCKWISE_90:
+                        }
+                        case COUNTERCLOCKWISE_90 -> {
                             startingX = partialZ < 0 ? schematicPosX + 1 : schematicPosX;
                             startingZ = partialX < 0 ? schematicPosZ : schematicPosZ + 1;
                             endX = startingX + partialZ;
                             endZ = startingZ - partialX;
-                            break;
-                        default:
+                        }
+                        default -> {
                             startingX = partialX < 0 ? schematicPosX + 1 : schematicPosX;
                             startingZ = partialZ < 0 ? schematicPosZ + 1 : schematicPosZ;
                             endX = startingX + partialX;
                             endZ = startingZ + partialZ;
+                        }
                     }
-                    IVertexBuilder drawBuffer = buffer.getBuffer(RenderType.lines());
+                    VertexConsumer drawBuffer = buffer.getBuffer(RenderType.lines());
                     if (tile.getMode() == SchematicMode.SAVE || tile.showsBoundingBox()) {
-                        WorldRenderer.renderLineBox(matrices,
+                        LevelRenderer.renderLineBox(matrices,
                                                     drawBuffer,
                                                     startingX,
                                                     startingY,

@@ -1,24 +1,31 @@
 package tgw.evolution.util.hitbox;
 
-import net.minecraft.entity.monster.CreeperEntity;
-import net.minecraft.util.math.vector.Vector3d;
-import tgw.evolution.util.MathHelper;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.phys.Vec3;
+import tgw.evolution.items.ICustomAttack;
+import tgw.evolution.util.math.MathHelper;
 
-public class HitboxCreeper extends HitboxEntity<CreeperEntity> {
+public class HitboxCreeper extends HitboxEntity<Creeper> {
 
-    public static final Vector3d NECK_STANDING = new Vector3d(0, 18 / 16.0, 0);
-    protected final Hitbox body = this.addBox(BodyPart.CHEST, aabb(-4, -12, -2, 4, 0, 2));
-    protected final Hitbox head = this.addBox(BodyPart.HEAD, HitboxLib.BIPED_HEAD);
-    protected final Hitbox legFL = this.addBox(BodyPart.FRONT_LEFT_LEG, HitboxLib.CREEPER_LEG);
-    protected final Hitbox legFR = this.addBox(BodyPart.FRONT_RIGHT_LEG, HitboxLib.CREEPER_LEG);
-    protected final Hitbox legRL = this.addBox(BodyPart.REAR_LEFT_LEG, HitboxLib.CREEPER_LEG);
-    protected final Hitbox legRR = this.addBox(BodyPart.REAR_RIGHT_LEG, HitboxLib.CREEPER_LEG);
+    public static final Vec3 NECK_STANDING = new Vec3(0, 18 / 16.0, 0);
+    protected final Hitbox body = this.addBox(HitboxType.CHEST, aabb(-4, -12, -2, 4, 0, 2));
+    protected final Hitbox head = this.addBox(HitboxType.HEAD, HitboxLib.BIPED_HEAD);
+    protected final Hitbox legFL = this.addBox(HitboxType.FRONT_LEFT_LEG, HitboxLib.CREEPER_LEG);
+    protected final Hitbox legFR = this.addBox(HitboxType.FRONT_RIGHT_LEG, HitboxLib.CREEPER_LEG);
+    protected final Hitbox legRL = this.addBox(HitboxType.REAR_LEFT_LEG, HitboxLib.CREEPER_LEG);
+    protected final Hitbox legRR = this.addBox(HitboxType.REAR_RIGHT_LEG, HitboxLib.CREEPER_LEG);
 
     protected float limbSwing;
     protected float limbSwingAmount;
 
     @Override
-    public void init(CreeperEntity entity, float partialTicks) {
+    public Hitbox getEquipmentFor(ICustomAttack.AttackType type, InteractionHand hand) {
+        throw new IllegalStateException("Creepers do not have hands!");
+    }
+
+    @Override
+    public void init(Creeper entity, float partialTicks) {
         this.reset();
         this.rotationYaw = -MathHelper.getEntityBodyYaw(entity, partialTicks);
         this.rotationPitch = -entity.getViewXRot(partialTicks);

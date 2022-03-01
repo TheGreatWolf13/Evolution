@@ -1,6 +1,6 @@
 package tgw.evolution.items;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Items implemented by this interface can parry by holding right-click.

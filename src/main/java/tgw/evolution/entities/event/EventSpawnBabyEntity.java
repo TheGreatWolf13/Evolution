@@ -1,6 +1,6 @@
 package tgw.evolution.entities.event;
 
-import net.minecraft.entity.MobEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
 import tgw.evolution.entities.EntityGenericAgeable;
@@ -9,11 +9,11 @@ import javax.annotation.Nullable;
 
 @Cancelable
 public class EventSpawnBabyEntity extends Event {
-    private final MobEntity father;
-    private final MobEntity mother;
+    private final Mob father;
+    private final Mob mother;
     private EntityGenericAgeable child;
 
-    public EventSpawnBabyEntity(MobEntity father, MobEntity mother, @Nullable EntityGenericAgeable proposedChild) {
+    public EventSpawnBabyEntity(Mob father, Mob mother, @Nullable EntityGenericAgeable proposedChild) {
         this.father = father;
         this.mother = mother;
         this.child = proposedChild;
@@ -24,11 +24,11 @@ public class EventSpawnBabyEntity extends Event {
         return this.child;
     }
 
-    public MobEntity getFather() {
+    public Mob getFather() {
         return this.father;
     }
 
-    public MobEntity getMother() {
+    public Mob getMother() {
         return this.mother;
     }
 

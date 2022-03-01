@@ -1,21 +1,21 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.state.StateContainer;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Mirror;
-import net.minecraft.util.Rotation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
@@ -36,7 +36,7 @@ public class BlockWallTorch extends BlockTorch {
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void animateTick(BlockState state, World world, BlockPos pos, Random rand) {
+    public void animateTick(BlockState state, Level level, BlockPos pos, Random rand) {
         if (!state.getValue(LIT)) {
             return;
         }
@@ -44,18 +44,18 @@ public class BlockWallTorch extends BlockTorch {
         double dy = pos.getY() + 0.7;
         double dz = pos.getZ() + 0.5;
         Direction direction = state.getValue(DIRECTION_HORIZONTAL).getOpposite();
-        world.addParticle(ParticleTypes.SMOKE, dx + 0.27 * direction.getStepX(), dy + 0.22, dz + 0.27 * direction.getStepZ(), 0, 0, 0);
-        world.addParticle(ParticleTypes.FLAME, dx + 0.27 * direction.getStepX(), dy + 0.22, dz + 0.27 * direction.getStepZ(), 0, 0, 0);
+        level.addParticle(ParticleTypes.SMOKE, dx + 0.27 * direction.getStepX(), dy + 0.22, dz + 0.27 * direction.getStepZ(), 0, 0, 0);
+        level.addParticle(ParticleTypes.FLAME, dx + 0.27 * direction.getStepX(), dy + 0.22, dz + 0.27 * direction.getStepZ(), 0, 0, 0);
     }
 
     @Override
-    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
+    public boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
         Direction direction = state.getValue(DIRECTION_HORIZONTAL);
         return BlockUtils.hasSolidSide(world, pos.relative(direction.getOpposite()), direction);
     }
 
     @Override
-    public void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+    public void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(DIRECTION_HORIZONTAL);
         super.createBlockStateDefinition(builder);
     }
@@ -66,33 +66,27 @@ public class BlockWallTorch extends BlockTorch {
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
-        switch (state.getValue(DIRECTION_HORIZONTAL)) {
-            case WEST: {
-                return EvolutionHitBoxes.TORCH_WEST;
-            }
-            case SOUTH: {
-                return EvolutionHitBoxes.TORCH_SOUTH;
-            }
-            case NORTH: {
-                return EvolutionHitBoxes.TORCH_NORTH;
-            }
-        }
-        return EvolutionHitBoxes.TORCH_EAST;
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return switch (state.getValue(DIRECTION_HORIZONTAL)) {
+            case WEST -> EvolutionHitBoxes.TORCH_WEST;
+            case SOUTH -> EvolutionHitBoxes.TORCH_SOUTH;
+            case NORTH -> EvolutionHitBoxes.TORCH_NORTH;
+            default -> EvolutionHitBoxes.TORCH_EAST;
+        };
     }
 
     @Override
     @Nullable
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        World world = context.getLevel();
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
-        boolean lit = world.getFluidState(pos).isEmpty();
+        boolean lit = level.getFluidState(pos).isEmpty();
         BlockState state = this.defaultBlockState();
         Direction[] directions = context.getNearestLookingDirections();
         for (Direction direction : directions) {
             if (direction.getAxis().isHorizontal()) {
                 state = state.setValue(DIRECTION_HORIZONTAL, direction.getOpposite());
-                if (state.canSurvive(world, pos)) {
+                if (state.canSurvive(level, pos)) {
                     if (!lit) {
                         return state.setValue(LIT, false);
                     }
@@ -115,8 +109,13 @@ public class BlockWallTorch extends BlockTorch {
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
-        return facing.getOpposite() == state.getValue(DIRECTION_HORIZONTAL) && !state.canSurvive(world, currentPos) ?
+    public BlockState updateShape(BlockState state,
+                                  Direction facing,
+                                  BlockState facingState,
+                                  LevelAccessor level,
+                                  BlockPos currentPos,
+                                  BlockPos facingPos) {
+        return facing.getOpposite() == state.getValue(DIRECTION_HORIZONTAL) && !state.canSurvive(level, currentPos) ?
                Blocks.AIR.defaultBlockState() :
                state;
     }

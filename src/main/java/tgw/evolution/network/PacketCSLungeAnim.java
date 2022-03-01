@@ -1,35 +1,35 @@
 package tgw.evolution.network;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Hand;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
-import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 
 import java.util.function.Supplier;
 
 public class PacketCSLungeAnim implements IPacket {
 
-    private final Hand hand;
+    private final InteractionHand hand;
 
-    public PacketCSLungeAnim(Hand hand) {
+    public PacketCSLungeAnim(InteractionHand hand) {
         this.hand = hand;
     }
 
-    public static PacketCSLungeAnim decode(PacketBuffer buffer) {
-        return new PacketCSLungeAnim(buffer.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND);
+    public static PacketCSLungeAnim decode(FriendlyByteBuf buffer) {
+        return new PacketCSLungeAnim(buffer.readBoolean() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND);
     }
 
-    public static void encode(PacketCSLungeAnim packet, PacketBuffer buffer) {
-        buffer.writeBoolean(packet.hand == Hand.MAIN_HAND);
+    public static void encode(PacketCSLungeAnim packet, FriendlyByteBuf buffer) {
+        buffer.writeBoolean(packet.hand == InteractionHand.MAIN_HAND);
     }
 
     public static void handle(PacketCSLungeAnim packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
-                ServerPlayerEntity player = context.get().getSender();
+                ServerPlayer player = context.get().getSender();
                 EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> player),
                                                new PacketSCLungeAnim(player.getId(), packet.hand));
             });

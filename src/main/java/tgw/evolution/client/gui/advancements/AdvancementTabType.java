@@ -1,9 +1,9 @@
 package tgw.evolution.client.gui.advancements;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.renderer.ItemRenderer;
-import net.minecraft.item.ItemStack;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -49,7 +49,7 @@ public enum AdvancementTabType {
         return null;
     }
 
-    public void draw(MatrixStack matrices, AbstractGui gui, int x, int y, int width, int height, boolean selected, int index) {
+    public void draw(PoseStack matrices, GuiComponent gui, int x, int y, int width, int height, boolean selected, int index) {
         int i = this.textureX;
         index %= this.getMax(width, height);
         if (index > 0) {
@@ -62,32 +62,28 @@ public enum AdvancementTabType {
         gui.blit(matrices, x + this.getX(index, width, height), y + this.getY(index, width, height), i, j, this.width, this.height);
     }
 
-    public void drawIcon(int left, int top, int width, int height, int index, ItemRenderer renderItem, ItemStack stack) {
+    public void drawIcon(int left, int top, int width, int height, int index, ItemRenderer itemRenderer, ItemStack stack) {
         int i = left + this.getX(index, width, height);
         int j = top + this.getY(index, width, height);
         switch (this) {
-            case ABOVE: {
+            case ABOVE -> {
                 i += 6;
                 j += 9;
-                break;
             }
-            case BELOW: {
+            case BELOW -> {
                 i += 6;
                 j += 6;
-                break;
             }
-            case LEFT: {
+            case LEFT -> {
                 i += 10;
                 j += 5;
-                break;
             }
-            case RIGHT: {
+            case RIGHT -> {
                 i += 6;
                 j += 5;
-                break;
             }
         }
-        renderItem.renderAndDecorateItem(null, stack, i, j);
+        itemRenderer.renderAndDecorateItem(stack, i, j);
     }
 
     public int getMax() {
@@ -95,93 +91,44 @@ public enum AdvancementTabType {
     }
 
     private int getMax(int width, int height) {
-        switch (this) {
-            case LEFT:
-            case RIGHT: {
-                return height / 32;
-            }
-            case ABOVE:
-            case BELOW: {
-                return width / 32;
-            }
-            default: {
-                return this.max;
-            }
-        }
+        return switch (this) {
+            case LEFT, RIGHT -> height / 32;
+            case ABOVE, BELOW -> width / 32;
+        };
     }
 
     public int getX(int p_192648_1_) {
-        switch (this) {
-            case ABOVE:
-            case BELOW: {
-                return (this.width + 4) * p_192648_1_;
-            }
-            case LEFT: {
-                return -this.width + 4;
-            }
-            case RIGHT: {
-                return 248;
-            }
-            default: {
-                throw new UnsupportedOperationException("Don't know what this tab type is!" + this);
-            }
-        }
+        return switch (this) {
+            case ABOVE, BELOW -> (this.width + 4) * p_192648_1_;
+            case LEFT -> -this.width + 4;
+            case RIGHT -> 248;
+        };
     }
 
     public int getX(int index, int width, int height) {
         index %= this.getMax(width, height);
-        switch (this) {
-            case ABOVE:
-            case BELOW: {
-                return (this.width + 4) * index;
-            }
-            case LEFT: {
-                return -this.width + 4;
-            }
-            case RIGHT: {
-                return width - 4;
-            }
-            default: {
-                throw new UnsupportedOperationException("Don't know what this tab type is!" + this);
-            }
-        }
+        return switch (this) {
+            case ABOVE, BELOW -> (this.width + 4) * index;
+            case LEFT -> -this.width + 4;
+            case RIGHT -> width - 4;
+        };
     }
 
     public int getY(int p_192653_1_) {
-        switch (this) {
-            case ABOVE: {
-                return -this.height + 4;
-            }
-            case BELOW: {
-                return 136;
-            }
-            case LEFT:
-            case RIGHT: {
-                return this.height * p_192653_1_;
-            }
-            default: {
-                throw new UnsupportedOperationException("Don't know what this tab type is!" + this);
-            }
-        }
+        return switch (this) {
+            case ABOVE -> -this.height + 4;
+            case BELOW -> 136;
+            case LEFT, RIGHT -> this.height * p_192653_1_;
+        };
     }
 
     public int getY(int index, int width, int height) {
         index %= this.getMax(width, height);
-        switch (this) {
-            case ABOVE: {
-                return -this.height + 4;
-            }
-            case BELOW: {
-                return height - 4;
-            }
-            case LEFT:
-            case RIGHT: {
-                return this.height * index;
-            }
-            default: {
-                throw new UnsupportedOperationException("Don't know what this tab type is!" + this);
-            }
-        }
+        return switch (this) {
+            case ABOVE -> -this.height + 4;
+            case BELOW -> height - 4;
+            case LEFT, RIGHT -> this.height * index;
+        };
     }
 
     public boolean isMouseOver(int left, int top, int width, int height, int index, double mouseX, double mouseY) {

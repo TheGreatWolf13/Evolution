@@ -19,7 +19,7 @@
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
 //import tgw.evolution.blocks.BlockPuzzle;
-//import tgw.evolution.util.MathHelper;
+//import tgw.evolution.util.math.MathHelper;
 //import tgw.evolution.world.feature.structures.config.IConfigStruct;
 //import tgw.evolution.world.puzzle.pieces.ConfiguredPuzzlePiece;
 //import tgw.evolution.world.puzzle.pieces.EmptyPuzzlePiece;

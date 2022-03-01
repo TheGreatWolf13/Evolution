@@ -1,31 +1,28 @@
 package tgw.evolution.init;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.GlassBlock;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.trees.Tree;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.GlassBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.grower.AbstractTreeGrower;
+import net.minecraft.world.level.material.Material;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.*;
 import tgw.evolution.blocks.fluids.BlockFreshWater;
 import tgw.evolution.blocks.fluids.BlockGenericFluid;
 import tgw.evolution.blocks.fluids.BlockSaltWater;
-import tgw.evolution.blocks.trees.TreeBirch;
-import tgw.evolution.blocks.trees.TreeNull;
-import tgw.evolution.blocks.trees.TreeOak;
-import tgw.evolution.util.MetalVariant;
-import tgw.evolution.util.Oxidation;
-import tgw.evolution.util.RockVariant;
-import tgw.evolution.util.WoodVariant;
+import tgw.evolution.util.constants.MetalVariant;
+import tgw.evolution.util.constants.Oxidation;
+import tgw.evolution.util.constants.RockVariant;
+import tgw.evolution.util.constants.WoodVariant;
 
-import static tgw.evolution.util.MetalVariant.COPPER;
-import static tgw.evolution.util.RockVariant.*;
-import static tgw.evolution.util.WoodVariant.*;
+import static tgw.evolution.util.constants.MetalVariant.COPPER;
+import static tgw.evolution.util.constants.RockVariant.*;
+import static tgw.evolution.util.constants.WoodVariant.*;
 
 @SuppressWarnings("unused")
 @EventBusSubscriber
@@ -296,24 +293,24 @@ public final class EvolutionBlocks {
     public static final RegistryObject<Block> LEAVES_SPRUCE = BLOCKS.register("leaves_spruce", BlockLeaves::new);
     public static final RegistryObject<Block> LEAVES_WILLOW = BLOCKS.register("leaves_willow", BlockLeaves::new);
     //Sapling
-    public static final RegistryObject<BlockSapling> SAPLING_ACACIA = BLOCKS.register("sapling_acacia", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_ASPEN = BLOCKS.register("sapling_aspen", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_BIRCH = BLOCKS.register("sapling_birch", () -> sapling(new TreeBirch()));
-    public static final RegistryObject<BlockSapling> SAPLING_CEDAR = BLOCKS.register("sapling_cedar", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_EBONY = BLOCKS.register("sapling_ebony", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_ELM = BLOCKS.register("sapling_elm", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_EUCALYPTUS = BLOCKS.register("sapling_eucalyptus", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_FIR = BLOCKS.register("sapling_fir", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_KAPOK = BLOCKS.register("sapling_kapok", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_MANGROVE = BLOCKS.register("sapling_mangrove", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_MAPLE = BLOCKS.register("sapling_maple", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_OAK = BLOCKS.register("sapling_oak", () -> sapling(new TreeOak()));
-    public static final RegistryObject<BlockSapling> SAPLING_OLD_OAK = BLOCKS.register("sapling_old_oak", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_PALM = BLOCKS.register("sapling_palm", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_PINE = BLOCKS.register("sapling_pine", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_REDWOOD = BLOCKS.register("sapling_redwood", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_SPRUCE = BLOCKS.register("sapling_spruce", () -> sapling(new TreeNull()));
-    public static final RegistryObject<BlockSapling> SAPLING_WILLOW = BLOCKS.register("sapling_willow", () -> sapling(new TreeNull()));
+    public static final RegistryObject<BlockSapling> SAPLING_ACACIA = BLOCKS.register("sapling_acacia", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_ASPEN = BLOCKS.register("sapling_aspen", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_BIRCH = BLOCKS.register("sapling_birch", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_CEDAR = BLOCKS.register("sapling_cedar", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_EBONY = BLOCKS.register("sapling_ebony", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_ELM = BLOCKS.register("sapling_elm", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_EUCALYPTUS = BLOCKS.register("sapling_eucalyptus", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_FIR = BLOCKS.register("sapling_fir", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_KAPOK = BLOCKS.register("sapling_kapok", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_MANGROVE = BLOCKS.register("sapling_mangrove", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_MAPLE = BLOCKS.register("sapling_maple", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_OAK = BLOCKS.register("sapling_oak", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_OLD_OAK = BLOCKS.register("sapling_old_oak", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_PALM = BLOCKS.register("sapling_palm", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_PINE = BLOCKS.register("sapling_pine", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_REDWOOD = BLOCKS.register("sapling_redwood", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_SPRUCE = BLOCKS.register("sapling_spruce", () -> sapling(null));
+    public static final RegistryObject<BlockSapling> SAPLING_WILLOW = BLOCKS.register("sapling_willow", () -> sapling(null));
     //Planks
     public static final RegistryObject<Block> PLANKS_ACACIA = BLOCKS.register("planks_acacia", () -> planks(ACACIA));
     public static final RegistryObject<Block> PLANKS_ASPEN = BLOCKS.register("planks_aspen", () -> planks(ASPEN));
@@ -482,7 +479,7 @@ public final class EvolutionBlocks {
         return new BlockSand(variant);
     }
 
-    private static BlockSapling sapling(Tree tree) {
+    private static BlockSapling sapling(AbstractTreeGrower tree) {
         return new BlockSapling(tree);
     }
 

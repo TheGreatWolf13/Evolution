@@ -1,36 +1,37 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.advancements.CriteriaTriggers;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.attributes.Attribute;
-import net.minecraft.entity.ai.attributes.Attributes;
-import net.minecraft.entity.ai.attributes.ModifiableAttributeInstance;
-import net.minecraft.entity.passive.IFlyingAnimal;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.ArmorItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.potion.Effect;
-import net.minecraft.potion.EffectInstance;
-import net.minecraft.potion.Effects;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.*;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.CombatTracker;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.EntityDamageSource;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.animal.FlyingAnimal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.ForgeMod;
+import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -41,28 +42,31 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.IClimbable;
 import tgw.evolution.blocks.ICollisionBlock;
-import tgw.evolution.blocks.IFriction;
-import tgw.evolution.entities.IEntityPatch;
 import tgw.evolution.entities.IEntityProperties;
 import tgw.evolution.events.EntityEvents;
 import tgw.evolution.hooks.LivingEntityHooks;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.items.IAdditionalEquipment;
+import tgw.evolution.init.EvolutionSounds;
+import tgw.evolution.inventory.AdditionalSlotType;
+import tgw.evolution.items.ICustomAttack;
 import tgw.evolution.items.IEvolutionItem;
 import tgw.evolution.network.PacketCSImpactDamage;
-import tgw.evolution.util.EntityFlags;
-import tgw.evolution.util.EntityStates;
-import tgw.evolution.util.Gravity;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.patches.IBlockPatch;
+import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.patches.ILivingEntityPatch;
+import tgw.evolution.util.constants.EntityFlags;
+import tgw.evolution.util.constants.EntityStates;
 import tgw.evolution.util.damage.DamageSourceEntity;
+import tgw.evolution.util.earth.Gravity;
+import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nullable;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(LivingEntity.class)
-public abstract class LivingEntityMixin extends Entity implements IEntityProperties {
+public abstract class LivingEntityMixin extends Entity implements IEntityProperties, ILivingEntityPatch {
 
     @Shadow
     public float animationSpeed;
@@ -81,6 +85,10 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     @Shadow
     public int removeStingerTime;
     @Shadow
+    public int swingTime;
+    @Shadow
+    public boolean swinging;
+    @Shadow
     public float yBodyRot;
     @Shadow
     public float yBodyRotO;
@@ -98,7 +106,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     protected float lastHurt;
     @Shadow
     @Nullable
-    protected PlayerEntity lastHurtByPlayer;
+    protected Player lastHurtByPlayer;
     @Shadow
     protected int lastHurtByPlayerTime;
     @Shadow
@@ -107,24 +115,34 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     protected float oRun;
     @Shadow
     protected float run;
+    private boolean isMainhandCustomAttacking;
+    private boolean isOffhandCustomAttacking;
     @Shadow
     private DamageSource lastDamageSource;
     @Shadow
     private long lastDamageStamp;
+    private int mainhandCustomAttackTime;
+    @Nullable
+    private ICustomAttack.AttackType mainhandCustomAttackType;
+    private int mainhandStopTicks;
     @Shadow
     private int noJumpDelay;
+    private int offhandCustomAttackTime;
+    @Nullable
+    private ICustomAttack.AttackType offhandCustomAttackType;
+    private int offhandStopTicks;
 
-    public LivingEntityMixin(EntityType<?> entityType, World world) {
-        super(entityType, world);
+    public LivingEntityMixin(EntityType<?> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Shadow
-    protected abstract void actuallyHurt(DamageSource p_70665_1_, float p_70665_2_);
+    protected abstract void actuallyHurt(DamageSource p_21240_, float p_21241_);
 
     @Shadow
     public abstract void aiStep();
 
-    @Redirect(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;isEffectiveAi()Z", ordinal = 0))
+    @Redirect(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isEffectiveAi()Z", ordinal = 0))
     private boolean aiStepProxy(LivingEntity entity) {
         return true;
     }
@@ -161,13 +179,13 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         float damage = 0;
         if (deltaSpeedX >= 6) {
             double kineticEnergy = 0.5 * deltaSpeedX * deltaSpeedX * mass;
-            AxisAlignedBB bb = this.getBoundingBox();
+            AABB bb = this.getBoundingBox();
             double xCoord = speedX >= 0 ? bb.maxX + 0.01 : bb.minX - 0.01;
             int numberOfBlocks = 0;
             double slowDown = 0;
             BlockPos minPos = new BlockPos(xCoord, bb.minY, bb.minZ);
             BlockPos maxPos = new BlockPos(xCoord, bb.maxY, bb.maxZ);
-            BlockPos.Mutable changingPos = new BlockPos.Mutable();
+            BlockPos.MutableBlockPos changingPos = new BlockPos.MutableBlockPos();
             if (this.level.hasChunksAt(minPos, maxPos)) {
                 for (int j = minPos.getY(); j <= maxPos.getY(); j++) {
                     for (int k = minPos.getZ(); k <= maxPos.getZ(); k++) {
@@ -175,9 +193,9 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                         changingPos.set(xCoord, j, k);
                         BlockState stateAtPos = this.level.getBlockState(changingPos);
                         Block blockAtPos = stateAtPos.getBlock();
-                        if (blockAtPos instanceof ICollisionBlock) {
-                            slowDown += ((ICollisionBlock) blockAtPos).getSlowdownSide(stateAtPos);
-                            ((ICollisionBlock) blockAtPos).collision((LivingEntity) (Object) this, speedX);
+                        if (blockAtPos instanceof ICollisionBlock collisionBlock) {
+                            slowDown += collisionBlock.getSlowdownSide(stateAtPos);
+                            collisionBlock.collision((LivingEntity) (Object) this, speedX);
                         }
                         else {
                             slowDown += 1;
@@ -202,13 +220,13 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         deltaSpeedZ *= 20;
         if (deltaSpeedZ >= 6) {
             double kineticEnergy = 0.5 * deltaSpeedZ * deltaSpeedZ * mass;
-            AxisAlignedBB bb = this.getBoundingBox();
+            AABB bb = this.getBoundingBox();
             double zCoord = speedZ >= 0 ? bb.maxZ + 0.01 : bb.minZ - 0.01;
             int numberOfBlocks = 0;
             double slowDown = 0;
             BlockPos minPos = new BlockPos(bb.minX, bb.minY, zCoord);
             BlockPos maxPos = new BlockPos(bb.maxX, bb.maxY, zCoord);
-            BlockPos.Mutable changingPos = new BlockPos.Mutable();
+            BlockPos.MutableBlockPos changingPos = new BlockPos.MutableBlockPos();
             if (this.level.hasChunksAt(minPos, maxPos)) {
                 for (int i = minPos.getX(); i <= maxPos.getX(); i++) {
                     for (int j = minPos.getY(); j <= maxPos.getY(); j++) {
@@ -216,9 +234,9 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                         changingPos.set(i, j, zCoord);
                         BlockState stateAtPos = this.level.getBlockState(changingPos);
                         Block blockAtPos = stateAtPos.getBlock();
-                        if (blockAtPos instanceof ICollisionBlock) {
-                            slowDown += ((ICollisionBlock) blockAtPos).getSlowdownSide(stateAtPos);
-                            ((ICollisionBlock) blockAtPos).collision((LivingEntity) (Object) this, speedZ);
+                        if (blockAtPos instanceof ICollisionBlock collisionBlock) {
+                            slowDown += collisionBlock.getSlowdownSide(stateAtPos);
+                            collisionBlock.collision((LivingEntity) (Object) this, speedZ);
                         }
                         else {
                             slowDown += 1;
@@ -242,38 +260,38 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
             if (!this.level.isClientSide) {
                 this.hurt(EvolutionDamage.WALL_IMPACT, damage);
             }
-            else if ((LivingEntity) (Object) this instanceof PlayerEntity) {
+            else if ((LivingEntity) (Object) this instanceof Player) {
                 EvolutionNetwork.INSTANCE.sendToServer(new PacketCSImpactDamage(damage));
             }
         }
     }
 
     @Shadow
-    public abstract boolean canStandOnFluid(Fluid p_230285_1_);
+    public abstract boolean canStandOnFluid(Fluid p_21070_);
 
     @Shadow
     protected abstract boolean checkBedExists();
 
     @Shadow
-    protected abstract boolean checkTotemDeathProtection(DamageSource p_190628_1_);
+    protected abstract boolean checkTotemDeathProtection(DamageSource p_21263_);
 
     @Shadow
     protected abstract void detectEquipmentUpdates();
 
     @Shadow
-    public abstract void die(DamageSource p_70645_1_);
+    public abstract void die(DamageSource p_21014_);
 
-    private Vector3d getAbsoluteAcceleration(Vector3d direction, double magnitude) {
+    private Vec3 getAbsoluteAcceleration(Vec3 direction, double magnitude) {
         double length = direction.lengthSqr();
         if (length < 1.0E-7) {
-            return Vector3d.ZERO;
+            return Vec3.ZERO;
         }
         if (this.getPose() == Pose.CROUCHING) {
-            if (!((Object) this instanceof PlayerEntity && ((PlayerEntity) (Object) this).abilities.flying)) {
+            if (!((Object) this instanceof Player && ((Player) (Object) this).getAbilities().flying)) {
                 magnitude *= 0.3;
             }
         }
-        if ((Object) this instanceof PlayerEntity) {
+        if ((Object) this instanceof Player) {
             if (this.getPose() == Pose.SWIMMING && !this.isInWater()) {
                 magnitude *= 0.3;
             }
@@ -284,13 +302,13 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                 magnitude *= ((IEvolutionItem) activeItem).useItemSlowDownRate();
             }
         }
-        Vector3d acceleration = direction.normalize();
+        Vec3 acceleration = direction.normalize();
         double accX = acceleration.x * magnitude;
         double accY = acceleration.y * magnitude;
         double accZ = acceleration.z * magnitude;
-        float sinFacing = MathHelper.sinDeg(this.yRot);
-        float cosFacing = MathHelper.cosDeg(this.yRot);
-        return new Vector3d(accX * cosFacing - accZ * sinFacing, accY, accZ * cosFacing + accX * sinFacing);
+        float sinFacing = MathHelper.sinDeg(this.getYRot());
+        float cosFacing = MathHelper.cosDeg(this.getYRot());
+        return new Vec3(accX * cosFacing - accZ * sinFacing, accY, accZ * cosFacing + accX * sinFacing);
     }
 
     private double getAcceleration() {
@@ -304,13 +322,13 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
 
     @Shadow
     @Nullable
-    public abstract ModifiableAttributeInstance getAttribute(Attribute attribute);
+    public abstract AttributeInstance getAttribute(Attribute p_21052_);
 
     @Shadow
-    public abstract double getAttributeBaseValue(Attribute p_233638_1_);
+    public abstract double getAttributeBaseValue(Attribute p_21173_);
 
     @Shadow
-    public abstract double getAttributeValue(Attribute attribute);
+    public abstract double getAttributeValue(Attribute p_21134_);
 
     @Override
     public double getBaseMass() {
@@ -326,10 +344,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
 
     @Shadow
     @Nullable
-    public abstract EffectInstance getEffect(Effect p_70660_1_);
-
-    @Shadow
-    public abstract BlockState getFeetBlockState();
+    public abstract MobEffectInstance getEffect(MobEffect p_21125_);
 
     @Override
     public float getFrictionModifier() {
@@ -337,7 +352,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     }
 
     @Shadow
-    public abstract ItemStack getItemBySlot(EquipmentSlotType p_184582_1_);
+    public abstract ItemStack getItemBySlot(EquipmentSlot p_21127_);
 
     /**
      * @author MGSchultz
@@ -355,6 +370,41 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         return this.getAttributeBaseValue(Attributes.MOVEMENT_SPEED) * 2.75;
     }
 
+    @Override
+    public float getMainhandCustomAttackProgress(float partialTicks) {
+        return (this.mainhandCustomAttackTime + partialTicks) / this.mainhandCustomAttackType.getAttackTime();
+    }
+
+    @Override
+    public int getMainhandCustomAttackTicks() {
+        return this.mainhandCustomAttackTime;
+    }
+
+    @Nullable
+    @Override
+    public ICustomAttack.AttackType getMainhandCustomAttackType() {
+        return this.mainhandCustomAttackType;
+    }
+
+    @Override
+    public float getOffhandCustomAttackProgress(float partialTicks) {
+        if (!this.isOffhandCustomAttacking) {
+            return 0;
+        }
+        return (this.offhandCustomAttackTime + partialTicks) / this.offhandCustomAttackType.getAttackTime();
+    }
+
+    @Override
+    public int getOffhandCustomAttackTicks() {
+        return this.offhandCustomAttackTime;
+    }
+
+    @Nullable
+    @Override
+    public ICustomAttack.AttackType getOffhandCustomAttackType() {
+        return this.offhandCustomAttackType;
+    }
+
     @Shadow
     protected abstract float getSoundVolume();
 
@@ -365,20 +415,20 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     public abstract ItemStack getUseItem();
 
     @Shadow
-    protected abstract float getVoicePitch();
+    public abstract float getVoicePitch();
 
     @Shadow
     protected abstract float getWaterSlowDown();
 
-    private Vector3d handleLadderMotion(double speedX, double speedY, double speedZ) {
-        boolean isCreativeFlying = (Object) this instanceof PlayerEntity && ((PlayerEntity) (Object) this).abilities.flying;
+    private Vec3 handleLadderMotion(double speedX, double speedY, double speedZ) {
+        boolean isCreativeFlying = (Object) this instanceof Player && ((Player) (Object) this).getAbilities().flying;
         if (this.onClimbable() && !isCreativeFlying) {
             BlockState state = this.getFeetBlockState();
             Block block = state.getBlock();
             double dx = 0;
             double dz = 0;
-            if (block instanceof IClimbable) {
-                double climbableOffset = ((IClimbable) block).getXPos(state);
+            if (block instanceof IClimbable climbable) {
+                double climbableOffset = climbable.getXPos(state);
                 if (!Double.isNaN(climbableOffset)) {
                     if (climbableOffset < 0) {
                         double temp = this.blockPosition().getX() - climbableOffset + this.getBbWidth() / 2.0;
@@ -393,7 +443,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                         }
                     }
                 }
-                climbableOffset = ((IClimbable) block).getZPos(state);
+                climbableOffset = climbable.getZPos(state);
                 if (!Double.isNaN(climbableOffset)) {
                     if (climbableOffset < 0) {
                         double temp = this.blockPosition().getZ() - climbableOffset + this.getBbWidth() / 2.0;
@@ -425,25 +475,25 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                 newZ = speedZ;
             }
             double newY = speedY < -0.3 ? speedY : Math.max(speedY, this.isCrouching() ? 0 : -0.15);
-            if (newY < 0 && block != Blocks.SCAFFOLDING && this.isCrouching() && (Object) this instanceof PlayerEntity) {
+            if (newY < 0 && block != Blocks.SCAFFOLDING && this.isCrouching() && (Object) this instanceof Player) {
                 newY = 0;
             }
-            return new Vector3d(newX, newY, newZ);
+            return new Vec3(newX, newY, newZ);
         }
-        return new Vector3d(speedX, speedY, speedZ);
+        return new Vec3(speedX, speedY, speedZ);
     }
 
-    private void handleNormalMovement(Vector3d travelVector, double gravityAcceleration, float slowdown) {
-        AxisAlignedBB aabb = this.getBoundingBox();
-        BlockPos.Mutable blockBelow = new BlockPos.Mutable(this.getX(), aabb.minY - 0.001, this.getZ());
+    private void handleNormalMovement(Vec3 travelVector, double gravityAcceleration, float slowdown) {
+        AABB aabb = this.getBoundingBox();
+        BlockPos.MutableBlockPos blockBelow = new BlockPos.MutableBlockPos(this.getX(), aabb.minY - 0.001, this.getZ());
         BlockState state = this.level.getBlockState(blockBelow);
-        if (this.isOnGround() && (state.isAir(this.level, blockBelow) || state.getCollisionShape(this.level, blockBelow).isEmpty())) {
+        if (this.isOnGround() && (state.isAir() || state.getCollisionShape(this.level, blockBelow).isEmpty())) {
             outer:
             for (int i = 0; i < 2; i++) {
                 for (int j = 0; j < 2; j++) {
                     blockBelow.set(i == 0 ? aabb.minX : aabb.maxX, aabb.minY - 0.001, j == 0 ? aabb.minZ : aabb.maxZ);
                     state = this.level.getBlockState(blockBelow);
-                    if (!state.isAir(this.level, blockBelow) && !state.getCollisionShape(this.level, blockBelow).isEmpty()) {
+                    if (!state.isAir() && !state.getCollisionShape(this.level, blockBelow).isEmpty()) {
                         break outer;
                     }
                 }
@@ -451,11 +501,11 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         }
         Block block = state.getBlock();
         float frictionCoef = 0.85F;
-        if (block.isAir(state, this.level, blockBelow)) {
+        if (state.isAir()) {
             frictionCoef = 0.0f;
         }
-        else if (block instanceof IFriction) {
-            frictionCoef = ((IFriction) block).getFrictionCoefficient(state);
+        else if (block instanceof IBlockPatch friction) {
+            frictionCoef = friction.getFrictionCoefficient(state);
         }
         if (this.getFluidHeight(FluidTags.WATER) > 0) {
             frictionCoef -= 0.1f;
@@ -463,14 +513,14 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                 frictionCoef = 0.01F;
             }
         }
-        Vector3d acceleration = this.getAbsoluteAcceleration(travelVector, slowdown * this.jumpMovementFactor(frictionCoef));
+        Vec3 acceleration = this.getAbsoluteAcceleration(travelVector, slowdown * this.jumpMovementFactor(frictionCoef));
         double accX = acceleration.x;
         double accY = acceleration.y;
         double accZ = acceleration.z;
         if (!this.isOnGround()) {
             frictionCoef = 0.0F;
         }
-        Vector3d motion = this.getDeltaMovement();
+        Vec3 motion = this.getDeltaMovement();
         double motionX = motion.x;
         double motionY = motion.y;
         double motionZ = motion.z;
@@ -553,7 +603,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     }
 
     @Shadow
-    public abstract boolean hasEffect(Effect p_70644_1_);
+    public abstract boolean hasEffect(MobEffect p_21024_);
 
     /**
      * @author MGSchultz
@@ -575,7 +625,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         if (this.isDeadOrDying()) {
             return false;
         }
-        if (source.isFire() && this.hasEffect(Effects.FIRE_RESISTANCE)) {
+        if (source.isFire() && this.hasEffect(MobEffects.FIRE_RESISTANCE)) {
             return false;
         }
         if (this.isSleeping() && !this.level.isClientSide) {
@@ -583,26 +633,24 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         }
         this.noActionTime = 0;
         float f = amount;
-        if ((source == DamageSource.ANVIL || source == DamageSource.FALLING_BLOCK) && !this.getItemBySlot(EquipmentSlotType.HEAD).isEmpty()) {
-            this.getItemBySlot(EquipmentSlotType.HEAD)
-                .hurtAndBreak((int) (amount * 4.0F + this.random.nextFloat() * amount * 2.0F),
-                              (LivingEntity) (Object) this,
-                              e -> e.broadcastBreakEvent(EquipmentSlotType.HEAD));
-            amount *= 0.75F;
-        }
         boolean blocked = false;
         float blockedAmount = 0.0F;
         if (amount > 0.0F && this.isDamageSourceBlocked(source)) {
-            this.hurtCurrentlyUsedShield(amount);
-            blockedAmount = amount;
-            amount = 0.0F;
-            if (!source.isProjectile()) {
-                Entity entity = source.getDirectEntity();
-                if (entity instanceof LivingEntity) {
-                    this.blockUsingShield((LivingEntity) entity);
+            ShieldBlockEvent event = ForgeHooks.onShieldBlock((LivingEntity) (Object) this, source, amount);
+            if (!event.isCanceled()) {
+                if (event.shieldTakesDamage()) {
+                    this.hurtCurrentlyUsedShield(amount);
                 }
+                blockedAmount = event.getBlockedDamage();
+                amount -= event.getBlockedDamage();
+                if (!source.isProjectile()) {
+                    Entity entity = source.getDirectEntity();
+                    if (entity instanceof LivingEntity) {
+                        this.blockUsingShield((LivingEntity) entity);
+                    }
+                }
+                blocked = true;
             }
-            blocked = true;
         }
         this.animationSpeed = 1.5F;
         boolean gotHurt = true;
@@ -621,23 +669,26 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
             this.hurtDuration = 10;
             this.hurtTime = this.hurtDuration;
         }
+        if (source.isDamageHelmet() && !this.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) {
+            this.hurtHelmet(source, amount);
+            amount *= 0.75f;
+        }
         this.hurtDir = 0.0F;
         Entity sourceEntity = source.getEntity();
         if (sourceEntity != null) {
-            if (sourceEntity instanceof LivingEntity) {
+            if (sourceEntity instanceof LivingEntity && !source.isNoAggro()) {
                 this.setLastHurtByMob((LivingEntity) sourceEntity);
             }
-            if (sourceEntity instanceof PlayerEntity) {
+            if (sourceEntity instanceof Player) {
                 this.lastHurtByPlayerTime = 100;
-                this.lastHurtByPlayer = (PlayerEntity) sourceEntity;
+                this.lastHurtByPlayer = (Player) sourceEntity;
             }
-            else if (sourceEntity instanceof TameableEntity) {
-                TameableEntity tameable = (TameableEntity) sourceEntity;
-                if (tameable.isTame()) {
+            else if (sourceEntity instanceof TamableAnimal tamable) {
+                if (tamable.isTame()) {
                     this.lastHurtByPlayerTime = 100;
-                    LivingEntity owner = tameable.getOwner();
+                    LivingEntity owner = tamable.getOwner();
                     if (owner != null && owner.getType() == EntityType.PLAYER) {
-                        this.lastHurtByPlayer = (PlayerEntity) owner;
+                        this.lastHurtByPlayer = (Player) owner;
                     }
                     else {
                         this.lastHurtByPlayer = null;
@@ -649,12 +700,12 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
             if (blocked) {
                 this.level.broadcastEntityEvent(this, EntityStates.SHIELD_BLOCK_SOUND);
             }
-            else if (source instanceof EntityDamageSource && ((EntityDamageSource) source).isThorns()) {
+            else if (source instanceof EntityDamageSource entitySource && entitySource.isThorns()) {
                 this.level.broadcastEntityEvent(this, EntityStates.THORNS_HIT_SOUND);
             }
             else {
                 byte state;
-                if (source == EvolutionDamage.DROWN) { //Replace for Evolution Damage
+                if (source == EvolutionDamage.DROWN) { //Replace with Evolution Damage
                     state = EntityStates.DROWN_HIT_SOUND;
                 }
                 else if (source.isFire()) {
@@ -677,7 +728,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                 for (dz = sourceEntity.getZ() - this.getZ(); dx * dx + dz * dz < 1.0E-4; dz = (Math.random() - Math.random()) * 0.01) {
                     dx = (Math.random() - Math.random()) * 0.01;
                 }
-                this.hurtDir = MathHelper.radToDeg((float) MathHelper.atan2(dz, dx)) - this.yRot;
+                this.hurtDir = (float) (MathHelper.radToDeg(Mth.atan2(dz, dx)) - this.getYRot());
                 this.knockback(0.4F, dx, dz);
             }
             else {
@@ -701,14 +752,14 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
             this.lastDamageSource = source;
             this.lastDamageStamp = this.level.getGameTime();
         }
-        if ((Object) this instanceof ServerPlayerEntity) {
-            CriteriaTriggers.ENTITY_HURT_PLAYER.trigger((ServerPlayerEntity) (Object) this, source, f, amount, blocked);
+        if ((Object) this instanceof ServerPlayer serverPlayer) {
+            CriteriaTriggers.ENTITY_HURT_PLAYER.trigger(serverPlayer, source, f, amount, blocked);
             if (blockedAmount > 0.0F && blockedAmount < 3.402_823_5E37F) {
-                ((PlayerEntity) (Object) this).awardStat(Stats.DAMAGE_BLOCKED_BY_SHIELD, Math.round(blockedAmount * 10.0F));
+                serverPlayer.awardStat(Stats.DAMAGE_BLOCKED_BY_SHIELD, Math.round(blockedAmount * 10.0F));
             }
         }
-        if (sourceEntity instanceof ServerPlayerEntity) {
-            CriteriaTriggers.PLAYER_HURT_ENTITY.trigger((ServerPlayerEntity) sourceEntity, this, source, f, amount, blocked);
+        if (sourceEntity instanceof ServerPlayer serverPlayer) {
+            CriteriaTriggers.PLAYER_HURT_ENTITY.trigger(serverPlayer, this, source, f, amount, blocked);
         }
         return didDamage;
     }
@@ -717,10 +768,13 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     protected abstract void hurtCurrentlyUsedShield(float p_184590_1_);
 
     @Shadow
+    protected abstract void hurtHelmet(DamageSource p_147213_, float p_147214_);
+
+    @Shadow
     protected abstract boolean isAffectedByFluids();
 
     @Shadow
-    protected abstract boolean isDamageSourceBlocked(DamageSource p_184583_1_);
+    public abstract boolean isDamageSourceBlocked(DamageSource p_21276_);
 
     @Shadow
     public abstract boolean isDeadOrDying();
@@ -730,6 +784,16 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
 
     @Shadow
     public abstract boolean isFallFlying();
+
+    @Override
+    public boolean isMainhandCustomAttacking() {
+        return this.isMainhandCustomAttacking;
+    }
+
+    @Override
+    public boolean isOffhandCustomAttacking() {
+        return this.isOffhandCustomAttacking;
+    }
 
     @Shadow
     public abstract boolean isSleeping();
@@ -746,14 +810,14 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     @Overwrite
     protected void jumpFromGround() {
         float upwardsBaseAcc = this.getJumpPower();
-        if (this.hasEffect(Effects.JUMP)) {
-            upwardsBaseAcc *= 1.0f + (this.getEffect(Effects.JUMP).getAmplifier() + 1) / 10.0f;
+        if (this.hasEffect(MobEffects.JUMP)) {
+            upwardsBaseAcc *= 1.0f + (this.getEffect(MobEffects.JUMP).getAmplifier() + 1) / 10.0f;
         }
         double baseMass = this.getAttributeBaseValue(EvolutionAttributes.MASS.get());
         double totalMass = this.getAttributeValue(EvolutionAttributes.MASS.get());
         double upwardsForce = Math.min(baseMass * 1.25, totalMass) * upwardsBaseAcc;
         double upwardsAcc = upwardsForce / totalMass;
-        Vector3d motion = this.getDeltaMovement();
+        Vec3 motion = this.getDeltaMovement();
         this.setDeltaMovement(motion.x, upwardsAcc, motion.z);
         this.hasImpulse = true;
         this.noJumpDelay = 10;
@@ -761,8 +825,8 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     }
 
     private double jumpMovementFactor(float frictionCoef) {
-        if ((Object) this instanceof PlayerEntity) {
-            if (!((PlayerEntity) (Object) this).abilities.flying) {
+        if ((Object) this instanceof Player player) {
+            if (!player.getAbilities().flying) {
                 if (this.isOnGround() || this.onClimbable()) {
                     return this.getAcceleration() * frictionCoef * this.getFrictionModifier();
                 }
@@ -773,44 +837,99 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     }
 
     @Shadow
-    public abstract void knockback(float p_233627_1_, double p_233627_2_, double p_233627_4_);
+    public abstract void knockback(double p_147241_, double p_147242_, double p_147243_);
 
-    @Shadow
-    public abstract boolean onClimbable();
-
-    @Inject(method = "<init>", at = @At(value = "TAIL"))
-    private void onConstructor(EntityType<? extends LivingEntity> type, World world, CallbackInfo ci) {
-        this.getAttribute(EvolutionAttributes.MASS.get()).setBaseValue(this.getBaseMass());
-        this.getAttribute(ForgeMod.ENTITY_GRAVITY.get()).setBaseValue(Gravity.gravity(this.level.dimensionType()));
-    }
-
-    /**
-     * @author MGSchultz
-     * <p>
-     * Remove the annoying noise when using an item for other players.
-     */
-    @Overwrite
-    protected void playEquipSound(ItemStack stack) {
-        if (!stack.isEmpty()) {
-            SoundEvent sound = null;
-            Item item = stack.getItem();
-            if (item instanceof ArmorItem) {
-                sound = ((ArmorItem) item).getMaterial().getEquipSound();
+    @Inject(method = "baseTick", at = @At(value = "TAIL"))
+    public void onBaseTick(CallbackInfo ci) {
+        if (this.isMainhandCustomAttacking) {
+            this.mainhandCustomAttackTime++;
+            int totalTime = this.mainhandCustomAttackType.getAttackTime();
+            if (this.mainhandCustomAttackTime > totalTime) {
+                this.stopMainhandCustomAttack(ICustomAttack.StopReason.END);
             }
-            else if (item == Items.ELYTRA) {
-                sound = SoundEvents.ARMOR_EQUIP_ELYTRA;
+        }
+        else {
+            if (this.mainhandStopTicks > 0) {
+                this.mainhandStopTicks--;
             }
-            else if (item instanceof IAdditionalEquipment) {
-                sound = ((IAdditionalEquipment) item).getEquipSound();
+            else {
+                this.mainhandCustomAttackTime = 0;
             }
-            if (sound != null) {
-                this.playSound(sound, 1.0F, 1.0F);
+        }
+        if (this.isOffhandCustomAttacking) {
+            this.offhandCustomAttackTime++;
+            int totalTime = this.offhandCustomAttackType.getAttackTime();
+            if (this.offhandCustomAttackTime > totalTime) {
+                this.stopOffhandCustomAttack(ICustomAttack.StopReason.END);
             }
         }
     }
 
     @Shadow
-    protected abstract void playHurtSound(DamageSource p_184581_1_);
+    public abstract boolean onClimbable();
+
+    @Inject(method = "<init>", at = @At(value = "TAIL"))
+    private void onConstructor(EntityType<? extends LivingEntity> type, Level level, CallbackInfo ci) {
+        this.getAttribute(EvolutionAttributes.MASS.get()).setBaseValue(this.getBaseMass());
+        this.getAttribute(ForgeMod.ENTITY_GRAVITY.get()).setBaseValue(Gravity.gravity(this.level.dimensionType()));
+    }
+
+    @Inject(method = "updateSwingTime", at = @At("HEAD"), cancellable = true)
+    private void onUpdateSwingTime(CallbackInfo ci) {
+        if (!this.swinging && this.swingTime == 0) {
+            ci.cancel();
+        }
+    }
+
+    @Shadow
+    protected abstract void playHurtSound(DamageSource p_21160_);
+
+    @Redirect(method = "collectEquipmentChanges", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/EquipmentSlot;values()" +
+                                                                                      "[Lnet/minecraft/world/entity/EquipmentSlot;"))
+    private EquipmentSlot[] removeAllocation() {
+        return AdditionalSlotType.SLOTS;
+    }
+
+//    /**
+//     * @author MGSchultz
+//     * <p>
+//     * Remove the annoying noise when using an item for other players.
+//     */
+//    @Overwrite
+//    protected void playEquipSound(ItemStack stack) {
+//        if (!stack.isEmpty()) {
+//            SoundEvent sound = null;
+//            Item item = stack.getItem();
+//            if (item instanceof ArmorItem) {
+//                sound = ((ArmorItem) item).getMaterial().getEquipSound();
+//            }
+//            else if (item == Items.ELYTRA) {
+//                sound = SoundEvents.ARMOR_EQUIP_ELYTRA;
+//            }
+//            else if (item instanceof IAdditionalEquipment) {
+//                sound = ((IAdditionalEquipment) item).getEquipSound();
+//            }
+//            if (sound != null) {
+//                this.playSound(sound, 1.0F, 1.0F);
+//            }
+//        }
+//    }
+
+    @Override
+    public boolean renderMainhandCustomAttack() {
+        if (this.isMainhandCustomAttacking) {
+            return true;
+        }
+        return this.mainhandStopTicks > 0;
+    }
+
+    @Override
+    public boolean renderOffhandCustomAttack() {
+        if (this.isOffhandCustomAttacking) {
+            return true;
+        }
+        return this.offhandStopTicks > 0;
+    }
 
     @Shadow
     public abstract void setArrowCount(int p_85034_1_);
@@ -820,6 +939,34 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
 
     @Shadow
     public abstract void setStingerCount(int p_226300_1_);
+
+    @Override
+    public void startMainhandCustomAttack(ICustomAttack.AttackType type) {
+        this.isMainhandCustomAttacking = true;
+        this.mainhandCustomAttackType = type;
+        this.mainhandCustomAttackTime = 0;
+    }
+
+    @Override
+    public void startOffhandCustomAttack(ICustomAttack.AttackType type) {
+        this.isOffhandCustomAttacking = true;
+        this.offhandCustomAttackType = type;
+        this.offhandCustomAttackTime = 0;
+    }
+
+    @Override
+    public void stopMainhandCustomAttack(ICustomAttack.StopReason reason) {
+        if (reason == ICustomAttack.StopReason.HIT_BLOCK) {
+            this.playSound(EvolutionSounds.PARRY_FAIL.get(), 0.4f, 0.8F + this.random.nextFloat() * 0.4F);
+            this.mainhandStopTicks = 5;
+        }
+        this.isMainhandCustomAttacking = false;
+    }
+
+    @Override
+    public void stopOffhandCustomAttack(ICustomAttack.StopReason reason) {
+        this.isOffhandCustomAttacking = false;
+    }
 
     @Shadow
     public abstract void stopSleeping();
@@ -863,12 +1010,6 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
             if (this.tickCount % 20 == 0) {
                 this.getCombatTracker().recheckStatus();
             }
-            if (!this.glowing) {
-                boolean flag = this.hasEffect(Effects.GLOWING);
-                if (this.getSharedFlag(6) != flag) {
-                    this.setSharedFlag(6, flag);
-                }
-            }
             if (this.isSleeping() && !this.checkBedExists()) {
                 this.stopSleeping();
             }
@@ -885,7 +1026,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
             f3 = 1.0F;
             f2 = MathHelper.sqrt(dSSq) * 3.0F;
             float f4 = (float) MathHelper.atan2Deg(dz, dx) - 90.0F;
-            float f5 = Math.abs(MathHelper.wrapDegrees(this.yRot) - f4);
+            float f5 = Math.abs(Mth.wrapDegrees(this.getYRot()) - f4);
             if (95.0F < f5 && f5 < 265.0F) {
                 f1 = f4 - 180.0F;
             }
@@ -894,7 +1035,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
             }
         }
         if (this.attackAnim > 0.0F || LivingEntityHooks.shouldFixRotation((LivingEntity) (Object) this)) {
-            f1 = this.yRot;
+            f1 = this.getYRot();
         }
         if (!this.onGround) {
             f3 = 0.0F;
@@ -903,10 +1044,10 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         this.level.getProfiler().push("headTurn");
         f2 = this.tickHeadTurn(f1, f2);
         this.level.getProfiler().popPush("rangeChecks");
-        while (this.yRot - this.yRotO < -180.0F) {
+        while (this.getYRot() - this.yRotO < -180.0F) {
             this.yRotO -= 360.0F;
         }
-        while (this.yRot - this.yRotO >= 180.0F) {
+        while (this.getYRot() - this.yRotO >= 180.0F) {
             this.yRotO += 360.0F;
         }
         while (this.yBodyRot - this.yBodyRotO < -180.0F) {
@@ -915,10 +1056,10 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         while (this.yBodyRot - this.yBodyRotO >= 180.0F) {
             this.yBodyRotO += 360.0F;
         }
-        while (this.xRot - this.xRotO < -180.0F) {
+        while (this.getXRot() - this.xRotO < -180.0F) {
             this.xRotO -= 360.0F;
         }
-        while (this.xRot - this.xRotO >= 180.0F) {
+        while (this.getXRot() - this.xRotO >= 180.0F) {
             this.xRotO += 360.0F;
         }
         while (this.yHeadRot - this.yHeadRotO < -180.0F) {
@@ -936,7 +1077,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
             this.fallFlyTicks = 0;
         }
         if (this.isSleeping()) {
-            this.xRot = 0.0F;
+            this.setXRot(0.0f);
         }
     }
 
@@ -949,20 +1090,9 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
      * Replace to handle Evolution's physics.
      */
     @Overwrite
-    public void travel(Vector3d travelVector) {
+    public void travel(Vec3 travelVector) {
         if (this.isEffectiveAi() || this.isControlledByLocalInstance()) {
-            ModifiableAttributeInstance gravity = this.getAttribute(ForgeMod.ENTITY_GRAVITY.get());
-            boolean falling = this.getDeltaMovement().y <= 0;
-            if (falling && this.hasEffect(Effects.SLOW_FALLING)) {
-                if (!gravity.hasModifier(EvolutionAttributes.SLOW_FALLING)) {
-                    gravity.addTransientModifier(EvolutionAttributes.SLOW_FALLING);
-                }
-                this.fallDistance = 1.0F;
-            }
-            else if (gravity.hasModifier(EvolutionAttributes.SLOW_FALLING)) {
-                gravity.removeModifier(EvolutionAttributes.SLOW_FALLING);
-            }
-            double gravityAcceleration = gravity.getValue();
+            double gravityAcceleration = Gravity.gravity(this.getLevel().dimensionType());
             FluidState fluidState = this.level.getFluidState(this.blockPosition());
             if (this.isInWater() && this.isAffectedByFluids() && !this.canStandOnFluid(fluidState.getType())) {
                 //handleWaterMovement
@@ -976,8 +1106,8 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                 }
                 float waterSpeedMult = 0.04F;
                 waterSpeedMult *= (float) this.getAttributeValue(ForgeMod.SWIM_SPEED.get());
-                Vector3d acceleration = this.getAbsoluteAcceleration(travelVector, waterSpeedMult);
-                Vector3d motion = this.getDeltaMovement();
+                Vec3 acceleration = this.getAbsoluteAcceleration(travelVector, waterSpeedMult);
+                Vec3 motion = this.getDeltaMovement();
                 double motionX = motion.x;
                 double motionY = motion.y;
                 double motionZ = motion.z;
@@ -1026,7 +1156,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                 double posY = this.getY();
                 this.moveRelative(0.02F, travelVector);
                 this.move(MoverType.SELF, this.getDeltaMovement());
-                Vector3d motion = this.getDeltaMovement();
+                Vec3 motion = this.getDeltaMovement();
                 double motionX = motion.x * 0.5;
                 double motionY = motion.y * 0.5;
                 double motionZ = motion.z * 0.5;
@@ -1040,7 +1170,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
             }
             else if (this.isFallFlying()) {
                 //Handle elytra movement
-                Vector3d motion = this.getDeltaMovement();
+                Vec3 motion = this.getDeltaMovement();
                 double motionX = motion.x;
                 double motionY = motion.y;
                 double motionZ = motion.z;
@@ -1052,10 +1182,10 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                 if (motionY > -0.5) {
                     this.fallDistance = 1.0F;
                 }
-                Vector3d lookVec = this.getLookAngle();
-                float pitchInRad = MathHelper.degToRad(this.xRot);
+                Vec3 lookVec = this.getLookAngle();
+                float pitchInRad = MathHelper.degToRad(this.getXRot());
                 double horizLookVecLength = Math.sqrt(lookVec.x * lookVec.x + lookVec.z * lookVec.z);
-                double horizontalSpeed = Math.sqrt(Entity.getHorizontalDistanceSqr(motion));
+                double horizontalSpeed = motion.horizontalDistance();
                 float cosPitch = MathHelper.cos(pitchInRad);
                 cosPitch = (float) (cosPitch * cosPitch * Math.min(1, lookVec.length() / 0.4));
                 motionY += gravityAcceleration * (-1 + cosPitch * 0.75);
@@ -1092,7 +1222,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                 this.handleNormalMovement(travelVector, gravityAcceleration, 1.0f);
             }
         }
-        this.calculateEntityAnimation((LivingEntity) (Object) this, this instanceof IFlyingAnimal);
+        this.calculateEntityAnimation((LivingEntity) (Object) this, this instanceof FlyingAnimal);
     }
 
     @Shadow

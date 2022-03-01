@@ -1,6 +1,6 @@
 package tgw.evolution.world.puzzle.pieces.config;
 
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.math.MathHelper;
 
 import java.util.Random;
 

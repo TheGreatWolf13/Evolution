@@ -1,26 +1,28 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.StateContainer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Hand;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.blocks.tileentities.ILoggable;
 import tgw.evolution.blocks.tileentities.TEChopping;
@@ -30,33 +32,31 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.items.ItemAxe;
 import tgw.evolution.items.ItemLog;
-import tgw.evolution.util.BlockFlags;
-import tgw.evolution.util.HarvestLevel;
-import tgw.evolution.util.MathHelper;
-import tgw.evolution.util.WoodVariant;
+import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.constants.WoodVariant;
 
 import javax.annotation.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.FLUID_LOGGED;
 import static tgw.evolution.init.EvolutionBStates.OCCUPIED;
 
-public class BlockChopping extends BlockMass implements IReplaceable, ISittable, IFluidLoggable {
+public class BlockChopping extends BlockMass implements IReplaceable, ISittable, IFluidLoggable, EntityBlock {
 
     public BlockChopping(WoodVariant name) {
-        super(Properties.of(Material.WOOD).harvestLevel(HarvestLevel.STONE).sound(SoundType.WOOD).strength(8.0F, 2.0F), name.getMass() / 2);
+        super(Properties.of(Material.WOOD).sound(SoundType.WOOD).strength(8.0F, 2.0F), name.getMass() / 2);
         this.registerDefaultState(this.defaultBlockState().setValue(OCCUPIED, false).setValue(FLUID_LOGGED, false));
     }
 
     @Override
-    public void attack(BlockState state, World world, BlockPos pos, PlayerEntity player) {
+    public void attack(BlockState state, Level level, BlockPos pos, Player player) {
         if (state.getValue(FLUID_LOGGED)) {
             return;
         }
-        TileEntity tile = world.getBlockEntity(pos);
-        if (!(tile instanceof TEChopping)) {
+        BlockEntity tile = level.getBlockEntity(pos);
+        if (!(tile instanceof TEChopping chopping)) {
             return;
         }
-        TEChopping chopping = (TEChopping) tile;
         if (chopping.hasLog() && player.getMainHandItem().getItem() instanceof ItemAxe) {
             if (chopping.increaseBreakProgress() == 3) {
                 chopping.breakLog(player);
@@ -80,33 +80,27 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
     }
 
     @Override
-    public boolean canSurvive(BlockState state, IWorldReader world, BlockPos pos) {
-        return BlockUtils.hasSolidSide(world, pos.below(), Direction.UP);
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        return BlockUtils.hasSolidSide(level, pos.below(), Direction.UP);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(OCCUPIED, FLUID_LOGGED);
     }
 
-    @Nullable
     @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return new TEChopping();
-    }
-
-    @Override
-    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
         return NonNullList.of(ItemStack.EMPTY, new ItemStack(this));
     }
 
     @Override
-    public int getFireSpreadSpeed(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+    public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
         return EvolutionBlocks.FIRE.get().getActualEncouragement(state);
     }
 
     @Override
-    public int getFlammability(BlockState state, IBlockReader world, BlockPos pos, Direction face) {
+    public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
         return EvolutionBlocks.FIRE.get().getActualFlammability(state);
     }
 
@@ -121,26 +115,31 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
     }
 
     @Override
+    public int getHarvestLevel(BlockState state) {
+        return HarvestLevel.STONE;
+    }
+
+    @Override
     public int getInitialAmount(BlockState state) {
         return 50_000;
     }
 
     @Override
-    public int getMass(World world, BlockPos pos, BlockState state) {
+    public int getMass(Level level, BlockPos pos, BlockState state) {
         int mass = 0;
         if (state.getValue(FLUID_LOGGED)) {
-            Fluid fluid = this.getFluid(world, pos);
-            if (fluid instanceof FluidGeneric) {
-                int amount = this.getCurrentAmount(world, pos, state);
-                int layers = MathHelper.ceil(amount / 12_500.0);
-                mass = layers * ((FluidGeneric) fluid).getMass() / 8;
+            Fluid fluid = this.getFluid(level, pos);
+            if (fluid instanceof FluidGeneric fluidGeneric) {
+                int amount = this.getCurrentAmount(level, pos, state);
+                int layers = Mth.ceil(amount / 12_500.0);
+                mass = layers * fluidGeneric.getMass() / 8;
             }
         }
         return mass + this.getBaseMass();
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return EvolutionHitBoxes.SLAB_LOWER;
     }
 
@@ -150,54 +149,55 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
     }
 
     @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
-    }
-
-    @Override
     public boolean isReplaceable(BlockState state) {
         return true;
     }
 
     @Override
-    public void neighborChanged(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!world.isClientSide) {
-            if (!state.canSurvive(world, pos)) {
-                for (ItemStack stack : this.getDrops(world, pos, this.defaultBlockState())) {
-                    popResource(world, pos, stack);
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!level.isClientSide) {
+            if (!state.canSurvive(level, pos)) {
+                for (ItemStack stack : this.getDrops(level, pos, this.defaultBlockState())) {
+                    popResource(level, pos, stack);
                 }
-                TEUtils.invokeIfInstance(world.getBlockEntity(pos), TEChopping::dropLog);
-                world.removeBlock(pos, isMoving);
+                TEUtils.invokeIfInstance(level.getBlockEntity(pos), TEChopping::dropLog);
+                level.removeBlock(pos, isMoving);
                 return;
             }
         }
-        super.neighborChanged(state, world, pos, block, fromPos, isMoving);
+        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new TEChopping(pos, state);
     }
 
     @Override
-    public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (state.getBlock() == newState.getBlock()) {
             return;
         }
-        TEUtils.invokeIfInstance(world.getBlockEntity(pos), TEChopping::dropLog);
+        TEUtils.invokeIfInstance(level.getBlockEntity(pos), TEChopping::dropLog);
     }
 
     @Override
-    public void setBlockState(World world, BlockPos pos, BlockState state, @Nullable FluidGeneric fluid, int amount) {
+    public void setBlockState(Level level, BlockPos pos, BlockState state, @Nullable FluidGeneric fluid, int amount) {
         boolean hasFluid = amount > 0 && fluid != null;
-        TileEntity tile = world.getBlockEntity(pos);
+        BlockEntity tile = level.getBlockEntity(pos);
         if (hasFluid) {
             TEUtils.invokeIfInstance(tile, TEChopping::dropLog);
         }
         BlockState stateToPlace = state.setValue(FLUID_LOGGED, hasFluid);
         if (!(tile instanceof TEChopping)) {
-            world.removeBlockEntity(pos);
+            level.removeBlockEntity(pos);
         }
-        world.setBlock(pos, stateToPlace, BlockFlags.NOTIFY_UPDATE_AND_RERENDER + BlockFlags.IS_MOVING);
-        tile = world.getBlockEntity(pos);
+        level.setBlock(pos, stateToPlace, BlockFlags.NOTIFY_UPDATE_AND_RERENDER + BlockFlags.IS_MOVING);
+        tile = level.getBlockEntity(pos);
         if (hasFluid) {
             TEUtils.<ILoggable>invokeIfInstance(tile, t -> t.setAmountAndFluid(amount, fluid), true);
-            BlockUtils.scheduleFluidTick(world, pos);
+            BlockUtils.scheduleFluidTick(level, pos);
         }
         else {
             TEUtils.<ILoggable>invokeIfInstance(tile, t -> t.setAmountAndFluid(0, null));
@@ -205,46 +205,50 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
+    public BlockState updateShape(BlockState state,
+                                  Direction facing,
+                                  BlockState facingState,
+                                  LevelAccessor level,
+                                  BlockPos currentPos,
+                                  BlockPos facingPos) {
         if (state.getValue(FLUID_LOGGED)) {
-            BlockUtils.scheduleFluidTick(world, currentPos);
+            BlockUtils.scheduleFluidTick(level, currentPos);
         }
-        return super.updateShape(state, facing, facingState, world, currentPos, facingPos);
+        return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (state.getValue(FLUID_LOGGED)) {
             if (!state.getValue(OCCUPIED)) {
-                if (EntitySit.create(world, pos, player)) {
-                    world.setBlockAndUpdate(pos, state.setValue(OCCUPIED, true));
-                    return ActionResultType.SUCCESS;
+                if (EntitySit.create(level, pos, player)) {
+                    level.setBlockAndUpdate(pos, state.setValue(OCCUPIED, true));
+                    return InteractionResult.SUCCESS;
                 }
             }
-            return ActionResultType.PASS;
+            return InteractionResult.PASS;
         }
-        TileEntity tile = world.getBlockEntity(pos);
-        if (!(tile instanceof TEChopping)) {
-            return ActionResultType.PASS;
+        BlockEntity tile = level.getBlockEntity(pos);
+        if (!(tile instanceof TEChopping chopping)) {
+            return InteractionResult.PASS;
         }
-        TEChopping chopping = (TEChopping) tile;
         if (player.getItemInHand(hand).getItem() instanceof ItemLog && !state.getValue(OCCUPIED)) {
             if (!chopping.hasLog()) {
                 chopping.setStack(player, hand);
-                return ActionResultType.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
         }
         if (!chopping.hasLog() && !state.getValue(OCCUPIED)) {
-            if (!player.isCrouching() && EntitySit.create(world, pos, player)) {
-                world.setBlockAndUpdate(pos, state.setValue(OCCUPIED, true));
-                return ActionResultType.SUCCESS;
+            if (!player.isCrouching() && EntitySit.create(level, pos, player)) {
+                level.setBlockAndUpdate(pos, state.setValue(OCCUPIED, true));
+                return InteractionResult.SUCCESS;
             }
-            return ActionResultType.PASS;
+            return InteractionResult.PASS;
         }
         if (chopping.hasLog()) {
             chopping.removeStack(player);
-            return ActionResultType.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
-        return ActionResultType.PASS;
+        return InteractionResult.PASS;
     }
 }

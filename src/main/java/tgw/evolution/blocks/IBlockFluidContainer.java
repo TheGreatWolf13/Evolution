@@ -1,17 +1,17 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 
 public interface IBlockFluidContainer {
 
-    int getAmountRemoved(World world, BlockPos pos, int maxAmount);
+    int getAmountRemoved(Level level, BlockPos pos, int maxAmount);
 
-    Fluid getFluid(IBlockReader world, BlockPos pos);
+    Fluid getFluid(BlockGetter world, BlockPos pos);
 
-    int receiveFluid(World world, BlockPos pos, BlockState state, FluidGeneric fluid, int amount);
+    int receiveFluid(Level level, BlockPos pos, BlockState state, FluidGeneric fluid, int amount);
 }

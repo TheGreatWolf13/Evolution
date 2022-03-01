@@ -1,12 +1,12 @@
 package tgw.evolution.util.damage;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.items.IMelee;
 
@@ -28,30 +28,28 @@ public class DamageSourceEntity extends DamageSourceEv {
     }
 
     @Nullable
-    public ITextComponent getItemDisplay() {
+    public Component getItemDisplay() {
         ItemStack heldStack = ((LivingEntity) this.damageSourceEntity).getMainHandItem();
         return heldStack.getItem() instanceof IMelee ? heldStack.getDisplayName() : null;
     }
 
     @Override
-    public ITextComponent getLocalizedDeathMessage(LivingEntity deadEntity) {
-        ITextComponent itemComp = this.getItemDisplay();
+    public Component getLocalizedDeathMessage(LivingEntity deadEntity) {
+        Component itemComp = this.getItemDisplay();
         String message = "death.attack." + this.msgId;
         return itemComp != null ?
-               new TranslationTextComponent(message + ".item", deadEntity.getDisplayName(), this.damageSourceEntity.getDisplayName(), itemComp) :
-               new TranslationTextComponent(message, deadEntity.getDisplayName(), this.damageSourceEntity.getDisplayName());
+               new TranslatableComponent(message + ".item", deadEntity.getDisplayName(), this.damageSourceEntity.getDisplayName(), itemComp) :
+               new TranslatableComponent(message, deadEntity.getDisplayName(), this.damageSourceEntity.getDisplayName());
     }
 
     @Override
     @Nullable
-    public Vector3d getSourcePosition() {
+    public Vec3 getSourcePosition() {
         return this.damageSourceEntity != null ? this.damageSourceEntity.position() : null;
     }
 
     @Override
     public boolean scalesWithDifficulty() {
-        return this.damageSourceEntity != null &&
-               this.damageSourceEntity instanceof LivingEntity &&
-               !(this.damageSourceEntity instanceof PlayerEntity);
+        return this.damageSourceEntity != null && this.damageSourceEntity instanceof LivingEntity && !(this.damageSourceEntity instanceof Player);
     }
 }

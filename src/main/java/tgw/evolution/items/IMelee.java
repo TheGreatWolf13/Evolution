@@ -1,17 +1,18 @@
 package tgw.evolution.items;
 
+import net.minecraft.world.item.ItemStack;
 import tgw.evolution.init.EvolutionDamage;
 
 import javax.annotation.Nonnull;
 
 public interface IMelee {
 
-    double getAttackSpeed();
+    double getAttackDamage(ItemStack stack);
 
-    double getAttackDamage();
-
-    double getReach();
+    double getAttackSpeed(ItemStack stack);
 
     @Nonnull
-    EvolutionDamage.Type getDamageType();
+    EvolutionDamage.Type getDamageType(ItemStack stack);
+
+    double getReach(ItemStack stack);
 }

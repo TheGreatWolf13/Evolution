@@ -1,48 +1,50 @@
 package tgw.evolution.items;
 
 import net.minecraft.advancements.CriteriaTriggers;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.UseAction;
-import net.minecraft.potion.EffectInstance;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.world.World;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.level.Level;
 import org.apache.commons.lang3.tuple.Pair;
+import tgw.evolution.capabilities.food.CapabilityHunger;
+import tgw.evolution.capabilities.food.IHunger;
 import tgw.evolution.capabilities.thirst.CapabilityThirst;
 import tgw.evolution.capabilities.thirst.IThirst;
 
 public abstract class ItemGenericConsumable extends ItemEv implements IConsumable {
 
-    public ItemGenericConsumable(Properties properties) {
+    public ItemGenericConsumable(Item.Properties properties) {
         super(properties);
     }
 
-    private static void applyEffects(LivingEntity entity, ItemStack stack, World world) {
+    private static void applyEffects(LivingEntity entity, ItemStack stack, Level level) {
         Item item = stack.getItem();
-        if (item instanceof IConsumable) {
-            for (Pair<EffectInstance, Float> pair : ((IConsumable) item).getEffects()) {
-                if (!world.isClientSide && pair.getLeft() != null && world.random.nextFloat() < pair.getRight()) {
+        if (item instanceof IConsumable consumable) {
+            for (Pair<MobEffectInstance, Float> pair : consumable.getEffects()) {
+                if (!level.isClientSide && pair.getLeft() != null && level.random.nextFloat() < pair.getRight()) {
                     //noinspection ObjectAllocationInLoop
-                    entity.addEffect(new EffectInstance(pair.getLeft()));
+                    entity.addEffect(new MobEffectInstance(pair.getLeft()));
                 }
             }
         }
     }
 
     @Override
-    public ItemStack finishUsingItem(ItemStack stack, World world, LivingEntity entity) {
-        return this instanceof IDrink || this instanceof IFood || this instanceof INutrient ? this.onItemConsume(entity, world, stack) : stack;
+    public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
+        return this instanceof IDrink || this instanceof IFood || this instanceof INutrient ? this.onItemConsume(entity, level, stack) : stack;
     }
 
     @Override
-    public UseAction getUseAnimation(ItemStack stack) {
+    public UseAnim getUseAnimation(ItemStack stack) {
         return this.getUseAnimation();
     }
 
@@ -51,24 +53,29 @@ public abstract class ItemGenericConsumable extends ItemEv implements IConsumabl
         return this.getConsumeTime();
     }
 
-    private ItemStack onItemConsume(LivingEntity entity, World world, ItemStack stack) {
-        applyEffects(entity, stack, world);
-        PlayerEntity player = entity instanceof PlayerEntity ? (PlayerEntity) entity : null;
-        if (stack.getItem() instanceof IFood) {
-            //TODO increase hunger
-            world.playSound(null,
+    protected ItemStack onItemConsume(LivingEntity entity, Level level, ItemStack stack) {
+        applyEffects(entity, stack, level);
+        Player player = entity instanceof Player pl ? pl : null;
+        if (stack.getItem() instanceof IFood food) {
+            if (player instanceof ServerPlayer) {
+                IHunger hunger = player.getCapability(CapabilityHunger.INSTANCE).orElseThrow(IllegalStateException::new);
+                int amount = food.getHunger();
+                hunger.increaseHungerLevel(amount);
+                hunger.increaseSaturationLevel(amount);
+            }
+            level.playSound(null,
                             entity.getX(),
                             entity.getY(),
                             entity.getZ(),
                             entity.getEatingSound(stack),
-                            SoundCategory.NEUTRAL,
+                            SoundSource.NEUTRAL,
                             1.0F,
-                            1.0F + (world.random.nextFloat() - world.random.nextFloat()) * 0.4F);
+                            1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.4F);
         }
-        if (stack.getItem() instanceof IDrink) {
-            if (player instanceof ServerPlayerEntity) {
+        if (stack.getItem() instanceof IDrink drink) {
+            if (player instanceof ServerPlayer) {
                 IThirst thirst = player.getCapability(CapabilityThirst.INSTANCE).orElseThrow(IllegalStateException::new);
-                int amount = ((IDrink) stack.getItem()).getThirst();
+                int amount = drink.getThirst();
                 thirst.increaseThirstLevel(amount);
                 thirst.increaseHydrationLevel(amount);
             }
@@ -76,26 +83,26 @@ public abstract class ItemGenericConsumable extends ItemEv implements IConsumabl
         if (stack.getItem() instanceof INutrient) {
             //TODO increase nutrient
         }
-        if (player instanceof ServerPlayerEntity) {
-            CriteriaTriggers.CONSUME_ITEM.trigger((ServerPlayerEntity) player, stack);
+        if (player instanceof ServerPlayer serverPlayer) {
+            CriteriaTriggers.CONSUME_ITEM.trigger(serverPlayer, stack);
         }
         if (player != null) {
             player.awardStat(Stats.ITEM_USED.get(this));
         }
-        if (player == null || !player.abilities.instabuild) {
+        if (player == null || !player.getAbilities().instabuild) {
             stack.shrink(1);
         }
         return stack;
     }
 
     @Override
-    public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         if (this instanceof IDrink || this instanceof IFood || this instanceof INutrient) {
             ItemStack heldStack = player.getItemInHand(hand);
             player.startUsingItem(hand);
-            return new ActionResult<>(ActionResultType.CONSUME, heldStack);
+            return new InteractionResultHolder<>(InteractionResult.CONSUME, heldStack);
         }
-        return new ActionResult<>(ActionResultType.PASS, player.getItemInHand(hand));
+        return new InteractionResultHolder<>(InteractionResult.PASS, player.getItemInHand(hand));
     }
 
     @Override

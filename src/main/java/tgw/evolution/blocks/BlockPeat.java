@@ -1,26 +1,28 @@
 package tgw.evolution.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.StateContainer.Builder;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Direction;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.blocks.tileentities.TELoggable;
 import tgw.evolution.entities.misc.EntityFallingPeat;
@@ -28,9 +30,8 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.BlockFlags;
-import tgw.evolution.util.DirectionUtil;
-import tgw.evolution.util.MathHelper;
+import tgw.evolution.util.constants.BlockFlags;
+import tgw.evolution.util.math.DirectionUtil;
 
 import javax.annotation.Nullable;
 import java.util.Random;
@@ -38,26 +39,25 @@ import java.util.Random;
 import static tgw.evolution.init.EvolutionBStates.FLUID_LOGGED;
 import static tgw.evolution.init.EvolutionBStates.LAYERS_1_4;
 
-public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable {
-
+public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable, EntityBlock {
     public BlockPeat() {
         super(Properties.of(Material.DIRT).strength(2.0f, 0.5f).sound(SoundType.GRAVEL), 1_156);
         this.registerDefaultState(this.defaultBlockState().setValue(LAYERS_1_4, 1).setValue(FLUID_LOGGED, false));
     }
 
-    private static boolean canFallThrough(BlockState state, World world, BlockPos pos) {
+    private static boolean canFallThrough(BlockState state, BlockGetter level, BlockPos pos) {
         if (!BlockGravity.canFallThrough(state)) {
             return false;
         }
         if (state.getBlock() instanceof BlockPeat) {
             return state.getValue(LAYERS_1_4) != 4;
         }
-        return state.getCollisionShape(world, pos).isEmpty();
+        return state.getCollisionShape(level, pos).isEmpty();
     }
 
-    public static void checkFallable(World world, BlockPos pos, BlockState state) {
+    public static void checkFallable(Level level, BlockPos pos, BlockState state) {
         BlockPos posDown = pos.below();
-        BlockState stateDown = world.getBlockState(posDown);
+        BlockState stateDown = level.getBlockState(posDown);
         int layers = 0;
         if (stateDown.getBlock() == EvolutionBlocks.PEAT.get()) {
             layers = stateDown.getValue(LAYERS_1_4);
@@ -65,56 +65,56 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
         if (layers == 4) {
             return;
         }
-        if (!world.isEmptyBlock(posDown)) {
-            if (!canFallThrough(stateDown, world, posDown)) {
+        if (!level.isEmptyBlock(posDown)) {
+            if (!canFallThrough(stateDown, level, posDown)) {
                 return;
             }
         }
         if (pos.getY() < 0) {
             return;
         }
-        world.removeBlock(pos, true);
-        EntityFallingPeat entity = new EntityFallingPeat(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, state.getValue(LAYERS_1_4));
-        world.addFreshEntity(entity);
+        level.removeBlock(pos, true);
+        EntityFallingPeat entity = new EntityFallingPeat(level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, state.getValue(LAYERS_1_4));
+        level.addFreshEntity(entity);
         entity.playSound(EvolutionSounds.SOIL_COLLAPSE.get(), 0.25F, 1.0F);
         for (Direction dir : DirectionUtil.ALL_EXCEPT_DOWN) {
-            BlockUtils.scheduleBlockTick(world, pos.relative(dir), 2);
+            BlockUtils.scheduleBlockTick(level, pos.relative(dir), 2);
         }
     }
 
-    public static void placeLayersOn(World world, BlockPos pos, int layers) {
-        BlockState state = world.getBlockState(pos);
+    public static void placeLayersOn(Level level, BlockPos pos, int layers) {
+        BlockState state = level.getBlockState(pos);
         if (state.getBlock() == EvolutionBlocks.PEAT.get()) {
             for (int i = 1; i <= 4; i++) {
                 if (state.getValue(LAYERS_1_4) == i) {
                     if (i + layers > 4) {
                         int remain = i + layers - 4;
-                        world.setBlock(pos, state.setValue(LAYERS_1_4, 4), BlockFlags.NOTIFY_AND_UPDATE);
-                        world.setBlock(pos.above(),
+                        level.setBlock(pos, state.setValue(LAYERS_1_4, 4), BlockFlags.NOTIFY_AND_UPDATE);
+                        level.setBlock(pos.above(),
                                        EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, remain),
                                        BlockFlags.NOTIFY_AND_UPDATE);
                         return;
                     }
-                    world.setBlock(pos, state.setValue(LAYERS_1_4, i + layers), BlockFlags.NOTIFY_AND_UPDATE);
+                    level.setBlock(pos, state.setValue(LAYERS_1_4, i + layers), BlockFlags.NOTIFY_AND_UPDATE);
                     return;
                 }
             }
         }
         if (state.getBlock() instanceof IReplaceable) {
-            world.setBlock(pos, EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, layers), BlockFlags.NOTIFY_AND_UPDATE);
-            ((IReplaceable) state.getBlock()).onReplaced(state, world, pos);
+            level.setBlock(pos, EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, layers), BlockFlags.NOTIFY_AND_UPDATE);
+            ((IReplaceable) state.getBlock()).onReplaced(state, level, pos);
             return;
         }
         if (state.getMaterial().isReplaceable()) {
-            world.setBlock(pos, EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, layers), BlockFlags.NOTIFY_AND_UPDATE);
+            level.setBlock(pos, EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, layers), BlockFlags.NOTIFY_AND_UPDATE);
         }
     }
 
     @Override
-    public boolean canBeReplaced(BlockState state, BlockItemUseContext useContext) {
-        if (useContext.getItemInHand().getItem() == this.asItem() && state.getValue(LAYERS_1_4) < 4) {
-            if (useContext.replacingClickedOnBlock()) {
-                return useContext.getClickedFace() == Direction.UP;
+    public boolean canBeReplaced(BlockState state, BlockPlaceContext context) {
+        if (context.getItemInHand().getItem() == this.asItem() && state.getValue(LAYERS_1_4) < 4) {
+            if (context.replacingClickedOnBlock()) {
+                return context.getClickedFace() == Direction.UP;
             }
             return true;
         }
@@ -140,18 +140,12 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
     }
 
     @Override
-    protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(LAYERS_1_4, FLUID_LOGGED);
     }
 
-    @Nullable
     @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return new TELoggable();
-    }
-
-    @Override
-    public NonNullList<ItemStack> getDrops(World world, BlockPos pos, BlockState state) {
+    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
         return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.peat.get(), state.getValue(LAYERS_1_4)));
     }
 
@@ -172,14 +166,14 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
     }
 
     @Override
-    public int getMass(World world, BlockPos pos, BlockState state) {
+    public int getMass(Level level, BlockPos pos, BlockState state) {
         int mass = 0;
         if (state.getValue(FLUID_LOGGED)) {
-            Fluid fluid = this.getFluid(world, pos);
-            if (fluid instanceof FluidGeneric) {
-                int amount = this.getCurrentAmount(world, pos, state);
-                int layers = MathHelper.ceil(amount / 12_500.0);
-                mass = layers * ((FluidGeneric) fluid).getMass() / 8;
+            Fluid fluid = this.getFluid(level, pos);
+            if (fluid instanceof FluidGeneric fluidGeneric) {
+                int amount = this.getCurrentAmount(level, pos, state);
+                int layers = Mth.ceil(amount / 12_500.0);
+                mass = layers * fluidGeneric.getMass() / 8;
             }
         }
         return mass + this.getMass(state);
@@ -191,23 +185,18 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return EvolutionHitBoxes.PEAT[state.getValue(LAYERS_1_4)];
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState state = context.getLevel().getBlockState(context.getClickedPos());
         if (state.getBlock() == this) {
             int layers = state.getValue(LAYERS_1_4);
-            return state.setValue(LAYERS_1_4, MathHelper.clampMax(4, layers + 1));
+            return state.setValue(LAYERS_1_4, Math.min(layers + 1, 4));
         }
         return super.getStateForPlacement(context);
-    }
-
-    @Override
-    public boolean hasTileEntity(BlockState state) {
-        return state.getValue(FLUID_LOGGED);
     }
 
     @Override
@@ -215,8 +204,27 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
         return state.getValue(LAYERS_1_4) != 4;
     }
 
+    @Nullable
     @Override
-    public void onRemove(BlockState state, World world, BlockPos pos, BlockState newState, boolean isMoving) {
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new TELoggable(pos, state);
+    }
+
+    @Override
+    public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
+        BlockUtils.scheduleBlockTick(level, pos.above(), 2);
+        if (player.isCreative() || state.getValue(LAYERS_1_4) == 1) {
+            return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
+        }
+        this.playerWillDestroy(level, pos, state, player);
+        level.setBlock(pos,
+                       state.setValue(LAYERS_1_4, state.getValue(LAYERS_1_4) - 1),
+                       level.isClientSide ? BlockFlags.NOTIFY_UPDATE_AND_RERENDER : BlockFlags.NOTIFY_AND_UPDATE);
+        return true;
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         Block block = state.getBlock();
         Block newBlock = newState.getBlock();
         if (block == newBlock) {
@@ -224,48 +232,40 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
                 int layers = state.getValue(LAYERS_1_4);
                 int newLayers = newState.getValue(LAYERS_1_4);
                 if (newLayers > layers) {
-                    Block fluidBlock = this.getFluidState(world, pos, state).createLegacyBlock().getBlock();
-                    fluidBlock.onRemove(state, world, pos, newState, isMoving);
+                    Block fluidBlock = this.getFluidState(level, pos, state).createLegacyBlock().getBlock();
+                    fluidBlock.onRemove(state, level, pos, newState, isMoving);
                 }
             }
         }
-        super.onRemove(state, world, pos, newState, isMoving);
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 
     @Override
-    public void playerWillDestroy(World world, BlockPos pos, BlockState state, PlayerEntity player) {
-        BlockUtils.scheduleBlockTick(world, pos.above(), 2);
-        super.playerWillDestroy(world, pos, state, player);
+    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        BlockUtils.scheduleBlockTick(level, pos.above(), 2);
+        super.playerWillDestroy(level, pos, state, player);
     }
 
     @Override
-    public boolean removedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player, boolean willHarvest, FluidState fluid) {
-        BlockUtils.scheduleBlockTick(world, pos.above(), 2);
-        if (player.isCreative() || state.getValue(LAYERS_1_4) == 1) {
-            return super.removedByPlayer(state, world, pos, player, willHarvest, fluid);
-        }
-        this.playerWillDestroy(world, pos, state, player);
-        world.setBlock(pos,
-                       state.setValue(LAYERS_1_4, state.getValue(LAYERS_1_4) - 1),
-                       world.isClientSide ? BlockFlags.NOTIFY_UPDATE_AND_RERENDER : BlockFlags.NOTIFY_AND_UPDATE);
-        return true;
-    }
-
-    @Override
-    public void tick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
         if (state.getValue(FLUID_LOGGED)) {
-            BlockUtils.scheduleFluidTick(world, pos);
+            BlockUtils.scheduleFluidTick(level, pos);
         }
-        checkFallable(world, pos, state);
+        checkFallable(level, pos, state);
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
+    public BlockState updateShape(BlockState state,
+                                  Direction facing,
+                                  BlockState facingState,
+                                  LevelAccessor level,
+                                  BlockPos currentPos,
+                                  BlockPos facingPos) {
         if (state.getValue(FLUID_LOGGED)) {
-            BlockUtils.scheduleFluidTick(world, currentPos);
+            BlockUtils.scheduleFluidTick(level, currentPos);
         }
-        return !state.canSurvive(world, currentPos) ?
+        return !state.canSurvive(level, currentPos) ?
                Blocks.AIR.defaultBlockState() :
-               super.updateShape(state, facing, facingState, world, currentPos, facingPos);
+               super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 }

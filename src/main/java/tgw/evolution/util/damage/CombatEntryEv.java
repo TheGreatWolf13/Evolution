@@ -1,8 +1,8 @@
 package tgw.evolution.util.damage;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
 import tgw.evolution.init.EvolutionDamage;
 
 import javax.annotation.Nullable;
@@ -31,7 +31,7 @@ public class CombatEntryEv {
     }
 
     @Nullable
-    public ITextComponent getDamageSrcDisplayName() {
+    public Component getDamageSrcDisplayName() {
         return this.damageSrc.getEntity() == null ? null : this.damageSrc.getEntity().getDisplayName();
     }
 

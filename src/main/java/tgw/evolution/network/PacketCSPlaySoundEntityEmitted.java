@@ -1,13 +1,13 @@
 package tgw.evolution.network;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.entity.EntityAccess;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
-import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 
 import javax.annotation.Nonnull;
@@ -16,22 +16,22 @@ import java.util.function.Supplier;
 public class PacketCSPlaySoundEntityEmitted implements IPacket {
 
     @Nonnull
-    private final SoundCategory category;
+    private final SoundSource category;
     private final int entityId;
     private final float pitch;
     @Nonnull
     private final String sound;
     private final float volume;
 
-    public PacketCSPlaySoundEntityEmitted(@Nonnull Entity entity,
+    public PacketCSPlaySoundEntityEmitted(@Nonnull EntityAccess entity,
                                           @Nonnull SoundEvent sound,
-                                          @Nonnull SoundCategory category,
+                                          @Nonnull SoundSource category,
                                           float volume,
                                           float pitch) {
         this(entity.getId(), sound.getRegistryName().toString(), category, volume, pitch);
     }
 
-    private PacketCSPlaySoundEntityEmitted(int entityId, @Nonnull String sound, @Nonnull SoundCategory category, float volume, float pitch) {
+    private PacketCSPlaySoundEntityEmitted(int entityId, @Nonnull String sound, @Nonnull SoundSource category, float volume, float pitch) {
         this.entityId = entityId;
         this.sound = sound;
         this.category = category;
@@ -39,16 +39,16 @@ public class PacketCSPlaySoundEntityEmitted implements IPacket {
         this.pitch = pitch;
     }
 
-    public static PacketCSPlaySoundEntityEmitted decode(PacketBuffer buffer) {
+    public static PacketCSPlaySoundEntityEmitted decode(FriendlyByteBuf buffer) {
         int entityId = buffer.readVarInt();
         String sound = buffer.readUtf();
-        SoundCategory category = buffer.readEnum(SoundCategory.class);
+        SoundSource category = buffer.readEnum(SoundSource.class);
         float volume = buffer.readFloat();
         float pitch = buffer.readFloat();
         return new PacketCSPlaySoundEntityEmitted(entityId, sound, category, volume, pitch);
     }
 
-    public static void encode(PacketCSPlaySoundEntityEmitted packet, PacketBuffer buffer) {
+    public static void encode(PacketCSPlaySoundEntityEmitted packet, FriendlyByteBuf buffer) {
         buffer.writeVarInt(packet.entityId);
         buffer.writeUtf(packet.sound);
         buffer.writeEnum(packet.category);
@@ -59,7 +59,7 @@ public class PacketCSPlaySoundEntityEmitted implements IPacket {
     public static void handle(PacketCSPlaySoundEntityEmitted packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
-                ServerPlayerEntity player = context.get().getSender();
+                ServerPlayer player = context.get().getSender();
                 EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> player),
                                                new PacketSCPlaySoundEntityEmitted(packet.entityId,
                                                                                   packet.sound,

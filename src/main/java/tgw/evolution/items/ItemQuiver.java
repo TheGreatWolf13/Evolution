@@ -1,8 +1,13 @@
 package tgw.evolution.items;
 
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.SoundEvents;
-import tgw.evolution.inventory.SlotType;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectMaps;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.item.ItemStack;
+import tgw.evolution.inventory.AdditionalSlotType;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -11,6 +16,11 @@ public class ItemQuiver extends ItemEv implements IAdditionalEquipment {
 
     public ItemQuiver(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public Reference2ObjectMap<Attribute, AttributeModifier> getAttributes(ItemStack stack) {
+        return Reference2ObjectMaps.emptyMap();
     }
 
     @Nullable
@@ -22,7 +32,7 @@ public class ItemQuiver extends ItemEv implements IAdditionalEquipment {
 
     @Nonnull
     @Override
-    public SlotType getType() {
-        return SlotType.TACTICAL;
+    public AdditionalSlotType getValidSlot() {
+        return AdditionalSlotType.TACTICAL;
     }
 }

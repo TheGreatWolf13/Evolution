@@ -1,7 +1,7 @@
 package tgw.evolution.entities.ai;
 
-import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.world.entity.ai.goal.Goal;
 import tgw.evolution.entities.EntityGenericCreature;
 
 import java.util.EnumSet;

@@ -3,21 +3,21 @@ package tgw.evolution.inventory;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.container.PlayerContainer;
-import net.minecraft.inventory.container.RecipeBookContainer;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.inventory.container.WorkbenchContainer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.RecipeItemHelper;
-import net.minecraft.network.play.server.SPlaceGhostRecipePacket;
+import net.minecraft.network.protocol.game.ClientboundPlaceGhostRecipePacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.StackedContents;
+import net.minecraft.world.inventory.CraftingMenu;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.inventory.RecipeBookMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraftforge.common.crafting.IShapedRecipe;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import tgw.evolution.inventory.extendedinventory.ContainerPlayerInventory;
-import tgw.evolution.util.MathHelper;
 
 import javax.annotation.Nullable;
 import java.util.Iterator;
@@ -30,13 +30,9 @@ public final class ServerRecipePlacerEv {
     private ServerRecipePlacerEv() {
     }
 
-    public static void addItemToSlot(RecipeBookContainer<?> container,
-                                     PlayerInventory inventory,
-                                     Iterator<Integer> ingredients,
-                                     int slotIn,
-                                     int maxAmount) {
+    public static void addItemToSlot(RecipeBookMenu<?> container, Inventory inventory, Iterator<Integer> ingredients, int slotIn, int maxAmount) {
         Slot slot = container.getSlot(slotIn);
-        ItemStack itemstack = RecipeItemHelper.fromStackingIndex(ingredients.next());
+        ItemStack itemstack = StackedContents.fromStackingIndex(ingredients.next());
         if (!itemstack.isEmpty()) {
             for (int i = 0; i < maxAmount; ++i) {
                 moveItemToGrid(inventory, slot, itemstack);
@@ -44,19 +40,17 @@ public final class ServerRecipePlacerEv {
         }
     }
 
-    private static void clearGrid(RecipeBookContainer<?> container, PlayerInventory inventory) {
+    private static void clearGrid(RecipeBookMenu<?> container, Inventory inventory) {
         for (int i = 0; i < container.getGridWidth() * container.getGridHeight() + 1; i++) {
             if (i != container.getResultSlotIndex() ||
-                !(container instanceof WorkbenchContainer) &&
-                !(container instanceof PlayerContainer) &&
-                !(container instanceof ContainerPlayerInventory)) {
+                !(container instanceof CraftingMenu) && !(container instanceof InventoryMenu) && !(container instanceof ContainerPlayerInventory)) {
                 moveItemToInventory(container, inventory, i);
             }
         }
         container.clearCraftingContent();
     }
 
-    private static int getAmountOfFreeSlotsInInventory(PlayerInventory inventory) {
+    private static int getAmountOfFreeSlotsInInventory(Inventory inventory) {
         int i = 0;
         for (ItemStack itemstack : inventory.items) {
             if (itemstack.isEmpty()) {
@@ -66,7 +60,7 @@ public final class ServerRecipePlacerEv {
         return i;
     }
 
-    private static int getStackSize(RecipeBookContainer<?> container, boolean placeAll, int maxPossible, boolean recipeMatches) {
+    private static int getStackSize(RecipeBookMenu<?> container, boolean placeAll, int maxPossible, boolean recipeMatches) {
         if (placeAll) {
             return maxPossible;
         }
@@ -88,10 +82,10 @@ public final class ServerRecipePlacerEv {
         return i;
     }
 
-    private static void handleRecipeClicked(RecipeItemHelper helper,
-                                            RecipeBookContainer<?> container,
-                                            PlayerInventory inventory,
-                                            IRecipe recipe,
+    private static void handleRecipeClicked(StackedContents helper,
+                                            RecipeBookMenu<?> container,
+                                            Inventory inventory,
+                                            Recipe recipe,
                                             boolean placeAll) {
         boolean flag = container.recipeMatches(recipe);
         int i = helper.getBiggestCraftableStack(recipe, null);
@@ -110,7 +104,7 @@ public final class ServerRecipePlacerEv {
         if (helper.canCraft(recipe, intlist, j1)) {
             int k = j1;
             for (int l : intlist) {
-                int i1 = RecipeItemHelper.fromStackingIndex(l).getMaxStackSize();
+                int i1 = StackedContents.fromStackingIndex(l).getMaxStackSize();
                 if (i1 < k) {
                     k = i1;
                 }
@@ -129,7 +123,7 @@ public final class ServerRecipePlacerEv {
         }
     }
 
-    private static void moveItemToGrid(PlayerInventory inventory, Slot slotToFill, ItemStack ingredientIn) {
+    private static void moveItemToGrid(Inventory inventory, Slot slotToFill, ItemStack ingredientIn) {
         int i = inventory.findSlotMatchingUnusedItem(ingredientIn);
         if (i != -1) {
             ItemStack itemstack = inventory.getItem(i).copy();
@@ -151,7 +145,7 @@ public final class ServerRecipePlacerEv {
         }
     }
 
-    private static void moveItemToInventory(RecipeBookContainer<?> container, PlayerInventory inventory, int slot) {
+    private static void moveItemToInventory(RecipeBookMenu<?> container, Inventory inventory, int slot) {
         ItemStack itemstack = container.getSlot(slot).getItem();
         if (!itemstack.isEmpty()) {
             for (; itemstack.getCount() > 0; container.getSlot(slot).remove(1)) {
@@ -168,18 +162,17 @@ public final class ServerRecipePlacerEv {
         }
     }
 
-    private static void placeRecipe(RecipeBookContainer<?> container,
-                                    PlayerInventory inventory,
+    private static void placeRecipe(RecipeBookMenu<?> container,
+                                    Inventory inventory,
                                     int width,
                                     int height,
                                     int outputSlot,
-                                    IRecipe<?> recipe,
+                                    Recipe<?> recipe,
                                     Iterator<Integer> ingredients,
                                     int maxAmount) {
         int i = width;
         int j = height;
-        if (recipe instanceof IShapedRecipe) {
-            IShapedRecipe<?> shapedrecipe = (IShapedRecipe<?>) recipe;
+        if (recipe instanceof IShapedRecipe<?> shapedrecipe) {
             i = shapedrecipe.getRecipeWidth();
             j = shapedrecipe.getRecipeHeight();
         }
@@ -189,7 +182,7 @@ public final class ServerRecipePlacerEv {
                 ++k1;
             }
             boolean flag = j < height / 2.0F;
-            int l = MathHelper.floor(height / 2.0F - j / 2.0F);
+            int l = Mth.floor(height / 2.0F - j / 2.0F);
             if (flag && l > k) {
                 k1 += width;
                 ++k;
@@ -199,7 +192,7 @@ public final class ServerRecipePlacerEv {
                     return;
                 }
                 flag = i < width / 2.0F;
-                l = MathHelper.floor(width / 2.0F - i / 2.0F);
+                l = Mth.floor(width / 2.0F - i / 2.0F);
                 int j1 = i;
                 boolean flag1 = i1 < i;
                 if (flag) {
@@ -218,26 +211,26 @@ public final class ServerRecipePlacerEv {
         }
     }
 
-    public static void recipeClicked(RecipeBookContainer<?> container, ServerPlayerEntity player, @Nullable IRecipe<?> recipe, boolean placeAll) {
+    public static void recipeClicked(RecipeBookMenu<?> container, ServerPlayer player, @Nullable Recipe<?> recipe, boolean placeAll) {
         if (recipe != null && player.getRecipeBook().contains(recipe)) {
-            if (testClearGrid(container, player.inventory) || player.isCreative()) {
-                RecipeItemHelper recipeItemHelper = new RecipeItemHelper();
+            if (testClearGrid(container, player.getInventory()) || player.isCreative()) {
+                StackedContents recipeItemHelper = new StackedContents();
                 recipeItemHelper.clear();
-                player.inventory.fillStackedContents(recipeItemHelper);
+                player.getInventory().fillStackedContents(recipeItemHelper);
                 container.fillCraftSlotsStackedContents(recipeItemHelper);
                 if (recipeItemHelper.canCraft(recipe, null)) {
-                    handleRecipeClicked(recipeItemHelper, container, player.inventory, recipe, placeAll);
+                    handleRecipeClicked(recipeItemHelper, container, player.getInventory(), recipe, placeAll);
                 }
                 else {
-                    clearGrid(container, player.inventory);
-                    player.connection.send(new SPlaceGhostRecipePacket(player.containerMenu.containerId, recipe));
+                    clearGrid(container, player.getInventory());
+                    player.connection.send(new ClientboundPlaceGhostRecipePacket(player.containerMenu.containerId, recipe));
                 }
-                player.inventory.setChanged();
+                player.getInventory().setChanged();
             }
         }
     }
 
-    private static boolean testClearGrid(RecipeBookContainer<?> container, PlayerInventory inventory) {
+    private static boolean testClearGrid(RecipeBookMenu<?> container, Inventory inventory) {
         List<ItemStack> list = Lists.newArrayList();
         int i = getAmountOfFreeSlotsInInventory(inventory);
         for (int j = 0; j < container.getGridWidth() * container.getGridHeight() + 1; j++) {
