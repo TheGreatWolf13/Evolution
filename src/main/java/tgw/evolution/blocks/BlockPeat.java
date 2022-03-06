@@ -90,8 +90,7 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
                     if (i + layers > 4) {
                         int remain = i + layers - 4;
                         level.setBlock(pos, state.setValue(LAYERS_1_4, 4), BlockFlags.NOTIFY_AND_UPDATE);
-                        level.setBlock(pos.above(),
-                                       EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, remain),
+                        level.setBlock(pos.above(), EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, remain),
                                        BlockFlags.NOTIFY_AND_UPDATE);
                         return;
                     }
@@ -146,7 +145,7 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
 
     @Override
     public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.peat.get(), state.getValue(LAYERS_1_4)));
+        return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.PEAT.get(), state.getValue(LAYERS_1_4)));
     }
 
     @Override
@@ -217,8 +216,7 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
             return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
         }
         this.playerWillDestroy(level, pos, state, player);
-        level.setBlock(pos,
-                       state.setValue(LAYERS_1_4, state.getValue(LAYERS_1_4) - 1),
+        level.setBlock(pos, state.setValue(LAYERS_1_4, state.getValue(LAYERS_1_4) - 1),
                        level.isClientSide ? BlockFlags.NOTIFY_UPDATE_AND_RERENDER : BlockFlags.NOTIFY_AND_UPDATE);
         return true;
     }

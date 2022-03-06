@@ -13,9 +13,9 @@ import tgw.evolution.init.EvolutionItems;
 
 public class RenderTEChopping implements BlockEntityRenderer<TEChopping> {
 
-    private static final ItemStack DESTROY_3 = new ItemStack(EvolutionItems.destroy_3.get());
-    private static final ItemStack DESTROY_6 = new ItemStack(EvolutionItems.destroy_6.get());
-    private static final ItemStack DESTROY_9 = new ItemStack(EvolutionItems.destroy_9.get());
+    private static final ItemStack DESTROY_3 = new ItemStack(EvolutionItems.DESTROY_3.get());
+    private static final ItemStack DESTROY_6 = new ItemStack(EvolutionItems.DESTROY_6.get());
+    private static final ItemStack DESTROY_9 = new ItemStack(EvolutionItems.DESTROY_9.get());
     private final ItemRenderer itemRenderer;
 
     public RenderTEChopping(BlockEntityRendererProvider.Context context) {

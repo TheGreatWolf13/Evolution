@@ -4,8 +4,6 @@ import net.minecraft.network.chat.Component;
 
 public interface IPartType<T extends IPartType<T>> {
 
-    T byName(String name);
-
     boolean canBeSharpened();
 
     Component getComponent();

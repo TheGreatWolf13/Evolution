@@ -6,11 +6,17 @@ public interface IMatrix4fPatch {
 
     void rotate(Quaternion quaternion);
 
+    void rotateX(float i, float r);
+
+    void rotateY(float j, float r);
+
+    void rotateZ(float k, float r);
+
+    void scale(float x, float y, float z);
+
     float transformVecX(float x, float y, float z);
 
     float transformVecY(float x, float y, float z);
 
     float transformVecZ(float x, float y, float z);
-
-    void translate(float x, float y, float z);
 }

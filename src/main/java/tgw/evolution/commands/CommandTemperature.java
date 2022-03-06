@@ -16,11 +16,14 @@ import tgw.evolution.capabilities.temperature.ITemperature;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.IItemTemperature;
 
-public class CommandTemperature implements Command<CommandSourceStack> {
+public final class CommandTemperature implements Command<CommandSourceStack> {
 
     private static final Command<CommandSourceStack> CMD = new CommandTemperature();
     private static final DoubleArgumentType KELVIN = DoubleArgumentType.doubleArg(0, 1_000_000_000);
     private static final DoubleArgumentType CELSIUS = DoubleArgumentType.doubleArg(-273, 1_000_000_000 - 273);
+
+    private CommandTemperature() {
+    }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("temperature")

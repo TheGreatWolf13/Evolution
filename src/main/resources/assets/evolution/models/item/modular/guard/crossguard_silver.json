@@ -1,0 +1,6 @@
+{
+  "parent": "evolution:item/modular/guard/crossguard",
+  "textures": {
+    "0": "evolution:item/modular/guard/crossguard_silver"
+  }
+}

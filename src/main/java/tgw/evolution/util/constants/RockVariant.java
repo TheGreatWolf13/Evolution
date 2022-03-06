@@ -6,13 +6,15 @@ import net.minecraft.world.level.block.Block;
 import tgw.evolution.blocks.tileentities.KnappingRecipe;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.IVariant;
 import tgw.evolution.util.UnregisteredFeatureException;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
 
 import static tgw.evolution.util.constants.RockType.*;
 
-public enum RockVariant {
+public enum RockVariant implements IVariant {
     ANDESITE(0, IGNEOUS_EXTRUSIVE, "andesite", 2_565, 40_000_000),
     BASALT(1, IGNEOUS_EXTRUSIVE, "basalt", 2_768, 30_000_000),
     CHALK(2, SEDIMENTARY, "chalk", 2_499, 4_000_000),
@@ -37,6 +39,7 @@ public enum RockVariant {
     CLAY(21, null, "clay", 2_067, 0);
 
     public static final RockVariant[] VALUES = values();
+    public static final RockVariant[] VALUES_STONE = Arrays.stream(VALUES).filter(v -> v != PEAT && v != CLAY).toArray(RockVariant[]::new);
     private final int density;
     private final byte id;
     private final String name;
@@ -120,26 +123,7 @@ public enum RockVariant {
     public Block getCobble() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a cobble type!");
-            case ANDESITE -> EvolutionBlocks.COBBLE_ANDESITE.get();
-            case BASALT -> EvolutionBlocks.COBBLE_BASALT.get();
-            case CHALK -> EvolutionBlocks.COBBLE_CHALK.get();
-            case CHERT -> EvolutionBlocks.COBBLE_CHERT.get();
-            case CONGLOMERATE -> EvolutionBlocks.COBBLE_CONGLOMERATE.get();
-            case DACITE -> EvolutionBlocks.COBBLE_DACITE.get();
-            case DIORITE -> EvolutionBlocks.COBBLE_DIORITE.get();
-            case DOLOMITE -> EvolutionBlocks.COBBLE_DOLOMITE.get();
-            case GABBRO -> EvolutionBlocks.COBBLE_GABBRO.get();
-            case GNEISS -> EvolutionBlocks.COBBLE_GNEISS.get();
-            case GRANITE -> EvolutionBlocks.COBBLE_GRANITE.get();
-            case LIMESTONE -> EvolutionBlocks.COBBLE_LIMESTONE.get();
-            case MARBLE -> EvolutionBlocks.COBBLE_MARBLE.get();
-            case PHYLLITE -> EvolutionBlocks.COBBLE_PHYLLITE.get();
-            case QUARTZITE -> EvolutionBlocks.COBBLE_QUARTZITE.get();
-            case RED_SANDSTONE -> EvolutionBlocks.COBBLE_RED_SANDSTONE.get();
-            case SANDSTONE -> EvolutionBlocks.COBBLE_SANDSTONE.get();
-            case SCHIST -> EvolutionBlocks.COBBLE_SCHIST.get();
-            case SHALE -> EvolutionBlocks.COBBLE_SHALE.get();
-            case SLATE -> EvolutionBlocks.COBBLE_SLATE.get();
+            default -> EvolutionBlocks.ALL_COBBLE.get(this).get();
         };
     }
 
@@ -147,105 +131,25 @@ public enum RockVariant {
         return switch (this) {
             case CLAY -> EvolutionBlocks.CLAY.get();
             case PEAT -> EvolutionBlocks.PEAT.get();
-            case ANDESITE -> EvolutionBlocks.DIRT_ANDESITE.get();
-            case BASALT -> EvolutionBlocks.DIRT_BASALT.get();
-            case CHALK -> EvolutionBlocks.DIRT_CHALK.get();
-            case CHERT -> EvolutionBlocks.DIRT_CHERT.get();
-            case CONGLOMERATE -> EvolutionBlocks.DIRT_CONGLOMERATE.get();
-            case DACITE -> EvolutionBlocks.DIRT_DACITE.get();
-            case DIORITE -> EvolutionBlocks.DIRT_DIORITE.get();
-            case DOLOMITE -> EvolutionBlocks.DIRT_DOLOMITE.get();
-            case GABBRO -> EvolutionBlocks.DIRT_GABBRO.get();
-            case GNEISS -> EvolutionBlocks.DIRT_GNEISS.get();
-            case GRANITE -> EvolutionBlocks.DIRT_GRANITE.get();
-            case LIMESTONE -> EvolutionBlocks.DIRT_LIMESTONE.get();
-            case MARBLE -> EvolutionBlocks.DIRT_MARBLE.get();
-            case PHYLLITE -> EvolutionBlocks.DIRT_PHYLLITE.get();
-            case QUARTZITE -> EvolutionBlocks.DIRT_QUARTZITE.get();
-            case RED_SANDSTONE -> EvolutionBlocks.DIRT_RED_SANDSTONE.get();
-            case SANDSTONE -> EvolutionBlocks.DIRT_SANDSTONE.get();
-            case SCHIST -> EvolutionBlocks.DIRT_SCHIST.get();
-            case SHALE -> EvolutionBlocks.DIRT_SHALE.get();
-            case SLATE -> EvolutionBlocks.DIRT_SLATE.get();
+            default -> EvolutionBlocks.ALL_DIRT.get(this).get();
         };
     }
 
     public Block getDryGrass() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a dry grass type!");
-            case ANDESITE -> EvolutionBlocks.DRY_GRASS_ANDESITE.get();
-            case BASALT -> EvolutionBlocks.DRY_GRASS_BASALT.get();
-            case CHALK -> EvolutionBlocks.DRY_GRASS_CHALK.get();
-            case CHERT -> EvolutionBlocks.DRY_GRASS_CHERT.get();
-            case CONGLOMERATE -> EvolutionBlocks.DRY_GRASS_CONGLOMERATE.get();
-            case DACITE -> EvolutionBlocks.DRY_GRASS_DACITE.get();
-            case DIORITE -> EvolutionBlocks.DRY_GRASS_DIORITE.get();
-            case DOLOMITE -> EvolutionBlocks.DRY_GRASS_DOLOMITE.get();
-            case GABBRO -> EvolutionBlocks.DRY_GRASS_GABBRO.get();
-            case GNEISS -> EvolutionBlocks.DRY_GRASS_GNEISS.get();
-            case GRANITE -> EvolutionBlocks.DRY_GRASS_GRANITE.get();
-            case LIMESTONE -> EvolutionBlocks.DRY_GRASS_LIMESTONE.get();
-            case MARBLE -> EvolutionBlocks.DRY_GRASS_MARBLE.get();
-            case PHYLLITE -> EvolutionBlocks.DRY_GRASS_PHYLLITE.get();
-            case QUARTZITE -> EvolutionBlocks.DRY_GRASS_QUARTZITE.get();
-            case RED_SANDSTONE -> EvolutionBlocks.DRY_GRASS_RED_SANDSTONE.get();
-            case SANDSTONE -> EvolutionBlocks.DRY_GRASS_SANDSTONE.get();
-            case SCHIST -> EvolutionBlocks.DRY_GRASS_SCHIST.get();
-            case SHALE -> EvolutionBlocks.DRY_GRASS_SHALE.get();
-            case SLATE -> EvolutionBlocks.DRY_GRASS_SLATE.get();
+            default -> EvolutionBlocks.ALL_DRY_GRASS.get(this).get();
         };
     }
 
     public Block getGrass() {
-        return switch (this) {
-            case CLAY -> EvolutionBlocks.GRASS_CLAY.get();
-            case PEAT -> EvolutionBlocks.GRASS_PEAT.get();
-            case ANDESITE -> EvolutionBlocks.GRASS_ANDESITE.get();
-            case BASALT -> EvolutionBlocks.GRASS_BASALT.get();
-            case CHALK -> EvolutionBlocks.GRASS_CHALK.get();
-            case CHERT -> EvolutionBlocks.GRASS_CHERT.get();
-            case CONGLOMERATE -> EvolutionBlocks.GRASS_CONGLOMERATE.get();
-            case DACITE -> EvolutionBlocks.GRASS_DACITE.get();
-            case DIORITE -> EvolutionBlocks.GRASS_DIORITE.get();
-            case DOLOMITE -> EvolutionBlocks.GRASS_DOLOMITE.get();
-            case GABBRO -> EvolutionBlocks.GRASS_GABBRO.get();
-            case GNEISS -> EvolutionBlocks.GRASS_GNEISS.get();
-            case GRANITE -> EvolutionBlocks.GRASS_GRANITE.get();
-            case LIMESTONE -> EvolutionBlocks.GRASS_LIMESTONE.get();
-            case MARBLE -> EvolutionBlocks.GRASS_MARBLE.get();
-            case PHYLLITE -> EvolutionBlocks.GRASS_PHYLLITE.get();
-            case QUARTZITE -> EvolutionBlocks.GRASS_QUARTZITE.get();
-            case RED_SANDSTONE -> EvolutionBlocks.GRASS_RED_SANDSTONE.get();
-            case SANDSTONE -> EvolutionBlocks.GRASS_SANDSTONE.get();
-            case SCHIST -> EvolutionBlocks.GRASS_SCHIST.get();
-            case SHALE -> EvolutionBlocks.GRASS_SHALE.get();
-            case SLATE -> EvolutionBlocks.GRASS_SLATE.get();
-        };
+        return EvolutionBlocks.ALL_GRASS.get(this).get();
     }
 
     public Block getGravel() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a gravel type!");
-            case ANDESITE -> EvolutionBlocks.GRAVEL_ANDESITE.get();
-            case BASALT -> EvolutionBlocks.GRAVEL_BASALT.get();
-            case CHALK -> EvolutionBlocks.GRAVEL_CHALK.get();
-            case CHERT -> EvolutionBlocks.GRAVEL_CHERT.get();
-            case CONGLOMERATE -> EvolutionBlocks.GRAVEL_CONGLOMERATE.get();
-            case DACITE -> EvolutionBlocks.GRAVEL_DACITE.get();
-            case DIORITE -> EvolutionBlocks.GRAVEL_DIORITE.get();
-            case DOLOMITE -> EvolutionBlocks.GRAVEL_DOLOMITE.get();
-            case GABBRO -> EvolutionBlocks.GRAVEL_GABBRO.get();
-            case GNEISS -> EvolutionBlocks.GRAVEL_GNEISS.get();
-            case GRANITE -> EvolutionBlocks.GRAVEL_GRANITE.get();
-            case LIMESTONE -> EvolutionBlocks.GRAVEL_LIMESTONE.get();
-            case MARBLE -> EvolutionBlocks.GRAVEL_MARBLE.get();
-            case PHYLLITE -> EvolutionBlocks.GRAVEL_PHYLLITE.get();
-            case QUARTZITE -> EvolutionBlocks.GRAVEL_QUARTZITE.get();
-            case RED_SANDSTONE -> EvolutionBlocks.GRAVEL_RED_SANDSTONE.get();
-            case SANDSTONE -> EvolutionBlocks.GRAVEL_SANDSTONE.get();
-            case SCHIST -> EvolutionBlocks.GRAVEL_SCHIST.get();
-            case SHALE -> EvolutionBlocks.GRAVEL_SHALE.get();
-            case SLATE -> EvolutionBlocks.GRAVEL_SLATE.get();
+            default -> EvolutionBlocks.ALL_GRAVEL.get(this).get();
         };
     }
 
@@ -372,26 +276,7 @@ public enum RockVariant {
     public Block getKnapping() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a knapping type!");
-            case ANDESITE -> EvolutionBlocks.KNAPPING_ANDESITE.get();
-            case BASALT -> EvolutionBlocks.KNAPPING_BASALT.get();
-            case CHALK -> EvolutionBlocks.KNAPPING_CHALK.get();
-            case CHERT -> EvolutionBlocks.KNAPPING_CHERT.get();
-            case CONGLOMERATE -> EvolutionBlocks.KNAPPING_CONGLOMERATE.get();
-            case DACITE -> EvolutionBlocks.KNAPPING_DACITE.get();
-            case DIORITE -> EvolutionBlocks.KNAPPING_DIORITE.get();
-            case DOLOMITE -> EvolutionBlocks.KNAPPING_DOLOMITE.get();
-            case GABBRO -> EvolutionBlocks.KNAPPING_GABBRO.get();
-            case GNEISS -> EvolutionBlocks.KNAPPING_GNEISS.get();
-            case GRANITE -> EvolutionBlocks.KNAPPING_GRANITE.get();
-            case LIMESTONE -> EvolutionBlocks.KNAPPING_LIMESTONE.get();
-            case MARBLE -> EvolutionBlocks.KNAPPING_MARBLE.get();
-            case PHYLLITE -> EvolutionBlocks.KNAPPING_PHYLLITE.get();
-            case QUARTZITE -> EvolutionBlocks.KNAPPING_QUARTZITE.get();
-            case RED_SANDSTONE -> EvolutionBlocks.KNAPPING_RED_SANDSTONE.get();
-            case SANDSTONE -> EvolutionBlocks.KNAPPING_SANDSTONE.get();
-            case SCHIST -> EvolutionBlocks.KNAPPING_SCHIST.get();
-            case SHALE -> EvolutionBlocks.KNAPPING_SHALE.get();
-            case SLATE -> EvolutionBlocks.KNAPPING_SLATE.get();
+            default -> EvolutionBlocks.ALL_KNAPPING.get(this).get();
         };
     }
 
@@ -425,33 +310,22 @@ public enum RockVariant {
         return this.density;
     }
 
+    @Override
     public String getName() {
         return this.name;
+    }
+
+    public Block getPolishedStone() {
+        return switch (this) {
+            case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a polished stone type!");
+            default -> EvolutionBlocks.ALL_POLISHED_STONE.get(this).get();
+        };
     }
 
     public Block getRock() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a rock type!");
-            case ANDESITE -> EvolutionBlocks.ROCK_ANDESITE.get();
-            case BASALT -> EvolutionBlocks.ROCK_BASALT.get();
-            case CHALK -> EvolutionBlocks.ROCK_CHALK.get();
-            case CHERT -> EvolutionBlocks.ROCK_CHERT.get();
-            case CONGLOMERATE -> EvolutionBlocks.ROCK_CONGLOMERATE.get();
-            case DACITE -> EvolutionBlocks.ROCK_DACITE.get();
-            case DIORITE -> EvolutionBlocks.ROCK_DIORITE.get();
-            case DOLOMITE -> EvolutionBlocks.ROCK_DOLOMITE.get();
-            case GABBRO -> EvolutionBlocks.ROCK_GABBRO.get();
-            case GNEISS -> EvolutionBlocks.ROCK_GNEISS.get();
-            case GRANITE -> EvolutionBlocks.ROCK_GRANITE.get();
-            case LIMESTONE -> EvolutionBlocks.ROCK_LIMESTONE.get();
-            case MARBLE -> EvolutionBlocks.ROCK_MARBLE.get();
-            case PHYLLITE -> EvolutionBlocks.ROCK_PHYLLITE.get();
-            case QUARTZITE -> EvolutionBlocks.ROCK_QUARTZITE.get();
-            case RED_SANDSTONE -> EvolutionBlocks.ROCK_RED_SANDSTONE.get();
-            case SANDSTONE -> EvolutionBlocks.ROCK_SANDSTONE.get();
-            case SCHIST -> EvolutionBlocks.ROCK_SCHIST.get();
-            case SHALE -> EvolutionBlocks.ROCK_SHALE.get();
-            case SLATE -> EvolutionBlocks.ROCK_SLATE.get();
+            default -> EvolutionBlocks.ALL_ROCK.get(this).get();
         };
     }
 
@@ -462,26 +336,7 @@ public enum RockVariant {
     public Block getSand() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a sand type!");
-            case ANDESITE -> EvolutionBlocks.SAND_ANDESITE.get();
-            case BASALT -> EvolutionBlocks.SAND_BASALT.get();
-            case CHALK -> EvolutionBlocks.SAND_CHALK.get();
-            case CHERT -> EvolutionBlocks.SAND_CHERT.get();
-            case CONGLOMERATE -> EvolutionBlocks.SAND_CONGLOMERATE.get();
-            case DACITE -> EvolutionBlocks.SAND_DACITE.get();
-            case DIORITE -> EvolutionBlocks.SAND_DIORITE.get();
-            case DOLOMITE -> EvolutionBlocks.SAND_DOLOMITE.get();
-            case GABBRO -> EvolutionBlocks.SAND_GABBRO.get();
-            case GNEISS -> EvolutionBlocks.SAND_GNEISS.get();
-            case GRANITE -> EvolutionBlocks.SAND_GRANITE.get();
-            case LIMESTONE -> EvolutionBlocks.SAND_LIMESTONE.get();
-            case MARBLE -> EvolutionBlocks.SAND_MARBLE.get();
-            case PHYLLITE -> EvolutionBlocks.SAND_PHYLLITE.get();
-            case QUARTZITE -> EvolutionBlocks.SAND_QUARTZITE.get();
-            case RED_SANDSTONE -> EvolutionBlocks.SAND_RED_SANDSTONE.get();
-            case SANDSTONE -> EvolutionBlocks.SAND_SANDSTONE.get();
-            case SCHIST -> EvolutionBlocks.SAND_SCHIST.get();
-            case SHALE -> EvolutionBlocks.SAND_SHALE.get();
-            case SLATE -> EvolutionBlocks.SAND_SLATE.get();
+            default -> EvolutionBlocks.ALL_SAND.get(this).get();
         };
     }
 
@@ -518,52 +373,14 @@ public enum RockVariant {
     public Block getStone() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a stone type!");
-            case ANDESITE -> EvolutionBlocks.STONE_ANDESITE.get();
-            case BASALT -> EvolutionBlocks.STONE_BASALT.get();
-            case CHALK -> EvolutionBlocks.STONE_CHALK.get();
-            case CHERT -> EvolutionBlocks.STONE_CHERT.get();
-            case CONGLOMERATE -> EvolutionBlocks.STONE_CONGLOMERATE.get();
-            case DACITE -> EvolutionBlocks.STONE_DACITE.get();
-            case DIORITE -> EvolutionBlocks.STONE_DIORITE.get();
-            case DOLOMITE -> EvolutionBlocks.STONE_DOLOMITE.get();
-            case GABBRO -> EvolutionBlocks.STONE_GABBRO.get();
-            case GNEISS -> EvolutionBlocks.STONE_GNEISS.get();
-            case GRANITE -> EvolutionBlocks.STONE_GRANITE.get();
-            case LIMESTONE -> EvolutionBlocks.STONE_LIMESTONE.get();
-            case MARBLE -> EvolutionBlocks.STONE_MARBLE.get();
-            case PHYLLITE -> EvolutionBlocks.STONE_PHYLLITE.get();
-            case QUARTZITE -> EvolutionBlocks.STONE_QUARTZITE.get();
-            case RED_SANDSTONE -> EvolutionBlocks.STONE_RED_SANDSTONE.get();
-            case SANDSTONE -> EvolutionBlocks.STONE_SANDSTONE.get();
-            case SCHIST -> EvolutionBlocks.STONE_SCHIST.get();
-            case SHALE -> EvolutionBlocks.STONE_SHALE.get();
-            case SLATE -> EvolutionBlocks.STONE_SLATE.get();
+            default -> EvolutionBlocks.ALL_STONE.get(this).get();
         };
     }
 
     public Block getStoneBricks() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a stone bricks type!");
-            case ANDESITE -> EvolutionBlocks.STONE_BRICKS_ANDESITE.get();
-            case BASALT -> EvolutionBlocks.STONE_BRICKS_BASALT.get();
-            case CHALK -> EvolutionBlocks.STONE_BRICKS_CHALK.get();
-            case CHERT -> EvolutionBlocks.STONE_BRICKS_CHERT.get();
-            case CONGLOMERATE -> EvolutionBlocks.STONE_BRICKS_CONGLOMERATE.get();
-            case DACITE -> EvolutionBlocks.STONE_BRICKS_DACITE.get();
-            case DIORITE -> EvolutionBlocks.STONE_BRICKS_DIORITE.get();
-            case DOLOMITE -> EvolutionBlocks.STONE_BRICKS_DOLOMITE.get();
-            case GABBRO -> EvolutionBlocks.STONE_BRICKS_GABBRO.get();
-            case GNEISS -> EvolutionBlocks.STONE_BRICKS_GNEISS.get();
-            case GRANITE -> EvolutionBlocks.STONE_BRICKS_GRANITE.get();
-            case LIMESTONE -> EvolutionBlocks.STONE_BRICKS_LIMESTONE.get();
-            case MARBLE -> EvolutionBlocks.STONE_BRICKS_MARBLE.get();
-            case PHYLLITE -> EvolutionBlocks.STONE_BRICKS_PHYLLITE.get();
-            case QUARTZITE -> EvolutionBlocks.STONE_BRICKS_QUARTZITE.get();
-            case RED_SANDSTONE -> EvolutionBlocks.STONE_BRICKS_RED_SANDSTONE.get();
-            case SANDSTONE -> EvolutionBlocks.STONE_BRICKS_SANDSTONE.get();
-            case SCHIST -> EvolutionBlocks.STONE_BRICKS_SCHIST.get();
-            case SHALE -> EvolutionBlocks.STONE_BRICKS_SHALE.get();
-            case SLATE -> EvolutionBlocks.STONE_BRICKS_SLATE.get();
+            default -> EvolutionBlocks.ALL_STONE_BRICKS.get(this).get();
         };
     }
 }

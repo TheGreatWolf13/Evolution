@@ -17,6 +17,8 @@ import tgw.evolution.client.tooltip.*;
 import tgw.evolution.init.EvolutionStyles;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.*;
+import tgw.evolution.items.modular.ItemModular;
+import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.util.constants.NBTTypes;
 
 import java.util.ArrayList;

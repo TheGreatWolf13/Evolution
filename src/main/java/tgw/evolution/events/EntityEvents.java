@@ -25,6 +25,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.entity.npc.WanderingTrader;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
@@ -72,7 +73,9 @@ import tgw.evolution.entities.IAgressive;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.init.*;
 import tgw.evolution.inventory.extendedinventory.ContainerExtendedHandler;
-import tgw.evolution.items.ItemModularTool;
+import tgw.evolution.items.modular.ItemModular;
+import tgw.evolution.items.modular.ItemModularTool;
+import tgw.evolution.items.modular.part.ItemPart;
 import tgw.evolution.network.*;
 import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.util.PlayerHelper;
@@ -200,8 +203,16 @@ public class EntityEvents {
 
     @SubscribeEvent
     public void attachCapabilitiesItemStack(AttachCapabilitiesEvent<ItemStack> event) {
-        if (event.getObject().getItem() instanceof ItemModularTool) {
-            event.addCapability(Evolution.getResource("tool"), new SerializableCapabilityProvider<>(CapabilityModular.TOOL, new ModularTool()));
+        Item item = event.getObject().getItem();
+        if (item instanceof ItemModular) {
+            if (item instanceof ItemModularTool) {
+                event.addCapability(Evolution.getResource("tool"), new SerializableCapabilityProvider<>(CapabilityModular.TOOL, new ModularTool()));
+            }
+        }
+        else if (item instanceof ItemPart part) {
+            event.addCapability(Evolution.getResource("part_" + part.getCapName()),
+                                new SerializableCapabilityProvider<>(CapabilityModular.PART, part.createNew()));
+
         }
     }
 

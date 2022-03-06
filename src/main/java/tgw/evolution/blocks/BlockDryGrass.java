@@ -25,7 +25,7 @@ public class BlockDryGrass extends BlockGenericSlowable implements IRockVariant 
     private final RockVariant variant;
 
     public BlockDryGrass(RockVariant variant) {
-        super(Properties.of(Material.GRASS).strength(3.0F, 0.6F).sound(SoundType.GRASS).randomTicks(), variant.getMass() / 4);
+        super(Properties.of(Material.DIRT).strength(3.0F, 0.6F).sound(SoundType.GRASS).randomTicks(), variant.getMass() / 4);
         this.variant = variant;
     }
 
@@ -91,13 +91,12 @@ public class BlockDryGrass extends BlockGenericSlowable implements IRockVariant 
                     Block blockAtPos = level.getBlockState(randomPos).getBlock();
                     if (blockAtPos instanceof BlockDirt && canSustainGrassWater(level, randomPos)) {
                         //TODO proper snow
-                        level.setBlockAndUpdate(randomPos,
-                                                ((IRockVariant) blockAtPos).getVariant()
-                                                                           .getDryGrass()
-                                                                           .defaultBlockState()
-                                                                           .setValue(SNOWY,
-                                                                                     level.getBlockState(randomPos.above()).getBlock() ==
-                                                                                     Blocks.SNOW));
+                        level.setBlockAndUpdate(randomPos, ((IRockVariant) blockAtPos).getVariant()
+                                                                                      .getDryGrass()
+                                                                                      .defaultBlockState()
+                                                                                      .setValue(SNOWY,
+                                                                                                level.getBlockState(randomPos.above()).getBlock() ==
+                                                                                                Blocks.SNOW));
                     }
                 }
             }

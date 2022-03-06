@@ -13,6 +13,7 @@ import java.util.List;
 
 public class MaterialInstance {
 
+    public static final MaterialInstance DUMMY = new MaterialInstance(ItemMaterial.STONE_ANDESITE);
     private final ItemMaterial material;
 
     public MaterialInstance(ItemMaterial material) {

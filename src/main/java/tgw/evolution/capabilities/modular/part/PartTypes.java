@@ -28,8 +28,7 @@ public final class PartTypes {
             this.volume = volume;
         }
 
-        @Override
-        public Blade byName(String name) {
+        public static Blade byName(String name) {
             return switch (name) {
                 case "arming_sword" -> ARMING_SWORD;
                 default -> NULL;
@@ -85,8 +84,7 @@ public final class PartTypes {
             this.volume = volume;
         }
 
-        @Override
-        public Guard byName(String name) {
+        public static Guard byName(String name) {
             return switch (name) {
                 case "crossguard" -> CROSSGUARD;
                 default -> NULL;
@@ -144,8 +142,7 @@ public final class PartTypes {
             this.volume = volume;
         }
 
-        @Override
-        public HalfHead byName(String name) {
+        public static HalfHead byName(String name) {
             return switch (name) {
                 case "axe" -> AXE;
                 case "hammer" -> HAMMER;
@@ -207,8 +204,7 @@ public final class PartTypes {
             this.volume = volume;
         }
 
-        @Override
-        public Handle byName(String name) {
+        public static Handle byName(String name) {
             return switch (name) {
                 case "one_handed" -> ONE_HANDED;
                 case "two_handed" -> TWO_HANDED;
@@ -286,8 +282,7 @@ public final class PartTypes {
             this.volume = volume;
         }
 
-        @Override
-        public Head byName(String name) {
+        public static Head byName(String name) {
             return switch (name) {
                 case "axe" -> AXE;
                 case "hammer" -> HAMMER;
@@ -356,8 +351,7 @@ public final class PartTypes {
             this.volume = volume;
         }
 
-        @Override
-        public Hilt byName(String name) {
+        public static Hilt byName(String name) {
             return switch (name) {
                 case "one_handed" -> ONE_HANDED;
                 default -> NULL;
@@ -418,8 +412,7 @@ public final class PartTypes {
             this.volume = volume;
         }
 
-        @Override
-        public Pole byName(String name) {
+        public static Pole byName(String name) {
             return switch (name) {
                 default -> NULL;
             };
@@ -465,7 +458,7 @@ public final class PartTypes {
 
     public enum Pommel implements IAttachmentType<Pommel> {
         NULL("null", 0),
-        POMMEL("pommel", Float.NaN);
+        POMMEL("pommel", 12.5f);
 
         public static final Pommel[] VALUES = values();
         private final Component component;
@@ -478,8 +471,7 @@ public final class PartTypes {
             this.volume = volume;
         }
 
-        @Override
-        public Pommel byName(String name) {
+        public static Pommel byName(String name) {
             return switch (name) {
                 case "pommel" -> POMMEL;
                 default -> NULL;
@@ -503,8 +495,10 @@ public final class PartTypes {
 
         @Override
         public double getRelativeCenterOfMass(int grabLength) {
-            //TODO implementation
-            return 0;
+            return switch (this) {
+                case NULL -> 0;
+                case POMMEL -> 1.5;
+            };
         }
 
         @Override

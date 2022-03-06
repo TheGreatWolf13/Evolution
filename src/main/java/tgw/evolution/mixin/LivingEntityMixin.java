@@ -595,6 +595,15 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         if (Math.abs(motionZ) < 1e-6) {
             motionZ = 0;
         }
+        if (Double.isNaN(motionX)) {
+            motionX = 0;
+        }
+        if (Double.isNaN(motionY)) {
+            motionY = 0;
+        }
+        if (Double.isNaN(motionZ)) {
+            motionZ = 0;
+        }
         this.setDeltaMovement(this.handleLadderMotion(motionX, motionY, motionZ));
         this.move(MoverType.SELF, this.getDeltaMovement());
         if (this.horizontalCollision) {

@@ -14,22 +14,10 @@ import java.util.List;
 
 public class PommelPart implements IHitPart<PartTypes.Pommel> {
 
-    private final MaterialInstance material;
-    private final PartTypes.Pommel type;
+    public static final PommelPart DUMMY = new PommelPart();
+    private MaterialInstance material = MaterialInstance.DUMMY;
     private int spentDurability;
-
-    public PommelPart(PartTypes.Pommel type, MaterialInstance material) {
-        this.type = type;
-        this.material = material;
-    }
-
-    public static PommelPart read(CompoundTag nbt) {
-        PartTypes.Pommel type = PartTypes.Pommel.NULL.byName(nbt.getString("Type"));
-        MaterialInstance material = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
-        PommelPart part = new PommelPart(type, material);
-        part.spentDurability = nbt.getInt("Durability");
-        return part;
-    }
+    private PartTypes.Pommel type = PartTypes.Pommel.NULL;
 
     @Override
     public void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num) {
@@ -48,6 +36,13 @@ public class PommelPart implements IHitPart<PartTypes.Pommel> {
     }
 
     @Override
+    public void deserializeNBT(CompoundTag nbt) {
+        this.type = PartTypes.Pommel.byName(nbt.getString("Type"));
+        this.material = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
+        this.spentDurability = nbt.getInt("Durability");
+    }
+
+    @Override
     public double getAttackDamageInternal(double preAttackDamage) {
         //TODO implementation
         return preAttackDamage;
@@ -59,8 +54,13 @@ public class PommelPart implements IHitPart<PartTypes.Pommel> {
     }
 
     @Override
+    public String getDescriptionId() {
+        return "item.evolution.part.pommel." + this.type.getName() + "." + this.material.getMaterial().getName();
+    }
+
+    @Override
     public int getDurabilityDmg() {
-        return this.getMaxDurability() - this.spentDurability;
+        return this.spentDurability;
     }
 
     @Override
@@ -99,19 +99,31 @@ public class PommelPart implements IHitPart<PartTypes.Pommel> {
     }
 
     @Override
+    public boolean isBroken() {
+        //TODO implementation
+        return false;
+    }
+
+    @Override
     public void loseSharp(int amount) {
     }
 
     @Override
-    public void sharp() {
-    }
-
-    @Override
-    public CompoundTag write() {
+    public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putString("Type", this.type.getName());
         tag.put("MaterialInstance", this.material.write());
         tag.putInt("Durability", this.spentDurability);
         return tag;
+    }
+
+    @Override
+    public void set(PartTypes.Pommel type, MaterialInstance material) {
+        this.type = type;
+        this.material = material;
+    }
+
+    @Override
+    public void sharp() {
     }
 }

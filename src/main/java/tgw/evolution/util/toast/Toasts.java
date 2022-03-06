@@ -33,7 +33,7 @@ public final class Toasts {
     }
 
     public static void register() {
-        ItemStack knapping = new ItemStack(EvolutionItems.rock_andesite.get());
+        ItemStack knapping = new ItemStack(EvolutionItems.ALL_ROCK.get(RockVariant.ANDESITE).get());
         for (RockVariant rock : RockVariant.VALUES) {
             Item rockItem;
             try {
@@ -53,7 +53,7 @@ public final class Toasts {
             }
             registerRecipe(rockItem, rockRecipes);
         }
-        ItemStack chopping = new ItemStack(EvolutionItems.chopping_block_oak.get());
+        ItemStack chopping = new ItemStack(EvolutionItems.ALL_CHOPPING_BLOCK.get(WoodVariant.ACACIA).get());
         for (WoodVariant wood : WoodVariant.VALUES) {
             Item woodItem = wood.getLogItem();
             //noinspection ObjectAllocationInLoop

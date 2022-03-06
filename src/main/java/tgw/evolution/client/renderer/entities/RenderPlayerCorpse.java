@@ -1,7 +1,6 @@
 package tgw.evolution.client.renderer.entities;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Vector3f;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -12,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 import tgw.evolution.entities.EntityPlayerDummy;
 import tgw.evolution.entities.EntitySkeletonDummy;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
+import tgw.evolution.util.constants.CommonRotations;
+import tgw.evolution.util.math.MathHelper;
 
 public class RenderPlayerCorpse extends EntityRenderer<EntityPlayerCorpse> {
 
@@ -35,8 +36,8 @@ public class RenderPlayerCorpse extends EntityRenderer<EntityPlayerCorpse> {
     public void render(EntityPlayerCorpse entity, float yaw, float partialTicks, PoseStack matrices, MultiBufferSource buffer, int packedLight) {
         super.render(entity, yaw, partialTicks, matrices, buffer, packedLight);
         matrices.pushPose();
-        matrices.mulPose(Vector3f.YP.rotationDegrees(-entity.getYRot()));
-        matrices.mulPose(Vector3f.XP.rotationDegrees(-90.0F));
+        MathHelper.getExtendedMatrix(matrices).mulPoseY(-entity.getYRot());
+        matrices.mulPose(CommonRotations.XN90);
         matrices.translate(0, -1, 3 / 16.0);
         if (entity.isSkeleton()) {
             EntitySkeletonDummy skeleton = entity.getSkeleton();

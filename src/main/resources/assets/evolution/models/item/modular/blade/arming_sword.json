@@ -1,8 +1,4 @@
 {
-	"credit": "Made with Blockbench",
-	"textures": {
-		"0": "evolution:Desktop/Evolution/models/arming_sword/blade"
-	},
 	"elements": [
 		{
 			"from": [15, 15, 7.25],
@@ -242,5 +238,5 @@
 				"down": {"uv": [2, 12, 3, 13], "texture": "#0"}
 			}
 		}
-	]
+	]	
 }

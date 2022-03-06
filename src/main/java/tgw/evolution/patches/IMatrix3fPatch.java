@@ -28,6 +28,14 @@ public interface IMatrix3fPatch {
 
     void rotate(Quaternion quaternion);
 
+    void rotateX(float i, float r);
+
+    void rotateY(float j, float r);
+
+    void rotateZ(float k, float r);
+
+    void scale(float x, float y, float z);
+
     float transformVecX(float x, float y, float z);
 
     default float transformVecX(Vector3f dir) {

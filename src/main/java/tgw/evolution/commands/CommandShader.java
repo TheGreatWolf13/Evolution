@@ -13,10 +13,13 @@ import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCShader;
 
-public class CommandShader implements Command<CommandSourceStack> {
+public final class CommandShader implements Command<CommandSourceStack> {
 
     private static final Command<CommandSourceStack> CMD = new CommandShader();
     private static final IntegerArgumentType SHADER = IntegerArgumentType.integer(0);
+
+    private CommandShader() {
+    }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("shader")

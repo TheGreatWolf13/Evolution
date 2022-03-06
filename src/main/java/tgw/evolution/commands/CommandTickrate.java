@@ -9,10 +9,13 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.TranslatableComponent;
 import tgw.evolution.hooks.TickrateChanger;
 
-public class CommandTickrate implements Command<CommandSourceStack> {
+public final class CommandTickrate implements Command<CommandSourceStack> {
 
     private static final Command<CommandSourceStack> CMD = new CommandTickrate();
     private static final FloatArgumentType TPS = FloatArgumentType.floatArg(TickrateChanger.MIN_TICKRATE, TickrateChanger.MAX_TICKRATE);
+
+    private CommandTickrate() {
+    }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("tickrate")

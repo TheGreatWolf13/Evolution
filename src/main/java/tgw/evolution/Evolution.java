@@ -122,6 +122,7 @@ public final class Evolution {
         if (FMLLoader.getDist() == Dist.CLIENT) {
             ClientEvents.onFinishLoading();
         }
+        System.gc();
     }
 
     private static void onClientSetup(FMLClientSetupEvent event) {

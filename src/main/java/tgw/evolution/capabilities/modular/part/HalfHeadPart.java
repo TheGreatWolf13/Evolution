@@ -14,26 +14,11 @@ import java.util.List;
 
 public class HalfHeadPart implements IHitPart<PartTypes.HalfHead> {
 
-    private final MaterialInstance material;
-    private final PartTypes.HalfHead type;
+    public static final HalfHeadPart DUMMY = new HalfHeadPart();
+    private MaterialInstance material = MaterialInstance.DUMMY;
     private int sharpAmount;
     private int spentDurability;
-
-    public HalfHeadPart(PartTypes.HalfHead type, MaterialInstance material) {
-        this.type = type;
-        this.material = material;
-    }
-
-    public static HalfHeadPart read(CompoundTag nbt) {
-        PartTypes.HalfHead type = PartTypes.HalfHead.NULL.byName(nbt.getString("Type"));
-        MaterialInstance material = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
-        HalfHeadPart part = new HalfHeadPart(type, material);
-        part.spentDurability = nbt.getInt("Durability");
-        if (part.canBeSharpened()) {
-            part.sharpAmount = nbt.getInt("SharpAmount");
-        }
-        return part;
-    }
+    private PartTypes.HalfHead type = PartTypes.HalfHead.NULL;
 
     @Override
     public void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num) {
@@ -52,6 +37,16 @@ public class HalfHeadPart implements IHitPart<PartTypes.HalfHead> {
     }
 
     @Override
+    public void deserializeNBT(CompoundTag nbt) {
+        this.type = PartTypes.HalfHead.byName(nbt.getString("Type"));
+        this.material = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
+        this.spentDurability = nbt.getInt("Durability");
+        if (this.canBeSharpened()) {
+            this.sharpAmount = nbt.getInt("SharpAmount");
+        }
+    }
+
+    @Override
     public double getAttackDamageInternal(double preAttackDamage) {
         //TODO implementation
         return preAttackDamage;
@@ -65,6 +60,11 @@ public class HalfHeadPart implements IHitPart<PartTypes.HalfHead> {
             case HAMMER -> EvolutionDamage.Type.CRUSHING;
             case PICKAXE -> EvolutionDamage.Type.PIERCING;
         };
+    }
+
+    @Override
+    public String getDescriptionId() {
+        return "item.evolution.part.halfhead." + this.type.getName() + "." + this.material.getMaterial().getName();
     }
 
     @Override
@@ -108,6 +108,12 @@ public class HalfHeadPart implements IHitPart<PartTypes.HalfHead> {
     }
 
     @Override
+    public boolean isBroken() {
+        //TODO implementation
+        return false;
+    }
+
+    @Override
     public void loseSharp(int amount) {
         if (this.canBeSharpened()) {
             this.sharpAmount -= amount;
@@ -118,14 +124,7 @@ public class HalfHeadPart implements IHitPart<PartTypes.HalfHead> {
     }
 
     @Override
-    public void sharp() {
-        if (this.canBeSharpened()) {
-            this.sharpAmount = Mth.ceil(1.5 * this.material.getHardness());
-        }
-    }
-
-    @Override
-    public CompoundTag write() {
+    public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putString("Type", this.type.getName());
         tag.put("MaterialInstance", this.material.write());
@@ -134,5 +133,18 @@ public class HalfHeadPart implements IHitPart<PartTypes.HalfHead> {
             tag.putInt("SharpAmount", this.sharpAmount);
         }
         return tag;
+    }
+
+    @Override
+    public void set(PartTypes.HalfHead type, MaterialInstance material) {
+        this.type = type;
+        this.material = material;
+    }
+
+    @Override
+    public void sharp() {
+        if (this.canBeSharpened()) {
+            this.sharpAmount = Mth.ceil(1.5 * this.material.getHardness());
+        }
     }
 }

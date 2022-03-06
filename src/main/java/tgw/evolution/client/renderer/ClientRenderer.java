@@ -72,6 +72,7 @@ import tgw.evolution.init.*;
 import tgw.evolution.items.*;
 import tgw.evolution.network.PacketCSPlaySoundEntityEmitted;
 import tgw.evolution.patches.ILivingEntityPatch;
+import tgw.evolution.patches.IPoseStackPatch;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.Matrix3d;
 import tgw.evolution.util.math.MathHelper;
@@ -86,8 +87,8 @@ import java.util.Random;
 public class ClientRenderer {
 
     private static final RenderType MAP_BACKGROUND = RenderType.text(new ResourceLocation("textures/map/map_background.png"));
-    private static final RenderType MAP_BACKGROUND_CHECKERBOARD = RenderType.text(new ResourceLocation("textures/map/map_background_checkerboard" +
-                                                                                                       ".png"));
+    private static final RenderType MAP_BACKGROUND_CHECKERBOARD = RenderType.text(
+            new ResourceLocation("textures/map/map_background_checkerboard" + ".png"));
     public static ClientRenderer instance;
     private static int slotMainHand;
     private final ClientEvents client;
@@ -166,8 +167,8 @@ public class ClientRenderer {
                                   float alpha,
                                   Entity entity,
                                   float partialTicks) {
-        boolean renderAll = Minecraft.getInstance().player.getMainHandItem().getItem() == EvolutionItems.debug_item.get() ||
-                            Minecraft.getInstance().player.getOffhandItem().getItem() == EvolutionItems.debug_item.get();
+        boolean renderAll = Minecraft.getInstance().player.getMainHandItem().getItem() == EvolutionItems.DEBUG_ITEM.get() ||
+                            Minecraft.getInstance().player.getOffhandItem().getItem() == EvolutionItems.DEBUG_ITEM.get();
         hitbox.getParent().init(entity, partialTicks);
         Matrix3d mainTransform = hitbox.getParent().getTransform().transpose();
         final double[] points0 = new double[3];
@@ -259,16 +260,8 @@ public class ClientRenderer {
                                          double z,
                                          BlockPos pos,
                                          BlockState state) {
-        drawShape(matrices,
-                  buffer,
-                  state.getShape(entity.level, pos, CollisionContext.of(entity)),
-                  pos.getX() - x,
-                  pos.getY() - y,
-                  pos.getZ() - z,
-                  0.0F,
-                  0.0F,
-                  0.0F,
-                  0.4F);
+        drawShape(matrices, buffer, state.getShape(entity.level, pos, CollisionContext.of(entity)), pos.getX() - x, pos.getY() - y, pos.getZ() - z,
+                  0.0F, 0.0F, 0.0F, 0.4F);
     }
 
     private static void drawShape(PoseStack matrices,
@@ -316,15 +309,7 @@ public class ClientRenderer {
     }
 
     public static void floatBlit(PoseStack matrices, float x, float y, int blitOffset, int width, int height, TextureAtlasSprite sprite) {
-        GUIUtils.innerFloatBlit(matrices.last().pose(),
-                                x,
-                                x + width,
-                                y,
-                                y + height,
-                                blitOffset,
-                                sprite.getU0(),
-                                sprite.getU1(),
-                                sprite.getV0(),
+        GUIUtils.innerFloatBlit(matrices.last().pose(), x, x + width, y, y + height, blitOffset, sprite.getU0(), sprite.getU1(), sprite.getV0(),
                                 sprite.getV1());
     }
 
@@ -701,7 +686,6 @@ public class ClientRenderer {
             RenderSystem.lineWidth(Math.max(2.5F, this.mc.getWindow().getWidth() / 1_920.0F * 2.5F));
             RenderSystem.disableTexture();
             matrices.pushPose();
-//            RenderSystem.scalef(1.0F, 1.0F, 1.0F);
             double projX = camera.getPosition().x;
             double projY = camera.getPosition().y;
             double projZ = camera.getPosition().z;
@@ -723,8 +707,9 @@ public class ClientRenderer {
                     internalMat.pushPose();
                     internalMat.translate(width / 2.0, height / 2.0, this.mc.gui.getBlitOffset());
                     Camera camera = this.mc.gameRenderer.getMainCamera();
-                    internalMat.mulPose(Vector3f.XN.rotationDegrees(camera.getXRot()));
-                    internalMat.mulPose(Vector3f.YP.rotationDegrees(camera.getYRot()));
+                    IPoseStackPatch internalMatExt = MathHelper.getExtendedMatrix(internalMat);
+                    internalMatExt.mulPoseX(-camera.getXRot());
+                    internalMatExt.mulPoseY(camera.getYRot());
                     internalMat.scale(-1.0f, -1.0f, -1.0f);
                     RenderSystem.applyModelViewMatrix();
                     RenderSystem.renderCrosshair(10);
@@ -1067,17 +1052,7 @@ public class ClientRenderer {
         double posX = Mth.lerp(partialTicks, entity.xOld, entity.getX());
         double posY = Mth.lerp(partialTicks, entity.yOld, entity.getY());
         double posZ = Mth.lerp(partialTicks, entity.zOld, entity.getZ());
-        drawHitbox(matrices,
-                   buffer.getBuffer(RenderType.lines()),
-                   hitbox,
-                   posX - projX,
-                   posY - projY,
-                   posZ - projZ,
-                   1.0F,
-                   1.0F,
-                   0.0F,
-                   1.0F,
-                   entity,
+        drawHitbox(matrices, buffer.getBuffer(RenderType.lines()), hitbox, posX - projX, posY - projY, posZ - projZ, 1.0F, 1.0F, 0.0F, 1.0F, entity,
                    partialTicks);
         RenderSystem.enableTexture();
         RenderSystem.disableBlend();
@@ -1119,30 +1094,14 @@ public class ClientRenderer {
         if (mainHand) {
             float swingProg = this.getMainhandSwingProgress(partialTicks);
             float equippedProgress = 1.0F - Mth.lerp(partialTicks, this.mainhandPrevEquipProgress, this.mainhandEquipProgress);
-            this.renderItemInFirstPerson(matrices,
-                                         buffer,
-                                         packedLight,
-                                         player,
-                                         partialTicks,
-                                         interpPitch,
-                                         InteractionHand.MAIN_HAND,
-                                         swingProg,
-                                         this.mainHandStack,
-                                         equippedProgress);
+            this.renderItemInFirstPerson(matrices, buffer, packedLight, player, partialTicks, interpPitch, InteractionHand.MAIN_HAND, swingProg,
+                                         this.mainHandStack, equippedProgress);
         }
         if (offHand) {
             float swingProg = this.getOffhandSwingProgress(partialTicks);
             float equippedProgress = 1.0F - Mth.lerp(partialTicks, this.offhandPrevEquipProgress, this.offhandEquipProgress);
-            this.renderItemInFirstPerson(matrices,
-                                         buffer,
-                                         packedLight,
-                                         player,
-                                         partialTicks,
-                                         interpPitch,
-                                         InteractionHand.OFF_HAND,
-                                         swingProg,
-                                         this.offhandStack,
-                                         equippedProgress);
+            this.renderItemInFirstPerson(matrices, buffer, packedLight, player, partialTicks, interpPitch, InteractionHand.OFF_HAND, swingProg,
+                                         this.offhandStack, equippedProgress);
         }
 //        RenderSystem.disableRescaleNormal();
 //        RenderHelper.turnOff();
@@ -1211,15 +1170,9 @@ public class ClientRenderer {
                     matrices.mulPose(Vector3f.YP.rotationDegrees(sideOffset * 10.0F));
                 }
             }
-            this.renderItemSide(matrices,
-                                buffer,
-                                packedLight,
-                                OverlayTexture.NO_OVERLAY,
-                                player,
-                                stack,
-                                isRightSide ?
-                                ItemTransforms.TransformType.FIRST_PERSON_RIGHT_HAND :
-                                ItemTransforms.TransformType.FIRST_PERSON_LEFT_HAND,
+            this.renderItemSide(matrices, buffer, packedLight, OverlayTexture.NO_OVERLAY, player, stack, isRightSide ?
+                                                                                                         ItemTransforms.TransformType.FIRST_PERSON_RIGHT_HAND :
+                                                                                                         ItemTransforms.TransformType.FIRST_PERSON_LEFT_HAND,
                                 !isRightSide);
         }
         else {
@@ -1322,15 +1275,9 @@ public class ClientRenderer {
                     }
                 }
             }
-            this.renderItemSide(matrices,
-                                buffer,
-                                packedLight,
-                                OverlayTexture.NO_OVERLAY,
-                                player,
-                                stack,
-                                rightSide ?
-                                ItemTransforms.TransformType.FIRST_PERSON_RIGHT_HAND :
-                                ItemTransforms.TransformType.FIRST_PERSON_LEFT_HAND,
+            this.renderItemSide(matrices, buffer, packedLight, OverlayTexture.NO_OVERLAY, player, stack, rightSide ?
+                                                                                                         ItemTransforms.TransformType.FIRST_PERSON_RIGHT_HAND :
+                                                                                                         ItemTransforms.TransformType.FIRST_PERSON_LEFT_HAND,
                                 !rightSide);
         }
         matrices.popPose();
@@ -1432,15 +1379,7 @@ public class ClientRenderer {
         double projX = info.getPosition().x;
         double projY = info.getPosition().y;
         double projZ = info.getPosition().z;
-        drawShape(matrices,
-                  buffer.getBuffer(RenderType.LINES),
-                  shape,
-                  pos.getX() - projX,
-                  pos.getY() - projY,
-                  pos.getZ() - projZ,
-                  1.0F,
-                  1.0F,
-                  0.0F,
+        drawShape(matrices, buffer.getBuffer(RenderType.LINES), shape, pos.getX() - projX, pos.getY() - projY, pos.getZ() - projZ, 1.0F, 1.0F, 0.0F,
                   1.0F);
         matrices.popPose();
         RenderSystem.enableTexture();
@@ -1508,11 +1447,8 @@ public class ClientRenderer {
                 if (addingInstance.getAmplifier() != 0) {
                     matrices.pushPose();
                     matrices.scale(0.5f, 0.5f, 0.5f);
-                    this.mc.font.drawShadow(matrices,
-                                            MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(addingInstance) + 1),
-                                            (finalX + 3) * 2,
-                                            (finalY + 17) * 2,
-                                            0xffff_ffff);
+                    this.mc.font.drawShadow(matrices, MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(addingInstance) + 1),
+                                            (finalX + 3) * 2, (finalY + 17) * 2, 0xffff_ffff);
                     matrices.popPose();
                 }
             };
@@ -1641,12 +1577,8 @@ public class ClientRenderer {
                         float finalX = x;
                         float finalY = y;
                         //noinspection ObjectAllocationInLoop
-                        this.runnables.add(() -> this.mc.font.drawShadow(matrices,
-                                                                         MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(
-                                                                                 effectInstance) + 1),
-                                                                         (finalX + 3) * 2,
-                                                                         (finalY + 17) * 2,
-                                                                         0xff_ffff));
+                        this.runnables.add(() -> this.mc.font.drawShadow(matrices, MathHelper.getRomanNumber(
+                                ScreenDisplayEffects.getFixedAmplifier(effectInstance) + 1), (finalX + 3) * 2, (finalY + 17) * 2, 0xff_ffff));
                     }
                 }
             }
@@ -1759,11 +1691,9 @@ public class ClientRenderer {
                     if (this.currentMainhandItem.getItem() instanceof ItemSword) {
                         this.mc.getSoundManager()
                                .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
-                        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlaySoundEntityEmitted(this.mc.player,
-                                                                                                  EvolutionSounds.SWORD_UNSHEATHE.get(),
-                                                                                                  SoundSource.PLAYERS,
-                                                                                                  0.8f,
-                                                                                                  1.0f));
+                        EvolutionNetwork.INSTANCE.sendToServer(
+                                new PacketCSPlaySoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE.get(), SoundSource.PLAYERS, 0.8f,
+                                                                   1.0f));
                     }
                 }
             }
@@ -1778,11 +1708,9 @@ public class ClientRenderer {
                     if (this.currentOffhandItem.getItem() instanceof ItemSword) {
                         this.mc.getSoundManager()
                                .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
-                        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlaySoundEntityEmitted(this.mc.player,
-                                                                                                  EvolutionSounds.SWORD_UNSHEATHE.get(),
-                                                                                                  SoundSource.PLAYERS,
-                                                                                                  0.8f,
-                                                                                                  1.0f));
+                        EvolutionNetwork.INSTANCE.sendToServer(
+                                new PacketCSPlaySoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE.get(), SoundSource.PLAYERS, 0.8f,
+                                                                   1.0f));
                     }
                 }
             }
@@ -1791,11 +1719,11 @@ public class ClientRenderer {
                 this.client.offhandTimeSinceLastHit++;
             }
             float cooledAttackStrength = this.client.getOffhandCooledAttackStrength(this.mc.player.getOffhandItem(), 1.0F);
-            this.offhandEquipProgress += MathHelper.clamp((!requipO ? cooledAttackStrength * cooledAttackStrength * cooledAttackStrength : 0.0F) -
-                                                          this.offhandEquipProgress, -0.4f, 0.4F);
+            this.offhandEquipProgress += MathHelper.clamp(
+                    (!requipO ? cooledAttackStrength * cooledAttackStrength * cooledAttackStrength : 0.0F) - this.offhandEquipProgress, -0.4f, 0.4F);
             cooledAttackStrength = this.client.getMainhandCooledAttackStrength(1.0F);
-            this.mainhandEquipProgress += MathHelper.clamp((!requipM ? cooledAttackStrength * cooledAttackStrength * cooledAttackStrength : 0.0F) -
-                                                           this.mainhandEquipProgress, -0.4F, 0.4F);
+            this.mainhandEquipProgress += MathHelper.clamp(
+                    (!requipM ? cooledAttackStrength * cooledAttackStrength * cooledAttackStrength : 0.0F) - this.mainhandEquipProgress, -0.4F, 0.4F);
 
         }
         if (this.mainhandEquipProgress < 0.1F && !InputHooks.isMainhandLunging) {

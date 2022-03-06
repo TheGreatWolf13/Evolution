@@ -2,13 +2,16 @@ package tgw.evolution.init;
 
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
+import tgw.evolution.capabilities.modular.part.PartTypes;
+import tgw.evolution.items.modular.ItemModularTool;
+import tgw.evolution.util.constants.WoodVariant;
 
 public final class EvolutionCreativeTabs {
 
     public static final CreativeModeTab DEV = new CreativeModeTab("evolution.dev") {
         @Override
         public ItemStack makeIcon() {
-            return new ItemStack(EvolutionItems.debug_item.get());
+            return new ItemStack(EvolutionItems.DEBUG_ITEM.get());
         }
     };
 
@@ -26,24 +29,24 @@ public final class EvolutionCreativeTabs {
         }
     };
 
-    public static final CreativeModeTab STONE_TOOLS = new CreativeModeTab("evolution.stone") {
+    public static final CreativeModeTab PARTS_AND_TOOLS = new CreativeModeTab("evolution.parts_and_tools") {
         @Override
         public ItemStack makeIcon() {
-            return new ItemStack(EvolutionItems.rock_andesite.get());
+            return ItemModularTool.createNew(PartTypes.Head.PICKAXE, ItemMaterial.COPPER, PartTypes.Handle.ONE_HANDED, ItemMaterial.WOOD, false);
         }
     };
 
     public static final CreativeModeTab TREES_AND_WOOD = new CreativeModeTab("evolution.trees_and_wood") {
         @Override
         public ItemStack makeIcon() {
-            return new ItemStack(EvolutionBlocks.LOG_OAK.get());
+            return new ItemStack(EvolutionBlocks.ALL_LOG.get(WoodVariant.OAK).get());
         }
     };
 
     public static final CreativeModeTab METAL = new CreativeModeTab("evolution.metal") {
         @Override
         public ItemStack makeIcon() {
-            return new ItemStack(EvolutionItems.ingot_copper.get());
+            return new ItemStack(EvolutionItems.INGOT_COPPER.get());
         }
     };
 

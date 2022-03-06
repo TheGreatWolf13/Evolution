@@ -3,15 +3,16 @@ package tgw.evolution.init;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.InventoryMenu;
-import org.antlr.runtime.misc.DoubleKeyMap;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.modular.part.IPartType;
-import tgw.evolution.capabilities.modular.part.PartTypes;
+import tgw.evolution.util.DoubleEnumMap;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.constants.WoodVariant;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static tgw.evolution.capabilities.modular.part.PartTypes.*;
 
 public final class EvolutionResources {
     //Slot indices
@@ -71,24 +72,32 @@ public final class EvolutionResources {
     //      Modular
     public static final List<ModelResourceLocation> MODULAR_MODELS = new ArrayList<>();
     //          Blade
-    public static final DoubleKeyMap<PartTypes.Blade, ItemMaterial, ModelResourceLocation> MODULAR_BLADES = new DoubleKeyMap<>();
-    public static final DoubleKeyMap<PartTypes.Blade, ItemMaterial, ModelResourceLocation> MODULAR_BLADES_SHARP = new DoubleKeyMap<>();
+    public static final DoubleEnumMap<Blade, ItemMaterial, ModelResourceLocation> MODULAR_BLADES = new DoubleEnumMap<>(Blade.class,
+                                                                                                                       ItemMaterial.class);
+    public static final DoubleEnumMap<Blade, ItemMaterial, ModelResourceLocation> MODULAR_BLADES_SHARP = new DoubleEnumMap<>(Blade.class,
+                                                                                                                             ItemMaterial.class);
     //          Guard
-    public static final DoubleKeyMap<PartTypes.Guard, ItemMaterial, ModelResourceLocation> MODULAR_GUARDS = new DoubleKeyMap<>();
+    public static final DoubleEnumMap<Guard, ItemMaterial, ModelResourceLocation> MODULAR_GUARDS = new DoubleEnumMap<>(Guard.class,
+                                                                                                                       ItemMaterial.class);
     //          Half Head
-    public static final DoubleKeyMap<PartTypes.HalfHead, ItemMaterial, ModelResourceLocation> MODULAR_HALF_HEADS = new DoubleKeyMap<>();
-    public static final DoubleKeyMap<PartTypes.HalfHead, ItemMaterial, ModelResourceLocation> MODULAR_HALF_HEADS_SHARP = new DoubleKeyMap<>();
+    public static final DoubleEnumMap<HalfHead, ItemMaterial, ModelResourceLocation> MODULAR_HALF_HEADS = new DoubleEnumMap<>(HalfHead.class,
+                                                                                                                              ItemMaterial.class);
+    public static final DoubleEnumMap<HalfHead, ItemMaterial, ModelResourceLocation> MODULAR_HALF_HEADS_SHARP = new DoubleEnumMap<>(HalfHead.class,
+                                                                                                                                    ItemMaterial.class);
     //          Handle
-    public static final DoubleKeyMap<PartTypes.Handle, ItemMaterial, ModelResourceLocation> MODULAR_HANDLES = new DoubleKeyMap<>();
+    public static final DoubleEnumMap<Handle, ItemMaterial, ModelResourceLocation> MODULAR_HANDLES = new DoubleEnumMap<>(Handle.class,
+                                                                                                                         ItemMaterial.class);
     //          Head
-    public static final DoubleKeyMap<PartTypes.Head, ItemMaterial, ModelResourceLocation> MODULAR_HEADS = new DoubleKeyMap<>();
-    public static final DoubleKeyMap<PartTypes.Head, ItemMaterial, ModelResourceLocation> MODULAR_HEADS_SHARP = new DoubleKeyMap<>();
+    public static final DoubleEnumMap<Head, ItemMaterial, ModelResourceLocation> MODULAR_HEADS = new DoubleEnumMap<>(Head.class, ItemMaterial.class);
+    public static final DoubleEnumMap<Head, ItemMaterial, ModelResourceLocation> MODULAR_HEADS_SHARP = new DoubleEnumMap<>(Head.class,
+                                                                                                                           ItemMaterial.class);
     //          Hilt
-    public static final DoubleKeyMap<PartTypes.Hilt, ItemMaterial, ModelResourceLocation> MODULAR_HILTS = new DoubleKeyMap<>();
+    public static final DoubleEnumMap<Hilt, ItemMaterial, ModelResourceLocation> MODULAR_HILTS = new DoubleEnumMap<>(Hilt.class, ItemMaterial.class);
     //          Pole
-    public static final DoubleKeyMap<PartTypes.Pole, ItemMaterial, ModelResourceLocation> MODULAR_POLES = new DoubleKeyMap<>();
+    public static final DoubleEnumMap<Pole, ItemMaterial, ModelResourceLocation> MODULAR_POLES = new DoubleEnumMap<>(Pole.class, ItemMaterial.class);
     //          Pommel
-    public static final DoubleKeyMap<PartTypes.Pommel, ItemMaterial, ModelResourceLocation> MODULAR_POMMELS = new DoubleKeyMap<>();
+    public static final DoubleEnumMap<Pommel, ItemMaterial, ModelResourceLocation> MODULAR_POMMELS = new DoubleEnumMap<>(Pommel.class,
+                                                                                                                         ItemMaterial.class);
 
     static {
         BLOCK_KNAPPING = new ResourceLocation[RockVariant.VALUES.length];
@@ -113,7 +122,7 @@ public final class EvolutionResources {
             //noinspection ObjectAllocationInLoop
             BLOCK_PIT_LOG[variant.getId()] = Evolution.getResource("textures/block/pit_" + variant.getName() + ".png");
         }
-        for (PartTypes.Blade blade : PartTypes.Blade.VALUES) {
+        for (Blade blade : Blade.VALUES) {
             for (ItemMaterial material : ItemMaterial.VALUES) {
                 if (material.isAllowedBy(blade)) {
                     MODULAR_BLADES.put(blade, material, itemModel("modular/blade", blade, material, false));
@@ -123,14 +132,14 @@ public final class EvolutionResources {
                 }
             }
         }
-        for (PartTypes.Guard guard : PartTypes.Guard.VALUES) {
+        for (Guard guard : Guard.VALUES) {
             for (ItemMaterial material : ItemMaterial.VALUES) {
                 if (material.isAllowedBy(guard)) {
                     MODULAR_GUARDS.put(guard, material, itemModel("modular/guard", guard, material, false));
                 }
             }
         }
-        for (PartTypes.HalfHead halfHead : PartTypes.HalfHead.VALUES)  {
+        for (HalfHead halfHead : HalfHead.VALUES) {
             for (ItemMaterial material : ItemMaterial.VALUES) {
                 if (material.isAllowedBy(halfHead)) {
                     MODULAR_HALF_HEADS.put(halfHead, material, itemModel("modular/halfhead", halfHead, material, false));
@@ -140,14 +149,14 @@ public final class EvolutionResources {
                 }
             }
         }
-        for (PartTypes.Handle handle : PartTypes.Handle.VALUES) {
+        for (Handle handle : Handle.VALUES) {
             for (ItemMaterial material : ItemMaterial.VALUES) {
                 if (material.isAllowedBy(handle)) {
                     MODULAR_HANDLES.put(handle, material, itemModel("modular/handle", handle, material, false));
                 }
             }
         }
-        for (PartTypes.Head head : PartTypes.Head.VALUES) {
+        for (Head head : Head.VALUES) {
             for (ItemMaterial material : ItemMaterial.VALUES) {
                 if (material.isAllowedBy(head)) {
                     MODULAR_HEADS.put(head, material, itemModel("modular/head", head, material, false));
@@ -157,21 +166,21 @@ public final class EvolutionResources {
                 }
             }
         }
-        for (PartTypes.Hilt hilt : PartTypes.Hilt.VALUES) {
+        for (Hilt hilt : Hilt.VALUES) {
             for (ItemMaterial material : ItemMaterial.VALUES) {
                 if (material.isAllowedBy(hilt)) {
                     MODULAR_HILTS.put(hilt, material, itemModel("modular/hilt", hilt, material, false));
                 }
             }
         }
-        for (PartTypes.Pole pole : PartTypes.Pole.VALUES) {
+        for (Pole pole : Pole.VALUES) {
             for (ItemMaterial material : ItemMaterial.VALUES) {
                 if (material.isAllowedBy(pole)) {
                     MODULAR_POLES.put(pole, material, itemModel("modular/pole", pole, material, false));
                 }
             }
         }
-        for (PartTypes.Pommel pommel : PartTypes.Pommel.VALUES) {
+        for (Pommel pommel : Pommel.VALUES) {
             for (ItemMaterial material : ItemMaterial.VALUES) {
                 if (material.isAllowedBy(pommel)) {
                     MODULAR_POMMELS.put(pommel, material, itemModel("modular/pommel", pommel, material, false));
@@ -180,13 +189,13 @@ public final class EvolutionResources {
         }
     }
 
+    private EvolutionResources() {
+    }
+
     private static ModelResourceLocation itemModel(String path, IPartType<?> part, ItemMaterial material, boolean sharp) {
         String name = path + "/" + part.getName() + "_" + material.getName() + (sharp ? "_sharp" : "");
         ModelResourceLocation model = new ModelResourceLocation(Evolution.getResource(name), "inventory");
         MODULAR_MODELS.add(model);
         return model;
-    }
-
-    private EvolutionResources() {
     }
 }

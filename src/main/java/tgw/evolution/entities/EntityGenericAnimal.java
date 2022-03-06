@@ -148,13 +148,10 @@ public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> exte
     public void handleEntityEvent(byte id) {
         if (id == EntityStates.LOVE_HEARTS_PARTICLES) {
             for (int i = 0; i < 7; ++i) {
-                this.level.addParticle(ParticleTypes.HEART,
-                                       this.getX() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth(),
+                this.level.addParticle(ParticleTypes.HEART, this.getX() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth(),
                                        this.getY() + 0.5 + this.random.nextFloat() * this.getBbHeight(),
                                        this.getZ() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth(),
-                                       this.random.nextGaussian() * 0.02,
-                                       this.random.nextGaussian() * 0.02,
-                                       this.random.nextGaussian() * 0.02);
+                                       this.random.nextGaussian() * 0.02, this.random.nextGaussian() * 0.02, this.random.nextGaussian() * 0.02);
             }
         }
         else {
@@ -185,7 +182,7 @@ public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> exte
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
-        if (itemstack.getItem() == EvolutionItems.debug_item.get()) {
+        if (itemstack.getItem() == EvolutionItems.DEBUG_ITEM.get()) {
             if (!this.level.isClientSide) {
                 MutableComponent debug = new TextComponent("[EntityDebug]").withStyle(ChatFormatting.YELLOW).withStyle(ChatFormatting.BOLD);
                 MutableComponent text = new TextComponent("Gender = " + this.gender + "\n");

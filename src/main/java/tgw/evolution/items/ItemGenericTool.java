@@ -19,6 +19,7 @@ import net.minecraftforge.common.ForgeMod;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.ItemMaterial;
 import tgw.evolution.inventory.SlotType;
+import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.PlayerHelper;
 
 import javax.annotation.Nonnull;

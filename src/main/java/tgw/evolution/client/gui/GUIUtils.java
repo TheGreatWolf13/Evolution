@@ -37,6 +37,7 @@ import net.minecraft.world.level.storage.LevelData;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.util.constants.CommonRotations;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -50,10 +51,8 @@ public final class GUIUtils {
     static {
         PostChain shader;
         try {
-            shader = new PostChain(Minecraft.getInstance().getTextureManager(),
-                                   Minecraft.getInstance().getResourceManager(),
-                                   Minecraft.getInstance().getMainRenderTarget(),
-                                   EvolutionResources.SHADER_DESATURATE_75);
+            shader = new PostChain(Minecraft.getInstance().getTextureManager(), Minecraft.getInstance().getResourceManager(),
+                                   Minecraft.getInstance().getMainRenderTarget(), EvolutionResources.SHADER_DESATURATE_75);
         }
         catch (IOException e) {
             shader = null;
@@ -86,11 +85,11 @@ public final class GUIUtils {
         PoseStack matrices = new PoseStack();
         matrices.translate(0, 0, 1_000);
         matrices.scale(scale, scale, scale);
-        Quaternion quatZ = Vector3f.ZP.rotationDegrees(180.0F);
+        Quaternion quatZ = CommonRotations.ZP180.copy();
         Quaternion quatX = Vector3f.XP.rotationDegrees(atanMouseY * 20.0F);
         quatZ.mul(quatX);
         matrices.mulPose(quatZ);
-        internalMat.mulPose(Vector3f.ZP.rotationDegrees(180.0f));
+        internalMat.mulPose(CommonRotations.ZP180);
         float oldYawOffset = entity.yBodyRot;
         float oldYaw = entity.getYRot();
         float oldPitch = entity.getXRot();
@@ -142,10 +141,8 @@ public final class GUIUtils {
         RenderSystem.enableBlend();
         RenderSystem.disableTexture();
         RenderSystem.setShader(GameRenderer::getPositionShader);
-        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA,
-                                       GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-                                       GlStateManager.SourceFactor.ONE,
-                                       GlStateManager.DestFactor.ZERO);
+        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                                       GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         setColor(color);
         builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
         boolean xHigh = x < x2;
@@ -250,16 +247,8 @@ public final class GUIUtils {
                                        float vOffset,
                                        int textureWidth,
                                        int textureHeight) {
-        innerFloatBlit(matrixStack.last().pose(),
-                       x1,
-                       x2,
-                       y1,
-                       y2,
-                       blitOffset,
-                       uOffset / textureWidth,
-                       (uOffset + uWidth) / textureWidth,
-                       vOffset / textureHeight,
-                       (vOffset + vHeight) / textureHeight);
+        innerFloatBlit(matrixStack.last().pose(), x1, x2, y1, y2, blitOffset, uOffset / textureWidth, (uOffset + uWidth) / textureWidth,
+                       vOffset / textureHeight, (vOffset + vHeight) / textureHeight);
     }
 
     public static void innerFloatBlit(Matrix4f matrix,
@@ -370,9 +359,8 @@ public final class GUIUtils {
         Level level = Minecraft.getInstance().level;
         if (level != null) {
             LevelData levelData = level.getLevelData();
-            difficulty = level.getCurrentDifficultyAt(pos == null ?
-                                                      new BlockPos(levelData.getXSpawn(), levelData.getYSpawn(), levelData.getZSpawn()) :
-                                                      pos);
+            difficulty = level.getCurrentDifficultyAt(
+                    pos == null ? new BlockPos(levelData.getXSpawn(), levelData.getYSpawn(), levelData.getZSpawn()) : pos);
         }
         else {
             difficulty = new DifficultyInstance(Difficulty.NORMAL, 0, 0, 0);

@@ -16,9 +16,12 @@ import tgw.evolution.capabilities.thirst.ThirstStats;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.patches.IEffectInstancePatch;
 
-public class CommandHeal implements Command<CommandSourceStack> {
+public final class CommandHeal implements Command<CommandSourceStack> {
 
     private static final Command<CommandSourceStack> CMD = new CommandHeal();
+
+    private CommandHeal() {
+    }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("heal").requires(cs -> cs.getEntity() instanceof ServerPlayer && cs.hasPermission(2)).executes(CMD));

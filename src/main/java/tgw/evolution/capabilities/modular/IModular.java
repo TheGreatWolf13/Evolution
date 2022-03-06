@@ -9,7 +9,7 @@ import net.minecraft.world.level.material.Material;
 import net.minecraftforge.common.util.INBTSerializable;
 import org.intellij.lang.annotations.MagicConstant;
 import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.items.ItemModular;
+import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.constants.HarvestLevel;
 
 import java.util.List;
@@ -39,9 +39,9 @@ public interface IModular extends INBTSerializable<CompoundTag> {
 
     int getTotalMaxDurability();
 
-    boolean isBroken();
+    boolean isAxe();
 
-    boolean isInit();
+    boolean isBroken();
 
     boolean isTwoHanded();
 
@@ -105,12 +105,12 @@ public interface IModular extends INBTSerializable<CompoundTag> {
         }
 
         @Override
-        public boolean isBroken() {
+        public boolean isAxe() {
             return false;
         }
 
         @Override
-        public boolean isInit() {
+        public boolean isBroken() {
             return false;
         }
 

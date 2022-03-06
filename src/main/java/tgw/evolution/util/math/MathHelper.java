@@ -1,7 +1,9 @@
 package tgw.evolution.util.math;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
+import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3d;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.core.BlockPos;
@@ -26,9 +28,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.Patterns;
 import tgw.evolution.entities.INeckPosition;
 import tgw.evolution.init.EvolutionHitBoxes;
-import tgw.evolution.patches.IEntityPatch;
-import tgw.evolution.patches.IMatrix3fPatch;
-import tgw.evolution.patches.IMatrix4fPatch;
+import tgw.evolution.patches.*;
 import tgw.evolution.util.AdvancedEntityRayTraceResult;
 import tgw.evolution.util.ArmPose;
 import tgw.evolution.util.HitInformation;
@@ -385,12 +385,8 @@ public final class MathHelper {
                 //noinspection ObjectAllocationInLoop
                 BlockHitResult hitResult = hitter.level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
                 if (hitResult.getType() != HitResult.Type.MISS) {
-                    Evolution.info("Collided with {} at {} on {}, from = {}, to = {}",
-                                   hitter.level.getBlockState(hitResult.getBlockPos()),
-                                   hitResult.getBlockPos(),
-                                   hitResult.getLocation(),
-                                   from,
-                                   to);
+                    Evolution.info("Collided with {} at {} on {}, from = {}, to = {}", hitter.level.getBlockState(hitResult.getBlockPos()),
+                                   hitResult.getBlockPos(), hitResult.getLocation(), from, to);
                     return hitResult;
                 }
             }
@@ -766,12 +762,20 @@ public final class MathHelper {
         return partialTicks == 1.0F ? entity.getYRot() : Mth.lerp(partialTicks, entity.yRotO, entity.getYRot());
     }
 
+    public static IPoseStackPatch getExtendedMatrix(PoseStack matrices) {
+        return (IPoseStackPatch) matrices;
+    }
+
     public static IMatrix4fPatch getExtendedMatrix(Matrix4f matrix) {
         return (IMatrix4fPatch) (Object) matrix;
     }
 
     public static IMatrix3fPatch getExtendedMatrix(Matrix3f matrix) {
         return (IMatrix3fPatch) (Object) matrix;
+    }
+
+    public static IQuaternionPatch getExtendedQuaternion(Quaternion quaternion) {
+        return (IQuaternionPatch) (Object) quaternion;
     }
 
     public static HumanoidArm getHandSide(LivingEntity entity) {
@@ -1099,11 +1103,8 @@ public final class MathHelper {
                                                           boolean fluid) {
         Vec3 look = entity.getViewVector(partialTicks);
         Vec3 to = cameraPos.add(look.x * distance, look.y * distance, look.z * distance);
-        return entity.level.clip(new ClipContext(cameraPos,
-                                                 to,
-                                                 ClipContext.Block.OUTLINE,
-                                                 fluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE,
-                                                 entity));
+        return entity.level.clip(
+                new ClipContext(cameraPos, to, ClipContext.Block.OUTLINE, fluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, entity));
     }
 
     /**
@@ -1120,11 +1121,8 @@ public final class MathHelper {
         Vec3 from = entity.getEyePosition(partialTicks);
         Vec3 look = entity.getViewVector(partialTicks);
         Vec3 to = from.add(look.x * distance, look.y * distance, look.z * distance);
-        return entity.level.clip(new ClipContext(from,
-                                                 to,
-                                                 ClipContext.Block.OUTLINE,
-                                                 fluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE,
-                                                 entity));
+        return entity.level.clip(
+                new ClipContext(from, to, ClipContext.Block.OUTLINE, fluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, entity));
     }
 
     /**
@@ -1152,11 +1150,8 @@ public final class MathHelper {
         phi = degToRad(phi);
         Vec3 looking = new Vec3(sin(theta), sin(phi), cos(theta)).normalize();
         Vec3 to = from.add(looking.x * distance, looking.y * distance, looking.z * distance);
-        return entity.level.clip(new ClipContext(from,
-                                                 to,
-                                                 ClipContext.Block.OUTLINE,
-                                                 fluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE,
-                                                 entity));
+        return entity.level.clip(
+                new ClipContext(from, to, ClipContext.Block.OUTLINE, fluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, entity));
     }
 
     /**
@@ -1477,13 +1472,8 @@ public final class MathHelper {
         int times = (to.get2DDataValue() - from.get2DDataValue() + 4) % 4;
         for (int i = 0; i < times; i++) {
             //noinspection ObjectAllocationInLoop
-            buffer[0].forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> buffer[1] = Shapes.or(buffer[1],
-                                                                                                Shapes.box(1 - maxZ,
-                                                                                                           minY,
-                                                                                                           minX,
-                                                                                                           1 - minZ,
-                                                                                                           maxY,
-                                                                                                           maxX)));
+            buffer[0].forAllBoxes(
+                    (minX, minY, minZ, maxX, maxY, maxZ) -> buffer[1] = Shapes.or(buffer[1], Shapes.box(1 - maxZ, minY, minX, 1 - minZ, maxY, maxX)));
             buffer[0] = buffer[1];
             buffer[1] = Shapes.empty();
         }

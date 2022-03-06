@@ -12,24 +12,11 @@ import tgw.evolution.client.tooltip.EvolutionTooltipMass;
 
 import java.util.List;
 
-public class GrabPart<T extends IGrabType<T>> implements IPart<T> {
+public abstract class GrabPart<T extends IGrabType<T>> implements IPart<T> {
 
-    private final MaterialInstance material;
-    private final T type;
-    private int spentDurability;
-
-    public GrabPart(T type, MaterialInstance material) {
-        this.type = type;
-        this.material = material;
-    }
-
-    public static <E extends IGrabType<E>> GrabPart<E> read(CompoundTag nbt, E helper) {
-        E type = helper.byName(nbt.getString("Type"));
-        MaterialInstance material = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
-        GrabPart<E> grab = new GrabPart<>(type, material);
-        grab.spentDurability = nbt.getInt("Durability");
-        return grab;
-    }
+    protected MaterialInstance material = MaterialInstance.DUMMY;
+    protected int spentDurability;
+    protected T type;
 
     @Override
     public void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num) {
@@ -42,6 +29,13 @@ public class GrabPart<T extends IGrabType<T>> implements IPart<T> {
     @Override
     public void damage(int amount) {
         this.spentDurability += amount;
+    }
+
+    @Override
+    public final void deserializeNBT(CompoundTag nbt) {
+        this.type = this.getType(nbt.getString("Type"));
+        this.material = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
+        this.spentDurability = nbt.getInt("Durability");
     }
 
     @Override
@@ -64,17 +58,25 @@ public class GrabPart<T extends IGrabType<T>> implements IPart<T> {
         return Mth.ceil(this.material.getHardness() * this.material.getResistance() / 50.0);
     }
 
+    protected abstract T getType(String type);
+
     @Override
     public T getType() {
         return this.type;
     }
 
     @Override
-    public CompoundTag write() {
+    public final CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putString("Type", this.type.getName());
         tag.putInt("Durability", this.spentDurability);
         tag.put("MaterialInstance", this.material.write());
         return tag;
+    }
+
+    @Override
+    public void set(T type, MaterialInstance material) {
+        this.type = type;
+        this.material = material;
     }
 }

@@ -4,9 +4,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.IVariant;
 import tgw.evolution.util.UnregisteredFeatureException;
 
-public enum WoodVariant {
+public enum WoodVariant implements IVariant {
     ACACIA(0, "acacia", 750, 14_412_500),
     ASPEN(1, "aspen", 420, 6_650_000),
     BIRCH(2, "birch", 640, 12_233_333),
@@ -64,49 +65,11 @@ public enum WoodVariant {
     }
 
     public Block getChoppingBlock() {
-        return switch (this) {
-            case ACACIA -> EvolutionBlocks.CHOPPING_BLOCK_ACACIA.get();
-            case ASPEN -> EvolutionBlocks.CHOPPING_BLOCK_ASPEN.get();
-            case BIRCH -> EvolutionBlocks.CHOPPING_BLOCK_BIRCH.get();
-            case CEDAR -> EvolutionBlocks.CHOPPING_BLOCK_CEDAR.get();
-            case EBONY -> EvolutionBlocks.CHOPPING_BLOCK_EBONY.get();
-            case ELM -> EvolutionBlocks.CHOPPING_BLOCK_ELM.get();
-            case EUCALYPTUS -> EvolutionBlocks.CHOPPING_BLOCK_EUCALYPTUS.get();
-            case FIR -> EvolutionBlocks.CHOPPING_BLOCK_FIR.get();
-            case KAPOK -> EvolutionBlocks.CHOPPING_BLOCK_KAPOK.get();
-            case MANGROVE -> EvolutionBlocks.CHOPPING_BLOCK_MANGROVE.get();
-            case MAPLE -> EvolutionBlocks.CHOPPING_BLOCK_MAPLE.get();
-            case OAK -> EvolutionBlocks.CHOPPING_BLOCK_OAK.get();
-            case OLD_OAK -> EvolutionBlocks.CHOPPING_BLOCK_OLD_OAK.get();
-            case PALM -> EvolutionBlocks.CHOPPING_BLOCK_PALM.get();
-            case PINE -> EvolutionBlocks.CHOPPING_BLOCK_PINE.get();
-            case REDWOOD -> EvolutionBlocks.CHOPPING_BLOCK_REDWOOD.get();
-            case SPRUCE -> EvolutionBlocks.CHOPPING_BLOCK_SPRUCE.get();
-            case WILLOW -> EvolutionBlocks.CHOPPING_BLOCK_WILLOW.get();
-        };
+        return EvolutionBlocks.ALL_CHOPPING_BLOCK.get(this).get();
     }
 
     public Item getFirewood() {
-        return switch (this) {
-            case ACACIA -> EvolutionItems.firewood_acacia.get();
-            case ASPEN -> EvolutionItems.firewood_aspen.get();
-            case BIRCH -> EvolutionItems.firewood_birch.get();
-            case CEDAR -> EvolutionItems.firewood_cedar.get();
-            case EBONY -> EvolutionItems.firewood_ebony.get();
-            case ELM -> EvolutionItems.firewood_elm.get();
-            case EUCALYPTUS -> EvolutionItems.firewood_eucalyptus.get();
-            case FIR -> EvolutionItems.firewood_fir.get();
-            case KAPOK -> EvolutionItems.firewood_kapok.get();
-            case MANGROVE -> EvolutionItems.firewood_mangrove.get();
-            case MAPLE -> EvolutionItems.firewood_maple.get();
-            case OAK -> EvolutionItems.firewood_oak.get();
-            case OLD_OAK -> EvolutionItems.firewood_old_oak.get();
-            case PALM -> EvolutionItems.firewood_palm.get();
-            case PINE -> EvolutionItems.firewood_pine.get();
-            case REDWOOD -> EvolutionItems.firewood_redwood.get();
-            case SPRUCE -> EvolutionItems.firewood_spruce.get();
-            case WILLOW -> EvolutionItems.firewood_willow.get();
-        };
+        return EvolutionItems.ALL_FIREWOOD.get(this).get();
     }
 
     public byte getId() {
@@ -114,126 +77,36 @@ public enum WoodVariant {
     }
 
     public Block getLeaves() {
-        return switch (this) {
-            case ACACIA -> EvolutionBlocks.LEAVES_ACACIA.get();
-            case ASPEN -> EvolutionBlocks.LEAVES_ASPEN.get();
-            case BIRCH -> EvolutionBlocks.LEAVES_BIRCH.get();
-            case CEDAR -> EvolutionBlocks.LEAVES_CEDAR.get();
-            case EBONY -> EvolutionBlocks.LEAVES_EBONY.get();
-            case ELM -> EvolutionBlocks.LEAVES_ELM.get();
-            case EUCALYPTUS -> EvolutionBlocks.LEAVES_EUCALYPTUS.get();
-            case FIR -> EvolutionBlocks.LEAVES_FIR.get();
-            case KAPOK -> EvolutionBlocks.LEAVES_KAPOK.get();
-            case MANGROVE -> EvolutionBlocks.LEAVES_MANGROVE.get();
-            case MAPLE -> EvolutionBlocks.LEAVES_MAPLE.get();
-            case OAK -> EvolutionBlocks.LEAVES_OAK.get();
-            case OLD_OAK -> EvolutionBlocks.LEAVES_OLD_OAK.get();
-            case PALM -> EvolutionBlocks.LEAVES_PALM.get();
-            case PINE -> EvolutionBlocks.LEAVES_PINE.get();
-            case REDWOOD -> EvolutionBlocks.LEAVES_REDWOOD.get();
-            case SPRUCE -> EvolutionBlocks.LEAVES_SPRUCE.get();
-            case WILLOW -> EvolutionBlocks.LEAVES_WILLOW.get();
-        };
+        return EvolutionBlocks.ALL_LEAVES.get(this).get();
     }
 
     public Block getLog() {
-        return switch (this) {
-            case ACACIA -> EvolutionBlocks.LOG_ACACIA.get();
-            case ASPEN -> EvolutionBlocks.LOG_ASPEN.get();
-            case BIRCH -> EvolutionBlocks.LOG_BIRCH.get();
-            case CEDAR -> EvolutionBlocks.LOG_CEDAR.get();
-            case EBONY -> EvolutionBlocks.LOG_EBONY.get();
-            case ELM -> EvolutionBlocks.LOG_ELM.get();
-            case EUCALYPTUS -> EvolutionBlocks.LOG_EUCALYPTUS.get();
-            case FIR -> EvolutionBlocks.LOG_FIR.get();
-            case KAPOK -> EvolutionBlocks.LOG_KAPOK.get();
-            case MANGROVE -> EvolutionBlocks.LOG_MANGROVE.get();
-            case MAPLE -> EvolutionBlocks.LOG_MAPLE.get();
-            case OAK -> EvolutionBlocks.LOG_OAK.get();
-            case OLD_OAK -> EvolutionBlocks.LOG_OLD_OAK.get();
-            case PALM -> EvolutionBlocks.LOG_PALM.get();
-            case PINE -> EvolutionBlocks.LOG_PINE.get();
-            case REDWOOD -> EvolutionBlocks.LOG_REDWOOD.get();
-            case SPRUCE -> EvolutionBlocks.LOG_SPRUCE.get();
-            case WILLOW -> EvolutionBlocks.LOG_WILLOW.get();
-        };
+        return EvolutionBlocks.ALL_LOG.get(this).get();
     }
 
     public Item getLogItem() {
-        return switch (this) {
-            case ACACIA -> EvolutionItems.log_acacia.get();
-            case ASPEN -> EvolutionItems.log_aspen.get();
-            case BIRCH -> EvolutionItems.log_birch.get();
-            case CEDAR -> EvolutionItems.log_cedar.get();
-            case EBONY -> EvolutionItems.log_ebony.get();
-            case ELM -> EvolutionItems.log_elm.get();
-            case EUCALYPTUS -> EvolutionItems.log_eucalyptus.get();
-            case FIR -> EvolutionItems.log_fir.get();
-            case KAPOK -> EvolutionItems.log_kapok.get();
-            case MANGROVE -> EvolutionItems.log_mangrove.get();
-            case MAPLE -> EvolutionItems.log_maple.get();
-            case OAK -> EvolutionItems.log_oak.get();
-            case OLD_OAK -> EvolutionItems.log_old_oak.get();
-            case PALM -> EvolutionItems.log_palm.get();
-            case PINE -> EvolutionItems.log_pine.get();
-            case REDWOOD -> EvolutionItems.log_redwood.get();
-            case SPRUCE -> EvolutionItems.log_spruce.get();
-            case WILLOW -> EvolutionItems.log_willow.get();
-        };
+        return EvolutionItems.ALL_LOG.get(this).get();
     }
 
     public int getMass() {
         return this.density;
     }
 
+    @Override
     public String getName() {
         return this.name;
     }
 
     public Item getPlank() {
-        return switch (this) {
-            case ACACIA -> EvolutionItems.plank_acacia.get();
-            case ASPEN -> EvolutionItems.plank_aspen.get();
-            case BIRCH -> EvolutionItems.plank_birch.get();
-            case CEDAR -> EvolutionItems.plank_cedar.get();
-            case EBONY -> EvolutionItems.plank_ebony.get();
-            case ELM -> EvolutionItems.plank_elm.get();
-            case EUCALYPTUS -> EvolutionItems.plank_eucalyptus.get();
-            case FIR -> EvolutionItems.plank_fir.get();
-            case KAPOK -> EvolutionItems.plank_kapok.get();
-            case MANGROVE -> EvolutionItems.plank_mangrove.get();
-            case MAPLE -> EvolutionItems.plank_maple.get();
-            case OAK -> EvolutionItems.plank_oak.get();
-            case OLD_OAK -> EvolutionItems.plank_old_oak.get();
-            case PALM -> EvolutionItems.plank_palm.get();
-            case PINE -> EvolutionItems.plank_pine.get();
-            case REDWOOD -> EvolutionItems.plank_redwood.get();
-            case SPRUCE -> EvolutionItems.plank_spruce.get();
-            case WILLOW -> EvolutionItems.plank_willow.get();
-        };
+        return EvolutionItems.ALL_PLANK.get(this).get();
     }
 
     public Block getPlanks() {
-        return switch (this) {
-            case ACACIA -> EvolutionBlocks.PLANKS_ACACIA.get();
-            case ASPEN -> EvolutionBlocks.PLANKS_ASPEN.get();
-            case BIRCH -> EvolutionBlocks.PLANKS_BIRCH.get();
-            case CEDAR -> EvolutionBlocks.PLANKS_CEDAR.get();
-            case EBONY -> EvolutionBlocks.PLANKS_EBONY.get();
-            case ELM -> EvolutionBlocks.PLANKS_ELM.get();
-            case EUCALYPTUS -> EvolutionBlocks.PLANKS_EUCALYPTUS.get();
-            case FIR -> EvolutionBlocks.PLANKS_FIR.get();
-            case KAPOK -> EvolutionBlocks.PLANKS_KAPOK.get();
-            case MANGROVE -> EvolutionBlocks.PLANKS_MANGROVE.get();
-            case MAPLE -> EvolutionBlocks.PLANKS_MAPLE.get();
-            case OAK -> EvolutionBlocks.PLANKS_OAK.get();
-            case OLD_OAK -> EvolutionBlocks.PLANKS_OLD_OAK.get();
-            case PALM -> EvolutionBlocks.PLANKS_PALM.get();
-            case PINE -> EvolutionBlocks.PLANKS_PINE.get();
-            case REDWOOD -> EvolutionBlocks.PLANKS_REDWOOD.get();
-            case SPRUCE -> EvolutionBlocks.PLANKS_SPRUCE.get();
-            case WILLOW -> EvolutionBlocks.PLANKS_WILLOW.get();
-        };
+        return EvolutionBlocks.ALL_PLANKS.get(this).get();
+    }
+
+    public Block getSapling() {
+        return EvolutionBlocks.ALL_SAPLING.get(this).get();
     }
 
     public int getShearStrength() {

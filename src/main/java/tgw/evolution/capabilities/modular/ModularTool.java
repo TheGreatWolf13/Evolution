@@ -7,27 +7,24 @@ import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.level.material.Material;
 import tgw.evolution.capabilities.modular.part.GrabPart;
+import tgw.evolution.capabilities.modular.part.HandlePart;
 import tgw.evolution.capabilities.modular.part.HeadPart;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.init.ItemMaterial;
-import tgw.evolution.items.ItemModular;
-import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.math.MathHelper;
 
 import java.util.List;
 
 public class ModularTool implements IModularTool {
 
-    private GrabPart<PartTypes.Handle> handle;
-    private HeadPart head;
+    private final HandlePart handle = new HandlePart();
+    private final HeadPart head = new HeadPart();
 
     @Override
     public void appendTooltip(List<Either<FormattedText, TooltipComponent>> tooltip) {
-        if (!this.isInit()) {
-            return;
-        }
         this.head.appendText(tooltip, 0);
         tooltip.add(Either.left(EvolutionTexts.EMPTY));
         this.handle.appendText(tooltip, 1);
@@ -35,9 +32,6 @@ public class ModularTool implements IModularTool {
 
     @Override
     public void damage(ItemModular.DamageCause cause) {
-        if (!this.isInit()) {
-            return;
-        }
         switch (cause) {
             case BREAK_BAD_BLOCK -> {
                 this.head.damage(1);
@@ -73,15 +67,12 @@ public class ModularTool implements IModularTool {
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {
-        this.handle = GrabPart.read(nbt.getCompound("Handle"), PartTypes.Handle.NULL);
-        this.head = HeadPart.read(nbt.getCompound("Head"));
+        this.handle.deserializeNBT(nbt.getCompound("Handle"));
+        this.head.deserializeNBT(nbt.getCompound("Head"));
     }
 
     @Override
     public double getAttackDamage() {
-        if (!this.isInit()) {
-            return 0;
-        }
         double damage = switch (this.getDamageType()) {
             case PIERCING -> this.head.getMaterial().getElasticModulus() / 3.5;
             case CRUSHING -> this.getMoment() * 12.5; //TODO divide by area
@@ -99,9 +90,6 @@ public class ModularTool implements IModularTool {
 
     @Override
     public int getBackPriority() {
-        if (!this.isInit()) {
-            return -1;
-        }
         return switch (this.head.getType()) {
             case NULL -> -1;
             case AXE -> 2;
@@ -114,25 +102,16 @@ public class ModularTool implements IModularTool {
 
     @Override
     public EvolutionDamage.Type getDamageType() {
-        if (!this.isInit()) {
-            return EvolutionDamage.Type.GENERIC;
-        }
         return this.head.getDamageType();
     }
 
     @Override
     public String getDescriptionId() {
-        if (!this.isInit()) {
-            return "null";
-        }
         return "item.evolution." + this.head.getType().getName() + "." + this.head.getMaterial().getName();
     }
 
     @Override
     public ReferenceSet<Material> getEffectiveMaterials() {
-        if (!this.isInit()) {
-            return ReferenceSet.of();
-        }
         return this.head.getEffectiveMaterials();
     }
 
@@ -143,25 +122,16 @@ public class ModularTool implements IModularTool {
 
     @Override
     public ItemMaterial getHandleMaterial() {
-        if (!this.isInit()) {
-            return ItemMaterial.WOOD;
-        }
         return this.handle.getMaterial().getMaterial();
     }
 
     @Override
     public PartTypes.Handle getHandleType() {
-        if (!this.isInit()) {
-            return PartTypes.Handle.NULL;
-        }
         return this.handle.getType();
     }
 
     @Override
     public int getHarvestLevel() {
-        if (!this.isInit()) {
-            return HarvestLevel.HAND;
-        }
         return this.head.getHarvestLevel();
     }
 
@@ -172,41 +142,26 @@ public class ModularTool implements IModularTool {
 
     @Override
     public ItemMaterial getHeadMaterial() {
-        if (!this.isInit()) {
-            return ItemMaterial.STONE_ANDESITE;
-        }
         return this.head.getMaterial().getMaterial();
     }
 
     @Override
     public PartTypes.Head getHeadType() {
-        if (!this.isInit()) {
-            return PartTypes.Head.NULL;
-        }
         return this.head.getType();
     }
 
     @Override
     public double getMass() {
-        if (!this.isInit()) {
-            return 0;
-        }
         return this.head.getMass() + this.handle.getMass();
     }
 
     @Override
     public float getMiningSpeed() {
-        if (!this.isInit()) {
-            return 0;
-        }
         return this.head.getMiningSpeed();
     }
 
     @Override
     public double getMoment() {
-        if (!this.isInit()) {
-            return 0;
-        }
         int handleLength = this.handle.getType().getLength();
         double grabPoint = this.handle.getType().getGrabPoint();
         double handleArm = handleLength / 2.0 - grabPoint;
@@ -222,18 +177,17 @@ public class ModularTool implements IModularTool {
 
     @Override
     public int getTotalDurabilityDmg() {
-        if (!this.isInit()) {
-            return 0;
-        }
         return this.head.getDurabilityDmg() + this.handle.getDurabilityDmg();
     }
 
     @Override
     public int getTotalMaxDurability() {
-        if (!this.isInit()) {
-            return 0;
-        }
         return this.head.getMaxDurability() + this.handle.getMaxDurability();
+    }
+
+    @Override
+    public boolean isAxe() {
+        return this.head.getType() == PartTypes.Head.AXE;
     }
 
     @Override
@@ -243,34 +197,20 @@ public class ModularTool implements IModularTool {
     }
 
     @Override
-    public boolean isInit() {
-        return this.head != null && this.handle != null;
-    }
-
-    @Override
     public boolean isSharpened() {
-        if (!this.isInit()) {
-            return false;
-        }
         return this.head.getSharpAmount() > 0;
     }
 
     @Override
     public boolean isTwoHanded() {
-        if (!this.isInit()) {
-            return false;
-        }
         return this.head.getType().isTwoHanded() || this.handle.getType().isTwoHanded();
     }
 
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
-        if (!this.isInit()) {
-            return tag;
-        }
-        tag.put("Handle", this.handle.write());
-        tag.put("Head", this.head.write());
+        tag.put("Handle", this.handle.serializeNBT());
+        tag.put("Head", this.head.serializeNBT());
         return tag;
     }
 
@@ -280,20 +220,17 @@ public class ModularTool implements IModularTool {
     }
 
     @Override
-    public void setHandle(GrabPart<PartTypes.Handle> handle) {
-        this.handle = handle;
+    public void setHandle(PartTypes.Handle handleType, MaterialInstance material) {
+        this.handle.set(handleType, material);
     }
 
     @Override
-    public void setHead(HeadPart head) {
-        this.head = head;
+    public void setHead(PartTypes.Head headType, MaterialInstance material) {
+        this.head.set(headType, material);
     }
 
     @Override
     public void sharp() {
-        if (!this.isInit()) {
-            return;
-        }
         this.head.sharp();
     }
 }

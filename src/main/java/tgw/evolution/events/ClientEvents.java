@@ -103,6 +103,7 @@ import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.*;
 import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.items.*;
+import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.network.*;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.patches.ILivingEntityPatch;
@@ -139,17 +140,16 @@ public class ClientEvents {
     private static final Map<PlayerRenderer, Object> INJECTED_PLAYER_RENDERERS = new WeakHashMap<>();
     private static final StaticFieldHandler<SkullBlockEntity, GameProfileCache> PROFILE_CACHE = new StaticFieldHandler<>(SkullBlockEntity.class,
                                                                                                                          "f_59755_");
-    private static final StaticFieldHandler<SkullBlockEntity, MinecraftSessionService> SESSION_SERVICE =
-            new StaticFieldHandler<>(SkullBlockEntity.class,
-                                                                                                                                  "f_59756_");
+    private static final StaticFieldHandler<SkullBlockEntity, MinecraftSessionService> SESSION_SERVICE = new StaticFieldHandler<>(
+            SkullBlockEntity.class, "f_59756_");
     private static final FieldHandler<GameRenderer, LightTexture> LIGHT_TEXTURE = new FieldHandler<>(GameRenderer.class, "f_109074_");
     private static final FieldHandler<Minecraft, Timer> TIMER = new FieldHandler<>(Minecraft.class, "f_90991_");
     private static final FieldHandler<Timer, Float> MS_PER_TICK = new FieldHandler<>(Timer.class, "f_92521_");
     private static final FieldHandler<LocalPlayer, ClientRecipeBook> RECIPE_BOOK = new FieldHandler<>(LocalPlayer.class, "f_108592_");
     private static final FieldHandler<LocalPlayer, StatsCounter> STATS = new FieldHandler<>(LocalPlayer.class, "f_108591_");
-    private static final StaticFieldHandler<DimensionSpecialEffects, Object2ObjectMap<ResourceLocation, DimensionSpecialEffects>> DIMENSION_EFFECTS = new StaticFieldHandler<>(
-            DimensionSpecialEffects.class,
-            "f_108857_");
+    private static final StaticFieldHandler<DimensionSpecialEffects, Object2ObjectMap<ResourceLocation, DimensionSpecialEffects>>
+            DIMENSION_EFFECTS
+            = new StaticFieldHandler<>(DimensionSpecialEffects.class, "f_108857_");
     private static final FieldHandler<GameRenderer, Boolean> EFFECT_ACTIVE = new FieldHandler<>(GameRenderer.class, "f_109053_");
     private static ClientEvents instance;
     @Nullable
@@ -314,15 +314,12 @@ public class ClientEvents {
             }
             Map<ModConfig.Type, Set<ModConfig>> modConfigMap = createConfigMap(container);
             if (!modConfigMap.isEmpty()) {
-                Evolution.info("Registering config factory for mod {}. Found {} client config(s) and {} common config(s)",
-                               modId,
+                Evolution.info("Registering config factory for mod {}. Found {} client config(s) and {} common config(s)", modId,
                                modConfigMap.getOrDefault(ModConfig.Type.CLIENT, Collections.emptySet()).size(),
                                modConfigMap.getOrDefault(ModConfig.Type.COMMON, Collections.emptySet()).size());
                 String displayName = container.getModInfo().getDisplayName();
-                container.registerExtensionPoint(ConfigGuiHandler.ConfigGuiFactory.class,
-                                                 () -> new ConfigGuiHandler.ConfigGuiFactory((mc, screen) -> new ScreenModConfigSelection(screen,
-                                                                                                                                          displayName,
-                                                                                                                                          modConfigMap)));
+                container.registerExtensionPoint(ConfigGuiHandler.ConfigGuiFactory.class, () -> new ConfigGuiHandler.ConfigGuiFactory(
+                        (mc, screen) -> new ScreenModConfigSelection(screen, displayName, modConfigMap)));
             }
         });
     }
@@ -840,26 +837,23 @@ public class ClientEvents {
                 this.isMainhandCustomAttacking = ((ILivingEntityPatch) this.mc.player).isMainhandCustomAttacking();
                 this.isOffhandCustomAttacking = ((ILivingEntityPatch) this.mc.player).isOffhandCustomAttacking();
                 if (this.isMainhandCustomAttacking) {
-                    List<HitInformation> hitInfos = MathHelper.collideOBBWithCollider(this.mc.player,
-                                                                                      ((IEntityPatch) this.mc.player).getHitboxes()
-                                                                                                                     .getEquipmentFor(((ILivingEntityPatch) this.mc.player).getMainhandCustomAttackType(),
-                                                                                                                                      InteractionHand.MAIN_HAND),
-                                                                                      1.0f,
-                                                                                      MAINHAND_HIT_RESULT,
+                    List<HitInformation> hitInfos = MathHelper.collideOBBWithCollider(this.mc.player, ((IEntityPatch) this.mc.player).getHitboxes()
+                                                                                                                                     .getEquipmentFor(
+                                                                                                                                             ((ILivingEntityPatch) this.mc.player).getMainhandCustomAttackType(),
+                                                                                                                                             InteractionHand.MAIN_HAND),
+                                                                                      1.0f, MAINHAND_HIT_RESULT,
                                                                                       ((ILivingEntityPatch) this.mc.player).getMainhandCustomAttackTicks() >
                                                                                       3);
                     if (!hitInfos.isEmpty()) {
                         for (HitInformation hitInfo : hitInfos) {
-                            Evolution.info("Collided with {} on {}",
-                                           hitInfo.getEntity(),
+                            Evolution.info("Collided with {} on {}", hitInfo.getEntity(),
                                            Arrays.toString(hitInfo.getHitboxes().toArray(HitboxType[]::new)));
                             Set<HitboxType> boxes = MAINHAND_HITS.get(hitInfo.getEntity().getId());
                             if (boxes == null) {
                                 boxes = EnumSet.noneOf(HitboxType.class);
                                 boxes.addAll(hitInfo.getHitboxes());
                                 //noinspection ObjectAllocationInLoop
-                                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSHitInformation(hitInfo.getEntity(),
-                                                                                                  InteractionHand.MAIN_HAND,
+                                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSHitInformation(hitInfo.getEntity(), InteractionHand.MAIN_HAND,
                                                                                                   hitInfo.getHitboxes().toArray(HitboxType[]::new)));
                             }
                             else {
@@ -867,9 +861,8 @@ public class ClientEvents {
                                     if (!boxes.contains(box)) {
                                         boxes.add(box);
                                         //noinspection ObjectAllocationInLoop
-                                        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSHitInformation(hitInfo.getEntity(),
-                                                                                                          InteractionHand.MAIN_HAND,
-                                                                                                          box));
+                                        EvolutionNetwork.INSTANCE.sendToServer(
+                                                new PacketCSHitInformation(hitInfo.getEntity(), InteractionHand.MAIN_HAND, box));
                                     }
                                 }
                             }
@@ -972,12 +965,8 @@ public class ClientEvents {
         if (event.getScreen() instanceof PauseScreen) {
             if (!event.getListenersList().isEmpty()) {
                 AbstractButton shareToLan = (AbstractButton) event.getListenersList().get(6);
-                event.addListener(new Button(shareToLan.x,
-                                             shareToLan.y + 24,
-                                             shareToLan.getWidth(),
-                                             shareToLan.getHeight(),
-                                             EvolutionTexts.GUI_MENU_MOD_OPTIONS,
-                                             button -> this.mc.setScreen(new ModListScreen(event.getScreen()))));
+                event.addListener(new Button(shareToLan.x, shareToLan.y + 24, shareToLan.getWidth(), shareToLan.getHeight(),
+                                             EvolutionTexts.GUI_MENU_MOD_OPTIONS, button -> this.mc.setScreen(new ModListScreen(event.getScreen()))));
                 shareToLan.x = event.getScreen().width / 2 - 102;
                 shareToLan.setWidth(204);
                 AbstractButton returnToMenu = (AbstractButton) event.getListenersList().get(7);
@@ -989,29 +978,21 @@ public class ClientEvents {
                 event.removeListener(feedback);
                 event.removeListener(bugs);
                 String feedbackLink = "https://github.com/MGSchultz-13/Evolution/discussions/categories/feedback";
-                feedback = new Button(event.getScreen().width / 2 - 102,
-                                      event.getScreen().height / 4 + 72 - 16,
-                                      98,
-                                      20,
-                                      EvolutionTexts.GUI_MENU_SEND_FEEDBACK,
-                                      button -> this.mc.setScreen(new ConfirmLinkScreen(b -> {
-                                          if (b) {
-                                              Util.getPlatform().openUri(feedbackLink);
-                                          }
-                                          this.mc.setScreen(event.getScreen());
-                                      }, feedbackLink, true)));
+                feedback = new Button(event.getScreen().width / 2 - 102, event.getScreen().height / 4 + 72 - 16, 98, 20,
+                                      EvolutionTexts.GUI_MENU_SEND_FEEDBACK, button -> this.mc.setScreen(new ConfirmLinkScreen(b -> {
+                    if (b) {
+                        Util.getPlatform().openUri(feedbackLink);
+                    }
+                    this.mc.setScreen(event.getScreen());
+                }, feedbackLink, true)));
                 String bugsLink = "https://github.com/MGSchultz-13/Evolution/issues";
-                bugs = new Button(event.getScreen().width / 2 + 4,
-                                  event.getScreen().height / 4 + 72 - 16,
-                                  98,
-                                  20,
-                                  EvolutionTexts.GUI_MENU_REPORT_BUGS,
-                                  button -> this.mc.setScreen(new ConfirmLinkScreen(b -> {
-                                      if (b) {
-                                          Util.getPlatform().openUri(bugsLink);
-                                      }
-                                      this.mc.setScreen(event.getScreen());
-                                  }, bugsLink, true)));
+                bugs = new Button(event.getScreen().width / 2 + 4, event.getScreen().height / 4 + 72 - 16, 98, 20,
+                                  EvolutionTexts.GUI_MENU_REPORT_BUGS, button -> this.mc.setScreen(new ConfirmLinkScreen(b -> {
+                    if (b) {
+                        Util.getPlatform().openUri(bugsLink);
+                    }
+                    this.mc.setScreen(event.getScreen());
+                }, bugsLink, true)));
                 event.addListener(feedback);
                 event.addListener(bugs);
             }
@@ -1340,9 +1321,7 @@ public class ClientEvents {
             !this.mc.options.hideGui &&
             this.mc.gameMode.getPlayerMode() != GameType.SPECTATOR) {
             this.mc.gameRenderer.lightTexture().turnOnLightLayer();
-            this.renderer.renderItemInFirstPerson(event.getPoseStack(),
-                                                  event.getMultiBufferSource(),
-                                                  event.getPackedLight(),
+            this.renderer.renderItemInFirstPerson(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(),
                                                   event.getPartialTicks());
             this.mc.gameRenderer.lightTexture().turnOffLightLayer();
         }
@@ -1377,13 +1356,9 @@ public class ClientEvents {
             }
         }
         if (this.mc.getEntityRenderDispatcher().shouldRenderHitBoxes() &&
-            (this.mc.player.getMainHandItem().getItem() == EvolutionItems.debug_item.get() ||
-             this.mc.player.getOffhandItem().getItem() == EvolutionItems.debug_item.get())) {
-            this.renderer.renderHitbox(matrices,
-                                       buffer,
-                                       this.mc.player,
-                                       ((IEntityPatch) this.mc.player).getHitboxes().getBoxes().get(0),
-                                       camera,
+            (this.mc.player.getMainHandItem().getItem() == EvolutionItems.DEBUG_ITEM.get() ||
+             this.mc.player.getOffhandItem().getItem() == EvolutionItems.DEBUG_ITEM.get())) {
+            this.renderer.renderHitbox(matrices, buffer, this.mc.player, ((IEntityPatch) this.mc.player).getHitboxes().getBoxes().get(0), camera,
                                        event.getPartialTicks());
         }
     }
@@ -1582,11 +1557,8 @@ public class ClientEvents {
             if (beltStack.getItem() instanceof ItemSword) {
                 this.mc.getSoundManager()
                        .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
-                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlaySoundEntityEmitted(this.mc.player,
-                                                                                          EvolutionSounds.SWORD_SHEATHE.get(),
-                                                                                          SoundSource.PLAYERS,
-                                                                                          0.8f,
-                                                                                          1.0f));
+                EvolutionNetwork.INSTANCE.sendToServer(
+                        new PacketCSPlaySoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
             }
             BELT_ITEMS.put(this.mc.player.getId(), beltStack.copy());
             EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateBeltBackItem(beltStack, false));

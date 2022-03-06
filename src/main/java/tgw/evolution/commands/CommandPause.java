@@ -9,9 +9,12 @@ import net.minecraft.commands.Commands;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.patches.IMinecraftServerPatch;
 
-public class CommandPause implements Command<CommandSourceStack> {
+public final class CommandPause implements Command<CommandSourceStack> {
 
     private static final Command<CommandSourceStack> CMD = new CommandPause();
+
+    private CommandPause() {
+    }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("pause").requires(cs -> cs.hasPermission(2)).executes(CMD));

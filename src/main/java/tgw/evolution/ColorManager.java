@@ -123,6 +123,6 @@ public final class ColorManager {
             }
             register(colors, leaves, wood.getLeaves());
         }
-        register(colors, temperature, EvolutionItems.ingot_copper.get());
+        register(colors, temperature, EvolutionItems.INGOT_COPPER.get());
     }
 }

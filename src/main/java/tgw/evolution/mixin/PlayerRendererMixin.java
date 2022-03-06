@@ -1,7 +1,6 @@
 package tgw.evolution.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Vector3f;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -18,6 +17,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import tgw.evolution.patches.IPoseStackPatch;
+import tgw.evolution.util.math.MathHelper;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(PlayerRenderer.class)
@@ -58,14 +59,10 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
         playerModel.swimAmount = 0.0F;
         playerModel.setupAnim(player, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
         arm.xRot = 0.0F;
-        arm.render(matrices,
-                   buffer.getBuffer(RenderType.entitySolid(player.getSkinTextureLocation())),
-                   packedLight,
+        arm.render(matrices, buffer.getBuffer(RenderType.entitySolid(player.getSkinTextureLocation())), packedLight,
                    LivingEntityRenderer.getOverlayCoords(player, 0));
         armwear.xRot = 0.0F;
-        armwear.render(matrices,
-                       buffer.getBuffer(RenderType.entityTranslucent(player.getSkinTextureLocation())),
-                       packedLight,
+        armwear.render(matrices, buffer.getBuffer(RenderType.entityTranslucent(player.getSkinTextureLocation())), packedLight,
                        LivingEntityRenderer.getOverlayCoords(player, 0));
     }
 
@@ -81,12 +78,13 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
     @Overwrite
     protected void setupRotations(AbstractClientPlayer player, PoseStack matrices, float ageInTicks, float rotationYaw, float partialTicks) {
         float swimAmount = player.getSwimAmount(partialTicks);
+        IPoseStackPatch matricesExt = MathHelper.getExtendedMatrix(matrices);
         if (player.isFallFlying()) {
             super.setupRotations(player, matrices, ageInTicks, rotationYaw, partialTicks);
             float f1 = player.getFallFlyingTicks() + partialTicks;
             float f2 = Mth.clamp(f1 * f1 / 100.0F, 0.0F, 1.0F);
             if (!player.isAutoSpinAttack()) {
-                matrices.mulPose(Vector3f.XP.rotationDegrees(f2 * (-90.0F - player.getXRot())));
+                matricesExt.mulPoseX(f2 * (-90.0F - player.getXRot()));
             }
             Vec3 viewVec = player.getViewVector(partialTicks);
             Vec3 motion = player.getDeltaMovement();
@@ -95,7 +93,7 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
             if (horizMotionSqr > 0 && horizViewSqr > 0) {
                 double d2 = (motion.x * viewVec.x + motion.z * viewVec.z) / Math.sqrt(horizMotionSqr * horizViewSqr);
                 double d3 = motion.x * viewVec.z - motion.z * viewVec.x;
-                matrices.mulPose(Vector3f.YP.rotation((float) (Math.signum(d3) * Math.acos(d2))));
+                matricesExt.mulPoseYRad((float) (Math.signum(d3) * Math.acos(d2)));
             }
         }
         else if (swimAmount > 0.0F) {
@@ -105,18 +103,18 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
             if (player.isVisuallySwimming()) {
                 if (!player.isInWater()) {
                     //Crawling pose
-                    matrices.mulPose(Vector3f.XP.rotationDegrees(interpXRot));
+                    matricesExt.mulPoseX(interpXRot);
                     matrices.translate(0, -1, 0.3);
                 }
                 else {
                     //Swimming pose
                     matrices.translate(0, 0.4, 0);
-                    matrices.mulPose(Vector3f.XP.rotationDegrees(interpXRot));
+                    matricesExt.mulPoseX(interpXRot);
                     matrices.translate(0, -1.4, -0.25);
                 }
             }
             else {
-                matrices.mulPose(Vector3f.XP.rotationDegrees(interpXRot));
+                matricesExt.mulPoseX(interpXRot);
                 matrices.translate(0, -1.3, 0);
             }
         }

@@ -19,5 +19,6 @@ public final class EvolutionCommands {
         CommandPause.register(dispatcher);
         CommandShader.register(dispatcher);
         CommandTemperature.register(dispatcher);
+        CommandGC.register(dispatcher);
     }
 }

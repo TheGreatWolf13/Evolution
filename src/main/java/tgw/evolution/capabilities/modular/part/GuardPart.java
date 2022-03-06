@@ -11,22 +11,10 @@ import java.util.List;
 
 public class GuardPart implements IPart<PartTypes.Guard> {
 
-    private final MaterialInstance material;
-    private final PartTypes.Guard type;
+    public static final GuardPart DUMMY = new GuardPart();
+    private MaterialInstance material = MaterialInstance.DUMMY;
     private int spentDurability;
-
-    public GuardPart(PartTypes.Guard type, MaterialInstance material) {
-        this.material = material;
-        this.type = type;
-    }
-
-    public static GuardPart read(CompoundTag nbt) {
-        PartTypes.Guard type = PartTypes.Guard.NULL.byName(nbt.getString("Type"));
-        MaterialInstance material = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
-        GuardPart guard = new GuardPart(type, material);
-        guard.spentDurability = nbt.getInt("Durability");
-        return guard;
-    }
+    private PartTypes.Guard type = PartTypes.Guard.NULL;
 
     @Override
     public void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num) {
@@ -37,6 +25,18 @@ public class GuardPart implements IPart<PartTypes.Guard> {
     @Override
     public void damage(int amount) {
         this.spentDurability += amount;
+    }
+
+    @Override
+    public void deserializeNBT(CompoundTag nbt) {
+        this.type = PartTypes.Guard.byName(nbt.getString("Type"));
+        this.material = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
+        this.spentDurability = nbt.getInt("Durability");
+    }
+
+    @Override
+    public String getDescriptionId() {
+        return "item.evolution.part.guard." + this.type.getName() + "." + this.material.getMaterial().getName();
     }
 
     @Override
@@ -65,11 +65,23 @@ public class GuardPart implements IPart<PartTypes.Guard> {
     }
 
     @Override
-    public CompoundTag write() {
+    public boolean isBroken() {
+        //TODO implementation
+        return false;
+    }
+
+    @Override
+    public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putString("Type", this.type.getName());
         tag.putInt("Durability", this.spentDurability);
         tag.put("MaterialInstance", this.material.write());
         return tag;
+    }
+
+    @Override
+    public void set(PartTypes.Guard type, MaterialInstance material) {
+        this.type = type;
+        this.material = material;
     }
 }

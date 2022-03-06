@@ -12,9 +12,12 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 
-public class CommandGamemode implements Command<CommandSourceStack> {
+public final class CommandGamemode implements Command<CommandSourceStack> {
 
     private static final Command<CommandSourceStack> CMD = new CommandGamemode();
+
+    private CommandGamemode() {
+    }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("gm").requires(cs -> cs.getEntity() instanceof ServerPlayer && cs.hasPermission(2)).executes(CMD));

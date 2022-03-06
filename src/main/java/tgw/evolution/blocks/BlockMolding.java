@@ -73,12 +73,12 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
 
     @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult hitResult, BlockGetter level, BlockPos pos, Player player) {
-        return new ItemStack(EvolutionItems.clayball.get());
+        return new ItemStack(EvolutionItems.CLAYBALL.get());
     }
 
     @Override
     public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.clay.get(), state.getValue(LAYERS_1_5)));
+        return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.CLAY.get(), state.getValue(LAYERS_1_5)));
     }
 
     @Override
@@ -135,7 +135,7 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         int layers = state.getValue(LAYERS_1_5);
-        if (player.getItemInHand(hand).getItem() == EvolutionItems.clayball.get()) {
+        if (player.getItemInHand(hand).getItem() == EvolutionItems.CLAYBALL.get()) {
             if (layers < 5) {
                 level.setBlockAndUpdate(pos, state.setValue(LAYERS_1_5, layers + 1));
                 TEMolding tile = (TEMolding) level.getBlockEntity(pos);
@@ -186,7 +186,7 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
                     level.setBlockAndUpdate(pos, state.setValue(LAYERS_1_5, layers - count));
                 }
                 if (!level.isClientSide) {
-                    dropItemStack(level, pos, new ItemStack(EvolutionItems.clayball.get(), count));
+                    dropItemStack(level, pos, new ItemStack(EvolutionItems.CLAYBALL.get(), count));
                 }
             }
         }

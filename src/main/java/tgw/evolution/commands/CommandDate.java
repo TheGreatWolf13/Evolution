@@ -13,7 +13,7 @@ import tgw.evolution.util.time.Date;
 import tgw.evolution.util.time.FullDate;
 import tgw.evolution.util.time.Time;
 
-public class CommandDate implements Command<CommandSourceStack> {
+public final class CommandDate implements Command<CommandSourceStack> {
 
     private static final Command<CommandSourceStack> CMD = new CommandDate();
     private static final IntegerArgumentType DAY = IntegerArgumentType.integer(1, Time.DAYS_IN_A_MONTH);
@@ -21,6 +21,9 @@ public class CommandDate implements Command<CommandSourceStack> {
     private static final IntegerArgumentType YEAR = IntegerArgumentType.integer(1_000);
     private static final IntegerArgumentType HOUR = IntegerArgumentType.integer(0, 23);
     private static final IntegerArgumentType MINUTE = IntegerArgumentType.integer(0, 59);
+
+    private CommandDate() {
+    }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("date")

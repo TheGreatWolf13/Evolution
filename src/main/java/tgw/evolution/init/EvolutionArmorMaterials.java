@@ -9,7 +9,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import tgw.evolution.Evolution;
 
 public enum EvolutionArmorMaterials implements ArmorMaterial {
-    generic("placeholder", 400, new int[]{8, 10, 9, 7}, 25, EvolutionItems.debug_item.get(), "entity.ender_dragon.growl", 0.0f, 0.0f);
+    generic("placeholder", 400, new int[]{8, 10, 9, 7}, 25, EvolutionItems.DEBUG_ITEM.get(), "entity.ender_dragon.growl", 0.0f, 0.0f);
 
     private static final int[] MAX_DAMAGE_ARRAY = {13, 15, 16, 11};
     private final int[] damageReduction;

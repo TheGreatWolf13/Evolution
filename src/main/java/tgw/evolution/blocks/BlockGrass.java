@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
@@ -34,7 +35,8 @@ public class BlockGrass extends BlockGenericSlowable implements IRockVariant {
     private final RockVariant variant;
 
     public BlockGrass(RockVariant variant) {
-        super(Properties.of(Material.GRASS).strength(3.0F, 0.6F).sound(SoundType.GRASS).randomTicks(), variant.getMass() / 4);
+        super(Properties.of(Material.DIRT).color(MaterialColor.GRASS).strength(3.0F, 0.6F).sound(SoundType.GRASS).randomTicks(),
+              variant.getMass() / 4);
         this.variant = variant;
     }
 
@@ -82,7 +84,7 @@ public class BlockGrass extends BlockGenericSlowable implements IRockVariant {
 
     @Override
     public BlockState getStateForFalling(BlockState state) {
-        if (this == EvolutionBlocks.GRASS_PEAT.get()) {
+        if (this == EvolutionBlocks.ALL_GRASS.get(RockVariant.PEAT).get()) {
             return EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, 4);
         }
         return this.variant.getDirt().defaultBlockState();
@@ -102,10 +104,9 @@ public class BlockGrass extends BlockGenericSlowable implements IRockVariant {
                     !(level.getBlockState(fromPos)
                            .getBlock() instanceof BlockMolding/* || worldIn.getBlockState(fromPos).getBlock() instanceof BlockShadowHound*/) &&
                     !(level.getBlockState(fromPos).getBlock() instanceof BlockPitKiln && level.getBlockState(fromPos).getValue(LAYERS_0_16) < 9)) {
-                    level.setBlockAndUpdate(pos,
-                                            this == EvolutionBlocks.GRASS_PEAT.get() ?
-                                            EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, 4) :
-                                            this.variant.getDirt().defaultBlockState());
+                    level.setBlockAndUpdate(pos, this == EvolutionBlocks.ALL_GRASS.get(RockVariant.PEAT).get() ?
+                                                 EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, 4) :
+                                                 this.variant.getDirt().defaultBlockState());
                     CapabilityChunkStorage.addElements(level.getChunkAt(pos), NutrientHelper.DECAY_GRASS_BLOCK);
                     for (Direction direction : DirectionUtil.HORIZ_NESW) {
                         BlockPos offset = pos.relative(direction);
@@ -121,7 +122,7 @@ public class BlockGrass extends BlockGenericSlowable implements IRockVariant {
 
     @Override
     public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
-        if (this != EvolutionBlocks.GRASS_PEAT.get() || player.isCreative()) {
+        if (this != EvolutionBlocks.ALL_GRASS.get(RockVariant.PEAT).get() || player.isCreative()) {
             return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
         }
         level.setBlockAndUpdate(pos, EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, 3));
@@ -144,10 +145,9 @@ public class BlockGrass extends BlockGenericSlowable implements IRockVariant {
             }
             if (random.nextInt(4) == 0) {
                 if (!canSustainGrass(state, level, pos)) {
-                    level.setBlockAndUpdate(pos,
-                                            this == EvolutionBlocks.GRASS_PEAT.get() ?
-                                            EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, 4) :
-                                            this.variant.getDirt().defaultBlockState());
+                    level.setBlockAndUpdate(pos, this == EvolutionBlocks.ALL_GRASS.get(RockVariant.PEAT).get() ?
+                                                 EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, 4) :
+                                                 this.variant.getDirt().defaultBlockState());
                 }
                 else {
                     if (level.getBrightness(LightLayer.SKY, pos.above()) >= 9) {
@@ -155,33 +155,33 @@ public class BlockGrass extends BlockGenericSlowable implements IRockVariant {
                         for (int i = 0; i < 4; ++i) {
                             BlockPos randomPos = pos.offset(random.nextInt(3) - 1, random.nextInt(5) - 3, random.nextInt(3) - 1);
                             BlockState stateAtPos = level.getBlockState(randomPos);
-                            if ((stateAtPos.getBlock() instanceof BlockDirt ||
-                                 stateAtPos.getBlock() instanceof BlockDryGrass ||
-                                 stateAtPos.getBlock() instanceof BlockPeat) && canSustainGrassWater(placeState, level, randomPos)) {
-                                if (stateAtPos.getBlock() instanceof BlockPeat) {
+                            Block blockAtPos = stateAtPos.getBlock();
+                            if ((blockAtPos instanceof BlockDirt || blockAtPos instanceof BlockDryGrass || blockAtPos instanceof BlockPeat) &&
+                                canSustainGrassWater(placeState, level, randomPos)) {
+                                if (blockAtPos instanceof BlockPeat) {
                                     if (stateAtPos.getValue(LAYERS_1_4) != 4) {
                                         return;
                                     }
                                 }
                                 if (CapabilityChunkStorage.removeElements(level.getChunkAt(randomPos), NutrientHelper.GROW_GRASS_BLOCK)) {
-                                    if (stateAtPos.getBlock() instanceof BlockPeat) {
+                                    if (blockAtPos instanceof BlockPeat) {
                                         //TODO proper snow
-                                        level.setBlockAndUpdate(randomPos,
-                                                                EvolutionBlocks.GRASS_PEAT.get()
-                                                                                          .defaultBlockState()
-                                                                                          .setValue(SNOWY,
-                                                                                                    level.getBlockState(randomPos.above())
-                                                                                                         .getBlock() == Blocks.SNOW));
+                                        level.setBlockAndUpdate(randomPos, EvolutionBlocks.ALL_GRASS.get(RockVariant.PEAT)
+                                                                                                    .get()
+                                                                                                    .defaultBlockState()
+                                                                                                    .setValue(SNOWY,
+                                                                                                              level.getBlockState(randomPos.above())
+                                                                                                                   .getBlock() == Blocks.SNOW));
                                     }
                                     else {
                                         //TODO proper snow
-                                        level.setBlockAndUpdate(randomPos,
-                                                                ((IRockVariant) stateAtPos.getBlock()).getVariant()
-                                                                                                      .getGrass()
-                                                                                                      .defaultBlockState()
-                                                                                                      .setValue(SNOWY,
-                                                                                                                level.getBlockState(randomPos.above())
-                                                                                                                     .getBlock() == Blocks.SNOW));
+                                        IRockVariant rockVariant = (IRockVariant) blockAtPos;
+                                        level.setBlockAndUpdate(randomPos, rockVariant.getVariant()
+                                                                                      .getGrass()
+                                                                                      .defaultBlockState()
+                                                                                      .setValue(SNOWY,
+                                                                                                level.getBlockState(randomPos.above()).getBlock() ==
+                                                                                                Blocks.SNOW));
                                     }
                                 }
                             }
@@ -198,11 +198,9 @@ public class BlockGrass extends BlockGenericSlowable implements IRockVariant {
                 }
                 else if (level.getBlockState(posUp).getBlock() instanceof BlockTallGrass) {
                     if (CapabilityChunkStorage.removeElements(level.getChunkAt(pos), NutrientHelper.GROW_TALL_GRASS_2)) {
-                        level.setBlock(posUp,
-                                       EvolutionBlocks.TALLGRASS.get().defaultBlockState().setValue(HALF, DoubleBlockHalf.LOWER),
+                        level.setBlock(posUp, EvolutionBlocks.TALLGRASS.get().defaultBlockState().setValue(HALF, DoubleBlockHalf.LOWER),
                                        BlockFlags.BLOCK_UPDATE);
-                        level.setBlock(pos.above(2),
-                                       EvolutionBlocks.TALLGRASS.get().defaultBlockState().setValue(HALF, DoubleBlockHalf.UPPER),
+                        level.setBlock(pos.above(2), EvolutionBlocks.TALLGRASS.get().defaultBlockState().setValue(HALF, DoubleBlockHalf.UPPER),
                                        BlockFlags.BLOCK_UPDATE);
                     }
                 }

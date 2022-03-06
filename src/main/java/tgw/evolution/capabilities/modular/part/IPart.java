@@ -5,6 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.util.INBTSerializable;
 import org.intellij.lang.annotations.MagicConstant;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.items.IDurability;
@@ -12,11 +13,13 @@ import tgw.evolution.util.constants.HarvestLevel;
 
 import java.util.List;
 
-public interface IPart<T extends IPartType<T>> extends IDurability {
+public interface IPart<T extends IPartType<T>> extends IDurability, INBTSerializable<CompoundTag> {
 
     void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num);
 
     void damage(int amount);
+
+    String getDescriptionId();
 
     @Override
     default int getDmg(ItemStack stack) {
@@ -43,5 +46,7 @@ public interface IPart<T extends IPartType<T>> extends IDurability {
 
     T getType();
 
-    CompoundTag write();
+    boolean isBroken();
+
+    void set(T type, MaterialInstance material);
 }

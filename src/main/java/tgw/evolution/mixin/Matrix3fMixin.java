@@ -14,28 +14,20 @@ public abstract class Matrix3fMixin implements IMatrix3fPatch {
 
     @Shadow
     protected float m00;
-
     @Shadow
     protected float m01;
-
     @Shadow
     protected float m02;
-
     @Shadow
     protected float m10;
-
     @Shadow
     protected float m11;
-
     @Shadow
     protected float m12;
-
     @Shadow
     protected float m20;
-
     @Shadow
     protected float m21;
-
     @Shadow
     protected float m22;
 
@@ -104,7 +96,7 @@ public abstract class Matrix3fMixin implements IMatrix3fPatch {
         // Try to determine if this is a simple rotation on one axis component only
         if (i) {
             if (!j && !k) {
-                this.rotateX(quaternion);
+                this.rotateX(quaternion.i(), quaternion.r());
             }
             else {
                 this.rotateXYZ(quaternion);
@@ -112,20 +104,19 @@ public abstract class Matrix3fMixin implements IMatrix3fPatch {
         }
         else if (j) {
             if (!k) {
-                this.rotateY(quaternion);
+                this.rotateY(quaternion.j(), quaternion.r());
             }
             else {
                 this.rotateXYZ(quaternion);
             }
         }
         else if (k) {
-            this.rotateZ(quaternion);
+            this.rotateZ(quaternion.k(), quaternion.r());
         }
     }
 
-    private void rotateX(Quaternion quaternion) {
-        float i = quaternion.i();
-        float r = quaternion.r();
+    @Override
+    public void rotateX(float i, float r) {
         float ii = 2.0F * i * i;
         float ta11 = 1.0F - ii;
         float ta22 = 1.0F - ii;
@@ -189,9 +180,8 @@ public abstract class Matrix3fMixin implements IMatrix3fPatch {
         this.m22 = m22;
     }
 
-    private void rotateY(Quaternion quaternion) {
-        float j = quaternion.j();
-        float r = quaternion.r();
+    @Override
+    public void rotateY(float j, float r) {
         float jj = 2.0F * j * j;
         float ta00 = 1.0F - jj;
         float ta22 = 1.0F - jj;
@@ -212,9 +202,8 @@ public abstract class Matrix3fMixin implements IMatrix3fPatch {
         this.m22 = m22;
     }
 
-    private void rotateZ(Quaternion quaternion) {
-        float k = quaternion.k();
-        float r = quaternion.r();
+    @Override
+    public void rotateZ(float k, float r) {
         float kk = 2.0F * k * k;
         float ta00 = 1.0F - kk;
         float ta11 = 1.0F - kk;
@@ -233,6 +222,19 @@ public abstract class Matrix3fMixin implements IMatrix3fPatch {
         this.m11 = m11;
         this.m20 = m20;
         this.m21 = m21;
+    }
+
+    @Override
+    public void scale(float x, float y, float z) {
+        this.m00 *= x;
+        this.m01 *= y;
+        this.m02 *= z;
+        this.m10 *= x;
+        this.m11 *= y;
+        this.m12 *= z;
+        this.m20 *= x;
+        this.m21 *= y;
+        this.m22 *= z;
     }
 
     @Override

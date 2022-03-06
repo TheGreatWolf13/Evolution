@@ -7,11 +7,12 @@ import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.level.material.Material;
 import tgw.evolution.capabilities.modular.part.GrabPart;
+import tgw.evolution.capabilities.modular.part.HandlePart;
 import tgw.evolution.capabilities.modular.part.HeadPart;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.ItemMaterial;
-import tgw.evolution.items.ItemModular;
+import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.constants.HarvestLevel;
 
 import java.util.List;
@@ -44,15 +45,15 @@ public interface IModularTool extends IModular {
 
     boolean isSharpened();
 
-    void setHandle(GrabPart<PartTypes.Handle> handle);
+    void setHandle(PartTypes.Handle handleType, MaterialInstance material);
 
-    void setHead(HeadPart head);
+    void setHead(PartTypes.Head headType, MaterialInstance material);
 
     void sharp();
 
     final class Impl implements IModularTool {
-        private final GrabPart<PartTypes.Handle> handle = new GrabPart<>(PartTypes.Handle.NULL, new MaterialInstance(ItemMaterial.STONE_ANDESITE));
-        private final HeadPart head = new HeadPart(PartTypes.Head.NULL, new MaterialInstance(ItemMaterial.STONE_ANDESITE));
+        private final HandlePart handle = new HandlePart();
+        private final HeadPart head = new HeadPart();
 
         private Impl() {
         }
@@ -165,12 +166,12 @@ public interface IModularTool extends IModular {
         }
 
         @Override
-        public boolean isBroken() {
+        public boolean isAxe() {
             return false;
         }
 
         @Override
-        public boolean isInit() {
+        public boolean isBroken() {
             return false;
         }
 
@@ -194,11 +195,11 @@ public interface IModularTool extends IModular {
         }
 
         @Override
-        public void setHandle(GrabPart<PartTypes.Handle> handle) {
+        public void setHandle(PartTypes.Handle handleType, MaterialInstance material) {
         }
 
         @Override
-        public void setHead(HeadPart head) {
+        public void setHead(PartTypes.Head headType, MaterialInstance material) {
         }
 
         @Override

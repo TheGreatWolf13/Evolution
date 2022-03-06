@@ -19,6 +19,10 @@ public interface IHitPart<T extends IAttachmentType<T>> extends IPart<T> {
 
     int getSharpAmount();
 
+    default boolean isSharp() {
+        return this.getSharpAmount() > 0;
+    }
+
     void loseSharp(int amount);
 
     void sharp();

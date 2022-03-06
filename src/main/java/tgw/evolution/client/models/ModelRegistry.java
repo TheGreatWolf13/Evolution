@@ -8,7 +8,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.event.ModelBakeEvent;
 import tgw.evolution.Evolution;
-import tgw.evolution.client.models.item.BakedModelModularTool;
+import tgw.evolution.client.models.item.modular.BakedModelModularTool;
+import tgw.evolution.client.models.item.part.*;
 import tgw.evolution.client.models.tile.BakedModelFirewoodPile;
 import tgw.evolution.client.models.tile.BakedModelKnapping;
 import tgw.evolution.init.EvolutionBlocks;
@@ -35,7 +36,15 @@ public final class ModelRegistry {
             registerModel(event, block, variant, BakedModelKnapping::new);
         }
         registerModel(event, EvolutionBlocks.FIREWOOD_PILE.get(), BakedModelFirewoodPile::new);
-        registerModel(event, EvolutionItems.modular_tool.get(), BakedModelModularTool::new);
+        registerModel(event, EvolutionItems.MODULAR_TOOL.get(), BakedModelModularTool::new);
+        registerModel(event, EvolutionItems.BLADE_PART.get(), BakedModelPartBlade::new);
+        registerModel(event, EvolutionItems.GUARD_PART.get(), BakedModelPartGuard::new);
+        registerModel(event, EvolutionItems.HALFHEAD_PART.get(), BakedModelPartHalfHead::new);
+        registerModel(event, EvolutionItems.HANDLE_PART.get(), BakedModelPartHandle::new);
+        registerModel(event, EvolutionItems.HEAD_PART.get(), BakedModelPartHead::new);
+        registerModel(event, EvolutionItems.HILT_PART.get(), BakedModelPartHilt::new);
+        registerModel(event, EvolutionItems.POLE_PART.get(), BakedModelPartPole::new);
+        registerModel(event, EvolutionItems.POMMEL_PART.get(), BakedModelPartPommel::new);
     }
 
     private static void registerModel(ModelBakeEvent event, Item item, Function<BakedModel, BakedModel> newModel) {

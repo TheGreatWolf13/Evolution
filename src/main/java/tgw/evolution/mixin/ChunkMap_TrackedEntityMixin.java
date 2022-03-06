@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.Set;
 
 @SuppressWarnings("MethodMayBeStatic")
-@Mixin(targets = "net.minecraft.server.level.ChunkMap.TrackedEntity")
+@Mixin(targets = "net.minecraft.server.level.ChunkMap$TrackedEntity")
 public abstract class ChunkMap_TrackedEntityMixin {
 
     /**

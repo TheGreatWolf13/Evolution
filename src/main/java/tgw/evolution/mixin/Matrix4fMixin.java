@@ -3,6 +3,7 @@ package tgw.evolution.mixin;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Quaternion;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.patches.IMatrix4fPatch;
 
@@ -39,8 +40,16 @@ public abstract class Matrix4fMixin implements IMatrix4fPatch {
     protected float m31;
     @Shadow
     protected float m32;
-    @Shadow
-    protected float m33;
+
+    /**
+     * @author MGSchultz
+     * <p>
+     * Avoid allocations and use faster, specialized functions
+     */
+    @Overwrite
+    public void multiply(Quaternion quaternion) {
+        this.rotate(quaternion);
+    }
 
     @Override
     public void rotate(Quaternion quaternion) {
@@ -50,7 +59,7 @@ public abstract class Matrix4fMixin implements IMatrix4fPatch {
         // Try to determine if this is a simple rotation on one axis component only
         if (i) {
             if (!j && !k) {
-                this.rotateX(quaternion);
+                this.rotateX(quaternion.i(), quaternion.r());
             }
             else {
                 this.rotateXYZ(quaternion);
@@ -58,20 +67,19 @@ public abstract class Matrix4fMixin implements IMatrix4fPatch {
         }
         else if (j) {
             if (!k) {
-                this.rotateY(quaternion);
+                this.rotateY(quaternion.j(), quaternion.r());
             }
             else {
                 this.rotateXYZ(quaternion);
             }
         }
         else if (k) {
-            this.rotateZ(quaternion);
+            this.rotateZ(quaternion.k(), quaternion.r());
         }
     }
 
-    private void rotateX(Quaternion quaternion) {
-        float i = quaternion.i();
-        float r = quaternion.r();
+    @Override
+    public void rotateX(float i, float r) {
         float ii = 2.0F * i * i;
         float ta11 = 1.0F - ii;
         float ta22 = 1.0F - ii;
@@ -145,9 +153,8 @@ public abstract class Matrix4fMixin implements IMatrix4fPatch {
         this.m32 = m32;
     }
 
-    private void rotateY(Quaternion quaternion) {
-        float j = quaternion.j();
-        float r = quaternion.r();
+    @Override
+    public void rotateY(float j, float r) {
         float jj = 2.0F * j * j;
         float ta00 = 1.0F - jj;
         float ta22 = 1.0F - jj;
@@ -172,9 +179,8 @@ public abstract class Matrix4fMixin implements IMatrix4fPatch {
         this.m32 = m32;
     }
 
-    private void rotateZ(Quaternion quaternion) {
-        float k = quaternion.k();
-        float r = quaternion.r();
+    @Override
+    public void rotateZ(float k, float r) {
         float kk = 2.0F * k * k;
         float ta00 = 1.0F - kk;
         float ta11 = 1.0F - kk;
@@ -200,6 +206,22 @@ public abstract class Matrix4fMixin implements IMatrix4fPatch {
     }
 
     @Override
+    public void scale(float x, float y, float z) {
+        this.m00 *= x;
+        this.m01 *= y;
+        this.m02 *= z;
+        this.m10 *= x;
+        this.m11 *= y;
+        this.m12 *= z;
+        this.m20 *= x;
+        this.m21 *= y;
+        this.m22 *= z;
+        this.m30 *= x;
+        this.m31 *= y;
+        this.m32 *= z;
+    }
+
+    @Override
     public float transformVecX(float x, float y, float z) {
         return this.m00 * x + this.m01 * y + this.m02 * z + this.m03;
     }
@@ -212,13 +234,5 @@ public abstract class Matrix4fMixin implements IMatrix4fPatch {
     @Override
     public float transformVecZ(float x, float y, float z) {
         return this.m20 * x + this.m21 * y + this.m22 * z + this.m23;
-    }
-
-    @Override
-    public void translate(float x, float y, float z) {
-        this.m03 = this.m00 * x + this.m01 * y + this.m02 * z + this.m03;
-        this.m13 = this.m10 * x + this.m11 * y + this.m12 * z + this.m13;
-        this.m23 = this.m20 * x + this.m21 * y + this.m22 * z + this.m23;
-        this.m33 = this.m30 * x + this.m31 * y + this.m32 * z + this.m33;
     }
 }
