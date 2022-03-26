@@ -53,5 +53,6 @@ public enum EvolutionRenderLayer {
         set(EvolutionBlocks.TALLGRASS, CUTOUT);
         set(EvolutionBlocks.TORCH, CUTOUT);
         set(EvolutionBlocks.WALL_TORCH, CUTOUT);
+        set(EvolutionBlocks.GLASS, CUTOUT);
     }
 }

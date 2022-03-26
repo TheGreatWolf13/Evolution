@@ -2,13 +2,16 @@ package tgw.evolution.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+
+import javax.annotation.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.SNOWY;
 
@@ -20,7 +23,8 @@ public abstract class BlockGenericSlowable extends BlockGravity implements IColl
     }
 
     @Override
-    public void collision(LivingEntity entity, double speed) {
+    public boolean collision(Level level, BlockPos pos, Entity entity, double speed, double mass, @Nullable Direction.Axis axis) {
+        return false;
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.electronwill.nightconfig.toml.TomlFormat;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.Evolution;
@@ -12,7 +13,6 @@ import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.util.ConfigHelper;
 
 import java.io.ByteArrayInputStream;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 public class PacketCSSyncServerConfig implements IPacket {
@@ -43,13 +43,14 @@ public class PacketCSSyncServerConfig implements IPacket {
                     return;
                 }
                 Evolution.debug("Received server config sync from player: {}", player.getName().getString());
-                Optional.ofNullable(ConfigHelper.getModConfig(packet.filename)).ifPresent(config -> {
+                ModConfig config = ConfigHelper.getModConfig(packet.filename);
+                if (config != null) {
                     CommentedConfig data = TomlFormat.instance().createParser().parse(new ByteArrayInputStream(packet.data));
                     config.getConfigData().putAll(data);
                     ConfigHelper.resetCache(config);
                     EvolutionNetwork.INSTANCE.send(PacketDistributor.ALL.with(() -> null),
                                                    new PacketSCSyncServerConfig(packet.filename, packet.data));
-                });
+                }
             });
             context.get().setPacketHandled(true);
         }

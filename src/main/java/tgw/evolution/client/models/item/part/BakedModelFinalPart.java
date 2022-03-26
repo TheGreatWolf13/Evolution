@@ -38,7 +38,7 @@ public abstract class BakedModelFinalPart<T extends IPartType<T>> implements Bak
 
     private ModelDataMap getEmptyIModelData(T nullPart) {
         ModelDataMap.Builder builder = new ModelDataMap.Builder();
-        builder.withInitial(this.material, ItemMaterial.STONE_ANDESITE);
+        builder.withInitial(this.material, ItemMaterial.ANDESITE);
         builder.withInitial(this.type, nullPart);
         this.appendToEmptyModelData(builder);
         return builder.build();

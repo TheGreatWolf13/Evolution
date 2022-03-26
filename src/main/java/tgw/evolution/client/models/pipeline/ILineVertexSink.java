@@ -1,0 +1,19 @@
+package tgw.evolution.client.models.pipeline;
+
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
+
+public interface ILineVertexSink extends IVertexSink {
+    VertexFormat VERTEX_FORMAT = DefaultVertexFormat.POSITION_COLOR_NORMAL;
+
+    /**
+     * Writes a line vertex to the sink.
+     *
+     * @param x      The x-position of the vertex
+     * @param y      The y-position of the vertex
+     * @param z      The z-position of the vertex
+     * @param color  The ABGR-packed color of the vertex
+     * @param normal The 3 byte packed normal vector of the vertex
+     */
+    void vertexLine(float x, float y, float z, int color, int normal);
+}

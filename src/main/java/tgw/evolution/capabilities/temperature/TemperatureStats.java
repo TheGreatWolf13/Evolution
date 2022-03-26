@@ -4,8 +4,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionAttributes;
+import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCTemperatureData;
+import tgw.evolution.patches.IEffectInstancePatch;
 import tgw.evolution.util.Temperature;
 import tgw.evolution.util.earth.ClimateZone;
 import tgw.evolution.util.math.MathHelper;
@@ -41,7 +43,9 @@ public class TemperatureStats implements ITemperature {
      */
     private double desiredTemperature = 20;
     /**
-     * Bit 0~1: ClimateZone;
+     * Bit 0~1: ClimateZone;<br>
+     * Bit 2: isShivering;<br>
+     * Bit 3: isSweating;
      */
     private byte flags;
     private boolean needsUpdate = true;
@@ -124,6 +128,14 @@ public class TemperatureStats implements ITemperature {
         return ClimateZone.Region.byId(this.flags & 0b11);
     }
 
+    private boolean isShivering() {
+        return (this.flags & 4) != 0;
+    }
+
+    private boolean isSweating() {
+        return (this.flags & 8) != 0;
+    }
+
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
@@ -170,22 +182,71 @@ public class TemperatureStats implements ITemperature {
         this.desiredTemperature = Math.max(temp, -273);
     }
 
+    private void setShaking(boolean isShaking) {
+        if (isShaking) {
+            this.flags |= 4;
+        }
+        else {
+            this.flags &= ~4;
+        }
+    }
+
+    private void setSweating(boolean isSweating) {
+        if (isSweating) {
+            this.flags |= 8;
+        }
+        else {
+            this.flags &= ~8;
+        }
+    }
+
     @Override
     public void tick(ServerPlayer player) {
         this.calculateZone(player);
         if (player.isAlive()) {
+            //Update desired
             if (this.ticks == 0) {
                 this.updateDesiredTemperature(player);
             }
             if (this.ticks % 10 == 0) {
                 this.updateDesiredComfort(player);
             }
+            //Temperature calculations
             double dTemp = this.desiredTemperature - this.currentTemperature;
             this.setCurrentTemperature(this.currentTemperature + TEMPERATURE_COEFFICIENT * dTemp);
             double dMinComf = Math.signum(this.desiredMinComfort - this.currentMinComfort);
             this.setCurrentMinComfort(this.currentMinComfort + COMFORT_COEFFICIENT * dMinComf);
             double dMaxComf = Math.signum(this.desiredMaxComfort - this.currentMaxComfort);
             this.setCurrentMaxComfort(this.currentMaxComfort + COMFORT_COEFFICIENT * dMaxComf);
+            //Handle Shivering
+            boolean shouldBeShivering = this.currentTemperature < this.currentMinComfort - 5;
+            if (this.isShivering()) {
+                if (!shouldBeShivering) {
+                    player.removeEffect(EvolutionEffects.SHIVERING.get());
+                    this.setShaking(false);
+                }
+            }
+            else {
+                if (shouldBeShivering) {
+                    player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.SHIVERING.get(), 0, false, false, true));
+                    this.setShaking(true);
+                }
+            }
+            //Handle Sweating
+            boolean shouldBeSweating = this.currentTemperature > this.currentMaxComfort + 5;
+            if (this.isSweating()) {
+                if (!shouldBeSweating) {
+                    player.removeEffect(EvolutionEffects.SWEATING.get());
+                    this.setSweating(false);
+                }
+            }
+            else {
+                if (shouldBeSweating) {
+                    player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.SWEATING.get(), 0, false, false, true));
+                    this.setSweating(true);
+                }
+            }
+            //Ticking
             this.ticks++;
             if (this.ticks >= 100) {
                 this.ticks = 0;
@@ -218,6 +279,12 @@ public class TemperatureStats implements ITemperature {
         this.desiredTemperature = getTemperatureBasedOnHeight(averageSurfaceTemp, player);
         if (player.isSprinting()) {
             this.desiredTemperature += 2;
+        }
+        if (player.hasEffect(EvolutionEffects.SHIVERING.get())) {
+            this.desiredTemperature += 2;
+        }
+        if (player.hasEffect(EvolutionEffects.SWEATING.get())) {
+            this.desiredTemperature -= 2;
         }
         //TODO objects
     }

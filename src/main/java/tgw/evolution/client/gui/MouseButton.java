@@ -9,7 +9,8 @@ import javax.annotation.Nullable;
 @OnlyIn(Dist.CLIENT)
 public enum MouseButton {
     LEFT(0),
-    RIGHT(1);
+    RIGHT(1),
+    MIDDLE(2);
 
     private final int id;
 
@@ -22,7 +23,8 @@ public enum MouseButton {
         return switch (glfw) {
             case GLFW.GLFW_MOUSE_BUTTON_LEFT -> LEFT;
             case GLFW.GLFW_MOUSE_BUTTON_RIGHT -> RIGHT;
-            default -> throw new IllegalArgumentException("Unknown MouseButton id: " + glfw);
+            case GLFW.GLFW_MOUSE_BUTTON_MIDDLE -> MIDDLE;
+            default -> null;
         };
     }
 

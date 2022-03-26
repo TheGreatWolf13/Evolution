@@ -12,7 +12,6 @@ import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.stats.Stat;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.MinecraftForgeClient;
@@ -35,50 +34,25 @@ import tgw.evolution.init.EvolutionRenderer;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.stats.EvolutionStatsCounter;
-import tgw.evolution.util.constants.RockVariant;
+import tgw.evolution.util.CollectionUtil;
 import tgw.evolution.util.constants.SkinType;
 
 import java.util.Map;
 
 public class ClientProxy implements IProxy {
 
-    public static final KeyMapping TOGGLE_PRONE = new KeyMapping("key.prone.toggle",
-                                                                 KeyConflictContext.IN_GAME,
-                                                                 InputConstants.Type.KEYSYM,
-                                                                 GLFW.GLFW_KEY_X,
-                                                                 "key.categories.movement");
-    public static final KeyMapping BUILDING_ASSIST = new KeyMapping("key.build_assist",
-                                                                    KeyConflictContext.IN_GAME,
-                                                                    InputConstants.Type.KEYSYM,
-                                                                    GLFW.GLFW_KEY_BACKSLASH,
-                                                                    "key.categories.creative");
+    public static final KeyMapping TOGGLE_PRONE = new KeyMapping("key.prone.toggle", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM,
+                                                                 GLFW.GLFW_KEY_X, "key.categories.movement");
+    public static final KeyMapping BUILDING_ASSIST = new KeyMapping("key.build_assist", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM,
+                                                                    GLFW.GLFW_KEY_BACKSLASH, "key.categories.creative");
 
     private static void addOverrides() {
-        ItemProperties.register(EvolutionItems.sword_dev.get(),
-                                new ResourceLocation("attack"),
-                                (stack, level, entity, seed) -> entity != null &&
-                                                                ((ILivingEntityPatch) entity).renderMainhandCustomAttack() &&
-                                                                entity.getMainHandItem() == stack ? 1.0f : 0.0f);
-        ItemProperties.register(EvolutionItems.shield_dev.get(),
-                                new ResourceLocation("blocking"),
+        ItemProperties.register(EvolutionItems.sword_dev.get(), new ResourceLocation("attack"), (stack, level, entity, seed) -> entity != null &&
+                                                                                                                                ((ILivingEntityPatch) entity).renderMainhandSpecialAttack() &&
+                                                                                                                                entity.getMainHandItem() ==
+                                                                                                                                stack ? 1.0f : 0.0f);
+        ItemProperties.register(EvolutionItems.shield_dev.get(), new ResourceLocation("blocking"),
                                 (stack, level, entity, seed) -> entity != null && entity.isUsingItem() && entity.getUseItem() == stack ? 1.0F : 0.0F);
-        ResourceLocation throwing = new ResourceLocation("throwing");
-        for (RockVariant variant : RockVariant.VALUES) {
-            Item item;
-            try {
-                item = variant.getJavelin();
-            }
-            catch (IllegalStateException t) {
-                item = null;
-            }
-            if (item != null) {
-                ItemProperties.register(item,
-                                        throwing,
-                                        (stack, level, entity, seed) -> entity != null && entity.isUsingItem() && entity.getUseItem() == stack ?
-                                                                        1.0F :
-                                                                        0.0F);
-            }
-        }
     }
 
     public static void changeWorldOrders() {
@@ -192,6 +166,9 @@ public class ClientProxy implements IProxy {
         for (ModelResourceLocation model : EvolutionResources.MODULAR_MODELS) {
             ForgeModelBakery.addSpecialModel(model);
         }
+        //Clear and trim since we are not using it anymore
+        EvolutionResources.MODULAR_MODELS.clear();
+        CollectionUtil.trim(EvolutionResources.MODULAR_MODELS);
     }
 
     @Override

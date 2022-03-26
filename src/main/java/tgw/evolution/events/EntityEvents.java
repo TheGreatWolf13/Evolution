@@ -80,12 +80,13 @@ import tgw.evolution.network.*;
 import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.Temperature;
-import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.constants.HarvestLevels;
 import tgw.evolution.util.constants.SkinType;
 import tgw.evolution.util.damage.*;
 import tgw.evolution.util.earth.ClimateZone;
 import tgw.evolution.util.earth.WindVector;
 import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Units;
 import tgw.evolution.util.reflection.FieldHandler;
 import tgw.evolution.util.reflection.FunctionMethodHandler;
 
@@ -99,26 +100,19 @@ public class EntityEvents {
     private static final FunctionMethodHandler<Entity, Void, Pose> SET_POSE = new FunctionMethodHandler<>(Entity.class, "m_20124_", Pose.class);
     private static final FieldHandler<LivingEntity, CombatTracker> COMBAT_TRACKER = new FieldHandler<>(LivingEntity.class, "f_20944_");
     private static final RandomGenerator RANDOM = new Random();
-    private static final ReferenceSet<DamageSource> IGNORED_DAMAGE_SOURCES = ReferenceSet.of(EvolutionDamage.DEHYDRATION,
-                                                                                             EvolutionDamage.DROWN,
-                                                                                             EvolutionDamage.FALL,
-                                                                                             EvolutionDamage.FALLING_ROCK,
-                                                                                             EvolutionDamage.IN_FIRE,
-                                                                                             EvolutionDamage.IN_WALL,
-                                                                                             EvolutionDamage.ON_FIRE,
-                                                                                             EvolutionDamage.VOID,
+    private static final ReferenceSet<DamageSource> IGNORED_DAMAGE_SOURCES = ReferenceSet.of(EvolutionDamage.DEHYDRATION, EvolutionDamage.DROWN,
+                                                                                             EvolutionDamage.FALL, EvolutionDamage.FALLING_ROCK,
+                                                                                             EvolutionDamage.IN_FIRE, EvolutionDamage.IN_WALL,
+                                                                                             EvolutionDamage.ON_FIRE, EvolutionDamage.VOID,
                                                                                              EvolutionDamage.WALL_IMPACT,
                                                                                              EvolutionDamage.WATER_IMPACT,
                                                                                              EvolutionDamage.WATER_INTOXICATION);
-    private static final ReferenceSet<DamageSource> IGNORED_VANILLA_SOURCES = ReferenceSet.of(DamageSource.DROWN,
-                                                                                              DamageSource.FALL,
-                                                                                              DamageSource.IN_WALL,
-                                                                                              DamageSource.OUT_OF_WORLD);
+    private static final ReferenceSet<DamageSource> IGNORED_VANILLA_SOURCES = ReferenceSet.of(DamageSource.DROWN, DamageSource.FALL,
+                                                                                              DamageSource.IN_WALL, DamageSource.OUT_OF_WORLD);
     private final Map<DamageSource, EquipmentSlot> damageMultipliers = new WeakHashMap<>();
 
     public static void calculateFallDamage(LivingEntity entity, double velocity, double distanceOfSlowDown, boolean isWater) {
-        //Convert from m/t to m/s
-        velocity *= 20;
+        velocity = Units.toSISpeed(velocity);
         double legHeight = PlayerHelper.LEG_HEIGHT;
         double baseMass = PlayerHelper.MASS;
         if (entity instanceof EntityGenericCreature creature) {
@@ -336,8 +330,7 @@ public class EntityEvents {
                 hitEntity.hurt(EvolutionDamage.DROWN, 10.0f);
             }
             else if ("mob".equals(source.msgId)) {
-                hitEntity.hurt(EvolutionDamage.causeMobMeleeDamage((LivingEntity) source.getEntity(),
-                                                                   EvolutionDamage.Type.GENERIC,
+                hitEntity.hurt(EvolutionDamage.causeMobMeleeDamage((LivingEntity) source.getEntity(), EvolutionDamage.Type.GENERIC,
                                                                    InteractionHand.MAIN_HAND), event.getAmount());
             }
             event.setCanceled(true);
@@ -558,7 +551,7 @@ public class EntityEvents {
     public void onPlayerBreakBlock(PlayerEvent.BreakSpeed event) {
         BlockState state = event.getState();
         //If the block is breakable by hand, do nothing
-        if (((IBlockPatch) state.getBlock()).getHarvestLevel(state) <= HarvestLevel.HAND) {
+        if (((IBlockPatch) state.getBlock()).getHarvestLevel(state) <= HarvestLevels.HAND) {
             return;
         }
         //Prevents players from breaking blocks if their tool cannot harvest the block
@@ -658,11 +651,8 @@ public class EntityEvents {
             if (!player.level.isClientSide) {
                 if (player.getMainHandItem().getItem() == Items.ANVIL) {
                     player.setItemInHand(InteractionHand.MAIN_HAND,
-                                         ItemModularTool.createNew(PartTypes.Head.AXE,
-                                                                   ItemMaterial.COPPER,
-                                                                   PartTypes.Handle.ONE_HANDED,
-                                                                   ItemMaterial.COPPER,
-                                                                   true));
+                                         ItemModularTool.createNew(PartTypes.Head.AXE, ItemMaterial.COPPER, PartTypes.Handle.ONE_HANDED,
+                                                                   ItemMaterial.COPPER, true));
                 }
                 //Ticks Player systems
                 if (!player.isCreative() && !player.isSpectator()) {
@@ -733,11 +723,7 @@ public class EntityEvents {
                         torch = true;
                     }
                     if (torch) {
-                        player.level.playSound(null,
-                                               player.blockPosition(),
-                                               SoundEvents.FIRE_EXTINGUISH,
-                                               SoundSource.BLOCKS,
-                                               1.0F,
+                        player.level.playSound(null, player.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0F,
                                                2.6F + (player.level.random.nextFloat() - player.level.random.nextFloat()) * 0.8F);
                     }
                 }

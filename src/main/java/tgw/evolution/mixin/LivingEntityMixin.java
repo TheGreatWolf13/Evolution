@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.stats.Stats;
@@ -50,8 +51,9 @@ import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.inventory.AdditionalSlotType;
-import tgw.evolution.items.ICustomAttack;
 import tgw.evolution.items.IEvolutionItem;
+import tgw.evolution.items.ISpecialAttack;
+import tgw.evolution.network.PacketCSCollision;
 import tgw.evolution.network.PacketCSImpactDamage;
 import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.patches.IEntityPatch;
@@ -115,22 +117,24 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     protected float oRun;
     @Shadow
     protected float run;
-    private boolean isMainhandCustomAttacking;
-    private boolean isOffhandCustomAttacking;
+    private boolean isMainhandSpecialAttacking;
+    private boolean isOffhandSpecialAttacking;
     @Shadow
     private DamageSource lastDamageSource;
     @Shadow
     private long lastDamageStamp;
-    private int mainhandCustomAttackTime;
+    private byte mainhandSpecialAttackCooldown;
+    private byte mainhandSpecialAttackTime;
     @Nullable
-    private ICustomAttack.AttackType mainhandCustomAttackType;
-    private int mainhandStopTicks;
+    private ISpecialAttack.IAttackType mainhandSpecialAttackType;
+    private byte mainhandStopTicks;
     @Shadow
     private int noJumpDelay;
-    private int offhandCustomAttackTime;
+    private byte offhandSpecialAttackCooldown;
+    private byte offhandSpecialAttackTime;
     @Nullable
-    private ICustomAttack.AttackType offhandCustomAttackType;
-    private int offhandStopTicks;
+    private ISpecialAttack.IAttackType offhandSpecialAttackType;
+    private byte offhandStopTicks;
 
     public LivingEntityMixin(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -195,7 +199,8 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                         Block blockAtPos = stateAtPos.getBlock();
                         if (blockAtPos instanceof ICollisionBlock collisionBlock) {
                             slowDown += collisionBlock.getSlowdownSide(stateAtPos);
-                            collisionBlock.collision((LivingEntity) (Object) this, speedX);
+                            //noinspection ObjectAllocationInLoop
+                            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSCollision(changingPos, speedX, Direction.Axis.X));
                         }
                         else {
                             slowDown += 1;
@@ -236,7 +241,8 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                         Block blockAtPos = stateAtPos.getBlock();
                         if (blockAtPos instanceof ICollisionBlock collisionBlock) {
                             slowDown += collisionBlock.getSlowdownSide(stateAtPos);
-                            collisionBlock.collision((LivingEntity) (Object) this, speedZ);
+                            //noinspection ObjectAllocationInLoop
+                            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSCollision(changingPos, speedZ, Direction.Axis.Z));
                         }
                         else {
                             slowDown += 1;
@@ -371,38 +377,31 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     }
 
     @Override
-    public float getMainhandCustomAttackProgress(float partialTicks) {
-        return (this.mainhandCustomAttackTime + partialTicks) / this.mainhandCustomAttackType.getAttackTime();
-    }
-
-    @Override
-    public int getMainhandCustomAttackTicks() {
-        return this.mainhandCustomAttackTime;
+    public float getMainhandSpecialAttackProgress(float partialTicks) {
+        if (this.mainhandStopTicks > 0) {
+            partialTicks = 1.0f;
+        }
+        return (this.mainhandSpecialAttackTime + partialTicks) / this.mainhandSpecialAttackType.getAttackTime();
     }
 
     @Nullable
     @Override
-    public ICustomAttack.AttackType getMainhandCustomAttackType() {
-        return this.mainhandCustomAttackType;
+    public ISpecialAttack.IAttackType getMainhandSpecialAttackType() {
+        return this.mainhandSpecialAttackType;
     }
 
     @Override
-    public float getOffhandCustomAttackProgress(float partialTicks) {
-        if (!this.isOffhandCustomAttacking) {
+    public float getOffhandSpecialAttackProgress(float partialTicks) {
+        if (!this.isOffhandSpecialAttacking) {
             return 0;
         }
-        return (this.offhandCustomAttackTime + partialTicks) / this.offhandCustomAttackType.getAttackTime();
-    }
-
-    @Override
-    public int getOffhandCustomAttackTicks() {
-        return this.offhandCustomAttackTime;
+        return (this.offhandSpecialAttackTime + partialTicks) / this.offhandSpecialAttackType.getAttackTime();
     }
 
     @Nullable
     @Override
-    public ICustomAttack.AttackType getOffhandCustomAttackType() {
-        return this.offhandCustomAttackType;
+    public ISpecialAttack.IAttackType getOffhandSpecialAttackType() {
+        return this.offhandSpecialAttackType;
     }
 
     @Shadow
@@ -782,6 +781,18 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     @Shadow
     protected abstract boolean isAffectedByFluids();
 
+    @Override
+    public boolean isCameraLocked() {
+        boolean isLocked = false;
+        if (this.renderMainhandSpecialAttack()) {
+            isLocked = this.mainhandSpecialAttackType.isCameraLocked(this.mainhandSpecialAttackTime);
+        }
+        if (this.renderOffhandSpecialAttack()) {
+            isLocked |= this.offhandSpecialAttackType.isCameraLocked(this.offhandSpecialAttackTime);
+        }
+        return isLocked;
+    }
+
     @Shadow
     public abstract boolean isDamageSourceBlocked(DamageSource p_21276_);
 
@@ -795,13 +806,45 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     public abstract boolean isFallFlying();
 
     @Override
-    public boolean isMainhandCustomAttacking() {
-        return this.isMainhandCustomAttacking;
+    public boolean isMainhandInHitTicks() {
+        if (!this.isMainhandSpecialAttacking) {
+            return false;
+        }
+        return this.mainhandSpecialAttackType.isHitTick(this.mainhandSpecialAttackTime);
     }
 
     @Override
-    public boolean isOffhandCustomAttacking() {
-        return this.isOffhandCustomAttacking;
+    public boolean isMainhandInSpecialAttack() {
+        if (this.isMainhandSpecialAttacking) {
+            return true;
+        }
+        return this.mainhandSpecialAttackCooldown > 0 || this.mainhandStopTicks > 0;
+    }
+
+    @Override
+    public boolean isMainhandSpecialAttacking() {
+        return this.isMainhandSpecialAttacking;
+    }
+
+    @Override
+    public boolean isOffhandInHitTicks() {
+        if (!this.isOffhandSpecialAttacking) {
+            return false;
+        }
+        return this.offhandSpecialAttackType.isHitTick(this.offhandSpecialAttackTime);
+    }
+
+    @Override
+    public boolean isOffhandInSpecialAttack() {
+        if (this.isOffhandSpecialAttacking) {
+            return true;
+        }
+        return this.offhandSpecialAttackCooldown > 0 || this.offhandStopTicks > 0;
+    }
+
+    @Override
+    public boolean isOffhandSpecialAttacking() {
+        return this.isOffhandSpecialAttacking;
     }
 
     @Shadow
@@ -850,11 +893,17 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
 
     @Inject(method = "baseTick", at = @At(value = "TAIL"))
     public void onBaseTick(CallbackInfo ci) {
-        if (this.isMainhandCustomAttacking) {
-            this.mainhandCustomAttackTime++;
-            int totalTime = this.mainhandCustomAttackType.getAttackTime();
-            if (this.mainhandCustomAttackTime > totalTime) {
-                this.stopMainhandCustomAttack(ICustomAttack.StopReason.END);
+        if (this.mainhandSpecialAttackCooldown > 0) {
+            this.mainhandSpecialAttackCooldown--;
+        }
+        if (this.offhandSpecialAttackCooldown > 0) {
+            this.offhandSpecialAttackCooldown--;
+        }
+        if (this.isMainhandSpecialAttacking) {
+            this.mainhandSpecialAttackTime++;
+            int totalTime = this.mainhandSpecialAttackType.getAttackTime();
+            if (this.mainhandSpecialAttackTime > totalTime) {
+                this.stopMainhandSpecialAttack(ISpecialAttack.StopReason.END);
             }
         }
         else {
@@ -862,14 +911,22 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                 this.mainhandStopTicks--;
             }
             else {
-                this.mainhandCustomAttackTime = 0;
+                this.mainhandSpecialAttackTime = 0;
             }
         }
-        if (this.isOffhandCustomAttacking) {
-            this.offhandCustomAttackTime++;
-            int totalTime = this.offhandCustomAttackType.getAttackTime();
-            if (this.offhandCustomAttackTime > totalTime) {
-                this.stopOffhandCustomAttack(ICustomAttack.StopReason.END);
+        if (this.isOffhandSpecialAttacking) {
+            this.offhandSpecialAttackTime++;
+            int totalTime = this.offhandSpecialAttackType.getAttackTime();
+            if (this.offhandSpecialAttackTime > totalTime) {
+                this.stopOffhandSpecialAttack(ISpecialAttack.StopReason.END);
+            }
+        }
+        else {
+            if (this.offhandStopTicks > 0) {
+                this.offhandStopTicks--;
+            }
+            else {
+                this.offhandSpecialAttackTime = 0;
             }
         }
     }
@@ -925,16 +982,16 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
 //    }
 
     @Override
-    public boolean renderMainhandCustomAttack() {
-        if (this.isMainhandCustomAttacking) {
+    public boolean renderMainhandSpecialAttack() {
+        if (this.isMainhandSpecialAttacking) {
             return true;
         }
         return this.mainhandStopTicks > 0;
     }
 
     @Override
-    public boolean renderOffhandCustomAttack() {
-        if (this.isOffhandCustomAttacking) {
+    public boolean renderOffhandSpecialAttack() {
+        if (this.isOffhandSpecialAttacking) {
             return true;
         }
         return this.offhandStopTicks > 0;
@@ -950,31 +1007,33 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     public abstract void setStingerCount(int p_226300_1_);
 
     @Override
-    public void startMainhandCustomAttack(ICustomAttack.AttackType type) {
-        this.isMainhandCustomAttacking = true;
-        this.mainhandCustomAttackType = type;
-        this.mainhandCustomAttackTime = 0;
+    public void startMainhandSpecialAttack(ISpecialAttack.IAttackType type) {
+        this.isMainhandSpecialAttacking = true;
+        this.mainhandSpecialAttackType = type;
+        this.mainhandSpecialAttackTime = 0;
     }
 
     @Override
-    public void startOffhandCustomAttack(ICustomAttack.AttackType type) {
-        this.isOffhandCustomAttacking = true;
-        this.offhandCustomAttackType = type;
-        this.offhandCustomAttackTime = 0;
+    public void startOffhandSpecialAttack(ISpecialAttack.IAttackType type) {
+        this.isOffhandSpecialAttacking = true;
+        this.offhandSpecialAttackType = type;
+        this.offhandSpecialAttackTime = 0;
     }
 
     @Override
-    public void stopMainhandCustomAttack(ICustomAttack.StopReason reason) {
-        if (reason == ICustomAttack.StopReason.HIT_BLOCK) {
-            this.playSound(EvolutionSounds.PARRY_FAIL.get(), 0.4f, 0.8F + this.random.nextFloat() * 0.4F);
+    public void stopMainhandSpecialAttack(ISpecialAttack.StopReason reason) {
+        if (reason == ISpecialAttack.StopReason.HIT_BLOCK) {
+            this.playSound(EvolutionSounds.METAL_WEAPON_HIT_BLOCK.get(), 0.4f, 0.8F + this.random.nextFloat() * 0.4F);
             this.mainhandStopTicks = 5;
         }
-        this.isMainhandCustomAttacking = false;
+        this.mainhandSpecialAttackCooldown = 2;
+        this.isMainhandSpecialAttacking = false;
     }
 
     @Override
-    public void stopOffhandCustomAttack(ICustomAttack.StopReason reason) {
-        this.isOffhandCustomAttacking = false;
+    public void stopOffhandSpecialAttack(ISpecialAttack.StopReason reason) {
+        this.isOffhandSpecialAttacking = false;
+        this.offhandSpecialAttackCooldown = 2;
     }
 
     @Shadow

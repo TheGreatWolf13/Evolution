@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -16,7 +17,6 @@ import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.util.ConfigHelper;
 
 import java.io.ByteArrayInputStream;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 public class PacketHandlerClient implements IPacketHandler {
@@ -54,11 +54,12 @@ public class PacketHandlerClient implements IPacketHandler {
     public void handleSyncServerConfig(String filename, byte[] data) {
         if (!Minecraft.getInstance().isLocalServer()) {
             Evolution.info("Received config sync from server");
-            Optional.ofNullable(ConfigHelper.getModConfig(filename)).ifPresent(config -> {
+            ModConfig config = ConfigHelper.getModConfig(filename);
+            if (config != null) {
                 CommentedConfig commentedConfig = TomlFormat.instance().createParser().parse(new ByteArrayInputStream(data));
                 ConfigHelper.setConfigData(config, commentedConfig);
                 ConfigHelper.fireEvent(config, new ModConfigEvent.Reloading(config));
-            });
+            }
         }
     }
 }

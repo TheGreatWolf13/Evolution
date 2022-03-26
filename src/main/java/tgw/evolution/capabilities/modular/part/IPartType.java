@@ -1,6 +1,7 @@
 package tgw.evolution.capabilities.modular.part;
 
 import net.minecraft.network.chat.Component;
+import tgw.evolution.init.ItemMaterial;
 
 public interface IPartType<T extends IPartType<T>> {
 
@@ -10,7 +11,7 @@ public interface IPartType<T extends IPartType<T>> {
 
     String getName();
 
-    float getVolume();
+    double getVolume(ItemMaterial material);
 
     boolean isTwoHanded();
 }

@@ -3,7 +3,6 @@ package tgw.evolution.commands;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -11,7 +10,7 @@ import net.minecraft.commands.Commands;
 public final class CommandGC implements Command<CommandSourceStack> {
 
     private static final Command<CommandSourceStack> CMD = new CommandGC();
-    private long lastExecution = Util.getMillis();
+    private long lastExecution = Util.getMillis() - 30_000;
 
     private CommandGC() {
     }
@@ -21,7 +20,7 @@ public final class CommandGC implements Command<CommandSourceStack> {
     }
 
     @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    public int run(CommandContext<CommandSourceStack> context) {
         long now = Util.getMillis();
         if (now - this.lastExecution >= 30_000) {
             this.lastExecution = now;

@@ -1,0 +1,6 @@
+{
+  "parent": "evolution:item/modular/head/spear",
+  "textures": {
+    "0": "evolution:item/modular/head/spear_copper"
+  }
+}

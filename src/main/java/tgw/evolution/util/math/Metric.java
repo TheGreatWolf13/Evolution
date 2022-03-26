@@ -40,6 +40,9 @@ public enum Metric {
     public static final DecimalFormat ONE_PLACE = initFormat(",##0.#");
     public static final DecimalFormat TWO_PLACES = initFormat(",##0.##");
     public static final DecimalFormat THREE_PLACES = initFormat(",##0.###");
+    public static final DecimalFormat ONE_PLACE_FULL = initFormat(",##0.0");
+    public static final DecimalFormat THREE_PLACES_FULL = initFormat(",##0.000");
+    public static final DecimalFormat FIVE_PLACES_FULL = initFormat(",##0.00000");
     public static final DecimalFormat INT_2 = initFormat("00");
     public static final DecimalFormat DAMAGE_FORMAT = initFormat(",##0 HP");
     public static final DecimalFormat HOUR_FORMAT = initFormat(",##0 h");
@@ -82,12 +85,16 @@ public enum Metric {
 
     public static String bytes(double value, int decimalPlaces) {
         int magnitude = 0;
+        while (value <= -1_024L) {
+            value /= 1_024L;
+            magnitude++;
+        }
         while (value >= 1_024L) {
             value /= 1_024L;
             magnitude++;
         }
         Metric metric = byMagnitude(magnitude);
-        return format(value, decimalPlaces) + " " + metric.prefix + "B";
+        return format(value, decimalPlaces) + metric.prefix + "B";
     }
 
     public static String format(double value, int decimalPlaces) {
@@ -116,15 +123,15 @@ public enum Metric {
     }
 
     public static String format(double value, int decimalPlaces, String unit, boolean forceSign) {
-        boolean spacing = !unit.isEmpty();
+        boolean hasUnit = !unit.isEmpty();
         if (Double.isNaN(value)) {
-            return spacing ? "NaN " + unit : "NaN";
+            return hasUnit ? "NaN " + unit : "NaN";
         }
         if (Double.isInfinite(value)) {
-            return spacing ? value + " " + unit : String.valueOf(value);
+            return hasUnit ? value + " " + unit : String.valueOf(value);
         }
         if (value == 0) {
-            return spacing ? "0 " + unit : "0";
+            return hasUnit ? "0" + unit : "0";
         }
         String sign = value > 0 ? forceSign ? "+" : "" : "-";
         value = Math.abs(value);
@@ -138,7 +145,28 @@ public enum Metric {
             magnitude++;
         }
         Metric metric = byMagnitude(magnitude);
-        return sign + format(value, decimalPlaces) + (spacing ? " " + metric.prefix + unit : metric.prefix);
+        return sign + format(value, decimalPlaces) + (hasUnit ? metric.prefix + unit : metric.prefix);
+    }
+
+    public static String formatForceDecimals(double value, int decimalPlaces) {
+        switch (decimalPlaces) {
+            case 0 -> {
+                return DEFAULT.format(value);
+            }
+            case 1 -> {
+                return ONE_PLACE_FULL.format(value);
+            }
+            case 3 -> {
+                return THREE_PLACES_FULL.format(value);
+            }
+            case 5 -> {
+                return FIVE_PLACES_FULL.format(value);
+            }
+        }
+        if (decimalPlaces < 0) {
+            throw new IllegalStateException("Negative Decimal Places?");
+        }
+        return String.format(Locale.ROOT, "%." + decimalPlaces + "f", value);
     }
 
     public static double fromMetric(double value, Metric metric) {

@@ -1,11 +1,18 @@
 package tgw.evolution.capabilities.modular.part;
 
+import net.minecraft.world.item.ItemStack;
+import tgw.evolution.capabilities.modular.CapabilityModular;
+
 public class HandlePart extends GrabPart<PartTypes.Handle> {
 
     public static final HandlePart DUMMY = new HandlePart();
 
     public HandlePart() {
         this.type = PartTypes.Handle.NULL;
+    }
+
+    public static HandlePart get(ItemStack stack) {
+        return (HandlePart) stack.getCapability(CapabilityModular.PART).orElse(DUMMY);
     }
 
     @Override

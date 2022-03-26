@@ -3,7 +3,7 @@ package tgw.evolution.blocks;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.patches.IBlockPatch;
-import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.constants.HarvestLevels;
 
 public abstract class BlockGeneric extends Block implements IBlockPatch {
 
@@ -13,6 +13,6 @@ public abstract class BlockGeneric extends Block implements IBlockPatch {
 
     @Override
     public int getHarvestLevel(BlockState state) {
-        return HarvestLevel.HAND;
+        return HarvestLevels.HAND;
     }
 }

@@ -2,8 +2,8 @@ package tgw.evolution.client.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -29,7 +29,7 @@ public class ScreenKnapping extends Screen {
 
     private static final int WIDTH = 190;
     private static final int HEIGHT = 78;
-    private final Object2ObjectMap<Button, ItemStack> buttons = new Object2ObjectOpenHashMap<>();
+    private final Reference2ObjectMap<Button, ItemStack> buttons = new Reference2ObjectOpenHashMap<>();
     private final BlockPos pos;
     private final ResourceLocation resBackground = Evolution.getResource("textures/gui/knapping.png");
     private final ItemStack[] stacks = new ItemStack[KnappingRecipe.VALUES.length - 1];
@@ -100,7 +100,7 @@ public class ScreenKnapping extends Screen {
         for (int i = 0; i < this.stacks.length; i++) {
             this.drawItemStack(this.stacks[i], 2 + relX + 25 * i, 2 + relY, null);
         }
-        for (Map.Entry<Button, ItemStack> entry : this.buttons.object2ObjectEntrySet()) {
+        for (Map.Entry<Button, ItemStack> entry : this.buttons.reference2ObjectEntrySet()) {
             if (entry.getKey().isMouseOver(mouseX, mouseY)) {
                 this.renderTooltip(matrices, entry.getValue(), mouseX, mouseY);
             }

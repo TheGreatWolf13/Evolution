@@ -2,7 +2,6 @@ package tgw.evolution.util;
 
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -11,7 +10,7 @@ import net.minecraftforge.registries.DataSerializerEntry;
 
 public final class EvolutionDataSerializers {
 
-    public static final EntityDataSerializer<NonNullList<ItemStack>> ITEM_LIST = new EntityDataSerializer<NonNullList<ItemStack>>() {
+    public static final EntityDataSerializer<NonNullList<ItemStack>> ITEM_LIST = new EntityDataSerializer<>() {
 
         @Override
         public NonNullList<ItemStack> copy(NonNullList<ItemStack> itemStacks) {
@@ -20,10 +19,6 @@ public final class EvolutionDataSerializers {
                 list.set(i, itemStacks.get(i).copy());
             }
             return list;
-        }
-
-        public EntityDataAccessor<NonNullList<ItemStack>> createKey(int id) {
-            return new EntityDataAccessor<>(id, this);
         }
 
         @Override

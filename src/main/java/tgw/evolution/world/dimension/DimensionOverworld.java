@@ -13,6 +13,7 @@ import tgw.evolution.util.earth.EarthHelper;
 import tgw.evolution.util.earth.MoonPhase;
 import tgw.evolution.util.earth.PlanetsHelper;
 import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.math.Vec3f;
 
 import javax.annotation.Nullable;
@@ -23,7 +24,6 @@ public class DimensionOverworld {
     private final Vec3f lastFogColor = new Vec3f(0, 0, 0);
     private float[] duskDawnColors;
     private MoonPhase eclipsePhase = MoonPhase.FULL_MOON;
-    private Vec3 fogColor = Vec3.ZERO;
     private boolean isInLunarEclipse;
     private boolean isInSolarEclipse;
     private float latitude;
@@ -49,27 +49,6 @@ public class DimensionOverworld {
         this.generateLightBrightnessTable();
     }
 
-    private Vec3 calculateFogColor() {
-        float sunAngle = 1.0f;
-        if (this.sunAltitude > 80) {
-            sunAngle = -this.sunAltitude * this.sunAltitude / 784.0f + 10.0f * this.sunAltitude / 49.0f - 7.163_265f;
-            sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
-        }
-        if (this.isInSolarEclipse) {
-            float intensity = 1.0F - this.getSolarEclipseIntensity();
-            if (intensity < sunAngle) {
-                sunAngle = intensity;
-            }
-        }
-        float r = 0.752_941_2F;
-        r *= sunAngle;
-        float g = 0.847_058_83F;
-        g *= sunAngle;
-        float b = 1.0F;
-        b *= sunAngle;
-        return new Vec3(r, g, b);
-    }
-
     private void generateLightBrightnessTable() {
         this.lightBrightnessTable = new float[16];
         for (int lightLevel = 0; lightLevel <= 15; ++lightLevel) {
@@ -82,8 +61,8 @@ public class DimensionOverworld {
         return this.lightBrightnessTable[light];
     }
 
-    public Vec3 getBrightnessDependentFogColor(Vec3 biomeFogColor, float multiplier) {
-        return biomeFogColor.multiply(multiplier * 0.97 + 0.03, multiplier * 0.97 + 0.03, multiplier * 0.97 + 0.03);
+    public Vec3d getBrightnessDependentFogColor(Vec3d biomeFogColor, float multiplier) {
+        return biomeFogColor.scale(multiplier * 0.97 + 0.03);
     }
 
     public float[] getDuskDawnColors() {
@@ -92,10 +71,6 @@ public class DimensionOverworld {
 
     public MoonPhase getEclipsePhase() {
         return this.eclipsePhase;
-    }
-
-    public Vec3 getFogColor() {
-        return this.fogColor;
     }
 
     public Vec3f getLastFogColor() {
@@ -284,10 +259,7 @@ public class DimensionOverworld {
         float seasonDeclination = EarthHelper.sunSeasonalDeclination(dayTime);
         this.sunCelestialRadius = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(seasonDeclination);
         this.sunDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(seasonDeclination);
-        this.sunAltitude = EarthHelper.getSunAltitude(sinLatitude,
-                                                      cosLatitude,
-                                                      this.sunRightAscension * 360,
-                                                      this.sunCelestialRadius,
+        this.sunAltitude = EarthHelper.getSunAltitude(sinLatitude, cosLatitude, this.sunRightAscension * 360, this.sunCelestialRadius,
                                                       this.sunDeclinationOffset);
         Minecraft.getInstance().getProfiler().popPush("moon");
         this.moonRightAscension = EarthHelper.calculateMoonRightAscension(dayTime);
@@ -295,10 +267,7 @@ public class DimensionOverworld {
         this.moonCelestialRadius = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(monthlyDeclination);
         this.moonDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(monthlyDeclination);
         this.moonPhase = MoonPhase.byAngles(this.sunRightAscension * 360, this.moonRightAscension * 360);
-        this.moonAltitude = EarthHelper.getMoonAltitude(sinLatitude,
-                                                        cosLatitude,
-                                                        this.moonRightAscension * 360,
-                                                        this.moonCelestialRadius,
+        this.moonAltitude = EarthHelper.getMoonAltitude(sinLatitude, cosLatitude, this.moonRightAscension * 360, this.moonCelestialRadius,
                                                         this.moonDeclinationOffset);
         Minecraft.getInstance().getProfiler().popPush("eclipse");
         float dRightAscension = Mth.wrapDegrees(360 * (this.sunRightAscension - this.moonRightAscension));
@@ -323,17 +292,14 @@ public class DimensionOverworld {
                 }
                 dRightAscension = -dRightAscension;
                 this.isInLunarEclipse = true;
-                this.lunarEclipseDRightAscension = EarthHelper.getEclipseAmount(Math.signum(dRightAscension) *
-                                                                                dRightAscension *
-                                                                                dRightAscension *
-                                                                                7.0f / 9.0f);
+                this.lunarEclipseDRightAscension = EarthHelper.getEclipseAmount(
+                        Math.signum(dRightAscension) * dRightAscension * dRightAscension * 7.0f / 9.0f);
                 this.lunarEclipseDDeclination = EarthHelper.getEclipseAmount(dDeclination * dDeclination * dDeclination / 392.0f);
                 this.eclipsePhase = EarthHelper.phaseByEclipseIntensity(this.getLunarEclipseRightAscensionIndex(),
                                                                         this.getLunarEclipseDeclinationIndex());
             }
         }
         Minecraft.getInstance().getProfiler().popPush("effects");
-        this.fogColor = this.calculateFogColor();
         this.duskDawnColors = this.sunsetColors();
         //noinspection VariableNotUsedInsideIf
         if (this.duskDawnColors != null) {

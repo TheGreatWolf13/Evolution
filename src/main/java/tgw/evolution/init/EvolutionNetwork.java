@@ -104,5 +104,9 @@ public final class EvolutionNetwork {
         INSTANCE.registerMessage(increaseId(), PacketCSSyncServerConfig.class, PacketCSSyncServerConfig::encode, PacketCSSyncServerConfig::decode,
                                  PacketCSSyncServerConfig::handle);
         INSTANCE.registerMessage(increaseId(), PacketSCGC.class, PacketSCGC::encode, PacketSCGC::decode, PacketSCGC::handle);
+        INSTANCE.registerMessage(increaseId(), PacketCSCollision.class, PacketCSCollision::encode, PacketCSCollision::decode,
+                                 PacketCSCollision::handle);
+        INSTANCE.registerMessage(increaseId(), PacketCSSpecialHit.class, PacketCSSpecialHit::encode, PacketCSSpecialHit::decode,
+                                 PacketCSSpecialHit::handle);
     }
 }

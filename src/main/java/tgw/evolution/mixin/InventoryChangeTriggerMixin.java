@@ -19,7 +19,13 @@ public abstract class InventoryChangeTriggerMixin extends SimpleCriterionTrigger
     @Inject(method = "trigger(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/entity/player/Inventory;" +
                      "Lnet/minecraft/world/item/ItemStack;)V", at = @At("TAIL"))
     private void onTrigger(ServerPlayer player, Inventory inv, ItemStack stack, CallbackInfo ci) {
+        if (!player.isAlive()) {
+            player.reviveCaps();
+        }
         IToastData toast = player.getCapability(CapabilityToast.INSTANCE).orElseThrow(IllegalStateException::new);
         toast.trigger(player, stack);
+        if (!player.isAlive()) {
+            player.invalidateCaps();
+        }
     }
 }

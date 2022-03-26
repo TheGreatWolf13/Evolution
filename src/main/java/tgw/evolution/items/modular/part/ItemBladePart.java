@@ -1,7 +1,6 @@
 package tgw.evolution.items.modular.part;
 
 import net.minecraft.world.item.ItemStack;
-import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.capabilities.modular.part.BladePart;
 import tgw.evolution.capabilities.modular.part.IPart;
@@ -25,8 +24,8 @@ public class ItemBladePart extends ItemPart<PartTypes.Blade, BladePart> {
     }
 
     @Override
-    public IPart<PartTypes.Blade> getPartCap(ItemStack stack) {
-        return stack.getCapability(CapabilityModular.PART).orElse(BladePart.DUMMY);
+    public BladePart getPartCap(ItemStack stack) {
+        return BladePart.get(stack);
     }
 
     @Override

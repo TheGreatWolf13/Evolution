@@ -31,6 +31,7 @@ public final class EvolutionBlocks {
 
     //Placeholder
     public static final RegistryObject<Block> PLACEHOLDER_BLOCK = BLOCKS.register("placeholder_block", BlockPlaceholder::new);
+    public static final RegistryObject<Block> GLASS = BLOCKS.register("glass", BlockGlass::new);
     //Stick
     public static final RegistryObject<Block> STICK = BLOCKS.register("stick", () -> new BlockPlaceableItem(
             Block.Properties.of(Material.DECORATION).sound(SoundType.WOOD)));

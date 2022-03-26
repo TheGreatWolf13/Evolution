@@ -10,6 +10,7 @@ import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.Evolution;
 import tgw.evolution.inventory.SlotType;
 import tgw.evolution.util.UnregisteredFeatureException;
+import tgw.evolution.util.math.Units;
 
 import java.util.UUID;
 
@@ -40,15 +41,11 @@ public final class EvolutionAttributes {
     private static final UUID MASS_MOD_LEGGINGS = UUID.fromString("d12c48de-b027-4f50-931e-81e7184a78a6");
     private static final UUID MASS_MOD_CHESTPLATE = UUID.fromString("d12c48de-b027-4f50-931e-81e7184a78a7");
     private static final UUID MASS_MOD_HELMET = UUID.fromString("d12c48de-b027-4f50-931e-81e7184a78a8");
-    //Reach
-    private static final UUID REACH_MOD_MAINHAND = UUID.fromString("449b8c5d-47b0-4c67-a90e-758b956f2d3c");
     //Effects
     private static final UUID SLOW_FALLING_MOD = UUID.fromString("A5B6CF2A-2F7C-31EF-9022-7C3E7D5E6ABA");
 
-    public static final AttributeModifier SLOW_FALLING = new AttributeModifier(SLOW_FALLING_MOD,
-                                                                               "Slow falling acceleration reduction",
-                                                                               -0.02,
-                                                                               AttributeModifier.Operation.ADDITION);
+    public static final AttributeModifier SLOW_FALLING = new AttributeModifier(SLOW_FALLING_MOD, "Slow falling acceleration reduction",
+                                                                               Units.toMSUAcceleration(-8), AttributeModifier.Operation.ADDITION);
 
     private EvolutionAttributes() {
     }
@@ -100,15 +97,6 @@ public final class EvolutionAttributes {
             case HELMET -> new AttributeModifier(MASS_MOD_HELMET, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
             default -> throw new UnregisteredFeatureException("Unregistered slot for Attribute: " + slot);
         };
-    }
-
-    public static AttributeModifier reachModifier(double value, SlotType slot) {
-        switch (slot) {
-            case MAINHAND -> {
-                return new AttributeModifier(REACH_MOD_MAINHAND, "Reach Modifier", value, AttributeModifier.Operation.ADDITION);
-            }
-        }
-        throw new UnregisteredFeatureException("Unregistered slot for Attribute: " + slot);
     }
 
     private static RegistryObject<Attribute> register(String name, double value, double min, double max, boolean sync) {

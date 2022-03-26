@@ -4,9 +4,12 @@ import com.google.gson.JsonParseException;
 import com.mojang.datafixers.util.Either;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.*;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -19,10 +22,14 @@ import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.*;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.items.modular.ItemModularTool;
+import tgw.evolution.items.modular.part.ItemPart;
+import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.NBTTypes;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public final class ItemEvents {
 
@@ -36,11 +43,7 @@ public final class ItemEvents {
     }
 
     private static void addEasterEggs(List<Either<FormattedText, TooltipComponent>> tooltip, ItemStack stack) {
-        ClientEvents client = ClientEvents.getInstance();
-        if (client == null) {
-            return;
-        }
-        if (client.hasCtrlDown()) {
+        if (Screen.hasControlDown()) {
             Item item = stack.getItem();
             if (item instanceof ItemRock rock) {
                 switch (rock.getVariant()) {
@@ -92,6 +95,42 @@ public final class ItemEvents {
         add(tooltip, EvolutionTexts.capacity(container));
     }
 
+    public static <E extends LivingEntity> void damageItem(ItemStack stack, E entity, ItemModular.DamageCause cause, @Nullable EquipmentSlot slot) {
+        Consumer<E> onBreak = slot == null ? e -> {
+        } : e -> e.broadcastBreakEvent(slot);
+        if (stack.getItem() instanceof ItemModular modular) {
+            modular.hurtAndBreak(stack, cause, entity, onBreak);
+        }
+        else {
+            int amount = switch (cause) {
+                case BREAK_BLOCK, HIT_ENTITY -> 1;
+                case HIT_BLOCK -> 0;
+                case BREAK_BAD_BLOCK -> 2;
+            };
+            stack.hurtAndBreak(amount, entity, onBreak);
+        }
+    }
+
+    public static <E extends LivingEntity> void damageItem(ItemStack stack,
+                                                           E entity,
+                                                           ItemModular.DamageCause cause,
+                                                           @Nullable EquipmentSlot slot,
+                                                           @HarvestLevel int harvestLevel) {
+        Consumer<E> onBreak = slot == null ? e -> {
+        } : e -> e.broadcastBreakEvent(slot);
+        if (stack.getItem() instanceof ItemModular modular) {
+            modular.hurtAndBreak(stack, cause, entity, onBreak, harvestLevel);
+        }
+        else {
+            int amount = switch (cause) {
+                case BREAK_BLOCK, HIT_ENTITY -> 1;
+                case HIT_BLOCK -> 0;
+                case BREAK_BAD_BLOCK -> 2;
+            };
+            stack.hurtAndBreak(amount, entity, onBreak);
+        }
+    }
+
     public static void makeEvolutionTooltip(ItemStack stack, List<Either<FormattedText, TooltipComponent>> tooltip) {
         tooltip.clear();
         //Name
@@ -103,9 +142,7 @@ public final class ItemEvents {
         //Item specific information
         Item item = stack.getItem();
         boolean isAdvanced = Minecraft.getInstance().options.advancedItemTooltips;
-        item.appendHoverText(stack,
-                             Evolution.PROXY.getClientLevel(),
-                             TEMP_TOOLTIP_HOLDER,
+        item.appendHoverText(stack, Evolution.PROXY.getClientLevel(), TEMP_TOOLTIP_HOLDER,
                              isAdvanced ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL);
         for (Component comp : TEMP_TOOLTIP_HOLDER) {
             add(tooltip, comp);
@@ -147,23 +184,25 @@ public final class ItemEvents {
                 }
             }
         }
+        //Part
+        if (item instanceof ItemPart part) {
+            add(tooltip, EvolutionTexts.EMPTY);
+            part.getPartCap(stack).appendText(tooltip, 0);
+        }
         //Modular
         if (item instanceof ItemModular modular) {
-            ClientEvents client = ClientEvents.getInstance();
-            if (client != null) {
-                if (client.hasCtrlDown()) {
-                    add(tooltip, EvolutionTexts.EMPTY);
-                    //Show Materials
-                    modular.getModularCap(stack).appendTooltip(tooltip);
-                }
-                else {
-                    add(tooltip, EvolutionTexts.EMPTY);
-                    add(tooltip, EvolutionTexts.TOOLTIP_SHOW_PARTS);
-                }
+            if (Screen.hasControlDown()) {
+                add(tooltip, EvolutionTexts.EMPTY);
+                //Show Materials
+                modular.getModularCap(stack).appendTooltip(tooltip);
+            }
+            else {
+                add(tooltip, EvolutionTexts.EMPTY);
+                add(tooltip, EvolutionTexts.TOOLTIP_SHOW_PARTS);
             }
         }
         //Mass
-        if (item instanceof IMass mass) {
+        if (item instanceof IMass mass && !(item instanceof ItemPart)) {
             add(tooltip, EvolutionTexts.EMPTY);
             tooltip.add(Either.right(EvolutionTooltipMass.MAIN.mass(mass.getMass(stack))));
         }
@@ -174,7 +213,7 @@ public final class ItemEvents {
             add(tooltip, EvolutionTexts.TOOLTIP_TWO_HANDED);
             hasAddedLine = true;
         }
-        if (item instanceof IThrowable) {
+        if (item instanceof IThrowable throwable && throwable.isThrowable(stack)) {
             if (!hasAddedLine) {
                 add(tooltip, EvolutionTexts.EMPTY);
             }
@@ -228,9 +267,10 @@ public final class ItemEvents {
             }
             tooltip.add(Either.right(EvolutionTooltipDamage.INSTANCE.damage(melee.getDamageType(stack), melee.getAttackDamage(stack))));
             tooltip.add(Either.right(EvolutionTooltipSpeed.INSTANCE.speed(melee.getAttackSpeed(stack))));
-            tooltip.add(Either.right(EvolutionTooltipReach.INSTANCE.reach(melee.getReach(stack))));
             if (item instanceof ItemModularTool tool) {
-                tooltip.add(Either.right(EvolutionTooltipMining.INSTANCE.mining(tool.getMiningSpeed(stack))));
+                if (!tool.getModularCap(stack).getEffectiveMaterials().isEmpty()) {
+                    tooltip.add(Either.right(EvolutionTooltipMining.INSTANCE.mining(tool.getMiningSpeed(stack))));
+                }
             }
         }
         //Additional Equipment stats
@@ -241,9 +281,8 @@ public final class ItemEvents {
                     add(tooltip, EvolutionTexts.EMPTY);
                     hasAddedLine = true;
                 }
-                add(tooltip,
-                    new TranslatableComponent("evolution.tooltip.slot." + ((IAdditionalEquipment) item).getValidSlot().getName()).withStyle(
-                            ChatFormatting.GRAY));
+                add(tooltip, new TranslatableComponent("evolution.tooltip.slot." + ((IAdditionalEquipment) item).getValidSlot().getName()).withStyle(
+                        ChatFormatting.GRAY));
                 hasAddedSlot = true;
                 tooltip.add(Either.right(EvolutionTooltipHeat.INSTANCE.heat(heatResistant.getHeatResistance())));
             }
@@ -264,7 +303,7 @@ public final class ItemEvents {
             add(tooltip, EvolutionTexts.TOOLTIP_UNBREAKABLE);
         }
         //Durability
-        if (stack.getItem() instanceof IDurability durability) {
+        if (stack.getItem() instanceof IDurability durability && !(item instanceof ItemPart)) {
             tooltip.add(Either.right(EvolutionTooltipDurability.MAIN.durability(durability.displayDurability(stack))));
         }
         addEasterEggs(tooltip, stack);

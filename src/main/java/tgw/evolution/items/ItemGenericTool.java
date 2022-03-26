@@ -15,12 +15,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
-import net.minecraftforge.common.ForgeMod;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.ItemMaterial;
 import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.PlayerHelper;
+import tgw.evolution.util.constants.HarvestLevel;
 
 import javax.annotation.Nonnull;
 import java.util.Set;
@@ -76,7 +76,6 @@ public abstract class ItemGenericTool extends ItemModular implements IDurability
             case MAINHAND -> {
                 builder.put(Attributes.ATTACK_DAMAGE, EvolutionAttributes.attackDamageModifier(this.getAttackDamage(stack), SlotType.MAINHAND));
                 builder.put(Attributes.ATTACK_SPEED, EvolutionAttributes.attackSpeedModifier(this.getAttackSpeed(stack), SlotType.MAINHAND));
-                builder.put(ForgeMod.REACH_DISTANCE.get(), EvolutionAttributes.reachModifier(this.getReach(stack), SlotType.MAINHAND));
                 builder.put(EvolutionAttributes.MASS.get(), EvolutionAttributes.massModifier(this.getMass(stack), SlotType.MAINHAND));
             }
             case OFFHAND -> builder.put(EvolutionAttributes.MASS.get(), EvolutionAttributes.massModifier(this.getMass(stack), SlotType.OFFHAND));
@@ -97,12 +96,11 @@ public abstract class ItemGenericTool extends ItemModular implements IDurability
     }
 
     @Override
-    public double getReach(ItemStack stack) {
-        return this.reach() - PlayerHelper.REACH_DISTANCE;
-    }
-
-    @Override
-    public <T extends LivingEntity> void hurtAndBreak(ItemStack stack, DamageCause cause, T entity, Consumer<T> onBroken) {
+    public <T extends LivingEntity> void hurtAndBreak(ItemStack stack,
+                                                      DamageCause cause,
+                                                      T entity,
+                                                      Consumer<T> onBroken,
+                                                      @HarvestLevel int harvestLevel) {
         //TODO implementation
 
     }

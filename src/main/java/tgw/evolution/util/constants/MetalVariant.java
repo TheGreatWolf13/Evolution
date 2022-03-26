@@ -6,7 +6,7 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.UnregisteredFeatureException;
 
 public enum MetalVariant {
-    COPPER(8_920, HarvestLevel.LOW_METAL, 30.0F, 10.0F, 1.6f, true);
+    COPPER(8_920, HarvestLevels.LOW_METAL, 30.0F, 10.0F, 1.6f, true);
     private final int density;
     private final float frictionCoef;
     private final float hardness;

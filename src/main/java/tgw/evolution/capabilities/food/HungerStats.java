@@ -193,7 +193,10 @@ public class HungerStats implements IHunger {
     }
 
     private void setSaturationExhaustion(float saturationExhaustion) {
-        //TODO
+        if (saturationExhaustion < 0) {
+            saturationExhaustion = 0;
+        }
+        this.saturationExhaustion = saturationExhaustion;
     }
 
     @Override
@@ -252,6 +255,9 @@ public class HungerStats implements IHunger {
             }
             if (player.onClimbable()) {
                 modifier += 0.1f;
+            }
+            if (player.hasEffect(EvolutionEffects.SHIVERING.get())) {
+                modifier += 0.15f;
             }
             double baseMass = player.getAttributeBaseValue(EvolutionAttributes.MASS.get());
             double totalMass = player.getAttributeValue(EvolutionAttributes.MASS.get());

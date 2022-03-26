@@ -24,7 +24,7 @@ import tgw.evolution.blocks.tileentities.TEFirewoodPile;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.items.ItemFirewood;
-import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.constants.HarvestLevels;
 import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nullable;
@@ -53,13 +53,7 @@ public class BlockFirewoodPile extends BlockMass implements IReplaceable, Entity
                 BlockUtils.dropItemStack(level, pos, stack);
             }
             else {
-                level.playSound(null,
-                                pos.getX() + 0.5f,
-                                pos.getY() + 0.5f,
-                                pos.getZ() + 0.5f,
-                                SoundEvents.ITEM_PICKUP,
-                                SoundSource.PLAYERS,
-                                0.2f,
+                level.playSound(null, pos.getX() + 0.5f, pos.getY() + 0.5f, pos.getZ() + 0.5f, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f,
                                 ((level.random.nextFloat() - level.random.nextFloat()) * 0.7f + 1) * 2);
             }
             if (state.getValue(FIREWOOD_COUNT) == 1) {
@@ -136,7 +130,7 @@ public class BlockFirewoodPile extends BlockMass implements IReplaceable, Entity
 
     @Override
     public int getHarvestLevel(BlockState state) {
-        return HarvestLevel.UNBREAKABLE;
+        return HarvestLevels.UNBREAKABLE;
     }
 
     @Override

@@ -8,25 +8,28 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.CubicSampler;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.material.FogType;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.events.ClientEvents;
+import tgw.evolution.patches.obj.IVec3dFetcher;
 import tgw.evolution.util.earth.EarthHelper;
+import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.math.Vec3f;
 
 @Mixin(FogRenderer.class)
 public abstract class FogRendererMixin {
+
+    private static final double[] GAUSSIAN_SAMPLE_KERNEL = {0, 1, 4, 6, 4, 1, 0};
+    private static final Vec3d VEC = new Vec3d();
 
     @Shadow
     private static long biomeChangedTime;
@@ -45,6 +48,43 @@ public abstract class FogRendererMixin {
 
     @Shadow
     private static float fogBlue;
+
+    private static Vec3d gaussianSampleVec3(double posX, double posY, double posZ, IVec3dFetcher fetcher) {
+        int i = Mth.floor(posX);
+        int j = Mth.floor(posY);
+        int k = Mth.floor(posZ);
+        double dx = posX - i;
+        double dy = posY - j;
+        double dz = posZ - k;
+        double totalScale = 0;
+        double vecX = 0;
+        double vecY = 0;
+        double vecZ = 0;
+        Vec3d fetcherVec = VEC;
+        for (int x = 0; x < 6; x++) {
+            double scaleX = Mth.lerp(dx, GAUSSIAN_SAMPLE_KERNEL[x + 1], GAUSSIAN_SAMPLE_KERNEL[x]);
+            int di = i - 2 + x;
+            for (int y = 0; y < 6; y++) {
+                double scaleY = Mth.lerp(dy, GAUSSIAN_SAMPLE_KERNEL[y + 1], GAUSSIAN_SAMPLE_KERNEL[y]);
+                int dj = j - 2 + y;
+                for (int z = 0; z < 6; z++) {
+                    double scaleZ = Mth.lerp(dz, GAUSSIAN_SAMPLE_KERNEL[z + 1], GAUSSIAN_SAMPLE_KERNEL[z]);
+                    int dk = k - 2 + z;
+                    double scale = scaleX * scaleY * scaleZ;
+                    totalScale += scale;
+                    Vec3d fetch = fetcher.fetch(di, dj, dk, fetcherVec).scale(scale);
+                    vecX += fetch.getX();
+                    vecY += fetch.getY();
+                    vecZ += fetch.getZ();
+                }
+            }
+        }
+        double finalScale = 1.0 / totalScale;
+        vecX *= finalScale;
+        vecY *= finalScale;
+        vecZ *= finalScale;
+        return fetcherVec.set(vecX, vecY, vecZ);
+    }
 
     /**
      * @author MGSchultz
@@ -103,25 +143,26 @@ public abstract class FogRendererMixin {
                 float skyRed = skyColor.x;
                 float skyGreen = skyColor.y;
                 float skyBlue = skyColor.z;
-                Vec3 fogColor;
+                Vec3d fogColor;
                 if (ClientEvents.getInstance().getDimension() != null) {
                     BiomeManager biomeManager = level.getBiomeManager();
-                    Vec3 samplePos = camera.getPosition().subtract(2, 2, 2).scale(0.25);
+                    double posX = (camera.getPosition().x - 2) * 0.25;
+                    double posY = (camera.getPosition().y - 2) * 0.25;
+                    double posZ = (camera.getPosition().z - 2) * 0.25;
                     float skyFogMult = ClientEvents.getInstance().getDimension().getSunBrightness(partialTicks);
-                    fogColor = CubicSampler.gaussianSampleVec3(samplePos,
-                                                               (x, y, z) -> ClientEvents.getInstance()
-                                                                                        .getDimension()
-                                                                                        .getBrightnessDependentFogColor(Vec3.fromRGB24(biomeManager.getNoiseBiomeAtQuart(
-                                                                                                x,
-                                                                                                y,
-                                                                                                z).getFogColor()), skyFogMult));
+                    IVec3dFetcher fetcher = (x, y, z, vec) -> ClientEvents.getInstance()
+                                                                          .getDimension()
+                                                                          .getBrightnessDependentFogColor(Vec3d.fromRGB24(
+                                                                                                                  biomeManager.getNoiseBiomeAtQuart(x, y, z).getFogColor(), vec),
+                                                                                                          skyFogMult);
+                    fogColor = gaussianSampleVec3(posX, posY, posZ, fetcher);
                 }
                 else {
-                    fogColor = Vec3.ZERO;
+                    fogColor = Vec3d.ZERO;
                 }
-                fogRed = (float) fogColor.x();
-                fogGreen = (float) fogColor.y();
-                fogBlue = (float) fogColor.z();
+                fogRed = (float) fogColor.getX();
+                fogGreen = (float) fogColor.getY();
+                fogBlue = (float) fogColor.getZ();
                 fogRed += (skyRed - fogRed) * f4;
                 fogGreen += (skyGreen - fogGreen) * f4;
                 fogBlue += (skyBlue - fogBlue) * f4;

@@ -18,7 +18,7 @@ public abstract class InventoryMixin {
     @OnlyIn(Dist.CLIENT)
     @Inject(method = "swapPaint", at = @At("HEAD"), cancellable = true)
     private void onSwapPaint(double scrollAmount, CallbackInfo ci) {
-        if (((IMinecraftPatch) Minecraft.getInstance()).isMultiplayerPaused() || ClientEvents.getInstance().isMainhandCustomAttacking()) {
+        if (((IMinecraftPatch) Minecraft.getInstance()).isMultiplayerPaused() || ClientEvents.getInstance().isMainhandInSpecialAttack()) {
             ci.cancel();
         }
     }

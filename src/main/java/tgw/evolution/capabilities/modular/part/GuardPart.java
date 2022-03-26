@@ -5,6 +5,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.item.ItemStack;
+import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 
 import java.util.List;
@@ -15,6 +17,10 @@ public class GuardPart implements IPart<PartTypes.Guard> {
     private MaterialInstance material = MaterialInstance.DUMMY;
     private int spentDurability;
     private PartTypes.Guard type = PartTypes.Guard.NULL;
+
+    public static GuardPart get(ItemStack stack) {
+        return (GuardPart) stack.getCapability(CapabilityModular.PART).orElse(DUMMY);
+    }
 
     @Override
     public void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num) {

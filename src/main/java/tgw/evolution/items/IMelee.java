@@ -13,6 +13,4 @@ public interface IMelee {
 
     @Nonnull
     EvolutionDamage.Type getDamageType(ItemStack stack);
-
-    double getReach(ItemStack stack);
 }

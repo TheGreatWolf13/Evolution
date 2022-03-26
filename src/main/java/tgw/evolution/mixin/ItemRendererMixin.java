@@ -88,9 +88,15 @@ public abstract class ItemRendererMixin {
     public void renderModelLists(BakedModel model, ItemStack stack, int light, int overlay, PoseStack matrices, VertexConsumer builder) {
         XoRoShiRoRandom random = this.random;
         for (Direction direction : DirectionUtil.ALL) {
-            this.renderQuadList(matrices, builder, model.getQuads(null, direction, random.setSeedAndReturn(42L)), stack, light, overlay);
+            List<BakedQuad> quads = model.getQuads(null, direction, random.setSeedAndReturn(42L));
+            if (!quads.isEmpty()) {
+                this.renderQuadList(matrices, builder, quads, stack, light, overlay);
+            }
         }
-        this.renderQuadList(matrices, builder, model.getQuads(null, null, random.setSeedAndReturn(42L)), stack, light, overlay);
+        List<BakedQuad> quads = model.getQuads(null, null, random.setSeedAndReturn(42L));
+        if (!quads.isEmpty()) {
+            this.renderQuadList(matrices, builder, quads, stack, light, overlay);
+        }
     }
 
     /**
@@ -107,11 +113,11 @@ public abstract class ItemRendererMixin {
             if (notEmpty && quad.isTinted()) {
                 color = this.itemColors.getColor(stack, quad.getTintIndex());
             }
-            float a = (color >> 24 & 255) / 255.0f;
             float r = (color >> 16 & 255) / 255.0F;
             float g = (color >> 8 & 255) / 255.0F;
             float b = (color & 255) / 255.0F;
             if (stack.getItem() instanceof IItemTemperature) {
+                float a = (color >> 24 & 255) / 255.0f;
                 addVertexDataTemperature(builder, pose, quad, r, g, b, a, light, overlay);
             }
             else {

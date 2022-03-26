@@ -25,8 +25,12 @@ public final class EvolutionEffects {
     //TODO
     public static final RegistryObject<MobEffect> OVEREAT = EFFECTS.register("overeat", () -> new EffectGeneric(MobEffectCategory.HARMFUL, 0));
     public static final RegistryObject<MobEffect> SATURATION = EFFECTS.register("saturation", EffectSaturation::new);
+    public static final RegistryObject<MobEffect> SHIVERING = EFFECTS.register("shivering",
+                                                                               () -> new EffectGeneric(MobEffectCategory.NEUTRAL, 0xee_eeee));
     //TODO
     public static final RegistryObject<MobEffect> STARVATION = EFFECTS.register("starvation", () -> new EffectGeneric(MobEffectCategory.HARMFUL, 0));
+    public static final RegistryObject<MobEffect> SWEATING = EFFECTS.register("sweating",
+                                                                              () -> new EffectGeneric(MobEffectCategory.NEUTRAL, 0x0067_dd));
     public static final RegistryObject<MobEffect> THIRST = EFFECTS.register("thirst", () -> new EffectGeneric(MobEffectCategory.HARMFUL, 0x45_ff4b));
     public static final RegistryObject<MobEffect> WATER_INTOXICATION = EFFECTS.register("water_intoxication", EffectWaterIntoxication::new);
 

@@ -74,6 +74,10 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
     }
 
     @Override
+    protected void onBlockHit(BlockState state) {
+    }
+
+    @Override
     protected void onEntityHit(EntityHitResult rayTraceResult) {
         SoundEvent soundevent = SoundEvents.ARROW_HIT;
         this.playSound(soundevent, 1.0F, 1.0F);
@@ -93,11 +97,7 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
         super.tick();
         if (this.isInWater()) {
             BlockPos pos = this.blockPosition();
-            this.level.playSound(null,
-                                 pos,
-                                 SoundEvents.FIRE_EXTINGUISH,
-                                 SoundSource.BLOCKS,
-                                 1.0F,
+            this.level.playSound(null, pos, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0F,
                                  2.6F + (this.random.nextFloat() - this.random.nextFloat()) * 0.8F);
             BlockUtils.dropItemStack(this.level, pos, new ItemStack(EvolutionItems.torch_unlit.get()));
             this.discard();

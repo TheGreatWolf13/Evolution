@@ -6,6 +6,10 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
+import it.unimi.dsi.fastutil.objects.ReferenceList;
 import net.minecraft.Util;
 import net.minecraft.client.*;
 import net.minecraft.client.gui.GuiComponent;
@@ -78,9 +82,7 @@ import tgw.evolution.util.hitbox.Matrix3d;
 import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Random;
 
 @OnlyIn(Dist.CLIENT)
@@ -92,16 +94,18 @@ public class ClientRenderer {
     public static ClientRenderer instance;
     private static int slotMainHand;
     private final ClientEvents client;
-    private final List<ClientEffectInstance> effects = new ArrayList<>();
+    private final ObjectList<ClientEffectInstance> effects = new ObjectArrayList<>();
     private final EntityRenderDispatcher entityRenderDispatcher;
     private final byte[] hungerShakeAligment = new byte[10];
     private final ItemRenderer itemRenderer;
     private final Minecraft mc;
     private final Random rand = new Random();
-    private final List<Runnable> runnables = new ArrayList<>();
+    private final ReferenceList<Runnable> runnables = new ReferenceArrayList<>();
     private final byte[] thirstShakeAligment = new byte[10];
     public boolean isAddingEffect;
     public boolean isRenderingPlayer;
+    public boolean shouldRenderLeftArm = true;
+    public boolean shouldRenderRightArm = true;
     private ItemStack currentMainhandItem = ItemStack.EMPTY;
     private ItemStack currentOffhandItem = ItemStack.EMPTY;
     private long healthUpdateCounter;
@@ -399,7 +403,7 @@ public class ClientRenderer {
                                                   InteractionHand hand,
                                                   HumanoidArm arm,
                                                   ItemStack stack) {
-        float progress = ((ILivingEntityPatch) player).getMainhandCustomAttackProgress(partialTicks);
+        float progress = ((ILivingEntityPatch) player).getMainhandSpecialAttackProgress(partialTicks);
         matrices.mulPose(Vector3f.XP.rotationDegrees(-90));
         matrices.mulPose(Vector3f.YP.rotationDegrees(-90));
         matrices.translate(progress / 2, 0, progress);
@@ -733,8 +737,8 @@ public class ClientRenderer {
                             }
                         }
                         else if (this.hitmarkerTick > 0) {
-                            if (this.hitmarkerTick <= 5) {
-                                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, (this.hitmarkerTick - partialTicks) / 5);
+                            if (this.hitmarkerTick < 5) {
+                                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, (this.hitmarkerTick + partialTicks) / 5);
                             }
                             blit(matrices, (width - 17) / 2, (height - 17) / 2, 84, 94, 17, 17);
                         }
@@ -1260,8 +1264,8 @@ public class ClientRenderer {
                     else if (InputHooks.isMainhandLunging) {
                         this.transformLungingFirstPerson(matrices, partialTicks, hand, stack);
                     }
-                    else if (this.client.isMainhandCustomAttacking()) {
-                        if (((ILivingEntityPatch) player).getMainhandCustomAttackType() == ICustomAttack.AttackType.SWORD) {
+                    else if (this.client.isMainhandInSpecialAttack()) {
+                        if (((ILivingEntityPatch) player).getMainhandSpecialAttackType() == ISpecialAttack.BasicAttackType.SWORD) {
                             transformSwordFirstPerson(matrices, player, partialTicks, hand, handSide, stack);
                         }
                     }
@@ -1733,7 +1737,7 @@ public class ClientRenderer {
             this.offhandStack = offhandStack.copy();
         }
         if (InputHooks.isMainhandLunging) {
-            ClientEvents.MISS_TIME.set(this.mc, 1);
+            this.mc.missTime = 1;
             this.client.performLungeMovement();
             this.mainhandLungingTicks++;
             if (this.mainhandLungingTicks == 4) {

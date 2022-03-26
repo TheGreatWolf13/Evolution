@@ -131,6 +131,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Final
     public LevelRenderer levelRenderer;
     @Shadow
+    public int missTime;
+    @Shadow
     @Final
     public MouseHandler mouseHandler;
     @Shadow
@@ -150,8 +152,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     @Final
     public TextureManager textureManager;
-    @Shadow
-    protected int missTime;
     private int cancelUseCooldown;
     @Shadow
     @Nullable
@@ -395,11 +395,13 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         while (this.options.keySmoothCamera.consumeClick()) {
             this.options.smoothCamera = !this.options.smoothCamera;
         }
+        boolean isMainhandSpecialAttacking = ClientEvents.getInstance().isMainhandInSpecialAttack();
+        boolean isOffhandSpecialAttacking = ClientEvents.getInstance().isOffhandInSpecialAttack();
         for (int slot = 0; slot < 9; slot++) {
             boolean isSaveToolbarDown = this.options.keySaveHotbarActivator.isDown();
             boolean isLoadToolbarDown = this.options.keyLoadHotbarActivator.isDown();
             if (this.options.keyHotbarSlots[slot].consumeClick()) {
-                if (!this.multiplayerPause && !ClientEvents.getInstance().isMainhandCustomAttacking()) {
+                if (!this.multiplayerPause && !isMainhandSpecialAttacking) {
                     if (this.player.isSpectator()) {
                         this.gui.getSpectatorGui().onHotbarSelected(slot);
                     }
@@ -427,7 +429,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
         }
         while (this.options.keyInventory.consumeClick()) {
-            if (!this.multiplayerPause) {
+            if (!this.multiplayerPause && !isMainhandSpecialAttacking && !isOffhandSpecialAttacking) {
                 if (this.gameMode.isServerControlledInventory()) {
                     this.player.sendOpenInventory();
                 }
@@ -443,18 +445,17 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             this.setScreen(new AdvancementsScreen(this.player.connection.getAdvancements()));
         }
         while (this.options.keySwapOffhand.consumeClick()) {
-            if (!this.multiplayerPause) {
+            if (!this.multiplayerPause && !isMainhandSpecialAttacking && !isOffhandSpecialAttacking) {
                 if (!this.player.isSpectator()) {
                     //noinspection ObjectAllocationInLoop
                     this.getConnection()
-                        .send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND,
-                                                                BlockPos.ZERO,
+                        .send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ZERO,
                                                                 Direction.DOWN));
                 }
             }
         }
         while (this.options.keyDrop.consumeClick()) {
-            if (!this.multiplayerPause) {
+            if (!this.multiplayerPause && !isMainhandSpecialAttacking) {
                 if (!this.player.isSpectator() && this.player.drop(Screen.hasControlDown())) {
                     this.player.swing(InteractionHand.MAIN_HAND);
                 }
@@ -478,9 +479,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
             while (this.options.keyAttack.consumeClick()) {
                 if (!this.multiplayerPause) {
-                    Item usedItem = this.player.getUseItem().getItem();
-                    if (usedItem instanceof IThrowable) {
-                        if (((IThrowable) usedItem).isCancelable() && this.cancelUseCooldown == 0) {
+                    ItemStack usedStack = this.player.getUseItem();
+                    if (usedStack.getItem() instanceof ICancelableUse cancelable) {
+                        if (cancelable.isCancelable(usedStack) && this.cancelUseCooldown == 0) {
                             this.player.stopUsingItem();
                             this.cancelUseCooldown = 20;
                             //noinspection ObjectAllocationInLoop
@@ -510,16 +511,16 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                                     InputHooks.isMainhandLungeInProgress = true;
                                     LungeChargeInfo lunge = ClientEvents.ABOUT_TO_LUNGE_PLAYERS.get(this.player.getId());
                                     if (lunge == null) {
-                                        ClientEvents.ABOUT_TO_LUNGE_PLAYERS.put(this.player.getId(),
-                                                                                new LungeChargeInfo(InteractionHand.MAIN_HAND,
-                                                                                                    this.player.getMainHandItem(),
-                                                                                                    lungeFullTime - lungeMinTime));
+                                        ClientEvents.ABOUT_TO_LUNGE_PLAYERS.put(this.player.getId(), new LungeChargeInfo(InteractionHand.MAIN_HAND,
+                                                                                                                         this.player.getMainHandItem(),
+                                                                                                                         lungeFullTime -
+                                                                                                                         lungeMinTime));
                                     }
                                     else {
                                         lunge.addInfo(InteractionHand.MAIN_HAND, this.player.getMainHandItem(), lungeFullTime - lungeMinTime);
                                     }
-                                    EvolutionNetwork.INSTANCE.sendToServer(new PacketCSStartLunge(InteractionHand.MAIN_HAND,
-                                                                                                  lungeFullTime - lungeMinTime));
+                                    EvolutionNetwork.INSTANCE.sendToServer(
+                                            new PacketCSStartLunge(InteractionHand.MAIN_HAND, lungeFullTime - lungeMinTime));
                                 }
                             }
                             if (InputHooks.getAttackKeyDownTicks() >= lungeFullTime) {
@@ -566,16 +567,16 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                                     InputHooks.isOffhandLungeInProgress = true;
                                     LungeChargeInfo lunge = ClientEvents.ABOUT_TO_LUNGE_PLAYERS.get(this.player.getId());
                                     if (lunge == null) {
-                                        ClientEvents.ABOUT_TO_LUNGE_PLAYERS.put(this.player.getId(),
-                                                                                new LungeChargeInfo(InteractionHand.OFF_HAND,
-                                                                                                    this.player.getOffhandItem(),
-                                                                                                    lungeFullTime - lungeMinTime));
+                                        ClientEvents.ABOUT_TO_LUNGE_PLAYERS.put(this.player.getId(), new LungeChargeInfo(InteractionHand.OFF_HAND,
+                                                                                                                         this.player.getOffhandItem(),
+                                                                                                                         lungeFullTime -
+                                                                                                                         lungeMinTime));
                                     }
                                     else {
                                         lunge.addInfo(InteractionHand.OFF_HAND, this.player.getOffhandItem(), lungeFullTime - lungeMinTime);
                                     }
-                                    EvolutionNetwork.INSTANCE.sendToServer(new PacketCSStartLunge(InteractionHand.OFF_HAND,
-                                                                                                  lungeFullTime - lungeMinTime));
+                                    EvolutionNetwork.INSTANCE.sendToServer(
+                                            new PacketCSStartLunge(InteractionHand.OFF_HAND, lungeFullTime - lungeMinTime));
                                 }
                             }
                             if (InputHooks.useKeyDownTicks >= lungeFullTime) {
@@ -830,11 +831,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         this.profiler.push("fpsUpdate");
         while (Util.getMillis() >= this.lastTime + 1_000L) {
             fps = this.frames;
-            this.fpsString = String.format("%d fps T: %s%s%s%s B: %d",
-                                           fps,
+            this.fpsString = String.format("%d fps T: %s%s%s%s B: %d", fps,
                                            this.options.framerateLimit == Option.FRAMERATE_LIMIT.getMaxValue() ? "inf" : this.options.framerateLimit,
-                                           this.options.enableVsync ? " vsync" : "",
-                                           this.options.graphicsMode,
+                                           this.options.enableVsync ? " vsync" : "", this.options.graphicsMode,
                                            this.options.renderClouds == CloudStatus.OFF ?
                                            "" :
                                            this.options.renderClouds == CloudStatus.FAST ? " fast-clouds" : " fancy-clouds",
@@ -874,18 +873,17 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             if (!this.player.isHandsBusy()) {
                 InputEvent.ClickInputEvent inputEvent = ForgeHooksClient.onClickInput(0, this.options.keyAttack, InteractionHand.MAIN_HAND);
                 ItemStack mainhandStack = this.player.getMainHandItem();
-                Item mainhandItem = mainhandStack.getItem();
-                boolean hasCustomAttack = mainhandItem instanceof ICustomAttack;
+                ISpecialAttack specialAttack = mainhandStack.getItem() instanceof ISpecialAttack special ? special : null;
                 if (!inputEvent.isCanceled()) {
                     switch (this.hitResult.getType()) {
                         case ENTITY: {
                             if (this.gameMode.getPlayerMode() != GameType.SPECTATOR) {
-                                if (!hasCustomAttack) {
+                                if (specialAttack == null) {
                                     ClientEvents.getInstance().leftMouseClick();
                                 }
                                 else {
                                     ClientEvents.getInstance()
-                                                .startCustomAttack(((ICustomAttack) mainhandItem).getAttackType(), InteractionHand.MAIN_HAND);
+                                                .startSpecialAttack(specialAttack.getBasicAttackType(mainhandStack), InteractionHand.MAIN_HAND);
                                 }
                             }
                             else {
@@ -898,9 +896,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                             BlockPos hitPos = blockRayTrace.getBlockPos();
                             if (!this.level.isEmptyBlock(hitPos)) {
                                 this.gameMode.startDestroyBlock(hitPos, blockRayTrace.getDirection());
-                                if (hasCustomAttack) {
+                                if (specialAttack != null) {
                                     ClientEvents.getInstance()
-                                                .startCustomAttack(((ICustomAttack) mainhandItem).getAttackType(), InteractionHand.MAIN_HAND);
+                                                .startSpecialAttack(specialAttack.getBasicAttackType(mainhandStack), InteractionHand.MAIN_HAND);
                                 }
                                 break;
                             }
@@ -909,20 +907,20 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                             if (this.gameMode.hasMissTime()) {
                                 this.missTime = 10;
                             }
-                            if (!hasCustomAttack) {
+                            if (specialAttack == null) {
                                 ClientEvents.getInstance().leftMouseClick();
                                 ForgeHooks.onEmptyLeftClick(this.player);
                             }
                             else {
                                 ClientEvents.getInstance()
-                                            .startCustomAttack(((ICustomAttack) mainhandItem).getAttackType(), InteractionHand.MAIN_HAND);
+                                            .startSpecialAttack(specialAttack.getBasicAttackType(mainhandStack), InteractionHand.MAIN_HAND);
                             }
                             break;
                         }
                     }
                 }
                 if (inputEvent.shouldSwingHand()) {
-                    if (!hasCustomAttack) {
+                    if (specialAttack == null) {
                         ClientEvents.getInstance().swingArm(InteractionHand.MAIN_HAND);
                         this.player.swing(InteractionHand.MAIN_HAND);
                     }

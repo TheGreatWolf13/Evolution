@@ -15,7 +15,7 @@ import net.minecraft.world.level.material.Material;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.BlockFlags;
-import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.constants.HarvestLevels;
 import tgw.evolution.util.constants.WoodVariant;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
@@ -88,7 +88,7 @@ public class BlockLog extends BlockXYZAxis {
 
     @Override
     public int getHarvestLevel(BlockState state) {
-        return HarvestLevel.STONE;
+        return HarvestLevels.STONE;
     }
 
     @Override

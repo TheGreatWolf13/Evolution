@@ -1,5 +1,8 @@
 package tgw.evolution.util.constants;
 
+import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
+import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
+import it.unimi.dsi.fastutil.bytes.Byte2ReferenceOpenHashMap;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import tgw.evolution.init.EvolutionBlocks;
@@ -28,6 +31,16 @@ public enum WoodVariant implements IVariant {
     WILLOW(17, "willow", 500, 7_850_000);
 
     public static final WoodVariant[] VALUES = values();
+    private static final Byte2ReferenceMap<WoodVariant> REGISTRY;
+
+    static {
+        Byte2ReferenceMap<WoodVariant> map = new Byte2ReferenceOpenHashMap<>();
+        for (WoodVariant variant : VALUES) {
+            map.put(variant.id, variant);
+        }
+        REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+    }
+
     private final int density;
     private final byte id;
     private final String name;
@@ -41,27 +54,11 @@ public enum WoodVariant implements IVariant {
     }
 
     public static WoodVariant byId(byte id) {
-        return switch (id) {
-            case 0 -> ACACIA;
-            case 1 -> ASPEN;
-            case 2 -> BIRCH;
-            case 3 -> CEDAR;
-            case 4 -> EBONY;
-            case 5 -> ELM;
-            case 6 -> EUCALYPTUS;
-            case 7 -> FIR;
-            case 8 -> KAPOK;
-            case 9 -> MANGROVE;
-            case 10 -> MAPLE;
-            case 11 -> OAK;
-            case 12 -> OLD_OAK;
-            case 13 -> PALM;
-            case 14 -> PINE;
-            case 15 -> REDWOOD;
-            case 16 -> SPRUCE;
-            case 17 -> WILLOW;
-            default -> throw new UnregisteredFeatureException("Unregistered variant for id: " + id);
-        };
+        WoodVariant variant = REGISTRY.get(id);
+        if (variant == null) {
+            throw new UnregisteredFeatureException("Unregistered variant for id: " + id);
+        }
+        return variant;
     }
 
     public Block getChoppingBlock() {

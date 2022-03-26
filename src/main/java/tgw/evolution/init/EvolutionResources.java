@@ -1,16 +1,15 @@
 package tgw.evolution.init;
 
+import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
+import it.unimi.dsi.fastutil.objects.ReferenceList;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.InventoryMenu;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.modular.part.IPartType;
-import tgw.evolution.util.DoubleEnumMap;
+import tgw.evolution.util.BiEnumMap;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.constants.WoodVariant;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static tgw.evolution.capabilities.modular.part.PartTypes.*;
 
@@ -70,34 +69,30 @@ public final class EvolutionResources {
                                                             Evolution.getResource("item/slot_tactical")};
     //Models
     //      Modular
-    public static final List<ModelResourceLocation> MODULAR_MODELS = new ArrayList<>();
+    public static final ReferenceList<ModelResourceLocation> MODULAR_MODELS = new ReferenceArrayList<>();
+    public static final ModelResourceLocation TOOL_SWEEP = new ModelResourceLocation(Evolution.getResource("modular_tool_sweep"), "inventory");
+    public static final ModelResourceLocation TOOL_THROWING = new ModelResourceLocation(Evolution.getResource("modular_tool_throwing"), "inventory");
     //          Blade
-    public static final DoubleEnumMap<Blade, ItemMaterial, ModelResourceLocation> MODULAR_BLADES = new DoubleEnumMap<>(Blade.class,
-                                                                                                                       ItemMaterial.class);
-    public static final DoubleEnumMap<Blade, ItemMaterial, ModelResourceLocation> MODULAR_BLADES_SHARP = new DoubleEnumMap<>(Blade.class,
-                                                                                                                             ItemMaterial.class);
+    public static final BiEnumMap<Blade, ItemMaterial, ModelResourceLocation> MODULAR_BLADES = new BiEnumMap<>(Blade.class, ItemMaterial.class);
+    public static final BiEnumMap<Blade, ItemMaterial, ModelResourceLocation> MODULAR_BLADES_SHARP = new BiEnumMap<>(Blade.class, ItemMaterial.class);
     //          Guard
-    public static final DoubleEnumMap<Guard, ItemMaterial, ModelResourceLocation> MODULAR_GUARDS = new DoubleEnumMap<>(Guard.class,
-                                                                                                                       ItemMaterial.class);
+    public static final BiEnumMap<Guard, ItemMaterial, ModelResourceLocation> MODULAR_GUARDS = new BiEnumMap<>(Guard.class, ItemMaterial.class);
     //          Half Head
-    public static final DoubleEnumMap<HalfHead, ItemMaterial, ModelResourceLocation> MODULAR_HALF_HEADS = new DoubleEnumMap<>(HalfHead.class,
-                                                                                                                              ItemMaterial.class);
-    public static final DoubleEnumMap<HalfHead, ItemMaterial, ModelResourceLocation> MODULAR_HALF_HEADS_SHARP = new DoubleEnumMap<>(HalfHead.class,
-                                                                                                                                    ItemMaterial.class);
+    public static final BiEnumMap<HalfHead, ItemMaterial, ModelResourceLocation> MODULAR_HALF_HEADS = new BiEnumMap<>(HalfHead.class,
+                                                                                                                      ItemMaterial.class);
+    public static final BiEnumMap<HalfHead, ItemMaterial, ModelResourceLocation> MODULAR_HALF_HEADS_SHARP = new BiEnumMap<>(HalfHead.class,
+                                                                                                                            ItemMaterial.class);
     //          Handle
-    public static final DoubleEnumMap<Handle, ItemMaterial, ModelResourceLocation> MODULAR_HANDLES = new DoubleEnumMap<>(Handle.class,
-                                                                                                                         ItemMaterial.class);
+    public static final BiEnumMap<Handle, ItemMaterial, ModelResourceLocation> MODULAR_HANDLES = new BiEnumMap<>(Handle.class, ItemMaterial.class);
     //          Head
-    public static final DoubleEnumMap<Head, ItemMaterial, ModelResourceLocation> MODULAR_HEADS = new DoubleEnumMap<>(Head.class, ItemMaterial.class);
-    public static final DoubleEnumMap<Head, ItemMaterial, ModelResourceLocation> MODULAR_HEADS_SHARP = new DoubleEnumMap<>(Head.class,
-                                                                                                                           ItemMaterial.class);
+    public static final BiEnumMap<Head, ItemMaterial, ModelResourceLocation> MODULAR_HEADS = new BiEnumMap<>(Head.class, ItemMaterial.class);
+    public static final BiEnumMap<Head, ItemMaterial, ModelResourceLocation> MODULAR_HEADS_SHARP = new BiEnumMap<>(Head.class, ItemMaterial.class);
     //          Hilt
-    public static final DoubleEnumMap<Hilt, ItemMaterial, ModelResourceLocation> MODULAR_HILTS = new DoubleEnumMap<>(Hilt.class, ItemMaterial.class);
+    public static final BiEnumMap<Hilt, ItemMaterial, ModelResourceLocation> MODULAR_HILTS = new BiEnumMap<>(Hilt.class, ItemMaterial.class);
     //          Pole
-    public static final DoubleEnumMap<Pole, ItemMaterial, ModelResourceLocation> MODULAR_POLES = new DoubleEnumMap<>(Pole.class, ItemMaterial.class);
+    public static final BiEnumMap<Pole, ItemMaterial, ModelResourceLocation> MODULAR_POLES = new BiEnumMap<>(Pole.class, ItemMaterial.class);
     //          Pommel
-    public static final DoubleEnumMap<Pommel, ItemMaterial, ModelResourceLocation> MODULAR_POMMELS = new DoubleEnumMap<>(Pommel.class,
-                                                                                                                         ItemMaterial.class);
+    public static final BiEnumMap<Pommel, ItemMaterial, ModelResourceLocation> MODULAR_POMMELS = new BiEnumMap<>(Pommel.class, ItemMaterial.class);
 
     static {
         BLOCK_KNAPPING = new ResourceLocation[RockVariant.VALUES.length];
@@ -187,6 +182,8 @@ public final class EvolutionResources {
                 }
             }
         }
+        MODULAR_MODELS.add(TOOL_SWEEP);
+        MODULAR_MODELS.add(TOOL_THROWING);
     }
 
     private EvolutionResources() {

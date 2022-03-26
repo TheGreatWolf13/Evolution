@@ -33,6 +33,7 @@ import tgw.evolution.entities.IEntityProperties;
 import tgw.evolution.entities.INeckPosition;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.util.math.MathHelper;
 
@@ -44,12 +45,16 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     public Level level;
     @Shadow
+    public int tickCount;
+    @Shadow
     public float xRotO;
     @Shadow
     public float yRotO;
     protected int fireDamageImmunity;
     protected boolean hasCollidedOnX;
     protected boolean hasCollidedOnZ;
+    private float lastTickXRot;
+    private float lastTickYRot;
     @Shadow
     @Nullable
     private Entity vehicle;
@@ -100,10 +105,22 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     }
 
     @Shadow
+    public abstract float getPickRadius();
+
+    @Shadow
     public abstract Pose getPose();
 
     @Shadow
     public abstract Vec3 getViewVector(float p_20253_);
+
+    @Shadow
+    public abstract float getViewXRot(float pPartialTicks);
+
+    @Shadow
+    public abstract float getXRot();
+
+    @Shadow
+    public abstract float getYRot();
 
     @Override
     public final boolean hasCollidedOnXAxis() {
@@ -131,6 +148,8 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Inject(method = "baseTick", at = @At("HEAD"))
     private void onBaseTickPre(CallbackInfo ci) {
+        this.lastTickXRot = this.getXRot();
+        this.lastTickYRot = this.getYRot();
         if (this.fireDamageImmunity > 0) {
             this.fireDamageImmunity--;
         }
@@ -161,6 +180,13 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
             ci.cancel();
             return;
         }
+        //Prevent moving camera on certain Special Attacks
+        if (this instanceof ILivingEntityPatch patch) {
+            if (patch.isCameraLocked()) {
+                ci.cancel();
+            }
+        }
+        //Climbable limit
         if (!this.isOnGround()) {
             if ((Object) this instanceof LivingEntity living) {
                 boolean isPlayerFlying = (Object) this instanceof Player && ((Player) (Object) this).getAbilities().flying;
@@ -280,10 +306,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         Vec3 camera = MathHelper.getCameraPosition((Entity) (Object) this, partialTicks);
         Vec3 viewVec = this.getViewVector(partialTicks);
         Vec3 to = camera.add(viewVec.x * distance, viewVec.y * distance, viewVec.z * distance);
-        return this.level.clip(new ClipContext(camera,
-                                               to,
-                                               ClipContext.Block.OUTLINE,
-                                               checkFluids ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE,
+        return this.level.clip(new ClipContext(camera, to, ClipContext.Block.OUTLINE, checkFluids ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE,
                                                (Entity) (Object) this));
     }
 
@@ -291,4 +314,10 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     public void setFireDamageImmunity(int immunity) {
         this.fireDamageImmunity = immunity;
     }
+
+    @Shadow
+    public abstract void setXRot(float pXRot);
+
+    @Shadow
+    public abstract void setYRot(float pYRot);
 }

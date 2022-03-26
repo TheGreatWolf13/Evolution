@@ -24,6 +24,6 @@ public final class LivingEntityHooks {
             }
             return false;
         }
-        return ((ILivingEntityPatch) entity).isMainhandCustomAttacking() || ((ILivingEntityPatch) entity).isOffhandCustomAttacking();
+        return ((ILivingEntityPatch) entity).isMainhandInSpecialAttack() || ((ILivingEntityPatch) entity).isOffhandInSpecialAttack();
     }
 }

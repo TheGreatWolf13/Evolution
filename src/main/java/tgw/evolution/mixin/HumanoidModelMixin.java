@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.patches.ILivingEntityPatch;
-import tgw.evolution.util.MixinTempHelper;
+import tgw.evolution.util.hitbox.MixinTempHelper;
 import tgw.evolution.util.math.MathHelper;
 
 @Mixin(HumanoidModel.class)
@@ -99,6 +99,10 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
             }
             case CROSSBOW_CHARGE -> AnimationUtils.animateCrossbowCharge(this.rightArm, this.leftArm, entity, false);
             case CROSSBOW_HOLD -> AnimationUtils.animateCrossbowHold(this.rightArm, this.leftArm, this.head, false);
+            case SPYGLASS -> {
+                this.leftArm.xRot = Mth.clamp(this.head.xRot - 1.919_862_2F - (entity.isCrouching() ? 0.261_799_4F : 0.0F), -2.4F, 3.3F);
+                this.leftArm.yRot = this.head.yRot + 0.261_799_4F;
+            }
         }
     }
 
@@ -143,6 +147,10 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
             }
             case CROSSBOW_CHARGE -> AnimationUtils.animateCrossbowCharge(this.rightArm, this.leftArm, entity, true);
             case CROSSBOW_HOLD -> AnimationUtils.animateCrossbowHold(this.rightArm, this.leftArm, this.head, true);
+            case SPYGLASS -> {
+                this.rightArm.xRot = Mth.clamp(this.head.xRot - 1.919_862_2F - (entity.isCrouching() ? 0.261_799_4F : 0.0F), -3.3F, 3.3F);
+                this.rightArm.yRot = this.head.yRot - 0.261_799_4F;
+            }
         }
     }
 
@@ -257,7 +265,12 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
             this.leftArm.y = 2.0F;
             this.rightArm.y = 2.0F;
         }
-        AnimationUtils.bobArms(this.rightArm, this.leftArm, ageInTicks);
+        if (this.rightArmPose != HumanoidModel.ArmPose.SPYGLASS) {
+            AnimationUtils.bobModelPart(this.rightArm, ageInTicks, 1.0F);
+        }
+        if (this.leftArmPose != HumanoidModel.ArmPose.SPYGLASS) {
+            AnimationUtils.bobModelPart(this.leftArm, ageInTicks, -1.0F);
+        }
         if (this.swimAmount > 0.0F) {
             float f1 = limbSwing % 26.0F;
             HumanoidArm attackArm = this.getAttackArm(entity);
@@ -268,11 +281,9 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
                 this.rightArm.xRot = Mth.lerp(f2, this.rightArm.xRot, 0.0F);
                 this.leftArm.yRot = this.rotlerpRad(f3, this.leftArm.yRot, MathHelper.PI);
                 this.rightArm.yRot = Mth.lerp(f2, this.rightArm.yRot, MathHelper.PI);
-                this.leftArm.zRot = this.rotlerpRad(f3,
-                                                    this.leftArm.zRot,
+                this.leftArm.zRot = this.rotlerpRad(f3, this.leftArm.zRot,
                                                     MathHelper.PI + 1.870_796_4F * this.quadraticArmUpdate(f1) / this.quadraticArmUpdate(14.0F));
-                this.rightArm.zRot = Mth.lerp(f2,
-                                              this.rightArm.zRot,
+                this.rightArm.zRot = Mth.lerp(f2, this.rightArm.zRot,
                                               MathHelper.PI - 1.870_796_4F * this.quadraticArmUpdate(f1) / this.quadraticArmUpdate(14.0F));
             }
             else if (f1 >= 14.0F && f1 < 22.0F) {
@@ -308,7 +319,7 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
     protected void setupAttackAnimation(T entity, float ageInTicks) {
         if (this.attackTime > 0.0F) {
             HumanoidArm attackingSide = this.getAttackArm(entity);
-            if (!(((ILivingEntityPatch) entity).renderMainhandCustomAttack() && entity.getMainArm() == this.getAttackArm(entity))) {
+            if (!(((ILivingEntityPatch) entity).renderMainhandSpecialAttack() && entity.getMainArm() == this.getAttackArm(entity))) {
                 ModelPart attackingArm = this.getArm(attackingSide);
                 float sqrtAttackTime = this.attackTime;
                 this.body.yRot = MathHelper.sin(MathHelper.sqrt(sqrtAttackTime) * MathHelper.TAU) * 0.2F;
@@ -338,13 +349,8 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
                 attackingArm.zRot += MathHelper.sin(this.attackTime * MathHelper.PI) * -0.4F;
             }
         }
-        if (((ILivingEntityPatch) entity).renderMainhandCustomAttack()) {
-            HumanoidArm attackingSide = entity.getMainArm();
-            ModelPart attackingArm = this.getArm(attackingSide);
-            float progress = ((ILivingEntityPatch) entity).getMainhandCustomAttackProgress(1.0f);
-            attackingArm.xRot = MixinTempHelper.xRot(progress);
-            attackingArm.yRot = MixinTempHelper.yRot(progress, this.head.xRot);
-            attackingArm.zRot = MixinTempHelper.zRot(progress);
+        if (((ILivingEntityPatch) entity).renderMainhandSpecialAttack()) {
+            MixinTempHelper.setup((HumanoidModel) (Object) this, entity);
         }
     }
 

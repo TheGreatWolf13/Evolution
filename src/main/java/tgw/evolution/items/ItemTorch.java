@@ -133,11 +133,6 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     @Override
-    public boolean isCancelable() {
-        return true;
-    }
-
-    @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity living, int timeLeft) {
         if (living instanceof Player player) {
             int charge = this.getUseDuration(stack) - timeLeft;

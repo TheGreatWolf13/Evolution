@@ -1,7 +1,6 @@
 package tgw.evolution.items.modular.part;
 
 import net.minecraft.world.item.ItemStack;
-import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.capabilities.modular.part.HiltPart;
 import tgw.evolution.capabilities.modular.part.IPart;
@@ -25,8 +24,8 @@ public class ItemHiltPart extends ItemPart<PartTypes.Hilt, HiltPart> {
     }
 
     @Override
-    public IPart<PartTypes.Hilt> getPartCap(ItemStack stack) {
-        return stack.getCapability(CapabilityModular.PART).orElse(HiltPart.DUMMY);
+    public HiltPart getPartCap(ItemStack stack) {
+        return HiltPart.get(stack);
     }
 
     @Override

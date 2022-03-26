@@ -6,6 +6,7 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
 import tgw.evolution.capabilities.food.CapabilityHunger;
 import tgw.evolution.capabilities.food.IHunger;
+import tgw.evolution.init.EvolutionCapabilities;
 
 public class EffectSaturation extends MobEffect {
 
@@ -16,14 +17,9 @@ public class EffectSaturation extends MobEffect {
     @Override
     public void applyEffectTick(LivingEntity entity, int amplifier) {
         if (entity instanceof ServerPlayer player) {
-            if (!player.isAlive()) {
-                player.reviveCaps();
-            }
-            IHunger hunger = player.getCapability(CapabilityHunger.INSTANCE).orElseThrow(IllegalStateException::new);
+            IHunger hunger = EvolutionCapabilities.getCapability(player, CapabilityHunger.INSTANCE);
             hunger.increaseHungerLevel(1 + amplifier);
-            if (!player.isAlive()) {
-                player.invalidateCaps();
-            }
+            EvolutionCapabilities.finishCapabilities(player);
         }
     }
 

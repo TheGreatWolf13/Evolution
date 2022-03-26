@@ -10,10 +10,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
-import tgw.evolution.items.ICustomAttack;
+import tgw.evolution.items.ISpecialAttack;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.ArmPose;
-import tgw.evolution.util.MixinTempHelper;
 import tgw.evolution.util.UnregisteredFeatureException;
 import tgw.evolution.util.math.MathHelper;
 
@@ -32,8 +31,10 @@ public class HitboxPlayer extends HitboxEntity<Player> {
     protected final HitboxGroup leftLeg;
     protected final Hitbox legL = this.addBox(HitboxType.LEFT_LEG, HitboxLib.PLAYER_LEG);
     protected final Hitbox legR = this.addBox(HitboxType.RIGHT_LEG, HitboxLib.PLAYER_LEG);
-    protected final Hitbox mainhandSword;
     protected final HitboxGroup rightArm;
+    protected final Hitbox rightHandAxeSweep;
+    protected final Hitbox rightHandSpearStab;
+    protected final Hitbox rightHandSword;
     protected final HitboxGroup rightLeg;
     protected final Hitbox shoulderL;
     protected final Hitbox shoulderR;
@@ -54,16 +55,28 @@ public class HitboxPlayer extends HitboxEntity<Player> {
         this.armR = this.addBox(HitboxType.RIGHT_ARM, aabb(slim ? -2 : -3, -6, -2, 1, -2, 2, SCALE));
         this.shoulderR = this.addBox(HitboxType.RIGHT_SHOULDER, aabb(slim ? -2 : -3, -2, -2, 1, 2, 2, SCALE));
         this.handR = this.addBox(HitboxType.RIGHT_HAND, aabb(slim ? -2 : -3, -10, -2, 1, -6, 2, SCALE));
-        this.mainhandSword = this.addEquip(HitboxType.BLADE, aabb(-0.5, -1, 13, -1.5, 1, 23.5, SCALE));
+        this.rightHandAxeSweep = this.addEquip(HitboxType.AXE, aabb(-1, 0, 15, 0, 5, 21.5, SCALE));
+        this.rightHandSpearStab = this.addEquip(HitboxType.SPEAR, aabb(-1, 0, 15, 0, 5, 21.5, SCALE));
+        this.rightHandSword = this.addEquip(HitboxType.BLADE, aabb(-0.5, -1, 13, -1.5, 1, 23.5, SCALE));
         this.leftArm = new HitboxGroup(this.shoulderL, this.armL, this.handL);
         this.leftLeg = new HitboxGroup(this.legL, this.footL);
-        this.rightArm = new HitboxGroup(this.shoulderR, this.armR, this.handR, this.mainhandSword);
+        this.rightArm = new HitboxGroup(this.shoulderR, this.armR, this.handR, this.rightHandSword, this.rightHandAxeSweep);
         this.rightLeg = new HitboxGroup(this.legR, this.footR);
         this.rightArm.setStartingRotationForBox(3, -MathHelper.PI_OVER_2, 0, 0);
+        this.rightArm.setStartingRotationForBox(4, -MathHelper.PI_OVER_2, 0, 0);
+        this.finish();
     }
 
     private static float quadraticArmUpdate(float f) {
         return -65.0F * f + f * f;
+    }
+
+    @Override
+    protected void childFinish() {
+        this.leftArm.finish();
+        this.leftLeg.finish();
+        this.rightArm.finish();
+        this.rightLeg.finish();
     }
 
     protected HitboxGroup getArmForSide(HumanoidArm side) {
@@ -71,19 +84,18 @@ public class HitboxPlayer extends HitboxEntity<Player> {
     }
 
     @Override
-    public Hitbox getEquipmentFor(ICustomAttack.AttackType type, InteractionHand hand) {
-        switch (hand) {
-            case MAIN_HAND -> {
-                switch (type) {
-                    case SWORD -> {
-                        return this.mainhandSword;
-                    }
-                }
-                throw new UnregisteredFeatureException("No hitbox registered for " + type + " on " + hand);
-            }
-            case OFF_HAND -> throw new UnregisteredFeatureException("No hitbox registered for " + type + " on " + hand);
+    public Hitbox getEquipmentFor(ISpecialAttack.IAttackType type, HumanoidArm arm) {
+        if (type instanceof ISpecialAttack.BasicAttackType basic) {
+            return switch (arm) {
+                case RIGHT -> switch (basic) {
+                    case AXE_SWEEP -> this.rightHandAxeSweep;
+                    case SPEAR_STAB -> this.rightHandSpearStab;
+                    case SWORD -> this.rightHandSword;
+                };
+                case LEFT -> throw new UnregisteredFeatureException("No hitbox registered for BasicAttack " + type + " on " + arm);
+            };
         }
-        throw new IllegalStateException("Unknown hand: " + hand);
+        throw new UnregisteredFeatureException("No hitbox registered for ChargeAttack " + type + " on " + arm);
     }
 
     @Override
@@ -93,19 +105,23 @@ public class HitboxPlayer extends HitboxEntity<Player> {
         if (entity.getVehicle() instanceof AbstractHorse) {
             this.rotationYaw = -MathHelper.getEntityBodyYaw(entity.getVehicle(), partialTicks);
         }
+        if (entity.isFullyFrozen()) {
+            this.rotationYaw -= (float) (Math.cos(entity.tickCount * 3.25D) * Math.PI * 0.4F);
+        }
         this.rotationPitch = -entity.getViewXRot(partialTicks);
         this.limbSwing = MathHelper.getLimbSwing(entity, partialTicks);
         this.limbSwingAmount = MathHelper.getLimbSwingAmount(entity, partialTicks);
         this.swimAnimation = MathHelper.getSwimAnimation(entity, partialTicks);
         this.remainingItemUseTime = entity.getUseItemRemainingTicks();
         this.isSitting = MathHelper.isSitting(entity);
-        ItemStack mainhandStack = entity.getMainHandItem();
-        ItemStack offhandStack = entity.getOffhandItem();
-        this.rightArmPose = MathHelper.getArmPose(entity, mainhandStack, offhandStack, InteractionHand.MAIN_HAND);
-        this.leftArmPose = MathHelper.getArmPose(entity, mainhandStack, offhandStack, InteractionHand.OFF_HAND);
+//        ItemStack mainhandStack = entity.getMainHandItem();
+//        ItemStack offhandStack = entity.getOffhandItem();
+        this.rightArmPose = ArmPose.getArmPose(entity, InteractionHand.MAIN_HAND);
+        this.leftArmPose = ArmPose.getArmPose(entity, InteractionHand.OFF_HAND);
         this.attackTime = MathHelper.getAttackAnim(entity, partialTicks);
         this.isSneak = entity.getPose() == Pose.CROUCHING;
         this.ageInTicks = MathHelper.getAgeInTicks(entity, partialTicks);
+        this.rightHandSpearStab.setAabb(aabb(-1, 0, 15, 0, 5, 21.5, SCALE));
         //Main
         this.rotationY = MathHelper.degToRad(this.rotationYaw);
         float sinYaw = MathHelper.sinDeg(this.rotationYaw);
@@ -248,7 +264,12 @@ public class HitboxPlayer extends HitboxEntity<Player> {
             this.leftLeg.setPivotZ(-0.1f * SCALE / 16);
             this.rightLeg.setPivotZ(-0.1f * SCALE / 16);
         }
-        this.bobArms(this.rightArm, this.leftArm, this.ageInTicks);
+        if (this.rightArmPose != ArmPose.SPYGLASS) {
+            this.bobModelPart(this.rightArm, this.ageInTicks, 1.0F);
+        }
+        if (this.leftArmPose != ArmPose.SPYGLASS) {
+            this.bobModelPart(this.leftArm, this.ageInTicks, -1.0F);
+        }
         if (this.swimAnimation > 0.0F) {
             float f7 = this.limbSwing % 26.0F;
             HumanoidArm attackArm = getAttackArm(entity);
@@ -259,11 +280,9 @@ public class HitboxPlayer extends HitboxEntity<Player> {
                 this.rightArm.setRotationX(Mth.lerp(rightArmAnim, this.rightArm.getRotationX(), 0.0F));
                 this.leftArm.setRotationY(Mth.lerp(leftArmAnim, this.leftArm.getRotationY(), MathHelper.PI));
                 this.rightArm.setRotationY(Mth.lerp(rightArmAnim, this.rightArm.getRotationY(), -MathHelper.PI));
-                this.leftArm.setRotationZ(rotLerpRad(leftArmAnim,
-                                                     this.leftArm.getRotationZ(),
+                this.leftArm.setRotationZ(rotLerpRad(leftArmAnim, this.leftArm.getRotationZ(),
                                                      MathHelper.PI + 1.870_796_4F * quadraticArmUpdate(f7) / quadraticArmUpdate(14.0F)));
-                this.rightArm.setRotationZ(Mth.lerp(rightArmAnim,
-                                                    this.rightArm.getRotationZ(),
+                this.rightArm.setRotationZ(Mth.lerp(rightArmAnim, this.rightArm.getRotationZ(),
                                                     MathHelper.PI - 1.870_796_4F * quadraticArmUpdate(f7) / quadraticArmUpdate(14.0F)));
             }
             else if (f7 >= 14.0F && f7 < 22.0F) {
@@ -284,12 +303,10 @@ public class HitboxPlayer extends HitboxEntity<Player> {
                 this.leftArm.setRotationZ(rotLerpRad(leftArmAnim, this.leftArm.getRotationZ(), MathHelper.PI));
                 this.rightArm.setRotationZ(Mth.lerp(rightArmAnim, this.rightArm.getRotationZ(), MathHelper.PI));
             }
-            this.leftLeg.setRotationX(Mth.lerp(this.swimAnimation,
-                                               this.leftLeg.getRotationX(),
+            this.leftLeg.setRotationX(Mth.lerp(this.swimAnimation, this.leftLeg.getRotationX(),
                                                -0.3F * MathHelper.cos(this.limbSwing * 0.333_333_34F + MathHelper.PI)));
-            this.rightLeg.setRotationX(Mth.lerp(this.swimAnimation,
-                                                this.rightLeg.getRotationX(),
-                                                -0.3F * MathHelper.cos(this.limbSwing * 0.333_333_34F)));
+            this.rightLeg.setRotationX(
+                    Mth.lerp(this.swimAnimation, this.rightLeg.getRotationX(), -0.3F * MathHelper.cos(this.limbSwing * 0.333_333_34F)));
         }
     }
 
@@ -376,7 +393,7 @@ public class HitboxPlayer extends HitboxEntity<Player> {
     protected void setupAttackAnimation(Player player) {
         if (this.attackTime > 0.0F) {
             HumanoidArm handside = getAttackArm(player);
-            if (!(((ILivingEntityPatch) player).renderMainhandCustomAttack() && player.getMainArm() == getAttackArm(player))) {
+            if (!(((ILivingEntityPatch) player).renderMainhandSpecialAttack() && player.getMainArm() == getAttackArm(player))) {
                 HitboxGroup arm = this.getArmForSide(handside);
                 float f = this.attackTime;
                 this.body.rotationY = -MathHelper.sin(MathHelper.sqrt(f) * MathHelper.TAU) * 0.2F;
@@ -401,13 +418,8 @@ public class HitboxPlayer extends HitboxEntity<Player> {
                 arm.addRotationZ(MathHelper.sin(this.attackTime * MathHelper.PI) * -0.4F);
             }
         }
-        if (((ILivingEntityPatch) player).renderMainhandCustomAttack()) {
-            HumanoidArm attackingSide = player.getMainArm();
-            HitboxGroup attackingArm = this.getArmForSide(attackingSide);
-            float progress = ((ILivingEntityPatch) player).getMainhandCustomAttackProgress(1.0f);
-            attackingArm.setRotationX(-MixinTempHelper.xRot(progress));
-            attackingArm.setRotationY(MixinTempHelper.yRot(progress, this.head.rotationX));
-            attackingArm.setRotationZ(MixinTempHelper.zRot(progress));
+        if (((ILivingEntityPatch) player).renderMainhandSpecialAttack()) {
+            MixinTempHelper.setup(this, player);
         }
     }
 }

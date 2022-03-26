@@ -59,10 +59,11 @@ public class TESchematic extends BlockEntity {
         super(EvolutionTEs.SCHEMATIC.get(), pos, state);
     }
 
-    private static Optional<BoundingBox> calculateEnclosingBoundingBox(BlockPos startingPos, Stream<BlockPos> relatedCornerBlocks) {
+    @Nullable
+    private static BoundingBox calculateEnclosingBoundingBox(BlockPos startingPos, Stream<BlockPos> relatedCornerBlocks) {
         Iterator<BlockPos> iterator = relatedCornerBlocks.iterator();
         if (!iterator.hasNext()) {
-            return Optional.empty();
+            return null;
         }
         BlockPos pos = iterator.next();
         BoundingBox bb = new BoundingBox(pos);
@@ -72,7 +73,7 @@ public class TESchematic extends BlockEntity {
         else {
             bb.encapsulate(startingPos);
         }
-        return Optional.of(bb);
+        return bb;
     }
 
     private static Random createRandom(long seed) {
@@ -88,20 +89,22 @@ public class TESchematic extends BlockEntity {
         BlockPos startPos = new BlockPos(pos.getX() - searchLimit, 0, pos.getZ() - searchLimit);
         BlockPos endPos = new BlockPos(pos.getX() + searchLimit, 255, pos.getZ() + searchLimit);
         Stream<BlockPos> stream = this.getRelatedCorners(startPos, endPos);
-        return calculateEnclosingBoundingBox(pos, stream).filter(bb -> {
-            int dx = bb.maxX() - bb.minX();
-            int dy = bb.maxY() - bb.minY();
-            int dz = bb.maxZ() - bb.minZ();
-            if (dx > 1 && dy > 1 && dz > 1) {
-                this.schematicPos = new BlockPos(bb.minX() - pos.getX() + 1, bb.minY() - pos.getY() + 1, bb.minZ() - pos.getZ() + 1);
-                this.size = new Vec3i(dx - 1, dy - 1, dz - 1);
-                this.setChanged();
-                BlockState state = this.level.getBlockState(pos);
-                this.level.sendBlockUpdated(pos, state, state, BlockFlags.NOTIFY_AND_UPDATE);
-                return true;
-            }
+        BoundingBox bb = calculateEnclosingBoundingBox(pos, stream);
+        if (bb == null) {
             return false;
-        }).isPresent();
+        }
+        int dx = bb.maxX() - bb.minX();
+        int dy = bb.maxY() - bb.minY();
+        int dz = bb.maxZ() - bb.minZ();
+        if (dx > 1 && dy > 1 && dz > 1) {
+            this.schematicPos = new BlockPos(bb.minX() - pos.getX() + 1, bb.minY() - pos.getY() + 1, bb.minZ() - pos.getZ() + 1);
+            this.size = new Vec3i(dx - 1, dy - 1, dz - 1);
+            this.setChanged();
+            BlockState state = this.level.getBlockState(pos);
+            this.level.sendBlockUpdated(pos, state, state, BlockFlags.NOTIFY_AND_UPDATE);
+            return true;
+        }
+        return false;
     }
 
     private List<TESchematic> filterRelatedCornerBlocks(List<TESchematic> nearbySchematicBlocks) {

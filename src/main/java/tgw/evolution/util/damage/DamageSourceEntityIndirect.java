@@ -59,9 +59,8 @@ public class DamageSourceEntityIndirect extends DamageSourceEntity implements IH
                 return new TranslatableComponent(message, deadEntity.getDisplayName(), itemComp);
             }
         }
-        String messageItem = message + ".item";
         return itemComp != null ?
-               new TranslatableComponent(messageItem, deadEntity.getDisplayName(), sourceComp, itemComp) :
+               new TranslatableComponent(message + ".item", deadEntity.getDisplayName(), sourceComp, itemComp) :
                new TranslatableComponent(message, deadEntity.getDisplayName(), sourceComp);
     }
 

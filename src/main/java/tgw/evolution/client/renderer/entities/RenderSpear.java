@@ -1,21 +1,20 @@
 package tgw.evolution.client.renderer.entities;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Vector3f;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import tgw.evolution.client.models.entities.ModelSpear;
 import tgw.evolution.entities.projectiles.EntitySpear;
+import tgw.evolution.patches.IPoseStackPatch;
+import tgw.evolution.util.math.MathHelper;
 
 public class RenderSpear extends EntityRenderer<EntitySpear> {
-
-    private final ModelSpear model = new ModelSpear();
 
     public RenderSpear(EntityRendererProvider.Context context) {
         super(context);
@@ -23,16 +22,19 @@ public class RenderSpear extends EntityRenderer<EntitySpear> {
 
     @Override
     public ResourceLocation getTextureLocation(EntitySpear spear) {
-        return spear.getTextureName();
+        return TextureAtlas.LOCATION_BLOCKS;
     }
 
     @Override
     public void render(EntitySpear entity, float yaw, float partialTicks, PoseStack matrices, MultiBufferSource buffer, int packedLight) {
         matrices.pushPose();
-        matrices.mulPose(Vector3f.YP.rotationDegrees(Mth.lerp(partialTicks, entity.yRotO, entity.getYRot()) - 90.0F));
-        matrices.mulPose(Vector3f.ZP.rotationDegrees(Mth.lerp(partialTicks, entity.xRotO, entity.getXRot()) - 90.0F));
-        VertexConsumer modelBuffer = ItemRenderer.getFoilBuffer(buffer, this.model.renderType(this.getTextureLocation(entity)), false, false);
-        this.model.renderToBuffer(matrices, modelBuffer, packedLight, OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, 1.0f);
+        IPoseStackPatch matricesExt = MathHelper.getExtendedMatrix(matrices);
+        matricesExt.mulPoseY(Mth.lerp(partialTicks, entity.yRotO, entity.getYRot()) - 90.0F);
+        matricesExt.mulPoseZ(Mth.lerp(partialTicks, entity.xRotO, entity.getXRot()) - 90.0F);
+        matrices.translate(-0.05, -0.7, 0);
+        Minecraft.getInstance()
+                 .getItemRenderer()
+                 .renderStatic(entity.getStack(), ItemTransforms.TransformType.HEAD, packedLight, OverlayTexture.NO_OVERLAY, matrices, buffer, 0);
         matrices.popPose();
         super.render(entity, yaw, partialTicks, matrices, buffer, packedLight);
     }

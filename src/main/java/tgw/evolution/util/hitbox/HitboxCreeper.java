@@ -1,9 +1,9 @@
 package tgw.evolution.util.hitbox;
 
-import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.phys.Vec3;
-import tgw.evolution.items.ICustomAttack;
+import tgw.evolution.items.ISpecialAttack;
 import tgw.evolution.util.math.MathHelper;
 
 public class HitboxCreeper extends HitboxEntity<Creeper> {
@@ -15,13 +15,20 @@ public class HitboxCreeper extends HitboxEntity<Creeper> {
     protected final Hitbox legFR = this.addBox(HitboxType.FRONT_RIGHT_LEG, HitboxLib.CREEPER_LEG);
     protected final Hitbox legRL = this.addBox(HitboxType.REAR_LEFT_LEG, HitboxLib.CREEPER_LEG);
     protected final Hitbox legRR = this.addBox(HitboxType.REAR_RIGHT_LEG, HitboxLib.CREEPER_LEG);
-
     protected float limbSwing;
     protected float limbSwingAmount;
 
+    public HitboxCreeper() {
+        this.finish();
+    }
+
     @Override
-    public Hitbox getEquipmentFor(ICustomAttack.AttackType type, InteractionHand hand) {
-        throw new IllegalStateException("Creepers do not have hands!");
+    protected void childFinish() {
+    }
+
+    @Override
+    public Hitbox getEquipmentFor(ISpecialAttack.IAttackType type, HumanoidArm arm) {
+        throw new IllegalStateException("Creepers do not have arms!");
     }
 
     @Override

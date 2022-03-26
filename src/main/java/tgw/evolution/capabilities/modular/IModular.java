@@ -7,10 +7,10 @@ import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.level.material.Material;
 import net.minecraftforge.common.util.INBTSerializable;
-import org.intellij.lang.annotations.MagicConstant;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.constants.HarvestLevels;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public interface IModular extends INBTSerializable<CompoundTag> {
 
     void appendTooltip(List<Either<FormattedText, TooltipComponent>> tooltip);
 
-    void damage(ItemModular.DamageCause cause);
+    void damage(ItemModular.DamageCause cause, @HarvestLevel int harvestLevel);
 
     double getAttackDamage();
 
@@ -30,7 +30,7 @@ public interface IModular extends INBTSerializable<CompoundTag> {
 
     ReferenceSet<Material> getEffectiveMaterials();
 
-    @MagicConstant(valuesFromClass = HarvestLevel.class)
+    @HarvestLevel
     int getHarvestLevel();
 
     double getMass();
@@ -45,9 +45,9 @@ public interface IModular extends INBTSerializable<CompoundTag> {
 
     boolean isTwoHanded();
 
-    void setDurabilityDmg(int damage);
-
     final class Impl implements IModular {
+
+        private final CompoundTag tag = new CompoundTag();
 
         private Impl() {
         }
@@ -57,7 +57,7 @@ public interface IModular extends INBTSerializable<CompoundTag> {
         }
 
         @Override
-        public void damage(ItemModular.DamageCause cause) {
+        public void damage(ItemModular.DamageCause cause, @HarvestLevel int harvestLevel) {
         }
 
         @Override
@@ -86,7 +86,7 @@ public interface IModular extends INBTSerializable<CompoundTag> {
 
         @Override
         public int getHarvestLevel() {
-            return HarvestLevel.HAND;
+            return HarvestLevels.HAND;
         }
 
         @Override
@@ -121,11 +121,7 @@ public interface IModular extends INBTSerializable<CompoundTag> {
 
         @Override
         public CompoundTag serializeNBT() {
-            return new CompoundTag();
-        }
-
-        @Override
-        public void setDurabilityDmg(int damage) {
+            return this.tag;
         }
     }
 }

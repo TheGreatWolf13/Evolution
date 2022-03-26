@@ -6,7 +6,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Material;
+import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.init.EvolutionDamage;
 
@@ -19,6 +21,10 @@ public class BladePart implements IHitPart<PartTypes.Blade> {
     private int sharpAmount;
     private int spentDurability;
     private PartTypes.Blade type = PartTypes.Blade.NULL;
+
+    public static BladePart get(ItemStack stack) {
+        return (BladePart) stack.getCapability(CapabilityModular.PART).orElse(DUMMY);
+    }
 
     @Override
     public void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num) {

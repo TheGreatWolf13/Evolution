@@ -6,7 +6,6 @@ import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.util.INBTSerializable;
-import org.intellij.lang.annotations.MagicConstant;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.items.IDurability;
 import tgw.evolution.util.constants.HarvestLevel;
@@ -28,11 +27,11 @@ public interface IPart<T extends IPartType<T>> extends IDurability, INBTSerializ
 
     int getDurabilityDmg();
 
-    @MagicConstant(valuesFromClass = HarvestLevel.class)
+    @HarvestLevel
     int getHarvestLevel();
 
     default double getMass() {
-        return 1.378_615e-6 * this.getType().getVolume() * this.getMaterial().getDensity();
+        return 1.378_615e-6 * this.getType().getVolume(this.getMaterial().getMaterial()) * this.getMaterial().getDensity();
     }
 
     MaterialInstance getMaterial();

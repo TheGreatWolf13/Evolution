@@ -1,7 +1,6 @@
 package tgw.evolution.items.modular.part;
 
 import net.minecraft.world.item.ItemStack;
-import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.capabilities.modular.part.IPart;
 import tgw.evolution.capabilities.modular.part.PartTypes;
@@ -25,8 +24,8 @@ public class ItemPolePart extends ItemPart<PartTypes.Pole, PolePart> {
     }
 
     @Override
-    public IPart<PartTypes.Pole> getPartCap(ItemStack stack) {
-        return stack.getCapability(CapabilityModular.PART).orElse(PolePart.DUMMY);
+    public PolePart getPartCap(ItemStack stack) {
+        return PolePart.get(stack);
     }
 
     @Override

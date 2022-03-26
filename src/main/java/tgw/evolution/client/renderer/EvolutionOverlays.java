@@ -10,11 +10,17 @@ import tgw.evolution.init.EvolutionResources;
 
 public final class EvolutionOverlays {
 
-    public static final IIngameOverlay CROSSHAIR_OVERLAY = OverlayRegistry.registerOverlayBottom("Crosshair", EvolutionOverlays::crosshair);
-    public static final IIngameOverlay POTION_OVERLAY = OverlayRegistry.registerOverlayBottom("Potion", EvolutionOverlays::potion);
-    public static final IIngameOverlay TEMPERATURE_OVERLAY = OverlayRegistry.registerOverlayBottom("Temperature", EvolutionOverlays::temperature);
-    public static final IIngameOverlay HEALTH_OVERLAY = OverlayRegistry.registerOverlayBottom("Player Health", EvolutionOverlays::health);
-    public static final IIngameOverlay FOOD_THIRST_OVERLAY = OverlayRegistry.registerOverlayBottom("Food Thirst", EvolutionOverlays::foodAndThirst);
+    public static final IIngameOverlay CROSSHAIR_OVERLAY = OverlayRegistry.registerOverlayBelow(ForgeIngameGui.CROSSHAIR_ELEMENT, "Crosshair",
+                                                                                                EvolutionOverlays::crosshair);
+    public static final IIngameOverlay POTION_OVERLAY = OverlayRegistry.registerOverlayBelow(ForgeIngameGui.POTION_ICONS_ELEMENT, "Potion",
+                                                                                             EvolutionOverlays::potion);
+    public static final IIngameOverlay TEMPERATURE_OVERLAY = OverlayRegistry.registerOverlayBelow(ForgeIngameGui.EXPERIENCE_BAR_ELEMENT,
+                                                                                                  "Temperature", EvolutionOverlays::temperature);
+    public static final IIngameOverlay HEALTH_OVERLAY = OverlayRegistry.registerOverlayBelow(ForgeIngameGui.PLAYER_HEALTH_ELEMENT, "Player Health",
+                                                                                             EvolutionOverlays::health);
+    public static final IIngameOverlay FOOD_THIRST_OVERLAY = OverlayRegistry.registerOverlayBelow(ForgeIngameGui.FOOD_LEVEL_ELEMENT,
+                                                                                                  "Food and Thirst",
+                                                                                                  EvolutionOverlays::foodAndThirst);
 
     private EvolutionOverlays() {
     }

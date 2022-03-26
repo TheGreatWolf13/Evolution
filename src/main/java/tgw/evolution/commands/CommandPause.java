@@ -3,7 +3,6 @@ package tgw.evolution.commands;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import tgw.evolution.init.EvolutionTexts;
@@ -22,7 +21,7 @@ public final class CommandPause implements Command<CommandSourceStack> {
     }
 
     @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    public int run(CommandContext<CommandSourceStack> context) {
         String input = context.getInput();
         IMinecraftServerPatch server = (IMinecraftServerPatch) context.getSource().getServer();
         switch (input) {

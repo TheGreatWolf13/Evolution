@@ -1,5 +1,6 @@
 package tgw.evolution.mixin;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -9,13 +10,16 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.patches.IItemStackPatch;
 
 @Mixin(ItemStack.class)
-public abstract class ItemStackMixin extends CapabilityProvider<ItemStack> {
+public abstract class ItemStackMixin extends CapabilityProvider<ItemStack> implements IItemStackPatch {
 
     @Shadow
     @Final
     public static ItemStack EMPTY;
+    @Shadow
+    private CompoundTag capNBT;
     @Shadow
     private int count;
     @Shadow
@@ -26,6 +30,11 @@ public abstract class ItemStackMixin extends CapabilityProvider<ItemStack> {
 
     public ItemStackMixin(Class<ItemStack> baseClass) {
         super(baseClass);
+    }
+
+    @Override
+    public CompoundTag getCapNBT() {
+        return this.capNBT;
     }
 
     private Item getItemInternal() {

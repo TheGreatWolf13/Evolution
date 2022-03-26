@@ -16,6 +16,7 @@ public abstract class GrabPart<T extends IGrabType<T>> implements IPart<T> {
 
     protected MaterialInstance material = MaterialInstance.DUMMY;
     protected int spentDurability;
+    protected CompoundTag tag;
     protected T type;
 
     @Override
@@ -67,11 +68,13 @@ public abstract class GrabPart<T extends IGrabType<T>> implements IPart<T> {
 
     @Override
     public final CompoundTag serializeNBT() {
-        CompoundTag tag = new CompoundTag();
-        tag.putString("Type", this.type.getName());
-        tag.putInt("Durability", this.spentDurability);
-        tag.put("MaterialInstance", this.material.write());
-        return tag;
+        if (this.tag == null) {
+            this.tag = new CompoundTag();
+        }
+        this.tag.putString("Type", this.type.getName());
+        this.tag.putInt("Durability", this.spentDurability);
+        this.tag.put("MaterialInstance", this.material.write());
+        return this.tag;
     }
 
     @Override

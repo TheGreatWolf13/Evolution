@@ -17,6 +17,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import tgw.evolution.client.layers.LayerBack;
+import tgw.evolution.client.layers.LayerBelt;
 import tgw.evolution.patches.IPoseStackPatch;
 import tgw.evolution.util.math.MathHelper;
 
@@ -26,6 +28,12 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
 
     public PlayerRendererMixin(EntityRendererProvider.Context p_174289_, PlayerModel<AbstractClientPlayer> p_174290_, float p_174291_) {
         super(p_174289_, p_174290_, p_174291_);
+    }
+
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void onConstructor(EntityRendererProvider.Context context, boolean slim, CallbackInfo ci) {
+        this.addLayer(new LayerBelt(this));
+        this.addLayer(new LayerBack(this));
     }
 
     @Inject(method = "scale(Lnet/minecraft/client/player/AbstractClientPlayer;Lcom/mojang/blaze3d/vertex/PoseStack;F)V", at = @At("TAIL"))

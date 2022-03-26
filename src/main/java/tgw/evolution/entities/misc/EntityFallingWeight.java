@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
-import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.FriendlyByteBuf;
@@ -262,11 +261,9 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         boolean isInWater = this.level.getFluidState(this.mutablePos).is(FluidTags.WATER);
         double d0 = this.getDeltaMovement().lengthSqr();
         if (d0 > 1) {
-            BlockHitResult raytraceresult = this.level.clip(new ClipContext(new Vec3(this.xo, this.yo, this.zo),
-                                                                            new Vec3(this.getX(), this.getY(), this.getZ()),
-                                                                            ClipContext.Block.COLLIDER,
-                                                                            ClipContext.Fluid.SOURCE_ONLY,
-                                                                            this));
+            BlockHitResult raytraceresult = this.level.clip(
+                    new ClipContext(new Vec3(this.xo, this.yo, this.zo), new Vec3(this.getX(), this.getY(), this.getZ()), ClipContext.Block.COLLIDER,
+                                    ClipContext.Fluid.SOURCE_ONLY, this));
             if (raytraceresult.getType() != HitResult.Type.MISS && this.level.getFluidState(raytraceresult.getBlockPos()).is(FluidTags.WATER)) {
                 this.mutablePos.set(raytraceresult.getBlockPos());
                 isInWater = true;
@@ -298,23 +295,24 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
             if ((!isInWater || this.onGround) && state.getBlock() != Blocks.MOVING_PISTON) {
                 this.discard();
                 if (BlockUtils.isReplaceable(state)) {
-                    NonNullList<ItemStack> drops;
-                    if (state.getBlock() instanceof IReplaceable) {
-                        drops = ((IReplaceable) state.getBlock()).getDrops(this.level, this.mutablePos, state);
-                    }
-                    else {
-                        drops = NonNullList.of(ItemStack.EMPTY, new ItemStack(state.getBlock()));
-                    }
-                    if (this.level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) {
-                        for (ItemStack stack : drops) {
-                            this.spawnAtLocation(stack);
-                        }
-                    }
+//                    NonNullList<ItemStack> drops;
+//                    if (state.getBlock() instanceof IReplaceable) {
+//                        drops = ((IReplaceable) state.getBlock()).getDrops(this.level, this.mutablePos, state);
+//                    }
+//                    else {
+//                        drops = NonNullList.of(ItemStack.EMPTY, new ItemStack(state.getBlock()));
+//                    }
+//                    if (this.level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) {
+//                        for (ItemStack stack : drops) {
+//                            this.spawnAtLocation(stack);
+//                        }
+//                    }
+                    BlockUtils.destroyBlock(this.level, this.mutablePos);
                     this.level.setBlockAndUpdate(this.mutablePos, this.state);
                 }
                 else if (this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
-                    if (carryingBlock instanceof BlockCobblestone) {
-                        this.spawnAtLocation(new ItemStack(((BlockCobblestone) carryingBlock).getVariant().getRock(), 4));
+                    if (carryingBlock instanceof BlockCobblestone cobble) {
+                        this.spawnAtLocation(new ItemStack(cobble.getVariant().getRock(), 4));
                     }
                     else {
                         this.spawnAtLocation(carryingBlock);

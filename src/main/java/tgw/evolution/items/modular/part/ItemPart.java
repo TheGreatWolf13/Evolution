@@ -38,7 +38,7 @@ public abstract class ItemPart<T extends IPartType<T>, P extends IPart<T>> exten
                     if (this.isAllowedBy(t, material)) {
                         //noinspection ObjectAllocationInLoop
                         ItemStack stack = new ItemStack(this);
-                        P part = (P) this.getPartCap(stack);
+                        P part = this.getPartCap(stack);
                         this.setupNewPart(part, t, material);
                         items.add(stack);
                     }
@@ -97,12 +97,12 @@ public abstract class ItemPart<T extends IPartType<T>, P extends IPart<T>> exten
         if (!this.canBeDepleted()) {
             return 0;
         }
-        P part = (P) this.getPartCap(stack);
+        P part = this.getPartCap(stack);
         int durability = part.getMaxDurability();
         return part.isBroken() ? durability + 1 : durability;
     }
 
-    public abstract IPart<T> getPartCap(ItemStack stack);
+    public abstract P getPartCap(ItemStack stack);
 
     protected abstract boolean isAllowedBy(T t, ItemMaterial material);
 

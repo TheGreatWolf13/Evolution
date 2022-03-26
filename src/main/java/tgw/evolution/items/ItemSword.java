@@ -15,9 +15,10 @@ import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.ItemMaterial;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Set;
 
-public class ItemSword extends ItemGenericTool implements IOffhandAttackable, ISweepAttack, IParry, ILunge, IBeltWeapon, ICustomAttack {
+public class ItemSword extends ItemGenericTool implements IOffhandAttackable, ISweepAttack, IParry, ILunge, IBeltWeapon, ISpecialAttack {
 
     private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet();
     private static final Set<Material> EFFECTIVE_MATS = Sets.newHashSet();
@@ -45,8 +46,15 @@ public class ItemSword extends ItemGenericTool implements IOffhandAttackable, IS
 
     @Nonnull
     @Override
-    public AttackType getAttackType() {
-        return AttackType.SWORD;
+    public BasicAttackType getBasicAttackType(ItemStack stack) {
+        return BasicAttackType.SWORD;
+    }
+
+    @Nullable
+    @Override
+    public ChargeAttackType getChargeAttackType() {
+        //TODO implementation
+        return null;
     }
 
     @Nonnull
@@ -103,6 +111,12 @@ public class ItemSword extends ItemGenericTool implements IOffhandAttackable, IS
     @Override
     public int getUseDuration(ItemStack stack) {
         return 72_000;
+    }
+
+    @Override
+    public boolean hasChargeAttack() {
+        //TODO implementation
+        return false;
     }
 
     @Override

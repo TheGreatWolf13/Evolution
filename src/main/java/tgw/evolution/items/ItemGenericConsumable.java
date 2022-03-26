@@ -14,11 +14,11 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
-import org.apache.commons.lang3.tuple.Pair;
 import tgw.evolution.capabilities.food.CapabilityHunger;
 import tgw.evolution.capabilities.food.IHunger;
 import tgw.evolution.capabilities.thirst.CapabilityThirst;
 import tgw.evolution.capabilities.thirst.IThirst;
+import tgw.evolution.util.Object2FloatPair;
 
 public abstract class ItemGenericConsumable extends ItemEv implements IConsumable {
 
@@ -27,10 +27,9 @@ public abstract class ItemGenericConsumable extends ItemEv implements IConsumabl
     }
 
     private static void applyEffects(LivingEntity entity, ItemStack stack, Level level) {
-        Item item = stack.getItem();
-        if (item instanceof IConsumable consumable) {
-            for (Pair<MobEffectInstance, Float> pair : consumable.getEffects()) {
-                if (!level.isClientSide && pair.getLeft() != null && level.random.nextFloat() < pair.getRight()) {
+        if (stack.getItem() instanceof IConsumable consumable) {
+            for (Object2FloatPair<MobEffectInstance> pair : consumable.getEffects()) {
+                if (!level.isClientSide && level.random.nextFloat() < pair.getRightAsFloat()) {
                     //noinspection ObjectAllocationInLoop
                     entity.addEffect(new MobEffectInstance(pair.getLeft()));
                 }
@@ -63,13 +62,7 @@ public abstract class ItemGenericConsumable extends ItemEv implements IConsumabl
                 hunger.increaseHungerLevel(amount);
                 hunger.increaseSaturationLevel(amount);
             }
-            level.playSound(null,
-                            entity.getX(),
-                            entity.getY(),
-                            entity.getZ(),
-                            entity.getEatingSound(stack),
-                            SoundSource.NEUTRAL,
-                            1.0F,
+            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), entity.getEatingSound(stack), SoundSource.NEUTRAL, 1.0F,
                             1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.4F);
         }
         if (stack.getItem() instanceof IDrink drink) {

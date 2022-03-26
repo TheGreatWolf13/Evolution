@@ -7,6 +7,4 @@ public interface IOffhandAttackable {
     double getAttackDamage(ItemStack stack);
 
     double getAttackSpeed(ItemStack stack);
-
-    double getReach(ItemStack stack);
 }

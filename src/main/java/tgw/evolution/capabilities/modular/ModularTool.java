@@ -6,14 +6,13 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.level.material.Material;
-import tgw.evolution.capabilities.modular.part.GrabPart;
 import tgw.evolution.capabilities.modular.part.HandlePart;
 import tgw.evolution.capabilities.modular.part.HeadPart;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.init.ItemMaterial;
 import tgw.evolution.items.modular.ItemModular;
+import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.math.MathHelper;
 
 import java.util.List;
@@ -22,6 +21,7 @@ public class ModularTool implements IModularTool {
 
     private final HandlePart handle = new HandlePart();
     private final HeadPart head = new HeadPart();
+    private CompoundTag tag;
 
     @Override
     public void appendTooltip(List<Either<FormattedText, TooltipComponent>> tooltip) {
@@ -30,8 +30,7 @@ public class ModularTool implements IModularTool {
         this.handle.appendText(tooltip, 1);
     }
 
-    @Override
-    public void damage(ItemModular.DamageCause cause) {
+    private void damage(ItemModular.DamageCause cause) {
         switch (cause) {
             case BREAK_BAD_BLOCK -> {
                 this.head.damage(1);
@@ -66,6 +65,26 @@ public class ModularTool implements IModularTool {
     }
 
     @Override
+    public void damage(ItemModular.DamageCause cause, @HarvestLevel int harvestLevel) {
+        int toolLevel = this.getHarvestLevel();
+        int delta = toolLevel - harvestLevel;
+        if (delta == 0) {
+            this.damage(cause);
+            return;
+        }
+        if (delta > 0) {
+            if (!(MathHelper.RANDOM.nextFloat() < delta * 0.1f)) {
+                this.damage(cause);
+            }
+            return;
+        }
+        this.damage(cause);
+        if (MathHelper.RANDOM.nextFloat() < delta * -0.1f) {
+            this.damage(cause);
+        }
+    }
+
+    @Override
     public void deserializeNBT(CompoundTag nbt) {
         this.handle.deserializeNBT(nbt.getCompound("Handle"));
         this.head.deserializeNBT(nbt.getCompound("Head"));
@@ -85,7 +104,7 @@ public class ModularTool implements IModularTool {
     @Override
     public double getAttackSpeed() {
         //TODO implementation
-        return 0;
+        return 1;
     }
 
     @Override
@@ -107,6 +126,11 @@ public class ModularTool implements IModularTool {
 
     @Override
     public String getDescriptionId() {
+        if (this.head.getType() == PartTypes.Head.SPEAR) {
+            if (!this.isTwoHanded()) {
+                return "item.evolution.javelin." + this.head.getMaterial().getName();
+            }
+        }
         return "item.evolution." + this.head.getType().getName() + "." + this.head.getMaterial().getName();
     }
 
@@ -116,18 +140,8 @@ public class ModularTool implements IModularTool {
     }
 
     @Override
-    public GrabPart<PartTypes.Handle> getHandle() {
+    public HandlePart getHandle() {
         return this.handle;
-    }
-
-    @Override
-    public ItemMaterial getHandleMaterial() {
-        return this.handle.getMaterial().getMaterial();
-    }
-
-    @Override
-    public PartTypes.Handle getHandleType() {
-        return this.handle.getType();
     }
 
     @Override
@@ -138,16 +152,6 @@ public class ModularTool implements IModularTool {
     @Override
     public HeadPart getHead() {
         return this.head;
-    }
-
-    @Override
-    public ItemMaterial getHeadMaterial() {
-        return this.head.getMaterial().getMaterial();
-    }
-
-    @Override
-    public PartTypes.Head getHeadType() {
-        return this.head.getType();
     }
 
     @Override
@@ -167,12 +171,6 @@ public class ModularTool implements IModularTool {
         double handleArm = handleLength / 2.0 - grabPoint;
         double headArm = this.head.getType().getRelativeCenterOfMass(handleLength) - grabPoint;
         return handleArm * this.handle.getMass() + headArm * this.head.getMass();
-    }
-
-    @Override
-    public double getReach() {
-        //TODO implementation
-        return 0;
     }
 
     @Override
@@ -208,15 +206,12 @@ public class ModularTool implements IModularTool {
 
     @Override
     public CompoundTag serializeNBT() {
-        CompoundTag tag = new CompoundTag();
-        tag.put("Handle", this.handle.serializeNBT());
-        tag.put("Head", this.head.serializeNBT());
-        return tag;
-    }
-
-    @Override
-    public void setDurabilityDmg(int damage) {
-
+        if (this.tag == null) {
+            this.tag = new CompoundTag();
+        }
+        this.tag.put("Handle", this.handle.serializeNBT());
+        this.tag.put("Head", this.head.serializeNBT());
+        return this.tag;
     }
 
     @Override

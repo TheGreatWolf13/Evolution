@@ -7,7 +7,6 @@ import tgw.evolution.util.math.ILineConsumer;
 
 public class Hitbox implements IHitbox {
 
-    private final AABB aabb;
     private final HitboxEntity<? extends Entity> parent;
     private final HitboxType part;
     protected float pivotX;
@@ -16,6 +15,7 @@ public class Hitbox implements IHitbox {
     protected float rotationX;
     protected float rotationY;
     protected float rotationZ;
+    private AABB aabb;
 
     public Hitbox(HitboxType part, AABB aabb, HitboxEntity<? extends Entity> parent) {
         this.part = part;
@@ -103,6 +103,11 @@ public class Hitbox implements IHitbox {
     protected void reset() {
         this.setPivot(0, 0, 0);
         this.setRotation(0, 0, 0);
+    }
+
+    @Deprecated(forRemoval = true)
+    public void setAabb(AABB aabb) {
+        this.aabb = aabb;
     }
 
     protected void setPivot(float x, float y, float z) {

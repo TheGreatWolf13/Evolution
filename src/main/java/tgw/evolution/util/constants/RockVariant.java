@@ -1,12 +1,19 @@
 package tgw.evolution.util.constants;
 
+import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
+import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
+import it.unimi.dsi.fastutil.bytes.Byte2ReferenceOpenHashMap;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import tgw.evolution.blocks.tileentities.KnappingRecipe;
+import tgw.evolution.capabilities.modular.MaterialInstance;
+import tgw.evolution.capabilities.modular.part.HeadPart;
+import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.IVariant;
+import tgw.evolution.init.ItemMaterial;
 import tgw.evolution.util.UnregisteredFeatureException;
 
 import javax.annotation.Nullable;
@@ -40,6 +47,16 @@ public enum RockVariant implements IVariant {
 
     public static final RockVariant[] VALUES = values();
     public static final RockVariant[] VALUES_STONE = Arrays.stream(VALUES).filter(v -> v != PEAT && v != CLAY).toArray(RockVariant[]::new);
+    private static final Byte2ReferenceMap<RockVariant> REGISTRY;
+
+    static {
+        Byte2ReferenceMap<RockVariant> map = new Byte2ReferenceOpenHashMap<>();
+        for (RockVariant variant : VALUES) {
+            map.put(variant.id, variant);
+        }
+        REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+    }
+
     private final int density;
     private final byte id;
     private final String name;
@@ -55,31 +72,23 @@ public enum RockVariant implements IVariant {
     }
 
     public static RockVariant fromId(byte id) {
-        return switch (id) {
-            case 0 -> ANDESITE;
-            case 1 -> BASALT;
-            case 2 -> CHALK;
-            case 3 -> CHERT;
-            case 4 -> CONGLOMERATE;
-            case 5 -> DACITE;
-            case 6 -> DIORITE;
-            case 7 -> DOLOMITE;
-            case 8 -> GABBRO;
-            case 9 -> GNEISS;
-            case 10 -> GRANITE;
-            case 11 -> LIMESTONE;
-            case 12 -> MARBLE;
-            case 13 -> PHYLLITE;
-            case 14 -> QUARTZITE;
-            case 15 -> RED_SANDSTONE;
-            case 16 -> SANDSTONE;
-            case 17 -> SCHIST;
-            case 18 -> SHALE;
-            case 19 -> SLATE;
-            case 20 -> PEAT;
-            case 21 -> CLAY;
-            default -> throw new UnregisteredFeatureException("Unregistered variant for id: " + id);
-        };
+        RockVariant variant = REGISTRY.get(id);
+        if (variant == null) {
+            throw new UnregisteredFeatureException("Unregistered variant for id: " + id);
+        }
+        return variant;
+    }
+
+    private static ItemStack getPart(PartTypes.Head type, RockVariant variant) {
+        ItemMaterial material = variant.getMaterial();
+        if (!material.isAllowedBy(type)) {
+            throw new IllegalStateException("Invalid material for head type " + type + ": " + variant);
+        }
+        ItemStack stack = new ItemStack(EvolutionItems.HEAD_PART.get());
+        HeadPart part = HeadPart.get(stack);
+        part.set(type, new MaterialInstance(material));
+        part.sharp();
+        return stack;
     }
 
     public Block fromEnumVanillaRep(VanillaRockVariant vanilla) {
@@ -91,32 +100,6 @@ public enum RockVariant implements IVariant {
             case SAND -> this.getSand();
             case STONE -> this.getStone();
             case STONE_BRICKS -> this.getStoneBricks();
-        };
-    }
-
-    public Item getAxeHead() {
-        return switch (this) {
-            case CLAY, PEAT -> throw new IllegalStateException("This variant does not have an axe head!");
-            case ANDESITE -> EvolutionItems.axe_head_andesite.get();
-            case BASALT -> EvolutionItems.axe_head_basalt.get();
-            case CHALK -> EvolutionItems.axe_head_chalk.get();
-            case CHERT -> EvolutionItems.axe_head_chert.get();
-            case CONGLOMERATE -> EvolutionItems.axe_head_conglomerate.get();
-            case DACITE -> EvolutionItems.axe_head_dacite.get();
-            case DIORITE -> EvolutionItems.axe_head_diorite.get();
-            case DOLOMITE -> EvolutionItems.axe_head_dolomite.get();
-            case GABBRO -> EvolutionItems.axe_head_gabbro.get();
-            case GNEISS -> EvolutionItems.axe_head_gneiss.get();
-            case GRANITE -> EvolutionItems.axe_head_granite.get();
-            case LIMESTONE -> EvolutionItems.axe_head_limestone.get();
-            case MARBLE -> EvolutionItems.axe_head_marble.get();
-            case PHYLLITE -> EvolutionItems.axe_head_phyllite.get();
-            case QUARTZITE -> EvolutionItems.axe_head_quartzite.get();
-            case RED_SANDSTONE -> EvolutionItems.axe_head_red_sandstone.get();
-            case SANDSTONE -> EvolutionItems.axe_head_sandstone.get();
-            case SCHIST -> EvolutionItems.axe_head_schist.get();
-            case SHALE -> EvolutionItems.axe_head_shale.get();
-            case SLATE -> EvolutionItems.axe_head_slate.get();
         };
     }
 
@@ -209,67 +192,15 @@ public enum RockVariant implements IVariant {
         return this.id;
     }
 
-    public Item getJavelin() {
-        return switch (this) {
-            case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a javelin!");
-            case ANDESITE -> EvolutionItems.javelin_andesite.get();
-            case BASALT -> EvolutionItems.javelin_basalt.get();
-            case CHALK -> EvolutionItems.javelin_chalk.get();
-            case CHERT -> EvolutionItems.javelin_chert.get();
-            case CONGLOMERATE -> EvolutionItems.javelin_conglomerate.get();
-            case DACITE -> EvolutionItems.javelin_dacite.get();
-            case DIORITE -> EvolutionItems.javelin_diorite.get();
-            case DOLOMITE -> EvolutionItems.javelin_dolomite.get();
-            case GABBRO -> EvolutionItems.javelin_gabbro.get();
-            case GNEISS -> EvolutionItems.javelin_gneiss.get();
-            case GRANITE -> EvolutionItems.javelin_granite.get();
-            case LIMESTONE -> EvolutionItems.javelin_limestone.get();
-            case MARBLE -> EvolutionItems.javelin_marble.get();
-            case PHYLLITE -> EvolutionItems.javelin_phyllite.get();
-            case QUARTZITE -> EvolutionItems.javelin_quartzite.get();
-            case RED_SANDSTONE -> EvolutionItems.javelin_red_sandstone.get();
-            case SANDSTONE -> EvolutionItems.javelin_sandstone.get();
-            case SCHIST -> EvolutionItems.javelin_schist.get();
-            case SHALE -> EvolutionItems.javelin_shale.get();
-            case SLATE -> EvolutionItems.javelin_slate.get();
-        };
-    }
-
-    public Item getJavelinHead() {
-        return switch (this) {
-            case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a javelin head!");
-            case ANDESITE -> EvolutionItems.javelin_head_andesite.get();
-            case BASALT -> EvolutionItems.javelin_head_basalt.get();
-            case CHALK -> EvolutionItems.javelin_head_chalk.get();
-            case CHERT -> EvolutionItems.javelin_head_chert.get();
-            case CONGLOMERATE -> EvolutionItems.javelin_head_conglomerate.get();
-            case DACITE -> EvolutionItems.javelin_head_dacite.get();
-            case DIORITE -> EvolutionItems.javelin_head_diorite.get();
-            case DOLOMITE -> EvolutionItems.javelin_head_dolomite.get();
-            case GABBRO -> EvolutionItems.javelin_head_gabbro.get();
-            case GNEISS -> EvolutionItems.javelin_head_gneiss.get();
-            case GRANITE -> EvolutionItems.javelin_head_granite.get();
-            case LIMESTONE -> EvolutionItems.javelin_head_limestone.get();
-            case MARBLE -> EvolutionItems.javelin_head_marble.get();
-            case PHYLLITE -> EvolutionItems.javelin_head_phyllite.get();
-            case QUARTZITE -> EvolutionItems.javelin_head_quartzite.get();
-            case RED_SANDSTONE -> EvolutionItems.javelin_head_red_sandstone.get();
-            case SANDSTONE -> EvolutionItems.javelin_head_sandstone.get();
-            case SCHIST -> EvolutionItems.javelin_head_schist.get();
-            case SHALE -> EvolutionItems.javelin_head_shale.get();
-            case SLATE -> EvolutionItems.javelin_head_slate.get();
-        };
-    }
-
     public ItemStack getKnappedStack(KnappingRecipe knapping) {
         return switch (knapping) {
-            case AXE -> new ItemStack(this.getAxeHead());
-            case HOE -> new ItemStack(this.getHoeHead());
             case NULL -> new ItemStack(this.getRock());
-            case KNIFE -> new ItemStack(this.getKnifeBlade());
+            case AXE -> getPart(PartTypes.Head.AXE, this);
             case HAMMER -> new ItemStack(this.getHammerHead());
+            case HOE -> new ItemStack(this.getHoeHead());
+            case KNIFE -> new ItemStack(this.getKnifeBlade());
             case SHOVEL -> new ItemStack(this.getShovelHead());
-            case JAVELIN -> new ItemStack(this.getJavelinHead());
+            case SPEAR -> getPart(PartTypes.Head.SPEAR, this);
         };
     }
 
@@ -308,6 +239,32 @@ public enum RockVariant implements IVariant {
 
     public int getMass() {
         return this.density;
+    }
+
+    private ItemMaterial getMaterial() {
+        return switch (this) {
+            case CLAY, PEAT -> throw new IllegalStateException("This variant is not a valid material!");
+            case ANDESITE -> ItemMaterial.ANDESITE;
+            case BASALT -> ItemMaterial.BASALT;
+            case CHALK -> ItemMaterial.CHALK;
+            case CHERT -> ItemMaterial.CHERT;
+            case CONGLOMERATE -> ItemMaterial.CONGLOMERATE;
+            case DACITE -> ItemMaterial.DACITE;
+            case DIORITE -> ItemMaterial.DIORITE;
+            case DOLOMITE -> ItemMaterial.DOLOMITE;
+            case GABBRO -> ItemMaterial.GABBRO;
+            case GNEISS -> ItemMaterial.GNEISS;
+            case GRANITE -> ItemMaterial.GRANITE;
+            case LIMESTONE -> ItemMaterial.LIMESTONE;
+            case MARBLE -> ItemMaterial.MARBLE;
+            case PHYLLITE -> ItemMaterial.PHYLLITE;
+            case QUARTZITE -> ItemMaterial.QUARTZITE;
+            case RED_SANDSTONE -> ItemMaterial.RED_SANDSTONE;
+            case SANDSTONE -> ItemMaterial.SANDSTONE;
+            case SCHIST -> ItemMaterial.SCHIST;
+            case SHALE -> ItemMaterial.SHALE;
+            case SLATE -> ItemMaterial.SLATE;
+        };
     }
 
     @Override

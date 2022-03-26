@@ -3,14 +3,14 @@ package tgw.evolution.util.earth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.dimension.DimensionType;
 import tgw.evolution.entities.projectiles.IAerodynamicEntity;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Units;
 
 public final class Gravity {
 
     /**
      * The average gravity acceleration at the surface of Earth, in m/s^2.
      */
-    private static final double EARTH_GRAVITY = MathHelper.convertAcceleration(9.8);
+    private static final double EARTH_GRAVITY = Units.toMSUAcceleration(9.8);
     /**
      * The average air density in the atmosphere, in kg/m^3.
      */
@@ -50,7 +50,7 @@ public final class Gravity {
     public static double horizontalWaterDrag(Entity entity) {
         return 0.5 * WATER_DENSITY * entity.getBbWidth() * entity.getBbHeight() * coefOfDrag(entity);
     }
-    
+
     /**
      * Returns the vertical drag due to air resistance in the given dimension, based on the area of the body.
      */

@@ -33,6 +33,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.entity.IEntityAdditionalSpawnData;
 import net.minecraftforge.network.NetworkHooks;
+import tgw.evolution.blocks.ICollisionBlock;
 import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStats;
@@ -45,8 +46,8 @@ import tgw.evolution.util.math.MathHelper;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<T>> extends Entity implements IEntityAdditionalSpawnData,
-                                                                                                              IEvolutionEntity<T> {
+public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<T>> extends Entity
+        implements IEntityAdditionalSpawnData, IEvolutionEntity<T> {
     private static final EntityDataAccessor<Byte> PIERCE_LEVEL = SynchedEntityData.defineId(EntityGenericProjectile.class,
                                                                                             EntityDataSerializers.BYTE);
     protected final IntSet hitEntities = new IntOpenHashSet();
@@ -57,11 +58,10 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
     public UUID shootingEntity;
     public int ticksInAir;
     public int timeInGround;
-    private float damage = 2.0f;
+    private double damage = 2.0;
     @Nullable
     private BlockState inBlockState;
     private double mass = 1;
-    private IntOpenHashSet piercedEntities;
     private int ticksInGround;
 
     public EntityGenericProjectile(EntityType<? extends EntityGenericProjectile> type, LivingEntity shooter, Level level, double mass) {
@@ -124,7 +124,7 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
 
     protected abstract ItemStack getArrowStack();
 
-    public float getDamage() {
+    public double getDamage() {
         return this.damage;
     }
 
@@ -153,11 +153,6 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
         return false;
     }
 
-//    @Override
-//    protected boolean isMovementNoisy() {
-//        return false;
-//    }
-
     @Override
     @OnlyIn(Dist.CLIENT)
     public void lerpMotion(double x, double y, double z) {
@@ -180,19 +175,14 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
         this.setRot(yaw, pitch);
     }
 
+    protected abstract void onBlockHit(BlockState state);
+
     protected void onEntityHit(EntityHitResult entityRayTrace) {
         Entity rayTracedEntity = entityRayTrace.getEntity();
         float velocityLength = (float) this.getDeltaMovement().length();
-        float damage = velocityLength * this.damage;
+        float damage = (float) (velocityLength * this.damage);
         if (this.getPierceLevel() > 0) {
-            if (this.piercedEntities == null) {
-                this.piercedEntities = new IntOpenHashSet(5);
-            }
-            if (this.piercedEntities.size() >= this.getPierceLevel() + 1) {
-                this.discard();
-                return;
-            }
-            this.piercedEntities.add(rayTracedEntity.getId());
+            //TODO piercing
         }
         LivingEntity shooter = this.getShooter();
         DamageSourceEv source;
@@ -256,24 +246,31 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
         }
         else if (type == HitResult.Type.BLOCK) {
             BlockHitResult blockHitResult = (BlockHitResult) hitResult;
-            BlockState stateAtPos = this.level.getBlockState(blockHitResult.getBlockPos());
-            this.inBlockState = stateAtPos;
-            Vec3 vec3d = blockHitResult.getLocation().subtract(this.position());
-            this.setDeltaMovement(vec3d);
-            Vec3 vec3d1 = vec3d.normalize().scale(0.05);
-            this.setPosRaw(this.getX() - vec3d1.x, this.getY() - vec3d1.y, this.getZ() - vec3d1.z);
-            this.playSound(this.getHitBlockSound(), 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
-            this.inGround = true;
-            this.arrowShake = 7;
-            this.setPierceLevel((byte) 0);
-            this.resetHitEntities();
-            this.onProjectileCollision(this.level, stateAtPos, blockHitResult);
+            BlockPos pos = blockHitResult.getBlockPos();
+            if (this.onProjectileCollision(this.level.getBlockState(pos), pos)) {
+                Vec3 vec3d = blockHitResult.getLocation().subtract(this.position());
+                this.setDeltaMovement(vec3d);
+                Vec3 vec3d1 = vec3d.normalize().scale(0.05);
+                this.setPosRaw(this.getX() - vec3d1.x, this.getY() - vec3d1.y, this.getZ() - vec3d1.z);
+                this.playSound(this.getHitBlockSound(), 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
+                this.inBlockState = this.level.getBlockState(blockHitResult.getBlockPos());
+                this.inGround = true;
+                this.setPierceLevel((byte) 0);
+                this.resetHitEntities();
+                this.arrowShake = 7;
+                this.onBlockHit(this.inBlockState);
+            }
         }
     }
 
-    public void onProjectileCollision(Level level, BlockState state, BlockHitResult hit) {
-        //TODO
-//        state.getBlock().onProjectileCollision(level, state, hit, this);
+    /**
+     * @return Whether is speed should be changed internally
+     */
+    public boolean onProjectileCollision(BlockState state, BlockPos pos) {
+        if (state.getBlock() instanceof ICollisionBlock collisionBlock) {
+            return !collisionBlock.collision(this.level, pos, this, this.getDeltaMovement().length(), this.mass, null);
+        }
+        return true;
     }
 
     @Override
@@ -294,17 +291,13 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
 
     @Nullable
     protected EntityHitResult rayTraceEntities(Vec3 startVec, Vec3 endVec) {
-        return ProjectileUtil.getEntityHitResult(this.level,
-                                                 this,
-                                                 startVec,
-                                                 endVec,
+        return ProjectileUtil.getEntityHitResult(this.level, this, startVec, endVec,
                                                  this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(1),
                                                  entity -> !entity.isSpectator() &&
                                                            entity.isAlive() &&
                                                            entity.isAttackable() &&
                                                            entity.isPickable() &&
-                                                           (entity != this.getShooter() || this.ticksInAir >= 5) &&
-                                                           (this.piercedEntities == null || !this.piercedEntities.contains(entity.getId())));
+                                                           (entity != this.getShooter() || this.ticksInAir >= 5));
     }
 
     @Override
@@ -337,12 +330,9 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
         if (this.hitEntities != null) {
             this.hitEntities.clear();
         }
-        if (this.piercedEntities != null) {
-            this.piercedEntities.clear();
-        }
     }
 
-    public void setDamage(float damage) {
+    public void setDamage(double damage) {
         this.damage = damage;
     }
 
@@ -370,8 +360,7 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
 
     public void shoot(double x, double y, double z, float velocity, float inaccuracy) {
         Vec3 motion = new Vec3(x, y, z).normalize()
-                                       .add(this.random.nextGaussian() * 0.007_5F * inaccuracy,
-                                            this.random.nextGaussian() * 0.007_5F * inaccuracy,
+                                       .add(this.random.nextGaussian() * 0.007_5F * inaccuracy, this.random.nextGaussian() * 0.007_5F * inaccuracy,
                                             this.random.nextGaussian() * 0.007_5F * inaccuracy)
                                        .normalize()
                                        .scale(velocity);
@@ -440,11 +429,8 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
             this.ticksInAir++;
             Vec3 positionVec = this.position();
             Vec3 newPositionVec = positionVec.add(motion);
-            HitResult rayTrace = this.level.clip(new ClipContext(positionVec,
-                                                                 newPositionVec,
-                                                                 ClipContext.Block.COLLIDER,
-                                                                 ClipContext.Fluid.NONE,
-                                                                 this));
+            HitResult rayTrace = this.level.clip(
+                    new ClipContext(positionVec, newPositionVec, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
             if (rayTrace.getType() != HitResult.Type.MISS) {
                 newPositionVec = rayTrace.getLocation();
             }
@@ -480,8 +466,8 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
             double horizontalSpeed = motion.horizontalDistance();
             this.setYRot(MathHelper.radToDeg((float) Mth.atan2(motionX, motionZ)));
             //noinspection StatementWithEmptyBody
-            for (this.setXRot(MathHelper.radToDeg((float) Mth.atan2(motionY, horizontalSpeed))); this.getXRot() - this.xRotO <
-                                                                                                 -180.0f; this.xRotO -= 360.0F) {
+            for (this.setXRot(MathHelper.radToDeg((float) Mth.atan2(motionY, horizontalSpeed))); this.getXRot() - this.xRotO < -180.0f;
+                 this.xRotO -= 360.0F) {
             }
             while (this.getXRot() - this.xRotO >= 180.0F) {
                 this.xRotO += 360.0F;
@@ -510,13 +496,8 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
             }
             if (this.isInWater()) {
                 for (int j = 0; j < 4; ++j) {
-                    this.level.addParticle(ParticleTypes.BUBBLE,
-                                           this.getX() - motionX * 0.25,
-                                           this.getY() - motionY * 0.25,
-                                           this.getZ() - motionZ * 0.25,
-                                           motionX,
-                                           motionY,
-                                           motionZ);
+                    this.level.addParticle(ParticleTypes.BUBBLE, this.getX() - motionX * 0.25, this.getY() - motionY * 0.25,
+                                           this.getZ() - motionZ * 0.25, motionX, motionY, motionZ);
                 }
             }
             double gravity = 0;
@@ -551,11 +532,13 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
         ALLOWED,
         CREATIVE_ONLY;
 
+        public static final PickupStatus[] VALUES = values();
+
         public static PickupStatus getByOrdinal(int ordinal) {
-            if (ordinal < 0 || ordinal > values().length) {
+            if (ordinal < 0 || ordinal > VALUES.length) {
                 ordinal = 0;
             }
-            return values()[ordinal];
+            return VALUES[ordinal];
         }
     }
 }

@@ -13,6 +13,7 @@ import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.IDurability;
 import tgw.evolution.items.IMass;
 import tgw.evolution.items.ItemEv;
+import tgw.evolution.util.constants.HarvestLevel;
 
 import java.util.function.Consumer;
 
@@ -27,10 +28,16 @@ public abstract class ItemModular extends ItemEv implements IDurability, IMass {
         return true;
     }
 
-    public void damage(ItemStack stack, DamageCause cause) {
+    protected void damage(ItemStack stack, DamageCause cause, @HarvestLevel int harvestLevel) {
         if (this.canBeDepleted()) {
-            this.getModularCap(stack).damage(cause);
+            this.getModularCap(stack).damage(cause, harvestLevel);
         }
+    }
+
+    @Override
+    @Deprecated
+    public <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<T> onBroken) {
+        throw new AssertionError("Should not be called. Call hurtAndBreak(ItemStack, DamageCause, LivingEntity, Consumer)");
     }
 
     @Override
@@ -88,7 +95,15 @@ public abstract class ItemModular extends ItemEv implements IDurability, IMass {
 
     public abstract IModular getModularCap(ItemStack stack);
 
-    public abstract <E extends LivingEntity> void hurtAndBreak(ItemStack stack, DamageCause cause, E entity, Consumer<E> onBroken);
+    public <E extends LivingEntity> void hurtAndBreak(ItemStack stack, DamageCause cause, E entity, Consumer<E> onBroken) {
+        this.hurtAndBreak(stack, cause, entity, onBroken, this.getModularCap(stack).getHarvestLevel());
+    }
+
+    public abstract <E extends LivingEntity> void hurtAndBreak(ItemStack stack,
+                                                               DamageCause cause,
+                                                               E entity,
+                                                               Consumer<E> onBroken,
+                                                               @HarvestLevel int harvestLevel);
 
     public boolean isAxe(ItemStack stack) {
         return this.getModularCap(stack).isAxe();

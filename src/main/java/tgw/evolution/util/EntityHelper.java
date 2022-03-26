@@ -17,7 +17,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.ForgeEventFactory;
 import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.items.*;
+import tgw.evolution.items.IFireAspect;
+import tgw.evolution.items.IKnockback;
+import tgw.evolution.items.IMelee;
+import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.hitbox.HitboxType;
 import tgw.evolution.util.math.MathHelper;
 
@@ -35,59 +38,45 @@ public final class EntityHelper {
         if (victim.isAttackable()) {
             if (!victim.skipAttackInteraction(attacker)) {
                 float damage = (float) attacker.getAttribute(Attributes.ATTACK_DAMAGE).getValue();
-                if (attackItem instanceof IOffhandAttackable) {
-                    damage = (float) (((IOffhandAttackable) attackItem).getAttackDamage(attackStack) +
-                                      attacker.getAttribute(Attributes.ATTACK_DAMAGE).getBaseValue());
+                if (attackItem instanceof ItemModular modular) {
+                    damage += modular.getModularCap(attackStack).getAttackDamage();
                 }
                 if (damage > 0.0F) {
                     int knockbackModifier = 0;
-                    if (attackItem instanceof IKnockback) {
-                        knockbackModifier += ((IKnockback) attackItem).getLevel();
+                    if (attackItem instanceof IKnockback knockback) {
+                        knockbackModifier += knockback.getLevel();
                     }
-                    boolean sprinting = false;
+//                    boolean sprinting = false;
                     if (attacker.isSprinting() && attacker instanceof Player) {
-                        attacker.level.playSound(null,
-                                                 attacker.getX(),
-                                                 attacker.getY(),
-                                                 attacker.getZ(),
-                                                 SoundEvents.PLAYER_ATTACK_KNOCKBACK,
-                                                 attacker.getSoundSource(),
-                                                 1.0F,
-                                                 1.0F);
+                        attacker.level.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(), SoundEvents.PLAYER_ATTACK_KNOCKBACK,
+                                                 attacker.getSoundSource(), 1.0F, 1.0F);
                         ++knockbackModifier;
-                        sprinting = true;
+//                        sprinting = true;
                     }
-                    int heavyModifier = 0;
-                    if (attackItem instanceof IHeavyAttack heavyItem) {
-                        float heavyChance = heavyItem.getHeavyAttackChance();
-                        if (sprinting) {
-                            heavyChance *= 2;
-                        }
-                        if (attacker.getRandom().nextFloat() < heavyChance) {
-                            heavyModifier = heavyItem.getHeavyAttackLevel();
-                            if (sprinting) {
-                                heavyModifier *= 2;
-                            }
-                            if (attacker.level instanceof ServerLevel serverLevel) {
-                                serverLevel.sendParticles(ParticleTypes.ENCHANTED_HIT,
-                                                          victim.getX(),
-                                                          victim.getY() + victim.getBbHeight() * 0.5F,
-                                                          victim.getZ(),
-                                                          10,
-                                                          0.5,
-                                                          0,
-                                                          0.5,
-                                                          0.1);
-                            }
-                        }
-                    }
-                    damage *= 1 + heavyModifier / 10.0f;
-                    boolean isSweepAttack = false;
-                    if (!sprinting && attacker.isOnGround()) {
-                        if (attackItem instanceof ISweepAttack) {
-                            isSweepAttack = true;
-                        }
-                    }
+//                    int heavyModifier = 0;
+//                    if (attackItem instanceof IHeavyAttack heavyItem) {
+//                        float heavyChance = heavyItem.getHeavyAttackChance();
+//                        if (sprinting) {
+//                            heavyChance *= 2;
+//                        }
+//                        if (attacker.getRandom().nextFloat() < heavyChance) {
+//                            heavyModifier = heavyItem.getHeavyAttackLevel();
+//                            if (sprinting) {
+//                                heavyModifier *= 2;
+//                            }
+//                            if (attacker.level instanceof ServerLevel serverLevel) {
+//                                serverLevel.sendParticles(ParticleTypes.ENCHANTED_HIT, victim.getX(), victim.getY() + victim.getBbHeight() * 0.5F,
+//                                                          victim.getZ(), 10, 0.5, 0, 0.5, 0.1);
+//                            }
+//                        }
+//                    }
+//                    damage *= 1 + heavyModifier / 10.0f;
+//                    boolean isSweepAttack = false;
+//                    if (!sprinting && attacker.isOnGround()) {
+//                        if (attackItem instanceof ISweepAttack) {
+//                            isSweepAttack = true;
+//                        }
+//                    }
                     int fireAspectModifier = 0;
                     if (attackItem instanceof IFireAspect fireItem) {
                         if (attacker.getRandom().nextFloat() < fireItem.getChance()) {
@@ -117,13 +106,11 @@ public final class EntityHelper {
                         //Knockback calculations
                         if (knockbackModifier > 0) {
                             if (victim instanceof LivingEntity) {
-                                ((LivingEntity) victim).knockback(knockbackModifier * 0.5F,
-                                                                  MathHelper.sinDeg(attacker.getYRot()),
+                                ((LivingEntity) victim).knockback(knockbackModifier * 0.5F, MathHelper.sinDeg(attacker.getYRot()),
                                                                   -MathHelper.cosDeg(attacker.getYRot()));
                             }
                             else {
-                                victim.push(-MathHelper.sinDeg(attacker.getYRot()) * knockbackModifier * 0.5F,
-                                            0,
+                                victim.push(-MathHelper.sinDeg(attacker.getYRot()) * knockbackModifier * 0.5F, 0,
                                             MathHelper.cosDeg(attacker.getYRot()) * knockbackModifier * 0.5F);
                             }
                             attacker.setDeltaMovement(attacker.getDeltaMovement().multiply(0.6, 1, 0.6));
@@ -169,16 +156,10 @@ public final class EntityHelper {
                             victim.setDeltaMovement(targetMotion);
                         }
                         //Strong attack particles
-                        if (!isSweepAttack) {
-                            attacker.level.playSound(null,
-                                                     attacker.getX(),
-                                                     attacker.getY(),
-                                                     attacker.getZ(),
-                                                     SoundEvents.PLAYER_ATTACK_STRONG,
-                                                     attacker.getSoundSource(),
-                                                     1.0F,
-                                                     1.0F);
-                        }
+//                        if (!isSweepAttack) {
+                        attacker.level.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(), SoundEvents.PLAYER_ATTACK_STRONG,
+                                                 attacker.getSoundSource(), 1.0F, 1.0F);
+//                        }
                         attacker.setLastHurtMob(victim);
                         //Entity parts
                         Entity entity = victim;
@@ -212,15 +193,8 @@ public final class EntityHelper {
                             }
                             if (attacker.level instanceof ServerLevel serverLevel && damageDealt >= 10.0F) {
                                 int heartsToSpawn = (int) (damageDealt * 0.1);
-                                serverLevel.sendParticles(ParticleTypes.DAMAGE_INDICATOR,
-                                                          living.getX(),
-                                                          living.getY() + living.getBbHeight() * 0.5F,
-                                                          living.getZ(),
-                                                          heartsToSpawn,
-                                                          0.5,
-                                                          0,
-                                                          0.5,
-                                                          0.1);
+                                serverLevel.sendParticles(ParticleTypes.DAMAGE_INDICATOR, living.getX(), living.getY() + living.getBbHeight() * 0.5F,
+                                                          living.getZ(), heartsToSpawn, 0.5, 0, 0.5, 0.1);
                             }
                         }
                         if (attacker instanceof Player) {
@@ -231,14 +205,8 @@ public final class EntityHelper {
                     //Attack fail
                     else {
                         if (attacker instanceof Player) {
-                            attacker.level.playSound(null,
-                                                     attacker.getX(),
-                                                     attacker.getY(),
-                                                     attacker.getZ(),
-                                                     SoundEvents.PLAYER_ATTACK_NODAMAGE,
-                                                     attacker.getSoundSource(),
-                                                     1.0F,
-                                                     1.0F);
+                            attacker.level.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(), SoundEvents.PLAYER_ATTACK_NODAMAGE,
+                                                     attacker.getSoundSource(), 1.0F, 1.0F);
                         }
                         if (fireAspect) {
                             victim.clearFire();

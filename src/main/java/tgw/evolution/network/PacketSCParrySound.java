@@ -30,10 +30,10 @@ public class PacketSCParrySound implements IPacket {
             context.get().enqueueWork(() -> {
                 SoundEvent sound;
                 if (packet.success) {
-                    sound = EvolutionSounds.PARRY_SUCCESS.get();
+                    sound = EvolutionSounds.METAL_WEAPON_BLOCKS.get();
                 }
                 else {
-                    sound = EvolutionSounds.PARRY_FAIL.get();
+                    sound = EvolutionSounds.METAL_WEAPON_HIT_BLOCK.get();
                 }
                 Evolution.PROXY.getClientPlayer().playSound(sound, 0.4f, 0.8F + Evolution.PROXY.getClientLevel().random.nextFloat() * 0.4F);
             });

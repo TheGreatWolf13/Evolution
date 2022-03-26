@@ -36,6 +36,8 @@ public class BakedModelFinalModularTool implements BakedModel {
 
     private final BakedModel baseModel;
     private final IModelData modelData = getEmptyIModelData();
+    private boolean isSweeping;
+    private boolean isThrowing;
 
     public BakedModelFinalModularTool(BakedModel baseModel) {
         this.baseModel = baseModel;
@@ -43,9 +45,9 @@ public class BakedModelFinalModularTool implements BakedModel {
 
     public static ModelDataMap getEmptyIModelData() {
         ModelDataMap.Builder builder = new ModelDataMap.Builder();
-        builder.withInitial(HEAD_MATERIAL, ItemMaterial.STONE_ANDESITE);
+        builder.withInitial(HEAD_MATERIAL, ItemMaterial.ANDESITE);
         builder.withInitial(HEAD_TYPE, PartTypes.Head.NULL);
-        builder.withInitial(HANDLE_MATERIAL, ItemMaterial.STONE_ANDESITE);
+        builder.withInitial(HANDLE_MATERIAL, ItemMaterial.ANDESITE);
         builder.withInitial(HANDLE_TYPE, PartTypes.Handle.NULL);
         builder.withInitial(IS_SHARP, false);
         return builder.build();
@@ -105,6 +107,12 @@ public class BakedModelFinalModularTool implements BakedModel {
 
     @Override
     public ItemTransforms getTransforms() {
+        if (this.isThrowing) {
+            return Minecraft.getInstance().getModelManager().getModel(EvolutionResources.TOOL_THROWING).getTransforms();
+        }
+        if (this.isSweeping) {
+            return Minecraft.getInstance().getModelManager().getModel(EvolutionResources.TOOL_SWEEP).getTransforms();
+        }
         return this.baseModel.getTransforms();
     }
 
@@ -128,6 +136,14 @@ public class BakedModelFinalModularTool implements BakedModel {
         this.modelData.setData(HANDLE_TYPE, handleType);
         this.modelData.setData(HANDLE_MATERIAL, handleMaterial);
         this.modelData.setData(IS_SHARP, isSharp);
+    }
+
+    public void setSweeping(boolean sweeping) {
+        this.isSweeping = sweeping;
+    }
+
+    public void setThrowing(boolean throwing) {
+        this.isThrowing = throwing;
     }
 
     @Override

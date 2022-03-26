@@ -9,7 +9,7 @@ import javax.annotation.Nonnull;
 public enum KnappingRecipe {
     NULL(0, KnappingPatterns.NULL),
     AXE(1, KnappingPatterns.AXE),
-    JAVELIN(2, KnappingPatterns.JAVELIN),
+    SPEAR(2, KnappingPatterns.JAVELIN),
     SHOVEL(3, KnappingPatterns.SHOVEL),
     HAMMER(4, KnappingPatterns.HAMMER),
     HOE(5, KnappingPatterns.HOE),

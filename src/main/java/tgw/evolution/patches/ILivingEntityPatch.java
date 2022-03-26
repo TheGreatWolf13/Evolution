@@ -1,38 +1,83 @@
 package tgw.evolution.patches;
 
-import tgw.evolution.items.ICustomAttack;
+import tgw.evolution.items.ISpecialAttack;
 
 import javax.annotation.Nullable;
 
 public interface ILivingEntityPatch {
 
-    float getMainhandCustomAttackProgress(float partialTicks);
+    /**
+     * @return The progress, from {@code 0.0f} to {@code 1.0f} of the mainhand special attack, given interpolation ticks.
+     */
+    float getMainhandSpecialAttackProgress(float partialTicks);
 
-    int getMainhandCustomAttackTicks();
-
+    /**
+     * @return The type of the current mainhand special attack. {@code null} if none is being performed.
+     */
     @Nullable
-    ICustomAttack.AttackType getMainhandCustomAttackType();
+    ISpecialAttack.IAttackType getMainhandSpecialAttackType();
 
-    float getOffhandCustomAttackProgress(float partialTicks);
+    /**
+     * @return The progress, from {@code 0.0f} to {@code 1.0f} of the offhand special attack, given interpolation ticks.
+     */
+    float getOffhandSpecialAttackProgress(float partialTicks);
 
-    int getOffhandCustomAttackTicks();
-
+    /**
+     * @return The type of the current offhand special attack. {@code null} if none is being performed.
+     */
     @Nullable
-    ICustomAttack.AttackType getOffhandCustomAttackType();
+    ISpecialAttack.IAttackType getOffhandSpecialAttackType();
 
-    boolean isMainhandCustomAttacking();
+    /**
+     * @return Whether the current mainhand or offhand special attacks should lock the player camera.
+     */
+    boolean isCameraLocked();
 
-    boolean isOffhandCustomAttacking();
+    /**
+     * @return Whether the mainhand special attack is in hit ticks (hitbox calculations should be performed and damage should be dealt).
+     */
+    boolean isMainhandInHitTicks();
 
-    boolean renderMainhandCustomAttack();
+    /**
+     * @return Whether the mainhand special attack is in progress, is canceled, or on cooldown.
+     */
+    boolean isMainhandInSpecialAttack();
 
-    boolean renderOffhandCustomAttack();
+    /**
+     * @return Whether the mainhand special attack is in progress, has NOT been canceled and is NOT on cooldown.
+     */
+    boolean isMainhandSpecialAttacking();
 
-    void startMainhandCustomAttack(ICustomAttack.AttackType type);
+    /**
+     * @return Whether the offhand special attack is in hit ticks (hitbox calculations should be performed and damage should be dealt).
+     */
+    boolean isOffhandInHitTicks();
 
-    void startOffhandCustomAttack(ICustomAttack.AttackType type);
+    /**
+     * @return Whether the offhand special attack is in progress, has been canceled, or is on cooldown.
+     */
+    boolean isOffhandInSpecialAttack();
 
-    void stopMainhandCustomAttack(ICustomAttack.StopReason reason);
+    /**
+     * @return Whether the offhand special attack is in progress, has NOT been canceled and is NOT on cooldown.
+     */
+    boolean isOffhandSpecialAttacking();
 
-    void stopOffhandCustomAttack(ICustomAttack.StopReason reason);
+    /**
+     * @return Whether the mainhand special attack should be rendered by clients.
+     */
+    boolean renderMainhandSpecialAttack();
+
+    /**
+     * @return Whether the offhand special attack should be rendered by clients.
+     */
+    boolean renderOffhandSpecialAttack();
+
+    void startMainhandSpecialAttack(ISpecialAttack.IAttackType type);
+
+    void startOffhandSpecialAttack(ISpecialAttack.IAttackType type);
+
+    void stopMainhandSpecialAttack(ISpecialAttack.StopReason reason);
+
+    void stopOffhandSpecialAttack(ISpecialAttack.StopReason reason);
 }

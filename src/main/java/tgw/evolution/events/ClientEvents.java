@@ -14,6 +14,7 @@ import net.minecraft.client.Timer;
 import net.minecraft.client.*;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.DebugScreenOverlay;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.PauseScreen;
@@ -29,7 +30,6 @@ import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.resources.language.I18n;
@@ -45,6 +45,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
@@ -52,6 +53,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
@@ -62,6 +64,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.ConfigGuiHandler;
 import net.minecraftforge.client.event.*;
+import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.client.gui.ModListScreen;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
@@ -86,11 +89,8 @@ import tgw.evolution.client.gui.config.ScreenModConfigSelection;
 import tgw.evolution.client.gui.controls.ScreenKeyBinds;
 import tgw.evolution.client.gui.stats.ScreenStats;
 import tgw.evolution.client.gui.toast.ToastCustomRecipe;
-import tgw.evolution.client.layers.LayerBack;
-import tgw.evolution.client.layers.LayerBelt;
 import tgw.evolution.client.models.ModelRegistry;
 import tgw.evolution.client.renderer.ClientRenderer;
-import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.client.util.ClientEffectInstance;
 import tgw.evolution.client.util.EvolutionInput;
@@ -105,14 +105,17 @@ import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.items.*;
 import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.network.*;
+import tgw.evolution.patches.IDebugScreenOverlayPatch;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.stats.EvolutionStatsCounter;
 import tgw.evolution.util.AdvancedEntityRayTraceResult;
+import tgw.evolution.util.CollectionUtil;
 import tgw.evolution.util.HitInformation;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.constants.OptiFineHelper;
+import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.HitboxType;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.reflection.FieldHandler;
@@ -128,21 +131,18 @@ import java.util.stream.Collectors;
 
 public class ClientEvents {
 
-    public static final FieldHandler<Minecraft, Integer> MISS_TIME = new FieldHandler<>(Minecraft.class, "f_91078_");
     public static final ObjectList<ClientEffectInstance> EFFECTS_TO_ADD = new ObjectArrayList<>();
     public static final ObjectList<ClientEffectInstance> EFFECTS = new ObjectArrayList<>();
     public static final Int2ObjectMap<LungeChargeInfo> ABOUT_TO_LUNGE_PLAYERS = new Int2ObjectOpenHashMap<>();
     public static final Int2ObjectMap<LungeAttackInfo> LUNGING_PLAYERS = new Int2ObjectOpenHashMap<>();
     public static final Int2ObjectMap<ItemStack> BELT_ITEMS = new Int2ObjectOpenHashMap<>();
     public static final Int2ObjectMap<ItemStack> BACK_ITEMS = new Int2ObjectOpenHashMap<>();
-    private static final Int2ObjectMap<Set<HitboxType>> MAINHAND_HITS = new Int2ObjectOpenHashMap<>();
+    private static final HitInformation MAINHAND_HITS = new HitInformation();
     private static final BlockHitResult[] MAINHAND_HIT_RESULT = new BlockHitResult[1];
-    private static final Map<PlayerRenderer, Object> INJECTED_PLAYER_RENDERERS = new WeakHashMap<>();
     private static final StaticFieldHandler<SkullBlockEntity, GameProfileCache> PROFILE_CACHE = new StaticFieldHandler<>(SkullBlockEntity.class,
                                                                                                                          "f_59755_");
     private static final StaticFieldHandler<SkullBlockEntity, MinecraftSessionService> SESSION_SERVICE = new StaticFieldHandler<>(
             SkullBlockEntity.class, "f_59756_");
-    private static final FieldHandler<GameRenderer, LightTexture> LIGHT_TEXTURE = new FieldHandler<>(GameRenderer.class, "f_109074_");
     private static final FieldHandler<Minecraft, Timer> TIMER = new FieldHandler<>(Minecraft.class, "f_90991_");
     private static final FieldHandler<Timer, Float> MS_PER_TICK = new FieldHandler<>(Timer.class, "f_92521_");
     private static final FieldHandler<LocalPlayer, ClientRecipeBook> RECIPE_BOOK = new FieldHandler<>(LocalPlayer.class, "f_108592_");
@@ -151,6 +151,8 @@ public class ClientEvents {
             DIMENSION_EFFECTS
             = new StaticFieldHandler<>(DimensionSpecialEffects.class, "f_108857_");
     private static final FieldHandler<GameRenderer, Boolean> EFFECT_ACTIVE = new FieldHandler<>(GameRenderer.class, "f_109053_");
+    private static final FieldHandler<ForgeIngameGui, DebugScreenOverlay> DEBUG_SCREEN_OVERLAY = new FieldHandler<>(ForgeIngameGui.class,
+                                                                                                                    "debugOverlay");
     private static ClientEvents instance;
     @Nullable
     private static IGuiScreenHandler handler;
@@ -178,16 +180,14 @@ public class ClientEvents {
     private boolean initialized;
     private boolean inverted;
     private boolean isJumpPressed;
-    private boolean isMainhandCustomAttacking;
-    private boolean isOffhandCustomAttacking;
     private boolean isPreviousProned;
     private boolean isSneakPressed;
     private boolean lunging;
-    private GameRenderer oldGameRenderer;
     private CameraType previousCameraType;
     private boolean previousPressed;
     private boolean proneToggle;
     private boolean sneakpreviousPressed;
+    private long tickCount;
     private int ticks;
     private float tps = 20.0f;
     private int warmUpTicks;
@@ -389,10 +389,19 @@ public class ClientEvents {
 
     public void clearMemory() {
         EFFECTS.clear();
+        CollectionUtil.trim(EFFECTS);
         EFFECTS_TO_ADD.clear();
+        CollectionUtil.trim(EFFECTS_TO_ADD);
         this.inverted = false;
         ABOUT_TO_LUNGE_PLAYERS.clear();
+        CollectionUtil.trim(ABOUT_TO_LUNGE_PLAYERS);
         LUNGING_PLAYERS.clear();
+        CollectionUtil.trim(LUNGING_PLAYERS);
+        MAINHAND_HITS.clearMemory();
+        BELT_ITEMS.clear();
+        CollectionUtil.trim(BELT_ITEMS);
+        BACK_ITEMS.clear();
+        CollectionUtil.trim(BACK_ITEMS);
         if (this.mc.level == null) {
             this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
             if (((IMinecraftPatch) this.mc).isMultiplayerPaused()) {
@@ -564,16 +573,8 @@ public class ClientEvents {
         }
     }
 
-    public boolean hasCtrlDown() {
-        return Screen.hasControlDown();
-    }
-
     public boolean hasShader(int shaderId) {
         return this.getShader(shaderId) != null;
-    }
-
-    public boolean hasShiftDown() {
-        return Screen.hasShiftDown();
     }
 
     public void init() {
@@ -591,14 +592,15 @@ public class ClientEvents {
         }
         //Replace MovementInput
         this.mc.player.input = new EvolutionInput(this.mc.options);
+        System.gc();
     }
 
-    public boolean isMainhandCustomAttacking() {
-        return this.isMainhandCustomAttacking;
+    public boolean isMainhandInSpecialAttack() {
+        return ((ILivingEntityPatch) this.mc.player).isMainhandInSpecialAttack();
     }
 
-    public boolean isOffhandCustomAttacking() {
-        return this.isOffhandCustomAttacking;
+    public boolean isOffhandInSpecialAttack() {
+        return ((ILivingEntityPatch) this.mc.player).isOffhandInSpecialAttack();
     }
 
     public boolean isPlayerDizzy() {
@@ -710,12 +712,6 @@ public class ClientEvents {
                     }
                 }
             }
-            this.mc.getProfiler().popPush("lightMap");
-            GameRenderer gameRenderer = this.mc.gameRenderer;
-            if (gameRenderer != this.oldGameRenderer) {
-                this.oldGameRenderer = gameRenderer;
-                LIGHT_TEXTURE.set(this.oldGameRenderer, new LightTextureEv(this.oldGameRenderer, this.mc));
-            }
             this.mc.getProfiler().pop();
             if (!this.mc.isPaused()) {
                 this.mc.getProfiler().push("dimension");
@@ -759,7 +755,7 @@ public class ClientEvents {
                     twoHanded.isTwoHanded(mainHandStack) &&
                     !this.mc.player.getOffhandItem().isEmpty()) {
                     this.mainhandTimeSinceLastHit = 0;
-                    MISS_TIME.set(this.mc, Integer.MAX_VALUE);
+                    this.mc.missTime = Integer.MAX_VALUE;
                     this.mc.player.displayClientMessage(EvolutionTexts.ACTION_TWO_HANDED, true);
                 }
                 //Prevents the player from attacking if on cooldown
@@ -767,7 +763,7 @@ public class ClientEvents {
                 if (this.getMainhandCooledAttackStrength(0.0F) != 1 &&
                     this.mc.hitResult != null &&
                     this.mc.hitResult.getType() != HitResult.Type.BLOCK) {
-                    MISS_TIME.set(this.mc, Integer.MAX_VALUE);
+                    this.mc.missTime = Integer.MAX_VALUE;
                 }
                 this.mc.getProfiler().pop();
             }
@@ -834,53 +830,34 @@ public class ClientEvents {
                     this.swingArm(InteractionHand.MAIN_HAND);
                 }
                 this.lunging = false;
-                this.isMainhandCustomAttacking = ((ILivingEntityPatch) this.mc.player).isMainhandCustomAttacking();
-                this.isOffhandCustomAttacking = ((ILivingEntityPatch) this.mc.player).isOffhandCustomAttacking();
-                if (this.isMainhandCustomAttacking) {
-                    List<HitInformation> hitInfos = MathHelper.collideOBBWithCollider(this.mc.player, ((IEntityPatch) this.mc.player).getHitboxes()
-                                                                                                                                     .getEquipmentFor(
-                                                                                                                                             ((ILivingEntityPatch) this.mc.player).getMainhandCustomAttackType(),
-                                                                                                                                             InteractionHand.MAIN_HAND),
-                                                                                      1.0f, MAINHAND_HIT_RESULT,
-                                                                                      ((ILivingEntityPatch) this.mc.player).getMainhandCustomAttackTicks() >
-                                                                                      3);
-                    if (!hitInfos.isEmpty()) {
-                        for (HitInformation hitInfo : hitInfos) {
-                            Evolution.info("Collided with {} on {}", hitInfo.getEntity(),
-                                           Arrays.toString(hitInfo.getHitboxes().toArray(HitboxType[]::new)));
-                            Set<HitboxType> boxes = MAINHAND_HITS.get(hitInfo.getEntity().getId());
-                            if (boxes == null) {
-                                boxes = EnumSet.noneOf(HitboxType.class);
-                                boxes.addAll(hitInfo.getHitboxes());
-                                //noinspection ObjectAllocationInLoop
-                                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSHitInformation(hitInfo.getEntity(), InteractionHand.MAIN_HAND,
-                                                                                                  hitInfo.getHitboxes().toArray(HitboxType[]::new)));
-                            }
-                            else {
-                                for (HitboxType box : hitInfo.getHitboxes()) {
-                                    if (!boxes.contains(box)) {
-                                        boxes.add(box);
-                                        //noinspection ObjectAllocationInLoop
-                                        EvolutionNetwork.INSTANCE.sendToServer(
-                                                new PacketCSHitInformation(hitInfo.getEntity(), InteractionHand.MAIN_HAND, box));
-                                    }
-                                }
-                            }
-                            MAINHAND_HITS.put(hitInfo.getEntity().getId(), boxes);
+                if (((ILivingEntityPatch) this.mc.player).isMainhandSpecialAttacking()) {
+                    if (((ILivingEntityPatch) this.mc.player).isMainhandInHitTicks()) {
+                        Hitbox collider = ((IEntityPatch) this.mc.player).getHitboxes()
+                                                                         .getEquipmentFor(
+                                                                                 ((ILivingEntityPatch) this.mc.player).getMainhandSpecialAttackType(),
+                                                                                 this.mc.player.getMainArm());
+                        MathHelper.collideOBBWithCollider(MAINHAND_HITS, this.mc.player, collider, 1.0f, MAINHAND_HIT_RESULT, true);
+                        if (MAINHAND_HIT_RESULT[0] != null && MAINHAND_HIT_RESULT[0].getType() != HitResult.Type.MISS) {
+                            ((ILivingEntityPatch) this.mc.player).stopMainhandSpecialAttack(ISpecialAttack.StopReason.HIT_BLOCK);
+                            Evolution.info("Collided with {} at {} on {}", this.mc.level.getBlockState(MAINHAND_HIT_RESULT[0].getBlockPos()),
+                                           MAINHAND_HIT_RESULT[0].getBlockPos(), MAINHAND_HIT_RESULT[0].getLocation());
                         }
-                    }
-                    if (MAINHAND_HIT_RESULT[0] != null && MAINHAND_HIT_RESULT[0].getType() != HitResult.Type.MISS) {
-                        ((ILivingEntityPatch) this.mc.player).stopMainhandCustomAttack(ICustomAttack.StopReason.HIT_BLOCK);
                     }
                 }
                 else {
-                    MAINHAND_HITS.clear();
+                    if (!MAINHAND_HITS.isEmpty()) {
+                        MAINHAND_HITS.sendHits(InteractionHand.MAIN_HAND);
+                        MAINHAND_HITS.clear();
+                    }
                     MAINHAND_HIT_RESULT[0] = null;
                 }
                 //Ticks renderer
                 this.mc.getProfiler().popPush("renderer");
                 this.renderer.endTick();
                 this.mc.getProfiler().pop();
+            }
+            if (++this.tickCount % 20 == 0) {
+                ((IDebugScreenOverlayPatch) DEBUG_SCREEN_OVERLAY.get((ForgeIngameGui) this.mc.gui)).resetSecond();
             }
         }
         this.mc.getProfiler().pop();
@@ -1052,7 +1029,7 @@ public class ClientEvents {
             if (selectedSlotStack.isEmpty()) {
                 return false;
             }
-            boolean shiftIsDown = this.hasShiftDown();
+            boolean shiftIsDown = Screen.hasShiftDown();
             if (stackOnMouse.isEmpty()) {
                 if (!shiftIsDown) {
                     return false;
@@ -1259,13 +1236,10 @@ public class ClientEvents {
     @SubscribeEvent
     public void onPlayerRenderPre(RenderPlayerEvent.Pre event) {
         PlayerRenderer renderer = event.getRenderer();
-        if (renderer != null && !INJECTED_PLAYER_RENDERERS.containsKey(renderer)) {
-            renderer.addLayer(new LayerBelt(renderer));
-            renderer.addLayer(new LayerBack(renderer));
-            INJECTED_PLAYER_RENDERERS.put(renderer, null);
-        }
         //Hide certain parts of the player model to not clip into the camera in certain situations
         if (this.renderer.isRenderingPlayer) {
+            this.renderer.shouldRenderLeftArm = true;
+            this.renderer.shouldRenderRightArm = true;
             boolean hasNausea = this.mc.player.hasEffect(MobEffects.CONFUSION);
             float swimAnimation = MathHelper.getSwimAnimation(this.mc.player, event.getPartialTick());
             boolean isInSwimAnimation = swimAnimation > 0 && swimAnimation < 1;
@@ -1280,6 +1254,24 @@ public class ClientEvents {
                 renderer.getModel().rightSleeve.visible = true;
                 renderer.getModel().leftArm.visible = true;
                 renderer.getModel().leftSleeve.visible = true;
+            }
+            if (this.mc.player.isUsingItem() && this.mc.player.getUseItem().getUseAnimation() == UseAnim.SPYGLASS) {
+                HumanoidArm arm = this.mc.player.getMainArm();
+                if (this.mc.player.getUsedItemHand() != InteractionHand.MAIN_HAND) {
+                    arm = arm.getOpposite();
+                }
+                switch (arm) {
+                    case RIGHT -> {
+                        renderer.getModel().rightArm.visible = false;
+                        renderer.getModel().rightSleeve.visible = false;
+                        this.renderer.shouldRenderRightArm = false;
+                    }
+                    case LEFT -> {
+                        renderer.getModel().leftArm.visible = false;
+                        renderer.getModel().leftSleeve.visible = false;
+                        this.renderer.shouldRenderLeftArm = false;
+                    }
+                }
             }
             this.wasInWater <<= 1;
             this.wasInWater |= isInWater ? 1 : 0;
@@ -1477,23 +1469,18 @@ public class ClientEvents {
         }
     }
 
-    public void startCustomAttack(ICustomAttack.AttackType attackType, InteractionHand hand) {
+    public void startSpecialAttack(ISpecialAttack.IAttackType attackType, InteractionHand hand) {
         ILivingEntityPatch player = (ILivingEntityPatch) this.mc.player;
         switch (hand) {
             case MAIN_HAND -> {
-                if (player.isMainhandCustomAttacking()) {
-                    break;
+                if (!player.isMainhandInSpecialAttack()) {
+                    player.startMainhandSpecialAttack(attackType);
                 }
-                this.isMainhandCustomAttacking = true;
-                this.mainhandTimeSinceLastHit = 0;
-                player.startMainhandCustomAttack(attackType);
             }
             case OFF_HAND -> {
-                if (player.isOffhandCustomAttacking()) {
-                    break;
+                if (!player.isOffhandInSpecialAttack()) {
+                    player.startOffhandSpecialAttack(attackType);
                 }
-                this.isOffhandCustomAttacking = true;
-                player.startOffhandCustomAttack(attackType);
             }
         }
     }

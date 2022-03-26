@@ -47,6 +47,7 @@ public final class EvolutionConfig {
 
     public static class Client {
 
+        public final ForgeConfigSpec.BooleanValue animatedTextures;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Temperature> bodyTemperature;
         public final ForgeConfigSpec.BooleanValue celestialEquator;
         public final ForgeConfigSpec.BooleanValue celestialForceAll;
@@ -68,7 +69,10 @@ public final class EvolutionConfig {
             this.crazyMode = builder.translation("evolution.config.crazyMode").define("crazyMode", false);
             this.hitmarkers = builder.translation("evolution.config.hitmarkers").define("hitmarkers", true);
             this.firstPersonRenderer = builder.translation("evolution.config.firstPersonRenderer").define("firstPersonRenderer", true);
+            builder.push("performance");
             this.showPlanets = builder.translation("evolution.config.showPlanets").define("showPlanets", true);
+            this.animatedTextures = builder.translation("evolution.config.animatedTextures").define("animatedTextures", true);
+            builder.pop();
             builder.push("units");
             this.limitTimeUnitsToHour = builder.translation("evolution.config.limitTimeUnitsToHour").define("limitTimeUnitsToHour", false);
             this.bodyTemperature = builder.translation("evolution.config.bodyTemperature")

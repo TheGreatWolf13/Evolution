@@ -12,11 +12,13 @@ import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.patches.IMatrix4fPatch;
 import tgw.evolution.util.math.MathHelper;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.Arrays;
 
 @Mixin(IForgeVertexConsumer.class)
 public interface IForgeVertexConsumerMixin {
@@ -28,8 +30,9 @@ public interface IForgeVertexConsumerMixin {
     void applyBakedNormals(Vector3f generated, ByteBuffer data, Matrix3f normalTransform);
 
     /**
-     * @reason Avoid allocations.
      * @author MGSchultz
+     * <p>
+     * Avoid allocations.
      */
     @Overwrite
     default void putBulkData(PoseStack.Pose matrixEntry,
@@ -41,21 +44,15 @@ public interface IForgeVertexConsumerMixin {
                              int lightmapCoord,
                              int overlayColor,
                              boolean readExistingColor) {
-        this.putBulkData(matrixEntry,
-                         bakedQuad,
-                         MathHelper.BASE_BRIGHTNESS,
-                         red,
-                         green,
-                         blue,
-                         alpha,
-                         new int[]{lightmapCoord, lightmapCoord, lightmapCoord, lightmapCoord},
-                         overlayColor,
-                         readExistingColor);
+        int[] lightmap = RenderHelper.LIGHTMAP.get();
+        Arrays.fill(lightmap, lightmapCoord);
+        this.putBulkData(matrixEntry, bakedQuad, RenderHelper.DEF_BRIGHTNESS, red, green, blue, alpha, lightmap, overlayColor, readExistingColor);
     }
 
     /**
-     * @reason Avoid allocations.
      * @author MGSchultz
+     * <p>
+     * Avoid allocations.
      */
     @Overwrite
     default void putBulkData(PoseStack.Pose matrixEntry,
@@ -66,21 +63,15 @@ public interface IForgeVertexConsumerMixin {
                              float alpha,
                              int lightmapCoord,
                              int overlayColor) {
-        this.putBulkData(matrixEntry,
-                         bakedQuad,
-                         MathHelper.BASE_BRIGHTNESS,
-                         red,
-                         green,
-                         blue,
-                         alpha,
-                         new int[]{lightmapCoord, lightmapCoord, lightmapCoord, lightmapCoord},
-                         overlayColor,
-                         false);
+        int[] lightmap = RenderHelper.LIGHTMAP.get();
+        Arrays.fill(lightmap, lightmapCoord);
+        this.putBulkData(matrixEntry, bakedQuad, RenderHelper.DEF_BRIGHTNESS, red, green, blue, alpha, lightmap, overlayColor, false);
     }
 
     /**
-     * @reason Avoid allocations.
      * @author MGSchultz
+     * <p>
+     * Avoid allocations.
      */
     @Overwrite
     default void putBulkData(PoseStack.Pose matrixEntry,

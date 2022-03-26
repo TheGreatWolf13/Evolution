@@ -35,11 +35,6 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
     }
 
     @Override
-    public boolean isCancelable() {
-        return true;
-    }
-
-    @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity living, int timeLeft) {
         if (living instanceof Player player) {
             int charge = this.getUseDuration(stack) - timeLeft;

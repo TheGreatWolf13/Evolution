@@ -33,6 +33,7 @@ import tgw.evolution.items.*;
 import tgw.evolution.network.PacketSCHandAnimation;
 import tgw.evolution.stats.EvolutionServerStatsCounter;
 import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Units;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -61,7 +62,7 @@ public final class PlayerHelper {
     /**
      * The force the player uses to push its feet against the ground.
      */
-    public static final double WALK_FORCE = MathHelper.convertForce(1_000);
+    public static final double WALK_FORCE = Units.toMSUForce(1_000);
     public static final Vec3 NECK_POS_STANDING = new Vec3(0, 24 / 16.0 * 0.937_5, -1 / 16.0);
     public static final Vec3 NECK_POS_SNEAKING = new Vec3(0, 1.27 - 4 / 16.0 * 0.937_5, -1 / 16.0);
     public static final Vec3 NECK_POS_CRAWLING = new Vec3(0, 4.62 / 16.0 * 0.937_5, -2 / 16.0);
@@ -125,14 +126,8 @@ public final class PlayerHelper {
                     }
                     boolean sprinting = false;
                     if (player.isSprinting()) {
-                        player.level.playSound(null,
-                                               player.getX(),
-                                               player.getY(),
-                                               player.getZ(),
-                                               SoundEvents.PLAYER_ATTACK_KNOCKBACK,
-                                               player.getSoundSource(),
-                                               1.0F,
-                                               1.0F);
+                        player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_KNOCKBACK,
+                                               player.getSoundSource(), 1.0F, 1.0F);
                         ++knockbackModifier;
                         sprinting = true;
                     }
@@ -148,15 +143,9 @@ public final class PlayerHelper {
                                 heavyModifier *= 2;
                             }
                             if (player.level instanceof ServerLevel serverLevel) {
-                                serverLevel.sendParticles(ParticleTypes.ENCHANTED_HIT,
-                                                          targetEntity.getX(),
-                                                          targetEntity.getY() + targetEntity.getBbHeight() * 0.5F,
-                                                          targetEntity.getZ(),
-                                                          10,
-                                                          0.5,
-                                                          0,
-                                                          0.5,
-                                                          0.1);
+                                serverLevel.sendParticles(ParticleTypes.ENCHANTED_HIT, targetEntity.getX(),
+                                                          targetEntity.getY() + targetEntity.getBbHeight() * 0.5F, targetEntity.getZ(), 10, 0.5, 0,
+                                                          0.5, 0.1);
                             }
                         }
                     }
@@ -193,8 +182,7 @@ public final class PlayerHelper {
                                 living.knockback(knockbackModifier * 0.5F, MathHelper.sinDeg(player.getYRot()), -MathHelper.cosDeg(player.getYRot()));
                             }
                             else {
-                                targetEntity.push(-MathHelper.sinDeg(player.getYRot()) * knockbackModifier * 0.5F,
-                                                  0,
+                                targetEntity.push(-MathHelper.sinDeg(player.getYRot()) * knockbackModifier * 0.5F, 0,
                                                   MathHelper.cosDeg(player.getYRot()) * knockbackModifier * 0.5F);
                             }
                             player.setDeltaMovement(player.getDeltaMovement().multiply(0.6, 1, 0.6));
@@ -216,14 +204,8 @@ public final class PlayerHelper {
                                     entitiesHit++;
                                 }
                             }
-                            player.level.playSound(null,
-                                                   player.getX(),
-                                                   player.getY(),
-                                                   player.getZ(),
-                                                   SoundEvents.PLAYER_ATTACK_SWEEP,
-                                                   player.getSoundSource(),
-                                                   1.0F,
-                                                   1.0F);
+                            player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                                                   player.getSoundSource(), 1.0F, 1.0F);
                             player.sweepAttack();
                         }
                         //Calculated velocity changed
@@ -234,14 +216,8 @@ public final class PlayerHelper {
                         }
                         //Strong attack particles
                         if (!isSweepAttack) {
-                            player.level.playSound(null,
-                                                   player.getX(),
-                                                   player.getY(),
-                                                   player.getZ(),
-                                                   SoundEvents.PLAYER_ATTACK_STRONG,
-                                                   player.getSoundSource(),
-                                                   1.0F,
-                                                   1.0F);
+                            player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_STRONG,
+                                                   player.getSoundSource(), 1.0F, 1.0F);
                         }
                         player.setLastHurtMob(targetEntity);
                         //Entity parts
@@ -271,29 +247,16 @@ public final class PlayerHelper {
                             }
                             if (player.level instanceof ServerLevel serverLevel && damageDealt >= 10.0F) {
                                 int heartsToSpawn = (int) (damageDealt * 0.1);
-                                serverLevel.sendParticles(ParticleTypes.DAMAGE_INDICATOR,
-                                                          living.getX(),
-                                                          living.getY() + living.getBbHeight() * 0.5F,
-                                                          living.getZ(),
-                                                          heartsToSpawn,
-                                                          0.5,
-                                                          0,
-                                                          0.5,
-                                                          0.1);
+                                serverLevel.sendParticles(ParticleTypes.DAMAGE_INDICATOR, living.getX(), living.getY() + living.getBbHeight() * 0.5F,
+                                                          living.getZ(), heartsToSpawn, 0.5, 0, 0.5, 0.1);
                             }
                         }
                         player.causeFoodExhaustion(0.1F);
                     }
                     //Attack fail
                     else {
-                        player.level.playSound(null,
-                                               player.getX(),
-                                               player.getY(),
-                                               player.getZ(),
-                                               SoundEvents.PLAYER_ATTACK_NODAMAGE,
-                                               player.getSoundSource(),
-                                               1.0F,
-                                               1.0F);
+                        player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_NODAMAGE,
+                                               player.getSoundSource(), 1.0F, 1.0F);
                         if (fireAspect) {
                             targetEntity.clearFire();
                         }
@@ -316,7 +279,7 @@ public final class PlayerHelper {
     }
 
     private static float fullHit(Player player, float damage, EvolutionDamage.Type type) {
-        Evolution.debug("{} received {}HP of {} damage", player.getScoreboardName(), damage, type);
+        Evolution.info("{} received {}HP of {} damage", player.getScoreboardName(), damage, type);
         //TODO
         return damage;
     }
@@ -325,7 +288,7 @@ public final class PlayerHelper {
         if (slot == null) {
             return fullHit(player, damage, type);
         }
-        Evolution.debug("{} received {}HP of {} damage on {}", player.getScoreboardName(), damage, type, slot);
+        Evolution.info("{} received {}HP of {} damage on {}", player.getScoreboardName(), damage, type, slot);
         switch (slot) {
             case HEAD -> {
                 return headHit(player, damage, type);
@@ -424,14 +387,8 @@ public final class PlayerHelper {
                         knockbackModifier += ((IKnockback) lungeItem).getLevel();
                     }
                     if (player.isSprinting()) {
-                        player.level.playSound(null,
-                                               player.getX(),
-                                               player.getY(),
-                                               player.getZ(),
-                                               SoundEvents.PLAYER_ATTACK_KNOCKBACK,
-                                               player.getSoundSource(),
-                                               1.0F,
-                                               1.0F);
+                        player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_KNOCKBACK,
+                                               player.getSoundSource(), 1.0F, 1.0F);
                         ++knockbackModifier;
                     }
                     int fireAspectModifier = 0;
@@ -457,13 +414,11 @@ public final class PlayerHelper {
                         //Knockback calculations
                         if (knockbackModifier > 0) {
                             if (targetEntity instanceof LivingEntity) {
-                                ((LivingEntity) targetEntity).knockback(knockbackModifier * 0.5F,
-                                                                        MathHelper.sinDeg(player.getYRot()),
+                                ((LivingEntity) targetEntity).knockback(knockbackModifier * 0.5F, MathHelper.sinDeg(player.getYRot()),
                                                                         -MathHelper.cosDeg(player.getYRot()));
                             }
                             else {
-                                targetEntity.push(-MathHelper.sinDeg(player.getYRot()) * knockbackModifier * 0.5,
-                                                  0.0,
+                                targetEntity.push(-MathHelper.sinDeg(player.getYRot()) * knockbackModifier * 0.5, 0.0,
                                                   MathHelper.cosDeg(player.getYRot()) * knockbackModifier * 0.5);
                             }
                             player.setDeltaMovement(player.getDeltaMovement().multiply(0.6, 1.0, 0.6));
@@ -475,14 +430,8 @@ public final class PlayerHelper {
                             targetEntity.setDeltaMovement(targetMotion);
                         }
                         //Strong attack particles
-                        player.level.playSound(null,
-                                               player.getX(),
-                                               player.getY(),
-                                               player.getZ(),
-                                               SoundEvents.PLAYER_ATTACK_STRONG,
-                                               player.getSoundSource(),
-                                               1.0F,
-                                               1.0F);
+                        player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_STRONG,
+                                               player.getSoundSource(), 1.0F, 1.0F);
                         player.setLastHurtMob(targetEntity);
                         //Entity parts
                         Entity entity = targetEntity;
@@ -507,29 +456,16 @@ public final class PlayerHelper {
                             }
                             if (player.level instanceof ServerLevel serverLevel && damageDealt >= 10.0F) {
                                 int heartsToSpawn = (int) (damageDealt * 0.1);
-                                serverLevel.sendParticles(ParticleTypes.DAMAGE_INDICATOR,
-                                                          living.getX(),
-                                                          living.getY() + living.getBbHeight() * 0.5,
-                                                          living.getZ(),
-                                                          heartsToSpawn,
-                                                          0.5,
-                                                          0.0,
-                                                          0.5,
-                                                          0.1);
+                                serverLevel.sendParticles(ParticleTypes.DAMAGE_INDICATOR, living.getX(), living.getY() + living.getBbHeight() * 0.5,
+                                                          living.getZ(), heartsToSpawn, 0.5, 0.0, 0.5, 0.1);
                             }
                         }
                         player.causeFoodExhaustion(0.1F);
                     }
                     //Attack fail
                     else {
-                        player.level.playSound(null,
-                                               player.getX(),
-                                               player.getY(),
-                                               player.getZ(),
-                                               SoundEvents.PLAYER_ATTACK_NODAMAGE,
-                                               player.getSoundSource(),
-                                               1.0F,
-                                               1.0F);
+                        player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_NODAMAGE,
+                                               player.getSoundSource(), 1.0F, 1.0F);
                         if (fireAspect) {
                             targetEntity.clearFire();
                         }
@@ -574,11 +510,9 @@ public final class PlayerHelper {
         player.swingingArm = hand;
         if (player.level instanceof ServerLevel serverLevel) {
             serverLevel.getChunkSource()
-                       .broadcastAndSend(player,
-                                         new ClientboundAnimatePacket(player,
-                                                                      hand == InteractionHand.MAIN_HAND ?
-                                                                      ClientboundAnimatePacket.SWING_MAIN_HAND :
-                                                                      ClientboundAnimatePacket.SWING_OFF_HAND));
+                       .broadcastAndSend(player, new ClientboundAnimatePacket(player, hand == InteractionHand.MAIN_HAND ?
+                                                                                      ClientboundAnimatePacket.SWING_MAIN_HAND :
+                                                                                      ClientboundAnimatePacket.SWING_OFF_HAND));
         }
     }
 

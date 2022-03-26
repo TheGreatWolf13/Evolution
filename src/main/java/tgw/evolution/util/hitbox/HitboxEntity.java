@@ -1,6 +1,8 @@
 package tgw.evolution.util.hitbox;
 
 import com.mojang.math.Vector3d;
+import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
+import it.unimi.dsi.fastutil.objects.ReferenceList;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -9,16 +11,16 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import tgw.evolution.items.ICustomAttack;
+import tgw.evolution.items.ISpecialAttack;
+import tgw.evolution.util.CollectionUtil;
 import tgw.evolution.util.math.MathHelper;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class HitboxEntity<T extends Entity> {
 
-    private final List<Hitbox> boxes;
-    private final List<Hitbox> equipment;
+    private final ReferenceList<Hitbox> boxes;
+    private final ReferenceList<Hitbox> equipment;
     protected float ageInTicks;
     protected float pivotX;
     protected float pivotY;
@@ -30,8 +32,8 @@ public abstract class HitboxEntity<T extends Entity> {
     protected float rotationZ;
 
     public HitboxEntity() {
-        this.boxes = new ArrayList<>();
-        this.equipment = new ArrayList<>();
+        this.boxes = new ReferenceArrayList<>();
+        this.equipment = new ReferenceArrayList<>();
     }
 
     public static AABB aabb(double x0, double y0, double z0, double x1, double y1, double z1) {
@@ -73,13 +75,27 @@ public abstract class HitboxEntity<T extends Entity> {
         return new Vector3d(x / 16, y / 16, z / 16);
     }
 
-    protected Hitbox addBox(HitboxType part, AABB aabb) {
+    protected final Hitbox addBox(HitboxType part, AABB aabb) {
+        //Verify that every Hitbox has a unique HitboxType
+        //This code is not the fastest, but it is only run when creating the HitboxEntity instance.
+        for (Hitbox box : this.boxes) {
+            if (box.getPart() == part) {
+                throw new IllegalStateException("Duplicate HitboxType: " + part);
+            }
+        }
         Hitbox box = new Hitbox(part, aabb, this);
         this.boxes.add(box);
         return box;
     }
 
-    protected Hitbox addEquip(HitboxType part, AABB aabb) {
+    protected final Hitbox addEquip(HitboxType part, AABB aabb) {
+        //Verify that every Hitbox has a unique HitboxType
+        //This code is not the fastest, but it is only run when creating the HitboxEntity instance.
+        for (Hitbox box : this.equipment) {
+            if (box.getPart() == part) {
+                throw new IllegalStateException("Duplicate HitboxType: " + part);
+            }
+        }
         Hitbox box = new Hitbox(part, aabb, this);
         this.equipment.add(box);
         return box;
@@ -108,16 +124,27 @@ public abstract class HitboxEntity<T extends Entity> {
     }
 
     public void bobArms(IHitbox rightArm, IHitbox leftArm, float ageInTicks) {
-        rightArm.addRotationZ(MathHelper.cos(ageInTicks * 0.09F) * 0.05F + 0.05F);
-        leftArm.addRotationZ(-MathHelper.cos(ageInTicks * 0.09F) * 0.05F - 0.05F);
-        rightArm.addRotationX(-MathHelper.sin(ageInTicks * 0.067F) * 0.05F);
-        leftArm.addRotationX(MathHelper.sin(ageInTicks * 0.067F) * 0.05F);
+        this.bobModelPart(rightArm, ageInTicks, 1.0F);
+        this.bobModelPart(leftArm, ageInTicks, -1.0F);
     }
+
+    protected void bobModelPart(IHitbox box, float ageInTicks, float mul) {
+        box.addRotationZ(mul * (Mth.cos(ageInTicks * 0.09F) * 0.05F + 0.05F));
+        box.addRotationX(-mul * Mth.sin(ageInTicks * 0.067F) * 0.05F);
+    }
+
+    protected abstract void childFinish();
 
     public void doOffset(double[] answer) {
         answer[0] += this.pivotX;
         answer[1] += this.pivotY;
         answer[2] += this.pivotZ;
+    }
+
+    protected final void finish() {
+        CollectionUtil.trim(this.boxes);
+        CollectionUtil.trim(this.equipment);
+        this.childFinish();
     }
 
     public List<Hitbox> getBoxes() {
@@ -128,7 +155,7 @@ public abstract class HitboxEntity<T extends Entity> {
         return this.equipment;
     }
 
-    public abstract Hitbox getEquipmentFor(ICustomAttack.AttackType type, InteractionHand hand);
+    public abstract Hitbox getEquipmentFor(ISpecialAttack.IAttackType type, HumanoidArm arm);
 
     public Vec3 getOffset() {
         return new Vec3(this.pivotX, this.pivotY, this.pivotZ);

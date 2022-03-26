@@ -11,10 +11,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.phys.Vec3;
-import tgw.evolution.items.ICustomAttack;
+import tgw.evolution.items.ISpecialAttack;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.ArmPose;
-import tgw.evolution.util.MixinTempHelper;
 import tgw.evolution.util.UnregisteredFeatureException;
 import tgw.evolution.util.math.MathHelper;
 
@@ -24,15 +23,15 @@ public class HitboxZombie extends HitboxEntity<Zombie> {
     protected final Hitbox armL;
     protected final Hitbox armR;
     protected final Hitbox body = this.addBox(HitboxType.CHEST, aabb(-4, -12, -2, 4, 0, 2));
-    protected final Hitbox footL = this.addBox(HitboxType.LEFT_FOOT, HitboxLib.PLAYER_FOOT);
-    protected final Hitbox footR = this.addBox(HitboxType.RIGHT_FOOT, HitboxLib.PLAYER_FOOT);
+    protected final Hitbox footL = this.addBox(HitboxType.LEFT_FOOT, HitboxLib.BIPED_LEG);
+    protected final Hitbox footR = this.addBox(HitboxType.RIGHT_FOOT, HitboxLib.BIPED_FOOT);
     protected final Hitbox handL;
     protected final Hitbox handR;
-    protected final Hitbox head = this.addBox(HitboxType.HEAD, aabb(-4, 0, -4, 4, 8, 4));
+    protected final Hitbox head = this.addBox(HitboxType.HEAD, HitboxLib.BIPED_HEAD);
     protected final HitboxGroup leftArm;
     protected final HitboxGroup leftLeg;
-    protected final Hitbox legL = this.addBox(HitboxType.LEFT_LEG, HitboxLib.PLAYER_LEG);
-    protected final Hitbox legR = this.addBox(HitboxType.RIGHT_LEG, HitboxLib.PLAYER_LEG);
+    protected final Hitbox legL = this.addBox(HitboxType.LEFT_LEG, HitboxLib.BIPED_LEG);
+    protected final Hitbox legR = this.addBox(HitboxType.RIGHT_LEG, HitboxLib.BIPED_LEG);
     protected final HitboxGroup rightArm;
     protected final HitboxGroup rightLeg;
     protected final Hitbox shoulderL;
@@ -58,6 +57,7 @@ public class HitboxZombie extends HitboxEntity<Zombie> {
         this.leftLeg = new HitboxGroup(this.legL, this.footL);
         this.rightArm = new HitboxGroup(this.shoulderR, this.armR, this.handR);
         this.rightLeg = new HitboxGroup(this.legR, this.footR);
+        this.finish();
     }
 
     private static float quadraticArmUpdate(float f) {
@@ -79,16 +79,21 @@ public class HitboxZombie extends HitboxEntity<Zombie> {
         this.bobArms(rightArm, leftArm, ageInTicks);
     }
 
+    @Override
+    protected void childFinish() {
+        this.leftArm.finish();
+        this.leftLeg.finish();
+        this.rightArm.finish();
+        this.rightLeg.finish();
+    }
+
     protected HitboxGroup getArmForSide(HumanoidArm side) {
         return side == HumanoidArm.LEFT ? this.leftArm : this.rightArm;
     }
 
     @Override
-    public Hitbox getEquipmentFor(ICustomAttack.AttackType type, InteractionHand hand) {
-        switch (hand) {
-            case MAIN_HAND, OFF_HAND -> throw new UnregisteredFeatureException("No hitbox registered for " + type + " on " + hand);
-        }
-        throw new IllegalStateException("Unknown hand: " + hand);
+    public Hitbox getEquipmentFor(ISpecialAttack.IAttackType type, HumanoidArm arm) {
+        throw new UnregisteredFeatureException("No hitbox registered for " + type + " on " + arm);
     }
 
     @Override
@@ -104,10 +109,10 @@ public class HitboxZombie extends HitboxEntity<Zombie> {
         this.swimAnimation = MathHelper.getSwimAnimation(entity, partialTicks);
         this.remainingItemUseTime = entity.getUseItemRemainingTicks();
         this.isSitting = MathHelper.isSitting(entity);
-        ItemStack mainhandStack = entity.getMainHandItem();
-        ItemStack offhandStack = entity.getOffhandItem();
-        this.rightArmPose = MathHelper.getArmPose(entity, mainhandStack, offhandStack, InteractionHand.MAIN_HAND);
-        this.leftArmPose = MathHelper.getArmPose(entity, mainhandStack, offhandStack, InteractionHand.OFF_HAND);
+//        ItemStack mainhandStack = entity.getMainHandItem();
+//        ItemStack offhandStack = entity.getOffhandItem();
+        this.rightArmPose = ArmPose.getArmPose(entity, InteractionHand.MAIN_HAND);
+        this.leftArmPose = ArmPose.getArmPose(entity, InteractionHand.OFF_HAND);
         this.attackTime = MathHelper.getAttackAnim(entity, partialTicks);
         this.isSneak = entity.getPose() == Pose.CROUCHING;
         this.ageInTicks = MathHelper.getAgeInTicks(entity, partialTicks);
@@ -264,11 +269,9 @@ public class HitboxZombie extends HitboxEntity<Zombie> {
                 this.rightArm.setRotationX(Mth.lerp(rightArmAnim, this.rightArm.getRotationX(), 0.0F));
                 this.leftArm.setRotationY(Mth.lerp(leftArmAnim, this.leftArm.getRotationY(), MathHelper.PI));
                 this.rightArm.setRotationY(Mth.lerp(rightArmAnim, this.rightArm.getRotationY(), -MathHelper.PI));
-                this.leftArm.setRotationZ(rotLerpRad(leftArmAnim,
-                                                     this.leftArm.getRotationZ(),
+                this.leftArm.setRotationZ(rotLerpRad(leftArmAnim, this.leftArm.getRotationZ(),
                                                      MathHelper.PI + 1.870_796_4F * quadraticArmUpdate(f7) / quadraticArmUpdate(14.0F)));
-                this.rightArm.setRotationZ(Mth.lerp(rightArmAnim,
-                                                    this.rightArm.getRotationZ(),
+                this.rightArm.setRotationZ(Mth.lerp(rightArmAnim, this.rightArm.getRotationZ(),
                                                     MathHelper.PI - 1.870_796_4F * quadraticArmUpdate(f7) / quadraticArmUpdate(14.0F)));
             }
             else if (f7 >= 14.0F && f7 < 22.0F) {
@@ -289,12 +292,10 @@ public class HitboxZombie extends HitboxEntity<Zombie> {
                 this.leftArm.setRotationZ(rotLerpRad(leftArmAnim, this.leftArm.getRotationZ(), MathHelper.PI));
                 this.rightArm.setRotationZ(Mth.lerp(rightArmAnim, this.rightArm.getRotationZ(), MathHelper.PI));
             }
-            this.leftLeg.setRotationX(Mth.lerp(this.swimAnimation,
-                                               this.leftLeg.getRotationX(),
+            this.leftLeg.setRotationX(Mth.lerp(this.swimAnimation, this.leftLeg.getRotationX(),
                                                -0.3F * MathHelper.cos(this.limbSwing * 0.333_333_34F + MathHelper.PI)));
-            this.rightLeg.setRotationX(Mth.lerp(this.swimAnimation,
-                                                this.rightLeg.getRotationX(),
-                                                -0.3F * MathHelper.cos(this.limbSwing * 0.333_333_34F)));
+            this.rightLeg.setRotationX(
+                    Mth.lerp(this.swimAnimation, this.rightLeg.getRotationX(), -0.3F * MathHelper.cos(this.limbSwing * 0.333_333_34F)));
         }
         this.animateZombieArms(this.leftArm, this.rightArm, this.isAggressive(entity), this.attackTime, this.ageInTicks);
     }
@@ -386,7 +387,7 @@ public class HitboxZombie extends HitboxEntity<Zombie> {
     protected void setupAttackAnimation(Zombie player) {
         if (this.attackTime > 0.0F) {
             HumanoidArm handside = getAttackArm(player);
-            if (!(((ILivingEntityPatch) player).isMainhandCustomAttacking() && player.getMainArm() == getAttackArm(player))) {
+            if (!(((ILivingEntityPatch) player).isMainhandInSpecialAttack() && player.getMainArm() == getAttackArm(player))) {
                 HitboxGroup arm = this.getArmForSide(handside);
                 float f = this.attackTime;
                 this.body.rotationY = -MathHelper.sin(MathHelper.sqrt(f) * MathHelper.TAU) * 0.2F;
@@ -411,10 +412,10 @@ public class HitboxZombie extends HitboxEntity<Zombie> {
                 arm.addRotationZ(MathHelper.sin(this.attackTime * MathHelper.PI) * -0.4F);
             }
         }
-        if (((ILivingEntityPatch) player).isMainhandCustomAttacking()) {
+        if (((ILivingEntityPatch) player).isMainhandInSpecialAttack()) {
             HumanoidArm attackingSide = player.getMainArm();
             HitboxGroup attackingArm = this.getArmForSide(attackingSide);
-            float progress = ((ILivingEntityPatch) player).getMainhandCustomAttackProgress(1.0f);
+            float progress = ((ILivingEntityPatch) player).getMainhandSpecialAttackProgress(1.0f);
             attackingArm.setRotationX(-MixinTempHelper.xRot(progress));
             attackingArm.setRotationY(MixinTempHelper.yRot(progress, this.head.rotationX));
             attackingArm.setRotationZ(MixinTempHelper.zRot(progress));

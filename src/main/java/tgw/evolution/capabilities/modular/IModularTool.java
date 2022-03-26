@@ -5,15 +5,15 @@ import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Material;
-import tgw.evolution.capabilities.modular.part.GrabPart;
 import tgw.evolution.capabilities.modular.part.HandlePart;
 import tgw.evolution.capabilities.modular.part.HeadPart;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.init.ItemMaterial;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.constants.HarvestLevels;
 
 import java.util.List;
 
@@ -21,27 +21,21 @@ public interface IModularTool extends IModular {
 
     IModularTool NULL = new Impl();
 
+    static IModularTool get(ItemStack stack) {
+        return stack.getCapability(CapabilityModular.TOOL).orElse(NULL);
+    }
+
     double getAttackSpeed();
 
     int getBackPriority();
 
-    GrabPart<PartTypes.Handle> getHandle();
-
-    ItemMaterial getHandleMaterial();
-
-    PartTypes.Handle getHandleType();
+    HandlePart getHandle();
 
     HeadPart getHead();
-
-    ItemMaterial getHeadMaterial();
-
-    PartTypes.Head getHeadType();
 
     float getMiningSpeed();
 
     double getMoment();
-
-    double getReach();
 
     boolean isSharpened();
 
@@ -54,6 +48,7 @@ public interface IModularTool extends IModular {
     final class Impl implements IModularTool {
         private final HandlePart handle = new HandlePart();
         private final HeadPart head = new HeadPart();
+        private final CompoundTag tag = new CompoundTag();
 
         private Impl() {
         }
@@ -63,7 +58,7 @@ public interface IModularTool extends IModular {
         }
 
         @Override
-        public void damage(ItemModular.DamageCause cause) {
+        public void damage(ItemModular.DamageCause cause, @HarvestLevel int harvestLevel) {
         }
 
         @Override
@@ -101,38 +96,18 @@ public interface IModularTool extends IModular {
         }
 
         @Override
-        public GrabPart<PartTypes.Handle> getHandle() {
+        public HandlePart getHandle() {
             return this.handle;
         }
 
         @Override
-        public ItemMaterial getHandleMaterial() {
-            return this.handle.getMaterial().getMaterial();
-        }
-
-        @Override
-        public PartTypes.Handle getHandleType() {
-            return this.handle.getType();
-        }
-
-        @Override
         public int getHarvestLevel() {
-            return HarvestLevel.HAND;
+            return HarvestLevels.HAND;
         }
 
         @Override
         public HeadPart getHead() {
             return this.head;
-        }
-
-        @Override
-        public ItemMaterial getHeadMaterial() {
-            return this.head.getMaterial().getMaterial();
-        }
-
-        @Override
-        public PartTypes.Head getHeadType() {
-            return this.head.getType();
         }
 
         @Override
@@ -147,11 +122,6 @@ public interface IModularTool extends IModular {
 
         @Override
         public double getMoment() {
-            return 0;
-        }
-
-        @Override
-        public double getReach() {
             return 0;
         }
 
@@ -187,11 +157,7 @@ public interface IModularTool extends IModular {
 
         @Override
         public CompoundTag serializeNBT() {
-            return new CompoundTag();
-        }
-
-        @Override
-        public void setDurabilityDmg(int damage) {
+            return this.tag;
         }
 
         @Override

@@ -33,6 +33,19 @@ public final class EvolutionCapabilities {
         }
     }
 
+    public static void finishCapabilities(Player player) {
+        if (!player.isAlive()) {
+            player.invalidateCaps();
+        }
+    }
+
+    public static <T> T getCapability(Player player, Capability<T> instance) {
+        if (!player.isAlive()) {
+            player.reviveCaps();
+        }
+        return player.getCapability(instance).orElseThrow(IllegalStateException::new);
+    }
+
     public static void register(RegisterCapabilitiesEvent event) {
         CapabilityChunkStorage.register(event);
         CapabilityExtendedInventory.register(event);

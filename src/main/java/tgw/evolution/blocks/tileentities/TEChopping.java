@@ -12,14 +12,18 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.fluids.FluidGeneric;
+import tgw.evolution.events.ItemEvents;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.items.ItemLog;
+import tgw.evolution.items.modular.ItemModular;
+import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.util.constants.WoodVariant;
 
 import javax.annotation.Nullable;
@@ -41,7 +45,9 @@ public class TEChopping extends BlockEntity implements ILoggable {
             Item firewood = WoodVariant.byId(this.id).getFirewood();
             ItemStack stack = new ItemStack(firewood, 16);
             BlockUtils.dropItemStack(this.level, this.worldPosition, stack, 0.5);
-            player.getMainHandItem().hurtAndBreak(1, player, playerEntity -> playerEntity.getItemBySlot(EquipmentSlot.MAINHAND));
+            Block block = WoodVariant.byId(this.id).getLog();
+            ItemEvents.damageItem(player.getMainHandItem(), player, ItemModular.DamageCause.BREAK_BLOCK, EquipmentSlot.MAINHAND,
+                                  ((IBlockPatch) block).getHarvestLevel(block.defaultBlockState()));
             player.awardStat(Stats.ITEM_CRAFTED.get(firewood), 16);
         }
         this.id = -1;

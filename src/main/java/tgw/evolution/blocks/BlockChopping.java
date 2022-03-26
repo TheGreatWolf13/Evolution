@@ -30,10 +30,10 @@ import tgw.evolution.blocks.tileentities.TEUtils;
 import tgw.evolution.entities.misc.EntitySit;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
-import tgw.evolution.items.ItemAxe;
 import tgw.evolution.items.ItemLog;
+import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.constants.BlockFlags;
-import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.constants.HarvestLevels;
 import tgw.evolution.util.constants.WoodVariant;
 
 import javax.annotation.Nullable;
@@ -57,9 +57,12 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
         if (!(tile instanceof TEChopping chopping)) {
             return;
         }
-        if (chopping.hasLog() && player.getMainHandItem().getItem() instanceof ItemAxe) {
-            if (chopping.increaseBreakProgress() == 3) {
-                chopping.breakLog(player);
+        if (chopping.hasLog()) {
+            ItemStack stackInHand = player.getMainHandItem();
+            if (stackInHand.getItem() instanceof ItemModular tool && tool.isAxe(stackInHand)) {
+                if (chopping.increaseBreakProgress() == 3) {
+                    chopping.breakLog(player);
+                }
             }
         }
     }
@@ -116,7 +119,7 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
 
     @Override
     public int getHarvestLevel(BlockState state) {
-        return HarvestLevel.STONE;
+        return HarvestLevels.STONE;
     }
 
     @Override

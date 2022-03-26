@@ -247,11 +247,18 @@ public class ThirstStats implements IThirst {
 
     @Override
     public void tick(ServerPlayer player) {
-        //TODO influence by temperature also
         if (player.isAlive()) {
-            float sprintModifier = player.isSprinting() ? 0.15f : 0.0f;
+            float modifier = 0.0f;
+            if (player.isSprinting()) {
+                modifier += 0.15f;
+            }
+            if (player.hasEffect(EvolutionEffects.SWEATING.get())) {
+                modifier += 0.15f;
+            }
+            if (this.hydrationLevel > 0) {
+                modifier -= 0.15f;
+            }
             float thirstEffectModifier = 0.0f;
-            float hydrationModifier = this.hydrationLevel > 0 ? -0.15f : 0.0f;
             if (player.hasEffect(EvolutionEffects.THIRST.get())) {
                 MobEffectInstance effect = player.getEffect(EvolutionEffects.THIRST.get());
                 if (effect.getDuration() > 0) {
@@ -300,7 +307,7 @@ public class ThirstStats implements IThirst {
                 this.setExtremelyIntoxicated(false);
                 player.removeEffect(EvolutionEffects.WATER_INTOXICATION.get());
             }
-            this.addThirstExhaustion(DAILY_CONSUMPTION / Time.DAY_IN_TICKS * (1.0f + sprintModifier + thirstEffectModifier + hydrationModifier));
+            this.addThirstExhaustion(DAILY_CONSUMPTION / Time.DAY_IN_TICKS * (1.0f + modifier + thirstEffectModifier));
             this.addHydrationExhaustion(0.9f);
         }
         else {

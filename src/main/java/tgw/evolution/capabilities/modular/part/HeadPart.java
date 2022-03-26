@@ -6,7 +6,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Material;
+import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.client.tooltip.EvolutionTooltipDurability;
 import tgw.evolution.client.tooltip.EvolutionTooltipMass;
@@ -21,7 +23,12 @@ public class HeadPart implements IHitPart<PartTypes.Head> {
     private MaterialInstance material = MaterialInstance.DUMMY;
     private int sharpAmount;
     private int spentDurability;
+    private CompoundTag tag;
     private PartTypes.Head type = PartTypes.Head.NULL;
+
+    public static HeadPart get(ItemStack stack) {
+        return (HeadPart) stack.getCapability(CapabilityModular.PART).orElse(DUMMY);
+    }
 
     @Override
     public void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num) {
@@ -61,6 +68,9 @@ public class HeadPart implements IHitPart<PartTypes.Head> {
                 //Very Sharp
                 return 1.15 * preAttackDamage;
             }
+        }
+        if (this.type == PartTypes.Head.HOE) {
+            return 0.7 * preAttackDamage;
         }
         return preAttackDamage;
     }
@@ -139,14 +149,19 @@ public class HeadPart implements IHitPart<PartTypes.Head> {
 
     @Override
     public CompoundTag serializeNBT() {
-        CompoundTag tag = new CompoundTag();
-        tag.putString("Type", this.type.getName());
-        tag.putInt("Durability", this.spentDurability);
-        tag.put("MaterialInstance", this.material.write());
-        if (this.canBeSharpened()) {
-            tag.putInt("SharpAmount", this.sharpAmount);
+        if (this.tag == null) {
+            this.tag = new CompoundTag();
         }
-        return tag;
+        this.tag.putString("Type", this.type.getName());
+        this.tag.putInt("Durability", this.spentDurability);
+        this.tag.put("MaterialInstance", this.material.write());
+        if (this.canBeSharpened()) {
+            this.tag.putInt("SharpAmount", this.sharpAmount);
+        }
+        else {
+            this.tag.remove("SharpAmount");
+        }
+        return this.tag;
     }
 
     @Override

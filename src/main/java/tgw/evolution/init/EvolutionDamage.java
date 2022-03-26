@@ -10,6 +10,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
+import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.util.damage.DamageSourceEntity;
 import tgw.evolution.util.damage.DamageSourceEntityIndirect;
 import tgw.evolution.util.damage.DamageSourceEv;
@@ -31,6 +32,7 @@ public final class EvolutionDamage {
     public static final ObjectSet<String> ALL_SOURCES = new ObjectOpenHashSet<>();
     public static final DamageSource DEHYDRATION = createSrc(new DamageSourceEv("dehydration", Type.SICKNESS).bypassArmor().absolute());
     public static final DamageSource DROWN = createSrc(new DamageSourceEv("drown", Type.DROWNING).bypassArmor());
+    public static final DamageSource DUMMY = new DamageSourceEv("dummy", Type.GENERIC);
     public static final DamageSource EFFICIENCY = createSrc(new DamageSourceEv("efficiency", Type.VOID).bypassArmor().bypassInvul().absolute());
     public static final DamageSource FALL = new DamageSourceEv("fall_damage", Type.IMPACT).bypassArmor();
     public static final DamageSource FALLING_METAL = createSrc(new DamageSourceEv("falling_metal", Type.CRUSHING).bypassArmor());
@@ -75,7 +77,7 @@ public final class EvolutionDamage {
         return new DamageSourcePlayer("player", player, type, hand);
     }
 
-    public static DamageSourceEv causeSpearDamage(Entity source, @Nullable Entity trueSource) {
+    public static DamageSourceEv causeSpearDamage(EntitySpear source, @Nullable Entity trueSource) {
         return new DamageSourceEntityIndirect("spear", source, trueSource, Type.PIERCING).projectile();
     }
 

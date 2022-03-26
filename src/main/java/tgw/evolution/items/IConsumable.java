@@ -3,15 +3,14 @@ package tgw.evolution.items;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.UseAnim;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
+import tgw.evolution.util.Object2FloatPair;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public interface IConsumable {
 
-    List<Pair<MobEffectInstance, Float>> EMPTY = ImmutableList.of();
+    List<Object2FloatPair<MobEffectInstance>> EMPTY = ImmutableList.of();
 
     /**
      * @return The time to consume the item, in ticks.
@@ -21,7 +20,7 @@ public interface IConsumable {
     /**
      * @return A list made of pairs. Each pair contains an effect this item can apply paired with its chance, in float.
      */
-    List<Pair<MobEffectInstance, Float>> getEffects();
+    List<Object2FloatPair<MobEffectInstance>> getEffects();
 
     /**
      * @return The animation to use while consuming.
@@ -32,7 +31,7 @@ public interface IConsumable {
 
         private final UseAnim anim;
         private int consumeTime = 32;
-        private List<Pair<MobEffectInstance, Float>> effects = EMPTY;
+        private List<Object2FloatPair<MobEffectInstance>> effects = EMPTY;
 
         public Properties(UseAnim anim) {
             this.anim = anim;
@@ -46,7 +45,7 @@ public interface IConsumable {
             if (this.effects == EMPTY) {
                 this.effects = new ArrayList<>();
             }
-            this.effects.add(new ImmutablePair<>(effect, chance));
+            this.effects.add(new Object2FloatPair<>(effect, chance));
         }
 
         public UseAnim getAnim() {
@@ -57,7 +56,7 @@ public interface IConsumable {
             return this.consumeTime;
         }
 
-        public List<Pair<MobEffectInstance, Float>> getEffects() {
+        public List<Object2FloatPair<MobEffectInstance>> getEffects() {
             return this.effects;
         }
     }

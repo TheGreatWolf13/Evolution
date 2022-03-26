@@ -4,7 +4,6 @@ import com.mojang.datafixers.util.Either;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
-import org.intellij.lang.annotations.MagicConstant;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.init.ItemMaterial;
 import tgw.evolution.util.constants.HarvestLevel;
@@ -13,8 +12,9 @@ import java.util.List;
 
 public class MaterialInstance {
 
-    public static final MaterialInstance DUMMY = new MaterialInstance(ItemMaterial.STONE_ANDESITE);
+    public static final MaterialInstance DUMMY = new MaterialInstance(ItemMaterial.ANDESITE);
     private final ItemMaterial material;
+    private CompoundTag tag;
 
     public MaterialInstance(ItemMaterial material) {
         this.material = material;
@@ -46,7 +46,7 @@ public class MaterialInstance {
         return this.material.getHardness();
     }
 
-    @MagicConstant(valuesFromClass = HarvestLevel.class)
+    @HarvestLevel
     public int getHarvestLevel() {
         return this.material.getHarvestLevel();
     }
@@ -64,8 +64,10 @@ public class MaterialInstance {
     }
 
     public CompoundTag write() {
-        CompoundTag tag = new CompoundTag();
-        tag.putString("Material", this.material.getName());
-        return tag;
+        if (this.tag == null) {
+            this.tag = new CompoundTag();
+        }
+        this.tag.putString("Material", this.material.getName());
+        return this.tag;
     }
 }

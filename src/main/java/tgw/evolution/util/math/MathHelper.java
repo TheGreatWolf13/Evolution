@@ -14,10 +14,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.*;
@@ -30,7 +27,6 @@ import tgw.evolution.entities.INeckPosition;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.patches.*;
 import tgw.evolution.util.AdvancedEntityRayTraceResult;
-import tgw.evolution.util.ArmPose;
 import tgw.evolution.util.HitInformation;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.HitboxEntity;
@@ -48,7 +44,10 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.Collator;
 import java.text.Normalizer;
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -62,7 +61,6 @@ public final class MathHelper {
     public static final float SQRT_2 = sqrt(2.0f);
     public static final float SQRT_2_OVER_2 = SQRT_2 / 2.0f;
     public static final Random RANDOM = new Random();
-    public static final float[] BASE_BRIGHTNESS = {1.0f, 1.0f, 1.0f, 1.0f};
     public static final DirectionDiagonal[][] DIAGONALS = {{DirectionDiagonal.NORTH_WEST, DirectionDiagonal.NORTH_EAST},
                                                            {DirectionDiagonal.SOUTH_WEST, DirectionDiagonal.SOUTH_EAST}};
     public static final InteractionHand[] HANDS = InteractionHand.values();
@@ -295,25 +293,21 @@ public final class MathHelper {
         return angle;
     }
 
-    public static List<HitInformation> collideOBBWithCollider(@Nonnull Entity entity,
-                                                              @Nonnull Hitbox collider,
-                                                              float partialTicks,
-                                                              BlockHitResult[] hitResult,
-                                                              boolean checkBlocks) {
+    public static void collideOBBWithCollider(@Nonnull HitInformation hits,
+                                              @Nonnull Entity entity,
+                                              @Nonnull Hitbox collider,
+                                              float partialTicks,
+                                              BlockHitResult[] hitResult,
+                                              boolean checkBlocks) {
         Level world = entity.level;
         collider.getParent().init(entity, partialTicks);
-        List<HitInformation> hitInfos = new ArrayList<>();
         List<Entity> foundEntities = world.getEntities(entity, entity.getBoundingBox().inflate(2.5), PREDICATE);
         for (Entity entityInBoundingBox : foundEntities) {
-            HitInformation hitInfo = collidingEntityHitboxes(entity, entityInBoundingBox, collider, partialTicks);
-            if (hitInfo != null) {
-                hitInfos.add(hitInfo);
-            }
+            collidingEntityHitboxes(hits, entity, entityInBoundingBox, collider, partialTicks);
         }
         if (checkBlocks) {
             hitResult[0] = collideWithBlocks(entity, collider, partialTicks);
         }
-        return hitInfos;
     }
 
     @Nullable
@@ -385,8 +379,6 @@ public final class MathHelper {
                 //noinspection ObjectAllocationInLoop
                 BlockHitResult hitResult = hitter.level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
                 if (hitResult.getType() != HitResult.Type.MISS) {
-                    Evolution.info("Collided with {} at {} on {}, from = {}, to = {}", hitter.level.getBlockState(hitResult.getBlockPos()),
-                                   hitResult.getBlockPos(), hitResult.getLocation(), from, to);
                     return hitResult;
                 }
             }
@@ -394,8 +386,10 @@ public final class MathHelper {
         return null;
     }
 
-    @Nullable
-    public static <T extends Entity> HitInformation collidingEntityHitboxes(Entity hitter, T entity, Hitbox collider, float partialTicks) {
+    public static <T extends Entity> void collidingEntityHitboxes(HitInformation hits, Entity hitter, T entity, Hitbox collider, float partialTicks) {
+        if (hits.areAllChecked(entity)) {
+            return;
+        }
         AABB aabb = collider.getAABB();
         Matrix3d transform = collider.getTransformation().transpose();
         Vec3 offset = collider.getOffset();
@@ -408,13 +402,11 @@ public final class MathHelper {
         double posY = Mth.lerp(partialTicks, entity.yOld, entity.getY());
         double posZ = Mth.lerp(partialTicks, entity.zOld, entity.getZ());
         HitboxEntity<T> hitbox = null;
-        List<Hitbox> hitboxes = null;
         if (((IEntityPatch) entity).hasHitboxes()) {
             hitbox = (HitboxEntity<T>) ((IEntityPatch) entity).getHitboxes();
             hitbox.init(entity, partialTicks);
-            hitboxes = new ArrayList<>(hitbox.getBoxes());
         }
-        List<Hitbox> collidedHitboxes = new ArrayList<>();
+        //Check for the four main vertices of the collider box
         for (int v = 0; v < 4; v++) {
             double x = v < 2 ? aabb.minX : aabb.maxX;
             double y = v % 2 == 0 ? aabb.minY : aabb.maxY;
@@ -431,6 +423,7 @@ public final class MathHelper {
             fromX0 += mainOffset.x;
             fromY0 += mainOffset.y;
             fromZ0 += mainOffset.z;
+            //For every vertex, check the three edges connected to it
             for (int i = 0; i < 3; i++) {
                 double x0 = x;
                 double y0 = y;
@@ -459,23 +452,28 @@ public final class MathHelper {
                 toY0 += hitterPosY;
                 toZ0 += hitterPosZ;
                 if (!((IEntityPatch) entity).hasHitboxes()) {
+                    //Sanity checks
                     if (Math.abs(fromX0 - toX0) > aabb.getXsize()) {
+                        //Invalid hit, try another
                         continue;
                     }
                     if (Math.abs(fromY0 - toY0) > aabb.getYsize()) {
+                        //Invalid hit, try another
                         continue;
                     }
                     if (Math.abs(fromZ0 - toZ0) > aabb.getZsize()) {
+                        //Invalid hit, try another
                         continue;
                     }
                     Vec3 from = new Vec3(fromX0, fromY0, fromZ0);
                     Vec3 to = new Vec3(toX0, toY0, toZ0);
                     Optional<Vec3> optional = entity.getBoundingBox().clip(from, to);
                     if (optional.isPresent() || entity.getBoundingBox().contains(from) || entity.getBoundingBox().contains(to)) {
-                        HitInformation hitInformation = new HitInformation(entity);
-                        hitInformation.addHitbox(HitboxType.ALL);
-                        return hitInformation;
+                        //Edge hit the entity BB
+                        hits.addHitbox(entity, HitboxType.ALL);
+                        return;
                     }
+                    //Edge did not hit, try another
                     continue;
                 }
                 fromX0 -= posX;
@@ -503,8 +501,12 @@ public final class MathHelper {
                 Vec3 from = new Vec3(fromX1, fromY1, fromZ1);
                 //noinspection ObjectAllocationInLoop
                 Vec3 to = new Vec3(toX1, toY1, toZ1);
-                for (Iterator<Hitbox> it = hitboxes.listIterator(); it.hasNext(); ) {
-                    Hitbox box = it.next();
+                boolean hasAdded = false;
+                //Check if the edge hits every Hitbox
+                for (Hitbox box : hitbox.getBoxes()) {
+                    if (hits.contains(entity, box.getPart())) {
+                        continue;
+                    }
                     Vec3 newFrom = from;
                     Vec3 newTo = to;
                     Vec3 offsetIns = box.getOffset();
@@ -515,20 +517,15 @@ public final class MathHelper {
                     newTo = transformIns.transform(newTo);
                     Optional<Vec3> optional = box.getAABB().clip(newFrom, newTo);
                     if (optional.isPresent()) {
-                        collidedHitboxes.add(box);
-                        it.remove();
+                        hasAdded = true;
+                        hits.addHitbox(entity, box.getPart());
                     }
+                }
+                if (hasAdded && hits.areAllChecked(entity)) {
+                    return;
                 }
             }
         }
-        if (!collidedHitboxes.isEmpty()) {
-            HitInformation hitInformation = new HitInformation(entity);
-            for (Hitbox box : collidedHitboxes) {
-                hitInformation.addHitbox(box.getPart());
-            }
-            return hitInformation;
-        }
-        return null;
     }
 
     /**
@@ -552,26 +549,6 @@ public final class MathHelper {
         return stripAccents(a, sb).toLowerCase(Locale.ROOT).contains(stripAccents(b, sb).toLowerCase(Locale.ROOT));
     }
 
-    /**
-     * Converts the given acceleration to Minecraft values.
-     *
-     * @param mPerSSq The acceleration in metres / second^2.
-     * @return The acceleration in metres / tick^2.
-     */
-    public static double convertAcceleration(double mPerSSq) {
-        return mPerSSq / 400;
-    }
-
-    /**
-     * Converts the given force to Minecraft values.
-     *
-     * @param newtons The force in newtons (kg * m/s^2).
-     * @return The force in kg * m/t^2.
-     */
-    public static double convertForce(double newtons) {
-        return newtons / 400;
-    }
-
     private static void convertRemainingAccentCharacters(StringBuilder decomposed) {
         for (int i = 0; i < decomposed.length(); ++i) {
             if (decomposed.charAt(i) == 321) {
@@ -583,16 +560,6 @@ public final class MathHelper {
                 decomposed.insert(i, 'l');
             }
         }
-    }
-
-    /**
-     * Converts the given speed to Minecraft values.
-     *
-     * @param mPerS The speed in metres / second.
-     * @return The speed in metres / tick.
-     */
-    public static double convertSpeed(double mPerS) {
-        return mPerS / 20;
     }
 
     /**
@@ -672,43 +639,43 @@ public final class MathHelper {
         };
     }
 
-    public static ArmPose getArmPose(LivingEntity entity, ItemStack mainhandStack, ItemStack offhandStack, InteractionHand hand) {
-        ArmPose armPose = ArmPose.EMPTY;
-        ItemStack stack = hand == InteractionHand.MAIN_HAND ? mainhandStack : offhandStack;
-        if (!stack.isEmpty()) {
-            armPose = ArmPose.ITEM;
-            if (entity.getTicksUsingItem() > 0 && hand == entity.getUsedItemHand()) {
-                UseAnim useaction = stack.getUseAnimation();
-                switch (useaction) {
-                    case BLOCK -> {
-                        return ArmPose.BLOCK;
-                    }
-                    case BOW -> {
-                        return ArmPose.BOW_AND_ARROW;
-                    }
-                    case SPEAR -> {
-                        return ArmPose.THROW_SPEAR;
-                    }
-                    case CROSSBOW -> {
-                        return ArmPose.CROSSBOW_CHARGE;
-                    }
-                }
-            }
-            else {
-                boolean mainhandHasCrossbow = mainhandStack.getItem() == Items.CROSSBOW;
-                boolean mainhandIsCharged = CrossbowItem.isCharged(mainhandStack);
-                boolean offhandHasCrossbow = offhandStack.getItem() == Items.CROSSBOW;
-                boolean offhandIsCharged = CrossbowItem.isCharged(offhandStack);
-                if (mainhandHasCrossbow && mainhandIsCharged) {
-                    armPose = ArmPose.CROSSBOW_HOLD;
-                }
-                if (offhandHasCrossbow && offhandIsCharged && mainhandStack.getItem().getUseAnimation(mainhandStack) == UseAnim.NONE) {
-                    return ArmPose.CROSSBOW_HOLD;
-                }
-            }
-        }
-        return armPose;
-    }
+//    public static ArmPose getArmPose(LivingEntity entity, ItemStack mainhandStack, ItemStack offhandStack, InteractionHand hand) {
+//        ArmPose armPose = ArmPose.EMPTY;
+//        ItemStack stack = hand == InteractionHand.MAIN_HAND ? mainhandStack : offhandStack;
+//        if (!stack.isEmpty()) {
+//            armPose = ArmPose.ITEM;
+//            if (entity.getTicksUsingItem() > 0 && hand == entity.getUsedItemHand()) {
+//                UseAnim useaction = stack.getUseAnimation();
+//                switch (useaction) {
+//                    case BLOCK -> {
+//                        return ArmPose.BLOCK;
+//                    }
+//                    case BOW -> {
+//                        return ArmPose.BOW_AND_ARROW;
+//                    }
+//                    case SPEAR -> {
+//                        return ArmPose.THROW_SPEAR;
+//                    }
+//                    case CROSSBOW -> {
+//                        return ArmPose.CROSSBOW_CHARGE;
+//                    }
+//                }
+//            }
+//            else {
+//                boolean mainhandHasCrossbow = mainhandStack.getItem() == Items.CROSSBOW;
+//                boolean mainhandIsCharged = CrossbowItem.isCharged(mainhandStack);
+//                boolean offhandHasCrossbow = offhandStack.getItem() == Items.CROSSBOW;
+//                boolean offhandIsCharged = CrossbowItem.isCharged(offhandStack);
+//                if (mainhandHasCrossbow && mainhandIsCharged) {
+//                    armPose = ArmPose.CROSSBOW_HOLD;
+//                }
+//                if (offhandHasCrossbow && offhandIsCharged && mainhandStack.getItem().getUseAnimation(mainhandStack) == UseAnim.NONE) {
+//                    return ArmPose.CROSSBOW_HOLD;
+//                }
+//            }
+//        }
+//        return armPose;
+//    }
 
     public static float getAttackAnim(LivingEntity entity, float partialTick) {
         float f = entity.attackAnim - entity.oAttackAnim;
@@ -1280,9 +1247,8 @@ public final class MathHelper {
         Hitbox box = null;
         List<Entity> foundEntities = level.getEntities(entity, new AABB(from, to).inflate(1.5), PREDICATE);
         for (Entity entityInBoundingBox : foundEntities) {
-            Optional<Vec3> optional = rayTracingEntityHitboxes(entityInBoundingBox, from, look, reachDistance, partialTicks, distance, hitbox);
-            if (optional.isPresent()) {
-                Vec3 hitResult = optional.get();
+            Vec3 hitResult = rayTracingEntityHitboxes(entityInBoundingBox, from, look, reachDistance, partialTicks, distance, hitbox);
+            if (hitResult != null) {
                 if (distance[0] < rangeSq || rangeSq == 0) {
                     foundEntity = entityInBoundingBox;
                     hitVector = hitResult;
@@ -1312,16 +1278,16 @@ public final class MathHelper {
      * @param distance     Will return the distance squared for the hit result. Must be a double[] with length 1.
      * @param chosenBox    Will return the OBB hit, if any. Must be a Hitbox[] with length 1.
      * @param <T>          The type of the Entity the ray is being cast on.
-     * @return An optional with the hit result, if any, or an empty optional.
+     * @return The hit result, if any, or null.
      */
-    @Nonnull
-    public static <T extends Entity> Optional<Vec3> rayTracingEntityHitboxes(T entity,
-                                                                             Vec3 from,
-                                                                             Vec3 look,
-                                                                             double reach,
-                                                                             float partialTicks,
-                                                                             double[] distance,
-                                                                             Hitbox[] chosenBox) {
+    @Nullable
+    public static <T extends Entity> Vec3 rayTracingEntityHitboxes(T entity,
+                                                                   Vec3 from,
+                                                                   Vec3 look,
+                                                                   double reach,
+                                                                   float partialTicks,
+                                                                   double[] distance,
+                                                                   Hitbox[] chosenBox) {
         chosenBox[0] = null;
         distance[0] = reach * reach;
         if (!((IEntityPatch) entity).hasHitboxes()) {
@@ -1330,13 +1296,13 @@ public final class MathHelper {
             if (optional.isPresent()) {
                 double actualDistanceSquared = from.distanceToSqr(optional.get());
                 distance[0] = actualDistanceSquared;
-                return optional;
+                return optional.get();
             }
             if (entity.getBoundingBox().contains(from)) {
                 distance[0] = 0;
-                return Optional.of(from);
+                return from;
             }
-            return Optional.empty();
+            return null;
         }
         HitboxEntity<T> hitbox = (HitboxEntity<T>) ((IEntityPatch) entity).getHitboxes();
         hitbox.init(entity, partialTicks);
@@ -1373,15 +1339,12 @@ public final class MathHelper {
                     result = result.add(posX, posY, posZ);
                     chosenBox[0] = box;
                     if (actualDistanceSquared == 0) {
-                        break;
+                        return result;
                     }
                 }
             }
         }
-        if (result != null) {
-            return Optional.of(result);
-        }
-        return Optional.empty();
+        return result;
     }
 
     /**

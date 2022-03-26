@@ -10,7 +10,6 @@ import com.google.gson.stream.JsonReader;
 import com.mojang.datafixers.DataFixer;
 import it.unimi.dsi.fastutil.objects.*;
 import net.minecraft.SharedConstants;
-import net.minecraft.Util;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -33,11 +32,11 @@ import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.PacketSCStatistics;
 import tgw.evolution.util.constants.NBTTypes;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 public class EvolutionServerStatsCounter extends ServerStatsCounter {
@@ -89,8 +88,17 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
         return stat.getType().getRegistry().getKey(stat.getValue());
     }
 
-    private static <T> Optional<Stat<T>> getStat(StatType<T> statType, String resLoc) {
-        return Optional.ofNullable(ResourceLocation.tryParse(resLoc)).flatMap(statType.getRegistry()::getOptional).map(statType::get);
+    @Nullable
+    private static <T> Stat<T> getStat(StatType<T> statType, String resLoc) {
+        ResourceLocation resourceLocation = ResourceLocation.tryParse(resLoc);
+        if (resourceLocation == null) {
+            return null;
+        }
+        T t = statType.getRegistry().get(resourceLocation);
+        if (t == null) {
+            return null;
+        }
+        return statType.get(t);
     }
 
     private Set<Stat<?>> getDirty() {
@@ -186,51 +194,61 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
             tag = NbtUtils.update(dataFixer, DataFixTypes.STATS, tag, tag.getInt("DataVersion"));
             if (tag.contains("stats", NBTTypes.COMPOUND_NBT)) {
                 CompoundTag stats = tag.getCompound("stats");
-                for (String s : stats.getAllKeys()) {
-                    if (stats.contains(s, NBTTypes.COMPOUND_NBT)) {
+                for (String typeKey : stats.getAllKeys()) {
+                    if (stats.contains(typeKey, NBTTypes.COMPOUND_NBT)) {
                         //noinspection ObjectAllocationInLoop
-                        Util.ifElse(Registry.STAT_TYPE.getOptional(new ResourceLocation(s)), statType -> {
-                            CompoundTag compoundnbt2 = stats.getCompound(s);
-                            for (String s1 : compoundnbt2.getAllKeys()) {
-                                if (compoundnbt2.contains(s1, NBTTypes.ANY_NUMERIC)) {
-                                    //noinspection ObjectAllocationInLoop
-                                    Util.ifElse(getStat(statType, s1),
-                                                stat -> this.statsData.put(stat, compoundnbt2.getLong(s1)),
-                                                () -> Evolution.warn("Invalid statistic in {}: Don't know what {} is", this.statsFile, s1));
+                        StatType<?> statType = Registry.STAT_TYPE.get(new ResourceLocation(typeKey));
+                        if (statType != null) {
+                            CompoundTag type = stats.getCompound(typeKey);
+                            for (String key : type.getAllKeys()) {
+                                if (type.contains(key, NBTTypes.ANY_NUMERIC)) {
+                                    Stat<?> stat = getStat(statType, key);
+                                    if (stat != null) {
+                                        this.statsData.put(stat, type.getLong(key));
+                                    }
+                                    else {
+                                        Evolution.warn("Invalid statistic in {}: Don't know what {} is", this.statsFile, key);
+                                    }
                                 }
                                 else {
-                                    Evolution.warn("Invalid statistic value in {}: Don't know what {} is for key {}",
-                                                   this.statsFile,
-                                                   compoundnbt2.get(s1),
-                                                   s1);
+                                    Evolution.warn("Invalid statistic value in {}: Don't know what {} is for key {}", this.statsFile, type.get(key),
+                                                   key);
                                 }
                             }
-                        }, () -> Evolution.warn("Invalid statistic type in {}: Don't know what {} is", this.statsFile, s));
+                        }
+                        else {
+                            Evolution.warn("Invalid statistic type in {}: Don't know what {} is", this.statsFile, typeKey);
+                        }
                     }
                 }
             }
             if (tag.contains("partial", NBTTypes.COMPOUND_NBT)) {
                 CompoundTag partial = tag.getCompound("partial");
-                for (String s : partial.getAllKeys()) {
-                    if (partial.contains(s, NBTTypes.COMPOUND_NBT)) {
+                for (String typeKey : partial.getAllKeys()) {
+                    if (partial.contains(typeKey, NBTTypes.COMPOUND_NBT)) {
                         //noinspection ObjectAllocationInLoop
-                        Util.ifElse(Registry.STAT_TYPE.getOptional(new ResourceLocation(s)), statType -> {
-                            CompoundTag compoundnbt2 = partial.getCompound(s);
-                            for (String s1 : compoundnbt2.getAllKeys()) {
-                                if (compoundnbt2.contains(s1, NBTTypes.ANY_NUMERIC)) {
-                                    //noinspection ObjectAllocationInLoop
-                                    Util.ifElse(getStat(statType, s1),
-                                                stat -> this.partialData.put(stat, compoundnbt2.getFloat(s1)),
-                                                () -> Evolution.warn("Invalid statistic in {}: Don't know what {} is", this.statsFile, s1));
+                        StatType<?> statType = Registry.STAT_TYPE.get(new ResourceLocation(typeKey));
+                        if (statType != null) {
+                            CompoundTag type = partial.getCompound(typeKey);
+                            for (String key : type.getAllKeys()) {
+                                if (type.contains(key, NBTTypes.ANY_NUMERIC)) {
+                                    Stat<?> stat = getStat(statType, key);
+                                    if (stat != null) {
+                                        this.partialData.put(stat, type.getFloat(key));
+                                    }
+                                    else {
+                                        Evolution.warn("Invalid statistic in {}: Don't know what {} is", this.statsFile, key);
+                                    }
                                 }
                                 else {
-                                    Evolution.warn("Invalid statistic value in {}: Don't know what {} is for key {}",
-                                                   this.statsFile,
-                                                   compoundnbt2.get(s1),
-                                                   s1);
+                                    Evolution.warn("Invalid statistic value in {}: Don't know what {} is for key {}", this.statsFile, type.get(key),
+                                                   key);
                                 }
                             }
-                        }, () -> Evolution.warn("Invalid statistic type in {}: Don't know what {} is", this.statsFile, s));
+                        }
+                        else {
+                            Evolution.warn("Invalid statistic type in {}: Don't know what {} is", this.statsFile, typeKey);
+                        }
                     }
                 }
             }

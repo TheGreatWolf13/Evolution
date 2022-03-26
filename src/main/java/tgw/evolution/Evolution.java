@@ -101,9 +101,19 @@ public final class Evolution {
         LOGGER.debug(MARKER, "[" + clazz + "]: " + message, objects);
     }
 
+    public static void debug(String message) {
+        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
+        LOGGER.debug(MARKER, "[" + clazz + "]: " + message);
+    }
+
     public static void error(String message, Object... objects) {
         String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
         LOGGER.error(MARKER, "[" + clazz + "]: " + message, objects);
+    }
+
+    public static void error(String message) {
+        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
+        LOGGER.error(MARKER, "[" + clazz + "]: " + message);
     }
 
     public static ResourceLocation getResource(String name) {
@@ -115,6 +125,11 @@ public final class Evolution {
         LOGGER.info(MARKER, "[" + clazz + "]: " + message, objects);
     }
 
+    public static void info(String message) {
+        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
+        LOGGER.info(MARKER, "[" + clazz + "]: " + message);
+    }
+
     private static void loadComplete(FMLLoadCompleteEvent event) {
 //        EvolutionBiomes.registerBiomes();
         EvolutionEntities.registerEntityWorldSpawns();
@@ -122,7 +137,6 @@ public final class Evolution {
         if (FMLLoader.getDist() == Dist.CLIENT) {
             ClientEvents.onFinishLoading();
         }
-        System.gc();
     }
 
     private static void onClientSetup(FMLClientSetupEvent event) {
@@ -171,6 +185,11 @@ public final class Evolution {
 
     public static void usingPlaceholder(Player player, String obj) {
         player.displayClientMessage(new TextComponent("[DEBUG] Using placeholder " + obj + "!"), false);
+    }
+
+    public static void warn(String message) {
+        String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
+        LOGGER.warn(MARKER, "[" + clazz + "]: " + message);
     }
 
     public static void warn(String message, Object... objects) {

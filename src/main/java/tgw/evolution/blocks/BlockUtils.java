@@ -12,6 +12,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
@@ -46,6 +47,13 @@ public final class BlockUtils {
             return evolution.getBlock() instanceof BlockGrass;
         }
         return false;
+    }
+
+    public static void destroyBlock(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        Block.dropResources(state, level, pos);
+        level.removeBlock(pos, false);
+        level.levelEvent(LevelEvent.PARTICLES_DESTROY_BLOCK, pos, Block.getId(state));
     }
 
     public static void dropItemStack(Level level, BlockPos pos, @Nonnull ItemStack stack, double heightOffset) {

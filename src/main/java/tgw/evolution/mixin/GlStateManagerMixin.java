@@ -9,13 +9,9 @@ import org.spongepowered.asm.mixin.Overwrite;
 import tgw.evolution.patches.IMatrix4fPatch;
 import tgw.evolution.util.constants.CommonRotations;
 import tgw.evolution.util.math.MathHelper;
-import tgw.evolution.util.reflection.StaticFieldHandler;
 
 @Mixin(GlStateManager.class)
 public abstract class GlStateManagerMixin {
-
-    private static final StaticFieldHandler<RenderSystem, Vector3f[]> SHADER_LIGHT_DIRECTIONS = new StaticFieldHandler<>(RenderSystem.class,
-                                                                                                                         "f_157150_");
 
     /**
      * @author MGSchultz
@@ -65,8 +61,7 @@ public abstract class GlStateManagerMixin {
         float x1 = matrixExt.transformVecX(lightingVector2.x(), lightingVector2.y(), lightingVector2.z());
         float y1 = matrixExt.transformVecY(lightingVector2.x(), lightingVector2.y(), lightingVector2.z());
         float z1 = matrixExt.transformVecZ(lightingVector2.x(), lightingVector2.y(), lightingVector2.z());
-        Vector3f[] shaderLightDirections = SHADER_LIGHT_DIRECTIONS.get();
-        shaderLightDirections[0].set(x0, y0, z0);
-        shaderLightDirections[1].set(x1, y1, z1);
+        RenderSystem.shaderLightDirections[0].set(x0, y0, z0);
+        RenderSystem.shaderLightDirections[1].set(x1, y1, z1);
     }
 }
