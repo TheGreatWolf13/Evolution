@@ -82,6 +82,10 @@ public class DimensionOverworld {
         return this.latitude;
     }
 
+    public float getLunarEclipseDRightAscension() {
+        return this.lunarEclipseDRightAscension;
+    }
+
     public int getLunarEclipseDeclinationIndex() {
         return Math.round(this.lunarEclipseDDeclination);
     }
@@ -162,7 +166,8 @@ public class DimensionOverworld {
         float skyBrightness = 1.0f - (MathHelper.cosDeg(this.sunAltitude) * 2.0f + 0.62f);
         skyBrightness = MathHelper.clamp(skyBrightness, 0, 1);
         if (this.isInSolarEclipse) {
-            float intensity = Math.min(this.getSolarEclipseIntensity(), 0.9F);
+            float intensity = Math.max(this.getSolarEclipseIntensity(), 0.2f);
+            intensity -= 0.2f;
             if (skyBrightness < intensity) {
                 skyBrightness = intensity;
             }
@@ -273,15 +278,15 @@ public class DimensionOverworld {
         float dRightAscension = Mth.wrapDegrees(360 * (this.sunRightAscension - this.moonRightAscension));
         this.isInSolarEclipse = false;
         this.isInLunarEclipse = false;
-        if (Math.abs(dRightAscension) <= 3.0f) {
+        if (Math.abs(dRightAscension) <= 1.5f) {
             float dDeclination = Mth.wrapDegrees(seasonDeclination - monthlyDeclination);
             if (Math.abs(dDeclination) <= 7.0f) {
                 this.isInSolarEclipse = true;
-                this.solarEclipseDRightAscension = EarthHelper.getEclipseAmount(dRightAscension * 7.0f / 3.0f);
+                this.solarEclipseDRightAscension = EarthHelper.getEclipseAmount(dRightAscension * 7.0f / 1.5f);
                 this.solarEclipseDDeclination = EarthHelper.getEclipseAmount(dDeclination);
             }
         }
-        else if (177.0f <= Math.abs(dRightAscension) || Math.abs(dRightAscension) <= -177.0f) {
+        else if (178.5f <= Math.abs(dRightAscension) || Math.abs(dRightAscension) <= -178.5f) {
             float dDeclination = Mth.wrapDegrees(seasonDeclination - monthlyDeclination);
             if (Math.abs(dDeclination) <= 14.0f) {
                 if (dRightAscension > 0) {
@@ -293,7 +298,7 @@ public class DimensionOverworld {
                 dRightAscension = -dRightAscension;
                 this.isInLunarEclipse = true;
                 this.lunarEclipseDRightAscension = EarthHelper.getEclipseAmount(
-                        Math.signum(dRightAscension) * dRightAscension * dRightAscension * 7.0f / 9.0f);
+                        Math.signum(dRightAscension) * dRightAscension * dRightAscension * 7.0f / (1.5f * 1.5f));
                 this.lunarEclipseDDeclination = EarthHelper.getEclipseAmount(dDeclination * dDeclination * dDeclination / 392.0f);
                 this.eclipsePhase = EarthHelper.phaseByEclipseIntensity(this.getLunarEclipseRightAscensionIndex(),
                                                                         this.getLunarEclipseDeclinationIndex());

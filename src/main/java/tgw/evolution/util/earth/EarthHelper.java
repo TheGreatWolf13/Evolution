@@ -109,7 +109,9 @@ public final class EarthHelper {
             sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
         }
         if (dimension != null && dimension.isInSolarEclipse()) {
-            float intensity = 1.0F - dimension.getSolarEclipseIntensity();
+            float intensity = Math.max(0.2f, dimension.getSolarEclipseIntensity());
+            intensity -= 0.2f;
+            intensity = 1.0f - intensity;
             if (intensity < sunAngle) {
                 sunAngle = intensity;
             }
@@ -170,13 +172,15 @@ public final class EarthHelper {
      * Calculates the declination of the Moon in the skies. This phenomenon is cyclic and repeats monthly.
      * The maximum declination depends on the lunar standstill (which varies from -5.1 degrees to +5.1 degrees)
      * and the tilt of the Earth's orbit (23.5 degrees).
+     * <p>
+     * Obs.: The {@code worldTime} is increased by 1000 ticks in order to make the first solar eclipse a total one instead of a partial.
      *
      * @param worldTime The time of the world, in ticks.
-     * @return A value in degrees representing the declination of the Moon in the skies.
+     * @return A value in degrees representing the declination of the Moon in the skies from -28.6 to +28.6.
      */
     public static float lunarMonthlyDeclination(long worldTime) {
         float amplitude = lunarStandStillAmplitude(worldTime) + ECLIPTIC_INCLINATION;
-        return amplitude * MathHelper.sin(MathHelper.TAU * worldTime / Time.MONTH_IN_TICKS);
+        return amplitude * MathHelper.sin(MathHelper.TAU * (worldTime + 1_000) / Time.MONTH_IN_TICKS);
     }
 
     /**
