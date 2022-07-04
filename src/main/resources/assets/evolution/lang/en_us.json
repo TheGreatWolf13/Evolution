@@ -42,7 +42,7 @@
   "evolution.config.enum_pound": "lb",
   "evolution.config.enum_rankine": "°R",
   "evolution.config.firstPersonRenderer": "First Person Renderer",
-  "evolution.config.firstPersonRenderer.comment": "Renders your body in first person as you would see it from your own eyes. Recommended!",
+  "evolution.config.firstPersonRenderer.comment": "Renders your body in first person as you would see it from your own eyes. Disabling is not supported and visual glitches may happen.",
   "evolution.config.food": "Food Energy Unit",
   "evolution.config.food.comment": "The energy unit used by food in the game.",
   "evolution.config.hitmarkers": "Hitmarkers",
