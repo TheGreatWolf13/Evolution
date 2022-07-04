@@ -33,15 +33,16 @@ public class TemperatureStats implements ITemperature {
     /**
      * The desired max temperature the Player aims to feel comfortable in, in Celsius.
      */
-    private int desiredMaxComfort = 25;
+    private short desiredMaxComfort = 25;
     /**
      * The desired min temperature the Player aims to feel comfortable in, in Celsius.
      */
-    private int desiredMinComfort = 15;
+    private short desiredMinComfort = 15;
     /**
      * The ambient temperature the Player aims to achieve, in Celsius.
      */
     private double desiredTemperature = 20;
+    private short effectTicks;
     /**
      * Bit 0~1: ClimateZone;<br>
      * Bit 2: isShivering;<br>
@@ -92,8 +93,9 @@ public class TemperatureStats implements ITemperature {
         this.currentMaxComfort = nbt.getDouble("CurrentMax");
         this.currentMinComfort = nbt.getDouble("CurrentMin");
         this.desiredTemperature = nbt.getDouble("DesiredTemp");
-        this.desiredMaxComfort = nbt.getInt("DesiredMax");
-        this.desiredMinComfort = nbt.getInt("DesiredMin");
+        this.desiredMaxComfort = nbt.getShort("DesiredMax");
+        this.desiredMinComfort = nbt.getShort("DesiredMin");
+        this.effectTicks = nbt.getShort("EffectTicks");
         this.needsUpdate = true;
     }
 
@@ -145,8 +147,9 @@ public class TemperatureStats implements ITemperature {
         nbt.putDouble("CurrentMax", this.currentMaxComfort);
         nbt.putDouble("CurrentMin", this.currentMinComfort);
         nbt.putDouble("DesiredTemp", this.desiredTemperature);
-        nbt.putInt("DesiredMax", this.desiredMaxComfort);
-        nbt.putInt("DesiredMin", this.desiredMinComfort);
+        nbt.putShort("DesiredMax", this.desiredMaxComfort);
+        nbt.putShort("DesiredMin", this.desiredMinComfort);
+        nbt.putShort("EffectTicks", this.effectTicks);
         return nbt;
     }
 
@@ -182,8 +185,8 @@ public class TemperatureStats implements ITemperature {
         this.desiredTemperature = Math.max(temp, -273);
     }
 
-    private void setShaking(boolean isShaking) {
-        if (isShaking) {
+    private void setShivering(boolean isShivering) {
+        if (isShivering) {
             this.flags |= 4;
         }
         else {
@@ -222,28 +225,44 @@ public class TemperatureStats implements ITemperature {
             boolean shouldBeShivering = this.currentTemperature < this.currentMinComfort - 5;
             if (this.isShivering()) {
                 if (!shouldBeShivering) {
-                    player.removeEffect(EvolutionEffects.SHIVERING.get());
-                    this.setShaking(false);
+                    this.effectTicks += (int) (this.currentTemperature - this.currentMinComfort + 10) / 5 * 2;
+                    if (this.effectTicks >= 0) {
+                        this.effectTicks = 0;
+                        player.removeEffect(EvolutionEffects.SHIVERING.get());
+                        this.setShivering(false);
+                    }
                 }
             }
             else {
                 if (shouldBeShivering) {
-                    player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.SHIVERING.get(), 0, false, false, true));
-                    this.setShaking(true);
+                    this.effectTicks += (int) (this.currentTemperature - this.currentMinComfort) / 5;
+                    if (this.effectTicks <= -500) {
+                        this.effectTicks = -500;
+                        player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.SHIVERING.get(), 0, false, false, true));
+                        this.setShivering(true);
+                    }
                 }
             }
             //Handle Sweating
             boolean shouldBeSweating = this.currentTemperature > this.currentMaxComfort + 5;
             if (this.isSweating()) {
                 if (!shouldBeSweating) {
-                    player.removeEffect(EvolutionEffects.SWEATING.get());
-                    this.setSweating(false);
+                    this.effectTicks += (int) (this.currentTemperature - this.currentMaxComfort - 10) / 5 * 2;
+                    if (this.effectTicks <= 0) {
+                        this.effectTicks = 0;
+                        player.removeEffect(EvolutionEffects.SWEATING.get());
+                        this.setSweating(false);
+                    }
                 }
             }
             else {
                 if (shouldBeSweating) {
-                    player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.SWEATING.get(), 0, false, false, true));
-                    this.setSweating(true);
+                    this.effectTicks += (int) (this.currentTemperature - this.currentMaxComfort) / 5;
+                    if (this.effectTicks >= 500) {
+                        this.effectTicks = 500;
+                        player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.SWEATING.get(), 0, false, false, true));
+                        this.setSweating(true);
+                    }
                 }
             }
             //Ticking
