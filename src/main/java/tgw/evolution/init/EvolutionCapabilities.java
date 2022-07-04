@@ -11,6 +11,7 @@ import tgw.evolution.capabilities.food.CapabilityHunger;
 import tgw.evolution.capabilities.health.CapabilityHealth;
 import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
 import tgw.evolution.capabilities.modular.CapabilityModular;
+import tgw.evolution.capabilities.stamina.CapabilityStamina;
 import tgw.evolution.capabilities.temperature.CapabilityTemperature;
 import tgw.evolution.capabilities.thirst.CapabilityThirst;
 import tgw.evolution.capabilities.toast.CapabilityToast;
@@ -55,5 +56,6 @@ public final class EvolutionCapabilities {
         CapabilityHunger.register(event);
         CapabilityTemperature.register(event);
         CapabilityModular.register(event);
+        CapabilityStamina.register(event);
     }
 }
