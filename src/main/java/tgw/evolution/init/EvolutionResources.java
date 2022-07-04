@@ -27,6 +27,16 @@ public final class EvolutionResources {
     public static final int MASK = 5;
     public static final int BACK = 6;
     public static final int TACTICAL = 7;
+    //Icons coordinates
+    public static final int ICON_HEARTS = 0;
+    public static final int ICON_HEARTS_HARDCORE = 18;
+    public static final int ICON_HUNGER = 36;
+    public static final int ICON_THIRST = 45;
+    public static final int ICON_STAMINA = 54;
+    public static final int ICON_TEMPERATURE = 63;
+    public static final int ICON_17_17 = 218;
+    public static final int ICON_12_12 = 235;
+    public static final int ICON_9_9 = 247;
     //Resource Locations
     //      Blocks
     public static final ResourceLocation[] BLOCK_KNAPPING;
