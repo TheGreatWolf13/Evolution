@@ -17,6 +17,8 @@ import java.util.List;
 public final class EvolutionEffects {
 
     public static final DeferredRegister<MobEffect> EFFECTS = DeferredRegister.create(ForgeRegistries.MOB_EFFECTS, Evolution.MODID);
+    public static final RegistryObject<MobEffect> ANAEMIA = EFFECTS.register("anaemia",
+                                                                             () -> new EffectGeneric(MobEffectCategory.HARMFUL, 0xdd_dd00));
     public static final RegistryObject<MobEffect> DEHYDRATION = EFFECTS.register("dehydration", EffectDehydration::new);
     public static final RegistryObject<MobEffect> DISORIENTED = EFFECTS.register("disoriented",
                                                                                  () -> new EffectGeneric(MobEffectCategory.HARMFUL, 0xed_a677));
