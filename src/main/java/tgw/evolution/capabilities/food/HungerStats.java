@@ -20,11 +20,10 @@ public class HungerStats implements IHunger {
     public static final HungerStats CLIENT_INSTANCE = new HungerStats();
     public static final int HUNGER_CAPACITY = 3_000;
     public static final int SATURATION_CAPACITY = 3_000;
-    public static final float DAILY_CONSUMPTION = 1_680.0f;
     public static final int OVEREAT = 1_000;
     public static final int OVEREAT_II = 2_000;
-    public static final float HUNGER_SCALE = HUNGER_CAPACITY / 10.0f;
-    public static final float SATURATION_SCALE = OVEREAT / 10.0f;
+    private static final float DAILY_CONSUMPTION = 1_680.0f;
+    private static final float SCALE = HUNGER_CAPACITY / 10.0f;
     /**
      * Bit 0: Overeat; <br>
      * Bit 1: Very overeat; <br>
@@ -40,12 +39,12 @@ public class HungerStats implements IHunger {
     private float saturationExhaustion;
     private int saturationLevel;
 
-    private static int hungerLevel(int amount) {
-        return Mth.ceil(amount / (HUNGER_SCALE / 2));
+    public static int hungerLevel(int amount) {
+        return Mth.ceil(amount / (SCALE / 2));
     }
 
-    private static int saturationLevel(int amount) {
-        return Mth.ceil(amount / 25.0);
+    public static int saturationLevel(int amount) {
+        return Mth.ceil(amount / (SCALE / 4));
     }
 
     private void addHungerExhaustion(float exhaustion) {
@@ -57,10 +56,13 @@ public class HungerStats implements IHunger {
     }
 
     private void addSaturationExhaustion(float exhaustion) {
-        this.saturationExhaustion += exhaustion;
-        while (this.saturationExhaustion >= 1) {
-            this.saturationExhaustion -= 1;
-            this.decreaseSaturationLevel();
+        if (this.saturationLevel > 0) {
+            this.saturationExhaustion += exhaustion;
+            while (this.saturationExhaustion >= 1) {
+                this.saturationExhaustion -= 1;
+                this.decreaseSaturationLevel();
+                this.increaseHungerLevel(1);
+            }
         }
     }
 
@@ -318,8 +320,7 @@ public class HungerStats implements IHunger {
                 player.removeEffect(EvolutionEffects.OVEREAT.get());
             }
             this.addHungerExhaustion(DAILY_CONSUMPTION / Time.DAY_IN_TICKS * (1.0f + modifier + hungerEffectModifier));
-            //TODO
-            this.addSaturationExhaustion(0.4f);
+            this.addSaturationExhaustion(0.36f);
         }
         else {
             this.setSaturationLevel(0);

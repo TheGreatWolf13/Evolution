@@ -19,9 +19,8 @@ public class ThirstStats implements IThirst {
     public static final int HYDRATION_CAPACITY = 3_000;
     public static final int INTOXICATION = 1_000;
     public static final int INTOXICATION_II = 2_000;
-    public static final float THIRST_SCALE = THIRST_CAPACITY / 10.0f;
-    public static final float HYDRATION_SCALE = INTOXICATION / 10.0f;
-    public static final float DAILY_CONSUMPTION = 2_500.0f;
+    private static final float SCALE = THIRST_CAPACITY / 10.0f;
+    private static final float DAILY_CONSUMPTION = 2_500.0f;
     /**
      * Bit 0: intoxicated;<br>
      * Bit 1: veryIntoxicated;<br>
@@ -37,20 +36,23 @@ public class ThirstStats implements IThirst {
     private float thirstExhaustion;
     private int thirstLevel = THIRST_CAPACITY;
 
-    private static int hydrationLevel(int amount) {
-        return Mth.ceil(amount / 25.0);
+    public static int hydrationLevel(int amount) {
+        return Mth.ceil(amount / (SCALE / 4));
     }
 
-    private static int thirstLevel(int amount) {
-        return Mth.ceil(amount / (THIRST_SCALE / 2));
+    public static int thirstLevel(int amount) {
+        return Mth.ceil(amount / (SCALE / 2));
     }
 
     @Override
     public void addHydrationExhaustion(float exhaustion) {
-        this.hydrationExhaustion += exhaustion;
-        while (this.hydrationExhaustion >= 1) {
-            this.hydrationExhaustion -= 1;
-            this.decreaseHydrationLevel();
+        if (this.hydrationLevel > 0) {
+            this.hydrationExhaustion += exhaustion;
+            while (this.hydrationExhaustion >= 1) {
+                this.hydrationExhaustion -= 1;
+                this.decreaseHydrationLevel();
+                this.increaseThirstLevel(1);
+            }
         }
     }
 
