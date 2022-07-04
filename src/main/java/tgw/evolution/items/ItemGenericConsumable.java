@@ -59,7 +59,6 @@ public abstract class ItemGenericConsumable extends ItemEv implements IConsumabl
             if (player instanceof ServerPlayer) {
                 IHunger hunger = player.getCapability(CapabilityHunger.INSTANCE).orElseThrow(IllegalStateException::new);
                 int amount = food.getHunger();
-                hunger.increaseHungerLevel(amount);
                 hunger.increaseSaturationLevel(amount);
             }
             level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), entity.getEatingSound(stack), SoundSource.NEUTRAL, 1.0F,
@@ -69,7 +68,6 @@ public abstract class ItemGenericConsumable extends ItemEv implements IConsumabl
             if (player instanceof ServerPlayer) {
                 IThirst thirst = player.getCapability(CapabilityThirst.INSTANCE).orElseThrow(IllegalStateException::new);
                 int amount = drink.getThirst();
-                thirst.increaseThirstLevel(amount);
                 thirst.increaseHydrationLevel(amount);
             }
         }
