@@ -10,6 +10,12 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.server.command.EnumArgument;
+import tgw.evolution.capabilities.food.CapabilityHunger;
+import tgw.evolution.capabilities.food.HungerStats;
+import tgw.evolution.capabilities.food.IHunger;
+import tgw.evolution.capabilities.stamina.CapabilityStamina;
+import tgw.evolution.capabilities.stamina.IStamina;
+import tgw.evolution.capabilities.stamina.StaminaStats;
 import tgw.evolution.capabilities.thirst.CapabilityThirst;
 import tgw.evolution.capabilities.thirst.IThirst;
 import tgw.evolution.capabilities.thirst.ThirstStats;
@@ -49,6 +55,8 @@ public class CommandRegen implements Command<CommandSourceStack> {
         for (Entity target : targets) {
             if (target instanceof ServerPlayer player) {
                 IThirst thirst = player.getCapability(CapabilityThirst.INSTANCE).orElseThrow(IllegalStateException::new);
+                IHunger hunger = player.getCapability(CapabilityHunger.INSTANCE).orElseThrow(IllegalStateException::new);
+                IStamina stamina = player.getCapability(CapabilityStamina.INSTANCE).orElseThrow(IllegalStateException::new);
                 RegenType type = RegenType.ALL;
                 try {
                     type = context.getArgument("type", RegenType.class);
@@ -60,12 +68,19 @@ public class CommandRegen implements Command<CommandSourceStack> {
                         player.setHealth(player.getMaxHealth());
                         thirst.setThirstLevel(ThirstStats.THIRST_CAPACITY);
                         thirst.setHydrationLevel(0);
+                        hunger.setHungerLevel(HungerStats.HUNGER_CAPACITY);
+                        hunger.setSaturationLevel(0);
                     }
                     case HEALTH -> player.setHealth(player.getMaxHealth());
                     case THIRST -> {
                         thirst.setThirstLevel(ThirstStats.THIRST_CAPACITY);
                         thirst.setHydrationLevel(0);
                     }
+                    case HUNGER -> {
+                        hunger.setHungerLevel(HungerStats.HUNGER_CAPACITY);
+                        hunger.setSaturationLevel(0);
+                    }
+                    case STAMINA -> stamina.setStamina(StaminaStats.MAX_STAMINA);
                 }
                 count++;
             }
