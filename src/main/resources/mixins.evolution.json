@@ -20,6 +20,7 @@
     "CompoundTagMixin",
     "CraftingMenuMixin",
     "DataFixesManagerMixin",
+    "DataLayerMixin",
     "DirectionMixin",
     "EntityMixin",
     "ForgeHooksClientMixin",
@@ -51,6 +52,7 @@
     "ServerStatsCounterMixin",
     "StateHolderMixin",
     "Vector4fMixin",
+    "YggdrasilUserApiServiceMixin",
     "ZombieMixin"
   ],
   "client": [
@@ -67,6 +69,7 @@
     "ChunkRenderDispatcherMixin",
     "ClientLevelMixin",
     "ClientPacketListenerMixin",
+    "ClientTelemetryManagerMixin",
     "CreeperMixin",
     "DebugScreenOverlayMixin",
     "EntityRendererMixin",
