@@ -9,29 +9,17 @@ import javax.annotation.Nullable;
 
 public class SimpleCapabilityProvider<C> implements ICapabilityProvider {
 
-    /**
-     * The {@link Capability} instance to provide the handler for.
-     */
     protected final Capability<C> capability;
 
-    /**
-     * The {@link Direction} to provide the handler for.
-     */
-    protected final Direction facing;
+    protected final Direction direction;
 
-    /**
-     * The handler instance to provide.
-     */
     protected final C handler;
 
-    /**
-     * A lazy optional containing handler instance to provide.
-     */
     protected final LazyOptional<C> lazyOptional;
 
-    public SimpleCapabilityProvider(Capability<C> capability, @Nullable Direction facing, @Nullable C handler) {
+    public SimpleCapabilityProvider(Capability<C> capability, @Nullable Direction direction, @Nullable C handler) {
         this.capability = capability;
-        this.facing = facing;
+        this.direction = direction;
         this.handler = handler;
         if (this.handler != null) {
             this.lazyOptional = LazyOptional.of(() -> this.handler);
@@ -47,12 +35,12 @@ public class SimpleCapabilityProvider<C> implements ICapabilityProvider {
      * The return value CAN be the same for multiple faces.
      *
      * @param capability The capability to check
-     * @param facing     The Side to check from:
+     * @param direction  The Side to check from:
      *                   CAN BE NULL. Null is defined to represent 'internal' or 'self'
      * @return A lazy optional containing the handler, if this object supports the capability.
      */
     @Override
-    public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction facing) {
+    public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction direction) {
         return this.capability.orEmpty(capability, this.lazyOptional);
     }
 
@@ -71,8 +59,8 @@ public class SimpleCapabilityProvider<C> implements ICapabilityProvider {
      * @return The Direction to provide the handler for
      */
     @Nullable
-    public Direction getFacing() {
-        return this.facing;
+    public Direction getDirection() {
+        return this.direction;
     }
 
     /**
