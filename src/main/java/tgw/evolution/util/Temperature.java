@@ -107,22 +107,22 @@ public final class Temperature {
         return alpha << 24 | red << 16 | green << 8 | blue;
     }
 
-    public static int getMaxComfortForRegion(ClimateZone.Region region) {
+    public static short getMaxComfortForRegion(ClimateZone.Region region) {
         if (region == null) {
             return 0;
         }
-        return switch (region) {
+        return (short) switch (region) {
             case POLAR -> 20;
             case TEMPERATE -> 25;
             case TROPICAL -> 30;
         };
     }
 
-    public static int getMinComfortForRegion(ClimateZone.Region region) {
+    public static short getMinComfortForRegion(ClimateZone.Region region) {
         if (region == null) {
             return 0;
         }
-        return switch (region) {
+        return (short) switch (region) {
             case POLAR -> 10;
             case TEMPERATE -> 15;
             case TROPICAL -> 20;
