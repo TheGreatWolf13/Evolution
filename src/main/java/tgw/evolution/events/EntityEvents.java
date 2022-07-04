@@ -12,6 +12,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.CombatTracker;
 import net.minecraft.world.damagesource.DamageSource;
@@ -27,7 +28,6 @@ import net.minecraft.world.entity.npc.WanderingTrader;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
@@ -59,7 +59,6 @@ import tgw.evolution.capabilities.health.IHealth;
 import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.ModularTool;
-import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.capabilities.temperature.CapabilityTemperature;
 import tgw.evolution.capabilities.temperature.ITemperature;
 import tgw.evolution.capabilities.temperature.TemperatureStats;
@@ -183,15 +182,22 @@ public class EntityEvents {
 
     @SubscribeEvent
     public void attachCapabilitiesEntities(AttachCapabilitiesEvent<Entity> event) {
-        if (event.getObject() instanceof Player player) {
+        Entity entity = event.getObject();
+        if (entity instanceof Player player) {
+
             event.addCapability(Evolution.getResource("extended_inventory"),
                                 new SerializableCapabilityProvider<>(CapabilityExtendedInventory.INSTANCE, new ContainerExtendedHandler(player)));
-            event.addCapability(Evolution.getResource("thirst"), new SerializableCapabilityProvider<>(CapabilityThirst.INSTANCE, new ThirstStats()));
-            event.addCapability(Evolution.getResource("health"), new SerializableCapabilityProvider<>(CapabilityHealth.INSTANCE, new HealthStats()));
-            event.addCapability(Evolution.getResource("toast"), new SerializableCapabilityProvider<>(CapabilityToast.INSTANCE, new ToastStats()));
-            event.addCapability(Evolution.getResource("hunger"), new SerializableCapabilityProvider<>(CapabilityHunger.INSTANCE, new HungerStats()));
-            event.addCapability(Evolution.getResource("temperature"),
-                                new SerializableCapabilityProvider<>(CapabilityTemperature.INSTANCE, new TemperatureStats()));
+            if (entity instanceof ServerPlayer) {
+                event.addCapability(Evolution.getResource("thirst"),
+                                    new SerializableCapabilityProvider<>(CapabilityThirst.INSTANCE, new ThirstStats()));
+                event.addCapability(Evolution.getResource("health"),
+                                    new SerializableCapabilityProvider<>(CapabilityHealth.INSTANCE, new HealthStats()));
+                event.addCapability(Evolution.getResource("toast"), new SerializableCapabilityProvider<>(CapabilityToast.INSTANCE, new ToastStats()));
+                event.addCapability(Evolution.getResource("hunger"),
+                                    new SerializableCapabilityProvider<>(CapabilityHunger.INSTANCE, new HungerStats()));
+                event.addCapability(Evolution.getResource("temperature"),
+                                    new SerializableCapabilityProvider<>(CapabilityTemperature.INSTANCE, new TemperatureStats()));
+            }
         }
     }
 
@@ -638,45 +644,50 @@ public class EntityEvents {
     @SubscribeEvent
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
         Player player = event.player;
+        ProfilerFiller profiler = player.level.getProfiler();
         if (event.phase == TickEvent.Phase.START) {
-            player.level.getProfiler().push("preTick");
+            profiler.push("preTick");
             player.getFoodData().setFoodLevel(20);
+            profiler.push("reach");
             if (player.isCreative()) {
                 player.getAttribute(ForgeMod.REACH_DISTANCE.get()).setBaseValue(12);
             }
             else {
                 player.getAttribute(ForgeMod.REACH_DISTANCE.get()).setBaseValue(PlayerHelper.REACH_DISTANCE);
             }
+            profiler.popPush("status");
             //Handles Status Updates
             if (!player.level.isClientSide) {
-                if (player.getMainHandItem().getItem() == Items.ANVIL) {
-                    player.setItemInHand(InteractionHand.MAIN_HAND,
-                                         ItemModularTool.createNew(PartTypes.Head.AXE, ItemMaterial.COPPER, PartTypes.Handle.ONE_HANDED,
-                                                                   ItemMaterial.COPPER, true));
-                }
                 //Ticks Player systems
                 if (!player.isCreative() && !player.isSpectator()) {
                     ServerPlayer sPlayer = (ServerPlayer) player;
                     if (!player.isAlive()) {
                         player.reviveCaps();
                     }
+                    profiler.push("thirst");
                     IThirst thirst = player.getCapability(CapabilityThirst.INSTANCE).orElseThrow(IllegalStateException::new);
                     thirst.tick(sPlayer);
+                    profiler.popPush("health");
                     IHealth health = player.getCapability(CapabilityHealth.INSTANCE).orElseThrow(IllegalStateException::new);
                     health.tick(sPlayer);
+                    profiler.popPush("hunger");
                     IHunger hunger = player.getCapability(CapabilityHunger.INSTANCE).orElseThrow(IllegalStateException::new);
                     hunger.tick(sPlayer);
+                    profiler.popPush("temperature");
                     ITemperature temperature = player.getCapability(CapabilityTemperature.INSTANCE).orElseThrow(IllegalStateException::new);
                     temperature.tick(sPlayer);
+                    profiler.pop();
                     if (!player.isAlive()) {
                         player.invalidateCaps();
                     }
                 }
             }
-            player.level.getProfiler().pop();
+            profiler.pop();
+            profiler.pop();
         }
         else if (event.phase == TickEvent.Phase.END) {
-            player.level.getProfiler().push("postTick");
+            profiler.push("postTick");
+            profiler.push("stats");
             player.awardStat(EvolutionStats.TIME_PLAYED);
             if (player.getPose() == Pose.CROUCHING) {
                 player.setSprinting(false);
@@ -693,6 +704,7 @@ public class EntityEvents {
             if (player.isAlive()) {
                 player.awardStat(EvolutionStats.TIME_SINCE_LAST_DEATH);
             }
+            profiler.popPush("prone");
             if (Evolution.PRONED_PLAYERS.getOrDefault(player.getId(), false)) {
                 SET_POSE.call(player, Pose.SWIMMING);
             }
@@ -706,6 +718,7 @@ public class EntityEvents {
                 player.setSprinting(false);
                 player.maxUpStep = getStepHeight(player);
             }
+            profiler.popPush("water");
             if (!player.level.isClientSide) {
                 //Put off torches in Water
                 if (player.isEyeInFluid(FluidTags.WATER)) {
@@ -728,7 +741,8 @@ public class EntityEvents {
                     }
                 }
             }
-            player.level.getProfiler().pop();
+            profiler.pop();
+            profiler.pop();
         }
     }
 

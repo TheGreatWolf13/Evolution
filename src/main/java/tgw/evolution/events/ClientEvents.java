@@ -46,7 +46,6 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
@@ -54,7 +53,6 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.dimension.DimensionType;
@@ -872,11 +870,6 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
-    public void onFogRender(EntityViewRenderEvent.FogDensity event) {
-        this.renderer.renderFog(event);
-    }
-
-    @SubscribeEvent
     public void onGUIMouseClickedPre(ScreenEvent.MouseClickedEvent.Pre event) {
         MouseButton button = MouseButton.fromGLFW(event.getButton());
         if (button != null) {
@@ -1306,16 +1299,8 @@ public class ClientEvents {
 
     @SubscribeEvent
     public void onRenderHand(RenderHandEvent event) {
-        event.setCanceled(true);
-        boolean sleeping = this.mc.getCameraEntity() instanceof LivingEntity && ((LivingEntity) this.mc.getCameraEntity()).isSleeping();
-        if (this.mc.options.getCameraType() == CameraType.FIRST_PERSON &&
-            !sleeping &&
-            !this.mc.options.hideGui &&
-            this.mc.gameMode.getPlayerMode() != GameType.SPECTATOR) {
-            this.mc.gameRenderer.lightTexture().turnOnLightLayer();
-            this.renderer.renderItemInFirstPerson(event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(),
-                                                  event.getPartialTicks());
-            this.mc.gameRenderer.lightTexture().turnOffLightLayer();
+        if (this.shouldRenderPlayer()) {
+            event.setCanceled(true);
         }
     }
 
