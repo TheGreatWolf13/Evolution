@@ -59,6 +59,8 @@ import tgw.evolution.capabilities.health.IHealth;
 import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.ModularTool;
+import tgw.evolution.capabilities.stamina.CapabilityStamina;
+import tgw.evolution.capabilities.stamina.StaminaStats;
 import tgw.evolution.capabilities.temperature.CapabilityTemperature;
 import tgw.evolution.capabilities.temperature.ITemperature;
 import tgw.evolution.capabilities.temperature.TemperatureStats;
@@ -197,6 +199,8 @@ public class EntityEvents {
                                     new SerializableCapabilityProvider<>(CapabilityHunger.INSTANCE, new HungerStats()));
                 event.addCapability(Evolution.getResource("temperature"),
                                     new SerializableCapabilityProvider<>(CapabilityTemperature.INSTANCE, new TemperatureStats()));
+                event.addCapability(Evolution.getResource("stamina"),
+                                    new SerializableCapabilityProvider<>(CapabilityStamina.INSTANCE, new StaminaStats()));
             }
         }
     }
