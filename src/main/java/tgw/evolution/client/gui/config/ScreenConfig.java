@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
 import tgw.evolution.client.gui.widgets.EditBoxAdv;
+import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.ConfigHelper;
 import tgw.evolution.util.math.MathHelper;
@@ -168,16 +169,12 @@ public class ScreenConfig extends ScreenListMenu {
                 }
                 this.minecraft.setScreen(this.parent);
             }));
-            this.restoreButton = this.addRenderableWidget(new Button(this.width / 2 - 50,
-                                                                     this.height - 29,
-                                                                     100,
-                                                                     20,
-                                                                     EvolutionTexts.GUI_CONFIG_RESTORE_DEFAULTS,
-                                                                     button -> {
-                                                                         if (this.folderEntry.isRoot()) {
-                                                                             this.showRestoreScreen();
-                                                                         }
-                                                                     }));
+            this.restoreButton = this.addRenderableWidget(
+                    new Button(this.width / 2 - 50, this.height - 29, 100, 20, EvolutionTexts.GUI_CONFIG_RESTORE_DEFAULTS, button -> {
+                        if (this.folderEntry.isRoot()) {
+                            this.showRestoreScreen();
+                        }
+                    }));
             this.addRenderableWidget(new Button(this.width / 2 + 60, this.height - 29, 100, 20, CommonComponents.GUI_CANCEL, button -> {
                 if (this.isChanged(this.folderEntry)) {
                     this.minecraft.setScreen(new ScreenConfirmation(this, this.textUnsaved, result -> {
@@ -195,11 +192,7 @@ public class ScreenConfig extends ScreenListMenu {
             this.updateButtons();
         }
         else {
-            this.addRenderableWidget(new Button(this.width / 2 - 75,
-                                                this.height - 29,
-                                                150,
-                                                20,
-                                                CommonComponents.GUI_BACK,
+            this.addRenderableWidget(new Button(this.width / 2 - 75, this.height - 29, 150, 20, CommonComponents.GUI_BACK,
                                                 button -> this.minecraft.setScreen(this.parent)));
         }
     }
@@ -349,17 +342,11 @@ public class ScreenConfig extends ScreenListMenu {
 
         public FolderItem(FolderEntry folderEntry, String modId) {
             super(createLabel(folderEntry.label, modId));
-            this.button = new Button(10,
-                                     5,
-                                     44,
-                                     20,
-                                     new TextComponent(this.getLabel()).withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.WHITE),
+            this.button = new Button(10, 5, 44, 20, new TextComponent(this.getLabel()).withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.WHITE),
                                      onPress -> {
                                          Component newTitle = ScreenConfig.this.title.copy().append(" > " + this.getLabel());
-                                         ScreenConfig.this.minecraft.setScreen(new ScreenConfig(ScreenConfig.this,
-                                                                                                newTitle,
-                                                                                                folderEntry,
-                                                                                                ScreenConfig.this.config));
+                                         ScreenConfig.this.minecraft.setScreen(
+                                                 new ScreenConfig(ScreenConfig.this, newTitle, folderEntry, ScreenConfig.this.config));
                                      });
         }
 
@@ -405,7 +392,7 @@ public class ScreenConfig extends ScreenListMenu {
             this.tooltip = this.createToolTip(holder);
             int maxTooltipWidth = Math.max(ScreenConfig.this.width / 2 - 43, 170);
             Button.OnTooltip tooltip = ScreenUtil.createButtonTooltip(ScreenConfig.this, ScreenConfig.this.textReset, maxTooltipWidth);
-            this.resetButton = new ButtonIcon(0, 0, 0, 165, onPress -> {
+            this.resetButton = new ButtonIcon(0, 0, 0, EvolutionResources.ICON_12_12, onPress -> {
                 this.holder.restoreDefaultValue();
                 this.onResetValue();
             }, tooltip);
@@ -434,8 +421,8 @@ public class ScreenConfig extends ScreenListMenu {
                 Class<? extends Enum<?>> clazz = ScreenConfig.this.clazz.get(enumValue);
                 Enum<?>[] values = clazz.getEnumConstants();
                 Component allowedValues = EvolutionTexts.configAllowedValues(Arrays.stream(values)
-                                                                                   .map(o -> I18n.get(createEnumKey(ScreenConfig.this.config.getModId(),
-                                                                                                                    o)))
+                                                                                   .map(o -> I18n.get(
+                                                                                           createEnumKey(ScreenConfig.this.config.getModId(), o)))
                                                                                    .collect(Collectors.joining(", ")));
                 lines.add(allowedValues);
             }
@@ -624,20 +611,14 @@ public class ScreenConfig extends ScreenListMenu {
 
         public StringItem(ValueHolder<String> holder) {
             super(holder);
-            this.button = new Button(10,
-                                     5,
-                                     46,
-                                     20,
-                                     EvolutionTexts.GUI_GENERAL_EDIT,
-                                     button -> Minecraft.getInstance()
-                                                        .setScreen(new ScreenEditString(ScreenConfig.this,
-                                                                                        this.label,
-                                                                                        holder.getValue(),
-                                                                                        holder.valueSpec::test,
-                                                                                        s -> {
-                                                                                            holder.setValue(s);
-                                                                                            ScreenConfig.this.updateButtons();
-                                                                                        })));
+            this.button = new Button(10, 5, 46, 20, EvolutionTexts.GUI_GENERAL_EDIT, button -> Minecraft.getInstance()
+                                                                                                        .setScreen(new ScreenEditString(
+                                                                                                                ScreenConfig.this, this.label,
+                                                                                                                holder.getValue(),
+                                                                                                                holder.valueSpec::test, s -> {
+                                                                                                            holder.setValue(s);
+                                                                                                            ScreenConfig.this.updateButtons();
+                                                                                                        })));
             this.eventListeners.add(this.button);
         }
 
@@ -672,11 +653,7 @@ public class ScreenConfig extends ScreenListMenu {
 
         public ListItem(ListValueHolder holder) {
             super(holder);
-            this.button = new Button(10,
-                                     5,
-                                     46,
-                                     20,
-                                     EvolutionTexts.GUI_GENERAL_EDIT,
+            this.button = new Button(10, 5, 46, 20, EvolutionTexts.GUI_GENERAL_EDIT,
                                      button -> Minecraft.getInstance().setScreen(new ScreenEditList(ScreenConfig.this, this.label, holder)));
             this.eventListeners.add(this.button);
         }
@@ -712,11 +689,7 @@ public class ScreenConfig extends ScreenListMenu {
 
         public EnumItem(ValueHolder<Enum<?>> holder) {
             super(holder);
-            this.button = new Button(10,
-                                     5,
-                                     46,
-                                     20,
-                                     new TranslatableComponent(createEnumKey(ScreenConfig.this.config.getModId(), holder.getValue())),
+            this.button = new Button(10, 5, 46, 20, new TranslatableComponent(createEnumKey(ScreenConfig.this.config.getModId(), holder.getValue())),
                                      button -> Minecraft.getInstance()
                                                         .setScreen(new ScreenChangeEnum(ScreenConfig.this, this.label, holder.getValue(), e -> {
                                                             holder.setValue(e);

@@ -47,6 +47,7 @@ import tgw.evolution.client.gui.widgets.ButtonIcon;
 import tgw.evolution.client.gui.widgets.CheckBoxAdv;
 import tgw.evolution.client.gui.widgets.EditBoxAdv;
 import tgw.evolution.client.gui.widgets.Label;
+import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.math.MathHelper;
 
@@ -217,16 +218,9 @@ public class ScreenModList extends Screen {
         this.modList.setLeftPos(10);
         this.modList.setRenderTopAndBottom(false);
         this.addWidget(this.modList);
-        this.addRenderableWidget(new Button(10,
-                                            this.modList.getBottom() + 8,
-                                            127,
-                                            20,
-                                            CommonComponents.GUI_BACK,
-                                            onPress -> this.getMinecraft().setScreen(null)));
-        this.addRenderableWidget(new ButtonIcon(140,
-                                                this.modList.getBottom() + 8,
-                                                22,
-                                                165,
+        this.addRenderableWidget(
+                new Button(10, this.modList.getBottom() + 8, 127, 20, CommonComponents.GUI_BACK, onPress -> this.getMinecraft().setScreen(null)));
+        this.addRenderableWidget(new ButtonIcon(140, this.modList.getBottom() + 8, 12 * 2, EvolutionResources.ICON_12_12,
                                                 onPress -> Util.getPlatform().openFile(FMLPaths.MODSDIR.get().toFile()),
                                                 (button, matrices, mouseX, mouseY) -> this.setActiveTooltip(this.textButtonOpenModsFolder)));
         int padding = 10;
@@ -241,22 +235,12 @@ public class ScreenModList extends Screen {
             }
         }));
         this.configButton.visible = false;
-        this.websiteButton = this.addRenderableWidget(new Button(contentLeft + buttonWidth + 5,
-                                                                 105,
-                                                                 buttonWidth,
-                                                                 20,
-                                                                 this.textWebsite,
+        this.websiteButton = this.addRenderableWidget(new Button(contentLeft + buttonWidth + 5, 105, buttonWidth, 20, this.textWebsite,
                                                                  onPress -> this.openLink("displayURL", this.selectedModInfo)));
         this.websiteButton.visible = false;
-        this.issueButton = this.addRenderableWidget(new Button(contentLeft + buttonWidth + buttonWidth + 10,
-                                                               105,
-                                                               buttonWidth,
-                                                               20,
-                                                               this.textReportBugs,
-                                                               onPress -> this.openLink("issueTrackerURL",
-                                                                                        this.selectedModInfo != null ?
-                                                                                        this.selectedModInfo.getOwningFile() :
-                                                                                        null)));
+        this.issueButton = this.addRenderableWidget(
+                new Button(contentLeft + buttonWidth + buttonWidth + 10, 105, buttonWidth, 20, this.textReportBugs,
+                           onPress -> this.openLink("issueTrackerURL", this.selectedModInfo != null ? this.selectedModInfo.getOwningFile() : null)));
         this.issueButton.visible = false;
         this.descriptionList = new StringList(contentWidth, this.height - 135 - 55, contentLeft, 130);
         this.descriptionList.setRenderTopAndBottom(false);
@@ -283,8 +267,7 @@ public class ScreenModList extends Screen {
             }
             if (s.contains("/") || s.contains("\\")) {
                 Evolution.warn("Skipped loading logo file from {}. The file name '{}' contained illegal characters '/' or '\\'",
-                               info.getDisplayName(),
-                               s);
+                               info.getDisplayName(), s);
                 return;
             }
             PathResourcePack resourcePack = ResourcePackLoader.getPackFor(info.getModId())
@@ -294,9 +277,8 @@ public class ScreenModList extends Screen {
                                                                                                          "somehow!")));
             try (InputStream is = resourcePack.getRootResource(s); NativeImage logo = NativeImage.read(is)) {
                 TextureManager textureManager = this.getMinecraft().getTextureManager();
-                this.logoCache.put(info.getModId(),
-                                   Pair.of(textureManager.register("modlogo", this.createLogoTexture(logo, info.getLogoBlur())),
-                                           new Size2i(logo.getWidth(), logo.getHeight())));
+                this.logoCache.put(info.getModId(), Pair.of(textureManager.register("modlogo", this.createLogoTexture(logo, info.getLogoBlur())),
+                                                            new Size2i(logo.getWidth(), logo.getHeight())));
             }
             catch (IOException ignored) {
             }
@@ -382,23 +364,19 @@ public class ScreenModList extends Screen {
         this.modId = new TextComponent("Mod ID: " + this.selectedModInfo.getModId()).withStyle(ChatFormatting.DARK_GRAY);
         this.modIdWidth = this.font.width(this.modId);
         this.version = new Label(new TranslatableComponent("evolution.gui.modsList.version"),
-                                 new TextComponent(this.selectedModInfo.getVersion().toString()),
-                                 l -> this.setActiveTooltip(l.getTooltip()));
+                                 new TextComponent(this.selectedModInfo.getVersion().toString()), l -> this.setActiveTooltip(l.getTooltip()));
         this.license = new Label(new TranslatableComponent("evolution.gui.modsList.license"),
-                                 new TextComponent(this.selectedModInfo.getOwningFile().getLicense()),
-                                 l -> this.setActiveTooltip(l.getTooltip()));
+                                 new TextComponent(this.selectedModInfo.getOwningFile().getLicense()), l -> this.setActiveTooltip(l.getTooltip()));
         Optional<Object> creditsOp = this.selectedModInfo.getConfigElement("credits");
         this.hasCredits = creditsOp.isPresent();
         if (this.hasCredits) {
-            this.credits = new Label(new TranslatableComponent("evolution.gui.modsList.credits"),
-                                     new TextComponent(creditsOp.get().toString()),
+            this.credits = new Label(new TranslatableComponent("evolution.gui.modsList.credits"), new TextComponent(creditsOp.get().toString()),
                                      l -> this.setActiveTooltip(l.getTooltip()));
         }
         Optional<Object> authorsOp = this.selectedModInfo.getConfigElement("authors");
         this.hasAuthors = authorsOp.isPresent();
         if (this.hasAuthors) {
-            this.authors = new Label(new TranslatableComponent("evolution.gui.modsList.authors"),
-                                     new TextComponent(authorsOp.get().toString()),
+            this.authors = new Label(new TranslatableComponent("evolution.gui.modsList.authors"), new TextComponent(authorsOp.get().toString()),
                                      l -> this.setActiveTooltip(l.getTooltip()));
         }
     }

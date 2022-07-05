@@ -21,6 +21,8 @@ public final class EvolutionOverlays {
     public static final IIngameOverlay FOOD_THIRST_OVERLAY = OverlayRegistry.registerOverlayBelow(ForgeIngameGui.FOOD_LEVEL_ELEMENT,
                                                                                                   "Food and Thirst",
                                                                                                   EvolutionOverlays::foodAndThirst);
+    public static final IIngameOverlay STAMINA = OverlayRegistry.registerOverlayBelow(ForgeIngameGui.PLAYER_HEALTH_ELEMENT, "Stamina",
+                                                                                      EvolutionOverlays::stamina);
 
     private EvolutionOverlays() {
     }
@@ -54,6 +56,13 @@ public final class EvolutionOverlays {
     private static void potion(ForgeIngameGui gui, PoseStack matrices, float partialTicks, int width, int height) {
         if (!Minecraft.getInstance().options.hideGui) {
             ClientRenderer.instance.renderPotionIcons(matrices, partialTicks, width, height);
+        }
+    }
+
+    private static void stamina(ForgeIngameGui gui, PoseStack matrices, float partialTicks, int width, int height) {
+        if (!Minecraft.getInstance().options.hideGui && gui.shouldDrawSurvivalElements()) {
+            gui.setupOverlayRenderState(true, false, EvolutionResources.GUI_ICONS);
+            ClientRenderer.instance.renderStamina(matrices, width, height);
         }
     }
 

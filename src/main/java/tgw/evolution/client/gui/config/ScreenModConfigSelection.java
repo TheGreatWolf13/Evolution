@@ -74,11 +74,7 @@ public class ScreenModConfigSelection extends ScreenListMenu {
     @Override
     protected void init() {
         super.init();
-        this.addRenderableWidget(new Button(this.width / 2 - 75,
-                                            this.height - 29,
-                                            150,
-                                            20,
-                                            CommonComponents.GUI_BACK,
+        this.addRenderableWidget(new Button(this.width / 2 - 75, this.height - 29, 150, 20, CommonComponents.GUI_BACK,
                                             button -> this.minecraft.setScreen(this.parent)));
     }
 
@@ -107,26 +103,29 @@ public class ScreenModConfigSelection extends ScreenListMenu {
                                        this.config.getType() != ModConfig.Type.SERVER ||
                                        this.hasRequiredPermission();
             if (config.getType() != ModConfig.Type.SERVER || Minecraft.getInstance().player != null) {
-                this.restoreButton = new ButtonIcon(0, 0, 0, 165, onPress -> this.showRestoreScreen(), (button, poseStack, mouseX, mouseY) -> {
-                    if (button.isHoveredOrFocused()) {
-                        if (this.hasRequiredPermission() && button.active) {
-                            ScreenModConfigSelection.this.renderTooltip(poseStack,
-                                                                        Minecraft.getInstance().font.split(EvolutionTexts.GUI_CONFIG_RESTORE_DEFAULTS,
-                                                                                                           Math.max(ScreenModConfigSelection.this.width /
-                                                                                                                    2 - 60, 170)),
-                                                                        mouseX,
-                                                                        mouseY);
-                        }
-                        else if (!this.hasRequiredPermission()) {
-                            ScreenModConfigSelection.this.renderTooltip(poseStack,
-                                                                        Minecraft.getInstance().font.split(ScreenModConfigSelection.this.textNoPermission,
-                                                                                                           Math.max(ScreenModConfigSelection.this.width /
-                                                                                                                    2 - 60, 170)),
-                                                                        mouseX,
-                                                                        mouseY);
-                        }
-                    }
-                });
+                this.restoreButton = new ButtonIcon(0, 0, 0, EvolutionResources.ICON_12_12, onPress -> this.showRestoreScreen(),
+                                                    (button, poseStack, mouseX, mouseY) -> {
+                                                        if (button.isHoveredOrFocused()) {
+                                                            if (this.hasRequiredPermission() && button.active) {
+                                                                ScreenModConfigSelection.this.renderTooltip(poseStack,
+                                                                                                            Minecraft.getInstance().font.split(
+                                                                                                                    EvolutionTexts.GUI_CONFIG_RESTORE_DEFAULTS,
+                                                                                                                    Math.max(
+                                                                                                                            ScreenModConfigSelection.this.width /
+                                                                                                                            2 - 60, 170)), mouseX,
+                                                                                                            mouseY);
+                                                            }
+                                                            else if (!this.hasRequiredPermission()) {
+                                                                ScreenModConfigSelection.this.renderTooltip(poseStack,
+                                                                                                            Minecraft.getInstance().font.split(
+                                                                                                                    ScreenModConfigSelection.this.textNoPermission,
+                                                                                                                    Math.max(
+                                                                                                                            ScreenModConfigSelection.this.width /
+                                                                                                                            2 - 60, 170)), mouseX,
+                                                                                                            mouseY);
+                                                            }
+                                                        }
+                                                    });
                 this.restoreButton.active = this.hasRequiredPermission();
                 this.updateRestoreDefaultButton();
             }
@@ -175,9 +174,7 @@ public class ScreenModConfigSelection extends ScreenListMenu {
                         ScreenModConfigSelection.this.renderTooltip(poseStack,
                                                                     Minecraft.getInstance().font.split(ScreenModConfigSelection.this.textNoPermission,
                                                                                                        Math.max(ScreenModConfigSelection.this.width /
-                                                                                                                2 - 60, 170)),
-                                                                    mouseX,
-                                                                    mouseY);
+                                                                                                                2 - 60, 170)), mouseX, mouseY);
                     }
                 }
             });
@@ -220,15 +217,14 @@ public class ScreenModConfigSelection extends ScreenListMenu {
         }
 
         private void showRestoreScreen() {
-            ScreenConfirmation confirmScreen = new ScreenConfirmation(ScreenModConfigSelection.this,
-                                                                      EvolutionTexts.GUI_CONFIG_RESTORE_MESSAGE,
+            ScreenConfirmation confirmScreen = new ScreenConfirmation(ScreenModConfigSelection.this, EvolutionTexts.GUI_CONFIG_RESTORE_MESSAGE,
                                                                       result -> {
                                                                           if (!result || this.allConfigValues == null) {
                                                                               return true;
                                                                           }
                                                                           // Resets all config values
-                                                                          CommentedConfig newConfig =
-                                                                                  CommentedConfig.copy(this.config.getConfigData());
+                                                                          CommentedConfig newConfig = CommentedConfig.copy(
+                                                                                  this.config.getConfigData());
                                                                           this.allConfigValues.forEach(pair -> {
                                                                               ForgeConfigSpec.ConfigValue<?> configValue = pair.getLeft();
                                                                               ForgeConfigSpec.ValueSpec valueSpec = pair.getRight();

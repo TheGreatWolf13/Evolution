@@ -20,6 +20,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
+import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
 
 import java.util.ArrayList;
@@ -44,10 +45,8 @@ public class ScreenEditList extends Screen {
         this.holder = holder;
         this.valueSpec = holder.getSpec();
         this.listType = ListType.fromHolder(holder);
-        this.values.addAll(holder.getValue()
-                                 .stream()
-                                 .map(o -> new StringHolder(this.listType.getStringParser().apply(o)))
-                                 .collect(Collectors.toList()));
+        this.values.addAll(
+                holder.getValue().stream().map(o -> new StringHolder(this.listType.getStringParser().apply(o))).collect(Collectors.toList()));
     }
 
     @Override
@@ -64,32 +63,16 @@ public class ScreenEditList extends Screen {
             this.holder.setValue(newValues);
             this.minecraft.setScreen(this.parent);
         }));
-        this.addRenderableWidget(new Button(this.width / 2 - 45,
-                                            this.height - 29,
-                                            90,
-                                            20,
-                                            this.textAddValue,
-                                            button -> this.minecraft.setScreen(new ScreenEditString(ScreenEditList.this,
-                                                                                                    EvolutionTexts.GUI_GENERAL_EDIT,
-                                                                                                    "",
-                                                                                                    s -> {
-                                                                                                        Object value = this.listType.getValueParser()
-                                                                                                                                    .apply(s);
-                                                                                                        return value != null &&
-                                                                                                               this.valueSpec.test(Collections.singletonList(
-                                                                                                                       value));
-                                                                                                    },
-                                                                                                    s -> {
-                                                                                                        StringHolder holder = new StringHolder(s);
-                                                                                                        this.values.add(holder);
-                                                                                                        this.list.addEntry(new StringEntry(this.list,
-                                                                                                                                           holder));
-                                                                                                    }))));
-        this.addRenderableWidget(new Button(this.width / 2 + 50,
-                                            this.height - 29,
-                                            90,
-                                            20,
-                                            CommonComponents.GUI_CANCEL,
+        this.addRenderableWidget(new Button(this.width / 2 - 45, this.height - 29, 90, 20, this.textAddValue, button -> this.minecraft.setScreen(
+                new ScreenEditString(ScreenEditList.this, EvolutionTexts.GUI_GENERAL_EDIT, "", s -> {
+                    Object value = this.listType.getValueParser().apply(s);
+                    return value != null && this.valueSpec.test(Collections.singletonList(value));
+                }, s -> {
+                    StringHolder holder = new StringHolder(s);
+                    this.values.add(holder);
+                    this.list.addEntry(new StringEntry(this.list, holder));
+                }))));
+        this.addRenderableWidget(new Button(this.width / 2 + 50, this.height - 29, 90, 20, CommonComponents.GUI_CANCEL,
                                             button -> this.minecraft.setScreen(this.parent)));
     }
 
@@ -239,34 +222,19 @@ public class ScreenEditList extends Screen {
         public StringEntry(ObjectList list, StringHolder holder) {
             this.list = list;
             this.holder = holder;
-            this.editButton = new Button(0,
-                                         0,
-                                         42,
-                                         20,
-                                         EvolutionTexts.GUI_GENERAL_EDIT,
-                                         onPress -> ScreenEditList.this.minecraft.setScreen(new ScreenEditString(ScreenEditList.this,
-                                                                                                                 EvolutionTexts.GUI_GENERAL_EDIT,
-                                                                                                                 this.holder.getValue(),
-                                                                                                                 s -> {
-                                                                                                                     Object value =
-                                                                                                                             ScreenEditList.this.listType.getValueParser()
-                                                                                                                                                                .apply(s);
-                                                                                                                     return value != null &&
-                                                                                                                            ScreenEditList.this.valueSpec.test(
-                                                                                                                                    Collections.singletonList(
-                                                                                                                                            value));
-                                                                                                                 },
-                                                                                                                 this.holder::setValue)));
+            this.editButton = new Button(0, 0, 42, 20, EvolutionTexts.GUI_GENERAL_EDIT, onPress -> ScreenEditList.this.minecraft.setScreen(
+                    new ScreenEditString(ScreenEditList.this, EvolutionTexts.GUI_GENERAL_EDIT, this.holder.getValue(), s -> {
+                        Object value = ScreenEditList.this.listType.getValueParser().apply(s);
+                        return value != null && ScreenEditList.this.valueSpec.test(Collections.singletonList(value));
+                    }, this.holder::setValue)));
             Button.OnTooltip tooltip = (button, matrixStack, mouseX, mouseY) -> {
                 if (button.active && button.isHoveredOrFocused()) {
-                    ScreenEditList.this.renderTooltip(matrixStack,
-                                                      ScreenEditList.this.minecraft.font.split(EvolutionTexts.GUI_GENERAL_REMOVE,
-                                                                                               Math.max(ScreenEditList.this.width / 2 - 43, 170)),
-                                                      mouseX,
-                                                      mouseY);
+                    ScreenEditList.this.renderTooltip(matrixStack, ScreenEditList.this.minecraft.font.split(EvolutionTexts.GUI_GENERAL_REMOVE,
+                                                                                                            Math.max(ScreenEditList.this.width / 2 -
+                                                                                                                     43, 170)), mouseX, mouseY);
                 }
             };
-            this.deleteButton = new ButtonIcon(0, 0, 11, 0, onPress -> {
+            this.deleteButton = new ButtonIcon(0, 0, 12, EvolutionResources.ICON_12_12, onPress -> {
                 ScreenEditList.this.values.remove(this.holder);
                 this.list.removeEntry(this);
             }, tooltip);
