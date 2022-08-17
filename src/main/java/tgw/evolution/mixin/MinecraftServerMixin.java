@@ -141,9 +141,8 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     }
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to handle multiplayer pause.
+     * @author TheGreatWolf
+     * @reason Overwrite to handle multiplayer pause.
      */
     @Overwrite
     public void tickChildren(BooleanSupplier booleanSupplier) {
@@ -198,9 +197,8 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     }
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to handle multiplayer pausing.
+     * @author TheGreatWolf
+     * @reason Overwrite to handle multiplayer pausing.
      */
     @Overwrite
     public void tickServer(BooleanSupplier booleanSupplier) {

@@ -39,7 +39,7 @@ public abstract class FontMixin implements IFontPatch {
                                         boolean pDrawShadow);
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid unnecessary allocations
      */
@@ -73,7 +73,7 @@ public abstract class FontMixin implements IFontPatch {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid unnecessary allocations
      */

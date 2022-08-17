@@ -519,7 +519,7 @@ public class ClientRenderer {
     public void renderFoodAndThirst(PoseStack matrices, int width, int height) {
         this.mc.getProfiler().push("food");
         //Preparations
-        LivingEntity player = (LivingEntity) this.mc.getCameraEntity();
+        LivingEntity player = this.mc.player;
         ForgeIngameGui gui = (ForgeIngameGui) this.mc.gui;
         int top = height - gui.right_height;
         gui.right_height += 10;

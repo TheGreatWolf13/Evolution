@@ -1,15 +1,14 @@
 package tgw.evolution.util.hitbox;
 
-import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
-import it.unimi.dsi.fastutil.objects.ReferenceList;
-import tgw.evolution.util.CollectionUtil;
+import tgw.evolution.util.collection.RArrayList;
+import tgw.evolution.util.collection.RList;
 
 import java.util.Collections;
 
 public class HitboxGroup implements IHitbox {
 
-    private final ReferenceList<Hitbox> boxes = new ReferenceArrayList<>();
-    private final ReferenceList<StartingRotation> rotations = new ReferenceArrayList<>();
+    private final RList<Hitbox> boxes = new RArrayList<>();
+    private final RList<StartingRotation> rotations = new RArrayList<>();
 
     public HitboxGroup(Hitbox... boxes) {
         Collections.addAll(this.boxes, boxes);
@@ -40,8 +39,8 @@ public class HitboxGroup implements IHitbox {
     }
 
     public void finish() {
-        CollectionUtil.trim(this.boxes);
-        CollectionUtil.trim(this.rotations);
+        this.boxes.trimCollection();
+        this.rotations.trimCollection();
     }
 
     @Override

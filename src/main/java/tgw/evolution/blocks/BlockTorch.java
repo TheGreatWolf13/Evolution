@@ -34,7 +34,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.blocks.tileentities.ILoggable;
 import tgw.evolution.blocks.tileentities.TETorch;
-import tgw.evolution.blocks.tileentities.TEUtils;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.config.EvolutionConfig;
@@ -100,7 +99,14 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
     @Override
     public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
         if (state.getValue(LIT)) {
-            return NonNullList.of(ItemStack.EMPTY, TEUtils.returnIfInstance(level.getBlockEntity(pos), ItemTorch::getDroppedStack, ItemStack.EMPTY));
+            ItemStack stack;
+            if (level.getBlockEntity(pos) instanceof TETorch te) {
+                stack = ItemTorch.getDroppedStack(te);
+            }
+            else {
+                stack = ItemStack.EMPTY;
+            }
+            return NonNullList.of(ItemStack.EMPTY, stack);
         }
         return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.torch_unlit.get()));
     }
@@ -193,7 +199,9 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
         if (!state.getValue(LIT)) {
             return;
         }
-        TEUtils.invokeIfInstance(level.getBlockEntity(pos), TETorch::setPlaceTime);
+        if (level.getBlockEntity(pos) instanceof TETorch te) {
+            te.setPlaceTime();
+        }
     }
 
     @Override
@@ -222,11 +230,15 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
         BlockState stateToPlace = state.setValue(FLUID_LOGGED, hasFluid).setValue(LIT, false);
         level.setBlock(pos, stateToPlace, BlockFlags.NOTIFY_UPDATE_AND_RERENDER);
         if (hasFluid) {
-            TEUtils.<ILoggable>invokeIfInstance(level.getBlockEntity(pos), t -> t.setAmountAndFluid(amount, fluid), true);
+            if (level.getBlockEntity(pos) instanceof ILoggable te) {
+                te.setAmountAndFluid(amount, fluid);
+            }
             BlockUtils.scheduleFluidTick(level, pos);
         }
         else {
-            TEUtils.<ILoggable>invokeIfInstance(level.getBlockEntity(pos), t -> t.setAmountAndFluid(0, null));
+            if (level.getBlockEntity(pos) instanceof ILoggable te) {
+                te.setAmountAndFluid(0, null);
+            }
         }
     }
 
@@ -267,7 +279,9 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
                 level.setBlockAndUpdate(pos, state.setValue(LIT, true));
                 level.playSound(player, pos, SoundEvents.FIRE_AMBIENT, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.7F + 0.3F);
                 if (!level.isClientSide) {
-                    TEUtils.invokeIfInstance(level.getBlockEntity(pos), TETorch::setPlaceTime);
+                    if (level.getBlockEntity(pos) instanceof TETorch te) {
+                        te.setPlaceTime();
+                    }
                 }
                 player.awardStat(Stats.ITEM_CRAFTED.get(EvolutionItems.torch.get()));
                 return InteractionResult.SUCCESS;

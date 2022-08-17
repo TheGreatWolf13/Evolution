@@ -3,6 +3,7 @@ package tgw.evolution.mixin;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,20 +20,23 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStats;
+import tgw.evolution.patches.IServerPlayerPatch;
 import tgw.evolution.util.damage.DamageSourceEv;
 
 import java.util.function.Consumer;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(ServerPlayer.class)
-public abstract class ServerPlayerMixin extends Player {
+public abstract class ServerPlayerMixin extends Player implements IServerPlayerPatch {
 
     @Shadow
     @Final
     public MinecraftServer server;
-
+    private boolean cameraUnload;
+    private SectionPos lastCameraSectionPos;
     @Shadow
     private int spawnInvulnerableTime;
 
@@ -40,10 +44,19 @@ public abstract class ServerPlayerMixin extends Player {
         super(level, pos, spawnAngle, profile);
     }
 
+    @Override
+    public boolean getCameraUnload() {
+        return this.cameraUnload;
+    }
+
+    @Override
+    public SectionPos getLastCameraSectionPos() {
+        return this.lastCameraSectionPos;
+    }
+
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to overcome respawnInvulnerabilityTime
+     * @author TheGreatWolf
+     * @reason Overwrite to overcome respawnInvulnerabilityTime
      */
     @Overwrite
     @Override
@@ -89,8 +102,8 @@ public abstract class ServerPlayerMixin extends Player {
 
     @ModifyArg(method = "drop(Lnet/minecraft/world/item/ItemStack;ZZ)Lnet/minecraft/world/entity/item/ItemEntity;", at = @At(value = "INVOKE",
             target =
-            "Lnet/minecraft/server/level/ServerPlayer;awardStat" +
-            "(Lnet/minecraft/resources/ResourceLocation;)V", ordinal = 0), index = 0)
+                    "Lnet/minecraft/server/level/ServerPlayer;awardStat" +
+                    "(Lnet/minecraft/resources/ResourceLocation;)V", ordinal = 0), index = 0)
     private ResourceLocation modifyDrop(ResourceLocation resLoc) {
         return EvolutionStats.ITEMS_DROPPED;
     }
@@ -103,5 +116,37 @@ public abstract class ServerPlayerMixin extends Player {
             this.awardStat(EvolutionStats.TIMES_SLEPT);
             CriteriaTriggers.SLEPT_IN_BED.trigger((ServerPlayer) (Object) this);
         };
+    }
+
+    @Redirect(method = "setCamera", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;teleportTo(DDD)V"))
+    private void proxySetCamera(ServerPlayer player, double x, double y, double z) {
+        if (player.isSpectator()) {
+            player.teleportTo(x, y, z);
+        }
+    }
+
+    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;absMoveTo(DDDFF)V"))
+    private void proxyTick0(ServerPlayer player, double x, double y, double z, float yaw, float pitch) {
+        if (player.isSpectator()) {
+            player.absMoveTo(x, y, z, yaw, pitch);
+        }
+    }
+
+    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;wantsToStopRiding()Z"))
+    private boolean proxyTick1(ServerPlayer player) {
+        if (player.isSpectator()) {
+            return this.wantsToStopRiding();
+        }
+        return false;
+    }
+
+    @Override
+    public void setCameraUnload(boolean shouldUnload) {
+        this.cameraUnload = shouldUnload;
+    }
+
+    @Override
+    public void setLastCameraSectionPos(SectionPos pos) {
+        this.lastCameraSectionPos = pos;
     }
 }

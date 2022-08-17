@@ -17,7 +17,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
-import tgw.evolution.blocks.ISittable;
+import org.jetbrains.annotations.Range;
+import tgw.evolution.blocks.ISittableBlock;
 import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionEntities;
@@ -25,34 +26,37 @@ import tgw.evolution.util.hitbox.HitboxEntity;
 
 import javax.annotation.Nullable;
 
-public class EntitySit extends Entity implements IEvolutionEntity<EntitySit> {
+public class EntitySittable extends Entity implements IEvolutionEntity<EntitySittable>, ISittableEntity {
 
+    @Range(from = 0, to = 100)
+    private byte comfort;
     private BlockPos source;
 
-    public EntitySit(EntityType<?> entityType, Level level) {
+    public EntitySittable(EntityType<?> entityType, Level level) {
         super(entityType, level);
         this.noPhysics = true;
         this.blocksBuilding = true;
     }
 
-    public EntitySit(Level world, BlockPos pos, double yOffset) {
+    public EntitySittable(Level world, BlockPos pos, double yOffset, @Range(from = 0, to = 100) int comfort) {
         this(EvolutionEntities.SIT.get(), world);
         this.setPos(pos.getX() + 0.5, pos.getY() + yOffset, pos.getZ() + 0.5);
         this.source = pos;
         this.xo = pos.getX() + 0.5;
         this.yo = pos.getY() + yOffset;
         this.zo = pos.getZ() + 0.5;
+        this.comfort = (byte) comfort;
     }
 
-    public EntitySit(PlayMessages.SpawnEntity spawnEntity, Level level) {
+    public EntitySittable(PlayMessages.SpawnEntity spawnEntity, Level level) {
         this(EvolutionEntities.SIT.get(), level);
     }
 
     public static boolean create(Level level, BlockPos pos, Player player) {
         Block block = level.getBlockState(pos).getBlock();
-        if (block instanceof ISittable sittable) {
+        if (block instanceof ISittableBlock sittable) {
             if (!level.isClientSide) {
-                EntitySit seat = new EntitySit(level, pos, sittable.getYOffset());
+                EntitySittable seat = new EntitySittable(level, pos, sittable.getYOffset(), sittable.getComfort());
                 level.addFreshEntity(seat);
                 player.startRiding(seat, false);
             }
@@ -64,6 +68,7 @@ public class EntitySit extends Entity implements IEvolutionEntity<EntitySit> {
     @Override
     protected void addAdditionalSaveData(CompoundTag compound) {
         compound.put("Source", NbtUtils.writeBlockPos(this.source));
+        compound.putByte("Comfort", this.comfort);
     }
 
     //TODO
@@ -79,6 +84,11 @@ public class EntitySit extends Entity implements IEvolutionEntity<EntitySit> {
     @Override
     public Packet<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    @Override
+    public @Range(from = 0, to = 100) int getComfort() {
+        return this.comfort;
     }
 
     @Override
@@ -110,7 +120,7 @@ public class EntitySit extends Entity implements IEvolutionEntity<EntitySit> {
 
     @Nullable
     @Override
-    public HitboxEntity<EntitySit> getHitbox() {
+    public HitboxEntity<EntitySittable> getHitbox() {
         return null;
     }
 
@@ -127,6 +137,7 @@ public class EntitySit extends Entity implements IEvolutionEntity<EntitySit> {
     @Override
     protected void readAdditionalSaveData(CompoundTag compound) {
         this.source = NbtUtils.readBlockPos(compound.getCompound("Source"));
+        this.comfort = compound.getByte("Comfort");
     }
 
     @Override
@@ -136,7 +147,7 @@ public class EntitySit extends Entity implements IEvolutionEntity<EntitySit> {
             this.source = this.blockPosition();
         }
         if (!this.level.isClientSide) {
-            if (!(this.level.getBlockState(this.source).getBlock() instanceof ISittable)) {
+            if (!(this.level.getBlockState(this.source).getBlock() instanceof ISittableBlock)) {
                 this.discard();
             }
             if (this.getPassengers().isEmpty()) {

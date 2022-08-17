@@ -2,7 +2,6 @@ package tgw.evolution.capabilities.temperature;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
@@ -275,7 +274,7 @@ public class TemperatureStats implements ITemperature {
             this.ticks = 0;
         }
         if (this.needsUpdate) {
-            EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCTemperatureData(this));
+            EvolutionNetwork.send(player, new PacketSCTemperatureData(this));
             this.needsUpdate = false;
         }
     }

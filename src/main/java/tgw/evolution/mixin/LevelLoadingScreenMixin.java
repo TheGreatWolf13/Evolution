@@ -43,7 +43,7 @@ public abstract class LevelLoadingScreenMixin extends Screen {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      */
     @Overwrite
     public static void renderChunks(PoseStack matrices, StoringChunkProgressListener tracker, int mapX, int mapY, int mapScale, int mapPadding) {

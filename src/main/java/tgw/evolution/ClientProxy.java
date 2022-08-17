@@ -34,14 +34,13 @@ import tgw.evolution.init.EvolutionRenderer;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.stats.EvolutionStatsCounter;
-import tgw.evolution.util.CollectionUtil;
 import tgw.evolution.util.constants.SkinType;
 
 import java.util.Map;
 
 public class ClientProxy implements IProxy {
 
-    public static final KeyMapping TOGGLE_PRONE = new KeyMapping("key.prone.toggle", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM,
+    public static final KeyMapping TOGGLE_CRAWL = new KeyMapping("key.crawl.toggle", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM,
                                                                  GLFW.GLFW_KEY_X, "key.categories.movement");
     public static final KeyMapping BUILDING_ASSIST = new KeyMapping("key.build_assist", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM,
                                                                     GLFW.GLFW_KEY_BACKSLASH, "key.categories.creative");
@@ -79,7 +78,7 @@ public class ClientProxy implements IProxy {
     }
 
     private static void registerKeyBinds() {
-        ClientRegistry.registerKeyBinding(TOGGLE_PRONE);
+        ClientRegistry.registerKeyBinding(TOGGLE_CRAWL);
         ClientRegistry.registerKeyBinding(BUILDING_ASSIST);
     }
 
@@ -167,8 +166,7 @@ public class ClientProxy implements IProxy {
             ForgeModelBakery.addSpecialModel(model);
         }
         //Clear and trim since we are not using it anymore
-        EvolutionResources.MODULAR_MODELS.clear();
-        CollectionUtil.trim(EvolutionResources.MODULAR_MODELS);
+        EvolutionResources.MODULAR_MODELS.reset();
     }
 
     @Override

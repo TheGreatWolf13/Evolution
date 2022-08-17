@@ -22,7 +22,7 @@ public abstract class Vector4fMixin {
     public abstract void set(float pX, float pY, float pZ, float pW);
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations
      */

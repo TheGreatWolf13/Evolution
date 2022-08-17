@@ -49,7 +49,7 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Overwrite to change overlay to render hurt effect.
      */
@@ -78,7 +78,7 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
     protected abstract void setModelProperties(AbstractClientPlayer p_117819_);
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Overwrite to improve first person camera.
      */

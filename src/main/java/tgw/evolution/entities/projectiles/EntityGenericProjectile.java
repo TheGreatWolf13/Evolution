@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
@@ -38,7 +39,6 @@ import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.util.PlayerHelper;
-import tgw.evolution.util.constants.NBTTypes;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.math.MathHelper;
@@ -303,7 +303,7 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
     @Override
     public void readAdditionalSaveData(CompoundTag compound) {
         this.ticksInGround = compound.getShort("TicksInGround");
-        if (compound.contains("BlockStateIn", NBTTypes.COMPOUND_NBT)) {
+        if (compound.contains("BlockStateIn", Tag.TAG_COMPOUND)) {
             this.inBlockState = NbtUtils.readBlockState(compound.getCompound("BlockStateIn"));
         }
         this.arrowShake = compound.getByte("Shake");

@@ -34,7 +34,7 @@ public abstract class VertexBufferMixin {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations
      */

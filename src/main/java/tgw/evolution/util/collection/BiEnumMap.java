@@ -1,4 +1,4 @@
-package tgw.evolution.util;
+package tgw.evolution.util.collection;
 
 import javax.annotation.Nullable;
 import java.util.EnumMap;

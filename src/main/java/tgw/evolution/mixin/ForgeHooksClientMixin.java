@@ -23,7 +23,7 @@ public abstract class ForgeHooksClientMixin {
     private static Matrix3f flipXNormal;
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations.
      */

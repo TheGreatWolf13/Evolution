@@ -17,7 +17,6 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraftforge.common.extensions.IForgeBlockState;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCHandAnimation;
 import tgw.evolution.util.constants.BlockFlags;
@@ -97,7 +96,7 @@ public abstract class ItemGenericPlaceable extends ItemEv {
         this.sucessPlaceLogic(context);
         SoundType soundtype = stateInPos.getSoundType(level, pos, context.getPlayer());
         player.swing(context.getHand());
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCHandAnimation(context.getHand()));
+        EvolutionNetwork.send(player, new PacketSCHandAnimation(context.getHand()));
         level.playSound(null,
                         pos,
                         getPlaceSound(stateInPos, level, pos, context.getPlayer()),

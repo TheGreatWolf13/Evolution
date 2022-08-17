@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.*;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -24,7 +25,6 @@ import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.items.modular.part.ItemPart;
 import tgw.evolution.util.constants.HarvestLevel;
-import tgw.evolution.util.constants.NBTTypes;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -154,10 +154,10 @@ public final class ItemEvents {
         //Effects
         addEffectsTooltips(tooltip, stack);
         if (stack.hasTag()) {
-            if (stack.getTag().contains("display", NBTTypes.COMPOUND_NBT)) {
+            if (stack.getTag().contains("display", Tag.TAG_COMPOUND)) {
                 CompoundTag nbt = stack.getTag().getCompound("display");
                 //Color
-                if (nbt.contains("color", NBTTypes.INT)) {
+                if (nbt.contains("color", Tag.TAG_INT)) {
                     if (isAdvanced) {
                         add(tooltip,
                             new TranslatableComponent("item.color", String.format("#%06X", nbt.getInt("color"))).withStyle(ChatFormatting.GRAY));
@@ -167,8 +167,8 @@ public final class ItemEvents {
                     }
                 }
                 //Lore
-                if (nbt.getTagType("Lore") == NBTTypes.LIST_NBT) {
-                    ListTag lore = nbt.getList("Lore", NBTTypes.STRING);
+                if (nbt.getTagType("Lore") == Tag.TAG_LIST) {
+                    ListTag lore = nbt.getList("Lore", Tag.TAG_STRING);
                     for (int j = 0; j < lore.size(); j++) {
                         String s = lore.getString(j);
                         try {

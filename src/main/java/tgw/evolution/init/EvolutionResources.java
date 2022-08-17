@@ -1,13 +1,13 @@
 package tgw.evolution.init;
 
-import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
-import it.unimi.dsi.fastutil.objects.ReferenceList;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.InventoryMenu;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.modular.part.IPartType;
-import tgw.evolution.util.BiEnumMap;
+import tgw.evolution.util.collection.BiEnumMap;
+import tgw.evolution.util.collection.RArrayList;
+import tgw.evolution.util.collection.RList;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.constants.WoodVariant;
 
@@ -81,7 +81,7 @@ public final class EvolutionResources {
                                                             Evolution.getResource("item/slot_tactical")};
     //Models
     //      Modular
-    public static final ReferenceList<ModelResourceLocation> MODULAR_MODELS = new ReferenceArrayList<>();
+    public static final RList<ModelResourceLocation> MODULAR_MODELS = new RArrayList<>();
     public static final ModelResourceLocation TOOL_SWEEP = new ModelResourceLocation(Evolution.getResource("modular_tool_sweep"), "inventory");
     public static final ModelResourceLocation TOOL_THROWING = new ModelResourceLocation(Evolution.getResource("modular_tool_throwing"), "inventory");
     //          Blade

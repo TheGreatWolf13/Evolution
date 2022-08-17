@@ -22,7 +22,7 @@ public abstract class RegistryObjectMixin<T extends IForgeRegistryEntry<? super 
     private T value;
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Prevent lambda and string allocation when the value is not {@code null}.
      */

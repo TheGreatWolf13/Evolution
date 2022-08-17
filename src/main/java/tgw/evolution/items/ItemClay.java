@@ -8,7 +8,6 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionNetwork;
@@ -45,7 +44,6 @@ public class ItemClay extends ItemGenericPlaceable {
 
     @Override
     public void sucessPlaceLogic(BlockPlaceContext context) {
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) context.getPlayer()),
-                                       new PacketSCOpenMoldingGui(context.getClickedPos()));
+        EvolutionNetwork.send((ServerPlayer) context.getPlayer(), new PacketSCOpenMoldingGui(context.getClickedPos()));
     }
 }

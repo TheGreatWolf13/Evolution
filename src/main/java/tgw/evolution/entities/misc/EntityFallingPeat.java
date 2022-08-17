@@ -2,6 +2,7 @@ package tgw.evolution.entities.misc;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.world.entity.*;
@@ -21,7 +22,6 @@ import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionEntities;
-import tgw.evolution.util.constants.NBTTypes;
 import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.hitbox.HitboxEntity;
 
@@ -125,7 +125,7 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         this.fallTime = tag.getInt("Time");
-        if (tag.contains("Layers", NBTTypes.BYTE)) {
+        if (tag.contains("Layers", Tag.TAG_BYTE)) {
             this.layers = tag.getByte("Layers");
         }
     }

@@ -100,7 +100,7 @@ public abstract class ItemRendererMixin {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Overwrite to implement a new method to calculate item colors.
      */

@@ -42,7 +42,7 @@ public abstract class LevelChunkMixin extends ChunkAccess {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Overwrite to implement new fluid system.
      */

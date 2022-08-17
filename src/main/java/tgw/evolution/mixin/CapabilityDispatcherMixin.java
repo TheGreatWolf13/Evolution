@@ -23,7 +23,7 @@ public abstract class CapabilityDispatcherMixin implements ICapabilityDispatcher
     private INBTSerializable<Tag>[] writers;
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations when comparing the CompoundTags
      */

@@ -14,6 +14,10 @@ public final class MixinTempHelper {
     private MixinTempHelper() {
     }
 
+    public static boolean condition() {
+        return true;
+    }
+
     private static ModelPart getArm(HumanoidModel model, HumanoidArm side) {
         return side == HumanoidArm.LEFT ? model.leftArm : model.rightArm;
     }

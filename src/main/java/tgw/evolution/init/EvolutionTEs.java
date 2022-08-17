@@ -61,7 +61,7 @@ public final class EvolutionTEs {
     public static Block[] getMatchingBlocks(Class<? extends Block> clazz, Block... otherBlocks) {
         List<Block> blockList = ForgeRegistries.BLOCKS.getValues().stream().filter(block -> block.getClass() == clazz).collect(Collectors.toList());
         blockList.addAll(Arrays.asList(otherBlocks));
-        return blockList.toArray(new Block[0]);
+        return blockList.toArray(new Block[blockList.size()]);
     }
 
     private static Block[] getMetals() {

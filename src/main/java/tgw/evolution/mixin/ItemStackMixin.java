@@ -42,7 +42,7 @@ public abstract class ItemStackMixin extends CapabilityProvider<ItemStack> imple
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Use cached state
      */
@@ -56,7 +56,7 @@ public abstract class ItemStackMixin extends CapabilityProvider<ItemStack> imple
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Use cached state
      */

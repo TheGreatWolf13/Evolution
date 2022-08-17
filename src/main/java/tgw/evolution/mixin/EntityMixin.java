@@ -53,8 +53,8 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     protected int fireDamageImmunity;
     protected boolean hasCollidedOnX;
     protected boolean hasCollidedOnZ;
-    private float lastTickXRot;
-    private float lastTickYRot;
+    //    private float lastTickXRot;
+//    private float lastTickYRot;
     @Shadow
     @Nullable
     private Entity vehicle;
@@ -148,8 +148,8 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Inject(method = "baseTick", at = @At("HEAD"))
     private void onBaseTickPre(CallbackInfo ci) {
-        this.lastTickXRot = this.getXRot();
-        this.lastTickYRot = this.getYRot();
+//        this.lastTickXRot = this.getXRot();
+//        this.lastTickYRot = this.getYRot();
         if (this.fireDamageImmunity > 0) {
             this.fireDamageImmunity--;
         }
@@ -297,9 +297,8 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     }
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to handle camera pos.
+     * @author TheGreatWolf
+     * @reason Overwrite to handle camera pos.
      */
     @Overwrite
     public HitResult pick(double distance, float partialTicks, boolean checkFluids) {

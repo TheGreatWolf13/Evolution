@@ -18,7 +18,7 @@ import tgw.evolution.entities.EntityCow;
 import tgw.evolution.entities.misc.EntityFallingPeat;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
-import tgw.evolution.entities.misc.EntitySit;
+import tgw.evolution.entities.misc.EntitySittable;
 import tgw.evolution.entities.projectiles.EntityHook;
 import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.entities.projectiles.EntityTorch;
@@ -42,55 +42,51 @@ public final class EvolutionEntities {
     public static final RegistryObject<EntityType<EntityHook>> HOOK;
     public static final RegistryObject<EntityType<EntityPlayerCorpse>> PLAYER_CORPSE;
     public static final RegistryObject<EntityType<EntitySpear>> SPEAR;
-    public static final RegistryObject<EntityType<EntitySit>> SIT;
+    public static final RegistryObject<EntityType<EntitySittable>> SIT;
     public static final RegistryObject<EntityType<EntityTorch>> TORCH;
 
     static {
         COW = register("cow", () -> EntityType.Builder.of(EntityCow::new, CREATURE).sized(0.9f, 1.4f));
         SPAWN_EGG_COW = ITEMS.register("spawn_egg_cow", () -> genEgg(COW));
-        FALLING_PEAT = register("falling_peat",
-                                () -> EntityType.Builder.<EntityFallingPeat>of(EntityFallingPeat::new, MISC)
-                                                        .sized(1.0F, 1.0F)
-                                                        .setTrackingRange(10)
+        FALLING_PEAT = register("falling_peat", () -> EntityType.Builder.<EntityFallingPeat>of(EntityFallingPeat::new, MISC)
+                                                                        .sized(1.0F, 1.0F)
+                                                                        .setTrackingRange(10)
+                                                                        .setUpdateInterval(20)
+                                                                        .setCustomClientFactory(EntityFallingPeat::new)
+                                                                        .setShouldReceiveVelocityUpdates(true));
+        FALLING_WEIGHT = register("falling_weight", () -> EntityType.Builder.<EntityFallingWeight>of(EntityFallingWeight::new, MISC)
+                                                                            .sized(1.0F, 1.0F)
+                                                                            .setTrackingRange(10)
+                                                                            .setUpdateInterval(20)
+                                                                            .setCustomClientFactory(EntityFallingWeight::new)
+                                                                            .setShouldReceiveVelocityUpdates(true));
+        HOOK = register("hook", () -> EntityType.Builder.<EntityHook>of(EntityHook::new, MISC)
+                                                        .sized(0.5f, 0.5f)
+                                                        .setTrackingRange(5)
                                                         .setUpdateInterval(20)
-                                                        .setCustomClientFactory(EntityFallingPeat::new)
+                                                        .setCustomClientFactory(EntityHook::new)
                                                         .setShouldReceiveVelocityUpdates(true));
-        FALLING_WEIGHT = register("falling_weight",
-                                  () -> EntityType.Builder.<EntityFallingWeight>of(EntityFallingWeight::new, MISC)
-                                                          .sized(1.0F, 1.0F)
-                                                          .setTrackingRange(10)
+        PLAYER_CORPSE = register("player_corpse", () -> EntityType.Builder.<EntityPlayerCorpse>of(EntityPlayerCorpse::new, MISC)
+                                                                          .sized(0.9F, 0.4F)
+                                                                          .setTrackingRange(10)
+                                                                          .setUpdateInterval(20)
+                                                                          .setCustomClientFactory(EntityPlayerCorpse::new)
+                                                                          .setShouldReceiveVelocityUpdates(true));
+        SPEAR = register("spear", () -> EntityType.Builder.<EntitySpear>of(EntitySpear::new, MISC)
+                                                          .sized(0.1f, 0.1f)
+                                                          .setTrackingRange(5)
                                                           .setUpdateInterval(20)
-                                                          .setCustomClientFactory(EntityFallingWeight::new)
+                                                          .setCustomClientFactory(EntitySpear::new)
                                                           .setShouldReceiveVelocityUpdates(true));
-        HOOK = register("hook",
-                        () -> EntityType.Builder.<EntityHook>of(EntityHook::new, MISC)
-                                                .sized(0.5f, 0.5f)
-                                                .setTrackingRange(5)
-                                                .setUpdateInterval(20)
-                                                .setCustomClientFactory(EntityHook::new)
-                                                .setShouldReceiveVelocityUpdates(true));
-        PLAYER_CORPSE = register("player_corpse",
-                                 () -> EntityType.Builder.<EntityPlayerCorpse>of(EntityPlayerCorpse::new, MISC)
-                                                         .sized(0.9F, 0.4F)
-                                                         .setTrackingRange(10)
-                                                         .setUpdateInterval(20)
-                                                         .setCustomClientFactory(EntityPlayerCorpse::new)
-                                                         .setShouldReceiveVelocityUpdates(true));
-        SPEAR = register("spear",
-                         () -> EntityType.Builder.<EntitySpear>of(EntitySpear::new, MISC)
-                                                 .sized(0.1f, 0.1f)
-                                                 .setTrackingRange(5)
-                                                 .setUpdateInterval(20)
-                                                 .setCustomClientFactory(EntitySpear::new)
-                                                 .setShouldReceiveVelocityUpdates(true));
-        SIT = register("sit", () -> EntityType.Builder.<EntitySit>of(EntitySit::new, MISC).sized(0.0f, 0.0f).setCustomClientFactory(EntitySit::new));
-        TORCH = register("torch",
-                         () -> EntityType.Builder.<EntityTorch>of(EntityTorch::new, MISC)
-                                                 .sized(0.2f, 0.2f)
-                                                 .setTrackingRange(5)
-                                                 .setUpdateInterval(20)
-                                                 .setCustomClientFactory(EntityTorch::new)
-                                                 .setShouldReceiveVelocityUpdates(true));
+        SIT = register("sit", () -> EntityType.Builder.<EntitySittable>of(EntitySittable::new, MISC)
+                                                      .sized(0.0f, 0.0f)
+                                                      .setCustomClientFactory(EntitySittable::new));
+        TORCH = register("torch", () -> EntityType.Builder.<EntityTorch>of(EntityTorch::new, MISC)
+                                                          .sized(0.2f, 0.2f)
+                                                          .setTrackingRange(5)
+                                                          .setUpdateInterval(20)
+                                                          .setCustomClientFactory(EntityTorch::new)
+                                                          .setShouldReceiveVelocityUpdates(true));
     }
 
     private EvolutionEntities() {

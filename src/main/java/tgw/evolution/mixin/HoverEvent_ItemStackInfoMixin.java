@@ -46,7 +46,7 @@ public abstract class HoverEvent_ItemStackInfoMixin implements IItemStackInfoPat
     private CompoundTag tag;
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Handle new field CapNBT
      */
@@ -84,7 +84,7 @@ public abstract class HoverEvent_ItemStackInfoMixin implements IItemStackInfoPat
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Handle new field CapNBT
      */
@@ -120,7 +120,7 @@ public abstract class HoverEvent_ItemStackInfoMixin implements IItemStackInfoPat
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Handle new field CapNBT
      */
@@ -142,7 +142,7 @@ public abstract class HoverEvent_ItemStackInfoMixin implements IItemStackInfoPat
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Handle new field CapNBT
      */
@@ -162,7 +162,7 @@ public abstract class HoverEvent_ItemStackInfoMixin implements IItemStackInfoPat
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Handle new field CapNBT
      */

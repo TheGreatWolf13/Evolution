@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import org.apache.logging.log4j.Logger;
@@ -12,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.patches.IEffectInstancePatch;
-import tgw.evolution.util.constants.NBTTypes;
 
 import javax.annotation.Nullable;
 
@@ -41,7 +41,7 @@ public abstract class MobEffectInstanceMixin implements IEffectInstancePatch {
     private boolean visible;
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Overwrite to handle infinite effects.
      */
@@ -51,15 +51,15 @@ public abstract class MobEffectInstanceMixin implements IEffectInstancePatch {
         int duration = nbt.getInt("Duration");
         boolean ambient = nbt.getBoolean("Ambient");
         boolean showParticles = true;
-        if (nbt.contains("ShowParticles", NBTTypes.BYTE)) {
+        if (nbt.contains("ShowParticles", Tag.TAG_BYTE)) {
             showParticles = nbt.getBoolean("ShowParticles");
         }
         boolean showIcon = showParticles;
-        if (nbt.contains("ShowIcon", NBTTypes.BYTE)) {
+        if (nbt.contains("ShowIcon", Tag.TAG_BYTE)) {
             showIcon = nbt.getBoolean("ShowIcon");
         }
         MobEffectInstance hiddenEffects = null;
-        if (nbt.contains("HiddenEffect", NBTTypes.COMPOUND_NBT)) {
+        if (nbt.contains("HiddenEffect", Tag.TAG_COMPOUND)) {
             hiddenEffects = loadSpecifiedEffect(effect, nbt.getCompound("HiddenEffect"));
         }
         MobEffectInstance instance = new MobEffectInstance(effect, duration, Math.max(amplifier, 0), ambient, showParticles, showIcon, hiddenEffects);
@@ -77,7 +77,7 @@ public abstract class MobEffectInstanceMixin implements IEffectInstancePatch {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Overwrite to handle infinite effects.
      */
@@ -112,7 +112,7 @@ public abstract class MobEffectInstanceMixin implements IEffectInstancePatch {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Overwrite to handle infinite effects.
      */
@@ -157,7 +157,7 @@ public abstract class MobEffectInstanceMixin implements IEffectInstancePatch {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Overwrite to handle infinite effects.
      */
@@ -179,7 +179,7 @@ public abstract class MobEffectInstanceMixin implements IEffectInstancePatch {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Overwrite to handle infinite effects.
      */

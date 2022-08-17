@@ -19,7 +19,6 @@ import net.minecraft.stats.ServerStatsCounter;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.storage.LevelData;
-import net.minecraftforge.network.PacketDistributor;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -116,8 +115,7 @@ public abstract class PlayerListMixin {
                                                                              "(Lnet/minecraft/server/level/ServerPlayer;)V", ordinal = 0))
     private void placeNewPlayerProxy1(CustomBossEvents customServerBossInfoManager, ServerPlayer player) {
         customServerBossInfoManager.onPlayerConnect(player);
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCChangeTickrate(TickrateChanger.getCurrentTickrate()));
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player),
-                                       new PacketSCMultiplayerPause(((IMinecraftServerPatch) player.getServer()).isMultiplayerPaused()));
+        EvolutionNetwork.send(player, new PacketSCChangeTickrate(TickrateChanger.getCurrentTickrate()));
+        EvolutionNetwork.send(player, new PacketSCMultiplayerPause(((IMinecraftServerPatch) player.getServer()).isMultiplayerPaused()));
     }
 }

@@ -6,7 +6,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCToast;
 import tgw.evolution.util.toast.Toasts;
@@ -38,7 +37,7 @@ public class ToastStats implements IToastData {
         if (id != -1) {
             if (!this.unlocked.contains(id)) {
                 this.unlocked.add(id);
-                EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCToast(id));
+                EvolutionNetwork.send(player, new PacketSCToast(id));
             }
         }
     }

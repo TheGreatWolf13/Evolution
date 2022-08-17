@@ -116,7 +116,7 @@ public abstract class ModelBlockRendererMixin {
 
     /**
      * @reason Avoid allocations
-     * @author MGSchultz
+     * @author TheGreatWolf
      */
     @Overwrite
     public void renderModel(PoseStack.Pose entry,
@@ -173,7 +173,7 @@ public abstract class ModelBlockRendererMixin {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Use EvAmbientOcclusionFace to avoid array allocations.
      */

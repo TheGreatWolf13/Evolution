@@ -183,7 +183,7 @@ public final class NBTHelper {
 
     public static NonNullList<ItemStack> readStackList(CompoundTag nbt) {
         NonNullList<ItemStack> list = NonNullList.withSize(nbt.getInt("Size"), ItemStack.EMPTY);
-        ListTag tagList = nbt.getList("Items", NBTTypes.COMPOUND_NBT);
+        ListTag tagList = nbt.getList("Items", Tag.TAG_COMPOUND);
         for (int i = 0; i < tagList.size(); i++) {
             CompoundTag itemTags = tagList.getCompound(i);
             int slot = itemTags.getInt("Slot");

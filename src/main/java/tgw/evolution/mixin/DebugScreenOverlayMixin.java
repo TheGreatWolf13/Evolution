@@ -105,7 +105,7 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent implements ID
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations
      */
@@ -135,7 +135,7 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent implements ID
                   Metric.format(receivedPackets, 0) +
                   " rx";
         }
-        BlockPos pos = this.minecraft.getCameraEntity().blockPosition();
+        BlockPos pos = this.minecraft.player.blockPosition();
         if (this.minecraft.showOnlyReducedInfo()) {
             this.gameInfo.add(this.getMC());
             this.gameInfo.add(this.minecraft.fpsString);
@@ -148,7 +148,7 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent implements ID
             this.gameInfo.add("Chunk-relative: " + (pos.getX() & 15) + " " + (pos.getY() & 15) + " " + (pos.getZ() & 15));
             return this.gameInfo;
         }
-        Entity entity = this.minecraft.getCameraEntity();
+        Entity entity = this.minecraft.player;
         Direction direction = entity.getDirection();
         String towards = switch (direction) {
             case NORTH -> "Towards negative Z";
@@ -179,11 +179,11 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent implements ID
         this.gameInfo.add(this.minecraft.level.dimension().location() + " FC: " + forcedChunks.size());
         this.gameInfo.add("");
         this.gameInfo.add("XYZ: " +
-                          Metric.formatForceDecimals(this.minecraft.getCameraEntity().getX(), 3) +
+                          Metric.formatForceDecimals(this.minecraft.player.getX(), 3) +
                           " / " +
-                          Metric.formatForceDecimals(this.minecraft.getCameraEntity().getY(), 5) +
+                          Metric.formatForceDecimals(this.minecraft.player.getY(), 5) +
                           " / " +
-                          Metric.formatForceDecimals(this.minecraft.getCameraEntity().getZ(), 3));
+                          Metric.formatForceDecimals(this.minecraft.player.getZ(), 3));
         this.gameInfo.add("Block: " + pos.getX() + " " + pos.getY() + " " + pos.getZ());
         this.gameInfo.add("Chunk: " +
                           (pos.getX() & 15) +

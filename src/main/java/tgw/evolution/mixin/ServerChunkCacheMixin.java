@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.util.BiArrayList;
+import tgw.evolution.util.collection.BiArrayList;
 import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nullable;
@@ -46,9 +46,8 @@ public abstract class ServerChunkCacheMixin extends ChunkSource {
     protected abstract void getFullChunk(long p_8371_, Consumer<LevelChunk> p_8372_);
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Avoid allocations
+     * @author TheGreatWolf
+     * @reason Avoid allocations
      */
     @Overwrite
     private void tickChunks() {

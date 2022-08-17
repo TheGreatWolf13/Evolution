@@ -13,6 +13,7 @@ import net.minecraft.SharedConstants;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,13 +25,11 @@ import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.PacketDistributor;
 import org.apache.commons.io.FileUtils;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.PacketSCStatistics;
-import tgw.evolution.util.constants.NBTTypes;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -188,20 +187,20 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
                 return;
             }
             CompoundTag tag = fromJson(jsonElement.getAsJsonObject());
-            if (!tag.contains("DataVersion", NBTTypes.ANY_NUMERIC)) {
+            if (!tag.contains("DataVersion", Tag.TAG_ANY_NUMERIC)) {
                 tag.putInt("DataVersion", 1_343);
             }
             tag = NbtUtils.update(dataFixer, DataFixTypes.STATS, tag, tag.getInt("DataVersion"));
-            if (tag.contains("stats", NBTTypes.COMPOUND_NBT)) {
+            if (tag.contains("stats", Tag.TAG_COMPOUND)) {
                 CompoundTag stats = tag.getCompound("stats");
                 for (String typeKey : stats.getAllKeys()) {
-                    if (stats.contains(typeKey, NBTTypes.COMPOUND_NBT)) {
+                    if (stats.contains(typeKey, Tag.TAG_COMPOUND)) {
                         //noinspection ObjectAllocationInLoop
                         StatType<?> statType = Registry.STAT_TYPE.get(new ResourceLocation(typeKey));
                         if (statType != null) {
                             CompoundTag type = stats.getCompound(typeKey);
                             for (String key : type.getAllKeys()) {
-                                if (type.contains(key, NBTTypes.ANY_NUMERIC)) {
+                                if (type.contains(key, Tag.TAG_ANY_NUMERIC)) {
                                     Stat<?> stat = getStat(statType, key);
                                     if (stat != null) {
                                         this.statsData.put(stat, type.getLong(key));
@@ -222,16 +221,16 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
                     }
                 }
             }
-            if (tag.contains("partial", NBTTypes.COMPOUND_NBT)) {
+            if (tag.contains("partial", Tag.TAG_COMPOUND)) {
                 CompoundTag partial = tag.getCompound("partial");
                 for (String typeKey : partial.getAllKeys()) {
-                    if (partial.contains(typeKey, NBTTypes.COMPOUND_NBT)) {
+                    if (partial.contains(typeKey, Tag.TAG_COMPOUND)) {
                         //noinspection ObjectAllocationInLoop
                         StatType<?> statType = Registry.STAT_TYPE.get(new ResourceLocation(typeKey));
                         if (statType != null) {
                             CompoundTag type = partial.getCompound(typeKey);
                             for (String key : type.getAllKeys()) {
-                                if (type.contains(key, NBTTypes.ANY_NUMERIC)) {
+                                if (type.contains(key, Tag.TAG_ANY_NUMERIC)) {
                                     Stat<?> stat = getStat(statType, key);
                                     if (stat != null) {
                                         this.partialData.put(stat, type.getFloat(key));
@@ -268,7 +267,7 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
                 stats.put(stat, this.getValueLong(stat));
             }
         }
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCStatistics(stats));
+        EvolutionNetwork.send(player, new PacketSCStatistics(stats));
     }
 
     @Override

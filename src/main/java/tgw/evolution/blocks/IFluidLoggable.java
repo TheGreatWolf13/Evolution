@@ -13,7 +13,6 @@ import net.minecraft.world.level.material.Fluids;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.blocks.tileentities.ILoggable;
-import tgw.evolution.blocks.tileentities.TEUtils;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.util.constants.BlockFlags;
 
@@ -133,9 +132,9 @@ public interface IFluidLoggable extends IBlockFluidContainer {
 
     default boolean remove(Level level, BlockPos pos, BlockState state) {
         Fluid fluid = this.getFluid(level, pos);
-        if (fluid instanceof FluidGeneric) {
+        if (fluid instanceof FluidGeneric fluidGeneric) {
             int amount = this.getCurrentAmount(level, pos, state);
-            ((FluidGeneric) fluid).setBlockStateInternal(level, pos, amount);
+            fluidGeneric.setBlockStateInternal(level, pos, amount);
             return true;
         }
         return false;
@@ -149,11 +148,15 @@ public interface IFluidLoggable extends IBlockFluidContainer {
         }
         level.setBlock(pos, stateToPlace, BlockFlags.NOTIFY_UPDATE_AND_RERENDER + BlockFlags.IS_MOVING);
         if (hasFluid) {
-            TEUtils.<ILoggable>invokeIfInstance(level.getBlockEntity(pos), t -> t.setAmountAndFluid(amount, fluid), true);
+            if (level.getBlockEntity(pos) instanceof ILoggable te) {
+                te.setAmountAndFluid(amount, fluid);
+            }
             BlockUtils.scheduleFluidTick(level, pos);
         }
         else {
-            TEUtils.<ILoggable>invokeIfInstance(level.getBlockEntity(pos), t -> t.setAmountAndFluid(0, null));
+            if (level.getBlockEntity(pos) instanceof ILoggable te) {
+                te.setAmountAndFluid(0, null);
+            }
         }
     }
 }

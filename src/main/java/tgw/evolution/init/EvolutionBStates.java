@@ -6,6 +6,7 @@ import tgw.evolution.blocks.tileentities.SchematicMode;
 
 public final class EvolutionBStates {
 
+    public static final IntegerProperty ATM = IntegerProperty.create("atm", 0, 31);
     public static final IntegerProperty LAYERS_0_16 = IntegerProperty.create("layers", 0, 16);
     public static final IntegerProperty LAYERS_1_4 = IntegerProperty.create("layers", 1, 4);
     public static final IntegerProperty LAYERS_1_5 = IntegerProperty.create("layers", 1, 5);

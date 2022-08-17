@@ -1,5 +1,6 @@
 package tgw.evolution.mixin;
 
+import com.google.common.collect.Queues;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.shaders.Uniform;
@@ -12,6 +13,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
+import net.minecraft.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.Minecraft;
@@ -53,7 +55,11 @@ import tgw.evolution.util.math.VectorUtil;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("VariableNotUsedInsideIf")
 @Mixin(LevelRenderer.class)
@@ -106,6 +112,23 @@ public abstract class LevelRendererMixin {
     @Nullable
     private RenderTarget itemEntityTarget;
     @Shadow
+    private int lastCameraChunkX;
+    @Shadow
+    private int lastCameraChunkY;
+    @Shadow
+    private int lastCameraChunkZ;
+    @Shadow
+    private double lastCameraX;
+    @Shadow
+    private double lastCameraY;
+    @Shadow
+    private double lastCameraZ;
+    @Shadow
+    @Nullable
+    private Future<?> lastFullRenderChunkUpdate;
+    @Shadow
+    private int lastViewDistance;
+    @Shadow
     @Nullable
     private ClientLevel level;
     @Shadow
@@ -113,13 +136,34 @@ public abstract class LevelRendererMixin {
     private Minecraft minecraft;
     @Shadow
     @Final
+    private AtomicBoolean needsFrustumUpdate;
+    @Shadow
+    private boolean needsFullRenderChunkUpdate;
+    @Shadow
+    @Final
     private AtomicLong nextFullUpdateMillis;
     @Shadow
     @Nullable
     private RenderTarget particlesTarget;
     @Shadow
+    private double prevCamRotX;
+    @Shadow
+    private double prevCamRotY;
+    @Shadow
+    private double prevCamX;
+    @Shadow
+    private double prevCamY;
+    @Shadow
+    private double prevCamZ;
+    @Shadow
+    @Final
+    private BlockingQueue<ChunkRenderDispatcher.RenderChunk> recentlyCompiledChunks;
+    @Shadow
     @Final
     private RenderBuffers renderBuffers;
+    @Shadow
+    @Final
+    private AtomicReference<LevelRenderer.RenderChunkStorage> renderChunkStorage;
     @Shadow
     @Final
     private ObjectArrayList<LevelRenderer.RenderChunkInfo> renderChunksInFrustum;
@@ -145,6 +189,12 @@ public abstract class LevelRendererMixin {
     private double zTransparentOld;
 
     @Shadow
+    public abstract void allChanged();
+
+    @Shadow
+    protected abstract void applyFrustum(Frustum pFrustrum);
+
+    @Shadow
     protected abstract void captureFrustum(Matrix4f pViewMatrix,
                                            Matrix4f pProjectionMatrix,
                                            double pCamX,
@@ -159,8 +209,8 @@ public abstract class LevelRendererMixin {
     protected abstract boolean closeToBorder(BlockPos pPos, ChunkRenderDispatcher.RenderChunk pChunk);
 
     /**
-     * @author MGSchultz
-     * Avoid unnecessary allocations.
+     * @author TheGreatWolf
+     * @reason Avoid unnecessary allocations.
      */
     @Overwrite
     private void compileChunks(Camera camera) {
@@ -218,12 +268,14 @@ public abstract class LevelRendererMixin {
                                                                          Direction pFacing);
 
     @Shadow
+    protected abstract void initializeQueueForFullUpdate(Camera pCamera, Queue<LevelRenderer.RenderChunkInfo> pInfoQueue);
+
+    @Shadow
     public abstract void levelEvent(Player pPlayer, int pType, BlockPos pPos, int pData);
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Avoid allocations
+     * @author TheGreatWolf
+     * @reason Avoid allocations
      */
     @Overwrite
     private void renderChunkLayer(RenderType renderType, PoseStack matrices, double camX, double camY, double camZ, Matrix4f projectionMatrix) {
@@ -349,9 +401,8 @@ public abstract class LevelRendererMixin {
                                              BlockState pState);
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Implement first person renderer in a clean way, also small level optimizations
+     * @author TheGreatWolf
+     * @reason Implement first person renderer in a clean way, also small level optimizations
      */
     @Overwrite
     public void renderLevel(PoseStack matrices,
@@ -700,15 +751,108 @@ public abstract class LevelRendererMixin {
     @Shadow
     protected abstract void renderWorldBorder(Camera pCamera);
 
-    @Shadow
-    protected abstract void setupRender(Camera p_194339_, Frustum p_194340_, boolean p_194341_, boolean p_194342_);
+    /**
+     * @author TheGreatWolf
+     * @reason Handle when the camera is different from the player
+     */
+    @Overwrite
+    private void setupRender(Camera camera, Frustum frustum, boolean hasCapturedFrustrum, boolean isSpectator) {
+        Vec3 camPos = camera.getPosition();
+        if (this.minecraft.options.getEffectiveRenderDistance() != this.lastViewDistance) {
+            this.allChanged();
+        }
+        this.level.getProfiler().push("camera");
+        double camX = this.minecraft.cameraEntity.getX();
+        double camY = this.minecraft.cameraEntity.getY();
+        double camZ = this.minecraft.cameraEntity.getZ();
+        double dx = camX - this.lastCameraX;
+        double dy = camY - this.lastCameraY;
+        double dz = camZ - this.lastCameraZ;
+        int secX = SectionPos.posToSectionCoord(camX);
+        int secY = SectionPos.posToSectionCoord(camY);
+        int secZ = SectionPos.posToSectionCoord(camZ);
+        if (this.lastCameraChunkX != secX || this.lastCameraChunkY != secY || this.lastCameraChunkZ != secZ || dx * dx + dy * dy + dz * dz > 16.0) {
+            this.lastCameraX = camX;
+            this.lastCameraY = camY;
+            this.lastCameraZ = camZ;
+            this.lastCameraChunkX = secX;
+            this.lastCameraChunkY = secY;
+            this.lastCameraChunkZ = secZ;
+            this.viewArea.repositionCamera(camX, camZ);
+        }
+        this.chunkRenderDispatcher.setCamera(camPos);
+        this.level.getProfiler().popPush("cull");
+        this.minecraft.getProfiler().popPush("culling");
+        BlockPos blockpos = camera.getBlockPosition();
+        double currentCamX = Math.floor(camPos.x / 8.0);
+        double currentCamY = Math.floor(camPos.y / 8.0);
+        double currentCamZ = Math.floor(camPos.z / 8.0);
+        this.needsFullRenderChunkUpdate = this.needsFullRenderChunkUpdate ||
+                                          currentCamX != this.prevCamX ||
+                                          currentCamY != this.prevCamY ||
+                                          currentCamZ != this.prevCamZ;
+        this.nextFullUpdateMillis.updateAndGet(l -> {
+            if (l > 0L && System.currentTimeMillis() > l) {
+                this.needsFullRenderChunkUpdate = true;
+                return 0L;
+            }
+            return l;
+        });
+        this.prevCamX = currentCamX;
+        this.prevCamY = currentCamY;
+        this.prevCamZ = currentCamZ;
+        this.minecraft.getProfiler().popPush("update");
+        boolean smartCull = this.minecraft.smartCull;
+        if (isSpectator && this.level.getBlockState(blockpos).isSolidRender(this.level, blockpos)) {
+            smartCull = false;
+        }
+        if (!hasCapturedFrustrum) {
+            if (this.needsFullRenderChunkUpdate && (this.lastFullRenderChunkUpdate == null || this.lastFullRenderChunkUpdate.isDone())) {
+                this.minecraft.getProfiler().push("full_update_schedule");
+                this.needsFullRenderChunkUpdate = false;
+                boolean finalSmartCull = smartCull;
+                this.lastFullRenderChunkUpdate = Util.backgroundExecutor().submit(() -> {
+                    Queue<LevelRenderer.RenderChunkInfo> chunkInfos = Queues.newArrayDeque();
+                    this.initializeQueueForFullUpdate(camera, chunkInfos);
+                    LevelRenderer.RenderChunkStorage renderChunkStorage = new LevelRenderer.RenderChunkStorage(this.viewArea.chunks.length);
+                    this.updateRenderChunks(renderChunkStorage.renderChunks, renderChunkStorage.renderInfoMap, camPos, chunkInfos, finalSmartCull);
+                    this.renderChunkStorage.set(renderChunkStorage);
+                    this.needsFrustumUpdate.set(true);
+                });
+                this.minecraft.getProfiler().pop();
+            }
+            LevelRenderer.RenderChunkStorage renderChunks = this.renderChunkStorage.get();
+            if (!this.recentlyCompiledChunks.isEmpty()) {
+                this.minecraft.getProfiler().push("partial_update");
+                Queue<LevelRenderer.RenderChunkInfo> queue = Queues.newArrayDeque();
+                while (!this.recentlyCompiledChunks.isEmpty()) {
+                    ChunkRenderDispatcher.RenderChunk renderChunk = this.recentlyCompiledChunks.poll();
+                    LevelRenderer.RenderChunkInfo renderChunkInfo = renderChunks.renderInfoMap.get(renderChunk);
+                    if (renderChunkInfo != null && renderChunkInfo.chunk == renderChunk) {
+                        queue.add(renderChunkInfo);
+                    }
+                }
+                this.updateRenderChunks(renderChunks.renderChunks, renderChunks.renderInfoMap, camPos, queue, smartCull);
+                this.needsFrustumUpdate.set(true);
+                this.minecraft.getProfiler().pop();
+            }
+            double camRotX = Math.floor(camera.getXRot() / 2.0F);
+            double camRotY = Math.floor(camera.getYRot() / 2.0F);
+            if (this.needsFrustumUpdate.compareAndSet(true, false) || camRotX != this.prevCamRotX || camRotY != this.prevCamRotY) {
+                this.applyFrustum(new Frustum(frustum).offsetToFullyIncludeCameraCube(8));
+                this.prevCamRotX = camRotX;
+                this.prevCamRotY = camRotY;
+            }
+        }
+        this.minecraft.getProfiler().pop();
+    }
 
     @Shadow
     protected abstract boolean shouldShowEntityOutlines();
 
     /**
-     * @author MGSchultz
-     * Avoid hotpath allocations.
+     * @author TheGreatWolf
+     * @reason Avoid hotpath allocations.
      * This method is a mess, I have no idea of what it does and how it does that.
      */
     @SuppressWarnings("CollectionDeclaredAsConcreteClass")

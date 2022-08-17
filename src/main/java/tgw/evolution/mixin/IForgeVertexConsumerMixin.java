@@ -30,7 +30,7 @@ public interface IForgeVertexConsumerMixin {
     void applyBakedNormals(Vector3f generated, ByteBuffer data, Matrix3f normalTransform);
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations.
      */
@@ -50,7 +50,7 @@ public interface IForgeVertexConsumerMixin {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations.
      */
@@ -69,7 +69,7 @@ public interface IForgeVertexConsumerMixin {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations.
      */

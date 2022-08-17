@@ -48,8 +48,7 @@ public class PacketCSSyncServerConfig implements IPacket {
                     CommentedConfig data = TomlFormat.instance().createParser().parse(new ByteArrayInputStream(packet.data));
                     config.getConfigData().putAll(data);
                     ConfigHelper.resetCache(config);
-                    EvolutionNetwork.INSTANCE.send(PacketDistributor.ALL.with(() -> null),
-                                                   new PacketSCSyncServerConfig(packet.filename, packet.data));
+                    EvolutionNetwork.INSTANCE.send(PacketDistributor.ALL.noArg(), new PacketSCSyncServerConfig(packet.filename, packet.data));
                 }
             });
             context.get().setPacketHandled(true);

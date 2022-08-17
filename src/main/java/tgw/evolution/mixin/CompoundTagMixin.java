@@ -40,7 +40,7 @@ public abstract class CompoundTagMixin implements ICompoundTagPatch {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Use faster collection
      */

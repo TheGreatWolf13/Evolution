@@ -13,7 +13,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCHandAnimation;
 
@@ -89,7 +88,7 @@ public abstract class ItemGenericBlockPlaceable extends ItemBlock {
                         soundtype.getPitch() * 0.8F);
         stack.shrink(1);
         player.swing(context.getHand());
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCHandAnimation(context.getHand()));
+        EvolutionNetwork.send(player, new PacketSCHandAnimation(context.getHand()));
         return InteractionResult.SUCCESS;
     }
 

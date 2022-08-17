@@ -23,11 +23,11 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Range;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.blocks.tileentities.ILoggable;
 import tgw.evolution.blocks.tileentities.TEChopping;
-import tgw.evolution.blocks.tileentities.TEUtils;
-import tgw.evolution.entities.misc.EntitySit;
+import tgw.evolution.entities.misc.EntitySittable;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.items.ItemLog;
@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
 import static tgw.evolution.init.EvolutionBStates.FLUID_LOGGED;
 import static tgw.evolution.init.EvolutionBStates.OCCUPIED;
 
-public class BlockChopping extends BlockMass implements IReplaceable, ISittable, IFluidLoggable, EntityBlock {
+public class BlockChopping extends BlockMass implements IReplaceable, ISittableBlock, IFluidLoggable, EntityBlock {
 
     public BlockChopping(WoodVariant name) {
         super(Properties.of(Material.WOOD).sound(SoundType.WOOD).strength(8.0F, 2.0F), name.getMass() / 2);
@@ -90,6 +90,12 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(OCCUPIED, FLUID_LOGGED);
+    }
+
+    @Override
+    public @Range(from = 0, to = 100) int getComfort() {
+        //TODO implementation
+        return 0;
     }
 
     @Override
@@ -163,7 +169,9 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
                 for (ItemStack stack : this.getDrops(level, pos, this.defaultBlockState())) {
                     popResource(level, pos, stack);
                 }
-                TEUtils.invokeIfInstance(level.getBlockEntity(pos), TEChopping::dropLog);
+                if (level.getBlockEntity(pos) instanceof TEChopping te) {
+                    te.dropLog();
+                }
                 level.removeBlock(pos, isMoving);
                 return;
             }
@@ -182,7 +190,9 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
         if (state.getBlock() == newState.getBlock()) {
             return;
         }
-        TEUtils.invokeIfInstance(level.getBlockEntity(pos), TEChopping::dropLog);
+        if (level.getBlockEntity(pos) instanceof TEChopping te) {
+            te.dropLog();
+        }
     }
 
     @Override
@@ -190,7 +200,9 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
         boolean hasFluid = amount > 0 && fluid != null;
         BlockEntity tile = level.getBlockEntity(pos);
         if (hasFluid) {
-            TEUtils.invokeIfInstance(tile, TEChopping::dropLog);
+            if (tile instanceof TEChopping te) {
+                te.dropLog();
+            }
         }
         BlockState stateToPlace = state.setValue(FLUID_LOGGED, hasFluid);
         if (!(tile instanceof TEChopping)) {
@@ -199,11 +211,15 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
         level.setBlock(pos, stateToPlace, BlockFlags.NOTIFY_UPDATE_AND_RERENDER + BlockFlags.IS_MOVING);
         tile = level.getBlockEntity(pos);
         if (hasFluid) {
-            TEUtils.<ILoggable>invokeIfInstance(tile, t -> t.setAmountAndFluid(amount, fluid), true);
+            if (tile instanceof ILoggable te) {
+                te.setAmountAndFluid(amount, fluid);
+            }
             BlockUtils.scheduleFluidTick(level, pos);
         }
         else {
-            TEUtils.<ILoggable>invokeIfInstance(tile, t -> t.setAmountAndFluid(0, null));
+            if (tile instanceof ILoggable te) {
+                te.setAmountAndFluid(0, null);
+            }
         }
     }
 
@@ -224,7 +240,7 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (state.getValue(FLUID_LOGGED)) {
             if (!state.getValue(OCCUPIED)) {
-                if (EntitySit.create(level, pos, player)) {
+                if (EntitySittable.create(level, pos, player)) {
                     level.setBlockAndUpdate(pos, state.setValue(OCCUPIED, true));
                     return InteractionResult.SUCCESS;
                 }
@@ -242,7 +258,7 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittable,
             }
         }
         if (!chopping.hasLog() && !state.getValue(OCCUPIED)) {
-            if (!player.isCrouching() && EntitySit.create(level, pos, player)) {
+            if (!player.isCrouching() && EntitySittable.create(level, pos, player)) {
                 level.setBlockAndUpdate(pos, state.setValue(OCCUPIED, true));
                 return InteractionResult.SUCCESS;
             }

@@ -63,9 +63,8 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     }
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to fix some issues with sprinting conditions.
+     * @author TheGreatWolf
+     * @reason Overwrite to fix some issues with sprinting conditions.
      */
     @Override
     @Overwrite
@@ -237,9 +236,8 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     public abstract float getJumpRidingScale();
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to handle first person camera.
+     * @author TheGreatWolf
+     * @reason Overwrite to handle first person camera.
      */
     @Overwrite
     @Override
@@ -248,9 +246,8 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     }
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to handle first person camera.
+     * @author TheGreatWolf
+     * @reason Overwrite to handle first person camera.
      */
     @Overwrite
     @Override
@@ -264,13 +261,18 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     @Shadow
     protected abstract boolean hasEnoughImpulseToStartSprinting();
 
-    @Shadow
-    protected abstract boolean isControlledCamera();
+    /**
+     * @author TheGreatWolf
+     * @reason Overwrite to handle the possibility of second person camera.
+     */
+    @Overwrite
+    protected boolean isControlledCamera() {
+        return this.minecraft.getCameraEntity() == this || !this.isSpectator();
+    }
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Replace to fix inconsist render between client and server.
+     * @author TheGreatWolf
+     * @reason Replace to fix inconsist render between client and server.
      */
     @Override
     @Overwrite
@@ -317,9 +319,8 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
     protected abstract void sendRidingJump();
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to fix inconsistency with jumping.
+     * @author TheGreatWolf
+     * @reason Overwrite to fix inconsistency with jumping.
      */
     @Override
     @Overwrite

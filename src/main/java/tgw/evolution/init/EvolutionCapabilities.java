@@ -5,6 +5,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.common.util.INBTSerializable;
+import net.minecraftforge.common.util.NonNullSupplier;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.food.CapabilityHunger;
@@ -16,17 +17,19 @@ import tgw.evolution.capabilities.temperature.CapabilityTemperature;
 import tgw.evolution.capabilities.thirst.CapabilityThirst;
 import tgw.evolution.capabilities.toast.CapabilityToast;
 
+import javax.annotation.Nullable;
+
 public final class EvolutionCapabilities {
+
+    private static final NonNullSupplier<IllegalStateException> EXCEPTION_MAKER = IllegalStateException::new;
 
     private EvolutionCapabilities() {
     }
 
     public static <T extends INBTSerializable<CompoundTag>> void clonePlayer(Player oldPlayer, Player newPlayer, Capability<T> cap) {
         try {
-            oldPlayer.reviveCaps();
-            T oldCap = oldPlayer.getCapability(cap).orElseThrow(IllegalStateException::new);
-            oldPlayer.invalidateCaps();
-            T newCap = newPlayer.getCapability(cap).orElseThrow(IllegalStateException::new);
+            T oldCap = getRevivedCapability(oldPlayer, cap);
+            T newCap = getCapabilityOrThrow(newPlayer, cap);
             newCap.deserializeNBT(oldCap.serializeNBT());
         }
         catch (Exception e) {
@@ -34,17 +37,38 @@ public final class EvolutionCapabilities {
         }
     }
 
-    public static void finishCapabilities(Player player) {
-        if (!player.isAlive()) {
-            player.invalidateCaps();
-        }
+    /**
+     * Gets the holder object associated with this capability, if it's present, or {@code null}. Note that if the holder object does not exist, or the
+     * capability was invalidated via
+     * {@link net.minecraft.world.entity.LivingEntity#invalidateCaps}, the method will return {@code null}.
+     */
+    @Nullable
+    public static <T> T getCapabilityOrNull(Player player, Capability<T> instance) {
+        return player.getCapability(instance).orElse(null);
     }
 
-    public static <T> T getCapability(Player player, Capability<T> instance) {
-        if (!player.isAlive()) {
+    /**
+     * Gets the holder object associated with this capability. Note that if the holder object does not exist, or the capability was invalidated via
+     * {@link net.minecraft.world.entity.LivingEntity#invalidateCaps}, the method will throw {@link IllegalStateException}.
+     */
+    public static <T> T getCapabilityOrThrow(Player player, Capability<T> instance) {
+        return player.getCapability(instance).orElseThrow(EXCEPTION_MAKER);
+    }
+
+    /**
+     * Gets the holder object associated with this capability. Note that if the holder object does not exist, the method will throw
+     * {@link IllegalStateException}. The method will still return if the capabilities were invalidated, however, reviving them.
+     */
+    public static <T> T getRevivedCapability(Player player, Capability<T> instance) {
+        boolean shouldRevive = !player.isAlive();
+        if (shouldRevive) {
             player.reviveCaps();
         }
-        return player.getCapability(instance).orElseThrow(IllegalStateException::new);
+        T capability = player.getCapability(instance).orElseThrow(EXCEPTION_MAKER);
+        if (shouldRevive) {
+            player.invalidateCaps();
+        }
+        return capability;
     }
 
     public static void register(RegisterCapabilitiesEvent event) {

@@ -9,7 +9,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCShader;
 
@@ -36,16 +35,16 @@ public final class CommandShader implements Command<CommandSourceStack> {
         ServerPlayer player = source.getPlayerOrException();
         switch (input) {
             case "/shader" -> {
-                EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCShader(PacketSCShader.QUERY));
+                EvolutionNetwork.send(player, new PacketSCShader(PacketSCShader.QUERY));
                 return SINGLE_SUCCESS;
             }
             case "/shader toggle" -> {
-                EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCShader(PacketSCShader.TOGGLE));
+                EvolutionNetwork.send(player, new PacketSCShader(PacketSCShader.TOGGLE));
                 return SINGLE_SUCCESS;
             }
         }
         int shaderId = IntegerArgumentType.getInteger(context, "shaderId");
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCShader(shaderId));
+        EvolutionNetwork.send(player, new PacketSCShader(shaderId));
         return SINGLE_SUCCESS;
     }
 }

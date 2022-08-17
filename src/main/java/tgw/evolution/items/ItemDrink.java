@@ -3,7 +3,7 @@ package tgw.evolution.items;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.UseAnim;
-import tgw.evolution.util.Object2FloatPair;
+import tgw.evolution.util.collection.O2FPair;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ public class ItemDrink extends ItemGenericConsumable implements IDrink {
 
     private final UseAnim anim;
     private final int consumeTime;
-    private final List<Object2FloatPair<MobEffectInstance>> effects;
+    private final List<O2FPair<MobEffectInstance>> effects;
     private final int thirst;
 
     public ItemDrink(Item.Properties properties, DrinkProperties drink) {
@@ -28,7 +28,7 @@ public class ItemDrink extends ItemGenericConsumable implements IDrink {
     }
 
     @Override
-    public List<Object2FloatPair<MobEffectInstance>> getEffects() {
+    public List<O2FPair<MobEffectInstance>> getEffects() {
         return this.effects;
     }
 

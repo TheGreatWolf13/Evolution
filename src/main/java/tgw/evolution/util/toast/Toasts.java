@@ -1,14 +1,14 @@
 package tgw.evolution.util.toast;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Reference2IntMap;
-import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.KnappingRecipe;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.util.collection.I2OMap;
+import tgw.evolution.util.collection.I2OOpenHashMap;
+import tgw.evolution.util.collection.R2IMap;
+import tgw.evolution.util.collection.R2IOpenHashMap;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.constants.WoodVariant;
 
@@ -17,8 +17,8 @@ import java.util.List;
 
 public final class Toasts {
 
-    private static final Int2ObjectMap<ToastHolderRecipe[]> RECIPES = new Int2ObjectOpenHashMap<>();
-    private static final Reference2IntMap<Item> RECIPE_TRIGGERS = new Reference2IntOpenHashMap<>();
+    private static final I2OMap<ToastHolderRecipe[]> RECIPES = new I2OOpenHashMap<>();
+    private static final R2IMap<Item> RECIPE_TRIGGERS = new R2IOpenHashMap<>();
     private static int index;
 
     private Toasts() {
@@ -79,6 +79,6 @@ public final class Toasts {
     }
 
     public static void registerRecipe(int id, Item trigger, List<ToastHolderRecipe> toasts) {
-        registerRecipe(id, trigger, toasts.toArray(new ToastHolderRecipe[0]));
+        registerRecipe(id, trigger, toasts.toArray(new ToastHolderRecipe[toasts.size()]));
     }
 }

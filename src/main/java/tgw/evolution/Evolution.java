@@ -1,8 +1,5 @@
 package tgw.evolution;
 
-import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
-import it.unimi.dsi.fastutil.ints.Int2BooleanMaps;
-import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.TextComponent;
@@ -50,7 +47,6 @@ public final class Evolution {
     public static final String MODID = "evolution";
     public static final IProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> ServerProxy::new);
     public static final IPacketHandler PACKET_HANDLER = DistExecutor.safeRunForDist(() -> PacketHandlerClient::new, () -> PacketHandlerDummy::new);
-    public static final Int2BooleanMap PRONED_PLAYERS = Int2BooleanMaps.synchronize(new Int2BooleanOpenHashMap());
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Marker MARKER = MarkerManager.getMarker("Evolution");
     public static Evolution instance;
@@ -103,7 +99,7 @@ public final class Evolution {
 
     public static void debug(String message) {
         String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.debug(MARKER, "[" + clazz + "]: " + message);
+        LOGGER.debug(MARKER, "[{}]: {}", clazz, message);
     }
 
     public static void error(String message, Object... objects) {
@@ -113,7 +109,7 @@ public final class Evolution {
 
     public static void error(String message) {
         String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.error(MARKER, "[" + clazz + "]: " + message);
+        LOGGER.error(MARKER, "[{}]: {}", clazz, message);
     }
 
     public static ResourceLocation getResource(String name) {
@@ -127,7 +123,7 @@ public final class Evolution {
 
     public static void info(String message) {
         String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.info(MARKER, "[" + clazz + "]: " + message);
+        LOGGER.info(MARKER, "[{}]: {}", clazz, message);
     }
 
     private static void loadComplete(FMLLoadCompleteEvent event) {
@@ -189,7 +185,7 @@ public final class Evolution {
 
     public static void warn(String message) {
         String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.warn(MARKER, "[" + clazz + "]: " + message);
+        LOGGER.warn(MARKER, "[{}]: {}", clazz, message);
     }
 
     public static void warn(String message, Object... objects) {

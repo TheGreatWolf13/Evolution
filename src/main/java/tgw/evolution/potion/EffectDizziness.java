@@ -1,17 +1,17 @@
 package tgw.evolution.potion;
 
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.player.Player;
+import tgw.evolution.util.collection.I2IMap;
+import tgw.evolution.util.collection.I2IOpenHashMap;
 import tgw.evolution.util.math.MathHelper;
 
 public class EffectDizziness extends MobEffect {
 
-    private static final Int2IntMap AFFECTED = new Int2IntOpenHashMap();
+    private static final I2IMap AFFECTED = new I2IOpenHashMap();
 
     public EffectDizziness() {
         super(MobEffectCategory.HARMFUL, 0x3a_5785);

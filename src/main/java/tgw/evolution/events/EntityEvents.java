@@ -46,6 +46,7 @@ import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.Evolution;
@@ -60,6 +61,7 @@ import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.ModularTool;
 import tgw.evolution.capabilities.stamina.CapabilityStamina;
+import tgw.evolution.capabilities.stamina.IStamina;
 import tgw.evolution.capabilities.stamina.StaminaStats;
 import tgw.evolution.capabilities.temperature.CapabilityTemperature;
 import tgw.evolution.capabilities.temperature.ITemperature;
@@ -89,7 +91,6 @@ import tgw.evolution.util.earth.WindVector;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Units;
 import tgw.evolution.util.reflection.FieldHandler;
-import tgw.evolution.util.reflection.FunctionMethodHandler;
 
 import java.util.*;
 import java.util.random.RandomGenerator;
@@ -98,7 +99,6 @@ public class EntityEvents {
 
     public static final WindVector WIND = new WindVector();
     public static final Object2ReferenceMap<UUID, SkinType> SKIN_TYPE = new Object2ReferenceOpenHashMap<>();
-    private static final FunctionMethodHandler<Entity, Void, Pose> SET_POSE = new FunctionMethodHandler<>(Entity.class, "m_20124_", Pose.class);
     private static final FieldHandler<LivingEntity, CombatTracker> COMBAT_TRACKER = new FieldHandler<>(LivingEntity.class, "f_20944_");
     private static final RandomGenerator RANDOM = new Random();
     private static final ReferenceSet<DamageSource> IGNORED_DAMAGE_SOURCES = ReferenceSet.of(EvolutionDamage.DEHYDRATION, EvolutionDamage.DROWN,
@@ -158,15 +158,6 @@ public class EntityEvents {
         }
         double velocity = entity.getDeltaMovement().y;
         calculateFallDamage(entity, velocity, distanceOfSlowDown, true);
-    }
-
-    private static float getStepHeight(Player player) {
-        AttributeInstance mass = player.getAttribute(EvolutionAttributes.MASS.get());
-        double baseMass = mass.getBaseValue();
-        double totalMass = mass.getValue();
-        double equipMass = totalMass - baseMass;
-        double stepHeight = 1.062_5f - equipMass * 0.001_14f;
-        return (float) Math.max(stepHeight, 0.6);
     }
 
     private static void spawnDrops(ItemStack stack, Level level, BlockPos pos) {
@@ -233,6 +224,7 @@ public class EntityEvents {
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityToast.INSTANCE);
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityHunger.INSTANCE);
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityTemperature.INSTANCE);
+        EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityStamina.INSTANCE);
     }
 
     @SubscribeEvent
@@ -259,10 +251,9 @@ public class EntityEvents {
             else if (player instanceof ServerPlayer serverPlayer) {
                 Collection<MobEffectInstance> effects = player.getActiveEffects();
                 if (!effects.isEmpty()) {
-                    PacketDistributor.PacketTarget target = PacketDistributor.PLAYER.with(() -> serverPlayer);
                     for (MobEffectInstance instance : effects) {
                         //noinspection ObjectAllocationInLoop
-                        EvolutionNetwork.INSTANCE.send(target, new PacketSCAddEffect(instance, PacketSCAddEffect.Logic.ADD));
+                        EvolutionNetwork.send(serverPlayer, new PacketSCAddEffect(instance, PacketSCAddEffect.Logic.ADD));
                     }
                 }
             }
@@ -296,7 +287,7 @@ public class EntityEvents {
         if (entity instanceof ServerPlayer player) {
             //noinspection VariableNotUsedInsideIf
             if (player.connection != null) {
-                EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCUpdateCameraTilt(player));
+                EvolutionNetwork.send(player, new PacketSCUpdateCameraTilt(player));
             }
         }
     }
@@ -445,7 +436,7 @@ public class EntityEvents {
             }
         }
         if (killer instanceof ServerPlayer killerPlayer) {
-            EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> killerPlayer), new PacketSCHitmarker(true));
+            EvolutionNetwork.send(killerPlayer, new PacketSCHitmarker(true));
         }
     }
 
@@ -510,7 +501,7 @@ public class EntityEvents {
         }
         Entity trueSource = source.getEntity();
         if (trueSource instanceof ServerPlayer sourcePlayer) {
-            EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> sourcePlayer), new PacketSCHitmarker(false));
+            EvolutionNetwork.send(sourcePlayer, new PacketSCHitmarker(false));
         }
     }
 
@@ -574,12 +565,11 @@ public class EntityEvents {
     public void onPlayerLogIn(PlayerEvent.PlayerLoggedInEvent event) {
         Player player = event.getPlayer();
         Level level = player.level;
-        if (!level.isClientSide) {
-            PacketDistributor.PacketTarget target = PacketDistributor.PLAYER.with(() -> (ServerPlayer) player);
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             for (Player otherPlayer : level.players()) {
                 if (!otherPlayer.equals(player)) {
                     //noinspection ObjectAllocationInLoop
-                    EvolutionNetwork.INSTANCE.send(target, new PacketSCFixRotation(otherPlayer));
+                    EvolutionNetwork.send(serverPlayer, new PacketSCFixRotation(otherPlayer));
                 }
             }
             EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> player), new PacketSCFixRotation(player));
@@ -588,7 +578,9 @@ public class EntityEvents {
 
     @SubscribeEvent
     public void onPlayerLogOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        event.getPlayer().awardStat(EvolutionStats.LEAVE_GAME);
+        Player player = event.getPlayer();
+        player.awardStat(EvolutionStats.LEAVE_GAME);
+        EvolutionNetwork.playerLogOut(player);
     }
 
     @SubscribeEvent
@@ -630,11 +622,10 @@ public class EntityEvents {
                 }
             }
         }
-        PacketDistributor.PacketTarget target = PacketDistributor.PLAYER.with(() -> player);
         for (Player otherPlayer : world.players()) {
             if (!otherPlayer.equals(player)) {
                 //noinspection ObjectAllocationInLoop
-                EvolutionNetwork.INSTANCE.send(target, new PacketSCFixRotation(otherPlayer));
+                EvolutionNetwork.send(player, new PacketSCFixRotation(otherPlayer));
             }
         }
         EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> player), new PacketSCFixRotation(player));
@@ -643,6 +634,8 @@ public class EntityEvents {
         temperature.setCurrentTemperature(Temperature.getBaseTemperatureForRegion(region));
         temperature.setCurrentMinComfort(Temperature.getMinComfortForRegion(region));
         temperature.setCurrentMaxComfort(Temperature.getMaxComfortForRegion(region));
+        IStamina stamina = player.getCapability(CapabilityStamina.INSTANCE).orElseThrow(IllegalStateException::new);
+        stamina.setStamina(StaminaStats.MAX_STAMINA);
     }
 
     @SubscribeEvent
@@ -669,16 +662,16 @@ public class EntityEvents {
                         player.reviveCaps();
                     }
                     profiler.push("thirst");
-                    IThirst thirst = player.getCapability(CapabilityThirst.INSTANCE).orElseThrow(IllegalStateException::new);
+                    IThirst thirst = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityThirst.INSTANCE);
                     thirst.tick(sPlayer);
                     profiler.popPush("health");
-                    IHealth health = player.getCapability(CapabilityHealth.INSTANCE).orElseThrow(IllegalStateException::new);
+                    IHealth health = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityHealth.INSTANCE);
                     health.tick(sPlayer);
                     profiler.popPush("hunger");
-                    IHunger hunger = player.getCapability(CapabilityHunger.INSTANCE).orElseThrow(IllegalStateException::new);
+                    IHunger hunger = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityHunger.INSTANCE);
                     hunger.tick(sPlayer);
                     profiler.popPush("temperature");
-                    ITemperature temperature = player.getCapability(CapabilityTemperature.INSTANCE).orElseThrow(IllegalStateException::new);
+                    ITemperature temperature = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityTemperature.INSTANCE);
                     temperature.tick(sPlayer);
                     profiler.pop();
                     if (!player.isAlive()) {
@@ -707,20 +700,6 @@ public class EntityEvents {
             }
             if (player.isAlive()) {
                 player.awardStat(EvolutionStats.TIME_SINCE_LAST_DEATH);
-            }
-            profiler.popPush("prone");
-            if (Evolution.PRONED_PLAYERS.getOrDefault(player.getId(), false)) {
-                SET_POSE.call(player, Pose.SWIMMING);
-            }
-            else {
-                player.maxUpStep = 0.6f;
-                if (player.getVehicle() != null) {
-                    SET_POSE.call(player, Pose.STANDING);
-                }
-            }
-            if (player.getPose() == Pose.SWIMMING && !player.isInWater()) {
-                player.setSprinting(false);
-                player.maxUpStep = getStepHeight(player);
             }
             profiler.popPush("water");
             if (!player.level.isClientSide) {
@@ -758,23 +737,20 @@ public class EntityEvents {
             oldInstance.getEffect().removeAttributeModifiers(entity, entity.getAttributes(), oldInstance.getAmplifier());
         }
         MobEffectInstance newInstance = event.getPotionEffect();
-        newInstance.getEffect().addAttributeModifiers(entity, entity.getAttributes(), newInstance.getAmplifier());
+//        newInstance.getEffect().addAttributeModifiers(entity, entity.getAttributes(), newInstance.getAmplifier());
         if (entity instanceof ServerPlayer player) {
             if (oldInstance == null) {
-                EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player),
-                                               new PacketSCAddEffect(newInstance, PacketSCAddEffect.Logic.ADD));
+                EvolutionNetwork.send(player, new PacketSCAddEffect(newInstance, PacketSCAddEffect.Logic.ADD));
             }
             else {
                 MobEffectInstance newEffect = new MobEffectInstance(oldInstance);
                 newEffect.update(newInstance);
                 boolean isSame = oldInstance.getAmplifier() == newEffect.getAmplifier();
                 if (isSame) {
-                    EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player),
-                                                   new PacketSCAddEffect(newEffect, PacketSCAddEffect.Logic.UPDATE));
+                    EvolutionNetwork.send(player, new PacketSCAddEffect(newEffect, PacketSCAddEffect.Logic.UPDATE));
                 }
                 else {
-                    EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player),
-                                                   new PacketSCAddEffect(newEffect, PacketSCAddEffect.Logic.REPLACE));
+                    EvolutionNetwork.send(player, new PacketSCAddEffect(newEffect, PacketSCAddEffect.Logic.REPLACE));
                 }
             }
         }
@@ -785,7 +761,7 @@ public class EntityEvents {
         if (!(event.getEntityLiving() instanceof ServerPlayer player)) {
             return;
         }
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCRemoveEffect(event.getPotionEffect().getEffect()));
+        EvolutionNetwork.send(player, new PacketSCRemoveEffect(event.getPotionEffect().getEffect()));
     }
 
     @SubscribeEvent
@@ -793,7 +769,7 @@ public class EntityEvents {
         if (!(event.getEntityLiving() instanceof ServerPlayer player)) {
             return;
         }
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCRemoveEffect(event.getPotion()));
+        EvolutionNetwork.send(player, new PacketSCRemoveEffect(event.getPotion()));
     }
 
     @SubscribeEvent
@@ -802,17 +778,21 @@ public class EntityEvents {
     }
 
     @SubscribeEvent
+    public void onServerStop(ServerStoppedEvent event) {
+        EvolutionNetwork.resetCache();
+    }
+
+    @SubscribeEvent
     public void onSetAttackTarget(LivingSetAttackTargetEvent event) {
-        if (event.getEntity() instanceof LivingEntity) {
-            Mob entity = (Mob) event.getEntity();
-            if (entity.getTarget() != null && event.getTarget() != null) {
-                if (entity.hasEffect(MobEffects.BLINDNESS)) {
-                    int effectLevel = 3 - entity.getEffect(MobEffects.BLINDNESS).getAmplifier();
+        if (event.getEntity() instanceof Mob mob) {
+            if (mob.getTarget() != null && event.getTarget() != null) {
+                if (mob.hasEffect(MobEffects.BLINDNESS)) {
+                    int effectLevel = 3 - mob.getEffect(MobEffects.BLINDNESS).getAmplifier();
                     if (effectLevel < 0) {
                         effectLevel = 0;
                     }
-                    if (entity.distanceTo(event.getTarget()) > effectLevel) {
-                        entity.setTarget(null);
+                    if (mob.distanceTo(event.getTarget()) > effectLevel) {
+                        mob.setTarget(null);
                     }
                 }
             }

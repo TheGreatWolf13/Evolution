@@ -13,7 +13,7 @@ public abstract class RegistryDelegateMixin {
     private ResourceLocation name;
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations
      */

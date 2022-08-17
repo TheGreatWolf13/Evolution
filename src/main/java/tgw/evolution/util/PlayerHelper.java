@@ -24,7 +24,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Score;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.ForgeEventFactory;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionNetwork;
@@ -483,7 +482,7 @@ public final class PlayerHelper {
             }
         }
         swingArm(player, hand);
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new PacketSCHandAnimation(hand));
+        EvolutionNetwork.send((ServerPlayer) player, new PacketSCHandAnimation(hand));
         if (entity != null) {
             attackEntity(player, entity, hand, rayTraceHeight);
         }

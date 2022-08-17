@@ -1,8 +1,6 @@
 package tgw.evolution.util.hitbox;
 
 import com.mojang.math.Vector3d;
-import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
-import it.unimi.dsi.fastutil.objects.ReferenceList;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -12,15 +10,16 @@ import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import tgw.evolution.items.ISpecialAttack;
-import tgw.evolution.util.CollectionUtil;
+import tgw.evolution.util.collection.RArrayList;
+import tgw.evolution.util.collection.RList;
 import tgw.evolution.util.math.MathHelper;
 
 import java.util.List;
 
 public abstract class HitboxEntity<T extends Entity> {
 
-    private final ReferenceList<Hitbox> boxes;
-    private final ReferenceList<Hitbox> equipment;
+    private final RList<Hitbox> boxes;
+    private final RList<Hitbox> equipment;
     protected float ageInTicks;
     protected float pivotX;
     protected float pivotY;
@@ -32,8 +31,8 @@ public abstract class HitboxEntity<T extends Entity> {
     protected float rotationZ;
 
     public HitboxEntity() {
-        this.boxes = new ReferenceArrayList<>();
-        this.equipment = new ReferenceArrayList<>();
+        this.boxes = new RArrayList<>();
+        this.equipment = new RArrayList<>();
     }
 
     public static AABB aabb(double x0, double y0, double z0, double x1, double y1, double z1) {
@@ -142,8 +141,8 @@ public abstract class HitboxEntity<T extends Entity> {
     }
 
     protected final void finish() {
-        CollectionUtil.trim(this.boxes);
-        CollectionUtil.trim(this.equipment);
+        this.boxes.trimCollection();
+        this.equipment.trimCollection();
         this.childFinish();
     }
 

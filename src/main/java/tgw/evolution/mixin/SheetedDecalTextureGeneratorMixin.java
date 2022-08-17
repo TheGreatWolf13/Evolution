@@ -46,7 +46,7 @@ public abstract class SheetedDecalTextureGeneratorMixin {
     private float z;
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      */
     @Overwrite
     public void endVertex() {

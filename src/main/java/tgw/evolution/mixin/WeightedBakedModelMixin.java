@@ -40,7 +40,7 @@ public abstract class WeightedBakedModelMixin {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations.
      */

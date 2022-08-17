@@ -22,7 +22,7 @@ public abstract class BufferUploaderMixin {
     private static int lastIndexBufferObject;
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations
      */

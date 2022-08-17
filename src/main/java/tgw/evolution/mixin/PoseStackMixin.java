@@ -71,7 +71,7 @@ public abstract class PoseStackMixin implements IPoseStackPatch {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations and use faster, specialized functions
      */

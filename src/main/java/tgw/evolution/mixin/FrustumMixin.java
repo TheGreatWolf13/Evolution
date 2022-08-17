@@ -16,8 +16,8 @@ public abstract class FrustumMixin {
     private Vector4f[] frustumData;
 
     /**
-     * @author MGSchultz
-     * Avoid allocations
+     * @author TheGreatWolf
+     * @reason Avoid allocations
      */
     @Overwrite
     private boolean cubeCompletelyInFrustum(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {
@@ -52,8 +52,8 @@ public abstract class FrustumMixin {
     }
 
     /**
-     * @author MGSchultz
-     * Avoid allocations.
+     * @author TheGreatWolf
+     * @reason Avoid allocations.
      */
     @Overwrite
     private boolean cubeInFrustum(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {

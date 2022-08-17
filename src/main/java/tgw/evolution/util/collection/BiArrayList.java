@@ -1,4 +1,4 @@
-package tgw.evolution.util;
+package tgw.evolution.util.collection;
 
 import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.objects.ObjectArrays;

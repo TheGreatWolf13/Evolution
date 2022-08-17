@@ -7,7 +7,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import tgw.evolution.Evolution;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.util.earth.EarthHelper;
 import tgw.evolution.util.earth.MoonPhase;
@@ -254,7 +253,7 @@ public class DimensionOverworld {
         }
         Minecraft.getInstance().getProfiler().push("init");
         long dayTime = this.level.getDayTime();
-        this.latitude = -EarthHelper.calculateLatitude(Evolution.PROXY.getClientPlayer().getZ());
+        this.latitude = -EarthHelper.calculateLatitude(Minecraft.getInstance().getCameraEntity().getZ());
         float sinLatitude = MathHelper.sinDeg(this.latitude);
         float cosLatitude = MathHelper.cosDeg(this.latitude);
         Minecraft.getInstance().getProfiler().popPush("stars");

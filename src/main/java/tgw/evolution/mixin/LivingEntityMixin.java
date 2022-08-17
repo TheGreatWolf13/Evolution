@@ -155,9 +155,8 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     protected abstract void blockUsingShield(LivingEntity p_190629_1_);
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to reset animation position.
+     * @author TheGreatWolf
+     * @reason Overwrite to reset animation position.
      */
     @Overwrite
     public void calculateEntityAnimation(LivingEntity entity, boolean flies) {
@@ -361,9 +360,8 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     public abstract ItemStack getItemBySlot(EquipmentSlot p_21127_);
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Replace the method to handle Evolution's physics.
+     * @author TheGreatWolf
+     * @reason Replace the method to handle Evolution's physics.
      * Represents the upwards acceleration of the Entity when jumping.
      */
     @Overwrite
@@ -614,9 +612,8 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     public abstract boolean hasEffect(MobEffect p_21024_);
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to use Evolution Damage Sources.
+     * @author TheGreatWolf
+     * @reason Overwrite to use Evolution Damage Sources.
      */
     @Override
     @Overwrite
@@ -854,9 +851,8 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     public abstract boolean isUsingItem();
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Replace the method to handle Evolution's physics.
+     * @author TheGreatWolf
+     * @reason Replace the method to handle Evolution's physics.
      * Represents the jump force applied during a single tick for the entity to jump.
      */
     @Overwrite
@@ -957,7 +953,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     }
 
 //    /**
-//     * @author MGSchultz
+//     * @author TheGreatWolf
 //     * <p>
 //     * Remove the annoying noise when using an item for other players.
 //     */
@@ -1040,9 +1036,8 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     public abstract void stopSleeping();
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to rotate body
+     * @author TheGreatWolf
+     * @reason Overwrite to rotate body
      */
     @Override
     @Overwrite
@@ -1153,13 +1148,16 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     protected abstract float tickHeadTurn(float p_110146_1_, float p_110146_2_);
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Replace to handle Evolution's physics.
+     * @author TheGreatWolf
+     * @reason Replace to handle Evolution's physics.
      */
     @Overwrite
     public void travel(Vec3 travelVector) {
         if (this.isEffectiveAi() || this.isControlledByLocalInstance()) {
+            if (this.level.getChunkAt(this.blockPosition()).isEmpty()) {
+                //Prevents players from moving in unloaded chunks, gaining momentum and then taking damage when the ground finally loads.
+                return;
+            }
             double gravityAcceleration = Gravity.gravity(this.getLevel().dimensionType());
             FluidState fluidState = this.level.getFluidState(this.blockPosition());
             if (this.isInWater() && this.isAffectedByFluids() && !this.canStandOnFluid(fluidState.getType())) {

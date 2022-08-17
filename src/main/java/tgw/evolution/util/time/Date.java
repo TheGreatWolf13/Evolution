@@ -168,6 +168,7 @@ public class Date {
         NOVEMBER("november", 11, 10),
         DECEMBER("december", 12, 11);
 
+        public static final Month[] VALUES = values();
         private final int index;
         private final String name;
         private final int numerical;
@@ -182,7 +183,7 @@ public class Date {
 
         public static Month byIndex(int index) {
             index %= 12;
-            for (Month month : values()) {
+            for (Month month : VALUES) {
                 if (month.index == index) {
                     return month;
                 }

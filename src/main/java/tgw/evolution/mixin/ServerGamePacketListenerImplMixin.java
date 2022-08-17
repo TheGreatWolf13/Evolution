@@ -82,7 +82,7 @@ public abstract class ServerGamePacketListenerImplMixin {
     public abstract void send(Packet<?> p_9830_);
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Overwrite to prevent kicking players for flying when the server is multiplayer paused.
      * Also prevents players from being ticked while the server is paused.

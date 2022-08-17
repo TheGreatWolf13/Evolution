@@ -8,7 +8,6 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.blocks.IRockVariant;
 import tgw.evolution.init.EvolutionNetwork;
@@ -62,7 +61,6 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IRockVariant 
 
     @Override
     public void sneakingAction(BlockPlaceContext context) {
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) context.getPlayer()),
-                                       new PacketSCOpenKnappingGui(context.getClickedPos(), this.variant));
+        EvolutionNetwork.send((ServerPlayer) context.getPlayer(), new PacketSCOpenKnappingGui(context.getClickedPos(), this.variant));
     }
 }

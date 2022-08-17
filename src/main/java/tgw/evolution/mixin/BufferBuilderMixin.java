@@ -86,7 +86,7 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Use new sorting points
      */
@@ -256,7 +256,7 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Try to avoid allocations, but the sorting method tends to allocate a lot of {@code int[]}. Can we do better?
      */
@@ -302,7 +302,7 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Use newSortingPoints
      */

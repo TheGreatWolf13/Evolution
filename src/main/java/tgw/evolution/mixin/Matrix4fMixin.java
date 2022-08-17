@@ -42,7 +42,7 @@ public abstract class Matrix4fMixin implements IMatrix4fPatch {
     protected float m32;
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations and use faster, specialized functions
      */

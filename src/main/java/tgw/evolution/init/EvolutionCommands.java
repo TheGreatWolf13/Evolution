@@ -20,5 +20,6 @@ public final class EvolutionCommands {
         CommandShader.register(dispatcher);
         CommandTemperature.register(dispatcher);
         CommandGC.register(dispatcher);
+        CommandCamera.register(dispatcher);
     }
 }

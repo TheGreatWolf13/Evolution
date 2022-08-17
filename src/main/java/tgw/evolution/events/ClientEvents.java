@@ -3,11 +3,7 @@ package tgw.evolution.events;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Timer;
@@ -66,7 +62,6 @@ import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.client.gui.ModListScreen;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
@@ -91,7 +86,6 @@ import tgw.evolution.client.models.ModelRegistry;
 import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.client.util.ClientEffectInstance;
-import tgw.evolution.client.util.EvolutionInput;
 import tgw.evolution.client.util.LungeAttackInfo;
 import tgw.evolution.client.util.LungeChargeInfo;
 import tgw.evolution.config.EvolutionConfig;
@@ -103,15 +97,15 @@ import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.items.*;
 import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.network.*;
-import tgw.evolution.patches.IDebugScreenOverlayPatch;
-import tgw.evolution.patches.IEntityPatch;
-import tgw.evolution.patches.ILivingEntityPatch;
-import tgw.evolution.patches.IMinecraftPatch;
+import tgw.evolution.patches.*;
 import tgw.evolution.stats.EvolutionStatsCounter;
 import tgw.evolution.util.AdvancedEntityRayTraceResult;
-import tgw.evolution.util.CollectionUtil;
 import tgw.evolution.util.HitInformation;
 import tgw.evolution.util.PlayerHelper;
+import tgw.evolution.util.collection.I2OMap;
+import tgw.evolution.util.collection.I2OOpenHashMap;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.constants.OptiFineHelper;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.HitboxType;
@@ -129,12 +123,12 @@ import java.util.stream.Collectors;
 
 public class ClientEvents {
 
-    public static final ObjectList<ClientEffectInstance> EFFECTS_TO_ADD = new ObjectArrayList<>();
-    public static final ObjectList<ClientEffectInstance> EFFECTS = new ObjectArrayList<>();
-    public static final Int2ObjectMap<LungeChargeInfo> ABOUT_TO_LUNGE_PLAYERS = new Int2ObjectOpenHashMap<>();
-    public static final Int2ObjectMap<LungeAttackInfo> LUNGING_PLAYERS = new Int2ObjectOpenHashMap<>();
-    public static final Int2ObjectMap<ItemStack> BELT_ITEMS = new Int2ObjectOpenHashMap<>();
-    public static final Int2ObjectMap<ItemStack> BACK_ITEMS = new Int2ObjectOpenHashMap<>();
+    public static final OList<ClientEffectInstance> EFFECTS_TO_ADD = new OArrayList<>();
+    public static final OList<ClientEffectInstance> EFFECTS = new OArrayList<>();
+    public static final I2OMap<LungeChargeInfo> ABOUT_TO_LUNGE_PLAYERS = new I2OOpenHashMap<>();
+    public static final I2OMap<LungeAttackInfo> LUNGING_PLAYERS = new I2OOpenHashMap<>();
+    public static final I2OMap<ItemStack> BELT_ITEMS = new I2OOpenHashMap<>();
+    public static final I2OMap<ItemStack> BACK_ITEMS = new I2OOpenHashMap<>();
     private static final HitInformation MAINHAND_HITS = new HitInformation();
     private static final BlockHitResult[] MAINHAND_HIT_RESULT = new BlockHitResult[1];
     private static final StaticFieldHandler<SkullBlockEntity, GameProfileCache> PROFILE_CACHE = new StaticFieldHandler<>(SkullBlockEntity.class,
@@ -171,7 +165,9 @@ public class ClientEvents {
     @Nullable
     public Entity rightPointedEntity;
     public EntityHitResult rightRayTrace;
+    private int cameraId = -1;
     private Vec3 cameraPos = Vec3.ZERO;
+    private boolean crawlToggle;
     private int currentShader;
     private int desiredShader;
     private DimensionOverworld dimension;
@@ -183,7 +179,6 @@ public class ClientEvents {
     private boolean lunging;
     private CameraType previousCameraType;
     private boolean previousPressed;
-    private boolean proneToggle;
     private boolean sneakpreviousPressed;
     private long tickCount;
     private int ticks;
@@ -386,20 +381,14 @@ public class ClientEvents {
     }
 
     public void clearMemory() {
-        EFFECTS.clear();
-        CollectionUtil.trim(EFFECTS);
-        EFFECTS_TO_ADD.clear();
-        CollectionUtil.trim(EFFECTS_TO_ADD);
+        EFFECTS.reset();
+        EFFECTS_TO_ADD.reset();
         this.inverted = false;
-        ABOUT_TO_LUNGE_PLAYERS.clear();
-        CollectionUtil.trim(ABOUT_TO_LUNGE_PLAYERS);
-        LUNGING_PLAYERS.clear();
-        CollectionUtil.trim(LUNGING_PLAYERS);
+        ABOUT_TO_LUNGE_PLAYERS.reset();
+        LUNGING_PLAYERS.reset();
         MAINHAND_HITS.clearMemory();
-        BELT_ITEMS.clear();
-        CollectionUtil.trim(BELT_ITEMS);
-        BACK_ITEMS.clear();
-        CollectionUtil.trim(BACK_ITEMS);
+        BELT_ITEMS.reset();
+        BACK_ITEMS.reset();
         if (this.mc.level == null) {
             this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
             if (((IMinecraftPatch) this.mc).isMultiplayerPaused()) {
@@ -588,8 +577,6 @@ public class ClientEvents {
             EntityPlayerCorpse.setProfileCache(playerProfile);
             EntityPlayerCorpse.setSessionService(session);
         }
-        //Replace MovementInput
-        this.mc.player.input = new EvolutionInput(this.mc.options);
         System.gc();
     }
 
@@ -646,6 +633,7 @@ public class ClientEvents {
             this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
             ABOUT_TO_LUNGE_PLAYERS.clear();
             LUNGING_PLAYERS.clear();
+            this.shutDownInternalServer();
         }
         if (!this.initialized) {
             this.init();
@@ -654,8 +642,17 @@ public class ClientEvents {
         this.mc.getProfiler().pop();
         //Runs at the start of each tick
         if (event.phase == TickEvent.Phase.START) {
+            //Camera
+            this.mc.getProfiler().push("camera");
+            if (this.cameraId != -1) {
+                Entity entity = this.mc.level.getEntity(this.cameraId);
+                if (entity != null) {
+                    this.cameraId = -1;
+                    this.mc.setCameraEntity(entity);
+                }
+            }
             //Jump
-            this.mc.getProfiler().push("jump");
+            this.mc.getProfiler().popPush("jump");
             if (this.jumpTicks > 0) {
                 this.jumpTicks--;
             }
@@ -665,7 +662,10 @@ public class ClientEvents {
             //Apply shaders
             this.mc.getProfiler().popPush("shaders");
             int shader = 0;
-            if (this.mc.options.getCameraType() == CameraType.FIRST_PERSON && !this.mc.player.isCreative() && !this.mc.player.isSpectator()) {
+            if (this.mc.options.getCameraType() == CameraType.FIRST_PERSON &&
+                !this.mc.player.isCreative() &&
+                !this.mc.player.isSpectator() &&
+                this.mc.player.equals(this.mc.getCameraEntity())) {
                 float health = this.mc.player.getHealth();
                 if (health <= 12.5f) {
                     shader = 25;
@@ -793,12 +793,12 @@ public class ClientEvents {
                 }
                 this.mc.getProfiler().popPush("prone");
                 //Proning
-                boolean pressed = ClientProxy.TOGGLE_PRONE.isDown();
+                boolean pressed = ClientProxy.TOGGLE_CRAWL.isDown();
                 if (pressed && !this.previousPressed) {
-                    this.proneToggle = !this.proneToggle;
+                    this.crawlToggle = !this.crawlToggle;
                 }
                 this.previousPressed = pressed;
-                this.updateClientProneState(this.mc.player);
+                this.updateClientCrawlState(this.mc.player);
                 //Sneak on ladders
                 this.mc.getProfiler().popPush("ladders");
                 if (this.mc.player.onClimbable()) {
@@ -1213,10 +1213,10 @@ public class ClientEvents {
         if (this.mc.player.getPose() == Pose.SWIMMING && !this.mc.player.isInWater() && !this.mc.player.onClimbable()) {
             movementInput.jumping = false;
         }
-        if (this.proneToggle && !this.mc.player.onClimbable() && this.mc.player.isOnGround() && this.isJumpPressed) {
+        if (this.crawlToggle && !this.mc.player.onClimbable() && this.mc.player.isOnGround() && this.isJumpPressed) {
             BlockPos pos = this.mc.player.blockPosition().above();
             if (!this.mc.level.getBlockState(pos).getMaterial().blocksMotion()) {
-                this.proneToggle = false;
+                this.crawlToggle = false;
             }
         }
     }
@@ -1416,6 +1416,20 @@ public class ClientEvents {
         ItemEvents.makeEvolutionTooltip(event.getItemStack(), event.getTooltipElements());
     }
 
+//    public void setCameraEntity(int entityId) {
+//        if (this.mc.level != null) {
+//            if (entityId == -1) {
+//                this.mc.setCameraEntity(this.mc.player);
+//            }
+//            else {
+//                Entity entity = this.mc.level.getEntity(entityId);
+//                if (entity != null) {
+//                    this.mc.setCameraEntity(entity);
+//                }
+//            }
+//        }
+//    }
+
     public void rightMouseClick(IOffhandAttackable item, ItemStack stack) {
         float cooldown = getRightCooldownPeriod(item, stack);
         if (this.offhandTimeSinceLastHit >= cooldown) {
@@ -1427,10 +1441,19 @@ public class ClientEvents {
     }
 
     public void setCameraPos(Vec3 cameraPos) {
-        this.cameraPos = cameraPos;
+        if (this.mc.player.equals(this.mc.getCameraEntity())) {
+            this.cameraPos = cameraPos;
+        }
+        else {
+            this.cameraPos = null;
+        }
     }
 
-    private boolean shouldBeProbe(Player player) {
+    public void setNotLoadedCameraId(int id) {
+        this.cameraId = id;
+    }
+
+    private boolean shouldCrawl(Player player) {
         if (player.isInWater()) {
             return false;
         }
@@ -1447,8 +1470,7 @@ public class ClientEvents {
         return EvolutionConfig.CLIENT.firstPersonRenderer.get();
     }
 
-    @SubscribeEvent
-    public void shutDownInternalServer(ServerStoppedEvent event) {
+    public void shutDownInternalServer() {
         if (this.inverted) {
             this.inverted = false;
         }
@@ -1537,15 +1559,15 @@ public class ClientEvents {
         }
     }
 
-    private void updateClientProneState(Player player) {
+    private void updateClientCrawlState(Player player) {
         if (player != null) {
-            boolean shouldBeProne = ClientProxy.TOGGLE_PRONE.isDown() != this.proneToggle;
-            shouldBeProne = shouldBeProne && this.shouldBeProbe(player);
+            boolean shouldCrawl = ClientProxy.TOGGLE_CRAWL.isDown() != this.crawlToggle;
+            shouldCrawl = shouldCrawl && this.shouldCrawl(player);
             BlockPos pos = player.blockPosition().above(2);
-            shouldBeProne = shouldBeProne || this.proneToggle && player.onClimbable() && player.level.getBlockState(pos).getMaterial().blocksMotion();
-            if (shouldBeProne != Evolution.PRONED_PLAYERS.getOrDefault(player.getId(), false)) {
-                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSetProne(shouldBeProne));
-                Evolution.PRONED_PLAYERS.put(player.getId(), shouldBeProne);
+            shouldCrawl = shouldCrawl || this.crawlToggle && player.onClimbable() && player.level.getBlockState(pos).getMaterial().blocksMotion();
+            if (shouldCrawl != ((IPlayerPatch) player).isCrawling()) {
+                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSetCrawling(shouldCrawl));
+                ((IPlayerPatch) player).setCrawling(shouldCrawl);
             }
         }
     }

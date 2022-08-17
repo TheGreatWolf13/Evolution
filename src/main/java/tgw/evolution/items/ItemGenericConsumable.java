@@ -18,7 +18,7 @@ import tgw.evolution.capabilities.food.CapabilityHunger;
 import tgw.evolution.capabilities.food.IHunger;
 import tgw.evolution.capabilities.thirst.CapabilityThirst;
 import tgw.evolution.capabilities.thirst.IThirst;
-import tgw.evolution.util.Object2FloatPair;
+import tgw.evolution.util.collection.O2FPair;
 
 public abstract class ItemGenericConsumable extends ItemEv implements IConsumable {
 
@@ -28,7 +28,7 @@ public abstract class ItemGenericConsumable extends ItemEv implements IConsumabl
 
     private static void applyEffects(LivingEntity entity, ItemStack stack, Level level) {
         if (stack.getItem() instanceof IConsumable consumable) {
-            for (Object2FloatPair<MobEffectInstance> pair : consumable.getEffects()) {
+            for (O2FPair<MobEffectInstance> pair : consumable.getEffects()) {
                 if (!level.isClientSide && level.random.nextFloat() < pair.getRightAsFloat()) {
                     //noinspection ObjectAllocationInLoop
                     entity.addEffect(new MobEffectInstance(pair.getLeft()));

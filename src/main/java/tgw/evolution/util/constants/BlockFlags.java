@@ -1,10 +1,16 @@
 package tgw.evolution.util.constants;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+
 public final class BlockFlags {
     /**
      * Calls
-     * {@link Block#neighborChanged(BlockState, World, BlockPos, Block, BlockPos, boolean)
-     * neighborChanged} on surrounding blocks (with isMoving as false). Also updates comparator output state.
+     * {@link net.minecraft.world.level.block.Block#neighborChanged(BlockState, Level, BlockPos, Block, BlockPos, boolean)} on surrounding blocks
+     * (with isMoving as false). Also updates comparator output state.
      */
     public static final int NOTIFY_NEIGHBORS = 1;
     /**
@@ -28,13 +34,13 @@ public final class BlockFlags {
     public static final int UPDATE_NEIGHBORS = 16;
     /**
      * Prevents neighbor changes from spawning item drops, used by
-     * {@link Block#replaceBlock(BlockState, BlockState, IWorld, BlockPos, int)}.
+     * {@link Block#updateOrDestroy(BlockState, BlockState, LevelAccessor, BlockPos, int)}.
      */
     public static final int NO_NEIGHBOR_DROPS = 32;
     /**
      * Tell the block being changed that it was moved, rather than removed/replaced,
      * the boolean value is eventually passed to
-     * {@link Block#onReplaced(BlockState, World, BlockPos, BlockState, boolean)}
+     * {@link Block#onRemove(BlockState, Level, BlockPos, BlockState, boolean)}
      * as the last parameter.
      */
     public static final int IS_MOVING = 64;

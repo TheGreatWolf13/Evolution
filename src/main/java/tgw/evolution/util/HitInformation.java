@@ -1,7 +1,6 @@
 package tgw.evolution.util;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import tgw.evolution.Evolution;
@@ -10,6 +9,8 @@ import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketCSHitInformation;
 import tgw.evolution.network.PacketCSSpecialHit;
 import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.util.collection.I2OMap;
+import tgw.evolution.util.collection.I2OOpenHashMap;
 import tgw.evolution.util.hitbox.HitboxType;
 
 import java.util.EnumSet;
@@ -17,7 +18,7 @@ import java.util.Set;
 
 public class HitInformation {
 
-    private final Int2ObjectMap<Set<HitboxType>> data = new Int2ObjectOpenHashMap<>();
+    private final I2OMap<Set<HitboxType>> data = new I2OOpenHashMap<>();
 
     public void addHitbox(Entity entity, HitboxType hitbox) {
         ClientEvents.getInstance().getRenderer().updateHitmarkers(false);
@@ -49,8 +50,7 @@ public class HitInformation {
     }
 
     public void clearMemory() {
-        this.data.clear();
-        CollectionUtil.trim(this.data);
+        this.data.reset();
     }
 
     public boolean contains(Entity entity, HitboxType hitbox) {

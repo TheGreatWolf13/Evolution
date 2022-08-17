@@ -39,7 +39,7 @@ public abstract class AgeableListModelMixin extends EntityModel {
     protected abstract Iterable<ModelPart> headParts();
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations
      */

@@ -59,7 +59,7 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
     protected abstract HumanoidArm getAttackArm(T p_217147_1_);
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      */
     @Overwrite
     private void poseLeftArm(T entity) {
@@ -107,7 +107,7 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      */
     @Overwrite
     private void poseRightArm(T entity) {
@@ -161,7 +161,7 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
     protected abstract float rotlerpRad(float p_205060_1_, float p_205060_2_, float p_205060_3_);
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Overwrite to improve first person camera.
      */
@@ -311,7 +311,7 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Overwrite to implement Evolution's custom attack animations
      */

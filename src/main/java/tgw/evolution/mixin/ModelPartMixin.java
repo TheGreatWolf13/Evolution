@@ -34,7 +34,7 @@ public abstract class ModelPartMixin {
     private List<ModelPart.Cube> cubes;
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations, use quick matrix transformations
      * <p>
@@ -70,7 +70,7 @@ public abstract class ModelPartMixin {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations and use faster, specialized functions
      */

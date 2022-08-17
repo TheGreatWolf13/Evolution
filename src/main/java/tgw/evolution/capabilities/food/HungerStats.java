@@ -5,7 +5,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
@@ -332,7 +331,7 @@ public class HungerStats implements IHunger {
             this.setStarving(false);
         }
         if (this.needsUpdate) {
-            EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCHungerData(this));
+            EvolutionNetwork.send(player, new PacketSCHungerData(this));
             this.needsUpdate = false;
         }
     }

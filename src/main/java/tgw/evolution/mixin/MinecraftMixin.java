@@ -259,9 +259,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     protected abstract ProfilerFiller constructProfiler(boolean p_167971_, @Nullable SingleTickProfiler p_167972_);
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Replace to handle Evolution's input.
+     * @author TheGreatWolf
+     * @reason Replace to handle Evolution's input.
      */
     @Overwrite
     private void continueAttack(boolean leftClick) {
@@ -319,9 +318,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     }
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Replaces freeMemory to better recovery from crashes.
+     * @author TheGreatWolf
+     * @reason Replaces freeMemory to better recovery from crashes.
      */
     @Overwrite
     public void emergencySave() {
@@ -378,9 +376,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     protected abstract int getFramerateLimit();
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Replace to handle Evolution's input.
+     * @author TheGreatWolf
+     * @reason Replace to handle Evolution's input.
      */
     @SuppressWarnings("StatementWithEmptyBody")
     @Overwrite
@@ -388,9 +385,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         for (; this.options.keyTogglePerspective.consumeClick(); this.levelRenderer.needsUpdate()) {
             CameraType view = this.options.getCameraType();
             this.options.setCameraType(view.cycle());
-            if (view.isFirstPerson() != this.options.getCameraType().isFirstPerson()) {
-                this.gameRenderer.checkEntityPostEffect(this.options.getCameraType().isFirstPerson() ? this.getCameraEntity() : null);
-            }
+//            if (view.isFirstPerson() != this.options.getCameraType().isFirstPerson()) {
+//                this.gameRenderer.checkEntityPostEffect(this.options.getCameraType().isFirstPerson() ? this.getCameraEntity() : null);
+//            }
         }
         while (this.options.keySmoothCamera.consumeClick()) {
             this.options.smoothCamera = !this.options.smoothCamera;
@@ -643,9 +640,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     protected abstract void openChatScreen(String defaultText);
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Replace to handle Evolution's input.
+     * @author TheGreatWolf
+     * @reason Replace to handle Evolution's input.
      */
     @Overwrite
     private void pickBlock() {
@@ -665,9 +661,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     protected abstract void renderFpsMeter(PoseStack p_91141_, ProfileResults p_91142_);
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Replaces Minecraft's run method to be able to catch more exceptions.
+     * @author TheGreatWolf
+     * @reason Replaces Minecraft's run method to be able to catch more exceptions.
      */
     @Overwrite
     public void run() {
@@ -731,9 +726,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     }
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to handle multiplayer pause
+     * @author TheGreatWolf
+     * @reason Overwrite to handle multiplayer pause
      */
     @Overwrite
     private void runTick(boolean shouldRender) {
@@ -856,9 +850,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     protected abstract boolean shouldRenderFpsPie();
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Replace to handle Evolution's input.
+     * @author TheGreatWolf
+     * @reason Replace to handle Evolution's input.
      */
     @Overwrite
     private void startAttack() {
@@ -930,9 +923,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     }
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Replace to handle Evolution's input.
+     * @author TheGreatWolf
+     * @reason Replace to handle Evolution's input.
      */
     @Overwrite
     private void startUseItem() {
@@ -1049,9 +1041,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     public abstract void stop();
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to handle multiplayer pause.
+     * @author TheGreatWolf
+     * @reason Overwrite to handle multiplayer pause.
      */
     @Overwrite
     public void tick() {

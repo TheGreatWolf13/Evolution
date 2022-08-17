@@ -87,7 +87,7 @@ public abstract class FogRendererMixin {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Modify the fog color
      */

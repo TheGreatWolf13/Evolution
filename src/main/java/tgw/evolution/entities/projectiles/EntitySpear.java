@@ -1,6 +1,7 @@
 package tgw.evolution.entities.projectiles;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,7 +25,6 @@ import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.patches.IBlockPatch;
-import tgw.evolution.util.constants.NBTTypes;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.hitbox.HitboxEntity;
 
@@ -131,7 +131,7 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("Spear", NBTTypes.COMPOUND_NBT)) {
+        if (tag.contains("Spear", Tag.TAG_COMPOUND)) {
             this.setStack(ItemStack.of(tag.getCompound("Spear")));
         }
     }

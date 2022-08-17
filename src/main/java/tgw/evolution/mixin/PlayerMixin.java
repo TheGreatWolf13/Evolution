@@ -6,20 +6,22 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Unit;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.network.PacketDistributor;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tgw.evolution.entities.INeckPosition;
 import tgw.evolution.events.EntityEvents;
+import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.PacketSCMovement;
@@ -40,6 +42,9 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
     @Shadow
     @Final
     private Abilities abilities;
+    @Shadow
+    @Nullable
+    private Pose forcedPose;
     private boolean isMoving;
 
     protected PlayerMixin(EntityType<? extends LivingEntity> type, Level level) {
@@ -47,9 +52,8 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
     }
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to use Evolution Stats.
+     * @author TheGreatWolf
+     * @reason Overwrite to use Evolution Stats.
      */
     @Overwrite
     public void checkMovementStatistics(double dx, double dy, double dz) {
@@ -120,9 +124,8 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
     }
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to use Evolution Stats.
+     * @author TheGreatWolf
+     * @reason Overwrite to use Evolution Stats.
      */
     @Overwrite
     private void checkRidingStatistics(double dx, double dy, double dz) {
@@ -145,9 +148,8 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
     }
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to handle first person camera.
+     * @author TheGreatWolf
+     * @reason Overwrite to handle first person camera.
      */
     @Overwrite
     @Override
@@ -183,9 +185,23 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
         return PlayerHelper.NECK_POS_STANDING;
     }
 
+    private float getStepHeight() {
+        AttributeInstance mass = this.getAttribute(EvolutionAttributes.MASS.get());
+        double baseMass = mass.getBaseValue();
+        double totalMass = mass.getValue();
+        double equipMass = totalMass - baseMass;
+        double stepHeight = 1.062_5f - equipMass * 0.001_14f;
+        return (float) Math.max(stepHeight, 0.6);
+    }
+
     @Override
     public boolean hasHitboxes() {
         return true;
+    }
+
+    @Override
+    public boolean isCrawling() {
+        return this.getSharedFlag(2);
     }
 
     @Override
@@ -196,14 +212,29 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
     @Inject(method = "startSleepInBed", at = @At("TAIL"))
     private void onStartSleepInBed(BlockPos pos, CallbackInfoReturnable<Either<Player.BedSleepingProblem, Unit>> cir) {
         if (!this.level.isClientSide) {
-            EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) (Object) this), new PacketSCMovement(0, 0, 0));
+            EvolutionNetwork.send((ServerPlayer) (Object) this, new PacketSCMovement(0, 0, 0));
         }
     }
 
+    @Inject(method = "tick", at = @At("TAIL"))
+    private void onTick(CallbackInfo ci) {
+        if (this.isVisuallyCrawling()) {
+            this.setSprinting(false);
+            this.maxUpStep = this.getStepHeight();
+        }
+        else {
+            this.maxUpStep = 0.6f;
+        }
+    }
+
+    @Override
+    public void setCrawling(boolean crawling) {
+        this.setSharedFlag(2, crawling);
+    }
+
     /**
-     * @author MGSchultz
-     * <p>
-     * Replace to handle Evolution's physics
+     * @author TheGreatWolf
+     * @reason Replace to handle Evolution's physics
      */
     @Override
     @Overwrite
@@ -231,6 +262,55 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
         }
         else {
             super.travel(travelVector);
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Handle crawling pose
+     */
+    @Overwrite
+    protected void updatePlayerPose() {
+        if (this.forcedPose != null) {
+            this.setPose(this.forcedPose);
+            return;
+        }
+        if (this.isPassenger()) {
+            this.setPose(Pose.STANDING);
+        }
+        else if (this.canEnterPose(Pose.SWIMMING)) {
+            Pose firstPose;
+            if (this.isFallFlying()) {
+                firstPose = Pose.FALL_FLYING;
+            }
+            else if (this.isSleeping()) {
+                firstPose = Pose.SLEEPING;
+            }
+            else if (this.isSwimming() || this.isCrawling()) {
+                firstPose = Pose.SWIMMING;
+            }
+            else if (this.isAutoSpinAttack()) {
+                firstPose = Pose.SPIN_ATTACK;
+            }
+            else if (this.isShiftKeyDown() && !this.abilities.flying) {
+                firstPose = Pose.CROUCHING;
+            }
+            else {
+                firstPose = Pose.STANDING;
+            }
+            Pose secondPose;
+            if (!this.isSpectator() && !this.isPassenger() && !this.canEnterPose(firstPose)) {
+                if (this.canEnterPose(Pose.CROUCHING)) {
+                    secondPose = Pose.CROUCHING;
+                }
+                else {
+                    secondPose = Pose.SWIMMING;
+                }
+            }
+            else {
+                secondPose = firstPose;
+            }
+            this.setPose(secondPose);
         }
     }
 }

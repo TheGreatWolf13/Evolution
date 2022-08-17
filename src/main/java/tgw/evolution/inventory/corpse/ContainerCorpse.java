@@ -1,5 +1,6 @@
 package tgw.evolution.inventory.corpse;
 
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -38,32 +39,32 @@ public class ContainerCorpse extends AbstractContainerMenu implements IEvolution
 
     private void addArmorSlots(IItemHandler handler) {
         this.addSlot(new SlotItemHandler(handler, 0, 8, 18) {
-//            @Override
-//            public ItemStack onTake(Player player, ItemStack stackTaken) {
-//                ContainerCorpse.this.corpse.setSlot(EquipmentSlot.HEAD, this.getItem().copy());
-//                return super.onTake(player, stackTaken);
-//            }
+            @Override
+            public void onTake(Player player, ItemStack stackTaken) {
+                ContainerCorpse.this.corpse.setSlot(EquipmentSlot.HEAD, this.getItem().copy());
+                super.onTake(player, stackTaken);
+            }
         }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[EvolutionResources.HELMET]));
         this.addSlot(new SlotItemHandler(handler, 1, 26, 18) {
-//            @Override
-//            public ItemStack onTake(Player player, ItemStack stackTaken) {
-//                ContainerCorpse.this.corpse.setSlot(EquipmentSlot.CHEST, this.getItem().copy());
-//                return super.onTake(player, stackTaken);
-//            }
+            @Override
+            public void onTake(Player player, ItemStack stackTaken) {
+                ContainerCorpse.this.corpse.setSlot(EquipmentSlot.CHEST, this.getItem().copy());
+                super.onTake(player, stackTaken);
+            }
         }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[EvolutionResources.CHESTPLATE]));
         this.addSlot(new SlotItemHandler(handler, 2, 44, 18) {
-//            @Override
-//            public ItemStack onTake(Player player, ItemStack stackTaken) {
-//                ContainerCorpse.this.corpse.setSlot(EquipmentSlot.LEGS, this.getItem().copy());
-//                return super.onTake(player, stackTaken);
-//            }
+            @Override
+            public void onTake(Player player, ItemStack stackTaken) {
+                ContainerCorpse.this.corpse.setSlot(EquipmentSlot.LEGS, this.getItem().copy());
+                super.onTake(player, stackTaken);
+            }
         }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[EvolutionResources.LEGGINGS]));
         this.addSlot(new SlotItemHandler(handler, 3, 62, 18) {
-//            @Override
-//            public ItemStack onTake(Player player, ItemStack stackTaken) {
-//                ContainerCorpse.this.corpse.setSlot(EquipmentSlot.FEET, this.getItem().copy());
-//                return super.onTake(player, stackTaken);
-//            }
+            @Override
+            public void onTake(Player player, ItemStack stackTaken) {
+                ContainerCorpse.this.corpse.setSlot(EquipmentSlot.FEET, this.getItem().copy());
+                super.onTake(player, stackTaken);
+            }
         }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[EvolutionResources.BOOTS]));
     }
 
@@ -84,11 +85,11 @@ public class ContainerCorpse extends AbstractContainerMenu implements IEvolution
         this.addSlot(new SlotItemHandler(handler, 9, 62, 36).setBackground(InventoryMenu.BLOCK_ATLAS,
                                                                            EvolutionResources.SLOT_EXTENDED[EvolutionResources.CLOAK]));
         this.addSlot(new SlotItemHandler(handler, 10, 80, 36) {
-//            @Override
-//            public ItemStack onTake(Player player, ItemStack stackTaken) {
-//                ContainerCorpse.this.corpse.setSlot(EquipmentSlot.OFFHAND, this.getItem().copy());
-//                return super.onTake(player, stackTaken);
-//            }
+            @Override
+            public void onTake(Player player, ItemStack stackTaken) {
+                ContainerCorpse.this.corpse.setSlot(EquipmentSlot.OFFHAND, this.getItem().copy());
+                super.onTake(player, stackTaken);
+            }
         }.setBackground(InventoryMenu.BLOCK_ATLAS, InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD));
         this.addSlot(new SlotItemHandler(handler, 11, 98, 36).setBackground(InventoryMenu.BLOCK_ATLAS,
                                                                             EvolutionResources.SLOT_EXTENDED[EvolutionResources.BACK]));
@@ -100,11 +101,11 @@ public class ContainerCorpse extends AbstractContainerMenu implements IEvolution
     public void addSlot(IItemHandler handler, int index, int x, int y) {
         if (index == 40 + this.corpse.getSelected()) {
             this.addSlot(new SlotItemHandler(handler, index, x, y) {
-//                @Override
-//                public ItemStack onTake(Player player, ItemStack stackTaken) {
-//                    ContainerCorpse.this.corpse.setSlot(EquipmentSlot.MAINHAND, this.getItem().copy());
-//                    return super.onTake(player, stackTaken);
-//                }
+                @Override
+                public void onTake(Player player, ItemStack stackTaken) {
+                    ContainerCorpse.this.corpse.setSlot(EquipmentSlot.MAINHAND, this.getItem().copy());
+                    super.onTake(player, stackTaken);
+                }
             });
         }
         else {

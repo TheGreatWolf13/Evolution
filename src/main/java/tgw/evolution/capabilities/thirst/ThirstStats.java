@@ -4,7 +4,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCThirstData;
@@ -322,7 +321,7 @@ public class ThirstStats implements IThirst {
             this.setExtremelyDehydrated(false);
         }
         if (this.needsUpdate) {
-            EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCThirstData(this));
+            EvolutionNetwork.send(player, new PacketSCThirstData(this));
             this.needsUpdate = false;
         }
     }

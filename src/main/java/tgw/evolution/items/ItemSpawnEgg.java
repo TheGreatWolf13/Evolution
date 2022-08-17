@@ -3,6 +3,7 @@ package tgw.evolution.items;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
@@ -26,7 +27,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.util.constants.NBTTypes;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
@@ -41,9 +41,9 @@ public class ItemSpawnEgg<E extends Entity> extends ItemEv {
     }
 
     public EntityType<?> getType(@Nullable CompoundTag nbt) {
-        if (nbt != null && nbt.contains("EntityTag", NBTTypes.COMPOUND_NBT)) {
+        if (nbt != null && nbt.contains("EntityTag", Tag.TAG_COMPOUND)) {
             CompoundTag entityTag = nbt.getCompound("EntityTag");
-            if (entityTag.contains("id", NBTTypes.STRING)) {
+            if (entityTag.contains("id", Tag.TAG_STRING)) {
                 return EntityType.byString(entityTag.getString("id")).orElseGet(this.type);
             }
         }

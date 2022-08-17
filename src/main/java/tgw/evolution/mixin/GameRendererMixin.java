@@ -26,10 +26,7 @@ import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.common.ForgeMod;
 import org.lwjgl.opengl.GL11C;
 import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Constant;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.config.EvolutionConfig;
@@ -80,13 +77,12 @@ public abstract class GameRendererMixin {
     }
 
     /**
-     * @author MGSchultz
-     * <p>
-     * Overwrite to handle Evolution's hitboxes and reach distance.
+     * @author TheGreatWolf
+     * @reason Overwrite to handle Evolution's hitboxes and reach distance.
      */
     @Overwrite
     public void pick(float partialTicks) {
-        Entity entity = this.minecraft.getCameraEntity();
+        Entity entity = this.minecraft.player;
         if (entity != null) {
             //noinspection VariableNotUsedInsideIf
             if (this.minecraft.level != null) {
@@ -111,7 +107,7 @@ public abstract class GameRendererMixin {
                     ClientEvents.getInstance().leftPointedEntity = null;
                 }
                 ItemStack offhandStack = this.minecraft.player.getOffhandItem();
-                if (offhandStack.getItem() instanceof IOffhandAttackable offhandAttackable) {
+                if (offhandStack.getItem() instanceof IOffhandAttackable) {
                     EntityHitResult rightRayTrace = MathHelper.rayTraceOBBEntityFromEyes(this.minecraft.player, cameraPos, partialTicks,
                                                                                          reachDistance);
                     ClientEvents.getInstance().rightPointedEntity = rightRayTrace == null ? null : rightRayTrace.getEntity();
@@ -126,11 +122,16 @@ public abstract class GameRendererMixin {
         }
     }
 
+    @Redirect(method = "shouldRenderBlockOutline", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getCameraEntity()" +
+                                                                                       "Lnet/minecraft/world/entity/Entity;"))
+    private Entity proxyShouldRenderBlockOutline(Minecraft mc) {
+        return mc.player;
+    }
+
     /**
-     * @author MGSchultz
-     * <p>
-     * Make gui render even when {@link net.minecraft.client.Options#hideGui} is {@code true} since every render overlay of the gui already makes a
-     * check of its own. This allows us to render gui elements which should always remain on the screen (such as helmet overlays).
+     * @author TheGreatWolf
+     * @reason Make gui render even when {@link net.minecraft.client.Options#hideGui} is {@code true} since every render overlay of the gui already
+     * makes a check of its own. This allows us to render gui elements which should always remain on the screen (such as helmet overlays).
      */
     @Overwrite
     public void render(float partialTicks, long nanoTime, boolean renderLevel) {

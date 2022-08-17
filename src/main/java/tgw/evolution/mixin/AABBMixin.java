@@ -30,7 +30,7 @@ public abstract class AABBMixin {
     public double minZ;
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Simplify the code to better help the JVM optimize it
      */
@@ -44,7 +44,7 @@ public abstract class AABBMixin {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Simplify the code to better help the JVM optimize it
      */

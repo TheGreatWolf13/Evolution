@@ -17,9 +17,10 @@ public class EffectSaturation extends MobEffect {
     @Override
     public void applyEffectTick(LivingEntity entity, int amplifier) {
         if (entity instanceof ServerPlayer player) {
-            IHunger hunger = EvolutionCapabilities.getCapability(player, CapabilityHunger.INSTANCE);
-            hunger.increaseHungerLevel(1 + amplifier);
-            EvolutionCapabilities.finishCapabilities(player);
+            IHunger hunger = EvolutionCapabilities.getCapabilityOrNull(player, CapabilityHunger.INSTANCE);
+            if (hunger != null) {
+                hunger.increaseHungerLevel(1 + amplifier);
+            }
         }
     }
 

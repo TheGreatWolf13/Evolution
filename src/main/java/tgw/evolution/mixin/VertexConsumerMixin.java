@@ -50,7 +50,7 @@ public interface VertexConsumerMixin extends IForgeVertexConsumer, IVertexDrain 
     VertexConsumer normal(float x, float y, float z);
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations.
      */
@@ -62,7 +62,7 @@ public interface VertexConsumerMixin extends IForgeVertexConsumer, IVertexDrain 
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations
      */

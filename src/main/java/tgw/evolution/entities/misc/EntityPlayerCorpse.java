@@ -12,6 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
@@ -46,9 +47,9 @@ import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.inventory.corpse.ContainerCorpseProvider;
 import tgw.evolution.inventory.extendedinventory.IExtendedInventory;
+import tgw.evolution.patches.ISynchedEntityDataPatch;
 import tgw.evolution.util.EvolutionDataSerializers;
 import tgw.evolution.util.constants.NBTHelper;
-import tgw.evolution.util.constants.NBTTypes;
 import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.hitbox.HitboxEntity;
 import tgw.evolution.util.reflection.StaticFieldHandler;
@@ -369,7 +370,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         if (compound.hasUUID("PlayerUUID")) {
             this.playerUUID = compound.getUUID("PlayerUUID");
         }
-        if (compound.contains("PlayerName", NBTTypes.STRING)) {
+        if (compound.contains("PlayerName", Tag.TAG_STRING)) {
             this.playerName = compound.getString("PlayerName");
         }
         this.setPlayerProfile(new GameProfile(this.playerUUID, this.playerName));
@@ -439,9 +440,8 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
 
     public void setSlot(EquipmentSlot slot, ItemStack stack) {
         NonNullList<ItemStack> equip = this.entityData.get(EQUIPMENT);
-        NonNullList<ItemStack> newEquip = NonNullList.of(ItemStack.EMPTY, equip.toArray(new ItemStack[0]));
-        newEquip.set(slot.ordinal(), stack);
-        this.entityData.set(EQUIPMENT, newEquip);
+        equip.set(slot.ordinal(), stack);
+        ((ISynchedEntityDataPatch) this.entityData).forceDirty(EQUIPMENT);
     }
 
     @Override

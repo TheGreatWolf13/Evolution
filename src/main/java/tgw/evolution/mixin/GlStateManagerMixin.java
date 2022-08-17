@@ -14,7 +14,7 @@ import tgw.evolution.util.math.MathHelper;
 public abstract class GlStateManagerMixin {
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid most allocations
      */
@@ -31,7 +31,7 @@ public abstract class GlStateManagerMixin {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid most allocations and use faster, specialized functions
      */
@@ -47,7 +47,7 @@ public abstract class GlStateManagerMixin {
     }
 
     /**
-     * @author MGSchultz
+     * @author TheGreatWolf
      * <p>
      * Avoid allocations
      */
