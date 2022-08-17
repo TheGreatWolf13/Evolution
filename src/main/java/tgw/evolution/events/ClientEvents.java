@@ -3,14 +3,15 @@ package tgw.evolution.events;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Timer;
 import net.minecraft.client.*;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.DebugScreenOverlay;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.PauseScreen;
@@ -58,7 +59,6 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.ConfigGuiHandler;
 import net.minecraftforge.client.event.*;
-import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.client.gui.ModListScreen;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
@@ -97,7 +97,10 @@ import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.items.*;
 import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.network.*;
-import tgw.evolution.patches.*;
+import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.patches.ILivingEntityPatch;
+import tgw.evolution.patches.IMinecraftPatch;
+import tgw.evolution.patches.IPlayerPatch;
 import tgw.evolution.stats.EvolutionStatsCounter;
 import tgw.evolution.util.AdvancedEntityRayTraceResult;
 import tgw.evolution.util.HitInformation;
@@ -143,8 +146,6 @@ public class ClientEvents {
             DIMENSION_EFFECTS
             = new StaticFieldHandler<>(DimensionSpecialEffects.class, "f_108857_");
     private static final FieldHandler<GameRenderer, Boolean> EFFECT_ACTIVE = new FieldHandler<>(GameRenderer.class, "f_109053_");
-    private static final FieldHandler<ForgeIngameGui, DebugScreenOverlay> DEBUG_SCREEN_OVERLAY = new FieldHandler<>(ForgeIngameGui.class,
-                                                                                                                    "debugOverlay");
     private static ClientEvents instance;
     @Nullable
     private static IGuiScreenHandler handler;
@@ -180,7 +181,6 @@ public class ClientEvents {
     private CameraType previousCameraType;
     private boolean previousPressed;
     private boolean sneakpreviousPressed;
-    private long tickCount;
     private int ticks;
     private float tps = 20.0f;
     private int warmUpTicks;
@@ -717,10 +717,23 @@ public class ClientEvents {
                 this.mc.getProfiler().popPush("renderer");
                 this.renderer.startTick();
                 this.mc.getProfiler().popPush("lunge");
-                ABOUT_TO_LUNGE_PLAYERS.int2ObjectEntrySet().removeIf(entry -> entry.getValue().shouldBeRemoved());
-                ABOUT_TO_LUNGE_PLAYERS.forEach((key, value) -> value.tick());
-                LUNGING_PLAYERS.int2ObjectEntrySet().removeIf(entry -> entry.getValue().shouldBeRemoved());
-                LUNGING_PLAYERS.forEach((key, value) -> value.tick());
+                for (ObjectIterator<Int2ObjectMap.Entry<LungeChargeInfo>> it = ABOUT_TO_LUNGE_PLAYERS.int2ObjectEntrySet()
+                                                                                                     .iterator(); it.hasNext(); ) {
+                    if (it.next().getValue().shouldBeRemoved()) {
+                        it.remove();
+                    }
+                }
+                for (Int2ObjectMap.Entry<LungeChargeInfo> entry : ABOUT_TO_LUNGE_PLAYERS.int2ObjectEntrySet()) {
+                    entry.getValue().tick();
+                }
+                for (ObjectIterator<Int2ObjectMap.Entry<LungeAttackInfo>> it = LUNGING_PLAYERS.int2ObjectEntrySet().iterator(); it.hasNext(); ) {
+                    if (it.next().getValue().shouldBeRemoved()) {
+                        it.remove();
+                    }
+                }
+                for (Int2ObjectMap.Entry<LungeAttackInfo> entry : LUNGING_PLAYERS.int2ObjectEntrySet()) {
+                    entry.getValue().tick();
+                }
                 this.mc.getProfiler().pop();
                 InputHooks.parryCooldownTick();
                 this.mc.getProfiler().push("updateHeld");
@@ -853,9 +866,6 @@ public class ClientEvents {
                 this.mc.getProfiler().popPush("renderer");
                 this.renderer.endTick();
                 this.mc.getProfiler().pop();
-            }
-            if (++this.tickCount % 20 == 0) {
-                ((IDebugScreenOverlayPatch) DEBUG_SCREEN_OVERLAY.get((ForgeIngameGui) this.mc.gui)).resetSecond();
             }
         }
         this.mc.getProfiler().pop();

@@ -146,7 +146,9 @@ public final class NBTHelper {
                 return nbt1;
             }
             compound = new CompoundTag();
-            comp.getAllKeys().forEach(string -> compound.put(string, comp.get(string)));
+            for (String string : comp.getAllKeys()) {
+                compound.put(string, comp.get(string));
+            }
         }
         compound.put(nbt2.getAsString(), nbt3);
         return compound;

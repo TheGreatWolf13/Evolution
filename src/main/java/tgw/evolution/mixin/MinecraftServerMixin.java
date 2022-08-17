@@ -151,36 +151,40 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             this.getFunctions().tick();
         }
         this.profiler.popPush("levels");
-        for (ServerLevel serverworld : this.getWorldArray()) {
+        for (ServerLevel level : this.getWorldArray()) {
             long tickStart = Util.getNanos();
             //noinspection ObjectAllocationInLoop
-            this.profiler.push(() -> serverworld + " " + serverworld.dimension().location());
+            this.profiler.push(() -> level + " " + level.dimension().location());
             if (this.tickCount % 20 == 0 || !this.wasPaused && this.isMultiplayerPaused) { //Added check for multiplayer pause
                 this.profiler.push("timeSync");
                 //noinspection ObjectAllocationInLoop
-                this.playerList.broadcastAll(new ClientboundSetTimePacket(serverworld.getGameTime(),
-                                                                          serverworld.getDayTime(),
-                                                                          serverworld.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)),
-                                             serverworld.dimension());
+                this.playerList.broadcastAll(new ClientboundSetTimePacket(level.getGameTime(),
+                                                                          level.getDayTime(),
+                                                                          level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)),
+                                             level.dimension());
                 this.profiler.pop();
             }
             this.profiler.push("tick");
             if (!this.isMultiplayerPaused) { //Added check for multiplayer pause
-                ForgeEventFactory.onPreWorldTick(serverworld);
+                ForgeEventFactory.onPreWorldTick(level);
                 try {
-                    serverworld.tick(booleanSupplier);
+                    level.tick(booleanSupplier);
                 }
                 catch (Throwable throwable) {
                     CrashReport crashreport = CrashReport.forThrowable(throwable, "Exception ticking world");
-                    serverworld.fillReportDetails(crashreport);
+                    level.fillReportDetails(crashreport);
                     throw new ReportedException(crashreport);
                 }
-                ForgeEventFactory.onPostWorldTick(serverworld);
+                ForgeEventFactory.onPostWorldTick(level);
             }
             this.profiler.pop();
             this.profiler.pop();
-            //noinspection ObjectAllocationInLoop
-            this.perWorldTickTimes.computeIfAbsent(serverworld.dimension(), k -> new long[100])[this.tickCount % 100] = Util.getNanos() - tickStart;
+            long[] tickTimes = this.perWorldTickTimes.get(level.dimension());
+            if (tickTimes == null) {
+                tickTimes = new long[100];
+                this.perWorldTickTimes.put(level.dimension(), tickTimes);
+            }
+            tickTimes[this.tickCount % 100] = Util.getNanos() - tickStart;
         }
         this.profiler.popPush("connection");
         this.getConnection().tick();

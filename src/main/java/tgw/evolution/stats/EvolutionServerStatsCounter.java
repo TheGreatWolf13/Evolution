@@ -1,6 +1,5 @@
 package tgw.evolution.stats;
 
-import com.google.common.collect.Maps;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -287,24 +286,32 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
 
     @Override
     protected String toJson() {
-        Map<StatType<?>, JsonObject> dataMap = Maps.newHashMap();
+        Reference2ObjectMap<StatType<?>, JsonObject> dataMap = new Reference2ObjectOpenHashMap<>();
         for (Object2LongMap.Entry<Stat<?>> entry : this.statsData.object2LongEntrySet()) {
             Stat<?> stat = entry.getKey();
-            //noinspection ObjectAllocationInLoop
-            dataMap.computeIfAbsent(stat.getType(), key -> new JsonObject()).addProperty(getKey(stat).toString(), entry.getLongValue());
+            JsonObject json = dataMap.get(stat.getType());
+            if (json == null) {
+                json = new JsonObject();
+                dataMap.put(stat.getType(), json);
+            }
+            json.addProperty(getKey(stat).toString(), entry.getLongValue());
         }
         JsonObject data = new JsonObject();
-        for (Map.Entry<StatType<?>, JsonObject> entry : dataMap.entrySet()) {
+        for (Reference2ObjectMap.Entry<StatType<?>, JsonObject> entry : dataMap.reference2ObjectEntrySet()) {
             data.add(Registry.STAT_TYPE.getKey(entry.getKey()).toString(), entry.getValue());
         }
-        Map<StatType<?>, JsonObject> partialDataMap = Maps.newHashMap();
+        Reference2ObjectMap<StatType<?>, JsonObject> partialDataMap = new Reference2ObjectOpenHashMap<>();
         for (Object2FloatMap.Entry<Stat<?>> entry : this.partialData.object2FloatEntrySet()) {
             Stat<?> stat = entry.getKey();
-            //noinspection ObjectAllocationInLoop
-            partialDataMap.computeIfAbsent(stat.getType(), key -> new JsonObject()).addProperty(getKey(stat).toString(), entry.getFloatValue());
+            JsonObject json = partialDataMap.get(stat.getType());
+            if (json == null) {
+                json = new JsonObject();
+                partialDataMap.put(stat.getType(), json);
+            }
+            json.addProperty(getKey(stat).toString(), entry.getFloatValue());
         }
         JsonObject partialData = new JsonObject();
-        for (Map.Entry<StatType<?>, JsonObject> entry : partialDataMap.entrySet()) {
+        for (Reference2ObjectMap.Entry<StatType<?>, JsonObject> entry : partialDataMap.reference2ObjectEntrySet()) {
             partialData.add(Registry.STAT_TYPE.getKey(entry.getKey()).toString(), entry.getValue());
         }
         JsonObject finalObj = new JsonObject();

@@ -58,7 +58,6 @@ import tgw.evolution.network.PacketCSImpactDamage;
 import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.patches.ILivingEntityPatch;
-import tgw.evolution.util.constants.EntityFlags;
 import tgw.evolution.util.constants.EntityStates;
 import tgw.evolution.util.damage.DamageSourceEntity;
 import tgw.evolution.util.earth.Gravity;
@@ -1280,7 +1279,7 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
                     this.calculateWallImpact(motionX, motionZ, mass);
                 }
                 if (this.isOnGround() && !this.level.isClientSide) {
-                    this.setSharedFlag(EntityFlags.ELYTRA_FLYING, false);
+                    this.setSharedFlag(FLAG_FALL_FLYING, false);
                 }
             }
             else {

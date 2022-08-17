@@ -43,7 +43,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.patches.IDebugScreenOverlayPatch;
+import tgw.evolution.util.AllocationRateCalculator;
 import tgw.evolution.util.math.Metric;
 
 import javax.annotation.Nullable;
@@ -51,11 +51,12 @@ import java.util.List;
 import java.util.Map;
 
 @Mixin(DebugScreenOverlay.class)
-public abstract class DebugScreenOverlayMixin extends GuiComponent implements IDebugScreenOverlayPatch {
+public abstract class DebugScreenOverlayMixin extends GuiComponent {
 
     @Shadow
     @Final
     private static Map<Heightmap.Types, String> HEIGHTMAP_NAMES;
+    private final AllocationRateCalculator allocationRateCalculator = new AllocationRateCalculator();
     private final ObjectList<String> gameInfo = new ObjectArrayList<>();
     private final Heightmap.Types[] heightmapTypes = Heightmap.Types.values();
     private final MobCategory[] mobCategories = MobCategory.values();
@@ -64,13 +65,11 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent implements ID
     protected HitResult block;
     @Shadow
     protected HitResult liquid;
-    private String allocationPerTick;
     private String cpu;
     private String javaVersion;
     @Shadow
     @Nullable
     private ChunkPos lastPos;
-    private long lastUsedMem;
     private String mc;
     private String mcFull;
     @Shadow
@@ -85,15 +84,6 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent implements ID
     @Shadow
     public abstract void clearChunkCache();
 
-    private String getAllocationPerTick(long usedMem) {
-        if (this.allocationPerTick == null) {
-            double deltaMem = (usedMem - this.lastUsedMem) / 20.0;
-            this.allocationPerTick = "Allocation: " + Metric.bytes(deltaMem, 1) + "/t";
-            this.lastUsedMem = usedMem;
-        }
-        return this.allocationPerTick;
-    }
-
     @Shadow
     protected abstract LevelChunk getClientChunk();
 
@@ -106,8 +96,7 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent implements ID
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations
+     * @reason Avoid allocations
      */
     @Overwrite
     protected List<String> getGameInformation() {
@@ -342,7 +331,7 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent implements ID
         this.systemInfo.clear();
         this.systemInfo.add(this.getJavaVersion());
         this.systemInfo.add("Mem: " + usedMem * 100L / maxMem + "% " + bytesToMegabytes(usedMem) + "/" + bytesToMegabytes(maxMem) + "MB");
-        this.systemInfo.add(this.getAllocationPerTick(usedMem));
+        this.systemInfo.add("Allocation rate: " + Metric.bytes(this.allocationRateCalculator.get(usedMem), 1) + "/s");
         this.systemInfo.add("Allocated: " + totMem * 100L / maxMem + "% " + bytesToMegabytes(totMem) + "MB");
         this.systemInfo.add("");
         this.systemInfo.add(this.getCpu());
@@ -364,6 +353,7 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent implements ID
                 this.systemInfo.add(this.getPropertyValueString(entry));
             }
             for (ResourceLocation resourcelocation : state.getBlock().getTags()) {
+                //noinspection ObjectAllocationInLoop
                 this.systemInfo.add("#" + resourcelocation);
             }
         }
@@ -377,6 +367,7 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent implements ID
                 this.systemInfo.add(this.getPropertyValueString(entry1));
             }
             for (ResourceLocation resourcelocation1 : fluidstate.getType().getTags()) {
+                //noinspection ObjectAllocationInLoop
                 this.systemInfo.add("#" + resourcelocation1);
             }
         }
@@ -385,13 +376,11 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent implements ID
             this.systemInfo.add("");
             this.systemInfo.add(ChatFormatting.UNDERLINE + "Targeted Entity");
             this.systemInfo.add(String.valueOf(Registry.ENTITY_TYPE.getKey(entity.getType())));
-            entity.getType().getTags().forEach(t -> this.systemInfo.add("#" + t));
+            for (ResourceLocation tag : entity.getType().getTags()) {
+                //noinspection ObjectAllocationInLoop
+                this.systemInfo.add("#" + tag);
+            }
         }
         return this.systemInfo;
-    }
-
-    @Override
-    public void resetSecond() {
-        this.allocationPerTick = null;
     }
 }

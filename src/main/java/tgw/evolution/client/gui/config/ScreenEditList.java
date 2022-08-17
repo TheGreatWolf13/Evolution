@@ -45,8 +45,10 @@ public class ScreenEditList extends Screen {
         this.holder = holder;
         this.valueSpec = holder.getSpec();
         this.listType = ListType.fromHolder(holder);
-        this.values.addAll(
-                holder.getValue().stream().map(o -> new StringHolder(this.listType.getStringParser().apply(o))).collect(Collectors.toList()));
+        for (Object o : holder.getValue()) {
+            //noinspection ObjectAllocationInLoop
+            this.values.add(new StringHolder(this.listType.getStringParser().apply(o)));
+        }
     }
 
     @Override
@@ -179,7 +181,10 @@ public class ScreenEditList extends Screen {
     public class ObjectList extends ContainerObjectSelectionList<StringEntry> {
         public ObjectList() {
             super(ScreenEditList.this.minecraft, ScreenEditList.this.width, ScreenEditList.this.height, 36, ScreenEditList.this.height - 36, 24);
-            ScreenEditList.this.values.forEach(value -> this.addEntry(new StringEntry(this, value)));
+            for (StringHolder value : ScreenEditList.this.values) {
+                //noinspection ObjectAllocationInLoop
+                this.addEntry(new StringEntry(this, value));
+            }
         }
 
         @Override
@@ -205,11 +210,13 @@ public class ScreenEditList extends Screen {
         @Override
         public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
             super.render(poseStack, mouseX, mouseY, partialTicks);
-            this.children().forEach(entry -> entry.children().forEach(o -> {
-                if (o instanceof Button button) {
-                    button.renderToolTip(poseStack, mouseX, mouseY);
+            for (StringEntry entry : this.children()) {
+                for (GuiEventListener o : entry.children()) {
+                    if (o instanceof Button button) {
+                        button.renderToolTip(poseStack, mouseX, mouseY);
+                    }
                 }
-            }));
+            }
         }
     }
 

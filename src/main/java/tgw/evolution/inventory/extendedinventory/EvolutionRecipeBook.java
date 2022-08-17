@@ -36,16 +36,24 @@ public class EvolutionRecipeBook extends ClientRecipeBook {
                 RecipeBookCategories category = getCategory(recipe);
                 String group = recipe.getGroup();
                 if (group.isEmpty()) {
-                    //noinspection ObjectAllocationInLoop
-                    recipeLists.computeIfAbsent(category, cat -> new ObjectArrayList<>()).add(ImmutableList.of(recipe));
+                    List<List<Recipe<?>>> lists = recipeLists.get(category);
+                    if (lists == null) {
+                        lists = new ObjectArrayList<>();
+                        recipeLists.put(category, lists);
+                    }
+                    lists.add(ImmutableList.of(recipe));
                 }
                 else {
                     List<Recipe<?>> recipeList = table.get(category, group);
                     if (recipeList == null) {
                         recipeList = new ObjectArrayList<>();
                         table.put(category, group, recipeList);
-                        //noinspection ObjectAllocationInLoop
-                        recipeLists.computeIfAbsent(category, cat -> new ObjectArrayList<>()).add(recipeList);
+                        List<List<Recipe<?>>> lists = recipeLists.get(category);
+                        if (lists == null) {
+                            lists = new ObjectArrayList<>();
+                            recipeLists.put(category, lists);
+                        }
+                        lists.add(recipeList);
                     }
                     recipeList.add(recipe);
                 }
@@ -101,18 +109,22 @@ public class EvolutionRecipeBook extends ClientRecipeBook {
         Map<RecipeBookCategories, List<List<Recipe<?>>>> recipeLists = categorizeAndGroupRecipes(recipes);
         Map<RecipeBookCategories, List<RecipeCollection>> listOfRecipeLists = new EnumMap<>(RecipeBookCategories.class);
         ImmutableList.Builder<RecipeCollection> builder = ImmutableList.builder();
-        recipeLists.forEach((category, lists) -> {
-            Stream<RecipeCollection> recipeStream = lists.stream().map(RecipeCollection::new);
-            listOfRecipeLists.put(category, recipeStream.peek(builder::add).collect(ImmutableList.toImmutableList()));
-        });
-        RecipeBookCategories.AGGREGATE_CATEGORIES.forEach((category, categoryList) -> listOfRecipeLists.put(category,
-                                                                                                            (List<RecipeCollection>) categoryList.stream()
-                                                                                                                                                 .flatMap(
-                                                                                                                                                         cat -> ((List) listOfRecipeLists.getOrDefault(
-                                                                                                                                                                 cat,
-                                                                                                                                                                 ImmutableList.of())).stream())
-                                                                                                                                                 .collect(
-                                                                                                                                                         ImmutableList.toImmutableList())));
+        for (Map.Entry<RecipeBookCategories, List<List<Recipe<?>>>> entry : recipeLists.entrySet()) {
+            Stream<RecipeCollection> recipeStream = entry.getValue().stream().map(RecipeCollection::new);
+            //noinspection ObjectAllocationInLoop
+            listOfRecipeLists.put(entry.getKey(), recipeStream.peek(builder::add).collect(ImmutableList.toImmutableList()));
+        }
+        for (Map.Entry<RecipeBookCategories, List<RecipeBookCategories>> entry : RecipeBookCategories.AGGREGATE_CATEGORIES.entrySet()) {
+            //noinspection ObjectAllocationInLoop
+            listOfRecipeLists.put(entry.getKey(),
+                                  (List<RecipeCollection>) entry.getValue().stream()
+                                                                .flatMap(
+                                                                        cat -> ((List) listOfRecipeLists.getOrDefault(
+                                                                                cat,
+                                                                                ImmutableList.of())).stream())
+                                                                .collect(
+                                                                        ImmutableList.toImmutableList()));
+        }
         this.collectionsByTab = ImmutableMap.copyOf(listOfRecipeLists);
         this.allCollections = builder.build();
     }

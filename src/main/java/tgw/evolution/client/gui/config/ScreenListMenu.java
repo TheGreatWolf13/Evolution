@@ -170,7 +170,9 @@ public abstract class ScreenListMenu extends Screen {
                   50,
                   ScreenListMenu.this.height - 36,
                   ScreenListMenu.this.itemHeight);
-            entries.forEach(this::addEntry);
+            for (Item item : entries) {
+                this.addEntry(item);
+            }
         }
 
         @Override
@@ -196,11 +198,13 @@ public abstract class ScreenListMenu extends Screen {
                     ScreenListMenu.this.setActiveTooltip(item.tooltip);
                 }
             }
-            this.children().forEach(item -> item.children().forEach(o -> {
-                if (o instanceof Button button) {
-                    button.renderToolTip(poseStack, mouseX, mouseY);
+            for (Item item : this.children()) {
+                for (GuiEventListener o : item.children()) {
+                    if (o instanceof Button button) {
+                        button.renderToolTip(poseStack, mouseX, mouseY);
+                    }
                 }
-            }));
+            }
         }
 
         @Override

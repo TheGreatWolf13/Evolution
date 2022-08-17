@@ -600,9 +600,11 @@ public class ScreenModList extends Screen {
 
         public void setTextFromInfo(IModInfo info) {
             this.clearEntries();
-            ScreenModList.this.font.getSplitter()
-                                   .splitLines(info.getDescription().trim(), this.getRowWidth(), Style.EMPTY)
-                                   .forEach(text -> this.addEntry(new StringEntry(text.getString().replace("\n", "").replace("\r", "").trim())));
+            for (FormattedText text : ScreenModList.this.font.getSplitter()
+                                                             .splitLines(info.getDescription().trim(), this.getRowWidth(), Style.EMPTY)) {
+                //noinspection ObjectAllocationInLoop
+                this.addEntry(new StringEntry(text.getString().replace("\n", "").replace("\r", "").trim()));
+            }
         }
 
         @Override

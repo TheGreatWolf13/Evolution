@@ -28,8 +28,8 @@ public final class ConfigHelper {
 
     private static final FunctionMethodHandler<ModConfig, Void, CommentedConfig> MOD_CONFIG_SET_CONFIG_DATA =
             new FunctionMethodHandler<>(ModConfig.class,
-                                                                                                                                          "setConfigData",
-                                                                                                                                          CommentedConfig.class);
+                                        "setConfigData",
+                                        CommentedConfig.class);
     private static final FieldHandler<ConfigTracker, ConcurrentHashMap<String, ModConfig>> CONFIG_MAP = new FieldHandler<>(ConfigTracker.class,
                                                                                                                            "fileMap");
     private static final FunctionMethodHandler<ModConfig, Void, IConfigEvent> MOD_CONFIG_FIRE_EVENT = new FunctionMethodHandler<>(ModConfig.class,
@@ -57,15 +57,16 @@ public final class ConfigHelper {
     private static void gatherValuesFromConfig(UnmodifiableConfig config,
                                                ForgeConfigSpec spec,
                                                List<Pair<ForgeConfigSpec.ConfigValue<?>, ForgeConfigSpec.ValueSpec>> values) {
-        config.valueMap().forEach((s, o) -> {
+        for (Object o : config.valueMap().values()) {
             if (o instanceof AbstractConfig) {
                 gatherValuesFromConfig((UnmodifiableConfig) o, spec, values);
             }
             else if (o instanceof ForgeConfigSpec.ConfigValue<?> configValue) {
                 ForgeConfigSpec.ValueSpec valueSpec = spec.getRaw(configValue.getPath());
+                //noinspection ObjectAllocationInLoop
                 values.add(Pair.of(configValue, valueSpec));
             }
-        });
+        }
     }
 
     @Nullable
@@ -75,11 +76,18 @@ public final class ConfigHelper {
     }
 
     public static boolean isModified(ModConfig config) {
-        return gatherAllConfigValues(config).stream().anyMatch(pair -> !pair.getLeft().get().equals(pair.getRight().getDefault()));
+        for (Pair<ForgeConfigSpec.ConfigValue<?>, ForgeConfigSpec.ValueSpec> pair : gatherAllConfigValues(config)) {
+            if (!pair.getLeft().get().equals(pair.getRight().getDefault())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void resetCache(ModConfig config) {
-        gatherAllConfigValues(config).forEach(pair -> pair.getLeft().clearCache());
+        for (Pair<ForgeConfigSpec.ConfigValue<?>, ForgeConfigSpec.ValueSpec> pair : gatherAllConfigValues(config)) {
+            pair.getLeft().clearCache();
+        }
     }
 
     public static void sendConfigDataToServer(ModConfig config) {

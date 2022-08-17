@@ -13,6 +13,7 @@ import net.minecraft.network.chat.*;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.config.ModConfig;
 import org.apache.commons.io.FilenameUtils;
@@ -57,17 +58,26 @@ public class ScreenModConfigSelection extends ScreenListMenu {
         Set<ModConfig> clientConfigs = this.configMap.get(ModConfig.Type.CLIENT);
         if (clientConfigs != null && !clientConfigs.isEmpty()) {
             entries.add(new TitleItem(this.textTitleClient));
-            clientConfigs.forEach(config -> entries.add(new FileItem(config)));
+            for (ModConfig config : clientConfigs) {
+                //noinspection ObjectAllocationInLoop
+                entries.add(new FileItem(config));
+            }
         }
         Set<ModConfig> commonConfigs = this.configMap.get(ModConfig.Type.COMMON);
         if (commonConfigs != null && !commonConfigs.isEmpty()) {
             entries.add(new TitleItem(this.textTitleCommon));
-            commonConfigs.forEach(config -> entries.add(new FileItem(config)));
+            for (ModConfig config : commonConfigs) {
+                //noinspection ObjectAllocationInLoop
+                entries.add(new FileItem(config));
+            }
         }
         Set<ModConfig> serverConfigs = this.configMap.get(ModConfig.Type.SERVER);
         if (serverConfigs != null && !serverConfigs.isEmpty()) {
             entries.add(new TitleItem(this.textTitleServer));
-            serverConfigs.forEach(config -> entries.add(new FileItem(config)));
+            for (ModConfig config : serverConfigs) {
+                //noinspection ObjectAllocationInLoop
+                entries.add(new FileItem(config));
+            }
         }
     }
 
@@ -161,12 +171,13 @@ public class ScreenModConfigSelection extends ScreenListMenu {
                     Minecraft.getInstance().setScreen(new ScreenWorldSelection(ScreenModConfigSelection.this, config, this.title));
                 }
                 else {
-                    ModList.get()
-                           .getModContainerById(config.getModId())
-                           .ifPresent(container -> Minecraft.getInstance()
-                                                            .setScreen(new ScreenConfig(ScreenModConfigSelection.this,
-                                                                                        new TextComponent(container.getModInfo().getDisplayName()),
-                                                                                        config)));
+                    ModContainer container = ModList.get().getModContainerById(config.getModId()).orElse(null);
+                    if (container != null) {
+                        Minecraft.getInstance()
+                                 .setScreen(new ScreenConfig(ScreenModConfigSelection.this,
+                                                             new TextComponent(container.getModInfo().getDisplayName()),
+                                                             config));
+                    }
                 }
             }, (button, poseStack, mouseX, mouseY) -> {
                 if (button.isHoveredOrFocused()) {
@@ -225,11 +236,11 @@ public class ScreenModConfigSelection extends ScreenListMenu {
                                                                           // Resets all config values
                                                                           CommentedConfig newConfig = CommentedConfig.copy(
                                                                                   this.config.getConfigData());
-                                                                          this.allConfigValues.forEach(pair -> {
+                                                                          for (Pair<ForgeConfigSpec.ConfigValue<?>, ForgeConfigSpec.ValueSpec> pair : this.allConfigValues) {
                                                                               ForgeConfigSpec.ConfigValue<?> configValue = pair.getLeft();
                                                                               ForgeConfigSpec.ValueSpec valueSpec = pair.getRight();
                                                                               newConfig.set(configValue.getPath(), valueSpec.getDefault());
-                                                                          });
+                                                                          }
                                                                           this.updateRestoreDefaultButton();
                                                                           this.config.getConfigData().putAll(newConfig);
                                                                           ConfigHelper.resetCache(this.config);

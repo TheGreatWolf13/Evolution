@@ -53,7 +53,10 @@ public class ScreenWorldSelection extends ScreenListMenu {
             LevelStorageSource source = Minecraft.getInstance().getLevelSource();
             List<LevelSummary> levelList = source.getLevelList();
             Collections.sort(levelList);
-            levelList.forEach(worldSummary -> entries.add(new WorldItem(worldSummary)));
+            for (LevelSummary summary : levelList) {
+                //noinspection ObjectAllocationInLoop
+                entries.add(new WorldItem(summary));
+            }
         }
         catch (LevelStorageException e) {
             e.printStackTrace();
@@ -74,11 +77,11 @@ public class ScreenWorldSelection extends ScreenListMenu {
     @Override
     public void onClose() {
         super.onClose();
-        this.entries.forEach(item -> {
+        for (Item item : this.entries) {
             if (item instanceof WorldItem worldItem) {
                 worldItem.disposeIcon();
             }
-        });
+        }
     }
 
     @Override
@@ -106,7 +109,8 @@ public class ScreenWorldSelection extends ScreenListMenu {
             this.iconFile = summary.getIcon().isFile() ? summary.getIcon() : null;
             this.texture = this.loadWorldIcon();
             this.modifyButton = new Button(0, 0, 60, 20,
-                                           ScreenWorldSelection.this.textSelect, onPress -> this.loadServerConfig(summary.getLevelId(), summary.getLevelName()));
+                                           ScreenWorldSelection.this.textSelect,
+                                           onPress -> this.loadServerConfig(summary.getLevelId(), summary.getLevelName()));
         }
 
         @Override
@@ -128,11 +132,11 @@ public class ScreenWorldSelection extends ScreenListMenu {
                                                                                  .reader(serverConfigPath)
                                                                                  .apply(ScreenWorldSelection.this.config);
                 ConfigHelper.setConfigData(ScreenWorldSelection.this.config, data);
-                ModList.get()
-                       .getModContainerById(ScreenWorldSelection.this.config.getModId())
-                       .ifPresent(container -> ScreenWorldSelection.this.minecraft.setScreen(new ScreenConfig(ScreenWorldSelection.this.parent,
-                                                                                                              new TextComponent(worldName),
-                                                                                                              ScreenWorldSelection.this.config)));
+                if (ModList.get().getModContainerById(ScreenWorldSelection.this.config.getModId()).isPresent()) {
+                    ScreenWorldSelection.this.minecraft.setScreen(new ScreenConfig(ScreenWorldSelection.this.parent,
+                                                                                   new TextComponent(worldName),
+                                                                                   ScreenWorldSelection.this.config));
+                }
             }
             catch (IOException e) {
                 e.printStackTrace();

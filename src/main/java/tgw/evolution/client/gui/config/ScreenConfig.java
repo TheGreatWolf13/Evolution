@@ -119,10 +119,11 @@ public class ScreenConfig extends ScreenListMenu {
         return defaultValue;
     }
 
+    @SuppressWarnings("ObjectAllocationInLoop")
     @Override
     protected void constructEntries(List<Item> entries) {
         List<Item> configEntries = new ArrayList<>();
-        this.folderEntry.getEntries().forEach(c -> {
+        for (IEntry c : this.folderEntry.getEntries()) {
             if (c instanceof FolderEntry folder) {
                 configEntries.add(new FolderItem(folder, this.config.getModId()));
             }
@@ -153,7 +154,7 @@ public class ScreenConfig extends ScreenListMenu {
                     Evolution.info("Unsupported config value: " + valueEntry.getHolder().configValue.getPath());
                 }
             }
-        });
+        }
         configEntries.sort(this.sortAlphabetically);
         entries.addAll(configEntries);
     }
@@ -240,14 +241,14 @@ public class ScreenConfig extends ScreenListMenu {
     }
 
     private void restoreDefaults(FolderEntry entry) {
-        entry.getEntries().forEach(e -> {
+        for (IEntry e : entry.getEntries()) {
             if (e instanceof FolderEntry folder) {
                 this.restoreDefaults(folder);
             }
             else if (e instanceof ValueEntry valueEntry) {
                 valueEntry.getHolder().restoreDefaultValue();
             }
-        });
+        }
     }
 
     private void saveConfig() {
@@ -823,18 +824,20 @@ public class ScreenConfig extends ScreenListMenu {
             return this.entries;
         }
 
+        @SuppressWarnings("ObjectAllocationInLoop")
         private void init() {
             if (this.entries == null) {
                 ImmutableList.Builder<IEntry> builder = ImmutableList.builder();
-                this.config.valueMap().forEach((s, o) -> {
+                for (Map.Entry<String, Object> entry : this.config.valueMap().entrySet()) {
+                    Object o = entry.getValue();
                     if (o instanceof UnmodifiableConfig unmodifiableConfig) {
-                        builder.add(new FolderEntry(s, unmodifiableConfig, this.spec, false));
+                        builder.add(new FolderEntry(entry.getKey(), unmodifiableConfig, this.spec, false));
                     }
                     else if (o instanceof ForgeConfigSpec.ConfigValue<?> configValue) {
                         ForgeConfigSpec.ValueSpec valueSpec = this.spec.getRaw(configValue.getPath());
                         builder.add(new ValueEntry(configValue, valueSpec));
                     }
-                });
+                }
                 this.entries = builder.build();
             }
         }

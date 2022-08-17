@@ -174,7 +174,12 @@ public enum Metric {
     }
 
     public static DateFormat getDateFormatter(Locale locale) {
-        return DATE_FORMATS.computeIfAbsent(locale, (Locale l) -> new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", l));
+        DateFormat dateFormat = DATE_FORMATS.get(locale);
+        if (dateFormat == null) {
+            dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", locale);
+            DATE_FORMATS.put(locale, dateFormat);
+        }
+        return dateFormat;
     }
 
     private static DecimalFormatSymbols getSymbols() {

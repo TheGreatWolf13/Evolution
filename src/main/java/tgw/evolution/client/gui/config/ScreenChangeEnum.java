@@ -61,7 +61,14 @@ public class ScreenChangeEnum extends Screen {
         this.constructEntries();
         this.list = new EnumList(this.entries);
         this.list.setRenderBackground(!ScreenListMenu.isPlayingGame());
-        this.list.setSelected(this.list.children().stream().filter(entry -> entry.getEnumValue() == this.selectedValue).findFirst().orElse(null));
+        Entry selected = null;
+        for (Entry entry : this.list.children()) {
+            if (entry.getEnumValue() == this.selectedValue) {
+                selected = entry;
+                break;
+            }
+        }
+        this.list.setSelected(selected);
         this.addWidget(this.list);
         this.searchEditBox = new EditBoxAdv(this.font, this.width / 2 - 110, 22, 220, 20, EvolutionTexts.GUI_GENERAL_SEARCH);
         this.searchEditBox.setResponder(s -> {
@@ -135,7 +142,9 @@ public class ScreenChangeEnum extends Screen {
                   50,
                   ScreenChangeEnum.this.height - 36,
                   20);
-            entries.forEach(this::addEntry);
+            for (ScreenChangeEnum.Entry entry : entries) {
+                this.addEntry(entry);
+            }
         }
 
         @Override

@@ -28,7 +28,6 @@ import tgw.evolution.network.PacketSCMovement;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.patches.IPlayerPatch;
 import tgw.evolution.util.PlayerHelper;
-import tgw.evolution.util.constants.EntityFlags;
 import tgw.evolution.util.constants.SkinType;
 import tgw.evolution.util.hitbox.EvolutionEntityHitboxes;
 import tgw.evolution.util.hitbox.HitboxEntity;
@@ -45,6 +44,7 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
     @Shadow
     @Nullable
     private Pose forcedPose;
+    private boolean isCrawling;
     private boolean isMoving;
 
     protected PlayerMixin(EntityType<? extends LivingEntity> type, Level level) {
@@ -201,7 +201,7 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
 
     @Override
     public boolean isCrawling() {
-        return this.getSharedFlag(2);
+        return this.isCrawling;
     }
 
     @Override
@@ -229,7 +229,7 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
 
     @Override
     public void setCrawling(boolean crawling) {
-        this.setSharedFlag(2, crawling);
+        this.isCrawling = crawling;
     }
 
     /**
@@ -257,7 +257,7 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
             this.setDeltaMovement(motion.x, motionY * 0.8, motion.z);
             this.fallDistance = 0.0F;
             super.travel(travelVector);
-            this.setSharedFlag(EntityFlags.ELYTRA_FLYING, false);
+            this.setSharedFlag(FLAG_FALL_FLYING, false);
             this.flyingSpeed = jumpMovementFactor;
         }
         else {
@@ -286,7 +286,7 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
             else if (this.isSleeping()) {
                 firstPose = Pose.SLEEPING;
             }
-            else if (this.isSwimming() || this.isCrawling()) {
+            else if (this.isSwimming() || this.isCrawling) {
                 firstPose = Pose.SWIMMING;
             }
             else if (this.isAutoSpinAttack()) {
