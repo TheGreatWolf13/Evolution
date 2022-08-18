@@ -29,6 +29,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.PacketSCStatistics;
+import tgw.evolution.util.math.HalfFloat;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -39,7 +40,7 @@ import java.util.Set;
 
 public class EvolutionServerStatsCounter extends ServerStatsCounter {
 
-    protected final Object2FloatMap<Stat<?>> partialData = Object2FloatMaps.synchronize(new Object2FloatOpenHashMap<>());
+    protected final Object2ShortMap<Stat<?>> partialData = Object2ShortMaps.synchronize(new Object2ShortOpenHashMap<>());
     protected final Object2LongMap<Stat<?>> statsData = Object2LongMaps.synchronize(new Object2LongOpenHashMap<>());
     private final ObjectSet<Stat<?>> dirty = new ObjectOpenHashSet<>();
     private final MinecraftServer server;
@@ -50,8 +51,8 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
         super(server, statsFile);
         this.server = server;
         this.statsFile = statsFile;
-        this.statsData.defaultReturnValue(0);
-        this.partialData.defaultReturnValue(0);
+        this.statsData.defaultReturnValue(0L);
+        this.partialData.defaultReturnValue((short) 0);
         if (statsFile.isFile()) {
             try {
                 this.parseLocal(server.getFixerUpper(), FileUtils.readFileToString(statsFile));
@@ -160,12 +161,12 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
         }
         long value = (long) amount;
         amount -= value;
-        amount += this.partialData.getOrDefault(stat, 0);
+        amount += HalfFloat.toFloat(this.partialData.getOrDefault(stat, (short) 0));
         while (amount >= 1.0f) {
             amount -= 1.0f;
             value++;
         }
-        this.partialData.put(stat, amount);
+        this.partialData.put(stat, HalfFloat.toHalf(amount));
         if (value > 0) {
             this.incrementLong(stat, value);
         }
@@ -232,7 +233,7 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
                                 if (type.contains(key, Tag.TAG_ANY_NUMERIC)) {
                                     Stat<?> stat = getStat(statType, key);
                                     if (stat != null) {
-                                        this.partialData.put(stat, type.getFloat(key));
+                                        this.partialData.put(stat, type.getShort(key));
                                     }
                                     else {
                                         Evolution.warn("Invalid statistic in {}: Don't know what {} is", this.statsFile, key);
@@ -301,14 +302,14 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
             data.add(Registry.STAT_TYPE.getKey(entry.getKey()).toString(), entry.getValue());
         }
         Reference2ObjectMap<StatType<?>, JsonObject> partialDataMap = new Reference2ObjectOpenHashMap<>();
-        for (Object2FloatMap.Entry<Stat<?>> entry : this.partialData.object2FloatEntrySet()) {
+        for (Object2ShortMap.Entry<Stat<?>> entry : this.partialData.object2ShortEntrySet()) {
             Stat<?> stat = entry.getKey();
             JsonObject json = partialDataMap.get(stat.getType());
             if (json == null) {
                 json = new JsonObject();
                 partialDataMap.put(stat.getType(), json);
             }
-            json.addProperty(getKey(stat).toString(), entry.getFloatValue());
+            json.addProperty(getKey(stat).toString(), entry.getShortValue());
         }
         JsonObject partialData = new JsonObject();
         for (Reference2ObjectMap.Entry<StatType<?>, JsonObject> entry : partialDataMap.reference2ObjectEntrySet()) {
