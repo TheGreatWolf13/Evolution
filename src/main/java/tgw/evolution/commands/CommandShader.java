@@ -25,6 +25,7 @@ public final class CommandShader implements Command<CommandSourceStack> {
                                     .requires(cs -> cs.getEntity() instanceof Player && cs.hasPermission(2))
                                     .executes(CMD)
                                     .then(Commands.literal("toggle").executes(CMD))
+                                    .then(Commands.literal("cycle").executes(CMD))
                                     .then(Commands.argument("shaderId", SHADER).executes(CMD)));
     }
 
@@ -40,6 +41,10 @@ public final class CommandShader implements Command<CommandSourceStack> {
             }
             case "/shader toggle" -> {
                 EvolutionNetwork.send(player, new PacketSCShader(PacketSCShader.TOGGLE));
+                return SINGLE_SUCCESS;
+            }
+            case "/shader cycle" -> {
+                EvolutionNetwork.send(player, new PacketSCShader(PacketSCShader.CYCLE));
                 return SINGLE_SUCCESS;
             }
         }

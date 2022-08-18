@@ -385,9 +385,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         for (; this.options.keyTogglePerspective.consumeClick(); this.levelRenderer.needsUpdate()) {
             CameraType view = this.options.getCameraType();
             this.options.setCameraType(view.cycle());
-//            if (view.isFirstPerson() != this.options.getCameraType().isFirstPerson()) {
-//                this.gameRenderer.checkEntityPostEffect(this.options.getCameraType().isFirstPerson() ? this.getCameraEntity() : null);
-//            }
+            if (view.isFirstPerson() != this.options.getCameraType().isFirstPerson()) {
+                this.gameRenderer.checkEntityPostEffect(this.options.getCameraType().isFirstPerson() ? this.getCameraEntity() : null);
+            }
         }
         while (this.options.keySmoothCamera.consumeClick()) {
             this.options.smoothCamera = !this.options.smoothCamera;

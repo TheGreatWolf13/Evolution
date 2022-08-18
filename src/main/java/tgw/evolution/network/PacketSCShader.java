@@ -11,6 +11,7 @@ public class PacketSCShader implements IPacket {
 
     public static final int TOGGLE = -1;
     public static final int QUERY = -2;
+    public static final int CYCLE = -3;
     private final int shaderId;
 
     public PacketSCShader(int shaderId) {

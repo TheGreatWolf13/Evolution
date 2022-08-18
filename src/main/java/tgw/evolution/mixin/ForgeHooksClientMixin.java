@@ -3,8 +3,12 @@ package tgw.evolution.mixin;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.ForgeHooksClient;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -53,5 +57,22 @@ public abstract class ForgeHooksClientMixin {
             matrices.last().normal().mul(nMat);
         }
         return model;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Shutdown shaders it no shader found
+     */
+    @Overwrite
+    public static void loadEntityShader(Entity entity, GameRenderer gameRenderer) {
+        if (entity != null) {
+            ResourceLocation shader = ClientRegistry.getEntityShader(entity.getClass());
+            if (shader != null) {
+                gameRenderer.loadEffect(shader);
+            }
+            else {
+                gameRenderer.shutdownEffect();
+            }
+        }
     }
 }

@@ -28,6 +28,7 @@ public final class EvolutionTexts {
     public static final Component COMMAND_PAUSE_RESUME_FAIL = transl("command.evolution.pause.resume.fail");
     public static final Component COMMAND_PAUSE_RESUME_INFO = transl("command.evolution.pause.resume.info");
     public static final Component COMMAND_PAUSE_RESUME_SUCCESS = transl("command.evolution.pause.resume.success");
+    public static final Component COMMAND_SHADER_NO_SHADER = transl("command.evolution.shader.noShader");
     public static final Component COMMAND_SHADER_RESET = transl("command.evolution.shader.reset");
     public static final Component COMMAND_SHADER_TOGGLE_OFF = transl("command.evolution.shader.toggleOff");
     public static final Component COMMAND_SHADER_TOGGLE_ON = transl("command.evolution.shader.toggleOn");

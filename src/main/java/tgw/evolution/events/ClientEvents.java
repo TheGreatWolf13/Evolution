@@ -4,6 +4,7 @@ import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.minecraft.ChatFormatting;
@@ -97,18 +98,12 @@ import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.items.*;
 import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.network.*;
-import tgw.evolution.patches.IEntityPatch;
-import tgw.evolution.patches.ILivingEntityPatch;
-import tgw.evolution.patches.IMinecraftPatch;
-import tgw.evolution.patches.IPlayerPatch;
+import tgw.evolution.patches.*;
 import tgw.evolution.stats.EvolutionStatsCounter;
 import tgw.evolution.util.AdvancedEntityRayTraceResult;
 import tgw.evolution.util.HitInformation;
 import tgw.evolution.util.PlayerHelper;
-import tgw.evolution.util.collection.I2OMap;
-import tgw.evolution.util.collection.I2OOpenHashMap;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.*;
 import tgw.evolution.util.constants.OptiFineHelper;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.HitboxType;
@@ -154,6 +149,9 @@ public class ClientEvents {
     private static double accumulatedScrollDelta;
     private static boolean canDoLMBDrag;
     private static boolean canDoRMBDrag;
+    private final ISet currentShaders = new IOpenHashSet();
+    private final ISet desiredShaders = new IOpenHashSet();
+    private final ISet forcedShaders = new IOpenHashSet();
     private final Minecraft mc;
     private final ClientRenderer renderer;
     public int effectToAddTicks;
@@ -169,8 +167,6 @@ public class ClientEvents {
     private int cameraId = -1;
     private Vec3 cameraPos = Vec3.ZERO;
     private boolean crawlToggle;
-    private int currentShader;
-    private int desiredShader;
     private DimensionOverworld dimension;
     private boolean initialized;
     private boolean inverted;
@@ -178,7 +174,6 @@ public class ClientEvents {
     private boolean isPreviousProned;
     private boolean isSneakPressed;
     private boolean lunging;
-    private CameraType previousCameraType;
     private boolean previousPressed;
     private boolean sneakpreviousPressed;
     private int ticks;
@@ -389,6 +384,9 @@ public class ClientEvents {
         MAINHAND_HITS.clearMemory();
         BELT_ITEMS.reset();
         BACK_ITEMS.reset();
+        this.desiredShaders.reset();
+        this.currentShaders.reset();
+        this.forcedShaders.reset();
         if (this.mc.level == null) {
             this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
             if (((IMinecraftPatch) this.mc).isMultiplayerPaused()) {
@@ -531,7 +529,15 @@ public class ClientEvents {
     public void handleShaderPacket(int shaderId) {
         switch (shaderId) {
             case PacketSCShader.QUERY -> {
-                this.mc.player.displayClientMessage(new TranslatableComponent("command.evolution.shader.query", this.currentShader), false);
+                Component message = this.currentShaders.isEmpty() ?
+                                    EvolutionTexts.COMMAND_SHADER_NO_SHADER :
+                                    new TranslatableComponent("command.evolution.shader.query", this.currentShaders.stream()
+                                                                                                                   .sorted(Integer::compareTo)
+                                                                                                                   .map(String::valueOf)
+                                                                                                                   .collect(
+                                                                                                                           Collectors.joining(
+                                                                                                                                   ", ")));
+                this.mc.player.displayClientMessage(message, false);
                 return;
             }
             case PacketSCShader.TOGGLE -> {
@@ -544,15 +550,19 @@ public class ClientEvents {
                 }
                 return;
             }
+            case PacketSCShader.CYCLE -> {
+                this.mc.gameRenderer.cycleEffect();
+                return;
+            }
             case 0 -> {
                 this.mc.player.displayClientMessage(EvolutionTexts.COMMAND_SHADER_RESET, false);
-                this.desiredShader = 0;
+                this.forcedShaders.clear();
                 return;
             }
         }
         if (this.hasShader(shaderId)) {
             this.mc.player.displayClientMessage(new TranslatableComponent("command.evolution.shader.success", shaderId), false);
-            this.desiredShader = shaderId;
+            this.forcedShaders.add(shaderId);
         }
         else {
             this.mc.player.displayClientMessage(new TranslatableComponent("command.evolution.shader.fail", shaderId).withStyle(ChatFormatting.RED),
@@ -661,52 +671,51 @@ public class ClientEvents {
             }
             //Apply shaders
             this.mc.getProfiler().popPush("shaders");
-            int shader = 0;
+            this.desiredShaders.clear();
             if (this.mc.options.getCameraType() == CameraType.FIRST_PERSON &&
                 !this.mc.player.isCreative() &&
                 !this.mc.player.isSpectator() &&
                 this.mc.player.equals(this.mc.getCameraEntity())) {
                 float health = this.mc.player.getHealth();
                 if (health <= 12.5f) {
-                    shader = 25;
+                    this.desiredShaders.add(25);
                 }
                 else if (health <= 25) {
-                    shader = 50;
+                    this.desiredShaders.add(50);
                 }
                 else if (health <= 50) {
-                    shader = 75;
+                    this.desiredShaders.add(75);
                 }
             }
-            if (this.desiredShader == 0) {
-                if (shader != this.currentShader) {
-                    this.currentShader = shader;
-                    if (shader == 0) {
-                        this.mc.gameRenderer.shutdownEffect();
-                    }
-                    else {
-                        ResourceLocation shaderLoc = this.getShader(shader);
-                        if (shaderLoc != null) {
-                            this.mc.gameRenderer.loadEffect(shaderLoc);
-                        }
-                        else {
-                            Evolution.warn("Unregistered shader id: {}", shader);
-                        }
-                    }
+            this.desiredShaders.addAll(this.forcedShaders);
+            if (this.desiredShaders.isEmpty()) {
+                if (!this.currentShaders.isEmpty()) {
+                    this.currentShaders.clear();
+                    ((IGameRendererPatch) this.mc.gameRenderer).shutdownAllShaders();
                 }
             }
             else {
-                if (this.mc.options.getCameraType() != this.previousCameraType) {
-                    this.previousCameraType = this.mc.options.getCameraType();
-                    this.currentShader = 0;
-                }
-                if (this.desiredShader != this.currentShader) {
-                    this.currentShader = this.desiredShader;
-                    ResourceLocation shaderLoc = this.getShader(this.desiredShader);
-                    if (shaderLoc != null) {
-                        this.mc.gameRenderer.loadEffect(shaderLoc);
+                if (!this.desiredShaders.containsAll(this.currentShaders)) {
+                    for (IntIterator it = this.currentShaders.intIterator(); it.hasNext(); ) {
+                        int shader = it.nextInt();
+                        if (!this.desiredShaders.contains(shader)) {
+                            it.remove();
+                            ((IGameRendererPatch) this.mc.gameRenderer).shutdownShader(shader);
+                        }
                     }
-                    else {
-                        Evolution.warn("Unregistered shader id: {}", this.desiredShader);
+                }
+                if (!this.currentShaders.containsAll(this.desiredShaders)) {
+                    for (IntIterator it = this.desiredShaders.intIterator(); it.hasNext(); ) {
+                        int shader = it.nextInt();
+                        if (this.currentShaders.add(shader)) {
+                            ResourceLocation shaderLoc = this.getShader(shader);
+                            if (shaderLoc != null) {
+                                ((IGameRendererPatch) this.mc.gameRenderer).loadShader(shader, shaderLoc);
+                            }
+                            else {
+                                Evolution.warn("Unregistered shader id: {}", shader);
+                            }
+                        }
                     }
                 }
             }

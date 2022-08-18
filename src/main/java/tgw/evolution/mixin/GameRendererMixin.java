@@ -1,5 +1,6 @@
 package tgw.evolution.mixin;
 
+import com.google.gson.JsonSyntaxException;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -14,6 +15,7 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.client.renderer.RenderBuffers;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
@@ -24,6 +26,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.common.ForgeMod;
+import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11C;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.*;
@@ -32,17 +35,30 @@ import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.items.IOffhandAttackable;
+import tgw.evolution.patches.IGameRendererPatch;
+import tgw.evolution.util.collection.I2OMap;
+import tgw.evolution.util.collection.I2OOpenHashMap;
 import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.Locale;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(GameRenderer.class)
-public abstract class GameRendererMixin {
+public abstract class GameRendererMixin implements IGameRendererPatch {
 
     @Shadow
+    @Final
+    public static int EFFECT_NONE;
+    @Shadow
+    @Final
+    private static Logger LOGGER;
+    private final I2OMap<PostChain> postEffects = new I2OOpenHashMap<>();
+    @Shadow
     private boolean effectActive;
+    @Shadow
+    private int effectIndex;
     @Shadow
     private long lastActiveTime;
     @Mutable
@@ -55,6 +71,52 @@ public abstract class GameRendererMixin {
     @Shadow
     @Nullable
     private PostChain postEffect;
+    @Shadow
+    @Final
+    private ResourceManager resourceManager;
+
+    /**
+     * @author TheGreatWolf
+     * @reason Remove {@code this.effectActive = false} when the shader fails to load, preventing other shaders from being unloaded.
+     */
+    @Overwrite
+    public void loadEffect(ResourceLocation resLoc) {
+        if (this.postEffect != null) {
+            this.postEffect.close();
+        }
+        try {
+            this.postEffect = new PostChain(this.minecraft.getTextureManager(), this.resourceManager, this.minecraft.getMainRenderTarget(), resLoc);
+            this.postEffect.resize(this.minecraft.getWindow().getWidth(), this.minecraft.getWindow().getHeight());
+            this.effectActive = true;
+        }
+        catch (IOException e) {
+            LOGGER.warn("Failed to load shader: {}", resLoc, e);
+            this.effectIndex = EFFECT_NONE;
+        }
+        catch (JsonSyntaxException e) {
+            LOGGER.warn("Failed to parse shader: {}", resLoc, e);
+            this.effectIndex = EFFECT_NONE;
+        }
+    }
+
+    @Override
+    public void loadShader(int shaderId, ResourceLocation resLoc) {
+        if (!this.postEffects.containsKey(shaderId)) {
+            try {
+                PostChain shader = new PostChain(this.minecraft.getTextureManager(), this.resourceManager, this.minecraft.getMainRenderTarget(),
+                                                 resLoc);
+                shader.resize(this.minecraft.getWindow().getWidth(), this.minecraft.getWindow().getHeight());
+                this.effectActive = true;
+                this.postEffects.put(shaderId, shader);
+            }
+            catch (IOException e) {
+                LOGGER.warn("Failed to load shader: {}", resLoc, e);
+            }
+            catch (JsonSyntaxException e) {
+                LOGGER.warn("Failed to parse shader: {}", resLoc, e);
+            }
+        }
+    }
 
     /**
      * Modify the near clipping plane to improve first person camera.
@@ -156,12 +218,21 @@ public abstract class GameRendererMixin {
                 this.renderLevel(partialTicks, nanoTime, new PoseStack());
                 this.tryTakeScreenshotIfNeeded();
                 this.minecraft.levelRenderer.doEntityOutline();
-                if (this.postEffect != null && this.effectActive) {
-                    RenderSystem.disableBlend();
-                    RenderSystem.disableDepthTest();
-                    RenderSystem.enableTexture();
-                    RenderSystem.resetTextureMatrix();
-                    this.postEffect.process(partialTicks);
+                if (this.effectActive) {
+                    if (this.postEffect != null) {
+                        RenderSystem.disableBlend();
+                        RenderSystem.disableDepthTest();
+                        RenderSystem.enableTexture();
+                        RenderSystem.resetTextureMatrix();
+                        this.postEffect.process(partialTicks);
+                    }
+                    for (PostChain effect : this.postEffects.values()) {
+                        RenderSystem.disableBlend();
+                        RenderSystem.disableDepthTest();
+                        RenderSystem.enableTexture();
+                        RenderSystem.resetTextureMatrix();
+                        effect.process(partialTicks);
+                    }
                 }
                 this.minecraft.getMainRenderTarget().bindWrite(true);
             }
@@ -249,6 +320,22 @@ public abstract class GameRendererMixin {
 
     @Shadow
     public abstract void renderLevel(float pPartialTicks, long pFinishTimeNano, PoseStack pMatrixStack);
+
+    @Override
+    public void shutdownAllShaders() {
+        for (PostChain effect : this.postEffects.values()) {
+            effect.close();
+        }
+        this.postEffects.clear();
+    }
+
+    @Override
+    public void shutdownShader(int shaderId) {
+        PostChain shader = this.postEffects.remove(shaderId);
+        if (shader != null) {
+            shader.close();
+        }
+    }
 
     @Shadow
     protected abstract void tryTakeScreenshotIfNeeded();
