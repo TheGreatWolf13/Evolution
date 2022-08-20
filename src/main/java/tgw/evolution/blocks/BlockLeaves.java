@@ -1,5 +1,6 @@
 package tgw.evolution.blocks;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -207,6 +208,14 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
             dropResources(state, level, pos);
             level.removeBlock(pos, false);
         }
+    }
+
+    @Override
+    public boolean skipRendering(BlockState state, BlockState adjacentState, Direction direction) {
+        if (!Minecraft.useFancyGraphics()) {
+            return adjacentState.getBlock() instanceof BlockLeaves;
+        }
+        return super.skipRendering(state, adjacentState, direction);
     }
 
     @Override
