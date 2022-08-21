@@ -21,6 +21,8 @@ import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.TEFirewoodPile;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.util.collection.BArrayList;
+import tgw.evolution.util.collection.BList;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -37,7 +39,7 @@ public class BakedModelFirewoodPile implements BakedModel {
 
     static {
         Arrays.fill(EMPTY_FIREWOOD, (byte) -1);
-        List<Byte> numbers = new ArrayList<>();
+        BList numbers = new BArrayList();
         for (byte i = 0; i < 16; i++) {
             numbers.add(i);
         }

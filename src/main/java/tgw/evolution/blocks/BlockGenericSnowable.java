@@ -15,9 +15,9 @@ import javax.annotation.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.SNOWY;
 
-public abstract class BlockGenericSlowable extends BlockGravity implements ICollisionBlock {
+public abstract class BlockGenericSnowable extends BlockGravity implements ICollisionBlock {
 
-    protected BlockGenericSlowable(Block.Properties builder, int mass) {
+    protected BlockGenericSnowable(Block.Properties builder, int mass) {
         super(builder, mass);
         this.registerDefaultState(this.defaultBlockState().setValue(SNOWY, false));
     }

@@ -1,6 +1,5 @@
 package tgw.evolution.mixin;
 
-import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.WeightedBakedModel;
 import net.minecraft.util.random.WeightedEntry;
@@ -12,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import tgw.evolution.util.collection.RArrayList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +33,6 @@ public abstract class WeightedBakedModel_Builder {
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void onConstructor(CallbackInfo ci) {
-        this.list = new ReferenceArrayList<>();
+        this.list = new RArrayList<>();
     }
 }

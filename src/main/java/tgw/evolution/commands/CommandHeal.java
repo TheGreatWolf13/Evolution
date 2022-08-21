@@ -14,7 +14,6 @@ import tgw.evolution.capabilities.thirst.CapabilityThirst;
 import tgw.evolution.capabilities.thirst.IThirst;
 import tgw.evolution.capabilities.thirst.ThirstStats;
 import tgw.evolution.init.EvolutionEffects;
-import tgw.evolution.patches.IEffectInstancePatch;
 
 public final class CommandHeal implements Command<CommandSourceStack> {
 
@@ -37,8 +36,8 @@ public final class CommandHeal implements Command<CommandSourceStack> {
         thirst.setHydrationLevel(0);
         hunger.setHungerLevel(HungerStats.HUNGER_CAPACITY);
         hunger.setSaturationLevel(0);
-        player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.HYDRATION.get(), 99, false, false, true));
-        player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.SATURATION.get(), 99, false, false, true));
+        player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.HYDRATION.get(), 99, false, false, true));
+        player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.SATURATION.get(), 99, false, false, true));
         return SINGLE_SUCCESS;
     }
 }

@@ -4,8 +4,6 @@ import com.mojang.blaze3d.platform.GlUtil;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.longs.LongSets;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.ClientBrandRetriever;
@@ -44,6 +42,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.util.AllocationRateCalculator;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.math.Metric;
 
 import javax.annotation.Nullable;
@@ -57,10 +57,10 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
     @Final
     private static Map<Heightmap.Types, String> HEIGHTMAP_NAMES;
     private final AllocationRateCalculator allocationRateCalculator = new AllocationRateCalculator();
-    private final ObjectList<String> gameInfo = new ObjectArrayList<>();
+    private final OList<String> gameInfo = new OArrayList<>();
     private final Heightmap.Types[] heightmapTypes = Heightmap.Types.values();
     private final MobCategory[] mobCategories = MobCategory.values();
-    private final ObjectList<String> systemInfo = new ObjectArrayList<>();
+    private final OList<String> systemInfo = new OArrayList<>();
     @Shadow
     protected HitResult block;
     @Shadow

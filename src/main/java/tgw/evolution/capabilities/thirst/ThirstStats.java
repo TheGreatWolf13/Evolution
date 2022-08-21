@@ -3,11 +3,10 @@ package tgw.evolution.capabilities.thirst;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
-import net.minecraft.world.effect.MobEffectInstance;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCThirstData;
-import tgw.evolution.patches.IEffectInstancePatch;
+import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.time.Time;
 
@@ -253,33 +252,24 @@ public class ThirstStats implements IThirst {
             if (player.isSprinting()) {
                 modifier += 0.15f;
             }
-            if (player.hasEffect(EvolutionEffects.SWEATING.get())) {
-                modifier += 0.15f;
-            }
             if (this.hydrationLevel > 0) {
                 modifier -= 0.15f;
             }
-            float thirstEffectModifier = 0.0f;
-            if (player.hasEffect(EvolutionEffects.THIRST.get())) {
-                MobEffectInstance effect = player.getEffect(EvolutionEffects.THIRST.get());
-                if (effect.getDuration() > 0) {
-                    thirstEffectModifier = 0.1f * (effect.getAmplifier() + 1);
-                }
-            }
+            modifier += ((ILivingEntityPatch) player).getEffectHelper().getThirstMod();
             if (this.thirstLevel <= 0 && !this.isExtremelyDehydrated()) {
                 this.setDehydrated(true);
                 this.setVeryDehydrated(true);
                 this.setExtremelyDehydrated(true);
-                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.DEHYDRATION.get(), 2, false, false, true));
+                player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.DEHYDRATION.get(), 2, false, false, true));
             }
             else if (this.thirstLevel <= 0.1 * THIRST_CAPACITY && !this.isVeryDehydrated()) {
                 this.setDehydrated(true);
                 this.setVeryDehydrated(true);
-                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.DEHYDRATION.get(), 1, false, false, true));
+                player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.DEHYDRATION.get(), 1, false, false, true));
             }
             else if (this.thirstLevel <= 0.25 * THIRST_CAPACITY && !this.isDehydrated()) {
                 this.setDehydrated(true);
-                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.DEHYDRATION.get(), 0, false, false, true));
+                player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.DEHYDRATION.get(), 0, false, false, true));
             }
             else if (this.thirstLevel > 0.25 * THIRST_CAPACITY && this.isDehydrated()) {
                 this.setDehydrated(false);
@@ -291,16 +281,16 @@ public class ThirstStats implements IThirst {
                 this.setExtremelyIntoxicated(true);
                 this.setVeryIntoxicated(true);
                 this.setIntoxicated(true);
-                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.WATER_INTOXICATION.get(), 2, false, false, true));
+                player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.WATER_INTOXICATION.get(), 2, false, false, true));
             }
             else if (this.hydrationLevel >= INTOXICATION_II && !this.isVeryIntoxicated()) {
                 this.setVeryIntoxicated(true);
                 this.setIntoxicated(true);
-                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.WATER_INTOXICATION.get(), 1, false, false, true));
+                player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.WATER_INTOXICATION.get(), 1, false, false, true));
             }
             else if (this.hydrationLevel >= INTOXICATION && !this.isIntoxicated()) {
                 this.setIntoxicated(true);
-                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.WATER_INTOXICATION.get(), 0, false, false, true));
+                player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.WATER_INTOXICATION.get(), 0, false, false, true));
             }
             else if (this.hydrationLevel <= 0 && this.isIntoxicated()) {
                 this.setIntoxicated(false);
@@ -308,7 +298,7 @@ public class ThirstStats implements IThirst {
                 this.setExtremelyIntoxicated(false);
                 player.removeEffect(EvolutionEffects.WATER_INTOXICATION.get());
             }
-            this.addThirstExhaustion(DAILY_CONSUMPTION / Time.DAY_IN_TICKS * (1.0f + modifier + thirstEffectModifier));
+            this.addThirstExhaustion(DAILY_CONSUMPTION / Time.DAY_IN_TICKS * (1.0f + modifier));
             this.addHydrationExhaustion(0.9f);
         }
         else {

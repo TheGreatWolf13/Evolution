@@ -19,8 +19,9 @@ import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.ArrayUtils;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,7 +29,7 @@ import java.util.List;
 public class ListKeyBinds extends KeyBindsList {
     private final KeyBindsScreen keyBindsScreen;
     private final Component textReset = new TranslatableComponent("evolution.gui.controls.reset");
-    public List<Entry> allEntries;
+    public OList<Entry> allEntries;
     private int maxNameWidth;
 
     public ListKeyBinds(KeyBindsScreen screen, Minecraft mc) {
@@ -40,7 +41,7 @@ public class ListKeyBinds extends KeyBindsList {
         this.x1 = screen.width + 45;
         this.keyBindsScreen = screen;
         this.children().clear();
-        this.allEntries = new ArrayList<>();
+        this.allEntries = new OArrayList<>();
         KeyMapping[] keyMappings = ArrayUtils.clone(mc.options.keyMappings);
         Arrays.sort(keyMappings);
         String s = null;

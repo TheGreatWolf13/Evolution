@@ -6,14 +6,13 @@ import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.client.gui.components.toasts.ToastComponent;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.toast.ToastHolder;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public abstract class ToastGeneric<T extends ToastHolder> implements Toast {
 
-    private final List<T> toasts = new ArrayList<>();
+    private final OList<T> toasts = new OArrayList<>();
     private boolean changed;
     private long lastChanged;
 

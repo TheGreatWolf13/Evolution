@@ -4,7 +4,6 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Table;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.ClientRecipeBook;
 import net.minecraft.client.RecipeBookCategories;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
@@ -16,6 +15,7 @@ import tgw.evolution.items.IAdditionalEquipment;
 import tgw.evolution.items.IItemFluidContainer;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.items.ItemBlock;
+import tgw.evolution.util.collection.OArrayList;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 
 public class EvolutionRecipeBook extends ClientRecipeBook {
 
-    private List<RecipeCollection> allCollections = new ObjectArrayList<>();
+    private List<RecipeCollection> allCollections = new OArrayList<>();
     private Map<RecipeBookCategories, List<RecipeCollection>> collectionsByTab = new EnumMap<>(RecipeBookCategories.class);
 
     private static Map<RecipeBookCategories, List<List<Recipe<?>>>> categorizeAndGroupRecipes(Iterable<Recipe<?>> recipes) {
@@ -38,7 +38,7 @@ public class EvolutionRecipeBook extends ClientRecipeBook {
                 if (group.isEmpty()) {
                     List<List<Recipe<?>>> lists = recipeLists.get(category);
                     if (lists == null) {
-                        lists = new ObjectArrayList<>();
+                        lists = new OArrayList<>();
                         recipeLists.put(category, lists);
                     }
                     lists.add(ImmutableList.of(recipe));
@@ -46,11 +46,11 @@ public class EvolutionRecipeBook extends ClientRecipeBook {
                 else {
                     List<Recipe<?>> recipeList = table.get(category, group);
                     if (recipeList == null) {
-                        recipeList = new ObjectArrayList<>();
+                        recipeList = new OArrayList<>();
                         table.put(category, group, recipeList);
                         List<List<Recipe<?>>> lists = recipeLists.get(category);
                         if (lists == null) {
-                            lists = new ObjectArrayList<>();
+                            lists = new OArrayList<>();
                             recipeLists.put(category, lists);
                         }
                         lists.add(recipeList);

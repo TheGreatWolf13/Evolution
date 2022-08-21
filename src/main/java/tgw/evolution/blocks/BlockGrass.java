@@ -30,7 +30,7 @@ import java.util.Random;
 
 import static tgw.evolution.init.EvolutionBStates.*;
 
-public class BlockGrass extends BlockGenericSlowable implements IRockVariant {
+public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
 
     private final RockVariant variant;
 
@@ -140,7 +140,7 @@ public class BlockGrass extends BlockGenericSlowable implements IRockVariant {
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
         if (!level.isClientSide) {
-            if (!level.isAreaLoaded(pos, 3)) {
+            if (!BlockUtils.isAreaLoaded(level, pos, 3)) {
                 return;
             }
             if (random.nextInt(4) == 0) {

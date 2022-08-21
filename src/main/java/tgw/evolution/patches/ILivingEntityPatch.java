@@ -1,10 +1,15 @@
 package tgw.evolution.patches;
 
+import tgw.evolution.entities.EffectHelper;
 import tgw.evolution.items.ISpecialAttack;
 
 import javax.annotation.Nullable;
 
 public interface ILivingEntityPatch {
+
+    void addAbsorptionSuggestion(float amount);
+
+    EffectHelper getEffectHelper();
 
     /**
      * @return The progress, from {@code 0.0f} to {@code 1.0f} of the mainhand special attack, given interpolation ticks.
@@ -62,6 +67,8 @@ public interface ILivingEntityPatch {
      * @return Whether the offhand special attack is in progress, has NOT been canceled and is NOT on cooldown.
      */
     boolean isOffhandSpecialAttacking();
+
+    void removeAbsorptionSuggestion(float amount);
 
     /**
      * @return Whether the mainhand special attack should be rendered by clients.

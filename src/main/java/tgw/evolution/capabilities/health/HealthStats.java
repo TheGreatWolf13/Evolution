@@ -2,10 +2,8 @@ package tgw.evolution.capabilities.health;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.GameRules;
-import tgw.evolution.init.EvolutionEffects;
+import tgw.evolution.patches.ILivingEntityPatch;
 
 public class HealthStats implements IHealth {
 
@@ -17,10 +15,7 @@ public class HealthStats implements IHealth {
         if (!player.level.getGameRules().getBoolean(GameRules.RULE_NATURAL_REGENERATION)) {
             return false;
         }
-        if (player.hasEffect(EvolutionEffects.STARVATION.get())) {
-            return false;
-        }
-        return !player.hasEffect(EvolutionEffects.DEHYDRATION.get());
+        return ((ILivingEntityPatch) player).getEffectHelper().canRegen();
     }
 
     @Override
@@ -28,22 +23,9 @@ public class HealthStats implements IHealth {
         this.tick = nbt.getByte("Tick");
     }
 
-    public void forcedRegen(ServerPlayer player) {
-        if (player.hasEffect(MobEffects.REGENERATION)) {
-            MobEffectInstance regenInstance = player.getEffect(MobEffects.REGENERATION);
-            int timer = 50 >> regenInstance.getAmplifier();
-            if (timer < 1) {
-                timer = 1;
-            }
-            if (regenInstance.getDuration() % timer == 0) {
-                player.setHealth(player.getHealth() + 1);
-            }
-        }
-    }
-
     public void naturalRegen(ServerPlayer player) {
         float currentHealth = player.getHealth();
-        player.setHealth(currentHealth + REGEN_FACTOR * currentHealth);
+        player.heal(REGEN_FACTOR * currentHealth);
     }
 
     public void resetTick() {
@@ -71,9 +53,6 @@ public class HealthStats implements IHealth {
                     this.naturalRegen(player);
                     this.resetTick();
                 }
-            }
-            if (player.isHurt()) {
-                this.forcedRegen(player);
             }
         }
         else {

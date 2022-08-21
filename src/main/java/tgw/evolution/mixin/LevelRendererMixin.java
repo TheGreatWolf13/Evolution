@@ -12,7 +12,6 @@ import com.mojang.math.Vector3f;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectListIterator;
-import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import net.minecraft.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CloudStatus;
@@ -51,6 +50,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ClientEvents;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.math.VectorUtil;
 
 import javax.annotation.Nullable;
@@ -72,6 +73,7 @@ public abstract class LevelRendererMixin {
     @Final
     private static double CEILED_SECTION_DIAGONAL;
     private final BlockPos.MutableBlockPos destructionPos = new BlockPos.MutableBlockPos();
+    private final OList<ChunkRenderDispatcher.RenderChunk> renderChunks = new OArrayList<>();
     @Shadow
     @Final
     private BlockEntityRenderDispatcher blockEntityRenderDispatcher;
@@ -218,9 +220,9 @@ public abstract class LevelRendererMixin {
         RenderRegionCache renderRegionCache = new RenderRegionCache();
         BlockPos cameraPos = camera.getBlockPosition();
         //Use faster list
-        List<ChunkRenderDispatcher.RenderChunk> list = new ReferenceArrayList<>();
-        for (LevelRenderer.RenderChunkInfo renderChunkInfo : this.renderChunksInFrustum) {
-            ChunkRenderDispatcher.RenderChunk renderChunk = renderChunkInfo.chunk;
+        this.renderChunks.clear();
+        for (int i = 0, l = this.renderChunksInFrustum.size(); i < l; i++) {
+            ChunkRenderDispatcher.RenderChunk renderChunk = this.renderChunksInFrustum.get(i).chunk;
             //Avoid allocating a new ChunkPos just to use its coordinates
             int chunkX = SectionPos.blockToSectionCoord(renderChunk.getOrigin().getX());
             int chunkZ = SectionPos.blockToSectionCoord(renderChunk.getOrigin().getZ());
@@ -247,14 +249,15 @@ public abstract class LevelRendererMixin {
                     this.minecraft.getProfiler().pop();
                 }
                 else {
-                    list.add(renderChunk);
+                    this.renderChunks.add(renderChunk);
                 }
             }
         }
         this.minecraft.getProfiler().popPush("upload");
         this.chunkRenderDispatcher.uploadAllPendingUploads();
         this.minecraft.getProfiler().popPush("schedule_async_compile");
-        for (ChunkRenderDispatcher.RenderChunk renderChunk : list) {
+        for (int i = 0, l = this.renderChunks.size(); i < l; i++) {
+            ChunkRenderDispatcher.RenderChunk renderChunk = this.renderChunks.get(i);
             renderChunk.rebuildChunkAsync(this.chunkRenderDispatcher, renderRegionCache);
             renderChunk.setNotDirty();
         }
@@ -291,9 +294,9 @@ public abstract class LevelRendererMixin {
                 this.yTransparentOld = camY;
                 this.zTransparentOld = camZ;
                 int j = 0;
-                for (LevelRenderer.RenderChunkInfo renderChunkInfo : this.renderChunksInFrustum) {
-                    if (j < 15 && renderChunkInfo.chunk.resortTransparency(renderType, this.chunkRenderDispatcher)) {
-                        ++j;
+                for (int i = 0, l = this.renderChunksInFrustum.size(); i < l; i++) {
+                    if (j < 15 && this.renderChunksInFrustum.get(i).chunk.resortTransparency(renderType, this.chunkRenderDispatcher)) {
+                        j++;
                     }
                 }
             }
@@ -302,8 +305,7 @@ public abstract class LevelRendererMixin {
         this.minecraft.getProfiler().push("filterempty");
         this.minecraft.getProfiler().popPush(() -> "render_" + renderType);
         boolean flag = renderType != RenderType.translucent();
-        ObjectListIterator<LevelRenderer.RenderChunkInfo> objectlistiterator = this.renderChunksInFrustum.listIterator(
-                flag ? 0 : this.renderChunksInFrustum.size());
+        ObjectListIterator<LevelRenderer.RenderChunkInfo> it = this.renderChunksInFrustum.listIterator(flag ? 0 : this.renderChunksInFrustum.size());
         VertexFormat vertexformat = renderType.format();
         ShaderInstance shaderinstance = RenderSystem.getShader();
         BufferUploader.reset();
@@ -342,14 +344,14 @@ public abstract class LevelRendererMixin {
         boolean flag1 = false;
         while (true) {
             if (flag) {
-                if (!objectlistiterator.hasNext()) {
+                if (!it.hasNext()) {
                     break;
                 }
             }
-            else if (!objectlistiterator.hasPrevious()) {
+            else if (!it.hasPrevious()) {
                 break;
             }
-            LevelRenderer.RenderChunkInfo renderChunkInfo = flag ? objectlistiterator.next() : objectlistiterator.previous();
+            LevelRenderer.RenderChunkInfo renderChunkInfo = flag ? it.next() : it.previous();
             ChunkRenderDispatcher.RenderChunk chunk = renderChunkInfo.chunk;
             if (!chunk.getCompiledChunk().isEmpty(renderType)) {
                 VertexBuffer vertexbuffer = chunk.getBuffer(renderType);
@@ -552,8 +554,8 @@ public abstract class LevelRendererMixin {
         buffer.endBatch(RenderType.entityCutoutNoCull(TextureAtlas.LOCATION_BLOCKS));
         buffer.endBatch(RenderType.entitySmoothCutout(TextureAtlas.LOCATION_BLOCKS));
         profiler.popPush("blockentities");
-        for (LevelRenderer.RenderChunkInfo renderChunkInfo : this.renderChunksInFrustum) {
-            List<BlockEntity> blockEntities = renderChunkInfo.chunk.getCompiledChunk().getRenderableBlockEntities();
+        for (int i = 0, l = this.renderChunksInFrustum.size(); i < l; i++) {
+            List<BlockEntity> blockEntities = this.renderChunksInFrustum.get(i).chunk.getCompiledChunk().getRenderableBlockEntities();
             if (!blockEntities.isEmpty()) {
                 for (BlockEntity blockEntity : blockEntities) {
                     if (!frustum.isVisible(blockEntity.getRenderBoundingBox())) {

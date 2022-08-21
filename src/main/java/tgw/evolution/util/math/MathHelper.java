@@ -49,7 +49,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -992,19 +991,6 @@ public final class MathHelper {
         return entity.isPassenger() && entity.getVehicle() != null && entity.getVehicle().shouldRiderSit();
     }
 
-    /**
-     * Iterates through a {@link List} in reverse order.
-     *
-     * @param list     The {@link List} to iterate.
-     * @param consumer The action to perform with the parameter.
-     * @param <T>      The Type parameter of the {@link List}
-     */
-    public static <T> void iterateReverse(@Nonnull List<T> list, Consumer<T> consumer) {
-        for (int i = list.size() - 1; i >= 0; i--) {
-            consumer.accept(list.get(i));
-        }
-    }
-
     public static float lerpAngles(float partialTicks, float prevAngle, float angle) {
         return prevAngle + partialTicks * Mth.wrapDegrees(angle - prevAngle);
     }
@@ -1317,7 +1303,8 @@ public final class MathHelper {
         look = mainTransform.transform(look);
         mainTransform.transpose();
         Vec3 result = null;
-        for (Hitbox box : hitbox.getBoxes()) {
+        for (int i = 0, l = hitbox.getBoxes().size(); i < l; i++) {
+            Hitbox box = hitbox.getBoxes().get(i);
             Vec3 newFrom = from;
             Vec3 newLook = look;
             Vec3 offset = box.getOffset();

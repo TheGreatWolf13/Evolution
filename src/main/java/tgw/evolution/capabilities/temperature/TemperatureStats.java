@@ -6,7 +6,7 @@ import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCTemperatureData;
-import tgw.evolution.patches.IEffectInstancePatch;
+import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.Temperature;
 import tgw.evolution.util.earth.ClimateZone;
 import tgw.evolution.util.math.MathHelper;
@@ -60,6 +60,7 @@ public class TemperatureStats implements ITemperature {
         //Temperature will fluctuate above y=80 and below y=60
         //Temperature at 1 km is -56.5ºC
         //Temperature at y = 0 is 13ºC
+        //Temperature at y = -64 is 1ºC
         double y = player.getY();
         if (60 < y && y < 80) {
             return baseTemp;
@@ -70,10 +71,13 @@ public class TemperatureStats implements ITemperature {
         if (y >= 80) {
             return (-113 / 1_840.0 - baseTemp / 920.0) * y + 113 / 23.0 + 25 * baseTemp / 23.0;
         }
-        if (y < 0) {
-            return 13;
+        if (y < -64) {
+            return 1;
         }
-        return (baseTemp - 13) / 60 * y + 13;
+        if (y < 0) {
+            return MathHelper.relativize(y, -64, 0) * 12 + 1;
+        }
+        return MathHelper.relativize(y, 0, 60) * (baseTemp - 13) + 13;
     }
 
     private void calculateZone(ServerPlayer player) {
@@ -237,7 +241,7 @@ public class TemperatureStats implements ITemperature {
                     this.effectTicks += (int) (this.currentTemperature - this.currentMinComfort) / 5;
                     if (this.effectTicks <= -500) {
                         this.effectTicks = -500;
-                        player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.SHIVERING.get(), 0, false, false, true));
+                        player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.SHIVERING.get(), 0, false, false, true));
                         this.setShivering(true);
                     }
                 }
@@ -259,7 +263,7 @@ public class TemperatureStats implements ITemperature {
                     this.effectTicks += (int) (this.currentTemperature - this.currentMaxComfort) / 5;
                     if (this.effectTicks >= 500) {
                         this.effectTicks = 500;
-                        player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.SWEATING.get(), 0, false, false, true));
+                        player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.SWEATING.get(), 0, false, false, true));
                         this.setSweating(true);
                     }
                 }
@@ -298,12 +302,7 @@ public class TemperatureStats implements ITemperature {
         if (player.isSprinting()) {
             this.desiredTemperature += 2;
         }
-        if (player.hasEffect(EvolutionEffects.SHIVERING.get())) {
-            this.desiredTemperature += 2;
-        }
-        if (player.hasEffect(EvolutionEffects.SWEATING.get())) {
-            this.desiredTemperature -= 2;
-        }
+        this.desiredTemperature += ((ILivingEntityPatch) player).getEffectHelper().getTemperatureMod();
         //TODO objects
     }
 }

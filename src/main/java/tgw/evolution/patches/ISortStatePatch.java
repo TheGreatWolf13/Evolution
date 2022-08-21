@@ -1,10 +1,10 @@
 package tgw.evolution.patches;
 
-import it.unimi.dsi.fastutil.floats.FloatList;
+import tgw.evolution.util.collection.FList;
 
 public interface ISortStatePatch {
 
-    FloatList getNewSortingPoints();
+    FList getNewSortingPoints();
 
-    void putNewSortingPoints(FloatList newSortingPoints);
+    void putNewSortingPoints(FList newSortingPoints);
 }

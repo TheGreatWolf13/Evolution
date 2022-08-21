@@ -1,15 +1,17 @@
 package tgw.evolution.client.renderer;
 
-import it.unimi.dsi.fastutil.floats.FloatArrayList;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import tgw.evolution.util.collection.FArrayList;
+import tgw.evolution.util.collection.FList;
+import tgw.evolution.util.collection.IArrayList;
+import tgw.evolution.util.collection.IList;
 
 public final class RenderHelper {
 
     public static final float[] DEF_BRIGHTNESS = {1.0f, 1.0f, 1.0f, 1.0f};
     public static final ThreadLocal<float[]> BRIGHTNESS = ThreadLocal.withInitial(() -> new float[4]);
     public static final ThreadLocal<int[]> LIGHTMAP = ThreadLocal.withInitial(() -> new int[4]);
-    public static final ThreadLocal<IntArrayList> INT_LIST = ThreadLocal.withInitial(IntArrayList::new);
-    public static final ThreadLocal<FloatArrayList> FLOAT_LIST = ThreadLocal.withInitial(FloatArrayList::new);
+    public static final ThreadLocal<IList> INT_LIST = ThreadLocal.withInitial(IArrayList::new);
+    public static final ThreadLocal<FList> FLOAT_LIST = ThreadLocal.withInitial(FArrayList::new);
     public static final String[] SAMPLER_NAMES = {"Sampler0",
                                                   "Sampler1",
                                                   "Sampler2",

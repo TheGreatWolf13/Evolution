@@ -2,6 +2,7 @@ package tgw.evolution.init;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.Util;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.stats.StatFormatter;
@@ -49,7 +50,7 @@ public final class EvolutionStats {
     public static final IEvoStatFormatter DAMAGE = new IEvoStatFormatter() {
         @Override
         public String format(long value) {
-            return Metric.DAMAGE_FORMAT.format(value);
+            return Metric.HP_FORMAT.format(value);
         }
 
         @Override
@@ -106,7 +107,13 @@ public final class EvolutionStats {
     public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_TAKEN_BLOCKED = genDamage("taken_blocked", EvolutionDamage.PLAYER);
     public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_TAKEN_RAW = genDamage("taken_raw", EvolutionDamage.ALL);
     //Deaths
-    public static final Object2ObjectMap<String, ResourceLocation> DEATH_SOURCE = genDeath("death");
+    public static final Object2ObjectMap<String, ResourceLocation> DEATH_SOURCE = Util.make(new Object2ObjectOpenHashMap<>(), m -> {
+        for (String src : EvolutionDamage.ALL_SOURCES) {
+            //noinspection ObjectAllocationInLoop
+            m.put(src, registerCustom("death_" + src, DEFAULT));
+        }
+        m.trim();
+    });
     public static final ResourceLocation DEATHS = registerCustom("death_total", DEFAULT);
     //Distance
     public static final ResourceLocation DISTANCE_CLIMBED = registerCustom("distance_climbed", DISTANCE);
@@ -154,15 +161,6 @@ public final class EvolutionStats {
         for (EvolutionDamage.Type dmgType : types) {
             //noinspection ObjectAllocationInLoop
             map.put(dmgType, registerCustom("damage_" + dmgType.getName() + "_" + pattern, DAMAGE));
-        }
-        return map;
-    }
-
-    private static Object2ObjectMap<String, ResourceLocation> genDeath(String name) {
-        Object2ObjectMap<String, ResourceLocation> map = new Object2ObjectOpenHashMap<>();
-        for (String src : EvolutionDamage.ALL_SOURCES) {
-            //noinspection ObjectAllocationInLoop
-            map.put(src, registerCustom(name + "_" + src, DEFAULT));
         }
         return map;
     }

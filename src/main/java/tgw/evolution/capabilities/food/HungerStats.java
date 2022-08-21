@@ -3,13 +3,11 @@ package tgw.evolution.capabilities.food;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCHungerData;
-import tgw.evolution.patches.IEffectInstancePatch;
+import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IPlayerPatch;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.time.Time;
@@ -170,7 +168,7 @@ public class HungerStats implements IHunger {
     public void setHungerLevel(int hunger) {
         int old = this.hungerLevel;
         this.hungerLevel = MathHelper.clamp(hunger, 0, HUNGER_CAPACITY);
-        if (old != this.hungerLevel) {
+        if (hungerLevel(old) != hungerLevel(this.hungerLevel)) {
             this.needsUpdate = true;
         }
     }
@@ -204,7 +202,7 @@ public class HungerStats implements IHunger {
     public void setSaturationLevel(int saturation) {
         int old = this.saturationLevel;
         this.saturationLevel = MathHelper.clamp(saturation, 0, SATURATION_CAPACITY);
-        if (old != this.saturationLevel) {
+        if (saturationLevel(old) != saturationLevel(this.saturationLevel)) {
             this.needsUpdate = true;
         }
     }
@@ -257,9 +255,7 @@ public class HungerStats implements IHunger {
             if (player.onClimbable()) {
                 modifier += 0.1f;
             }
-            if (player.hasEffect(EvolutionEffects.SHIVERING.get())) {
-                modifier += 0.15f;
-            }
+            modifier += ((ILivingEntityPatch) player).getEffectHelper().getHungerMod();
             double baseMass = player.getAttributeBaseValue(EvolutionAttributes.MASS.get());
             double totalMass = player.getAttributeValue(EvolutionAttributes.MASS.get());
             double equipMass = totalMass - baseMass;
@@ -269,27 +265,20 @@ public class HungerStats implements IHunger {
             if (this.saturationLevel > 0) {
                 modifier -= 0.15f;
             }
-            float hungerEffectModifier = 0.0f;
-            if (player.hasEffect(MobEffects.HUNGER)) {
-                MobEffectInstance effect = player.getEffect(MobEffects.HUNGER);
-                if (effect.getDuration() > 0) {
-                    hungerEffectModifier = 0.1f * (effect.getAmplifier() + 1);
-                }
-            }
             if (this.hungerLevel <= 0 && !this.isStarving()) {
                 this.setHungry(true);
                 this.setVeryHungry(true);
                 this.setStarving(true);
-                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.STARVATION.get(), 2, false, false, true));
+                player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.STARVATION.get(), 2, false, false, true));
             }
             else if (this.hungerLevel <= 0.1 * HUNGER_CAPACITY && !this.isVeryHungry()) {
                 this.setHungry(true);
                 this.setVeryHungry(true);
-                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.STARVATION.get(), 1, false, false, true));
+                player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.STARVATION.get(), 1, false, false, true));
             }
             else if (this.hungerLevel <= 0.25 * HUNGER_CAPACITY && !this.isHungry()) {
                 this.setHungry(true);
-                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.STARVATION.get(), 0, false, false, true));
+                player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.STARVATION.get(), 0, false, false, true));
             }
             else if (this.hungerLevel > 0.25 * HUNGER_CAPACITY && this.isHungry()) {
                 this.setHungry(false);
@@ -301,16 +290,16 @@ public class HungerStats implements IHunger {
                 this.setExtremelyOvereat(true);
                 this.setVeryOvereat(true);
                 this.setOvereat(true);
-                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.OVEREAT.get(), 2, false, false, true));
+                player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.OVEREAT.get(), 2, false, false, true));
             }
             else if (this.saturationLevel >= OVEREAT_II && !this.isVeryOvereat()) {
                 this.setVeryOvereat(true);
                 this.setOvereat(true);
-                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.OVEREAT.get(), 1, false, false, true));
+                player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.OVEREAT.get(), 1, false, false, true));
             }
             else if (this.saturationLevel >= OVEREAT && !this.isOvereat()) {
                 this.setOvereat(true);
-                player.addEffect(IEffectInstancePatch.newInfinite(EvolutionEffects.OVEREAT.get(), 0, false, false, true));
+                player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.OVEREAT.get(), 0, false, false, true));
             }
             else if (this.saturationLevel <= 0 && this.isOvereat()) {
                 this.setOvereat(false);
@@ -318,7 +307,7 @@ public class HungerStats implements IHunger {
                 this.setExtremelyOvereat(false);
                 player.removeEffect(EvolutionEffects.OVEREAT.get());
             }
-            this.addHungerExhaustion(DAILY_CONSUMPTION / Time.DAY_IN_TICKS * (1.0f + modifier + hungerEffectModifier));
+            this.addHungerExhaustion(DAILY_CONSUMPTION / Time.DAY_IN_TICKS * (1.0f + modifier));
             this.addSaturationExhaustion(0.36f);
         }
         else {

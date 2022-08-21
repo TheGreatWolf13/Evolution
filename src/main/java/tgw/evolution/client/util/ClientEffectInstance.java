@@ -2,7 +2,7 @@ package tgw.evolution.client.util;
 
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
-import tgw.evolution.patches.IEffectInstancePatch;
+import tgw.evolution.patches.IMobEffectInstancePatch;
 
 public class ClientEffectInstance implements Comparable<ClientEffectInstance> {
 
@@ -40,9 +40,9 @@ public class ClientEffectInstance implements Comparable<ClientEffectInstance> {
         this.amplifier = instance.getAmplifier();
         this.duration = instance.getDuration();
         this.isAmbient = instance.isAmbient();
-        this.setInfinite(((IEffectInstancePatch) instance).isInfinite());
+        this.setInfinite(((IMobEffectInstancePatch) instance).isInfinite());
         this.isShowIcon = instance.showIcon();
-        this.setHiddenInstance(((IEffectInstancePatch) instance).getHiddenEffect());
+        this.setHiddenInstance(((IMobEffectInstancePatch) instance).getHiddenEffect());
     }
 
     @Override

@@ -14,13 +14,14 @@ import net.minecraftforge.fml.config.ModConfig;
 import org.apache.commons.lang3.tuple.Pair;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketCSSyncServerConfig;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.reflection.FieldHandler;
 import tgw.evolution.util.reflection.FunctionMethodHandler;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -49,7 +50,7 @@ public final class ConfigHelper {
 
     public static List<Pair<ForgeConfigSpec.ConfigValue<?>, ForgeConfigSpec.ValueSpec>> gatherAllConfigValues(UnmodifiableConfig config,
                                                                                                               ForgeConfigSpec spec) {
-        List<Pair<ForgeConfigSpec.ConfigValue<?>, ForgeConfigSpec.ValueSpec>> values = new ArrayList<>();
+        OList<Pair<ForgeConfigSpec.ConfigValue<?>, ForgeConfigSpec.ValueSpec>> values = new OArrayList<>();
         gatherValuesFromConfig(config, spec, values);
         return ImmutableList.copyOf(values);
     }

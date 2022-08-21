@@ -5,11 +5,14 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.items.*;
 import tgw.evolution.util.math.MathHelper;
 
+import static net.minecraft.world.effect.MobEffectCategory.*;
 import static tgw.evolution.init.EvolutionFormatter.*;
 import static tgw.evolution.init.EvolutionStyles.*;
 import static tgw.evolution.util.math.Metric.*;
@@ -69,6 +72,12 @@ public final class EvolutionTexts {
     public static final Component TOOLTIP_CLAY_MOLD = transl("evolution.tooltip.clayMold").setStyle(INFO);
     public static final Component TOOLTIP_CONSUMABLE = transl("evolution.tooltip.consumable").setStyle(LIGHT_GREY);
     public static final Component TOOLTIP_CONTAINER_EMPTY = transl("evolution.tooltip.containerEmpty").setStyle(INFO);
+    public static final Component TOOLTIP_EFFECT_CAUSES = transl("evolution.tooltip.effect.causes").setStyle(LIGHT_GREY);
+    public static final Component TOOLTIP_EFFECT_DISABLE_REGEN = arrow(HARMFUL).append(
+            transl("evolution.tooltip.effect.disableRegen").withStyle(WHITE));
+    public static final Component TOOLTIP_EFFECT_DISABLE_SPRINT = arrow(HARMFUL).append(
+            transl("evolution.tooltip.effect.disableSprint").withStyle(WHITE));
+    public static final Component TOOLTIP_EFFECT_MAY_CAUSE = transl("evolution.tooltip.effect.mayCause").setStyle(LIGHT_GREY);
     public static final Component TOOLTIP_FIREWOOD_PILE = transl("evolution.tooltip.firewoodPile").setStyle(INFO);
     public static final Component TOOLTIP_LUNGE = transl("evolution.tooltip.lunge").setStyle(PROPERTY);
     public static final Component TOOLTIP_MAINHAND = transl("evolution.tooltip.mainhand").setStyle(LIGHT_GREY);
@@ -89,6 +98,10 @@ public final class EvolutionTexts {
     public static final Component TOOLTIP_VERY_EFFICIENT = transl("evolution.tooltip.veryEfficient").setStyle(INFO);
 
     private EvolutionTexts() {
+    }
+
+    private static MutableComponent arrow(MobEffectCategory category) {
+        return new TextComponent(" \u25ba ").withStyle(category == BENEFICIAL ? DARK_GREEN : category == HARMFUL ? RED : YELLOW);
     }
 
     public static Component capacity(IItemFluidContainer container) {
@@ -133,6 +146,92 @@ public final class EvolutionTexts {
 
     public static Component durability(String durability) {
         return new TranslatableComponent("evolution.tooltip.durability", durability).setStyle(DURABILITY);
+    }
+
+    public static Component effect(MobEffectInstance instance) {
+        MutableComponent comp = arrow(instance.getEffect().getCategory()).append(
+                new TranslatableComponent(instance.getEffect().getDescriptionId()).withStyle(WHITE));
+        if (instance.getAmplifier() > 0) {
+            comp.append(new TextComponent(" " + MathHelper.getRomanNumber(instance.getAmplifier() + 1)).withStyle(WHITE));
+        }
+        return comp;
+    }
+
+    public static Component effectAbsorption(float absorption) {
+        return arrow(BENEFICIAL).append(
+                new TranslatableComponent("evolution.tooltip.effect.absorption", HP_FORMAT.format(absorption)).withStyle(WHITE));
+    }
+
+    public static Component effectAttSpeed(float speed) {
+        return arrow(speed > 0 ? BENEFICIAL : HARMFUL).append(
+                new TranslatableComponent("evolution.tooltip.effect.attackSpeed", PERCENT_ONE_PLACE_BONUS.format(speed)).withStyle(WHITE));
+    }
+
+    public static Component effectDmg(float dmg, int tickInterval, boolean isAddition) {
+        return new TranslatableComponent(isAddition ? "evolution.tooltip.effect.damage.addition" : "evolution.tooltip.effect.damage",
+                                         HP_FORMAT.format(dmg), time(tickInterval / 20.0, 1));
+    }
+
+    public static Component effectHealth(float health) {
+        return arrow(health > 0 ? BENEFICIAL : HARMFUL).append(
+                new TranslatableComponent("evolution.tooltip.effect.health", HP_BONUS_FORMAT.format(health)).withStyle(WHITE));
+    }
+
+    public static Component effectHunger(float hunger) {
+        return arrow(HARMFUL).append(new TranslatableComponent("evolution.tooltip.effect.hunger", PERCENT_ONE_PLACE.format(hunger)).withStyle(WHITE));
+    }
+
+    public static Component effectInstaHP(float instaHP) {
+        if (instaHP > 0) {
+            return arrow(BENEFICIAL).append(
+                    new TranslatableComponent("evolution.tooltip.effect.instantHealth", HP_FORMAT.format(instaHP)).withStyle(WHITE));
+        }
+        return arrow(HARMFUL).append(
+                new TranslatableComponent("evolution.tooltip.effect.instantDamage", HP_FORMAT.format(-instaHP)).withStyle(WHITE));
+    }
+
+    public static Component effectJump(float jump) {
+        return arrow(jump > 0 ? BENEFICIAL : HARMFUL).append(
+                new TranslatableComponent("evolution.tooltip.effect.jump", PERCENT_ONE_PLACE_BONUS.format(jump)).withStyle(WHITE));
+    }
+
+    public static Component effectLuck(int luck) {
+        return arrow(luck > 0 ? BENEFICIAL : HARMFUL).append(
+                new TranslatableComponent("evolution.tooltip.effect.luck", BONUS.format(luck)).withStyle(WHITE));
+    }
+
+    public static Component effectMeleeDmg(float dmg) {
+        return arrow(dmg > 0 ? BENEFICIAL : HARMFUL).append(
+                new TranslatableComponent("evolution.tooltip.effect.meleeDamage", HP_BONUS_FORMAT.format(dmg)).withStyle(WHITE));
+    }
+
+    public static Component effectMining(float mining) {
+        return arrow(mining > 0 ? BENEFICIAL : HARMFUL).append(
+                new TranslatableComponent("evolution.tooltip.effect.miningSpeed", PERCENT_ONE_PLACE_BONUS.format(mining)).withStyle(WHITE));
+    }
+
+    public static Component effectRegen(float regen, int tickInterval, boolean isAddition) {
+        return new TranslatableComponent(isAddition ? "evolution.tooltip.effect.regen.addition" : "evolution.tooltip.effect.regen",
+                                         HP_FORMAT.format(regen), time(tickInterval / 20.0, 1));
+    }
+
+    public static Component effectResist(float resist) {
+        return arrow(BENEFICIAL).append(
+                new TranslatableComponent("evolution.tooltip.effect.resistance", PERCENT_ONE_PLACE.format(resist)).withStyle(WHITE));
+    }
+
+    public static Component effectSpeed(float speed) {
+        return arrow(speed > 0 ? BENEFICIAL : HARMFUL).append(
+                new TranslatableComponent("evolution.tooltip.effect.moveSpeed", PERCENT_ONE_PLACE_BONUS.format(speed)).withStyle(WHITE));
+    }
+
+    public static Component effectTemperature(double temp) {
+        return arrow(NEUTRAL).append(
+                new TranslatableComponent("evolution.tooltip.effect.temperature", TEMPERATURE_BODY_RELATIVE.format(temp)).withStyle(WHITE));
+    }
+
+    public static Component effectThirst(float thirst) {
+        return arrow(HARMFUL).append(new TranslatableComponent("evolution.tooltip.effect.thirst", PERCENT_ONE_PLACE.format(thirst)).withStyle(WHITE));
     }
 
     public static Component fireAspect(IFireAspect item) {

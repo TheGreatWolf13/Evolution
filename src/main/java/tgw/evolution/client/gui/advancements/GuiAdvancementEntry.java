@@ -1,6 +1,5 @@
 package tgw.evolution.client.gui.advancements;
 
-import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.advancements.Advancement;
@@ -17,6 +16,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.GUIUtils;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -34,7 +35,7 @@ public class GuiAdvancementEntry extends GuiComponent {
     private static final int ICON_SIZE = 26;
     private final Advancement advancement;
     private final GuiAdvancementTab betterAdvancementTabGui;
-    private final List<GuiAdvancementEntry> children = Lists.newArrayList();
+    private final OList<GuiAdvancementEntry> children = new OArrayList<>();
     private final DisplayInfo displayInfo;
     private final Minecraft mc;
     private final ResourceLocation resWidgets = Evolution.getResource("textures/gui/widgets.png");
@@ -107,8 +108,8 @@ public class GuiAdvancementEntry extends GuiComponent {
                                                        scrollY + this.y + 5,
                                                        0);
         }
-        for (GuiAdvancementEntry advancementEntry : this.children) {
-            advancementEntry.draw(matrices, scrollX, scrollY);
+        for (int i = 0, l = this.children.size(); i < l; i++) {
+            this.children.get(i).draw(matrices, scrollX, scrollY);
         }
     }
 
@@ -142,8 +143,8 @@ public class GuiAdvancementEntry extends GuiComponent {
         if (this.parent != null) {
             this.drawConnection(matrices, this.parent, scrollX, scrollY, drawInside);
         }
-        for (GuiAdvancementEntry advancementEntry : this.children) {
-            advancementEntry.drawConnectivity(matrices, scrollX, scrollY, drawInside);
+        for (int i = 0, l = this.children.size(); i < l; i++) {
+            this.children.get(i).drawConnectivity(matrices, scrollX, scrollY, drawInside);
         }
     }
 

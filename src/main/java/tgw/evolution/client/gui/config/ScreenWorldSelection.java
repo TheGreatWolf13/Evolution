@@ -25,6 +25,7 @@ import net.minecraft.world.level.storage.LevelSummary;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FileUtils;
+import org.lwjgl.glfw.GLFW;
 import tgw.evolution.util.ConfigHelper;
 
 import javax.annotation.Nullable;
@@ -75,6 +76,15 @@ public class ScreenWorldSelection extends ScreenListMenu {
     }
 
     @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            this.minecraft.setScreen(this.parent);
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
     public void onClose() {
         super.onClose();
         for (Item item : this.entries) {
@@ -82,6 +92,11 @@ public class ScreenWorldSelection extends ScreenListMenu {
                 worldItem.disposeIcon();
             }
         }
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return false;
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import joptsimple.internal.Strings;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -22,12 +23,15 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import org.apache.commons.lang3.StringUtils;
+import org.lwjgl.glfw.GLFW;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
 import tgw.evolution.client.gui.widgets.EditBoxAdv;
+import tgw.evolution.init.EvolutionFormatter;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.ConfigHelper;
+import tgw.evolution.util.collection.*;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.reflection.FieldHandler;
 
@@ -83,9 +87,16 @@ public class ScreenConfig extends ScreenListMenu {
         return spec.getComment() != null ? new TextComponent(spec.getComment()) : new TextComponent("");
     }
 
-    public static String createEnumKey(String modId, Enum<?> enumValue) {
-        return modId + ".config.enum_" + enumValue.name().toLowerCase();
+    public static Component createEnumComp(String modId, Enum<?> enumValue) {
+        if (enumValue instanceof EvolutionFormatter.IUnit unit) {
+            return new TextComponent(unit.getName());
+        }
+        return new TranslatableComponent(modId + ".config.enum_" + enumValue.name().toLowerCase());
     }
+
+//    public static String createEnumKey(String modId, Enum<?> enumValue) {
+//        return modId + ".config.enum_" + enumValue.name().toLowerCase();
+//    }
 
     public static MutableComponent createLabel(String input, String modId) {
         return new TranslatableComponent(modId + ".config.label." + input.toLowerCase());
@@ -122,7 +133,7 @@ public class ScreenConfig extends ScreenListMenu {
     @SuppressWarnings("ObjectAllocationInLoop")
     @Override
     protected void constructEntries(List<Item> entries) {
-        List<Item> configEntries = new ArrayList<>();
+        RList<Item> configEntries = new RArrayList<>();
         for (IEntry c : this.folderEntry.getEntries()) {
             if (c instanceof FolderEntry folder) {
                 configEntries.add(new FolderItem(folder, this.config.getModId()));
@@ -231,6 +242,38 @@ public class ScreenConfig extends ScreenListMenu {
     }
 
     @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            if (this.folderEntry.isRoot()) {
+                if (this.isChanged(this.folderEntry)) {
+                    this.minecraft.setScreen(new ScreenConfirmation(this, this.textUnsaved, result -> {
+                        if (!result) {
+                            return true;
+                        }
+                        this.minecraft.setScreen(this.parent);
+                        return false;
+                    }));
+                }
+                else {
+                    this.minecraft.setScreen(this.parent);
+                }
+                return true;
+            }
+            this.minecraft.setScreen(this.parent);
+            return true;
+        }
+        if (this.folderEntry.isRoot() && keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+            //noinspection VariableNotUsedInsideIf
+            if (this.config != null) {
+                this.saveConfig();
+            }
+            this.minecraft.setScreen(this.parent);
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
     public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
         this.activeTooltip = null;
         this.renderBackground(poseStack);
@@ -303,7 +346,7 @@ public class ScreenConfig extends ScreenListMenu {
 
     @Override
     public boolean shouldCloseOnEsc() {
-        return this.config == null || this.config.getType() != ModConfig.Type.SERVER;
+        return this.config == null;
     }
 
     private void showRestoreScreen() {
@@ -383,7 +426,7 @@ public class ScreenConfig extends ScreenListMenu {
     }
 
     public abstract class ConfigItem<T> extends Item {
-        protected final List<GuiEventListener> eventListeners = new ArrayList<>();
+        protected final OList<GuiEventListener> eventListeners = new OArrayList<>();
         protected final ValueHolder<T> holder;
         protected final Button resetButton;
 
@@ -422,8 +465,8 @@ public class ScreenConfig extends ScreenListMenu {
                 Class<? extends Enum<?>> clazz = ScreenConfig.this.clazz.get(enumValue);
                 Enum<?>[] values = clazz.getEnumConstants();
                 Component allowedValues = EvolutionTexts.configAllowedValues(Arrays.stream(values)
-                                                                                   .map(o -> I18n.get(
-                                                                                           createEnumKey(ScreenConfig.this.config.getModId(), o)))
+                                                                                   .map(o -> createEnumComp(ScreenConfig.this.config.getModId(),
+                                                                                                            o).getString())
                                                                                    .collect(Collectors.joining(", ")));
                 lines.add(allowedValues);
             }
@@ -690,7 +733,7 @@ public class ScreenConfig extends ScreenListMenu {
 
         public EnumItem(ValueHolder<Enum<?>> holder) {
             super(holder);
-            this.button = new Button(10, 5, 46, 20, new TranslatableComponent(createEnumKey(ScreenConfig.this.config.getModId(), holder.getValue())),
+            this.button = new Button(10, 5, 46, 20, createEnumComp(ScreenConfig.this.config.getModId(), holder.getValue()),
                                      button -> Minecraft.getInstance()
                                                         .setScreen(new ScreenChangeEnum(ScreenConfig.this, this.label, holder.getValue(), e -> {
                                                             holder.setValue(e);
@@ -701,7 +744,7 @@ public class ScreenConfig extends ScreenListMenu {
 
         @Override
         protected void onResetValue() {
-            this.button.setMessage(new TranslatableComponent(createEnumKey(ScreenConfig.this.config.getModId(), this.holder.getValue())));
+            this.button.setMessage(createEnumComp(ScreenConfig.this.config.getModId(), this.holder.getValue()));
         }
 
         @Override
@@ -790,6 +833,18 @@ public class ScreenConfig extends ScreenListMenu {
             }
             if (original instanceof LinkedList) {
                 return LinkedList::new;
+            }
+            if (original instanceof RArrayList) {
+                return RArrayList::new;
+            }
+            if (original instanceof OArrayList) {
+                return OArrayList::new;
+            }
+            if (original instanceof IArrayList) {
+                return objects -> new IntArrayList((Collection<? extends Integer>) objects);
+            }
+            if (original instanceof FArrayList) {
+                return objects -> new FArrayList((Collection<? extends Float>) objects);
             }
             return null;
         }

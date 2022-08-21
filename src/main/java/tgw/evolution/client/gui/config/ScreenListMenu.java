@@ -16,8 +16,9 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.util.FormattedCharSequence;
 import tgw.evolution.client.gui.widgets.EditBoxAdv;
 import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.util.collection.RArrayList;
+import tgw.evolution.util.collection.RList;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -46,7 +47,7 @@ public abstract class ScreenListMenu extends Screen {
 
     @Override
     protected void init() {
-        List<Item> entries = new ArrayList<>();
+        RList<Item> entries = new RArrayList<>();
         this.constructEntries(entries);
         this.entries = ImmutableList.copyOf(entries);
         this.list = new EntryList(this.entries);
@@ -199,8 +200,8 @@ public abstract class ScreenListMenu extends Screen {
                 }
             }
             for (Item item : this.children()) {
-                for (GuiEventListener o : item.children()) {
-                    if (o instanceof Button button) {
+                for (int i = 0, l = item.children().size(); i < l; i++) {
+                    if (item.children().get(i) instanceof Button button) {
                         button.renderToolTip(poseStack, mouseX, mouseY);
                     }
                 }

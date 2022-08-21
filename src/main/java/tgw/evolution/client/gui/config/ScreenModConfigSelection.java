@@ -18,6 +18,7 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.config.ModConfig;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
@@ -86,6 +87,20 @@ public class ScreenModConfigSelection extends ScreenListMenu {
         super.init();
         this.addRenderableWidget(new Button(this.width / 2 - 75, this.height - 29, 150, 20, CommonComponents.GUI_BACK,
                                             button -> this.minecraft.setScreen(this.parent)));
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            this.minecraft.setScreen(this.parent);
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return false;
     }
 
     @Override

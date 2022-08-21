@@ -399,16 +399,15 @@ public class ScreenModList extends Screen {
         }
 
         public void filterAndUpdateList(String text) {
-            List<ModEntry> entries = net.minecraftforge.fml.ModList.get()
-                                                                   .getMods()
-                                                                   .stream()
-                                                                   .filter(info -> info.getDisplayName().toLowerCase().contains(text.toLowerCase()))
-                                                                   .filter(info -> !ScreenModList.this.updatesButton.isChecked() ||
-                                                                                   VersionChecker.getResult(info).status().shouldDraw())
-                                                                   .map(info -> new ModEntry((ModInfo) info, this))
-                                                                   .sorted(ScreenModList.this.sort)
-                                                                   .collect(Collectors.toList());
-            this.replaceEntries(entries);
+            this.replaceEntries(net.minecraftforge.fml.ModList.get()
+                                                              .getMods()
+                                                              .stream()
+                                                              .filter(info -> info.getDisplayName().toLowerCase().contains(text.toLowerCase()))
+                                                              .filter(info -> !ScreenModList.this.updatesButton.isChecked() ||
+                                                                              VersionChecker.getResult(info).status().shouldDraw())
+                                                              .map(info -> new ModEntry((ModInfo) info, this))
+                                                              .sorted(ScreenModList.this.sort)
+                                                              .collect(Collectors.toList()));
             this.setScrollAmount(0);
         }
 

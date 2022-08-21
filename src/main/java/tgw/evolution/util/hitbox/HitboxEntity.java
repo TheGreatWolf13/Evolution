@@ -77,8 +77,8 @@ public abstract class HitboxEntity<T extends Entity> {
     protected final Hitbox addBox(HitboxType part, AABB aabb) {
         //Verify that every Hitbox has a unique HitboxType
         //This code is not the fastest, but it is only run when creating the HitboxEntity instance.
-        for (Hitbox box : this.boxes) {
-            if (box.getPart() == part) {
+        for (int i = 0, l = this.boxes.size(); i < l; i++) {
+            if (this.boxes.get(i).getPart() == part) {
                 throw new IllegalStateException("Duplicate HitboxType: " + part);
             }
         }
@@ -90,8 +90,8 @@ public abstract class HitboxEntity<T extends Entity> {
     protected final Hitbox addEquip(HitboxType part, AABB aabb) {
         //Verify that every Hitbox has a unique HitboxType
         //This code is not the fastest, but it is only run when creating the HitboxEntity instance.
-        for (Hitbox box : this.equipment) {
-            if (box.getPart() == part) {
+        for (int i = 0, l = this.equipment.size(); i < l; i++) {
+            if (this.equipment.get(i).getPart() == part) {
                 throw new IllegalStateException("Duplicate HitboxType: " + part);
             }
         }
@@ -172,11 +172,11 @@ public abstract class HitboxEntity<T extends Entity> {
     protected void reset() {
         this.setPivot(0, 0, 0);
         this.setRotation(0, 0, 0);
-        for (Hitbox box : this.boxes) {
-            box.reset();
+        for (int i = 0, l = this.boxes.size(); i < l; i++) {
+            this.boxes.get(i).reset();
         }
-        for (Hitbox box : this.equipment) {
-            box.reset();
+        for (int i = 0, l = this.equipment.size(); i < l; i++) {
+            this.equipment.get(i).reset();
         }
     }
 

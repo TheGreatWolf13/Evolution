@@ -81,8 +81,7 @@ public abstract class ItemRendererMixin {
 
     /**
      * @author JellySquid
-     * <p>
-     * Avoid allocations
+     * @reason Avoid allocations
      */
     @Overwrite
     public void renderModelLists(BakedModel model, ItemStack stack, int light, int overlay, PoseStack matrices, VertexConsumer builder) {
@@ -101,14 +100,14 @@ public abstract class ItemRendererMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Overwrite to implement a new method to calculate item colors.
+     * @reason Overwrite to implement a new method to calculate item colors.
      */
     @Overwrite
     public void renderQuadList(PoseStack matrices, VertexConsumer builder, List<BakedQuad> quads, ItemStack stack, int light, int overlay) {
         boolean notEmpty = !stack.isEmpty();
         PoseStack.Pose pose = matrices.last();
-        for (BakedQuad quad : quads) {
+        for (int i = 0, l = quads.size(); i < l; i++) {
+            BakedQuad quad = quads.get(i);
             int color = 0xffff_ffff;
             if (notEmpty && quad.isTinted()) {
                 color = this.itemColors.getColor(stack, quad.getTintIndex());

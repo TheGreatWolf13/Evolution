@@ -19,11 +19,13 @@ import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
+import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -36,7 +38,7 @@ public class ScreenEditList extends Screen {
     private final Screen parent;
     private final Component textAddValue = new TranslatableComponent("evolution.gui.config.addValue");
     private final ForgeConfigSpec.ValueSpec valueSpec;
-    private final List<StringHolder> values = new ArrayList<>();
+    private final OList<StringHolder> values = new OArrayList<>();
     private ObjectList list;
 
     public ScreenEditList(Screen parent, Component title, ScreenConfig.ListValueHolder holder) {
@@ -79,11 +81,25 @@ public class ScreenEditList extends Screen {
     }
 
     @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            this.minecraft.setScreen(this.parent);
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
     public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(poseStack);
         this.list.render(poseStack, mouseX, mouseY, partialTicks);
         drawCenteredString(poseStack, this.font, this.title, this.width / 2, 14, 0xFF_FFFF);
         super.render(poseStack, mouseX, mouseY, partialTicks);
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return false;
     }
 
     protected enum ListType {

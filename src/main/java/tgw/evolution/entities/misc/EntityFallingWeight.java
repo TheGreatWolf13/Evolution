@@ -1,6 +1,5 @@
 package tgw.evolution.entities.misc;
 
-import com.google.common.collect.Lists;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
@@ -37,11 +36,12 @@ import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.hitbox.HitboxEntity;
 
 import javax.annotation.Nullable;
-import java.util.List;
 
 public class EntityFallingWeight extends Entity implements IEntityAdditionalSpawnData, IEvolutionEntity<EntityFallingWeight> {
 
@@ -66,6 +66,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         this.zo = z;
     }
 
+    @SuppressWarnings("unused")
     public EntityFallingWeight(PlayMessages.SpawnEntity spawnEntity, Level level) {
         this(EvolutionEntities.FALLING_WEIGHT.get(), level);
     }
@@ -105,7 +106,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
             return false;
         }
         float motionY = 20.0F * (float) this.getDeltaMovement().y;
-        List<Entity> list = Lists.newArrayList(this.level.getEntities(this, this.getBoundingBox()));
+        OList<Entity> list = new OArrayList<>(this.level.getEntities(this, this.getBoundingBox()));
         float kinecticEnergy = this.mass * motionY * motionY / 2;
         for (Entity entity : list) {
             float forceOfImpact = kinecticEnergy / entity.getBbHeight();

@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.LivingEntity;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,12 +13,13 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import tgw.evolution.patches.IEffectInstancePatch;
+import tgw.evolution.patches.IMobEffectInstancePatch;
+import tgw.evolution.patches.IMobEffectPatch;
 
 import javax.annotation.Nullable;
 
 @Mixin(MobEffectInstance.class)
-public abstract class MobEffectInstanceMixin implements IEffectInstancePatch {
+public abstract class MobEffectInstanceMixin implements IMobEffectInstancePatch {
 
     @Shadow
     @Final
@@ -65,7 +67,7 @@ public abstract class MobEffectInstanceMixin implements IEffectInstancePatch {
         MobEffectInstance instance = new MobEffectInstance(effect, duration, Math.max(amplifier, 0), ambient, showParticles, showIcon, hiddenEffects);
         boolean infinite = nbt.getBoolean("Infinite");
         if (infinite) {
-            ((IEffectInstancePatch) instance).setInfinite(infinite);
+            ((IMobEffectInstancePatch) instance).setInfinite(infinite);
         }
         return readCurativeItems(instance, nbt);
     }
@@ -75,6 +77,9 @@ public abstract class MobEffectInstanceMixin implements IEffectInstancePatch {
     private static MobEffectInstance readCurativeItems(MobEffectInstance effect, CompoundTag nbt) {
         return null;
     }
+
+    @Shadow
+    public abstract void applyEffect(LivingEntity pEntity);
 
     /**
      * @author TheGreatWolf
@@ -93,14 +98,14 @@ public abstract class MobEffectInstanceMixin implements IEffectInstancePatch {
         return this.duration == other.getDuration() &&
                this.amplifier == other.getAmplifier() &&
                this.ambient == other.isAmbient() &&
-               this.infinite == ((IEffectInstancePatch) other).isInfinite() &&
+               this.infinite == ((IMobEffectInstancePatch) other).isInfinite() &&
                this.effect.equals(other.getEffect());
     }
 
     @Override
-    public int getAbsoluteDuration() {
+    public float getAbsoluteDuration() {
         if (this.infinite) {
-            return Integer.MAX_VALUE;
+            return Float.POSITIVE_INFINITY;
         }
         return this.duration;
     }
@@ -134,7 +139,11 @@ public abstract class MobEffectInstanceMixin implements IEffectInstancePatch {
 
     @Inject(method = "setDetailsFrom", at = @At(value = "TAIL"))
     void onSetDetailsFrom(MobEffectInstance other, CallbackInfo ci) {
-        this.setInfinite(((IEffectInstancePatch) other).isInfinite());
+        this.setInfinite(((IMobEffectInstancePatch) other).isInfinite());
+        MobEffectInstance hiddenEffect = ((IMobEffectInstancePatch) other).getHiddenEffect();
+        if (hiddenEffect != null) {
+            this.hiddenEffect = new MobEffectInstance(hiddenEffect);
+        }
     }
 
     @Inject(method = "writeDetailsTo", at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/CompoundTag;putBoolean(Ljava/lang/String;Z)V",
@@ -142,6 +151,9 @@ public abstract class MobEffectInstanceMixin implements IEffectInstancePatch {
     private void onWriteDetailsTo(CompoundTag nbt, CallbackInfo ci) {
         nbt.putBoolean("Infinite", this.infinite);
     }
+
+    @Shadow
+    abstract void setDetailsFrom(MobEffectInstance pEffectInstance);
 
     @Override
     public void setHiddenEffect(@Nullable MobEffectInstance hiddenInstance) {
@@ -158,13 +170,36 @@ public abstract class MobEffectInstanceMixin implements IEffectInstancePatch {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Overwrite to handle infinite effects.
+     * @reason When an effect expires, but has a hidden effect, its attribute modifiers are updated and readded. However, instead of removing the
+     * modifiers based on the old instance of the effect (which has a higher amplifier), the original code removes and readds the attributes based
+     * on the new instance (which obviously has the same amplifier), resulting in weird behaviours.
+     */
+    @Overwrite
+    public boolean tick(LivingEntity entity, Runnable runnable) {
+        if (this.duration > 0) {
+            if (this.effect.isDurationEffectTick(this.duration, this.amplifier)) {
+                this.applyEffect(entity);
+            }
+            this.tickDownDuration();
+            if (this.duration == 0 && this.hiddenEffect != null) {
+                this.effect.removeAttributeModifiers(entity, entity.getAttributes(), this.amplifier);
+                this.setDetailsFrom(this.hiddenEffect);
+                this.hiddenEffect = ((IMobEffectInstancePatch) this.hiddenEffect).getHiddenEffect();
+                this.effect.addAttributeModifiers(entity, entity.getAttributes(), this.amplifier);
+                entity.onEffectUpdated((MobEffectInstance) (Object) this, false, null);
+            }
+        }
+        return this.duration > 0;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Overwrite to handle infinite effects.
      */
     @Overwrite
     private int tickDownDuration() {
         if (this.hiddenEffect != null) {
-            ((IEffectInstancePatch) this.hiddenEffect).tickDownDurationPatch();
+            ((IMobEffectInstancePatch) this.hiddenEffect).tickDownDurationPatch();
         }
         this.duration--;
         if (this.duration == 0 && this.infinite) {
@@ -191,20 +226,67 @@ public abstract class MobEffectInstanceMixin implements IEffectInstancePatch {
         }
         boolean changed = false;
         if (other.getAmplifier() > this.amplifier) {
-            if (((IEffectInstancePatch) other).getAbsoluteDuration() < this.getAbsoluteDuration()) {
+            if (((IMobEffectInstancePatch) other).getAbsoluteDuration() < this.getAbsoluteDuration()) {
                 MobEffectInstance hidden = this.hiddenEffect;
                 this.hiddenEffect = new MobEffectInstance((MobEffectInstance) (Object) this);
-                ((IEffectInstancePatch) this.hiddenEffect).setHiddenEffect(hidden);
+                ((IMobEffectInstancePatch) this.hiddenEffect).setHiddenEffect(hidden);
             }
             this.amplifier = other.getAmplifier();
             this.duration = other.getDuration();
-            this.setInfinite(((IEffectInstancePatch) other).isInfinite());
+            this.setInfinite(((IMobEffectInstancePatch) other).isInfinite());
             changed = true;
         }
-        else if (((IEffectInstancePatch) other).getAbsoluteDuration() > this.getAbsoluteDuration()) {
+        else if (((IMobEffectInstancePatch) other).getAbsoluteDuration() > this.getAbsoluteDuration()) {
             if (other.getAmplifier() == this.amplifier) {
                 this.duration = other.getDuration();
-                this.setInfinite(((IEffectInstancePatch) other).isInfinite());
+                this.setInfinite(((IMobEffectInstancePatch) other).isInfinite());
+                changed = true;
+            }
+            else if (this.hiddenEffect == null) {
+                this.hiddenEffect = new MobEffectInstance(other);
+            }
+            else {
+                this.hiddenEffect.update(other);
+            }
+        }
+        if (!other.isAmbient() && this.ambient || changed) {
+            this.ambient = other.isAmbient();
+            changed = true;
+        }
+        if (other.isVisible() != this.visible) {
+            this.visible = other.isVisible();
+            changed = true;
+        }
+        if (other.showIcon() != this.showIcon) {
+            this.showIcon = other.showIcon();
+            return true;
+        }
+        return changed;
+    }
+
+    @Override
+    public boolean updateWithEntity(MobEffectInstance other, LivingEntity entity) {
+        if (this.effect != other.getEffect()) {
+            LOGGER.warn("This method should only be called for matching effects!");
+            return false;
+        }
+        boolean changed = false;
+        if (other.getAmplifier() > this.amplifier) {
+            if (((IMobEffectInstancePatch) other).getAbsoluteDuration() < this.getAbsoluteDuration()) {
+                MobEffectInstance hidden = this.hiddenEffect;
+                this.hiddenEffect = new MobEffectInstance((MobEffectInstance) (Object) this);
+                ((IMobEffectInstancePatch) this.hiddenEffect).setHiddenEffect(hidden);
+            }
+            ((IMobEffectPatch) this.effect).update(entity, this.amplifier, other.getAmplifier());
+            this.amplifier = other.getAmplifier();
+            this.duration = other.getDuration();
+            this.setInfinite(((IMobEffectInstancePatch) other).isInfinite());
+            changed = true;
+        }
+        else if (((IMobEffectInstancePatch) other).getAbsoluteDuration() > this.getAbsoluteDuration()) {
+            if (other.getAmplifier() == this.amplifier) {
+                this.duration = other.getDuration();
+                this.setInfinite(((IMobEffectInstancePatch) other).isInfinite());
                 changed = true;
             }
             else if (this.hiddenEffect == null) {

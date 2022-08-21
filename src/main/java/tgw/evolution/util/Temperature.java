@@ -23,10 +23,6 @@ public final class Temperature {
         return celsius + 273.15;
     }
 
-    public static double C2KRelative(double value) {
-        return value;
-    }
-
     public static double C2R(double value) {
         return value * 9 / 5 + 491.67;
     }

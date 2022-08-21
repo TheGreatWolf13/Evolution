@@ -10,7 +10,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.Pose;
@@ -21,11 +20,11 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.items.IEvolutionItem;
+import tgw.evolution.patches.ILivingEntityPatch;
 
 @Mixin(LocalPlayer.class)
-public abstract class LocalPlayerMixin extends AbstractClientPlayer {
+public abstract class LocalPlayerMixin extends AbstractClientPlayer implements ILivingEntityPatch {
 
     @Shadow
     @Final
@@ -93,7 +92,7 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
         if (isSneaking) {
             this.sprintTriggerTime = 0;
         }
-        boolean effectsAllowSprinting = this.effectsAllowSprinting();
+        boolean effectsAllowSprinting = this.getEffectHelper().canSprint();
         boolean itemsAllowSprinting = this.itemsAllowSprinting();
         if ((this.onGround || this.isUnderWater()) &&
             !isSneaking &&
@@ -217,19 +216,6 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
             this.getAbilities().flying = false;
             this.onUpdateAbilities();
         }
-    }
-
-    private boolean effectsAllowSprinting() {
-        if (this.hasEffect(EvolutionEffects.DEHYDRATION.get())) {
-            return false;
-        }
-        if (this.hasEffect(EvolutionEffects.STARVATION.get())) {
-            return false;
-        }
-        if (this.hasEffect(EvolutionEffects.DIZZINESS.get())) {
-            return false;
-        }
-        return !this.hasEffect(MobEffects.BLINDNESS);
     }
 
     @Shadow

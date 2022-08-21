@@ -79,7 +79,7 @@ public class BlockSapling extends BlockBush {
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
         if (level.getBrightness(pos.above()) >= 9 && random.nextInt(7) == 0) {
-            if (!level.isAreaLoaded(pos, 1)) {
+            if (!BlockUtils.isAreaLoaded(level, pos, 1)) {
                 return;
             }
 //            this.placeTree(level, pos, state, random);

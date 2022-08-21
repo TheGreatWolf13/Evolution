@@ -39,11 +39,11 @@ public class Time {
      * and divided by 365.25 (a real life, Earth year).
      */
     public static final int SATURNIAN_YEAR = (int) (10_759.22 * DAYS_IN_A_YEAR / 365.25) * DAY_IN_TICKS;
-    public static final int SIDEREAL_DAY_IN_TICKS = (int) (DAY_IN_TICKS * (23 + 56 / 60.0 + 4 / (60.0 * 60.0)) / 24.0);
     /**
      * A sidereal day presents the time it takes for the Earth to spin around its axis by 360º relative to the background stars.
      * It is equivalent to 23h 56min 04s.
      */
+    public static final int SIDEREAL_DAY_IN_TICKS = (int) (DAY_IN_TICKS * (23 + 56 / 60.0 + 4 / (60.0 * 60.0)) / 24.0);
     private final int hour;
     private final int minute;
 

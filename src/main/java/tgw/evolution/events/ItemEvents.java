@@ -24,16 +24,17 @@ import tgw.evolution.items.*;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.items.modular.part.ItemPart;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.constants.HarvestLevel;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 public final class ItemEvents {
 
-    private static final List<Component> TEMP_TOOLTIP_HOLDER = new ArrayList<>();
+    private static final OList<Component> TEMP_TOOLTIP_HOLDER = new OArrayList<>();
 
     private ItemEvents() {
     }
@@ -144,8 +145,8 @@ public final class ItemEvents {
         boolean isAdvanced = Minecraft.getInstance().options.advancedItemTooltips;
         item.appendHoverText(stack, Evolution.PROXY.getClientLevel(), TEMP_TOOLTIP_HOLDER,
                              isAdvanced ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL);
-        for (Component comp : TEMP_TOOLTIP_HOLDER) {
-            add(tooltip, comp);
+        for (int i = 0, l = TEMP_TOOLTIP_HOLDER.size(); i < l; i++) {
+            add(tooltip, TEMP_TOOLTIP_HOLDER.get(i));
         }
         TEMP_TOOLTIP_HOLDER.clear();
         if (item instanceof IItemFluidContainer) {

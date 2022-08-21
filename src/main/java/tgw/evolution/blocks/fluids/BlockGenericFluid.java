@@ -1,6 +1,5 @@
 package tgw.evolution.blocks.fluids;
 
-import com.google.common.collect.Lists;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -32,6 +31,8 @@ import tgw.evolution.blocks.tileentities.TELiquid;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.init.EvolutionBStates;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.math.DirectionList;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
@@ -47,13 +48,13 @@ import static tgw.evolution.init.EvolutionBStates.LEVEL_1_8;
 public abstract class BlockGenericFluid extends BlockMass implements IBlockFluidContainer, IReplaceable, EntityBlock {
     public static final IntegerProperty LEVEL = LEVEL_1_8;
     public static final BooleanProperty FULL = EvolutionBStates.FULL;
-    private final List<FluidState> fluidStateCache;
+    private final OList<FluidState> fluidStateCache;
     private final Supplier<? extends FluidGeneric> supplier;
     private boolean fluidStateCacheInitialized;
 
     public BlockGenericFluid(Supplier<? extends FluidGeneric> fluid, Properties properties, int mass) {
         super(properties, mass);
-        this.fluidStateCache = Lists.newArrayList();
+        this.fluidStateCache = new OArrayList<>();
         this.registerDefaultState(this.defaultBlockState().setValue(LEVEL, 8).setValue(FULL, true));
         this.supplier = fluid;
     }

@@ -24,12 +24,11 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.DirectionUtil;
-import tgw.evolution.util.math.MathHelper;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 import static tgw.evolution.init.EvolutionBStates.ATTACHED;
@@ -169,7 +168,7 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
         Direction direction = state.getValue(DIRECTION_HORIZONTAL);
         mutablePos.set(pos);
         Direction movement = direction;
-        List<BlockPos> toRemove = new ArrayList<>();
+        OList<BlockPos> toRemove = new OArrayList<>();
         int count = 0;
         for (int removingRope = 1; removingRope <= this.getRopeLength(); removingRope++) {
             mutablePos.move(movement);
@@ -204,7 +203,9 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
             }
             break;
         }
-        MathHelper.iterateReverse(toRemove, removing -> level.removeBlock(removing, false));
+        for (int i = toRemove.size() - 1; i >= 0; i--) {
+            level.removeBlock(toRemove.get(i), false);
+        }
         return count;
     }
 

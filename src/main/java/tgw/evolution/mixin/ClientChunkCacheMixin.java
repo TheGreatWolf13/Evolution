@@ -20,7 +20,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-import tgw.evolution.Evolution;
 import tgw.evolution.patches.IClientChunkCachePatch;
 import tgw.evolution.patches.IClientChunkCache_StoragePatch;
 
@@ -53,7 +52,6 @@ public abstract class ClientChunkCacheMixin extends ChunkSource implements IClie
      */
     @Overwrite
     public void drop(int x, int z) {
-        Evolution.info("Unloaded chunk at [{}, {}]", x, z);
         if (this.storage.inRange(x, z)) {
             int index = this.storage.getIndex(x, z);
             LevelChunk chunk = this.storage.getChunk(index);
@@ -142,7 +140,6 @@ public abstract class ClientChunkCacheMixin extends ChunkSource implements IClie
                                             FriendlyByteBuf buf,
                                             CompoundTag tag,
                                             Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> consumer) {
-        Evolution.info("Loaded or updated chunk at [{}, {}]", x, z);
         if (this.storage.inRange(x, z)) {
             int index = this.storage.getIndex(x, z);
             LevelChunk chunk = this.storage.getChunk(index);

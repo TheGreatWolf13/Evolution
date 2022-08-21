@@ -1,8 +1,12 @@
 package tgw.evolution.mixin;
 
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.stats.Stats;
@@ -32,10 +36,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.ForgeMod;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.event.entity.living.ShieldBlockEvent;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -43,6 +47,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.IClimbable;
 import tgw.evolution.blocks.ICollisionBlock;
+import tgw.evolution.entities.EffectHelper;
 import tgw.evolution.entities.IEntityProperties;
 import tgw.evolution.events.EntityEvents;
 import tgw.evolution.hooks.LivingEntityHooks;
@@ -55,20 +60,29 @@ import tgw.evolution.items.IEvolutionItem;
 import tgw.evolution.items.ISpecialAttack;
 import tgw.evolution.network.PacketCSCollision;
 import tgw.evolution.network.PacketCSImpactDamage;
-import tgw.evolution.patches.IBlockPatch;
-import tgw.evolution.patches.IEntityPatch;
-import tgw.evolution.patches.ILivingEntityPatch;
+import tgw.evolution.patches.*;
 import tgw.evolution.util.constants.EntityStates;
 import tgw.evolution.util.damage.DamageSourceEntity;
 import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nullable;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity implements IEntityProperties, ILivingEntityPatch {
 
+    @Shadow
+    @Final
+    private static EntityDataAccessor<Boolean> DATA_EFFECT_AMBIENCE_ID;
+    @Shadow
+    @Final
+    private static EntityDataAccessor<Integer> DATA_EFFECT_COLOR_ID;
+    private final EffectHelper effectHelper = new EffectHelper();
     @Shadow
     public float animationSpeed;
     @Shadow
@@ -116,6 +130,12 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     protected float oRun;
     @Shadow
     protected float run;
+    @Mutable
+    @Shadow
+    @Final
+    private Map<MobEffect, MobEffectInstance> activeEffects;
+    @Shadow
+    private boolean effectsDirty;
     private boolean isMainhandSpecialAttacking;
     private boolean isOffhandSpecialAttacking;
     @Shadow
@@ -142,13 +162,43 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     @Shadow
     protected abstract void actuallyHurt(DamageSource p_21240_, float p_21241_);
 
+    @Override
+    public void addAbsorptionSuggestion(float amount) {
+        if (amount > 0) {
+            float delta = this.effectHelper.addAbsorptionSuggestion(amount);
+            if (delta > 0) {
+                this.setAbsorptionAmount(this.getAbsorptionAmount() + delta);
+            }
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason When an effect is overwritten to a hidden effect, its attribute modifiers are removed and readded. However, instead of removing the
+     * modifiers based on the old instance of the effect (which has a lower amplifier), the original code removes and readds the attributes based
+     * on the new instance (which has a higher amplifier), resulting in weird behaviours.
+     */
+    @Overwrite
+    public boolean addEffect(MobEffectInstance effectInstance, @Nullable Entity entity) {
+        if (!this.canBeAffected(effectInstance)) {
+            return false;
+        }
+        MobEffectInstance oldInstance = this.activeEffects.get(effectInstance.getEffect());
+        MinecraftForge.EVENT_BUS.post(new PotionEvent.PotionAddedEvent((LivingEntity) (Object) this, oldInstance, effectInstance, entity));
+        if (oldInstance == null) {
+            this.activeEffects.put(effectInstance.getEffect(), effectInstance);
+            this.onEffectAdded(effectInstance, entity);
+            return true;
+        }
+        if (((IMobEffectInstancePatch) oldInstance).updateWithEntity(effectInstance, (LivingEntity) (Object) this)) {
+            this.onEffectUpdated(oldInstance, false, entity);
+            return true;
+        }
+        return false;
+    }
+
     @Shadow
     public abstract void aiStep();
-
-    @Redirect(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isEffectiveAi()Z", ordinal = 0))
-    private boolean aiStepProxy(LivingEntity entity) {
-        return true;
-    }
 
     @Shadow
     protected abstract void blockUsingShield(LivingEntity p_190629_1_);
@@ -271,6 +321,9 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     }
 
     @Shadow
+    public abstract boolean canBeAffected(MobEffectInstance pPotioneffect);
+
+    @Shadow
     public abstract boolean canStandOnFluid(Fluid p_21070_);
 
     @Shadow
@@ -315,6 +368,9 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         return new Vec3(accX * cosFacing - accZ * sinFacing, accY, accZ * cosFacing + accX * sinFacing);
     }
 
+    @Shadow
+    public abstract float getAbsorptionAmount();
+
     private double getAcceleration() {
         double force = this.getAttributeValue(Attributes.MOVEMENT_SPEED);
         double mass = this.getAttributeValue(EvolutionAttributes.MASS.get());
@@ -349,6 +405,11 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     @Shadow
     @Nullable
     public abstract MobEffectInstance getEffect(MobEffect p_21125_);
+
+    @Override
+    public EffectHelper getEffectHelper() {
+        return this.effectHelper;
+    }
 
     @Override
     public float getFrictionModifier() {
@@ -886,6 +947,11 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     @Shadow
     public abstract void knockback(double p_147241_, double p_147242_, double p_147243_);
 
+    @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
+    private void onAddAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
+        tag.put("EffectHelper", this.effectHelper.save());
+    }
+
     @Inject(method = "baseTick", at = @At(value = "TAIL"))
     public void onBaseTick(CallbackInfo ci) {
         if (this.mainhandSpecialAttackCooldown > 0) {
@@ -935,6 +1001,25 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         this.getAttribute(ForgeMod.ENTITY_GRAVITY.get()).setBaseValue(Gravity.gravity(this.level.dimensionType()));
     }
 
+    @Shadow
+    protected abstract void onEffectAdded(MobEffectInstance p_147190_, @Nullable Entity p_147191_);
+
+    @Shadow
+    protected abstract void onEffectRemoved(MobEffectInstance pEffect);
+
+    @Shadow
+    public abstract void onEffectUpdated(MobEffectInstance p_147192_, boolean p_147193_, @Nullable Entity p_147194_);
+
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void onInit(EntityType type, Level level, CallbackInfo ci) {
+        this.activeEffects = new Reference2ObjectOpenHashMap<>();
+    }
+
+    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
+    private void onReadAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
+        this.effectHelper.fromNBT(tag.getCompound("EffectHelper"));
+    }
+
     @Inject(method = "updateSwingTime", at = @At("HEAD"), cancellable = true)
     private void onUpdateSwingTime(CallbackInfo ci) {
         if (!this.swinging && this.swingTime == 0) {
@@ -945,11 +1030,51 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
     @Shadow
     protected abstract void playHurtSound(DamageSource p_21160_);
 
+    @Redirect(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isEffectiveAi()Z", ordinal = 0))
+    private boolean proxyAiStep(LivingEntity entity) {
+        return true;
+    }
+
+    @Nullable
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/Maps;newHashMap()Ljava/util/HashMap;"))
+    private HashMap proxyInit() {
+        return null;
+    }
+
+    @Override
+    public void removeAbsorptionSuggestion(float amount) {
+        if (amount > 0) {
+            float max = this.effectHelper.removeAbsorptionSuggestion(amount);
+            if (this.getAbsorptionAmount() > max) {
+                this.setAbsorptionAmount(max);
+            }
+        }
+    }
+
     @Redirect(method = "collectEquipmentChanges", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/EquipmentSlot;values()" +
                                                                                       "[Lnet/minecraft/world/entity/EquipmentSlot;"))
     private EquipmentSlot[] removeAllocation() {
         return AdditionalSlotType.SLOTS;
     }
+
+    @Override
+    public boolean renderMainhandSpecialAttack() {
+        if (this.isMainhandSpecialAttacking) {
+            return true;
+        }
+        return this.mainhandStopTicks > 0;
+    }
+
+    @Override
+    public boolean renderOffhandSpecialAttack() {
+        if (this.isOffhandSpecialAttacking) {
+            return true;
+        }
+        return this.offhandStopTicks > 0;
+    }
+
+    @Shadow
+    public abstract void setAbsorptionAmount(float pAmount);
 
 //    /**
 //     * @author TheGreatWolf
@@ -975,22 +1100,6 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
 //            }
 //        }
 //    }
-
-    @Override
-    public boolean renderMainhandSpecialAttack() {
-        if (this.isMainhandSpecialAttacking) {
-            return true;
-        }
-        return this.mainhandStopTicks > 0;
-    }
-
-    @Override
-    public boolean renderOffhandSpecialAttack() {
-        if (this.isOffhandSpecialAttacking) {
-            return true;
-        }
-        return this.offhandStopTicks > 0;
-    }
 
     @Shadow
     public abstract void setArrowCount(int p_85034_1_);
@@ -1143,6 +1252,84 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         }
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason Implement evolution effect system, avoid allocations
+     */
+    @Overwrite
+    protected void tickEffects() {
+        try {
+            boolean canSprint = true;
+            boolean canRegen = true;
+            float hungerMod = 0.0f;
+            float thirstMod = 0.0f;
+            double tempMod = 0.0;
+            if (!this.activeEffects.isEmpty()) {
+                for (Iterator<MobEffect> it = this.activeEffects.keySet().iterator(); it.hasNext(); ) {
+                    MobEffect effect = it.next();
+                    MobEffectInstance instance = this.activeEffects.get(effect);
+                    if (!instance.tick((LivingEntity) (Object) this, null)) {
+                        //noinspection ObjectAllocationInLoop
+                        if (!this.level.isClientSide &&
+                            !MinecraftForge.EVENT_BUS.post(new PotionEvent.PotionExpiryEvent((LivingEntity) (Object) this, instance))) {
+                            it.remove();
+                            this.onEffectRemoved(instance);
+                        }
+                    }
+                    else if (instance.getDuration() % 600 == 0) {
+                        this.onEffectUpdated(instance, false, null);
+                    }
+                    IMobEffectPatch patch = (IMobEffectPatch) effect;
+                    if (canSprint && patch.disablesSprint()) {
+                        canSprint = false;
+                    }
+                    if (canRegen && patch.disablesNaturalRegen()) {
+                        canRegen = false;
+                    }
+                    int lvl = instance.getAmplifier();
+                    hungerMod += patch.hungerMod(lvl);
+                    thirstMod += patch.thirstMod(lvl);
+                    tempMod += patch.tempMod();
+                }
+            }
+            this.effectHelper.setCanSprint(canSprint);
+            this.effectHelper.setCanRegen(canRegen);
+            this.effectHelper.setHungerMod(hungerMod);
+            this.effectHelper.setThirstMod(thirstMod);
+            this.effectHelper.setTemperatureMod(tempMod);
+        }
+        catch (ConcurrentModificationException ignored) {
+        }
+        if (this.effectsDirty) {
+            if (!this.level.isClientSide) {
+                this.updateInvisibilityStatus();
+                this.updateGlowingStatus();
+            }
+            this.effectsDirty = false;
+        }
+        int color = this.entityData.get(DATA_EFFECT_COLOR_ID);
+        boolean ambient = this.entityData.get(DATA_EFFECT_AMBIENCE_ID);
+        if (color > 0) {
+            boolean shouldShow;
+            if (this.isInvisible()) {
+                shouldShow = this.random.nextInt(15) == 0;
+            }
+            else {
+                shouldShow = this.random.nextBoolean();
+            }
+            if (ambient) {
+                shouldShow &= this.random.nextInt(5) == 0;
+            }
+            if (shouldShow && color > 0) {
+                double r = (color >> 16 & 255) / 255.0;
+                double g = (color >> 8 & 255) / 255.0;
+                double b = (color & 255) / 255.0;
+                this.level.addParticle(ambient ? ParticleTypes.AMBIENT_ENTITY_EFFECT : ParticleTypes.ENTITY_EFFECT, this.getRandomX(0.5),
+                                       this.getRandomY(), this.getRandomZ(0.5), r, g, b);
+            }
+        }
+    }
+
     @Shadow
     protected abstract float tickHeadTurn(float p_110146_1_, float p_110146_2_);
 
@@ -1289,6 +1476,12 @@ public abstract class LivingEntityMixin extends Entity implements IEntityPropert
         }
         this.calculateEntityAnimation((LivingEntity) (Object) this, this instanceof FlyingAnimal);
     }
+
+    @Shadow
+    protected abstract void updateGlowingStatus();
+
+    @Shadow
+    protected abstract void updateInvisibilityStatus();
 
     @Shadow
     protected abstract void updateSwimAmount();

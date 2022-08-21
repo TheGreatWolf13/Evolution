@@ -6,9 +6,6 @@ import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
-import it.unimi.dsi.fastutil.floats.FloatArrayList;
-import it.unimi.dsi.fastutil.floats.FloatList;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.util.Mth;
@@ -22,6 +19,9 @@ import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.patches.IBakedQuadPatch;
 import tgw.evolution.patches.IMatrix4fPatch;
 import tgw.evolution.patches.ISortStatePatch;
+import tgw.evolution.util.collection.FArrayList;
+import tgw.evolution.util.collection.FList;
+import tgw.evolution.util.collection.IList;
 import tgw.evolution.util.math.ColorABGR;
 import tgw.evolution.util.math.IColor;
 import tgw.evolution.util.math.MathHelper;
@@ -34,7 +34,7 @@ import java.util.List;
 @Mixin(BufferBuilder.class)
 public abstract class BufferBuilderMixin extends DefaultedVertexConsumer implements BufferVertexConsumer, IVertexBufferView, IVertexDrain {
 
-    private final FloatList newSortingPoints = new FloatArrayList();
+    private final FList newSortingPoints = new FArrayList();
     @Shadow
     private ByteBuffer buffer;
     @Shadow
@@ -87,8 +87,7 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Use new sorting points
+     * @reason Use new sorting points
      */
     @Overwrite
     public void end() {
@@ -257,15 +256,14 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Try to avoid allocations, but the sorting method tends to allocate a lot of {@code int[]}. Can we do better?
+     * @reason Try to avoid allocations, but the sorting method tends to allocate a lot of {@code int[]}. Can we do better?
      */
     @Overwrite
     private void putSortedQuadIndices(VertexFormat.IndexType indexType) {
-        FloatArrayList floatList = RenderHelper.FLOAT_LIST.get();
+        FList floatList = RenderHelper.FLOAT_LIST.get();
         floatList.clear();
         floatList.size(this.newSortingPoints.size() / 3);
-        IntArrayList intList = RenderHelper.INT_LIST.get();
+        IList intList = RenderHelper.INT_LIST.get();
         intList.clear();
         intList.size(this.newSortingPoints.size() / 3);
         for (int i = 0; i < this.newSortingPoints.size() / 3; intList.set(i, i++)) {
@@ -303,8 +301,7 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Use newSortingPoints
+     * @reason Use newSortingPoints
      */
     @Overwrite
     public void setQuadSortOrigin(float sortX, float sortY, float sortZ) {

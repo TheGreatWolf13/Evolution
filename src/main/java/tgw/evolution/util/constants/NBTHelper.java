@@ -1,10 +1,14 @@
 package tgw.evolution.util.constants;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.*;
 import net.minecraft.world.item.ItemStack;
+import tgw.evolution.util.collection.*;
 
 import java.util.List;
 import java.util.Map;
@@ -73,16 +77,16 @@ public final class NBTHelper {
         }
         Tag tag = peekingiterator.peek();
         if (tag instanceof ByteTag byteTag) {
-            List<Byte> list2 = Lists.newArrayList(Iterators.transform(peekingiterator, byteNbt -> byteTag.getAsByte()));
-            return new ByteArrayTag(list2);
+            BList bytes = new BArrayList(Iterators.transform(peekingiterator, byteNbt -> byteTag.getAsByte()));
+            return new ByteArrayTag(bytes);
         }
         if (tag instanceof IntTag intTag) {
-            List<Integer> list1 = Lists.newArrayList(Iterators.transform(peekingiterator, intNbt -> intTag.getAsInt()));
-            return new IntArrayTag(list1);
+            IList integers = new IArrayList(Iterators.transform(peekingiterator, intNbt -> intTag.getAsInt()));
+            return new IntArrayTag(integers);
         }
         if (tag instanceof LongTag longTag) {
-            List<Long> longList = Lists.newArrayList(Iterators.transform(peekingiterator, longNbt -> longTag.getAsLong()));
-            return new LongArrayTag(longList);
+            LList longs = new LArrayList(Iterators.transform(peekingiterator, longNbt -> longTag.getAsLong()));
+            return new LongArrayTag(longs);
         }
         ListTag listnbt = new ListTag();
         while (peekingiterator.hasNext()) {

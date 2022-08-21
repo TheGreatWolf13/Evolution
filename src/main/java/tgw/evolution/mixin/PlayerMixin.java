@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tgw.evolution.entities.INeckPosition;
@@ -225,6 +226,11 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
         else {
             this.maxUpStep = 0.6f;
         }
+    }
+
+    @Redirect(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;heal(F)V"))
+    private void proxyAiStep(Player player, float amount) {
+        //Do nothing
     }
 
     @Override

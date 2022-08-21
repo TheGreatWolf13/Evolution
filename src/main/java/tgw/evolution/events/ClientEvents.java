@@ -225,9 +225,9 @@ public class ClientEvents {
         return a.isEmpty() || b.isEmpty() || a.sameItem(b) && ItemStack.tagMatches(a, b);
     }
 
-    public static boolean containsEffect(List<ClientEffectInstance> list, MobEffect effect) {
-        for (ClientEffectInstance instance : list) {
-            if (instance.getEffect() == effect) {
+    public static boolean containsEffect(OList<ClientEffectInstance> list, MobEffect effect) {
+        for (int i = 0, l = list.size(); i < l; i++) {
+            if (list.get(i).getEffect() == effect) {
                 return true;
             }
         }
@@ -328,11 +328,10 @@ public class ClientEvents {
         ModelRegistry.register(event);
     }
 
-    public static boolean removeEffect(List<ClientEffectInstance> list, MobEffect effect) {
-        Iterator<ClientEffectInstance> iterator = list.iterator();
-        while (iterator.hasNext()) {
-            if (iterator.next().getEffect() == effect) {
-                iterator.remove();
+    public static boolean removeEffect(OList<ClientEffectInstance> list, MobEffect effect) {
+        for (Iterator<ClientEffectInstance> it = list.listIterator(0); it.hasNext(); ) {
+            if (it.next().getEffect() == effect) {
+                it.remove();
                 return true;
             }
         }
@@ -430,11 +429,11 @@ public class ClientEvents {
     }
 
     @Nullable
-    private List<Slot> findPushSlots(List<Slot> slots, Slot selectedSlot, int itemCount, boolean mustDistributeAll) {
+    private RList<Slot> findPushSlots(List<Slot> slots, Slot selectedSlot, int itemCount, boolean mustDistributeAll) {
         ItemStack selectedSlotStack = selectedSlot.getItem();
         boolean findInPlayerInventory = selectedSlot.container != this.mc.player.getInventory();
-        List<Slot> rv = new ArrayList<>();
-        List<Slot> goodEmptySlots = new ArrayList<>();
+        RList<Slot> rv = new RArrayList<>();
+        RList<Slot> goodEmptySlots = new RArrayList<>();
         for (int i = 0; i != slots.size() && itemCount > 0; i++) {
             Slot slot = slots.get(i);
             if (handler.isIgnored(slot)) {
@@ -795,15 +794,24 @@ public class ClientEvents {
                 //Remove inactive effects
                 this.mc.getProfiler().push("effects");
                 if (!EFFECTS.isEmpty()) {
-                    Iterator<ClientEffectInstance> iterator = EFFECTS.iterator();
-                    while (iterator.hasNext()) {
-                        ClientEffectInstance instance = iterator.next();
+                    boolean needsRemoving = false;
+                    for (int i = 0, l = EFFECTS.size(); i < l; i++) {
+                        ClientEffectInstance instance = EFFECTS.get(i);
                         MobEffect effect = instance.getEffect();
                         if (instance.getDuration() == 0 || !this.mc.player.hasEffect(effect) && this.warmUpTicks >= 100) {
-                            iterator.remove();
+                            needsRemoving = true;
                         }
                         else {
                             instance.tick();
+                        }
+                    }
+                    if (needsRemoving) {
+                        for (Iterator<ClientEffectInstance> it = EFFECTS.iterator(); it.hasNext(); ) {
+                            ClientEffectInstance instance = it.next();
+                            MobEffect effect = instance.getEffect();
+                            if (instance.getDuration() == 0 || !this.mc.player.hasEffect(effect) && this.warmUpTicks >= 100) {
+                                it.remove();
+                            }
                         }
                     }
                 }
@@ -1129,7 +1137,7 @@ public class ClientEvents {
                     return true;
                 }
                 while (numItemsToMove-- > 0) {
-                    List<Slot> targetSlots = this.findPushSlots(slots, selectedSlot, selectedSlotStack.getCount(), true);
+                    RList<Slot> targetSlots = this.findPushSlots(slots, selectedSlot, selectedSlotStack.getCount(), true);
                     if (targetSlots == null) {
                         break;
                     }
@@ -1163,7 +1171,7 @@ public class ClientEvents {
                 return true;
             }
             numItemsToMove = Math.min(numItemsToMove, selectedSlotStack.getCount());
-            List<Slot> targetSlots = this.findPushSlots(slots, selectedSlot, numItemsToMove, false);
+            RList<Slot> targetSlots = this.findPushSlots(slots, selectedSlot, numItemsToMove, false);
             assert targetSlots != null;
             if (targetSlots.isEmpty()) {
                 return true;
@@ -1540,8 +1548,10 @@ public class ClientEvents {
         if (chosen == this.mc.player.getInventory().selected) {
             backStack = ItemStack.EMPTY;
         }
-        BACK_ITEMS.put(this.mc.player.getId(), backStack);
-        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateBeltBackItem(backStack, true));
+        ItemStack oldStack = BACK_ITEMS.put(this.mc.player.getId(), backStack);
+        if (oldStack != backStack) {
+            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateBeltBackItem(backStack, true));
+        }
     }
 
     private void updateBeltItem() {
@@ -1566,14 +1576,14 @@ public class ClientEvents {
         if (chosen == this.mc.player.getInventory().selected) {
             beltStack = ItemStack.EMPTY;
         }
-        if (!ItemStack.matches(beltStack, oldStack)) {
+        if (beltStack != oldStack) {
             if (beltStack.getItem() instanceof ItemSword) {
                 this.mc.getSoundManager()
                        .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
                 EvolutionNetwork.INSTANCE.sendToServer(
                         new PacketCSPlaySoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
             }
-            BELT_ITEMS.put(this.mc.player.getId(), beltStack.copy());
+            BELT_ITEMS.put(this.mc.player.getId(), beltStack);
             EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateBeltBackItem(beltStack, false));
         }
     }

@@ -29,11 +29,11 @@ import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.ItemHammer;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.math.DirectionUtil;
-import tgw.evolution.util.math.MathHelper;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -224,7 +224,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
         mutablePos.set(pos);
         BlockState temp;
         int count = 0;
-        List<BlockPos> toRemove = new ArrayList<>();
+        OList<BlockPos> toRemove = new OArrayList<>();
         if (state.getValue(DIRECTION_EXCEPT_UP) != Direction.DOWN) {
             for (int removingRopes = 1; removingRopes <= this.getRopeLength(); removingRopes++) {
                 mutablePos.move(Direction.DOWN);
@@ -282,7 +282,9 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                 }
             }
         }
-        MathHelper.iterateReverse(toRemove, removing -> level.removeBlock(removing, false));
+        for (int i = toRemove.size() - 1; i >= 0; i--) {
+            level.removeBlock(toRemove.get(i), false);
+        }
         return count;
     }
 

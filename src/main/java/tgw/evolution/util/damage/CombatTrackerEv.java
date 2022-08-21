@@ -1,6 +1,5 @@
 package tgw.evolution.util.damage;
 
-import com.google.common.collect.Lists;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,12 +16,13 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.items.IMelee;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 
 import javax.annotation.Nullable;
-import java.util.List;
 
 public class CombatTrackerEv extends CombatTracker {
-    private final List<CombatEntryEv> entries = Lists.newArrayList();
+    private final OList<CombatEntryEv> entries = new OArrayList<>();
     private final LivingEntity fighter;
     private int combatEndTime;
     private int combatStartTime;
@@ -52,7 +52,7 @@ public class CombatTrackerEv extends CombatTracker {
         CombatEntryEv lastSuffixEntry = null;
         float suffixDamage = 0.0F;
         float fallOrVoidAmount = 0.0F;
-        for (int i = 0; i < this.entries.size(); ++i) {
+        for (int i = 0, l = this.entries.size(); i < l; ++i) {
             CombatEntryEv currentEntry = this.entries.get(i);
             CombatEntryEv possibleDoomEntry = i > 0 ? this.entries.get(i - 1) : null;
             if ((currentEntry.getDamageSrc() == EvolutionDamage.FALL || currentEntry.getDamageSrc() == EvolutionDamage.VOID) &&

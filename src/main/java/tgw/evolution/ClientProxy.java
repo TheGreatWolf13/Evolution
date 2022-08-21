@@ -8,7 +8,6 @@ import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.achievement.StatsUpdateListener;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.item.ItemProperties;
-import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.stats.Stat;
 import net.minecraft.world.entity.player.Player;
@@ -162,8 +161,8 @@ public class ClientProxy implements IProxy {
 
     @Override
     public void registerModels(ModelRegistryEvent event) {
-        for (ModelResourceLocation model : EvolutionResources.MODULAR_MODELS) {
-            ForgeModelBakery.addSpecialModel(model);
+        for (int i = 0, l = EvolutionResources.MODULAR_MODELS.size(); i < l; i++) {
+            ForgeModelBakery.addSpecialModel(EvolutionResources.MODULAR_MODELS.get(i));
         }
         //Clear and trim since we are not using it anymore
         EvolutionResources.MODULAR_MODELS.reset();

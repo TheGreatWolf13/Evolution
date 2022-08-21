@@ -455,13 +455,6 @@ public class EntityEvents {
     }
 
     @SubscribeEvent
-    public void onLivingHeal(LivingHealEvent event) {
-        if (event.getEntityLiving() instanceof Player) {
-            event.setCanceled(true);
-        }
-    }
-
-    @SubscribeEvent
     public void onLivingHurt(LivingHurtEvent event) {
         if (event.getEntityLiving().level.isClientSide) {
             return;
@@ -644,13 +637,34 @@ public class EntityEvents {
         ProfilerFiller profiler = player.level.getProfiler();
         if (event.phase == TickEvent.Phase.START) {
             profiler.push("preTick");
-            player.getFoodData().setFoodLevel(20);
             profiler.push("reach");
             if (player.isCreative()) {
                 player.getAttribute(ForgeMod.REACH_DISTANCE.get()).setBaseValue(12);
             }
             else {
                 player.getAttribute(ForgeMod.REACH_DISTANCE.get()).setBaseValue(PlayerHelper.REACH_DISTANCE);
+            }
+            profiler.pop();
+            profiler.pop();
+        }
+        else if (event.phase == TickEvent.Phase.END) {
+            profiler.push("postTick");
+            profiler.push("stats");
+            player.awardStat(EvolutionStats.TIME_PLAYED);
+            if (player.getPose() == Pose.CROUCHING) {
+                player.setSprinting(false);
+                player.awardStat(EvolutionStats.TIME_SNEAKING);
+            }
+            if (!player.isSleeping()) {
+                if (player.isAlive()) {
+                    player.awardStat(EvolutionStats.TIME_SINCE_LAST_REST);
+                }
+            }
+            else {
+                PlayerHelper.takeStat(player, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_REST));
+            }
+            if (player.isAlive()) {
+                player.awardStat(EvolutionStats.TIME_SINCE_LAST_DEATH);
             }
             profiler.popPush("status");
             //Handles Status Updates
@@ -678,28 +692,6 @@ public class EntityEvents {
                         player.invalidateCaps();
                     }
                 }
-            }
-            profiler.pop();
-            profiler.pop();
-        }
-        else if (event.phase == TickEvent.Phase.END) {
-            profiler.push("postTick");
-            profiler.push("stats");
-            player.awardStat(EvolutionStats.TIME_PLAYED);
-            if (player.getPose() == Pose.CROUCHING) {
-                player.setSprinting(false);
-                player.awardStat(EvolutionStats.TIME_SNEAKING);
-            }
-            if (!player.isSleeping()) {
-                if (player.isAlive()) {
-                    player.awardStat(EvolutionStats.TIME_SINCE_LAST_REST);
-                }
-            }
-            else {
-                PlayerHelper.takeStat(player, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_REST));
-            }
-            if (player.isAlive()) {
-                player.awardStat(EvolutionStats.TIME_SINCE_LAST_DEATH);
             }
             profiler.popPush("water");
             if (!player.level.isClientSide) {
@@ -733,9 +725,9 @@ public class EntityEvents {
     public void onPotionAdded(PotionEvent.PotionAddedEvent event) {
         LivingEntity entity = event.getEntityLiving();
         MobEffectInstance oldInstance = event.getOldPotionEffect();
-        if (oldInstance != null) {
-            oldInstance.getEffect().removeAttributeModifiers(entity, entity.getAttributes(), oldInstance.getAmplifier());
-        }
+//        if (oldInstance != null) {
+//            oldInstance.getEffect().removeAttributeModifiers(entity, entity.getAttributes(), oldInstance.getAmplifier());
+//        }
         MobEffectInstance newInstance = event.getPotionEffect();
 //        newInstance.getEffect().addAttributeModifiers(entity, entity.getAttributes(), newInstance.getAmplifier());
         if (entity instanceof ServerPlayer player) {

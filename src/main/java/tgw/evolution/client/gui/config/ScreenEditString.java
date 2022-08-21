@@ -8,6 +8,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.widgets.EditBoxAdv;
 import tgw.evolution.init.EvolutionTexts;
 
@@ -60,11 +61,25 @@ public class ScreenEditString extends Screen {
     }
 
     @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            this.minecraft.setScreen(this.parent);
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
     public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(matrices);
         this.editBox.render(matrices, mouseX, mouseY, partialTicks);
         drawCenteredString(matrices, this.font, this.title, this.width / 2, this.height / 2 - 40, 0xFF_FFFF);
         super.render(matrices, mouseX, mouseY, partialTicks);
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return false;
     }
 
     private void updateValidation() {

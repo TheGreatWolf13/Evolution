@@ -1,24 +1,25 @@
 package tgw.evolution.client.gui.config;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.booleans.Boolean2BooleanFunction;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
-import java.util.function.Function;
 
 public class ScreenConfirmation extends Screen {
 
-    private final Function<Boolean, Boolean> handler;
+    private final Boolean2BooleanFunction handler;
     private final Component message;
     private final Screen parent;
     private Component negativeText = CommonComponents.GUI_NO;
     private Component positiveText = CommonComponents.GUI_YES;
 
-    public ScreenConfirmation(Screen parent, Component message, Function<Boolean, Boolean> handler) {
+    public ScreenConfirmation(Screen parent, Component message, Boolean2BooleanFunction handler) {
         super(message);
         this.parent = parent;
         this.message = message;
@@ -30,15 +31,26 @@ public class ScreenConfirmation extends Screen {
         List<FormattedCharSequence> lines = this.font.split(this.message, 300);
         int messageOffset = lines.size() * (this.font.lineHeight + 2) / 2;
         this.addRenderableWidget(new Button(this.width / 2 - 105, this.height / 2 + messageOffset, 100, 20, this.positiveText, button -> {
-            if (this.handler.apply(true)) {
+            if (this.handler.get(true)) {
                 this.minecraft.setScreen(this.parent);
             }
         }));
         this.addRenderableWidget(new Button(this.width / 2 + 5, this.height / 2 + messageOffset, 100, 20, this.negativeText, button -> {
-            if (this.handler.apply(false)) {
+            if (this.handler.get(false)) {
                 this.minecraft.setScreen(this.parent);
             }
         }));
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            if (this.handler.get(false)) {
+                this.minecraft.setScreen(this.parent);
+            }
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
@@ -62,5 +74,10 @@ public class ScreenConfirmation extends Screen {
 
     public void setPositiveText(Component positiveText) {
         this.positiveText = positiveText;
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return false;
     }
 }

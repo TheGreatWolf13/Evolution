@@ -5,11 +5,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
-import it.unimi.dsi.fastutil.objects.ReferenceList;
-import net.minecraft.Util;
 import net.minecraft.client.*;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
@@ -66,6 +61,10 @@ import tgw.evolution.items.IOffhandAttackable;
 import tgw.evolution.items.ItemSword;
 import tgw.evolution.network.PacketCSPlaySoundEntityEmitted;
 import tgw.evolution.patches.IPoseStackPatch;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.RArrayList;
+import tgw.evolution.util.collection.RList;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.Matrix3d;
 import tgw.evolution.util.math.MathHelper;
@@ -80,10 +79,10 @@ public class ClientRenderer {
     public static ClientRenderer instance;
     private static int slotMainHand;
     private final ClientEvents client;
-    private final ObjectList<ClientEffectInstance> effects = new ObjectArrayList<>();
+    private final OList<ClientEffectInstance> effects = new OArrayList<>();
     private final Minecraft mc;
     private final Random rand = new Random();
-    private final ReferenceList<Runnable> runnables = new ReferenceArrayList<>();
+    private final RList<Runnable> runnables = new RArrayList<>();
     public boolean isAddingEffect;
     public boolean isRenderingPlayer;
     public boolean shouldRenderLeftArm = true;
@@ -91,10 +90,12 @@ public class ClientRenderer {
     private ItemStack currentMainhandItem = ItemStack.EMPTY;
     private ItemStack currentOffhandItem = ItemStack.EMPTY;
     private byte healthFlashTicks;
+    private short healthTick;
     private byte hitmarkerTick;
     private byte hungerAlphaMult = 1;
     private float hungerFlashAlpha;
     private byte hungerFlashTicks;
+    private short hungerTick;
     private byte killmarkerTick;
     private short lastBeneficalCount;
     private int lastDisplayedHealth;
@@ -102,7 +103,6 @@ public class ClientRenderer {
     private byte lastDisplayedThirst;
     private short lastNeutralCount;
     private int lastPlayerHealth;
-    private long lastSystemTime;
     private ItemStack mainHandStack = ItemStack.EMPTY;
     private float mainhandEquipProgress;
     private boolean mainhandIsSwingInProgress;
@@ -117,6 +117,7 @@ public class ClientRenderer {
     private byte thirstAlphaMult = 1;
     private float thirstFlashAlpha;
     private byte thirstFlashTicks;
+    private short thirstTick;
 
     public ClientRenderer(Minecraft mc, ClientEvents client) {
         instance = this;
@@ -157,7 +158,8 @@ public class ClientRenderer {
         final double[] points1 = new double[3];
         Matrix4f pose = matrices.last().pose();
         Matrix3f normal = matrices.last().normal();
-        for (Hitbox box : hitbox.getParent().getBoxes()) {
+        for (int i = 0, l = hitbox.getParent().getBoxes().size(); i < l; i++) {
+            Hitbox box = hitbox.getParent().getBoxes().get(i);
             if (!renderAll) {
                 box = hitbox;
             }
@@ -198,7 +200,8 @@ public class ClientRenderer {
             }
         }
         if (renderAll) {
-            for (Hitbox box : hitbox.getParent().getEquipment()) {
+            for (int i = 0, l = hitbox.getParent().getEquipment().size(); i < l; i++) {
+                Hitbox box = hitbox.getParent().getEquipment().get(i);
                 Matrix3d transform = box.getTransformation().transpose();
                 //noinspection ObjectAllocationInLoop
                 box.forEachEdge((x0, y0, z0, x1, y1, z1) -> {
@@ -356,6 +359,15 @@ public class ClientRenderer {
         }
         if (this.thirstFlashTicks > 0) {
             this.thirstFlashTicks--;
+        }
+        if (this.healthTick > 0) {
+            this.healthTick--;
+        }
+        if (this.hungerTick > 0) {
+            this.hungerTick--;
+        }
+        if (this.thirstTick > 0) {
+            this.thirstTick--;
         }
     }
 
@@ -551,7 +563,12 @@ public class ClientRenderer {
         //Flash
         if (level > this.lastDisplayedHunger) {
             this.hungerFlashTicks = 11; //Two flashes that start immediately
+            this.hungerTick = 1_000;
             this.lastDisplayedHunger = (byte) level;
+        }
+        else if (this.hungerTick == 0) {
+            this.lastDisplayedHunger = (byte) level;
+            this.thirstTick = 1_000;
         }
         boolean flash = this.hungerFlashTicks > 0 && this.hungerFlashTicks / 3 % 2 != 0;
         //Rendering
@@ -677,6 +694,11 @@ public class ClientRenderer {
         if (level > this.lastDisplayedThirst) {
             this.thirstFlashTicks = 11; //Two flashes that start immediately
             this.lastDisplayedThirst = (byte) level;
+            this.thirstTick = 1_000;
+        }
+        else if (this.thirstTick == 0) {
+            this.lastDisplayedThirst = (byte) level;
+            this.thirstTick = 1_000;
         }
         flash = this.thirstFlashTicks > 0 && this.thirstFlashTicks / 3 % 2 != 0;
         //Rendering
@@ -783,26 +805,22 @@ public class ClientRenderer {
         Player player = this.mc.player;
         float currentHealth = player.getHealth();
         int currentDisplayedHealth = roundToHearts(currentHealth);
-        boolean updateHealth = false;
         //Take damage
         if (this.lastDisplayedHealth > currentDisplayedHealth) {
-            this.lastSystemTime = Util.getMillis();
+            this.healthTick = 1_000;
             this.healthFlashTicks = 20; //Three flashes that have a delay to start
-            updateHealth = true;
+            this.lastDisplayedHealth = (byte) currentDisplayedHealth;
         }
         //Regen Health
         else if (currentDisplayedHealth > this.lastDisplayedHealth) {
-            this.lastSystemTime = Util.getMillis();
+            this.healthTick = 1_000;
             this.healthFlashTicks = 11; //Two flashes that start immediately
-            updateHealth = true;
+            this.lastDisplayedHealth = (byte) currentDisplayedHealth;
         }
         //Update variables every 1s
-        if (Util.getMillis() - this.lastSystemTime > 1_000L) {
+        else if (this.healthTick == 0) {
             this.lastPlayerHealth = currentDisplayedHealth;
-            this.lastSystemTime = Util.getMillis();
-        }
-        if (updateHealth) {
-            this.lastDisplayedHealth = (byte) currentDisplayedHealth;
+            this.healthTick = 1_000;
         }
         float healthMax = (float) player.getAttribute(Attributes.MAX_HEALTH).getValue();
         boolean flash = this.healthFlashTicks > 0 && this.healthFlashTicks / 3 % 2 != 0;
@@ -995,8 +1013,9 @@ public class ClientRenderer {
                 this.client.effectToAddTicks = 0;
                 this.isAddingEffect = false;
                 ClientEvents.removeEffect(ClientEvents.EFFECTS, addingEffect);
-                for (ClientEffectInstance instance : ClientEvents.EFFECTS_TO_ADD) {
-                    for (int i = 0; i < 20; i++) {
+                for (int i = 0, l = ClientEvents.EFFECTS_TO_ADD.size(); i < l; i++) {
+                    ClientEffectInstance instance = ClientEvents.EFFECTS_TO_ADD.get(i);
+                    for (int j = 0; j < 20; j++) {
                         instance.tick();
                     }
                 }
@@ -1027,7 +1046,8 @@ public class ClientRenderer {
             byte neutralCount = 0;
             byte harmfulCount = 0;
             boolean isMoving = false;
-            for (ClientEffectInstance effectInstance : this.effects) {
+            for (int i = 0, l = this.effects.size(); i < l; i++) {
+                ClientEffectInstance effectInstance = this.effects.get(i);
                 if (!effectInstance.isShowIcon()) {
                     continue;
                 }
@@ -1120,13 +1140,14 @@ public class ClientRenderer {
                     }
                 }
             }
-            for (Runnable run : this.runnables) {
-                matrices.pushPose();
-                matrices.scale(0.5f, 0.5f, 0.5f);
+            for (int i = 0, l = this.runnables.size(); i < l; i++) {
+                Runnable run = this.runnables.get(i);
                 if (run != null) {
+                    matrices.pushPose();
+                    matrices.scale(0.5f, 0.5f, 0.5f);
                     run.run();
+                    matrices.popPose();
                 }
-                matrices.popPose();
             }
             this.lastBeneficalCount = beneficalCount;
             this.lastNeutralCount = neutralCount;

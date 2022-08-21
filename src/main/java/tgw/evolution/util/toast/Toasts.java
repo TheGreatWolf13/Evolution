@@ -5,14 +5,10 @@ import net.minecraft.world.item.ItemStack;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.KnappingRecipe;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.util.collection.I2OMap;
-import tgw.evolution.util.collection.I2OOpenHashMap;
-import tgw.evolution.util.collection.R2IMap;
-import tgw.evolution.util.collection.R2IOpenHashMap;
+import tgw.evolution.util.collection.*;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.constants.WoodVariant;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class Toasts {
@@ -43,7 +39,7 @@ public final class Toasts {
                 continue;
             }
             //noinspection ObjectAllocationInLoop
-            List<ToastHolderRecipe> rockRecipes = new ArrayList<>(KnappingRecipe.VALUES.length - 1);
+            RList<ToastHolderRecipe> rockRecipes = new RArrayList<>(KnappingRecipe.VALUES.length - 1);
             for (KnappingRecipe recipe : KnappingRecipe.VALUES) {
                 if (recipe == KnappingRecipe.NULL) {
                     continue;

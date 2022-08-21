@@ -30,7 +30,8 @@ public abstract class WeightedBakedModelMixin {
 
     @Nullable
     private static <T extends WeightedEntry> T getWeightedItem(List<T> entries, int weightedIndex) {
-        for (T t : entries) {
+        for (int i = 0, l = entries.size(); i < l; i++) {
+            T t = entries.get(i);
             weightedIndex -= t.getWeight().asInt();
             if (weightedIndex < 0) {
                 return t;
@@ -41,8 +42,7 @@ public abstract class WeightedBakedModelMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations.
+     * @reason Avoid allocations.
      */
     @Overwrite
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand, IModelData modelData) {

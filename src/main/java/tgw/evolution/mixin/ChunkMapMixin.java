@@ -28,10 +28,11 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCUpdateCameraViewCenter;
 import tgw.evolution.patches.IServerPlayerPatch;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -334,21 +335,21 @@ public abstract class ChunkMapMixin extends ChunkStorage {
     private void playerLoadedChunkNoPkt(ServerPlayer player, LevelChunk chunk) {
         player.trackChunk(chunk.getPos(), new ClientboundLevelChunkWithLightPacket(chunk, this.lightEngine, null, null, true));
         DebugPackets.sendPoiPacketsForChunk(this.level, chunk.getPos());
-        List<Mob> leashes = null;
-        List<Entity> passengers = null;
+        OList<Mob> leashes = null;
+        OList<Entity> passengers = null;
         for (ChunkMap.TrackedEntity trackedEntity : this.entityMap.values()) {
             Entity entity = trackedEntity.entity;
             if (entity != player && entity.chunkPosition().equals(chunk.getPos())) {
                 trackedEntity.updatePlayer(player);
                 if (entity instanceof Mob mob && mob.getLeashHolder() != null) {
                     if (leashes == null) {
-                        leashes = new ArrayList<>();
+                        leashes = new OArrayList<>();
                     }
                     leashes.add(mob);
                 }
                 if (!entity.getPassengers().isEmpty()) {
                     if (passengers == null) {
-                        passengers = new ArrayList<>();
+                        passengers = new OArrayList<>();
                     }
                     passengers.add(entity);
                 }

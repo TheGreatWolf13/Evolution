@@ -19,22 +19,22 @@ public class HitboxGroup implements IHitbox {
 
     @Override
     public void addRotationX(float x) {
-        for (Hitbox box : this.boxes) {
-            box.rotationX += x;
+        for (int i = 0, l = this.boxes.size(); i < l; i++) {
+            this.boxes.get(i).rotationX += x;
         }
     }
 
     @Override
     public void addRotationY(float y) {
-        for (Hitbox box : this.boxes) {
-            box.rotationY += y;
+        for (int i = 0, l = this.boxes.size(); i < l; i++) {
+            this.boxes.get(i).rotationY += y;
         }
     }
 
     @Override
     public void addRotationZ(float z) {
-        for (Hitbox box : this.boxes) {
-            box.rotationZ += z;
+        for (int i = 0, l = this.boxes.size(); i < l; i++) {
+            this.boxes.get(i).rotationZ += z;
         }
     }
 
@@ -68,8 +68,8 @@ public class HitboxGroup implements IHitbox {
     }
 
     public void setPivot(float x, float y, float z) {
-        for (Hitbox box : this.boxes) {
-            box.setPivot(x, y, z);
+        for (int i = 0, l = this.boxes.size(); i < l; i++) {
+            this.boxes.get(i).setPivot(x, y, z);
         }
     }
 
@@ -78,20 +78,20 @@ public class HitboxGroup implements IHitbox {
     }
 
     public void setPivotX(float x) {
-        for (Hitbox box : this.boxes) {
-            box.pivotX = x;
+        for (int i = 0, l = this.boxes.size(); i < l; i++) {
+            this.boxes.get(i).pivotX = x;
         }
     }
 
     public void setPivotY(float y) {
-        for (Hitbox box : this.boxes) {
-            box.pivotY = y;
+        for (int i = 0, l = this.boxes.size(); i < l; i++) {
+            this.boxes.get(i).pivotY = y;
         }
     }
 
     public void setPivotZ(float z) {
-        for (Hitbox box : this.boxes) {
-            box.pivotZ = z;
+        for (int i = 0, l = this.boxes.size(); i < l; i++) {
+            this.boxes.get(i).pivotZ = z;
         }
     }
 

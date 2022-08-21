@@ -1,6 +1,5 @@
 package tgw.evolution.potion;
 
-import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
@@ -9,7 +8,7 @@ import tgw.evolution.util.collection.I2IMap;
 import tgw.evolution.util.collection.I2IOpenHashMap;
 import tgw.evolution.util.math.MathHelper;
 
-public class EffectDizziness extends MobEffect {
+public class EffectDizziness extends EffectGeneric {
 
     private static final I2IMap AFFECTED = new I2IOpenHashMap();
 
@@ -18,7 +17,7 @@ public class EffectDizziness extends MobEffect {
     }
 
     @Override
-    public void applyEffectTick(LivingEntity entity, int amplifier) {
+    public void applyEffectTick(LivingEntity entity, int lvl) {
         if (entity.level.isClientSide) {
             return;
         }
@@ -26,19 +25,19 @@ public class EffectDizziness extends MobEffect {
             return;
         }
         int tick = AFFECTED.getOrDefault(entity.getId(), 0);
-        entity.zza = Math.signum(MathHelper.cos(tick * MathHelper.TAU / (80 >> amplifier)));
+        entity.zza = Math.signum(MathHelper.cos(tick * MathHelper.TAU / (80 >> lvl)));
         entity.setSprinting(false);
         AFFECTED.put(entity.getId(), ++tick);
-    }
-
-    @Override
-    public boolean isDurationEffectTick(int duration, int amplifier) {
-        return true;
     }
 
     @Override
     public void removeAttributeModifiers(LivingEntity entity, AttributeMap attributes, int amplifier) {
         AFFECTED.remove(entity.getId());
         super.removeAttributeModifiers(entity, attributes, amplifier);
+    }
+
+    @Override
+    public int tickInterval(int lvl) {
+        return 1;
     }
 }

@@ -22,10 +22,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.blocks.IFluidLoggable;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Stream;
 
 @Mixin(LevelChunk.class)
@@ -43,8 +43,7 @@ public abstract class LevelChunkMixin extends ChunkAccess {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Overwrite to implement new fluid system.
+     * @reason Overwrite to implement new fluid system.
      */
     @Override
     @Overwrite
@@ -89,7 +88,7 @@ public abstract class LevelChunkMixin extends ChunkAccess {
     @Override
     @Overwrite
     public Stream<BlockPos> getLights() {
-        List<BlockPos> list = new ArrayList<>();
+        OList<BlockPos> list = new OArrayList<>();
         int minX = this.chunkPos.getMinBlockX();
         int minZ = this.chunkPos.getMinBlockZ();
         for (LevelChunkSection section : this.sections) {

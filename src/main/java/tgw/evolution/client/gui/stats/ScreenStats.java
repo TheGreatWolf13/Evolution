@@ -1,10 +1,10 @@
 package tgw.evolution.client.gui.stats;
 
-import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
-import it.unimi.dsi.fastutil.objects.*;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
@@ -36,12 +36,11 @@ import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.stats.EvolutionStatsCounter;
 import tgw.evolution.stats.IEvoStatFormatter;
+import tgw.evolution.util.collection.*;
 import tgw.evolution.util.reflection.FieldHandler;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)
@@ -236,7 +235,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
         public ListCustomStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 12);
-            List<Stat<ResourceLocation>> list = new ArrayList<>();
+            OList<Stat<ResourceLocation>> list = new OArrayList<>();
             for (Stat<ResourceLocation> stat : Stats.CUSTOM) {
                 if (stat.getValue().getNamespace().equals(Evolution.MODID)) {
                     if (!stat.getValue().getPath().startsWith("distance_") &&
@@ -248,9 +247,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                 }
             }
             list.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(getFormattedName(a), getFormattedName(b)));
-            for (Stat<ResourceLocation> stat : list) {
+            for (int i = 0, l = list.size(); i < l; i++) {
                 //noinspection ObjectAllocationInLoop
-                this.addEntry(new Entry(stat));
+                this.addEntry(new Entry(list.get(i)));
             }
         }
 
@@ -299,24 +298,24 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     @OnlyIn(Dist.CLIENT)
     class ListDamageStats extends ObjectSelectionList<ScreenStats.ListDamageStats.Entry> {
         protected final Comparator<EvolutionDamage.Type> comparator = new ListComparator();
-        protected final ReferenceList<EvolutionDamage.Type> damageList;
-        protected final List<Map<EvolutionDamage.Type, ResourceLocation>> damageStatList;
+        protected final RList<EvolutionDamage.Type> damageList;
+        protected final OList<Map<EvolutionDamage.Type, ResourceLocation>> damageStatList;
         private final int[] headerTexture = {1, 2, 3, 4, 5};
         protected int currentHeader = -1;
         protected int sortOrder;
-
         @Nullable
         protected Map<EvolutionDamage.Type, ResourceLocation> sorting;
 
         public ListDamageStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 20);
-            this.damageStatList = Lists.newArrayList(EvolutionStats.DAMAGE_DEALT_RAW,
-                                                     EvolutionStats.DAMAGE_DEALT_ACTUAL,
-                                                     EvolutionStats.DAMAGE_TAKEN_BLOCKED,
-                                                     EvolutionStats.DAMAGE_TAKEN_RAW,
-                                                     EvolutionStats.DAMAGE_TAKEN_ACTUAL);
+            this.damageStatList = new OArrayList<>();
+            this.damageStatList.add(EvolutionStats.DAMAGE_DEALT_RAW);
+            this.damageStatList.add(EvolutionStats.DAMAGE_DEALT_ACTUAL);
+            this.damageStatList.add(EvolutionStats.DAMAGE_TAKEN_BLOCKED);
+            this.damageStatList.add(EvolutionStats.DAMAGE_TAKEN_RAW);
+            this.damageStatList.add(EvolutionStats.DAMAGE_TAKEN_ACTUAL);
             this.setRenderHeader(true, 20);
-            this.damageList = new ReferenceArrayList<>(EvolutionDamage.ALL);
+            this.damageList = new RArrayList<>(EvolutionDamage.ALL);
             for (int i = 0; i < this.damageList.size(); i++) {
                 //noinspection ObjectAllocationInLoop
                 this.addEntry(new ScreenStats.ListDamageStats.Entry());
@@ -518,7 +517,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     @OnlyIn(Dist.CLIENT)
     class ListDeathStats extends ObjectSelectionList<ListDeathStats.Entry> {
         private final Comparator<Stat<ResourceLocation>> comparator = new ListDeathStats.ListComparator();
-        private final List<Stat<ResourceLocation>> deathList;
+        private final OList<Stat<ResourceLocation>> deathList;
         private final int[] headerTexture = {2};
         protected int currentHeader = -1;
         protected int sortOrder;
@@ -526,7 +525,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         public ListDeathStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 12);
             this.setRenderHeader(true, 20);
-            this.deathList = new ArrayList<>();
+            this.deathList = new OArrayList<>();
             for (Stat<ResourceLocation> stat : Stats.CUSTOM) {
                 if (stat.getValue().getNamespace().equals(Evolution.MODID)) {
                     if (stat.getValue().getPath().startsWith("death_")) {
@@ -653,14 +652,14 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     class ListTimeStats extends ObjectSelectionList<ListTimeStats.Entry> {
         private final Comparator<Stat<ResourceLocation>> comparator = new ListTimeStats.ListComparator();
         private final int[] headerTexture = {1};
-        private final List<Stat<ResourceLocation>> timeList;
+        private final OList<Stat<ResourceLocation>> timeList;
         protected int currentHeader = -1;
         protected int sortOrder;
 
         public ListTimeStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 12);
             this.setRenderHeader(true, 20);
-            this.timeList = new ArrayList<>();
+            this.timeList = new OArrayList<>();
             for (Stat<ResourceLocation> stat : Stats.CUSTOM) {
                 if (stat.getValue().getNamespace().equals(Evolution.MODID)) {
                     if (stat.getValue().getPath().startsWith("time_")) {
@@ -776,7 +775,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     class ListDistanceStats extends ObjectSelectionList<ListDistanceStats.Entry> {
 
         private final Comparator<Stat<ResourceLocation>> comparator = new ListComparator();
-        private final List<Stat<ResourceLocation>> distanceList;
+        private final OList<Stat<ResourceLocation>> distanceList;
         private final int[] headerTexture = {1};
         protected int currentHeader = -1;
         protected int sortOrder;
@@ -784,7 +783,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         public ListDistanceStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 12);
             this.setRenderHeader(true, 20);
-            this.distanceList = new ArrayList<>();
+            this.distanceList = new OArrayList<>();
             for (Stat<ResourceLocation> stat : Stats.CUSTOM) {
                 if (stat.getValue().getNamespace().equals(Evolution.MODID)) {
                     if (stat.getValue().getPath().startsWith("distance")) {
@@ -899,10 +898,10 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     @OnlyIn(Dist.CLIENT)
     class ListMobStats extends ObjectSelectionList<ScreenStats.ListMobStats.Entry> {
 
-        protected final List<StatType<EntityType<?>>> statTypes;
+        protected final RList<StatType<EntityType<?>>> statTypes;
         private final Comparator<EntityType<?>> comparator = new ListMobStats.ListComparator();
         private final Reference2ReferenceMap<EntityType<?>, LivingEntity> entities = new Reference2ReferenceOpenHashMap<>();
-        private final ReferenceList<EntityType<?>> entityList;
+        private final RList<EntityType<?>> entityList;
         private final int[] headerTexture = {1, 2, 3, 4};
         protected int currentHeader = -1;
         private int sortOrder;
@@ -911,12 +910,10 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
         public ListMobStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 9 * 6);
-            this.statTypes = Lists.newArrayList(Stats.ENTITY_KILLED,
-                                                Stats.ENTITY_KILLED_BY,
-                                                EvolutionStats.DAMAGE_DEALT.get(),
-                                                EvolutionStats.DAMAGE_TAKEN.get());
+            this.statTypes = new RArrayList<>(Stats.ENTITY_KILLED, Stats.ENTITY_KILLED_BY, EvolutionStats.DAMAGE_DEALT.get(),
+                                              EvolutionStats.DAMAGE_TAKEN.get());
             this.setRenderHeader(true, 20);
-            this.entityList = new ReferenceArrayList<>();
+            this.entityList = new RArrayList<>();
             for (EntityType<?> entityType : Registry.ENTITY_TYPE) {
                 if (this.shouldAddEntry(entityType)) {
                     this.entityList.add(entityType);
@@ -1138,10 +1135,10 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
     @OnlyIn(Dist.CLIENT)
     class ListStats extends ObjectSelectionList<ScreenStats.ListStats.Entry> {
-        protected final List<StatType<Block>> blockStatList;
+        protected final RList<StatType<Block>> blockStatList;
         protected final Comparator<Item> comparator = new ListComparator();
-        protected final ReferenceList<Item> itemList;
-        protected final List<StatType<Item>> itemStatList;
+        protected final RList<Item> itemList;
+        protected final RList<StatType<Item>> itemStatList;
         private final int[] headerTexture = {3, 4, 1, 2, 5, 6};
         protected int currentHeader = -1;
         protected int sortOrder;
@@ -1150,14 +1147,15 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
         public ListStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 20);
-            this.blockStatList = Lists.newArrayList();
+            this.blockStatList = new RArrayList<>();
             this.blockStatList.add(Stats.BLOCK_MINED);
-            this.itemStatList = Lists.newArrayList(Stats.ITEM_BROKEN, Stats.ITEM_CRAFTED, Stats.ITEM_USED, Stats.ITEM_PICKED_UP, Stats.ITEM_DROPPED);
+            this.itemStatList = new RArrayList<>(Stats.ITEM_BROKEN, Stats.ITEM_CRAFTED, Stats.ITEM_USED, Stats.ITEM_PICKED_UP, Stats.ITEM_DROPPED);
             this.setRenderHeader(true, 20);
-            ReferenceSet<Item> set = new ReferenceOpenHashSet<>();
+            RSet<Item> set = new ROpenHashSet<>();
             allItemInRegistry:
             for (Item item : Registry.ITEM) {
-                for (StatType<Item> statType : this.itemStatList) {
+                for (int i = 0, l = this.itemStatList.size(); i < l; i++) {
+                    StatType<Item> statType = this.itemStatList.get(i);
                     if (statType.contains(item) && ScreenStats.this.stats.getValueLong(statType.get(item)) > 0) {
                         set.add(item);
                         continue allItemInRegistry;
@@ -1166,7 +1164,8 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
             allBlockInRegistry:
             for (Block block : Registry.BLOCK) {
-                for (StatType<Block> statType : this.blockStatList) {
+                for (int i = 0, l = this.blockStatList.size(); i < l; i++) {
+                    StatType<Block> statType = this.blockStatList.get(i);
                     if (statType.contains(block) && ScreenStats.this.stats.getValueLong(statType.get(block)) > 0) {
                         set.add(block.asItem());
                         continue allBlockInRegistry;
@@ -1174,7 +1173,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                 }
             }
             set.remove(Items.AIR);
-            this.itemList = new ReferenceArrayList<>(set);
+            this.itemList = new RArrayList<>(set);
             for (int i = 0; i < this.itemList.size(); i++) {
                 //noinspection ObjectAllocationInLoop
                 this.addEntry(new ScreenStats.ListStats.Entry());

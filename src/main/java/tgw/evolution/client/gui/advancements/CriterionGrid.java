@@ -17,8 +17,9 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
 import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +32,7 @@ public class CriterionGrid {
     private final int[] cellWidths;
     private final int fontHeight;
     private final int numColumns;
-    public List<Column> columns;
+    public OList<Column> columns;
     public int height;
     public int width;
 
@@ -41,7 +42,7 @@ public class CriterionGrid {
         this.fontHeight = 0;
         this.numColumns = 0;
         this.numRows = 0;
-        this.columns = Collections.emptyList();
+        this.columns = new OArrayList<>();
         this.width = 0;
         this.height = 0;
     }
@@ -65,7 +66,7 @@ public class CriterionGrid {
             return EMPTY;
         }
         int numUnobtained = advancement.getMaxCriteraRequired();
-        List<MutableComponent> cellContents = new ArrayList<>();
+        OList<MutableComponent> cellContents = new OArrayList<>();
         for (String criterion : criteria.keySet()) {
             if (progress.getCriterion(criterion).isDone()) {
                 //noinspection ObjectAllocationInLoop
@@ -127,11 +128,11 @@ public class CriterionGrid {
     }
 
     public void init() {
-        this.columns = new ArrayList<>();
+        this.columns = new OArrayList<>();
         this.width = 0;
         for (int c = 0; c < this.numColumns; c++) {
             //noinspection ObjectAllocationInLoop
-            List<MutableComponent> column = new ArrayList<>();
+            OList<MutableComponent> column = new OArrayList<>();
             int columnWidth = 0;
             for (int r = 0; r < this.numRows; r++) {
                 int cellIndex = c * this.numRows + r;

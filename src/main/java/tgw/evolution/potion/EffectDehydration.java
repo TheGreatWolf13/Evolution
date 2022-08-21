@@ -1,55 +1,92 @@
 package tgw.evolution.potion;
 
-import net.minecraft.world.effect.MobEffect;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeMap;
+import org.jetbrains.annotations.NotNull;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEffects;
-import tgw.evolution.patches.IEffectInstancePatch;
+import tgw.evolution.util.collection.ChanceEffectHolder;
+import tgw.evolution.util.collection.EffectHolder;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 
-public class EffectDehydration extends MobEffect {
+public class EffectDehydration extends EffectGeneric {
+
+    private OList<EffectHolder> causes;
+    private OList<ChanceEffectHolder> mayCause;
 
     public EffectDehydration() {
         super(MobEffectCategory.HARMFUL, 0);
     }
 
     @Override
-    public void addAttributeModifiers(LivingEntity entity, AttributeMap attributes, int amplifier) {
-        if (amplifier >= 1) {
-            entity.addEffect(IEffectInstancePatch.newInfinite(MobEffects.MOVEMENT_SLOWDOWN, amplifier - 1, false, false, false));
+    @NotNull
+    public ObjectList<EffectHolder> causesEffect() {
+        if (this.causes == null) {
+            this.causes = new OArrayList<>();
+            this.causes.add(new EffectHolder(1, MobEffects.MOVEMENT_SLOWDOWN,
+                                             a -> EvolutionEffects.infiniteOf(MobEffects.MOVEMENT_SLOWDOWN, a - 1, true, false, false)));
+            this.causes.trimCollection();
         }
-        super.addAttributeModifiers(entity, attributes, amplifier);
+        return this.causes;
     }
 
     @Override
-    public void applyEffectTick(LivingEntity entity, int amplifier) {
-        if (amplifier >= 2) {
-            entity.hurt(EvolutionDamage.DEHYDRATION, 1.0f);
-        }
-        if (amplifier >= 1 && !entity.hasEffect(MobEffects.MOVEMENT_SLOWDOWN)) {
-            entity.addEffect(IEffectInstancePatch.newInfinite(MobEffects.MOVEMENT_SLOWDOWN, amplifier - 1, false, false, false));
-        }
-        if (!entity.hasEffect(EvolutionEffects.DIZZINESS.get()) && entity.getRandom().nextFloat() < 0.05 * (amplifier + 1)) {
-            entity.addEffect(new MobEffectInstance(EvolutionEffects.DIZZINESS.get(), 400 * (amplifier + 1), amplifier, false, false, false));
-        }
+    public int customDescriptionUntil() {
+        return 2;
     }
 
     @Override
-    public boolean isDurationEffectTick(int duration, int amplifier) {
-        if (amplifier <= 2) {
-            return duration % 80 == 0;
-        }
-        return duration % Math.max(80 >> amplifier - 2, 1) == 0;
+    public boolean disablesNaturalRegen() {
+        return true;
     }
 
     @Override
-    public void removeAttributeModifiers(LivingEntity entity, AttributeMap attributes, int amplifier) {
-        if (amplifier >= 1) {
-            entity.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+    public boolean disablesSprint() {
+        return true;
+    }
+
+    @Override
+    public DamageSource dmgSource() {
+        return EvolutionDamage.DEHYDRATION;
+    }
+
+    @Override
+    @NotNull
+    public ObjectList<ChanceEffectHolder> mayCauseEffect() {
+        if (this.mayCause == null) {
+            this.mayCause = new OArrayList<>();
+            this.mayCause.add(new ChanceEffectHolder(0, EvolutionEffects.DIZZINESS.get(), a -> 0.05f * (a + 1),
+                                                     a -> new MobEffectInstance(EvolutionEffects.DIZZINESS.get(), 400 * (a + 1), a, true, false,
+                                                                                false)));
+            this.mayCause.trimCollection();
         }
-        super.removeAttributeModifiers(entity, attributes, amplifier);
+        return this.mayCause;
+    }
+
+    @Override
+    public float regen(int lvl) {
+        return lvl >= 2 ? -1 : 0;
+    }
+
+    @Override
+    public boolean shouldHurt(int lvl) {
+        return lvl >= 2;
+    }
+
+    @Override
+    public float staminaMod() {
+        return 0.1f;
+    }
+
+    @Override
+    public int tickInterval(int lvl) {
+        if (lvl <= 2) {
+            return 80;
+        }
+        return Math.max(80 >> lvl - 2, 1);
     }
 }

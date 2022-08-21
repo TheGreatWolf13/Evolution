@@ -4,8 +4,8 @@ import com.google.common.collect.ImmutableList;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.UseAnim;
 import tgw.evolution.util.collection.O2FPair;
+import tgw.evolution.util.collection.OArrayList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public interface IConsumable {
@@ -43,7 +43,7 @@ public interface IConsumable {
 
         protected void effectInternal(MobEffectInstance effect, float chance) {
             if (this.effects == EMPTY) {
-                this.effects = new ArrayList<>();
+                this.effects = new OArrayList<>();
             }
             this.effects.add(O2FPair.of(effect, chance));
         }

@@ -23,7 +23,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.entity.IEntityAdditionalSpawnData;
 import net.minecraftforge.network.NetworkHooks;
-import tgw.evolution.blocks.BlockGenericSlowable;
+import tgw.evolution.blocks.BlockGenericSnowable;
 import tgw.evolution.entities.util.AnimalFoodWaterController;
 import tgw.evolution.entities.util.Gender;
 import tgw.evolution.init.EvolutionItems;
@@ -140,7 +140,7 @@ public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> exte
 
     @Override
     public float getWalkTargetValue(BlockPos pos, LevelReader level) {
-        return level.getBlockState(pos.below()).getBlock() instanceof BlockGenericSlowable ? 10.0F : level.getBrightness(pos) - 0.5F;
+        return level.getBlockState(pos.below()).getBlock() instanceof BlockGenericSnowable ? 10.0F : level.getBrightness(pos) - 0.5F;
     }
 
     @OnlyIn(Dist.CLIENT)

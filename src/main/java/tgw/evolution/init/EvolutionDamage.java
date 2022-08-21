@@ -2,6 +2,7 @@ package tgw.evolution.init;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import net.minecraft.Util;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.InteractionHand;
@@ -29,7 +30,15 @@ public final class EvolutionDamage {
                                                                   type != Type.SLASHING)
                                                   .toArray(Type[]::new);
     public static final Type[] ALL = Arrays.stream(Type.values()).filter(type -> type != Type.GENERIC).toArray(Type[]::new);
-    public static final ObjectSet<String> ALL_SOURCES = new ObjectOpenHashSet<>();
+    public static final ObjectSet<String> ALL_SOURCES = Util.make(new ObjectOpenHashSet<>(), m -> {
+        m.add("arrow");
+        m.add("doomed_to_fall");
+        m.add("fall");
+        m.add("fall_then_finished");
+        m.add("hook");
+        m.add("player");
+        m.add("spear");
+    });
     public static final DamageSource DEHYDRATION = createSrc(new DamageSourceEv("dehydration", Type.SICKNESS).bypassArmor().absolute());
     public static final DamageSource DROWN = createSrc(new DamageSourceEv("drown", Type.DROWNING).bypassArmor());
     public static final DamageSource DUMMY = new DamageSourceEv("dummy", Type.GENERIC);
@@ -47,16 +56,6 @@ public final class EvolutionDamage {
     public static final DamageSource WALL_IMPACT = createSrc(new DamageSourceEv("wall_impact", Type.IMPACT).bypassArmor());
     public static final DamageSource WATER_IMPACT = createSrc(new DamageSourceEv("water_impact", Type.IMPACT).bypassArmor());
     public static final DamageSource WATER_INTOXICATION = createSrc(new DamageSourceEv("water_intoxication", Type.SICKNESS).bypassArmor().absolute());
-
-    static {
-        ALL_SOURCES.add("arrow");
-        ALL_SOURCES.add("doomed_to_fall");
-        ALL_SOURCES.add("fall");
-        ALL_SOURCES.add("fall_then_finished");
-        ALL_SOURCES.add("hook");
-        ALL_SOURCES.add("player");
-        ALL_SOURCES.add("spear");
-    }
 
     private EvolutionDamage() {
     }

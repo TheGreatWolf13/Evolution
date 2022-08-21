@@ -18,10 +18,11 @@ import net.minecraftforge.client.model.data.ModelProperty;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -100,7 +101,7 @@ public class BakedModelFinalModularTool implements BakedModel {
                                      .getModelManager()
                                      .getModel(EvolutionResources.MODULAR_HANDLES.get(extraData.getData(HANDLE_TYPE),
                                                                                       extraData.getData(HANDLE_MATERIAL)));
-        List<BakedQuad> combinedQuadsList = new ArrayList<>(head.getQuads(state, side, rand));
+        OList<BakedQuad> combinedQuadsList = new OArrayList<>(head.getQuads(state, side, rand));
         combinedQuadsList.addAll(handle.getQuads(state, side, rand));
         return combinedQuadsList;
     }

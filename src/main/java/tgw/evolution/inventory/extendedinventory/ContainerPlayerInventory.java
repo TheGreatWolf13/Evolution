@@ -21,7 +21,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
 import tgw.evolution.init.EvolutionContainers;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.inventory.ServerRecipePlacerEv;
+import tgw.evolution.inventory.ServerPlaceRecipeEv;
 import tgw.evolution.inventory.SlotExtended;
 import tgw.evolution.items.IAdditionalEquipment;
 import tgw.evolution.patches.IAbstractContainerMenuPatch;
@@ -182,7 +182,7 @@ public class ContainerPlayerInventory extends RecipeBookMenu<CraftingContainer> 
 
     @Override
     public void handlePlacement(boolean placeAll, Recipe<?> recipe, ServerPlayer player) {
-        ServerRecipePlacerEv.recipeClicked(this, player, recipe, placeAll);
+        ServerPlaceRecipeEv.recipeClicked(this, player, recipe, placeAll);
     }
 
     @Override

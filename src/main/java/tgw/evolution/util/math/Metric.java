@@ -37,6 +37,7 @@ public enum Metric {
     private static final Object2ObjectMap<Locale, DateFormat> DATE_FORMATS = new Object2ObjectOpenHashMap<>();
     private static final DecimalFormatSymbols SYMBOLS = getSymbols();
     public static final DecimalFormat DEFAULT = initFormat(",##0");
+    public static final DecimalFormat BONUS = initFormat(",##0", "+");
     public static final DecimalFormat ONE_PLACE = initFormat(",##0.#");
     public static final DecimalFormat TWO_PLACES = initFormat(",##0.##");
     public static final DecimalFormat THREE_PLACES = initFormat(",##0.###");
@@ -44,10 +45,12 @@ public enum Metric {
     public static final DecimalFormat THREE_PLACES_FULL = initFormat(",##0.000");
     public static final DecimalFormat FIVE_PLACES_FULL = initFormat(",##0.00000");
     public static final DecimalFormat INT_2 = initFormat("00");
-    public static final DecimalFormat DAMAGE_FORMAT = initFormat(",##0 HP");
-    public static final DecimalFormat HOUR_FORMAT = initFormat(",##0 h");
+    public static final DecimalFormat HP_FORMAT = initFormat(",##0.# HP");
+    public static final DecimalFormat HP_BONUS_FORMAT = initFormat(",##0.# HP", "+");
+    public static final DecimalFormat HOUR_FORMAT = initFormat(",##0h");
     public static final DecimalFormat LATITUDE_FORMAT = initFormat("#0.## \u00B0");
     public static final DecimalFormat PERCENT_ONE_PLACE = initFormat(",##0.#%");
+    public static final DecimalFormat PERCENT_ONE_PLACE_BONUS = initFormat(",##0.#%", "+");
     private final String fullName;
     private final double inNumber;
     private final String prefix;
@@ -189,8 +192,13 @@ public enum Metric {
     }
 
     private static DecimalFormat initFormat(String pattern) {
+        return initFormat(pattern, "");
+    }
+
+    private static DecimalFormat initFormat(String pattern, String positivePrefix) {
         DecimalFormat decimalFormat = new DecimalFormat(pattern);
         decimalFormat.setDecimalFormatSymbols(SYMBOLS);
+        decimalFormat.setPositivePrefix(positivePrefix);
         return decimalFormat;
     }
 

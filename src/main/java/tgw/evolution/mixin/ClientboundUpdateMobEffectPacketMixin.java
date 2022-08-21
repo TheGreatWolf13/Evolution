@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tgw.evolution.patches.IClientboundUpdateMobEffectPacketPatch;
-import tgw.evolution.patches.IEffectInstancePatch;
+import tgw.evolution.patches.IMobEffectInstancePatch;
 
 @Mixin(ClientboundUpdateMobEffectPacket.class)
 public abstract class ClientboundUpdateMobEffectPacketMixin implements IClientboundUpdateMobEffectPacketPatch {
@@ -23,7 +23,7 @@ public abstract class ClientboundUpdateMobEffectPacketMixin implements IClientbo
 
     @Inject(method = "<init>(ILnet/minecraft/world/effect/MobEffectInstance;)V", at = @At(value = "TAIL"))
     private void onConstructor(int entityId, MobEffectInstance effect, CallbackInfo ci) {
-        this.infinite = ((IEffectInstancePatch) effect).isInfinite();
+        this.infinite = ((IMobEffectInstancePatch) effect).isInfinite();
     }
 
     @Inject(method = "<init>(Lnet/minecraft/network/FriendlyByteBuf;)V", at = @At(value = "TAIL"))

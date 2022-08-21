@@ -10,6 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LevelEvent;
@@ -105,6 +106,11 @@ public final class BlockUtils {
     public static boolean hasSolidSide(BlockGetter world, BlockPos pos, Direction side) {
         BlockState state = world.getBlockState(pos);
         return state.isFaceSturdy(world, pos, side);
+    }
+
+    public static boolean isAreaLoaded(LevelReader level, BlockPos centre, int range) {
+        return level.hasChunksAt(centre.getX() - range, centre.getY() - range, centre.getZ() - range, centre.getX() + range, centre.getY() + range,
+                                 centre.getZ() + range);
     }
 
     /**

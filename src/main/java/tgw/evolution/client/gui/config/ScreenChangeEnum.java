@@ -13,12 +13,12 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.util.FormattedCharSequence;
+import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.widgets.EditBoxAdv;
 import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -43,7 +43,7 @@ public class ScreenChangeEnum extends Screen {
     }
 
     private void constructEntries() {
-        List<Entry> entries = new ArrayList<>();
+        OList<Entry> entries = new OArrayList<>();
         Object value = this.selectedValue;
         if (value != null) {
             Object[] enums = ((Enum<?>) value).getDeclaringClass().getEnumConstants();
@@ -97,6 +97,22 @@ public class ScreenChangeEnum extends Screen {
     }
 
     @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            this.minecraft.setScreen(this.parent);
+            return true;
+        }
+        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+            if (this.list.getSelected() != null) {
+                this.onSave.accept(this.list.getSelected().enumValue);
+            }
+            this.minecraft.setScreen(this.parent);
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         boolean onSearchBox = this.searchEditBox.mouseClicked(mouseX, mouseY, button);
         if (!onSearchBox && this.searchEditBox.isFocused() && button == 1) {
@@ -123,10 +139,15 @@ public class ScreenChangeEnum extends Screen {
         this.searchEditBox.render(poseStack, mouseX, mouseY, partialTicks);
         drawCenteredString(poseStack, this.font, this.title, this.width / 2, 7, 0xFF_FFFF);
         super.render(poseStack, mouseX, mouseY, partialTicks);
-        List<FormattedCharSequence> activeTooltip = null;
-        if (activeTooltip != null) {
-            this.renderTooltip(poseStack, activeTooltip, mouseX, mouseY);
-        }
+//        List<FormattedCharSequence> activeTooltip = null;
+//        if (activeTooltip != null) {
+//            this.renderTooltip(poseStack, activeTooltip, mouseX, mouseY);
+//        }
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return false;
     }
 
     @Override
@@ -166,7 +187,7 @@ public class ScreenChangeEnum extends Screen {
 
         public Entry(Enum<?> enumValue) {
             this.enumValue = enumValue;
-            this.label = new TranslatableComponent(ScreenConfig.createEnumKey(ScreenChangeEnum.this.modId, enumValue));
+            this.label = ScreenConfig.createEnumComp(ScreenChangeEnum.this.modId, enumValue);
         }
 
         public Enum<?> getEnumValue() {
