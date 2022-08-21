@@ -78,7 +78,7 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
 
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
-        if (!BlockUtils.isAreaLoaded(level, pos, 3)) {
+        if (!level.isAreaLoaded(pos, 3)) {
             return;
         }
         if (random.nextInt(2) == 0) {

@@ -114,7 +114,7 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
      */
     private void checkFallable(Level level, BlockPos pos) {
         if (canFallThrough(level.getBlockState(pos.below())) && pos.getY() >= 0) {
-            if (BlockUtils.isAreaLoaded(level, pos, 32)) {
+            if (level.isAreaLoaded(pos, 32)) {
                 if (!level.isClientSide) {
                     fall(level, pos);
                 }

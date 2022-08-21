@@ -361,7 +361,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
         if (level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) {
-            if (!BlockUtils.isAreaLoaded(level, pos, 2)) {
+            if (!level.isAreaLoaded(pos, 2)) {
                 return;
             }
             if (!state.canSurvive(level, pos)) {

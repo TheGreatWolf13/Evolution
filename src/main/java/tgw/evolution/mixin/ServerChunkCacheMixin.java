@@ -7,6 +7,7 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.LocalMobCapCalculator;
 import net.minecraft.world.level.NaturalSpawner;
 import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.storage.LevelData;
 import org.spongepowered.asm.mixin.Final;
@@ -43,7 +44,26 @@ public abstract class ServerChunkCacheMixin extends ChunkSource {
     private boolean spawnFriendlies;
 
     @Shadow
+    protected abstract boolean chunkAbsent(@Nullable ChunkHolder p_8417_, int p_8418_);
+
+    @Shadow
     protected abstract void getFullChunk(long p_8371_, Consumer<LevelChunk> p_8372_);
+
+    @Shadow
+    @Nullable
+    protected abstract ChunkHolder getVisibleChunkIfPresent(long p_8365_);
+
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid allocations
+     */
+    @Override
+    @Overwrite
+    public boolean hasChunk(int pX, int pZ) {
+        ChunkHolder holder = this.getVisibleChunkIfPresent(ChunkPos.asLong(pX, pZ));
+        int ticket = 33 + ChunkStatus.getDistance(ChunkStatus.FULL);
+        return !this.chunkAbsent(holder, ticket);
+    }
 
     /**
      * @author TheGreatWolf

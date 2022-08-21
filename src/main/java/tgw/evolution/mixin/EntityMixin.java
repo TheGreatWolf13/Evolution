@@ -1,9 +1,12 @@
 package tgw.evolution.mixin;
 
+import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.tags.Tag;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -14,6 +17,9 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -51,10 +57,10 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     public float yRotO;
     protected int fireDamageImmunity;
+    @Shadow
+    protected Object2DoubleMap<Tag<Fluid>> fluidHeight;
     protected boolean hasCollidedOnX;
     protected boolean hasCollidedOnZ;
-    //    private float lastTickXRot;
-//    private float lastTickYRot;
     @Shadow
     @Nullable
     private Entity vehicle;
@@ -84,6 +90,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         return 1;
     }
 
+    @Shadow
+    public abstract AABB getBoundingBox();
+
     @Override
     public float getCameraYOffset() {
         return 0;
@@ -93,6 +102,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     public float getCameraZOffset() {
         return 0;
     }
+
+    @Shadow
+    public abstract Vec3 getDeltaMovement();
 
     @Override
     public int getFireDamageImmunity() {
@@ -146,10 +158,11 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     public abstract boolean isOnGround();
 
+    @Shadow
+    public abstract boolean isPushedByFluid();
+
     @Inject(method = "baseTick", at = @At("HEAD"))
     private void onBaseTickPre(CallbackInfo ci) {
-//        this.lastTickXRot = this.getXRot();
-//        this.lastTickYRot = this.getYRot();
         if (this.fireDamageImmunity > 0) {
             this.fireDamageImmunity--;
         }
@@ -309,6 +322,12 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
                                                (Entity) (Object) this));
     }
 
+    @Shadow
+    public abstract void setDeltaMovement(Vec3 pMotion);
+
+    @Shadow
+    public abstract void setDeltaMovement(double pX, double pY, double pZ);
+
     @Override
     public void setFireDamageImmunity(int immunity) {
         this.fireDamageImmunity = immunity;
@@ -319,4 +338,123 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Shadow
     public abstract void setYRot(float pYRot);
+
+    @Shadow
+    public abstract boolean touchingUnloadedChunk();
+
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid most allocations
+     */
+    @Overwrite
+    public boolean updateFluidHeightAndDoFluidPushing(Tag<Fluid> fluid, double motionScale) {
+        if (this.touchingUnloadedChunk()) {
+            return false;
+        }
+        AABB aabb = this.getBoundingBox();
+        int minX = Mth.floor(aabb.minX + 0.001);
+        int maxX = Mth.ceil(aabb.maxX - 0.001);
+        int minY = Mth.floor(aabb.minY + 0.001);
+        int maxY = Mth.ceil(aabb.maxY - 0.001);
+        int minZ = Mth.floor(aabb.minZ + 0.001);
+        int maxZ = Mth.ceil(aabb.maxZ - 0.001);
+        double unMinY = aabb.minY + 0.001;
+        double height = 0.0;
+        boolean pushedByFluid = this.isPushedByFluid();
+        boolean isInFluid = false;
+        //Vec3 flow = Vec3.ZERO;
+        double flowX = 0.0;
+        double flowY = 0.0;
+        double flowZ = 0.0;
+        int flowCount = 0;
+        BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
+        for (int dx = minX; dx < maxX; ++dx) {
+            for (int dy = minY; dy < maxY; ++dy) {
+                for (int dz = minZ; dz < maxZ; ++dz) {
+                    mutableBlockPos.set(dx, dy, dz);
+                    FluidState fluidState = this.level.getFluidState(mutableBlockPos);
+                    if (fluidState.is(fluid)) {
+                        double localHeight = dy + fluidState.getHeight(this.level, mutableBlockPos);
+                        if (localHeight >= unMinY) {
+                            isInFluid = true;
+                            height = Math.max(localHeight - unMinY, height);
+                            if (pushedByFluid) {
+                                Vec3 localFlow = fluidState.getFlow(this.level, mutableBlockPos);
+                                double localFlowX = localFlow.x;
+                                double localFlowY = localFlow.y;
+                                double localFlowZ = localFlow.z;
+                                if (height < 0.4) {
+                                    //localFlow = localFlow.scale(height);
+                                    localFlowX *= height;
+                                    localFlowY *= height;
+                                    localFlowZ *= height;
+                                }
+                                //flow = flow.add(localFlow);
+                                flowX += localFlowX;
+                                flowY += localFlowY;
+                                flowZ += localFlowZ;
+                                ++flowCount;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //flow.lengthSqr(); (original is length() which computes a sqrt for no reason)
+        if (flowX * flowX + flowY * flowY + flowZ * flowZ > 0.0) {
+            if (flowCount > 0) {
+                //flow = flow.scale(1.0 / flowCount);
+                double scale = 1.0 / flowCount;
+                flowX *= scale;
+                flowY *= scale;
+                flowZ *= scale;
+            }
+            if (!((Object) this instanceof Player)) {
+                //flow = flow.normalize();
+                double norm = Math.sqrt(flowX * flowX + flowY * flowY + flowZ * flowZ);
+                if (norm < 1.0E-4) {
+                    flowX = 0.0;
+                    flowY = 0.0;
+                    flowZ = 0.0;
+                }
+                else {
+                    flowX /= norm;
+                    flowY /= norm;
+                    flowZ /= norm;
+                }
+            }
+            Vec3 velocity = this.getDeltaMovement();
+            //flow = flow.scale(motionScale);
+            flowX *= motionScale;
+            flowY *= motionScale;
+            flowZ *= motionScale;
+            //flow.lengthSqr; (original is length() which computes a sqrt for no reason)
+            if (Math.abs(velocity.x) < 0.003 &&
+                Math.abs(velocity.z) < 0.003 &&
+                flowX * flowX + flowY * flowY + flowZ * flowZ < 0.000_020_250_000_000_000_004_5) {
+                //flow = flow.normalize().scale(0.004_500_000_000_000_000_5);
+                double norm = Math.sqrt(flowX * flowX + flowY * flowY + flowZ * flowZ);
+                if (norm < 1.0E-4) {
+                    flowX = 0.0;
+                    flowY = 0.0;
+                    flowZ = 0.0;
+                }
+                else {
+                    flowX /= norm;
+                    flowY /= norm;
+                    flowZ /= norm;
+                }
+                flowX *= 0.004_500_000_000_000_000_5;
+                flowY *= 0.004_500_000_000_000_000_5;
+                flowZ *= 0.004_500_000_000_000_000_5;
+            }
+            //velocity.add(flow)
+            flowX += velocity.x;
+            flowY += velocity.y;
+            flowZ += velocity.z;
+            this.setDeltaMovement(flowX, flowY, flowZ);
+        }
+        this.fluidHeight.put(fluid, height);
+        return isInFluid;
+    }
 }

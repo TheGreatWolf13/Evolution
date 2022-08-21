@@ -140,7 +140,7 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
         if (!level.isClientSide) {
-            if (!BlockUtils.isAreaLoaded(level, pos, 3)) {
+            if (!level.isAreaLoaded(pos, 3)) {
                 return;
             }
             if (random.nextInt(4) == 0) {

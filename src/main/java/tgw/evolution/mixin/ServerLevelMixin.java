@@ -14,7 +14,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.patches.ILevelPatch;
 
 import java.util.Random;
@@ -58,12 +57,6 @@ public abstract class ServerLevelMixin extends Level {
                                                                         "Ljava/util/Random;)V"))
     private void proxyFluidStateTick(FluidState fluidState, Level level, BlockPos pos, Random rand) {
         fluidState.randomTick(level, pos.immutable(), rand);
-    }
-
-    @Redirect(method = "tickChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;isAreaLoaded" +
-                                                                        "(Lnet/minecraft/core/BlockPos;I)Z"))
-    private boolean proxyTickChunk(ServerLevel level, BlockPos pos, int range) {
-        return BlockUtils.isAreaLoaded(level, pos, range);
     }
 
     /**
