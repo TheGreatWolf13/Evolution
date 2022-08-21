@@ -72,7 +72,7 @@ public abstract class DistanceManagerMixin {
     }
 
     @Shadow
-    public abstract int getPlayerTicketLevel();
+    protected abstract int getPlayerTicketLevel();
 
     @Shadow
     protected abstract SortedArraySet<Ticket<?>> getTickets(long p_140858_);
