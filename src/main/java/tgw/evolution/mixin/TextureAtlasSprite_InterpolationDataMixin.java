@@ -30,11 +30,10 @@ public abstract class TextureAtlasSprite_InterpolationDataMixin {
 
     /**
      * @author JellySquid
-     * <p>
-     * Drastic optimizations
+     * @reason Drastic optimizations
      */
     @Overwrite
-    void uploadInterpolatedFrame(TextureAtlasSprite.AnimatedTexture animation) {
+    public void uploadInterpolatedFrame(TextureAtlasSprite.AnimatedTexture animation) {
         TextureAtlasSprite.FrameInfo animationFrame = animation.frames.get(animation.frame);
         int curIndex = animationFrame.index;
         int nextIndex = animation.frames.get((animation.frame + 1) % animation.frames.size()).index;

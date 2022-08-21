@@ -35,8 +35,8 @@ public abstract class ModelPartMixin {
 
     /**
      * @author TheGreatWolf
+     * @reason Avoid allocations, use quick matrix transformations
      * <p>
-     * Avoid allocations, use quick matrix transformations
      * <p>
      * Obs.: When trying to use VertexSink, the player model geometry gets distorted, i dont know why :(
      */
@@ -71,8 +71,7 @@ public abstract class ModelPartMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations and use faster, specialized functions
+     * @reason Avoid allocations and use faster, specialized functions
      */
     @Overwrite
     public void translateAndRotate(PoseStack matrices) {

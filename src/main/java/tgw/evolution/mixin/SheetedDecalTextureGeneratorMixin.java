@@ -47,6 +47,7 @@ public abstract class SheetedDecalTextureGeneratorMixin {
 
     /**
      * @author TheGreatWolf
+     * @reason Avoid allocations.
      */
     @Overwrite
     public void endVertex() {
