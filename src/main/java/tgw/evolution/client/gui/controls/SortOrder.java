@@ -31,18 +31,11 @@ public enum SortOrder {
     }
 
     public String getName() {
-        switch (this) {
-            default:
-            case NONE: {
-                return I18n.get("evolution.gui.controls.none");
-            }
-            case AZ: {
-                return I18n.get("evolution.gui.controls.az");
-            }
-            case ZA: {
-                return I18n.get("evolution.gui.controls.za");
-            }
-        }
+        return switch (this) {
+            case NONE -> I18n.get("evolution.gui.controls.none");
+            case AZ -> I18n.get("evolution.gui.controls.az");
+            case ZA -> I18n.get("evolution.gui.controls.za");
+        };
     }
 
     public void sort(List<ListKeyBinds.Entry> list) {

@@ -12,11 +12,11 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEMetal;
 import tgw.evolution.util.constants.MetalVariant;
 import tgw.evolution.util.constants.Oxidation;
 
-import javax.annotation.Nullable;
 import java.util.Random;
 
 public class BlockMetal extends BlockGravity implements EntityBlock {
@@ -42,7 +42,6 @@ public class BlockMetal extends BlockGravity implements EntityBlock {
         return this.metal.getFrictionCoefficient();
     }
 
-    @SuppressWarnings("MagicConstant")
     @Override
     public int getHarvestLevel(BlockState state) {
         return this.metal.getHarvestLevel();
@@ -74,6 +73,7 @@ public class BlockMetal extends BlockGravity implements EntityBlock {
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         if (!level.isClientSide && this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED) {
             TEMetal tile = (TEMetal) level.getBlockEntity(pos);
+            assert tile != null;
             tile.oxidationTick(this.metal, this.oxidation);
         }
         super.onPlace(state, level, pos, oldState, isMoving);
@@ -83,6 +83,7 @@ public class BlockMetal extends BlockGravity implements EntityBlock {
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random rand) {
         if (this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED) {
             TEMetal tile = (TEMetal) level.getBlockEntity(pos);
+            assert tile != null;
             tile.oxidationTick(this.metal, this.oxidation);
         }
     }
@@ -91,11 +92,13 @@ public class BlockMetal extends BlockGravity implements EntityBlock {
     public boolean triggerEvent(BlockState state, Level level, BlockPos pos, int paramA, int paramB) {
         if (!level.isClientSide && this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED) {
             TEMetal currentTile = (TEMetal) level.getBlockEntity(pos);
+            assert currentTile != null;
             if (currentTile.shouldOxidize(this.metal, this.oxidation)) {
                 Oxidation nextOxidation = this.oxidation.getNextStage();
                 level.setBlockAndUpdate(pos, this.metal.getBlock(nextOxidation).defaultBlockState());
                 if (nextOxidation != Oxidation.OXIDIZED) {
                     TEMetal newTile = (TEMetal) level.getBlockEntity(pos);
+                    assert newTile != null;
                     newTile.updateFromOld(currentTile);
                     newTile.oxidationTick(this.metal, nextOxidation);
                     level.blockEvent(pos, level.getBlockState(pos).getBlock(), 0, 0);

@@ -1,6 +1,6 @@
 package tgw.evolution.util.earth;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public enum ClimateZone {
 

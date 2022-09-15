@@ -32,7 +32,7 @@ import tgw.evolution.util.time.Time;
 
 public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> extends EntityGenericAgeable<T> implements IEntityAdditionalSpawnData {
 
-    private static final EntityDataAccessor<Integer> PREGNANCY_TIME = SynchedEntityData.defineId(EntityGenericAgeable.class,
+    private static final EntityDataAccessor<Integer> PREGNANCY_TIME = SynchedEntityData.defineId(EntityGenericAnimal.class,
                                                                                                  EntityDataSerializers.INT);
     private final AnimalFoodWaterController foodController;
     private Gender gender = Gender.MALE;
@@ -63,13 +63,13 @@ public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> exte
             this.inLove = false;
         }
         if (!this.isDead()) {
-            if (this.getAge() % Time.HOUR_IN_TICKS == 0) {
+            if (this.getAge() % Time.TICKS_PER_HOUR == 0) {
                 this.foodController.tick();
             }
             if (this.entityData.get(PREGNANCY_TIME) == 0) {
                 this.haveBabies();
             }
-            if (this.entityData.get(PREGNANCY_TIME) > -Time.MONTH_IN_TICKS) {
+            if (this.entityData.get(PREGNANCY_TIME) > -Time.TICKS_PER_MONTH) {
                 this.entityData.set(PREGNANCY_TIME, this.entityData.get(PREGNANCY_TIME) - 1);
             }
             if (this.canBeInLove()) {
@@ -109,7 +109,7 @@ public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> exte
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(PREGNANCY_TIME, -Time.MONTH_IN_TICKS);
+        this.entityData.define(PREGNANCY_TIME, -Time.TICKS_PER_MONTH);
     }
 
     @Override

@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.events.ItemEvents;
@@ -25,8 +26,6 @@ import tgw.evolution.items.ItemLog;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.util.constants.WoodVariant;
-
-import javax.annotation.Nullable;
 
 public class TEChopping extends BlockEntity implements ILoggable {
 
@@ -41,7 +40,7 @@ public class TEChopping extends BlockEntity implements ILoggable {
     }
 
     public void breakLog(Player player) {
-        if (!this.level.isClientSide) {
+        if (this.level != null && !this.level.isClientSide) {
             Item firewood = WoodVariant.byId(this.id).getFirewood();
             ItemStack stack = new ItemStack(firewood, 16);
             BlockUtils.dropItemStack(this.level, this.worldPosition, stack, 0.5);
@@ -56,7 +55,7 @@ public class TEChopping extends BlockEntity implements ILoggable {
     }
 
     public void dropLog() {
-        if (this.hasLog() && !this.level.isClientSide) {
+        if (this.level != null && this.hasLog() && !this.level.isClientSide) {
             BlockUtils.dropItemStack(this.level, this.worldPosition, this.getItemStack());
         }
         this.id = -1;
@@ -121,6 +120,7 @@ public class TEChopping extends BlockEntity implements ILoggable {
 
     public void removeStack(Player player) {
         ItemStack stack = this.getItemStack();
+        assert this.level != null;
         if (!this.level.isClientSide && !player.getInventory().add(stack)) {
             BlockUtils.dropItemStack(this.level, this.worldPosition, stack);
         }

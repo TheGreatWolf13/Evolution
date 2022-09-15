@@ -25,10 +25,12 @@ import net.minecraft.world.level.storage.LevelSummary;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FileUtils;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
+import tgw.evolution.client.util.Key;
+import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.util.ConfigHelper;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -76,7 +78,7 @@ public class ScreenWorldSelection extends ScreenListMenu {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(@Key int keyCode, int scanCode, @Modifiers int modifiers) {
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
             this.minecraft.setScreen(this.parent);
             return true;

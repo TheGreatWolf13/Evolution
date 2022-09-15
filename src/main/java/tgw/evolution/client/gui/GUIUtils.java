@@ -5,19 +5,16 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Matrix4f;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.PostChain;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
@@ -36,29 +33,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.util.constants.CommonRotations;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
+import org.jetbrains.annotations.Nullable;
 
 @OnlyIn(Dist.CLIENT)
 public final class GUIUtils {
 
-    private static final PostChain SHADER_GROUP;
-    private static DifficultyInstance difficulty;
-
-    static {
-        PostChain shader;
-        try {
-            shader = new PostChain(Minecraft.getInstance().getTextureManager(), Minecraft.getInstance().getResourceManager(),
-                                   Minecraft.getInstance().getMainRenderTarget(), EvolutionResources.SHADER_DESATURATE_75);
-        }
-        catch (IOException e) {
-            shader = null;
-        }
-        SHADER_GROUP = shader;
-    }
+    private static DifficultyInstance difficulty = new DifficultyInstance(Difficulty.NORMAL, 0, 0, 0);
 
     static {
         setDifficulty(null);
@@ -72,55 +52,8 @@ public final class GUIUtils {
         font.draw(matrices, charSequence, xCentre - font.width(charSequence) / 2.0f, y, color);
     }
 
-    public static void drawEntityOnScreen(int posX, int posY, float scale, float mouseX, float mouseY, LivingEntity entity) {
-        mouseX = posX - mouseX;
-        mouseY = posY - 45 - mouseY;
-        float atanMouseX = (float) Math.atan(mouseX / 40);
-        float atanMouseY = (float) Math.atan(mouseY / 40);
-        PoseStack internalMat = RenderSystem.getModelViewStack();
-        internalMat.pushPose();
-        internalMat.translate(posX, posY, 1_050);
-        internalMat.scale(1.0f, 1.0f, -1.0f);
-        RenderSystem.applyModelViewMatrix();
-        PoseStack matrices = new PoseStack();
-        matrices.translate(0, 0, 1_000);
-        matrices.scale(scale, scale, scale);
-        Quaternion quatZ = CommonRotations.ZP180.copy();
-        Quaternion quatX = Vector3f.XP.rotationDegrees(atanMouseY * 20.0F);
-        quatZ.mul(quatX);
-        matrices.mulPose(quatZ);
-        internalMat.mulPose(CommonRotations.ZP180);
-        float oldYawOffset = entity.yBodyRot;
-        float oldYaw = entity.getYRot();
-        float oldPitch = entity.getXRot();
-        float oldPrevYawHead = entity.yHeadRotO;
-        float oldYawHead = entity.yHeadRot;
-        boolean needsTurning = needsTurning(entity);
-        entity.yBodyRot = atanMouseX * 20.0F + (needsTurning ? 0 : 180);
-        entity.setYRot(atanMouseX * 40.0F + 180);
-        if (entity.getType() == EntityType.ENDER_DRAGON) {
-            matrices.mulPose(Vector3f.YP.rotationDegrees(-atanMouseX * 20.0F));
-        }
-        entity.setXRot(-atanMouseY * 20.0F);
-        entity.yHeadRot = entity.getYRot() + (needsTurning ? 180 : 0);
-        entity.yHeadRotO = entity.getYRot();
-        Lighting.setupForEntityInInventory();
-        EntityRenderDispatcher renderManager = Minecraft.getInstance().getEntityRenderDispatcher();
-        quatX.conj();
-        renderManager.overrideCameraOrientation(quatX);
-        renderManager.setRenderShadow(false);
-        MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
-        RenderSystem.runAsFancy(() -> renderManager.render(entity, 0, 0, 0, 0.0f, 1.0F, matrices, buffer, 0xf0_00f0));
-        buffer.endBatch();
-        renderManager.setRenderShadow(true);
-        entity.yBodyRot = oldYawOffset;
-        entity.setYRot(oldYaw);
-        entity.setXRot(oldPitch);
-        entity.yHeadRotO = oldPrevYawHead;
-        entity.yHeadRot = oldYawHead;
-        internalMat.popPose();
-        RenderSystem.applyModelViewMatrix();
-        Lighting.setupFor3DItems();
+    public static void drawEntityOnScreen(int posX, int posY, int scale, float mouseX, float mouseY, LivingEntity entity) {
+        InventoryScreen.renderEntityInInventory(posX, posY, scale, posX - mouseX, posY - 30 - mouseY, entity);
     }
 
     public static void drawRect(double x, double y, double x2, double y2, double width, int color) {
@@ -199,10 +132,12 @@ public final class GUIUtils {
         innerFloatBlit(matrixStack, x, x + uWidth, y, y + vHeight, blitOffset, uWidth, vHeight, uOffset, vOffset, textureWidth, textureHeight);
     }
 
+    @Nullable
     public static LivingEntity getEntity(Level level, EntityType<?> type) {
         LivingEntity entity = (LivingEntity) type.create(level);
         if (entity instanceof Mob mob) {
             try {
+                //noinspection ConstantConditions
                 mob.finalizeSpawn(null, difficulty, MobSpawnType.NATURAL, null, null);
             }
             catch (Throwable ignored) {
@@ -211,7 +146,7 @@ public final class GUIUtils {
         return entity;
     }
 
-    public static float getEntityScale(LivingEntity entity, float baseScale, float targetHeight, float targetWidth) {
+    public static int getEntityScale(LivingEntity entity, float baseScale, float targetHeight, float targetWidth) {
         if (entity.getType() == EntityType.ENDER_DRAGON) {
             targetWidth *= 3;
             targetHeight *= 2;
@@ -219,11 +154,7 @@ public final class GUIUtils {
         else if (entity.getType() == EntityType.SQUID) {
             targetHeight /= 2.5;
         }
-        return Math.min(targetWidth / entity.getBbWidth(), targetHeight / entity.getBbHeight()) * baseScale;
-    }
-
-    public static void hLine(PoseStack matrices, int x0, int x1, int y, int color) {
-        hLine(matrices, x0, x1, y, color, false);
+        return (int) (Math.min(targetWidth / entity.getBbWidth(), targetHeight / entity.getBbHeight()) * baseScale);
     }
 
     public static void hLine(PoseStack matrices, int x0, int x1, int y, int color, boolean over) {
@@ -268,12 +199,7 @@ public final class GUIUtils {
         builder.vertex(matrix, x2, y1, blitOffset).uv(maxU, minV).endVertex();
         builder.vertex(matrix, x1, y1, blitOffset).uv(minU, minV).endVertex();
         builder.end();
-//        RenderSystem.enableAlphaTest();
         BufferUploader.end(builder);
-    }
-
-    private static boolean needsTurning(LivingEntity entity) {
-        return entity.getType() == EntityType.BAT;
     }
 
     public static void renderAndDecorateFakeItemLighting(ItemRenderer renderer, ItemStack stack, int x, int y, int packedLight) {
@@ -362,19 +288,6 @@ public final class GUIUtils {
             difficulty = level.getCurrentDifficultyAt(
                     pos == null ? new BlockPos(levelData.getXSpawn(), levelData.getYSpawn(), levelData.getZSpawn()) : pos);
         }
-        else {
-            difficulty = new DifficultyInstance(Difficulty.NORMAL, 0, 0, 0);
-        }
-    }
-
-    public static void stopUseShader() {
-        if (SHADER_GROUP != null) {
-            SHADER_GROUP.close();
-        }
-    }
-
-    public static void vLine(PoseStack matrices, int x, int y0, int y1, int color) {
-        vLine(matrices, x, y0, y1, color, false);
     }
 
     public static void vLine(PoseStack matrices, int x, int y0, int y1, int color, boolean over) {

@@ -24,6 +24,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.IForgeShearable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.constants.BlockFlags;
@@ -197,7 +199,7 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
     }
 
     @Override
-    public List<ItemStack> onSheared(Player player, ItemStack item, Level level, BlockPos pos, int fortune) {
+    public @NotNull List<ItemStack> onSheared(@Nullable Player player, ItemStack item, Level level, BlockPos pos, int fortune) {
         level.setBlock(pos, Blocks.AIR.defaultBlockState(), BlockFlags.NOTIFY_UPDATE_AND_RERENDER);
         return Collections.singletonList(new ItemStack(this));
     }

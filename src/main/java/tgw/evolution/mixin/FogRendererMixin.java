@@ -72,10 +72,10 @@ public abstract class FogRendererMixin {
                     int dk = k - 2 + z;
                     double scale = scaleX * scaleY * scaleZ;
                     totalScale += scale;
-                    Vec3d fetch = fetcher.fetch(di, dj, dk, fetcherVec).scale(scale);
-                    vecX += fetch.getX();
-                    vecY += fetch.getY();
-                    vecZ += fetch.getZ();
+                    Vec3d fetch = fetcher.fetch(di, dj, dk, fetcherVec).scaleMutable(scale);
+                    vecX += fetch.x();
+                    vecY += fetch.y();
+                    vecZ += fetch.z();
                 }
             }
         }
@@ -88,8 +88,7 @@ public abstract class FogRendererMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Modify the fog color
+     * @reason Modify the fog color
      */
     @Overwrite
     public static void setupColor(Camera camera, float partialTicks, ClientLevel level, int renderDistance, float worldDarkenAmount) {
@@ -98,7 +97,7 @@ public abstract class FogRendererMixin {
         switch (fogType) {
             case WATER -> {
                 long i = Util.getMillis();
-                int j = level.getBiome(new BlockPos(camera.getPosition())).getWaterFogColor();
+                int j = level.getBiome(new BlockPos(camera.getPosition())).value().getWaterFogColor();
                 if (biomeChangedTime < 0L) {
                     targetBiomeFog = j;
                     previousBiomeFog = j;
@@ -143,7 +142,6 @@ public abstract class FogRendererMixin {
                 float skyRed = skyColor.x;
                 float skyGreen = skyColor.y;
                 float skyBlue = skyColor.z;
-                Vec3d fogColor;
                 if (ClientEvents.getInstance().getDimension() != null) {
                     BiomeManager biomeManager = level.getBiomeManager();
                     double posX = (camera.getPosition().x - 2) * 0.25;
@@ -153,16 +151,19 @@ public abstract class FogRendererMixin {
                     IVec3dFetcher fetcher = (x, y, z, vec) -> ClientEvents.getInstance()
                                                                           .getDimension()
                                                                           .getBrightnessDependentFogColor(Vec3d.fromRGB24(
-                                                                                                                  biomeManager.getNoiseBiomeAtQuart(x, y, z).getFogColor(), vec),
+                                                                                                                  biomeManager.getNoiseBiomeAtQuart(x, y, z).value().getFogColor(),
+                                                                                                                  vec),
                                                                                                           skyFogMult);
-                    fogColor = gaussianSampleVec3(posX, posY, posZ, fetcher);
+                    Vec3d fogColor = gaussianSampleVec3(posX, posY, posZ, fetcher);
+                    fogRed = (float) fogColor.x;
+                    fogGreen = (float) fogColor.y;
+                    fogBlue = (float) fogColor.z;
                 }
                 else {
-                    fogColor = Vec3d.ZERO;
+                    fogRed = 0;
+                    fogGreen = 0;
+                    fogBlue = 0;
                 }
-                fogRed = (float) fogColor.getX();
-                fogGreen = (float) fogColor.getY();
-                fogBlue = (float) fogColor.getZ();
                 fogRed += (skyRed - fogRed) * f4;
                 fogGreen += (skyGreen - fogGreen) * f4;
                 fogBlue += (skyBlue - fogBlue) * f4;
@@ -186,6 +187,7 @@ public abstract class FogRendererMixin {
         }
         double d0 = (camera.getPosition().y - level.getMinBuildHeight()) * level.getLevelData().getClearColorScale();
         if (entity instanceof LivingEntity living && living.hasEffect(MobEffects.BLINDNESS)) {
+            //noinspection ConstantConditions
             int i2 = living.getEffect(MobEffects.BLINDNESS).getDuration();
             if (i2 < 20) {
                 d0 *= 1.0 - i2 / 20.0;

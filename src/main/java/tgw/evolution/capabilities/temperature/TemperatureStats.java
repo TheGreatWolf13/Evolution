@@ -2,6 +2,7 @@ package tgw.evolution.capabilities.temperature;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
@@ -10,8 +11,6 @@ import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.Temperature;
 import tgw.evolution.util.earth.ClimateZone;
 import tgw.evolution.util.math.MathHelper;
-
-import javax.annotation.Nullable;
 
 public class TemperatureStats implements ITemperature {
 
@@ -287,8 +286,8 @@ public class TemperatureStats implements ITemperature {
         ClimateZone.Region region = this.getRegion();
         this.desiredMinComfort = Temperature.getMinComfortForRegion(region);
         this.desiredMaxComfort = Temperature.getMaxComfortForRegion(region);
-        this.desiredMinComfort -= player.getAttribute(EvolutionAttributes.COLD_RESISTANCE.get()).getValue();
-        this.desiredMaxComfort += player.getAttribute(EvolutionAttributes.HEAT_RESISTANCE.get()).getValue();
+        this.desiredMinComfort -= player.getAttributeValue(EvolutionAttributes.COLD_RESISTANCE.get());
+        this.desiredMaxComfort += player.getAttributeValue(EvolutionAttributes.HEAT_RESISTANCE.get());
     }
 
     private void updateDesiredTemperature(ServerPlayer player) {

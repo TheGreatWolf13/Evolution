@@ -9,6 +9,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -18,6 +19,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.modular.IModularTool;
 import tgw.evolution.events.ItemEvents;
 import tgw.evolution.init.EvolutionDamage;
@@ -25,10 +27,12 @@ import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.patches.IBlockPatch;
+import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.hitbox.HitboxEntity;
-
-import javax.annotation.Nullable;
+import tgw.evolution.util.hitbox.IHitboxArmed;
+import tgw.evolution.util.math.Vec3d;
 
 public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements IAerodynamicEntity {
 
@@ -38,7 +42,7 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     public EntitySpear(Level level, LivingEntity thrower, ItemStack thrownStack) {
         super(EvolutionEntities.SPEAR.get(), thrower, level, IModularTool.get(thrownStack).getMass());
         this.setStack(thrownStack.copy());
-        this.setDamage(IModularTool.get(thrownStack).getAttackDamage());
+        this.setDamage(PlayerHelper.ATTACK_DAMAGE * IModularTool.get(thrownStack).getAttackDamage());
     }
 
     public EntitySpear(EntityType<EntitySpear> type, Level level) {
@@ -56,6 +60,17 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     }
 
     @Override
+    protected void adjustPos(LivingEntity shooter, HumanoidArm arm) {
+        HitboxEntity<LivingEntity> hitboxes = (HitboxEntity<LivingEntity>) ((IEntityPatch) shooter).getHitboxes();
+        if (hitboxes instanceof IHitboxArmed armed) {
+            Vec3d offset = armed.getOffsetForArm(shooter, 1.0f, arm);
+            this.setPos(shooter.getX() + offset.x(), shooter.getY() + offset.y(), shooter.getZ() + offset.z());
+            return;
+        }
+        super.adjustPos(shooter, arm);
+    }
+
+    @Override
     public Packet<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
@@ -66,23 +81,27 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     }
 
     @Override
+    public float getFrictionModifier() {
+        return 0;
+    }
+
+    @Override
     protected SoundEvent getHitBlockSound() {
         return this.isStone ? EvolutionSounds.STONE_WEAPON_HIT_BLOCK.get() : EvolutionSounds.METAL_WEAPON_HIT_BLOCK.get();
     }
 
-    @Nullable
     @Override
-    public HitboxEntity<EntitySpear> getHitbox() {
+    public @Nullable HitboxEntity<EntitySpear> getHitboxes() {
         return null;
+    }
+
+    @Override
+    public double getLegSlowdown() {
+        return 0;
     }
 
     public ItemStack getStack() {
         return this.stack;
-    }
-
-    @Override
-    public boolean hasHitboxes() {
-        return false;
     }
 
     @Override
@@ -139,12 +158,15 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     @Override
     public void readSpawnData(FriendlyByteBuf buffer) {
         super.readSpawnData(buffer);
-        this.setStack(ItemStack.of(buffer.readNbt()));
+        CompoundTag tag = buffer.readNbt();
+        if (tag != null) {
+            this.setStack(ItemStack.of(tag));
+        }
     }
 
     private void setStack(ItemStack stack) {
         this.stack = stack.copy();
-        this.isStone = IModularTool.get(this.stack).getHead().getMaterial().getMaterial().isStone();
+        this.isStone = IModularTool.get(this.stack).getHead().getMaterialInstance().getMaterial().isStone();
     }
 
     @Override

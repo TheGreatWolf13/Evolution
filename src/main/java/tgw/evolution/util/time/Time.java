@@ -1,49 +1,72 @@
 package tgw.evolution.util.time;
 
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import tgw.evolution.util.math.Metric;
 
 public class Time {
     public static final Time START_TIME = new Time(6);
-    public static final int HOUR_IN_TICKS = 1_000;
-    public static final int DAY_IN_TICKS = 24_000;
-    public static final int DAYS_IN_A_MONTH = 21;
-    public static final int MONTH_IN_TICKS = DAYS_IN_A_MONTH * DAY_IN_TICKS;
-    public static final int MONTHS_IN_A_YEAR = 12;
-    public static final int DAYS_IN_A_YEAR = MONTHS_IN_A_YEAR * DAYS_IN_A_MONTH;
-    public static final int YEAR_IN_TICKS = DAYS_IN_A_YEAR * DAY_IN_TICKS;
+    public static final int TICKS_PER_HOUR;
+    public static final int TICKS_PER_DAY = 36_000;
+    public static final int TICKS_PER_MONTH;
+    public static final int TICKS_PER_YEAR;
+    public static final int DAYS_PER_MONTH = 21;
+    public static final int DAYS_PER_YEAR;
+    public static final int MONTHS_PER_YEAR;
     /**
      * How long it takes for Mercury to orbit the Sun. In real life, this value is 87.9691 days, which is then multiplied by
-     * {@link Time#YEAR_IN_TICKS}
+     * {@link Time#DAYS_PER_YEAR}
      * and divided by 365.25 (a real life, Earth year).
      */
-    public static final int MERCURIAN_YEAR = (int) (87.969_1 * DAYS_IN_A_YEAR / 365.25) * DAY_IN_TICKS;
+    public static final int MERCURIAN_YEAR;
     /**
-     * How long it takes for Venus to orbit the Sun. In real life, this value is 224.7 days, which is then multiplied by {@link Time#YEAR_IN_TICKS}
+     * How long it takes for Venus to orbit the Sun. In real life, this value is 224.7 days, which is then multiplied by {@link Time#DAYS_PER_YEAR}
      * and divided by 365.25 (a real life, Earth year).
      */
-    public static final int VENUSIAN_YEAR = (int) (224.7 * DAYS_IN_A_YEAR / 365.25) * DAY_IN_TICKS;
+    public static final int VENUSIAN_YEAR;
     /**
-     * How long it takes for Mars to orbit the Sun. In real life, this value is 686.971 days, which is then multiplied by {@link Time#YEAR_IN_TICKS}
+     * How long it takes for Mars to orbit the Sun. In real life, this value is 686.971 days, which is then multiplied by {@link Time#DAYS_PER_YEAR}
      * and divided by 365.25 (a real life, Earth year).
      */
-    public static final int MARTIAN_YEAR = (int) (686.971 * DAYS_IN_A_YEAR / 365.25) * DAY_IN_TICKS;
+    public static final int MARTIAN_YEAR;
     /**
      * How long it takes for Jupiter to orbit the Sun. In real life, this value is 4_331.572 days, which is then multiplied by
-     * {@link Time#YEAR_IN_TICKS}
+     * {@link Time#DAYS_PER_YEAR}
      * and divided by 365.25 (a real life, Earth year).
      */
-    public static final int JUPITERIAN_YEAR = (int) (4_331.572 * DAYS_IN_A_YEAR / 365.25) * DAY_IN_TICKS;
+    public static final int JUPITERIAN_YEAR;
     /**
      * How long it takes for Saturn to orbit the Sun. In real life, this value is 10_759.22 days, which is then multiplied by
-     * {@link Time#YEAR_IN_TICKS}
+     * {@link Time#DAYS_PER_YEAR}
      * and divided by 365.25 (a real life, Earth year).
      */
-    public static final int SATURNIAN_YEAR = (int) (10_759.22 * DAYS_IN_A_YEAR / 365.25) * DAY_IN_TICKS;
+    public static final int SATURNIAN_YEAR;
     /**
      * A sidereal day presents the time it takes for the Earth to spin around its axis by 360º relative to the background stars.
      * It is equivalent to 23h 56min 04s.
      */
-    public static final int SIDEREAL_DAY_IN_TICKS = (int) (DAY_IN_TICKS * (23 + 56 / 60.0 + 4 / (60.0 * 60.0)) / 24.0);
+    public static final int SIDEREAL_DAY_IN_TICKS;
+
+    static {
+        if (TICKS_PER_DAY % 24 != 0) {
+            throw new RuntimeException("Day should have a multiple of 24 number of ticks!");
+        }
+        TICKS_PER_HOUR = TICKS_PER_DAY / 24;
+        if (DAYS_PER_MONTH % 7 != 0) {
+            throw new RuntimeException("Month should have a multiple of 7 number of days!");
+        }
+        TICKS_PER_MONTH = DAYS_PER_MONTH * TICKS_PER_DAY;
+        MONTHS_PER_YEAR = 12;
+        DAYS_PER_YEAR = MONTHS_PER_YEAR * DAYS_PER_MONTH;
+        TICKS_PER_YEAR = DAYS_PER_YEAR * TICKS_PER_DAY;
+        MERCURIAN_YEAR = (int) (87.969_1 * DAYS_PER_YEAR / 365.25 * TICKS_PER_DAY);
+        VENUSIAN_YEAR = (int) (224.7 * DAYS_PER_YEAR / 365.25 * TICKS_PER_DAY);
+        MARTIAN_YEAR = (int) (686.971 * DAYS_PER_YEAR / 365.25 * TICKS_PER_DAY);
+        JUPITERIAN_YEAR = (int) (4_331.572 * DAYS_PER_YEAR / 365.25 * TICKS_PER_DAY);
+        SATURNIAN_YEAR = (int) (10_759.22 * DAYS_PER_YEAR / 365.25 * TICKS_PER_DAY);
+        SIDEREAL_DAY_IN_TICKS = (int) (TICKS_PER_DAY * (23 + 56 / 60.0 + 4 / (60.0 * 60.0)) / 24.0);
+    }
+
     private final int hour;
     private final int minute;
 
@@ -67,39 +90,35 @@ public class Time {
     }
 
     public static Time fromTicks(long ticks) {
-        ticks += 6_000;
-        long h = ticks % DAY_IN_TICKS / HOUR_IN_TICKS;
-        int m = (int) ((ticks % HOUR_IN_TICKS) / (HOUR_IN_TICKS / 60.0));
+        ticks += 6L * TICKS_PER_HOUR;
+        long h = ticks % TICKS_PER_DAY / TICKS_PER_HOUR;
+        int m = (int) ((ticks % TICKS_PER_HOUR) / (TICKS_PER_HOUR / 60.0));
         return new Time((int) h, m);
     }
 
-    public static String get24HourTime(int timeInTicks) {
-        timeInTicks %= 24_000;
-        int hour = timeInTicks / 1_000 + 6;
-        if (hour >= 24) {
-            hour -= 24;
-        }
-        int minute = (int) ((timeInTicks % 1_000) / 16.6);
-        return hour + "h" + minute;
-    }
-
     public static String getFormattedTime(int timeInTicks) {
-        if (timeInTicks < HOUR_IN_TICKS) {
+        if (timeInTicks < TICKS_PER_HOUR) {
             return timeInTicks + " ticks";
         }
-        if (timeInTicks < DAY_IN_TICKS) {
-            return timeInTicks / (float) HOUR_IN_TICKS + " hours";
+        if (timeInTicks < TICKS_PER_DAY) {
+            return timeInTicks / (float) TICKS_PER_HOUR + " hours";
         }
-        if (timeInTicks < YEAR_IN_TICKS) {
-            return timeInTicks / (float) DAY_IN_TICKS + " days";
+        if (timeInTicks < TICKS_PER_YEAR) {
+            return timeInTicks / (float) TICKS_PER_DAY + " days";
         }
-        return timeInTicks / (float) YEAR_IN_TICKS + " years";
+        return timeInTicks / (float) TICKS_PER_YEAR + " years";
     }
 
     public static long roundToLastFullHour(long ticks) {
-        ticks /= 1_000;
-        ticks *= 1_000;
+        ticks /= TICKS_PER_HOUR;
+        ticks *= TICKS_PER_HOUR;
         return ticks;
+    }
+
+    public Component getDisplayName() {
+        int hour12format = this.hour == 0 ? 12 : this.hour > 12 ? this.hour - 12 : this.hour;
+        String amPm = this.hour >= 12 ? "PM" : "AM";
+        return new TranslatableComponent("evolution.calendar.time", this.hour, Metric.INT_2.format(this.minute), hour12format, amPm);
     }
 
     @Override
@@ -108,6 +127,6 @@ public class Time {
     }
 
     public int toTicks() {
-        return this.hour * HOUR_IN_TICKS + this.minute * HOUR_IN_TICKS / 60;
+        return this.hour * TICKS_PER_HOUR + this.minute * TICKS_PER_HOUR / 60;
     }
 }

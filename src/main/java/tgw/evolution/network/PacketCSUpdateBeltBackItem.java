@@ -8,16 +8,14 @@ import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 
-import javax.annotation.Nonnull;
 import java.util.function.Supplier;
 
 public class PacketCSUpdateBeltBackItem implements IPacket {
 
     private final boolean back;
-    @Nonnull
     private final ItemStack stack;
 
-    public PacketCSUpdateBeltBackItem(@Nonnull ItemStack stack, boolean back) {
+    public PacketCSUpdateBeltBackItem(ItemStack stack, boolean back) {
         this.stack = stack;
         this.back = back;
     }

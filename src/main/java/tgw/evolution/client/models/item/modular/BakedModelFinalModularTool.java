@@ -15,14 +15,13 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.client.model.data.ModelProperty;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.ItemMaterial;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.RArrayList;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Random;
 
@@ -37,6 +36,7 @@ public class BakedModelFinalModularTool implements BakedModel {
 
     private final BakedModel baseModel;
     private final IModelData modelData = getEmptyIModelData();
+    private final List<BakedQuad> quadHolder = new RArrayList<>();
     private boolean isSweeping;
     private boolean isThrowing;
 
@@ -54,12 +54,11 @@ public class BakedModelFinalModularTool implements BakedModel {
         return builder.build();
     }
 
-    @Nonnull
     @Override
-    public IModelData getModelData(@Nonnull BlockAndTintGetter level,
-                                   @Nonnull BlockPos pos,
-                                   @Nonnull BlockState state,
-                                   @Nonnull IModelData tileData) {
+    public @NotNull IModelData getModelData(BlockAndTintGetter level,
+                                            BlockPos pos,
+                                            BlockState state,
+                                            IModelData tileData) {
         return this.modelData;
     }
 
@@ -74,7 +73,7 @@ public class BakedModelFinalModularTool implements BakedModel {
     }
 
     @Override
-    public TextureAtlasSprite getParticleIcon(@Nonnull IModelData data) {
+    public TextureAtlasSprite getParticleIcon(IModelData data) {
         return this.baseModel.getParticleIcon(data);
     }
 
@@ -83,9 +82,8 @@ public class BakedModelFinalModularTool implements BakedModel {
         return this.getQuads(state, side, rand, this.modelData);
     }
 
-    @Nonnull
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random rand, @Nonnull IModelData extraData) {
+    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand, IModelData extraData) {
         BakedModel head;
         if (extraData.getData(IS_SHARP)) {
             head = Minecraft.getInstance()
@@ -101,9 +99,10 @@ public class BakedModelFinalModularTool implements BakedModel {
                                      .getModelManager()
                                      .getModel(EvolutionResources.MODULAR_HANDLES.get(extraData.getData(HANDLE_TYPE),
                                                                                       extraData.getData(HANDLE_MATERIAL)));
-        OList<BakedQuad> combinedQuadsList = new OArrayList<>(head.getQuads(state, side, rand));
-        combinedQuadsList.addAll(handle.getQuads(state, side, rand));
-        return combinedQuadsList;
+        this.quadHolder.clear();
+        this.quadHolder.addAll(head.getQuads(state, side, rand));
+        this.quadHolder.addAll(handle.getQuads(state, side, rand));
+        return this.quadHolder;
     }
 
     @Override

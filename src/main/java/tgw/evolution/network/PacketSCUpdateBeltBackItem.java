@@ -6,17 +6,15 @@ import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.events.ClientEvents;
 
-import javax.annotation.Nonnull;
 import java.util.function.Supplier;
 
 public class PacketSCUpdateBeltBackItem implements IPacket {
 
     private final boolean back;
     private final int entityId;
-    @Nonnull
     private final ItemStack stack;
 
-    public PacketSCUpdateBeltBackItem(int entityId, boolean back, @Nonnull ItemStack stack) {
+    public PacketSCUpdateBeltBackItem(int entityId, boolean back, ItemStack stack) {
         this.stack = stack;
         this.back = back;
         this.entityId = entityId;

@@ -17,7 +17,10 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 import tgw.evolution.blocks.tileentities.TESchematic;
-import tgw.evolution.client.gui.widgets.EditBoxAdv;
+import tgw.evolution.client.gui.widgets.AdvEditBox;
+import tgw.evolution.client.util.Key;
+import tgw.evolution.client.util.Modifiers;
+import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
@@ -46,31 +49,31 @@ public class ScreenSchematic extends Screen {
     private final TESchematic tile;
     private Button detectSizeButton;
     private boolean ignoreEntities;
-    private EditBoxAdv integrityEdit;
+    private AdvEditBox integrityEdit;
     private Button loadButton;
     private Mirror mirror = Mirror.NONE;
     private Button mirrorButton;
     private SchematicMode mode = SchematicMode.SAVE;
     private Button modeButton;
-    private EditBoxAdv nameEdit;
-    private EditBoxAdv posXEdit;
-    private EditBoxAdv posYEdit;
-    private EditBoxAdv posZEdit;
+    private AdvEditBox nameEdit;
+    private AdvEditBox posXEdit;
+    private AdvEditBox posYEdit;
+    private AdvEditBox posZEdit;
     private Button rotate180DegreesButton;
     private Button rotate270DegressButton;
     private Button rotateNinetyDegreesButton;
     private Button rotateZeroDegreesButton;
     private Rotation rotation = Rotation.NONE;
     private Button saveButton;
-    private EditBoxAdv seedEdit;
+    private AdvEditBox seedEdit;
     private boolean showAir;
     private Button showAirButton;
     private boolean showBoundingBox;
     private Button showBoundingBoxButton;
     private Button showEntitiesButton;
-    private EditBoxAdv sizeXEdit;
-    private EditBoxAdv sizeYEdit;
-    private EditBoxAdv sizeZEdit;
+    private AdvEditBox sizeXEdit;
+    private AdvEditBox sizeYEdit;
+    private AdvEditBox sizeZEdit;
 
     public ScreenSchematic(TESchematic tile) {
         super(new TranslatableComponent(EvolutionBlocks.SCHEMATIC_BLOCK.get().getDescriptionId()));
@@ -208,7 +211,7 @@ public class ScreenSchematic extends Screen {
                                                                               this.tile.setRotation(Rotation.COUNTERCLOCKWISE_90);
                                                                               this.updateDirectionButtons();
                                                                           }));
-        this.nameEdit = new EditBoxAdv(this.font, this.width / 2 - 152, 40, 300, 20, EvolutionTexts.EMPTY) {
+        this.nameEdit = new AdvEditBox(this.font, this.width / 2 - 152, 40, 300, 20, EvolutionTexts.EMPTY) {
             @Override
             public boolean charTyped(char codePoint, int modifiers) {
                 return ScreenSchematic.this.isValidCharacterForName(this.getValue(), codePoint, this.getCursorPosition()) &&
@@ -219,36 +222,36 @@ public class ScreenSchematic extends Screen {
         this.nameEdit.setValue(this.tile.getName());
         this.addWidget(this.nameEdit);
         BlockPos schematicPos = this.tile.getSchematicPos();
-        this.posXEdit = new EditBoxAdv(this.font, this.width / 2 - 152, 80, 80, 20, EvolutionTexts.EMPTY);
+        this.posXEdit = new AdvEditBox(this.font, this.width / 2 - 152, 80, 80, 20, EvolutionTexts.EMPTY);
         this.posXEdit.setMaxLength(15);
         this.posXEdit.setValue(Integer.toString(schematicPos.getX()));
         this.addWidget(this.posXEdit);
-        this.posYEdit = new EditBoxAdv(this.font, this.width / 2 - 72, 80, 80, 20, EvolutionTexts.EMPTY);
+        this.posYEdit = new AdvEditBox(this.font, this.width / 2 - 72, 80, 80, 20, EvolutionTexts.EMPTY);
         this.posYEdit.setMaxLength(15);
         this.posYEdit.setValue(Integer.toString(schematicPos.getY()));
         this.addWidget(this.posYEdit);
-        this.posZEdit = new EditBoxAdv(this.font, this.width / 2 + 8, 80, 80, 20, EvolutionTexts.EMPTY);
+        this.posZEdit = new AdvEditBox(this.font, this.width / 2 + 8, 80, 80, 20, EvolutionTexts.EMPTY);
         this.posZEdit.setMaxLength(15);
         this.posZEdit.setValue(Integer.toString(schematicPos.getZ()));
         this.addWidget(this.posZEdit);
         Vec3i size = this.tile.getStructureSize();
-        this.sizeXEdit = new EditBoxAdv(this.font, this.width / 2 - 152, 120, 80, 20, EvolutionTexts.EMPTY);
+        this.sizeXEdit = new AdvEditBox(this.font, this.width / 2 - 152, 120, 80, 20, EvolutionTexts.EMPTY);
         this.sizeXEdit.setMaxLength(15);
         this.sizeXEdit.setValue(Integer.toString(size.getX()));
         this.addWidget(this.sizeXEdit);
-        this.sizeYEdit = new EditBoxAdv(this.font, this.width / 2 - 72, 120, 80, 20, EvolutionTexts.EMPTY);
+        this.sizeYEdit = new AdvEditBox(this.font, this.width / 2 - 72, 120, 80, 20, EvolutionTexts.EMPTY);
         this.sizeYEdit.setMaxLength(15);
         this.sizeYEdit.setValue(Integer.toString(size.getY()));
         this.addWidget(this.sizeYEdit);
-        this.sizeZEdit = new EditBoxAdv(this.font, this.width / 2 + 8, 120, 80, 20, EvolutionTexts.EMPTY);
+        this.sizeZEdit = new AdvEditBox(this.font, this.width / 2 + 8, 120, 80, 20, EvolutionTexts.EMPTY);
         this.sizeZEdit.setMaxLength(15);
         this.sizeZEdit.setValue(Integer.toString(size.getZ()));
         this.addWidget(this.sizeZEdit);
-        this.integrityEdit = new EditBoxAdv(this.font, this.width / 2 - 152, 120, 80, 20, EvolutionTexts.EMPTY);
+        this.integrityEdit = new AdvEditBox(this.font, this.width / 2 - 152, 120, 80, 20, EvolutionTexts.EMPTY);
         this.integrityEdit.setMaxLength(15);
         this.integrityEdit.setValue(this.decimalFormat.format(this.tile.getIntegrity()));
         this.addWidget(this.integrityEdit);
-        this.seedEdit = new EditBoxAdv(this.font, this.width / 2 - 72, 120, 80, 20, EvolutionTexts.EMPTY);
+        this.seedEdit = new AdvEditBox(this.font, this.width / 2 - 72, 120, 80, 20, EvolutionTexts.EMPTY);
         this.seedEdit.setMaxLength(31);
         this.seedEdit.setValue(Long.toString(this.tile.getSeed()));
         this.addWidget(this.seedEdit);
@@ -273,7 +276,7 @@ public class ScreenSchematic extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(@Key int keyCode, int scanCode, @Modifiers int modifiers) {
         if (super.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
         }
@@ -285,7 +288,7 @@ public class ScreenSchematic extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
         this.integrityEdit.setFocus(false);
         this.nameEdit.setFocus(false);
         this.seedEdit.setFocus(false);

@@ -21,7 +21,7 @@ import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCHandAnimation;
 import tgw.evolution.util.constants.BlockFlags;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ItemGenericPlaceable extends ItemEv {
 

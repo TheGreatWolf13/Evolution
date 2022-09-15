@@ -13,10 +13,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCHandAnimation;
-
-import javax.annotation.Nullable;
 
 public abstract class ItemGenericBlockPlaceable extends ItemBlock {
 

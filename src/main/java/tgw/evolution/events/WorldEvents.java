@@ -14,9 +14,8 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
-
-import javax.annotation.Nullable;
 
 public class WorldEvents {
 
@@ -50,11 +49,15 @@ public class WorldEvents {
 
     @SubscribeEvent
     public void onWorldLoad(WorldEvent.Load event) {
-        if (event.getWorld() instanceof ServerLevel world) {
-            MinecraftServer server = world.getServer();
+        if (event.getWorld() instanceof ServerLevel level) {
+            MinecraftServer server = level.getServer();
+            GameRules gameRules = level.getGameRules();
             if (server.getWorldData().getGameType() != GameType.CREATIVE) {
-                world.getGameRules().getRule(GameRules.RULE_REDUCEDDEBUGINFO).set(true, server);
+                gameRules.getRule(GameRules.RULE_REDUCEDDEBUGINFO).set(true, server);
             }
+            gameRules.getRule(GameRules.RULE_DOINSOMNIA).set(false, server);
+            gameRules.getRule(GameRules.RULE_DO_PATROL_SPAWNING).set(false, server);
+            gameRules.getRule(GameRules.RULE_DO_TRADER_SPAWNING).set(false, server);
         }
     }
 

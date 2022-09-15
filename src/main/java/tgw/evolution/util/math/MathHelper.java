@@ -13,7 +13,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -21,21 +20,15 @@ import net.minecraft.world.phys.*;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.Patterns;
-import tgw.evolution.entities.INeckPosition;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.patches.*;
 import tgw.evolution.util.AdvancedEntityRayTraceResult;
 import tgw.evolution.util.HitInformation;
-import tgw.evolution.util.hitbox.Hitbox;
-import tgw.evolution.util.hitbox.HitboxEntity;
-import tgw.evolution.util.hitbox.HitboxType;
-import tgw.evolution.util.hitbox.Matrix3d;
-import tgw.evolution.util.reflection.FieldHandler;
+import tgw.evolution.util.hitbox.*;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -54,19 +47,11 @@ import java.util.regex.Pattern;
 
 public final class MathHelper {
 
-    public static final float PI = (float) Math.PI;
-    public static final float TAU = 2.0f * PI;
-    public static final float PI_OVER_2 = PI / 2.0f;
-    public static final float SQRT_2 = sqrt(2.0f);
-    public static final float SQRT_2_OVER_2 = SQRT_2 / 2.0f;
     public static final Random RANDOM = new Random();
     public static final DirectionDiagonal[][] DIAGONALS = {{DirectionDiagonal.NORTH_WEST, DirectionDiagonal.NORTH_EAST},
                                                            {DirectionDiagonal.SOUTH_WEST, DirectionDiagonal.SOUTH_EAST}};
-    public static final InteractionHand[] HANDS = InteractionHand.values();
     public static final InteractionHand[] HANDS_LEFT_PRIORITY = {InteractionHand.OFF_HAND, InteractionHand.MAIN_HAND};
     private static final Predicate<Entity> PREDICATE = e -> e != null && !e.isSpectator() && e.isPickable();
-    private static final FieldHandler<LivingEntity, Float> SWIM_AMOUNT0 = new FieldHandler<>(LivingEntity.class, "f_20932_");
-    private static final FieldHandler<LivingEntity, Float> SWIM_AMOUNT = new FieldHandler<>(LivingEntity.class, "f_20931_");
     private static final Pattern DIACRITICAL_MARKS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
     private MathHelper() {
@@ -98,14 +83,6 @@ public final class MathHelper {
      */
     public static float arcCosDeg(double value) {
         return (float) (arcCos(value) * 180 / Math.PI);
-    }
-
-    public static double arcSin(double value) {
-        return Math.atan2(value, Math.sqrt(1 - value * value));
-    }
-
-    public static double arcSinDeg(double value) {
-        return Math.toDegrees(arcSin(value));
     }
 
     /**
@@ -153,7 +130,7 @@ public final class MathHelper {
         try {
             Files.walkFileTree(path, new SimpleFileVisitor<>() {
                 @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException e) {
+                public FileVisitResult postVisitDirectory(Path dir, @Nullable IOException e) {
                     if (e != null) {
                         Evolution.warn("Had trouble traversing: " + dir + " (" + e + ")");
                     }
@@ -292,239 +269,145 @@ public final class MathHelper {
         return angle;
     }
 
-    public static void collideOBBWithCollider(@Nonnull HitInformation hits,
-                                              @Nonnull Entity entity,
-                                              @Nonnull Hitbox collider,
+    /**
+     * @return The least distance between {@code from} and the {@link AABB}, given the ray clips, otherwise {@link Double#NaN}.
+     */
+    public static double clipDist(AABB bb, Vec3d from, Vec3d to) {
+        return clipDist(bb, from.x, from.y, from.z, to.x, to.y, to.z);
+    }
+
+    /**
+     * @return The least distance between {@code (x0, y0, z0)} and the {@link AABB}, given the ray clips, otherwise {@link Double#NaN}.
+     */
+    public static double clipDist(AABB bb, double x0, double y0, double z0, double x1, double y1, double z1) {
+        double dx = x1 - x0;
+        double dy = y1 - y0;
+        double dz = z1 - z0;
+        return getMinDist(bb, x0, y0, z0, dx, dy, dz);
+    }
+
+    public static double clipPoint(double minDist,
+                                   double distSide,
+                                   double distA,
+                                   double distB,
+                                   double minSide,
+                                   double minA,
+                                   double maxA,
+                                   double minB,
+                                   double maxB,
+                                   double startSide,
+                                   double startA,
+                                   double startB) {
+        double d0 = (minSide - startSide) / distSide;
+        double d1 = startA + d0 * distA;
+        double d2 = startB + d0 * distB;
+        double comp = Double.isNaN(minDist) ? 1.0 : minDist;
+        if (0 < d0 && d0 < comp && minA - 1.0E-7 < d1 && d1 < maxA + 1.0E-7 && minB - 1.0E-7 < d2 && d2 < maxB + 1.0E-7) {
+            return d0;
+        }
+        return minDist;
+    }
+
+    public static void collideOBBWithCollider(HitInformation hits,
+                                              LivingEntity entity,
                                               float partialTicks,
                                               BlockHitResult[] hitResult,
                                               boolean checkBlocks) {
-        Level world = entity.level;
-        collider.getParent().init(entity, partialTicks);
-        List<Entity> foundEntities = world.getEntities(entity, entity.getBoundingBox().inflate(2.5), PREDICATE);
-        for (Entity entityInBoundingBox : foundEntities) {
-            collidingEntityHitboxes(hits, entity, entityInBoundingBox, collider, partialTicks);
+        HitboxEntity<LivingEntity> hitboxes = ((IEntityPatch) entity).getHitboxes();
+        if (hitboxes == null) {
+            return;
+        }
+        Hitbox collider = hitboxes.getEquipFor(((ILivingEntityPatch) entity).getSpecialAttackType(), entity.getMainArm());
+        if (collider == null) {
+            return;
+        }
+        List<Entity> foundEntities = entity.level.getEntities(entity, entity.getBoundingBox().inflate(2.5), PREDICATE);
+        if (foundEntities.isEmpty() && !checkBlocks) {
+            return;
+        }
+        hitboxes.init(entity, partialTicks);
+        if (collider instanceof ColliderHitbox col) {
+            col.setParent(hitboxes);
+        }
+        Matrix4d colliderTransform = collider.adjustedColliderTransform();
+        Matrix4d transform = hitboxes.getColliderTransform();
+        double hitterPosX = Mth.lerp(partialTicks, entity.xOld, entity.getX());
+        double hitterPosY = Mth.lerp(partialTicks, entity.yOld, entity.getY());
+        double hitterPosZ = Mth.lerp(partialTicks, entity.zOld, entity.getZ());
+        hits.prepare(collider, colliderTransform, transform, hitterPosX, hitterPosY, hitterPosZ);
+        for (int i = 0, l = foundEntities.size(); i < l; i++) {
+            Entity possibleVictim = foundEntities.get(i);
+            HitboxEntity<Entity> victimHitboxes = ((IEntityPatch) possibleVictim).getHitboxes();
+            if (victimHitboxes == null) {
+                collidingWithEntityBB(hits, possibleVictim);
+            }
+            else {
+                collidingWithEntityHitboxesInTheirVS(hits, possibleVictim, victimHitboxes, partialTicks);
+            }
         }
         if (checkBlocks) {
-            hitResult[0] = collideWithBlocks(entity, collider, partialTicks);
+            hitResult[0] = collideWithBlocks(hits, entity, collider, partialTicks);
         }
+        hits.release();
     }
 
     @Nullable
-    public static BlockHitResult collideWithBlocks(Entity hitter, Hitbox collider, float partialTicks) {
-        AABB aabb = collider.getAABB();
-        Matrix3d transform = collider.getTransformation().transpose();
-        Vec3 offset = collider.getOffset();
-        Matrix3d mainTransform = collider.getParent().getTransform().transpose();
-        Vec3 mainOffset = collider.getParent().getOffset();
-        double hitterPosX = Mth.lerp(partialTicks, hitter.xOld, hitter.getX());
-        double hitterPosY = Mth.lerp(partialTicks, hitter.yOld, hitter.getY());
-        double hitterPosZ = Mth.lerp(partialTicks, hitter.zOld, hitter.getZ());
-        for (int v = 0; v < 4; v++) {
-            double x = v < 2 ? aabb.minX : aabb.maxX;
-            double y = v % 2 == 0 ? aabb.minY : aabb.maxY;
-            double z = v == 0 || v == 3 ? aabb.minZ : aabb.maxZ;
-            double fromX = transform.transformX(x, y, z);
-            double fromY = transform.transformY(x, y, z);
-            double fromZ = transform.transformZ(x, y, z);
-            fromX += offset.x;
-            fromY += offset.y;
-            fromZ += offset.z;
-            double fromX0 = mainTransform.transformX(fromX, fromY, fromZ);
-            double fromY0 = mainTransform.transformY(fromX, fromY, fromZ);
-            double fromZ0 = mainTransform.transformZ(fromX, fromY, fromZ);
-            fromX0 += mainOffset.x;
-            fromY0 += mainOffset.y;
-            fromZ0 += mainOffset.z;
-            for (int i = 0; i < 3; i++) {
-                double x0 = x;
-                double y0 = y;
-                double z0 = z;
-                switch (i) {
-                    case 0 -> x0 = x0 == aabb.minX ? aabb.maxX : aabb.minX;//Flip X
-                    case 1 -> y0 = y0 == aabb.minY ? aabb.maxY : aabb.minY;//Flip Y
-                    case 2 -> z0 = z0 == aabb.minZ ? aabb.maxZ : aabb.minZ;//Flip Z
-                }
-                double toX = transform.transformX(x0, y0, z0);
-                double toY = transform.transformY(x0, y0, z0);
-                double toZ = transform.transformZ(x0, y0, z0);
-                toX += offset.x;
-                toY += offset.y;
-                toZ += offset.z;
-                double toX0 = mainTransform.transformX(toX, toY, toZ);
-                double toY0 = mainTransform.transformY(toX, toY, toZ);
-                double toZ0 = mainTransform.transformZ(toX, toY, toZ);
-                toX0 += mainOffset.x;
-                toY0 += mainOffset.y;
-                toZ0 += mainOffset.z;
-                fromX0 += hitterPosX;
-                fromY0 += hitterPosY;
-                fromZ0 += hitterPosZ;
-                toX0 += hitterPosX;
-                toY0 += hitterPosY;
-                toZ0 += hitterPosZ;
-                if (Math.abs(fromX0 - toX0) > aabb.getXsize()) {
-                    continue;
-                }
-                if (Math.abs(fromY0 - toY0) > aabb.getYsize()) {
-                    continue;
-                }
-                if (Math.abs(fromZ0 - toZ0) > aabb.getZsize()) {
-                    continue;
-                }
-                //noinspection ObjectAllocationInLoop
-                Vec3 from = new Vec3(fromX0, fromY0, fromZ0);
-                //noinspection ObjectAllocationInLoop
-                Vec3 to = new Vec3(toX0, toY0, toZ0);
-                //noinspection ObjectAllocationInLoop
-                BlockHitResult hitResult = hitter.level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
-                if (hitResult.getType() != HitResult.Type.MISS) {
-                    return hitResult;
-                }
+    public static BlockHitResult collideWithBlocks(HitInformation hits, Entity hitter, Hitbox collider, float partialTicks) {
+        Level level = hitter.level;
+        for (int e = 0; e < 12; e++) {
+            BlockHitResult clip = level.clip(hits.getClipContext(e));
+            if (clip.getType() != HitResult.Type.MISS) {
+                return clip;
             }
         }
         return null;
     }
 
-    public static <T extends Entity> void collidingEntityHitboxes(HitInformation hits, Entity hitter, T entity, Hitbox collider, float partialTicks) {
-        if (hits.areAllChecked(entity)) {
-            return;
+    private static void collidingWithEntityBB(HitInformation hits, Entity victim) {
+        AABB bb = victim.getBoundingBox();
+        for (int v = 0; v < 8; v++) {
+            if (bb.contains(hits.getOrMakeVertex(v))) {
+                hits.addHitbox(victim, HitboxType.ALL);
+                return;
+            }
         }
-        AABB aabb = collider.getAABB();
-        Matrix3d transform = collider.getTransformation().transpose();
-        Vec3 offset = collider.getOffset();
-        Matrix3d mainTransform = collider.getParent().getTransform().transpose();
-        Vec3 mainOffset = collider.getParent().getOffset();
-        double hitterPosX = Mth.lerp(partialTicks, hitter.xOld, hitter.getX());
-        double hitterPosY = Mth.lerp(partialTicks, hitter.yOld, hitter.getY());
-        double hitterPosZ = Mth.lerp(partialTicks, hitter.zOld, hitter.getZ());
-        double posX = Mth.lerp(partialTicks, entity.xOld, entity.getX());
-        double posY = Mth.lerp(partialTicks, entity.yOld, entity.getY());
-        double posZ = Mth.lerp(partialTicks, entity.zOld, entity.getZ());
-        HitboxEntity<T> hitbox = null;
-        if (((IEntityPatch) entity).hasHitboxes()) {
-            hitbox = (HitboxEntity<T>) ((IEntityPatch) entity).getHitboxes();
-            hitbox.init(entity, partialTicks);
+        for (int e = 0; e < 12; e++) {
+            if (!Double.isNaN(clipDist(bb, hits.getOrMakeEdge(e, true), hits.getOrMakeEdge(e, false)))) {
+                hits.addHitbox(victim, HitboxType.ALL);
+                return;
+            }
         }
-        //Check for the four main vertices of the collider box
-        for (int v = 0; v < 4; v++) {
-            double x = v < 2 ? aabb.minX : aabb.maxX;
-            double y = v % 2 == 0 ? aabb.minY : aabb.maxY;
-            double z = v == 0 || v == 3 ? aabb.minZ : aabb.maxZ;
-            double fromX = transform.transformX(x, y, z);
-            double fromY = transform.transformY(x, y, z);
-            double fromZ = transform.transformZ(x, y, z);
-            fromX += offset.x;
-            fromY += offset.y;
-            fromZ += offset.z;
-            double fromX0 = mainTransform.transformX(fromX, fromY, fromZ);
-            double fromY0 = mainTransform.transformY(fromX, fromY, fromZ);
-            double fromZ0 = mainTransform.transformZ(fromX, fromY, fromZ);
-            fromX0 += mainOffset.x;
-            fromY0 += mainOffset.y;
-            fromZ0 += mainOffset.z;
-            //For every vertex, check the three edges connected to it
-            for (int i = 0; i < 3; i++) {
-                double x0 = x;
-                double y0 = y;
-                double z0 = z;
-                switch (i) {
-                    case 0 -> x0 = x0 == aabb.minX ? aabb.maxX : aabb.minX;//Flip X
-                    case 1 -> y0 = y0 == aabb.minY ? aabb.maxY : aabb.minY;//Flip Y
-                    case 2 -> z0 = z0 == aabb.minZ ? aabb.maxZ : aabb.minZ;//Flip Z
+    }
+
+    private static void collidingWithEntityHitboxesInTheirVS(HitInformation hits,
+                                                             Entity victim,
+                                                             HitboxEntity<Entity> victimHitboxes,
+                                                             float partialTicks) {
+        double victimX = Mth.lerp(partialTicks, victim.xo, victim.getX());
+        double victimY = Mth.lerp(partialTicks, victim.yo, victim.getY());
+        double victimZ = Mth.lerp(partialTicks, victim.zo, victim.getZ());
+        victimHitboxes.init(victim, partialTicks);
+        List<Hitbox> boxes = victimHitboxes.getBoxes();
+        hits.prepareInHBVS(victimHitboxes, victimX, victimY, victimZ);
+        boxes:
+        for (int i = 0, l = boxes.size(); i < l; i++) {
+            hits.softRelease();
+            Hitbox hitbox = boxes.get(i);
+            Matrix4d transform = hitbox.adjustedTransform();
+            for (int v = 0; v < 8; v++) {
+                if (hitbox.contains(hits.getOrMakeVertexInHBVS(v, transform))) {
+                    hits.addHitbox(victim, hitbox.getPart());
+                    continue boxes;
                 }
-                double toX = transform.transformX(x0, y0, z0);
-                double toY = transform.transformY(x0, y0, z0);
-                double toZ = transform.transformZ(x0, y0, z0);
-                toX += offset.x;
-                toY += offset.y;
-                toZ += offset.z;
-                double toX0 = mainTransform.transformX(toX, toY, toZ);
-                double toY0 = mainTransform.transformY(toX, toY, toZ);
-                double toZ0 = mainTransform.transformZ(toX, toY, toZ);
-                toX0 += mainOffset.x;
-                toY0 += mainOffset.y;
-                toZ0 += mainOffset.z;
-                fromX0 += hitterPosX;
-                fromY0 += hitterPosY;
-                fromZ0 += hitterPosZ;
-                toX0 += hitterPosX;
-                toY0 += hitterPosY;
-                toZ0 += hitterPosZ;
-                if (!((IEntityPatch) entity).hasHitboxes()) {
-                    //Sanity checks
-                    if (Math.abs(fromX0 - toX0) > aabb.getXsize()) {
-                        //Invalid hit, try another
-                        continue;
-                    }
-                    if (Math.abs(fromY0 - toY0) > aabb.getYsize()) {
-                        //Invalid hit, try another
-                        continue;
-                    }
-                    if (Math.abs(fromZ0 - toZ0) > aabb.getZsize()) {
-                        //Invalid hit, try another
-                        continue;
-                    }
-                    Vec3 from = new Vec3(fromX0, fromY0, fromZ0);
-                    Vec3 to = new Vec3(toX0, toY0, toZ0);
-                    Optional<Vec3> optional = entity.getBoundingBox().clip(from, to);
-                    if (optional.isPresent() || entity.getBoundingBox().contains(from) || entity.getBoundingBox().contains(to)) {
-                        //Edge hit the entity BB
-                        hits.addHitbox(entity, HitboxType.ALL);
-                        return;
-                    }
-                    //Edge did not hit, try another
-                    continue;
-                }
-                fromX0 -= posX;
-                fromY0 -= posY;
-                fromZ0 -= posZ;
-                toX0 -= posX;
-                toY0 -= posY;
-                toZ0 -= posZ;
-                Vec3 mainOffsetIns = hitbox.getOffset();
-                Matrix3d mainTransformIns = hitbox.getTransform();
-                fromX0 -= mainOffsetIns.x;
-                fromY0 -= mainOffsetIns.y;
-                fromZ0 -= mainOffsetIns.z;
-                double fromX1 = mainTransformIns.transformX(fromX0, fromY0, fromZ0);
-                double fromY1 = mainTransformIns.transformY(fromX0, fromY0, fromZ0);
-                double fromZ1 = mainTransformIns.transformZ(fromX0, fromY0, fromZ0);
-                toX0 -= mainOffsetIns.x;
-                toY0 -= mainOffsetIns.y;
-                toZ0 -= mainOffsetIns.z;
-                double toX1 = mainTransformIns.transformX(toX0, toY0, toZ0);
-                double toY1 = mainTransformIns.transformY(toX0, toY0, toZ0);
-                double toZ1 = mainTransformIns.transformZ(toX0, toY0, toZ0);
-                mainTransformIns.transpose();
-                //noinspection ObjectAllocationInLoop
-                Vec3 from = new Vec3(fromX1, fromY1, fromZ1);
-                //noinspection ObjectAllocationInLoop
-                Vec3 to = new Vec3(toX1, toY1, toZ1);
-                boolean hasAdded = false;
-                //Check if the edge hits every Hitbox
-                for (Hitbox box : hitbox.getBoxes()) {
-                    if (hits.contains(entity, box.getPart())) {
-                        continue;
-                    }
-                    Vec3 newFrom = from;
-                    Vec3 newTo = to;
-                    Vec3 offsetIns = box.getOffset();
-                    Matrix3d transformIns = box.getTransformation();
-                    newFrom = newFrom.subtract(offsetIns);
-                    newFrom = transformIns.transform(newFrom);
-                    newTo = newTo.subtract(offsetIns);
-                    newTo = transformIns.transform(newTo);
-                    Optional<Vec3> optional = box.getAABB().clip(newFrom, newTo);
-                    if (optional.isPresent()) {
-                        hasAdded = true;
-                        hits.addHitbox(entity, box.getPart());
-                    }
-                }
-                if (hasAdded && hits.areAllChecked(entity)) {
-                    return;
+            }
+            for (int e = 0; e < 12; e++) {
+                if (!Double.isNaN(hitbox.clipDist(hits.getOrMakeEdgeInHBVS(e, true, transform), hits.getOrMakeEdgeInHBVS(e, false, transform)))) {
+                    hits.addHitbox(victim, hitbox.getPart());
+                    continue boxes;
                 }
             }
         }
+        hits.releaseInHBVS();
     }
 
     /**
@@ -564,60 +447,37 @@ public final class MathHelper {
     /**
      * Approximates the trigonometric function cosine.
      *
-     * @param rad The argument of the cosine, given in radians.
-     * @return An approximation of the cosine of the given argument.
-     * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
-     */
-    public static float cos(float rad) {
-        return Mth.cos(wrapRadians(rad));
-    }
-
-    /**
-     * Approximates the trigonometric function cosine.
-     *
      * @param deg The argument of the cosine, given in degrees.
      * @return An approximation of the cosine of the given argument.
      * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
      */
     public static float cosDeg(float deg) {
-        return Mth.cos(degToRad(Mth.wrapDegrees(deg)));
-    }
-
-    /**
-     * Converts a {@code float} value from degrees to radians.
-     *
-     * @param degrees The value in degrees.
-     * @return the corresponding value in radians.
-     */
-    public static float degToRad(float degrees) {
-        return degrees * PI / 180;
+        return Mth.cos(deg * Mth.DEG_TO_RAD);
     }
 
     /**
      * Calculates the shortest distance between two points in euclidean space.
-     *
-     * @param x  The x coordinate of the first point.
-     * @param y  The y coordinate of the first point.
-     * @param z  The z coordinate of the first point.
-     * @param x0 The x coordinate of the second point.
-     * @param y0 The y coordinate of the second point.
-     * @param z0 The z coordinate of the second point.
-     * @return The shortest distance between the points as a {@code float} value.
-     * The distance will never be negative.
      */
-    public static float distance(double x, double y, double z, double x0, double y0, double z0) {
-        return sqrt((x - x0) * (x - x0) + (y - y0) * (y - y0) + (z - z0) * (z - z0));
+    public static float distance(double x0, double y0, double z0, double x1, double y1, double z1) {
+        return sqrt(distanceSqr(x0, y0, z0, x1, y1, z1));
     }
 
-    public static boolean epsilonEquals(double x, double y) {
-        return Math.abs(y - x) < 1.0E-5F;
+    public static double distanceSqr(double x0, double y0, double z0, double x1, double y1, double z1) {
+        double dx = x0 - x1;
+        double dy = y0 - y1;
+        double dz = z0 - z1;
+        return dx * dx + dy * dy + dz * dz;
+    }
+
+    public static HumanoidArm fromHand(LivingEntity victim, InteractionHand hand) {
+        return hand == InteractionHand.MAIN_HAND ? victim.getMainArm() : victim.getMainArm().getOpposite();
     }
 
     public static VoxelShape generateShapeFromPattern(long pattern) {
         VoxelShape shape = Shapes.empty();
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                if ((pattern >> (7 - j) * 8 + 7 - i & 1) != 0) {
+                if ((pattern & 1L << 8 * j + i) != 0) {
                     shape = union(shape, EvolutionHitBoxes.KNAPPING_PART.move(i / 8.0f, 0, j / 8.0f));
                 }
             }
@@ -625,107 +485,29 @@ public final class MathHelper {
         return shape;
     }
 
-    public static float getAgeInTicks(LivingEntity entity, float partialTicks) {
-        return entity.tickCount + partialTicks;
+    public static float getAgeInTicks(LivingEntity victim, float partialTicks) {
+        return victim.tickCount + partialTicks;
     }
 
-    public static float getAngleByDirection(Direction dir) {
-        return switch (dir) {
-            case SOUTH -> 90.0F;
-            case NORTH -> 270.0F;
-            case EAST -> 180.0F;
-            default -> 0.0F;
-        };
-    }
-
-//    public static ArmPose getArmPose(LivingEntity entity, ItemStack mainhandStack, ItemStack offhandStack, InteractionHand hand) {
-//        ArmPose armPose = ArmPose.EMPTY;
-//        ItemStack stack = hand == InteractionHand.MAIN_HAND ? mainhandStack : offhandStack;
-//        if (!stack.isEmpty()) {
-//            armPose = ArmPose.ITEM;
-//            if (entity.getTicksUsingItem() > 0 && hand == entity.getUsedItemHand()) {
-//                UseAnim useaction = stack.getUseAnimation();
-//                switch (useaction) {
-//                    case BLOCK -> {
-//                        return ArmPose.BLOCK;
-//                    }
-//                    case BOW -> {
-//                        return ArmPose.BOW_AND_ARROW;
-//                    }
-//                    case SPEAR -> {
-//                        return ArmPose.THROW_SPEAR;
-//                    }
-//                    case CROSSBOW -> {
-//                        return ArmPose.CROSSBOW_CHARGE;
-//                    }
-//                }
-//            }
-//            else {
-//                boolean mainhandHasCrossbow = mainhandStack.getItem() == Items.CROSSBOW;
-//                boolean mainhandIsCharged = CrossbowItem.isCharged(mainhandStack);
-//                boolean offhandHasCrossbow = offhandStack.getItem() == Items.CROSSBOW;
-//                boolean offhandIsCharged = CrossbowItem.isCharged(offhandStack);
-//                if (mainhandHasCrossbow && mainhandIsCharged) {
-//                    armPose = ArmPose.CROSSBOW_HOLD;
-//                }
-//                if (offhandHasCrossbow && offhandIsCharged && mainhandStack.getItem().getUseAnimation(mainhandStack) == UseAnim.NONE) {
-//                    return ArmPose.CROSSBOW_HOLD;
-//                }
-//            }
-//        }
-//        return armPose;
-//    }
-
-    public static float getAttackAnim(LivingEntity entity, float partialTick) {
-        float f = entity.attackAnim - entity.oAttackAnim;
+    public static float getAttackAnim(LivingEntity victim, float partialTick) {
+        float f = victim.attackAnim - victim.oAttackAnim;
         if (f < 0.0F) {
             ++f;
         }
-        return entity.oAttackAnim + f * partialTick;
+        return victim.oAttackAnim + f * partialTick;
     }
 
-    public static Matrix3d getBodyRotationMatrix(Entity entity, float partialTicks) {
-        float angle = -getEntityBodyYaw(entity, partialTicks);
-        return new Matrix3d().asYRotation(degToRad(angle));
-    }
-
-    public static Vec3 getCameraPosition(Entity entity, float partialTicks) {
-        if (entity.getPose() == Pose.SLEEPING) {
-            return new Vec3(entity.getX(), entity.getY() + 0.17, entity.getZ());
+    public static <T extends Entity> Vec3d getCameraPosition(T victim, float partialTicks) {
+        double x = Mth.lerp(partialTicks, victim.xo, victim.getX());
+        double y = Mth.lerp(partialTicks, victim.yo, victim.getY());
+        double z = Mth.lerp(partialTicks, victim.zo, victim.getZ());
+        if (!(victim instanceof LivingEntity living && living.isDeadOrDying())) {
+            HitboxEntity<T> hitboxes = ((IEntityPatch<T>) victim).getHitboxes();
+            if (hitboxes != null) {
+                return hitboxes.getOffsetForCamera(victim, partialTicks).addMutable(x, y, z);
+            }
         }
-        float yaw = entity.getViewYRot(partialTicks);
-        float pitch = entity.getViewXRot(partialTicks);
-        float cosBodyYaw;
-        float sinBodyYaw;
-        float sinYaw = sinDeg(yaw);
-        float cosYaw = cosDeg(yaw);
-        if (entity instanceof LivingEntity) {
-            float bodyYaw = lerpAngles(partialTicks, ((LivingEntity) entity).yBodyRotO, ((LivingEntity) entity).yBodyRot);
-            cosBodyYaw = cosDeg(bodyYaw);
-            sinBodyYaw = sinDeg(bodyYaw);
-        }
-        else {
-            cosBodyYaw = cosYaw;
-            sinBodyYaw = sinYaw;
-        }
-        float sinPitch = sinDeg(pitch);
-        float cosPitch = cosDeg(pitch);
-        float zOffset = ((INeckPosition) entity).getCameraZOffset();
-        float yOffset = ((INeckPosition) entity).getCameraYOffset();
-        Vec3 neckPoint = ((INeckPosition) entity).getNeckPoint();
-        float actualYOffset = yOffset * cosPitch - zOffset * sinPitch;
-        float horizontalOffset = yOffset * sinPitch + zOffset * cosPitch;
-        double x = Mth.lerp(partialTicks, entity.xo, entity.getX()) - horizontalOffset * sinYaw + neckPoint.x * cosBodyYaw - neckPoint.z * sinBodyYaw;
-        double y = Mth.lerp(partialTicks, entity.yo, entity.getY()) + neckPoint.y + actualYOffset;
-        double z = Mth.lerp(partialTicks, entity.zo, entity.getZ()) + horizontalOffset * cosYaw + neckPoint.x * sinBodyYaw + neckPoint.z * cosBodyYaw;
-        return new Vec3(x, y, z);
-    }
-
-    public static float getEntityBodyYaw(Entity entity, float partialTicks) {
-        if (entity instanceof LivingEntity living) {
-            return partialTicks == 1.0F ? living.yBodyRot : Mth.lerp(partialTicks, living.yBodyRotO, living.yBodyRot);
-        }
-        return partialTicks == 1.0F ? entity.getYRot() : Mth.lerp(partialTicks, entity.yRotO, entity.getYRot());
+        return new Vec3d(x, y + victim.getEyeHeight(), z);
     }
 
     public static IPoseStackPatch getExtendedMatrix(PoseStack matrices) {
@@ -742,19 +524,6 @@ public final class MathHelper {
 
     public static IQuaternionPatch getExtendedQuaternion(Quaternion quaternion) {
         return (IQuaternionPatch) (Object) quaternion;
-    }
-
-    public static HumanoidArm getHandSide(LivingEntity entity) {
-        HumanoidArm handSide = entity.getMainArm();
-        return entity.swingingArm == InteractionHand.MAIN_HAND ? handSide : handSide.getOpposite();
-    }
-
-    public static Matrix3d getHeadRotationMatrix(LivingEntity entity, float partialTick) {
-        float yaw = -entity.getViewYRot(partialTick);
-        float pitch = -entity.getViewXRot(partialTick);
-        Matrix3d xRot = new Matrix3d().asXRotation(degToRad(pitch));
-        Matrix3d yRot = new Matrix3d().asYRotation(degToRad(yaw));
-        return xRot.multiply(yRot);
     }
 
     /**
@@ -774,17 +543,40 @@ public final class MathHelper {
         return clamp(i, 0, maxIndex - 1);
     }
 
-    public static float getLimbSwing(LivingEntity entity, float partialTicks) {
-        float limbSwing = entity.animationPosition - entity.animationSpeed * (1.0F - partialTicks);
-        if (entity.isBaby()) {
+    public static float getLimbSwing(LivingEntity victim, float partialTicks) {
+        float limbSwing = victim.animationPosition - victim.animationSpeed * (1.0F - partialTicks);
+        if (victim.isBaby()) {
             limbSwing *= 3.0F;
         }
         return limbSwing;
     }
 
-    public static float getLimbSwingAmount(LivingEntity entity, float partialTicks) {
-        float limbSwingAmount = Mth.lerp(partialTicks, entity.animationSpeedOld, entity.animationSpeed);
+    public static float getLimbSwingAmount(LivingEntity victim, float partialTicks) {
+        float limbSwingAmount = Mth.lerp(partialTicks, victim.animationSpeedOld, victim.animationSpeed);
         return Math.min(limbSwingAmount, 1.0F);
+    }
+
+    private static double getMinDist(AABB bb, double x0, double y0, double z0, double dx, double dy, double dz) {
+        double minDist = Double.NaN;
+        if (dx > 1.0E-7) {
+            minDist = clipPoint(minDist, dx, dy, dz, bb.minX, bb.minY, bb.maxY, bb.minZ, bb.maxZ, x0, y0, z0);
+        }
+        else if (dx < -1.0E-7) {
+            minDist = clipPoint(minDist, dx, dy, dz, bb.maxX, bb.minY, bb.maxY, bb.minZ, bb.maxZ, x0, y0, z0);
+        }
+        if (dy > 1.0E-7) {
+            minDist = clipPoint(minDist, dy, dz, dx, bb.minY, bb.minZ, bb.maxZ, bb.minX, bb.maxX, y0, z0, x0);
+        }
+        else if (dy < -1.0E-7) {
+            minDist = clipPoint(minDist, dy, dz, dx, bb.maxY, bb.minZ, bb.maxZ, bb.minX, bb.maxX, y0, z0, x0);
+        }
+        if (dz > 1.0E-7) {
+            return clipPoint(minDist, dz, dx, dy, bb.minZ, bb.minX, bb.maxX, bb.minY, bb.maxY, z0, x0, y0);
+        }
+        if (dz < -1.0E-7) {
+            return clipPoint(minDist, dz, dx, dy, bb.maxZ, bb.minX, bb.maxX, bb.minY, bb.maxY, z0, x0, y0);
+        }
+        return minDist;
     }
 
     /**
@@ -793,18 +585,12 @@ public final class MathHelper {
      * @param axis The desired {@link Direction.Axis}.
      * @return The negative {@link Direction} on that {@link Direction.Axis}.
      */
-    public static Direction getNegativeAxis(@Nonnull Direction.Axis axis) {
+    public static Direction getNegativeAxis(Direction.Axis axis) {
         return switch (axis) {
             case X -> Direction.WEST;
             case Y -> Direction.DOWN;
             case Z -> Direction.NORTH;
         };
-    }
-
-    public static float getNetHeadYaw(LivingEntity entity, float partialTicks) {
-        float interpYaw = lerpAngles(partialTicks, entity.yBodyRotO, entity.yBodyRot);
-        float headYaw = lerpAngles(partialTicks, entity.yHeadRotO, entity.yHeadRot);
-        return headYaw - interpYaw;
     }
 
     /**
@@ -813,7 +599,7 @@ public final class MathHelper {
      * @param axis The desired {@link Direction.Axis}.
      * @return The positive {@link Direction} on that {@link Direction.Axis}.
      */
-    public static Direction getPositiveAxis(@Nonnull Direction.Axis axis) {
+    public static Direction getPositiveAxis(Direction.Axis axis) {
         return switch (axis) {
             case X -> Direction.EAST;
             case Y -> Direction.UP;
@@ -842,7 +628,6 @@ public final class MathHelper {
      * @param number The desired number to get the roman representation.
      * @return A {@link String} representing the number in roman form.
      */
-    @Nonnull
     public static String getRomanNumber(int number) {
         if (number <= 0 || number > 3_999) {
             return String.valueOf(number);
@@ -905,10 +690,6 @@ public final class MathHelper {
         return builder.toString();
     }
 
-    public static float getSwimAnimation(LivingEntity entity, float partialTicks) {
-        return Mth.lerp(partialTicks, SWIM_AMOUNT0.get(entity), SWIM_AMOUNT.get(entity));
-    }
-
     /**
      * Offsets a hit position to be within a bounding box.
      *
@@ -919,7 +700,7 @@ public final class MathHelper {
      * if the {@link Direction} is in the desired {@link Axis}.
      * If it is not, the position will not change.
      */
-    public static double hitOffset(Direction.Axis axis, double hit, @Nonnull Direction direction) {
+    public static double hitOffset(Direction.Axis axis, double hit, Direction direction) {
         if (direction.getAxis() != axis) {
             return hit;
         }
@@ -929,33 +710,6 @@ public final class MathHelper {
         }
         hit += 0.1;
         return hit;
-    }
-
-    /**
-     * Calculates the horizontal length of a given vector, given x and z components.
-     *
-     * @param x The x component
-     * @param z The z component
-     * @return The horizontal length of said vector.
-     */
-    public static float horizontalLength(double x, double z) {
-        return sqrt(x * x + z * z);
-    }
-
-    /**
-     * Calculates the horizontal length of a given vector.
-     *
-     * @param vec The corresponding vector.
-     * @return The horizontal length of said vector.
-     */
-    public static float horizontalLength(Vector3d vec) {
-        return sqrt(vec.x * vec.x + vec.z * vec.z);
-    }
-
-    public static boolean isInInterval(float value, float middlePoint, float length) {
-        float start = middlePoint - length / 2;
-        float end = middlePoint + length / 2;
-        return start <= value && value <= end;
     }
 
     public static boolean isMouseInsideBox(double mouseX, double mouseY, int x0, int y0, int x1, int y1) {
@@ -972,7 +726,7 @@ public final class MathHelper {
      * @param reference The {@link VoxelShape} that should totally encompass the first.
      * @return {@code true} if the first {@link VoxelShape} is totally encompassed by the second one; {@code false} otherwise.
      */
-    public static boolean isShapeTotallyInside(@Nonnull VoxelShape inside, @Nonnull VoxelShape reference) {
+    public static boolean isShapeTotallyInside(VoxelShape inside, VoxelShape reference) {
         return !Shapes.joinIsNotEmpty(reference, inside, BooleanOp.ONLY_SECOND);
     }
 
@@ -987,22 +741,28 @@ public final class MathHelper {
         return !Shapes.joinIsNotEmpty(reference, outside, BooleanOp.AND);
     }
 
-    public static boolean isSitting(LivingEntity entity) {
-        return entity.isPassenger() && entity.getVehicle() != null && entity.getVehicle().shouldRiderSit();
+    public static boolean isSitting(LivingEntity victim) {
+        return victim.isPassenger() && victim.getVehicle() != null && victim.getVehicle().shouldRiderSit();
     }
 
-    public static float lerpAngles(float partialTicks, float prevAngle, float angle) {
-        return prevAngle + partialTicks * Mth.wrapDegrees(angle - prevAngle);
+    public static float lerpDeg(float partialTicks, float prevAngle, float angle, boolean wrap) {
+        float delta = wrap ? Mth.wrapDegrees(angle - prevAngle) : angle - prevAngle;
+        return prevAngle + partialTicks * delta;
+    }
+
+    public static float lerpRad(float partialTicks, float prevAngle, float angle, boolean wrap) {
+        float delta = wrap ? wrapRadians(angle - prevAngle) : angle - prevAngle;
+        return prevAngle + partialTicks * delta;
     }
 
     /**
-     * Used to compare two {@link Nonnull} {@code boolean} matrices of the same size.
+     * Used to compare two {@code boolean} matrices of the same size.
      *
      * @param a The first matrix.
      * @param b The second matrix.
      * @return {@code true} if the matrices are equal, {@code false} otherwise.
      */
-    public static boolean matricesEqual(@Nonnull boolean[][] a, @Nonnull boolean[][] b) {
+    public static boolean matricesEqual(boolean[][] a, boolean[][] b) {
         for (int i = 0; i < a.length; i++) {
             for (int j = 0; j < a[i].length; j++) {
                 if (a[i][j] != b[i][j]) {
@@ -1011,26 +771,6 @@ public final class MathHelper {
             }
         }
         return true;
-    }
-
-    /**
-     * Converts a {@code double} value from radians to degrees.
-     *
-     * @param radians The value in radians.
-     * @return the corresponding value in degrees.
-     */
-    public static double radToDeg(double radians) {
-        return radians * 180 / Math.PI;
-    }
-
-    /**
-     * Converts a {@code float} value from radians to degrees.
-     *
-     * @param radians The value in radians.
-     * @return the corresponding value in degrees.
-     */
-    public static float radToDeg(float radians) {
-        return radians * 180 / PI;
     }
 
     /**
@@ -1048,34 +788,33 @@ public final class MathHelper {
         return !(value > end);
     }
 
-    @Nonnull
-    public static BlockHitResult rayTraceBlocksFromCamera(@Nonnull Entity entity,
-                                                          Vec3 cameraPos,
+    public static BlockHitResult rayTraceBlocksFromCamera(Entity victim,
+                                                          Vec3d cameraPos,
                                                           float partialTicks,
                                                           double distance,
                                                           boolean fluid) {
-        Vec3 look = entity.getViewVector(partialTicks);
-        Vec3 to = cameraPos.add(look.x * distance, look.y * distance, look.z * distance);
-        return entity.level.clip(
-                new ClipContext(cameraPos, to, ClipContext.Block.OUTLINE, fluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, entity));
+        Vec3 from = cameraPos.isNull() ? victim.getEyePosition(partialTicks) : cameraPos.asImmutable();
+        Vec3 look = victim.getViewVector(partialTicks);
+        Vec3 to = from.add(look.x * distance, look.y * distance, look.z * distance);
+        return victim.level.clip(
+                new ClipContext(from, to, ClipContext.Block.OUTLINE, fluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, victim));
     }
 
     /**
      * Casts a ray tracing for {@code Block}s starting from the eyes of the desired {@link Entity}.
      *
-     * @param entity       The {@link Entity} from whose eyes to cast the ray off.
+     * @param victim       The {@link Entity} from whose eyes to cast the ray off.
      * @param partialTicks The partial ticks to interpolate, between {@code 0.0f} and {@code 1.0f}.
      * @param distance     The maximum distance the ray will travel.
      * @param fluid        {@code true} if the ray can hit fluids, {@code false} if the ray can go through them.
      * @return A {@link BlockHitResult} containing the {@link net.minecraft.core.BlockPos} of the {@code Block} hit.
      */
-    @Nonnull
-    public static BlockHitResult rayTraceBlocksFromEyes(@Nonnull Entity entity, float partialTicks, double distance, boolean fluid) {
-        Vec3 from = entity.getEyePosition(partialTicks);
-        Vec3 look = entity.getViewVector(partialTicks);
+    public static BlockHitResult rayTraceBlocksFromEyes(Entity victim, float partialTicks, double distance, boolean fluid) {
+        Vec3 from = victim.getEyePosition(partialTicks);
+        Vec3 look = victim.getViewVector(partialTicks);
         Vec3 to = from.add(look.x * distance, look.y * distance, look.z * distance);
-        return entity.level.clip(
-                new ClipContext(from, to, ClipContext.Block.OUTLINE, fluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, entity));
+        return victim.level.clip(
+                new ClipContext(from, to, ClipContext.Block.OUTLINE, fluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, victim));
     }
 
     /**
@@ -1083,28 +822,27 @@ public final class MathHelper {
      * This method is useful for Entities that are projectiles, as {@link MathHelper#rayTraceBlocksFromEyes(Entity, float, double, boolean)}
      * usually do not work on them.
      *
-     * @param entity   The {@link Entity} from whose {@code yaw} and {@code pitch} to cast the ray.
+     * @param victim   The {@link Entity} from whose {@code yaw} and {@code pitch} to cast the ray.
      * @param distance The maximum distance this ray will travel.
      * @param fluid    {@code true} if the ray can hit fluids, {@code false} if the ray can go through them.
      * @return A {@link BlockHitResult} containing the {@link BlockPos} of the {@code Block} hit.
      */
-    @Nonnull
-    public static BlockHitResult rayTraceBlocksFromYawAndPitch(@Nonnull Entity entity, double distance, boolean fluid) {
-        Vec3 from = entity.getEyePosition(1.0f);
-        float theta = entity.getYRot();
+    public static BlockHitResult rayTraceBlocksFromYawAndPitch(Entity victim, double distance, boolean fluid) {
+        Vec3 from = victim.getEyePosition(1.0f);
+        float theta = victim.getYRot();
         if (theta < 0) {
             theta += 360;
         }
-        theta = degToRad(theta);
-        float phi = entity.getXRot();
+        theta *= Mth.DEG_TO_RAD;
+        float phi = victim.getXRot();
         if (phi < 0) {
             phi += 360;
         }
-        phi = degToRad(phi);
-        Vec3 looking = new Vec3(sin(theta), sin(phi), cos(theta)).normalize();
+        phi *= Mth.DEG_TO_RAD;
+        Vec3 looking = new Vec3(Mth.sin(theta), Mth.sin(phi), Mth.cos(theta)).normalize();
         Vec3 to = from.add(looking.x * distance, looking.y * distance, looking.z * distance);
-        return entity.level.clip(
-                new ClipContext(from, to, ClipContext.Block.OUTLINE, fluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, entity));
+        return victim.level.clip(
+                new ClipContext(from, to, ClipContext.Block.OUTLINE, fluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, victim));
     }
 
     /**
@@ -1120,7 +858,7 @@ public final class MathHelper {
      * this {@link EntityHitResult} will be {@code null}.
      */
     @Nullable
-    public static EntityHitResult rayTraceEntities(@Nonnull Entity toExclude, Vec3 startVec, Vec3 endVec, AABB boundingBox, double distanceSquared) {
+    public static EntityHitResult rayTraceEntities(Entity toExclude, Vec3 startVec, Vec3 endVec, AABB boundingBox, double distanceSquared) {
         Level level = toExclude.level;
         double range = distanceSquared;
         Entity entity = null;
@@ -1160,178 +898,160 @@ public final class MathHelper {
     }
 
     /**
-     * Casts a ray tracing for Entities starting from the eyes of the desired {@link Entity}.
-     *
-     * @param entity        The {@link Entity} from whose eyes to cast the ray off.
-     * @param partialTicks  The partial tick to interpolate, between {@code 0.0f} and {@code 1.0f}.
-     * @param reachDistance The max distance the ray will travel.
-     * @return An {@link EntityHitResult} containing the {@link Entity} hit by the ray traced
-     * and a {@link Vec3} containing the position of the hit. If no {@link Entity} was hit by the ray,
-     * this {@link EntityHitResult} will be {@code null}.
-     */
-    @Nullable
-    public static EntityHitResult rayTraceEntityFromEyes(@Nonnull Entity entity, float partialTicks, double reachDistance) {
-        Vec3 from = entity.getEyePosition(partialTicks);
-        Vec3 look = entity.getViewVector(partialTicks).normalize();
-        Vec3 to = from.add(look.x * reachDistance, look.y * reachDistance, look.z * reachDistance);
-        return rayTraceEntities(entity, from, to, new AABB(from, to), reachDistance * reachDistance);
-    }
-
-    /**
-     * Casts a ray tracing for {@code Entities} based on the {@link Entity}'s {@link Entity#yRot} and {@link Entity#xRot}.
-     * This method is useful for Entities that are projectiles, as {@link MathHelper#rayTraceEntityFromEyes(Entity, float, double)}
-     * usually do not work on them.
-     *
-     * @param entity   The {@link Entity} from whose {@code yaw} and {@code pitch} to cast the ray.
-     * @param distance The maximum distance this ray will travel.
-     * @return An {@link EntityHitResult} containing the {@link Entity} hit by the ray traced
-     * and a {@link Vec3} containing the position of the hit. If no {@link Entity} was hit by the ray,
-     * this {@link EntityHitResult} will be {@code null}.
-     */
-    @Nullable
-    public static EntityHitResult rayTraceEntityFromPitchAndYaw(@Nonnull Entity entity, double distance) {
-        Vec3 from = entity.getEyePosition(1.0f);
-        float theta = entity.getYRot();
-        if (theta < 0) {
-            theta += 360;
-        }
-        theta = degToRad(theta);
-        float phi = entity.getXRot();
-        if (phi < 0) {
-            phi += 360;
-        }
-        phi = degToRad(phi);
-        Vec3 looking = new Vec3(sin(theta), sin(phi), cos(theta)).normalize();
-        Vec3 to = from.add(looking.x * distance, looking.y * distance, looking.z * distance);
-        return rayTraceEntities(entity, from, to, new AABB(from, to), distance * distance);
-    }
-
-    /**
      * Casts a ray tracing for Entities starting from the eyes of the desired {@link Entity} and extends to its reach distance.
      * The ray will only collide with OBBs.
      *
-     * @param entity        The {@link Entity} from whose eyes to cast the ray off.
-     * @param partialTicks  The partial tick to interpolate, between {@code 0.0f} and {@code 1.0f}.
-     * @param reachDistance The max distance the ray will travel.
+     * @param victim       The {@link Entity} from whose eyes to cast the ray off.
+     * @param partialTicks The partial tick to interpolate, between {@code 0.0f} and {@code 1.0f}.
+     * @param reach        The max distance the ray will travel.
      * @return An {@link EntityHitResult} containing the {@link Entity} hit by the ray traced and a {@link Vector3d}
      * containing the position of the hit. If no {@link Entity} was hit by the ray, this {@link EntityHitResult} will be {@code null}.
      */
     @Nullable
-    public static EntityHitResult rayTraceOBBEntityFromEyes(@Nonnull Entity entity,
-                                                            @Nullable Vec3 cameraPos,
-                                                            float partialTicks,
-                                                            double reachDistance) {
-        Vec3 from = cameraPos != null ? cameraPos : entity.getEyePosition(partialTicks);
-        Vec3 look = entity.getViewVector(partialTicks).normalize();
-        Vec3 to = from.add(look.x * reachDistance, look.y * reachDistance, look.z * reachDistance);
-        Level level = entity.level;
-        double rangeSq = reachDistance * reachDistance;
-        Entity foundEntity = null;
-        Vec3 hitVector = null;
-        double[] distance = {1.0};
-        Hitbox[] hitbox = new Hitbox[1];
-        Hitbox box = null;
-        List<Entity> foundEntities = level.getEntities(entity, new AABB(from, to).inflate(1.5), PREDICATE);
-        for (Entity entityInBoundingBox : foundEntities) {
-            Vec3 hitResult = rayTracingEntityHitboxes(entityInBoundingBox, from, look, reachDistance, partialTicks, distance, hitbox);
-            if (hitResult != null) {
-                if (distance[0] < rangeSq || rangeSq == 0) {
-                    foundEntity = entityInBoundingBox;
-                    hitVector = hitResult;
-                    rangeSq = distance[0];
-                    box = hitbox[0];
-                    if (rangeSq == 0) {
-                        break;
+    public static EntityHitResult rayTraceEntitiesFromEyes(Entity victim, Vec3d cameraPos, float partialTicks, final double reach) {
+        //From vector
+        final double fromX;
+        final double fromY;
+        final double fromZ;
+        if (cameraPos.isNull()) {
+            //Eye position
+            fromX = Mth.lerp(partialTicks, victim.xo, victim.getX());
+            fromY = Mth.lerp(partialTicks, victim.yo, victim.getY());
+            fromZ = Mth.lerp(partialTicks, victim.zo, victim.getZ());
+        }
+        else {
+            //Camera position
+            fromX = cameraPos.x();
+            fromY = cameraPos.y();
+            fromZ = cameraPos.z();
+        }
+        //Entity view vector (won't result in new allocations as we already dealt with those)
+        Vec3 look = victim.getViewVector(partialTicks);
+        //To vector
+        final double toX = fromX + look.x * reach;
+        final double toY = fromY + look.y * reach;
+        final double toZ = fromZ + look.z * reach;
+        //Promising variables
+        Entity promEntity = null;
+        Hitbox promBox = null;
+        double promDist = reach;
+        //Scan for entities nearby
+        List<Entity> foundEntities = victim.level.getEntities(victim, new AABB(fromX, fromY, fromZ, toX, toY, toZ).inflate(2.5), PREDICATE);
+        if (!foundEntities.isEmpty()) {
+            Hitbox[] boxHolder = new Hitbox[1];
+            //Iterate over the entities
+            for (int i = 0, l = foundEntities.size(); i < l; i++) {
+                Entity entityInBB = foundEntities.get(i);
+                double dist = rayTracingEntityHitboxes(entityInBB, fromX, fromY, fromZ, look.x, look.y, look.z, promDist, partialTicks,
+                                                       boxHolder);
+                if (!Double.isNaN(dist)) {
+                    //Collided with victim, checking if the results are better than what we have
+                    if (dist < promDist) {
+                        promDist = dist;
+                        promEntity = entityInBB;
+                        promBox = boxHolder[0];
+                        if (dist == 0) {
+                            break;
+                        }
                     }
                 }
             }
         }
-        if (foundEntity == null) {
+        if (promEntity == null) {
             return null;
         }
-        return new AdvancedEntityRayTraceResult(foundEntity, hitVector, box);
+        //Create vector from distance
+        double hitX = fromX + promDist * (toX - fromX);
+        double hitY = fromY + promDist * (toY - fromY);
+        double hitZ = fromZ + promDist * (toZ - fromZ);
+        return new AdvancedEntityRayTraceResult(promEntity, new Vec3(hitX, hitY, hitZ), promBox);
     }
 
     /**
-     * Ray traces an Entity's hitbox. If the Entity has no defined OBBs, it will default to the Bounding Box. If the Entity has OBBs,
-     * the ray will only collide with the nearest OBB to its origin.
+     * Casts a ray tracing for Entities starting from the eyes of the desired {@link Entity}.
      *
-     * @param entity       The Entity the ray is being cast on.
-     * @param from         The origin of the ray.
-     * @param look         The direction of the ray.
-     * @param reach        How far the ray will extend for.
-     * @param partialTicks The partial tick for interpolation.
-     * @param distance     Will return the distance squared for the hit result. Must be a double[] with length 1.
-     * @param chosenBox    Will return the OBB hit, if any. Must be a Hitbox[] with length 1.
-     * @param <T>          The type of the Entity the ray is being cast on.
-     * @return The hit result, if any, or null.
+     * @param victim        The {@link Entity} from whose eyes to cast the ray off.
+     * @param partialTicks  The partial tick to interpolate, between {@code 0.0f} and {@code 1.0f}.
+     * @param reachDistance The max distance the ray will travel.
+     * @return An {@link EntityHitResult} containing the {@link Entity} hit by the ray traced
+     * and a {@link Vec3} containing the position of the hit. If no {@link Entity} was hit by the ray,
+     * this {@link EntityHitResult} will be {@code null}.
      */
     @Nullable
-    public static <T extends Entity> Vec3 rayTracingEntityHitboxes(T entity,
-                                                                   Vec3 from,
-                                                                   Vec3 look,
-                                                                   double reach,
-                                                                   float partialTicks,
-                                                                   double[] distance,
-                                                                   Hitbox[] chosenBox) {
+    public static EntityHitResult rayTraceEntityFromEyes(Entity victim, float partialTicks, double reachDistance) {
+        Vec3 from = victim.getEyePosition(partialTicks);
+        Vec3 look = victim.getViewVector(partialTicks).normalize();
+        Vec3 to = from.add(look.x * reachDistance, look.y * reachDistance, look.z * reachDistance);
+        return rayTraceEntities(victim, from, to, new AABB(from, to), reachDistance * reachDistance);
+    }
+
+    /**
+     * Ray traces an Entity's hitboxes. If the Entity has no defined OBBs, it will default to the Bounding Box. If the Entity has OBBs,
+     * the ray will only collide with the nearest OBB to its origin.
+     *
+     * @return The distance between the ray origin and the hit box, if it hits, or {@link Double#NaN} otherwise.
+     */
+    private static <T extends Entity> double rayTracingEntityHitboxes(T victim,
+                                                                      final double fromX, final double fromY, final double fromZ,
+                                                                      final double lookX, final double lookY, final double lookZ,
+                                                                      final double reach,
+                                                                      float partialTicks,
+                                                                      Hitbox[] chosenBox) {
         chosenBox[0] = null;
-        distance[0] = reach * reach;
-        if (!((IEntityPatch) entity).hasHitboxes()) {
-            Vec3 to = from.add(look.x * reach, look.y * reach, look.z * reach);
-            Optional<Vec3> optional = entity.getBoundingBox().clip(from, to);
-            if (optional.isPresent()) {
-                double actualDistanceSquared = from.distanceToSqr(optional.get());
-                distance[0] = actualDistanceSquared;
-                return optional.get();
+        double oldDist = reach;
+        final double toX = fromX + lookX * reach;
+        final double toY = fromY + lookY * reach;
+        final double toZ = fromZ + lookZ * reach;
+        HitboxEntity<T> hitbox = (HitboxEntity<T>) ((IEntityPatch) victim).getHitboxes();
+        if (hitbox == null) {
+            AABB bb = victim.getBoundingBox();
+            if (bb.contains(fromX, fromY, fromZ)) {
+                return 0;
             }
-            if (entity.getBoundingBox().contains(from)) {
-                distance[0] = 0;
-                return from;
-            }
-            return null;
+            return clipDist(bb, fromX, fromY, fromZ, toX, toY, toZ);
         }
-        HitboxEntity<T> hitbox = (HitboxEntity<T>) ((IEntityPatch) entity).getHitboxes();
-        hitbox.init(entity, partialTicks);
-        double posX = Mth.lerp(partialTicks, entity.xOld, entity.getX());
-        double posY = Mth.lerp(partialTicks, entity.yOld, entity.getY());
-        double posZ = Mth.lerp(partialTicks, entity.zOld, entity.getZ());
-        from = from.subtract(posX, posY, posZ);
-        Vec3 mainOffset = hitbox.getOffset();
-        Matrix3d mainTransform = hitbox.getTransform();
-        from = from.subtract(mainOffset);
-        from = mainTransform.transform(from);
-        look = mainTransform.transform(look);
-        mainTransform.transpose();
-        Vec3 result = null;
+        hitbox.init(victim, partialTicks);
+        final double posX = Mth.lerp(partialTicks, victim.xOld, victim.getX());
+        final double posY = Mth.lerp(partialTicks, victim.yOld, victim.getY());
+        final double posZ = Mth.lerp(partialTicks, victim.zOld, victim.getZ());
+        final double fromX0 = fromX - posX;
+        final double fromY0 = fromY - posY;
+        final double fromZ0 = fromZ - posZ;
+        final double fromXa = hitbox.untransformX(fromX0, fromY0, fromZ0);
+        final double fromYa = hitbox.untransformY(fromX0, fromY0, fromZ0);
+        final double fromZa = hitbox.untransformZ(fromX0, fromY0, fromZ0);
+        final double toX0 = toX - posX;
+        final double toY0 = toY - posY;
+        final double toZ0 = toZ - posZ;
+        final double toXa = hitbox.untransformX(toX0, toY0, toZ0);
+        final double toYa = hitbox.untransformY(toX0, toY0, toZ0);
+        final double toZa = hitbox.untransformZ(toX0, toY0, toZ0);
+        double clipDist = Double.NaN;
         for (int i = 0, l = hitbox.getBoxes().size(); i < l; i++) {
             Hitbox box = hitbox.getBoxes().get(i);
-            Vec3 newFrom = from;
-            Vec3 newLook = look;
-            Vec3 offset = box.getOffset();
-            Matrix3d transform = box.getTransformation();
-            newFrom = newFrom.subtract(offset);
-            newFrom = transform.transform(newFrom);
-            newLook = transform.transform(newLook);
-            Vec3 to = newFrom.add(newLook.x * reach, newLook.y * reach, newLook.z * reach);
-            Optional<Vec3> optional = box.getAABB().clip(newFrom, to);
-            if (optional.isPresent() || box.getAABB().contains(newFrom)) {
-                Vec3 hitResult = optional.orElse(newFrom);
-                double actualDistanceSquared = newFrom.distanceToSqr(hitResult);
-                if (actualDistanceSquared < distance[0]) {
-                    distance[0] = actualDistanceSquared;
-                    result = transform.transpose().transform(hitResult);
-                    result = result.add(offset);
-                    result = mainTransform.transform(result);
-                    result = result.add(mainOffset);
-                    result = result.add(posX, posY, posZ);
+            Matrix4d transform = box.adjustedTransform();
+            double newFromX = transform.untransformX(fromXa, fromYa, fromZa);
+            double newFromY = transform.untransformY(fromXa, fromYa, fromZa);
+            double newFromZ = transform.untransformZ(fromXa, fromYa, fromZa);
+            if (box.contains(newFromX, newFromY, newFromZ)) {
+                chosenBox[0] = box;
+                return 0;
+            }
+            double newToX = transform.untransformX(toXa, toYa, toZa);
+            double newToY = transform.untransformY(toXa, toYa, toZa);
+            double newToZ = transform.untransformZ(toXa, toYa, toZa);
+            double dist = box.clipDist(newFromX, newFromY, newFromZ, newToX, newToY, newToZ);
+            if (!Double.isNaN(dist)) {
+                if (dist < oldDist) {
+                    oldDist = clipDist = dist;
                     chosenBox[0] = box;
-                    if (actualDistanceSquared == 0) {
-                        return result;
+                    if (dist == 0) {
+                        return 0;
                     }
                 }
             }
         }
-        return result;
+        return clipDist;
     }
 
     /**
@@ -1369,26 +1089,25 @@ public final class MathHelper {
     }
 
     /**
-     * Resets a {@link Nonnull} {@code long} array (representing a 8x8x8 boolean tensor) starting at the desired index to
+     * Resets a {@code long} array (representing a 8x8x8 boolean tensor) starting at the desired index to
      * {@link tgw.evolution.blocks.tileentities.Patterns#MATRIX_FALSE}.
      *
      * @param tensor A {@code long} tensor to reset.
      * @param index  The index to start the reset.
      */
-    public static void resetTensor(@Nonnull long[] tensor, int index) {
+    public static void resetTensor(long[] tensor, int index) {
         for (int i = index; i < tensor.length; i++) {
             tensor[i] = Patterns.MATRIX_FALSE;
         }
     }
 
     /**
-     * Rotates a {@link Nonnull} square {@code boolean} matrix clockwise.
+     * Rotates a square {@code boolean} matrix clockwise.
      *
      * @param input A square {@code boolean} matrix.
      * @return A {@code new} square {@code boolean} matrix rotated 90 degrees clockwise.
      */
-    @Nonnull
-    public static boolean[][] rotateClockWise(@Nonnull boolean[][] input) {
+    public static boolean[][] rotateClockWise(boolean[][] input) {
         boolean[][] output = new boolean[input.length][input[0].length];
         int n = input.length;
         for (int ring = 0; ring < input.length / 2; ring++) {
@@ -1414,7 +1133,7 @@ public final class MathHelper {
      * @return A {@code new} {@link VoxelShape} rotated if the {@link Direction}s are different,
      * otherwise returns the same {@link VoxelShape}.
      */
-    public static VoxelShape rotateShape(@Nonnull Direction from, @Nonnull Direction to, @Nonnull VoxelShape shape) {
+    public static VoxelShape rotateShape(Direction from, Direction to, VoxelShape shape) {
         if (to == from) {
             return shape;
         }
@@ -1423,7 +1142,8 @@ public final class MathHelper {
         for (int i = 0; i < times; i++) {
             //noinspection ObjectAllocationInLoop
             buffer[0].forAllBoxes(
-                    (minX, minY, minZ, maxX, maxY, maxZ) -> buffer[1] = Shapes.or(buffer[1], Shapes.box(1 - maxZ, minY, minX, 1 - minZ, maxY, maxX)));
+                    (minX, minY, minZ, maxX, maxY, maxZ) -> buffer[1] = Shapes.or(buffer[1],
+                                                                                  Shapes.box(1 - maxZ, minY, minX, 1 - minZ, maxY, maxX)));
             buffer[0] = buffer[1];
             buffer[1] = Shapes.empty();
         }
@@ -1438,27 +1158,10 @@ public final class MathHelper {
      * @param y     The rotation angle around the y-axis.
      * @param z     The rotation angle around the z-axis.
      */
-    public static void setRotationAngle(@Nonnull ModelPart model, float x, float y, float z) {
+    public static void setRotationAngle(ModelPart model, float x, float y, float z) {
         model.xRot = x;
         model.yRot = y;
         model.zRot = z;
-    }
-
-    public static void setRotationPivot(ModelPart modelRenderer, float x, float y, float z) {
-        modelRenderer.x = x;
-        modelRenderer.y = y;
-        modelRenderer.z = z;
-    }
-
-    /**
-     * Approximates the trigonometric function sine.
-     *
-     * @param rad The argument of the sine, given in radians.
-     * @return An approximation of the sine of the given argument.
-     * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
-     */
-    public static float sin(float rad) {
-        return Mth.sin(wrapRadians(rad));
     }
 
     /**
@@ -1469,7 +1172,7 @@ public final class MathHelper {
      * The returned value will be between {@code 0.0f} and {@code 1.0f}, inclusive.
      */
     public static float sinDeg(float deg) {
-        return Mth.sin(degToRad(Mth.wrapDegrees(deg)));
+        return Mth.sin(deg * Mth.DEG_TO_RAD);
     }
 
     /**
@@ -1492,11 +1195,7 @@ public final class MathHelper {
         return (float) Math.sqrt(value);
     }
 
-    @Nullable
     public static String stripAccents(String input, @Nullable StringBuilder builder) {
-        if (input == null) {
-            return null;
-        }
         StringBuilder decomposed;
         if (builder == null) {
             decomposed = new StringBuilder(Normalizer.normalize(input, Normalizer.Form.NFD));
@@ -1517,24 +1216,8 @@ public final class MathHelper {
      * @param B The {@link VoxelShape} to subtract
      * @return A {@code new} {@link VoxelShape}, consisting of the {@link VoxelShape} A minus B.
      */
-    @Nonnull
-    public static VoxelShape subtract(@Nonnull VoxelShape A, @Nonnull VoxelShape B) {
+    public static VoxelShape subtract(VoxelShape A, VoxelShape B) {
         return Shapes.join(A, B, BooleanOp.ONLY_FIRST);
-    }
-
-    /**
-     * Approximates the trigonometric function tangent.
-     *
-     * @param rad The argument of the tangent, given in radians.
-     * @return An approximation of the tangent of the given argument.
-     * The returned value will be between {@link Float#NEGATIVE_INFINITY} and {@link Float#POSITIVE_INFINITY}.
-     */
-    public static float tan(float rad) {
-        return Mth.sin(rad) / Mth.cos(rad);
-    }
-
-    public static float tanDeg(float deg) {
-        return tan(degToRad(deg));
     }
 
     /**
@@ -1545,10 +1228,11 @@ public final class MathHelper {
      * @throws ArithmeticException if the value cannot be represented as a {@code byte}.
      */
     public static byte toByteExact(int value) {
-        if ((byte) value != value) {
+        byte b = (byte) value;
+        if (b != value) {
             throw new ArithmeticException("Byte overflow " + value);
         }
-        return (byte) value;
+        return b;
     }
 
     /**
@@ -1559,10 +1243,11 @@ public final class MathHelper {
      * @throws ArithmeticException if the value cannot be represented as a {@code short}.
      */
     public static short toShortExact(int value) {
-        if ((short) value != value) {
+        short s = (short) value;
+        if (s != value) {
             throw new ArithmeticException("Short overflow " + value);
         }
-        return (short) value;
+        return s;
     }
 
     public static int transformPackedNormal(int norm, Matrix3f matrix) {
@@ -1583,8 +1268,7 @@ public final class MathHelper {
      * @param B The second {@link VoxelShape}.
      * @return A {@code new} {@link VoxelShape} made of the union of both {@link VoxelShape}s.
      */
-    @Nonnull
-    public static VoxelShape union(@Nonnull VoxelShape A, @Nonnull VoxelShape B) {
+    public static VoxelShape union(VoxelShape A, VoxelShape B) {
         return Shapes.join(A, B, BooleanOp.OR);
     }
 
@@ -1594,30 +1278,13 @@ public final class MathHelper {
      * @param value The angle value in radians.
      * @return The equivalent angle value wrapped.
      */
-    public static double wrapRadians(double value) {
-        double d = value % (Math.PI * 2);
-        if (d >= Math.PI) {
-            d -= Math.PI * 2;
-        }
-        if (d < -Math.PI) {
-            d += Math.PI * 2;
-        }
-        return d;
-    }
-
-    /**
-     * Wraps the angle given in radians in the range [-pi; pi)
-     *
-     * @param value The angle value in radians.
-     * @return The equivalent angle value wrapped.
-     */
     public static float wrapRadians(float value) {
-        float d = value % TAU;
-        if (d >= PI) {
-            d -= TAU;
+        float d = value % Mth.TWO_PI;
+        if (d >= Mth.PI) {
+            d -= Mth.TWO_PI;
         }
-        if (d < -PI) {
-            d += TAU;
+        if (d < -Mth.PI) {
+            d += Mth.TWO_PI;
         }
         return d;
     }

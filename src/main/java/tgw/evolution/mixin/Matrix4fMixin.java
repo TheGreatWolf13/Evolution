@@ -43,8 +43,7 @@ public abstract class Matrix4fMixin implements IMatrix4fPatch {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations and use faster, specialized functions
+     * @reason Avoid allocations and use faster, specialized functions
      */
     @Overwrite
     public void multiply(Quaternion quaternion) {

@@ -10,7 +10,7 @@ public class DamageSourcePVP extends DamageSourcePlayer implements IHitLocation 
     private final EquipmentSlot hitLocation;
 
     public DamageSourcePVP(String damage, Player entity, EvolutionDamage.Type type, InteractionHand hand, EquipmentSlot hitLocation) {
-        super(damage, entity, type, hand);
+        super(damage, entity, type);
         this.hitLocation = hitLocation;
     }
 

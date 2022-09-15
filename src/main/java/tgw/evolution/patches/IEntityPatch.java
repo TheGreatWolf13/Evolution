@@ -2,38 +2,52 @@ package tgw.evolution.patches;
 
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.util.hitbox.HitboxEntity;
 import tgw.evolution.util.hitbox.HitboxType;
 
-import javax.annotation.Nullable;
+public interface IEntityPatch<T extends Entity> {
 
-public interface IEntityPatch {
+    /**
+     * @return The entity mass in kg.
+     */
+    double getBaseMass();
 
     default float getDamageForHitbox(float amount, EvolutionDamage.Type type, HitboxType hitbox) {
         return amount * hitbox.getMultiplier();
     }
 
-    int getFireDamageImmunity();
-
-    @Nullable
-    default HitboxEntity<? extends Entity> getHitboxes() {
-        return null;
+    default int getFireDamageImmunity() {
+        return 0;
     }
 
-    boolean hasCollidedOnXAxis();
+    float getFrictionModifier();
 
-    boolean hasCollidedOnZAxis();
+    @Nullable
+    HitboxEntity<T> getHitboxes();
 
-    default boolean hasHitboxes() {
+    /**
+     * @return Controls the deceleration because of the motion of your legs.
+     */
+    double getLegSlowdown();
+
+    default boolean hasCollidedOnXAxis() {
         return false;
     }
 
-    boolean hurtInternal(DamageSource source, float damage);
+    default boolean hasCollidedOnZAxis() {
+        return false;
+    }
+
+    default boolean hurtInternal(DamageSource source, float damage) {
+        return false;
+    }
 
     default boolean hurtSpecial(DamageSource source, EvolutionDamage.Type type, float amount, HitboxType hitbox) {
         return this.hurtInternal(source, this.getDamageForHitbox(amount, type, hitbox));
     }
 
-    void setFireDamageImmunity(int immunity);
+    default void setFireDamageImmunity(int immunity) {
+    }
 }

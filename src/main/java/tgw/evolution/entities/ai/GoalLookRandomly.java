@@ -1,8 +1,8 @@
 package tgw.evolution.entities.ai;
 
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.goal.Goal;
 import tgw.evolution.entities.EntityGenericCreature;
-import tgw.evolution.util.math.MathHelper;
 
 import java.util.EnumSet;
 
@@ -29,9 +29,9 @@ public class GoalLookRandomly extends Goal {
 
     @Override
     public void start() {
-        float d0 = MathHelper.TAU * this.entity.getRandom().nextFloat();
-        this.lookX = MathHelper.cos(d0);
-        this.lookZ = MathHelper.sin(d0);
+        float d0 = Mth.TWO_PI * this.entity.getRandom().nextFloat();
+        this.lookX = Mth.cos(d0);
+        this.lookZ = Mth.sin(d0);
         this.idleTime = 20 + this.entity.getRandom().nextInt(20);
     }
 

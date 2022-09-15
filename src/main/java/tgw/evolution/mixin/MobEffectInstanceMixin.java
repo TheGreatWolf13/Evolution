@@ -5,7 +5,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.patches.IMobEffectInstancePatch;
 import tgw.evolution.patches.IMobEffectPatch;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 @Mixin(MobEffectInstance.class)
 public abstract class MobEffectInstanceMixin implements IMobEffectInstancePatch {
@@ -44,8 +44,7 @@ public abstract class MobEffectInstanceMixin implements IMobEffectInstancePatch 
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Overwrite to handle infinite effects.
+     * @reason Overwrite to handle infinite effects.
      */
     @Overwrite
     private static MobEffectInstance loadSpecifiedEffect(MobEffect effect, CompoundTag nbt) {

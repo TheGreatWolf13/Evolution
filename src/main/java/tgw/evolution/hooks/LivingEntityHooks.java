@@ -1,9 +1,7 @@
 package tgw.evolution.hooks;
 
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.*;
 import tgw.evolution.patches.ILivingEntityPatch;
 
 public final class LivingEntityHooks {
@@ -24,6 +22,12 @@ public final class LivingEntityHooks {
             }
             return false;
         }
-        return ((ILivingEntityPatch) entity).isMainhandInSpecialAttack() || ((ILivingEntityPatch) entity).isOffhandInSpecialAttack();
+        if (entity.getMainHandItem().getItem() == Items.CROSSBOW) {
+            return CrossbowItem.isCharged(entity.getMainHandItem());
+        }
+        if (entity.getOffhandItem().getItem() == Items.CROSSBOW) {
+            return CrossbowItem.isCharged(entity.getOffhandItem());
+        }
+        return ((ILivingEntityPatch) entity).isInSpecialAttack();
     }
 }

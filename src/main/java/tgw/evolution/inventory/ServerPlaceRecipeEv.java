@@ -10,12 +10,12 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraftforge.common.crafting.IShapedRecipe;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.collection.IArrayList;
 import tgw.evolution.util.collection.IList;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 
-import javax.annotation.Nullable;
 import java.util.Iterator;
 
 public final class ServerPlaceRecipeEv {

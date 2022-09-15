@@ -43,8 +43,7 @@ public abstract class ItemStackMixin extends CapabilityProvider<ItemStack> imple
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Use cached state
+     * @reason Use cached state
      */
     @Overwrite
     public boolean isEmpty() {
@@ -57,8 +56,7 @@ public abstract class ItemStackMixin extends CapabilityProvider<ItemStack> imple
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Use cached state
+     * @reason Use cached state
      */
     @Overwrite
     private void updateEmptyCacheFlag() {

@@ -14,7 +14,10 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import org.lwjgl.glfw.GLFW;
-import tgw.evolution.client.gui.widgets.EditBoxAdv;
+import tgw.evolution.client.gui.widgets.AdvEditBox;
+import tgw.evolution.client.util.Key;
+import tgw.evolution.client.util.Modifiers;
+import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
@@ -70,7 +73,7 @@ public class ScreenChangeEnum extends Screen {
         }
         this.list.setSelected(selected);
         this.addWidget(this.list);
-        this.searchEditBox = new EditBoxAdv(this.font, this.width / 2 - 110, 22, 220, 20, EvolutionTexts.GUI_GENERAL_SEARCH);
+        this.searchEditBox = new AdvEditBox(this.font, this.width / 2 - 110, 22, 220, 20, EvolutionTexts.GUI_GENERAL_SEARCH);
         this.searchEditBox.setResponder(s -> {
             this.list.replaceEntries(s.isEmpty() ?
                                      this.entries :
@@ -97,7 +100,7 @@ public class ScreenChangeEnum extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(@Key int keyCode, int scanCode, @Modifiers int modifiers) {
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
             this.minecraft.setScreen(this.parent);
             return true;
@@ -113,9 +116,9 @@ public class ScreenChangeEnum extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
         boolean onSearchBox = this.searchEditBox.mouseClicked(mouseX, mouseY, button);
-        if (!onSearchBox && this.searchEditBox.isFocused() && button == 1) {
+        if (!onSearchBox && this.searchEditBox.isFocused() && button == GLFW.GLFW_MOUSE_BUTTON_2) {
             this.searchEditBox.setValue("");
             return true;
         }
@@ -123,7 +126,7 @@ public class ScreenChangeEnum extends Screen {
         for (GuiEventListener guieventlistener : this.children()) {
             if (guieventlistener.mouseClicked(mouseX, mouseY, button)) {
                 this.setFocused(guieventlistener);
-                if (button == 0) {
+                if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
                     this.setDragging(true);
                 }
                 return true;
@@ -204,7 +207,7 @@ public class ScreenChangeEnum extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
             ScreenChangeEnum.this.list.setSelected(this);
             ScreenChangeEnum.this.selectedValue = this.enumValue;
             return true;

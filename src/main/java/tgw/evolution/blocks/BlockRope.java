@@ -21,16 +21,16 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 
-import javax.annotation.Nullable;
 import java.util.Random;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
-public class BlockRope extends BlockGeneric implements IReplaceable, IClimbable {
+public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixBlock {
 
     public BlockRope() {
         super(Properties.of(Material.DECORATION).strength(0).sound(SoundType.WOOL).noCollission());
@@ -108,6 +108,11 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IClimbable 
     }
 
     @Override
+    public String getFallSuffix() {
+        return "rope";
+    }
+
+    @Override
     public float getFrictionCoefficient(BlockState state) {
         return 0.5f;
     }
@@ -158,7 +163,7 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IClimbable 
     }
 
     @Override
-    public boolean isLadder(BlockState state, LevelReader level, BlockPos pos, LivingEntity entity) {
+    public boolean isClimbable(BlockState state, LevelReader level, BlockPos pos, LivingEntity entity) {
         return true;
     }
 

@@ -2,6 +2,7 @@ package tgw.evolution.items.modular;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
@@ -14,9 +15,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import tgw.evolution.capabilities.modular.IModular;
-import tgw.evolution.capabilities.modular.IModularTool;
-import tgw.evolution.capabilities.modular.MaterialInstance;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import org.jetbrains.annotations.Nullable;
+import tgw.evolution.capabilities.SerializableCapabilityProvider;
+import tgw.evolution.capabilities.modular.*;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntitySpear;
@@ -24,16 +26,17 @@ import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.init.ItemMaterial;
-import tgw.evolution.items.*;
+import tgw.evolution.items.IBackWeapon;
+import tgw.evolution.items.IMelee;
+import tgw.evolution.items.IThrowable;
+import tgw.evolution.items.ITwoHanded;
 import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.constants.HarvestLevel;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
-public class ItemModularTool extends ItemModular implements IThrowable, ITwoHanded, IBackWeapon, IMelee, ISpecialAttack {
+public class ItemModularTool extends ItemModular implements IThrowable, ITwoHanded, IBackWeapon, IMelee {
 
     public ItemModularTool(Properties builder) {
         super(builder);
@@ -61,6 +64,14 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     @Override
+    public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
+        if (player.isCreative()) {
+            return false;
+        }
+        return !((ILivingEntityPatch) player).shouldRenderSpecialAttack();
+    }
+
+    @Override
     public void fillItemCategory(CreativeModeTab tab, NonNullList<ItemStack> items) {
         if (this.allowdedIn(tab)) {
             for (PartTypes.Head head : PartTypes.Head.VALUES) {
@@ -74,7 +85,7 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     @Override
-    public double getAttackDamage(ItemStack stack) {
+    public double getAttackDamage(ItemStack stack, IMelee.IAttackType attackType) {
         return IModularTool.get(stack).getAttackDamage();
     }
 
@@ -83,7 +94,11 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
         return IModularTool.get(stack).getAttackSpeed();
     }
 
-    @Nonnull
+    @Override
+    public int getAutoAttackTime(ItemStack stack) {
+        return 4;
+    }
+
     @Override
     public BasicAttackType getBasicAttackType(ItemStack stack) {
         IModularTool tool = IModularTool.get(stack);
@@ -93,16 +108,14 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
         return BasicAttackType.AXE_SWEEP;
     }
 
-    @Nullable
     @Override
-    public ChargeAttackType getChargeAttackType() {
+    public @Nullable ChargeAttackType getChargeAttackType(ItemStack stack) {
         //TODO implementation
         return null;
     }
 
-    @Nonnull
     @Override
-    public EvolutionDamage.Type getDamageType(ItemStack stack) {
+    public EvolutionDamage.Type getDamageType(ItemStack stack, IMelee.IAttackType attackType) {
         return IModularTool.get(stack).getDamageType();
     }
 
@@ -113,6 +126,11 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
             return tool.getMiningSpeed();
         }
         return 1.0F;
+    }
+
+    @Override
+    public int getMinAttackTime(ItemStack stack) {
+        return 4;
     }
 
     public float getMiningSpeed(ItemStack stack) {
@@ -143,12 +161,6 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     @Override
-    public boolean hasChargeAttack() {
-        //TODO implementation
-        return false;
-    }
-
-    @Override
     public <T extends LivingEntity> void hurtAndBreak(ItemStack stack,
                                                       DamageCause cause,
                                                       T entity,
@@ -173,6 +185,12 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
         return true;
     }
 
+    @Nullable
+    @Override
+    public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) {
+        return new SerializableCapabilityProvider<>(CapabilityModular.TOOL, new ModularTool());
+    }
+
     @Override
     public boolean isBroken(ItemStack stack) {
         //TODO implementation
@@ -194,6 +212,11 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     @Override
+    public boolean isHoldable(ItemStack stack) {
+        return true;
+    }
+
+    @Override
     public boolean isThrowable(ItemStack stack) {
         return IModularTool.get(stack).getHead().getType() == PartTypes.Head.SPEAR;
     }
@@ -204,7 +227,7 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     @Override
-    public boolean mineBlock(ItemStack stack, @Nonnull Level level, BlockState state, BlockPos pos, LivingEntity entity) {
+    public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity entity) {
         if (!level.isClientSide && state.getDestroySpeed(level, pos) != 0.0F) {
             IModularTool tool = IModularTool.get(stack);
             this.hurtAndBreak(stack,
@@ -227,7 +250,7 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
                     }
                     level.addFreshEntity(spear);
                     IModularTool tool = IModularTool.get(stack);
-                    level.playSound(null, spear, tool.getHead().getMaterial().getMaterial().isStone() ?
+                    level.playSound(null, spear, tool.getHead().getMaterialInstance().getMaterial().isStone() ?
                                                  EvolutionSounds.STONE_SPEAR_THROW.get() :
                                                  EvolutionSounds.METAL_SPEAR_THROW.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
                     if (!player.getAbilities().instabuild) {
@@ -241,12 +264,17 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     @Override
+    public boolean shouldPlaySheatheSound(ItemStack stack) {
+        return false;
+    }
+
+    @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (this.isBroken(stack) || this.isTwoHanded(stack) && hand == InteractionHand.OFF_HAND) {
             return new InteractionResultHolder<>(InteractionResult.FAIL, stack);
         }
-        if (!((ILivingEntityPatch) player).renderMainhandSpecialAttack() && this.isThrowable(stack)) {
+        if (!((ILivingEntityPatch) player).shouldRenderSpecialAttack() && this.isThrowable(stack)) {
             player.startUsingItem(hand);
             return new InteractionResultHolder<>(InteractionResult.CONSUME, stack);
         }

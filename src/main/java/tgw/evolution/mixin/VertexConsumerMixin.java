@@ -51,8 +51,7 @@ public interface VertexConsumerMixin extends IForgeVertexConsumer, IVertexDrain 
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations.
+     * @reason Avoid allocations.
      */
     @Overwrite
     default void putBulkData(PoseStack.Pose matrix, BakedQuad quad, float red, float green, float blue, int combinedLight, int combinedOverlay) {
@@ -63,8 +62,7 @@ public interface VertexConsumerMixin extends IForgeVertexConsumer, IVertexDrain 
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations
+     * @reason Avoid allocations
      */
     @Overwrite
     default void putBulkData(PoseStack.Pose entry,
@@ -138,8 +136,7 @@ public interface VertexConsumerMixin extends IForgeVertexConsumer, IVertexDrain 
 
     /**
      * @author JellySquid
-     * <p>
-     * Avoid allocations
+     * @reason Avoid allocations
      */
     @Overwrite
     default VertexConsumer vertex(Matrix4f matrix, float x, float y, float z) {

@@ -15,8 +15,7 @@ public abstract class GlStateManagerMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid most allocations
+     * @reason Avoid most allocations
      */
     @Overwrite
     public static void setupGui3DDiffuseLighting(Vector3f lightingVector1, Vector3f lightingVector2) {
@@ -32,8 +31,7 @@ public abstract class GlStateManagerMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid most allocations and use faster, specialized functions
+     * @reason Avoid most allocations and use faster, specialized functions
      */
     @Overwrite
     public static void setupGuiFlatDiffuseLighting(Vector3f pLighting1, Vector3f pLighting2) {
@@ -48,8 +46,7 @@ public abstract class GlStateManagerMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations
+     * @reason Avoid allocations
      */
     @Overwrite
     public static void setupLevelDiffuseLighting(Vector3f lightingVector1, Vector3f lightingVector2, Matrix4f matrix) {

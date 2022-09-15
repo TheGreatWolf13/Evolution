@@ -69,11 +69,6 @@ public final class EvolutionNetwork {
                  PacketSCUpdateCameraTilt::handle);
         register(PacketSCChangeTickrate.class, PacketSCChangeTickrate::encode, PacketSCChangeTickrate::decode, PacketSCChangeTickrate::handle);
         register(PacketSCRemoveEffect.class, PacketSCRemoveEffect::encode, PacketSCRemoveEffect::decode, PacketSCRemoveEffect::handle);
-        register(PacketCSLunge.class, PacketCSLunge::encode, PacketCSLunge::decode, PacketCSLunge::handle);
-        register(PacketCSStartLunge.class, PacketCSStartLunge::encode, PacketCSStartLunge::decode, PacketCSStartLunge::handle);
-        register(PacketSCStartLunge.class, PacketSCStartLunge::encode, PacketSCStartLunge::decode, PacketSCStartLunge::handle);
-        register(PacketCSLungeAnim.class, PacketCSLungeAnim::encode, PacketCSLungeAnim::decode, PacketCSLungeAnim::handle);
-        register(PacketSCLungeAnim.class, PacketSCLungeAnim::encode, PacketSCLungeAnim::decode, PacketSCLungeAnim::handle);
         register(PacketSCParrySound.class, PacketSCParrySound::encode, PacketSCParrySound::decode, PacketSCParrySound::handle);
         register(PacketCSUpdateBeltBackItem.class, PacketCSUpdateBeltBackItem::encode, PacketCSUpdateBeltBackItem::decode,
                  PacketCSUpdateBeltBackItem::handle);
@@ -107,6 +102,7 @@ public final class EvolutionNetwork {
         register(PacketCSSpecialHit.class, PacketCSSpecialHit::encode, PacketCSSpecialHit::decode, PacketCSSpecialHit::handle);
         register(PacketSCUpdateCameraViewCenter.class, PacketSCUpdateCameraViewCenter::encode, PacketSCUpdateCameraViewCenter::decode,
                  PacketSCUpdateCameraViewCenter::handle);
+        register(PacketSCMomentum.class, PacketSCMomentum::encode, PacketSCMomentum::decode, PacketSCMomentum::handle);
     }
 
     public static void resetCache() {

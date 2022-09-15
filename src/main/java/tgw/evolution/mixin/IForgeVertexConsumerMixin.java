@@ -31,8 +31,7 @@ public interface IForgeVertexConsumerMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations.
+     * @reason Avoid allocations.
      */
     @Overwrite
     default void putBulkData(PoseStack.Pose matrixEntry,
@@ -51,8 +50,7 @@ public interface IForgeVertexConsumerMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations.
+     * @reason Avoid allocations.
      */
     @Overwrite
     default void putBulkData(PoseStack.Pose matrixEntry,
@@ -70,8 +68,7 @@ public interface IForgeVertexConsumerMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations.
+     * @reason Avoid allocations.
      */
     @Overwrite
     default void putBulkData(PoseStack.Pose matrixEntry,

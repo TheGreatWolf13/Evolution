@@ -23,12 +23,11 @@ import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.material.Material;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.NutrientHelper;
 import tgw.evolution.util.constants.BlockFlags;
-
-import javax.annotation.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.HALF;
 
@@ -124,7 +123,7 @@ public class BlockDoublePlant extends BlockBush {
     }
 
     @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity entity, ItemStack stack) {
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack) {
         level.setBlock(pos.above(), this.defaultBlockState().setValue(HALF, DoubleBlockHalf.UPPER), BlockFlags.NOTIFY_AND_UPDATE);
     }
 

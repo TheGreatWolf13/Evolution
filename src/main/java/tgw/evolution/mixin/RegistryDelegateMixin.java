@@ -14,8 +14,7 @@ public abstract class RegistryDelegateMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations
+     * @reason Avoid allocations
      */
     @Override
     @Overwrite

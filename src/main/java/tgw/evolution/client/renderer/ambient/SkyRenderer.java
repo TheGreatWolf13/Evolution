@@ -10,9 +10,11 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.ISkyRenderHandler;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.util.Blending;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.init.EvolutionResources;
@@ -28,7 +30,7 @@ import java.util.Random;
 import java.util.random.RandomGenerator;
 
 @OnlyIn(Dist.CLIENT)
-public class SkyRenderer implements ISkyRenderHandler {
+public class SkyRenderer {
 
     private static final float SCALE_OF_CELESTIAL = 20.0f;
     private static final Quaternion LATITUDE_TRANSFORM = Vector3f.ZP.rotationDegrees(0);
@@ -36,9 +38,11 @@ public class SkyRenderer implements ISkyRenderHandler {
     private static float oldLatitude;
     private static float oldMoonRA;
     private final DimensionOverworld dimension;
-    private VertexBuffer darkBuffer;
-    private VertexBuffer skyBuffer;
-    private VertexBuffer starBuffer;
+    private @Nullable VertexBuffer darkBuffer;
+    private boolean fogEnabled;
+    private Runnable fogSetup;
+    private @Nullable VertexBuffer skyBuffer;
+    private @Nullable VertexBuffer starBuffer;
 
     public SkyRenderer(DimensionOverworld dimension) {
         this.dimension = dimension;
@@ -113,7 +117,7 @@ public class SkyRenderer implements ISkyRenderHandler {
         builder.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION);
         builder.vertex(matrix, celestialRadius, 0, 0).endVertex();
         for (int i = 0; i < 8; i++) {
-            builder.vertex(matrix, celestialRadius, MathHelper.sin(i), MathHelper.cos(i)).endVertex();
+            builder.vertex(matrix, celestialRadius, Mth.sin(i), Mth.cos(i)).endVertex();
         }
         builder.end();
         BufferUploader.end(builder);
@@ -125,7 +129,7 @@ public class SkyRenderer implements ISkyRenderHandler {
                                          BufferBuilder builder,
                                          float radius,
                                          DimensionOverworld dimension,
-                                         float starBrightness,
+                                         float planetBrightness,
                                          Vec3f skyColor) {
         int declinationIndex = dimension.getSolarEclipseDeclinationIndex();
         int rightAscIndex = dimension.getSolarEclipseRightAscensionIndex();
@@ -156,11 +160,12 @@ public class SkyRenderer implements ISkyRenderHandler {
         float intensity = dimension.getSolarEclipseIntensity();
         float rainStrength = 1.0F - level.getRainLevel(partialTicks);
         //Moon Shadow
-        if (starBrightness > 0) {
+        if (planetBrightness > 0 && intensity > 1 / 81.0f) {
             Blending.DEFAULT.apply();
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             RenderSystem.setShaderTexture(0, EvolutionResources.ENVIRONMENT_MOON_SHADOW_ECLIPSE);
-            RenderSystem.setShaderColor(skyColor.x, skyColor.y, skyColor.z, rainStrength * intensity * 81.0F);
+            float shadow = Mth.clamp(planetBrightness * 3 * (intensity - 1 / 81.0f), 0, 1.0f);
+            RenderSystem.setShaderColor(skyColor.x, skyColor.y, skyColor.z, rainStrength * shadow);
             builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
             builder.vertex(sunMatrix, -SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).uv(textureX0, textureY0).endVertex();
             builder.vertex(sunMatrix, SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).uv(textureX1, textureY0).endVertex();
@@ -170,14 +175,17 @@ public class SkyRenderer implements ISkyRenderHandler {
             BufferUploader.end(builder);
         }
         //End of Moon Shadow
-        if (intensity <= 1.0F / 81.0F) {
-            drawSun(sunMatrix, builder, radius);
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainStrength * intensity * 81.0F);
-        }
         Blending.ADDITIVE_ALPHA.apply();
+        if (intensity <= 1.0F / 81.0F) {
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainStrength * (1 - intensity * 81));
+            drawSun(sunMatrix, builder, radius);
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainStrength * intensity * 81);
+        }
+        else {
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainStrength);
+        }
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderTexture(0, EvolutionResources.ENVIRONMENT_SOLAR_ECLIPSE);
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, rainStrength);
         builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         builder.vertex(sunMatrix, -SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).uv(textureX0, textureY0).endVertex();
         builder.vertex(sunMatrix, SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).uv(textureX1, textureY0).endVertex();
@@ -355,9 +363,22 @@ public class SkyRenderer implements ISkyRenderHandler {
         BufferUploader.end(builder);
     }
 
-    @Override
-    public void render(int ticks, float partialTicks, PoseStack matrices, ClientLevel level, Minecraft mc) {
+    private void fog(boolean fog) {
+        if (fog != this.fogEnabled) {
+            this.fogEnabled = fog;
+            if (fog) {
+                this.fogSetup.run();
+            }
+            else {
+                FogRenderer.setupNoFog();
+            }
+        }
+    }
+
+    public void render(float partialTicks, PoseStack matrices, ClientLevel level, Minecraft mc, Runnable fogSetup) {
         mc.getProfiler().push("init");
+        this.fogSetup = fogSetup;
+        this.fogEnabled = true;
         this.dimension.setLevel(level);
         RenderSystem.disableTexture();
         float latitude = this.dimension.getLatitude();
@@ -383,6 +404,8 @@ public class SkyRenderer implements ISkyRenderHandler {
         RenderSystem.depthMask(false);
         RenderSystem.setShaderColor(skyColor.x, skyColor.y, skyColor.z, 1.0f);
         ShaderInstance shader = RenderSystem.getShader();
+        assert this.skyBuffer != null;
+        assert shader != null;
         this.skyBuffer.drawWithShader(matrices.last().pose(), RenderSystem.getProjectionMatrix(), shader);
         RenderSystem.enableBlend();
         //Render background stars
@@ -391,6 +414,7 @@ public class SkyRenderer implements ISkyRenderHandler {
         if (starBrightness > 0.0F) {
             float starsRightAscension = this.dimension.getStarsRightAscension();
             RenderSystem.disableTexture();
+            this.fog(false);
             //Pushed the matrix to draw the background stars
             matrices.pushPose();
             Blending.ADDITIVE_ALPHA.apply();
@@ -398,20 +422,23 @@ public class SkyRenderer implements ISkyRenderHandler {
             matrices.mulPose(LATITUDE_TRANSFORM);
             MathHelper.getExtendedMatrix(matrices).mulPoseX(360.0f * starsRightAscension + 180);
             RenderSystem.setShaderColor(starBrightness, starBrightness, starBrightness, starBrightness);
+            assert this.starBuffer != null;
+            assert GameRenderer.getPositionShader() != null;
             this.starBuffer.drawWithShader(matrices.last().pose(), RenderSystem.getProjectionMatrix(), GameRenderer.getPositionShader());
             matrices.popPose();
             //Popped the matrix to draw the background stars
+
         }
+        float planetStarBrightness = 1.25f - sunBrightness * sunBrightness;
+        if (sunBrightness >= 0.95f) {
+            planetStarBrightness -= (1.0f - (1.0f - sunBrightness) / 0.05f) * 0.25f;
+        }
+        planetStarBrightness *= rainStrength;
         if (EvolutionConfig.CLIENT.showPlanets.get()) {
             //Render planets
             mc.getProfiler().popPush("planets");
-            float planetStarBrightness = 1.25f - sunBrightness * sunBrightness;
-            if (sunBrightness >= 0.95f) {
-                planetStarBrightness -= (1.0f - (1.0f - sunBrightness) / 0.05f) * 0.25f;
-            }
-            planetStarBrightness *= rainStrength;
             if (planetStarBrightness > 0.0F) {
-                FogRenderer.setupNoFog();
+                this.fog(false);
                 RenderSystem.disableTexture();
                 //Pushed the matrix to draw the planets
                 Blending.ADDITIVE_ALPHA.apply();
@@ -463,6 +490,7 @@ public class SkyRenderer implements ISkyRenderHandler {
         if (starBrightness > 0 && this.dimension.getMoonPhase() != MoonPhase.NEW_MOON) {
             //Pushed the matrix to draw moon shadow
             RenderSystem.enableTexture();
+            this.fog(true);
             matrices.pushPose();
             matrices.mulPose(CommonRotations.YN90);
             //Translate the moon in the sky based on monthly amplitude.
@@ -473,7 +501,7 @@ public class SkyRenderer implements ISkyRenderHandler {
             Blending.DEFAULT.apply();
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             RenderSystem.setShaderTexture(0, EvolutionResources.ENVIRONMENT_MOON_SHADOW);
-            RenderSystem.setShaderColor(skyColor.x, skyColor.y, skyColor.z, 1.0f);
+            RenderSystem.setShaderColor(skyColor.x, skyColor.y, skyColor.z, planetStarBrightness);
             builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
             Matrix4f moonMatrix = matrices.last().pose();
             builder.vertex(moonMatrix, SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).uv(0, 0).endVertex();
@@ -487,42 +515,11 @@ public class SkyRenderer implements ISkyRenderHandler {
             RenderSystem.disableTexture();
             //Popped the matrix to draw moon shadow
         }
-        //Render dusk and dawn
-        mc.getProfiler().popPush("duskDawn");
-        FogRenderer.setupNoFog();
-        float[] duskDawnColors = this.dimension.getDuskDawnColors();
-        if (duskDawnColors != null) {
-            RenderSystem.setShader(GameRenderer::getPositionColorShader);
-            RenderSystem.disableTexture();
-            RenderSystem.enableBlend();
-            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-            Blending.ADDITIVE_ALPHA.apply();
-            //Pushed matrix to draw dusk and dawn
-            matrices.pushPose();
-            matrices.mulPose(CommonRotations.XN90);
-            MathHelper.getExtendedMatrix(matrices).mulPoseZ(this.dimension.getSunAzimuth());
-            Matrix4f duskDawnMatrix = matrices.last().pose();
-            builder.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
-            builder.vertex(duskDawnMatrix, 0, EarthHelper.CELESTIAL_SPHERE_RADIUS, 0)
-                   .color(duskDawnColors[0], duskDawnColors[1], duskDawnColors[2], duskDawnColors[3])
-                   .endVertex();
-            for (int j = 0; j <= 16; j++) {
-                float f6 = j * MathHelper.TAU / 16.0F;
-                float f7 = MathHelper.sin(f6);
-                float f8 = MathHelper.cos(f6);
-                builder.vertex(duskDawnMatrix, -f7 * 120.0F, f8 * 120.0F, f8 * 120.0F * duskDawnColors[3])
-                       .color(duskDawnColors[0], duskDawnColors[1], duskDawnColors[2], 0.0F)
-                       .endVertex();
-            }
-            builder.end();
-            BufferUploader.end(builder);
-            matrices.popPose();
-            //Popped matrix of dusk and dawn
-        }
         //Render the sun
         mc.getProfiler().popPush("sun");
         RenderSystem.enableTexture();
         RenderSystem.enableBlend();
+        this.fog(true);
         Blending.ADDITIVE_ALPHA.apply();
         //Pushed matrix to draw the sun
         matrices.pushPose();
@@ -534,7 +531,8 @@ public class SkyRenderer implements ISkyRenderHandler {
         MathHelper.getExtendedMatrix(matrices).mulPoseX(360.0f * sunRightAscension + 180);
         //Draw the sun
         if (this.dimension.isInSolarEclipse()) {
-            drawSolarEclipse(level, partialTicks, matrices.last().pose(), builder, sunCelestialRadius, this.dimension, starBrightness, skyColor);
+            drawSolarEclipse(level, partialTicks, matrices.last().pose(), builder, sunCelestialRadius, this.dimension, planetStarBrightness,
+                             skyColor);
         }
         else {
             drawSun(matrices.last().pose(), builder, sunCelestialRadius);
@@ -565,6 +563,38 @@ public class SkyRenderer implements ISkyRenderHandler {
         RenderSystem.disableBlend();
         matrices.popPose();
         //Popped the matrix to draw the moon
+        //Render dusk and dawn
+        mc.getProfiler().popPush("duskDawn");
+        float[] duskDawnColors = this.dimension.getDuskDawnColors();
+        if (duskDawnColors != null) {
+            RenderSystem.setShader(GameRenderer::getPositionColorShader);
+            RenderSystem.disableTexture();
+            RenderSystem.enableBlend();
+            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+            Blending.ADDITIVE_ALPHA.apply();
+            this.fog(false);
+            //Pushed matrix to draw dusk and dawn
+            matrices.pushPose();
+            matrices.mulPose(CommonRotations.XN90);
+            MathHelper.getExtendedMatrix(matrices).mulPoseZ(this.dimension.getSunAzimuth());
+            Matrix4f duskDawnMatrix = matrices.last().pose();
+            builder.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+            builder.vertex(duskDawnMatrix, 0, EarthHelper.CELESTIAL_SPHERE_RADIUS, 0)
+                   .color(duskDawnColors[0], duskDawnColors[1], duskDawnColors[2], duskDawnColors[3])
+                   .endVertex();
+            for (int j = 0; j <= 16; j++) {
+                float f6 = j * Mth.TWO_PI / 16.0F;
+                float f7 = Mth.sin(f6);
+                float f8 = Mth.cos(f6);
+                builder.vertex(duskDawnMatrix, -f7 * 120.0F, f8 * 120.0F, f8 * 120.0F * duskDawnColors[3])
+                       .color(duskDawnColors[0], duskDawnColors[1], duskDawnColors[2], 0.0F)
+                       .endVertex();
+            }
+            builder.end();
+            BufferUploader.end(builder);
+            matrices.popPose();
+            //Popped matrix of dusk and dawn
+        }
         //Render debug
         mc.getProfiler().popPush("debug");
         boolean forceAll = EvolutionConfig.CLIENT.celestialForceAll.get();
@@ -574,6 +604,7 @@ public class SkyRenderer implements ISkyRenderHandler {
         boolean planets = EvolutionConfig.CLIENT.showPlanets.get() && (forceAll || EvolutionConfig.CLIENT.planets.get());
         if (equator || poles) {
             RenderSystem.disableTexture();
+            this.fog(false);
             //Pushed matrix to draw celestial equator and poles
             matrices.pushPose();
             matrices.mulPose(CommonRotations.YN90);
@@ -598,6 +629,7 @@ public class SkyRenderer implements ISkyRenderHandler {
         }
         if (ecliptic) {
             RenderSystem.disableTexture();
+            this.fog(false);
             //Pushed matrix to draw the ecliptic
             matrices.pushPose();
             matrices.mulPose(CommonRotations.YN90);
@@ -613,6 +645,7 @@ public class SkyRenderer implements ISkyRenderHandler {
             //Popped matrix of the ecliptic
         }
         if (planets) {
+            this.fog(false);
             RenderSystem.disableTexture();
             matrices.pushPose();
             matrices.mulPose(CommonRotations.YN90);
@@ -658,11 +691,15 @@ public class SkyRenderer implements ISkyRenderHandler {
         mc.getProfiler().popPush("void");
         RenderSystem.disableTexture();
         RenderSystem.setShaderColor(0.0F, 0.0F, 0.0F, 1.0f);
-        double distanceAboveTheHorizon = mc.player.getEyePosition(partialTicks).y - level.getLevelData().getHorizonHeight(level);
+        Entity cameraEntity = mc.getCameraEntity();
+        assert cameraEntity != null;
+        double distanceAboveTheHorizon = cameraEntity.getEyePosition(partialTicks).y - level.getLevelData().getHorizonHeight(level);
         if (distanceAboveTheHorizon < 0.0) {
+            this.fog(true);
             //Pushed matrix to draw the dark void
             matrices.pushPose();
             matrices.translate(0, 12, 0);
+            assert this.darkBuffer != null;
             this.darkBuffer.drawWithShader(matrices.last().pose(), RenderSystem.getProjectionMatrix(), shader);
             matrices.popPose();
             //Popped matrix of the dark void
@@ -675,6 +712,7 @@ public class SkyRenderer implements ISkyRenderHandler {
         }
         RenderSystem.enableTexture();
         RenderSystem.depthMask(true);
+        this.fog(true);
         mc.getProfiler().pop();
     }
 }

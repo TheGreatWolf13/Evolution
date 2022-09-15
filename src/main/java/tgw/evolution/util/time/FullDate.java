@@ -1,7 +1,7 @@
 package tgw.evolution.util.time;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 
 public class FullDate {
     private final Date date;
@@ -20,7 +20,7 @@ public class FullDate {
     }
 
     public Component getDisplayName() {
-        return new TextComponent(this.hour + " ").append(this.date.getDisplayName());
+        return new TranslatableComponent("evolution.calendar.dateTime", this.date.getDisplayName(), this.hour.getDisplayName());
     }
 
     @Override

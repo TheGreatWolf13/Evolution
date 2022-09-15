@@ -16,7 +16,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 import tgw.evolution.blocks.tileentities.TESchematic;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.SCHEMATIC_MODE;
 

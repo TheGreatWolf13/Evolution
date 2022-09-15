@@ -16,15 +16,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.Evolution;
+import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.corpse.ContainerCorpse;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Metric;
 import tgw.evolution.util.time.FullDate;
 
-import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.List;
 
@@ -88,7 +89,7 @@ public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
         if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
             if (MathHelper.isMouseInsideBox(mouseX, mouseY, this.tabX, this.tabY, this.tabX + 32, this.tabY + 28)) {
                 this.setSelectedTab(0);

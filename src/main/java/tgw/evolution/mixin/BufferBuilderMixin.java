@@ -9,6 +9,8 @@ import com.mojang.math.Vector3f;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.util.Mth;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -26,7 +28,6 @@ import tgw.evolution.util.math.ColorABGR;
 import tgw.evolution.util.math.IColor;
 import tgw.evolution.util.math.MathHelper;
 
-import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.List;
@@ -34,6 +35,9 @@ import java.util.List;
 @Mixin(BufferBuilder.class)
 public abstract class BufferBuilderMixin extends DefaultedVertexConsumer implements BufferVertexConsumer, IVertexBufferView, IVertexDrain {
 
+    @Shadow
+    @Final
+    private static Logger LOGGER;
     private final FList newSortingPoints = new FArrayList();
     @Shadow
     private ByteBuffer buffer;

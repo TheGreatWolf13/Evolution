@@ -23,8 +23,7 @@ public abstract class YggdrasilUserApiServiceMixin {
 
     /**
      * @author The Great Wolf
-     * <p>
-     * Disable telemetry.
+     * @reason Disable telemetry.
      */
     @Overwrite(remap = false)
     public TelemetrySession newTelemetrySession(final Executor executor) {

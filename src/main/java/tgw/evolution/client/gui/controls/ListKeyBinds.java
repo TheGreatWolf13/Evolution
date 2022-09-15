@@ -11,7 +11,6 @@ import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.controls.KeyBindsList;
-import net.minecraft.client.gui.screens.controls.KeyBindsScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextComponent;
@@ -19,6 +18,7 @@ import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.ArrayUtils;
+import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 
@@ -27,19 +27,19 @@ import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 public class ListKeyBinds extends KeyBindsList {
-    private final KeyBindsScreen keyBindsScreen;
+    public final OList<Entry> allEntries;
+    private final ScreenKeyBinds screenKeyBinds;
     private final Component textReset = new TranslatableComponent("evolution.gui.controls.reset");
-    public OList<Entry> allEntries;
     private int maxNameWidth;
 
-    public ListKeyBinds(KeyBindsScreen screen, Minecraft mc) {
+    public ListKeyBinds(ScreenKeyBinds screen, Minecraft mc) {
         super(screen, mc);
         this.width = screen.width + 45;
         this.height = screen.height;
         this.y0 = 43;
         this.y1 = screen.height - 85;
         this.x1 = screen.width + 45;
-        this.keyBindsScreen = screen;
+        this.screenKeyBinds = screen;
         this.children().clear();
         this.allEntries = new OArrayList<>();
         KeyMapping[] keyMappings = ArrayUtils.clone(mc.options.keyMappings);
@@ -124,6 +124,7 @@ public class ListKeyBinds extends KeyBindsList {
                            int mouseY,
                            boolean isMouseOver,
                            float partialTicks) {
+            assert ListKeyBinds.this.minecraft.screen != null;
             ListKeyBinds.this.minecraft.font.draw(matrices,
                                                   this.name,
                                                   (ListKeyBinds.this.minecraft.screen.width - this.width) / 2.0f,
@@ -143,7 +144,7 @@ public class ListKeyBinds extends KeyBindsList {
         private KeyEntry(final KeyMapping key, final Component name) {
             this.key = key;
             this.name = name;
-            this.changeButton = new Button(0, 0, 95, 20, this.name, button -> ListKeyBinds.this.keyBindsScreen.selectedKey = key) {
+            this.changeButton = new Button(0, 0, 95, 20, this.name, button -> ListKeyBinds.this.screenKeyBinds.selectedKey = key) {
                 @Override
                 protected MutableComponent createNarrationMessage() {
                     return key.isUnbound() ?
@@ -181,11 +182,11 @@ public class ListKeyBinds extends KeyBindsList {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int modifiers) {
-            if (this.changeButton.mouseClicked(mouseX, mouseY, modifiers)) {
+        public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
+            if (this.changeButton.mouseClicked(mouseX, mouseY, button)) {
                 return true;
             }
-            return this.resetButton.mouseClicked(mouseX, mouseY, modifiers);
+            return this.resetButton.mouseClicked(mouseX, mouseY, button);
         }
 
         @Override
@@ -209,7 +210,7 @@ public class ListKeyBinds extends KeyBindsList {
                            int mouseY,
                            boolean isMouseOver,
                            float partialTicks) {
-            boolean flag = ListKeyBinds.this.keyBindsScreen.selectedKey == this.key;
+            boolean flag = ListKeyBinds.this.screenKeyBinds.selectedKey == this.key;
             float f = Math.max(20, x + 140 - ListKeyBinds.this.maxNameWidth);
             ListKeyBinds.this.minecraft.font.draw(matrices, this.name, f, y + height / 2.0f - 9 / 2.0f, 0xff_ffff);
             this.resetButton.x = x + ListKeyBinds.this.getRowWidth() - this.resetButton.getWidth() - 2;

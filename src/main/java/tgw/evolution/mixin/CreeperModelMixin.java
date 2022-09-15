@@ -1,0 +1,112 @@
+package tgw.evolution.mixin;
+
+import net.minecraft.client.model.CreeperModel;
+import net.minecraft.client.model.HierarchicalModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.*;
+import net.minecraft.world.entity.Entity;
+import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import tgw.evolution.util.hitbox.hms.HM;
+import tgw.evolution.util.hitbox.hms.HMCreeper;
+
+@Mixin(CreeperModel.class)
+public abstract class CreeperModelMixin<T extends Entity> extends HierarchicalModel<T> implements HMCreeper<T> {
+
+    @Shadow
+    @Final
+    private ModelPart head;
+
+    @Mutable
+    @Shadow
+    @Final
+    private ModelPart leftFrontLeg;
+
+    @Mutable
+    @Shadow
+    @Final
+    private ModelPart leftHindLeg;
+
+    @Mutable
+    @Shadow
+    @Final
+    private ModelPart rightFrontLeg;
+
+    @Mutable
+    @Shadow
+    @Final
+    private ModelPart rightHindLeg;
+
+    /**
+     * @author TheGreatWolf
+     * @reason Fix HMs
+     */
+    @Overwrite
+    public static LayerDefinition createBodyLayer(CubeDeformation def) {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition part = mesh.getRoot();
+        part.addOrReplaceChild("head",
+                               CubeListBuilder.create().texOffs(0, 0).addBox(-4.0F, 0.0F, -4.0F, 8.0F, 8.0F, 8.0F, def),
+                               PartPose.offset(0.0F, 18.0F, 0.0F));
+        part.addOrReplaceChild("body",
+                               CubeListBuilder.create().texOffs(16, 16).addBox(-4.0F, -12.0F, -2.0F, 8.0F, 12.0F, 4.0F, def),
+                               PartPose.offset(0.0F, 18.0F, 0.0F));
+        CubeListBuilder leg = CubeListBuilder.create().texOffs(0, 16).addBox(-2.0F, -6.0F, -2.0F, 4.0F, 6.0F, 4.0F, def);
+        part.addOrReplaceChild("right_hind_leg", leg, PartPose.offset(2.0F, 6.0F, 4.0F));
+        part.addOrReplaceChild("left_hind_leg", leg, PartPose.offset(-2.0F, 6.0F, 4.0F));
+        part.addOrReplaceChild("right_front_leg", leg, PartPose.offset(2.0F, 6.0F, -4.0F));
+        part.addOrReplaceChild("left_front_leg", leg, PartPose.offset(-2.0F, 6.0F, -4.0F));
+        return LayerDefinition.create(mesh, 64, 32);
+    }
+
+    @Override
+    public HM head() {
+        return (HM) (Object) this.head;
+    }
+
+    @Override
+    public HM leftFrontLeg() {
+        return (HM) (Object) this.leftFrontLeg;
+    }
+
+    @Override
+    public HM leftHindLeg() {
+        return (HM) (Object) this.leftHindLeg;
+    }
+
+    /**
+     * Why the hell are the legs switched leg and right in the original code? This cost me 2 hours.
+     */
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void onInit(ModelPart root, CallbackInfo ci) {
+        ModelPart temp = this.leftHindLeg;
+        this.leftHindLeg = this.rightHindLeg;
+        this.rightHindLeg = temp;
+        temp = this.leftFrontLeg;
+        this.leftFrontLeg = this.rightFrontLeg;
+        this.rightFrontLeg = temp;
+    }
+
+    @Override
+    public HM rightFrontLeg() {
+        return (HM) (Object) this.rightFrontLeg;
+    }
+
+    @Override
+    public HM rightHindLeg() {
+        return (HM) (Object) this.rightHindLeg;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Use HMs
+     */
+    @Override
+    @Overwrite
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.setup(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+    }
+}

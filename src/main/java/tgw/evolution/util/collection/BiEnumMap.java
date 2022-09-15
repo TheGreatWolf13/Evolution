@@ -1,6 +1,9 @@
 package tgw.evolution.util.collection;
 
-import javax.annotation.Nullable;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -15,6 +18,7 @@ public class BiEnumMap<K1 extends Enum<K1>, K2 extends Enum<K2>, V> {
     }
 
     @Nullable
+    @Contract(pure = true)
     public V get(K1 k1, K2 k2) {
         Map<K2, V> data2 = this.data.get(k1);
         if (data2 == null) {
@@ -24,6 +28,8 @@ public class BiEnumMap<K1 extends Enum<K1>, K2 extends Enum<K2>, V> {
     }
 
     @Nullable
+    @Contract(mutates = "this")
+    @CanIgnoreReturnValue
     public V put(K1 k1, K2 k2, V v) {
         Map<K2, V> data2 = this.data.get(k1);
         V prev = null;

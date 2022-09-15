@@ -9,7 +9,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.Entity;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -83,8 +83,7 @@ public abstract class ServerGamePacketListenerImplMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Overwrite to prevent kicking players for flying when the server is multiplayer paused.
+     * @reason Overwrite to prevent kicking players for flying when the server is multiplayer paused.
      * Also prevents players from being ticked while the server is paused.
      */
     @Overwrite

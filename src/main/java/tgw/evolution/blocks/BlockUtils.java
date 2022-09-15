@@ -18,11 +18,9 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.IPlantable;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.math.DirectionToIntMap;
 import tgw.evolution.util.math.DirectionUtil;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public final class BlockUtils {
 
@@ -56,7 +54,7 @@ public final class BlockUtils {
         level.levelEvent(LevelEvent.PARTICLES_DESTROY_BLOCK, pos, Block.getId(state));
     }
 
-    public static void dropItemStack(Level level, BlockPos pos, @Nonnull ItemStack stack, double heightOffset) {
+    public static void dropItemStack(Level level, BlockPos pos, ItemStack stack, double heightOffset) {
         if (level.isClientSide || stack.isEmpty()) {
             return;
         }
@@ -66,7 +64,7 @@ public final class BlockUtils {
         level.addFreshEntity(entity);
     }
 
-    public static void dropItemStack(Level world, BlockPos pos, @Nonnull ItemStack stack) {
+    public static void dropItemStack(Level world, BlockPos pos, ItemStack stack) {
         dropItemStack(world, pos, stack, 0);
     }
 

@@ -3,8 +3,6 @@ package tgw.evolution.blocks.tileentities;
 import tgw.evolution.Evolution;
 import tgw.evolution.util.math.MathHelper;
 
-import javax.annotation.Nonnull;
-
 import static tgw.evolution.blocks.tileentities.Patterns.*;
 
 public final class MoldingPatterns {
@@ -79,7 +77,7 @@ public final class MoldingPatterns {
     private MoldingPatterns() {
     }
 
-    public static boolean comparePatternsOneLayer(@Nonnull boolean[][] matrix, @Nonnull boolean[][][] pattern) {
+    public static boolean comparePatternsOneLayer(boolean[][] matrix, boolean[][][] pattern) {
         for (boolean[][] booleans : pattern) {
             if (MathHelper.matricesEqual(matrix, booleans)) {
                 return true;
@@ -88,7 +86,7 @@ public final class MoldingPatterns {
         return false;
     }
 
-    public static boolean comparePatternsTwoLayer(@Nonnull boolean[][][] matrix, @Nonnull boolean[][][][] pattern) {
+    public static boolean comparePatternsTwoLayer(boolean[][][] matrix, boolean[][][][] pattern) {
         for (boolean[][][] booleans : pattern) {
             if (MathHelper.matricesEqual(matrix[0], booleans[0])) {
                 if (MathHelper.matricesEqual(matrix[1], booleans[1])) {

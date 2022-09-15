@@ -6,15 +6,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
-import javax.annotation.Nonnull;
-
 public interface IReplaceable {
 
     boolean canBeReplacedByFluid(BlockState state);
 
     boolean canBeReplacedByRope(BlockState state);
 
-    @Nonnull
     NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state);
 
     boolean isReplaceable(BlockState state);

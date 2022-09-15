@@ -24,6 +24,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Score;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.ForgeEventFactory;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionNetwork;
@@ -34,8 +35,6 @@ import tgw.evolution.stats.EvolutionServerStatsCounter;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Units;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Random;
 import java.util.random.RandomGenerator;
@@ -43,17 +42,25 @@ import java.util.random.RandomGenerator;
 public final class PlayerHelper {
 
     /**
+     * The base attack damage of the Player, in HP.
+     */
+    public static final double ATTACK_DAMAGE = 2.5;
+    /**
      * The base attack speed of the Player, in attacks / s.
      */
     public static final double ATTACK_SPEED = 2;
     /**
      * The base reach distance of the Player, in metres.
      */
-    public static final double REACH_DISTANCE = 3.25;
+    public static final double REACH_DISTANCE = 3.5;
     /**
      * The base Player mass in kg. Used in various kinetic calculations.
      */
     public static final double MASS = 70;
+    /**
+     * The Player max health, in HP.
+     */
+    public static final double MAX_HEALTH = 100;
     /**
      * The height of the Player legs in m. Used to calculate fall damage.
      */
@@ -62,17 +69,14 @@ public final class PlayerHelper {
      * The force the player uses to push its feet against the ground.
      */
     public static final double WALK_FORCE = Units.toMSUForce(1_000);
-    public static final Vec3 NECK_POS_STANDING = new Vec3(0, 24 / 16.0 * 0.937_5, -1 / 16.0);
-    public static final Vec3 NECK_POS_SNEAKING = new Vec3(0, 1.27 - 4 / 16.0 * 0.937_5, -1 / 16.0);
-    public static final Vec3 NECK_POS_CRAWLING = new Vec3(0, 4.62 / 16.0 * 0.937_5, -2 / 16.0);
-    public static final EntityDimensions STANDING_SIZE = EntityDimensions.scalable(0.625F, 1.8F);
+    public static final EntityDimensions STANDING_SIZE = EntityDimensions.scalable(0.65F, 1.8F);
     public static final Map<Pose, EntityDimensions> SIZE_BY_POSE = ImmutableMap.<Pose, EntityDimensions>builder()
                                                                                .put(Pose.STANDING, STANDING_SIZE)
                                                                                .put(Pose.SLEEPING, EntityDimensions.fixed(0.2F, 0.2F))
-                                                                               .put(Pose.FALL_FLYING, EntityDimensions.scalable(0.625F, 0.625F))
-                                                                               .put(Pose.SWIMMING, EntityDimensions.scalable(0.625F, 0.625F))
-                                                                               .put(Pose.SPIN_ATTACK, EntityDimensions.scalable(0.625F, 0.625F))
-                                                                               .put(Pose.CROUCHING, EntityDimensions.scalable(0.625F, 1.5F))
+                                                                               .put(Pose.FALL_FLYING, EntityDimensions.scalable(0.65F, 0.65F))
+                                                                               .put(Pose.SWIMMING, EntityDimensions.scalable(0.65F, 0.65F))
+                                                                               .put(Pose.SPIN_ATTACK, EntityDimensions.scalable(0.65F, 0.65F))
+                                                                               .put(Pose.CROUCHING, EntityDimensions.scalable(0.65F, 1.5F))
                                                                                .put(Pose.DYING, EntityDimensions.fixed(0.2F, 0.2F))
                                                                                .build();
     private static final RandomGenerator RAND = new Random();
@@ -80,16 +84,19 @@ public final class PlayerHelper {
     private PlayerHelper() {
     }
 
-    public static void addStat(Player player, @Nonnull ResourceLocation resLoc, float amount) {
+    public static void addStat(Player player, ResourceLocation resLoc, float amount) {
         addStat(player, Stats.CUSTOM, resLoc, amount);
     }
 
-    public static <T> void addStat(Player player, @Nonnull StatType<T> statType, @Nonnull T type, float amount) {
+    public static <T> void addStat(Player player, StatType<T> statType, T type, float amount) {
         if (player instanceof ServerPlayer && !(player instanceof FakePlayer)) {
             Stat<T> stat = statType.get(type);
             EvolutionServerStatsCounter stats = (EvolutionServerStatsCounter) ((ServerPlayer) player).getStats();
             stats.incrementPartial(player, stat, amount);
-            player.getScoreboard().forAllObjectives(stat, player.getScoreboardName(), score -> score.setScore((int) stats.getValueLong(stat)));
+            player.getScoreboard().forAllObjectives(stat, player.getScoreboardName(), score -> {
+                assert score != null;
+                score.setScore((int) stats.getValueLong(stat));
+            });
         }
     }
 
@@ -114,10 +121,7 @@ public final class PlayerHelper {
         }
         if (targetEntity.isAttackable()) {
             if (!targetEntity.skipAttackInteraction(player)) {
-                float damage = (float) player.getAttribute(Attributes.ATTACK_DAMAGE).getValue();
-                if (attackItem instanceof IOffhandAttackable offhandAttackable) {
-                    damage = (float) (offhandAttackable.getAttackDamage(attackStack) + player.getAttribute(Attributes.ATTACK_DAMAGE).getBaseValue());
-                }
+                float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
                 if (damage > 0.0F) {
                     int knockbackModifier = 0;
                     if (attackItem instanceof IKnockback knockback) {
@@ -171,8 +175,10 @@ public final class PlayerHelper {
                         }
                     }
                     Vec3 targetMotion = targetEntity.getDeltaMovement();
-                    EvolutionDamage.Type type = attackItem instanceof IMelee melee ? melee.getDamageType(attackStack) : EvolutionDamage.Type.CRUSHING;
-                    DamageSource source = EvolutionDamage.causePlayerMeleeDamage(player, type, hand);
+                    EvolutionDamage.Type type = attackItem instanceof IMelee melee ?
+                                                melee.getDamageType(attackStack, melee.getBasicAttackType(attackStack)) :
+                                                EvolutionDamage.Type.CRUSHING;
+                    DamageSource source = EvolutionDamage.causePlayerMeleeDamage(player, type);
                     boolean attackSuccessfull = targetEntity.hurt(source, damage);
                     if (attackSuccessfull) {
                         //Knockback calculations
@@ -192,6 +198,7 @@ public final class PlayerHelper {
                             float sweepingDamage = 1.0F + ((ISweepAttack) attackItem).getSweepRatio() * damage;
                             for (LivingEntity livingEntity : player.level.getEntitiesOfClass(LivingEntity.class,
                                                                                              targetEntity.getBoundingBox().inflate(1, 0.25, 1))) {
+                                assert livingEntity != null;
                                 if (livingEntity != player &&
                                     livingEntity != targetEntity &&
                                     !player.isAlliedTo(livingEntity) &&
@@ -199,7 +206,7 @@ public final class PlayerHelper {
                                     player.distanceToSqr(livingEntity) < 9) {
                                     livingEntity.knockback(0.4F, MathHelper.sinDeg(player.getYRot()), -MathHelper.cosDeg(player.getYRot()));
                                     //noinspection ObjectAllocationInLoop
-                                    livingEntity.hurt(EvolutionDamage.causePlayerMeleeDamage(player, type, hand), sweepingDamage);
+                                    livingEntity.hurt(EvolutionDamage.causePlayerMeleeDamage(player, type), sweepingDamage);
                                     entitiesHit++;
                                 }
                             }
@@ -365,137 +372,14 @@ public final class PlayerHelper {
         return damage;
     }
 
-    private static void lungeEntity(Player player,
-                                    Entity targetEntity,
-                                    InteractionHand hand,
-                                    double rayTraceHeight,
-                                    ItemStack lungeStack,
-                                    float strength) {
-        Item lungeItem = lungeStack.getItem();
-        if (targetEntity.isAttackable()) {
-            if (!targetEntity.skipAttackInteraction(player)) {
-                float damage = (float) player.getAttribute(Attributes.ATTACK_DAMAGE).getBaseValue();
-                if (lungeItem instanceof IMelee) {
-                    damage += ((IMelee) lungeItem).getAttackDamage(lungeStack);
-                }
-                damage *= 1.2;
-                damage *= strength;
-                if (damage > 0.0F) {
-                    int knockbackModifier = 0;
-                    if (lungeItem instanceof IKnockback) {
-                        knockbackModifier += ((IKnockback) lungeItem).getLevel();
-                    }
-                    if (player.isSprinting()) {
-                        player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_KNOCKBACK,
-                                               player.getSoundSource(), 1.0F, 1.0F);
-                        ++knockbackModifier;
-                    }
-                    int fireAspectModifier = 0;
-                    if (lungeItem instanceof IFireAspect) {
-                        if (RAND.nextFloat() < ((IFireAspect) lungeItem).getChance()) {
-                            fireAspectModifier = ((IFireAspect) lungeItem).getLevel();
-                        }
-                    }
-                    float oldHealth = 0.0F;
-                    boolean fireAspect = false;
-                    if (targetEntity instanceof LivingEntity) {
-                        oldHealth = ((LivingEntity) targetEntity).getHealth();
-                        if (fireAspectModifier > 0 && !targetEntity.isOnFire()) {
-                            fireAspect = true;
-                            targetEntity.setRemainingFireTicks(1);
-                        }
-                    }
-                    Vec3 targetMotion = targetEntity.getDeltaMovement();
-                    EvolutionDamage.Type type = EvolutionDamage.Type.PIERCING;
-                    DamageSource source = EvolutionDamage.causePlayerMeleeDamage(player, type, hand);
-                    boolean attackSuccessfull = targetEntity.hurt(source, damage);
-                    if (attackSuccessfull) {
-                        //Knockback calculations
-                        if (knockbackModifier > 0) {
-                            if (targetEntity instanceof LivingEntity) {
-                                ((LivingEntity) targetEntity).knockback(knockbackModifier * 0.5F, MathHelper.sinDeg(player.getYRot()),
-                                                                        -MathHelper.cosDeg(player.getYRot()));
-                            }
-                            else {
-                                targetEntity.push(-MathHelper.sinDeg(player.getYRot()) * knockbackModifier * 0.5, 0.0,
-                                                  MathHelper.cosDeg(player.getYRot()) * knockbackModifier * 0.5);
-                            }
-                            player.setDeltaMovement(player.getDeltaMovement().multiply(0.6, 1.0, 0.6));
-                        }
-                        //Calculated velocity changed
-                        if (targetEntity instanceof ServerPlayer serverPlayer && targetEntity.hurtMarked) {
-                            serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetEntity));
-                            targetEntity.hurtMarked = false;
-                            targetEntity.setDeltaMovement(targetMotion);
-                        }
-                        //Strong attack particles
-                        player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_STRONG,
-                                               player.getSoundSource(), 1.0F, 1.0F);
-                        player.setLastHurtMob(targetEntity);
-                        //Entity parts
-                        Entity entity = targetEntity;
-                        if (targetEntity instanceof EnderDragonPart enderDragonPart) {
-                            entity = enderDragonPart.parentMob;
-                        }
-                        //Item damage calculation
-                        if (!player.level.isClientSide && !lungeStack.isEmpty() && entity instanceof LivingEntity living) {
-                            ItemStack copy = lungeStack.copy();
-                            lungeStack.hurtEnemy(living, player);
-                            if (lungeStack.isEmpty()) {
-                                ForgeEventFactory.onPlayerDestroyItem(player, copy, hand);
-                            }
-                        }
-                        //Stats and Heart particles
-                        if (targetEntity instanceof LivingEntity living) {
-                            float damageDealt = oldHealth - living.getHealth();
-                            applyDamageRaw(player, damage, type);
-                            applyDamageActual(player, damageDealt, type, living);
-                            if (fireAspectModifier > 0) {
-                                living.setRemainingFireTicks(fireAspectModifier * 4);
-                            }
-                            if (player.level instanceof ServerLevel serverLevel && damageDealt >= 10.0F) {
-                                int heartsToSpawn = (int) (damageDealt * 0.1);
-                                serverLevel.sendParticles(ParticleTypes.DAMAGE_INDICATOR, living.getX(), living.getY() + living.getBbHeight() * 0.5,
-                                                          living.getZ(), heartsToSpawn, 0.5, 0.0, 0.5, 0.1);
-                            }
-                        }
-                        player.causeFoodExhaustion(0.1F);
-                    }
-                    //Attack fail
-                    else {
-                        player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_ATTACK_NODAMAGE,
-                                               player.getSoundSource(), 1.0F, 1.0F);
-                        if (fireAspect) {
-                            targetEntity.clearFire();
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public static void performAttack(Player player, @Nullable Entity entity, InteractionHand hand, double rayTraceHeight) {
+    public static void performAttack(ServerPlayer player, @Nullable Entity entity, InteractionHand hand, double rayTraceHeight) {
         if (hand == InteractionHand.OFF_HAND) {
-            Item offhandItem = player.getOffhandItem().getItem();
-            if (!(offhandItem instanceof IOffhandAttackable)) {
-                return;
-            }
+            return;
         }
         swingArm(player, hand);
-        EvolutionNetwork.send((ServerPlayer) player, new PacketSCHandAnimation(hand));
+        EvolutionNetwork.send(player, new PacketSCHandAnimation(hand));
         if (entity != null) {
             attackEntity(player, entity, hand, rayTraceHeight);
-        }
-    }
-
-    public static void performLunge(Player player,
-                                    @Nullable Entity entity,
-                                    InteractionHand hand,
-                                    double rayTraceHeight,
-                                    ItemStack lungeStack,
-                                    float strength) {
-        if (entity != null && lungeStack.getItem() instanceof ILunge) {
-            lungeEntity(player, entity, hand, rayTraceHeight, lungeStack, strength);
         }
     }
 

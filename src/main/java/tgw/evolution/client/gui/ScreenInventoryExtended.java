@@ -15,6 +15,7 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.extendedinventory.ContainerPlayerInventory;
 
@@ -37,7 +38,10 @@ public class ScreenInventoryExtended extends ScreenDisplayEffects<ContainerPlaye
 
     @Override
     public void containerTick() {
+        assert this.minecraft != null;
+        assert this.minecraft.gameMode != null;
         if (this.minecraft.gameMode.hasInfiniteItems()) {
+            assert this.minecraft.player != null;
             this.minecraft.setScreen(new CreativeModeInventoryScreen(this.minecraft.player));
         }
         else {
@@ -60,7 +64,10 @@ public class ScreenInventoryExtended extends ScreenDisplayEffects<ContainerPlaye
 
     @Override
     protected void init() {
+        assert this.minecraft != null;
+        assert this.minecraft.gameMode != null;
         if (this.minecraft.gameMode.hasInfiniteItems()) {
+            assert this.minecraft.player != null;
             this.minecraft.setScreen(new CreativeModeInventoryScreen(this.minecraft.player));
         }
         else {
@@ -86,12 +93,11 @@ public class ScreenInventoryExtended extends ScreenDisplayEffects<ContainerPlaye
     }
 
     @Override
-    public boolean mouseClicked(double p_mouseClicked_1_, double p_mouseClicked_3_, int p_mouseClicked_5_) {
-        if (this.recipeBookGui.mouseClicked(p_mouseClicked_1_, p_mouseClicked_3_, p_mouseClicked_5_)) {
+    public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
+        if (this.recipeBookGui.mouseClicked(mouseX, mouseY, button)) {
             return true;
         }
-        return (!this.widthTooNarrow || !this.recipeBookGui.isVisible()) &&
-               super.mouseClicked(p_mouseClicked_1_, p_mouseClicked_3_, p_mouseClicked_5_);
+        return (!this.widthTooNarrow || !this.recipeBookGui.isVisible()) && super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
@@ -164,6 +170,8 @@ public class ScreenInventoryExtended extends ScreenDisplayEffects<ContainerPlaye
             this.blit(matrices, i + 43, j + 25, 212, 0, 18, 18);
             this.blit(matrices, i + 25, j + 25, 212, 0, 18, 18);
         }
+        assert this.minecraft != null;
+        assert this.minecraft.player != null;
         InventoryScreen.renderEntityInInventory(i + 88, j + 75, 30, i + 88 - this.oldMouseX, j + 75 - 50 - this.oldMouseY, this.minecraft.player);
     }
 
@@ -172,7 +180,7 @@ public class ScreenInventoryExtended extends ScreenDisplayEffects<ContainerPlaye
     }
 
     @Override
-    protected void slotClicked(Slot slot, int slotId, int mouseButton, ClickType type) {
+    public void slotClicked(Slot slot, int slotId, int mouseButton, ClickType type) {
         super.slotClicked(slot, slotId, mouseButton, type);
         this.recipeBookGui.slotClicked(slot);
     }

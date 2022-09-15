@@ -17,19 +17,19 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.blocks.ISittableBlock;
-import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionEntities;
+import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.hitbox.HitboxEntity;
 
-import javax.annotation.Nullable;
-
-public class EntitySittable extends Entity implements IEvolutionEntity<EntitySittable>, ISittableEntity {
+public class EntitySittable extends Entity implements IEntityPatch<EntitySittable>, ISittableEntity {
 
     @Range(from = 0, to = 100)
     private byte comfort;
+    @Nullable
     private BlockPos source;
 
     public EntitySittable(EntityType<?> entityType, Level level) {
@@ -67,15 +67,11 @@ public class EntitySittable extends Entity implements IEvolutionEntity<EntitySit
 
     @Override
     protected void addAdditionalSaveData(CompoundTag compound) {
-        compound.put("Source", NbtUtils.writeBlockPos(this.source));
+        if (this.source != null) {
+            compound.put("Source", NbtUtils.writeBlockPos(this.source));
+        }
         compound.putByte("Comfort", this.comfort);
     }
-
-    //TODO
-//    @Override
-//    protected boolean canBeRidden(Entity entity) {
-//        return true;
-//    }
 
     @Override
     protected void defineSynchedData() {
@@ -87,9 +83,20 @@ public class EntitySittable extends Entity implements IEvolutionEntity<EntitySit
     }
 
     @Override
+    public double getBaseMass() {
+        return 0;
+    }
+
+    @Override
     public @Range(from = 0, to = 100) int getComfort() {
         return this.comfort;
     }
+
+    //TODO
+//    @Override
+//    protected boolean canBeRidden(Entity entity) {
+//        return true;
+//    }
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity entity) {
@@ -118,20 +125,24 @@ public class EntitySittable extends Entity implements IEvolutionEntity<EntitySit
         return super.getDismountLocationForPassenger(entity);
     }
 
-    @Nullable
     @Override
-    public HitboxEntity<EntitySittable> getHitbox() {
+    public float getFrictionModifier() {
+        return 0;
+    }
+
+    @Override
+    public @Nullable HitboxEntity<EntitySittable> getHitboxes() {
         return null;
+    }
+
+    @Override
+    public double getLegSlowdown() {
+        return 0;
     }
 
     @Override
     public double getPassengersRidingOffset() {
         return 0;
-    }
-
-    @Override
-    public boolean hasHitboxes() {
-        return false;
     }
 
     @Override

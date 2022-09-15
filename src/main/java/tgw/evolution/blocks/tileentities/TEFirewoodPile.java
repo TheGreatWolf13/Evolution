@@ -7,12 +7,12 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.items.ItemFirewood;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.WoodVariant;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
 
 public class TEFirewoodPile extends BlockEntity {
@@ -72,6 +72,7 @@ public class TEFirewoodPile extends BlockEntity {
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
         this.handleUpdateTag(packet.getTag());
+        assert this.level != null;
         this.level.sendBlockUpdated(this.worldPosition,
                                     this.level.getBlockState(this.worldPosition),
                                     this.level.getBlockState(this.worldPosition),
@@ -99,6 +100,7 @@ public class TEFirewoodPile extends BlockEntity {
 
     public void sendRenderUpdate() {
         this.setChanged();
+        assert this.level != null;
         this.level.sendBlockUpdated(this.worldPosition,
                                     this.level.getBlockState(this.worldPosition),
                                     this.level.getBlockState(this.worldPosition),

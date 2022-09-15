@@ -14,21 +14,21 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.util.math.MathHelper;
-
-import javax.annotation.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
 public class BlockMoldClay extends BlockGeneric implements IReplaceable {
 
     private final int layers;
-    private VoxelShape shapeEast;
-    private VoxelShape shapeNorth;
-    private VoxelShape shapeSouth;
-    private VoxelShape shapeWest;
+    private VoxelShape shapeEast = Shapes.empty();
+    private VoxelShape shapeNorth = Shapes.empty();
+    private VoxelShape shapeSouth = Shapes.empty();
+    private VoxelShape shapeWest = Shapes.empty();
 
     public BlockMoldClay(int layers) {
         super(Properties.of(Material.CLAY).strength(0.0F).sound(SoundType.GRAVEL));

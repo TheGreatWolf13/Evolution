@@ -16,7 +16,7 @@ import tgw.evolution.blocks.tileentities.ILoggable;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.util.constants.BlockFlags;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public interface IFluidLoggable extends IBlockFluidContainer {
 

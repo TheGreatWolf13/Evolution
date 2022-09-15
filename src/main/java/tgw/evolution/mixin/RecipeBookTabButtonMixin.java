@@ -3,6 +3,7 @@ package tgw.evolution.mixin;
 import net.minecraft.client.gui.components.StateSwitchingButton;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookTabButton;
 import org.spongepowered.asm.mixin.Mixin;
+import tgw.evolution.client.util.MouseButton;
 
 @Mixin(RecipeBookTabButton.class)
 public abstract class RecipeBookTabButtonMixin extends StateSwitchingButton {
@@ -12,7 +13,7 @@ public abstract class RecipeBookTabButtonMixin extends StateSwitchingButton {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
         if (this.active && this.visible) {
             if (this.isValidClickButton(button)) {
                 boolean clicked = this.clicked(mouseX, mouseY);

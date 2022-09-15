@@ -2,6 +2,7 @@ package tgw.evolution.patches;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import net.minecraft.world.level.chunk.LevelChunk;
+import org.jetbrains.annotations.Nullable;
 
 public interface IClientChunkCache_StoragePatch {
 
@@ -14,7 +15,7 @@ public interface IClientChunkCache_StoragePatch {
 
     int getCamViewCenterZ();
 
-    LevelChunk getCameraChunk(int index);
+    @Nullable LevelChunk getCameraChunk(int index);
 
     int getCameraChunksLength();
 

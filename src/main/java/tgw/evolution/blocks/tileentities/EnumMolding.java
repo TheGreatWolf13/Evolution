@@ -1,8 +1,8 @@
 package tgw.evolution.blocks.tileentities;
 
-import it.unimi.dsi.fastutil.ints.Int2ReferenceMap;
-import it.unimi.dsi.fastutil.ints.Int2ReferenceMaps;
-import it.unimi.dsi.fastutil.ints.Int2ReferenceOpenHashMap;
+import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
+import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
+import it.unimi.dsi.fastutil.bytes.Byte2ReferenceOpenHashMap;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -23,14 +23,15 @@ public enum EnumMolding {
 //            new ItemStack(EvolutionItems.mold_clay_pickaxe.get()));
 
     public static final EnumMolding[] VALUES = values();
-    private static final Int2ReferenceMap<EnumMolding> REGISTRY;
+    private static final Byte2ReferenceMap<EnumMolding> REGISTRY;
 
     static {
-        Int2ReferenceMap<EnumMolding> map = new Int2ReferenceOpenHashMap<>();
+        Byte2ReferenceOpenHashMap<EnumMolding> map = new Byte2ReferenceOpenHashMap<>();
         for (EnumMolding molding : VALUES) {
             map.put(molding.id, molding);
         }
-        REGISTRY = Int2ReferenceMaps.unmodifiable(map);
+        map.trim();
+        REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
     }
 
     private final byte id;
@@ -45,7 +46,7 @@ public enum EnumMolding {
         this.stack = stack;
     }
 
-    public static EnumMolding byId(int id) {
+    public static EnumMolding byId(byte id) {
         return REGISTRY.getOrDefault(id, NULL);
     }
 

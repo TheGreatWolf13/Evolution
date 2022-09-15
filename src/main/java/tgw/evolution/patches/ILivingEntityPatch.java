@@ -1,9 +1,8 @@
 package tgw.evolution.patches;
 
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.EffectHelper;
-import tgw.evolution.items.ISpecialAttack;
-
-import javax.annotation.Nullable;
+import tgw.evolution.items.IMelee;
 
 public interface ILivingEntityPatch {
 
@@ -12,79 +11,50 @@ public interface ILivingEntityPatch {
     EffectHelper getEffectHelper();
 
     /**
-     * @return The progress, from {@code 0.0f} to {@code 1.0f} of the mainhand special attack, given interpolation ticks.
+     * @return The progress, from {@code 0.0f} to {@code 1.0f} of the special attack, given interpolation ticks.
      */
-    float getMainhandSpecialAttackProgress(float partialTicks);
+    float getSpecialAttackProgress(float partialTicks);
 
     /**
-     * @return The type of the current mainhand special attack. {@code null} if none is being performed.
-     */
-    @Nullable
-    ISpecialAttack.IAttackType getMainhandSpecialAttackType();
-
-    /**
-     * @return The progress, from {@code 0.0f} to {@code 1.0f} of the offhand special attack, given interpolation ticks.
-     */
-    float getOffhandSpecialAttackProgress(float partialTicks);
-
-    /**
-     * @return The type of the current offhand special attack. {@code null} if none is being performed.
+     * @return The type of the current special attack. {@code null} if none is being performed.
      */
     @Nullable
-    ISpecialAttack.IAttackType getOffhandSpecialAttackType();
+    IMelee.IAttackType getSpecialAttackType();
 
     /**
-     * @return Whether the current mainhand or offhand special attacks should lock the player camera.
+     * @return Whether the current special attacks should lock the player camera.
      */
     boolean isCameraLocked();
 
     /**
-     * @return Whether the mainhand special attack is in hit ticks (hitbox calculations should be performed and damage should be dealt).
+     * @return Whether the special attack is in hit ticks (hitbox calculations should be performed and damage should be dealt).
      */
-    boolean isMainhandInHitTicks();
+    boolean isInHitTicks();
 
     /**
-     * @return Whether the mainhand special attack is in progress, is canceled, or on cooldown.
+     * @return Whether the special attack is in progress, is canceled, or on cooldown.
      */
-    boolean isMainhandInSpecialAttack();
+    boolean isInSpecialAttack();
 
     /**
-     * @return Whether the mainhand special attack is in progress, has NOT been canceled and is NOT on cooldown.
+     * @return Whether the current special attack should lock the player movement (but not the player's inertia, conservation
+     * of momentum is important).
      */
-    boolean isMainhandSpecialAttacking();
+    boolean isMotionLocked();
 
     /**
-     * @return Whether the offhand special attack is in hit ticks (hitbox calculations should be performed and damage should be dealt).
+     * @return Whether the special attack is in progress, has NOT been canceled and is NOT on cooldown.
      */
-    boolean isOffhandInHitTicks();
-
-    /**
-     * @return Whether the offhand special attack is in progress, has been canceled, or is on cooldown.
-     */
-    boolean isOffhandInSpecialAttack();
-
-    /**
-     * @return Whether the offhand special attack is in progress, has NOT been canceled and is NOT on cooldown.
-     */
-    boolean isOffhandSpecialAttacking();
+    boolean isSpecialAttacking();
 
     void removeAbsorptionSuggestion(float amount);
 
     /**
-     * @return Whether the mainhand special attack should be rendered by clients.
+     * @return Whether the special attack should be rendered by clients.
      */
-    boolean renderMainhandSpecialAttack();
+    boolean shouldRenderSpecialAttack();
 
-    /**
-     * @return Whether the offhand special attack should be rendered by clients.
-     */
-    boolean renderOffhandSpecialAttack();
+    void startSpecialAttack(IMelee.IAttackType type);
 
-    void startMainhandSpecialAttack(ISpecialAttack.IAttackType type);
-
-    void startOffhandSpecialAttack(ISpecialAttack.IAttackType type);
-
-    void stopMainhandSpecialAttack(ISpecialAttack.StopReason reason);
-
-    void stopOffhandSpecialAttack(ISpecialAttack.StopReason reason);
+    void stopSpecialAttack(IMelee.StopReason reason);
 }

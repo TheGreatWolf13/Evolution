@@ -3,7 +3,6 @@ package tgw.evolution.init;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import tgw.evolution.commands.*;
-import tgw.evolution.commands.regen.CommandRegen;
 
 public final class EvolutionCommands {
 

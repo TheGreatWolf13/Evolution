@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
-import tgw.evolution.util.constants.HarvestLevels;
+import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.math.DirectionToIntMap;
 import tgw.evolution.util.math.DirectionUtil;
@@ -47,7 +47,7 @@ public class BlockStone extends BlockGravity implements IRockVariant {
 
     @Override
     public int getHarvestLevel(BlockState state) {
-        return HarvestLevels.LOW_METAL;
+        return HarvestLevel.LOW_METAL;
     }
 
     @Override

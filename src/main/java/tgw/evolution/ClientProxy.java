@@ -31,7 +31,6 @@ import tgw.evolution.init.EvolutionContainers;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionRenderer;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.stats.EvolutionStatsCounter;
 import tgw.evolution.util.constants.SkinType;
 
@@ -39,16 +38,24 @@ import java.util.Map;
 
 public class ClientProxy implements IProxy {
 
-    public static final KeyMapping TOGGLE_CRAWL = new KeyMapping("key.crawl.toggle", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM,
-                                                                 GLFW.GLFW_KEY_X, "key.categories.movement");
-    public static final KeyMapping BUILDING_ASSIST = new KeyMapping("key.build_assist", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM,
-                                                                    GLFW.GLFW_KEY_BACKSLASH, "key.categories.creative");
+    public static final KeyMapping KEY_BUILDING_ASSIST = new KeyMapping("key.build_assist", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM,
+                                                                        GLFW.GLFW_KEY_BACKSLASH,
+                                                                        "key.categories.creative");
+    /**
+     * Value injected from {@link tgw.evolution.mixin.OptionsMixin}
+     */
+    @SuppressWarnings("NotNullFieldNotInitialized")
+    public static KeyMapping KEY_CRAWL;
 
     private static void addOverrides() {
-        ItemProperties.register(EvolutionItems.sword_dev.get(), new ResourceLocation("attack"), (stack, level, entity, seed) -> entity != null &&
-                                                                                                                                ((ILivingEntityPatch) entity).renderMainhandSpecialAttack() &&
-                                                                                                                                entity.getMainHandItem() ==
-                                                                                                                                stack ? 1.0f : 0.0f);
+//        ItemProperties.register(EvolutionItems.sword_dev.get(), new ResourceLocation("attack"), (stack, level, entity, seed) -> entity != null &&
+//                                                                                                                                (
+//                                                                                                                                (ILivingEntityPatch) entity).renderMainhandSpecialAttack() &&
+//                                                                                                                                entity
+//                                                                                                                                .getMainHandItem
+//                                                                                                                                () ==
+//                                                                                                                                stack ? 1.0f : 0
+//                                                                                                                                .0f);
         ItemProperties.register(EvolutionItems.shield_dev.get(), new ResourceLocation("blocking"),
                                 (stack, level, entity, seed) -> entity != null && entity.isUsingItem() && entity.getUseItem() == stack ? 1.0F : 0.0F);
     }
@@ -77,8 +84,8 @@ public class ClientProxy implements IProxy {
     }
 
     private static void registerKeyBinds() {
-        ClientRegistry.registerKeyBinding(TOGGLE_CRAWL);
-        ClientRegistry.registerKeyBinding(BUILDING_ASSIST);
+        ClientRegistry.registerKeyBinding(KEY_CRAWL);
+        ClientRegistry.registerKeyBinding(KEY_BUILDING_ASSIST);
     }
 
     private static void registerScreens() {
@@ -128,11 +135,13 @@ public class ClientProxy implements IProxy {
 
     @Override
     public Level getClientLevel() {
+        assert Minecraft.getInstance().level != null;
         return Minecraft.getInstance().level;
     }
 
     @Override
     public Player getClientPlayer() {
+        assert Minecraft.getInstance().player != null;
         return Minecraft.getInstance().player;
     }
 

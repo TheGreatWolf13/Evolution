@@ -3,9 +3,8 @@ package tgw.evolution.util;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.hitbox.Hitbox;
-
-import javax.annotation.Nullable;
 
 public class AdvancedEntityRayTraceResult extends EntityHitResult {
 

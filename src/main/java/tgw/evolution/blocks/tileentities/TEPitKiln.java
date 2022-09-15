@@ -7,12 +7,11 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.util.constants.WoodVariant;
 import tgw.evolution.util.math.DirectionDiagonal;
-
-import javax.annotation.Nullable;
 
 public class TEPitKiln extends BlockEntity {
 
@@ -34,6 +33,7 @@ public class TEPitKiln extends BlockEntity {
     }
 
     public void checkEmpty() {
+        assert this.level != null;
         if (this.level.isClientSide) {
             return;
         }
@@ -125,6 +125,7 @@ public class TEPitKiln extends BlockEntity {
     }
 
     public void onRemoved() {
+        assert this.level != null;
         if (!this.level.isClientSide) {
             BlockUtils.dropItemStack(this.level, this.worldPosition, this.nwStack);
             BlockUtils.dropItemStack(this.level, this.worldPosition, this.neStack);
@@ -222,6 +223,7 @@ public class TEPitKiln extends BlockEntity {
 
     public void start() {
         this.setBurning(true);
+        assert this.level != null;
         this.timeStart = this.level.getDayTime();
         this.setChanged();
     }

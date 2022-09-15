@@ -6,6 +6,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import org.jetbrains.annotations.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.AXIS;
 
@@ -23,7 +24,7 @@ public abstract class BlockXYZAxis extends BlockGravity {
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
         return this.defaultBlockState().setValue(AXIS, context.getClickedFace().getAxis());
     }
 

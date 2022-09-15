@@ -33,10 +33,10 @@ import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.items.ItemLog;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.constants.BlockFlags;
-import tgw.evolution.util.constants.HarvestLevels;
+import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.WoodVariant;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.FLUID_LOGGED;
 import static tgw.evolution.init.EvolutionBStates.OCCUPIED;
@@ -125,7 +125,7 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittableB
 
     @Override
     public int getHarvestLevel(BlockState state) {
-        return HarvestLevels.STONE;
+        return HarvestLevel.STONE;
     }
 
     @Override

@@ -22,7 +22,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.patches.IItemStackInfoPatch;
 import tgw.evolution.patches.IItemStackPatch;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 @SuppressWarnings("NonFinalFieldReferencedInHashCode")
@@ -47,8 +47,7 @@ public abstract class HoverEvent_ItemStackInfoMixin implements IItemStackInfoPat
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Handle new field CapNBT
+     * @reason Handle new field CapNBT
      */
     @Overwrite
     private static HoverEvent.ItemStackInfo create(JsonElement element) {
@@ -85,8 +84,7 @@ public abstract class HoverEvent_ItemStackInfoMixin implements IItemStackInfoPat
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Handle new field CapNBT
+     * @reason Handle new field CapNBT
      */
     @Override
     @Overwrite
@@ -121,8 +119,7 @@ public abstract class HoverEvent_ItemStackInfoMixin implements IItemStackInfoPat
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Handle new field CapNBT
+     * @reason Handle new field CapNBT
      */
     @Overwrite
     public ItemStack getItemStack() {
@@ -143,8 +140,7 @@ public abstract class HoverEvent_ItemStackInfoMixin implements IItemStackInfoPat
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Handle new field CapNBT
+     * @reason Handle new field CapNBT
      */
     @Overwrite
     @Override
@@ -163,8 +159,7 @@ public abstract class HoverEvent_ItemStackInfoMixin implements IItemStackInfoPat
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Handle new field CapNBT
+     * @reason Handle new field CapNBT
      */
     @Overwrite
     private JsonElement serialize() {

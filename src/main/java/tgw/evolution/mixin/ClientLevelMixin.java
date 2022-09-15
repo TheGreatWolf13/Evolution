@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.Level;
@@ -18,14 +19,11 @@ import java.util.function.Supplier;
 @Mixin(ClientLevel.class)
 public abstract class ClientLevelMixin extends Level {
 
-    public ClientLevelMixin(WritableLevelData p_46450_,
-                            ResourceKey<Level> p_46451_,
-                            DimensionType p_46452_,
-                            Supplier<ProfilerFiller> p_46453_,
-                            boolean p_46454_,
-                            boolean p_46455_,
-                            long p_46456_) {
-        super(p_46450_, p_46451_, p_46452_, p_46453_, p_46454_, p_46455_, p_46456_);
+    public ClientLevelMixin(WritableLevelData pLevelData,
+                            ResourceKey<Level> pDimension,
+                            Holder<DimensionType> pDimensionTypeRegistration,
+                            Supplier<ProfilerFiller> pProfiler, boolean pIsClientSide, boolean pIsDebug, long pBiomeZoomSeed) {
+        super(pLevelData, pDimension, pDimensionTypeRegistration, pProfiler, pIsClientSide, pIsDebug, pBiomeZoomSeed);
     }
 
     @Inject(method = "getStarBrightness", at = @At(value = "HEAD"), cancellable = true)

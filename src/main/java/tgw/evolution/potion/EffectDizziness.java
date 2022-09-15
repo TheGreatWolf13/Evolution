@@ -1,12 +1,12 @@
 package tgw.evolution.potion;
 
+import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.player.Player;
 import tgw.evolution.util.collection.I2IMap;
 import tgw.evolution.util.collection.I2IOpenHashMap;
-import tgw.evolution.util.math.MathHelper;
 
 public class EffectDizziness extends EffectGeneric {
 
@@ -25,7 +25,7 @@ public class EffectDizziness extends EffectGeneric {
             return;
         }
         int tick = AFFECTED.getOrDefault(entity.getId(), 0);
-        entity.zza = Math.signum(MathHelper.cos(tick * MathHelper.TAU / (80 >> lvl)));
+        entity.zza = Math.signum(Mth.cos(tick * Mth.TWO_PI / (80 >> lvl)));
         entity.setSprinting(false);
         AFFECTED.put(entity.getId(), ++tick);
     }

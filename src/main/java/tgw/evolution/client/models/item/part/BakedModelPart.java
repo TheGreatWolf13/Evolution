@@ -6,20 +6,22 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.modular.part.IPart;
 import tgw.evolution.capabilities.modular.part.IPartType;
+import tgw.evolution.items.modular.part.ItemPart;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Random;
 
-public abstract class BakedModelPart<T extends IPartType<T>, P extends IPart<T>, M extends BakedModelFinalPart<T>> implements BakedModel {
+public abstract class BakedModelPart<T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>,
+        M extends BakedModelFinalPart<T, I, P>>
+        implements BakedModel {
 
     private final BakedModel baseModel;
-    private final ItemOverridesPart<T, P, M> overrides;
+    private final ItemOverridesPart<T, I, P, M> overrides;
 
-    public BakedModelPart(BakedModel baseModel, ItemOverridesPart<T, P, M> overrides) {
+    public BakedModelPart(BakedModel baseModel, ItemOverridesPart<T, I, P, M> overrides) {
         this.baseModel = baseModel;
         this.overrides = overrides;
     }
@@ -34,9 +36,8 @@ public abstract class BakedModelPart<T extends IPartType<T>, P extends IPart<T>,
         return this.baseModel.getParticleIcon();
     }
 
-    @Nonnull
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random rand) {
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand) {
         return this.baseModel.getQuads(state, side, rand);
     }
 

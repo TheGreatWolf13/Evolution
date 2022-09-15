@@ -10,7 +10,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.constants.HarvestLevels;
+import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.WoodVariant;
 
 public class BlockPlanks extends BlockGravity {
@@ -54,7 +54,7 @@ public class BlockPlanks extends BlockGravity {
 
     @Override
     public int getHarvestLevel(BlockState state) {
-        return HarvestLevels.STONE;
+        return HarvestLevel.STONE;
     }
 
     @Override

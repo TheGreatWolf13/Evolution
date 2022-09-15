@@ -39,9 +39,10 @@ public class LayerBelt extends RenderLayer<AbstractClientPlayer, PlayerModel<Abs
             int sideOffset = player.getMainArm() == HumanoidArm.RIGHT ? -1 : 1;
             matrices.pushPose();
             this.getParentModel().body.translateAndRotate(matrices);
-            matrices.mulPose(CommonRotations.YN90);
-            matrices.translate(0.1, 0.85, sideOffset * 0.28);
+            matrices.mulPose(CommonRotations.YP90);
+            matrices.translate(-0.1, -0.85, sideOffset * 0.28);
             matrices.scale(0.75f, 0.75f, 0.75f);
+            matrices.mulPose(CommonRotations.ZP180);
             Minecraft.getInstance()
                      .getItemRenderer()
                      .renderStatic(player, beltStack, ItemTransforms.TransformType.NONE, player.getMainArm() == HumanoidArm.LEFT, matrices, buffer,

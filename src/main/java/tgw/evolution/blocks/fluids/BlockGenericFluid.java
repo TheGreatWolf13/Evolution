@@ -37,7 +37,7 @@ import tgw.evolution.util.math.DirectionList;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;

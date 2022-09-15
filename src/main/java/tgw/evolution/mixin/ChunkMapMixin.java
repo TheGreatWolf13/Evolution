@@ -31,7 +31,7 @@ import tgw.evolution.patches.IServerPlayerPatch;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;

@@ -23,13 +23,13 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.extensions.IForgeBlockEntity;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.gui.ScreenSchematic;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.MathHelper;
 
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -49,7 +49,7 @@ public class TESchematic extends BlockEntity {
     private float integrity = 1.0F;
     private Mirror mirror = Mirror.NONE;
     private SchematicMode mode = SchematicMode.SAVE;
-    private ResourceLocation name;
+    private @Nullable ResourceLocation name;
     private Rotation rotation = Rotation.NONE;
     private BlockPos schematicPos = new BlockPos(0, 1, 0);
     private long seed;
@@ -100,6 +100,7 @@ public class TESchematic extends BlockEntity {
             this.schematicPos = new BlockPos(bb.minX() - pos.getX() + 1, bb.minY() - pos.getY() + 1, bb.minZ() - pos.getZ() + 1);
             this.size = new Vec3i(dx - 1, dy - 1, dz - 1);
             this.setChanged();
+            assert this.level != null;
             BlockState state = this.level.getBlockState(pos);
             this.level.sendBlockUpdated(pos, state, state, BlockFlags.NOTIFY_AND_UPDATE);
             return true;
@@ -143,6 +144,7 @@ public class TESchematic extends BlockEntity {
 //    }
 
     private Stream<BlockPos> getRelatedCorners(BlockPos startPos, BlockPos endPos) {
+        assert this.level != null;
         return BlockPos.betweenClosedStream(startPos, endPos)
                        .filter(pos -> this.level.getBlockState(pos).is(EvolutionBlocks.SCHEMATIC_BLOCK.get()))
                        .map(this.level::getBlockEntity)
@@ -200,8 +202,7 @@ public class TESchematic extends BlockEntity {
     }
 
     public boolean isStructureLoadable() {
-        if (this.mode == SchematicMode.LOAD && !this.level.isClientSide && this.name != null) {
-            ServerLevel level = (ServerLevel) this.level;
+        if (this.mode == SchematicMode.LOAD && this.level instanceof ServerLevel level && this.name != null) {
             StructureManager manager = level.getStructureManager();
             try {
                 return manager.get(this.name).isPresent();
@@ -330,9 +331,8 @@ public class TESchematic extends BlockEntity {
     }
 
     public boolean saveStructure(boolean writeToDisk) {
-        if (this.mode == SchematicMode.SAVE && !this.level.isClientSide && this.name != null) {
+        if (this.mode == SchematicMode.SAVE && this.level instanceof ServerLevel level && this.name != null) {
             BlockPos pos = this.getBlockPos().offset(this.schematicPos);
-            ServerLevel level = (ServerLevel) this.level;
             StructureManager structureManager = level.getStructureManager();
             StructureTemplate template;
             try {
@@ -371,6 +371,7 @@ public class TESchematic extends BlockEntity {
 
     public void setMode(SchematicMode mode) {
         this.mode = mode;
+        assert this.level != null;
         BlockState blockstate = this.level.getBlockState(this.getBlockPos());
         if (blockstate.getBlock() == EvolutionBlocks.SCHEMATIC_BLOCK.get()) {
             this.level.setBlock(this.getBlockPos(), blockstate.setValue(SCHEMATIC_MODE, mode), BlockFlags.BLOCK_UPDATE);

@@ -2,11 +2,11 @@ package tgw.evolution.world.dimension;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.util.earth.EarthHelper;
 import tgw.evolution.util.earth.MoonPhase;
@@ -15,18 +15,16 @@ import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.math.Vec3f;
 
-import javax.annotation.Nullable;
-
 public class DimensionOverworld {
 
     private static final float[] DUSK_DAWN_COLORS = new float[4];
     private final Vec3f lastFogColor = new Vec3f(0, 0, 0);
-    private float[] duskDawnColors;
+    private float @Nullable [] duskDawnColors;
     private MoonPhase eclipsePhase = MoonPhase.FULL_MOON;
     private boolean isInLunarEclipse;
     private boolean isInSolarEclipse;
     private float latitude;
-    private ClientLevel level;
+    private @Nullable ClientLevel level;
     private float[] lightBrightnessTable;
     private float lunarEclipseDDeclination;
     private float lunarEclipseDRightAscension;
@@ -61,10 +59,10 @@ public class DimensionOverworld {
     }
 
     public Vec3d getBrightnessDependentFogColor(Vec3d biomeFogColor, float multiplier) {
-        return biomeFogColor.scale(multiplier * 0.97 + 0.03);
+        return biomeFogColor.scaleMutable(multiplier * 0.97 + 0.03);
     }
 
-    public float[] getDuskDawnColors() {
+    public float @Nullable [] getDuskDawnColors() {
         return this.duskDawnColors;
     }
 
@@ -124,11 +122,6 @@ public class DimensionOverworld {
         float moonlightMult = this.moonlightMult();
         float moonlightMin = 1 - moonlightMult;
         return this.getSunBrightness(partialTicks) * moonlightMult + moonlightMin;
-    }
-
-    public Vec3 getSkyColor(BlockPos pos, float partialTick) {
-        Vec3f skyColor = EarthHelper.getSkyColor(this.level, pos, partialTick, this);
-        return new Vec3(skyColor.x, skyColor.y, skyColor.z);
     }
 
     public int getSolarEclipseDeclinationIndex() {
@@ -224,13 +217,12 @@ public class DimensionOverworld {
         }
     }
 
-    @Nullable
-    private float[] sunsetColors() {
+    private float @Nullable [] sunsetColors() {
         if (this.sunAltitude >= 66.0F && this.sunAltitude <= 107.5F) {
             float cosSunAlt = MathHelper.cosDeg(this.sunAltitude);
             float mult = this.sunAltitude > 90 ? 1.5f : 1.1f;
             float f3 = cosSunAlt * mult + 0.5F;
-            float alpha = 1.0F - (1.0F - MathHelper.sin(f3 * MathHelper.PI)) * 0.99F;
+            float alpha = 1.0F - (1.0F - Mth.sin(f3 * Mth.PI)) * 0.99F;
             if (this.sunAltitude > 90) {
                 alpha *= alpha;
             }
@@ -253,7 +245,8 @@ public class DimensionOverworld {
         }
         Minecraft.getInstance().getProfiler().push("init");
         long dayTime = this.level.getDayTime();
-        this.latitude = -EarthHelper.calculateLatitude(Minecraft.getInstance().getCameraEntity().getZ());
+        Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
+        this.latitude = -EarthHelper.calculateLatitude(cameraEntity == null ? 0 : cameraEntity.getZ());
         float sinLatitude = MathHelper.sinDeg(this.latitude);
         float cosLatitude = MathHelper.cosDeg(this.latitude);
         Minecraft.getInstance().getProfiler().popPush("stars");
@@ -307,7 +300,7 @@ public class DimensionOverworld {
         this.duskDawnColors = this.sunsetColors();
         //noinspection VariableNotUsedInsideIf
         if (this.duskDawnColors != null) {
-            this.sunAzimuth = MathHelper.radToDeg((float) Mth.atan2(EarthHelper.sunX, EarthHelper.sunZ)) + 180;
+            this.sunAzimuth = (float) MathHelper.atan2Deg(EarthHelper.sunX, EarthHelper.sunZ) + 180;
         }
         if (EvolutionConfig.CLIENT.showPlanets.get()) {
             Minecraft.getInstance().getProfiler().popPush("planets");

@@ -1,15 +1,19 @@
 package tgw.evolution.mixin;
 
+import com.mojang.datafixers.util.Either;
+import net.minecraft.Util;
 import net.minecraft.server.level.*;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.LocalMobCapCalculator;
 import net.minecraft.world.level.NaturalSpawner;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.storage.LevelData;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -17,7 +21,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.util.collection.BiArrayList;
 import tgw.evolution.util.math.MathHelper;
 
-import javax.annotation.Nullable;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 @Mixin(ServerChunkCache.class)
@@ -46,6 +50,35 @@ public abstract class ServerChunkCacheMixin extends ChunkSource {
     @Shadow
     protected abstract boolean chunkAbsent(@Nullable ChunkHolder p_8417_, int p_8418_);
 
+    /**
+     * @author TheGreatWolf
+     * @reason Delay ChunkPos allocation
+     */
+    @Overwrite
+    private CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> getChunkFutureMainThread(int x,
+                                                                                                             int z,
+                                                                                                             ChunkStatus status,
+                                                                                                             boolean p_8460_) {
+        long longPos = ChunkPos.asLong(x, z);
+        int j = 33 + ChunkStatus.getDistance(status);
+        ChunkHolder chunkholder = this.getVisibleChunkIfPresent(longPos);
+        if (p_8460_) {
+            this.distanceManager.addTicket(longPos, new Ticket<>(TicketType.UNKNOWN, j, new ChunkPos(x, z), false));
+            if (this.chunkAbsent(chunkholder, j)) {
+                ProfilerFiller profilerfiller = this.level.getProfiler();
+                profilerfiller.push("chunkLoad");
+                this.runDistanceManagerUpdates();
+                chunkholder = this.getVisibleChunkIfPresent(longPos);
+                profilerfiller.pop();
+                if (this.chunkAbsent(chunkholder, j)) {
+                    throw Util.pauseInIde(new IllegalStateException("No chunk holder after ticket has been added"));
+                }
+            }
+        }
+        //noinspection ConstantConditions
+        return this.chunkAbsent(chunkholder, j) ? ChunkHolder.UNLOADED_CHUNK_FUTURE : chunkholder.getOrScheduleFuture(status, this.chunkMap);
+    }
+
     @Shadow
     protected abstract void getFullChunk(long p_8371_, Consumer<LevelChunk> p_8372_);
 
@@ -64,6 +97,9 @@ public abstract class ServerChunkCacheMixin extends ChunkSource {
         int ticket = 33 + ChunkStatus.getDistance(ChunkStatus.FULL);
         return !this.chunkAbsent(holder, ticket);
     }
+
+    @Shadow
+    abstract boolean runDistanceManagerUpdates();
 
     /**
      * @author TheGreatWolf
@@ -104,7 +140,7 @@ public abstract class ServerChunkCacheMixin extends ChunkSource {
             for (int i = 0, len = list.size(); i < len; i++) {
                 LevelChunk chunk = list.getLeft(i);
                 ChunkPos chunkpos = chunk.getPos();
-                if (this.level.isPositionEntityTicking(chunkpos) && this.chunkMap.anyPlayerCloseEnoughForSpawning(chunkpos) ||
+                if (this.level.isNaturalSpawningAllowed(chunkpos) && this.chunkMap.anyPlayerCloseEnoughForSpawning(chunkpos) ||
                     this.distanceManager.shouldForceTicks(chunkpos.toLong())) {
                     chunk.incrementInhabitedTime(deltaTime);
                     if (doMobSpawn && (this.spawnEnemies || this.spawnFriendlies) && this.level.getWorldBorder().isWithinBounds(chunkpos)) {

@@ -7,12 +7,15 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.util.INBTSerializable;
 import tgw.evolution.capabilities.modular.MaterialInstance;
+import tgw.evolution.init.ItemMaterial;
 import tgw.evolution.items.IDurability;
+import tgw.evolution.items.modular.part.ItemPart;
 import tgw.evolution.util.constants.HarvestLevel;
 
 import java.util.List;
 
-public interface IPart<T extends IPartType<T>> extends IDurability, INBTSerializable<CompoundTag> {
+public interface IPart<T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>>
+        extends IDurability, INBTSerializable<CompoundTag> {
 
     void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num);
 
@@ -31,10 +34,10 @@ public interface IPart<T extends IPartType<T>> extends IDurability, INBTSerializ
     int getHarvestLevel();
 
     default double getMass() {
-        return 1.378_615e-6 * this.getType().getVolume(this.getMaterial().getMaterial()) * this.getMaterial().getDensity();
+        return 1.378_615e-6 * this.getType().getVolume(this.getMaterialInstance().getMaterial()) * this.getMaterialInstance().getDensity();
     }
 
-    MaterialInstance getMaterial();
+    MaterialInstance getMaterialInstance();
 
     @Override
     default int getMaxDmg(ItemStack stack) {
@@ -44,6 +47,8 @@ public interface IPart<T extends IPartType<T>> extends IDurability, INBTSerializ
     int getMaxDurability();
 
     T getType();
+
+    void init(T type, ItemMaterial material);
 
     boolean isBroken();
 

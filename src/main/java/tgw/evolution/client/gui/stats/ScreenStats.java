@@ -11,6 +11,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.achievement.StatsUpdateListener;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -20,7 +21,10 @@ import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.stats.*;
+import net.minecraft.stats.Stat;
+import net.minecraft.stats.StatType;
+import net.minecraft.stats.Stats;
+import net.minecraft.stats.StatsCounter;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.BlockItem;
@@ -29,6 +33,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.GUIUtils;
 import tgw.evolution.init.EvolutionDamage;
@@ -37,16 +42,13 @@ import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.stats.EvolutionStatsCounter;
 import tgw.evolution.stats.IEvoStatFormatter;
 import tgw.evolution.util.collection.*;
-import tgw.evolution.util.reflection.FieldHandler;
 
-import javax.annotation.Nullable;
 import java.util.Comparator;
 import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)
 public class ScreenStats extends Screen implements StatsUpdateListener {
 
-    private final FieldHandler<Stat, StatFormatter> formatter = new FieldHandler<>(Stat.class, "f_12852_");
     private final ResourceLocation resDamageIcons = Evolution.getResource("textures/gui/damage_icons.png");
     private final ResourceLocation resIcons = Evolution.getResource("textures/gui/stats_icons.png");
     private final EvolutionStatsCounter stats;
@@ -99,7 +101,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         blit(matrices, x, y, this.getBlitOffset(), u, v, 18, 18, 128, 128);
     }
 
-    @Nullable
     public ObjectSelectionList<?> byId(int displayId) {
         return switch (displayId) {
             case 0 -> this.generalStats;
@@ -109,7 +110,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             case 4 -> this.timeStats;
             case 5 -> this.deathStats;
             case 6 -> this.damageStats;
-            default -> null;
+            default -> throw new IllegalStateException("Unknown display id: " + displayId);
         };
     }
 
@@ -131,7 +132,10 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     @Override
     protected void init() {
         this.doesGuiPauseGame = true;
-        this.minecraft.getConnection().send(new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.REQUEST_STATS));
+        assert this.minecraft != null;
+        ClientPacketListener connection = this.minecraft.getConnection();
+        assert connection != null;
+        connection.send(new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.REQUEST_STATS));
     }
 
     public void initButtons() {
@@ -171,6 +175,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     }
 
     public void initLists() {
+        assert this.minecraft != null;
         this.generalStats = new ListCustomStats(this.minecraft);
         this.itemStats = new ListStats(this.minecraft);
         this.mobStats = new ListMobStats(this.minecraft);
@@ -208,7 +213,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                                0xff_ffff);
         }
         else {
-            this.displaySlot.render(matrices, mouseX, mouseY, partialTicks);
+            if (this.displaySlot != null) {
+                this.displaySlot.render(matrices, mouseX, mouseY, partialTicks);
+            }
             drawCenteredString(matrices, this.font, this.title, this.width / 2, 20, 0xff_ffff);
             super.render(matrices, mouseX, mouseY, partialTicks);
         }
@@ -224,6 +231,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         this.removeWidget(this.damageStats);
         if (displayId != -1) {
             ObjectSelectionList<?> displaySlot = this.byId(displayId);
+            assert displaySlot != null;
             this.addWidget(displaySlot);
             this.displaySlot = displaySlot;
             this.displayId = displayId;
@@ -265,7 +273,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
             private Entry(Stat<ResourceLocation> stat) {
                 this.title = getFormattedName(stat);
-                this.value = ((IEvoStatFormatter) ScreenStats.this.formatter.get(stat)).format(ScreenStats.this.stats.getValueLong(stat));
+                this.value = ((IEvoStatFormatter) stat.formatter).format(ScreenStats.this.stats.getValueLong(stat));
             }
 
             @Override
@@ -917,6 +925,8 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             for (EntityType<?> entityType : Registry.ENTITY_TYPE) {
                 if (this.shouldAddEntry(entityType)) {
                     this.entityList.add(entityType);
+                    assert ScreenStats.this.minecraft != null;
+                    assert ScreenStats.this.minecraft.level != null;
                     this.entities.put(entityType, GUIUtils.getEntity(ScreenStats.this.minecraft.level, entityType));
                     //noinspection ObjectAllocationInLoop
                     this.addEntry(new ScreenStats.ListMobStats.Entry());
@@ -1085,7 +1095,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                 if (type == EntityType.PLAYER) {
                     entity = ListMobStats.this.minecraft.player;
                 }
-                GUIUtils.drawEntityOnScreen(x - 30, y + 45, GUIUtils.getEntityScale(entity, 1.0f, 40, 35), mouseX, mouseY, entity);
+                if (entity != null) {
+                    GUIUtils.drawEntityOnScreen(x - 30, y + 45, GUIUtils.getEntityScale(entity, 1.0f, 40, 35), mouseX, mouseY, entity);
+                }
                 long dmgDealt = ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_DEALT.get(), type);
                 long dmgTaken = ScreenStats.this.stats.getValueLong(EvolutionStats.DAMAGE_TAKEN.get(), type);
                 long killed = ScreenStats.this.stats.getValueLong(Stats.ENTITY_KILLED, type);

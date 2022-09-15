@@ -1,6 +1,9 @@
 package tgw.evolution.blocks;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.state.BlockState;
 
 public interface IClimbable {
@@ -14,4 +17,6 @@ public interface IClimbable {
     double getXPos(BlockState state);
 
     double getZPos(BlockState state);
+
+    boolean isClimbable(BlockState state, LevelReader level, BlockPos pos, LivingEntity entity);
 }

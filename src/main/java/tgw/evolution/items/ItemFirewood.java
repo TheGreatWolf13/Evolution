@@ -9,6 +9,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.BlockFirewoodPile;
 import tgw.evolution.blocks.tileentities.TEFirewoodPile;
 import tgw.evolution.init.EvolutionBStates;
@@ -17,7 +18,6 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.constants.WoodVariant;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;

@@ -6,19 +6,16 @@ import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.Evolution;
 
-import javax.annotation.Nonnull;
 import java.util.function.Supplier;
 
 public class PacketSCPlaySoundEntityEmitted implements IPacket {
-    @Nonnull
     protected final SoundSource category;
     protected final int entityId;
     protected final float pitch;
-    @Nonnull
     protected final String sound;
     protected final float volume;
 
-    public PacketSCPlaySoundEntityEmitted(int entityId, @Nonnull String sound, @Nonnull SoundSource category, float volume, float pitch) {
+    public PacketSCPlaySoundEntityEmitted(int entityId, String sound, SoundSource category, float volume, float pitch) {
         this.entityId = entityId;
         this.sound = sound;
         this.category = category;

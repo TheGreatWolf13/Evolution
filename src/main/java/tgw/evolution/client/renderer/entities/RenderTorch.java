@@ -14,7 +14,7 @@ import tgw.evolution.Evolution;
 import tgw.evolution.client.models.entities.ModelTorch;
 import tgw.evolution.entities.projectiles.EntityTorch;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class RenderTorch extends EntityRenderer<EntityTorch> {
 

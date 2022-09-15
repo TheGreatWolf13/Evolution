@@ -18,12 +18,15 @@ public final class EvolutionConfig {
 
     static {
         final Pair<Common, ForgeConfigSpec> commonSpecPair = new ForgeConfigSpec.Builder().configure(Common::new);
+        assert commonSpecPair != null;
         COMMON_SPEC = commonSpecPair.getRight();
         COMMON = commonSpecPair.getLeft();
         final Pair<Client, ForgeConfigSpec> clientSpecPair = new ForgeConfigSpec.Builder().configure(Client::new);
+        assert clientSpecPair != null;
         CLIENT_SPEC = clientSpecPair.getRight();
         CLIENT = clientSpecPair.getLeft();
         final Pair<Server, ForgeConfigSpec> serverSpecPair = new ForgeConfigSpec.Builder().configure(Server::new);
+        assert serverSpecPair != null;
         SERVER_SPEC = serverSpecPair.getRight();
         SERVER = serverSpecPair.getLeft();
     }
@@ -55,7 +58,6 @@ public final class EvolutionConfig {
         public final ForgeConfigSpec.BooleanValue crazyMode;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Drink> drink;
         public final ForgeConfigSpec.BooleanValue ecliptic;
-        public final ForgeConfigSpec.BooleanValue firstPersonRenderer;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Food> food;
         public final ForgeConfigSpec.BooleanValue hitmarkers;
         public final ForgeConfigSpec.BooleanValue limitTimeUnitsToHour;
@@ -68,7 +70,6 @@ public final class EvolutionConfig {
             builder.push("Client");
             this.crazyMode = builder.translation("evolution.config.crazyMode").define("crazyMode", false);
             this.hitmarkers = builder.translation("evolution.config.hitmarkers").define("hitmarkers", true);
-            this.firstPersonRenderer = builder.translation("evolution.config.firstPersonRenderer").define("firstPersonRenderer", true);
             builder.push("performance");
             this.showPlanets = builder.translation("evolution.config.showPlanets").define("showPlanets", true);
             this.animatedTextures = builder.translation("evolution.config.animatedTextures").define("animatedTextures", true);
@@ -102,7 +103,7 @@ public final class EvolutionConfig {
         Server(final ForgeConfigSpec.Builder builder) {
             builder.push("Server");
             this.torchTime = builder.translation("evolution.config.torchTime")
-                                    .defineInRange("torchTime", 10, 0, Time.YEAR_IN_TICKS / Time.HOUR_IN_TICKS);
+                                    .defineInRange("torchTime", 10, 0, Time.TICKS_PER_YEAR / Time.TICKS_PER_HOUR);
             builder.pop();
         }
     }

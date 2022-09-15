@@ -2,7 +2,7 @@ package tgw.evolution.util.constants;
 
 import net.minecraft.world.level.block.Block;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public enum VanillaRockVariant {
     STONE,

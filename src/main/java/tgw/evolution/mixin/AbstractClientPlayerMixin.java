@@ -2,13 +2,12 @@ package tgw.evolution.mixin;
 
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.Entity;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.hitbox.EvolutionEntityHitboxes;
 import tgw.evolution.util.hitbox.HitboxEntity;
-
-import javax.annotation.Nullable;
 
 @Mixin(AbstractClientPlayer.class)
 public abstract class AbstractClientPlayerMixin implements IEntityPatch {

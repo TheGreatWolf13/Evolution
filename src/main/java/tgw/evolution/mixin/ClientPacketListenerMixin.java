@@ -60,8 +60,7 @@ public abstract class ClientPacketListenerMixin {
     @Inject(method = "handleLogin", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;<init>" +
                                                                         "(Lnet/minecraft/client/multiplayer/ClientPacketListener;" +
                                                                         "Lnet/minecraft/client/multiplayer/ClientLevel$ClientLevelData;" +
-                                                                        "Lnet/minecraft/resources/ResourceKey;" +
-                                                                        "Lnet/minecraft/world/level/dimension/DimensionType;" +
+                                                                        "Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/core/Holder;" +
                                                                         "IILjava/util/function/Supplier;" +
                                                                         "Lnet/minecraft/client/renderer/LevelRenderer;ZJ)V"))
     private void onHandleLogin0(ClientboundLoginPacket packet, CallbackInfo ci) {

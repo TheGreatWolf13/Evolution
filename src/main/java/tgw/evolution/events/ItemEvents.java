@@ -9,13 +9,17 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.*;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.tooltip.*;
 import tgw.evolution.init.EvolutionStyles;
@@ -28,7 +32,6 @@ import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.constants.HarvestLevel;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -132,7 +135,7 @@ public final class ItemEvents {
         }
     }
 
-    public static void makeEvolutionTooltip(ItemStack stack, List<Either<FormattedText, TooltipComponent>> tooltip) {
+    public static void makeEvolutionTooltip(Player player, ItemStack stack, List<Either<FormattedText, TooltipComponent>> tooltip) {
         tooltip.clear();
         //Name
         MutableComponent name = stack.getHoverName().copy().withStyle(stack.getRarity().color);
@@ -155,8 +158,10 @@ public final class ItemEvents {
         //Effects
         addEffectsTooltips(tooltip, stack);
         if (stack.hasTag()) {
-            if (stack.getTag().contains("display", Tag.TAG_COMPOUND)) {
-                CompoundTag nbt = stack.getTag().getCompound("display");
+            CompoundTag tag = stack.getTag();
+            assert tag != null;
+            if (tag.contains("display", Tag.TAG_COMPOUND)) {
+                CompoundTag nbt = tag.getCompound("display");
                 //Color
                 if (nbt.contains("color", Tag.TAG_INT)) {
                     if (isAdvanced) {
@@ -188,14 +193,14 @@ public final class ItemEvents {
         //Part
         if (item instanceof ItemPart part) {
             add(tooltip, EvolutionTexts.EMPTY);
-            part.getPartCap(stack).appendText(tooltip, 0);
+            part.makeTooltip(tooltip, stack, 0);
         }
         //Modular
         if (item instanceof ItemModular modular) {
             if (Screen.hasControlDown()) {
                 add(tooltip, EvolutionTexts.EMPTY);
                 //Show Materials
-                modular.getModularCap(stack).appendTooltip(tooltip);
+                modular.makeTooltip(tooltip, stack);
             }
             else {
                 add(tooltip, EvolutionTexts.EMPTY);
@@ -219,13 +224,6 @@ public final class ItemEvents {
                 add(tooltip, EvolutionTexts.EMPTY);
             }
             add(tooltip, EvolutionTexts.TOOLTIP_THROWABLE);
-            hasAddedLine = true;
-        }
-        if (item instanceof ILunge) {
-            if (!hasAddedLine) {
-                add(tooltip, EvolutionTexts.EMPTY);
-            }
-            add(tooltip, EvolutionTexts.TOOLTIP_LUNGE);
             hasAddedLine = true;
         }
         if (item instanceof IParry) {
@@ -260,13 +258,11 @@ public final class ItemEvents {
             else {
                 add(tooltip, EvolutionTexts.EMPTY);
             }
-            if (item instanceof IOffhandAttackable) {
-                add(tooltip, EvolutionTexts.TOOLTIP_MAINHAND_OFFHAND);
-            }
-            else {
-                add(tooltip, EvolutionTexts.TOOLTIP_MAINHAND);
-            }
-            tooltip.add(Either.right(EvolutionTooltipDamage.INSTANCE.damage(melee.getDamageType(stack), melee.getAttackDamage(stack))));
+            add(tooltip, EvolutionTexts.TOOLTIP_MAINHAND);
+            IMelee.BasicAttackType basicAttackType = melee.getBasicAttackType(stack);
+            tooltip.add(Either.right(EvolutionTooltipDamage.INSTANCE.damage(melee.getDamageType(stack, basicAttackType),
+                                                                            player.getAttributeValue(Attributes.ATTACK_DAMAGE) *
+                                                                            melee.getAttackDamage(stack, basicAttackType))));
             tooltip.add(Either.right(EvolutionTooltipSpeed.INSTANCE.speed(melee.getAttackSpeed(stack))));
             if (item instanceof ItemModularTool tool) {
                 if (!tool.getModularCap(stack).getEffectiveMaterials().isEmpty()) {
@@ -300,8 +296,11 @@ public final class ItemEvents {
             }
         }
         //Unbreakable
-        if (stack.hasTag() && stack.getTag().getBoolean("Unbreakable")) {
-            add(tooltip, EvolutionTexts.TOOLTIP_UNBREAKABLE);
+        if (stack.hasTag()) {
+            assert stack.getTag() != null;
+            if (stack.getTag().getBoolean("Unbreakable")) {
+                add(tooltip, EvolutionTexts.TOOLTIP_UNBREAKABLE);
+            }
         }
         //Durability
         if (stack.getItem() instanceof IDurability durability && !(item instanceof ItemPart)) {
@@ -310,8 +309,11 @@ public final class ItemEvents {
         addEasterEggs(tooltip, stack);
         //Advanced (registry name + nbt)
         if (isAdvanced) {
-            add(tooltip, new TextComponent(ForgeRegistries.ITEMS.getKey(stack.getItem()).toString()).withStyle(ChatFormatting.DARK_GRAY));
+            ResourceLocation key = ForgeRegistries.ITEMS.getKey(stack.getItem());
+            assert key != null;
+            add(tooltip, new TextComponent(key.toString()).withStyle(ChatFormatting.DARK_GRAY));
             if (stack.hasTag()) {
+                assert stack.getTag() != null;
                 add(tooltip, new TranslatableComponent("item.nbt_tags", stack.getTag().getAllKeys().size()).withStyle(ChatFormatting.DARK_GRAY));
             }
         }

@@ -2,7 +2,7 @@ package tgw.evolution.world.puzzle.pieces.config;
 
 import tgw.evolution.util.math.MathHelper;
 
-import java.util.Random;
+import java.util.random.RandomGenerator;
 
 public enum CivilizationType {
     NORMAL(0, 1), //real weight 15
@@ -28,7 +28,7 @@ public enum CivilizationType {
         throw new IllegalStateException("Unknown id " + id);
     }
 
-    public static CivilizationType getRandom(Random random) {
+    public static CivilizationType getRandom(RandomGenerator random) {
         if (weightSum == 0) {
             for (CivilizationType type : values()) {
                 weightSum += type.weight;

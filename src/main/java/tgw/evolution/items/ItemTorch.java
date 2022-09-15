@@ -33,7 +33,7 @@ import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.time.Time;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowable {

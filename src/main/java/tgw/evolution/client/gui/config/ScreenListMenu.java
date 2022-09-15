@@ -14,7 +14,9 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.util.FormattedCharSequence;
-import tgw.evolution.client.gui.widgets.EditBoxAdv;
+import org.jetbrains.annotations.Nullable;
+import tgw.evolution.client.gui.widgets.AdvEditBox;
+import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.collection.RArrayList;
 import tgw.evolution.util.collection.RList;
@@ -28,7 +30,7 @@ public abstract class ScreenListMenu extends Screen {
 
     protected final int itemHeight;
     protected final Screen parent;
-    protected List<FormattedCharSequence> activeTooltip;
+    protected @Nullable List<FormattedCharSequence> activeTooltip;
     protected List<Item> entries;
     protected EntryList list;
     protected EditBox searchEditBox;
@@ -52,7 +54,7 @@ public abstract class ScreenListMenu extends Screen {
         this.entries = ImmutableList.copyOf(entries);
         this.list = new EntryList(this.entries);
         this.addWidget(this.list);
-        this.searchEditBox = new EditBoxAdv(this.font, this.width / 2 - 110, 22, 220, 20, EvolutionTexts.GUI_GENERAL_SEARCH);
+        this.searchEditBox = new AdvEditBox(this.font, this.width / 2 - 110, 22, 220, 20, EvolutionTexts.GUI_GENERAL_SEARCH);
         this.searchEditBox.setResponder(s -> {
             this.list.replaceEntries(s.isEmpty() ?
                                      this.entries :
@@ -68,7 +70,7 @@ public abstract class ScreenListMenu extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
         this.searchEditBox.setFocus(false);
         for (GuiEventListener child : this.children()) {
             if (child instanceof EditBox editBox) {

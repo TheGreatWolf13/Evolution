@@ -2,21 +2,18 @@ package tgw.evolution.mixin;
 
 import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.world.level.chunk.LevelChunk;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.patches.IClientChunkCache_StoragePatch;
 
-import javax.annotation.Nullable;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 @Mixin(ClientChunkCache.Storage.class)
 public abstract class ClientChunkCache_StorageMixin implements IClientChunkCache_StoragePatch {
 
-    @Shadow
-    @Final
-    public int chunkRadius;
     @Shadow
     @Final
     public AtomicReferenceArray<LevelChunk> chunks;
@@ -26,6 +23,9 @@ public abstract class ClientChunkCache_StorageMixin implements IClientChunkCache
     volatile int cameraViewCenterZ;
     @Shadow
     int chunkCount;
+    @Shadow
+    @Final
+    int chunkRadius;
     @Shadow
     @Final
     ClientChunkCache this$0;
@@ -74,9 +74,8 @@ public abstract class ClientChunkCache_StorageMixin implements IClientChunkCache
         return this.cameraViewCenterZ;
     }
 
-    @Nullable
     @Override
-    public LevelChunk getCameraChunk(int index) {
+    public @Nullable LevelChunk getCameraChunk(int index) {
         if (this.cameraChunks != null) {
             return this.cameraChunks.get(index);
         }

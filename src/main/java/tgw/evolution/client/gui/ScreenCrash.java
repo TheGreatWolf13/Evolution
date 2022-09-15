@@ -9,6 +9,8 @@ import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.*;
+import org.lwjgl.glfw.GLFW;
+import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionTexts;
 
 import static tgw.evolution.init.EvolutionStyles.DARK_RED;
@@ -28,11 +30,13 @@ public class ScreenCrash extends Screen {
         super(new TranslatableComponent("evolution.gui.crash"));
         this.report = report;
         this.comment = getWittyComment();
+        //noinspection ConstantConditions
         if (this.report.getSaveFile() != null) {
             this.textComp = new TextComponent(this.report.getSaveFile().getName()).withStyle(ChatFormatting.UNDERLINE)
-                                                                                  .withStyle(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE,
-                                                                                                                                          this.report.getSaveFile()
-                                                                                                                                                     .getAbsolutePath())));
+                                                                                  .withStyle(style -> style.withClickEvent(
+                                                                                          new ClickEvent(ClickEvent.Action.OPEN_FILE,
+                                                                                                         this.report.getSaveFile()
+                                                                                                                    .getAbsolutePath())));
         }
         else {
             this.textComp = EvolutionTexts.EMPTY;
@@ -84,6 +88,7 @@ public class ScreenCrash extends Screen {
 
     @Override
     public void init() {
+        assert this.minecraft != null;
         this.addRenderableWidget(new Button(this.width / 2 - 155,
                                             this.height / 4 + 132,
                                             150,
@@ -104,8 +109,8 @@ public class ScreenCrash extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) {
+    public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
+        if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
             if (mouseY >= this.height / 4.0 + 60 && mouseY <= this.height / 4.0 + 69) {
                 if (mouseX >= this.width / 2.0 - this.clickWidth / 2.0 && mouseX <= this.width / 2.0 + this.clickWidth / 2.0) {
                     this.handleComponentClicked(this.textComp.getStyle());
@@ -125,6 +130,7 @@ public class ScreenCrash extends Screen {
         this.font.drawWordWrap(this.textReport, this.width / 2 - 140, this.height / 4 + 35, 280, textColor);
         String file;
         int fileColor = 0x00_FF00;
+        //noinspection ConstantConditions
         if (this.report.getSaveFile() != null) {
             file = this.textComp.getString();
             this.clickWidth = this.font.width(file);

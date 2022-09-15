@@ -4,30 +4,32 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelDataMap;
+import tgw.evolution.capabilities.modular.part.PartPommel;
 import tgw.evolution.capabilities.modular.part.PartTypes;
-import tgw.evolution.capabilities.modular.part.PommelPart;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.items.modular.part.ItemPartPommel;
 
-public class BakedModelPartPommel extends BakedModelPart<PartTypes.Pommel, PommelPart, BakedModelPartPommel.BakedModelFinalPartPommel> {
+public class BakedModelPartPommel
+        extends BakedModelPart<PartTypes.Pommel, ItemPartPommel, PartPommel, BakedModelPartPommel.BakedModelFinalPartPommel> {
 
     public BakedModelPartPommel(BakedModel baseModel) {
         super(baseModel, new ItemOverridesPartPommel(new BakedModelFinalPartPommel(baseModel)));
     }
 
-    public static class ItemOverridesPartPommel extends ItemOverridesPart<PartTypes.Pommel, PommelPart, BakedModelFinalPartPommel> {
+    public static class ItemOverridesPartPommel extends ItemOverridesPart<PartTypes.Pommel, ItemPartPommel, PartPommel, BakedModelFinalPartPommel> {
 
         public ItemOverridesPartPommel(BakedModelFinalPartPommel finalModel) {
-            super(finalModel, PommelPart.DUMMY);
+            super(finalModel, PartPommel.DUMMY);
         }
 
         @Override
-        protected void setModelData(PommelPart part) {
-            this.finalModel.setData(part.getType(), part.getMaterial().getMaterial());
+        protected void setModelData(PartPommel part) {
+            this.finalModel.setData(part.getType(), part.getMaterialInstance().getMaterial());
         }
     }
 
-    public static class BakedModelFinalPartPommel extends BakedModelFinalPart<PartTypes.Pommel> {
+    public static class BakedModelFinalPartPommel extends BakedModelFinalPart<PartTypes.Pommel, ItemPartPommel, PartPommel> {
 
         public BakedModelFinalPartPommel(BakedModel baseModel) {
             super(baseModel, PartTypes.Pommel.NULL);
@@ -39,6 +41,7 @@ public class BakedModelPartPommel extends BakedModelPart<PartTypes.Pommel, Pomme
 
         @Override
         protected ModelResourceLocation getModel(IModelData extraData) {
+            //noinspection ConstantConditions
             return EvolutionResources.MODULAR_POMMELS.get(extraData.getData(this.type), extraData.getData(this.material));
         }
 

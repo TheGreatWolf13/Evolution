@@ -9,7 +9,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.glfw.GLFW;
-import tgw.evolution.client.gui.widgets.EditBoxAdv;
+import tgw.evolution.client.gui.widgets.AdvEditBox;
+import tgw.evolution.client.util.Key;
+import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.init.EvolutionTexts;
 
 import java.util.function.Consumer;
@@ -34,7 +36,7 @@ public class ScreenEditString extends Screen {
 
     @Override
     protected void init() {
-        this.editBox = new EditBoxAdv(this.font, this.width / 2 - 150, this.height / 2 - 25, 300, 20, EvolutionTexts.EMPTY);
+        this.editBox = new AdvEditBox(this.font, this.width / 2 - 150, this.height / 2 - 25, 300, 20, EvolutionTexts.EMPTY);
         this.editBox.setValue(this.value);
         this.editBox.setMaxLength(32_500);
         this.editBox.setResponder(s -> this.updateValidation());
@@ -61,7 +63,7 @@ public class ScreenEditString extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(@Key int keyCode, int scanCode, @Modifiers int modifiers) {
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
             this.minecraft.setScreen(this.parent);
             return true;

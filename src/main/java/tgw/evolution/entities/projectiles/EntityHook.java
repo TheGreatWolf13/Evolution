@@ -29,9 +29,6 @@ import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.util.damage.DamageSourceEv;
-import tgw.evolution.util.hitbox.HitboxEntity;
-
-import javax.annotation.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.ATTACHED;
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
@@ -142,17 +139,6 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
         return SoundEvents.TRIDENT_HIT_GROUND;
     }
 
-    @Nullable
-    @Override
-    public HitboxEntity<EntityHook> getHitbox() {
-        return null;
-    }
-
-    @Override
-    public boolean hasHitboxes() {
-        return false;
-    }
-
     @Override
     protected void onBlockHit(BlockState state) {
     }
@@ -175,7 +161,10 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
             }
             this.setDeltaMovement(this.getDeltaMovement().multiply(-0.1, -0.1, -0.1));
             this.playSound(SoundEvents.TRIDENT_HIT, 1.0F, 1.0F);
-            Evolution.usingPlaceholder(entity.level.getNearestPlayer(this, 128), "sound");
+            Player player = entity.level.getNearestPlayer(this, 128);
+            if (player != null) {
+                Evolution.usingPlaceholder(player, "sound");
+            }
         }
     }
 
@@ -213,7 +202,7 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
                                                                                             .setValue(DIRECTION_HORIZONTAL,
                                                                                                       this.facing.getOpposite()));
             LivingEntity shooter = this.getShooter();
-            if (this.getShooter() instanceof Player) {
+            if (shooter instanceof Player) {
                 ItemStack stack = shooter.getOffhandItem();
                 if (stack.getItem() == EvolutionItems.rope.get()) {
                     int count = stack.getCount();

@@ -1,8 +1,5 @@
 package tgw.evolution.events;
 
-import it.unimi.dsi.fastutil.objects.Object2ReferenceMap;
-import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -13,25 +10,18 @@ import net.minecraft.stats.Stats;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.damagesource.CombatTracker;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.animal.horse.TraderLlama;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.monster.Phantom;
-import net.minecraft.world.entity.npc.WanderingTrader;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.EntityHitResult;
@@ -57,9 +47,8 @@ import tgw.evolution.capabilities.food.IHunger;
 import tgw.evolution.capabilities.health.CapabilityHealth;
 import tgw.evolution.capabilities.health.HealthStats;
 import tgw.evolution.capabilities.health.IHealth;
-import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
-import tgw.evolution.capabilities.modular.CapabilityModular;
-import tgw.evolution.capabilities.modular.ModularTool;
+import tgw.evolution.capabilities.inventory.CapabilityInventory;
+import tgw.evolution.capabilities.inventory.InventoryHandler;
 import tgw.evolution.capabilities.stamina.CapabilityStamina;
 import tgw.evolution.capabilities.stamina.IStamina;
 import tgw.evolution.capabilities.stamina.StaminaStats;
@@ -75,22 +64,21 @@ import tgw.evolution.entities.EntityGenericCreature;
 import tgw.evolution.entities.IAgressive;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.init.*;
-import tgw.evolution.inventory.extendedinventory.ContainerExtendedHandler;
-import tgw.evolution.items.modular.ItemModular;
-import tgw.evolution.items.modular.ItemModularTool;
-import tgw.evolution.items.modular.part.ItemPart;
 import tgw.evolution.network.*;
 import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.Temperature;
-import tgw.evolution.util.constants.HarvestLevels;
+import tgw.evolution.util.collection.O2ROpenHashMap;
+import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.SkinType;
-import tgw.evolution.util.damage.*;
+import tgw.evolution.util.damage.DamageSourceEntity;
+import tgw.evolution.util.damage.DamageSourceEntityIndirect;
+import tgw.evolution.util.damage.DamageSourceEv;
+import tgw.evolution.util.damage.IHitLocation;
 import tgw.evolution.util.earth.ClimateZone;
 import tgw.evolution.util.earth.WindVector;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Units;
-import tgw.evolution.util.reflection.FieldHandler;
 
 import java.util.*;
 import java.util.random.RandomGenerator;
@@ -98,18 +86,8 @@ import java.util.random.RandomGenerator;
 public class EntityEvents {
 
     public static final WindVector WIND = new WindVector();
-    public static final Object2ReferenceMap<UUID, SkinType> SKIN_TYPE = new Object2ReferenceOpenHashMap<>();
-    private static final FieldHandler<LivingEntity, CombatTracker> COMBAT_TRACKER = new FieldHandler<>(LivingEntity.class, "f_20944_");
+    public static final Map<UUID, SkinType> SKIN_TYPE = new O2ROpenHashMap<>();
     private static final RandomGenerator RANDOM = new Random();
-    private static final ReferenceSet<DamageSource> IGNORED_DAMAGE_SOURCES = ReferenceSet.of(EvolutionDamage.DEHYDRATION, EvolutionDamage.DROWN,
-                                                                                             EvolutionDamage.FALL, EvolutionDamage.FALLING_ROCK,
-                                                                                             EvolutionDamage.IN_FIRE, EvolutionDamage.IN_WALL,
-                                                                                             EvolutionDamage.ON_FIRE, EvolutionDamage.VOID,
-                                                                                             EvolutionDamage.WALL_IMPACT,
-                                                                                             EvolutionDamage.WATER_IMPACT,
-                                                                                             EvolutionDamage.WATER_INTOXICATION);
-    private static final ReferenceSet<DamageSource> IGNORED_VANILLA_SOURCES = ReferenceSet.of(DamageSource.DROWN, DamageSource.FALL,
-                                                                                              DamageSource.IN_WALL, DamageSource.OUT_OF_WORLD);
     private final Map<DamageSource, EquipmentSlot> damageMultipliers = new WeakHashMap<>();
 
     public static void calculateFallDamage(LivingEntity entity, double velocity, double distanceOfSlowDown, boolean isWater) {
@@ -124,6 +102,7 @@ public class EntityEvents {
         double totalMass = baseMass;
         if (entity instanceof Player) {
             AttributeInstance massAttribute = entity.getAttribute(EvolutionAttributes.MASS.get());
+            assert massAttribute != null;
             baseMass = massAttribute.getBaseValue();
             totalMass = massAttribute.getValue();
         }
@@ -179,7 +158,7 @@ public class EntityEvents {
         if (entity instanceof Player player) {
 
             event.addCapability(Evolution.getResource("extended_inventory"),
-                                new SerializableCapabilityProvider<>(CapabilityExtendedInventory.INSTANCE, new ContainerExtendedHandler(player)));
+                                new SerializableCapabilityProvider<>(CapabilityInventory.INSTANCE, new InventoryHandler(player)));
             if (entity instanceof ServerPlayer) {
                 event.addCapability(Evolution.getResource("thirst"),
                                     new SerializableCapabilityProvider<>(CapabilityThirst.INSTANCE, new ThirstStats()));
@@ -197,79 +176,56 @@ public class EntityEvents {
     }
 
     @SubscribeEvent
-    public void attachCapabilitiesItemStack(AttachCapabilitiesEvent<ItemStack> event) {
-        Item item = event.getObject().getItem();
-        if (item instanceof ItemModular) {
-            if (item instanceof ItemModularTool) {
-                event.addCapability(Evolution.getResource("tool"), new SerializableCapabilityProvider<>(CapabilityModular.TOOL, new ModularTool()));
-            }
-        }
-        else if (item instanceof ItemPart part) {
-            event.addCapability(Evolution.getResource("part_" + part.getCapName()),
-                                new SerializableCapabilityProvider<>(CapabilityModular.PART, part.createNew()));
-
-        }
-    }
-
-    @SubscribeEvent
     public void cloneCapabilitiesEvent(PlayerEvent.Clone event) {
         if (event.getOriginal().level.isClientSide) {
             return;
         }
         Player oldPlayer = event.getOriginal();
         Player newPlayer = event.getPlayer();
-        EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityExtendedInventory.INSTANCE);
+        EvolutionCapabilities.beginClone(oldPlayer);
+        EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityInventory.INSTANCE);
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityThirst.INSTANCE);
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityHealth.INSTANCE);
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityToast.INSTANCE);
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityHunger.INSTANCE);
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityTemperature.INSTANCE);
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityStamina.INSTANCE);
+        EvolutionCapabilities.endClone(oldPlayer);
     }
 
     @SubscribeEvent
     public void onEntityCreated(EntityJoinWorldEvent event) {
         Entity entity = event.getEntity();
-        //Prevents Phantoms, Trader Llamas and Wandering Traders from spawning
-        if (entity instanceof Phantom || entity instanceof TraderLlama || entity instanceof WanderingTrader) {
-            event.setCanceled(true);
-            return;
-        }
-        if (!(entity instanceof Player) && !(entity instanceof EntityGenericCreature)) {
-            return;
-        }
-        LivingEntity living = (LivingEntity) entity;
-        //Changes the combat tracker
-        COMBAT_TRACKER.set(living, new CombatTrackerEv(living));
-        //Sets the gravity of the Living Entities and the Player to be that of the dimension they're in
-        if (living instanceof Player player) {
-            if (player.level.isClientSide) {
-                if (player.equals(Evolution.PROXY.getClientPlayer())) {
-                    EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSkinType());
+        if (entity instanceof LivingEntity living) {
+            if (living instanceof Player player) {
+                if (player.level.isClientSide) {
+                    if (player.equals(Evolution.PROXY.getClientPlayer())) {
+                        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSkinType());
+                    }
                 }
-            }
-            else if (player instanceof ServerPlayer serverPlayer) {
-                Collection<MobEffectInstance> effects = player.getActiveEffects();
-                if (!effects.isEmpty()) {
-                    for (MobEffectInstance instance : effects) {
-                        //noinspection ObjectAllocationInLoop
-                        EvolutionNetwork.send(serverPlayer, new PacketSCAddEffect(instance, PacketSCAddEffect.Logic.ADD));
+                else if (player instanceof ServerPlayer serverPlayer) {
+                    Collection<MobEffectInstance> effects = player.getActiveEffects();
+                    if (!effects.isEmpty()) {
+                        for (MobEffectInstance instance : effects) {
+                            //noinspection ObjectAllocationInLoop
+                            EvolutionNetwork.send(serverPlayer, new PacketSCAddEffect(instance, PacketSCAddEffect.Logic.ADD));
+                        }
                     }
                 }
             }
-        }
-        //TODO
+            //TODO
 //        else {
 //            //Makes the Living Entities able to step up one block, instead of jumping (it looks better)
 //            entity.stepHeight = 1.0625F;
 //        }
+        }
     }
 
     @SubscribeEvent
     public void onEntityKnockedBack(LivingKnockBackEvent event) {
         event.setCanceled(true);
         LivingEntity entity = event.getEntityLiving();
-        double knockbackResistance = entity.getAttribute(Attributes.KNOCKBACK_RESISTANCE).getValue();
+        double knockbackResistance = entity.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE);
         if (knockbackResistance == 1) {
             return;
         }
@@ -285,10 +241,7 @@ public class EntityEvents {
         entity.setDeltaMovement(motion.x - knockbackVec.x, 0, motion.z - knockbackVec.z);
         entity.hurtMarked = true;
         if (entity instanceof ServerPlayer player) {
-            //noinspection VariableNotUsedInsideIf
-            if (player.connection != null) {
-                EvolutionNetwork.send(player, new PacketSCUpdateCameraTilt(player));
-            }
+            EvolutionNetwork.send(player, new PacketSCUpdateCameraTilt(player));
         }
     }
 
@@ -306,7 +259,7 @@ public class EntityEvents {
         if (!state.getCollisionShape(event.getWorld(), event.getPos()).isEmpty()) {
             return;
         }
-        EntityHitResult rayTraceResult = MathHelper.rayTraceEntityFromEyes(player, 1, player.getAttribute(ForgeMod.REACH_DISTANCE.get()).getValue());
+        EntityHitResult rayTraceResult = MathHelper.rayTraceEntityFromEyes(player, 1, player.getAttributeValue(ForgeMod.REACH_DISTANCE.get()));
         if (rayTraceResult != null) {
             player.attack(rayTraceResult.getEntity());
             player.resetAttackStrengthTicker();
@@ -320,46 +273,30 @@ public class EntityEvents {
         }
         LivingEntity hitEntity = event.getEntityLiving();
         DamageSource source = event.getSource();
-        if (!(source instanceof DamageSourceEv)) {
-            if (!IGNORED_VANILLA_SOURCES.contains(source)) {
-                Evolution.debug("Canceling vanilla damage source: {}", source.msgId);
-            }
-            if (source == DamageSource.OUT_OF_WORLD) {
-                hitEntity.hurt(EvolutionDamage.VOID, event.getAmount() * 5.0f);
-            }
-            else if (source == DamageSource.DROWN) {
-                hitEntity.hurt(EvolutionDamage.DROWN, 10.0f);
-            }
-            else if ("mob".equals(source.msgId)) {
-                hitEntity.hurt(EvolutionDamage.causeMobMeleeDamage((LivingEntity) source.getEntity(), EvolutionDamage.Type.GENERIC,
-                                                                   InteractionHand.MAIN_HAND), event.getAmount());
-            }
-            event.setCanceled(true);
-            return;
-        }
         if (!hitEntity.isAlive()) {
-            event.setCanceled(true);
             return;
         }
         float damage = event.getAmount();
         if (hitEntity instanceof ServerPlayer player) {
-            EvolutionDamage.Type damageType = ((DamageSourceEv) source).getType();
-            ResourceLocation resLoc = EvolutionStats.DAMAGE_TAKEN_RAW.get(damageType);
-            if (resLoc != null) {
-                PlayerHelper.addStat(player, resLoc, damage);
-            }
-            if (source instanceof DamageSourceEntity) {
-                if (source instanceof DamageSourceEntityIndirect) {
-                    PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_RAW.get(EvolutionDamage.Type.RANGED), damage);
+            if (source instanceof DamageSourceEv sourceEv) {
+                EvolutionDamage.Type damageType = sourceEv.getType();
+                ResourceLocation resLoc = EvolutionStats.DAMAGE_TAKEN_RAW.get(damageType);
+                if (resLoc != null) {
+                    PlayerHelper.addStat(player, resLoc, damage);
                 }
-                else {
-                    PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_RAW.get(EvolutionDamage.Type.MELEE), damage);
+                if (source instanceof DamageSourceEntity) {
+                    if (source instanceof DamageSourceEntityIndirect) {
+                        PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_RAW.get(EvolutionDamage.Type.RANGED), damage);
+                    }
+                    else {
+                        PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_RAW.get(EvolutionDamage.Type.MELEE), damage);
+                    }
                 }
+                PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_RAW.get(EvolutionDamage.Type.TOTAL), damage);
             }
-            PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_RAW.get(EvolutionDamage.Type.TOTAL), damage);
-        }
-        if (IGNORED_DAMAGE_SOURCES.contains(source)) {
-            return;
+            else {
+                Evolution.warn("Bad damage source: " + source);
+            }
         }
         Evolution.debug("amount = " + damage);
         //Raytracing projectile damage
@@ -513,18 +450,6 @@ public class EntityEvents {
         }
         //Removes damage immunity
         entity.invulnerableTime = 0;
-        //Sets the combat tracker
-        CombatTrackerEv combatTracker = (CombatTrackerEv) entity.getCombatTracker();
-        if (entity.onClimbable() && !entity.isOnGround()) {
-            entity.setSprinting(false);
-            BlockPos pos = new BlockPos(entity.getX(), entity.getBoundingBox().minY, entity.getZ());
-            BlockState state = entity.level.getBlockState(pos);
-            Block block = state.getBlock();
-            combatTracker.setFallSuffixBlock(block);
-        }
-        else if (entity.isOnGround()) {
-            combatTracker.setFallSuffixBlock(null);
-        }
         //Deals damage inside blocks
         if (entity.isInWall()) {
             if (entity.tickCount % 10 == 0) {
@@ -545,7 +470,7 @@ public class EntityEvents {
     public void onPlayerBreakBlock(PlayerEvent.BreakSpeed event) {
         BlockState state = event.getState();
         //If the block is breakable by hand, do nothing
-        if (((IBlockPatch) state.getBlock()).getHarvestLevel(state) <= HarvestLevels.HAND) {
+        if (((IBlockPatch) state.getBlock()).getHarvestLevel(state) <= HarvestLevel.HAND) {
             return;
         }
         //Prevents players from breaking blocks if their tool cannot harvest the block
@@ -638,11 +563,13 @@ public class EntityEvents {
         if (event.phase == TickEvent.Phase.START) {
             profiler.push("preTick");
             profiler.push("reach");
+            AttributeInstance reachDist = player.getAttribute(ForgeMod.REACH_DISTANCE.get());
+            assert reachDist != null;
             if (player.isCreative()) {
-                player.getAttribute(ForgeMod.REACH_DISTANCE.get()).setBaseValue(12);
+                reachDist.setBaseValue(8);
             }
             else {
-                player.getAttribute(ForgeMod.REACH_DISTANCE.get()).setBaseValue(PlayerHelper.REACH_DISTANCE);
+                reachDist.setBaseValue(PlayerHelper.REACH_DISTANCE);
             }
             profiler.pop();
             profiler.pop();
@@ -753,7 +680,10 @@ public class EntityEvents {
         if (!(event.getEntityLiving() instanceof ServerPlayer player)) {
             return;
         }
-        EvolutionNetwork.send(player, new PacketSCRemoveEffect(event.getPotionEffect().getEffect()));
+        MobEffectInstance effect = event.getPotionEffect();
+        if (effect != null) {
+            EvolutionNetwork.send(player, new PacketSCRemoveEffect(effect.getEffect()));
+        }
     }
 
     @SubscribeEvent
@@ -778,8 +708,9 @@ public class EntityEvents {
     public void onSetAttackTarget(LivingSetAttackTargetEvent event) {
         if (event.getEntity() instanceof Mob mob) {
             if (mob.getTarget() != null && event.getTarget() != null) {
-                if (mob.hasEffect(MobEffects.BLINDNESS)) {
-                    int effectLevel = 3 - mob.getEffect(MobEffects.BLINDNESS).getAmplifier();
+                MobEffectInstance effect = mob.getEffect(MobEffects.BLINDNESS);
+                if (effect != null) {
+                    int effectLevel = 3 - effect.getAmplifier();
                     if (effectLevel < 0) {
                         effectLevel = 0;
                     }

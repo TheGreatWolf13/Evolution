@@ -1,18 +1,17 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.registries.IForgeRegistryEntry;
 import net.minecraftforge.registries.RegistryObject;
+import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 @Mixin(RegistryObject.class)
-public abstract class RegistryObjectMixin<T extends IForgeRegistryEntry<? super T>> {
+public abstract class RegistryObjectMixin<T> {
 
     @Shadow
     @Final
@@ -23,11 +22,10 @@ public abstract class RegistryObjectMixin<T extends IForgeRegistryEntry<? super 
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Prevent lambda and string allocation when the value is not {@code null}.
+     * @reason Prevent lambda and string allocation when the value is not {@code null}.
      */
     @Overwrite
-    @Nonnull
+    @NotNull
     public T get() {
         T ret = this.value;
         if (ret == null) {

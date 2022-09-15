@@ -17,14 +17,16 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.GUIUtils;
+import tgw.evolution.client.util.Key;
+import tgw.evolution.client.util.Modifiers;
+import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionResources;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -63,7 +65,7 @@ public class ScreenAdvancements extends Screen implements ClientAdvancements.Lis
     }
 
     @Nullable
-    private GuiAdvancementTab getTab(@Nonnull Advancement advancement) {
+    private GuiAdvancementTab getTab(Advancement advancement) {
         while (advancement.getParent() != null) {
             advancement = advancement.getParent();
         }
@@ -84,7 +86,9 @@ public class ScreenAdvancements extends Screen implements ClientAdvancements.Lis
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(@Key int keyCode, int scanCode, @Modifiers int modifiers) {
+        assert this.minecraft != null;
+        //noinspection MagicConstant
         if (keyCode == this.minecraft.options.keyAdvancements.getKey().getValue()) {
             this.minecraft.setScreen(null);
             return true;
@@ -93,7 +97,7 @@ public class ScreenAdvancements extends Screen implements ClientAdvancements.Lis
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
         if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
             int top = TOP;
             for (GuiAdvancementTab betterAdvancementTabGui : this.tabs.values()) {
@@ -146,6 +150,7 @@ public class ScreenAdvancements extends Screen implements ClientAdvancements.Lis
 
     @Override
     public void onAddAdvancementRoot(Advancement advancement) {
+        assert this.minecraft != null;
         GuiAdvancementTab advancementTab = GuiAdvancementTab.create(this.minecraft,
                                                                     this,
                                                                     this.tabs.size(),
@@ -174,6 +179,7 @@ public class ScreenAdvancements extends Screen implements ClientAdvancements.Lis
     @Override
     public void onClose() {
         this.advManager.setListener(null);
+        assert this.minecraft != null;
         ClientPacketListener clientPlayNetHandler = this.minecraft.getConnection();
         if (clientPlayNetHandler != null) {
             clientPlayNetHandler.send(ServerboundSeenAdvancementsPacket.closedScreen());
@@ -218,7 +224,7 @@ public class ScreenAdvancements extends Screen implements ClientAdvancements.Lis
         if (this.advConnectedToMouse == null) {
             this.renderToolTips(matrices, mouseX, mouseY, left, top, right, bottom);
         }
-        if (this.advConnectedToMouse != null) {
+        if (this.advConnectedToMouse != null && this.selectedTab != null) {
             for (GuiAdvancementEntry advancementEntry : this.selectedTab.guis.values()) {
                 if (advancementEntry != this.advConnectedToMouse) {
                     int x1 = advancementEntry.x + left + PADDING + this.selectedTab.scrollX + 3;

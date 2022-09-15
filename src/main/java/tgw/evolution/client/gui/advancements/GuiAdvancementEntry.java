@@ -14,12 +14,12 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.GUIUtils;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,7 +45,7 @@ public class GuiAdvancementEntry extends GuiComponent {
     private AdvancementProgress advancementProgress;
     private CriterionGrid criterionGrid;
     private List<FormattedCharSequence> description;
-    private GuiAdvancementEntry parent;
+    private @Nullable GuiAdvancementEntry parent;
     private int width;
 
     public GuiAdvancementEntry(GuiAdvancementTab advancementTab, Minecraft mc, Advancement advancement, DisplayInfo displayInfo) {
@@ -309,8 +309,8 @@ public class GuiAdvancementEntry extends GuiComponent {
         return list;
     }
 
-    public void getAdvancementProgress(AdvancementProgress advancementProgressIn) {
-        this.advancementProgress = advancementProgressIn;
+    public void getAdvancementProgress(AdvancementProgress advancementProgress) {
+        this.advancementProgress = advancementProgress;
         this.refreshHover();
     }
 

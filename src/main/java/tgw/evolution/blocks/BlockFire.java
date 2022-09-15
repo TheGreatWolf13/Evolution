@@ -26,6 +26,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
@@ -37,7 +38,6 @@ import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.WoodVariant;
 import tgw.evolution.util.math.DirectionUtil;
 
-import javax.annotation.Nullable;
 import java.util.Random;
 import java.util.random.RandomGenerator;
 
@@ -307,9 +307,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
             BlockState state = this.defaultBlockState();
             for (Direction direction : DirectionUtil.ALL_EXCEPT_DOWN) {
                 BooleanProperty booleanProperty = directionToProperty(direction);
-                if (booleanProperty != null) {
-                    state = state.setValue(booleanProperty, this.canCatchFire(level, pos.relative(direction), DirectionUtil.getOpposite(direction)));
-                }
+                state = state.setValue(booleanProperty, this.canCatchFire(level, pos.relative(direction), DirectionUtil.getOpposite(direction)));
             }
             return state;
         }
@@ -343,6 +341,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
                 if (stateDown.getBlock() == EvolutionBlocks.PIT_KILN.get() && stateDown.getValue(LAYERS_0_16) == 16) {
                     if (BlockPitKiln.canBurn(level, pos.below())) {
                         TEPitKiln tile = (TEPitKiln) level.getBlockEntity(pos.below());
+                        assert tile != null;
                         tile.start();
                     }
                 }

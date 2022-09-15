@@ -9,6 +9,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -24,10 +25,7 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.ItemTorch;
-import tgw.evolution.util.hitbox.HitboxEntity;
 import tgw.evolution.util.math.MathHelper;
-
-import javax.annotation.Nullable;
 
 public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
 
@@ -42,7 +40,7 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
         super(type, level);
     }
 
-    public EntityTorch(PlayMessages.SpawnEntity spawnEntity, Level level) {
+    public EntityTorch(@SuppressWarnings("unused") PlayMessages.SpawnEntity spawnEntity, Level level) {
         this(EvolutionEntities.TORCH.get(), level);
     }
 
@@ -62,17 +60,6 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
         return ItemTorch.createStack(this.timeCreated, 1);
     }
 
-    @Nullable
-    @Override
-    public HitboxEntity<EntityTorch> getHitbox() {
-        return null;
-    }
-
-    @Override
-    public boolean hasHitboxes() {
-        return false;
-    }
-
     @Override
     protected void onBlockHit(BlockState state) {
     }
@@ -81,7 +68,10 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
     protected void onEntityHit(EntityHitResult rayTraceResult) {
         SoundEvent soundevent = SoundEvents.ARROW_HIT;
         this.playSound(soundevent, 1.0F, 1.0F);
-        Evolution.usingPlaceholder(this.level.getNearestPlayer(this, 128), "sound");
+        Player player = this.level.getNearestPlayer(this, 128);
+        if (player != null) {
+            Evolution.usingPlaceholder(player, "sound");
+        }
         BlockUtils.dropItemStack(this.level, this.blockPosition(), this.getArrowStack());
         this.discard();
     }

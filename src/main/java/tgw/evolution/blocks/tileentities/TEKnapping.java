@@ -10,19 +10,16 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.IRockVariant;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.util.constants.BlockFlags;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 public class TEKnapping extends BlockEntity {
 
     @Nullable
     public VoxelShape hitbox;
-    @Nonnull
     public KnappingRecipe type = KnappingRecipe.NULL;
     private long parts = Patterns.MATRIX_TRUE;
 
@@ -31,7 +28,7 @@ public class TEKnapping extends BlockEntity {
     }
 
     public void checkParts(Player player) {
-        if (!this.level.isClientSide) {
+        if (this.level != null && !this.level.isClientSide) {
             IRockVariant block = (IRockVariant) this.level.getBlockState(this.worldPosition).getBlock();
             if (this.parts == this.type.getPattern()) {
                 this.spawnDrops(block.getVariant().getKnappedStack(this.type));
@@ -87,18 +84,20 @@ public class TEKnapping extends BlockEntity {
     public void sendRenderUpdate() {
         this.setChanged();
         this.hitbox = null;
+        assert this.level != null;
         this.level.sendBlockUpdated(this.worldPosition,
                                     this.level.getBlockState(this.worldPosition),
                                     this.level.getBlockState(this.worldPosition),
                                     BlockFlags.RERENDER);
     }
 
-    public void setType(@Nonnull KnappingRecipe type) {
+    public void setType(KnappingRecipe type) {
         this.type = type;
         this.sendRenderUpdate();
     }
 
     private void spawnDrops(ItemStack stack) {
+        assert this.level != null;
         Block.popResource(this.level, this.worldPosition, stack);
         this.level.removeBlock(this.worldPosition, true);
     }

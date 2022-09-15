@@ -5,10 +5,8 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.inventory.AdditionalSlotType;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public interface IAdditionalEquipment {
 
@@ -17,6 +15,5 @@ public interface IAdditionalEquipment {
     @Nullable
     SoundEvent getEquipSound();
 
-    @Nonnull
     AdditionalSlotType getValidSlot();
 }

@@ -14,8 +14,7 @@ public abstract class BlockPosMixin extends Vec3i {
 
     /**
      * @author JellySquid
-     * <p>
-     * Simplify and inline
+     * @reason Simplify and inline
      */
     @Override
     @Overwrite
@@ -25,8 +24,7 @@ public abstract class BlockPosMixin extends Vec3i {
 
     /**
      * @author JellySquid
-     * <p>
-     * Simplify and inline
+     * @reason Simplify and inline
      */
     @Override
     @Overwrite
@@ -36,8 +34,7 @@ public abstract class BlockPosMixin extends Vec3i {
 
     /**
      * @author JellySquid
-     * <p>
-     * Simplify and inline
+     * @reason Simplify and inline
      */
     @Override
     @Overwrite
@@ -47,8 +44,7 @@ public abstract class BlockPosMixin extends Vec3i {
 
     /**
      * @author JellySquid
-     * <p>
-     * Simplify and inline
+     * @reason Simplify and inline
      */
     @Override
     @Overwrite
@@ -58,8 +54,7 @@ public abstract class BlockPosMixin extends Vec3i {
 
     /**
      * @author JellySquid
-     * <p>
-     * Simplify and inline
+     * @reason Simplify and inline
      */
     @Override
     @Overwrite
@@ -69,8 +64,7 @@ public abstract class BlockPosMixin extends Vec3i {
 
     /**
      * @author JellySquid
-     * <p>
-     * Simplify and inline
+     * @reason Simplify and inline
      */
     @Override
     @Overwrite
@@ -80,8 +74,7 @@ public abstract class BlockPosMixin extends Vec3i {
 
     /**
      * @author JellySquid
-     * <p>
-     * Simplify and inline
+     * @reason Simplify and inline
      */
     @Override
     @Overwrite
@@ -91,8 +84,7 @@ public abstract class BlockPosMixin extends Vec3i {
 
     /**
      * @author JellySquid
-     * <p>
-     * Simplify and inline
+     * @reason Simplify and inline
      */
     @Override
     @Overwrite
@@ -102,8 +94,7 @@ public abstract class BlockPosMixin extends Vec3i {
 
     /**
      * @author JellySquid
-     * <p>
-     * Simplify and inline
+     * @reason Simplify and inline
      */
     @Override
     @Overwrite
@@ -113,8 +104,7 @@ public abstract class BlockPosMixin extends Vec3i {
 
     /**
      * @author JellySquid
-     * <p>
-     * Simplify and inline
+     * @reason Simplify and inline
      */
     @Override
     @Overwrite
@@ -124,8 +114,7 @@ public abstract class BlockPosMixin extends Vec3i {
 
     /**
      * @author JellySquid
-     * <p>
-     * Simplify and inline
+     * @reason Simplify and inline
      */
     @Override
     @Overwrite
@@ -135,8 +124,7 @@ public abstract class BlockPosMixin extends Vec3i {
 
     /**
      * @author JellySquid
-     * <p>
-     * Simplify and inline
+     * @reason Simplify and inline
      */
     @Override
     @Overwrite

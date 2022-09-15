@@ -5,30 +5,31 @@ import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.client.model.data.ModelProperty;
-import tgw.evolution.capabilities.modular.part.HeadPart;
+import tgw.evolution.capabilities.modular.part.PartHead;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.items.modular.part.ItemPartHead;
 
-public class BakedModelPartHead extends BakedModelPart<PartTypes.Head, HeadPart, BakedModelPartHead.BakedModelFinalPartHead> {
+public class BakedModelPartHead extends BakedModelPart<PartTypes.Head, ItemPartHead, PartHead, BakedModelPartHead.BakedModelFinalPartHead> {
 
     public BakedModelPartHead(BakedModel baseModel) {
         super(baseModel, new ItemOverridesPartHead(new BakedModelFinalPartHead(baseModel)));
     }
 
-    public static class ItemOverridesPartHead extends ItemOverridesPart<PartTypes.Head, HeadPart, BakedModelFinalPartHead> {
+    public static class ItemOverridesPartHead extends ItemOverridesPart<PartTypes.Head, ItemPartHead, PartHead, BakedModelFinalPartHead> {
 
         public ItemOverridesPartHead(BakedModelFinalPartHead finalModel) {
-            super(finalModel, HeadPart.DUMMY);
+            super(finalModel, PartHead.DUMMY);
         }
 
         @Override
-        protected void setModelData(HeadPart part) {
-            this.finalModel.setData(part.getType(), part.getMaterial().getMaterial(), part.isSharp());
+        protected void setModelData(PartHead part) {
+            this.finalModel.setData(part.getType(), part.getMaterialInstance().getMaterial(), part.isSharp());
         }
     }
 
-    public static class BakedModelFinalPartHead extends BakedModelFinalPart<PartTypes.Head> {
+    public static class BakedModelFinalPartHead extends BakedModelFinalPart<PartTypes.Head, ItemPartHead, PartHead> {
         public final ModelProperty<Boolean> isSharp = new ModelProperty<>();
 
         public BakedModelFinalPartHead(BakedModel baseModel) {
@@ -42,9 +43,11 @@ public class BakedModelPartHead extends BakedModelPart<PartTypes.Head, HeadPart,
 
         @Override
         protected ModelResourceLocation getModel(IModelData extraData) {
-            if (extraData.getData(this.isSharp)) {
+            if (Boolean.TRUE == extraData.getData(this.isSharp)) {
+                //noinspection ConstantConditions
                 return EvolutionResources.MODULAR_HEADS_SHARP.get(extraData.getData(this.type), extraData.getData(this.material));
             }
+            //noinspection ConstantConditions
             return EvolutionResources.MODULAR_HEADS.get(extraData.getData(this.type), extraData.getData(this.material));
         }
 

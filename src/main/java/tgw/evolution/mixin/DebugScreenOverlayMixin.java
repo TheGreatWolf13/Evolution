@@ -17,7 +17,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.SectionPos;
 import net.minecraft.network.Connection;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -45,8 +44,9 @@ import tgw.evolution.util.AllocationRateCalculator;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.math.Metric;
+import tgw.evolution.util.time.Time;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
@@ -230,8 +230,8 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
                 this.gameInfo.add("Biome: " +
                                   this.minecraft.level.registryAccess()
                                                       .registryOrThrow(Registry.BIOME_REGISTRY)
-                                                      .getKey(this.minecraft.level.getBiome(pos)));
-                this.gameInfo.add("Day " + (1 + (this.minecraft.level.getDayTime() + 6_000L) / 24_000L));
+                                                      .getKey(this.minecraft.level.getBiome(pos).value()));
+                this.gameInfo.add("Day " + (1 + (this.minecraft.level.getDayTime() + 6L * Time.TICKS_PER_HOUR) / Time.TICKS_PER_DAY));
             }
         }
         ServerLevel serverLevel = this.getServerLevel();
@@ -240,7 +240,7 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
             ChunkGenerator generator = chunkSource.getGenerator();
             Climate.Sampler sampler = generator.climateSampler();
             BiomeSource biomeSource = generator.getBiomeSource();
-            biomeSource.addMultinoiseDebugInfo(this.gameInfo, pos, sampler);
+            biomeSource.addDebugInfo(this.gameInfo, pos, sampler);
             NaturalSpawner.SpawnState lastSpawnState = chunkSource.getLastSpawnState();
             if (lastSpawnState != null) {
                 Object2IntMap<MobCategory> categoryCounts = lastSpawnState.getMobCategoryCounts();
@@ -352,10 +352,7 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
             for (Map.Entry<Property<?>, Comparable<?>> entry : state.getValues().entrySet()) {
                 this.systemInfo.add(this.getPropertyValueString(entry));
             }
-            for (ResourceLocation resourcelocation : state.getBlock().getTags()) {
-                //noinspection ObjectAllocationInLoop
-                this.systemInfo.add("#" + resourcelocation);
-            }
+            state.getTags().forEach(t -> this.systemInfo.add("#" + t.location()));
         }
         if (this.liquid.getType() == HitResult.Type.BLOCK) {
             BlockPos blockpos1 = ((BlockHitResult) this.liquid).getBlockPos();
@@ -366,20 +363,14 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
             for (Map.Entry<Property<?>, Comparable<?>> entry1 : fluidstate.getValues().entrySet()) {
                 this.systemInfo.add(this.getPropertyValueString(entry1));
             }
-            for (ResourceLocation resourcelocation1 : fluidstate.getType().getTags()) {
-                //noinspection ObjectAllocationInLoop
-                this.systemInfo.add("#" + resourcelocation1);
-            }
+            fluidstate.getTags().forEach(t -> this.systemInfo.add("#" + t.location()));
         }
         Entity entity = this.minecraft.crosshairPickEntity;
         if (entity != null) {
             this.systemInfo.add("");
             this.systemInfo.add(ChatFormatting.UNDERLINE + "Targeted Entity");
             this.systemInfo.add(String.valueOf(Registry.ENTITY_TYPE.getKey(entity.getType())));
-            for (ResourceLocation tag : entity.getType().getTags()) {
-                //noinspection ObjectAllocationInLoop
-                this.systemInfo.add("#" + tag);
-            }
+            entity.getType().getTags().forEach(t -> this.systemInfo.add("#" + t.location()));
         }
         return this.systemInfo;
     }

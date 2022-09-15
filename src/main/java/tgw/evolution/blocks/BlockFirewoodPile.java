@@ -20,14 +20,13 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEFirewoodPile;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.items.ItemFirewood;
-import tgw.evolution.util.constants.HarvestLevels;
+import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.math.MathHelper;
-
-import javax.annotation.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 import static tgw.evolution.init.EvolutionBStates.FIREWOOD_COUNT;
@@ -48,6 +47,7 @@ public class BlockFirewoodPile extends BlockMass implements IReplaceable, Entity
             Math.abs(pos.getY() - player.getY()) < 1.75 &&
             Math.abs(pos.getZ() + 0.5 - player.getZ()) < 1.75) {
             TEFirewoodPile tile = (TEFirewoodPile) level.getBlockEntity(pos);
+            assert tile != null;
             ItemStack stack = new ItemStack(tile.removeLastFirewood());
             if (!player.getInventory().add(stack)) {
                 BlockUtils.dropItemStack(level, pos, stack);
@@ -99,6 +99,7 @@ public class BlockFirewoodPile extends BlockMass implements IReplaceable, Entity
     @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
         TEFirewoodPile tile = (TEFirewoodPile) level.getBlockEntity(pos);
+        assert tile != null;
         return new ItemStack(tile.getFirewoodAt(0));
     }
 
@@ -106,6 +107,7 @@ public class BlockFirewoodPile extends BlockMass implements IReplaceable, Entity
     public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
         NonNullList<ItemStack> drops = NonNullList.withSize(state.getValue(FIREWOOD_COUNT), ItemStack.EMPTY);
         TEFirewoodPile tile = (TEFirewoodPile) level.getBlockEntity(pos);
+        assert tile != null;
         for (int i = 0; i < drops.size(); i++) {
             //noinspection ObjectAllocationInLoop
             drops.set(i, new ItemStack(tile.getFirewoodAt(i)));
@@ -130,7 +132,7 @@ public class BlockFirewoodPile extends BlockMass implements IReplaceable, Entity
 
     @Override
     public int getHarvestLevel(BlockState state) {
-        return HarvestLevels.UNBREAKABLE;
+        return HarvestLevel.UNBREAKABLE;
     }
 
     @Override

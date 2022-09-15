@@ -25,6 +25,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
@@ -36,7 +37,7 @@ import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.time.Time;
 
-import javax.annotation.Nullable;
+import java.util.Objects;
 import java.util.Random;
 
 import static tgw.evolution.init.EvolutionBStates.LAYERS_0_16;
@@ -62,17 +63,20 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
     }
 
     private static InteractionResult manageStack(TEPitKiln tile, ItemStack handStack, Player player, DirectionDiagonal direction) {
-        if (tile.getStack(direction).isEmpty() &&
+        ItemStack stack = tile.getStack(direction);
+        if (stack.isEmpty() &&
             !tile.isSingle() &&
-            handStack.getItem() instanceof ItemClayMolded &&
-            !((ItemClayMolded) handStack.getItem()).single) {
+            handStack.getItem() instanceof ItemClayMolded clayMolded &&
+            !clayMolded.single) {
             tile.setStack(handStack, direction);
             tile.setChanged();
             return InteractionResult.SUCCESS;
         }
-        if (!tile.getStack(direction).isEmpty()) {
-            if (!tile.getLevel().isClientSide && !player.getInventory().add(tile.getStack(direction))) {
-                BlockUtils.dropItemStack(tile.getLevel(), tile.getBlockPos(), tile.getStack(direction));
+        if (!stack.isEmpty()) {
+            Level level = tile.getLevel();
+            assert level != null;
+            if (!level.isClientSide && !player.getInventory().add(stack)) {
+                BlockUtils.dropItemStack(level, tile.getBlockPos(), stack);
             }
             tile.setStack(ItemStack.EMPTY, direction);
             tile.setChanged();
@@ -101,6 +105,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
         }
         TEPitKiln tile = (TEPitKiln) level.getBlockEntity(pos);
         level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers - 1));
+        assert tile != null;
         ItemStack stack = tile.getLogStack(layers - 9);
         tile.setLog(layers - 9, (byte) -1);
         tile.setChanged();
@@ -196,7 +201,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (state.getBlock() != newState.getBlock()) {
-            ((TEPitKiln) level.getBlockEntity(pos)).onRemoved();
+            ((TEPitKiln) Objects.requireNonNull(level.getBlockEntity(pos))).onRemoved();
         }
         super.onRemove(state, level, pos, newState, isMoving);
     }
@@ -204,8 +209,9 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random random) {
         TEPitKiln tile = (TEPitKiln) level.getBlockEntity(pos);
+        assert tile != null;
         if (canBurn(level, pos)) {
-            if (level.getDayTime() > tile.getTimeStart() + 8 * Time.HOUR_IN_TICKS) {
+            if (level.getDayTime() > tile.getTimeStart() + 8L * Time.TICKS_PER_HOUR) {
                 level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, 0));
                 tile.finish();
             }

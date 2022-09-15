@@ -3,6 +3,7 @@ package tgw.evolution.capabilities.temperature;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.util.INBTSerializable;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.earth.ClimateZone;
 
 public interface ITemperature extends INBTSerializable<CompoundTag> {
@@ -17,7 +18,7 @@ public interface ITemperature extends INBTSerializable<CompoundTag> {
 
     int getDesiredMinComfort();
 
-    ClimateZone.Region getRegion();
+    @Nullable ClimateZone.Region getRegion();
 
     void setCurrentMaxComfort(double temp);
 

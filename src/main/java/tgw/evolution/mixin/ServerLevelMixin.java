@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -27,12 +28,9 @@ public abstract class ServerLevelMixin extends Level {
 
     public ServerLevelMixin(WritableLevelData pLevelData,
                             ResourceKey<Level> pDimension,
-                            DimensionType pDimensionType,
-                            Supplier<ProfilerFiller> pProfiler,
-                            boolean pIsClientSide,
-                            boolean pIsDebug,
-                            long pBiomeZoomSeed) {
-        super(pLevelData, pDimension, pDimensionType, pProfiler, pIsClientSide, pIsDebug, pBiomeZoomSeed);
+                            Holder<DimensionType> pDimensionTypeRegistration,
+                            Supplier<ProfilerFiller> pProfiler, boolean pIsClientSide, boolean pIsDebug, long pBiomeZoomSeed) {
+        super(pLevelData, pDimension, pDimensionTypeRegistration, pProfiler, pIsClientSide, pIsDebug, pBiomeZoomSeed);
     }
 
     @Override

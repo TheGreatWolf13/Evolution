@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[39.0,)"
+loaderVersion = "[40.0,)"
 issueTrackerURL = "https://github.com/MGSchultz-13/Evolution/issues/"
 license = "GNU General Public License v3.0"
 # A file name (in the root of the mod JAR) containing a logo for display
@@ -20,12 +20,12 @@ Evolution is a mod for Minecraft that makes the game more realistic in many ways
 [[dependencies.evolution]]
 modId = "forge"
 mandatory = true
-versionRange = "[39.0,)"
+versionRange = "[40.0,)"
 ordering = "NONE"
 side = "BOTH"
 [[dependencies.evolution]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.18.1]"
+versionRange = "[1.18.2]"
 ordering = "NONE"
 side = "BOTH"

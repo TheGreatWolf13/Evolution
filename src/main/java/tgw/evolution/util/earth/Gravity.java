@@ -41,7 +41,7 @@ public final class Gravity {
      * Returns the horizontal drag due to air resistance in the given dimension, based on the area of the body.
      */
     public static double horizontalDrag(Entity entity) {
-        if (entity.level.dimensionType().natural()) {
+        if (entity.level.dimensionType().effectsLocation() == DimensionType.OVERWORLD_EFFECTS) {
             return 0.5 * AIR_DENSITY * entity.getBbWidth() * entity.getBbHeight() * coefOfDrag(entity);
         }
         return 0;
@@ -55,7 +55,7 @@ public final class Gravity {
      * Returns the vertical drag due to air resistance in the given dimension, based on the area of the body.
      */
     public static double verticalDrag(Entity entity) {
-        if (entity.level.dimensionType().natural()) {
+        if (entity.level.dimensionType().effectsLocation() == DimensionType.OVERWORLD_EFFECTS) {
             return 0.5 * AIR_DENSITY * entity.getBbWidth() * entity.getBbWidth() * coefOfDrag(entity);
         }
         return 0;

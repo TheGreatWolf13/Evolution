@@ -10,13 +10,16 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.patches.IMatrix3fPatch;
 import tgw.evolution.patches.IMatrix4fPatch;
 import tgw.evolution.patches.IPoseStackPatch;
+import tgw.evolution.util.hitbox.hms.HM;
 import tgw.evolution.util.math.MathHelper;
 
 import java.util.List;
 
 @Mixin(ModelPart.class)
-public abstract class ModelPartMixin {
+public abstract class ModelPartMixin implements HM {
 
+    @Shadow
+    public boolean visible;
     @Shadow
     public float x;
     @Shadow
@@ -32,6 +35,21 @@ public abstract class ModelPartMixin {
     @Shadow
     @Final
     private List<ModelPart.Cube> cubes;
+
+    @Override
+    public void addRotationX(float dx) {
+        this.xRot += dx;
+    }
+
+    @Override
+    public void addRotationY(float dy) {
+        this.yRot += dy;
+    }
+
+    @Override
+    public void addRotationZ(float dz) {
+        this.zRot += dz;
+    }
 
     /**
      * @author TheGreatWolf
@@ -69,6 +87,59 @@ public abstract class ModelPartMixin {
         }
     }
 
+    @Shadow
+    public abstract void copyFrom(ModelPart pModelPart);
+
+    @Override
+    public float getPivotX() {
+        return this.x;
+    }
+
+    @Override
+    public float getPivotY() {
+        return this.y;
+    }
+
+    @Override
+    public float getPivotZ() {
+        return this.z;
+    }
+
+    @Override
+    public void setPivotX(float x) {
+        this.x = x;
+    }
+
+    @Override
+    public void setPivotY(float y) {
+        this.y = y;
+    }
+
+    @Override
+    public void setPivotZ(float z) {
+        this.z = z;
+    }
+
+    @Override
+    public void setRotationX(float rotX) {
+        this.xRot = rotX;
+    }
+
+    @Override
+    public void setRotationY(float rotY) {
+        this.yRot = rotY;
+    }
+
+    @Override
+    public void setRotationZ(float rotZ) {
+        this.zRot = rotZ;
+    }
+
+    @Override
+    public void setVisible(boolean visible) {
+        this.visible = visible;
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Avoid allocations and use faster, specialized functions
@@ -76,15 +147,30 @@ public abstract class ModelPartMixin {
     @Overwrite
     public void translateAndRotate(PoseStack matrices) {
         matrices.translate(this.x / 16.0F, this.y / 16.0F, this.z / 16.0F);
-        IPoseStackPatch matricesExt = MathHelper.getExtendedMatrix(matrices);
+        IPoseStackPatch mat = MathHelper.getExtendedMatrix(matrices);
         if (this.zRot != 0.0F) {
-            matricesExt.mulPoseZRad(this.zRot);
+            mat.mulPoseZRad(this.zRot);
         }
         if (this.yRot != 0.0F) {
-            matricesExt.mulPoseYRad(this.yRot);
+            mat.mulPoseYRad(this.yRot);
         }
         if (this.xRot != 0.0F) {
-            matricesExt.mulPoseXRad(this.xRot);
+            mat.mulPoseXRad(this.xRot);
         }
+    }
+
+    @Override
+    public float xRot() {
+        return this.xRot;
+    }
+
+    @Override
+    public float yRot() {
+        return this.yRot;
+    }
+
+    @Override
+    public float zRot() {
+        return this.zRot;
     }
 }

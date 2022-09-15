@@ -10,6 +10,7 @@ import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.common.util.LazyOptional;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 
 import java.util.Map;
@@ -33,13 +34,16 @@ public final class CapabilityChunkStorage {
         getChunkStorage(chunk).ifPresent(chunkStorages -> chunkStorages.addMany(map));
     }
 
-    public static boolean contains(LevelChunk chunk, EnumStorage storage, int value) {
+    public static boolean contains(@Nullable LevelChunk chunk, EnumStorage storage, int value) {
         boolean[] bool = {false};
         getChunkStorage(chunk).ifPresent(chunkStorages -> bool[0] = chunkStorages.getElementStored(storage) - value >= 0);
         return bool[0];
     }
 
-    public static LazyOptional<IChunkStorage> getChunkStorage(LevelChunk chunk) {
+    public static LazyOptional<IChunkStorage> getChunkStorage(@Nullable LevelChunk chunk) {
+        if (chunk == null) {
+            return LazyOptional.empty();
+        }
         return chunk.getCapability(INSTANCE, DEFAULT_FACING);
     }
 

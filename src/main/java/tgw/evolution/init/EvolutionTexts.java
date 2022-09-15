@@ -22,7 +22,6 @@ public final class EvolutionTexts {
     //Action Bar
     public static final Component ACTION_HIT_STAKE = transl("evolution.actionbar.hitStake").setStyle(WHITE);
     public static final Component ACTION_HOOK = transl("evolution.actionbar.hook").setStyle(WHITE);
-    public static final Component ACTION_INERTIA = transl("evolution.actionbar.inertia").setStyle(WHITE);
     public static final Component ACTION_TWO_HANDED = transl("evolution.actionbar.twoHanded").setStyle(WHITE);
     //Command
     public static final Component COMMAND_PAUSE_PAUSE_FAIL = transl("command.evolution.pause.pause.fail");
@@ -79,9 +78,7 @@ public final class EvolutionTexts {
             transl("evolution.tooltip.effect.disableSprint").withStyle(WHITE));
     public static final Component TOOLTIP_EFFECT_MAY_CAUSE = transl("evolution.tooltip.effect.mayCause").setStyle(LIGHT_GREY);
     public static final Component TOOLTIP_FIREWOOD_PILE = transl("evolution.tooltip.firewoodPile").setStyle(INFO);
-    public static final Component TOOLTIP_LUNGE = transl("evolution.tooltip.lunge").setStyle(PROPERTY);
     public static final Component TOOLTIP_MAINHAND = transl("evolution.tooltip.mainhand").setStyle(LIGHT_GREY);
-    public static final Component TOOLTIP_MAINHAND_OFFHAND = transl("evolution.tooltip.mainhand_offhand").setStyle(LIGHT_GREY);
     public static final Component TOOLTIP_PARRY = transl("evolution.tooltip.parry").setStyle(PROPERTY);
     public static final Component TOOLTIP_ROCK_KNAP = transl("evolution.tooltip.rockKnap").setStyle(INFO);
     public static final Component TOOLTIP_ROCK_TYPE_IGEXTRUSIVE = transl("evolution.tooltip.rockType.igneousExtrusive").setStyle(LIGHT_GREY);

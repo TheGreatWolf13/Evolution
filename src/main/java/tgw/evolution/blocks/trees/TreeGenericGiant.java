@@ -11,7 +11,7 @@
 //import net.minecraft.world.gen.feature.IFeatureConfig;
 //import net.minecraft.world.gen.feature.NoFeatureConfig;
 //
-//import javax.annotation.Nullable;
+//import org.jetbrains.annotations.Nullable;
 //import java.util.Random;
 //
 //public abstract class TreeGenericGiant extends BigTree {

@@ -22,20 +22,23 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.Evolution;
+import tgw.evolution.client.gui.widgets.AdvEditBox;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
-import tgw.evolution.client.gui.widgets.EditBoxAdv;
+import tgw.evolution.client.util.Key;
+import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.init.EvolutionFormatter;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.ConfigHelper;
 import tgw.evolution.util.collection.*;
 import tgw.evolution.util.math.MathHelper;
-import tgw.evolution.util.reflection.FieldHandler;
 
-import javax.annotation.Nullable;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -43,12 +46,11 @@ import java.util.stream.Collectors;
 
 @OnlyIn(Dist.CLIENT)
 public class ScreenConfig extends ScreenListMenu {
+    private static final Field CLAZZ = ObfuscationReflectionHelper.findField(ForgeConfigSpec.EnumValue.class, "clazz");
     private static final Pattern DOUBLE_SPACE = Pattern.compile("\\s++");
     private static final Pattern PATTERN_CAMEL_CASE = Pattern.compile("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])");
     protected final ModConfig config;
     protected final FolderEntry folderEntry;
-    private final FieldHandler<ForgeConfigSpec.EnumValue, Class<? extends Enum<?>>> clazz = new FieldHandler<>(ForgeConfigSpec.EnumValue.class,
-                                                                                                               "clazz");
     private final Comparator<Item> sortAlphabetically = (o1, o2) -> {
         if (o1 instanceof FolderItem && o2 instanceof FolderItem) {
             return MathHelper.compare(o1.label.getString(), o2.label.getString());
@@ -93,10 +95,6 @@ public class ScreenConfig extends ScreenListMenu {
         }
         return new TranslatableComponent(modId + ".config.enum_" + enumValue.name().toLowerCase());
     }
-
-//    public static String createEnumKey(String modId, Enum<?> enumValue) {
-//        return modId + ".config.enum_" + enumValue.name().toLowerCase();
-//    }
 
     public static MutableComponent createLabel(String input, String modId) {
         return new TranslatableComponent(modId + ".config.label." + input.toLowerCase());
@@ -173,12 +171,10 @@ public class ScreenConfig extends ScreenListMenu {
     @Override
     protected void init() {
         super.init();
+        assert this.minecraft != null;
         if (this.folderEntry.isRoot()) {
             this.saveButton = this.addRenderableWidget(new Button(this.width / 2 - 160, this.height - 29, 100, 20, this.textSave, button -> {
-                //noinspection VariableNotUsedInsideIf
-                if (this.config != null) {
-                    this.saveConfig();
-                }
+                this.saveConfig();
                 this.minecraft.setScreen(this.parent);
             }));
             this.restoreButton = this.addRenderableWidget(
@@ -242,7 +238,8 @@ public class ScreenConfig extends ScreenListMenu {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(@Key int keyCode, int scanCode, @Modifiers int modifiers) {
+        assert this.minecraft != null;
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
             if (this.folderEntry.isRoot()) {
                 if (this.isChanged(this.folderEntry)) {
@@ -263,10 +260,7 @@ public class ScreenConfig extends ScreenListMenu {
             return true;
         }
         if (this.folderEntry.isRoot() && keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
-            //noinspection VariableNotUsedInsideIf
-            if (this.config != null) {
-                this.saveConfig();
-            }
+            this.saveConfig();
             this.minecraft.setScreen(this.parent);
             return true;
         }
@@ -346,7 +340,7 @@ public class ScreenConfig extends ScreenListMenu {
 
     @Override
     public boolean shouldCloseOnEsc() {
-        return this.config == null;
+        return false;
     }
 
     private void showRestoreScreen() {
@@ -365,12 +359,8 @@ public class ScreenConfig extends ScreenListMenu {
 
     private void updateButtons() {
         if (this.folderEntry.isRoot()) {
-            if (this.saveButton != null) {
-                this.saveButton.active = this.isChanged(this.folderEntry);
-            }
-            if (this.restoreButton != null) {
-                this.restoreButton.active = this.isModified(this.folderEntry);
-            }
+            this.saveButton.active = this.isChanged(this.folderEntry);
+            this.restoreButton.active = this.isModified(this.folderEntry);
         }
     }
 
@@ -389,6 +379,7 @@ public class ScreenConfig extends ScreenListMenu {
             this.button = new Button(10, 5, 44, 20, new TextComponent(this.getLabel()).withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.WHITE),
                                      onPress -> {
                                          Component newTitle = ScreenConfig.this.title.copy().append(" > " + this.getLabel());
+                                         assert ScreenConfig.this.minecraft != null;
                                          ScreenConfig.this.minecraft.setScreen(
                                                  new ScreenConfig(ScreenConfig.this, newTitle, folderEntry, ScreenConfig.this.config));
                                      });
@@ -462,7 +453,13 @@ public class ScreenConfig extends ScreenListMenu {
                 lines.add(EvolutionTexts.configRange(range.toString()));
             }
             else if (value instanceof ForgeConfigSpec.EnumValue<?> enumValue) {
-                Class<? extends Enum<?>> clazz = ScreenConfig.this.clazz.get(enumValue);
+                Class<? extends Enum<?>> clazz = null;
+                try {
+                    clazz = (Class<? extends Enum<?>>) CLAZZ.get(enumValue);
+                }
+                catch (IllegalAccessException e) {
+                    throw new IllegalStateException("Could not get field clazz");
+                }
                 Enum<?>[] values = clazz.getEnumConstants();
                 Component allowedValues = EvolutionTexts.configAllowedValues(Arrays.stream(values)
                                                                                    .map(o -> createEnumComp(ScreenConfig.this.config.getModId(),
@@ -498,6 +495,7 @@ public class ScreenConfig extends ScreenListMenu {
         }
 
         private Component getTrimmedLabel(int maxWidth) {
+            assert ScreenConfig.this.minecraft != null;
             if (ScreenConfig.this.minecraft.font.width(this.label) > maxWidth) {
                 return new TextComponent(ScreenConfig.this.minecraft.font.substrByWidth(this.label, maxWidth).getString() + "...");
             }
@@ -534,7 +532,7 @@ public class ScreenConfig extends ScreenListMenu {
 
         public NumberItem(ValueHolder<T> holder, Function<String, Number> parser) {
             super(holder);
-            this.editBox = new EditBoxAdv(ScreenConfig.this.font, 0, 0, 44, 18, EvolutionTexts.EMPTY);
+            this.editBox = new AdvEditBox(ScreenConfig.this.font, 0, 0, 44, 18, EvolutionTexts.EMPTY);
             this.editBox.setValue(holder.getValue().toString());
             this.editBox.setResponder(s -> {
                 try {
@@ -783,7 +781,7 @@ public class ScreenConfig extends ScreenListMenu {
             this.configValue = configValue;
             this.valueSpec = valueSpec;
             this.initialValue = configValue.get();
-            this.setValue(configValue.get());
+            this.value = this.setValue(configValue.get());
         }
 
         public ForgeConfigSpec.ConfigValue<T> getConfigValue() {
@@ -811,8 +809,9 @@ public class ScreenConfig extends ScreenListMenu {
             ScreenConfig.this.updateButtons();
         }
 
-        protected void setValue(T value) {
+        protected T setValue(T value) {
             this.value = value;
+            return this.value;
         }
     }
 
@@ -855,50 +854,38 @@ public class ScreenConfig extends ScreenListMenu {
         }
 
         @Override
-        protected void setValue(List<?> value) {
+        protected List<?> setValue(List<?> value) {
             this.value = new ArrayList<>(value);
+            return this.value;
         }
     }
 
     public class FolderEntry implements IEntry {
-        private final UnmodifiableConfig config;
+        private final List<IEntry> entries;
         private final String label;
         private final boolean root;
-        private final ForgeConfigSpec spec;
-        private List<IEntry> entries;
 
         public FolderEntry(String label, UnmodifiableConfig config, ForgeConfigSpec spec, boolean root) {
             this.label = label;
-            this.config = config;
-            this.spec = spec;
             this.root = root;
-            this.init();
+            ImmutableList.Builder<IEntry> builder = ImmutableList.builder();
+            for (Map.Entry<String, Object> entry : config.valueMap().entrySet()) {
+                Object o = entry.getValue();
+                if (o instanceof UnmodifiableConfig unmodifiableConfig) {
+                    //noinspection ObjectAllocationInLoop
+                    builder.add(new FolderEntry(entry.getKey(), unmodifiableConfig, spec, false));
+                }
+                else if (o instanceof ForgeConfigSpec.ConfigValue<?> configValue) {
+                    ForgeConfigSpec.ValueSpec valueSpec = spec.getRaw(configValue.getPath());
+                    //noinspection ObjectAllocationInLoop
+                    builder.add(new ValueEntry(configValue, valueSpec));
+                }
+            }
+            this.entries = builder.build();
         }
 
         public List<IEntry> getEntries() {
             return this.entries;
-        }
-
-        @SuppressWarnings("ObjectAllocationInLoop")
-        private void init() {
-            if (this.entries == null) {
-                ImmutableList.Builder<IEntry> builder = ImmutableList.builder();
-                for (Map.Entry<String, Object> entry : this.config.valueMap().entrySet()) {
-                    Object o = entry.getValue();
-                    if (o instanceof UnmodifiableConfig unmodifiableConfig) {
-                        builder.add(new FolderEntry(entry.getKey(), unmodifiableConfig, this.spec, false));
-                    }
-                    else if (o instanceof ForgeConfigSpec.ConfigValue<?> configValue) {
-                        ForgeConfigSpec.ValueSpec valueSpec = this.spec.getRaw(configValue.getPath());
-                        builder.add(new ValueEntry(configValue, valueSpec));
-                    }
-                }
-                this.entries = builder.build();
-            }
-        }
-
-        public boolean isInitialized() {
-            return this.entries != null;
         }
 
         public boolean isRoot() {

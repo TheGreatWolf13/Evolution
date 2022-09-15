@@ -23,6 +23,7 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.blocks.tileentities.TELoggable;
 import tgw.evolution.entities.misc.EntityFallingPeat;
@@ -33,7 +34,6 @@ import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.DirectionUtil;
 
-import javax.annotation.Nullable;
 import java.util.Random;
 
 import static tgw.evolution.init.EvolutionBStates.FLUID_LOGGED;

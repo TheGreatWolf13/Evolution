@@ -11,7 +11,8 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkEvent;
-import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -23,7 +24,6 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import tgw.evolution.patches.IClientChunkCachePatch;
 import tgw.evolution.patches.IClientChunkCache_StoragePatch;
 
-import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 @Mixin(ClientChunkCache.class)
@@ -86,6 +86,7 @@ public abstract class ClientChunkCacheMixin extends ChunkSource implements IClie
      * @author TheGreatWolf
      * @reason Handle when camera is not the player
      */
+    @javax.annotation.Nullable
     @Override
     @Overwrite
     @Nullable

@@ -44,7 +44,7 @@ public abstract class PlayerListMixin {
 
     @Shadow
     @Final
-    private RegistryAccess.RegistryHolder registryHolder;
+    private RegistryAccess.Frozen registryHolder;
     @Shadow
     @Final
     private MinecraftServer server;
@@ -90,7 +90,7 @@ public abstract class PlayerListMixin {
                                                                              player.gameMode.getPreviousGameModeForPlayer(),
                                                                              this.server.levelKeys(),
                                                                              this.registryHolder,
-                                                                             serverworld1.dimensionType(),
+                                                                             serverworld1.dimensionTypeRegistration(),
                                                                              serverworld1.dimension(),
                                                                              BiomeManager.obfuscateSeed(serverworld1.getSeed()),
                                                                              this.getMaxPlayers(),

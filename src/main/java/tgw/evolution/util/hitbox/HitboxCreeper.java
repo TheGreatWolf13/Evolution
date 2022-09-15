@@ -2,23 +2,22 @@ package tgw.evolution.util.hitbox;
 
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.monster.Creeper;
-import net.minecraft.world.phys.Vec3;
-import tgw.evolution.items.ISpecialAttack;
-import tgw.evolution.util.math.MathHelper;
+import org.jetbrains.annotations.Nullable;
+import tgw.evolution.items.IMelee;
+import tgw.evolution.util.hitbox.hms.HM;
+import tgw.evolution.util.hitbox.hms.HMCreeper;
+import tgw.evolution.util.hitbox.hrs.HRCreeper;
 
-public class HitboxCreeper extends HitboxEntity<Creeper> {
+public final class HitboxCreeper extends HitboxEntity<Creeper> implements HMCreeper<Creeper>, HRCreeper {
 
-    public static final Vec3 NECK_STANDING = new Vec3(0, 18 / 16.0, 0);
-    protected final Hitbox body = this.addBox(HitboxType.CHEST, aabb(-4, -12, -2, 4, 0, 2));
-    protected final Hitbox head = this.addBox(HitboxType.HEAD, HitboxLib.BIPED_HEAD);
-    protected final Hitbox legFL = this.addBox(HitboxType.FRONT_LEFT_LEG, HitboxLib.CREEPER_LEG);
-    protected final Hitbox legFR = this.addBox(HitboxType.FRONT_RIGHT_LEG, HitboxLib.CREEPER_LEG);
-    protected final Hitbox legRL = this.addBox(HitboxType.REAR_LEFT_LEG, HitboxLib.CREEPER_LEG);
-    protected final Hitbox legRR = this.addBox(HitboxType.REAR_RIGHT_LEG, HitboxLib.CREEPER_LEG);
-    protected float limbSwing;
-    protected float limbSwingAmount;
+    private final Hitbox head = this.addBox(HitboxType.HEAD, HitboxLib.HUMANOID_HEAD, 0, 18, 0);
+    private final Hitbox legFL = this.addBox(HitboxType.LEG_FRONT_LEFT, HitboxLib.CREEPER_LEG, -2, 6, -4);
+    private final Hitbox legFR = this.addBox(HitboxType.LEG_FRONT_RIGHT, HitboxLib.CREEPER_LEG, 2, 6, -4);
+    private final Hitbox legHL = this.addBox(HitboxType.LEG_HIND_LEFT, HitboxLib.CREEPER_LEG, -2, 6, 4);
+    private final Hitbox legHR = this.addBox(HitboxType.LEG_HIND_RIGHT, HitboxLib.CREEPER_LEG, 2, 6, 4);
 
     public HitboxCreeper() {
+        this.addBox(HitboxType.CHEST, box(-4, -12, -2, 8, 12, 4), 0, 18, 0);
         this.finish();
     }
 
@@ -27,36 +26,67 @@ public class HitboxCreeper extends HitboxEntity<Creeper> {
     }
 
     @Override
-    public Hitbox getEquipmentFor(ISpecialAttack.IAttackType type, HumanoidArm arm) {
-        throw new IllegalStateException("Creepers do not have arms!");
+    protected @Nullable Hitbox childGetEquipFor(IMelee.@Nullable IAttackType type, HumanoidArm arm) {
+        return null;
     }
 
     @Override
-    public void init(Creeper entity, float partialTicks) {
-        this.reset();
-        this.rotationYaw = -MathHelper.getEntityBodyYaw(entity, partialTicks);
-        this.rotationPitch = -entity.getViewXRot(partialTicks);
-        this.limbSwing = MathHelper.getLimbSwing(entity, partialTicks);
-        this.limbSwingAmount = MathHelper.getLimbSwingAmount(entity, partialTicks);
-        //Main
-        this.rotationY = MathHelper.degToRad(this.rotationYaw);
-        //Head
-        this.head.pivotY = 18 / 16.0f;
-        this.head.rotationX = MathHelper.degToRad(this.rotationPitch);
-        this.head.rotationY = MathHelper.degToRad(-entity.getViewYRot(partialTicks) - this.rotationYaw);
-        //Body
-        this.body.pivotY = 18 / 16.0f;
-        //LegFL
-        this.legFL.setPivot(2, 6, 4, 1 / 16.0f);
-        this.legFL.rotationX = MathHelper.cos(this.limbSwing * 0.666_2F + MathHelper.PI) * 1.4F * this.limbSwingAmount;
-        //LegFR
-        this.legFR.setPivot(-2, 6, 4, 1 / 16.0f);
-        this.legFR.rotationX = MathHelper.cos(this.limbSwing * 0.666_2F) * 1.4F * this.limbSwingAmount;
-        //LegRL
-        this.legRL.setPivot(2, 6, -4, 1 / 16.0f);
-        this.legRL.rotationX = this.legFR.rotationX;
-        //LegRR
-        this.legRR.setPivot(-2, 6, -4, 1 / 16.0f);
-        this.legRR.rotationX = this.legFL.rotationX;
+    public void childInit(Creeper entity, float partialTicks) {
+        this.renderOrInit(entity, this, partialTicks);
+    }
+
+    @Override
+    public HM head() {
+        return this.head;
+    }
+
+    @Override
+    protected Hitbox headOrRoot() {
+        return this.head;
+    }
+
+    @Override
+    public HM leftFrontLeg() {
+        return this.legFL;
+    }
+
+    @Override
+    public HM leftHindLeg() {
+        return this.legHL;
+    }
+
+    @Override
+    public HMCreeper<Creeper> model() {
+        return this;
+    }
+
+    @Override
+    protected double relativeHeadOrRootX() {
+        return 0;
+    }
+
+    @Override
+    protected double relativeHeadOrRootY() {
+        return 4 / 16.0;
+    }
+
+    @Override
+    protected double relativeHeadOrRootZ() {
+        return -4 / 16.0;
+    }
+
+    @Override
+    public HM rightFrontLeg() {
+        return this.legFR;
+    }
+
+    @Override
+    public HM rightHindLeg() {
+        return this.legHR;
+    }
+
+    @Override
+    public void setAgeInTicks(float ageInTicks) {
+        this.ageInTicks = ageInTicks;
     }
 }

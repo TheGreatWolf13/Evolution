@@ -4,8 +4,8 @@ import net.minecraft.core.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SimpleCapabilityProvider<C> implements ICapabilityProvider {
 
@@ -40,7 +40,7 @@ public class SimpleCapabilityProvider<C> implements ICapabilityProvider {
      * @return A lazy optional containing the handler, if this object supports the capability.
      */
     @Override
-    public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction direction) {
+    public <T> @NotNull LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction direction) {
         return this.capability.orEmpty(capability, this.lazyOptional);
     }
 

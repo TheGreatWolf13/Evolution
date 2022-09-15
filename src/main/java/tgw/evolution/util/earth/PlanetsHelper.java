@@ -57,7 +57,7 @@ public final class PlanetsHelper {
     }
 
     private static float calculateMeanAnomaly0Sun(long worldTime) {
-        return Mth.wrapDegrees(356.047_0f + 360.0f / Time.YEAR_IN_TICKS * (worldTime % Time.YEAR_IN_TICKS));
+        return Mth.wrapDegrees(356.047_0f + 360.0f / Time.TICKS_PER_YEAR * (worldTime % Time.TICKS_PER_YEAR));
     }
 
     private static float calculateMeanAnomaly1Mercury(long worldTime) {

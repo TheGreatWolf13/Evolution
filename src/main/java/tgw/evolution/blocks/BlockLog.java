@@ -12,10 +12,11 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.BlockFlags;
-import tgw.evolution.util.constants.HarvestLevels;
+import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.WoodVariant;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
@@ -88,7 +89,7 @@ public class BlockLog extends BlockXYZAxis {
 
     @Override
     public int getHarvestLevel(BlockState state) {
-        return HarvestLevels.STONE;
+        return HarvestLevel.STONE;
     }
 
     @Override
@@ -97,8 +98,12 @@ public class BlockLog extends BlockXYZAxis {
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return super.getStateForPlacement(context).setValue(TREE, false);
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockState state = super.getStateForPlacement(context);
+        if (state == null) {
+            return null;
+        }
+        return state.setValue(TREE, false);
     }
 
     @Override

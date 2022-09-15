@@ -1,23 +1,23 @@
 package tgw.evolution.patches;
 
-import tgw.evolution.util.math.MathHelper;
+import net.minecraft.util.Mth;
 
 public interface IPoseStackPatch {
 
     default void mulPoseX(float degree) {
-        this.mulPoseXRad(MathHelper.degToRad(degree));
+        this.mulPoseXRad(Mth.DEG_TO_RAD * degree);
     }
 
     void mulPoseXRad(float radian);
 
     default void mulPoseY(float degree) {
-        this.mulPoseYRad(MathHelper.degToRad(degree));
+        this.mulPoseYRad(Mth.DEG_TO_RAD * degree);
     }
 
     void mulPoseYRad(float radian);
 
     default void mulPoseZ(float degree) {
-        this.mulPoseZRad(MathHelper.degToRad(degree));
+        this.mulPoseZRad(Mth.DEG_TO_RAD * degree);
     }
 
     void mulPoseZRad(float radian);

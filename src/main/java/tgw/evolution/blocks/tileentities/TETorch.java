@@ -8,10 +8,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.init.EvolutionTEs;
-
-import javax.annotation.Nullable;
 
 public class TETorch extends BlockEntity implements ILoggable {
 
@@ -86,6 +85,7 @@ public class TETorch extends BlockEntity implements ILoggable {
     }
 
     public void setPlaceTime() {
+        assert this.level != null;
         this.setTimePlaced(this.level.getDayTime());
     }
 

@@ -3,6 +3,7 @@ package tgw.evolution.init;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.common.util.NonNullSupplier;
@@ -10,14 +11,12 @@ import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.food.CapabilityHunger;
 import tgw.evolution.capabilities.health.CapabilityHealth;
-import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
+import tgw.evolution.capabilities.inventory.CapabilityInventory;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.stamina.CapabilityStamina;
 import tgw.evolution.capabilities.temperature.CapabilityTemperature;
 import tgw.evolution.capabilities.thirst.CapabilityThirst;
 import tgw.evolution.capabilities.toast.CapabilityToast;
-
-import javax.annotation.Nullable;
 
 public final class EvolutionCapabilities {
 
@@ -26,9 +25,15 @@ public final class EvolutionCapabilities {
     private EvolutionCapabilities() {
     }
 
+    public static void beginClone(Player oldPlayer) {
+        if (!oldPlayer.isAlive()) {
+            oldPlayer.reviveCaps();
+        }
+    }
+
     public static <T extends INBTSerializable<CompoundTag>> void clonePlayer(Player oldPlayer, Player newPlayer, Capability<T> cap) {
         try {
-            T oldCap = getRevivedCapability(oldPlayer, cap);
+            T oldCap = getCapabilityOrThrow(oldPlayer, cap);
             T newCap = getCapabilityOrThrow(newPlayer, cap);
             newCap.deserializeNBT(oldCap.serializeNBT());
         }
@@ -37,14 +42,19 @@ public final class EvolutionCapabilities {
         }
     }
 
+    public static void endClone(Player oldPlayer) {
+        if (!oldPlayer.isAlive()) {
+            oldPlayer.invalidateCaps();
+        }
+    }
+
     /**
      * Gets the holder object associated with this capability, if it's present, or {@code null}. Note that if the holder object does not exist, or the
      * capability was invalidated via
      * {@link net.minecraft.world.entity.LivingEntity#invalidateCaps}, the method will return {@code null}.
      */
-    @Nullable
-    public static <T> T getCapabilityOrNull(Player player, Capability<T> instance) {
-        return player.getCapability(instance).orElse(null);
+    public static <T> T getCapability(ICapabilityProvider player, Capability<T> instance, T orElse) {
+        return player.getCapability(instance).orElse(orElse);
     }
 
     /**
@@ -73,7 +83,7 @@ public final class EvolutionCapabilities {
 
     public static void register(RegisterCapabilitiesEvent event) {
         CapabilityChunkStorage.register(event);
-        CapabilityExtendedInventory.register(event);
+        CapabilityInventory.register(event);
         CapabilityThirst.register(event);
         CapabilityHealth.register(event);
         CapabilityToast.register(event);

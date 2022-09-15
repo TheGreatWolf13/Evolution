@@ -3,7 +3,7 @@ package tgw.evolution.blocks.tileentities;
 import net.minecraft.world.level.material.Fluid;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public interface ILoggable {
 

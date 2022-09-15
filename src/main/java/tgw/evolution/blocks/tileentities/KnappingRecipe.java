@@ -4,16 +4,14 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.Evolution;
 import tgw.evolution.util.math.MathHelper;
 
-import javax.annotation.Nonnull;
-
 public enum KnappingRecipe {
-    NULL(0, KnappingPatterns.NULL),
-    AXE(1, KnappingPatterns.AXE),
-    SPEAR(2, KnappingPatterns.JAVELIN),
-    SHOVEL(3, KnappingPatterns.SHOVEL),
-    HAMMER(4, KnappingPatterns.HAMMER),
-    HOE(5, KnappingPatterns.HOE),
-    KNIFE(6, KnappingPatterns.KNIFE);
+    NULL(0, Patterns.MATRIX_FALSE),
+    AXE(1, Patterns.AXE_TRUE),
+    SPEAR(2, Patterns.JAVELIN_TRUE),
+    SHOVEL(3, Patterns.SHOVEL_TRUE),
+    HAMMER(4, Patterns.HAMMER_TRUE),
+    HOE(5, Patterns.HOE_TRUE),
+    KNIFE(6, Patterns.KNIFE_TRUE);
 
     public static final KnappingRecipe[] VALUES = values();
     private final byte id;
@@ -26,15 +24,20 @@ public enum KnappingRecipe {
         this.pattern = pattern;
     }
 
-    @Nonnull
     public static KnappingRecipe byId(int id) {
-        for (KnappingRecipe knapping : VALUES) {
-            if (knapping.id == id) {
-                return knapping;
+        return switch (id) {
+            case 0 -> NULL;
+            case 1 -> AXE;
+            case 2 -> SPEAR;
+            case 3 -> SHOVEL;
+            case 4 -> HAMMER;
+            case 5 -> HOE;
+            case 6 -> KNIFE;
+            default -> {
+                Evolution.warn("Could not find KnappingRecipe with id {}, replacing with NULL", id);
+                yield NULL;
             }
-        }
-        Evolution.warn("Could not find KnappingRecipe with id {}, replacing with NULL", id);
-        return NULL;
+        };
     }
 
     public byte getId() {

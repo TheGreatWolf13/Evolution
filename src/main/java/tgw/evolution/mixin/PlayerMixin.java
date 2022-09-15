@@ -11,6 +11,7 @@ import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -20,7 +21,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import tgw.evolution.entities.INeckPosition;
 import tgw.evolution.events.EntityEvents;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionNetwork;
@@ -34,10 +34,8 @@ import tgw.evolution.util.hitbox.EvolutionEntityHitboxes;
 import tgw.evolution.util.hitbox.HitboxEntity;
 import tgw.evolution.util.math.MathHelper;
 
-import javax.annotation.Nullable;
-
 @Mixin(Player.class)
-public abstract class PlayerMixin extends LivingEntity implements INeckPosition, IEntityPatch, IPlayerPatch {
+public abstract class PlayerMixin extends LivingEntity implements IEntityPatch, IPlayerPatch {
 
     @Shadow
     @Final
@@ -47,6 +45,9 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
     private Pose forcedPose;
     private boolean isCrawling;
     private boolean isMoving;
+    private double motionX;
+    private double motionY;
+    private double motionZ;
 
     protected PlayerMixin(EntityType<? extends LivingEntity> type, Level level) {
         super(type, level);
@@ -59,6 +60,10 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
     @Overwrite
     public void checkMovementStatistics(double dx, double dy, double dz) {
         this.isMoving = false;
+        this.motionX = dx;
+        this.motionY = dy;
+        this.motionZ = dz;
+        //noinspection ConstantConditions
         if (!this.isPassenger() && (Object) this instanceof ServerPlayer player) {
             float dist = MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * 1_000;
             if (dist > 0) {
@@ -130,22 +135,13 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
      */
     @Overwrite
     private void checkRidingStatistics(double dx, double dy, double dz) {
+        //noinspection ConstantConditions
         if ((Object) this instanceof ServerPlayer player && this.isPassenger()) {
             float dist = MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * 1_000;
             if (dist > 0) {
                 PlayerHelper.addStat(player, EvolutionStats.TOTAL_DISTANCE_TRAVELED, dist);
             }
         }
-    }
-
-    @Override
-    public float getCameraYOffset() {
-        return 4 / 16.0f * 0.937_5f;
-    }
-
-    @Override
-    public float getCameraZOffset() {
-        return 4 / 16.0f * 0.937_5f;
     }
 
     /**
@@ -167,37 +163,28 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
     }
 
     @Override
-    public Vec3 getNeckPoint() {
-        switch (this.getPose()) {
-            case CROUCHING -> {
-                return PlayerHelper.NECK_POS_SNEAKING;
-            }
-            case SWIMMING -> {
-                if (!this.isInWater()) {
-                    return PlayerHelper.NECK_POS_CRAWLING;
-                }
-                return PlayerHelper.getSwimmingNeckPoint(this.getXRot());
-            }
-        }
-        float swimAnimation = MathHelper.getSwimAnimation(this, 1.0f);
-        if (swimAnimation > 0) {
-            return PlayerHelper.NECK_POS_CRAWLING;
-        }
-        return PlayerHelper.NECK_POS_STANDING;
-    }
-
-    private float getStepHeight() {
-        AttributeInstance mass = this.getAttribute(EvolutionAttributes.MASS.get());
-        double baseMass = mass.getBaseValue();
-        double totalMass = mass.getValue();
-        double equipMass = totalMass - baseMass;
-        double stepHeight = 1.062_5f - equipMass * 0.001_14f;
-        return (float) Math.max(stepHeight, 0.6);
+    public double getMotionX() {
+        return this.motionX;
     }
 
     @Override
-    public boolean hasHitboxes() {
-        return true;
+    public double getMotionY() {
+        return this.motionY;
+    }
+
+    @Override
+    public double getMotionZ() {
+        return this.motionZ;
+    }
+
+    private float getStepHeight() {
+        AttributeInstance massAttribute = this.getAttribute(EvolutionAttributes.MASS.get());
+        assert massAttribute != null;
+        double baseMass = massAttribute.getBaseValue();
+        double totalMass = massAttribute.getValue();
+        double equipMass = totalMass - baseMass;
+        double stepHeight = 1.062_5f - equipMass * 0.001_14f;
+        return (float) Math.max(stepHeight, 0.6);
     }
 
     @Override
@@ -213,6 +200,7 @@ public abstract class PlayerMixin extends LivingEntity implements INeckPosition,
     @Inject(method = "startSleepInBed", at = @At("TAIL"))
     private void onStartSleepInBed(BlockPos pos, CallbackInfoReturnable<Either<Player.BedSleepingProblem, Unit>> cir) {
         if (!this.level.isClientSide) {
+            //noinspection ConstantConditions
             EvolutionNetwork.send((ServerPlayer) (Object) this, new PacketSCMovement(0, 0, 0));
         }
     }

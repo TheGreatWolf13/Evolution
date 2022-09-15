@@ -201,7 +201,7 @@ public final class EvolutionResources {
     private EvolutionResources() {
     }
 
-    private static ModelResourceLocation itemModel(String path, IPartType<?> part, ItemMaterial material, boolean sharp) {
+    private static ModelResourceLocation itemModel(String path, IPartType<?, ?, ?> part, ItemMaterial material, boolean sharp) {
         String name = path + "/" + part.getName() + "_" + material.getName() + (sharp ? "_sharp" : "");
         ModelResourceLocation model = new ModelResourceLocation(Evolution.getResource(name), "inventory");
         MODULAR_MODELS.add(model);

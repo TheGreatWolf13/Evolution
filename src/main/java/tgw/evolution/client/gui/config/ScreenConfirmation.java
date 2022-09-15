@@ -8,6 +8,8 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import org.lwjgl.glfw.GLFW;
+import tgw.evolution.client.util.Key;
+import tgw.evolution.client.util.Modifiers;
 
 import java.util.List;
 
@@ -43,14 +45,14 @@ public class ScreenConfirmation extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+    public boolean keyPressed(@Key int key, int scanCode, @Modifiers int modifiers) {
+        if (key == GLFW.GLFW_KEY_ESCAPE) {
             if (this.handler.get(false)) {
                 this.minecraft.setScreen(this.parent);
             }
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(key, scanCode, modifiers);
     }
 
     @Override

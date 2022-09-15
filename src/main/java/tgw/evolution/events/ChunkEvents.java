@@ -9,7 +9,7 @@ import net.minecraftforge.fml.LogicalSide;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 
-import java.util.Random;
+import java.util.random.RandomGenerator;
 
 public class ChunkEvents {
 
@@ -67,7 +67,7 @@ public class ChunkEvents {
                               new ChunkPos(chunkPos.x, chunkPos.z - 1)};
     }
 
-    private static ChunkPos getRandom(int chunkX, int chunkZ, Random random) {
+    private static ChunkPos getRandom(int chunkX, int chunkZ, RandomGenerator random) {
         int i = random.nextInt(RANGE * 2 + 1) - RANGE;
         int j = random.nextInt(RANGE * 2 + 1) - RANGE;
         return new ChunkPos(chunkX + i, chunkZ + j);

@@ -1,22 +1,25 @@
 package tgw.evolution.util.math;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.mojang.math.Vector3f;
+import net.minecraft.world.phys.Vec3;
+import tgw.evolution.patches.IVec3Patch;
 
-public class Vec3d {
+@SuppressWarnings("EqualsAndHashcode")
+public class Vec3d extends Vec3 {
 
-    public static final Vec3d ZERO = new Vec3d();
-    private double x;
-    private double y;
-    private double z;
+    public static final Vec3 NULL = new Vec3(Double.NaN, Double.NaN, Double.NaN);
 
     public Vec3d() {
         this(0, 0, 0);
     }
 
+    public Vec3d(Vec3 vec) {
+        this(vec.x, vec.y, vec.z);
+    }
+
     public Vec3d(double x, double y, double z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        super(x, y, z);
     }
 
     public static Vec3d fromRGB24(int packed, Vec3d vec) {
@@ -26,63 +29,60 @@ public class Vec3d {
         return vec.set(dx, dy, dz);
     }
 
-    public static Vec3d fromRGB24(int packed) {
-        return fromRGB24(packed, new Vec3d());
+    public Vec3d addMutable(Vec3 vec) {
+        return this.addMutable(vec.x, vec.y, vec.z);
     }
 
-    public Vec3d add(Vec3d vec) {
-        return this.add(vec.x, vec.y, vec.z);
+    public Vec3d addMutable(double x, double y, double z) {
+        return this.set(this.x + x, this.y + y, this.z + z);
     }
 
-    public Vec3d add(double x, double y, double z) {
-        this.x += x;
-        this.y += y;
-        this.z += z;
-        return this;
+    public Vec3 asImmutable() {
+        return new Vec3(this.x, this.y, this.z);
     }
 
-    public double getX() {
-        return this.x;
+    @Override
+    public int hashCode() {
+        throw new IllegalStateException("Cannot hash mutable object");
     }
 
-    public double getY() {
-        return this.y;
+    public boolean isNull() {
+        return Double.isNaN(this.x);
     }
 
-    public double getZ() {
-        return this.z;
+    public Vec3d multiplyMutable(double x, double y, double z) {
+        return this.set(this.x * x, this.y * y, this.z * z);
     }
 
-    public Vec3d scale(double mult) {
-        this.x *= mult;
-        this.y *= mult;
-        this.z *= mult;
-        return this;
+    public Vec3d multiplyMutable(Vec3 vec) {
+        return this.multiplyMutable(vec.x, vec.y, vec.z);
+    }
+
+    @CanIgnoreReturnValue
+    public Vec3d scaleMutable(double scale) {
+        return this.multiplyMutable(scale, scale, scale);
+    }
+
+    public Vec3d set(Vec3 vec) {
+        return this.set(vec.x, vec.y, vec.z);
     }
 
     public Vec3d set(Vector3f vec) {
         return this.set(vec.x(), vec.y(), vec.z());
     }
 
-    public Vec3d set(Vec3d vec) {
-        return this.set(vec.x, vec.y, vec.z);
-    }
-
     public Vec3d set(double x, double y, double z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        ((IVec3Patch) this).setPosX(x);
+        ((IVec3Patch) this).setPosY(y);
+        ((IVec3Patch) this).setPosZ(z);
         return this;
     }
 
-    public Vec3d sub(double x, double y, double z) {
-        this.x -= x;
-        this.y -= y;
-        this.z -= z;
-        return this;
+    public Vec3d subMutable(Vec3 vec) {
+        return this.subMutable(vec.x, vec.y, vec.z);
     }
 
-    public Vec3d sub(Vec3d vec) {
-        return this.sub(vec.x, vec.y, vec.z);
+    public Vec3d subMutable(double x, double y, double z) {
+        return this.addMutable(-x, -y, -z);
     }
 }

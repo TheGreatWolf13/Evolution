@@ -21,6 +21,8 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
+import tgw.evolution.client.util.Key;
+import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.collection.OArrayList;
@@ -81,7 +83,7 @@ public class ScreenEditList extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(@Key int keyCode, int scanCode, @Modifiers int modifiers) {
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
             this.minecraft.setScreen(this.parent);
             return true;

@@ -25,7 +25,8 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.PacketDistributor;
-import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -39,7 +40,6 @@ import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.PacketSCMultiplayerPause;
 import tgw.evolution.patches.IMinecraftServerPatch;
 
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
@@ -166,7 +166,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             }
             this.profiler.push("tick");
             if (!this.isMultiplayerPaused) { //Added check for multiplayer pause
-                ForgeEventFactory.onPreWorldTick(level);
+                ForgeEventFactory.onPreWorldTick(level, booleanSupplier);
                 try {
                     level.tick(booleanSupplier);
                 }
@@ -175,7 +175,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
                     level.fillReportDetails(crashreport);
                     throw new ReportedException(crashreport);
                 }
-                ForgeEventFactory.onPostWorldTick(level);
+                ForgeEventFactory.onPostWorldTick(level, booleanSupplier);
             }
             this.profiler.pop();
             this.profiler.pop();
@@ -207,7 +207,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     @Overwrite
     public void tickServer(BooleanSupplier booleanSupplier) {
         long i = Util.getNanos();
-        ForgeEventFactory.onPreServerTick();
+        ForgeEventFactory.onPreServerTick(booleanSupplier);
         if (!this.isMultiplayerPaused) { //Added check for multiplayer pause
             ++this.tickCount;
         }
@@ -245,7 +245,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         long i1 = Util.getNanos();
         this.frameTimer.logFrameDuration(i1 - i);
         this.profiler.pop();
-        ForgeEventFactory.onPostServerTick();
+        ForgeEventFactory.onPostServerTick(booleanSupplier);
         this.wasPaused = this.isMultiplayerPaused; //Update wasPaused field
     }
 }

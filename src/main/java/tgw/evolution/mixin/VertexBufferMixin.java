@@ -35,8 +35,7 @@ public abstract class VertexBufferMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations
+     * @reason Avoid allocations
      */
     @Overwrite
     public void _drawWithShader(Matrix4f modelViewMatrix, Matrix4f projectionMatrix, ShaderInstance shader) {

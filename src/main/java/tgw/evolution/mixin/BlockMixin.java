@@ -5,7 +5,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import tgw.evolution.patches.IBlockPatch;
-import tgw.evolution.util.constants.HarvestLevels;
+import tgw.evolution.util.constants.HarvestLevel;
 
 @Mixin(Block.class)
 public abstract class BlockMixin extends BlockBehaviour implements IBlockPatch {
@@ -21,6 +21,6 @@ public abstract class BlockMixin extends BlockBehaviour implements IBlockPatch {
 
     @Override
     public int getHarvestLevel(BlockState state) {
-        return HarvestLevels.HAND;
+        return HarvestLevel.HAND;
     }
 }

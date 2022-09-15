@@ -10,7 +10,6 @@ import net.minecraftforge.common.util.INBTSerializable;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.constants.HarvestLevel;
-import tgw.evolution.util.constants.HarvestLevels;
 
 import java.util.List;
 
@@ -42,6 +41,10 @@ public interface IModular extends INBTSerializable<CompoundTag> {
     boolean isAxe();
 
     boolean isBroken();
+
+    boolean isHammer();
+
+    boolean isSword();
 
     boolean isTwoHanded();
 
@@ -86,7 +89,7 @@ public interface IModular extends INBTSerializable<CompoundTag> {
 
         @Override
         public int getHarvestLevel() {
-            return HarvestLevels.HAND;
+            return HarvestLevel.HAND;
         }
 
         @Override
@@ -111,6 +114,16 @@ public interface IModular extends INBTSerializable<CompoundTag> {
 
         @Override
         public boolean isBroken() {
+            return false;
+        }
+
+        @Override
+        public boolean isHammer() {
+            return false;
+        }
+
+        @Override
+        public boolean isSword() {
             return false;
         }
 

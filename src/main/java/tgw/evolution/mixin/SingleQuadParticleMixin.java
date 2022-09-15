@@ -81,8 +81,7 @@ public abstract class SingleQuadParticleMixin extends Particle {
 
     /**
      * @author JellySquid
-     * <p>
-     * Optimize function
+     * @reason Optimize function
      */
     @Override
     @Overwrite

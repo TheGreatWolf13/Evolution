@@ -28,8 +28,7 @@ public abstract class ForgeHooksClientMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations.
+     * @reason Avoid allocations.
      */
     @Overwrite
     public static BakedModel handleCameraTransforms(PoseStack matrices,

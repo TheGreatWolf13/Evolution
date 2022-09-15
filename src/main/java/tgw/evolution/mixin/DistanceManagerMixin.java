@@ -2,8 +2,10 @@ package tgw.evolution.mixin;
 
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.core.SectionPos;
@@ -38,6 +40,9 @@ public abstract class DistanceManagerMixin {
     ProcessorHandle<ChunkTaskPriorityQueueSorter.Release> ticketThrottlerReleaser;
     @Shadow
     @Final
+    Long2ObjectOpenHashMap<SortedArraySet<Ticket<?>>> tickets;
+    @Shadow
+    @Final
     LongSet ticketsToRelease;
     @Shadow
     @Final
@@ -46,11 +51,18 @@ public abstract class DistanceManagerMixin {
     @Final
     private DistanceManager.PlayerTicketTracker playerTicketManager;
     @Shadow
+    private long ticketTickCounter;
+    @Shadow
     @Final
     private DistanceManager.ChunkTicketTracker ticketTracker;
     @Shadow
     @Final
     private TickingTracker tickingTicketsTracker;
+
+    @Shadow
+    private static int getTicketLevelAt(SortedArraySet<Ticket<?>> p_140798_) {
+        throw new AbstractMethodError();
+    }
 
     /**
      * @author TheGreatWolf
@@ -76,6 +88,44 @@ public abstract class DistanceManagerMixin {
 
     @Shadow
     protected abstract SortedArraySet<Ticket<?>> getTickets(long p_140858_);
+
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid allocating memory for SortedArraySet
+     */
+    @Overwrite
+    protected void purgeStaleTickets() {
+        ++this.ticketTickCounter;
+        ObjectIterator<Long2ObjectMap.Entry<SortedArraySet<Ticket<?>>>> objectiterator = this.tickets.long2ObjectEntrySet().fastIterator();
+        while (objectiterator.hasNext()) {
+            Long2ObjectMap.Entry<SortedArraySet<Ticket<?>>> entry = objectiterator.next();
+            //Avoid iterator
+            SortedArraySet<Ticket<?>> value = entry.getValue();
+            boolean modified = false;
+            //Iterator fields
+            int index = 0;
+            int last = -1;
+            //while (iterator.hasNext())
+            while (index < value.size()) {
+                //Ticket<?> ticket = iterator.next()
+                last = index++;
+                Ticket<?> ticket = value.getInternal(last);
+                if (ticket.timedOut(this.ticketTickCounter)) {
+                    //iterator.remove();
+                    value.removeInternal(last);
+                    index--;
+                    modified = true;
+                    this.tickingTicketsTracker.removeTicket(entry.getLongKey(), ticket);
+                }
+            }
+            if (modified) {
+                this.ticketTracker.update(entry.getLongKey(), getTicketLevelAt(value), false);
+            }
+            if (value.isEmpty()) {
+                objectiterator.remove();
+            }
+        }
+    }
 
     /**
      * @author TheGreatWolf

@@ -56,7 +56,7 @@ public abstract class FrustumMixin {
      * @reason Avoid allocations.
      */
     @Overwrite
-    private boolean cubeInFrustum(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {
+    public boolean cubeInFrustum(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {
         for (int i = 0; i < 6; ++i) {
             Vector4f vec = this.frustumData[i];
             if (!(VectorUtil.dot(vec, minX, minY, minZ) > 0.0F) &&

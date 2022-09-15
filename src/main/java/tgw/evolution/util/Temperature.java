@@ -1,5 +1,6 @@
 package tgw.evolution.util;
 
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.earth.ClimateZone;
 import tgw.evolution.util.math.MathHelper;
 
@@ -38,7 +39,7 @@ public final class Temperature {
         return kelvin - 273.15;
     }
 
-    public static double getBaseTemperatureForRegion(ClimateZone.Region region) {
+    public static double getBaseTemperatureForRegion(@Nullable ClimateZone.Region region) {
         if (region == null) {
             return 0;
         }
@@ -103,7 +104,7 @@ public final class Temperature {
         return alpha << 24 | red << 16 | green << 8 | blue;
     }
 
-    public static short getMaxComfortForRegion(ClimateZone.Region region) {
+    public static short getMaxComfortForRegion(@Nullable ClimateZone.Region region) {
         if (region == null) {
             return 0;
         }
@@ -114,7 +115,7 @@ public final class Temperature {
         };
     }
 
-    public static short getMinComfortForRegion(ClimateZone.Region region) {
+    public static short getMinComfortForRegion(@Nullable ClimateZone.Region region) {
         if (region == null) {
             return 0;
         }

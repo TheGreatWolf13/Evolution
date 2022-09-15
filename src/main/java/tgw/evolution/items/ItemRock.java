@@ -15,7 +15,7 @@ import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketSCOpenKnappingGui;
 import tgw.evolution.util.constants.RockVariant;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ItemRock extends ItemGenericBlockPlaceable implements IRockVariant {

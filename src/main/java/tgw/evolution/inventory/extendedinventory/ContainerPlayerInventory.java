@@ -18,7 +18,9 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
+import tgw.evolution.capabilities.inventory.CapabilityInventory;
+import tgw.evolution.capabilities.inventory.IInventory;
+import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionContainers;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.ServerPlaceRecipeEv;
@@ -26,14 +28,13 @@ import tgw.evolution.inventory.SlotExtended;
 import tgw.evolution.items.IAdditionalEquipment;
 import tgw.evolution.patches.IAbstractContainerMenuPatch;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Optional;
 
 public class ContainerPlayerInventory extends RecipeBookMenu<CraftingContainer> {
 
     private static final EquipmentSlot[] VALID_EQUIPMENT_SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
-    public final IExtendedInventory handler;
+    public final IInventory handler;
     public final boolean isClientSide;
     private final CraftingContainer craftingContainer = new CraftingContainer(this, 2, 2);
     private final Player player;
@@ -44,7 +45,7 @@ public class ContainerPlayerInventory extends RecipeBookMenu<CraftingContainer> 
         this.player = inventory.player;
         ((IAbstractContainerMenuPatch) this).setPlayer(this.player);
         this.isClientSide = this.player.level.isClientSide;
-        this.handler = this.player.getCapability(CapabilityExtendedInventory.INSTANCE).orElseThrow(IllegalStateException::new);
+        this.handler = EvolutionCapabilities.getCapabilityOrThrow(this.player, CapabilityInventory.INSTANCE);
         //Crafting result slot
         this.addSlot(new ResultSlot(inventory.player, this.craftingContainer, this.resultContainer, 0, 161, 62));
         //Crafting slots
@@ -114,9 +115,9 @@ public class ContainerPlayerInventory extends RecipeBookMenu<CraftingContainer> 
                                                   Player player,
                                                   CraftingContainer craftingInventory,
                                                   ResultContainer resultInventory) {
-        if (!level.isClientSide) {
-            ServerPlayer serverPlayer = (ServerPlayer) player;
+        if (player instanceof ServerPlayer serverPlayer) {
             ItemStack stack = ItemStack.EMPTY;
+            //noinspection ConstantConditions
             Optional<CraftingRecipe> optional = level.getServer().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, craftingInventory, level);
             if (optional.isPresent()) {
                 CraftingRecipe recipe = optional.get();
@@ -155,7 +156,6 @@ public class ContainerPlayerInventory extends RecipeBookMenu<CraftingContainer> 
         return this.craftingContainer.getWidth();
     }
 
-    @Nonnull
     @Override
     public List<RecipeBookCategories> getRecipeBookCategories() {
         return Lists.newArrayList(RecipeBookCategories.CRAFTING_SEARCH,
@@ -189,7 +189,7 @@ public class ContainerPlayerInventory extends RecipeBookMenu<CraftingContainer> 
     public ItemStack quickMoveStack(Player player, int index) {
         ItemStack stack = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
-        if (slot != null && slot.hasItem()) {
+        if (slot.hasItem()) {
             ItemStack stackInSlot = slot.getItem();
             stack = stackInSlot.copy();
             EquipmentSlot equipmentSlotType = Mob.getEquipmentSlotForItem(stack);

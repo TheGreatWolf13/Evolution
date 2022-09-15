@@ -11,37 +11,38 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.config.ConfigTracker;
 import net.minecraftforge.fml.config.IConfigEvent;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketCSSyncServerConfig;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
-import tgw.evolution.util.reflection.FieldHandler;
-import tgw.evolution.util.reflection.FunctionMethodHandler;
 
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class ConfigHelper {
 
-    private static final FunctionMethodHandler<ModConfig, Void, CommentedConfig> MOD_CONFIG_SET_CONFIG_DATA =
-            new FunctionMethodHandler<>(ModConfig.class,
-                                        "setConfigData",
-                                        CommentedConfig.class);
-    private static final FieldHandler<ConfigTracker, ConcurrentHashMap<String, ModConfig>> CONFIG_MAP = new FieldHandler<>(ConfigTracker.class,
-                                                                                                                           "fileMap");
-    private static final FunctionMethodHandler<ModConfig, Void, IConfigEvent> MOD_CONFIG_FIRE_EVENT = new FunctionMethodHandler<>(ModConfig.class,
-                                                                                                                                  "fireEvent",
-                                                                                                                                  IConfigEvent.class);
+    private static final Method FIRE_EVENT = ObfuscationReflectionHelper.findMethod(ModConfig.class, "fireEvent", ModConfig.class,
+                                                                                    IConfigEvent.class);
+    private static final Method SET_CONFIG_DATA = ObfuscationReflectionHelper.findMethod(ModConfig.class, "setConfigData", ModConfig.class,
+                                                                                         CommentedConfig.class);
 
     private ConfigHelper() {
     }
 
     public static void fireEvent(ModConfig config, IConfigEvent event) {
-        MOD_CONFIG_FIRE_EVENT.call(config, event);
+        try {
+            FIRE_EVENT.invoke(config, event);
+        }
+        catch (IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalStateException("Could not invoke fireEvent method");
+        }
     }
 
     public static List<Pair<ForgeConfigSpec.ConfigValue<?>, ForgeConfigSpec.ValueSpec>> gatherAllConfigValues(ModConfig config) {
@@ -72,7 +73,7 @@ public final class ConfigHelper {
 
     @Nullable
     public static ModConfig getModConfig(String fileName) {
-        ConcurrentHashMap<String, ModConfig> configMap = CONFIG_MAP.get(ConfigTracker.INSTANCE);
+        ConcurrentHashMap<String, ModConfig> configMap = ConfigTracker.INSTANCE.fileMap();
         return configMap != null ? configMap.get(fileName) : null;
     }
 
@@ -107,7 +108,12 @@ public final class ConfigHelper {
     }
 
     public static void setConfigData(ModConfig config, @Nullable CommentedConfig configData) {
-        MOD_CONFIG_SET_CONFIG_DATA.call(config, configData);
+        try {
+            SET_CONFIG_DATA.invoke(config, configData);
+        }
+        catch (IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalStateException("Could not invoke setConfigData method");
+        }
         if (configData instanceof FileConfig) {
             config.save();
         }

@@ -10,16 +10,26 @@ import net.minecraft.world.level.material.Material;
 import tgw.evolution.capabilities.modular.IAttachmentType;
 import tgw.evolution.capabilities.modular.IGrabType;
 import tgw.evolution.capabilities.modular.IToolType;
+import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.items.modular.part.*;
+import tgw.evolution.util.collection.O2RMap;
+import tgw.evolution.util.collection.O2ROpenHashMap;
 
 public final class PartTypes {
 
     private PartTypes() {
     }
 
-    public enum Blade implements IAttachmentType<Blade> {
+    /**
+     * Used by Swords.<br>
+     * A sword has 4 parts: its {@link Blade}, its {@link Guard}, its {@link Hilt} and its {@link Pommel}.<br>
+     * A sword's guard and / or pommel are optional.<br>
+     */
+    public enum Blade implements IAttachmentType<Blade, ItemPartBlade, PartBlade> {
         NULL("null"),
-        ARMING_SWORD("arming_sword");
+        ARMING_SWORD("arming_sword"),
+        KNIFE("knife");
 
         public static final Blade[] VALUES = values();
         private static final Object2ReferenceMap<String, Blade> REGISTRY;
@@ -71,21 +81,38 @@ public final class PartTypes {
 
         @Override
         public double getVolume(ItemMaterial material) {
+            //TODO implementation
             return switch (this) {
                 case NULL -> 0;
                 case ARMING_SWORD -> 57.5;
+                case KNIFE -> Double.NaN;
             };
+        }
+
+        @Override
+        public boolean hasVariantIn(ItemMaterial material) {
+            return material.isAllowedBy(this);
         }
 
         @Override
         public boolean isTwoHanded() {
             return switch (this) {
-                case NULL, ARMING_SWORD -> false;
+                case NULL, ARMING_SWORD, KNIFE -> false;
             };
+        }
+
+        @Override
+        public ItemPartBlade partItem() {
+            return EvolutionItems.BLADE_PART.get();
         }
     }
 
-    public enum Guard implements IAttachmentType<Guard> {
+    /**
+     * Used by Swords.<br>
+     * A sword has 4 parts: its {@link Blade}, its {@link Guard}, its {@link Hilt} and its {@link Pommel}.<br>
+     * A sword's guard and / or pommel are optional.<br>
+     */
+    public enum Guard implements IAttachmentType<Guard, ItemPartGuard, PartGuard> {
         NULL("null"),
         CROSSGUARD("crossguard");
 
@@ -146,12 +173,28 @@ public final class PartTypes {
         }
 
         @Override
+        public boolean hasVariantIn(ItemMaterial material) {
+            return material.isAllowedBy(this);
+        }
+
+        @Override
         public boolean isTwoHanded() {
             return false;
         }
+
+        @Override
+        public ItemPartGuard partItem() {
+            return EvolutionItems.GUARD_PART.get();
+        }
     }
 
-    public enum HalfHead implements IToolType<HalfHead> {
+    /**
+     * Used by pole-arms.<br>
+     * A pole-arm has 4 parts: its {@link Head}, its left {@link HalfHead}, its right {@link HalfHead} and its {@link Pole}.<br>
+     * A pole-arm's head must be {@link Head#SPEAR}.<br>
+     * A pole-arm's left and / or right half-heads are optional.
+     */
+    public enum HalfHead implements IToolType<HalfHead, ItemPartHalfHead, PartHalfHead> {
         NULL("null", ReferenceSet.of()),
         AXE("axe", ReferenceSet.of(Material.WOOD)),
         HAMMER("hammer", ReferenceSet.of()),
@@ -216,19 +259,31 @@ public final class PartTypes {
         public double getVolume(ItemMaterial material) {
             return switch (this) {
                 case NULL -> 0;
-                case AXE -> Double.NaN;
-                case HAMMER -> Double.NaN;
-                case PICKAXE -> Double.NaN;
+                case AXE, PICKAXE, HAMMER -> Double.NaN;
             };
+        }
+
+        @Override
+        public boolean hasVariantIn(ItemMaterial material) {
+            return material.isAllowedBy(this);
         }
 
         @Override
         public boolean isTwoHanded() {
             return false;
         }
+
+        @Override
+        public ItemPartHalfHead partItem() {
+            return EvolutionItems.HALFHEAD_PART.get();
+        }
     }
 
-    public enum Handle implements IGrabType<Handle> {
+    /**
+     * Used by {@link tgw.evolution.items.modular.ItemModularTool}s.<br>
+     * A tool has 2 parts: its {@link Head} and its {@link Handle}.<br>
+     */
+    public enum Handle implements IGrabType<Handle, ItemPartHandle, PartHandle> {
         NULL("null"),
         ONE_HANDED("one_handed"),
         TWO_HANDED("two_handed");
@@ -303,15 +358,29 @@ public final class PartTypes {
         }
 
         @Override
+        public boolean hasVariantIn(ItemMaterial material) {
+            return material.isAllowedBy(this);
+        }
+
+        @Override
         public boolean isTwoHanded() {
             return switch (this) {
                 case NULL, ONE_HANDED -> false;
                 case TWO_HANDED -> true;
             };
         }
+
+        @Override
+        public ItemPartHandle partItem() {
+            return EvolutionItems.HANDLE_PART.get();
+        }
     }
 
-    public enum Head implements IToolType<Head> {
+    /**
+     * Used by {@link tgw.evolution.items.modular.ItemModularTool}s.<br>
+     * A tool has 2 parts: its {@link Head} and its {@link Handle}.<br>
+     */
+    public enum Head implements IToolType<Head, ItemPartHead, PartHead> {
         NULL("null", ReferenceSet.of()),
         AXE("axe", ReferenceSet.of(Material.WOOD)),
         HAMMER("hammer", ReferenceSet.of()),
@@ -325,10 +394,11 @@ public final class PartTypes {
         private static final Object2ReferenceMap<String, Head> REGISTRY;
 
         static {
-            Object2ReferenceMap<String, Head> map = new Object2ReferenceOpenHashMap<>();
+            O2RMap<String, Head> map = new O2ROpenHashMap<>();
             for (Head head : VALUES) {
                 map.put(head.name, head);
             }
+            map.trimCollection();
             REGISTRY = Object2ReferenceMaps.unmodifiable(map);
         }
 
@@ -388,9 +458,8 @@ public final class PartTypes {
             return switch (this) {
                 case NULL -> 0;
                 case AXE -> material.isStone() ? 58.5f : 58;
-                case HAMMER -> Double.NaN;
+                case HAMMER, MACE -> Double.NaN;
                 case HOE -> 48.5;
-                case MACE -> Double.NaN;
                 case PICKAXE -> 67.5;
                 case SHOVEL -> material.isStone() ? 20.5 : 19.5;
                 case SPEAR -> material.isStone() ? 28.5 : 28;
@@ -398,12 +467,27 @@ public final class PartTypes {
         }
 
         @Override
+        public boolean hasVariantIn(ItemMaterial material) {
+            return material.isAllowedBy(this);
+        }
+
+        @Override
         public boolean isTwoHanded() {
             return false;
         }
+
+        @Override
+        public ItemPartHead partItem() {
+            return EvolutionItems.HEAD_PART.get();
+        }
     }
 
-    public enum Hilt implements IGrabType<Hilt> {
+    /**
+     * Used by Swords.<br>
+     * A sword has 4 parts: its {@link Blade}, its {@link Guard}, its {@link Hilt} and its {@link Pommel}.<br>
+     * A sword's guard and / or pommel are optional.<br>
+     */
+    public enum Hilt implements IGrabType<Hilt, ItemPartHilt, PartHilt> {
         NULL("null"),
         ONE_HANDED("one_handed");
 
@@ -470,14 +554,30 @@ public final class PartTypes {
         }
 
         @Override
+        public boolean hasVariantIn(ItemMaterial material) {
+            return material.isAllowedBy(this);
+        }
+
+        @Override
         public boolean isTwoHanded() {
             return switch (this) {
                 case NULL, ONE_HANDED -> false;
             };
         }
+
+        @Override
+        public ItemPartHilt partItem() {
+            return EvolutionItems.HILT_PART.get();
+        }
     }
 
-    public enum Pole implements IGrabType<Pole> {
+    /**
+     * Used by pole-arms.<br>
+     * A pole-arm has 4 parts: its {@link Head}, its left {@link HalfHead}, its right {@link HalfHead} and its {@link Pole}.<br>
+     * A pole-arm's head must be {@link Head#SPEAR}.<br>
+     * A pole-arm's left and / or right half-heads are optional.
+     */
+    public enum Pole implements IGrabType<Pole, ItemPartPole, PartPole> {
         NULL("null");
 
         public static final Pole[] VALUES = values();
@@ -542,12 +642,27 @@ public final class PartTypes {
         }
 
         @Override
+        public boolean hasVariantIn(ItemMaterial material) {
+            return material.isAllowedBy(this);
+        }
+
+        @Override
         public boolean isTwoHanded() {
             return true;
         }
+
+        @Override
+        public ItemPartPole partItem() {
+            return EvolutionItems.POLE_PART.get();
+        }
     }
 
-    public enum Pommel implements IAttachmentType<Pommel> {
+    /**
+     * Used by Swords.<br>
+     * A sword has 4 parts: its {@link Blade}, its {@link Guard}, its {@link Hilt} and its {@link Pommel}.<br>
+     * A sword's guard and / or pommel are optional.<br>
+     */
+    public enum Pommel implements IAttachmentType<Pommel, ItemPartPommel, PartPommel> {
         NULL("null"),
         POMMEL("pommel");
 
@@ -610,8 +725,18 @@ public final class PartTypes {
         }
 
         @Override
+        public boolean hasVariantIn(ItemMaterial material) {
+            return material.isAllowedBy(this);
+        }
+
+        @Override
         public boolean isTwoHanded() {
             return false;
+        }
+
+        @Override
+        public ItemPartPommel partItem() {
+            return EvolutionItems.POMMEL_PART.get();
         }
     }
 }

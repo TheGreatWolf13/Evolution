@@ -4,6 +4,8 @@ import com.mojang.datafixers.util.Either;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.init.ItemMaterial;
 import tgw.evolution.util.constants.HarvestLevel;
@@ -14,19 +16,15 @@ public class MaterialInstance {
 
     public static final MaterialInstance DUMMY = new MaterialInstance(ItemMaterial.ANDESITE);
     private final ItemMaterial material;
-    private CompoundTag tag;
+    private @Nullable CompoundTag tag;
 
     public MaterialInstance(ItemMaterial material) {
         this.material = material;
     }
 
-    public static MaterialInstance fromNBT(CompoundTag nbt) {
-        ItemMaterial material = ItemMaterial.valueOf(nbt.getString("Material"));
-        return new MaterialInstance(material);
-    }
-
+    @Contract(pure = true, value = "_ -> new")
     public static MaterialInstance read(CompoundTag nbt) {
-        ItemMaterial material = ItemMaterial.byName(nbt.getString("Material"));
+        ItemMaterial material = ItemMaterial.byId(nbt.getByte("Material"));
         return new MaterialInstance(material);
     }
 
@@ -67,7 +65,7 @@ public class MaterialInstance {
         if (this.tag == null) {
             this.tag = new CompoundTag();
         }
-        this.tag.putString("Material", this.material.getName());
+        this.tag.putByte("Material", this.material.getId());
         return this.tag;
     }
 }

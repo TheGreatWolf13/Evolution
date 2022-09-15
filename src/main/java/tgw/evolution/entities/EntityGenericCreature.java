@@ -13,10 +13,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ForgeHooks;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.constants.EntityStates;
 
-public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> extends PathfinderMob implements IEntityProperties,
-                                                                                                                 IEvolutionEntity<T> {
+public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> extends PathfinderMob implements IEntityPatch<T> {
 
     protected static final EntityDataAccessor<Boolean> DEAD = SynchedEntityData.defineId(EntityGenericCreature.class, EntityDataSerializers.BOOLEAN);
     protected static final EntityDataAccessor<Boolean> SKELETON = SynchedEntityData.defineId(EntityGenericCreature.class,

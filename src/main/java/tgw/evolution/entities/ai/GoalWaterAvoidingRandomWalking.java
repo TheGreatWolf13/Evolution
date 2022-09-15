@@ -4,7 +4,7 @@ import net.minecraft.world.entity.ai.util.LandRandomPos;
 import net.minecraft.world.phys.Vec3;
 import tgw.evolution.entities.EntityGenericCreature;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class GoalWaterAvoidingRandomWalking extends GoalRandomWalking {
     protected final float probability;

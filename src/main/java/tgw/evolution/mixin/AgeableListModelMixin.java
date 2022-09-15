@@ -40,8 +40,7 @@ public abstract class AgeableListModelMixin extends EntityModel {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations
+     * @reason Avoid allocations
      */
     @Override
     @Overwrite

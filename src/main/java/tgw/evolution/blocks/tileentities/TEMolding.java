@@ -11,13 +11,13 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.MathHelper;
 
-import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 public class TEMolding extends BlockEntity {
@@ -223,6 +223,7 @@ public class TEMolding extends BlockEntity {
     public void sendRenderUpdate() {
         this.setChanged();
         this.hitbox = null;
+        assert this.level != null;
         this.level.sendBlockUpdated(this.worldPosition,
                                     this.level.getBlockState(this.worldPosition),
                                     this.level.getBlockState(this.worldPosition),
@@ -239,6 +240,7 @@ public class TEMolding extends BlockEntity {
     }
 
     private void spawnDrops(Supplier<Item> item, int count) {
+        assert this.level != null;
         Block.popResource(this.level, this.worldPosition, new ItemStack(item.get(), count));
         this.level.removeBlock(this.worldPosition, false);
     }

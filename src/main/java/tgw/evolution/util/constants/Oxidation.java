@@ -22,9 +22,9 @@ public enum Oxidation {
         switch (metal) {
             case COPPER -> {
                 return switch (this) {
-                    case NONE -> Time.MONTH_IN_TICKS;
-                    case EXPOSED -> 2L * Time.MONTH_IN_TICKS;
-                    case WEATHERED -> 3L * Time.MONTH_IN_TICKS;
+                    case NONE -> Time.TICKS_PER_MONTH;
+                    case EXPOSED -> 2L * Time.TICKS_PER_MONTH;
+                    case WEATHERED -> 3L * Time.TICKS_PER_MONTH;
                     case OXIDIZED -> throw new IllegalStateException("Cannot oxidize beyond the Oxidized state!");
                 };
             }

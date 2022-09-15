@@ -9,6 +9,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import org.jetbrains.annotations.Contract;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.items.*;
@@ -16,7 +17,6 @@ import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.items.modular.part.*;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.constants.WoodVariant;
-import tgw.evolution.util.math.MathHelper;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -76,16 +76,16 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> SCHEMATIC_BLOCK = ITEMS.register("schematic_block",
                                                                               () -> itemBlock(EvolutionBlocks.SCHEMATIC_BLOCK, propDev()));
     //Parts
-    public static final RegistryObject<Item> BLADE_PART = ITEMS.register("blade_part", () -> new ItemBladePart(propDev()));
-    public static final RegistryObject<Item> GUARD_PART = ITEMS.register("guard_part", () -> new ItemGuardPart(propDev()));
-    public static final RegistryObject<Item> HALFHEAD_PART = ITEMS.register("halfhead_part", () -> new ItemHalfHeadPart(propDev()));
-    public static final RegistryObject<Item> HANDLE_PART = ITEMS.register("handle_part", () -> new ItemHandlePart(propDev()));
-    public static final RegistryObject<Item> HEAD_PART = ITEMS.register("head_part", () -> new ItemHeadPart(propDev()));
-    public static final RegistryObject<Item> HILT_PART = ITEMS.register("hilt_part", () -> new ItemHiltPart(propDev()));
-    public static final RegistryObject<Item> POLE_PART = ITEMS.register("pole_part", () -> new ItemPolePart(propDev()));
-    public static final RegistryObject<Item> POMMEL_PART = ITEMS.register("pommel_part", () -> new ItemPommelPart(propDev()));
+    public static final RegistryObject<ItemPartBlade> BLADE_PART = ITEMS.register("blade_part", () -> new ItemPartBlade(propPartTool()));
+    public static final RegistryObject<ItemPartGuard> GUARD_PART = ITEMS.register("guard_part", () -> new ItemPartGuard(propPartTool()));
+    public static final RegistryObject<ItemPartHalfHead> HALFHEAD_PART = ITEMS.register("halfhead_part", () -> new ItemPartHalfHead(propPartTool()));
+    public static final RegistryObject<ItemPartHandle> HANDLE_PART = ITEMS.register("handle_part", () -> new ItemPartHandle(propPartTool()));
+    public static final RegistryObject<ItemPartHead> HEAD_PART = ITEMS.register("head_part", () -> new ItemPartHead(propPartTool()));
+    public static final RegistryObject<ItemPartHilt> HILT_PART = ITEMS.register("hilt_part", () -> new ItemPartHilt(propPartTool()));
+    public static final RegistryObject<ItemPartPole> POLE_PART = ITEMS.register("pole_part", () -> new ItemPartPole(propPartTool()));
+    public static final RegistryObject<ItemPartPommel> POMMEL_PART = ITEMS.register("pommel_part", () -> new ItemPartPommel(propPartTool()));
 
-    public static final RegistryObject<Item> MODULAR_TOOL = ITEMS.register("modular_tool", () -> new ItemModularTool(propDev()));
+    public static final RegistryObject<Item> MODULAR_TOOL = ITEMS.register("modular_tool", () -> new ItemModularTool(propPartTool()));
     //Stick
     public static final RegistryObject<Item> GLASS = ITEMS.register("glass", () -> itemBlock(EvolutionBlocks.GLASS.get()));
     public static final RegistryObject<Item> STICK = ITEMS.register("stick", () -> new ItemStick(EvolutionBlocks.STICK.get(), propTreesAndWood()));
@@ -138,29 +138,6 @@ public final class EvolutionItems {
     //Vegetation
     public static final RegistryObject<Item> GRASS = ITEMS.register("grass", () -> itemBlock(EvolutionBlocks.GRASS.get()));
     public static final RegistryObject<Item> TALLGRASS = ITEMS.register("tallgrass", () -> itemBlock(EvolutionBlocks.TALLGRASS.get()));
-    //Shovels
-    public static final RegistryObject<Item> shovel_andesite = ITEMS.register("shovel_andesite", () -> shovelStone(ItemMaterial.ANDESITE));
-    public static final RegistryObject<Item> shovel_basalt = ITEMS.register("shovel_basalt", () -> shovelStone(ItemMaterial.BASALT));
-    public static final RegistryObject<Item> shovel_chalk = ITEMS.register("shovel_chalk", () -> shovelStone(ItemMaterial.CHALK));
-    public static final RegistryObject<Item> shovel_chert = ITEMS.register("shovel_chert", () -> shovelStone(ItemMaterial.CHERT));
-    public static final RegistryObject<Item> shovel_conglomerate = ITEMS.register("shovel_conglomerate",
-                                                                                  () -> shovelStone(ItemMaterial.CONGLOMERATE));
-    public static final RegistryObject<Item> shovel_dacite = ITEMS.register("shovel_dacite", () -> shovelStone(ItemMaterial.DACITE));
-    public static final RegistryObject<Item> shovel_diorite = ITEMS.register("shovel_diorite", () -> shovelStone(ItemMaterial.DIORITE));
-    public static final RegistryObject<Item> shovel_dolomite = ITEMS.register("shovel_dolomite", () -> shovelStone(ItemMaterial.DOLOMITE));
-    public static final RegistryObject<Item> shovel_gabbro = ITEMS.register("shovel_gabbro", () -> shovelStone(ItemMaterial.GABBRO));
-    public static final RegistryObject<Item> shovel_gneiss = ITEMS.register("shovel_gneiss", () -> shovelStone(ItemMaterial.GNEISS));
-    public static final RegistryObject<Item> shovel_granite = ITEMS.register("shovel_granite", () -> shovelStone(ItemMaterial.GRANITE));
-    public static final RegistryObject<Item> shovel_limestone = ITEMS.register("shovel_limestone", () -> shovelStone(ItemMaterial.LIMESTONE));
-    public static final RegistryObject<Item> shovel_marble = ITEMS.register("shovel_marble", () -> shovelStone(ItemMaterial.MARBLE));
-    public static final RegistryObject<Item> shovel_phyllite = ITEMS.register("shovel_phyllite", () -> shovelStone(ItemMaterial.PHYLLITE));
-    public static final RegistryObject<Item> shovel_quartzite = ITEMS.register("shovel_quartzite", () -> shovelStone(ItemMaterial.QUARTZITE));
-    public static final RegistryObject<Item> shovel_red_sandstone = ITEMS.register("shovel_red_sandstone",
-                                                                                   () -> shovelStone(ItemMaterial.RED_SANDSTONE));
-    public static final RegistryObject<Item> shovel_sandstone = ITEMS.register("shovel_sandstone", () -> shovelStone(ItemMaterial.SANDSTONE));
-    public static final RegistryObject<Item> shovel_schist = ITEMS.register("shovel_schist", () -> shovelStone(ItemMaterial.SCHIST));
-    public static final RegistryObject<Item> shovel_shale = ITEMS.register("shovel_shale", () -> shovelStone(ItemMaterial.SHALE));
-    public static final RegistryObject<Item> shovel_slate = ITEMS.register("shovel_slate", () -> shovelStone(ItemMaterial.SLATE));
     //Planks
     public static final Map<WoodVariant, RegistryObject<Item>> ALL_PLANKS = make(WoodVariant.class, WoodVariant.VALUES, "planks_",
                                                                                  e -> () -> woodBlock(e.getPlanks()));
@@ -185,48 +162,6 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> INGOT_COPPER = ITEMS.register("ingot_copper", () -> new ItemIngot(propMetal()));
     //Metal Nuggets
     public static final RegistryObject<Item> NUGGET_COPPER = ITEMS.register("nugget_copper", () -> item(propMisc()));
-    //Shovel Heads
-    public static final RegistryObject<Item> shovel_head_andesite = ITEMS.register("shovel_head_andesite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_basalt = ITEMS.register("shovel_head_basalt", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_chalk = ITEMS.register("shovel_head_chalk", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_chert = ITEMS.register("shovel_head_chert", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_conglomerate = ITEMS.register("shovel_head_conglomerate", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_dacite = ITEMS.register("shovel_head_dacite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_diorite = ITEMS.register("shovel_head_diorite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_dolomite = ITEMS.register("shovel_head_dolomite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_gabbro = ITEMS.register("shovel_head_gabbro", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_gneiss = ITEMS.register("shovel_head_gneiss", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_granite = ITEMS.register("shovel_head_granite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_limestone = ITEMS.register("shovel_head_limestone", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_marble = ITEMS.register("shovel_head_marble", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_phyllite = ITEMS.register("shovel_head_phyllite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_quartzite = ITEMS.register("shovel_head_quartzite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_red_sandstone = ITEMS.register("shovel_head_red_sandstone", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_sandstone = ITEMS.register("shovel_head_sandstone", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_schist = ITEMS.register("shovel_head_schist", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_shale = ITEMS.register("shovel_head_shale", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> shovel_head_slate = ITEMS.register("shovel_head_slate", EvolutionItems::stoneHeads);
-    //Hammer Heads
-    public static final RegistryObject<Item> hammer_head_andesite = ITEMS.register("hammer_head_andesite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_basalt = ITEMS.register("hammer_head_basalt", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_chalk = ITEMS.register("hammer_head_chalk", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_chert = ITEMS.register("hammer_head_chert", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_conglomerate = ITEMS.register("hammer_head_conglomerate", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_dacite = ITEMS.register("hammer_head_dacite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_diorite = ITEMS.register("hammer_head_diorite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_dolomite = ITEMS.register("hammer_head_dolomite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_gabbro = ITEMS.register("hammer_head_gabbro", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_gneiss = ITEMS.register("hammer_head_gneiss", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_granite = ITEMS.register("hammer_head_granite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_limestone = ITEMS.register("hammer_head_limestone", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_marble = ITEMS.register("hammer_head_marble", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_phyllite = ITEMS.register("hammer_head_phyllite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_quartzite = ITEMS.register("hammer_head_quartzite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_red_sandstone = ITEMS.register("hammer_head_red_sandstone", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_sandstone = ITEMS.register("hammer_head_sandstone", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_schist = ITEMS.register("hammer_head_schist", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_shale = ITEMS.register("hammer_head_shale", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hammer_head_slate = ITEMS.register("hammer_head_slate", EvolutionItems::stoneHeads);
     //Torch
     public static final RegistryObject<Item> torch = ITEMS.register("torch", () -> new ItemTorch(propMisc()));
     public static final RegistryObject<Item> torch_unlit = ITEMS.register("torch_unlit", () -> new ItemTorchUnlit(propMisc()));
@@ -242,8 +177,6 @@ public final class EvolutionItems {
     //Plank
     public static final Map<WoodVariant, RegistryObject<Item>> ALL_PLANK = make(WoodVariant.class, WoodVariant.VALUES, "plank_",
                                                                                 e -> EvolutionItems::wood);
-    //Pickaxes
-    public static final RegistryObject<Item> pickaxe_copper = ITEMS.register("pickaxe_copper", () -> pickaxe(ItemMaterial.COPPER));
     //Chopping Blocks
     public static final Map<WoodVariant, RegistryObject<Item>> ALL_CHOPPING_BLOCK = make(WoodVariant.class, WoodVariant.VALUES, "chopping_block_",
                                                                                          e -> () -> woodBlock(e.getChoppingBlock()));
@@ -283,75 +216,10 @@ public final class EvolutionItems {
                                                                             () -> new ItemClayMolded(EvolutionBlocks.CRUCIBLE_CLAY, true));
     public static final RegistryObject<Item> straw = ITEMS.register("straw", () -> item(propMisc()));
     public static final RegistryObject<Item> fire_starter = ITEMS.register("fire_starter", ItemFireStarter::new);
-    //Hoe Heads
-    public static final RegistryObject<Item> hoe_head_andesite = ITEMS.register("hoe_head_andesite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_basalt = ITEMS.register("hoe_head_basalt", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_chalk = ITEMS.register("hoe_head_chalk", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_chert = ITEMS.register("hoe_head_chert", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_conglomerate = ITEMS.register("hoe_head_conglomerate", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_dacite = ITEMS.register("hoe_head_dacite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_diorite = ITEMS.register("hoe_head_diorite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_dolomite = ITEMS.register("hoe_head_dolomite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_gabbro = ITEMS.register("hoe_head_gabbro", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_gneiss = ITEMS.register("hoe_head_gneiss", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_granite = ITEMS.register("hoe_head_granite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_limestone = ITEMS.register("hoe_head_limestone", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_marble = ITEMS.register("hoe_head_marble", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_phyllite = ITEMS.register("hoe_head_phyllite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_quartzite = ITEMS.register("hoe_head_quartzite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_red_sandstone = ITEMS.register("hoe_head_red_sandstone", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_sandstone = ITEMS.register("hoe_head_sandstone", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_schist = ITEMS.register("hoe_head_schist", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_shale = ITEMS.register("hoe_head_shale", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> hoe_head_slate = ITEMS.register("hoe_head_slate", EvolutionItems::stoneHeads);
-    //Knife blades
-    public static final RegistryObject<Item> knife_blade_andesite = ITEMS.register("knife_blade_andesite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_basalt = ITEMS.register("knife_blade_basalt", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_chalk = ITEMS.register("knife_blade_chalk", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_chert = ITEMS.register("knife_blade_chert", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_conglomerate = ITEMS.register("knife_blade_conglomerate", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_dacite = ITEMS.register("knife_blade_dacite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_diorite = ITEMS.register("knife_blade_diorite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_dolomite = ITEMS.register("knife_blade_dolomite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_gabbro = ITEMS.register("knife_blade_gabbro", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_gneiss = ITEMS.register("knife_blade_gneiss", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_granite = ITEMS.register("knife_blade_granite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_limestone = ITEMS.register("knife_blade_limestone", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_marble = ITEMS.register("knife_blade_marble", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_phyllite = ITEMS.register("knife_blade_phyllite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_quartzite = ITEMS.register("knife_blade_quartzite", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_red_sandstone = ITEMS.register("knife_blade_red_sandstone", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_sandstone = ITEMS.register("knife_blade_sandstone", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_schist = ITEMS.register("knife_blade_schist", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_shale = ITEMS.register("knife_blade_shale", EvolutionItems::stoneHeads);
-    public static final RegistryObject<Item> knife_blade_slate = ITEMS.register("knife_blade_slate", EvolutionItems::stoneHeads);
     //Rope
     public static final RegistryObject<Item> rope = ITEMS.register("rope", () -> item(propMisc()));
     public static final RegistryObject<Item> climbing_stake = ITEMS.register("climbing_stake", () -> itemBlock(EvolutionBlocks.CLIMBING_STAKE.get()));
     public static final RegistryObject<Item> climbing_hook = ITEMS.register("climbing_hook", ItemClimbingHook::new);
-    //Hammer
-    public static final RegistryObject<Item> hammer_andesite = ITEMS.register("hammer_andesite", () -> hammerStone(ItemMaterial.ANDESITE));
-    public static final RegistryObject<Item> hammer_basalt = ITEMS.register("hammer_basalt", () -> hammerStone(ItemMaterial.BASALT));
-    public static final RegistryObject<Item> hammer_chalk = ITEMS.register("hammer_chalk", () -> hammerStone(ItemMaterial.CHALK));
-    public static final RegistryObject<Item> hammer_chert = ITEMS.register("hammer_chert", () -> hammerStone(ItemMaterial.CHERT));
-    public static final RegistryObject<Item> hammer_conglomerate = ITEMS.register("hammer_conglomerate",
-                                                                                  () -> hammerStone(ItemMaterial.CONGLOMERATE));
-    public static final RegistryObject<Item> hammer_dacite = ITEMS.register("hammer_dacite", () -> hammerStone(ItemMaterial.DACITE));
-    public static final RegistryObject<Item> hammer_diorite = ITEMS.register("hammer_diorite", () -> hammerStone(ItemMaterial.DIORITE));
-    public static final RegistryObject<Item> hammer_dolomite = ITEMS.register("hammer_dolomite", () -> hammerStone(ItemMaterial.DOLOMITE));
-    public static final RegistryObject<Item> hammer_gabbro = ITEMS.register("hammer_gabbro", () -> hammerStone(ItemMaterial.GABBRO));
-    public static final RegistryObject<Item> hammer_gneiss = ITEMS.register("hammer_gneiss", () -> hammerStone(ItemMaterial.GNEISS));
-    public static final RegistryObject<Item> hammer_granite = ITEMS.register("hammer_granite", () -> hammerStone(ItemMaterial.GRANITE));
-    public static final RegistryObject<Item> hammer_limestone = ITEMS.register("hammer_limestone", () -> hammerStone(ItemMaterial.LIMESTONE));
-    public static final RegistryObject<Item> hammer_marble = ITEMS.register("hammer_marble", () -> hammerStone(ItemMaterial.MARBLE));
-    public static final RegistryObject<Item> hammer_phyllite = ITEMS.register("hammer_phyllite", () -> hammerStone(ItemMaterial.PHYLLITE));
-    public static final RegistryObject<Item> hammer_quartzite = ITEMS.register("hammer_quartzite", () -> hammerStone(ItemMaterial.QUARTZITE));
-    public static final RegistryObject<Item> hammer_red_sandstone = ITEMS.register("hammer_red_sandstone",
-                                                                                   () -> hammerStone(ItemMaterial.RED_SANDSTONE));
-    public static final RegistryObject<Item> hammer_sandstone = ITEMS.register("hammer_sandstone", () -> hammerStone(ItemMaterial.SANDSTONE));
-    public static final RegistryObject<Item> hammer_schist = ITEMS.register("hammer_schist", () -> hammerStone(ItemMaterial.SCHIST));
-    public static final RegistryObject<Item> hammer_shale = ITEMS.register("hammer_shale", () -> hammerStone(ItemMaterial.SHALE));
-    public static final RegistryObject<Item> hammer_slate = ITEMS.register("hammer_slate", () -> hammerStone(ItemMaterial.SLATE));
     //Stone Bricks
     public static final Map<RockVariant, RegistryObject<Item>> ALL_STONE_BRICKS = make(RockVariant.class, RockVariant.VALUES_STONE, "stone_bricks_",
                                                                                        e -> () -> itemBlock(e.getStoneBricks()));
@@ -367,14 +235,12 @@ public final class EvolutionItems {
                                                                                           () -> bucketCreative(EvolutionFluids.FRESH_WATER));
     public static final RegistryObject<Item> bucket_creative_salt_water = ITEMS.register("bucket_creative_salt_water",
                                                                                          () -> bucketCreative(EvolutionFluids.SALT_WATER));
-    public static final RegistryObject<Item> sword_dev = ITEMS.register("sword_dev",
-                                                                        () -> new ItemSword(MathHelper.attackSpeed(0.7f), ItemMaterial.COPPER,
-                                                                                            propDev(), ItemMaterial.COPPER.getSwordMass()));
     public static final RegistryObject<Item> shield_dev = ITEMS.register("shield_dev", () -> new ItemShield(propDev().durability(400)));
 
     private EvolutionItems() {
     }
 
+    @Contract(pure = true, value = "_ -> new")
     private static Item bucketCeramic(Supplier<? extends Fluid> fluid) {
         if (fluid instanceof RegistryObject) {
             return new ItemBucketCeramic(fluid, propLiquid().stacksTo(1));
@@ -382,6 +248,7 @@ public final class EvolutionItems {
         return new ItemBucketCeramic(fluid, propLiquid().stacksTo(fluid.get() == Fluids.EMPTY ? 16 : 1));
     }
 
+    @Contract(pure = true, value = "_ -> new")
     private static Item bucketCreative(Supplier<? extends Fluid> fluid) {
         if (fluid instanceof RegistryObject) {
             return new ItemBucketCreative(fluid, propLiquid().stacksTo(1));
@@ -389,22 +256,22 @@ public final class EvolutionItems {
         return new ItemBucketCreative(fluid, propLiquid().stacksTo(fluid.get() == Fluids.EMPTY ? 16 : 1));
     }
 
-    private static Item hammerStone(ItemMaterial tier) {
-        return new ItemHammer(tier, MathHelper.attackSpeed(1.25F), propPartTool(), tier.getHammerMass());
-    }
-
+    @Contract(pure = true, value = "_ -> new")
     private static Item item(Item.Properties prop) {
         return new ItemEv(prop);
     }
 
+    @Contract(pure = true, value = "_ -> new")
     private static Item itemBlock(Block block) {
         return new ItemBlock(block, propMisc());
     }
 
+    @Contract(pure = true, value = "_, _ -> new")
     private static Item itemBlock(RegistryObject<Block> block, Item.Properties prop) {
         return new ItemBlock(block.get(), prop);
     }
 
+    @Contract(pure = true, value = "_, _, _, _ -> new")
     private static <E extends Enum<E> & IVariant> Map<E, RegistryObject<Item>> make(Class<E> clazz,
                                                                                     E[] values,
                                                                                     String name,
@@ -416,34 +283,37 @@ public final class EvolutionItems {
         return Maps.immutableEnumMap(map);
     }
 
-    private static Item pickaxe(ItemMaterial tier) {
-        return new ItemPickaxe(tier, MathHelper.attackSpeed(0.85F), propMisc(), tier.getPickaxeMass());
-    }
-
+    @Contract(pure = true, value = " -> new")
     public static Item.Properties propDev() {
         return new Item.Properties().tab(EvolutionCreativeTabs.DEV);
     }
 
+    @Contract(pure = true, value = " -> new")
     public static Item.Properties propEgg() {
         return new Item.Properties().tab(EvolutionCreativeTabs.EGGS);
     }
 
+    @Contract(pure = true, value = " -> new")
     public static Item.Properties propLiquid() {
         return new Item.Properties().tab(EvolutionCreativeTabs.LIQUIDS);
     }
 
+    @Contract(pure = true, value = " -> new")
     public static Item.Properties propMetal() {
         return new Item.Properties().tab(EvolutionCreativeTabs.METAL);
     }
 
+    @Contract(pure = true, value = " -> new")
     public static Item.Properties propMisc() {
         return new Item.Properties().tab(EvolutionCreativeTabs.MISC);
     }
 
+    @Contract(pure = true, value = " -> new")
     public static Item.Properties propPartTool() {
         return new Item.Properties().tab(EvolutionCreativeTabs.PARTS_AND_TOOLS);
     }
 
+    @Contract(pure = true, value = " -> new")
     public static Item.Properties propTreesAndWood() {
         return new Item.Properties().tab(EvolutionCreativeTabs.TREES_AND_WOOD);
     }
@@ -452,18 +322,12 @@ public final class EvolutionItems {
         ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
     }
 
-    private static Item shovelStone(ItemMaterial tier) {
-        return new ItemShovel(tier, MathHelper.attackSpeed(1.0F), propPartTool(), tier.getShovelMass());
-    }
-
-    private static Item stoneHeads() {
-        return new ItemEv(propPartTool().stacksTo(16));
-    }
-
+    @Contract(pure = true, value = " -> new")
     private static Item wood() {
         return new ItemEv(propTreesAndWood());
     }
 
+    @Contract(pure = true, value = "_ -> new")
     private static Item woodBlock(Block block) {
         return new ItemBlock(block, propTreesAndWood());
     }

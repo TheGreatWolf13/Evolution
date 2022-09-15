@@ -2,13 +2,23 @@ package tgw.evolution.items.modular.part;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.mojang.datafixers.util.Either;
 import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import tgw.evolution.capabilities.SerializableCapabilityProvider;
+import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.part.IPart;
 import tgw.evolution.capabilities.modular.part.IPartType;
 import tgw.evolution.init.ItemMaterial;
@@ -17,30 +27,30 @@ import tgw.evolution.items.IDurability;
 import tgw.evolution.items.IMass;
 import tgw.evolution.items.ItemEv;
 
-public abstract class ItemPart<T extends IPartType<T>, P extends IPart<T>> extends ItemEv implements IDurability, IMass {
+import java.util.List;
+
+public abstract class ItemPart<T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>> extends ItemEv
+        implements IDurability, IMass {
 
     public ItemPart(Properties properties) {
         super(properties);
     }
 
     @Override
-    public boolean canBeDepleted() {
+    public final boolean canBeDepleted() {
         return true;
     }
 
-    public abstract IPart<T> createNew();
+    protected abstract P createNew();
 
     @Override
-    public void fillItemCategory(CreativeModeTab tab, NonNullList<ItemStack> items) {
+    public final void fillItemCategory(CreativeModeTab tab, NonNullList<ItemStack> items) {
         if (this.allowdedIn(tab)) {
             for (T t : this.iterable()) {
                 for (ItemMaterial material : ItemMaterial.VALUES) {
-                    if (this.isAllowedBy(t, material)) {
+                    if (t.hasVariantIn(material)) {
                         //noinspection ObjectAllocationInLoop
-                        ItemStack stack = new ItemStack(this);
-                        P part = this.getPartCap(stack);
-                        this.setupNewPart(part, t, material);
-                        items.add(stack);
+                        items.add(this.newStack(t, material));
                     }
                 }
             }
@@ -48,52 +58,52 @@ public abstract class ItemPart<T extends IPartType<T>, P extends IPart<T>> exten
     }
 
     @Override
-    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
+    public final Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
         ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
         this.putMassAttributes(builder, stack, SlotType.byEquipment(slot));
         return builder.build();
     }
 
     @Override
-    public int getBarColor(ItemStack stack) {
+    public final int getBarColor(ItemStack stack) {
         int maxDamage = stack.getMaxDamage();
         float f = Math.max(0.0F, (maxDamage - stack.getDamageValue()) / (float) maxDamage);
         return Mth.hsvToRgb(f / 3.0F, 1.0F, 1.0F);
     }
 
     @Override
-    public int getBarWidth(ItemStack stack) {
+    public final int getBarWidth(ItemStack stack) {
         return Math.round(13.0F - stack.getDamageValue() * 13.0F / stack.getMaxDamage());
     }
 
-    public abstract String getCapName();
+    protected abstract String getCapName();
 
     @Override
-    public int getDamage(ItemStack stack) {
+    public final int getDamage(ItemStack stack) {
         if (!this.canBeDepleted()) {
             return 0;
         }
-        IPart<T> part = this.getPartCap(stack);
+        IPart<T, I, P> part = this.getPartCap(stack);
         return part.getDurabilityDmg();
     }
 
     @Override
-    public String getDescriptionId(ItemStack stack) {
+    public final String getDescriptionId(ItemStack stack) {
         return this.getPartCap(stack).getDescriptionId();
     }
 
     @Override
-    public int getItemStackLimit(ItemStack stack) {
+    public final int getItemStackLimit(ItemStack stack) {
         return 1;
     }
 
     @Override
-    public double getMass(ItemStack stack) {
+    public final double getMass(ItemStack stack) {
         return this.getPartCap(stack).getMass();
     }
 
     @Override
-    public int getMaxDamage(ItemStack stack) {
+    public final int getMaxDamage(ItemStack stack) {
         if (!this.canBeDepleted()) {
             return 0;
         }
@@ -102,11 +112,24 @@ public abstract class ItemPart<T extends IPartType<T>, P extends IPart<T>> exten
         return part.isBroken() ? durability + 1 : durability;
     }
 
-    public abstract P getPartCap(ItemStack stack);
+    protected abstract P getPartCap(ItemStack stack);
 
-    protected abstract boolean isAllowedBy(T t, ItemMaterial material);
+    @Override
+    public final @NotNull ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) {
+        return new SerializableCapabilityProvider<>(CapabilityModular.PART, this.createNew());
+    }
 
     protected abstract T[] iterable();
 
-    protected abstract void setupNewPart(P part, T t, ItemMaterial material);
+    public final void makeTooltip(List<Either<FormattedText, TooltipComponent>> tooltip, ItemStack stack, int num) {
+        P partCap = this.getPartCap(stack);
+        partCap.appendText(tooltip, num);
+    }
+
+    @Contract(pure = true, value = "_, _ -> new")
+    public final ItemStack newStack(T type, ItemMaterial material) {
+        ItemStack stack = new ItemStack(this);
+        this.getPartCap(stack).init(type, material);
+        return stack;
+    }
 }

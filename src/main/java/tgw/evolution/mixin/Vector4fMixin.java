@@ -23,8 +23,7 @@ public abstract class Vector4fMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations
+     * @reason Avoid allocations
      */
     @Overwrite
     public void transform(Quaternion quaternion) {

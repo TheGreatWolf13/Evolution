@@ -20,27 +20,24 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.common.ForgeMod;
-import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11C;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
-import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ClientEvents;
-import tgw.evolution.items.IOffhandAttackable;
 import tgw.evolution.patches.IGameRendererPatch;
 import tgw.evolution.util.collection.I2OMap;
 import tgw.evolution.util.collection.I2OOpenHashMap;
 import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Vec3d;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Locale;
 
@@ -56,7 +53,7 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
     private static Logger LOGGER;
     private final I2OMap<PostChain> postEffects = new I2OOpenHashMap<>();
     @Shadow
-    private boolean effectActive;
+    public boolean effectActive;
     @Shadow
     private int effectIndex;
     @Shadow
@@ -128,9 +125,7 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
 
     @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
     private void onBobView(PoseStack matrices, float partialTicks, CallbackInfo ci) {
-        if (EvolutionConfig.CLIENT.firstPersonRenderer.get()) {
-            ci.cancel();
-        }
+        ci.cancel();
     }
 
     @Inject(method = "<init>", at = @At("TAIL"))
@@ -149,14 +144,14 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
             //noinspection VariableNotUsedInsideIf
             if (this.minecraft.level != null) {
                 this.minecraft.getProfiler().push("pick");
-                double reachDistance = this.minecraft.player.getAttribute(ForgeMod.REACH_DISTANCE.get()).getValue();
-                Vec3 cameraPos = MathHelper.getCameraPosition(entity, partialTicks);
+                double reachDistance = this.minecraft.player.getAttributeValue(ForgeMod.REACH_DISTANCE.get());
+                Vec3d cameraPos = MathHelper.getCameraPosition(entity, partialTicks);
                 ClientEvents.getInstance().setCameraPos(cameraPos);
                 this.minecraft.hitResult = MathHelper.rayTraceBlocksFromCamera(entity, cameraPos, partialTicks, reachDistance, false);
                 if (this.minecraft.hitResult.getType() == HitResult.Type.BLOCK) {
                     reachDistance = cameraPos.distanceTo(this.minecraft.hitResult.getLocation());
                 }
-                EntityHitResult leftRayTrace = MathHelper.rayTraceOBBEntityFromEyes(this.minecraft.player, cameraPos, partialTicks, reachDistance);
+                EntityHitResult leftRayTrace = MathHelper.rayTraceEntitiesFromEyes(this.minecraft.player, cameraPos, partialTicks, reachDistance);
                 if (leftRayTrace != null) {
                     this.minecraft.hitResult = leftRayTrace;
                     this.minecraft.crosshairPickEntity = leftRayTrace.getEntity();
@@ -168,22 +163,14 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
                     ClientEvents.getInstance().leftRayTrace = null;
                     ClientEvents.getInstance().leftPointedEntity = null;
                 }
-                ItemStack offhandStack = this.minecraft.player.getOffhandItem();
-                if (offhandStack.getItem() instanceof IOffhandAttackable) {
-                    EntityHitResult rightRayTrace = MathHelper.rayTraceOBBEntityFromEyes(this.minecraft.player, cameraPos, partialTicks,
-                                                                                         reachDistance);
-                    ClientEvents.getInstance().rightPointedEntity = rightRayTrace == null ? null : rightRayTrace.getEntity();
-                    ClientEvents.getInstance().rightRayTrace = rightRayTrace;
-                }
-                else {
-                    ClientEvents.getInstance().rightRayTrace = null;
-                    ClientEvents.getInstance().rightPointedEntity = null;
-                }
+                ClientEvents.getInstance().rightRayTrace = null;
+                ClientEvents.getInstance().rightPointedEntity = null;
                 this.minecraft.getProfiler().pop();
             }
         }
     }
 
+    @Nullable
     @Redirect(method = "shouldRenderBlockOutline", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getCameraEntity()" +
                                                                                        "Lnet/minecraft/world/entity/Entity;"))
     private Entity proxyShouldRenderBlockOutline(Minecraft mc) {

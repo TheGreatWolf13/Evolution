@@ -14,6 +14,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -36,7 +37,7 @@ public abstract class ServerPlayerMixin extends Player implements IServerPlayerP
     @Final
     public MinecraftServer server;
     private boolean cameraUnload;
-    private SectionPos lastCameraSectionPos;
+    private @Nullable SectionPos lastCameraSectionPos;
     @Shadow
     private int spawnInvulnerableTime;
 
@@ -50,7 +51,7 @@ public abstract class ServerPlayerMixin extends Player implements IServerPlayerP
     }
 
     @Override
-    public SectionPos getLastCameraSectionPos() {
+    public @Nullable SectionPos getLastCameraSectionPos() {
         return this.lastCameraSectionPos;
     }
 

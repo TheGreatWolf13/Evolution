@@ -18,7 +18,7 @@ public class PacketCSPlayerAttack implements IPacket {
     private final double rayTraceHeight;
 
     public PacketCSPlayerAttack(EntityAccess entity, InteractionHand hand, double rayTraceHeight) {
-        this(entity != null ? entity.getId() : -1, hand, rayTraceHeight);
+        this(entity.getId(), hand, rayTraceHeight);
     }
 
     private PacketCSPlayerAttack(int entityId, InteractionHand hand, double rayTraceHeight) {

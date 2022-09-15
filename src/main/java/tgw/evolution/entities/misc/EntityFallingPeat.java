@@ -16,18 +16,17 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.entity.IEntityAdditionalSpawnData;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.BlockPeat;
 import tgw.evolution.blocks.IReplaceable;
-import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionEntities;
+import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.hitbox.HitboxEntity;
 
-import javax.annotation.Nullable;
-
-public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnData, IEvolutionEntity<EntityFallingPeat> {
+public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnData, IEntityPatch<EntityFallingPeat> {
 
     public static final EntityDimensions[] DIMENSIONS = {EntityDimensions.scalable(1.0f, 0.25f),
                                                          EntityDimensions.scalable(1.0f, 0.5f),
@@ -37,12 +36,11 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     private boolean isSizeCorrect;
     private int layers;
     private int mass = 289;
+    @Nullable
     private BlockPos prevPos;
-
     public EntityFallingPeat(EntityType<EntityFallingPeat> type, Level level) {
         super(type, level);
     }
-
     public EntityFallingPeat(Level level, double x, double y, double z, int layers) {
         super(EvolutionEntities.FALLING_PEAT.get(), level);
         this.blocksBuilding = true;
@@ -55,7 +53,6 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
         this.mass = 289 * this.layers;
         this.prevPos = this.blockPosition();
     }
-
     public EntityFallingPeat(PlayMessages.SpawnEntity spawnEntity, Level level) {
         this(EvolutionEntities.FALLING_PEAT.get(), level);
     }
@@ -81,15 +78,14 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
         return false;
     }
 
-    //TODO
-//    @Override
-//    public boolean func_241845_aY() {
-//        return this.isAlive();
-//    }
-
     @Override
     public Packet<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    @Override
+    public double getBaseMass() {
+        return this.mass;
     }
 
     public BlockState getBlockState() {
@@ -101,15 +97,25 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
         return DIMENSIONS[this.layers - 1];
     }
 
-    @Nullable
+    //TODO
+//    @Override
+//    public boolean func_241845_aY() {
+//        return this.isAlive();
+//    }
+
     @Override
-    public HitboxEntity<EntityFallingPeat> getHitbox() {
+    public float getFrictionModifier() {
+        return 2.0f;
+    }
+
+    @Override
+    public @Nullable HitboxEntity<EntityFallingPeat> getHitboxes() {
         return null;
     }
 
     @Override
-    public boolean hasHitboxes() {
-        return false;
+    public double getLegSlowdown() {
+        return 0;
     }
 
     @Override

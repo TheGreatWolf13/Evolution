@@ -25,7 +25,7 @@ import tgw.evolution.blocks.IFluidLoggable;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.stream.Stream;
 
 @Mixin(LevelChunk.class)

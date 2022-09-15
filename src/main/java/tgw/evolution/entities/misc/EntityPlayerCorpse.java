@@ -15,6 +15,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -37,66 +38,63 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
-import tgw.evolution.capabilities.inventory.CapabilityExtendedInventory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import tgw.evolution.capabilities.inventory.CapabilityInventory;
+import tgw.evolution.capabilities.inventory.IInventory;
 import tgw.evolution.entities.EntityPlayerDummy;
 import tgw.evolution.entities.EntitySkeletonDummy;
-import tgw.evolution.entities.IEntityProperties;
-import tgw.evolution.entities.IEvolutionEntity;
+import tgw.evolution.entities.EntityUtils;
+import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.inventory.corpse.ContainerCorpseProvider;
-import tgw.evolution.inventory.extendedinventory.IExtendedInventory;
+import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.patches.ISynchedEntityDataPatch;
 import tgw.evolution.util.EvolutionDataSerializers;
 import tgw.evolution.util.constants.NBTHelper;
 import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.hitbox.HitboxEntity;
-import tgw.evolution.util.reflection.StaticFieldHandler;
 import tgw.evolution.util.time.Time;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.UUID;
 
-public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawnData, IEntityProperties, IEvolutionEntity<EntityPlayerCorpse> {
+public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawnData, IEntityPatch<EntityPlayerCorpse> {
 
     public static final EntityDataAccessor<Boolean> SKELETON = SynchedEntityData.defineId(EntityPlayerCorpse.class, EntityDataSerializers.BOOLEAN);
-    private static final StaticFieldHandler<Player, EntityDataAccessor<Byte>> DATA_PLAYER_MODE_CUSTOMIZATION = new StaticFieldHandler<>(Player.class,
-                                                                                                                                        "f_36089_");
     private static final EntityDataAccessor<NonNullList<ItemStack>> EQUIPMENT = SynchedEntityData.defineId(EntityPlayerCorpse.class,
                                                                                                            EvolutionDataSerializers.ITEM_LIST);
-    private static GameProfileCache profileCache;
-    private static MinecraftSessionService sessionService;
+    private static @Nullable GameProfileCache profileCache;
+    private static @Nullable MinecraftSessionService sessionService;
     private final ItemStackHandler itemHandler = new ItemStackHandler(49) {
-        @Nonnull
         @Override
-        public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
+        public @NotNull ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
             return stack;
         }
 
         @Override
-        public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
+        public boolean isItemValid(int slot, ItemStack stack) {
             return false;
         }
     };
     private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> this.itemHandler);
     private final IntSet playersInteracting = new IntOpenHashSet();
-    private Component deathMessage;
+    private Component deathMessage = EvolutionTexts.EMPTY;
     private int deathTimer;
     private long gameDeathTime;
     private boolean isSkeleton;
     private long lastTick;
     private byte model;
-    private EntityPlayerDummy player;
-    private String playerName;
-    private GameProfile playerProfile;
-    private UUID playerUUID;
+    private @Nullable EntityPlayerDummy player;
+    private String playerName = "";
+    private @Nullable GameProfile playerProfile;
+    private UUID playerUUID = EntityUtils.UUID_ZERO;
     private int selected;
-    private EntitySkeletonDummy skeleton;
+    private @Nullable EntitySkeletonDummy skeleton;
     private long systemDeathTime;
-
     public EntityPlayerCorpse(Player player) {
         this(EvolutionEntities.PLAYER_CORPSE.get(), player.level);
         double x = player.getX();
@@ -111,7 +109,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         this.playerName = player.getScoreboardName();
         this.setYRot(player.getYRot());
         this.setPlayerProfile(player.getGameProfile());
-        this.model = player.getEntityData().get(DATA_PLAYER_MODE_CUSTOMIZATION.get());
+        this.model = player.getEntityData().get(Player.DATA_PLAYER_MODE_CUSTOMISATION);
         if (player.getMainArm() == HumanoidArm.RIGHT) {
             this.model |= 1 << 7;
         }
@@ -120,7 +118,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         for (EquipmentSlot slot : AdditionalSlotType.SLOTS) {
             equip.set(i++, player.getItemBySlot(slot).copy());
         }
-        IExtendedInventory additionalEquip = player.getCapability(CapabilityExtendedInventory.INSTANCE).orElseThrow(IllegalStateException::new);
+        IInventory additionalEquip = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityInventory.INSTANCE);
         for (AdditionalSlotType slot : AdditionalSlotType.VALUES) {
             equip.set(i++, additionalEquip.getStackInSlot(slot.ordinal()).copy());
         }
@@ -150,7 +148,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         sessionService = sessionServiceIn;
     }
 
-    public static GameProfile updateGameProfile(GameProfile input) {
+    public static @Nullable GameProfile updateGameProfile(@Nullable GameProfile input) {
         if (input != null && !Strings.isNullOrEmpty(input.getName())) {
             if (input.isComplete() && input.getProperties().containsKey("textures")) {
                 return input;
@@ -183,10 +181,10 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         compound.putString("DeathMessage", Component.Serializer.toJson(this.deathMessage));
         compound.put("Equipment", NBTHelper.writeStackList(this.entityData.get(EQUIPMENT)));
         compound.putByte("Selected", (byte) this.selected);
-        if (this.playerUUID != null) {
+        if (this.playerUUID != EntityUtils.UUID_ZERO) {
             compound.putUUID("PlayerUUID", this.playerUUID);
         }
-        if (this.playerName != null) {
+        if (!this.playerName.isBlank()) {
             compound.putString("PlayerName", this.playerName);
         }
     }
@@ -207,9 +205,8 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         return 70;
     }
 
-    @Nonnull
     @Override
-    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
+    public <T> @NotNull LazyOptional<T> getCapability(Capability<T> cap, @Nullable Direction side) {
         if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
             return this.handler.cast();
         }
@@ -233,9 +230,8 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         return this.gameDeathTime;
     }
 
-    @Nullable
     @Override
-    public HitboxEntity<EntityPlayerCorpse> getHitbox() {
+    public @Nullable HitboxEntity<EntityPlayerCorpse> getHitboxes() {
         return null;
     }
 
@@ -263,12 +259,11 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         return null;
     }
 
-    @Nullable
-    public GameProfile getPlayerProfile() {
+    public @Nullable GameProfile getPlayerProfile() {
         return this.playerProfile;
     }
 
-    public UUID getPlayerUUID() {
+    public @Nullable UUID getPlayerUUID() {
         return this.playerUUID;
     }
 
@@ -292,11 +287,6 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
 
     public long getSystemDeathTime() {
         return this.systemDeathTime;
-    }
-
-    @Override
-    public boolean hasHitboxes() {
-        return false;
     }
 
     @Override
@@ -365,7 +355,8 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         this.entityData.set(EQUIPMENT, NBTHelper.readStackList(compound.getCompound("Equipment")));
         this.systemDeathTime = compound.getLong("SystemDeathTime");
         this.gameDeathTime = compound.getLong("GameDeathTime");
-        this.deathMessage = Component.Serializer.fromJson(compound.getString("DeathMessage"));
+        MutableComponent deathMessage = Component.Serializer.fromJson(compound.getString("DeathMessage"));
+        this.deathMessage = deathMessage == null ? EvolutionTexts.EMPTY : deathMessage;
         this.selected = compound.getByte("Selected");
         if (compound.hasUUID("PlayerUUID")) {
             this.playerUUID = compound.getUUID("PlayerUUID");
@@ -416,7 +407,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
             this.itemHandler.setStackInSlot(4 + i, stack);
             inv.set(i, ItemStack.EMPTY);
         }
-        IExtendedInventory handler = player.getCapability(CapabilityExtendedInventory.INSTANCE).orElseThrow(IllegalStateException::new);
+        IInventory handler = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityInventory.INSTANCE);
         for (int i = 0; i < handler.getSlots(); i++) {
             ItemStack stack = handler.getStackInSlot(i);
             handler.setStackInSlot(i, ItemStack.EMPTY);
@@ -453,7 +444,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
             if (!this.isSkeleton) {
                 this.deathTimer += passedTicks;
             }
-            if (this.deathTimer >= 7 * Time.DAY_IN_TICKS) {
+            if (this.deathTimer >= 7 * Time.TICKS_PER_DAY) {
                 this.entityData.set(SKELETON, true);
                 this.isSkeleton = true;
             }

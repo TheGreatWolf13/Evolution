@@ -25,9 +25,9 @@ public class NearPlane {
     public FogType getFogType(Vec3 cameraPos, BlockGetter level) {
         for (int i = 0; i < 5; i++) {
             Vec3d vec = this.getVector(i);
-            double x = cameraPos.x + vec.getX();
-            double y = cameraPos.y + vec.getY();
-            double z = cameraPos.z + vec.getZ();
+            double x = cameraPos.x + vec.x();
+            double y = cameraPos.y + vec.y();
+            double z = cameraPos.z + vec.z();
             this.pos.set(x, y, z);
             FluidState fluidState = level.getFluidState(this.pos);
             if (fluidState.is(FluidTags.LAVA)) {
@@ -57,12 +57,12 @@ public class NearPlane {
     }
 
     public void setup(Vector3f forward, double forwardScale, Vector3f left, double leftScale, Vector3f up, double upScale) {
-        this.forward.set(forward).scale(forwardScale);
-        this.left.set(left).scale(leftScale);
-        this.up.set(up).scale(upScale);
-        this.topLeft.set(this.forward).add(this.up).add(this.left);
-        this.topRight.set(this.forward).add(this.up).sub(this.left);
-        this.bottomLeft.set(this.forward).sub(this.up).add(this.left);
-        this.bottomRight.set(this.forward).sub(this.up).sub(this.left);
+        this.forward.set(forward).scaleMutable(forwardScale);
+        this.left.set(left).scaleMutable(leftScale);
+        this.up.set(up).scaleMutable(upScale);
+        this.topLeft.set(this.forward).addMutable(this.up).addMutable(this.left);
+        this.topRight.set(this.forward).addMutable(this.up).subMutable(this.left);
+        this.bottomLeft.set(this.forward).subMutable(this.up).addMutable(this.left);
+        this.bottomRight.set(this.forward).subMutable(this.up).subMutable(this.left);
     }
 }

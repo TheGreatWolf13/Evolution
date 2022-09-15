@@ -43,7 +43,7 @@ import tgw.evolution.items.ItemTorch;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.time.Time;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -215,7 +215,7 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
             if (torchTime == 0) {
                 return;
             }
-            if (level.getDayTime() >= teTorch.getTimePlaced() + (long) torchTime * Time.HOUR_IN_TICKS) {
+            if (level.getDayTime() >= teTorch.getTimePlaced() + (long) torchTime * Time.TICKS_PER_HOUR) {
                 level.setBlockAndUpdate(pos, state.setValue(LIT, false));
             }
         }

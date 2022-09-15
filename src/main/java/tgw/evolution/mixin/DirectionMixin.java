@@ -25,8 +25,7 @@ public abstract class DirectionMixin {
 
     /**
      * @author JellySquid
-     * <p>
-     * Avoid the modulo/abs operations
+     * @reason Avoid the modulo/abs operations
      */
     @Overwrite
     public Direction getOpposite() {
@@ -35,8 +34,7 @@ public abstract class DirectionMixin {
 
     /**
      * @author JellySquid
-     * <p>
-     * Avoid indirection to aid inlining
+     * @reason Avoid indirection to aid inlining
      */
     @Overwrite
     public int getStepX() {
@@ -45,8 +43,7 @@ public abstract class DirectionMixin {
 
     /**
      * @author JellySquid
-     * <p>
-     * Avoid indirection to aid inlining
+     * @reason Avoid indirection to aid inlining
      */
     @Overwrite
     public int getStepY() {
@@ -55,8 +52,7 @@ public abstract class DirectionMixin {
 
     /**
      * @author JellySquid
-     * <p>
-     * Avoid indirection to aid inlining
+     * @reason Avoid indirection to aid inlining
      */
     @Overwrite
     public int getStepZ() {

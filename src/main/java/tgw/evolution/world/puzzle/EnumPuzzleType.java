@@ -2,7 +2,7 @@ package tgw.evolution.world.puzzle;
 
 import tgw.evolution.util.math.MathHelper;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public enum EnumPuzzleType {
     EMPTY(0),

@@ -2,11 +2,14 @@ package tgw.evolution.items.modular;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.mojang.datafixers.util.Either;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.modular.IModular;
 import tgw.evolution.inventory.SlotType;
@@ -15,6 +18,7 @@ import tgw.evolution.items.IMass;
 import tgw.evolution.items.ItemEv;
 import tgw.evolution.util.constants.HarvestLevel;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public abstract class ItemModular extends ItemEv implements IDurability, IMass {
@@ -36,7 +40,7 @@ public abstract class ItemModular extends ItemEv implements IDurability, IMass {
 
     @Override
     @Deprecated
-    public <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<T> onBroken) {
+    public final <T extends LivingEntity> int damageItem(ItemStack stack, int amount, T entity, Consumer<T> onBroken) {
         throw new AssertionError("Should not be called. Call hurtAndBreak(ItemStack, DamageCause, LivingEntity, Consumer)");
     }
 
@@ -93,9 +97,9 @@ public abstract class ItemModular extends ItemEv implements IDurability, IMass {
         return modular.isBroken() ? durability + 1 : durability;
     }
 
-    public abstract IModular getModularCap(ItemStack stack);
+    protected abstract IModular getModularCap(ItemStack stack);
 
-    public <E extends LivingEntity> void hurtAndBreak(ItemStack stack, DamageCause cause, E entity, Consumer<E> onBroken) {
+    public final <E extends LivingEntity> void hurtAndBreak(ItemStack stack, DamageCause cause, E entity, Consumer<E> onBroken) {
         this.hurtAndBreak(stack, cause, entity, onBroken, this.getModularCap(stack).getHarvestLevel());
     }
 
@@ -110,6 +114,15 @@ public abstract class ItemModular extends ItemEv implements IDurability, IMass {
     }
 
     public abstract boolean isBroken(ItemStack stack);
+
+    public boolean isHammer(ItemStack stack) {
+        return this.getModularCap(stack).isHammer();
+    }
+
+    public void makeTooltip(List<Either<FormattedText, TooltipComponent>> tooltip, ItemStack stack) {
+        IModular modularCap = this.getModularCap(stack);
+        modularCap.appendTooltip(tooltip);
+    }
 
     @Override
     public void setDamage(ItemStack stack, int damage) {

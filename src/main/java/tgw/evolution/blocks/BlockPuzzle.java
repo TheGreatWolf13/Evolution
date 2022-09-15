@@ -15,10 +15,9 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEPuzzle;
 import tgw.evolution.client.gui.ScreenPuzzle;
-
-import javax.annotation.Nullable;
 
 public class BlockPuzzle extends DirectionalBlock implements EntityBlock, GameMasterBlock {
 

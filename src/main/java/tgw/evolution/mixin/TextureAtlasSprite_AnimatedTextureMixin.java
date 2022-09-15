@@ -2,13 +2,13 @@ package tgw.evolution.mixin;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.config.EvolutionConfig;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 @Mixin(TextureAtlasSprite.AnimatedTexture.class)

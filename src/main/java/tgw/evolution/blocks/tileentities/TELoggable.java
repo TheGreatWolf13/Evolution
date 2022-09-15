@@ -11,7 +11,7 @@ import net.minecraft.world.level.material.Fluids;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.init.EvolutionTEs;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class TELoggable extends BlockEntity implements ILoggable {
 

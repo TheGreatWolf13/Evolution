@@ -5,7 +5,7 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.INBTSerializable;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class SerializableCapabilityProvider<C extends INBTSerializable<N>, N extends Tag> extends SimpleCapabilityProvider<C>
         implements ICapabilitySerializable<N> {

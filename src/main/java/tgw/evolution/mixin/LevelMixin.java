@@ -62,7 +62,7 @@ public abstract class LevelMixin extends CapabilityProvider<Level> implements IL
         if (this.getHeight(Heightmap.Types.MOTION_BLOCKING, pos.getX(), pos.getZ()) > pos.getY()) {
             return false;
         }
-        Biome biome = this.getBiome(pos);
+        Biome biome = this.getBiome(pos).value();
         return biome.getPrecipitation() == Biome.Precipitation.RAIN && biome.warmEnoughToRain(pos);
     }
 

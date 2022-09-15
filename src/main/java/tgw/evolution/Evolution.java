@@ -1,7 +1,7 @@
 package tgw.evolution;
 
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
@@ -23,10 +23,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.registries.DataSerializerEntry;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.Marker;
-import org.apache.logging.log4j.MarkerManager;
+import org.slf4j.Logger;
 import tgw.evolution.blocks.BlockFire;
 import tgw.evolution.client.renderer.EvolutionRenderLayer;
 import tgw.evolution.config.EvolutionConfig;
@@ -39,7 +36,6 @@ import tgw.evolution.network.IPacketHandler;
 import tgw.evolution.network.PacketHandlerClient;
 import tgw.evolution.network.PacketHandlerDummy;
 import tgw.evolution.util.EvolutionDataSerializers;
-import tgw.evolution.util.reflection.FieldHandler;
 
 @Mod("evolution")
 public final class Evolution {
@@ -47,12 +43,9 @@ public final class Evolution {
     public static final String MODID = "evolution";
     public static final IProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> ServerProxy::new);
     public static final IPacketHandler PACKET_HANDLER = DistExecutor.safeRunForDist(() -> PacketHandlerClient::new, () -> PacketHandlerDummy::new);
-    private static final Logger LOGGER = LogManager.getLogger();
-    private static final Marker MARKER = MarkerManager.getMarker("Evolution");
-    public static Evolution instance;
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public Evolution() {
-        instance = this;
         EvolutionConfig.register(ModLoadingContext.get());
         EvolutionBlocks.register();
         EvolutionItems.register();
@@ -94,22 +87,22 @@ public final class Evolution {
 
     public static void debug(String message, Object... objects) {
         String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.debug(MARKER, "[" + clazz + "]: " + message, objects);
+        LOGGER.debug("[" + clazz + "]: " + message, objects);
     }
 
     public static void debug(String message) {
         String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.debug(MARKER, "[{}]: {}", clazz, message);
+        LOGGER.debug("[{}]: {}", clazz, message);
     }
 
     public static void error(String message, Object... objects) {
         String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.error(MARKER, "[" + clazz + "]: " + message, objects);
+        LOGGER.error("[" + clazz + "]: " + message, objects);
     }
 
     public static void error(String message) {
         String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.error(MARKER, "[{}]: {}", clazz, message);
+        LOGGER.error("[{}]: {}", clazz, message);
     }
 
     public static ResourceLocation getResource(String name) {
@@ -118,12 +111,12 @@ public final class Evolution {
 
     public static void info(String message, Object... objects) {
         String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.info(MARKER, "[" + clazz + "]: " + message, objects);
+        LOGGER.info("[" + clazz + "]: " + message, objects);
     }
 
     public static void info(String message) {
         String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.info(MARKER, "[{}]: {}", clazz, message);
+        LOGGER.info("[{}]: {}", clazz, message);
     }
 
     private static void loadComplete(FMLLoadCompleteEvent event) {
@@ -138,8 +131,7 @@ public final class Evolution {
     private static void onClientSetup(FMLClientSetupEvent event) {
         EvolutionRenderLayer.setup();
         ClientEvents.fixInputMappings();
-        FieldHandler<Font, Integer> fontHeight = new FieldHandler<>(Font.class, "f_92710_");
-        fontHeight.set(Minecraft.getInstance().font, 10);
+        Minecraft.getInstance().font.lineHeight = 10;
     }
 
     private static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
@@ -176,7 +168,7 @@ public final class Evolution {
         MinecraftForge.EVENT_BUS.register(new WorldEvents());
         MinecraftForge.EVENT_BUS.register(new ChunkEvents());
         MinecraftForge.EVENT_BUS.register(new EntityEvents());
-        LOGGER.info(MARKER, "Setup registries done.");
+        LOGGER.info("Setup registries done.");
     }
 
     public static void usingPlaceholder(Player player, String obj) {
@@ -185,11 +177,11 @@ public final class Evolution {
 
     public static void warn(String message) {
         String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.warn(MARKER, "[{}]: {}", clazz, message);
+        LOGGER.warn("[{}]: {}", clazz, message);
     }
 
     public static void warn(String message, Object... objects) {
         String clazz = Thread.currentThread().getStackTrace()[2].getClassName();
-        LOGGER.warn(MARKER, "[" + clazz + "]: " + message, objects);
+        LOGGER.warn("[" + clazz + "]: " + message, objects);
     }
 }

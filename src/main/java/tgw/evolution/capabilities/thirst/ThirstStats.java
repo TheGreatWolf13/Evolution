@@ -30,7 +30,7 @@ public class ThirstStats implements IThirst {
     private byte flags;
     private float hydrationExhaustion;
     private int hydrationLevel;
-    private boolean needsUpdate;
+    private boolean needsUpdate = true;
     private float thirstExhaustion;
     private int thirstLevel = THIRST_CAPACITY;
 
@@ -298,7 +298,7 @@ public class ThirstStats implements IThirst {
                 this.setExtremelyIntoxicated(false);
                 player.removeEffect(EvolutionEffects.WATER_INTOXICATION.get());
             }
-            this.addThirstExhaustion(DAILY_CONSUMPTION / Time.DAY_IN_TICKS * (1.0f + modifier));
+            this.addThirstExhaustion(DAILY_CONSUMPTION / Time.TICKS_PER_DAY * (1.0f + modifier));
             this.addHydrationExhaustion(0.9f);
         }
         else {

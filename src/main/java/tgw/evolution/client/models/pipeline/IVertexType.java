@@ -1,8 +1,7 @@
 package tgw.evolution.client.models.pipeline;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public interface IVertexType<T extends IVertexSink> {
     /**

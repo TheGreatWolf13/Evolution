@@ -65,13 +65,16 @@ public final class EvolutionStats {
             double seconds = ticks / 20.0;
             double minutes = seconds / 60.0;
             double hours = minutes / 60.0;
-            double days = hours / 24.0;
-            double years = days / 365.25;
-            if (years > 1 && !EvolutionConfig.CLIENT.limitTimeUnitsToHour.get()) {
-                return Metric.TWO_PLACES.format(years) + " a";
-            }
-            if (days > 1 && !EvolutionConfig.CLIENT.limitTimeUnitsToHour.get()) {
-                return Metric.TWO_PLACES.format(days) + " d";
+            boolean limitToHour = Boolean.TRUE == EvolutionConfig.CLIENT.limitTimeUnitsToHour.get();
+            if (!limitToHour) {
+                double days = hours / 24.0;
+                double years = days / 365.25;
+                if (years > 1) {
+                    return Metric.TWO_PLACES.format(years) + " a";
+                }
+                if (days > 1) {
+                    return Metric.TWO_PLACES.format(days) + " d";
+                }
             }
             if (hours > 1) {
                 return Metric.TWO_PLACES.format(hours) + " h";
@@ -99,6 +102,7 @@ public final class EvolutionStats {
     };
 
     public static final DeferredRegister<StatType<?>> STATS = DeferredRegister.create(ForgeRegistries.STAT_TYPES, Evolution.MODID);
+
     //Damage Dealt
     public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_DEALT_ACTUAL = genDamage("dealt_actual", EvolutionDamage.PLAYER);
     public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_DEALT_RAW = genDamage("dealt_raw", EvolutionDamage.PLAYER);
@@ -131,11 +135,6 @@ public final class EvolutionStats {
     public static final ResourceLocation TOTAL_ANIMAL_RIDDEN_DISTANCE = registerCustom("distance_total_animal_ridden", DISTANCE);
     public static final ResourceLocation TOTAL_DISTANCE_TRAVELED = registerCustom("distance_total_traveled", DISTANCE);
     public static final ResourceLocation TOTAL_VEHICLE_RIDDEN_DISTANCE = registerCustom("distance_total_vehicle_ridden", DISTANCE);
-    //Entity
-    public static final RegistryObject<StatType<EntityType<?>>> DAMAGE_DEALT = STATS.register("damage_dealt",
-                                                                                              () -> new StatType<>(Registry.ENTITY_TYPE));
-    public static final RegistryObject<StatType<EntityType<?>>> DAMAGE_TAKEN = STATS.register("damage_taken",
-                                                                                              () -> new StatType<>(Registry.ENTITY_TYPE));
     //Time
     public static final ResourceLocation TIME_PLAYED = registerCustom("time_played", TIME);
     public static final ResourceLocation TIME_SINCE_LAST_DEATH = registerCustom("time_since_last_death", TIME);
@@ -152,6 +151,11 @@ public final class EvolutionStats {
     public static final ResourceLocation PLAYER_KILLS = registerCustom("player_kills", DEFAULT);
     public static final ResourceLocation TIMES_KNAPPING = registerCustom("times_knapping", DEFAULT);
     public static final ResourceLocation TIMES_SLEPT = registerCustom("times_slept", DEFAULT);
+    //Entity
+    public static final RegistryObject<StatType<EntityType<?>>> DAMAGE_DEALT = STATS.register("damage_dealt",
+                                                                                              () -> new StatType<>(Registry.ENTITY_TYPE));
+    public static final RegistryObject<StatType<EntityType<?>>> DAMAGE_TAKEN = STATS.register("damage_taken",
+                                                                                              () -> new StatType<>(Registry.ENTITY_TYPE));
 
     private EvolutionStats() {
     }
@@ -159,6 +163,7 @@ public final class EvolutionStats {
     private static Map<EvolutionDamage.Type, ResourceLocation> genDamage(String pattern, EvolutionDamage.Type[] types) {
         Map<EvolutionDamage.Type, ResourceLocation> map = new EnumMap<>(EvolutionDamage.Type.class);
         for (EvolutionDamage.Type dmgType : types) {
+            assert dmgType != null;
             //noinspection ObjectAllocationInLoop
             map.put(dmgType, registerCustom("damage_" + dmgType.getName() + "_" + pattern, DAMAGE));
         }

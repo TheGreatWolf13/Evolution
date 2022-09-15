@@ -20,6 +20,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.client.util.EvolutionInput;
 import tgw.evolution.items.IEvolutionItem;
 import tgw.evolution.patches.ILivingEntityPatch;
 
@@ -80,7 +81,7 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
                          !this.isSwimming() &&
                          this.canEnterPose(Pose.CROUCHING) &&
                          (this.isShiftKeyDown() || !this.isSleeping() && !this.canEnterPose(Pose.STANDING));
-        this.input.tick(this.isMovingSlowly());
+        ((EvolutionInput) this.input).tick(this);
         ForgeHooksClient.onMovementInputUpdate(this, this.input);
         this.minecraft.getTutorial().onInput(this.input);
         if (!this.noPhysics) {
@@ -132,6 +133,7 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
         }
         boolean isFlying = false;
         if (this.getAbilities().mayfly) {
+            assert this.minecraft.gameMode != null;
             if (this.minecraft.gameMode.isAlwaysFlying()) {
                 if (!this.getAbilities().flying) {
                     this.getAbilities().flying = true;
@@ -191,6 +193,7 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
             }
             if (isJumping && !this.input.jumping) {
                 this.jumpRidingTicks = -10;
+                assert jumpingMount != null;
                 jumpingMount.onPlayerJump(Mth.floor(this.getJumpRidingScale() * 100.0F));
                 this.sendRidingJump();
             }
@@ -212,9 +215,12 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
             this.jumpRidingScale = 0.0F;
         }
         super.aiStep();
-        if (this.onGround && this.getAbilities().flying && !this.minecraft.gameMode.isAlwaysFlying()) {
-            this.getAbilities().flying = false;
-            this.onUpdateAbilities();
+        if (this.onGround && this.getAbilities().flying) {
+            assert this.minecraft.gameMode != null;
+            if (!this.minecraft.gameMode.isAlwaysFlying()) {
+                this.getAbilities().flying = false;
+                this.onUpdateAbilities();
+            }
         }
     }
 
@@ -313,8 +319,14 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
     public void serverAiStep() {
         super.serverAiStep();
         if (this.isControlledCamera()) {
-            this.xxa = this.input.leftImpulse;
-            this.zza = this.input.forwardImpulse;
+            if (!this.isMotionLocked()) {
+                this.xxa = this.input.leftImpulse;
+                this.zza = this.input.forwardImpulse;
+            }
+            else {
+                this.xxa = 0;
+                this.zza = 0;
+            }
             if (!this.jumping) {
                 this.jumping = this.input.jumping;
             }

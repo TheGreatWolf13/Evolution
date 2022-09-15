@@ -25,13 +25,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.PacketSCStatistics;
 import tgw.evolution.util.math.HalfFloat;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;

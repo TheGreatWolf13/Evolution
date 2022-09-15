@@ -22,7 +22,7 @@ import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.blocks.tileentities.TELoggable;
 import tgw.evolution.init.EvolutionHitBoxes;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.FLUID_LOGGED;
 

@@ -1,80 +1,58 @@
 package tgw.evolution.util.hitbox;
 
-import com.mojang.math.Vector3d;
-import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionHand;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Matrix3f;
+import com.mojang.math.Matrix4f;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
-import tgw.evolution.items.ISpecialAttack;
+import org.jetbrains.annotations.Nullable;
+import tgw.evolution.Evolution;
+import tgw.evolution.items.IMelee;
+import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.collection.RArrayList;
 import tgw.evolution.util.collection.RList;
-import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.hitbox.hms.HMEntity;
+import tgw.evolution.util.hitbox.hrs.HR;
+import tgw.evolution.util.hitbox.hrs.HREntity;
+import tgw.evolution.util.math.Vec3d;
 
 import java.util.List;
 
-public abstract class HitboxEntity<T extends Entity> {
+public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HREntity<T>, HR, IHitboxAccess<T> {
 
+    protected final Matrix4d helperColliderTransform = new Matrix4d();
+    protected final Vec3d helperOffset = new Vec3d();
+    protected final Matrix4d helperTransform = new Matrix4d();
     private final RList<Hitbox> boxes;
+    private final Vec3d cachedRenderOffset = new Vec3d();
+    private final Matrix4d colliderTransform = new Matrix4d();
     private final RList<Hitbox> equipment;
+    private final Matrix4d transform = new Matrix4d();
     protected float ageInTicks;
+    protected float attackTime;
     protected float pivotX;
     protected float pivotY;
     protected float pivotZ;
-    protected float rotationPitch;
-    protected float rotationX;
-    protected float rotationY;
-    protected float rotationYaw;
-    protected float rotationZ;
+    protected boolean riding;
+    protected float scaleX = 1.0f;
+    protected float scaleY = 1.0f;
+    protected float scaleZ = 1.0f;
+    protected boolean young;
+    private @Nullable Hitbox activeEquip;
 
     public HitboxEntity() {
         this.boxes = new RArrayList<>();
         this.equipment = new RArrayList<>();
     }
 
-    public static AABB aabb(double x0, double y0, double z0, double x1, double y1, double z1) {
-        return new AABB(x0 / 16, y0 / 16, z0 / 16, x1 / 16, y1 / 16, z1 / 16);
+    protected static AABB box(double minX, double minY, double minZ, double dimX, double dimY, double dimZ) {
+        return new AABB(minX / 16, minY / 16, minZ / 16, (minX + dimX) / 16, (minY + dimY) / 16, (minZ + dimZ) / 16);
     }
 
-    public static AABB aabb(double x0, double y0, double z0, double x1, double y1, double z1, double scale) {
-        return aabb(x0 * scale, y0 * scale, z0 * scale, x1 * scale, y1 * scale, z1 * scale);
-    }
-
-    protected static HumanoidArm getAttackArm(LivingEntity entity) {
-        HumanoidArm handside = entity.getMainArm();
-        return entity.swingingArm == InteractionHand.MAIN_HAND ? handside : handside.getOpposite();
-    }
-
-    protected static float rotLerpRad(float partialTick, float old, float now) {
-        float f = (now - old) % MathHelper.TAU;
-        if (f < -MathHelper.PI) {
-            f += MathHelper.TAU;
-        }
-        if (f >= MathHelper.PI) {
-            f -= MathHelper.TAU;
-        }
-        return old + partialTick * f;
-    }
-
-    public static boolean shouldPoseArm(LivingEntity entity, HumanoidArm side) {
-        if (entity.getMainArm() == side) {
-            return entity.getUsedItemHand() == InteractionHand.MAIN_HAND;
-        }
-        return entity.getUsedItemHand() == InteractionHand.OFF_HAND;
-    }
-
-    public static Vector3d v(double x, double y, double z, double scale) {
-        return v(x * scale, y * scale, z * scale);
-    }
-
-    public static Vector3d v(double x, double y, double z) {
-        return new Vector3d(x / 16, y / 16, z / 16);
-    }
-
-    protected final Hitbox addBox(HitboxType part, AABB aabb) {
+    protected final Hitbox addBox(HitboxType part, AABB aabb, float x, float y, float z) {
         //Verify that every Hitbox has a unique HitboxType
         //This code is not the fastest, but it is only run when creating the HitboxEntity instance.
         for (int i = 0, l = this.boxes.size(); i < l; i++) {
@@ -84,6 +62,36 @@ public abstract class HitboxEntity<T extends Entity> {
         }
         Hitbox box = new Hitbox(part, aabb, this);
         this.boxes.add(box);
+        box.setPivotX(x);
+        box.setPivotY(y);
+        box.setPivotZ(z);
+        return box;
+    }
+
+    protected final Hitbox addBox(HitboxType part, AABB aabb) {
+        return this.addBox(part, aabb, 0, 0, 0);
+    }
+
+    protected final HitboxAttachable addBoxAttachable(HitboxType part,
+                                                      AABB aabb,
+                                                      float x,
+                                                      float y,
+                                                      float z,
+                                                      double localOriginX,
+                                                      double localOriginY,
+                                                      double localOriginZ) {
+        //Verify that every Hitbox has a unique HitboxType
+        //This code is not the fastest, but it is only run when creating the HitboxEntity instance.
+        for (int i = 0, l = this.boxes.size(); i < l; i++) {
+            if (this.boxes.get(i).getPart() == part) {
+                throw new IllegalStateException("Duplicate HitboxType: " + part);
+            }
+        }
+        HitboxAttachable box = new HitboxAttachable(part, aabb, this, localOriginX / 16.0, localOriginY / 16.0, localOriginZ / 16.0);
+        this.boxes.add(box);
+        box.setPivotX(x);
+        box.setPivotY(y);
+        box.setPivotZ(z);
         return box;
     }
 
@@ -100,44 +108,51 @@ public abstract class HitboxEntity<T extends Entity> {
         return box;
     }
 
-    public void animateCrossbowCharge(IHitbox rightArm, IHitbox leftArm, LivingEntity entity, boolean rightHanded) {
-        IHitbox mainArm = rightHanded ? rightArm : leftArm;
-        IHitbox offArm = rightHanded ? leftArm : rightArm;
-        mainArm.setRotationY(rightHanded ? -0.8F : 0.8F);
-        mainArm.setRotationX(-0.970_796_35F);
-        offArm.setRotationX(mainArm.getRotationX());
-        float f = CrossbowItem.getChargeDuration(entity.getUseItem());
-        float f1 = MathHelper.clamp(entity.getTicksUsingItem(), 0.0F, f);
-        float f2 = f1 / f;
-        offArm.setRotationY(Mth.lerp(f2, 0.4F, 0.85F) * (rightHanded ? 1 : -1));
-        offArm.setRotationX(Mth.lerp(f2, offArm.getRotationX(), -MathHelper.PI_OVER_2));
-    }
-
-    public void animateCrossbowHold(IHitbox rightArm, IHitbox leftArm, IHitbox head, boolean rightHanded) {
-        IHitbox mainArm = rightHanded ? rightArm : leftArm;
-        IHitbox offArm = rightHanded ? leftArm : rightArm;
-        mainArm.setRotationY((rightHanded ? -0.3F : 0.3F) + head.getRotationY());
-        offArm.setRotationY((rightHanded ? 0.6F : -0.6F) + head.getRotationY());
-        mainArm.setRotationX(-MathHelper.PI_OVER_2 + head.getRotationX() + 0.1F);
-        offArm.setRotationX(-1.5F + head.getRotationX());
-    }
-
-    public void bobArms(IHitbox rightArm, IHitbox leftArm, float ageInTicks) {
-        this.bobModelPart(rightArm, ageInTicks, 1.0F);
-        this.bobModelPart(leftArm, ageInTicks, -1.0F);
-    }
-
-    protected void bobModelPart(IHitbox box, float ageInTicks, float mul) {
-        box.addRotationZ(mul * (Mth.cos(ageInTicks * 0.09F) * 0.05F + 0.05F));
-        box.addRotationX(-mul * Mth.sin(ageInTicks * 0.067F) * 0.05F);
+    @Override
+    public float attackTime() {
+        return this.attackTime;
     }
 
     protected abstract void childFinish();
 
-    public void doOffset(double[] answer) {
-        answer[0] += this.pivotX;
-        answer[1] += this.pivotY;
-        answer[2] += this.pivotZ;
+    protected abstract @Nullable Hitbox childGetEquipFor(IMelee.IAttackType type, HumanoidArm arm);
+
+    protected abstract void childInit(T entity, float partialTicks);
+
+    public final void drawAllBoxes(T entity,
+                                   float partialTicks,
+                                   VertexConsumer buffer,
+                                   PoseStack matrices,
+                                   float x, float y, float z) {
+        this.init(entity, partialTicks);
+        Matrix4f pose = matrices.last().pose();
+        Matrix3f normal = matrices.last().normal();
+        for (int i = 0, l = this.boxes.size(); i < l; i++) {
+            Hitbox hitbox = this.boxes.get(i);
+            hitbox.drawEdges(hitbox.adjustedTransform(), buffer, pose, normal, x, y, z, 1.0f, 1.0f, 0.0f, 1.0f);
+        }
+        if (this.activeEquip != null) {
+            if (entity instanceof ILivingEntityPatch patch && patch.shouldRenderSpecialAttack()) {
+                if (this.activeEquip instanceof ColliderHitbox colliderHitbox) {
+                    colliderHitbox.setParent(this);
+                }
+                this.activeEquip.drawEdges(this.activeEquip.adjustedTransform(), buffer, pose, normal, x, y, z, 1.0f, 0.0f, 1.0f, 1.0f);
+            }
+        }
+    }
+
+    public final void drawBox(Hitbox hitbox,
+                              T entity,
+                              float partialTicks,
+                              VertexConsumer buffer,
+                              PoseStack matrices,
+                              float x, float y, float z, float red, float green, float blue, float alpha) {
+        this.init(entity, partialTicks);
+//        Vec3 offset = this.renderOffset(entity, partialTicks);
+//        matrices.translate(offset.x, offset.y, offset.z);
+        Matrix4f pose = matrices.last().pose();
+        Matrix3f normal = matrices.last().normal();
+        hitbox.drawEdges(hitbox.adjustedTransform(), buffer, pose, normal, x, y, z, red, green, blue, alpha);
     }
 
     protected final void finish() {
@@ -146,38 +161,96 @@ public abstract class HitboxEntity<T extends Entity> {
         this.childFinish();
     }
 
-    public List<Hitbox> getBoxes() {
+    public final List<Hitbox> getBoxes() {
         return this.boxes;
     }
 
-    public List<Hitbox> getEquipment() {
+    public Matrix4d getColliderTransform() {
+        return this.colliderTransform.set(this.transform);
+    }
+
+    public final @Nullable Hitbox getEquipFor(@Nullable IMelee.IAttackType type, HumanoidArm arm) {
+        if (type == null) {
+            return null;
+        }
+        this.activeEquip = this.childGetEquipFor(type, arm);
+        if (this.activeEquip == null) {
+            Evolution.warn(
+                    "No hitbox registered for AttackType " + type + " on " + (arm == HumanoidArm.RIGHT ? "Right Arm" : "Left Arm") + " of " + this);
+        }
+        return this.activeEquip;
+    }
+
+    public final List<Hitbox> getEquipment() {
         return this.equipment;
     }
 
-    public abstract Hitbox getEquipmentFor(ISpecialAttack.IAttackType type, HumanoidArm arm);
-
-    public Vec3 getOffset() {
-        return new Vec3(this.pivotX, this.pivotY, this.pivotZ);
+    public final Vec3d getOffsetForCamera(T entity, float partialTicks) {
+        this.init(entity, partialTicks);
+        Matrix4d transform = this.headOrRoot().adjustedTransform();
+        double x0 = this.relativeHeadOrRootX();
+        double y0 = this.relativeHeadOrRootY();
+        double z0 = this.relativeHeadOrRootZ();
+        double x = transform.transformX(x0, y0, z0);
+        double y = transform.transformY(x0, y0, z0);
+        double z = transform.transformZ(x0, y0, z0);
+        return this.helperOffset.set(this.transformX(x, y, z), this.transformY(x, y, z), this.transformZ(x, y, z));
     }
 
-    public Matrix3d getTransform() {
-        Matrix3d xRot = new Matrix3d().asXRotation(this.rotationX);
-        Matrix3d yRot = new Matrix3d().asYRotation(this.rotationY);
-        Matrix3d zRot = new Matrix3d().asZRotation(this.rotationZ);
-        return xRot.multiply(yRot).multiply(zRot);
+    protected abstract Hitbox headOrRoot();
+
+    @Override
+    public final Vec3d helperOffset() {
+        return this.helperOffset;
     }
 
-    public abstract void init(T entity, float partialTicks);
-
-    protected void reset() {
+    @Override
+    public final void init(T entity, float partialTicks) {
+        this.transform.setIdentity();
         this.setPivot(0, 0, 0);
-        this.setRotation(0, 0, 0);
-        for (int i = 0, l = this.boxes.size(); i < l; i++) {
-            this.boxes.get(i).reset();
-        }
-        for (int i = 0, l = this.equipment.size(); i < l; i++) {
-            this.equipment.get(i).reset();
-        }
+        this.scaleX = 1;
+        this.scaleY = 1;
+        this.scaleZ = 1;
+        this.childInit(entity, partialTicks);
+        this.cachedRenderOffset.set(this.renderOffset(entity, partialTicks));
+    }
+
+    protected abstract double relativeHeadOrRootX();
+
+    protected abstract double relativeHeadOrRootY();
+
+    protected abstract double relativeHeadOrRootZ();
+
+    @Override
+    public boolean riding() {
+        return this.riding;
+    }
+
+    @Override
+    public final void rotateXHR(float xRot) {
+        this.transform.rotateX(xRot);
+    }
+
+    @Override
+    public final void rotateYHR(float yRot) {
+        this.transform.rotateY(yRot);
+    }
+
+    @Override
+    public final void rotateZHR(float zRot) {
+        this.transform.rotateZ(zRot);
+    }
+
+    @Override
+    public final void scaleHR(float scaleX, float scaleY, float scaleZ) {
+        this.scaleX *= scaleX;
+        this.scaleY *= scaleY;
+        this.scaleZ *= scaleZ;
+    }
+
+    @Override
+    public void setAttackTime(float attackTime) {
+        this.attackTime = attackTime;
     }
 
     protected void setPivot(float x, float y, float z, float scale) {
@@ -190,9 +263,59 @@ public abstract class HitboxEntity<T extends Entity> {
         this.pivotZ = z;
     }
 
-    protected void setRotation(float x, float y, float z) {
-        this.rotationX = x;
-        this.rotationY = y;
-        this.rotationZ = z;
+    @Override
+    public void setRiding(boolean riding) {
+        this.riding = riding;
+    }
+
+    @Override
+    public void setYoung(boolean young) {
+        this.young = young;
+    }
+
+    public final Vec3d transform(Vec3d vec) {
+        return this.transform.transform(vec);
+    }
+
+    @Override
+    public final double transformX(double x, double y, double z) {
+        return this.transform.transformX(x, y, z) + this.cachedRenderOffset.x;
+    }
+
+    @Override
+    public final double transformY(double x, double y, double z) {
+        return this.transform.transformY(x, y, z) + this.cachedRenderOffset.y;
+    }
+
+    @Override
+    public final double transformZ(double x, double y, double z) {
+        return this.transform.transformZ(x, y, z) + this.cachedRenderOffset.z;
+    }
+
+    @Override
+    public final void translateHR(float x, float y, float z) {
+        this.transform.translate(x * this.scaleX, y * this.scaleY, z * this.scaleZ);
+    }
+
+    @CanIgnoreReturnValue
+    public final Vec3d untransform(Vec3d vec) {
+        return this.transform.untransform(vec);
+    }
+
+    public final double untransformX(double x, double y, double z) {
+        return this.transform.untransformX(x, y, z);
+    }
+
+    public final double untransformY(double x, double y, double z) {
+        return this.transform.untransformY(x, y, z);
+    }
+
+    public final double untransformZ(double x, double y, double z) {
+        return this.transform.untransformZ(x, y, z);
+    }
+
+    @Override
+    public boolean young() {
+        return this.young;
     }
 }

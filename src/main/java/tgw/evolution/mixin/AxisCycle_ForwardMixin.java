@@ -9,8 +9,7 @@ public abstract class AxisCycle_ForwardMixin {
 
     /**
      * @author JellySquid
-     * <p>
-     * Avoid expensive array/modulo operations
+     * @reason Avoid expensive array/modulo operations
      */
     @Overwrite
     public Direction.Axis cycle(Direction.Axis axis) {

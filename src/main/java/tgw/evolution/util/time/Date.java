@@ -7,13 +7,13 @@ import tgw.evolution.util.math.Metric;
 public class Date {
 
     public static final Date STARTING_DATE = new Date(Month.JUNE, 1, 1_000);
-    public static final int DAYS_SINCE_MARCH_EQUINOX = 2 * Time.DAYS_IN_A_MONTH + 1;
+    public static final int DAYS_SINCE_MARCH_EQUINOX = 2 * Time.DAYS_PER_MONTH + 1;
     private final int day;
     private final Month month;
     private final int year;
 
     public Date(int year, Month month, int day) {
-        if (day > Time.DAYS_IN_A_MONTH || day < 1) {
+        if (day > Time.DAYS_PER_MONTH || day < 1) {
             throw new IllegalStateException("Invalid day: " + day);
         }
         this.year = year;
@@ -32,7 +32,7 @@ public class Date {
     }
 
     private Date(Month month, int day, int year) {
-        if (day > Time.DAYS_IN_A_MONTH || day < 1) {
+        if (day > Time.DAYS_PER_MONTH || day < 1) {
             throw new IllegalStateException("Invalid day: " + day);
         }
         this.year = year;
@@ -41,21 +41,21 @@ public class Date {
     }
 
     public Date(long ticks) {
-        ticks += 6_000;
-        long y = ticks / Time.YEAR_IN_TICKS;
-        ticks -= Time.YEAR_IN_TICKS * y;
-        long m = ticks / Time.MONTH_IN_TICKS;
-        ticks -= Time.MONTH_IN_TICKS * m;
-        long d = ticks / Time.DAY_IN_TICKS;
+        ticks += 6L * Time.TICKS_PER_HOUR;
+        long y = ticks / Time.TICKS_PER_YEAR;
+        ticks -= Time.TICKS_PER_YEAR * y;
+        long m = ticks / Time.TICKS_PER_MONTH;
+        ticks -= Time.TICKS_PER_MONTH * m;
+        long d = ticks / Time.TICKS_PER_DAY;
         d += STARTING_DATE.day;
         m += STARTING_DATE.month.numerical;
         y += STARTING_DATE.year;
-        if (d > Time.DAYS_IN_A_MONTH) {
-            d -= Time.DAYS_IN_A_MONTH;
+        if (d > Time.DAYS_PER_MONTH) {
+            d -= Time.DAYS_PER_MONTH;
             m++;
         }
-        if (m > Time.MONTHS_IN_A_YEAR) {
-            m -= Time.MONTHS_IN_A_YEAR;
+        if (m > Time.MONTHS_PER_YEAR) {
+            m -= Time.MONTHS_PER_YEAR;
             y++;
         }
         this.year = (int) y;
@@ -67,13 +67,13 @@ public class Date {
         int d = this.day + days;
         int m = this.month.getNumerical() + months;
         int y = this.year + years;
-        while (d > Time.DAYS_IN_A_MONTH) {
+        while (d > Time.DAYS_PER_MONTH) {
             m++;
-            d -= Time.DAYS_IN_A_MONTH;
+            d -= Time.DAYS_PER_MONTH;
         }
         while (d < 1) {
             m--;
-            d += Time.DAYS_IN_A_MONTH;
+            d += Time.DAYS_PER_MONTH;
         }
         while (m > 12) {
             y++;
@@ -106,7 +106,7 @@ public class Date {
     }
 
     public Component getDisplayName() {
-        return new TranslatableComponent("evolution.calendar.full_date", this.getDayDisplayName(), this.month.getDisplayName(), this.year);
+        return new TranslatableComponent("evolution.calendar.date", this.getDayDisplayName(), this.month.getDisplayName(), this.year);
     }
 
     public Month getMonth() {
@@ -126,13 +126,6 @@ public class Date {
     }
 
     /**
-     * Returns whether this date happened after the argument date.
-     */
-    public boolean isAfter(Date date) {
-        return !this.isBefore(date) && !this.equals(date);
-    }
-
-    /**
      * Returns whether this date happened before the argument date.
      */
     public boolean isBefore(Date date) {
@@ -147,10 +140,10 @@ public class Date {
     }
 
     public long toTicks() {
-        long temp = (long) (this.year - STARTING_DATE.year) * Time.YEAR_IN_TICKS;
-        temp += (long) (this.month.getNumerical() - STARTING_DATE.month.getNumerical()) * Time.MONTH_IN_TICKS;
-        temp += (long) (this.day - STARTING_DATE.day) * Time.DAY_IN_TICKS;
-        temp -= 6_000;
+        long temp = (long) (this.year - STARTING_DATE.year) * Time.TICKS_PER_YEAR;
+        temp += (long) (this.month.getNumerical() - STARTING_DATE.month.getNumerical()) * Time.TICKS_PER_MONTH;
+        temp += (long) (this.day - STARTING_DATE.day) * Time.TICKS_PER_DAY;
+        temp -= 6L * Time.TICKS_PER_HOUR;
         return temp;
     }
 

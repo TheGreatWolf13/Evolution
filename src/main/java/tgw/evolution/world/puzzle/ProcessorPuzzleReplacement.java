@@ -14,7 +14,7 @@
 //import net.minecraft.world.gen.feature.template.Template;
 //import tgw.evolution.init.EvolutionBlocks;
 //
-//import javax.annotation.Nullable;
+//import org.jetbrains.annotations.Nullable;
 //
 //public class ProcessorPuzzleReplacement extends StructureProcessor {
 //

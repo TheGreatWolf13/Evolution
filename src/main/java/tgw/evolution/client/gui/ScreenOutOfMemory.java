@@ -26,6 +26,7 @@ public class ScreenOutOfMemory extends Screen {
 
     @Override
     protected void init() {
+        assert this.minecraft != null;
         Button mainMenuButton = new Button(this.width / 2 - 155,
                                            this.height / 4 + 132,
                                            150,

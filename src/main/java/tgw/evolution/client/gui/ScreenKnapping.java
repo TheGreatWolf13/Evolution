@@ -21,7 +21,7 @@ import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketCSSetKnappingType;
 import tgw.evolution.util.constants.RockVariant;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)

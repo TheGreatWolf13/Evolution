@@ -17,6 +17,8 @@ import net.minecraftforge.client.model.SimpleModelState;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.client.model.data.ModelProperty;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.TEFirewoodPile;
 import tgw.evolution.init.EvolutionBStates;
@@ -24,8 +26,6 @@ import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.util.collection.BArrayList;
 import tgw.evolution.util.collection.BList;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.*;
 
 public class BakedModelFirewoodPile implements BakedModel {
@@ -133,7 +133,7 @@ public class BakedModelFirewoodPile implements BakedModel {
         throw new IllegalStateException("Unknown direction: " + modelFace);
     }
 
-    private static BakedQuad getQuadForFirewood(@Nonnull Direction whichFace,
+    private static BakedQuad getQuadForFirewood(Direction whichFace,
                                                 TextureAtlas blockAtlas,
                                                 float minX,
                                                 float minY,
@@ -956,8 +956,8 @@ public class BakedModelFirewoodPile implements BakedModel {
 
     private List<BakedQuad> getBakedQuadsFromIModelData(@Nullable BlockState state,
                                                         @Nullable Direction side,
-                                                        @Nonnull Random rand,
-                                                        @Nonnull IModelData data) {
+                                                        Random rand,
+                                                        IModelData data) {
         if (!data.hasProperty(FIREWOOD)) {
             Evolution.error("IModelData did not have expected property FIREWOOD");
             return this.baseModel.getQuads(state, side, rand);
@@ -970,11 +970,10 @@ public class BakedModelFirewoodPile implements BakedModel {
     }
 
     @Override
-    @Nonnull
-    public IModelData getModelData(@Nonnull BlockAndTintGetter level,
-                                   @Nonnull BlockPos pos,
-                                   @Nonnull BlockState state,
-                                   @Nonnull IModelData tileData) {
+    public @NotNull IModelData getModelData(BlockAndTintGetter level,
+                                            BlockPos pos,
+                                            BlockState state,
+                                            IModelData tileData) {
         BlockEntity tile = level.getBlockEntity(pos);
         ModelDataMap modelDataMap = getEmptyIModelData();
         if (tile instanceof TEFirewoodPile teFirewoodPile) {
@@ -1002,8 +1001,7 @@ public class BakedModelFirewoodPile implements BakedModel {
     }
 
     @Override
-    @Nonnull
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random rand, @Nonnull IModelData extraData) {
+    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand, IModelData extraData) {
         return this.getBakedQuadsFromIModelData(state, side, rand, extraData);
     }
 

@@ -22,13 +22,12 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.items.ItemRock;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.math.MathHelper;
-
-import javax.annotation.Nullable;
 
 public class BlockKnapping extends BlockGravity implements IReplaceable, IRockVariant, EntityBlock {
 
@@ -126,6 +125,7 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IRockVa
         TEKnapping tileEntity = (TEKnapping) level.getBlockEntity(pos);
         int x = MathHelper.getIndex(8, 0, 16, MathHelper.hitOffset(Direction.Axis.X, hitX, hit.getDirection()));
         int z = MathHelper.getIndex(8, 0, 16, MathHelper.hitOffset(Direction.Axis.Z, hitZ, hit.getDirection()));
+        assert tileEntity != null;
         if (!tileEntity.getPart(x, z) || tileEntity.type.getPatternPart(x, z)) {
             return InteractionResult.FAIL;
         }

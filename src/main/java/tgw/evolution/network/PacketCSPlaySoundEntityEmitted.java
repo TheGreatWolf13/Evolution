@@ -10,28 +10,25 @@ import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 
-import javax.annotation.Nonnull;
 import java.util.function.Supplier;
 
 public class PacketCSPlaySoundEntityEmitted implements IPacket {
 
-    @Nonnull
     private final SoundSource category;
     private final int entityId;
     private final float pitch;
-    @Nonnull
     private final String sound;
     private final float volume;
 
-    public PacketCSPlaySoundEntityEmitted(@Nonnull EntityAccess entity,
-                                          @Nonnull SoundEvent sound,
-                                          @Nonnull SoundSource category,
+    public PacketCSPlaySoundEntityEmitted(EntityAccess entity,
+                                          SoundEvent sound,
+                                          SoundSource category,
                                           float volume,
                                           float pitch) {
         this(entity.getId(), sound.getRegistryName().toString(), category, volume, pitch);
     }
 
-    private PacketCSPlaySoundEntityEmitted(int entityId, @Nonnull String sound, @Nonnull SoundSource category, float volume, float pitch) {
+    private PacketCSPlaySoundEntityEmitted(int entityId, String sound, SoundSource category, float volume, float pitch) {
         this.entityId = entityId;
         this.sound = sound;
         this.category = category;

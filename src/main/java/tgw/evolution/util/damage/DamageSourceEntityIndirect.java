@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.init.EvolutionDamage;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class DamageSourceEntityIndirect extends DamageSourceEntity implements IHitLocation {
     private final Entity trueSource;

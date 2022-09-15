@@ -12,7 +12,6 @@ import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
@@ -25,6 +24,7 @@ import net.minecraft.network.chat.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.client.ConfigGuiHandler;
@@ -40,18 +40,21 @@ import net.minecraftforge.resource.PathResourcePack;
 import net.minecraftforge.resource.ResourcePackLoader;
 import net.minecraftforge.versions.forge.ForgeVersion;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.config.ScreenUtil;
+import tgw.evolution.client.gui.widgets.AdvCheckBox;
+import tgw.evolution.client.gui.widgets.AdvEditBox;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
-import tgw.evolution.client.gui.widgets.CheckBoxAdv;
-import tgw.evolution.client.gui.widgets.EditBoxAdv;
 import tgw.evolution.client.gui.widgets.Label;
+import tgw.evolution.client.util.Key;
+import tgw.evolution.client.util.Modifiers;
+import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.math.MathHelper;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Comparator;
@@ -62,7 +65,6 @@ import java.util.stream.Collectors;
 public class ScreenModList extends Screen {
     private final Object2ObjectMap<String, ItemStack> itemCache = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectMap<String, Pair<ResourceLocation, Size2i>> logoCache = new Object2ObjectOpenHashMap<>();
-    private final ResourceLocation missingBanner = Evolution.getResource("textures/gui/missing_banner.png");
     private final Comparator<ModEntry> sort = Comparator.comparing(o -> o.getInfo().getDisplayName());
     //Text Components are not static to be able to be freed from memory
     private final FormattedText textButtonOpenModsFolder = new TranslatableComponent("fml.button.open.mods.folder");
@@ -73,7 +75,7 @@ public class ScreenModList extends Screen {
     private final Component textReportBugs = new TranslatableComponent("evolution.gui.modsList.reportBugs");
     private final Component textWebsite = new TranslatableComponent("evolution.gui.modsList.website");
     private final ResourceLocation versionCheckIcons = new ResourceLocation(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
-    private List<? extends FormattedCharSequence> activeTooltip;
+    private @Nullable List<? extends FormattedCharSequence> activeTooltip;
     private Label authors;
     private Button configButton;
     private Label credits;
@@ -85,10 +87,10 @@ public class ScreenModList extends Screen {
     private Component modId;
     private int modIdWidth;
     private ModList modList;
-    private EditBox searchEditBox;
-    private ModInfo selectedModInfo;
+    private AdvEditBox searchEditBox;
+    private @Nullable ModInfo selectedModInfo;
     private int tooltipYOffset;
-    private CheckBoxAdv updatesButton;
+    private AdvCheckBox updatesButton;
     private Label version;
     private Button websiteButton;
 
@@ -119,34 +121,29 @@ public class ScreenModList extends Screen {
 
     private void drawLogo(PoseStack poseStack, int contentWidth, int x, int y, int maxWidth, int maxHeight) {
         if (this.selectedModInfo != null) {
-            ResourceLocation logoResource = this.missingBanner;
-            Size2i size = null;
             if (this.logoCache.containsKey(this.selectedModInfo.getModId())) {
                 Pair<ResourceLocation, Size2i> logoInfo = this.logoCache.get(this.selectedModInfo.getModId());
                 if (logoInfo.getLeft() != null) {
-                    logoResource = logoInfo.getLeft();
-                    size = logoInfo.getRight();
+                    ResourceLocation logoResource = logoInfo.getLeft();
+                    Size2i size = logoInfo.getRight();
+                    RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
+                    RenderSystem.setShaderTexture(0, logoResource);
+                    RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+                    int width = size.width;
+                    int height = size.height;
+                    if (size.width > maxWidth) {
+                        width = maxWidth;
+                        height = width * size.height / size.width;
+                    }
+                    if (height > maxHeight) {
+                        height = maxHeight;
+                        width = height * size.width / size.height;
+                    }
+                    x += (contentWidth - width) / 2;
+                    y += (maxHeight - height) / 2;
+                    Screen.blit(poseStack, x, y, width, height, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
                 }
             }
-            if (size == null) {
-                size = new Size2i(600, 120);
-            }
-            RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
-            RenderSystem.setShaderTexture(0, logoResource);
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            int width = size.width;
-            int height = size.height;
-            if (size.width > maxWidth) {
-                width = maxWidth;
-                height = width * size.height / size.width;
-            }
-            if (height > maxHeight) {
-                height = maxHeight;
-                width = height * size.width / size.height;
-            }
-            x += (contentWidth - width) / 2;
-            y += (maxHeight - height) / 2;
-            Screen.blit(poseStack, x, y, width, height, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
         }
     }
 
@@ -208,7 +205,7 @@ public class ScreenModList extends Screen {
     @Override
     protected void init() {
         super.init();
-        this.searchEditBox = new EditBoxAdv(this.font, 11, 25, 148, 20, EvolutionTexts.GUI_GENERAL_SEARCH);
+        this.searchEditBox = new AdvEditBox(this.font, 11, 25, 148, 20, EvolutionTexts.GUI_GENERAL_SEARCH);
         this.searchEditBox.setResponder(s -> {
             this.modList.filterAndUpdateList(s);
             this.updateSelectedModList();
@@ -246,7 +243,7 @@ public class ScreenModList extends Screen {
         this.descriptionList.setRenderTopAndBottom(false);
         this.descriptionList.setRenderBackground(false);
         this.addWidget(this.descriptionList);
-        this.updatesButton = this.addRenderableWidget(new CheckBoxAdv(this.modList.getRight() - 14, 7, EvolutionTexts.EMPTY, false, b -> {
+        this.updatesButton = this.addRenderableWidget(new AdvCheckBox(this.modList.getRight() - 14, 7, EvolutionTexts.EMPTY, false, b -> {
             this.modList.filterAndUpdateList(this.searchEditBox.getValue());
             this.updateSelectedModList();
         }));
@@ -260,33 +257,38 @@ public class ScreenModList extends Screen {
         if (this.logoCache.containsKey(info.getModId())) {
             return;
         }
-        this.logoCache.put(info.getModId(), Pair.of(null, new Size2i(0, 0)));
-        info.getLogoFile().ifPresent(s -> {
+        outer:
+        if (info.getLogoFile().isPresent()) {
+            String s = info.getLogoFile().get();
             if (s.isEmpty()) {
-                return;
+                break outer;
             }
             if (s.contains("/") || s.contains("\\")) {
                 Evolution.warn("Skipped loading logo file from {}. The file name '{}' contained illegal characters '/' or '\\'",
                                info.getDisplayName(), s);
-                return;
+                break outer;
             }
-            PathResourcePack resourcePack = ResourcePackLoader.getPackFor(info.getModId())
-                                                              .orElseGet(() -> ResourcePackLoader.getPackFor("forge")
-                                                                                                 .orElseThrow(() -> new RuntimeException(
-                                                                                                         "Forge was not found in the mods list, " +
-                                                                                                         "somehow!")));
-            try (InputStream is = resourcePack.getRootResource(s); NativeImage logo = NativeImage.read(is)) {
-                TextureManager textureManager = this.getMinecraft().getTextureManager();
-                this.logoCache.put(info.getModId(), Pair.of(textureManager.register("modlogo", this.createLogoTexture(logo, info.getLogoBlur())),
-                                                            new Size2i(logo.getWidth(), logo.getHeight())));
+            Optional<PathResourcePack> packFor = ResourcePackLoader.getPackFor(info.getModId());
+            if (packFor.isPresent()) {
+                PathResourcePack resourcePack = packFor.get();
+                try (InputStream is = resourcePack.getRootResource(s); NativeImage logo = is != null ? NativeImage.read(is) : null) {
+                    if (logo != null) {
+                        TextureManager textureManager = this.getMinecraft().getTextureManager();
+                        this.logoCache.put(info.getModId(),
+                                           Pair.of(textureManager.register("modlogo", this.createLogoTexture(logo, info.getLogoBlur())),
+                                                   new Size2i(logo.getWidth(), logo.getHeight())));
+                        return;
+                    }
+                }
+                catch (IOException ignored) {
+                }
             }
-            catch (IOException ignored) {
-            }
-        });
+        }
+        this.logoCache.put(info.getModId(), Pair.of(null, new Size2i(0, 0)));
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
         if (this.selectedModInfo != null) {
             int contentLeft = this.modList.getRight() + 12 + 10;
             String version = ForgeI18n.parseMessage("fml.menu.mods.info.version", this.selectedModInfo.getVersion().toString());
@@ -304,7 +306,10 @@ public class ScreenModList extends Screen {
 
     private void openLink(String key, @Nullable IConfigurable configurable) {
         if (configurable != null) {
-            configurable.getConfigElement(key).ifPresent(o -> this.openLink(o.toString()));
+            Optional<Object> optional = configurable.getConfigElement(key);
+            if (optional.isPresent()) {
+                this.openLink(optional.get().toString());
+            }
         }
     }
 
@@ -361,6 +366,7 @@ public class ScreenModList extends Screen {
     }
 
     public void updateMod() {
+        assert this.selectedModInfo != null;
         this.modId = new TextComponent("Mod ID: " + this.selectedModInfo.getModId()).withStyle(ChatFormatting.DARK_GRAY);
         this.modIdWidth = this.font.width(this.modId);
         this.version = new Label(new TranslatableComponent("evolution.gui.modsList.version"),
@@ -390,6 +396,7 @@ public class ScreenModList extends Screen {
 
     private class ModList extends AbstractSelectionList<ModEntry> {
         public ModList() {
+            //noinspection ConstantConditions
             super(ScreenModList.this.minecraft, 150, ScreenModList.this.height, 46, ScreenModList.this.height - 35, 26);
         }
 
@@ -412,8 +419,17 @@ public class ScreenModList extends Screen {
         }
 
         @Nullable
-        public ModEntry getEntryFromInfo(IModInfo info) {
-            return this.children().stream().filter(entry -> entry.info == info).findFirst().orElse(null);
+        public ModEntry getEntryFromInfo(@Nullable IModInfo info) {
+            if (info == null) {
+                return null;
+            }
+            for (int i = 0, l = this.children().size(); i < l; i++) {
+                ModEntry modEntry = this.children().get(i);
+                if (modEntry.info == info) {
+                    return modEntry;
+                }
+            }
+            return null;
         }
 
         @Override
@@ -432,7 +448,7 @@ public class ScreenModList extends Screen {
         }
 
         @Override
-        public boolean keyPressed(int key, int scanCode, int modifiers) {
+        public boolean keyPressed(@Key int key, int scanCode, @Modifiers int modifiers) {
             if (key == GLFW.GLFW_KEY_ENTER && this.getSelected() != null) {
                 ScreenModList.this.setSelectedModInfo(this.getSelected().info);
                 SoundManager handler = Minecraft.getInstance().getSoundManager();
@@ -458,8 +474,8 @@ public class ScreenModList extends Screen {
     private class ModEntry extends AbstractSelectionList.Entry<ModEntry> {
         private final ModInfo info;
         private final ModList list;
-        private MutableComponent modName;
-        private MutableComponent version;
+        private @Nullable MutableComponent modName;
+        private @Nullable MutableComponent version;
 
         public ModEntry(ModInfo info, ModList list) {
             this.info = info;
@@ -486,44 +502,42 @@ public class ScreenModList extends Screen {
         }
 
         private ItemStack getItemIcon() {
-            if (ScreenModList.this.itemCache.containsKey(this.info.getModId())) {
-                return ScreenModList.this.itemCache.get(this.info.getModId());
+            String modId = this.info.getModId();
+            if (ScreenModList.this.itemCache.containsKey(modId)) {
+                return ScreenModList.this.itemCache.get(modId);
             }
-            if ("forge".equals(this.info.getModId())) {
-                ItemStack item = new ItemStack(Items.ANVIL);
-                ScreenModList.this.itemCache.put("forge", item);
-                return item;
+            if ("forge".equals(modId)) {
+                ItemStack stack = new ItemStack(Items.ANVIL);
+                ScreenModList.this.itemCache.put("forge", stack);
+                return stack;
             }
-            if ("minecraft".equals(this.info.getModId())) {
-                ItemStack item = new ItemStack(Items.GRASS_BLOCK);
-                ScreenModList.this.itemCache.put("minecraft", item);
-                return item;
+            if ("minecraft".equals(modId)) {
+                ItemStack stack = new ItemStack(Items.GRASS_BLOCK);
+                ScreenModList.this.itemCache.put("minecraft", stack);
+                return stack;
             }
             Optional<String> itemIcon = this.info.getConfigElement("itemIcon");
             if (itemIcon.isPresent() && !itemIcon.get().isEmpty()) {
                 try {
                     ItemParser parser = new ItemParser(new StringReader(itemIcon.get()), false).parse();
-                    ItemStack item = new ItemStack(parser.getItem(), 1, parser.getNbt());
-                    ScreenModList.this.itemCache.put(this.info.getModId(), item);
-                    return item;
+                    ItemStack stack = new ItemStack(parser.getItem(), 1, parser.getNbt());
+                    ScreenModList.this.itemCache.put(modId, stack);
+                    return stack;
                 }
                 catch (CommandSyntaxException ignored) {
                 }
             }
-            Optional<ItemStack> optional = ForgeRegistries.ITEMS.getValues()
-                                                                .stream()
-                                                                .filter(item -> item.getRegistryName().getNamespace().equals(this.info.getModId()))
-                                                                .map(ItemStack::new)
-                                                                .findAny();
-            if (optional.isPresent()) {
-                ItemStack item = optional.get();
-                if (item.getItem() != Items.AIR) {
-                    ScreenModList.this.itemCache.put(this.info.getModId(), item);
-                    return item;
+            for (Item value : ForgeRegistries.ITEMS.getValues()) {
+                //noinspection ConstantConditions
+                if (value.getRegistryName().getNamespace().equals(modId)) {
+                    ItemStack stack = new ItemStack(value);
+                    ScreenModList.this.itemCache.put(modId, stack);
+                    return stack;
                 }
             }
-            ScreenModList.this.itemCache.put(this.info.getModId(), new ItemStack(Items.GRASS_BLOCK));
-            return new ItemStack(Items.GRASS_BLOCK);
+            ItemStack stack = new ItemStack(Items.GRASS_BLOCK);
+            ScreenModList.this.itemCache.put(modId, stack);
+            return stack;
         }
 
         private Component getVersion() {
@@ -534,7 +548,7 @@ public class ScreenModList extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
             ScreenModList.this.setSelectedModInfo(this.info);
             this.list.setSelected(this);
             return false;
@@ -567,6 +581,7 @@ public class ScreenModList extends Screen {
 
     private class StringList extends AbstractSelectionList<StringEntry> {
         public StringList(int width, int height, int left, int top) {
+            //noinspection ConstantConditions
             super(ScreenModList.this.minecraft, width, ScreenModList.this.height, top, top + height, 10);
             this.setLeftPos(left);
         }

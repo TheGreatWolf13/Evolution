@@ -70,17 +70,17 @@ public abstract class BakedQuadMixin implements IBakedQuadPatch {
 
     @Override
     public float getX(int idx) {
-        return Float.intBitsToFloat(this.vertices[vertexOffset(idx) + POSITION_INDEX]);
+        return Float.intBitsToFloat(this.vertices[vertexOffset(idx)]);
     }
 
     @Override
     public float getY(int idx) {
-        return Float.intBitsToFloat(this.vertices[vertexOffset(idx) + POSITION_INDEX + 1]);
+        return Float.intBitsToFloat(this.vertices[vertexOffset(idx) + 1]);
     }
 
     @Override
     public float getZ(int idx) {
-        return Float.intBitsToFloat(this.vertices[vertexOffset(idx) + POSITION_INDEX + 2]);
+        return Float.intBitsToFloat(this.vertices[vertexOffset(idx) + 2]);
     }
 
     @Inject(method = "<init>", at = @At("RETURN"))

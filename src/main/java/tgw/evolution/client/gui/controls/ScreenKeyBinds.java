@@ -7,7 +7,6 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Widget;
-import net.minecraft.client.gui.screens.OptionsSubScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.controls.KeyBindsList;
 import net.minecraft.client.gui.screens.controls.KeyBindsScreen;
@@ -18,17 +17,18 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.settings.KeyModifier;
 import org.lwjgl.glfw.GLFW;
-import tgw.evolution.client.gui.widgets.CheckBoxAdv;
-import tgw.evolution.client.gui.widgets.EditBoxAdv;
+import tgw.evolution.client.gui.widgets.AdvCheckBox;
+import tgw.evolution.client.gui.widgets.AdvEditBox;
+import tgw.evolution.client.util.Key;
+import tgw.evolution.client.util.Modifiers;
+import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.math.MathHelper;
-import tgw.evolution.util.reflection.FieldHandler;
 
 import java.util.function.Predicate;
 
 @OnlyIn(Dist.CLIENT)
 public class ScreenKeyBinds extends KeyBindsScreen {
-    private final FieldHandler<KeyBindsScreen, KeyBindsList> keyBindsList = new FieldHandler<>(KeyBindsScreen.class, "f_193977_");
     private final Options options;
     private final Component textCategory = new TranslatableComponent("evolution.gui.controls.category");
     private final Component textConfirmReset = new TranslatableComponent("evolution.gui.controls.confirmReset");
@@ -37,9 +37,9 @@ public class ScreenKeyBinds extends KeyBindsScreen {
     private final Component textShowAll = new TranslatableComponent("evolution.gui.controls.showAll");
     private final Component textShowConflicts = new TranslatableComponent("evolution.gui.controls.showConflicts");
     private final Component textShowUnbound = new TranslatableComponent("evolution.gui.controls.showUnbound");
-    private CheckBoxAdv buttonCat;
+    private AdvCheckBox buttonCat;
     private Button buttonConflicting;
-    private CheckBoxAdv buttonKey;
+    private AdvCheckBox buttonKey;
     private Button buttonReset;
     private Button buttonUnbound;
     private boolean confirmingReset;
@@ -47,12 +47,12 @@ public class ScreenKeyBinds extends KeyBindsScreen {
     private boolean isCategoryMarked;
     private boolean isKeyMarked;
     private String lastSearch = "";
-    private EditBoxAdv searchBox;
+    private AdvEditBox searchBox;
     private SearchType searchType = SearchType.NAME;
     private SortOrder sortOrder = SortOrder.NONE;
 
-    public ScreenKeyBinds(KeyBindsScreen screen, Options options) {
-        super(new FieldHandler<OptionsSubScreen, Screen>(OptionsSubScreen.class, "f_96281_").get(screen), options);
+    public ScreenKeyBinds(Screen screen, Options options) {
+        super(screen, options);
         this.options = options;
     }
 
@@ -63,7 +63,7 @@ public class ScreenKeyBinds extends KeyBindsScreen {
     }
 
     public void filterKeys() {
-        KeyBindsList keyBindingList = this.keyBindsList.get(this);
+        KeyBindsList keyBindingList = this.keyBindsList;
         this.lastSearch = this.searchBox.getValue();
         keyBindingList.children().clear();
         if (this.lastSearch.isEmpty() && this.displayMode == DisplayMode.ALL && this.sortOrder == SortOrder.NONE) {
@@ -99,9 +99,9 @@ public class ScreenKeyBinds extends KeyBindsScreen {
     @Override
     protected void init() {
         this.confirmingReset = false;
-        this.keyBindsList.set(this, new ListKeyBinds(this, this.minecraft));
-        KeyBindsList keyBindingList = this.keyBindsList.get(this);
-        this.addWidget(keyBindingList);
+        assert this.minecraft != null;
+        this.keyBindsList = new ListKeyBinds(this, this.minecraft);
+        this.addWidget(this.keyBindsList);
         this.addRenderableWidget(new Button(this.width / 2 - 155 + 160,
                                             this.height - 29,
                                             150,
@@ -159,10 +159,10 @@ public class ScreenKeyBinds extends KeyBindsScreen {
                                                                          }
                                                                          this.filterKeys();
                                                                      }));
-        this.searchBox = new EditBoxAdv(this.font, this.width / 2 - 154, this.height - 29 - 23, 148, 18, EvolutionTexts.EMPTY);
+        this.searchBox = new AdvEditBox(this.font, this.width / 2 - 154, this.height - 29 - 23, 148, 18, EvolutionTexts.EMPTY);
         this.searchBox.setValue(this.lastSearch);
         this.addWidget(this.searchBox);
-        this.buttonKey = this.addRenderableWidget(new CheckBoxAdv(this.width / 2 - 10 - 13 - this.font.width(this.textKey),
+        this.buttonKey = this.addRenderableWidget(new AdvCheckBox(this.width / 2 - 10 - 13 - this.font.width(this.textKey),
                                                                   this.height - 29 - 37,
                                                                   this.textKey,
                                                                   this.isKeyMarked,
@@ -174,7 +174,7 @@ public class ScreenKeyBinds extends KeyBindsScreen {
                                                                       this.searchType = b.isChecked() ? SearchType.KEY : SearchType.NAME;
                                                                       this.filterKeys();
                                                                   }));
-        this.buttonCat = this.addRenderableWidget(new CheckBoxAdv(this.width / 2 - 150,
+        this.buttonCat = this.addRenderableWidget(new AdvCheckBox(this.width / 2 - 150,
                                                                   this.height - 29 - 37,
                                                                   this.textCategory,
                                                                   this.isCategoryMarked,
@@ -201,11 +201,12 @@ public class ScreenKeyBinds extends KeyBindsScreen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(@Key int keyCode, int scanCode, @Modifiers int modifiers) {
         this.buttonKey.setFocused(false);
         this.buttonCat.setFocused(false);
         if (!this.searchBox.isFocused() && this.selectedKey == null) {
             if (hasControlDown()) {
+                assert this.minecraft != null;
                 if (InputConstants.isKeyDown(this.minecraft.getWindow().getWindow(), GLFW.GLFW_KEY_F)) {
                     this.resetConfirmReset();
                     this.searchBox.setFocus(true);
@@ -234,7 +235,6 @@ public class ScreenKeyBinds extends KeyBindsScreen {
                 this.options.setKey(this.selectedKey, InputConstants.getKey(keyCode, scanCode));
             }
             if (!KeyModifier.isKeyCodeModifier(this.selectedKey.getKey())) {
-                //noinspection ConstantConditions
                 this.selectedKey = null;
             }
             this.lastKeySelection = Util.getMillis();
@@ -245,14 +245,14 @@ public class ScreenKeyBinds extends KeyBindsScreen {
     }
 
     @Override
-    public boolean mouseClicked(double mx, double my, int mb) {
+    public boolean mouseClicked(double mx, double my, @MouseButton int mb) {
         this.searchBox.setFocus(false);
         return super.mouseClicked(mx, my, mb);
     }
 
     @Override
-    public boolean mouseReleased(double mx, double my, int mb) {
-        if (mb == 0 && this.keyBindsList.get(this).mouseReleased(mx, my, mb)) {
+    public boolean mouseReleased(double mx, double my, @MouseButton int mb) {
+        if (mb == GLFW.GLFW_MOUSE_BUTTON_1 && this.keyBindsList.mouseReleased(mx, my, mb)) {
             this.setDragging(false);
             return true;
         }
@@ -269,7 +269,7 @@ public class ScreenKeyBinds extends KeyBindsScreen {
     @Override
     public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(matrices);
-        this.keyBindsList.get(this).render(matrices, mouseX, mouseY, partialTicks);
+        this.keyBindsList.render(matrices, mouseX, mouseY, partialTicks);
         drawCenteredString(matrices, this.font, this.title, this.width / 2, 5, 0xff_ffff);
         boolean isResetActive = false;
         for (KeyMapping keybinding : this.options.keyMappings) {

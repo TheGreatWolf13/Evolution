@@ -40,8 +40,7 @@ public abstract class FontMixin implements IFontPatch {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid unnecessary allocations
+     * @reason Avoid unnecessary allocations
      */
     @Overwrite
     private int drawInternal(String text,
@@ -74,8 +73,7 @@ public abstract class FontMixin implements IFontPatch {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid unnecessary allocations
+     * @reason Avoid unnecessary allocations
      */
     @Overwrite
     private int drawInternal(FormattedCharSequence processor,

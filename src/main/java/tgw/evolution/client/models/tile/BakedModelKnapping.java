@@ -19,14 +19,14 @@ import net.minecraftforge.client.model.SimpleModelState;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.client.model.data.ModelProperty;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.Patterns;
 import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.util.constants.RockVariant;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -52,7 +52,7 @@ public class BakedModelKnapping implements BakedModel {
         return builder.build();
     }
 
-    private static BakedQuad getQuadForPart(@Nonnull Direction whichFace,
+    private static BakedQuad getQuadForPart(Direction whichFace,
                                             TextureAtlasSprite sprite,
                                             float minX,
                                             float minY,
@@ -88,10 +88,10 @@ public class BakedModelKnapping implements BakedModel {
         };
     }
 
-    private List<BakedQuad> getBakedQuadsFromIModelData(@Nullable BlockState state,
-                                                        @Nullable Direction side,
-                                                        @Nonnull Random rand,
-                                                        @Nonnull IModelData data) {
+    private List<BakedQuad> getBakedQuadsFromIModelData(BlockState state,
+                                                        Direction side,
+                                                        Random rand,
+                                                        IModelData data) {
         if (!data.hasProperty(PARTS)) {
             Evolution.error("IModelData did not have expected property PARTS");
             return this.baseModel.getQuads(state, side, rand);
@@ -101,11 +101,10 @@ public class BakedModelKnapping implements BakedModel {
     }
 
     @Override
-    @Nonnull
-    public IModelData getModelData(@Nonnull BlockAndTintGetter level,
-                                   @Nonnull BlockPos pos,
-                                   @Nonnull BlockState state,
-                                   @Nonnull IModelData tileData) {
+    public @NotNull IModelData getModelData(BlockAndTintGetter level,
+                                            BlockPos pos,
+                                            BlockState state,
+                                            IModelData tileData) {
         BlockEntity tile = level.getBlockEntity(pos);
         ModelDataMap modelDataMap = getEmptyIModelData();
         if (tile instanceof TEKnapping teKnapping) {
@@ -133,8 +132,7 @@ public class BakedModelKnapping implements BakedModel {
     }
 
     @Override
-    @Nonnull
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random rand, @Nonnull IModelData extraData) {
+    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand, IModelData extraData) {
         return this.getBakedQuadsFromIModelData(state, side, rand, extraData);
     }
 

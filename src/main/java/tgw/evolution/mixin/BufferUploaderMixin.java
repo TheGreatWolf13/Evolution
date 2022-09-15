@@ -23,8 +23,7 @@ public abstract class BufferUploaderMixin {
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations
+     * @reason Avoid allocations
      */
     @Overwrite
     private static void _end(ByteBuffer buffer,

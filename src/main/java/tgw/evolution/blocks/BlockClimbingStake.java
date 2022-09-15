@@ -24,16 +24,16 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.items.ItemHammer;
+import tgw.evolution.items.ItemUtils;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.math.DirectionUtil;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Random;
 
@@ -93,11 +93,12 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
 
     @Override
     public void attack(BlockState state, Level level, BlockPos pos, Player player) {
-        if (player.isOnGround() && player.getMainHandItem().getItem() instanceof ItemHammer) {
+        ItemStack mainhandStack = player.getMainHandItem();
+        if (player.isOnGround() && ItemUtils.isHammer(mainhandStack)) {
             if (!state.getValue(HIT)) {
                 level.playSound(player, pos, SoundEvents.ANVIL_HIT, SoundSource.BLOCKS, 1.0f, 1.0f);
                 level.setBlockAndUpdate(pos, state.setValue(HIT, true));
-                player.getMainHandItem().hurtAndBreak(1, player, playerEntity -> playerEntity.broadcastBreakEvent(InteractionHand.MAIN_HAND));
+                mainhandStack.hurtAndBreak(1, player, playerEntity -> playerEntity.broadcastBreakEvent(InteractionHand.MAIN_HAND));
             }
             return;
         }

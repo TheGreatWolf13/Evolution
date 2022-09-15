@@ -1,18 +1,18 @@
 package tgw.evolution.capabilities.toast;
 
-import it.unimi.dsi.fastutil.ints.IntCollection;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCToast;
+import tgw.evolution.util.collection.IOpenHashSet;
+import tgw.evolution.util.collection.ISet;
 import tgw.evolution.util.toast.Toasts;
 
 public class ToastStats implements IToastData {
 
-    private final IntCollection unlocked = new IntOpenHashSet();
+    private final ISet unlocked = new IOpenHashSet();
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {

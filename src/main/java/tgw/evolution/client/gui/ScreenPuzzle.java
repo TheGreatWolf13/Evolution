@@ -10,9 +10,13 @@ import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.lwjgl.glfw.GLFW;
 import tgw.evolution.blocks.tileentities.TEPuzzle;
-import tgw.evolution.client.gui.widgets.CheckBoxAdv;
-import tgw.evolution.client.gui.widgets.EditBoxAdv;
+import tgw.evolution.client.gui.widgets.AdvCheckBox;
+import tgw.evolution.client.gui.widgets.AdvEditBox;
+import tgw.evolution.client.util.Key;
+import tgw.evolution.client.util.Modifiers;
+import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketCSUpdatePuzzle;
@@ -25,11 +29,11 @@ public class ScreenPuzzle extends Screen {
     private final Component textFinalState = new TranslatableComponent("evolution.gui.puzzle.finalState");
     private final Component textTargetPool = new TranslatableComponent("evolution.gui.puzzle.targetPool");
     private final TEPuzzle tile;
-    private EditBoxAdv attachmentTypeEdit;
+    private AdvEditBox attachmentTypeEdit;
     private boolean checkBB;
     private Button doneButton;
-    private EditBoxAdv finalStateEdit;
-    private EditBoxAdv targetPoolEdit;
+    private AdvEditBox finalStateEdit;
+    private AdvEditBox targetPoolEdit;
 
     public ScreenPuzzle(TEPuzzle tile) {
         super(NarratorChatListener.NO_TITLE);
@@ -47,6 +51,7 @@ public class ScreenPuzzle extends Screen {
 
     @Override
     protected void init() {
+        assert this.minecraft != null;
         this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
         this.doneButton = this.addRenderableWidget(new Button(this.width / 2 - 4 - 150,
                                                               210,
@@ -56,23 +61,23 @@ public class ScreenPuzzle extends Screen {
                                                               button -> this.sendUpdatesToServer()));
         this.addRenderableWidget(new Button(this.width / 2 + 4, 210, 150, 20, EvolutionTexts.GUI_GENERAL_CANCEL, p_214252_1_ -> this.onClose()));
         this.checkBB = this.tile.getCheckBB();
-        this.addRenderableWidget(new CheckBoxAdv(this.width / 2 - 4 - 150 + 1,
+        this.addRenderableWidget(new AdvCheckBox(this.width / 2 - 4 - 150 + 1,
                                                  150,
                                                  this.textCheckBB,
                                                  this.checkBB,
                                                  true,
                                                  b -> this.checkBB = !this.checkBB));
-        this.targetPoolEdit = new EditBoxAdv(this.font, this.width / 2 - 152, 40, 300, 20, EvolutionTexts.EMPTY);
+        this.targetPoolEdit = new AdvEditBox(this.font, this.width / 2 - 152, 40, 300, 20, EvolutionTexts.EMPTY);
         this.targetPoolEdit.setMaxLength(128);
         this.targetPoolEdit.setValue(this.tile.getTargetPool().toString());
         this.targetPoolEdit.setResponder(string -> this.checkValid());
         this.addWidget(this.targetPoolEdit);
-        this.attachmentTypeEdit = new EditBoxAdv(this.font, this.width / 2 - 152, 80, 300, 20, EvolutionTexts.EMPTY);
+        this.attachmentTypeEdit = new AdvEditBox(this.font, this.width / 2 - 152, 80, 300, 20, EvolutionTexts.EMPTY);
         this.attachmentTypeEdit.setMaxLength(128);
         this.attachmentTypeEdit.setValue(this.tile.getAttachmentType().toString());
         this.attachmentTypeEdit.setResponder(string -> this.checkValid());
         this.addWidget(this.attachmentTypeEdit);
-        this.finalStateEdit = new EditBoxAdv(this.font, this.width / 2 - 152, 120, 300, 20, EvolutionTexts.EMPTY);
+        this.finalStateEdit = new AdvEditBox(this.font, this.width / 2 - 152, 120, 300, 20, EvolutionTexts.EMPTY);
         this.finalStateEdit.setMaxLength(256);
         this.finalStateEdit.setValue(this.tile.getFinalState());
         this.addWidget(this.finalStateEdit);
@@ -81,11 +86,11 @@ public class ScreenPuzzle extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(@Key int keyCode, int scanCode, @Modifiers int modifiers) {
         if (super.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
         }
-        if (!this.doneButton.active || keyCode != 257 && keyCode != 335) {
+        if (!this.doneButton.active || keyCode != GLFW.GLFW_KEY_ENTER && keyCode != GLFW.GLFW_KEY_KP_ENTER) {
             return false;
         }
         this.sendUpdatesToServer();
@@ -93,7 +98,7 @@ public class ScreenPuzzle extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
         this.attachmentTypeEdit.setFocus(false);
         this.targetPoolEdit.setFocus(false);
         this.finalStateEdit.setFocus(false);
@@ -102,6 +107,7 @@ public class ScreenPuzzle extends Screen {
 
     @Override
     public void onClose() {
+        assert this.minecraft != null;
         this.minecraft.keyboardHandler.setSendRepeatsToGui(false);
         this.minecraft.setScreen(null);
     }

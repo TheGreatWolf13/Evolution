@@ -3,6 +3,7 @@ package tgw.evolution.mixin;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
@@ -12,6 +13,7 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.model.data.IModelData;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -28,7 +30,6 @@ import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.XoRoShiRoRandom;
 
-import javax.annotation.Nullable;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Random;
@@ -53,11 +54,12 @@ public abstract class ModelBlockRendererMixin {
             return;
         }
         drain.ensureCapacity(list.size() * 4);
-        for (BakedQuad bakedQuad : list) {
+        for (int i = 0, l = list.size(); i < l; i++) {
+            BakedQuad bakedQuad = list.get(i);
             int color = bakedQuad.isTinted() ? defaultColor : 0xFFFF_FFFF;
             IBakedQuadPatch quad = (IBakedQuadPatch) bakedQuad;
-            for (int i = 0; i < 4; i++) {
-                drain.writeQuad(entry, quad.getX(i), quad.getY(i), quad.getZ(i), color, quad.getTexU(i), quad.getTexV(i), light, overlay,
+            for (int v = 0; v < 4; v++) {
+                drain.writeQuad(entry, quad.getX(v), quad.getY(v), quad.getZ(v), color, quad.getTexU(v), quad.getTexV(v), light, overlay,
                                 ModelQuadUtil.getFacingNormal(bakedQuad.getDirection()));
             }
         }
@@ -163,19 +165,45 @@ public abstract class ModelBlockRendererMixin {
                                    BitSet shapeFlags,
                                    EvAmbientOcclusionFace AoFace,
                                    int packedOverlay) {
-        for (BakedQuad bakedquad : quads) {
-            this.calculateShape(level, state, pos, bakedquad.getVertices(), bakedquad.getDirection(), shape, shapeFlags);
-            AoFace.calculate(level, state, pos, bakedquad.getDirection(), shape, shapeFlags, bakedquad.isShade());
-            this.putQuadData(level, state, pos, consumer, matrices.last(), bakedquad, AoFace.brightness0, AoFace.brightness1, AoFace.brightness2,
+        for (int i = 0, l = quads.size(); i < l; i++) {
+            BakedQuad bakedQuad = quads.get(i);
+            this.calculateShape(level, state, pos, bakedQuad.getVertices(), bakedQuad.getDirection(), shape, shapeFlags);
+            AoFace.calculate(level, state, pos, bakedQuad.getDirection(), shape, shapeFlags, bakedQuad.isShade());
+            this.putQuadData(level, state, pos, consumer, matrices.last(), bakedQuad, AoFace.brightness0, AoFace.brightness1, AoFace.brightness2,
                              AoFace.brightness3, AoFace.lightmap0, AoFace.lightmap1, AoFace.lightmap2, AoFace.lightmap3, packedOverlay);
         }
-
     }
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Use EvAmbientOcclusionFace to avoid array allocations.
+     * @reason Avoid allocations via iterator
+     */
+    @Overwrite
+    private void renderModelFaceFlat(BlockAndTintGetter level,
+                                     BlockState state,
+                                     BlockPos pos,
+                                     int light,
+                                     int overlay,
+                                     boolean repackLight,
+                                     PoseStack matrices,
+                                     VertexConsumer buffer,
+                                     List<BakedQuad> quads,
+                                     BitSet shapeFlags) {
+        for (int i = 0, l = quads.size(); i < l; i++) {
+            BakedQuad bakedQuad = quads.get(i);
+            if (repackLight) {
+                this.calculateShape(level, state, pos, bakedQuad.getVertices(), bakedQuad.getDirection(), null, shapeFlags);
+                BlockPos blockpos = shapeFlags.get(0) ? pos.relative(bakedQuad.getDirection()) : pos;
+                light = LevelRenderer.getLightColor(level, state, blockpos);
+            }
+            float f = level.getShade(bakedQuad.getDirection(), bakedQuad.isShade());
+            this.putQuadData(level, state, pos, buffer, matrices.last(), bakedQuad, f, f, f, f, light, light, light, light, overlay);
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Use EvAmbientOcclusionFace to avoid array allocations.
      */
     @Overwrite
     public boolean tesselateWithAO(BlockAndTintGetter level,

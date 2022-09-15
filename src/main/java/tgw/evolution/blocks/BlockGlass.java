@@ -15,7 +15,7 @@ import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketCSCollision;
 import tgw.evolution.util.math.Units;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class BlockGlass extends BlockGeneric implements ICollisionBlock {
 

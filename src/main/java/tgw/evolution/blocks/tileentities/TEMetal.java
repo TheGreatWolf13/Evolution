@@ -51,6 +51,7 @@ public class TEMetal extends BlockEntity {
     }
 
     public void oxidationTick(MetalVariant metal, Oxidation oxidation) {
+        assert this.level != null;
         long currentTick = this.level.getGameTime();
         long passedTicks = currentTick - this.lastTick;
         this.lastTick = currentTick;
@@ -88,6 +89,7 @@ public class TEMetal extends BlockEntity {
             }
             mutablePos.setWithOffset(this.worldPosition, dir);
             if (!water) {
+                assert this.level != null;
                 FluidState fluid = this.level.getFluidState(mutablePos);
                 if (fluid.is(FluidTags.WATER)) {
                     water = true;

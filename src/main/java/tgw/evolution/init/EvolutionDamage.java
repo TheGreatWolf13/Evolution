@@ -5,11 +5,11 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.Util;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.util.damage.DamageSourceEntity;
@@ -17,7 +17,6 @@ import tgw.evolution.util.damage.DamageSourceEntityIndirect;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.damage.DamageSourcePlayer;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
 
 public final class EvolutionDamage {
@@ -68,12 +67,12 @@ public final class EvolutionDamage {
         return new DamageSourceEntityIndirect("hook", source, trueSource, Type.PIERCING).projectile();
     }
 
-    public static DamageSourceEv causeMobMeleeDamage(LivingEntity mob, Type type, InteractionHand hand) {
+    public static DamageSourceEv causeMobMeleeDamage(LivingEntity mob, Type type) {
         return new DamageSourceEntity("mob", mob, type);
     }
 
-    public static DamageSourceEv causePlayerMeleeDamage(Player player, Type type, InteractionHand hand) {
-        return new DamageSourcePlayer("player", player, type, hand);
+    public static DamageSourceEv causePlayerMeleeDamage(Player player, Type type) {
+        return new DamageSourcePlayer("player", player, type);
     }
 
     public static DamageSourceEv causeSpearDamage(EntitySpear source, @Nullable Entity trueSource) {

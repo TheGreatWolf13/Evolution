@@ -6,15 +6,16 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.UnregisteredFeatureException;
 
 public enum MetalVariant {
-    COPPER(8_920, HarvestLevels.LOW_METAL, 30.0F, 10.0F, 1.6f, true);
+    COPPER(8_920, HarvestLevel.LOW_METAL, 30.0F, 10.0F, 1.6f, true);
     private final int density;
     private final float frictionCoef;
     private final float hardness;
+    @HarvestLevel
     private final int harvestLevel;
     private final boolean oxidizes;
     private final float resistance;
 
-    MetalVariant(int density, int harvestLevel, float hardness, float resistance, float frictionCoef, boolean oxidizes) {
+    MetalVariant(int density, @HarvestLevel int harvestLevel, float hardness, float resistance, float frictionCoef, boolean oxidizes) {
         this.density = density;
         this.harvestLevel = harvestLevel;
         this.hardness = hardness;
@@ -59,6 +60,7 @@ public enum MetalVariant {
         return this.hardness;
     }
 
+    @HarvestLevel
     public int getHarvestLevel() {
         return this.harvestLevel;
     }

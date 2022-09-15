@@ -14,7 +14,7 @@ public abstract class RenderSystemMixin {
 
     @Shadow
     @Final
-    private static Vector3f[] shaderLightDirections;
+    public static Vector3f[] shaderLightDirections;
 
     @Inject(method = "<clinit>", at = @At("TAIL"))
     private static void onClinit(CallbackInfo ci) {

@@ -20,6 +20,7 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fluids.FluidAttributes;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.IFluidLoggable;
@@ -28,7 +29,7 @@ import tgw.evolution.blocks.tileentities.TELiquid;
 import tgw.evolution.init.EvolutionFluids;
 import tgw.evolution.util.math.*;
 
-import javax.annotation.Nullable;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public abstract class FluidGeneric extends FlowingFluid {
@@ -383,7 +384,7 @@ public abstract class FluidGeneric extends FlowingFluid {
 
     @Override
     public String toString() {
-        return this.getRegistryName().toString();
+        return Objects.requireNonNull(this.getRegistryName()).toString();
     }
 
     public boolean tryFall(Level level, BlockPos pos, FluidState fluidState) {

@@ -6,12 +6,13 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.level.material.Material;
-import tgw.evolution.capabilities.modular.part.HandlePart;
-import tgw.evolution.capabilities.modular.part.HeadPart;
+import tgw.evolution.capabilities.modular.part.PartHandle;
+import tgw.evolution.capabilities.modular.part.PartHead;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.modular.ItemModular;
+import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.math.MathHelper;
 
@@ -19,8 +20,8 @@ import java.util.List;
 
 public class ModularTool implements IModularTool {
 
-    private final HandlePart handle = new HandlePart();
-    private final HeadPart head = new HeadPart();
+    private final PartHandle handle = new PartHandle();
+    private final PartHead head = new PartHead();
     private CompoundTag tag;
 
     @Override
@@ -93,12 +94,12 @@ public class ModularTool implements IModularTool {
     @Override
     public double getAttackDamage() {
         double damage = switch (this.getDamageType()) {
-            case PIERCING -> this.head.getMaterial().getElasticModulus() / 3.5;
+            case PIERCING -> this.head.getMaterialInstance().getElasticModulus() / 3.5;
             case CRUSHING -> this.getMoment() * 12.5; //TODO divide by area
-            case SLASHING -> 0.87 * (0.65 * this.head.getMaterial().getElasticModulus() / 3.5 + 0.35 * this.getMoment() * 12.5);
+            case SLASHING -> 0.87 * (0.65 * this.head.getMaterialInstance().getElasticModulus() / 3.5 + 0.35 * this.getMoment() * 12.5);
             default -> 0;
         };
-        return this.head.getAttackDamageInternal(damage);
+        return this.head.getAttackDamageInternal(damage) / PlayerHelper.ATTACK_DAMAGE;
     }
 
     @Override
@@ -128,10 +129,10 @@ public class ModularTool implements IModularTool {
     public String getDescriptionId() {
         if (this.head.getType() == PartTypes.Head.SPEAR) {
             if (!this.isTwoHanded()) {
-                return "item.evolution.javelin." + this.head.getMaterial().getName();
+                return "item.evolution.javelin." + this.head.getMaterialInstance().getName();
             }
         }
-        return "item.evolution." + this.head.getType().getName() + "." + this.head.getMaterial().getName();
+        return "item.evolution." + this.head.getType().getName() + "." + this.head.getMaterialInstance().getName();
     }
 
     @Override
@@ -140,7 +141,7 @@ public class ModularTool implements IModularTool {
     }
 
     @Override
-    public HandlePart getHandle() {
+    public PartHandle getHandle() {
         return this.handle;
     }
 
@@ -150,7 +151,7 @@ public class ModularTool implements IModularTool {
     }
 
     @Override
-    public HeadPart getHead() {
+    public PartHead getHead() {
         return this.head;
     }
 
@@ -195,8 +196,18 @@ public class ModularTool implements IModularTool {
     }
 
     @Override
+    public boolean isHammer() {
+        return this.head.getType() == PartTypes.Head.HAMMER;
+    }
+
+    @Override
     public boolean isSharpened() {
         return this.head.getSharpAmount() > 0;
+    }
+
+    @Override
+    public boolean isSword() {
+        return false;
     }
 
     @Override

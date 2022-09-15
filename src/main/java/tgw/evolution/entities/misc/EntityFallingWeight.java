@@ -30,20 +30,19 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.entity.IEntityAdditionalSpawnData;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.*;
-import tgw.evolution.entities.IEvolutionEntity;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
+import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.hitbox.HitboxEntity;
 
-import javax.annotation.Nullable;
-
-public class EntityFallingWeight extends Entity implements IEntityAdditionalSpawnData, IEvolutionEntity<EntityFallingWeight> {
+public class EntityFallingWeight extends Entity implements IEntityAdditionalSpawnData, IEntityPatch<EntityFallingWeight> {
 
     private final MutableBlockPos mutablePos = new MutableBlockPos();
     public int fallTime;
@@ -140,11 +139,10 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
-    //TODO
-//    @Override
-//    public boolean func_241845_aY() {
-//        return this.isAlive();
-//    }
+    @Override
+    public double getBaseMass() {
+        return this.mass;
+    }
 
     /**
      * Returns the {@code BlockState} this entity is imitating.
@@ -153,15 +151,25 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         return this.state;
     }
 
-    @Nullable
     @Override
-    public HitboxEntity<EntityFallingWeight> getHitbox() {
-        return null;
+    public float getFrictionModifier() {
+        return 2.0f;
     }
 
     @Override
-    public boolean hasHitboxes() {
-        return false;
+    public @Nullable HitboxEntity<EntityFallingWeight> getHitboxes() {
+        return null;
+    }
+
+    //TODO
+//    @Override
+//    public boolean func_241845_aY() {
+//        return this.isAlive();
+//    }
+
+    @Override
+    public double getLegSlowdown() {
+        return 0;
     }
 
     @Override
@@ -186,7 +194,10 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
 
     @Override
     public void readSpawnData(FriendlyByteBuf buffer) {
-        this.state = NbtUtils.readBlockState(buffer.readNbt());
+        CompoundTag tag = buffer.readNbt();
+        if (tag != null) {
+            this.state = NbtUtils.readBlockState(tag);
+        }
     }
 
     @Override

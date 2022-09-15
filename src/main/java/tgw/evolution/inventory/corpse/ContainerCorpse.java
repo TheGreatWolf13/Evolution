@@ -25,15 +25,13 @@ public class ContainerCorpse extends AbstractContainerMenu implements IEvolution
         this.corpse = corpse;
         IItemHandler playerInventory = new InvWrapper(inventory);
         this.layoutPlayerInventorySlots(playerInventory, 8, 140);
-        if (corpse != null) {
-            IItemHandler corpseHandler = corpse.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).orElseThrow(IllegalStateException::new);
-            this.addArmorSlots(corpseHandler);
-            this.addClothesSlots(corpseHandler);
-            this.addEquipmentSlots(corpseHandler);
-            this.addSlotBox(corpseHandler, 13, 8, 54, 9, 18, 4, 18);
-            if (!corpse.level.isClientSide) {
-                corpse.onOpen(inventory.player);
-            }
+        IItemHandler corpseHandler = corpse.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).orElseThrow(IllegalStateException::new);
+        this.addArmorSlots(corpseHandler);
+        this.addClothesSlots(corpseHandler);
+        this.addEquipmentSlots(corpseHandler);
+        this.addSlotBox(corpseHandler, 13, 8, 54, 9, 18, 4, 18);
+        if (!corpse.level.isClientSide) {
+            corpse.onOpen(inventory.player);
         }
     }
 
@@ -121,7 +119,7 @@ public class ContainerCorpse extends AbstractContainerMenu implements IEvolution
     public ItemStack quickMoveStack(Player player, int index) {
         ItemStack stack = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
-        if (slot != null && slot.hasItem()) {
+        if (slot.hasItem()) {
             ItemStack stackInSlot = slot.getItem();
             stack = stackInSlot.copy();
             if (index > 35) {

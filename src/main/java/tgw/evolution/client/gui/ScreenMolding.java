@@ -14,13 +14,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.EnumMolding;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketCSSetMoldingType;
 
-import javax.annotation.Nullable;
 import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)

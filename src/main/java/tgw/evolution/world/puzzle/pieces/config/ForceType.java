@@ -7,6 +7,7 @@ public enum ForceType {
     SOFT(1),
     HARD(2);
 
+    public static final ForceType[] VALUES = values();
     private final byte id;
 
     ForceType(int id) {
@@ -14,7 +15,7 @@ public enum ForceType {
     }
 
     public static ForceType byId(int id) {
-        for (ForceType type : ForceType.values()) {
+        for (ForceType type : VALUES) {
             if (type.id == id) {
                 return type;
             }

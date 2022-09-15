@@ -1,12 +1,13 @@
 package tgw.evolution.patches;
 
 import net.minecraft.core.SectionPos;
+import org.jetbrains.annotations.Nullable;
 
 public interface IServerPlayerPatch {
 
     boolean getCameraUnload();
 
-    SectionPos getLastCameraSectionPos();
+    @Nullable SectionPos getLastCameraSectionPos();
 
     void setCameraUnload(boolean shouldUnload);
 

@@ -3,20 +3,20 @@ package tgw.evolution.util.constants;
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceOpenHashMap;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.KnappingRecipe;
-import tgw.evolution.capabilities.modular.MaterialInstance;
-import tgw.evolution.capabilities.modular.part.HeadPart;
+import tgw.evolution.capabilities.modular.part.IPart;
+import tgw.evolution.capabilities.modular.part.IPartType;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.IVariant;
 import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.items.modular.part.ItemPart;
 import tgw.evolution.util.UnregisteredFeatureException;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
 
 import static tgw.evolution.util.constants.RockType.*;
@@ -50,17 +50,18 @@ public enum RockVariant implements IVariant {
     private static final Byte2ReferenceMap<RockVariant> REGISTRY;
 
     static {
-        Byte2ReferenceMap<RockVariant> map = new Byte2ReferenceOpenHashMap<>();
+        Byte2ReferenceOpenHashMap<RockVariant> map = new Byte2ReferenceOpenHashMap<>();
         for (RockVariant variant : VALUES) {
             map.put(variant.id, variant);
         }
+        map.trim();
         REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
     }
 
     private final int density;
     private final byte id;
     private final String name;
-    private final RockType rockType;
+    private final @Nullable RockType rockType;
     private final int shearStrength;
 
     RockVariant(int id, @Nullable RockType rockType, String name, int densityInkg, int shearStrengthInPa) {
@@ -79,18 +80,7 @@ public enum RockVariant implements IVariant {
         return variant;
     }
 
-    private static ItemStack getPart(PartTypes.Head type, RockVariant variant) {
-        ItemMaterial material = variant.getMaterial();
-        if (!material.isAllowedBy(type)) {
-            throw new IllegalStateException("Invalid material for head type " + type + ": " + variant);
-        }
-        ItemStack stack = new ItemStack(EvolutionItems.HEAD_PART.get());
-        HeadPart part = HeadPart.get(stack);
-        part.set(type, new MaterialInstance(material));
-        part.sharp();
-        return stack;
-    }
-
+    @Contract(pure = true)
     public Block fromEnumVanillaRep(VanillaRockVariant vanilla) {
         return switch (vanilla) {
             case DIRT -> this.getDirt();
@@ -136,71 +126,20 @@ public enum RockVariant implements IVariant {
         };
     }
 
-    public Item getHammerHead() {
-        return switch (this) {
-            case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a hammer head!");
-            case ANDESITE -> EvolutionItems.hammer_head_andesite.get();
-            case BASALT -> EvolutionItems.hammer_head_basalt.get();
-            case CHALK -> EvolutionItems.hammer_head_chalk.get();
-            case CHERT -> EvolutionItems.hammer_head_chert.get();
-            case CONGLOMERATE -> EvolutionItems.hammer_head_conglomerate.get();
-            case DACITE -> EvolutionItems.hammer_head_dacite.get();
-            case DIORITE -> EvolutionItems.hammer_head_diorite.get();
-            case DOLOMITE -> EvolutionItems.hammer_head_dolomite.get();
-            case GABBRO -> EvolutionItems.hammer_head_gabbro.get();
-            case GNEISS -> EvolutionItems.hammer_head_gneiss.get();
-            case GRANITE -> EvolutionItems.hammer_head_granite.get();
-            case LIMESTONE -> EvolutionItems.hammer_head_limestone.get();
-            case MARBLE -> EvolutionItems.hammer_head_marble.get();
-            case PHYLLITE -> EvolutionItems.hammer_head_phyllite.get();
-            case QUARTZITE -> EvolutionItems.hammer_head_quartzite.get();
-            case RED_SANDSTONE -> EvolutionItems.hammer_head_red_sandstone.get();
-            case SANDSTONE -> EvolutionItems.hammer_head_sandstone.get();
-            case SCHIST -> EvolutionItems.hammer_head_schist.get();
-            case SHALE -> EvolutionItems.hammer_head_shale.get();
-            case SLATE -> EvolutionItems.hammer_head_slate.get();
-        };
-    }
-
-    public Item getHoeHead() {
-        return switch (this) {
-            case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a hoe head!");
-            case ANDESITE -> EvolutionItems.hoe_head_andesite.get();
-            case BASALT -> EvolutionItems.hoe_head_basalt.get();
-            case CHALK -> EvolutionItems.hoe_head_chalk.get();
-            case CHERT -> EvolutionItems.hoe_head_chert.get();
-            case CONGLOMERATE -> EvolutionItems.hoe_head_conglomerate.get();
-            case DACITE -> EvolutionItems.hoe_head_dacite.get();
-            case DIORITE -> EvolutionItems.hoe_head_diorite.get();
-            case DOLOMITE -> EvolutionItems.hoe_head_dolomite.get();
-            case GABBRO -> EvolutionItems.hoe_head_gabbro.get();
-            case GNEISS -> EvolutionItems.hoe_head_gneiss.get();
-            case GRANITE -> EvolutionItems.hoe_head_granite.get();
-            case LIMESTONE -> EvolutionItems.hoe_head_limestone.get();
-            case MARBLE -> EvolutionItems.hoe_head_marble.get();
-            case PHYLLITE -> EvolutionItems.hoe_head_phyllite.get();
-            case QUARTZITE -> EvolutionItems.hoe_head_quartzite.get();
-            case RED_SANDSTONE -> EvolutionItems.hoe_head_red_sandstone.get();
-            case SANDSTONE -> EvolutionItems.hoe_head_sandstone.get();
-            case SCHIST -> EvolutionItems.hoe_head_schist.get();
-            case SHALE -> EvolutionItems.hoe_head_shale.get();
-            case SLATE -> EvolutionItems.hoe_head_slate.get();
-        };
-    }
-
     public byte getId() {
         return this.id;
     }
 
+    @Contract(pure = true, value = "_ -> new")
     public ItemStack getKnappedStack(KnappingRecipe knapping) {
         return switch (knapping) {
             case NULL -> new ItemStack(this.getRock());
-            case AXE -> getPart(PartTypes.Head.AXE, this);
-            case HAMMER -> new ItemStack(this.getHammerHead());
-            case HOE -> new ItemStack(this.getHoeHead());
-            case KNIFE -> new ItemStack(this.getKnifeBlade());
-            case SHOVEL -> new ItemStack(this.getShovelHead());
-            case SPEAR -> getPart(PartTypes.Head.SPEAR, this);
+            case AXE -> this.getPart(PartTypes.Head.AXE);
+            case HAMMER -> this.getPart(PartTypes.Head.HAMMER);
+            case HOE -> this.getPart(PartTypes.Head.HOE);
+            case KNIFE -> this.getPart(PartTypes.Blade.KNIFE);
+            case SHOVEL -> this.getPart(PartTypes.Head.SHOVEL);
+            case SPEAR -> this.getPart(PartTypes.Head.SPEAR);
         };
     }
 
@@ -208,32 +147,6 @@ public enum RockVariant implements IVariant {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a knapping type!");
             default -> EvolutionBlocks.ALL_KNAPPING.get(this).get();
-        };
-    }
-
-    public Item getKnifeBlade() {
-        return switch (this) {
-            case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a knife blade!");
-            case ANDESITE -> EvolutionItems.knife_blade_andesite.get();
-            case BASALT -> EvolutionItems.knife_blade_basalt.get();
-            case CHALK -> EvolutionItems.knife_blade_chalk.get();
-            case CHERT -> EvolutionItems.knife_blade_chert.get();
-            case CONGLOMERATE -> EvolutionItems.knife_blade_conglomerate.get();
-            case DACITE -> EvolutionItems.knife_blade_dacite.get();
-            case DIORITE -> EvolutionItems.knife_blade_diorite.get();
-            case DOLOMITE -> EvolutionItems.knife_blade_dolomite.get();
-            case GABBRO -> EvolutionItems.knife_blade_gabbro.get();
-            case GNEISS -> EvolutionItems.knife_blade_gneiss.get();
-            case GRANITE -> EvolutionItems.knife_blade_granite.get();
-            case LIMESTONE -> EvolutionItems.knife_blade_limestone.get();
-            case MARBLE -> EvolutionItems.knife_blade_marble.get();
-            case PHYLLITE -> EvolutionItems.knife_blade_phyllite.get();
-            case QUARTZITE -> EvolutionItems.knife_blade_quartzite.get();
-            case RED_SANDSTONE -> EvolutionItems.knife_blade_red_sandstone.get();
-            case SANDSTONE -> EvolutionItems.knife_blade_sandstone.get();
-            case SCHIST -> EvolutionItems.knife_blade_schist.get();
-            case SHALE -> EvolutionItems.knife_blade_shale.get();
-            case SLATE -> EvolutionItems.knife_blade_slate.get();
         };
     }
 
@@ -272,6 +185,11 @@ public enum RockVariant implements IVariant {
         return this.name;
     }
 
+    @Contract(pure = true, value = "_ -> new")
+    private <T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>> ItemStack getPart(T type) {
+        return type.partItem().newStack(type, this.getMaterial());
+    }
+
     public Block getPolishedStone() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a polished stone type!");
@@ -286,7 +204,7 @@ public enum RockVariant implements IVariant {
         };
     }
 
-    public RockType getRockType() {
+    public @Nullable RockType getRockType() {
         return this.rockType;
     }
 
@@ -299,32 +217,6 @@ public enum RockVariant implements IVariant {
 
     public int getShearStrength() {
         return this.shearStrength;
-    }
-
-    public Item getShovelHead() {
-        return switch (this) {
-            case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a shovel head!");
-            case ANDESITE -> EvolutionItems.shovel_head_andesite.get();
-            case BASALT -> EvolutionItems.shovel_head_basalt.get();
-            case CHALK -> EvolutionItems.shovel_head_chalk.get();
-            case CHERT -> EvolutionItems.shovel_head_chert.get();
-            case CONGLOMERATE -> EvolutionItems.shovel_head_conglomerate.get();
-            case DACITE -> EvolutionItems.shovel_head_dacite.get();
-            case DIORITE -> EvolutionItems.shovel_head_diorite.get();
-            case DOLOMITE -> EvolutionItems.shovel_head_dolomite.get();
-            case GABBRO -> EvolutionItems.shovel_head_gabbro.get();
-            case GNEISS -> EvolutionItems.shovel_head_gneiss.get();
-            case GRANITE -> EvolutionItems.shovel_head_granite.get();
-            case LIMESTONE -> EvolutionItems.shovel_head_limestone.get();
-            case MARBLE -> EvolutionItems.shovel_head_marble.get();
-            case PHYLLITE -> EvolutionItems.shovel_head_phyllite.get();
-            case QUARTZITE -> EvolutionItems.shovel_head_quartzite.get();
-            case RED_SANDSTONE -> EvolutionItems.shovel_head_red_sandstone.get();
-            case SANDSTONE -> EvolutionItems.shovel_head_sandstone.get();
-            case SCHIST -> EvolutionItems.shovel_head_schist.get();
-            case SHALE -> EvolutionItems.shovel_head_shale.get();
-            case SLATE -> EvolutionItems.shovel_head_slate.get();
-        };
     }
 
     public Block getStone() {

@@ -2,7 +2,6 @@ package tgw.evolution.util.damage;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -14,9 +13,9 @@ public class DamageSourcePlayer extends DamageSourceEntity {
 
     private final ItemStack stack;
 
-    public DamageSourcePlayer(String damage, Player entity, EvolutionDamage.Type type, InteractionHand hand) {
+    public DamageSourcePlayer(String damage, Player entity, EvolutionDamage.Type type) {
         super(damage, entity, type);
-        this.stack = entity.getItemInHand(hand);
+        this.stack = entity.getMainHandItem();
     }
 
     @Override
@@ -27,6 +26,7 @@ public class DamageSourcePlayer extends DamageSourceEntity {
     @Override
     public Component getLocalizedDeathMessage(LivingEntity deadEntity) {
         String message = "death.attack." + this.msgId + ".item";
+        assert this.damageSourceEntity != null;
         return new TranslatableComponent(message, deadEntity.getDisplayName(), this.damageSourceEntity.getDisplayName(), this.getItemDisplay());
     }
 }

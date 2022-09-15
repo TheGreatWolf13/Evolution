@@ -32,7 +32,7 @@ import tgw.evolution.blocks.IBlockFluidContainer;
 import tgw.evolution.blocks.fluids.BlockGenericFluid;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.function.Supplier;
 
 public abstract class ItemGenericBucket extends ItemEv implements IItemFluidContainer {

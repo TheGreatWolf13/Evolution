@@ -2,6 +2,7 @@ package tgw.evolution.entities;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Pose;
@@ -9,13 +10,11 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.ai.*;
 import tgw.evolution.util.constants.EntityStates;
 import tgw.evolution.util.hitbox.HitboxEntity;
-import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.time.Time;
-
-import javax.annotation.Nullable;
 
 public class EntityCow extends EntityGenericAnimal<EntityCow> {
 
@@ -65,7 +64,7 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     @Override
     public int computeLifeSpan() {
         //TODO implementation
-        return 4 * Time.YEAR_IN_TICKS;
+        return 4 * Time.TICKS_PER_YEAR;
     }
 
     @Override
@@ -79,7 +78,7 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
 
     @Override
     public int getAdultAge() {
-        return 2 * Time.YEAR_IN_TICKS;
+        return 2 * Time.TICKS_PER_YEAR;
     }
 
     @Override
@@ -120,7 +119,7 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
 
     @Override
     public int getGestationPeriod() {
-        return 9 * Time.MONTH_IN_TICKS;
+        return 9 * Time.TICKS_PER_MONTH;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -131,9 +130,9 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
         }
         if (this.eatTimer > 4 && this.eatTimer <= 36) {
             float f = (this.eatTimer - 4 - partialTicks) / 32.0F;
-            return MathHelper.PI / 5.0F + 0.219_911_49F * MathHelper.sin(f * 28.7F);
+            return Mth.PI / 5.0F + 0.219_911_49F * Mth.sin(f * 28.7F);
         }
-        return this.eatTimer > 0 ? MathHelper.PI / 5.0F : MathHelper.degToRad(this.getXRot());
+        return this.eatTimer > 0 ? Mth.PI / 5.0F : Mth.DEG_TO_RAD * this.getXRot();
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -151,9 +150,9 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
         return this.eatTimer < 4 ? (this.eatTimer - partialTicks) / 4.0F : -(this.eatTimer - 40 - partialTicks) / 4.0F;
     }
 
-    @Nullable
     @Override
-    public HitboxEntity<EntityCow> getHitbox() {
+    public @Nullable HitboxEntity<EntityCow> getHitboxes() {
+        //TODO implementation
         return null;
     }
 
@@ -213,12 +212,6 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     }
 
     @Override
-    public boolean hasHitboxes() {
-        //TODO implementation
-        return false;
-    }
-
-    @Override
     public float mortallyRate() {
         //TODO implementation
         return 0;
@@ -233,7 +226,7 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     @Override
     protected void registerGoals() {
 //        this.eatGrassGoal = new EatGrassGoal(this);
-        this.goalSleep = new GoalSleep(this, Time.HOUR_IN_TICKS * 4, Time.HOUR_IN_TICKS);
+        this.goalSleep = new GoalSleep(this, Time.TICKS_PER_HOUR * 4, Time.TICKS_PER_HOUR);
         this.goalSelector.addGoal(0, new GoalSwim(this));
         this.goalSelector.addGoal(1, new GoalPanic(this, 2.0D));
         this.goalSelector.addGoal(2, this.goalSleep);
@@ -247,7 +240,7 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
 
     @Override
     public int skeletonTime() {
-        return 14 * Time.DAY_IN_TICKS;
+        return 14 * Time.TICKS_PER_DAY;
     }
 
     @Override
@@ -259,7 +252,7 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     @OnlyIn(Dist.CLIENT)
     public float tailIncX() {
         if (this.tailTimerX-- > 0) {
-            this.tailIncX += MathHelper.PI / 200.0F;
+            this.tailIncX += Mth.PI / 200.0F;
         }
         else if (this.getTailChanceX()) {
             this.tailTimerX = 200;
@@ -274,7 +267,7 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     @OnlyIn(Dist.CLIENT)
     public float tailIncZ() {
         if (this.tailTimerZ-- > 0) {
-            this.tailIncZ += MathHelper.PI * 2 / 500.0F;
+            this.tailIncZ += Mth.PI * 2 / 500.0F;
         }
         else if (this.getTailChanceZ()) {
             this.tailTimerZ = 500;

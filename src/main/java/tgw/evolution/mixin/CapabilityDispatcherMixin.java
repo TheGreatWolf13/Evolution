@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.patches.ICapabilityDispatcherPatch;
 import tgw.evolution.patches.ICompoundTagPatch;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 @Mixin(CapabilityDispatcher.class)
 public abstract class CapabilityDispatcherMixin implements ICapabilityDispatcherPatch {
@@ -24,8 +24,7 @@ public abstract class CapabilityDispatcherMixin implements ICapabilityDispatcher
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Avoid allocations when comparing the CompoundTags
+     * @reason Avoid allocations when comparing the CompoundTags
      */
     @Overwrite
     public boolean areCompatible(@Nullable CapabilityDispatcher other) {

@@ -7,7 +7,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.FogType;
@@ -19,10 +18,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import tgw.evolution.entities.INeckPosition;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.patches.obj.NearPlane;
 import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Vec3d;
 
 @Mixin(Camera.class)
 public abstract class CameraMixin {
@@ -69,55 +68,17 @@ public abstract class CameraMixin {
                          boolean thirdPersonReverse,
                          float partialTicks,
                          CallbackInfo ci) {
-        Vec3 cameraPos = ClientEvents.getInstance().getCameraPos();
-        if (cameraPos == null) {
-            if (thirdPerson) {
-                this.setPosition(Mth.lerp(partialTicks, renderViewEntity.xo, renderViewEntity.getX()),
-                                 Mth.lerp(partialTicks, renderViewEntity.yo, renderViewEntity.getY()) + renderViewEntity.getEyeHeight(),
-                                 Mth.lerp(partialTicks, renderViewEntity.zo, renderViewEntity.getZ()));
-            }
-            else {
-                float yaw = renderViewEntity.getViewYRot(partialTicks);
-                float pitch = renderViewEntity.getViewXRot(partialTicks);
-                float cosBodyYaw;
-                float sinBodyYaw;
-                float sinYaw = MathHelper.sinDeg(yaw);
-                float cosYaw = MathHelper.cosDeg(yaw);
-                if (renderViewEntity instanceof LivingEntity living) {
-                    float bodyYaw = MathHelper.lerpAngles(partialTicks, living.yBodyRotO, living.yBodyRot);
-                    cosBodyYaw = MathHelper.cosDeg(bodyYaw);
-                    sinBodyYaw = MathHelper.sinDeg(bodyYaw);
-                }
-                else {
-                    cosBodyYaw = cosYaw;
-                    sinBodyYaw = sinYaw;
-                }
-                float sinPitch = MathHelper.sinDeg(pitch);
-                float cosPitch = MathHelper.cosDeg(pitch);
-                float zOffset = ((INeckPosition) renderViewEntity).getCameraZOffset();
-                float yOffset = ((INeckPosition) renderViewEntity).getCameraYOffset();
-                Vec3 neckPoint = ((INeckPosition) renderViewEntity).getNeckPoint();
-                float actualYOffset = yOffset * cosPitch - zOffset * sinPitch;
-                float horizontalOffset = yOffset * sinPitch + zOffset * cosPitch;
-                double x = Mth.lerp(partialTicks, renderViewEntity.xo, renderViewEntity.getX()) - horizontalOffset * sinYaw +
-                           neckPoint.x * cosBodyYaw - neckPoint.z * sinBodyYaw;
-                double y = Mth.lerp(partialTicks, renderViewEntity.yo, renderViewEntity.getY()) + neckPoint.y + actualYOffset;
-                double z = Mth.lerp(partialTicks, renderViewEntity.zo, renderViewEntity.getZ()) +
-                           horizontalOffset * cosYaw +
-                           neckPoint.x * sinBodyYaw +
-                           neckPoint.z * cosBodyYaw;
-                this.setPosition(x, y, z);
-            }
+        if (thirdPerson) {
+            this.setPosition(Mth.lerp(partialTicks, renderViewEntity.xo, renderViewEntity.getX()),
+                             Mth.lerp(partialTicks, renderViewEntity.yo, renderViewEntity.getY()) + renderViewEntity.getEyeHeight(),
+                             Mth.lerp(partialTicks, renderViewEntity.zo, renderViewEntity.getZ()));
         }
         else {
-            if (thirdPerson) {
-                this.setPosition(Mth.lerp(partialTicks, renderViewEntity.xo, renderViewEntity.getX()),
-                                 Mth.lerp(partialTicks, renderViewEntity.yo, renderViewEntity.getY()) + renderViewEntity.getEyeHeight(),
-                                 Mth.lerp(partialTicks, renderViewEntity.zo, renderViewEntity.getZ()));
+            Vec3d cameraPos = ClientEvents.getInstance().getCameraPos();
+            if (cameraPos.isNull()) {
+                cameraPos = MathHelper.getCameraPosition(renderViewEntity, partialTicks);
             }
-            else {
-                this.setPosition(cameraPos.x, cameraPos.y, cameraPos.z);
-            }
+            this.setPosition(cameraPos.x(), cameraPos.y(), cameraPos.z());
         }
     }
 
@@ -127,7 +88,7 @@ public abstract class CameraMixin {
     private NearPlane setupAndGetNearPlane() {
         Minecraft minecraft = Minecraft.getInstance();
         double aspectRatio = minecraft.getWindow().getWidth() / (double) minecraft.getWindow().getHeight();
-        double d1 = Math.tan(minecraft.options.fov * (MathHelper.PI / 180.0F) / 2.0) * 0.05F;
+        double d1 = Math.tan(minecraft.options.fov * (Mth.PI / 180.0F) / 2.0) * 0.05F;
         double d2 = d1 * aspectRatio;
         this.nearPlane.setup(this.forwards, 0.05, this.left, d2, this.up, d1);
         return this.nearPlane;
@@ -135,6 +96,6 @@ public abstract class CameraMixin {
 
     @Redirect(method = "setup", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;setPosition(DDD)V", ordinal = 0))
     private void updateProxy(Camera renderInfo, double x, double y, double z) {
-
+        //Do nothing, as we already did
     }
 }

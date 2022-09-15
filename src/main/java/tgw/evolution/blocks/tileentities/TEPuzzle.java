@@ -10,7 +10,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTEs;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class TEPuzzle extends BlockEntity {
 

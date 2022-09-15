@@ -13,6 +13,7 @@ import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.events.ClientEvents;
+import tgw.evolution.util.constants.CommonRotations;
 
 public class LayerBack extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
 
@@ -39,8 +40,9 @@ public class LayerBack extends RenderLayer<AbstractClientPlayer, PlayerModel<Abs
             int sideOffset = player.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
             matrices.pushPose();
             this.getParentModel().body.translateAndRotate(matrices);
-            matrices.translate(-sideOffset * 0.1, 0.25, 0.17);
+            matrices.translate(sideOffset * 0.1, -0.25, 0.17);
             matrices.scale(sideOffset * 0.75f, 0.75f, 0.75f);
+            matrices.mulPose(CommonRotations.ZP180);
             Minecraft.getInstance()
                      .getItemRenderer()
                      .renderStatic(player,

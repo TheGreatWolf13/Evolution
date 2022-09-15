@@ -3,7 +3,7 @@ package tgw.evolution.util.earth;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.biome.Biome;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3f;
@@ -43,21 +43,21 @@ public final class EarthHelper {
     }
 
     public static float calculateMoonRightAscension(long worldTime) {
-        worldTime += 19.8 * Time.HOUR_IN_TICKS;
-        worldTime %= 1.05 * Time.DAY_IN_TICKS;
-        return (float) (worldTime / (1.05 * Time.DAY_IN_TICKS));
+        worldTime += 19.8 * Time.TICKS_PER_HOUR;
+        worldTime %= 1.05 * Time.TICKS_PER_DAY;
+        return (float) (worldTime / (1.05 * Time.TICKS_PER_DAY));
     }
 
     public static float calculateStarsRightAscension(long worldTime) {
-        worldTime += 6 * Time.HOUR_IN_TICKS;
+        worldTime += 6L * Time.TICKS_PER_HOUR;
         worldTime %= Time.SIDEREAL_DAY_IN_TICKS;
         return (float) worldTime / Time.SIDEREAL_DAY_IN_TICKS;
     }
 
     public static float calculateSunRightAscension(long worldTime) {
-        worldTime += 6 * Time.HOUR_IN_TICKS;
-        worldTime %= Time.DAY_IN_TICKS;
-        return (float) worldTime / Time.DAY_IN_TICKS;
+        worldTime += 6L * Time.TICKS_PER_HOUR;
+        worldTime %= Time.TICKS_PER_DAY;
+        return (float) worldTime / Time.TICKS_PER_DAY;
     }
 
     public static double calculateZFromLatitude(float latitude) {
@@ -84,7 +84,7 @@ public final class EarthHelper {
         return MathHelper.arcCosDeg(MOON.dotProduct(ZENITH) * MOON.inverseLength() * ZENITH.inverseLength());
     }
 
-    public static Vec3f getSkyColor(ClientLevel level, BlockPos pos, float partialTick, DimensionOverworld dimension) {
+    public static Vec3f getSkyColor(ClientLevel level, BlockPos pos, float partialTick, @Nullable DimensionOverworld dimension) {
         if (EvolutionConfig.CLIENT.crazyMode.get()) {
             int partial = tick % 20;
             if (partial == 0) {
@@ -116,8 +116,7 @@ public final class EarthHelper {
                 sunAngle = intensity;
             }
         }
-        Biome biome = level.getBiome(pos);
-        int color = biome.getSkyColor();
+        int color = level.getBiome(pos).value().getSkyColor();
         float r = (color >> 16 & 255) / 255.0F;
         r *= sunAngle;
         float g = (color >> 8 & 255) / 255.0F;
@@ -180,7 +179,7 @@ public final class EarthHelper {
      */
     public static float lunarMonthlyDeclination(long worldTime) {
         float amplitude = lunarStandStillAmplitude(worldTime) + ECLIPTIC_INCLINATION;
-        return amplitude * MathHelper.sin(MathHelper.TAU * (worldTime + 1_000) / Time.MONTH_IN_TICKS);
+        return amplitude * Mth.sin(Mth.TWO_PI * (worldTime + 1.9f * Time.TICKS_PER_HOUR) / Time.TICKS_PER_MONTH);
     }
 
     /**
@@ -191,7 +190,7 @@ public final class EarthHelper {
      * @return A value in degrees representing the lunar orbit amplitude.
      */
     public static float lunarStandStillAmplitude(long worldTime) {
-        return 5.1f * MathHelper.cos(MathHelper.TAU * worldTime / (Time.YEAR_IN_TICKS * 18.6f));
+        return 5.1f * Mth.cos(Mth.TWO_PI * worldTime / (Time.TICKS_PER_YEAR * 18.6f));
     }
 
     public static MoonPhase phaseByEclipseIntensity(int rightAscension, int declination) {
@@ -235,7 +234,7 @@ public final class EarthHelper {
      * @return A {@code float} value representing the Sun declination angle in degrees.
      */
     public static float sunSeasonalDeclination(long worldTime) {
-        float dayTime = (float) worldTime / Time.DAY_IN_TICKS + Date.DAYS_SINCE_MARCH_EQUINOX;
-        return ECLIPTIC_INCLINATION * MathHelper.sin(MathHelper.TAU * dayTime / Time.DAYS_IN_A_YEAR);
+        float dayTime = (float) worldTime / Time.TICKS_PER_DAY + Date.DAYS_SINCE_MARCH_EQUINOX;
+        return ECLIPTIC_INCLINATION * Mth.sin(Mth.TWO_PI * dayTime / Time.DAYS_PER_YEAR);
     }
 }

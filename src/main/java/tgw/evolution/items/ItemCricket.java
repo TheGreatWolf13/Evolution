@@ -9,7 +9,7 @@ import net.minecraft.world.level.Level;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionTexts;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ItemCricket extends ItemFood {

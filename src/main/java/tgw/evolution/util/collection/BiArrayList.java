@@ -34,13 +34,12 @@ public class BiArrayList<L, R> {
         this.b = (R[]) ObjectArrays.DEFAULT_EMPTY_ARRAY; // We delay allocation
     }
 
-    public boolean add(final L l, final R r) {
+    public void add(final L l, final R r) {
         this.grow(this.size + 1);
         this.a[this.size] = l;
         this.b[this.size++] = r;
         assert this.size <= this.a.length;
         assert this.size <= this.b.length;
-        return true;
     }
 
     public void clear() {

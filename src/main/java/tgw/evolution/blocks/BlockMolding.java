@@ -26,13 +26,11 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.util.math.MathHelper;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.LAYERS_1_5;
 
@@ -43,7 +41,7 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
         this.registerDefaultState(this.defaultBlockState().setValue(LAYERS_1_5, 1));
     }
 
-    private static void dropItemStack(Level level, BlockPos pos, @Nonnull ItemStack stack) {
+    private static void dropItemStack(Level level, BlockPos pos, ItemStack stack) {
         ItemEntity entity = new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 0.3, pos.getZ() + 0.5, stack);
         Vec3 motion = entity.getDeltaMovement();
         entity.push(-motion.x, -motion.y, -motion.z);
@@ -139,6 +137,7 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
             if (layers < 5) {
                 level.setBlockAndUpdate(pos, state.setValue(LAYERS_1_5, layers + 1));
                 TEMolding tile = (TEMolding) level.getBlockEntity(pos);
+                assert tile != null;
                 tile.addLayer(layers);
                 level.playSound(player, pos, SoundEvents.GRAVEL_PLACE, SoundSource.BLOCKS, 0.5F, 0.8F);
                 if (!player.isCreative()) {

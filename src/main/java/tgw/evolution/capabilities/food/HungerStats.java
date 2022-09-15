@@ -14,7 +14,7 @@ import tgw.evolution.util.time.Time;
 
 public class HungerStats implements IHunger {
 
-    public static final HungerStats CLIENT_INSTANCE = new HungerStats();
+    public static final IHunger CLIENT_INSTANCE = new HungerStats();
     public static final int HUNGER_CAPACITY = 3_000;
     public static final int SATURATION_CAPACITY = 3_000;
     public static final int OVEREAT = 1_000;
@@ -32,7 +32,7 @@ public class HungerStats implements IHunger {
     private byte flags;
     private float hungerExhaustion;
     private int hungerLevel = HUNGER_CAPACITY;
-    private boolean needsUpdate;
+    private boolean needsUpdate = true;
     private float saturationExhaustion;
     private int saturationLevel;
 
@@ -249,7 +249,7 @@ public class HungerStats implements IHunger {
                 //As the player will always be sprinting when swimming, 0.255 - 0.15 = 0.105
                 modifier += 0.105f;
             }
-            if (player.swinging) {
+            if (player.swinging || ((ILivingEntityPatch) player).isSpecialAttacking()) {
                 modifier += 0.05f;
             }
             if (player.onClimbable()) {
@@ -307,7 +307,7 @@ public class HungerStats implements IHunger {
                 this.setExtremelyOvereat(false);
                 player.removeEffect(EvolutionEffects.OVEREAT.get());
             }
-            this.addHungerExhaustion(DAILY_CONSUMPTION / Time.DAY_IN_TICKS * (1.0f + modifier));
+            this.addHungerExhaustion(DAILY_CONSUMPTION / Time.TICKS_PER_DAY * (1.0f + modifier));
             this.addSaturationExhaustion(0.36f);
         }
         else {

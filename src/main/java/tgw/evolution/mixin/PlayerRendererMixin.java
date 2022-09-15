@@ -2,32 +2,41 @@ package tgw.evolution.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.PlayerModel;
-import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.client.event.RenderPlayerEvent;
+import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.client.layers.LayerBack;
 import tgw.evolution.client.layers.LayerBelt;
 import tgw.evolution.patches.IPoseStackPatch;
+import tgw.evolution.util.hitbox.hrs.HRPlayer;
 import tgw.evolution.util.math.MathHelper;
 
-@SuppressWarnings("MethodMayBeStatic")
 @Mixin(PlayerRenderer.class)
-public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
+public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> implements HRPlayer {
 
     public PlayerRendererMixin(EntityRendererProvider.Context p_174289_, PlayerModel<AbstractClientPlayer> p_174290_, float p_174291_) {
         super(p_174289_, p_174290_, p_174291_);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Use HRs
+     */
+    @Override
+    @Overwrite
+    public Vec3 getRenderOffset(AbstractClientPlayer entity, float partialTicks) {
+        return this.renderOffset(entity, partialTicks);
     }
 
     @Inject(method = "<init>", at = @At("TAIL"))
@@ -36,51 +45,29 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
         this.addLayer(new LayerBack(this));
     }
 
-    @Inject(method = "scale(Lnet/minecraft/client/player/AbstractClientPlayer;Lcom/mojang/blaze3d/vertex/PoseStack;F)V", at = @At("TAIL"))
-    private void onScale(AbstractClientPlayer player, PoseStack matrices, float partialTicks, CallbackInfo ci) {
-        switch (player.getPose()) {
-            case STANDING, CROUCHING -> matrices.translate(0, 0, 1 / 16.0);
-            case SWIMMING -> {
-                if (!player.isInWater()) {
-                    matrices.translate(0, 9 / 16.0, -0.5 / 16.0);
-                }
-            }
-        }
-    }
-
     /**
      * @author TheGreatWolf
-     * <p>
-     * Overwrite to change overlay to render hurt effect.
+     * @reason Use HRs
      */
+    @Override
     @Overwrite
-    private void renderHand(PoseStack matrices,
-                            MultiBufferSource buffer,
-                            int packedLight,
-                            AbstractClientPlayer player,
-                            ModelPart arm,
-                            ModelPart armwear) {
-        PlayerModel<AbstractClientPlayer> playerModel = this.getModel();
-        this.setModelProperties(player);
-        playerModel.attackTime = 0.0F;
-        playerModel.crouching = false;
-        playerModel.swimAmount = 0.0F;
-        playerModel.setupAnim(player, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
-        arm.xRot = 0.0F;
-        arm.render(matrices, buffer.getBuffer(RenderType.entitySolid(player.getSkinTextureLocation())), packedLight,
-                   LivingEntityRenderer.getOverlayCoords(player, 0));
-        armwear.xRot = 0.0F;
-        armwear.render(matrices, buffer.getBuffer(RenderType.entityTranslucent(player.getSkinTextureLocation())), packedLight,
-                       LivingEntityRenderer.getOverlayCoords(player, 0));
+    public void render(AbstractClientPlayer entity,
+                       float entityYaw,
+                       float partialTicks,
+                       PoseStack matrices,
+                       MultiBufferSource buffer,
+                       int light) {
+        this.modelProperties(entity);
+        if (MinecraftForge.EVENT_BUS.post(new RenderPlayerEvent.Pre(entity, (PlayerRenderer) (Object) this, partialTicks, matrices, buffer, light))) {
+            return;
+        }
+        super.render(entity, entityYaw, partialTicks, matrices, buffer, light);
+        MinecraftForge.EVENT_BUS.post(new RenderPlayerEvent.Post(entity, (PlayerRenderer) (Object) this, partialTicks, matrices, buffer, light));
     }
-
-    @Shadow
-    protected abstract void setModelProperties(AbstractClientPlayer p_117819_);
 
     /**
      * @author TheGreatWolf
-     * <p>
-     * Overwrite to improve first person camera.
+     * @reason Overwrite to improve first person camera.
      */
     @Override
     @Overwrite

@@ -13,9 +13,10 @@ public final class TEUtils {
 
     public static void sendRenderUpdate(BlockEntity tile) {
         tile.setChanged();
-        Level world = tile.getLevel();
+        Level level = tile.getLevel();
         BlockPos pos = tile.getBlockPos();
-        BlockState state = world.getBlockState(pos);
-        tile.getLevel().sendBlockUpdated(pos, state, state, BlockFlags.RERENDER);
+        assert level != null;
+        BlockState state = level.getBlockState(pos);
+        level.sendBlockUpdated(pos, state, state, BlockFlags.RERENDER);
     }
 }

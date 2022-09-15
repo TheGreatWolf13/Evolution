@@ -100,8 +100,8 @@ public final class EvolutionEntities {
     }
 
     public static void modifyEntityAttribute(EntityAttributeModificationEvent event) {
-        event.add(EntityType.PLAYER, Attributes.MAX_HEALTH, 100);
-        event.add(EntityType.PLAYER, Attributes.ATTACK_DAMAGE, 2.5);
+        event.add(EntityType.PLAYER, Attributes.MAX_HEALTH, PlayerHelper.MAX_HEALTH);
+        event.add(EntityType.PLAYER, Attributes.ATTACK_DAMAGE, PlayerHelper.ATTACK_DAMAGE);
         event.add(EntityType.PLAYER, Attributes.ATTACK_SPEED, PlayerHelper.ATTACK_SPEED);
         event.add(EntityType.PLAYER, ForgeMod.REACH_DISTANCE.get(), PlayerHelper.REACH_DISTANCE);
         event.add(EntityType.PLAYER, Attributes.MOVEMENT_SPEED, PlayerHelper.WALK_FORCE);
