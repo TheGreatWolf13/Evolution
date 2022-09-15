@@ -24,8 +24,8 @@ public class PartPole extends PartGrab<PartTypes.Pole, ItemPartPole, PartPole> {
     }
 
     @Override
-    protected PartTypes.Pole getType(String type) {
-        return PartTypes.Pole.byName(type);
+    protected PartTypes.Pole getType(byte id) {
+        return PartTypes.Pole.byId(id);
     }
 
     @Override

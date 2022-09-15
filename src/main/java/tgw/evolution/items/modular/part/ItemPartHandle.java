@@ -4,6 +4,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.modular.part.PartHandle;
 import tgw.evolution.capabilities.modular.part.PartTypes;
+import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.util.math.MathHelper;
 
 public class ItemPartHandle extends ItemPart<PartTypes.Handle, ItemPartHandle, PartHandle> {
 
@@ -19,6 +21,16 @@ public class ItemPartHandle extends ItemPart<PartTypes.Handle, ItemPartHandle, P
     @Override
     protected String getCapName() {
         return "handle";
+    }
+
+    @Override
+    public ItemStack getDefaultInstance() {
+        PartTypes.Handle handle = PartTypes.Handle.getRandom(MathHelper.RANDOM);
+        ItemMaterial material = ItemMaterial.getRandom(MathHelper.RANDOM);
+        while (!handle.hasVariantIn(material)) {
+            material = ItemMaterial.getRandom(MathHelper.RANDOM);
+        }
+        return this.newStack(handle, material);
     }
 
     @Override

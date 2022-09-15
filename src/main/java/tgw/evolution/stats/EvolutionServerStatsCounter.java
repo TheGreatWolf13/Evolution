@@ -84,6 +84,7 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
     }
 
     private static <T> ResourceLocation getKey(Stat<T> stat) {
+        //noinspection ConstantConditions
         return stat.getType().getRegistry().getKey(stat.getValue());
     }
 
@@ -299,6 +300,7 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
         }
         JsonObject data = new JsonObject();
         for (Reference2ObjectMap.Entry<StatType<?>, JsonObject> entry : dataMap.reference2ObjectEntrySet()) {
+            //noinspection ConstantConditions
             data.add(Registry.STAT_TYPE.getKey(entry.getKey()).toString(), entry.getValue());
         }
         Reference2ObjectMap<StatType<?>, JsonObject> partialDataMap = new Reference2ObjectOpenHashMap<>();
@@ -313,6 +315,7 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
         }
         JsonObject partialData = new JsonObject();
         for (Reference2ObjectMap.Entry<StatType<?>, JsonObject> entry : partialDataMap.reference2ObjectEntrySet()) {
+            //noinspection ConstantConditions
             partialData.add(Registry.STAT_TYPE.getKey(entry.getKey()).toString(), entry.getValue());
         }
         JsonObject finalObj = new JsonObject();

@@ -35,6 +35,7 @@
     "InventoryChangeTriggerMixin",
     "InventoryMenuMixin",
     "InventoryMixin",
+    "ItemInputMixin",
     "ItemStackMixin",
     "LevelChunkMixin",
     "LevelMixin",

@@ -49,7 +49,7 @@ public enum KnappingRecipe {
     }
 
     public boolean getPatternPart(int i, int j) {
-        return (this.pattern >> (7 - j) * 8 + 7 - i & 1) != 0;
+        return (this.pattern & 1L << 8 * j + i) != 0;
     }
 
     public VoxelShape getShape() {

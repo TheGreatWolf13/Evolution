@@ -56,7 +56,7 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {
-        this.type = PartTypes.Head.byName(nbt.getString("Type"));
+        this.type = PartTypes.Head.byId(nbt.getByte("Type"));
         this.materialInstance = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
         this.spentDurability = nbt.getInt("Durability");
         if (this.canBeSharpened()) {
@@ -164,7 +164,7 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
         if (this.tag == null) {
             this.tag = new CompoundTag();
         }
-        this.tag.putString("Type", this.type.getName());
+        this.tag.putByte("Type", this.type.getId());
         this.tag.putInt("Durability", this.spentDurability);
         this.tag.put("MaterialInstance", this.materialInstance.write());
         if (this.canBeSharpened()) {

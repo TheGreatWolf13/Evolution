@@ -24,8 +24,8 @@ public class PartHandle extends PartGrab<PartTypes.Handle, ItemPartHandle, PartH
     }
 
     @Override
-    protected PartTypes.Handle getType(String type) {
-        return PartTypes.Handle.byName(type);
+    protected PartTypes.Handle getType(byte id) {
+        return PartTypes.Handle.byId(id);
     }
 
     @Override

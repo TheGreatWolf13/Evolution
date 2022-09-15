@@ -2,7 +2,6 @@ package tgw.evolution.util.constants;
 
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceOpenHashMap;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Contract;
@@ -16,6 +15,8 @@ import tgw.evolution.init.IVariant;
 import tgw.evolution.init.ItemMaterial;
 import tgw.evolution.items.modular.part.ItemPart;
 import tgw.evolution.util.UnregisteredFeatureException;
+import tgw.evolution.util.collection.B2RMap;
+import tgw.evolution.util.collection.B2ROpenHashMap;
 
 import java.util.Arrays;
 
@@ -50,11 +51,13 @@ public enum RockVariant implements IVariant {
     private static final Byte2ReferenceMap<RockVariant> REGISTRY;
 
     static {
-        Byte2ReferenceOpenHashMap<RockVariant> map = new Byte2ReferenceOpenHashMap<>();
+        B2RMap<RockVariant> map = new B2ROpenHashMap<>();
         for (RockVariant variant : VALUES) {
-            map.put(variant.id, variant);
+            if (map.put(variant.id, variant) != null) {
+                throw new IllegalStateException("RockVariant " + variant + " has duplicate id: " + variant.id);
+            }
         }
-        map.trim();
+        map.trimCollection();
         REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
     }
 

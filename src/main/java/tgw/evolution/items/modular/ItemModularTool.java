@@ -33,6 +33,7 @@ import tgw.evolution.items.ITwoHanded;
 import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.constants.HarvestLevel;
+import tgw.evolution.util.math.MathHelper;
 
 import java.util.function.Consumer;
 
@@ -117,6 +118,21 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     @Override
     public EvolutionDamage.Type getDamageType(ItemStack stack, IMelee.IAttackType attackType) {
         return IModularTool.get(stack).getDamageType();
+    }
+
+    @Override
+    public ItemStack getDefaultInstance() {
+        PartTypes.Head head = PartTypes.Head.getRandom(MathHelper.RANDOM);
+        ItemMaterial headMaterial = ItemMaterial.getRandom(MathHelper.RANDOM);
+        while (!head.hasVariantIn(headMaterial)) {
+            headMaterial = ItemMaterial.getRandom(MathHelper.RANDOM);
+        }
+        PartTypes.Handle handle = PartTypes.Handle.getRandom(MathHelper.RANDOM);
+        ItemMaterial handleMaterial = ItemMaterial.getRandom(MathHelper.RANDOM);
+        while (!handle.hasVariantIn(handleMaterial)) {
+            handleMaterial = ItemMaterial.getRandom(MathHelper.RANDOM);
+        }
+        return createNew(head, headMaterial, handle, handleMaterial, true);
     }
 
     @Override

@@ -29,6 +29,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.api.distmarker.Dist;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.GUIUtils;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.stats.EvolutionStatsCounter;
@@ -49,6 +51,7 @@ import java.util.Map;
 @OnlyIn(Dist.CLIENT)
 public class ScreenStats extends Screen implements StatsUpdateListener {
 
+    private final R2OMap<Item, ItemStack> cachedModularItems = new R2OOpenHashMap<>();
     private final ResourceLocation resDamageIcons = Evolution.getResource("textures/gui/damage_icons.png");
     private final ResourceLocation resIcons = Evolution.getResource("textures/gui/stats_icons.png");
     private final EvolutionStatsCounter stats;
@@ -74,11 +77,23 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     private ListCustomStats generalStats;
     private ListStats itemStats;
     private ListMobStats mobStats;
+    private byte refreshCacheCooldown;
     private ListTimeStats timeStats;
 
     public ScreenStats(StatsCounter statsCounter) {
         super(new TranslatableComponent("gui.stats"));
         this.stats = (EvolutionStatsCounter) statsCounter;
+        this.cachedModularItems.put(EvolutionItems.MODULAR_TOOL.get(), EvolutionItems.MODULAR_TOOL.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.BLADE_PART.get(), EvolutionItems.BLADE_PART.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.GUARD_PART.get(), EvolutionItems.GUARD_PART.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.HALFHEAD_PART.get(), EvolutionItems.HALFHEAD_PART.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.HANDLE_PART.get(), EvolutionItems.HANDLE_PART.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.HEAD_PART.get(), EvolutionItems.HEAD_PART.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.HILT_PART.get(), EvolutionItems.HILT_PART.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.POLE_PART.get(), EvolutionItems.POLE_PART.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.POMMEL_PART.get(), EvolutionItems.POMMEL_PART.get().getDefaultInstance());
+        this.cachedModularItems.trimCollection();
+        this.refreshCacheCooldown = 30;
     }
 
     private static int getCategoryOffset(int category) {
@@ -91,7 +106,11 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
     private void blitSlot(PoseStack matrices, int x, int y, Item item) {
         this.blitSlotIcon(matrices, x + 1, y + 1, 0, 0);
-        this.itemRenderer.renderGuiItem(item.getDefaultInstance(), x + 2, y + 2);
+        ItemStack stack = this.cachedModularItems.get(item);
+        if (stack == null) {
+            stack = item.getDefaultInstance();
+        }
+        this.itemRenderer.renderGuiItem(stack, x + 2, y + 2);
     }
 
     private void blitSlotIcon(PoseStack matrices, int x, int y, int u, int v) {
@@ -200,6 +219,14 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
     }
 
+    private void refreshCachedItems() {
+        for (Item item : this.cachedModularItems.keySet()) {
+            this.cachedModularItems.put(item, item.getDefaultInstance());
+        }
+        Evolution.info("Refreshed");
+        this.refreshCacheCooldown = 30;
+    }
+
     @Override
     public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
         if (this.doesGuiPauseGame) {
@@ -231,11 +258,23 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         this.removeWidget(this.damageStats);
         if (displayId != -1) {
             ObjectSelectionList<?> displaySlot = this.byId(displayId);
-            assert displaySlot != null;
             this.addWidget(displaySlot);
             this.displaySlot = displaySlot;
             this.displayId = displayId;
         }
+    }
+
+    @Override
+    public void tick() {
+        if (this.displaySlot == this.itemStats) {
+            if (this.refreshCacheCooldown == 0) {
+                this.refreshCachedItems();
+            }
+            else if (this.refreshCacheCooldown > 0) {
+                this.refreshCacheCooldown--;
+            }
+        }
+        super.tick();
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -1259,7 +1298,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                         return;
                     }
                     Item item = this.itemList.get(this.children().indexOf(entryAtPos));
-                    this.drawName(matrices, item.getDescription(), mouseX, mouseY);
+                    ItemStack stack = ScreenStats.this.cachedModularItems.get(item);
+                    String descId = stack == null ? item.getDescriptionId() : item.getDescriptionId(stack);
+                    this.drawName(matrices, new TranslatableComponent(descId), mouseX, mouseY);
                 }
                 else {
                     Component itextcomponent = null;

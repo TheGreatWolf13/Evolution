@@ -88,14 +88,15 @@ public class BakedModelKnapping implements BakedModel {
         };
     }
 
-    private List<BakedQuad> getBakedQuadsFromIModelData(BlockState state,
-                                                        Direction side,
+    private List<BakedQuad> getBakedQuadsFromIModelData(@Nullable BlockState state,
+                                                        @Nullable Direction side,
                                                         Random rand,
                                                         IModelData data) {
         if (!data.hasProperty(PARTS)) {
             Evolution.error("IModelData did not have expected property PARTS");
             return this.baseModel.getQuads(state, side, rand);
         }
+        //noinspection ConstantConditions
         long parts = data.getData(PARTS);
         return new ArrayList<>(this.getQuadsFromParts(parts, side));
     }
@@ -136,7 +137,8 @@ public class BakedModelKnapping implements BakedModel {
         return this.getBakedQuadsFromIModelData(state, side, rand, extraData);
     }
 
-    private List<BakedQuad> getQuadsFromParts(long parts, Direction side) {
+    private List<BakedQuad> getQuadsFromParts(long parts, @Nullable Direction side) {
+        assert ForgeModelBakery.instance() != null;
         TextureAtlas blockAtlas = ForgeModelBakery.instance().getSpriteMap().getAtlas(TextureAtlas.LOCATION_BLOCKS);
         TextureAtlasSprite sprite = blockAtlas.getSprite(EvolutionResources.BLOCK_KNAPPING[this.variant.getId()]);
         ImmutableList.Builder<BakedQuad> builder = new ImmutableList.Builder<>();
@@ -145,7 +147,7 @@ public class BakedModelKnapping implements BakedModel {
                 case UP, DOWN -> {
                     for (int j = 0; j < 8; j++) {
                         for (int i = 0; i < 8; i++) {
-                            if ((parts >> (7 - j) * 8 + 7 - i & 1) != 0) {
+                            if ((parts & 1L << 8 * j + i) != 0) {
                                 builder.add(getQuadForPart(side, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
                             }
                         }
@@ -153,28 +155,32 @@ public class BakedModelKnapping implements BakedModel {
                 }
                 case NORTH -> {
                     for (int i = 0; i < 8; i++) {
-                        if ((parts >> 63 - i & 1) != 0) {
+                        //j = 0
+                        if ((parts & 1L << i) != 0) {
                             builder.add(getQuadForPart(side, sprite, 2 * i, 0, 0, 2 * i + 2, 1, 2, i, 0));
                         }
                     }
                 }
                 case SOUTH -> {
                     for (int i = 0; i < 8; i++) {
-                        if ((parts >> 7 - i & 1) != 0) {
+                        //j = 7
+                        if ((parts & 1L << 56 + i) != 0) {
                             builder.add(getQuadForPart(side, sprite, 2 * i, 0, 14, 2 * i + 2, 1, 16, i, 7));
                         }
                     }
                 }
                 case EAST -> {
                     for (int j = 0; j < 8; j++) {
-                        if ((parts >> (7 - j) * 8 & 1) != 0) {
+                        //i = 7
+                        if ((parts & 1L << 8 * j + 7) != 0) {
                             builder.add(getQuadForPart(side, sprite, 14, 0, 2 * j, 16, 1, 2 * j + 2, 7, j));
                         }
                     }
                 }
                 case WEST -> {
                     for (int j = 0; j < 8; j++) {
-                        if ((parts >> (7 - j) * 8 + 7 & 1) != 0) {
+                        //i = 0
+                        if ((parts & 1L << 8 * j) != 0) {
                             builder.add(getQuadForPart(side, sprite, 0, 0, 2 * j, 2, 1, 2 * j + 2, 0, j));
                         }
                     }
@@ -184,17 +190,21 @@ public class BakedModelKnapping implements BakedModel {
         else {
             for (int j = 0; j < 8; j++) {
                 for (int i = 0; i < 8; i++) {
-                    if ((parts >> (7 - j) * 8 + 7 - i & 1) != 0) {
-                        if (j > 0 && (parts >> (8 - j) * 8 + 7 - i & 1) == 0) {
+                    if ((parts & 1L << 8 * j + i) != 0) {
+                        //j - 1
+                        if (j > 0 && (parts & 1L << 8 * (j - 1) + i) == 0) {
                             builder.add(getQuadForPart(Direction.NORTH, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
                         }
-                        if (j < 7 && (parts >> (6 - j) * 8 + 7 - i & 1) == 0) {
+                        //j + 1
+                        if (j < 7 && (parts & 1L << 8 * (j + 1) + i) == 0) {
                             builder.add(getQuadForPart(Direction.SOUTH, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
                         }
-                        if (i > 0 && (parts >> (7 - j) * 8 + 8 - i & 1) == 0) {
+                        //i - 1
+                        if (i > 0 && (parts & 1L << 8 * j + i - 1) == 0) {
                             builder.add(getQuadForPart(Direction.WEST, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
                         }
-                        if (i < 7 && (parts >> (7 - j) * 8 + 6 - i & 1) == 0) {
+                        //i + 1
+                        if (i < 7 && (parts & 1L << 8 * j + i + 1) == 0) {
                             builder.add(getQuadForPart(Direction.EAST, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
                         }
                     }

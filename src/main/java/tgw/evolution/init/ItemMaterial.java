@@ -2,12 +2,15 @@ package tgw.evolution.init;
 
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceOpenHashMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import tgw.evolution.capabilities.modular.part.PartTypes;
+import tgw.evolution.util.collection.B2RMap;
+import tgw.evolution.util.collection.B2ROpenHashMap;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.math.MathHelper;
+
+import java.util.random.RandomGenerator;
 
 /**
  * Values for metals and alloys are real. Values for rocks are tweaked for balance, but a stronger rock is still stronger than a weaker one.
@@ -50,13 +53,13 @@ public enum ItemMaterial {
     private static final Byte2ReferenceMap<ItemMaterial> REGISTRY;
 
     static {
-        Byte2ReferenceOpenHashMap<ItemMaterial> map = new Byte2ReferenceOpenHashMap<>();
+        B2RMap<ItemMaterial> map = new B2ROpenHashMap<>();
         for (ItemMaterial material : VALUES) {
             if (map.put(material.id, material) != null) {
                 throw new IllegalStateException("Material " + material + " has duplicate id: " + material.id);
             }
         }
-        map.trim();
+        map.trimCollection();
         REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
     }
 
@@ -85,6 +88,10 @@ public enum ItemMaterial {
 
     public static ItemMaterial byId(byte id) {
         return REGISTRY.getOrDefault(id, ANDESITE);
+    }
+
+    public static ItemMaterial getRandom(RandomGenerator random) {
+        return VALUES[random.nextInt(VALUES.length)];
     }
 
     public double getAxeMass() {

@@ -38,11 +38,11 @@ public class TEKnapping extends BlockEntity {
     }
 
     public void clearPart(int i, int j) {
-        this.parts &= ~(1L << (7 - j) * 8 + 7 - i);
+        this.parts &= ~(1L << 8 * j + i);
     }
 
     public boolean getPart(int i, int j) {
-        return (this.parts >> (7 - j) * 8 + 7 - i & 1) != 0;
+        return (this.parts & 1L << 8 * j + i) != 0;
     }
 
     public long getParts() {

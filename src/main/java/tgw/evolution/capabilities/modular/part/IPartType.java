@@ -10,6 +10,8 @@ public interface IPartType<T extends IPartType<T, I, P>, I extends ItemPart<T, I
 
     Component getComponent();
 
+    byte getId();
+
     String getName();
 
     double getVolume(ItemMaterial material);

@@ -37,7 +37,7 @@ public class PartGuard implements IPart<PartTypes.Guard, ItemPartGuard, PartGuar
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {
-        this.type = PartTypes.Guard.byName(nbt.getString("Type"));
+        this.type = PartTypes.Guard.byId(nbt.getByte("Type"));
         this.material = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
         this.spentDurability = nbt.getInt("Durability");
     }
@@ -89,7 +89,7 @@ public class PartGuard implements IPart<PartTypes.Guard, ItemPartGuard, PartGuar
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
-        tag.putString("Type", this.type.getName());
+        tag.putByte("Type", this.type.getId());
         tag.putInt("Durability", this.spentDurability);
         tag.put("MaterialInstance", this.material.write());
         return tag;

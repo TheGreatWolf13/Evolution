@@ -3,6 +3,8 @@ package tgw.evolution.items.modular.part;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.modular.part.PartHalfHead;
 import tgw.evolution.capabilities.modular.part.PartTypes;
+import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.util.math.MathHelper;
 
 public class ItemPartHalfHead extends ItemPart<PartTypes.HalfHead, ItemPartHalfHead, PartHalfHead> {
 
@@ -18,6 +20,16 @@ public class ItemPartHalfHead extends ItemPart<PartTypes.HalfHead, ItemPartHalfH
     @Override
     protected String getCapName() {
         return "halfhead";
+    }
+
+    @Override
+    public ItemStack getDefaultInstance() {
+        PartTypes.HalfHead halfHead = PartTypes.HalfHead.getRandom(MathHelper.RANDOM);
+        ItemMaterial material = ItemMaterial.getRandom(MathHelper.RANDOM);
+        while (!halfHead.hasVariantIn(material)) {
+            material = ItemMaterial.getRandom(MathHelper.RANDOM);
+        }
+        return this.newStack(halfHead, material);
     }
 
     @Override

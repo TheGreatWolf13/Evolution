@@ -2,13 +2,14 @@ package tgw.evolution.util.constants;
 
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
-import it.unimi.dsi.fastutil.bytes.Byte2ReferenceOpenHashMap;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.IVariant;
 import tgw.evolution.util.UnregisteredFeatureException;
+import tgw.evolution.util.collection.B2RMap;
+import tgw.evolution.util.collection.B2ROpenHashMap;
 
 public enum WoodVariant implements IVariant {
     ACACIA(0, "acacia", 750, 14_412_500),
@@ -34,10 +35,13 @@ public enum WoodVariant implements IVariant {
     private static final Byte2ReferenceMap<WoodVariant> REGISTRY;
 
     static {
-        Byte2ReferenceMap<WoodVariant> map = new Byte2ReferenceOpenHashMap<>();
+        B2RMap<WoodVariant> map = new B2ROpenHashMap<>();
         for (WoodVariant variant : VALUES) {
-            map.put(variant.id, variant);
+            if (map.put(variant.id, variant) != null) {
+                throw new IllegalStateException("WoodVariant " + variant + " has duplicate id: " + variant.id);
+            }
         }
+        map.trimCollection();
         REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
     }
 

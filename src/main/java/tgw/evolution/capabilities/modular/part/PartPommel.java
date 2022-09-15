@@ -45,7 +45,7 @@ public class PartPommel implements IPartHit<PartTypes.Pommel, ItemPartPommel, Pa
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {
-        this.type = PartTypes.Pommel.byName(nbt.getString("Type"));
+        this.type = PartTypes.Pommel.byId(nbt.getByte("Type"));
         this.material = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
         this.spentDurability = nbt.getInt("Durability");
     }
@@ -127,7 +127,7 @@ public class PartPommel implements IPartHit<PartTypes.Pommel, ItemPartPommel, Pa
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
-        tag.putString("Type", this.type.getName());
+        tag.putByte("Type", this.type.getId());
         tag.put("MaterialInstance", this.material.write());
         tag.putInt("Durability", this.spentDurability);
         return tag;

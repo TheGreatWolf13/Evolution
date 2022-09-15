@@ -41,7 +41,7 @@ public abstract class PartGrab<T extends IGrabType<T, I, P>, I extends ItemPart<
 
     @Override
     public final void deserializeNBT(CompoundTag nbt) {
-        this.type = this.getType(nbt.getString("Type"));
+        this.type = this.getType(nbt.getByte("Type"));
         this.material = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
         this.spentDurability = nbt.getInt("Durability");
     }
@@ -66,7 +66,7 @@ public abstract class PartGrab<T extends IGrabType<T, I, P>, I extends ItemPart<
         return Mth.ceil(this.material.getHardness() * this.material.getResistance() / 50.0);
     }
 
-    protected abstract T getType(String type);
+    protected abstract T getType(byte id);
 
     @Override
     public T getType() {
@@ -78,7 +78,7 @@ public abstract class PartGrab<T extends IGrabType<T, I, P>, I extends ItemPart<
         if (this.tag == null) {
             this.tag = new CompoundTag();
         }
-        this.tag.putString("Type", this.type.getName());
+        this.tag.putByte("Type", this.type.getId());
         this.tag.putInt("Durability", this.spentDurability);
         this.tag.put("MaterialInstance", this.material.write());
         return this.tag;

@@ -1,21 +1,43 @@
 package tgw.evolution.util.constants;
 
+import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
+import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
 import net.minecraft.world.level.block.Block;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.UnregisteredFeatureException;
+import tgw.evolution.util.collection.B2RMap;
+import tgw.evolution.util.collection.B2ROpenHashMap;
+import tgw.evolution.util.math.MathHelper;
 
 public enum MetalVariant {
-    COPPER(8_920, HarvestLevel.LOW_METAL, 30.0F, 10.0F, 1.6f, true);
+    COPPER(0, 8_920, HarvestLevel.LOW_METAL, 30.0F, 10.0F, 1.6f, true);
+
+    public static final MetalVariant[] VALUES = values();
+    public static final Byte2ReferenceMap<MetalVariant> REGISTRY;
+
+    static {
+        B2RMap<MetalVariant> map = new B2ROpenHashMap<>();
+        for (MetalVariant variant : VALUES) {
+            if (map.put(variant.id, variant) != null) {
+                throw new IllegalStateException("MetalVariant " + variant + " has duplicate id: " + variant.id);
+            }
+        }
+        map.trimCollection();
+        REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
+    }
+
     private final int density;
     private final float frictionCoef;
     private final float hardness;
     @HarvestLevel
     private final int harvestLevel;
+    private final byte id;
     private final boolean oxidizes;
     private final float resistance;
 
-    MetalVariant(int density, @HarvestLevel int harvestLevel, float hardness, float resistance, float frictionCoef, boolean oxidizes) {
+    MetalVariant(int id, int density, @HarvestLevel int harvestLevel, float hardness, float resistance, float frictionCoef, boolean oxidizes) {
+        this.id = MathHelper.toByteExact(id);
         this.density = density;
         this.harvestLevel = harvestLevel;
         this.hardness = hardness;

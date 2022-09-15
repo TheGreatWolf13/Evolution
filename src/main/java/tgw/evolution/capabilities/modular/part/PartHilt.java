@@ -24,8 +24,8 @@ public class PartHilt extends PartGrab<PartTypes.Hilt, ItemPartHilt, PartHilt> {
     }
 
     @Override
-    protected PartTypes.Hilt getType(String type) {
-        return PartTypes.Hilt.byName(type);
+    protected PartTypes.Hilt getType(byte id) {
+        return PartTypes.Hilt.byId(id);
     }
 
     @Override
