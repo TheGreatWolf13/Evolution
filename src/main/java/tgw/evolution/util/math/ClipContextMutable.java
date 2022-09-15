@@ -15,11 +15,12 @@ public class ClipContextMutable extends ClipContext {
         super(from, to, block, fluid, entity);
     }
 
-    public void set(Vec3 from, Vec3 to, Block block, Fluid fluid, @Nullable Entity entity) {
+    public ClipContextMutable set(Vec3 from, Vec3 to, Block block, Fluid fluid, @Nullable Entity entity) {
         ((IClipContextPatch) this).setFrom(from);
         ((IClipContextPatch) this).setTo(to);
         ((IClipContextPatch) this).setBlock(block);
         ((IClipContextPatch) this).setFluid(fluid);
         ((IClipContextPatch) this).setEntity(entity);
+        return this;
     }
 }

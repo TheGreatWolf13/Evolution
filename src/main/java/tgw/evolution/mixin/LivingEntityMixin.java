@@ -153,6 +153,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     private byte specialAttackStopTicks;
     private byte specialAttackTime;
     private @Nullable IMelee.IAttackType specialAttackType;
+
     public LivingEntityMixin(EntityType<?> entityType, Level level) {
         super(entityType, level);
     }
@@ -398,6 +399,10 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     public double getBaseMass() {
         return 70;
     }
+
+    @Shadow
+    @javax.annotation.Nullable
+    public abstract Direction getBedOrientation();
 
     @Shadow
     public abstract CombatTracker getCombatTracker();

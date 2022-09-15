@@ -30,7 +30,7 @@ public abstract class QuaternionMixin implements IQuaternionPatch {
     }
 
     @Override
-    public void set(Vector3f axis, float angle, boolean degrees) {
+    public Quaternion set(Vector3f axis, float angle, boolean degrees) {
         if (degrees) {
             angle = Mth.DEG_TO_RAD * angle;
         }
@@ -40,5 +40,6 @@ public abstract class QuaternionMixin implements IQuaternionPatch {
         this.j = axis.y() * f;
         this.k = axis.z() * f;
         this.r = cos(angle);
+        return (Quaternion) (Object) this;
     }
 }
