@@ -65,6 +65,7 @@ public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
         RenderSystem.setShaderTexture(0, EvolutionResources.GUI_TABS);
         this.blit(matrices, this.tabX, this.tabY, 128, this.selectedTab == 0 ? 92 : 64, 32, 28);
         this.blit(matrices, this.tabX, this.tabY + 32, 128, this.selectedTab == 1 ? 92 : 64, 32, 28);
+        assert this.minecraft != null;
         this.minecraft.getItemRenderer().renderAndDecorateItem(this.tab0Stack, this.tabX + 6, this.tabY + 5);
         this.minecraft.getItemRenderer().renderAndDecorateItem(this.tab1Stack, this.tabX + 6, this.tabY + 32 + 5);
     }
@@ -197,7 +198,8 @@ public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
 
     protected void setSelectedTab(int selectedTab) {
         if (this.selectedTab != selectedTab) {
-            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+            assert this.minecraft != null;
+            this.minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             this.selectedTab = selectedTab;
         }
     }
