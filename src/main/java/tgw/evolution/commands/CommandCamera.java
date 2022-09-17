@@ -30,17 +30,10 @@ public final class CommandCamera implements Command<CommandSourceStack> {
         ServerPlayer player = source.getPlayerOrException();
         if ("/camera reset".equals(input)) {
             player.setCamera(null);
-//            EntityEvents.PLAYERS_CAMERAS.remove(player.getId());
-//            EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCCamera(-1));
             return SINGLE_SUCCESS;
         }
         Entity entity = EntityArgument.getEntity(context, "target");
-        if (entity != null) {
-            player.setCamera(entity);
-//            EntityEvents.PLAYERS_CAMERAS.put(player.getId(), entity.getId());
-//            EvolutionNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new PacketSCCamera(entity));
-            return SINGLE_SUCCESS;
-        }
-        return 0;
+        player.setCamera(entity);
+        return SINGLE_SUCCESS;
     }
 }
