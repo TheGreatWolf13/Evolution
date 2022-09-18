@@ -5,6 +5,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,8 +16,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.patches.IMobEffectInstancePatch;
 import tgw.evolution.patches.IMobEffectPatch;
-
-import org.jetbrains.annotations.Nullable;
 
 @Mixin(MobEffectInstance.class)
 public abstract class MobEffectInstanceMixin implements IMobEffectInstancePatch {
@@ -48,7 +47,7 @@ public abstract class MobEffectInstanceMixin implements IMobEffectInstancePatch 
      */
     @Overwrite
     private static MobEffectInstance loadSpecifiedEffect(MobEffect effect, CompoundTag nbt) {
-        int amplifier = nbt.getByte("Amplifier");
+        int amplifier = Byte.toUnsignedInt(nbt.getByte("Amplifier"));
         int duration = nbt.getInt("Duration");
         boolean ambient = nbt.getBoolean("Ambient");
         boolean showParticles = true;
@@ -63,7 +62,7 @@ public abstract class MobEffectInstanceMixin implements IMobEffectInstancePatch 
         if (nbt.contains("HiddenEffect", Tag.TAG_COMPOUND)) {
             hiddenEffects = loadSpecifiedEffect(effect, nbt.getCompound("HiddenEffect"));
         }
-        MobEffectInstance instance = new MobEffectInstance(effect, duration, Math.max(amplifier, 0), ambient, showParticles, showIcon, hiddenEffects);
+        MobEffectInstance instance = new MobEffectInstance(effect, duration, amplifier, ambient, showParticles, showIcon, hiddenEffects);
         boolean infinite = nbt.getBoolean("Infinite");
         if (infinite) {
             ((IMobEffectInstancePatch) instance).setInfinite(infinite);
