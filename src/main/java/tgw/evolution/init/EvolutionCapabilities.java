@@ -41,16 +41,16 @@ public final class EvolutionCapabilities {
      * capability was invalidated via
      * {@link net.minecraft.world.entity.LivingEntity#invalidateCaps}, the method will return {@code null}.
      */
-    public static <T> T getCapability(ICapabilityProvider player, Capability<T> instance, T orElse) {
-        return player.getCapability(instance).orElse(orElse);
+    public static <T> T getCapability(ICapabilityProvider capProvider, Capability<T> instance, T orElse) {
+        return capProvider.getCapability(instance).orElse(orElse);
     }
 
     /**
      * Gets the holder object associated with this capability. Note that if the holder object does not exist, or the capability was invalidated via
      * {@link net.minecraft.world.entity.LivingEntity#invalidateCaps}, the method will throw {@link IllegalStateException}.
      */
-    public static <T> T getCapabilityOrThrow(ICapabilityProvider player, Capability<T> instance) {
-        return player.getCapability(instance).orElseThrow(EXCEPTION_MAKER);
+    public static <T> T getCapabilityOrThrow(ICapabilityProvider capProvider, Capability<T> instance) {
+        return capProvider.getCapability(instance).orElseThrow(EXCEPTION_MAKER);
     }
 
     /**

@@ -3,15 +3,15 @@ package tgw.evolution.network;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.util.LogicalSidedProvider;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.network.NetworkEvent;
+import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.ChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.capabilities.chunkstorage.IChunkStorage;
+import tgw.evolution.init.EvolutionCapabilities;
 
-import java.util.Optional;
 import java.util.function.Supplier;
 
 public class PacketSCUpdateChunkStorage implements IPacket {
@@ -80,11 +80,10 @@ public class PacketSCUpdateChunkStorage implements IPacket {
     public static void handle(PacketSCUpdateChunkStorage packet, Supplier<NetworkEvent.Context> context) {
         if (IPacket.checkSide(packet, context)) {
             context.get().enqueueWork(() -> {
-                Optional<Level> optionalLevel = LogicalSidedProvider.CLIENTWORLD.get(context.get().getDirection().getReceptionSide());
-                optionalLevel.ifPresent(level -> CapabilityChunkStorage.getChunkStorage(level, packet.chunkPos).ifPresent(chunkStorage -> {
-                    if (!(chunkStorage instanceof ChunkStorage cs)) {
-                        return;
-                    }
+                Level level = Evolution.PROXY.getClientLevel();
+                IChunkStorage storage = EvolutionCapabilities.getCapabilityOrThrow(level.getChunk(packet.chunkPos.x, packet.chunkPos.z),
+                                                                                   CapabilityChunkStorage.INSTANCE);
+                if (storage instanceof ChunkStorage cs) {
                     cs.setElement(EnumStorage.NITROGEN, packet.nitrogen);
                     cs.setElement(EnumStorage.PHOSPHORUS, packet.phosphorus);
                     cs.setElement(EnumStorage.POTASSIUM, packet.potassium);
@@ -92,7 +91,7 @@ public class PacketSCUpdateChunkStorage implements IPacket {
                     cs.setElement(EnumStorage.CARBON_DIOXIDE, packet.carbonDioxide);
                     cs.setElement(EnumStorage.OXYGEN, packet.oxygen);
                     cs.setElement(EnumStorage.GAS_NITROGEN, packet.gasNitrogen);
-                }));
+                }
             });
             context.get().setPacketHandled(true);
         }

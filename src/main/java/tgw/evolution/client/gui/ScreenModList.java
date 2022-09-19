@@ -60,6 +60,7 @@ import java.io.InputStream;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 public class ScreenModList extends Screen {
@@ -226,9 +227,11 @@ public class ScreenModList extends Screen {
         int buttonWidth = (contentWidth - padding) / 3;
         this.configButton = this.addRenderableWidget(new Button(contentLeft, 105, buttonWidth, 20, this.textMenuModsConfig, onPress -> {
             if (this.selectedModInfo != null) {
-                ConfigGuiHandler.getGuiFactoryFor(this.selectedModInfo)
-                                .map(f -> f.apply(this.minecraft, this))
-                                .ifPresent(newScreen -> this.getMinecraft().setScreen(newScreen));
+                Optional<BiFunction<Minecraft, Screen, Screen>> factoryFor = ConfigGuiHandler.getGuiFactoryFor(this.selectedModInfo);
+                if (factoryFor.isPresent()) {
+                    assert this.minecraft != null;
+                    this.minecraft.setScreen(factoryFor.get().apply(this.minecraft, this));
+                }
             }
         }));
         this.configButton.visible = false;
