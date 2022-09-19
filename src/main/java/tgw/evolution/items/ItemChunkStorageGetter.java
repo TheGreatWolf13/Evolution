@@ -12,6 +12,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.capabilities.chunkstorage.IChunkStorage;
+import tgw.evolution.init.EvolutionCapabilities;
 
 public class ItemChunkStorageGetter extends ItemEv {
 
@@ -27,7 +28,7 @@ public class ItemChunkStorageGetter extends ItemEv {
         if (!level.isClientSide) {
             LevelChunk chunk = level.getChunkAt(player.blockPosition());
             ChunkPos chunkPos = chunk.getPos();
-            IChunkStorage chunkStorage = chunk.getCapability(CapabilityChunkStorage.INSTANCE).orElseThrow(IllegalStateException::new);
+            IChunkStorage chunkStorage = EvolutionCapabilities.getCapabilityOrThrow(chunk, CapabilityChunkStorage.INSTANCE);
             player.displayClientMessage(new TranslatableComponent("Chunk " +
                                                                   chunkPos +
                                                                   " contains " +

@@ -7,7 +7,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.progress.StoringChunkProgressListener;
 import net.minecraft.world.level.chunk.ChunkStatus;
@@ -18,6 +17,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.models.pipeline.IBasicScreenQuadVertexSink;
 import tgw.evolution.client.models.pipeline.IVertexDrain;
 import tgw.evolution.client.models.pipeline.VanillaVertexTypes;
+import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.util.math.ColorABGR;
 import tgw.evolution.util.math.ColorARGB;
 
@@ -55,7 +55,7 @@ public abstract class LevelLoadingScreenMixin extends Screen {
                 STATUS_TO_COLOR_FAST.put(entry.getKey(), ColorARGB.toABGR(entry.getIntValue(), 0xFF));
             }
         }
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_COLOR);
         Matrix4f matrix = matrices.last().pose();
         Tesselator tessellator = Tesselator.getInstance();
         RenderSystem.enableBlend();

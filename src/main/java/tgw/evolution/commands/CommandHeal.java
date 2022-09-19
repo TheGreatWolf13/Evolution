@@ -13,6 +13,7 @@ import tgw.evolution.capabilities.food.IHunger;
 import tgw.evolution.capabilities.thirst.CapabilityThirst;
 import tgw.evolution.capabilities.thirst.IThirst;
 import tgw.evolution.capabilities.thirst.ThirstStats;
+import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionEffects;
 
 public final class CommandHeal implements Command<CommandSourceStack> {
@@ -29,8 +30,9 @@ public final class CommandHeal implements Command<CommandSourceStack> {
     @Override
     public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        IThirst thirst = player.getCapability(CapabilityThirst.INSTANCE).orElseThrow(IllegalStateException::new);
-        IHunger hunger = player.getCapability(CapabilityHunger.INSTANCE).orElseThrow(IllegalStateException::new);
+        EvolutionCapabilities.revive(player);
+        IThirst thirst = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityThirst.INSTANCE);
+        IHunger hunger = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityHunger.INSTANCE);
         player.setHealth(player.getMaxHealth());
         thirst.setThirstLevel(ThirstStats.THIRST_CAPACITY);
         thirst.setHydrationLevel(0);
@@ -38,6 +40,7 @@ public final class CommandHeal implements Command<CommandSourceStack> {
         hunger.setSaturationLevel(0);
         player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.HYDRATION.get(), 99, false, false, true));
         player.addEffect(EvolutionEffects.infiniteOf(EvolutionEffects.SATURATION.get(), 99, false, false, true));
+        EvolutionCapabilities.invalidate(player);
         return SINGLE_SUCCESS;
     }
 }

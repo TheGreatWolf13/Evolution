@@ -32,6 +32,11 @@ public class IArrayList extends IntArrayList implements IList {
     }
 
     @Override
+    public IntListIterator it() {
+        return super.listIterator();
+    }
+
+    @Override
     public IntListIterator iterator() {
         Evolution.info("Allocating memory for an iterator at {}", Thread.currentThread().getStackTrace()[3]);
         return super.iterator();

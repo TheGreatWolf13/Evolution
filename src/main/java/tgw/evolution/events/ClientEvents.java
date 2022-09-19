@@ -4,7 +4,6 @@ import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.ints.IntIterator;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Camera;
@@ -219,12 +218,10 @@ public class ClientEvents {
     }
 
     private static int getIndexAndRemove(MobEffect effect) {
-        ObjectIterator<ClientEffectInstance> it = EFFECTS_TO_ADD.it();
-        int i = -1;
-        while (it.hasNext()) {
-            i++;
-            if (it.next().getEffect() == effect) {
-                it.remove();
+        for (int i = 0; i < EFFECTS_TO_ADD.size(); i++) {
+            ClientEffectInstance c = EFFECTS_TO_ADD.get(i);
+            if (c.getEffect() == effect) {
+                EFFECTS_TO_ADD.remove(i);
                 return i;
             }
         }
@@ -687,11 +684,10 @@ public class ClientEvents {
                         }
                     }
                     if (needsRemoving) {
-                        for (Iterator<ClientEffectInstance> it = EFFECTS.iterator(); it.hasNext(); ) {
-                            ClientEffectInstance instance = it.next();
-                            MobEffect effect = instance.getEffect();
-                            if (instance.getDuration() == 0 || !this.mc.player.hasEffect(effect) && this.warmUpTicks >= 100) {
-                                it.remove();
+                        for (int i = 0; i < EFFECTS.size(); i++) {
+                            ClientEffectInstance instance = EFFECTS.get(i);
+                            if (instance.getDuration() == 0 || !this.mc.player.hasEffect(instance.getEffect())) {
+                                EFFECTS.remove(i--);
                             }
                         }
                     }
@@ -1042,7 +1038,8 @@ public class ClientEvents {
                 return true;
             }
             handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-            for (Slot slot : targetSlots) {
+            for (int i = 0, l = targetSlots.size(); i < l; i++) {
+                Slot slot = targetSlots.get(i);
                 int clickTimes = slot.getItem().getMaxStackSize() - slot.getItem().getCount();
                 clickTimes = Math.min(clickTimes, numItemsToMove);
                 numItemsToMove -= clickTimes;

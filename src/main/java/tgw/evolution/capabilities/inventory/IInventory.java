@@ -9,6 +9,4 @@ import net.minecraftforge.items.IItemHandlerModifiable;
 public interface IInventory extends INBTSerializable<CompoundTag>, IItemHandlerModifiable {
 
     boolean isItemValidForSlot(int slot, ItemStack stack, LivingEntity player);
-
-    void setChanged(int slot, boolean change);
 }

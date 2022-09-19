@@ -30,6 +30,6 @@ public class ItemMask extends ItemEv implements IAdditionalEquipment {
 
     @Override
     public AdditionalSlotType getValidSlot() {
-        return AdditionalSlotType.MASK;
+        return AdditionalSlotType.FACE;
     }
 }

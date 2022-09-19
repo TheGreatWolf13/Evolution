@@ -7,7 +7,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -17,6 +16,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.EnumMolding;
+import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketCSSetMoldingType;
@@ -80,7 +80,7 @@ public class ScreenMolding extends Screen {
     @Override
     public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(matrices);
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         RenderSystem.setShaderTexture(0, this.resBackground);
         int cornerX = (this.width - WIDTH) / 2;

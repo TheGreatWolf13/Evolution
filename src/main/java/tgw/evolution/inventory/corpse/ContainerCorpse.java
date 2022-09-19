@@ -12,9 +12,11 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
+import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionContainers;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.IEvolutionContainer;
+import tgw.evolution.inventory.SlotType;
 
 public class ContainerCorpse extends AbstractContainerMenu implements IEvolutionContainer {
 
@@ -25,7 +27,7 @@ public class ContainerCorpse extends AbstractContainerMenu implements IEvolution
         this.corpse = corpse;
         IItemHandler playerInventory = new InvWrapper(inventory);
         this.layoutPlayerInventorySlots(playerInventory, 8, 140);
-        IItemHandler corpseHandler = corpse.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).orElseThrow(IllegalStateException::new);
+        IItemHandler corpseHandler = EvolutionCapabilities.getCapabilityOrThrow(corpse, CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
         this.addArmorSlots(corpseHandler);
         this.addClothesSlots(corpseHandler);
         this.addEquipmentSlots(corpseHandler);
@@ -42,57 +44,57 @@ public class ContainerCorpse extends AbstractContainerMenu implements IEvolution
                 ContainerCorpse.this.corpse.setSlot(EquipmentSlot.HEAD, this.getItem().copy());
                 super.onTake(player, stackTaken);
             }
-        }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[EvolutionResources.HELMET]));
+        }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[SlotType.ARMOR_HEAD.getIndex()]));
         this.addSlot(new SlotItemHandler(handler, 1, 26, 18) {
             @Override
             public void onTake(Player player, ItemStack stackTaken) {
                 ContainerCorpse.this.corpse.setSlot(EquipmentSlot.CHEST, this.getItem().copy());
                 super.onTake(player, stackTaken);
             }
-        }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[EvolutionResources.CHESTPLATE]));
+        }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[SlotType.ARMOR_CHEST.getIndex()]));
         this.addSlot(new SlotItemHandler(handler, 2, 44, 18) {
             @Override
             public void onTake(Player player, ItemStack stackTaken) {
                 ContainerCorpse.this.corpse.setSlot(EquipmentSlot.LEGS, this.getItem().copy());
                 super.onTake(player, stackTaken);
             }
-        }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[EvolutionResources.LEGGINGS]));
+        }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[SlotType.ARMOR_LEGS.getIndex()]));
         this.addSlot(new SlotItemHandler(handler, 3, 62, 18) {
             @Override
             public void onTake(Player player, ItemStack stackTaken) {
                 ContainerCorpse.this.corpse.setSlot(EquipmentSlot.FEET, this.getItem().copy());
                 super.onTake(player, stackTaken);
             }
-        }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[EvolutionResources.BOOTS]));
+        }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[SlotType.ARMOR_FEET.getIndex()]));
     }
 
     private void addClothesSlots(IItemHandler handler) {
         this.addSlot(new SlotItemHandler(handler, 4, 98, 18).setBackground(InventoryMenu.BLOCK_ATLAS,
-                                                                           EvolutionResources.SLOT_EXTENDED[EvolutionResources.FEET]));
+                                                                           EvolutionResources.SLOT_EXTENDED[SlotType.CLOTHES_FEET.getIndex()]));
         this.addSlot(new SlotItemHandler(handler, 5, 116, 18).setBackground(InventoryMenu.BLOCK_ATLAS,
-                                                                            EvolutionResources.SLOT_EXTENDED[EvolutionResources.LEGS]));
+                                                                            EvolutionResources.SLOT_EXTENDED[SlotType.CLOTHES_LEGS.getIndex()]));
         this.addSlot(new SlotItemHandler(handler, 6, 134, 18).setBackground(InventoryMenu.BLOCK_ATLAS,
-                                                                            EvolutionResources.SLOT_EXTENDED[EvolutionResources.BODY]));
+                                                                            EvolutionResources.SLOT_EXTENDED[SlotType.CLOTHES_CHEST.getIndex()]));
         this.addSlot(new SlotItemHandler(handler, 7, 152, 18).setBackground(InventoryMenu.BLOCK_ATLAS,
-                                                                            EvolutionResources.SLOT_EXTENDED[EvolutionResources.HAT]));
+                                                                            EvolutionResources.SLOT_EXTENDED[SlotType.CLOTHES_HEAD.getIndex()]));
     }
 
     private void addEquipmentSlots(IItemHandler handler) {
         this.addSlot(new SlotItemHandler(handler, 8, 44, 36).setBackground(InventoryMenu.BLOCK_ATLAS,
-                                                                           EvolutionResources.SLOT_EXTENDED[EvolutionResources.MASK]));
+                                                                           EvolutionResources.SLOT_EXTENDED[SlotType.FACE.getIndex()]));
         this.addSlot(new SlotItemHandler(handler, 9, 62, 36).setBackground(InventoryMenu.BLOCK_ATLAS,
-                                                                           EvolutionResources.SLOT_EXTENDED[EvolutionResources.CLOAK]));
+                                                                           EvolutionResources.SLOT_EXTENDED[SlotType.NECK.getIndex()]));
         this.addSlot(new SlotItemHandler(handler, 10, 80, 36) {
             @Override
             public void onTake(Player player, ItemStack stackTaken) {
                 ContainerCorpse.this.corpse.setSlot(EquipmentSlot.OFFHAND, this.getItem().copy());
                 super.onTake(player, stackTaken);
             }
-        }.setBackground(InventoryMenu.BLOCK_ATLAS, InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD));
+        }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_OFFHAND));
         this.addSlot(new SlotItemHandler(handler, 11, 98, 36).setBackground(InventoryMenu.BLOCK_ATLAS,
-                                                                            EvolutionResources.SLOT_EXTENDED[EvolutionResources.BACK]));
+                                                                            EvolutionResources.SLOT_EXTENDED[SlotType.BACK.getIndex()]));
         this.addSlot(new SlotItemHandler(handler, 12, 116, 36).setBackground(InventoryMenu.BLOCK_ATLAS,
-                                                                             EvolutionResources.SLOT_EXTENDED[EvolutionResources.TACTICAL]));
+                                                                             EvolutionResources.SLOT_EXTENDED[SlotType.BELT.getIndex()]));
     }
 
     @Override

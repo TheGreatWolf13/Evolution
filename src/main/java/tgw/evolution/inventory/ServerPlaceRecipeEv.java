@@ -111,7 +111,7 @@ public final class ServerPlaceRecipeEv {
                             menu.getGridHeight(),
                             menu.getResultSlotIndex(),
                             recipe,
-                            intList.iterator(),
+                            intList.it(),
                             newSize);
             }
         }

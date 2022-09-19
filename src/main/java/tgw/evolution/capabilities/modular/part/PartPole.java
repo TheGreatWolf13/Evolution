@@ -3,6 +3,7 @@ package tgw.evolution.capabilities.modular.part;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
+import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.ItemMaterial;
 import tgw.evolution.items.modular.part.ItemPartPole;
 
@@ -15,7 +16,7 @@ public class PartPole extends PartGrab<PartTypes.Pole, ItemPartPole, PartPole> {
     }
 
     public static PartPole get(ItemStack stack) {
-        return (PartPole) stack.getCapability(CapabilityModular.PART).orElse(DUMMY);
+        return (PartPole) EvolutionCapabilities.getCapability(stack, CapabilityModular.PART, DUMMY);
     }
 
     @Override

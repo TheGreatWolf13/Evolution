@@ -12,8 +12,7 @@ public interface IAdditionalEquipment {
 
     Reference2ObjectMap<Attribute, AttributeModifier> getAttributes(ItemStack stack);
 
-    @Nullable
-    SoundEvent getEquipSound();
+    @Nullable SoundEvent getEquipSound();
 
     AdditionalSlotType getValidSlot();
 }

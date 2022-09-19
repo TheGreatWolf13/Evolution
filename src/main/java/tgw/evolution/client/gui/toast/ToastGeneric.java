@@ -4,8 +4,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.client.gui.components.toasts.ToastComponent;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
+import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.toast.ToastHolder;
@@ -38,7 +38,7 @@ public abstract class ToastGeneric<T extends ToastHolder> implements Toast {
         if (this.toasts.isEmpty()) {
             return Visibility.HIDE;
         }
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
         RenderSystem.setShaderTexture(0, TEXTURE);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0f);
         gui.blit(matrices, 0, 0, 0, 32, this.width(), this.height());

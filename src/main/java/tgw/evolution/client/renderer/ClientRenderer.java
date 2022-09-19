@@ -7,9 +7,7 @@ import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import net.minecraft.client.*;
 import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -59,8 +57,6 @@ import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.patches.IPoseStackPatch;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
-import tgw.evolution.util.collection.RArrayList;
-import tgw.evolution.util.collection.RList;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.HitboxEntity;
 import tgw.evolution.util.math.MathHelper;
@@ -77,11 +73,12 @@ public class ClientRenderer {
     private final OList<ClientEffectInstance> effects = new OArrayList<>();
     private final Minecraft mc;
     private final Random rand = new Random();
-    private final RList<Runnable> runnables = new RArrayList<>();
+    private final ListRunnable runnables = new ListRunnable();
     public boolean isAddingEffect;
     public boolean isRenderingPlayer;
     public boolean shouldRenderLeftArm = true;
     public boolean shouldRenderRightArm = true;
+    private @Nullable RunnableAddingEffect addingEffect;
     private ItemStack currentMainhandStack = ItemStack.EMPTY;
     private ItemStack currentOffhandStack = ItemStack.EMPTY;
     private byte healthFlashTicks;
@@ -210,7 +207,7 @@ public class ClientRenderer {
         Blending.DEFAULT.apply();
     }
 
-    private static void floatBlit(PoseStack matrices, float x, float y, int textureX, int textureY, int sizeX, int sizeY, int blitOffset) {
+    public static void floatBlit(PoseStack matrices, float x, float y, int textureX, int textureY, int sizeX, int sizeY, int blitOffset) {
         GUIUtils.floatBlit(matrices, x, y, blitOffset, textureX, textureY, sizeX, sizeY, 256, 256);
     }
 
@@ -864,7 +861,12 @@ public class ClientRenderer {
     public void renderPotionIcons(PoseStack matrices, float partialTicks, int width, int height) {
         MobEffectTextureManager effectTextures = this.mc.getMobEffectTextures();
         ClientEffectInstance movingInstance = null;
-        Runnable runnable = null;
+        if (this.addingEffect == null) {
+            this.addingEffect = new RunnableAddingEffect();
+        }
+        else {
+            this.addingEffect.discard();
+        }
         while (!ClientEvents.EFFECTS_TO_ADD.isEmpty()) {
             ClientEffectInstance addingInstance = ClientEvents.EFFECTS_TO_ADD.get(0);
             MobEffect addingEffect = addingInstance.getEffect();
@@ -902,31 +904,7 @@ public class ClientRenderer {
                 float y1 = this.getYPosForEffect(addingEffect);
                 y = (y1 - y0) * t + y0;
             }
-            float finalX = x;
-            float finalY = y;
-            runnable = () -> {
-                RenderSystem.setShader(GameRenderer::getPositionTexShader);
-                RenderSystem.setShaderTexture(0, EvolutionResources.GUI_INVENTORY);
-                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
-                RenderSystem.enableBlend();
-                if (addingInstance.isAmbient()) {
-                    floatBlit(matrices, finalX, finalY, 24, 198, 24, 24, -80);
-                }
-                else {
-                    floatBlit(matrices, finalX, finalY, 0, 198, 24, 24, -80);
-                }
-                TextureAtlasSprite atlasSprite = effectTextures.get(addingEffect);
-                RenderSystem.setShaderTexture(0, atlasSprite.atlas().location());
-                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
-                floatBlit(matrices, finalX + 3, finalY + 3, -79, 18, 18, atlasSprite);
-                if (addingInstance.getAmplifier() != 0) {
-                    matrices.pushPose();
-                    matrices.scale(0.5f, 0.5f, 0.5f);
-                    this.mc.font.drawShadow(matrices, MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(addingInstance) + 1),
-                                            (finalX + 3) * 2, (finalY + 17) * 2, 0xffff_ffff);
-                    matrices.popPose();
-                }
-            };
+            this.addingEffect.set(matrices, x, y, alpha, addingInstance, effectTextures.get(addingEffect), this.mc.font);
             if (this.client.effectToAddTicks >= 20) {
                 movingInstance = null;
                 this.client.effectToAddTicks = 0;
@@ -960,7 +938,7 @@ public class ClientRenderer {
             }
             Collections.sort(this.effects);
             Collections.reverse(this.effects);
-            this.runnables.clear();
+            this.runnables.softClear();
             byte beneficalCount = 0;
             byte neutralCount = 0;
             byte harmfulCount = 0;
@@ -1030,15 +1008,15 @@ public class ClientRenderer {
                     }
                 }
                 if (effectInstance != movingInstance && !this.mc.options.renderDebug) {
-                    RenderSystem.setShader(GameRenderer::getPositionTexShader);
-                    RenderSystem.setShaderTexture(0, ContainerScreen.INVENTORY_LOCATION);
+                    RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
+                    RenderSystem.setShaderTexture(0, EvolutionResources.GUI_INVENTORY);
                     RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
                     float alpha = 1.0F;
                     if (effectInstance.isAmbient()) {
-                        floatBlit(matrices, x, y, 165, 166, 24, 24, 0);
+                        floatBlit(matrices, x, y, 180, 180, 24, 24, 0);
                     }
                     else {
-                        floatBlit(matrices, x, y, 141, 166, 24, 24, 0);
+                        floatBlit(matrices, x, y, 156, 180, 24, 24, 0);
                         if (effectInstance.getDuration() <= 200) {
                             int remainingSeconds = 10 - effectInstance.getDuration() / 20;
                             alpha = MathHelper.clamp(effectInstance.getDuration() / 100.0F, 0.0F, 0.5F) +
@@ -1051,22 +1029,14 @@ public class ClientRenderer {
                     RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, alpha);
                     floatBlit(matrices, x + 3, y + 3, 0, 18, 18, atlasSprite);
                     if (effectInstance.getAmplifier() != 0) {
-                        float finalX = x;
-                        float finalY = y;
                         String text = MathHelper.getRomanNumber(ScreenDisplayEffects.getFixedAmplifier(effectInstance) + 1);
-                        //noinspection ObjectAllocationInLoop
-                        this.runnables.add(() -> this.mc.font.drawShadow(matrices, text, (finalX + 3) * 2, (finalY + 17) * 2, 0xff_ffff));
+                        this.runnables.setNew(matrices, x, y, text, this.mc.font);
                     }
                 }
             }
             for (int i = 0, l = this.runnables.size(); i < l; i++) {
-                Runnable run = this.runnables.get(i);
-                if (run != null) {
-                    matrices.pushPose();
-                    matrices.scale(0.5f, 0.5f, 0.5f);
-                    run.run();
-                    matrices.popPose();
-                }
+                RunnableEffectAmplifier run = this.runnables.get(i);
+                run.run();
             }
             this.lastBeneficalCount = beneficalCount;
             this.lastNeutralCount = neutralCount;
@@ -1075,10 +1045,9 @@ public class ClientRenderer {
             this.movingFinalCount = 1;
             this.lastBeneficalCount = 0;
             this.lastNeutralCount = 0;
+            this.runnables.clear();
         }
-        if (runnable != null) {
-            runnable.run();
-        }
+        this.addingEffect.run();
     }
 
     public void renderStamina(PoseStack matrices, int width, int height) {

@@ -12,7 +12,6 @@ import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.achievement.StatsUpdateListener;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.Registry;
@@ -37,6 +36,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.GUIUtils;
+import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionStats;
@@ -115,7 +115,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
     private void blitSlotIcon(PoseStack matrices, int x, int y, int u, int v) {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
         RenderSystem.setShaderTexture(0, this.resIcons);
         blit(matrices, x, y, this.getBlitOffset(), u, v, 18, 18, 128, 128);
     }

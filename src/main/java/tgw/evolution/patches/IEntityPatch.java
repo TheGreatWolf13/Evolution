@@ -40,6 +40,10 @@ public interface IEntityPatch<T extends Entity> {
         return false;
     }
 
+    default boolean hasExtendedInventory() {
+        return false;
+    }
+
     default boolean hurtInternal(DamageSource source, float damage) {
         return false;
     }

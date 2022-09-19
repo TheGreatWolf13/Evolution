@@ -1,9 +1,13 @@
 package tgw.evolution.client.renderer;
 
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.ShaderInstance;
 import tgw.evolution.util.collection.FArrayList;
 import tgw.evolution.util.collection.FList;
 import tgw.evolution.util.collection.IArrayList;
 import tgw.evolution.util.collection.IList;
+
+import java.util.function.Supplier;
 
 public final class RenderHelper {
 
@@ -24,6 +28,11 @@ public final class RenderHelper {
                                                   "Sampler9",
                                                   "Sampler10",
                                                   "Sampler11"};
+
+    public static final Supplier<ShaderInstance> SHADER_POSITION = GameRenderer::getPositionShader;
+    public static final Supplier<ShaderInstance> SHADER_POSITION_COLOR = GameRenderer::getPositionColorShader;
+    public static final Supplier<ShaderInstance> SHADER_POSITION_COLOR_TEX = GameRenderer::getPositionColorTexShader;
+    public static final Supplier<ShaderInstance> SHADER_POSITION_TEX = GameRenderer::getPositionTexShader;
 
     private RenderHelper() {
     }

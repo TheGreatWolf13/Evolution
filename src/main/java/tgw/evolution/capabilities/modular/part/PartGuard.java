@@ -8,6 +8,7 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
+import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.ItemMaterial;
 import tgw.evolution.items.modular.part.ItemPartGuard;
 
@@ -21,7 +22,7 @@ public class PartGuard implements IPart<PartTypes.Guard, ItemPartGuard, PartGuar
     private PartTypes.Guard type = PartTypes.Guard.NULL;
 
     public static PartGuard get(ItemStack stack) {
-        return (PartGuard) stack.getCapability(CapabilityModular.PART).orElse(DUMMY);
+        return (PartGuard) EvolutionCapabilities.getCapability(stack, CapabilityModular.PART, DUMMY);
     }
 
     @Override

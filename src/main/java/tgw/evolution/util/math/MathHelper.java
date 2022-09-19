@@ -712,7 +712,11 @@ public final class MathHelper {
         return hit;
     }
 
-    public static boolean isMouseInsideBox(double mouseX, double mouseY, int x0, int y0, int x1, int y1) {
+    public static boolean isMouseInArea(double mouseX, double mouseY, int x, int y, int dx, int dy) {
+        return isMouseInRange(mouseX, mouseY, x, y, x + dx, y + dy);
+    }
+
+    public static boolean isMouseInRange(double mouseX, double mouseY, int x0, int y0, int x1, int y1) {
         if (x0 <= mouseX && mouseX <= x1) {
             return y0 <= mouseY && mouseY <= y1;
         }

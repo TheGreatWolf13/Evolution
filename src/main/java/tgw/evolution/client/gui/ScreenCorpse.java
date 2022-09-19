@@ -92,11 +92,11 @@ public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, @MouseButton int button) {
         if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
-            if (MathHelper.isMouseInsideBox(mouseX, mouseY, this.tabX, this.tabY, this.tabX + 32, this.tabY + 28)) {
+            if (MathHelper.isMouseInRange(mouseX, mouseY, this.tabX, this.tabY, this.tabX + 32, this.tabY + 28)) {
                 this.setSelectedTab(0);
                 return true;
             }
-            if (MathHelper.isMouseInsideBox(mouseX, mouseY, this.tabX, this.tabY + 32, this.tabX + 32, this.tabY + 32 + 28)) {
+            if (MathHelper.isMouseInRange(mouseX, mouseY, this.tabX, this.tabY + 32, this.tabX + 32, this.tabY + 32 + 28)) {
                 this.setSelectedTab(1);
                 return true;
             }
@@ -173,21 +173,21 @@ public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
 
     @Override
     protected void renderTooltip(PoseStack matrices, int mouseX, int mouseY) {
-        if (MathHelper.isMouseInsideBox(mouseX, mouseY, this.tabX, this.tabY, this.tabX + 32, this.tabY + 28)) {
+        if (MathHelper.isMouseInRange(mouseX, mouseY, this.tabX, this.tabY, this.tabX + 32, this.tabY + 28)) {
             this.renderTooltip(matrices, this.textTabInventory, mouseX, mouseY);
             return;
         }
-        if (MathHelper.isMouseInsideBox(mouseX, mouseY, this.tabX, this.tabY + 32, this.tabX + 32, this.tabY + 32 + 28)) {
+        if (MathHelper.isMouseInRange(mouseX, mouseY, this.tabX, this.tabY + 32, this.tabX + 32, this.tabY + 32 + 28)) {
             this.renderTooltip(matrices, this.textTabDeath, mouseX, mouseY);
             return;
         }
         if (this.selectedTab == 1) {
-            if (MathHelper.isMouseInsideBox(mouseX,
-                                            mouseY,
-                                            this.leftPos + 6,
-                                            this.messageStart,
-                                            this.leftPos + this.imageWidth - 6,
-                                            this.messageEnd)) {
+            if (MathHelper.isMouseInRange(mouseX,
+                                          mouseY,
+                                          this.leftPos + 6,
+                                          this.messageStart,
+                                          this.leftPos + this.imageWidth - 6,
+                                          this.messageEnd)) {
                 Style style = this.getClickedComponentStyleAt(mouseX, mouseY);
                 this.renderComponentHoverEffect(matrices, style, mouseX, mouseY);
                 return;

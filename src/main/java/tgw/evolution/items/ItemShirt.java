@@ -30,6 +30,6 @@ public class ItemShirt extends ItemEv implements IAdditionalEquipment {
 
     @Override
     public AdditionalSlotType getValidSlot() {
-        return AdditionalSlotType.BODY;
+        return AdditionalSlotType.CLOTHES_CHEST;
     }
 }

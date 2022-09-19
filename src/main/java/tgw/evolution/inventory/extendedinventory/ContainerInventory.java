@@ -24,90 +24,75 @@ import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionContainers;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.ServerPlaceRecipeEv;
+import tgw.evolution.inventory.SlotArmor;
 import tgw.evolution.inventory.SlotExtended;
+import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.IAdditionalEquipment;
 import tgw.evolution.patches.IAbstractContainerMenuPatch;
 
 import java.util.List;
 import java.util.Optional;
 
-public class ContainerPlayerInventory extends RecipeBookMenu<CraftingContainer> {
+public class ContainerInventory extends RecipeBookMenu<CraftingContainer> {
 
-    private static final EquipmentSlot[] VALID_EQUIPMENT_SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
     public final IInventory handler;
     public final boolean isClientSide;
     private final CraftingContainer craftingContainer = new CraftingContainer(this, 2, 2);
     private final Player player;
     private final ResultContainer resultContainer = new ResultContainer();
 
-    public ContainerPlayerInventory(int windowId, Inventory inventory) {
+    @SuppressWarnings("ObjectAllocationInLoop")
+    public ContainerInventory(int windowId, Inventory inventory) {
         super(EvolutionContainers.EXTENDED_INVENTORY.get(), windowId);
         this.player = inventory.player;
         ((IAbstractContainerMenuPatch) this).setPlayer(this.player);
         this.isClientSide = this.player.level.isClientSide;
         this.handler = EvolutionCapabilities.getCapabilityOrThrow(this.player, CapabilityInventory.INSTANCE);
         //Crafting result slot
-        this.addSlot(new ResultSlot(inventory.player, this.craftingContainer, this.resultContainer, 0, 161, 62));
+        this.addSlot(new ResultSlot(inventory.player, this.craftingContainer, this.resultContainer, 0, 232, 31));
         //Crafting slots
-        for (int i = 0; i < 2; ++i) {
-            for (int j = 0; j < 2; ++j) {
-                //noinspection ObjectAllocationInLoop
-                this.addSlot(new Slot(this.craftingContainer, j + i * 2, 152 + j * 18, 8 + i * 18));
+        for (int j = 0; j < 2; j++) {
+            for (int i = 0; i < 2; i++) {
+                this.addSlot(new Slot(this.craftingContainer, i + j * 2, 178 + i * 18, 22 + j * 18));
             }
         }
         //Armor slots
         for (int k = 0; k < 4; ++k) {
-            EquipmentSlot equipmentSlot = VALID_EQUIPMENT_SLOTS[k];
-            //noinspection ObjectAllocationInLoop
-            this.addSlot(new Slot(inventory, 39 - k, 26, 8 + k * 18) {
-
-                @Override
-                public int getMaxStackSize() {
-                    return 1;
-                }
-
-                @Override
-                public boolean mayPickup(Player player) {
-                    if (equipmentSlot == EquipmentSlot.CHEST) {
-                        return ContainerPlayerInventory.this.handler.getStackInSlot(EvolutionResources.CLOAK).isEmpty();
-                    }
-                    ItemStack stack = this.getItem();
-                    return !stack.isEmpty();
-                }
-
-                @Override
-                public boolean mayPlace(ItemStack stack) {
-                    if (equipmentSlot == EquipmentSlot.CHEST) {
-                        if (!ContainerPlayerInventory.this.handler.getStackInSlot(EvolutionResources.CLOAK).isEmpty()) {
-                            return false;
-                        }
-                    }
-                    return stack.canEquip(equipmentSlot, ContainerPlayerInventory.this.player);
-                }
-            }).setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_ARMOR[equipmentSlot.getIndex()]);
+            EquipmentSlot equip = switch (k) {
+                case 0 -> EquipmentSlot.HEAD;
+                case 1 -> EquipmentSlot.CHEST;
+                case 2 -> EquipmentSlot.LEGS;
+                case 3 -> EquipmentSlot.FEET;
+                default -> throw new IllegalStateException("Unexpected value: " + k);
+            };
+            this.addSlot(new SlotArmor(inventory, 39 - k, 26, 15 + k * 18, equip, this.player));
         }
         //Main inventory slots
-        for (int l = 0; l < 3; ++l) {
-            for (int j1 = 0; j1 < 9; ++j1) {
-                //noinspection ObjectAllocationInLoop
-                this.addSlot(new Slot(inventory, j1 + (l + 1) * 9, 26 + j1 * 18, 84 + l * 18));
+        for (int j = 0; j < 3; ++j) {
+            for (int i = 0; i < 9; ++i) {
+                this.addSlot(new Slot(inventory, i + (j + 1) * 9, 8 + i * 18, 98 + j * 18));
             }
         }
         //Hotbar slots
-        for (int i1 = 0; i1 < 9; ++i1) {
-            //noinspection ObjectAllocationInLoop
-            this.addSlot(new Slot(inventory, i1, 26 + i1 * 18, 142));
+        for (int i = 0; i < 9; ++i) {
+            this.addSlot(new Slot(inventory, i, 8 + i * 18, 156));
         }
-        //Shield slot
-        this.addSlot(new Slot(inventory, 40, 116, 62).setBackground(InventoryMenu.BLOCK_ATLAS, InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD));
-        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.HAT, 44, 8));
-        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.BODY, 44, 26));
-        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.LEGS, 44, 44));
-        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.FEET, 44, 62));
-        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.CLOAK, 8, 26));
-        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.MASK, 116, 8));
-        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.BACK, 116, 26));
-        this.addSlot(new SlotExtended(this.player, this.handler, EvolutionResources.TACTICAL, 116, 44));
+        //Offhand slot
+        this.addSlot(new Slot(inventory, 40, 152, 51).setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_OFFHAND));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_SHOULDER_LEFT.getIndex(), 44, 24));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_SHOULDER_RIGHT.getIndex(), 8, 24));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_ARM_LEFT.getIndex(), 44, 42));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_ARM_RIGHT.getIndex(), 8, 42));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_HAND_LEFT.getIndex(), 44, 60));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_HAND_RIGHT.getIndex(), 8, 60));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_HEAD.getIndex(), 116, 15));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_CHEST.getIndex(), 116, 33));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_LEGS.getIndex(), 116, 51));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_FEET.getIndex(), 116, 69));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.FACE.getIndex(), 134, 24));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.BACK.getIndex(), 134, 42));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.BELT.getIndex(), 134, 60));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.NECK.getIndex(), 152, 33));
     }
 
     protected static void slotChangedCraftingGrid(AbstractContainerMenu container,

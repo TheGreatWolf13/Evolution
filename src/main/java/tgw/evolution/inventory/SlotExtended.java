@@ -19,40 +19,13 @@ public class SlotExtended extends SlotItemHandler {
         this.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_EXTENDED[this.slot]);
     }
 
-    protected boolean isBlocked() {
-        switch (this.slot) {
-            case EvolutionResources.HAT -> {
-                return !this.player.getInventory().armor.get(EvolutionResources.HELMET).isEmpty();
-            }
-            case EvolutionResources.BODY -> {
-                if (!this.player.getInventory().armor.get(EvolutionResources.CHESTPLATE).isEmpty()) {
-                    return true;
-                }
-                return !this.getItemHandler().getStackInSlot(EvolutionResources.CLOAK).isEmpty();
-            }
-            case EvolutionResources.LEGS -> {
-                return !this.player.getInventory().armor.get(EvolutionResources.LEGGINGS).isEmpty();
-            }
-            case EvolutionResources.FEET -> {
-                return !this.player.getInventory().armor.get(EvolutionResources.BOOTS).isEmpty();
-            }
-        }
-        return false;
-    }
-
     @Override
-    public boolean mayPickup(Player player) {
-        if (this.isBlocked()) {
-            return false;
-        }
-        return super.mayPickup(player);
+    public int getMaxStackSize() {
+        return 1;
     }
 
     @Override
     public boolean mayPlace(ItemStack stack) {
-        if (this.isBlocked()) {
-            return false;
-        }
         return ((IInventory) this.getItemHandler()).isItemValidForSlot(this.slot, stack, this.player);
     }
 }

@@ -19,6 +19,7 @@ import tgw.evolution.capabilities.thirst.CapabilityThirst;
 import tgw.evolution.capabilities.thirst.IThirst;
 import tgw.evolution.capabilities.thirst.ThirstStats;
 import tgw.evolution.commands.argument.EnumEvArgument;
+import tgw.evolution.init.EvolutionCapabilities;
 
 import java.util.Collection;
 
@@ -54,9 +55,10 @@ public class CommandRegen implements Command<CommandSourceStack> {
         int count = 0;
         for (Entity target : targets) {
             if (target instanceof ServerPlayer player) {
-                IThirst thirst = player.getCapability(CapabilityThirst.INSTANCE).orElseThrow(IllegalStateException::new);
-                IHunger hunger = player.getCapability(CapabilityHunger.INSTANCE).orElseThrow(IllegalStateException::new);
-                IStamina stamina = player.getCapability(CapabilityStamina.INSTANCE).orElseThrow(IllegalStateException::new);
+                EvolutionCapabilities.revive(player);
+                IThirst thirst = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityThirst.INSTANCE);
+                IHunger hunger = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityHunger.INSTANCE);
+                IStamina stamina = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityStamina.INSTANCE);
                 RegenType type = RegenType.ALL;
                 try {
                     type = context.getArgument("type", RegenType.class);
@@ -83,6 +85,7 @@ public class CommandRegen implements Command<CommandSourceStack> {
                     case STAMINA -> stamina.setStamina(StaminaStats.MAX_STAMINA);
                 }
                 count++;
+                EvolutionCapabilities.invalidate(player);
             }
         }
         return count;

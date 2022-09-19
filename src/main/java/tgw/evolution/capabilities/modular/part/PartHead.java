@@ -13,6 +13,7 @@ import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.client.tooltip.EvolutionTooltipDurability;
 import tgw.evolution.client.tooltip.EvolutionTooltipMass;
+import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.init.ItemMaterial;
@@ -30,7 +31,7 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
     private PartTypes.Head type = PartTypes.Head.NULL;
 
     public static PartHead get(ItemStack stack) {
-        return (PartHead) stack.getCapability(CapabilityModular.PART).orElse(DUMMY);
+        return (PartHead) EvolutionCapabilities.getCapability(stack, CapabilityModular.PART, DUMMY);
     }
 
     @Override

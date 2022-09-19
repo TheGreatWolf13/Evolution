@@ -18,6 +18,7 @@ import tgw.evolution.capabilities.food.CapabilityHunger;
 import tgw.evolution.capabilities.food.IHunger;
 import tgw.evolution.capabilities.thirst.CapabilityThirst;
 import tgw.evolution.capabilities.thirst.IThirst;
+import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.util.collection.O2FPair;
 
 public abstract class ItemGenericConsumable extends ItemEv implements IConsumable {
@@ -57,7 +58,7 @@ public abstract class ItemGenericConsumable extends ItemEv implements IConsumabl
         Player player = entity instanceof Player pl ? pl : null;
         if (stack.getItem() instanceof IFood food) {
             if (player instanceof ServerPlayer) {
-                IHunger hunger = player.getCapability(CapabilityHunger.INSTANCE).orElseThrow(IllegalStateException::new);
+                IHunger hunger = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityHunger.INSTANCE);
                 int amount = food.getHunger();
                 hunger.increaseSaturationLevel(amount);
             }
@@ -66,7 +67,7 @@ public abstract class ItemGenericConsumable extends ItemEv implements IConsumabl
         }
         if (stack.getItem() instanceof IDrink drink) {
             if (player instanceof ServerPlayer) {
-                IThirst thirst = player.getCapability(CapabilityThirst.INSTANCE).orElseThrow(IllegalStateException::new);
+                IThirst thirst = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityThirst.INSTANCE);
                 int amount = drink.getThirst();
                 thirst.increaseHydrationLevel(amount);
             }

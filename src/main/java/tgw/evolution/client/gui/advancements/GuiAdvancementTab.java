@@ -6,7 +6,6 @@ import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.network.chat.Component;
@@ -17,6 +16,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
+import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.util.math.MathHelper;
 
 import java.util.LinkedHashMap;
@@ -118,7 +118,7 @@ public class GuiAdvancementTab extends GuiComponent {
         fill(matrices, width, height, 0, 0, 0xff00_0000);
         RenderSystem.depthFunc(GL11.GL_LEQUAL);
         ResourceLocation background = this.display.getBackground();
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
         if (background != null) {
             RenderSystem.setShaderTexture(0, background);
         }

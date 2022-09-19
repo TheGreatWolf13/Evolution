@@ -24,7 +24,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.ScreenCorpse;
-import tgw.evolution.client.gui.ScreenInventoryExtended;
+import tgw.evolution.client.gui.ScreenInventory;
 import tgw.evolution.client.tooltip.*;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionContainers;
@@ -89,7 +89,7 @@ public class ClientProxy implements IProxy {
     }
 
     private static void registerScreens() {
-        MenuScreens.register(EvolutionContainers.EXTENDED_INVENTORY.get(), ScreenInventoryExtended::new);
+        MenuScreens.register(EvolutionContainers.EXTENDED_INVENTORY.get(), ScreenInventory::new);
         MenuScreens.register(EvolutionContainers.CORPSE.get(), ScreenCorpse::new);
     }
 
@@ -131,6 +131,10 @@ public class ClientProxy implements IProxy {
         for (ResourceLocation resLoc : EvolutionResources.SLOT_EXTENDED) {
             event.addSprite(resLoc);
         }
+        for (ResourceLocation resLoc : EvolutionResources.SLOT_ARMOR) {
+            event.addSprite(resLoc);
+        }
+        event.addSprite(EvolutionResources.SLOT_OFFHAND);
     }
 
     @Override

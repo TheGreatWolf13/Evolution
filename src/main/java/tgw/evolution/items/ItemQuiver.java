@@ -30,6 +30,6 @@ public class ItemQuiver extends ItemEv implements IAdditionalEquipment {
 
     @Override
     public AdditionalSlotType getValidSlot() {
-        return AdditionalSlotType.TACTICAL;
+        return AdditionalSlotType.BELT;
     }
 }

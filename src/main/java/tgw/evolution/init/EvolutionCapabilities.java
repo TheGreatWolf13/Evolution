@@ -25,12 +25,6 @@ public final class EvolutionCapabilities {
     private EvolutionCapabilities() {
     }
 
-    public static void beginClone(Player oldPlayer) {
-        if (!oldPlayer.isAlive()) {
-            oldPlayer.reviveCaps();
-        }
-    }
-
     public static <T extends INBTSerializable<CompoundTag>> void clonePlayer(Player oldPlayer, Player newPlayer, Capability<T> cap) {
         try {
             T oldCap = getCapabilityOrThrow(oldPlayer, cap);
@@ -39,12 +33,6 @@ public final class EvolutionCapabilities {
         }
         catch (Exception e) {
             Evolution.error("Could not clone {} for {}: ", cap.getName(), oldPlayer.getScoreboardName(), e);
-        }
-    }
-
-    public static void endClone(Player oldPlayer) {
-        if (!oldPlayer.isAlive()) {
-            oldPlayer.invalidateCaps();
         }
     }
 
@@ -61,7 +49,7 @@ public final class EvolutionCapabilities {
      * Gets the holder object associated with this capability. Note that if the holder object does not exist, or the capability was invalidated via
      * {@link net.minecraft.world.entity.LivingEntity#invalidateCaps}, the method will throw {@link IllegalStateException}.
      */
-    public static <T> T getCapabilityOrThrow(Player player, Capability<T> instance) {
+    public static <T> T getCapabilityOrThrow(ICapabilityProvider player, Capability<T> instance) {
         return player.getCapability(instance).orElseThrow(EXCEPTION_MAKER);
     }
 
@@ -81,6 +69,12 @@ public final class EvolutionCapabilities {
         return capability;
     }
 
+    public static void invalidate(Player player) {
+        if (!player.isAlive()) {
+            player.invalidateCaps();
+        }
+    }
+
     public static void register(RegisterCapabilitiesEvent event) {
         CapabilityChunkStorage.register(event);
         CapabilityInventory.register(event);
@@ -91,5 +85,11 @@ public final class EvolutionCapabilities {
         CapabilityTemperature.register(event);
         CapabilityModular.register(event);
         CapabilityStamina.register(event);
+    }
+
+    public static void revive(Player player) {
+        if (!player.isAlive()) {
+            player.reviveCaps();
+        }
     }
 }

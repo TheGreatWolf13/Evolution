@@ -1,17 +1,22 @@
 package tgw.evolution.inventory;
 
 import net.minecraft.world.entity.EquipmentSlot;
-import tgw.evolution.init.EvolutionResources;
 
 public enum AdditionalSlotType {
-    HAT("hat", EvolutionResources.HAT),
-    BODY("body", EvolutionResources.BODY),
-    LEGS("legs", EvolutionResources.LEGS),
-    FEET("feet", EvolutionResources.FEET),
-    CLOAK("cloak", EvolutionResources.CLOAK),
-    MASK("mask", EvolutionResources.MASK),
-    BACK("back", EvolutionResources.BACK),
-    TACTICAL("tactical", EvolutionResources.TACTICAL);
+    CLOTHES_HEAD("clothes_head", SlotType.CLOTHES_HEAD.getIndex()),
+    CLOTHES_CHEST("clothes_chest", SlotType.CLOTHES_CHEST.getIndex()),
+    CLOTHES_LEGS("clothes_legs", SlotType.CLOTHES_LEGS.getIndex()),
+    CLOTHES_FEET("clothes_feet", SlotType.CLOTHES_FEET.getIndex()),
+    FACE("face", SlotType.FACE.getIndex()),
+    NECK("neck", SlotType.NECK.getIndex()),
+    BACK("back", SlotType.BACK.getIndex()),
+    BELT("belt", SlotType.BELT.getIndex()),
+    ARMOR_SHOULDER_LEFT("armor_shoulder_left", SlotType.ARMOR_SHOULDER_LEFT.getIndex()),
+    ARMOR_SHOULDER_RIGHT("armor_shoulder_right", SlotType.ARMOR_SHOULDER_RIGHT.getIndex()),
+    ARMOR_ARM_LEFT("armor_arm_left", SlotType.ARMOR_ARM_LEFT.getIndex()),
+    ARMOR_ARM_RIGHT("armor_arm_right", SlotType.ARMOR_ARM_RIGHT.getIndex()),
+    ARMOR_HAND_LEFT("armor_hand_left", SlotType.ARMOR_HAND_LEFT.getIndex()),
+    ARMOR_HAND_RIGHT("armor_hand_right", SlotType.ARMOR_HAND_RIGHT.getIndex());
 
     public static final AdditionalSlotType[] VALUES = values();
     public static final EquipmentSlot[] SLOTS = EquipmentSlot.values();

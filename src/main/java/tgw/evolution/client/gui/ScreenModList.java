@@ -14,7 +14,6 @@ import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -48,6 +47,7 @@ import tgw.evolution.client.gui.widgets.AdvCheckBox;
 import tgw.evolution.client.gui.widgets.AdvEditBox;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
 import tgw.evolution.client.gui.widgets.Label;
+import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.Key;
 import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.client.util.MouseButton;
@@ -126,7 +126,7 @@ public class ScreenModList extends Screen {
                 if (logoInfo.getLeft() != null) {
                     ResourceLocation logoResource = logoInfo.getLeft();
                     Size2i size = logoInfo.getRight();
-                    RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
+                    RenderSystem.setShader(RenderHelper.SHADER_POSITION_COLOR_TEX);
                     RenderSystem.setShaderTexture(0, logoResource);
                     RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
                     int width = size.width;
@@ -166,12 +166,12 @@ public class ScreenModList extends Screen {
             if (result.status().shouldDraw() && result.url() != null) {
                 String version = ForgeI18n.parseMessage("fml.menu.mods.info.version", this.selectedModInfo.getVersion().toString());
                 int versionWidth = this.font.width(version);
-                RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
+                RenderSystem.setShader(RenderHelper.SHADER_POSITION_COLOR_TEX);
                 RenderSystem.setShaderTexture(0, this.versionCheckIcons);
                 RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
                 int vOffset = result.status().isAnimated() && (System.currentTimeMillis() / 800 & 1) == 1 ? 8 : 0;
                 Screen.blit(matrices, contentLeft + versionWidth + 5, 92, result.status().getSheetOffset() * 8, vOffset, 8, 8, 64, 16);
-                if (MathHelper.isMouseInsideBox(mouseX, mouseY, contentLeft + versionWidth + 5, 92, contentLeft + versionWidth + 5 + 8, 92 + 8)) {
+                if (MathHelper.isMouseInRange(mouseX, mouseY, contentLeft + versionWidth + 5, 92, contentLeft + versionWidth + 5 + 8, 92 + 8)) {
                     this.setActiveTooltip(new TranslatableComponent("fml.menu.mods.info.updateavailable", result.url()));
                 }
             }
@@ -189,14 +189,14 @@ public class ScreenModList extends Screen {
     }
 
     private void drawModList(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
-        RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_COLOR_TEX);
         RenderSystem.setShaderTexture(0, this.versionCheckIcons);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         blit(matrices, this.modList.getRight() - 24, 8, 24, 0, 8, 8, 64, 16);
         this.modList.render(matrices, mouseX, mouseY, partialTicks);
         drawString(matrices, this.font, this.textMenuModsTitle, 70, 10, 0xFF_FFFF);
         this.searchEditBox.render(matrices, mouseX, mouseY, partialTicks);
-        if (MathHelper.isMouseInsideBox(mouseX, mouseY, this.modList.getRight() - 14, 7, this.modList.getRight(), 7 + 14)) {
+        if (MathHelper.isMouseInRange(mouseX, mouseY, this.modList.getRight() - 14, 7, this.modList.getRight(), 7 + 14)) {
             this.setActiveTooltip(this.textFilterUpdates);
             this.tooltipYOffset = 10;
         }
@@ -293,7 +293,7 @@ public class ScreenModList extends Screen {
             int contentLeft = this.modList.getRight() + 12 + 10;
             String version = ForgeI18n.parseMessage("fml.menu.mods.info.version", this.selectedModInfo.getVersion().toString());
             int versionWidth = this.font.width(version);
-            if (MathHelper.isMouseInsideBox(mouseX, mouseY, contentLeft + versionWidth + 5, 92, contentLeft + versionWidth + 5 + 8, 92 + 8)) {
+            if (MathHelper.isMouseInRange(mouseX, mouseY, contentLeft + versionWidth + 5, 92, contentLeft + versionWidth + 5 + 8, 92 + 8)) {
                 VersionChecker.CheckResult result = VersionChecker.getResult(this.selectedModInfo);
                 if (result.status().shouldDraw() && result.url() != null) {
                     Style style = Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, result.url()));
@@ -570,7 +570,7 @@ public class ScreenModList extends Screen {
             ScreenModList.this.getMinecraft().getItemRenderer().renderGuiItem(this.getItemIcon(), left + 4, top + 2);
             VersionChecker.CheckResult result = VersionChecker.getResult(this.info);
             if (result.status().shouldDraw()) {
-                RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
+                RenderSystem.setShader(RenderHelper.SHADER_POSITION_COLOR_TEX);
                 RenderSystem.setShaderTexture(0, ScreenModList.this.versionCheckIcons);
                 RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
                 int vOffset = result.status().isAnimated() && (System.currentTimeMillis() / 800 & 1) == 1 ? 8 : 0;

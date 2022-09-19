@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.part.IPart;
 import tgw.evolution.capabilities.modular.part.IPartType;
+import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.items.modular.part.ItemPart;
 
 public abstract class ItemOverridesPart<T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>,
@@ -26,7 +27,7 @@ public abstract class ItemOverridesPart<T extends IPartType<T, I, P>, I extends 
     @Nullable
     @Override
     public BakedModel resolve(BakedModel model, ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity entity, int seed) {
-        P part = (P) stack.getCapability(CapabilityModular.PART).orElse(this.part);
+        P part = (P) EvolutionCapabilities.getCapability(stack, CapabilityModular.PART, this.part);
         this.setModelData(part);
         return this.finalModel;
     }

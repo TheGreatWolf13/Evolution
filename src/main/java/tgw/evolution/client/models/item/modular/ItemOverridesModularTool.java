@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.IModularTool;
 import tgw.evolution.capabilities.modular.part.PartTypes;
+import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.items.IThrowable;
 import tgw.evolution.patches.ILivingEntityPatch;
 
@@ -39,7 +40,7 @@ public class ItemOverridesModularTool extends ItemOverrides {
     @Nullable
     @Override
     public BakedModel resolve(BakedModel model, ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity entity, int seed) {
-        IModularTool tool = stack.getCapability(CapabilityModular.TOOL).orElse(IModularTool.NULL);
+        IModularTool tool = EvolutionCapabilities.getCapability(stack, CapabilityModular.TOOL, IModularTool.NULL);
         this.finalModel.setModelData(tool.getHead().getType(), tool.getHead().getMaterialInstance().getMaterial(), tool.getHandle().getType(),
                                      tool.getHandle().getMaterialInstance().getMaterial(), tool.isSharpened());
         boolean isThrowing = isThrowing(stack, entity);

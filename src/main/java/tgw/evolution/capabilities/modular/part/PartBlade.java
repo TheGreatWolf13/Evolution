@@ -10,6 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Material;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
+import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.ItemMaterial;
 import tgw.evolution.items.modular.part.ItemPartBlade;
@@ -25,7 +26,7 @@ public class PartBlade implements IPartHit<PartTypes.Blade, ItemPartBlade, PartB
     private PartTypes.Blade type = PartTypes.Blade.NULL;
 
     public static PartBlade get(ItemStack stack) {
-        return (PartBlade) stack.getCapability(CapabilityModular.PART).orElse(DUMMY);
+        return (PartBlade) EvolutionCapabilities.getCapability(stack, CapabilityModular.PART, DUMMY);
     }
 
     @Override

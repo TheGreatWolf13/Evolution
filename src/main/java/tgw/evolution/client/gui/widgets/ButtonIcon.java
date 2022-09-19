@@ -3,10 +3,10 @@ package tgw.evolution.client.gui.widgets;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.Blending;
 import tgw.evolution.init.EvolutionResources;
 
@@ -30,7 +30,7 @@ public class ButtonIcon extends Button {
     @Override
     public void renderButton(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
         super.renderButton(matrices, mouseX, mouseY, partialTicks);
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
         RenderSystem.setShaderTexture(0, EvolutionResources.GUI_ICONS);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
         RenderSystem.enableDepthTest();

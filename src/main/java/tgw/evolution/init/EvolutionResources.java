@@ -2,9 +2,9 @@ package tgw.evolution.init;
 
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.InventoryMenu;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.modular.part.IPartType;
+import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.util.collection.BiEnumMap;
 import tgw.evolution.util.collection.RArrayList;
 import tgw.evolution.util.collection.RList;
@@ -14,19 +14,6 @@ import tgw.evolution.util.constants.WoodVariant;
 import static tgw.evolution.capabilities.modular.part.PartTypes.*;
 
 public final class EvolutionResources {
-    //Slot indices
-    public static final int BOOTS = 0;
-    public static final int LEGGINGS = 1;
-    public static final int CHESTPLATE = 2;
-    public static final int HELMET = 3;
-    public static final int HAT = 0;
-    public static final int BODY = 1;
-    public static final int LEGS = 2;
-    public static final int FEET = 3;
-    public static final int CLOAK = 4;
-    public static final int MASK = 5;
-    public static final int BACK = 6;
-    public static final int TACTICAL = 7;
     //Icons coordinates
     public static final int ICON_HEARTS = 0;
     public static final int ICON_HEARTS_HARDCORE = 18;
@@ -67,18 +54,9 @@ public final class EvolutionResources {
     public static final ResourceLocation SHADER_DESATURATE_75 = Evolution.getResource("shaders/post/saturation75.json");
     public static final ResourceLocation SHADER_MOTION_BLUR = new ResourceLocation("shaders/post/phosphor.json");
     //      Slots
-    public static final ResourceLocation[] SLOT_ARMOR = {InventoryMenu.EMPTY_ARMOR_SLOT_BOOTS,
-                                                         InventoryMenu.EMPTY_ARMOR_SLOT_LEGGINGS,
-                                                         InventoryMenu.EMPTY_ARMOR_SLOT_CHESTPLATE,
-                                                         InventoryMenu.EMPTY_ARMOR_SLOT_HELMET};
-    public static final ResourceLocation[] SLOT_EXTENDED = {Evolution.getResource("item/slot_hat"),
-                                                            Evolution.getResource("item/slot_body"),
-                                                            Evolution.getResource("item/slot_legs"),
-                                                            Evolution.getResource("item/slot_feet"),
-                                                            Evolution.getResource("item/slot_cloak"),
-                                                            Evolution.getResource("item/slot_mask"),
-                                                            Evolution.getResource("item/slot_back"),
-                                                            Evolution.getResource("item/slot_tactical")};
+    public static final ResourceLocation[] SLOT_ARMOR;
+    public static final ResourceLocation[] SLOT_EXTENDED;
+    public static final ResourceLocation SLOT_OFFHAND = Evolution.getResource("item/slot_offhand");
     //Models
     //      Modular
     public static final RList<ModelResourceLocation> MODULAR_MODELS = new RArrayList<>();
@@ -196,6 +174,24 @@ public final class EvolutionResources {
         }
         MODULAR_MODELS.add(TOOL_SWEEP);
         MODULAR_MODELS.add(TOOL_THROWING);
+        SLOT_EXTENDED = new ResourceLocation[AdditionalSlotType.VALUES.length];
+        for (int i = 0, l = AdditionalSlotType.VALUES.length; i < l; i++) {
+            AdditionalSlotType slotType = AdditionalSlotType.VALUES[i];
+            //noinspection ObjectAllocationInLoop
+            SLOT_EXTENDED[slotType.getSlotId()] = Evolution.getResource("item/slot_" + slotType.getName());
+        }
+        SLOT_ARMOR = new ResourceLocation[4];
+        for (int i = 0; i < 4; i++) {
+            String slot = switch (i) {
+                case 0 -> "armor_feet";
+                case 1 -> "armor_legs";
+                case 2 -> "armor_chest";
+                case 3 -> "armor_head";
+                default -> throw new IllegalStateException("Unexpected value: " + i);
+            };
+            //noinspection ObjectAllocationInLoop
+            SLOT_ARMOR[i] = Evolution.getResource("item/slot_" + slot);
+        }
     }
 
     private EvolutionResources() {

@@ -13,6 +13,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.temperature.CapabilityTemperature;
 import tgw.evolution.capabilities.temperature.ITemperature;
+import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.IItemTemperature;
 
@@ -54,7 +55,7 @@ public final class CommandTemperature implements Command<CommandSourceStack> {
             return 0;
         }
         double temp = DoubleArgumentType.getDouble(context, "celsius");
-        ITemperature temperature = player.getCapability(CapabilityTemperature.INSTANCE).orElseThrow(IllegalStateException::new);
+        ITemperature temperature = EvolutionCapabilities.getRevivedCapability(player, CapabilityTemperature.INSTANCE);
         if (input.contains("current")) {
             temperature.setCurrentTemperature(temp);
             return SINGLE_SUCCESS;

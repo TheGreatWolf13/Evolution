@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.capabilities.toast.CapabilityToast;
 import tgw.evolution.capabilities.toast.IToastData;
+import tgw.evolution.init.EvolutionCapabilities;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(InventoryChangeTrigger.class)
@@ -19,13 +20,7 @@ public abstract class InventoryChangeTriggerMixin extends SimpleCriterionTrigger
     @Inject(method = "trigger(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/entity/player/Inventory;" +
                      "Lnet/minecraft/world/item/ItemStack;)V", at = @At("TAIL"))
     private void onTrigger(ServerPlayer player, Inventory inv, ItemStack stack, CallbackInfo ci) {
-        if (!player.isAlive()) {
-            player.reviveCaps();
-        }
-        IToastData toast = player.getCapability(CapabilityToast.INSTANCE).orElseThrow(IllegalStateException::new);
+        IToastData toast = EvolutionCapabilities.getRevivedCapability(player, CapabilityToast.INSTANCE);
         toast.trigger(player, stack);
-        if (!player.isAlive()) {
-            player.invalidateCaps();
-        }
     }
 }

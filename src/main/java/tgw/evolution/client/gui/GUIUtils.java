@@ -12,7 +12,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.entity.ItemRenderer;
@@ -34,6 +33,7 @@ import net.minecraft.world.level.storage.LevelData;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.client.renderer.RenderHelper;
 
 @OnlyIn(Dist.CLIENT)
 public final class GUIUtils {
@@ -73,7 +73,7 @@ public final class GUIUtils {
         BufferBuilder builder = tessellator.getBuilder();
         RenderSystem.enableBlend();
         RenderSystem.disableTexture();
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION);
         RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
                                        GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         setColor(color);
@@ -103,7 +103,7 @@ public final class GUIUtils {
         RenderSystem.enableBlend();
         RenderSystem.disableTexture();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_COLOR);
         builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         float r = (color >> 16 & 255) / 255.0F;
         float g = (color >> 8 & 255) / 255.0F;

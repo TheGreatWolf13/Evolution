@@ -852,7 +852,7 @@ public abstract class LevelRendererMixin {
                     matrices.mulPose(Vector3f.XP.rotationDegrees(this.level.getTimeOfDay(partialTicks) * 360.0F));
                     Matrix4f pose = matrices.last().pose();
                     float celestialScale = 30.0F;
-                    RenderSystem.setShader(GameRenderer::getPositionTexShader);
+                    RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
                     RenderSystem.setShaderTexture(0, SUN_LOCATION);
                     builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
                     builder.vertex(pose, -celestialScale, 100.0F, -celestialScale).uv(0.0F, 0.0F).endVertex();

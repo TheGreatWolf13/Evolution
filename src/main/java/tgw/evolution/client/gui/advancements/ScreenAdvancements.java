@@ -9,7 +9,6 @@ import net.minecraft.client.gui.chat.NarratorChatListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientAdvancements;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.protocol.game.ServerboundSeenAdvancementsPacket;
@@ -22,6 +21,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.GUIUtils;
+import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.Key;
 import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.client.util.MouseButton;
@@ -503,7 +503,7 @@ public class ScreenAdvancements extends Screen implements ClientAdvancements.Lis
     public void renderWindow(PoseStack matrices, int left, int top, int right, int bottom) {
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.enableBlend();
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
         RenderSystem.setShaderTexture(0, this.resWindow);
         // Top left corner
         this.blit(matrices, left, top, 0, 0, CORNER_SIZE, CORNER_SIZE);
@@ -558,7 +558,7 @@ public class ScreenAdvancements extends Screen implements ClientAdvancements.Lis
         // Bottom right corner
         this.blit(matrices, right - CORNER_SIZE, bottom - CORNER_SIZE, WIDTH - CORNER_SIZE, HEIGHT - CORNER_SIZE, CORNER_SIZE, CORNER_SIZE);
         if (this.tabs.size() > 1) {
-            RenderSystem.setShader(GameRenderer::getPositionTexShader);
+            RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
             RenderSystem.setShaderTexture(0, EvolutionResources.GUI_TABS);
             int width = right - left;
             int height = bottom - top;

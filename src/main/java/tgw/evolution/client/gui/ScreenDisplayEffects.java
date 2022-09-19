@@ -18,8 +18,8 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.EffectRenderer;
-import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.RenderProperties;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.util.ClientEffectInstance;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionResources;
@@ -33,7 +33,6 @@ import java.util.Comparator;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> extends AbstractContainerScreen<T> {
-    private static final int X = 2;
     protected final Inventory inventory;
     private final Comparator<MobEffectInstance> comparator = (a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.getEffect()
                                                                                                               .getDisplayName()
@@ -43,11 +42,11 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
                                                                                                               .getString());
     protected boolean hasActivePotionEffects;
     private int effectHeight;
-    private OList<MobEffectInstance> effects;
+    private @Nullable OList<MobEffectInstance> effects;
     private boolean full;
     private int initialHeight;
-    private OList<FormattedCharSequence> lines;
-    private OList<Component> tooltips;
+    private @Nullable OList<FormattedCharSequence> lines;
+    private @Nullable OList<Component> tooltips;
 
     public ScreenDisplayEffects(T screenContainer, Inventory inv, Component title) {
         super(screenContainer, inv, title);
@@ -77,6 +76,8 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
     }
 
     private void drawActivePotionEffects(PoseStack matrices) {
+        assert this.minecraft != null;
+        assert this.minecraft.player != null;
         Collection<MobEffectInstance> collection = this.minecraft.player.getActiveEffects();
         if (!collection.isEmpty()) {
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -88,7 +89,7 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
                 this.effects.clear();
             }
             for (MobEffectInstance instance : collection) {
-                if (ForgeHooksClient.shouldRenderEffect(instance) && instance.getDuration() > 0) {
+                if (instance.getDuration() > 0) {
                     this.effects.add(instance);
                 }
             }
@@ -108,51 +109,60 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
             this.drawActivePotionEffectsNames(matrices);
         }
         else {
-            this.effects.clear();
+            if (this.effects != null) {
+                this.effects.clear();
+            }
         }
     }
 
     private void drawActivePotionEffectsBackgrounds(PoseStack matrices) {
         RenderSystem.setShaderTexture(0, EvolutionResources.GUI_INVENTORY);
         int height = this.initialHeight;
-        for (int i = 0, l = this.effects.size(); i < l; i++) {
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            this.blit(matrices, X, height, 0, 166, 156, 32);
-            height += this.effectHeight;
+        if (this.effects != null) {
+            for (int i = 0, l = this.effects.size(); i < l; i++) {
+                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+                this.blit(matrices, 2, height, 0, 180, 156, 32);
+                height += this.effectHeight;
+            }
         }
     }
 
     private void drawActivePotionEffectsIcons(PoseStack matrices) {
+        assert this.minecraft != null;
         MobEffectTextureManager potionSprite = this.minecraft.getMobEffectTextures();
         int height = this.initialHeight;
-        for (int i = 0, l = this.effects.size(); i < l; i++) {
-            TextureAtlasSprite atlasSprite = potionSprite.get(this.effects.get(i).getEffect());
-            RenderSystem.setShaderTexture(0, atlasSprite.atlas().location());
-            blit(matrices, X + 6, height + 7, this.getBlitOffset(), 18, 18, atlasSprite);
-            height += this.effectHeight;
+        if (this.effects != null) {
+            for (int i = 0, l = this.effects.size(); i < l; i++) {
+                TextureAtlasSprite atlasSprite = potionSprite.get(this.effects.get(i).getEffect());
+                RenderSystem.setShaderTexture(0, atlasSprite.atlas().location());
+                blit(matrices, 8, height + 7, this.getBlitOffset(), 18, 18, atlasSprite);
+                height += this.effectHeight;
+            }
         }
     }
 
     private void drawActivePotionEffectsNames(PoseStack matrices) {
         int height = this.initialHeight;
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0, l = this.effects.size(); i < l; i++) {
-            MobEffectInstance effect = this.effects.get(i);
-            EffectRenderer renderer = RenderProperties.getEffectRenderer(effect);
-            if (!renderer.shouldRenderInvText(effect)) {
+        if (this.effects != null) {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0, l = this.effects.size(); i < l; i++) {
+                MobEffectInstance effect = this.effects.get(i);
+                EffectRenderer renderer = RenderProperties.getEffectRenderer(effect);
+                if (!renderer.shouldRenderInvText(effect)) {
+                    height += this.effectHeight;
+                    continue;
+                }
+                builder.setLength(0);
+                builder.append(I18n.get(effect.getEffect().getDescriptionId()));
+                int ampl = getFixedAmplifier(effect);
+                if (ampl >= 1) {
+                    builder.append(' ');
+                    builder.append(MathHelper.getRomanNumber(ampl + 1));
+                }
+                this.font.drawShadow(matrices, builder.toString(), 30, height + 6, 0xff_ffff);
+                this.font.drawShadow(matrices, getPotionDurationString(effect, 1.0F), 30, height + 16, 0x7f_7f7f);
                 height += this.effectHeight;
-                continue;
             }
-            builder.setLength(0);
-            builder.append(I18n.get(effect.getEffect().getDescriptionId()));
-            int ampl = getFixedAmplifier(effect);
-            if (ampl >= 1) {
-                builder.append(' ');
-                builder.append(MathHelper.getRomanNumber(ampl + 1));
-            }
-            this.font.drawShadow(matrices, builder.toString(), X + 28, height + 6, 0xff_ffff);
-            this.font.drawShadow(matrices, getPotionDurationString(effect, 1.0F), X + 28, height + 16, 0x7f_7f7f);
-            height += this.effectHeight;
         }
     }
 
@@ -170,7 +180,7 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
             if (ef == this.effects.size() - 1) {
                 h = 32;
             }
-            if (MathHelper.isMouseInsideBox(mouseX, mouseY, X, height, Math.min(X + 156, leftOffset), height + h)) {
+            if (MathHelper.isMouseInRange(mouseX, mouseY, 2, height, Math.min(158, leftOffset), height + h)) {
                 if (this.tooltips == null) {
                     this.tooltips = new OArrayList<>();
                 }
@@ -212,6 +222,8 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
     }
 
     public void updateActivePotionEffects() {
+        assert this.minecraft != null;
+        assert this.minecraft.player != null;
         if (this.minecraft.player.getActiveEffects().isEmpty()) {
             this.leftPos = (this.width - this.imageWidth) / 2;
             this.hasActivePotionEffects = false;

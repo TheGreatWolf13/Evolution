@@ -40,7 +40,7 @@ public class Label {
         if (font.width(this.fullComponent) > maxWidth) {
             this.updateCutComponent(font, maxWidth);
             GuiComponent.drawString(matrices, font, this.cutComponent, x, y, 0xFF_FFFF);
-            if (MathHelper.isMouseInsideBox(mouseX, mouseY, x, y, x + maxWidth, y + 9)) {
+            if (MathHelper.isMouseInRange(mouseX, mouseY, x, y, x + maxWidth, y + 9)) {
                 this.onTooltip.onTooltip(this);
             }
         }

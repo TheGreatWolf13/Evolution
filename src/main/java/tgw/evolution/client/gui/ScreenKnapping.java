@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TranslatableComponent;
@@ -17,6 +16,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.KnappingRecipe;
+import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
@@ -151,7 +151,7 @@ public class ScreenKnapping extends Screen {
     @Override
     public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(matrices);
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         RenderSystem.setShaderTexture(0, this.resBackground);
         this.blit(matrices, this.cornerX, this.cornerY, 0, 0, 176, 84);

@@ -47,7 +47,6 @@ import tgw.evolution.entities.EntitySkeletonDummy;
 import tgw.evolution.entities.EntityUtils;
 import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionEntities;
-import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.inventory.corpse.ContainerCorpseProvider;
@@ -69,18 +68,8 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
                                                                                                            EvolutionDataSerializers.ITEM_LIST);
     private static @Nullable GameProfileCache profileCache;
     private static @Nullable MinecraftSessionService sessionService;
-    private final ItemStackHandler itemHandler = new ItemStackHandler(49) {
-        @Override
-        public @NotNull ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-            return stack;
-        }
-
-        @Override
-        public boolean isItemValid(int slot, ItemStack stack) {
-            return false;
-        }
-    };
-    private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> this.itemHandler);
+    private final LazyOptional<IItemHandler> handler;
+    private final ItemStackHandler itemHandler;
     private final IntSet playersInteracting = new IntOpenHashSet();
     private Component deathMessage = EvolutionTexts.EMPTY;
     private int deathTimer;
@@ -95,6 +84,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     private int selected;
     private @Nullable EntitySkeletonDummy skeleton;
     private long systemDeathTime;
+
     public EntityPlayerCorpse(Player player) {
         this(EvolutionEntities.PLAYER_CORPSE.get(), player.level);
         double x = player.getX();
@@ -134,6 +124,18 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         super(entityType, level);
         this.blocksBuilding = true;
         this.setInvulnerable(true);
+        this.itemHandler = new ItemStackHandler(AdditionalSlotType.VALUES.length + 36 + 4 + 1) {
+            @Override
+            public @NotNull ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+                return stack;
+            }
+
+            @Override
+            public boolean isItemValid(int slot, ItemStack stack) {
+                return false;
+            }
+        };
+        this.handler = LazyOptional.of(() -> this.itemHandler);
     }
 
     public EntityPlayerCorpse(@SuppressWarnings("unused") PlayMessages.SpawnEntity spawnEntity, Level level) {
@@ -385,42 +387,32 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
 
     public void setInventory(Player player) {
         NonNullList<ItemStack> inv = player.getInventory().armor;
+        int slot = 0;
         for (int i = 0; i < 4; i++) {
             ItemStack stack = inv.get(3 - i);
-            this.itemHandler.setStackInSlot(i, stack);
+            this.itemHandler.setStackInSlot(slot++, stack);
             inv.set(3 - i, ItemStack.EMPTY);
-        }
-        inv = player.getInventory().offhand;
-        for (int i = 0; i < 1; i++) {
-            ItemStack stack = inv.get(0);
-            this.itemHandler.setStackInSlot(10, stack);
-            inv.set(0, ItemStack.EMPTY);
         }
         inv = player.getInventory().items;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = inv.get(i);
-            this.itemHandler.setStackInSlot(40 + i, stack);
+            this.itemHandler.setStackInSlot(slot++, stack);
             inv.set(i, ItemStack.EMPTY);
         }
         for (int i = 9; i < 36; i++) {
             ItemStack stack = inv.get(i);
-            this.itemHandler.setStackInSlot(4 + i, stack);
+            this.itemHandler.setStackInSlot(slot++, stack);
             inv.set(i, ItemStack.EMPTY);
         }
+        inv = player.getInventory().offhand;
+        ItemStack stack = inv.get(0);
+        this.itemHandler.setStackInSlot(slot++, stack);
+        inv.set(0, ItemStack.EMPTY);
         IInventory handler = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityInventory.INSTANCE);
         for (int i = 0; i < handler.getSlots(); i++) {
-            ItemStack stack = handler.getStackInSlot(i);
+            stack = handler.getStackInSlot(i);
             handler.setStackInSlot(i, ItemStack.EMPTY);
-            switch (i) {
-                case EvolutionResources.HAT -> this.itemHandler.setStackInSlot(7, stack);
-                case EvolutionResources.BODY -> this.itemHandler.setStackInSlot(6, stack);
-                case EvolutionResources.LEGS -> this.itemHandler.setStackInSlot(5, stack);
-                case EvolutionResources.FEET -> this.itemHandler.setStackInSlot(4, stack);
-                case EvolutionResources.MASK -> this.itemHandler.setStackInSlot(8, stack);
-                case EvolutionResources.CLOAK -> this.itemHandler.setStackInSlot(9, stack);
-                case EvolutionResources.BACK -> this.itemHandler.setStackInSlot(11, stack);
-                case EvolutionResources.TACTICAL -> this.itemHandler.setStackInSlot(12, stack);
-            }
+            this.itemHandler.setStackInSlot(slot++, stack);
         }
     }
 

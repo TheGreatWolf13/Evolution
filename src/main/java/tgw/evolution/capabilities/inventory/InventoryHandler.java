@@ -1,37 +1,36 @@
 package tgw.evolution.capabilities.inventory;
 
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
+import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.items.IAdditionalEquipment;
 
 import java.util.Map;
 
 public class InventoryHandler extends ItemStackHandler implements IInventory {
 
-    private static final int CLOTH_SLOTS = 8;
-    private final Player player;
-    private boolean[] changed = new boolean[CLOTH_SLOTS];
+    private final Entity entity;
 
-    public InventoryHandler(Player player) {
-        super(CLOTH_SLOTS);
-        this.player = player;
+    public InventoryHandler(Entity entity) {
+        super(AdditionalSlotType.VALUES.length);
+        this.entity = entity;
     }
 
     @Override
     public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
         ItemStack stack = super.extractItem(slot, amount, simulate);
-        if (!this.player.level.isClientSide) {
+        if (!this.entity.level.isClientSide && this.entity instanceof LivingEntity living) {
             Item item = stack.getItem();
             if (item instanceof IAdditionalEquipment additionalEquipment) {
                 for (Map.Entry<Attribute, AttributeModifier> entry : additionalEquipment.getAttributes(stack).reference2ObjectEntrySet()) {
-                    AttributeInstance instance = this.player.getAttribute(entry.getKey());
+                    AttributeInstance instance = living.getAttribute(entry.getKey());
                     assert instance != null;
                     instance.removeModifier(entry.getValue());
                 }
@@ -58,38 +57,24 @@ public class InventoryHandler extends ItemStackHandler implements IInventory {
 
     @Override
     protected void onContentsChanged(int slot) {
-        this.setChanged(slot, true);
         this.serializeNBT();
     }
 
     @Override
-    public void setChanged(int slot, boolean change) {
-        if (this.changed == null) {
-            this.changed = new boolean[this.getSlots()];
-        }
-        this.changed[slot] = change;
-    }
-
-    @Override
     public void setSize(int size) {
-        if (size < CLOTH_SLOTS) {
-            size = CLOTH_SLOTS;
+        if (size < AdditionalSlotType.VALUES.length) {
+            size = AdditionalSlotType.VALUES.length;
         }
         super.setSize(size);
-        boolean[] old = this.changed;
-        this.changed = new boolean[size];
-        for (int i = 0; i < old.length && i < this.changed.length; i++) {
-            this.changed[i] = old[i];
-        }
     }
 
     @Override
     public void setStackInSlot(int slot, ItemStack stack) {
-        if (!this.player.level.isClientSide) {
+        if (!this.entity.level.isClientSide) {
             Item item = stack.getItem();
-            if (item instanceof IAdditionalEquipment additionalEquipment) {
+            if (item instanceof IAdditionalEquipment additionalEquipment && this.entity instanceof LivingEntity living) {
                 for (Map.Entry<Attribute, AttributeModifier> entry : additionalEquipment.getAttributes(stack).reference2ObjectEntrySet()) {
-                    AttributeInstance instance = this.player.getAttribute(entry.getKey());
+                    AttributeInstance instance = living.getAttribute(entry.getKey());
                     assert instance != null;
                     instance.addPermanentModifier(entry.getValue());
                 }

@@ -20,8 +20,8 @@ public class ItemSocks extends ItemEv implements IAdditionalEquipment, IHeatResi
     @Override
     public Reference2ObjectMap<Attribute, AttributeModifier> getAttributes(ItemStack stack) {
         Reference2ObjectMap<Attribute, AttributeModifier> map = new Reference2ObjectOpenHashMap<>();
-        this.putHeatAttributes(map, stack, SlotType.FEET);
-        this.putColdAttributes(map, stack, SlotType.FEET);
+        this.putHeatAttributes(map, stack, SlotType.CLOTHES_FEET);
+        this.putColdAttributes(map, stack, SlotType.CLOTHES_FEET);
         return map;
     }
 
@@ -44,6 +44,6 @@ public class ItemSocks extends ItemEv implements IAdditionalEquipment, IHeatResi
 
     @Override
     public AdditionalSlotType getValidSlot() {
-        return AdditionalSlotType.FEET;
+        return AdditionalSlotType.CLOTHES_FEET;
     }
 }

@@ -170,7 +170,6 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> shirt = ITEMS.register("temp_shirt", () -> new ItemShirt(propMisc()));
     public static final RegistryObject<Item> trousers = ITEMS.register("temp_trousers", () -> new ItemTrousers(propMisc()));
     public static final RegistryObject<Item> socks = ITEMS.register("temp_socks", () -> new ItemSocks(propMisc()));
-    public static final RegistryObject<Item> cape = ITEMS.register("temp_cape", () -> new ItemCloak(propMisc()));
     public static final RegistryObject<Item> mask = ITEMS.register("temp_mask", () -> new ItemMask(propMisc()));
     public static final RegistryObject<Item> backpack = ITEMS.register("temp_backpack", () -> new ItemBackpack(propMisc()));
     public static final RegistryObject<Item> quiver = ITEMS.register("temp_quiver", () -> new ItemQuiver(propMisc()));

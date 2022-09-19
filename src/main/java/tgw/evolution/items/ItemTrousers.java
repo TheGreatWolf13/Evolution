@@ -30,6 +30,6 @@ public class ItemTrousers extends ItemEv implements IAdditionalEquipment {
 
     @Override
     public AdditionalSlotType getValidSlot() {
-        return AdditionalSlotType.LEGS;
+        return AdditionalSlotType.CLOTHES_LEGS;
     }
 }

@@ -188,6 +188,11 @@ public abstract class PlayerMixin extends LivingEntity implements IEntityPatch, 
     }
 
     @Override
+    public boolean hasExtendedInventory() {
+        return true;
+    }
+
+    @Override
     public boolean isCrawling() {
         return this.isCrawling;
     }

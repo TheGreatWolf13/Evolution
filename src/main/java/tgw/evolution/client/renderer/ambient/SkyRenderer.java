@@ -15,6 +15,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.Blending;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.init.EvolutionResources;
@@ -52,7 +53,7 @@ public class SkyRenderer {
     }
 
     private static void buildSkyDisc(BufferBuilder builder, float y) {
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION);
         builder.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION);
         builder.vertex(0, y, 0).endVertex();
         float f = Math.signum(y) * 512.0F;
@@ -63,7 +64,7 @@ public class SkyRenderer {
     }
 
     private static void drawLine(Matrix4f matrix, BufferBuilder builder, float celestialRadius) {
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION);
         builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
         for (int i = 0; i < 45; i++) {
             builder.vertex(matrix, -0.5f, celestialRadius * MathHelper.cosDeg(8 * i), celestialRadius * MathHelper.sinDeg(8 * i)).endVertex();
@@ -86,7 +87,7 @@ public class SkyRenderer {
                                       float x1,
                                       float y1) {
         Blending.DEFAULT.apply();
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, starBrightness);
         RenderSystem.setShaderTexture(0, EvolutionResources.ENVIRONMENT_MOONLIGHT);
         builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
@@ -113,7 +114,7 @@ public class SkyRenderer {
     }
 
     private static void drawPole(Matrix4f matrix, BufferBuilder builder, float celestialRadius) {
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION);
         builder.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION);
         builder.vertex(matrix, celestialRadius, 0, 0).endVertex();
         for (int i = 0; i < 8; i++) {
@@ -162,7 +163,7 @@ public class SkyRenderer {
         //Moon Shadow
         if (planetBrightness > 0 && intensity > 1 / 81.0f) {
             Blending.DEFAULT.apply();
-            RenderSystem.setShader(GameRenderer::getPositionTexShader);
+            RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
             RenderSystem.setShaderTexture(0, EvolutionResources.ENVIRONMENT_MOON_SHADOW_ECLIPSE);
             float shadow = Mth.clamp(planetBrightness * 3 * (intensity - 1 / 81.0f), 0, 1.0f);
             RenderSystem.setShaderColor(skyColor.x, skyColor.y, skyColor.z, rainStrength * shadow);
@@ -184,7 +185,7 @@ public class SkyRenderer {
         else {
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainStrength);
         }
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
         RenderSystem.setShaderTexture(0, EvolutionResources.ENVIRONMENT_SOLAR_ECLIPSE);
         builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         builder.vertex(sunMatrix, -SCALE_OF_CELESTIAL, radius, -SCALE_OF_CELESTIAL).uv(textureX0, textureY0).endVertex();
@@ -197,7 +198,7 @@ public class SkyRenderer {
 
     private static void drawSquare(PoseStack matrices, BufferBuilder builder, float celestialRadius) {
         Matrix4f pose = matrices.last().pose();
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION);
         builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
         //First quad
         builder.vertex(pose, -2.5f - 0.5f, celestialRadius, 2.5f - 0.5f).endVertex();
@@ -265,7 +266,7 @@ public class SkyRenderer {
     }
 
     private static void drawSun(Matrix4f sunMatrix, BufferBuilder builder, float sunCelestialRadius) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
         RenderSystem.setShaderTexture(0, EvolutionResources.ENVIRONMENT_SUN);
         builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         builder.vertex(sunMatrix, -SCALE_OF_CELESTIAL, sunCelestialRadius, -SCALE_OF_CELESTIAL).uv(0, 0).endVertex();
@@ -298,7 +299,7 @@ public class SkyRenderer {
 
     private void createStars() {
         BufferBuilder builder = Tesselator.getInstance().getBuilder();
-        RenderSystem.setShader(GameRenderer::getPositionShader);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION);
         if (this.starBuffer != null) {
             this.starBuffer.close();
         }
@@ -499,7 +500,7 @@ public class SkyRenderer {
             matrices.mulPose(MOON_TRANSFORM);
             //Draw the moon shadow
             Blending.DEFAULT.apply();
-            RenderSystem.setShader(GameRenderer::getPositionTexShader);
+            RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
             RenderSystem.setShaderTexture(0, EvolutionResources.ENVIRONMENT_MOON_SHADOW);
             RenderSystem.setShaderColor(skyColor.x, skyColor.y, skyColor.z, planetStarBrightness);
             builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
@@ -567,7 +568,7 @@ public class SkyRenderer {
         mc.getProfiler().popPush("duskDawn");
         float[] duskDawnColors = this.dimension.getDuskDawnColors();
         if (duskDawnColors != null) {
-            RenderSystem.setShader(GameRenderer::getPositionColorShader);
+            RenderSystem.setShader(RenderHelper.SHADER_POSITION_COLOR);
             RenderSystem.disableTexture();
             RenderSystem.enableBlend();
             RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);

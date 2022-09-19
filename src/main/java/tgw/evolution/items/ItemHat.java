@@ -30,6 +30,6 @@ public class ItemHat extends ItemEv implements IAdditionalEquipment {
 
     @Override
     public AdditionalSlotType getValidSlot() {
-        return AdditionalSlotType.HAT;
+        return AdditionalSlotType.CLOTHES_HEAD;
     }
 }

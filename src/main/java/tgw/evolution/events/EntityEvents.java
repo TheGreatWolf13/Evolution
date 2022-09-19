@@ -66,6 +66,7 @@ import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.init.*;
 import tgw.evolution.network.*;
 import tgw.evolution.patches.IBlockPatch;
+import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.Temperature;
 import tgw.evolution.util.collection.O2ROpenHashMap;
@@ -155,10 +156,11 @@ public class EntityEvents {
     @SubscribeEvent
     public void attachCapabilitiesEntities(AttachCapabilitiesEvent<Entity> event) {
         Entity entity = event.getObject();
-        if (entity instanceof Player player) {
-
+        if (((IEntityPatch) entity).hasExtendedInventory()) {
             event.addCapability(Evolution.getResource("extended_inventory"),
-                                new SerializableCapabilityProvider<>(CapabilityInventory.INSTANCE, new InventoryHandler(player)));
+                                new SerializableCapabilityProvider<>(CapabilityInventory.INSTANCE, new InventoryHandler(entity)));
+        }
+        if (entity instanceof Player player) {
             if (entity instanceof ServerPlayer) {
                 event.addCapability(Evolution.getResource("thirst"),
                                     new SerializableCapabilityProvider<>(CapabilityThirst.INSTANCE, new ThirstStats()));
@@ -182,7 +184,7 @@ public class EntityEvents {
         }
         Player oldPlayer = event.getOriginal();
         Player newPlayer = event.getPlayer();
-        EvolutionCapabilities.beginClone(oldPlayer);
+        EvolutionCapabilities.revive(oldPlayer);
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityInventory.INSTANCE);
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityThirst.INSTANCE);
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityHealth.INSTANCE);
@@ -190,7 +192,7 @@ public class EntityEvents {
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityHunger.INSTANCE);
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityTemperature.INSTANCE);
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityStamina.INSTANCE);
-        EvolutionCapabilities.endClone(oldPlayer);
+        EvolutionCapabilities.invalidate(oldPlayer);
     }
 
     @SubscribeEvent
@@ -547,13 +549,15 @@ public class EntityEvents {
             }
         }
         EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> player), new PacketSCFixRotation(player));
-        ITemperature temperature = player.getCapability(CapabilityTemperature.INSTANCE).orElseThrow(IllegalStateException::new);
+        EvolutionCapabilities.revive(player);
+        ITemperature temperature = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityTemperature.INSTANCE);
         ClimateZone.Region region = temperature.getRegion();
         temperature.setCurrentTemperature(Temperature.getBaseTemperatureForRegion(region));
         temperature.setCurrentMinComfort(Temperature.getMinComfortForRegion(region));
         temperature.setCurrentMaxComfort(Temperature.getMaxComfortForRegion(region));
-        IStamina stamina = player.getCapability(CapabilityStamina.INSTANCE).orElseThrow(IllegalStateException::new);
+        IStamina stamina = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityStamina.INSTANCE);
         stamina.setStamina(StaminaStats.MAX_STAMINA);
+        EvolutionCapabilities.invalidate(player);
     }
 
     @SubscribeEvent
@@ -599,9 +603,7 @@ public class EntityEvents {
                 //Ticks Player systems
                 if (!player.isCreative() && !player.isSpectator()) {
                     ServerPlayer sPlayer = (ServerPlayer) player;
-                    if (!player.isAlive()) {
-                        player.reviveCaps();
-                    }
+                    EvolutionCapabilities.revive(player);
                     profiler.push("thirst");
                     IThirst thirst = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityThirst.INSTANCE);
                     thirst.tick(sPlayer);
@@ -615,9 +617,7 @@ public class EntityEvents {
                     ITemperature temperature = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityTemperature.INSTANCE);
                     temperature.tick(sPlayer);
                     profiler.pop();
-                    if (!player.isAlive()) {
-                        player.invalidateCaps();
-                    }
+                    EvolutionCapabilities.invalidate(player);
                 }
             }
             profiler.popPush("water");

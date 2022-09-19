@@ -52,7 +52,7 @@ public final class EvolutionAttributes {
 
     public static AttributeModifier attackDamageModifier(double value, SlotType slot) {
         switch (slot) {
-            case MAINHAND -> {
+            case HAND_MAIN -> {
                 return new AttributeModifier(ATTACK_DAMAGE_MOD_MAINHAND, "Damage modifier", value, AttributeModifier.Operation.ADDITION);
             }
         }
@@ -61,7 +61,7 @@ public final class EvolutionAttributes {
 
     public static AttributeModifier attackSpeedModifier(double value, SlotType slot) {
         switch (slot) {
-            case MAINHAND -> {
+            case HAND_MAIN -> {
                 return new AttributeModifier(ATTACK_SPEED_MOD_MAINHAND, "Attack Speed Modifier", value, AttributeModifier.Operation.ADDITION);
             }
         }
@@ -70,7 +70,7 @@ public final class EvolutionAttributes {
 
     public static AttributeModifier coldResistanceModifier(double value, SlotType slot) {
         switch (slot) {
-            case FEET -> {
+            case CLOTHES_FEET -> {
                 return new AttributeModifier(COLD_RESISTANCE_MOD_FEET, "Cold Resistance Modifier", value, AttributeModifier.Operation.ADDITION);
             }
         }
@@ -79,7 +79,7 @@ public final class EvolutionAttributes {
 
     public static AttributeModifier heatResistanceModifier(double value, SlotType slot) {
         switch (slot) {
-            case FEET -> {
+            case CLOTHES_FEET -> {
                 return new AttributeModifier(HEAT_RESISTANCE_MOD_FEET, "Heat Resistance Modifier", value, AttributeModifier.Operation.ADDITION);
             }
         }
@@ -88,13 +88,13 @@ public final class EvolutionAttributes {
 
     public static AttributeModifier massModifier(double value, SlotType slot) {
         return switch (slot) {
-            case MAINHAND -> new AttributeModifier(MASS_MOD_MAINHAND, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
-            case OFFHAND -> new AttributeModifier(MASS_MOD_OFFHAND, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
-            case FEET -> new AttributeModifier(MASS_MOD_FEET, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
-            case BOOTS -> new AttributeModifier(MASS_MOD_BOOTS, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
-            case LEGGINGS -> new AttributeModifier(MASS_MOD_LEGGINGS, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
-            case CHESTPLATE -> new AttributeModifier(MASS_MOD_CHESTPLATE, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
-            case HELMET -> new AttributeModifier(MASS_MOD_HELMET, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
+            case HAND_MAIN -> new AttributeModifier(MASS_MOD_MAINHAND, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
+            case HAND_OFF -> new AttributeModifier(MASS_MOD_OFFHAND, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
+            case CLOTHES_FEET -> new AttributeModifier(MASS_MOD_FEET, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
+            case ARMOR_FEET -> new AttributeModifier(MASS_MOD_BOOTS, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
+            case ARMOR_LEGS -> new AttributeModifier(MASS_MOD_LEGGINGS, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
+            case ARMOR_CHEST -> new AttributeModifier(MASS_MOD_CHESTPLATE, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
+            case ARMOR_HEAD -> new AttributeModifier(MASS_MOD_HELMET, "Mass Modifier", value, AttributeModifier.Operation.ADDITION);
             default -> throw new UnregisteredFeatureException("Unregistered slot for Attribute: " + slot);
         };
     }

@@ -9,14 +9,14 @@ import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.Evolution;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.inventory.corpse.ContainerCorpse;
-import tgw.evolution.inventory.extendedinventory.ContainerPlayerInventory;
+import tgw.evolution.inventory.extendedinventory.ContainerInventory;
 
 public final class EvolutionContainers {
 
     public static final DeferredRegister<MenuType<?>> CONTAINERS = DeferredRegister.create(ForgeRegistries.CONTAINERS, Evolution.MODID);
 
     public static final RegistryObject<MenuType<ContainerCorpse>> CORPSE;
-    public static final RegistryObject<MenuType<ContainerPlayerInventory>> EXTENDED_INVENTORY;
+    public static final RegistryObject<MenuType<ContainerInventory>> EXTENDED_INVENTORY;
 
     static {
         CORPSE = CONTAINERS.register("corpse", () -> IForgeMenuType.create((id, inv, data) -> {
@@ -25,7 +25,7 @@ public final class EvolutionContainers {
             return new ContainerCorpse(id, corpse, inv);
         }));
         EXTENDED_INVENTORY = CONTAINERS.register("extended_inventory",
-                                                 () -> IForgeMenuType.create((id, inv, data) -> new ContainerPlayerInventory(id, inv)));
+                                                 () -> IForgeMenuType.create((id, inv, data) -> new ContainerInventory(id, inv)));
     }
 
     private EvolutionContainers() {
