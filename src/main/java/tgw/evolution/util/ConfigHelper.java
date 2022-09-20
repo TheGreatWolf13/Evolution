@@ -28,10 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class ConfigHelper {
 
-    private static final Method FIRE_EVENT = ObfuscationReflectionHelper.findMethod(ModConfig.class, "fireEvent", ModConfig.class,
-                                                                                    IConfigEvent.class);
-    private static final Method SET_CONFIG_DATA = ObfuscationReflectionHelper.findMethod(ModConfig.class, "setConfigData", ModConfig.class,
-                                                                                         CommentedConfig.class);
+    private static final Method FIRE_EVENT = ObfuscationReflectionHelper.findMethod(ModConfig.class, "fireEvent", IConfigEvent.class);
+    private static final Method SET_CONFIG_DATA = ObfuscationReflectionHelper.findMethod(ModConfig.class, "setConfigData", CommentedConfig.class);
 
     private ConfigHelper() {
     }
