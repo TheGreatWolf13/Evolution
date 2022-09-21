@@ -8,7 +8,7 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import tgw.evolution.init.EvolutionHitBoxes;
+import tgw.evolution.init.EvolutionShapes;
 
 public class BlockPlaceableRock extends BlockPlaceableItem {
 
@@ -19,6 +19,6 @@ public class BlockPlaceableRock extends BlockPlaceableItem {
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         Vec3 offset = state.getOffset(level, pos);
-        return EvolutionHitBoxes.GROUND_ROCK.move(offset.x, offset.y, offset.z);
+        return EvolutionShapes.GROUND_ROCK.move(offset.x, offset.y, offset.z);
     }
 }

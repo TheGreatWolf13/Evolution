@@ -9,13 +9,13 @@ import java.util.Collections;
 public class HitboxGroup implements HM {
 
     private final RList<Hitbox> boxes = new RArrayList<>();
-    private final RList<StartingRotation> rotations = new RArrayList<>();
+//    private final RList<StartingRotation> rotations = new RArrayList<>();
 
     public HitboxGroup(Hitbox... boxes) {
         Collections.addAll(this.boxes, boxes);
-        for (int i = 0; i < boxes.length; i++) {
-            this.rotations.add(StartingRotation.ZERO);
-        }
+//        for (int i = 0; i < boxes.length; i++) {
+//            this.rotations.add(StartingRotation.ZERO);
+//        }
     }
 
     @Override
@@ -41,7 +41,7 @@ public class HitboxGroup implements HM {
 
     public void finish() {
         this.boxes.trimCollection();
-        this.rotations.trimCollection();
+//        this.rotations.trimCollection();
     }
 
     @Override
@@ -93,7 +93,7 @@ public class HitboxGroup implements HM {
     public void setRotationX(float x) {
         for (int i = 0; i < this.boxes.size(); i++) {
             Hitbox box = this.boxes.get(i);
-            box.setRotationX(x + this.rotations.get(i).xRot);
+            box.setRotationX(x/* + this.rotations.get(i).xRot*/);
         }
     }
 
@@ -101,7 +101,7 @@ public class HitboxGroup implements HM {
     public void setRotationY(float y) {
         for (int i = 0; i < this.boxes.size(); i++) {
             Hitbox box = this.boxes.get(i);
-            box.setRotationY(y + this.rotations.get(i).yRot);
+            box.setRotationY(y/* + this.rotations.get(i).yRot*/);
         }
     }
 
@@ -109,20 +109,20 @@ public class HitboxGroup implements HM {
     public void setRotationZ(float z) {
         for (int i = 0; i < this.boxes.size(); i++) {
             Hitbox box = this.boxes.get(i);
-            box.setRotationZ(z + this.rotations.get(i).zRot);
+            box.setRotationZ(z/* + this.rotations.get(i).zRot*/);
         }
     }
 
-    public void setStartingRotationForBox(int index, float xRot, float yRot, float zRot) {
-        if (index < 0) {
-            throw new ArrayIndexOutOfBoundsException("Negative index for Hitbox: " + index);
-        }
-        if (index >= this.rotations.size()) {
-            throw new ArrayIndexOutOfBoundsException("HitboxGroup only contains " + this.rotations.size() + " hitboxes");
-        }
-        this.rotations.add(index, new StartingRotation(xRot, yRot, zRot));
-        this.rotations.remove(index + 1);
-    }
+//    public void setStartingRotationForBox(int index, float xRot, float yRot, float zRot) {
+//        if (index < 0) {
+//            throw new ArrayIndexOutOfBoundsException("Negative index for Hitbox: " + index);
+//        }
+//        if (index >= this.rotations.size()) {
+//            throw new ArrayIndexOutOfBoundsException("HitboxGroup only contains " + this.rotations.size() + " hitboxes");
+//        }
+//        this.rotations.add(index, new StartingRotation(xRot, yRot, zRot));
+//        this.rotations.remove(index + 1);
+//    }
 
     @Override
     public void setVisible(boolean visible) {
@@ -134,7 +134,7 @@ public class HitboxGroup implements HM {
         if (this.boxes.isEmpty()) {
             throw new IllegalStateException("Empty group");
         }
-        return this.boxes.get(0).xRot() - this.rotations.get(0).xRot;
+        return this.boxes.get(0).xRot()/* - this.rotations.get(0).xRot*/;
     }
 
     @Override
@@ -142,7 +142,7 @@ public class HitboxGroup implements HM {
         if (this.boxes.isEmpty()) {
             throw new IllegalStateException("Empty group");
         }
-        return this.boxes.get(0).yRot() - this.rotations.get(0).yRot;
+        return this.boxes.get(0).yRot()/* - this.rotations.get(0).yRot*/;
     }
 
     @Override
@@ -150,11 +150,11 @@ public class HitboxGroup implements HM {
         if (this.boxes.isEmpty()) {
             throw new IllegalStateException("Empty group");
         }
-        return this.boxes.get(0).zRot() - this.rotations.get(0).zRot;
+        return this.boxes.get(0).zRot()/* - this.rotations.get(0).zRot*/;
     }
 
-    public record StartingRotation(float xRot, float yRot, float zRot) {
-
-        public static final StartingRotation ZERO = new StartingRotation(0, 0, 0);
-    }
+//    public record StartingRotation(float xRot, float yRot, float zRot) {
+//
+//        public static final StartingRotation ZERO = new StartingRotation(0, 0, 0);
+//    }
 }

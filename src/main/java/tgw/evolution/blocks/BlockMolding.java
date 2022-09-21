@@ -28,8 +28,8 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEMolding;
-import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.util.math.MathHelper;
 
 import static tgw.evolution.init.EvolutionBStates.LAYERS_1_5;
@@ -95,7 +95,7 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
         if (tile != null) {
             return tile.getHitbox(state);
         }
-        return EvolutionHitBoxes.MOLD_1;
+        return EvolutionShapes.MOLD_1;
     }
 
     @Override

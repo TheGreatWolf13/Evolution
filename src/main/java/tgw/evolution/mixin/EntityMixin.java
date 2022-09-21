@@ -6,6 +6,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
@@ -47,6 +49,8 @@ import tgw.evolution.util.math.AABBMutable;
 import tgw.evolution.util.math.ChunkPosMutable;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
+
+import java.util.List;
 
 @Mixin(Entity.class)
 public abstract class EntityMixin extends CapabilityProvider<Entity> implements IEntityPatch<Entity> {
@@ -134,6 +138,20 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     protected EntityMixin(Class<Entity> baseClass) {
         super(baseClass);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid allocations
+     */
+    @Overwrite
+    private static Component removeAction(Component name) {
+        MutableComponent mutable = name.plainCopy().setStyle(name.getStyle().withClickEvent(null));
+        List<Component> siblings = name.getSiblings();
+        for (int i = 0, l = siblings.size(); i < l; i++) {
+            mutable.append(removeAction(siblings.get(i)));
+        }
+        return mutable;
     }
 
     /**
@@ -479,7 +497,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         Vec3 allowedMovement = this.collide(deltaMovement);
         double d0 = allowedMovement.lengthSqr();
         if (d0 > 1.0E-7) {
-            if (this.fallDistance != 0.0F && d0 >= 1.0D) {
+            if (this.fallDistance != 0.0F && d0 >= 1.0) {
                 BlockHitResult blockHitResult = this.level.clip(
                         new ClipContext(this.position(), this.position().add(allowedMovement), ClipContext.Block.FALLDAMAGE_RESETTING,
                                         ClipContext.Fluid.WATER, (Entity) (Object) this));

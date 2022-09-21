@@ -23,6 +23,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.*;
@@ -388,31 +389,36 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     public void setInventory(Player player) {
         NonNullList<ItemStack> inv = player.getInventory().armor;
         int slot = 0;
+        //Armour
         for (int i = 0; i < 4; i++) {
             ItemStack stack = inv.get(3 - i);
             this.itemHandler.setStackInSlot(slot++, stack);
             inv.set(3 - i, ItemStack.EMPTY);
         }
-        inv = player.getInventory().items;
-        for (int i = 0; i < 9; i++) {
-            ItemStack stack = inv.get(i);
+        //Extended Inventory
+        IInventory handler = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityInventory.INSTANCE);
+        for (int i = 0; i < handler.getSlots(); i++) {
+            ItemStack stack = handler.getStackInSlot(i);
+            handler.setStackInSlot(i, ItemStack.EMPTY);
             this.itemHandler.setStackInSlot(slot++, stack);
-            inv.set(i, ItemStack.EMPTY);
         }
-        for (int i = 9; i < 36; i++) {
-            ItemStack stack = inv.get(i);
-            this.itemHandler.setStackInSlot(slot++, stack);
-            inv.set(i, ItemStack.EMPTY);
-        }
+        //Offhand
         inv = player.getInventory().offhand;
         ItemStack stack = inv.get(0);
         this.itemHandler.setStackInSlot(slot++, stack);
         inv.set(0, ItemStack.EMPTY);
-        IInventory handler = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityInventory.INSTANCE);
-        for (int i = 0; i < handler.getSlots(); i++) {
-            stack = handler.getStackInSlot(i);
-            handler.setStackInSlot(i, ItemStack.EMPTY);
+        //Main Inventory
+        inv = player.getInventory().items;
+        for (int i = 9; i < 36; i++) {
+            stack = inv.get(i);
             this.itemHandler.setStackInSlot(slot++, stack);
+            inv.set(i, ItemStack.EMPTY);
+        }
+        //Hotbar
+        for (int i = 0; i < 9; i++) {
+            stack = inv.get(i);
+            this.itemHandler.setStackInSlot(slot++, stack);
+            inv.set(i, ItemStack.EMPTY);
         }
     }
 
@@ -462,11 +468,11 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         double frictionX = 0;
         double frictionZ = 0;
         if (this.onGround) {
-            double norm = Math.sqrt(motionX * motionX + motionZ * motionZ);
+            double norm = Mth.fastInvSqrt(motionX * motionX + motionZ * motionZ);
             if (norm != 0) {
                 double frictionAcc = frictionCoef * gravity;
-                frictionX = motionX / norm * frictionAcc;
-                frictionZ = motionZ / norm * frictionAcc;
+                frictionX = motionX * norm * frictionAcc;
+                frictionZ = motionZ * norm * frictionAcc;
             }
             if (Math.abs(motionX) < Math.abs(frictionX)) {
                 frictionX = motionX;

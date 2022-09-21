@@ -3,33 +3,46 @@ package tgw.evolution.client.gui.widgets;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TextComponent;
+import org.jetbrains.annotations.Nullable;
+import tgw.evolution.client.text.CappedComponent;
 import tgw.evolution.util.math.MathHelper;
 
 public class Label {
 
-    private final ChatFormatting labelColor;
+    private final CappedComponent capped;
+    private final MutableComponent display;
+    private final boolean hasAddendum;
     private final OnTooltip onTooltip;
-    private final ChatFormatting tooltipColor;
-    private MutableComponent cutComponent;
-    private MutableComponent fullComponent;
-    private Component label;
-    private Component tooltip;
+    private final boolean shadow;
+    private final Component tooltip;
 
-    public Label(Component label, Component tooltip, OnTooltip onTooltip) {
-        this(label, tooltip, onTooltip, ChatFormatting.WHITE, ChatFormatting.GRAY);
+    public Label(Component title, Component desc, OnTooltip onTooltip) {
+        this(title, desc, null, true, onTooltip, ChatFormatting.WHITE, ChatFormatting.GRAY, ChatFormatting.WHITE);
     }
 
-    public Label(Component label, Component tooltip, OnTooltip onTooltip, ChatFormatting labelColor, ChatFormatting tooltipColor) {
-        this.label = label.copy().withStyle(labelColor);
-        this.tooltip = tooltip.copy().withStyle(tooltipColor);
+    public Label(Component title,
+                 Component desc,
+                 @Nullable Component addendum,
+                 boolean shadow,
+                 OnTooltip onTooltip,
+                 ChatFormatting titleColor,
+                 ChatFormatting descColor,
+                 ChatFormatting tooltipColor) {
         this.onTooltip = onTooltip;
-        this.labelColor = labelColor;
-        this.tooltipColor = tooltipColor;
-        this.updateFullComponent();
+        this.shadow = shadow;
+        MutableComponent copy = title.copy();
+        this.capped = new CappedComponent(desc, 50, copy);
+        if (addendum != null) {
+            this.tooltip = desc.copy().withStyle(tooltipColor).append(addendum.copy().withStyle(tooltipColor));
+            this.hasAddendum = true;
+        }
+        else {
+            this.tooltip = desc.copy().withStyle(tooltipColor);
+            this.hasAddendum = false;
+        }
+        this.display = copy.withStyle(titleColor).append(this.capped.withStyle(descColor));
     }
 
     public Component getTooltip() {
@@ -37,39 +50,16 @@ public class Label {
     }
 
     public void render(Font font, PoseStack matrices, int x, int y, int maxWidth, double mouseX, double mouseY) {
-        if (font.width(this.fullComponent) > maxWidth) {
-            this.updateCutComponent(font, maxWidth);
-            GuiComponent.drawString(matrices, font, this.cutComponent, x, y, 0xFF_FFFF);
-            if (MathHelper.isMouseInRange(mouseX, mouseY, x, y, x + maxWidth, y + 9)) {
-                this.onTooltip.onTooltip(this);
-            }
+        this.capped.setWidth(maxWidth, this.display);
+        if (this.shadow) {
+            font.drawShadow(matrices, this.display, x, y, 0xFF_FFFF);
         }
         else {
-            GuiComponent.drawString(matrices, font, this.fullComponent, x, y, 0xFF_FFFF);
+            font.draw(matrices, this.display, x, y, 0xFF_FFFF);
         }
-    }
-
-    public void setLabel(Component label) {
-        this.label = label;
-        this.updateFullComponent();
-    }
-
-    public void setTooltip(Component tooltip) {
-        this.tooltip = tooltip;
-        this.updateFullComponent();
-    }
-
-    private void updateCutComponent(Font font, int width) {
-        if (font.width(this.cutComponent) > width) {
-            this.cutComponent = this.label.copy().withStyle(this.labelColor);
-            String cutText = font.substrByWidth(this.tooltip, width - font.width(this.label) - 7).getString() + "...";
-            this.cutComponent.append(new TextComponent(cutText).withStyle(this.tooltipColor));
+        if ((this.hasAddendum || this.capped.isCapped()) && MathHelper.isMouseInArea(mouseX, mouseY, x, y, font.width(this.display), 9)) {
+            this.onTooltip.onTooltip(this);
         }
-    }
-
-    private void updateFullComponent() {
-        this.fullComponent = this.label.copy().withStyle(this.labelColor).append(this.tooltip.copy().withStyle(this.tooltipColor));
-        this.cutComponent = this.fullComponent;
     }
 
     public interface OnTooltip {

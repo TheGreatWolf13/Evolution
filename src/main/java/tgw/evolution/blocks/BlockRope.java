@@ -23,8 +23,8 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionShapes;
 
 import java.util.Random;
 
@@ -120,10 +120,10 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return switch (state.getValue(DIRECTION_HORIZONTAL)) {
-            case NORTH -> EvolutionHitBoxes.ROPE_WALL_NORTH;
-            case EAST -> EvolutionHitBoxes.ROPE_WALL_EAST;
-            case SOUTH -> EvolutionHitBoxes.ROPE_WALL_SOUTH;
-            case WEST -> EvolutionHitBoxes.ROPE_WALL_WEST;
+            case NORTH -> EvolutionShapes.ROPE_WALL_NORTH;
+            case EAST -> EvolutionShapes.ROPE_WALL_EAST;
+            case SOUTH -> EvolutionShapes.ROPE_WALL_SOUTH;
+            case WEST -> EvolutionShapes.ROPE_WALL_WEST;
             default -> throw new IllegalStateException("Could not find shape for " + state);
         };
     }

@@ -113,6 +113,11 @@ public class Date {
         return this.month;
     }
 
+    public Component getShortDisplayName() {
+        return new TranslatableComponent("evolution.calendar.dateShort", Metric.INT_2.format(this.day), Metric.INT_2.format(this.month.numerical),
+                                         this.year);
+    }
+
     public int getYear() {
         return this.year;
     }

@@ -32,7 +32,7 @@ import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.init.EvolutionHitBoxes;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.WoodVariant;
@@ -275,22 +275,22 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         VoxelShape shape = Shapes.empty();
         if (state.getValue(NORTH)) {
-            shape = EvolutionHitBoxes.SIXTEENTH_SLAB_NORTH_1;
+            shape = EvolutionShapes.SIXTEENTH_SLAB_NORTH_1;
         }
         if (state.getValue(SOUTH)) {
-            shape = Shapes.join(shape, EvolutionHitBoxes.SIXTEENTH_SLAB_SOUTH_1, BooleanOp.OR);
+            shape = Shapes.join(shape, EvolutionShapes.SIXTEENTH_SLAB_SOUTH_1, BooleanOp.OR);
         }
         if (state.getValue(EAST)) {
-            shape = Shapes.join(shape, EvolutionHitBoxes.SIXTEENTH_SLAB_EAST_1, BooleanOp.OR);
+            shape = Shapes.join(shape, EvolutionShapes.SIXTEENTH_SLAB_EAST_1, BooleanOp.OR);
         }
         if (state.getValue(WEST)) {
-            shape = Shapes.join(shape, EvolutionHitBoxes.SIXTEENTH_SLAB_WEST_1, BooleanOp.OR);
+            shape = Shapes.join(shape, EvolutionShapes.SIXTEENTH_SLAB_WEST_1, BooleanOp.OR);
         }
         if (state.getValue(UP)) {
-            shape = Shapes.join(shape, EvolutionHitBoxes.SIXTEENTH_SLAB_UPPER_1, BooleanOp.OR);
+            shape = Shapes.join(shape, EvolutionShapes.SIXTEENTH_SLAB_UPPER_1, BooleanOp.OR);
         }
         if (shape == Shapes.empty()) {
-            return EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_1;
+            return EvolutionShapes.SIXTEENTH_SLAB_LOWER_1;
         }
         return shape;
     }

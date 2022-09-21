@@ -28,8 +28,8 @@ import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.blocks.tileentities.TELoggable;
 import tgw.evolution.entities.misc.EntityFallingPeat;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.DirectionUtil;
@@ -185,7 +185,7 @@ public class BlockPeat extends BlockMass implements IReplaceable, IFluidLoggable
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return EvolutionHitBoxes.PEAT[state.getValue(LAYERS_1_4)];
+        return EvolutionShapes.PEAT[state.getValue(LAYERS_1_4)];
     }
 
     @Override

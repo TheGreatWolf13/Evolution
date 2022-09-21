@@ -23,20 +23,19 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.blocks.tileentities.ILoggable;
 import tgw.evolution.blocks.tileentities.TEChopping;
 import tgw.evolution.entities.misc.EntitySittable;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionHitBoxes;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemLog;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.WoodVariant;
-
-import org.jetbrains.annotations.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.FLUID_LOGGED;
 import static tgw.evolution.init.EvolutionBStates.OCCUPIED;
@@ -149,7 +148,7 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittableB
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return EvolutionHitBoxes.SLAB_LOWER;
+        return EvolutionShapes.SLAB_LOWER;
     }
 
     @Override

@@ -21,6 +21,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
+import tgw.evolution.client.text.CappedComponent;
 import tgw.evolution.client.util.Key;
 import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.init.EvolutionResources;
@@ -162,11 +163,7 @@ public class ScreenModConfigSelection extends ScreenListMenu {
         }
 
         private static MutableComponent createTrimmedFileName(Component fileName) {
-            MutableComponent trimmedFileName = fileName.copy();
-            if (Minecraft.getInstance().font.width(fileName) > 150) {
-                return new TextComponent(Minecraft.getInstance().font.substrByWidth(fileName, 140) + "...");
-            }
-            return trimmedFileName;
+            return new CappedComponent(fileName, 150);
         }
 
         @Override

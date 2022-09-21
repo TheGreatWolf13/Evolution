@@ -6,19 +6,19 @@ import it.unimi.dsi.fastutil.bytes.Byte2ReferenceOpenHashMap;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.util.math.MathHelper;
 
 public enum EnumMolding {
     NULL(0, Shapes.empty(), MoldingPatterns.NULL, ItemStack.EMPTY),
     AXE(1,
-        MathHelper.subtract(EvolutionHitBoxes.MOLD_1, EvolutionHitBoxes.AXE_THICK),
+        MathHelper.subtract(EvolutionShapes.MOLD_1, EvolutionShapes.AXE_THICK),
         MoldingPatterns.AXE,
         new ItemStack(EvolutionItems.mold_clay_axe.get())),
     ;
 //    PICKAXE(2,
-//            MathHelper.subtract(EvolutionHitBoxes.MOLD_1, EvolutionHitBoxes.PICKAXE_THICK),
+//            MathHelper.subtract(EvolutionShapes.MOLD_1, EvolutionShapes.PICKAXE_THICK),
 //            MoldingPatterns.PICKAXE,
 //            new ItemStack(EvolutionItems.mold_clay_pickaxe.get()));
 

@@ -13,7 +13,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionBStates;
-import tgw.evolution.init.EvolutionHitBoxes;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.MathHelper;
@@ -113,7 +113,7 @@ public class TEMolding extends BlockEntity {
     public void computeHitbox(BlockState state) {
         VoxelShape shape = Shapes.empty();
         if (state.getValue(EvolutionBStates.LAYERS_1_5) == 1) {
-            shape = EvolutionHitBoxes.MOLD_TOTAL_BASE;
+            shape = EvolutionShapes.MOLD_TOTAL_BASE;
         }
 //        for (int enc = 0; enc < this.matrices.length; enc++) {
 //            if (this.matrices[enc] == null) {
@@ -123,7 +123,7 @@ public class TEMolding extends BlockEntity {
 //            for (int i = 0; i < this.matrices[enc].length; i++) {
 //                for (int j = 0; j < this.matrices[enc][i].length; j++) {
 //                    if (this.matrices[enc][i][j]) {
-//                        shape = MathHelper.union(shape, EvolutionHitBoxes.MOLD_PART.withOffset(3 * i / 16.0f, 3 * enc / 16.0f, 3 * j / 16.0f));
+//                        shape = MathHelper.union(shape, EvolutionShapes.MOLD_PART.withOffset(3 * i / 16.0f, 3 * enc / 16.0f, 3 * j / 16.0f));
 //                    }
 //                }
 //            }

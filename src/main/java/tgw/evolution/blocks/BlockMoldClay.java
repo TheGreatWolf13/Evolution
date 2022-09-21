@@ -17,7 +17,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.init.EvolutionHitBoxes;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.util.math.MathHelper;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
@@ -78,7 +78,7 @@ public class BlockMoldClay extends BlockGeneric implements IReplaceable {
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         if (this.layers != 0) {
-            return EvolutionHitBoxes.MOLD_CLAY[this.layers - 1];
+            return EvolutionShapes.MOLD_CLAY[this.layers - 1];
         }
         return switch (state.getValue(DIRECTION_HORIZONTAL)) {
             case NORTH -> this.shapeNorth;

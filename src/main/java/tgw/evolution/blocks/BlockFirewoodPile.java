@@ -23,7 +23,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEFirewoodPile;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionHitBoxes;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemFirewood;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.math.MathHelper;
@@ -148,16 +148,16 @@ public class BlockFirewoodPile extends BlockMass implements IReplaceable, Entity
         }
         VoxelShape shape = Shapes.empty();
         if (logCount >= 12) {
-            shape = EvolutionHitBoxes.LOG_PILE[12];
+            shape = EvolutionShapes.LOG_PILE[12];
         }
         else if (logCount >= 8) {
-            shape = EvolutionHitBoxes.LOG_PILE[8];
+            shape = EvolutionShapes.LOG_PILE[8];
         }
         else if (logCount >= 4) {
-            shape = EvolutionHitBoxes.LOG_PILE[4];
+            shape = EvolutionShapes.LOG_PILE[4];
         }
         return MathHelper.union(shape,
-                                MathHelper.rotateShape(Direction.NORTH, state.getValue(DIRECTION_HORIZONTAL), EvolutionHitBoxes.LOG_PILE[logCount]));
+                                MathHelper.rotateShape(Direction.NORTH, state.getValue(DIRECTION_HORIZONTAL), EvolutionShapes.LOG_PILE[logCount]));
     }
 
     @Override

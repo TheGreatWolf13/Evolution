@@ -14,7 +14,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.IForgeShearable;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionHitBoxes;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.util.NutrientHelper;
 
 public class BlockTallGrass extends BlockBush implements IForgeShearable {
@@ -45,7 +45,7 @@ public class BlockTallGrass extends BlockBush implements IForgeShearable {
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return EvolutionHitBoxes.GRASS;
+        return EvolutionShapes.GRASS;
     }
 
     @Override

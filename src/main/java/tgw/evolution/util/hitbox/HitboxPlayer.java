@@ -20,25 +20,28 @@ public final class HitboxPlayer extends HitboxEntity<Player> implements HMPlayer
     private final Hitbox head = this.addBox(HitboxType.HEAD, HitboxLib.HUMANOID_HEAD, 0, 24, 0);
     private final HitboxGroup legL;
     private final HitboxGroup legR;
-    private float attackTime;
     private boolean crouching;
     private ArmPose leftArmPose = ArmPose.EMPTY;
     private ArmPose rightArmPose = ArmPose.EMPTY;
     private float swimAmount;
 
     public HitboxPlayer(boolean slim) {
+        //Left arm
         Hitbox shoulderL = this.addBox(HitboxType.SHOULDER_LEFT, slim ? box(-2, -2, -2, 3, 4, 4) : HitboxLib.HUMANOID_LEFT_SHOULDER);
         Hitbox armL = this.addBox(HitboxType.ARM_LEFT, slim ? box(-2, -6, -2, 3, 4, 4) : HitboxLib.HUMANOID_LEFT_ARM);
         this.handL = this.addBoxAttachable(HitboxType.HAND_LEFT, slim ? box(-2, -10, -2, 3, 4, 4) : HitboxLib.HUMANOID_LEFT_HAND, 0, 0, 0, -1, -8, 0);
+        this.armL = new HitboxGroup(shoulderL, armL, this.handL);
+        //Right arm
         Hitbox shoulderR = this.addBox(HitboxType.SHOULDER_RIGHT, slim ? box(-1, -2, -2, 3, 4, 4) : HitboxLib.HUMANOID_RIGHT_SHOULDER);
         Hitbox armR = this.addBox(HitboxType.ARM_RIGHT, slim ? box(-1, -6, -2, 3, 4, 4) : HitboxLib.HUMANOID_RIGHT_ARM);
         this.handR = this.addBoxAttachable(HitboxType.HAND_RIGHT, slim ? box(-1, -10, -2, 3, 4, 4) : HitboxLib.HUMANOID_RIGHT_HAND, 0, 0, 0, 1, -8,
                                            0);
-        this.armL = new HitboxGroup(shoulderL, armL, this.handL);
+        this.armR = new HitboxGroup(shoulderR, armR, this.handR);
+        //Left leg
         Hitbox legL = this.addBox(HitboxType.LEG_LEFT, HitboxLib.HUMANOID_LEG);
         Hitbox footL = this.addBox(HitboxType.FOOT_LEFT, HitboxLib.HUMANOID_FOOT);
         this.legL = new HitboxGroup(legL, footL);
-        this.armR = new HitboxGroup(shoulderR, armR, this.handR);
+        //Right leg
         Hitbox legR = this.addBox(HitboxType.LEG_RIGHT, HitboxLib.HUMANOID_LEG);
         Hitbox footR = this.addBox(HitboxType.FOOT_RIGHT, HitboxLib.HUMANOID_FOOT);
         this.legR = new HitboxGroup(legR, footR);

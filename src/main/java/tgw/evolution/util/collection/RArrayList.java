@@ -7,6 +7,7 @@ import tgw.evolution.Evolution;
 
 import java.util.Collection;
 
+@SuppressWarnings("EqualsAndHashcode")
 public class RArrayList<K> extends ReferenceArrayList<K> implements RList<K> {
 
     public RArrayList(int capacity) {
@@ -28,6 +29,15 @@ public class RArrayList<K> extends ReferenceArrayList<K> implements RList<K> {
 
     public RArrayList(Collection<? extends K> c) {
         super(c);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 1;
+        for (int i = 0, l = this.size(); i < l; i++) {
+            hash = 31 * hash + System.identityHashCode(this.get(i));
+        }
+        return hash;
     }
 
     @Override

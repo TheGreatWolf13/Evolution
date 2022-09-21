@@ -68,7 +68,7 @@ public final class EvolutionEntities {
                                                         .setShouldReceiveVelocityUpdates(true));
         PLAYER_CORPSE = register("player_corpse", () -> EntityType.Builder.<EntityPlayerCorpse>of(EntityPlayerCorpse::new, MISC)
                                                                           .sized(0.9F, 0.4F)
-                                                                          .setTrackingRange(10)
+                                                                          .setTrackingRange(5)
                                                                           .setUpdateInterval(20)
                                                                           .setCustomClientFactory(EntityPlayerCorpse::new)
                                                                           .setShouldReceiveVelocityUpdates(true));

@@ -11,7 +11,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import tgw.evolution.init.EvolutionHitBoxes;
+import tgw.evolution.init.EvolutionShapes;
 
 import java.util.Random;
 
@@ -46,7 +46,7 @@ public class BlockSapling extends BlockBush {
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return EvolutionHitBoxes.SAPLING;
+        return EvolutionShapes.SAPLING;
     }
 
 //    @Override

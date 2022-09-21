@@ -31,19 +31,19 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.blocks.tileentities.ILoggable;
 import tgw.evolution.blocks.tileentities.TETorch;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.config.EvolutionConfig;
-import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemTorch;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.time.Time;
 
-import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -154,7 +154,7 @@ public class BlockTorch extends BlockMass implements IReplaceable, IFireSource, 
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return EvolutionHitBoxes.TORCH;
+        return EvolutionShapes.TORCH;
     }
 
     @Override

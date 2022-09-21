@@ -26,8 +26,8 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.ItemUtils;
 import tgw.evolution.util.collection.OArrayList;
@@ -165,19 +165,19 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
         Direction dir = state.getValue(DIRECTION_EXCEPT_UP);
         switch (dir) {
             case DOWN -> {
-                return EvolutionHitBoxes.TORCH;
+                return EvolutionShapes.TORCH;
             }
             case NORTH -> {
-                return EvolutionHitBoxes.TORCH_SOUTH;
+                return EvolutionShapes.TORCH_SOUTH;
             }
             case SOUTH -> {
-                return EvolutionHitBoxes.TORCH_NORTH;
+                return EvolutionShapes.TORCH_NORTH;
             }
             case WEST -> {
-                return EvolutionHitBoxes.TORCH_EAST;
+                return EvolutionShapes.TORCH_EAST;
             }
         }
-        return EvolutionHitBoxes.TORCH_WEST;
+        return EvolutionShapes.TORCH_WEST;
     }
 
     @Nullable

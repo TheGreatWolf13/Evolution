@@ -29,6 +29,7 @@ import org.lwjgl.glfw.GLFW;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.widgets.AdvEditBox;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
+import tgw.evolution.client.text.CappedComponent;
 import tgw.evolution.client.util.Key;
 import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.init.EvolutionFormatter;
@@ -495,11 +496,7 @@ public class ScreenConfig extends ScreenListMenu {
         }
 
         private Component getTrimmedLabel(int maxWidth) {
-            assert ScreenConfig.this.minecraft != null;
-            if (ScreenConfig.this.minecraft.font.width(this.label) > maxWidth) {
-                return new TextComponent(ScreenConfig.this.minecraft.font.substrByWidth(this.label, maxWidth).getString() + "...");
-            }
-            return this.label;
+            return new CappedComponent(this.label, maxWidth);
         }
 
         protected void onResetValue() {

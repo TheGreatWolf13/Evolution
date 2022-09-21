@@ -24,7 +24,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEKnapping;
-import tgw.evolution.init.EvolutionHitBoxes;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemRock;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.math.MathHelper;
@@ -86,7 +86,7 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IRockVa
             tile.hitbox = calculateHitbox(tile);
             return tile.hitbox;
         }
-        return EvolutionHitBoxes.SIXTEENTH_SLAB_LOWER_1;
+        return EvolutionShapes.SIXTEENTH_SLAB_LOWER_1;
     }
 
     @Override

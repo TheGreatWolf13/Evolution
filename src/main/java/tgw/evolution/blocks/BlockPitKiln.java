@@ -28,8 +28,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemClayMolded;
 import tgw.evolution.items.ItemLog;
 import tgw.evolution.util.math.DirectionDiagonal;
@@ -151,7 +151,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return EvolutionHitBoxes.PIT_KILN[state.getValue(LAYERS_0_16)];
+        return EvolutionShapes.PIT_KILN[state.getValue(LAYERS_0_16)];
     }
 
     @Override

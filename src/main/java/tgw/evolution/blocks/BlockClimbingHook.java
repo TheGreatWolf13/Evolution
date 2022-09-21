@@ -22,8 +22,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.constants.BlockFlags;
@@ -120,16 +120,16 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         switch (state.getValue(DIRECTION_HORIZONTAL)) {
             case NORTH -> {
-                return EvolutionHitBoxes.HOOK_NORTH;
+                return EvolutionShapes.HOOK_NORTH;
             }
             case EAST -> {
-                return EvolutionHitBoxes.HOOK_EAST;
+                return EvolutionShapes.HOOK_EAST;
             }
             case SOUTH -> {
-                return EvolutionHitBoxes.HOOK_SOUTH;
+                return EvolutionShapes.HOOK_SOUTH;
             }
             case WEST -> {
-                return EvolutionHitBoxes.HOOK_WEST;
+                return EvolutionShapes.HOOK_WEST;
             }
         }
         throw new IllegalStateException("Invalid horizontal direction " + state.getValue(DIRECTION_HORIZONTAL));

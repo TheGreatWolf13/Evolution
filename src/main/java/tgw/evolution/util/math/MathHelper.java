@@ -23,7 +23,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.Patterns;
-import tgw.evolution.init.EvolutionHitBoxes;
+import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.patches.*;
 import tgw.evolution.util.AdvancedEntityRayTraceResult;
 import tgw.evolution.util.HitInformation;
@@ -478,7 +478,7 @@ public final class MathHelper {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 if ((pattern & 1L << 8 * j + i) != 0) {
-                    shape = union(shape, EvolutionHitBoxes.KNAPPING_PART.move(i / 8.0f, 0, j / 8.0f));
+                    shape = union(shape, EvolutionShapes.KNAPPING_PART.move(i / 8.0f, 0, j / 8.0f));
                 }
             }
         }

@@ -23,6 +23,10 @@ public class FullDate {
         return new TranslatableComponent("evolution.calendar.dateTime", this.date.getDisplayName(), this.hour.getDisplayName());
     }
 
+    public Component getShortDisplayName() {
+        return new TranslatableComponent("evolution.calendar.dateTimeShort", this.date.getShortDisplayName(), this.hour.getDisplayName());
+    }
+
     @Override
     public String toString() {
         return this.hour + " " + this.date;

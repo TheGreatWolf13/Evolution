@@ -1,10 +1,11 @@
 package tgw.evolution.patches;
 
+import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.EffectHelper;
 import tgw.evolution.items.IMelee;
 
-public interface ILivingEntityPatch {
+public interface ILivingEntityPatch<T extends LivingEntity> extends IEntityPatch<T> {
 
     void addAbsorptionSuggestion(float amount);
 

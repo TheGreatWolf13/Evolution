@@ -9,6 +9,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
@@ -62,7 +63,10 @@ import tgw.evolution.items.IEvolutionItem;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.network.PacketCSCollision;
 import tgw.evolution.network.PacketCSImpactDamage;
-import tgw.evolution.patches.*;
+import tgw.evolution.patches.IBlockPatch;
+import tgw.evolution.patches.ILivingEntityPatch;
+import tgw.evolution.patches.IMobEffectInstancePatch;
+import tgw.evolution.patches.IMobEffectPatch;
 import tgw.evolution.util.constants.EntityStates;
 import tgw.evolution.util.damage.DamageSourceEntity;
 import tgw.evolution.util.damage.EvolutionCombatTracker;
@@ -76,7 +80,7 @@ import java.util.Map;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(LivingEntity.class)
-public abstract class LivingEntityMixin extends Entity implements ILivingEntityPatch, IEntityPatch<LivingEntity> {
+public abstract class LivingEntityMixin extends Entity implements ILivingEntityPatch<LivingEntity> {
 
     @Shadow
     @Final
@@ -1102,9 +1106,17 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Override
     public void stopSpecialAttack(IMelee.StopReason reason) {
         if (reason == IMelee.StopReason.HIT_BLOCK) {
-            boolean isStone = IModularTool.get(this.getMainHandItem()).getHead().getMaterialInstance().getMaterial().isStone();
-            this.playSound(isStone ? EvolutionSounds.STONE_WEAPON_HIT_BLOCK.get() : EvolutionSounds.METAL_WEAPON_HIT_BLOCK.get(), 0.4f,
-                           0.8F + this.random.nextFloat() * 0.4F);
+            ItemStack stack = this.getMainHandItem();
+            SoundEvent sound;
+            if (stack.isEmpty()) {
+                sound = SoundEvents.PLAYER_ATTACK_NODAMAGE;
+            }
+            else {
+                sound = IModularTool.get(stack).getHead().getMaterialInstance().getMaterial().isStone() ?
+                        EvolutionSounds.STONE_WEAPON_HIT_BLOCK.get() :
+                        EvolutionSounds.METAL_WEAPON_HIT_BLOCK.get();
+            }
+            this.playSound(sound, 0.4f, 0.8F + this.random.nextFloat() * 0.4F);
             this.specialAttackStopTicks = 5;
         }
         this.specialAttackCooldown = 2;

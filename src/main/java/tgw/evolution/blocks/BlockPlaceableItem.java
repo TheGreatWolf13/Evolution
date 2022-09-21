@@ -18,11 +18,10 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.blocks.tileentities.TELoggable;
-import tgw.evolution.init.EvolutionHitBoxes;
-
-import org.jetbrains.annotations.Nullable;
+import tgw.evolution.init.EvolutionShapes;
 
 import static tgw.evolution.init.EvolutionBStates.FLUID_LOGGED;
 
@@ -95,7 +94,7 @@ public class BlockPlaceableItem extends BlockMass implements IReplaceable, IFlui
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         Vec3 offset = state.getOffset(level, pos);
-        return EvolutionHitBoxes.GROUND_ITEM.move(offset.x, offset.y, offset.z);
+        return EvolutionShapes.GROUND_ITEM.move(offset.x, offset.y, offset.z);
     }
 
     @Override

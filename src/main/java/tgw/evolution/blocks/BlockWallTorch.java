@@ -21,7 +21,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.EnumStorage;
-import tgw.evolution.init.EvolutionHitBoxes;
+import tgw.evolution.init.EvolutionShapes;
 
 import java.util.Random;
 
@@ -68,10 +68,10 @@ public class BlockWallTorch extends BlockTorch {
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return switch (state.getValue(DIRECTION_HORIZONTAL)) {
-            case WEST -> EvolutionHitBoxes.TORCH_WEST;
-            case SOUTH -> EvolutionHitBoxes.TORCH_SOUTH;
-            case NORTH -> EvolutionHitBoxes.TORCH_NORTH;
-            default -> EvolutionHitBoxes.TORCH_EAST;
+            case WEST -> EvolutionShapes.TORCH_WEST;
+            case SOUTH -> EvolutionShapes.TORCH_SOUTH;
+            case NORTH -> EvolutionShapes.TORCH_NORTH;
+            default -> EvolutionShapes.TORCH_EAST;
         };
     }
 

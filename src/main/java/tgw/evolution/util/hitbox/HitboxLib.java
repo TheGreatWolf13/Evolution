@@ -19,6 +19,12 @@ public final class HitboxLib {
     public static final AABB HUMANOID_FOOT = box(-2, -12, -2, 4, 4, 4);
     //Creeper
     public static final AABB CREEPER_LEG = box(-2, -6, -2, 4, 6, 4);
+    //Skeleton
+    public static final AABB SKELETON_SHOULDER = box(-1, -2, -1, 2, 4, 2);
+    public static final AABB SKELETON_ARM = box(-1, -6, -1, 2, 4, 2);
+    public static final AABB SKELETON_HAND = box(-1, -10, -1, 2, 4, 2);
+    public static final AABB SKELETON_LEG = box(-1, -8, -1, 2, 8, 2);
+    public static final AABB SKELETON_FOOT = box(-1, -12, -1, 2, 4, 2);
 
     private HitboxLib() {
     }

@@ -19,8 +19,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionHitBoxes;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionShapes;
 
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 
@@ -94,7 +94,7 @@ public class BlockRopeGround extends BlockGeneric implements IReplaceable {
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-        return state.getValue(DIRECTION_HORIZONTAL).getAxis() == Direction.Axis.X ? EvolutionHitBoxes.ROPE_GROUND_X : EvolutionHitBoxes.ROPE_GROUND_Z;
+        return state.getValue(DIRECTION_HORIZONTAL).getAxis() == Direction.Axis.X ? EvolutionShapes.ROPE_GROUND_X : EvolutionShapes.ROPE_GROUND_Z;
     }
 
     @Override
