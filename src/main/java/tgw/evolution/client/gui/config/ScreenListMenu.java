@@ -167,6 +167,7 @@ public abstract class ScreenListMenu extends Screen {
 
     protected class EntryList extends ContainerObjectSelectionList<Item> {
         public EntryList(List<Item> entries) {
+            //noinspection ConstantConditions
             super(ScreenListMenu.this.minecraft,
                   ScreenListMenu.this.width,
                   ScreenListMenu.this.height,
@@ -175,6 +176,7 @@ public abstract class ScreenListMenu extends Screen {
                   ScreenListMenu.this.itemHeight);
             for (Item item : entries) {
                 this.addEntry(item);
+                this.bindEntryToSelf(item);
             }
         }
 
@@ -201,9 +203,11 @@ public abstract class ScreenListMenu extends Screen {
                     ScreenListMenu.this.setActiveTooltip(item.tooltip);
                 }
             }
-            for (Item item : this.children()) {
-                for (int i = 0, l = item.children().size(); i < l; i++) {
-                    if (item.children().get(i) instanceof Button button) {
+            List<Item> children = this.children();
+            for (int i = 0, l = children.size(); i < l; i++) {
+                List<? extends GuiEventListener> c = children.get(i).children();
+                for (int j = 0, l2 = c.size(); j < l2; j++) {
+                    if (c.get(j) instanceof Button button) {
                         button.renderToolTip(poseStack, mouseX, mouseY);
                     }
                 }
@@ -232,6 +236,7 @@ public abstract class ScreenListMenu extends Screen {
                            int mouseY,
                            boolean selected,
                            float partialTicks) {
+            assert ScreenListMenu.this.minecraft != null;
             Screen.drawCenteredString(poseStack, ScreenListMenu.this.minecraft.font, this.label, left + width / 2, top + 5, 0xFF_FFFF);
         }
 
