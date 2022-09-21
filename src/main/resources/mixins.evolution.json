@@ -57,6 +57,7 @@
     "RegistryDelegateMixin",
     "RegistryObjectMixin",
     "ServerChunkCacheMixin",
+    "ServerEntityMixin",
     "ServerGamePacketListenerImplMixin",
     "ServerLevelMixin",
     "ServerPlayerMixin",
