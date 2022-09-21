@@ -319,15 +319,15 @@ public class SkyRenderer {
         drawMoonlight(builder, moonMatrix, 1.0F - rainStrength * this.dimension.getSunBrightness(partialTicks), radius, textureX0, textureY0,
                       textureX1, textureY1);
         Blending.DEFAULT.apply();
-        float color;
         if (phase == MoonPhase.NEW_MOON) {
-            color = 1.0f - Math.abs(this.dimension.getLunarEclipseDRightAscension());
+            float dRightAsc = Mth.clamp(Math.abs(this.dimension.getLunarEclipseDRightAscension()), 0, 0.5f);
+            float color = 0.75f - dRightAsc;
+            float redMult = MathHelper.relativize(1.0f - dRightAsc, 0.25f, 1.0f) * 0.85f;
+            RenderSystem.setShaderColor(color * redMult, color * 0.25f, color * 0.25f, rainStrength);
         }
         else {
-            color = 1.0f;
+            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, rainStrength);
         }
-        color *= color * color;
-        RenderSystem.setShaderColor(color, color, color, rainStrength);
         RenderSystem.setShaderTexture(0, EvolutionResources.ENVIRONMENT_LUNAR_ECLIPSE);
         builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         int declinationIndex = -this.dimension.getLunarEclipseDeclinationIndex();
