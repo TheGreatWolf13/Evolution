@@ -18,16 +18,12 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.inventory.CapabilityInventory;
 import tgw.evolution.capabilities.inventory.IInventory;
 import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionContainers;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.inventory.ServerPlaceRecipeEv;
-import tgw.evolution.inventory.SlotArmor;
-import tgw.evolution.inventory.SlotExtended;
-import tgw.evolution.inventory.SlotType;
+import tgw.evolution.inventory.*;
 import tgw.evolution.items.IAdditionalEquipment;
 import tgw.evolution.patches.IAbstractContainerMenuPatch;
 
@@ -79,7 +75,15 @@ public class ContainerInventory extends RecipeBookMenu<CraftingContainer> {
             this.addSlot(new Slot(inventory, i, 8 + i * 18, 156));
         }
         //Offhand slot
-        this.addSlot(new Slot(inventory, 40, 152, 51).setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_OFFHAND));
+        this.addSlot(new SlotEquip(inventory, 40, 152, 51, this.player) {
+            @Override
+            public void set(ItemStack stack) {
+                if (stack.getEquipmentSlot() == EquipmentSlot.OFFHAND && !ItemStack.isSame(stack, this.getItem())) {
+                    this.entity.equipEventAndSound(stack);
+                }
+                super.set(stack);
+            }
+        }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_OFFHAND));
         this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_HEAD.getIndex(), 116, 15));
         this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_CHEST.getIndex(), 116, 33));
         this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_LEGS.getIndex(), 116, 51));
@@ -173,7 +177,6 @@ public class ContainerInventory extends RecipeBookMenu<CraftingContainer> {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        Evolution.info("Index = {}", index);
         ItemStack stack = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
         if (slot.hasItem()) {
