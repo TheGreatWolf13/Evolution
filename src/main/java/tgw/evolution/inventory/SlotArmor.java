@@ -3,6 +3,7 @@ package tgw.evolution.inventory;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -28,5 +29,15 @@ public class SlotArmor extends Slot {
     @Override
     public boolean mayPlace(ItemStack stack) {
         return stack.canEquip(this.equip, this.entity);
+    }
+
+    @Override
+    public void set(ItemStack stack) {
+        if (this.entity instanceof LivingEntity living) {
+            if (!ItemStack.isSame(stack, this.getItem())) {
+                living.equipEventAndSound(stack);
+            }
+        }
+        super.set(stack);
     }
 }

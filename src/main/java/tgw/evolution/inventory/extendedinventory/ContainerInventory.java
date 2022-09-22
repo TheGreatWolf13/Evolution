@@ -18,6 +18,7 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.inventory.CapabilityInventory;
 import tgw.evolution.capabilities.inventory.IInventory;
 import tgw.evolution.init.EvolutionCapabilities;
@@ -79,20 +80,20 @@ public class ContainerInventory extends RecipeBookMenu<CraftingContainer> {
         }
         //Offhand slot
         this.addSlot(new Slot(inventory, 40, 152, 51).setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_OFFHAND));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_HEAD.getIndex(), 116, 15));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_CHEST.getIndex(), 116, 33));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_LEGS.getIndex(), 116, 51));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_FEET.getIndex(), 116, 69));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.FACE.getIndex(), 134, 24));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.NECK.getIndex(), 152, 33));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.BACK.getIndex(), 134, 42));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.BELT.getIndex(), 134, 60));
         this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_SHOULDER_LEFT.getIndex(), 44, 24));
         this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_SHOULDER_RIGHT.getIndex(), 8, 24));
         this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_ARM_LEFT.getIndex(), 44, 42));
         this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_ARM_RIGHT.getIndex(), 8, 42));
         this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_HAND_LEFT.getIndex(), 44, 60));
         this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_HAND_RIGHT.getIndex(), 8, 60));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_HEAD.getIndex(), 116, 15));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_CHEST.getIndex(), 116, 33));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_LEGS.getIndex(), 116, 51));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_FEET.getIndex(), 116, 69));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.FACE.getIndex(), 134, 24));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.BACK.getIndex(), 134, 42));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.BELT.getIndex(), 134, 60));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.NECK.getIndex(), 152, 33));
     }
 
     protected static void slotChangedCraftingGrid(AbstractContainerMenu container,
@@ -172,6 +173,7 @@ public class ContainerInventory extends RecipeBookMenu<CraftingContainer> {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
+        Evolution.info("Index = {}", index);
         ItemStack stack = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
         if (slot.hasItem()) {

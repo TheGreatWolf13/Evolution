@@ -28,4 +28,12 @@ public class SlotExtended extends SlotItemHandler {
     public boolean mayPlace(ItemStack stack) {
         return ((IInventory) this.getItemHandler()).isItemValidForSlot(this.slot, stack, this.player);
     }
+
+    @Override
+    public void set(ItemStack stack) {
+        if (!ItemStack.isSame(stack, this.getItem())) {
+            this.player.equipEventAndSound(stack);
+        }
+        super.set(stack);
+    }
 }
