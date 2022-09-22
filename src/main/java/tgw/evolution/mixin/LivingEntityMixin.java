@@ -214,16 +214,17 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     public void calculateEntityAnimation(LivingEntity entity, boolean flies) {
         entity.animationSpeedOld = entity.animationSpeed;
         double dx = entity.getX() - entity.xo;
-        double dy = flies ? entity.getY() - entity.yo : 0.0D;
+        double dy = flies ? entity.getY() - entity.yo : 0;
         double dz = entity.getZ() - entity.zo;
-        float dSSq = MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * 4.0F;
-        if (dSSq > 1.0F) {
-            dSSq = 1.0F;
-        }
-        else if (dSSq <= 1E-20 && entity.animationSpeed <= 1E-2F) {
+        float dSSq = MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * Mth.PI;
+//        if (dSSq > 1.0F) {
+//            dSSq = 1.0F;
+//        }
+        if (dSSq <= 1E-20 && entity.animationSpeed <= 1E-2F) {
             entity.animationPosition = 0;
+            entity.moveDist = 0;
         }
-        entity.animationSpeed += (dSSq - entity.animationSpeed) * 0.4F;
+        entity.animationSpeed += (dSSq - entity.animationSpeed) * (Mth.PI / 10);
         entity.animationPosition += entity.animationSpeed;
     }
 
@@ -268,8 +269,8 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
             double distanceOfSlowdown = slowDown + this.getBbWidth() / 4;
             double forceOfImpact = kineticEnergy / distanceOfSlowdown;
             float area = this.getBbHeight() * this.getBbWidth();
-            double pressure = forceOfImpact / area;
-            damage += (float) Math.pow(pressure, 1.6) / 1_750_000;
+            double stress = forceOfImpact / area;
+            damage += (float) Math.pow(stress, 1.6) / 1_750_000;
         }
         double motionZPost = this.getDeltaMovement().z;
         double deltaSpeedZ = Math.abs(speedZ) - Math.abs(motionZPost);
@@ -310,8 +311,8 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
             double distanceOfSlowdown = slowDown + this.getBbWidth() / 4;
             double forceOfImpact = kineticEnergy / distanceOfSlowdown;
             float area = this.getBbHeight() * this.getBbWidth();
-            double pressure = forceOfImpact / area;
-            damage += (float) Math.pow(pressure, 1.6) / 1_500_000;
+            double stress = forceOfImpact / area;
+            damage += (float) Math.pow(stress, 1.6) / 1_500_000;
         }
         if (damage >= 1.0f) {
             if (!this.level.isClientSide) {

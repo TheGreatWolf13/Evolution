@@ -140,6 +140,11 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
     }
 
     @Override
+    protected MovementEmission getMovementEmission() {
+        return MovementEmission.NONE;
+    }
+
+    @Override
     protected void onBlockHit(BlockState state) {
     }
 

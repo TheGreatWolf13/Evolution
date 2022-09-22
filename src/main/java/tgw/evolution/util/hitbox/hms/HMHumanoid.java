@@ -228,12 +228,12 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
         if (f < 1.0F) {
             f = 1.0F;
         }
-        this.rightArm().setRotationX(-Mth.cos(limbSwing * 0.666_2F + Mth.PI) * 2.0F * limbSwingAmount * 0.5F / f);
-        this.leftArm().setRotationX(-Mth.cos(limbSwing * 0.666_2F) * 2.0F * limbSwingAmount * 0.5F / f);
+        this.rightArm().setRotationX(-Mth.sin(limbSwing * 0.6F + Mth.PI) * 2.0F * limbSwingAmount * 0.5F / f);
+        this.leftArm().setRotationX(-Mth.sin(limbSwing * 0.6F) * 2.0F * limbSwingAmount * 0.5F / f);
         this.rightArm().setRotationZ(0);
         this.leftArm().setRotationZ(0);
-        this.leftLeg().setRotationX(Mth.cos(limbSwing * 0.666_2F) * 1.4F * limbSwingAmount / f);
-        this.rightLeg().setRotationX(Mth.cos(limbSwing * 0.666_2F + Mth.PI) * 1.4F * limbSwingAmount / f);
+        this.leftLeg().setRotationX(Mth.sin(limbSwing * 0.6F) * 1.4F * limbSwingAmount / f);
+        this.rightLeg().setRotationX(Mth.sin(limbSwing * 0.6F + Mth.PI) * 1.4F * limbSwingAmount / f);
         this.rightLeg().setRotationY(0);
         this.leftLeg().setRotationY(0);
         this.rightLeg().setRotationZ(0);

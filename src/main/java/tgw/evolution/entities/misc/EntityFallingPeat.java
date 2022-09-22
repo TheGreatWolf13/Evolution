@@ -38,9 +38,11 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     private int mass = 289;
     @Nullable
     private BlockPos prevPos;
+
     public EntityFallingPeat(EntityType<EntityFallingPeat> type, Level level) {
         super(type, level);
     }
+
     public EntityFallingPeat(Level level, double x, double y, double z, int layers) {
         super(EvolutionEntities.FALLING_PEAT.get(), level);
         this.blocksBuilding = true;
@@ -53,6 +55,7 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
         this.mass = 289 * this.layers;
         this.prevPos = this.blockPosition();
     }
+
     public EntityFallingPeat(PlayMessages.SpawnEntity spawnEntity, Level level) {
         this(EvolutionEntities.FALLING_PEAT.get(), level);
     }
@@ -97,16 +100,16 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
         return DIMENSIONS[this.layers - 1];
     }
 
+    @Override
+    public float getFrictionModifier() {
+        return 2.0f;
+    }
+
     //TODO
 //    @Override
 //    public boolean func_241845_aY() {
 //        return this.isAlive();
 //    }
-
-    @Override
-    public float getFrictionModifier() {
-        return 2.0f;
-    }
 
     @Override
     public @Nullable HitboxEntity<EntityFallingPeat> getHitboxes() {
@@ -116,6 +119,11 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     @Override
     public double getLegSlowdown() {
         return 0;
+    }
+
+    @Override
+    protected MovementEmission getMovementEmission() {
+        return MovementEmission.NONE;
     }
 
     @Override

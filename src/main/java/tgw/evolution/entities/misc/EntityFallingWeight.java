@@ -161,6 +161,11 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         return null;
     }
 
+    @Override
+    public double getLegSlowdown() {
+        return 0;
+    }
+
     //TODO
 //    @Override
 //    public boolean func_241845_aY() {
@@ -168,8 +173,8 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
 //    }
 
     @Override
-    public double getLegSlowdown() {
-        return 0;
+    protected MovementEmission getMovementEmission() {
+        return MovementEmission.NONE;
     }
 
     @Override

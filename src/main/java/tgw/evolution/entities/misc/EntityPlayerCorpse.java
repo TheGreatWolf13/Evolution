@@ -244,6 +244,11 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     }
 
     @Override
+    protected MovementEmission getMovementEmission() {
+        return MovementEmission.NONE;
+    }
+
+    @Override
     public Component getName() {
         if (this.isSkeleton()) {
             return new TranslatableComponent("entity.evolution.player_skeleton", this.playerName);

@@ -552,6 +552,10 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
                 this.walkDist += (float) allowedMovement.horizontalDistance() * 0.6F;
                 this.moveDist += (float) Math.sqrt(dx * dx + dy * dy + dz * dz) * 0.6F;
                 if (this.moveDist > this.nextStep && !onState.isAir()) {
+                    this.moveDist -= this.nextStep;
+                    if (this.moveDist > this.nextStep) {
+                        this.moveDist %= this.nextStep;
+                    }
                     this.nextStep = this.nextStep();
                     if (this.isInWater()) {
                         if (movementEmission.emitsSounds()) {
@@ -601,8 +605,14 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         this.level.getProfiler().pop();
     }
 
-    @Shadow
-    protected abstract float nextStep();
+    /**
+     * @author TheGreatWolf
+     * @reason Remove dependency from moveDist, as it's subtracted when reached, prevents precision loss.
+     */
+    @Overwrite
+    protected float nextStep() {
+        return 1;
+    }
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void onInit(EntityType entityType, Level level, CallbackInfo ci) {

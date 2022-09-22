@@ -176,6 +176,11 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
         return 0;
     }
 
+    @Override
+    protected MovementEmission getMovementEmission() {
+        return MovementEmission.NONE;
+    }
+
     public byte getPierceLevel() {
         return this.entityData.get(PIERCE_LEVEL);
     }

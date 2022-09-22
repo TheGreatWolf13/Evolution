@@ -141,6 +141,11 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
     }
 
     @Override
+    protected MovementEmission getMovementEmission() {
+        return MovementEmission.NONE;
+    }
+
+    @Override
     public double getPassengersRidingOffset() {
         return 0;
     }

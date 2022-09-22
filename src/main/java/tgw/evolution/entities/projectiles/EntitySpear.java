@@ -100,6 +100,11 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
         return 0;
     }
 
+    @Override
+    protected MovementEmission getMovementEmission() {
+        return MovementEmission.NONE;
+    }
+
     public ItemStack getStack() {
         return this.stack;
     }

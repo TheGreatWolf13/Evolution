@@ -61,6 +61,11 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
     }
 
     @Override
+    protected MovementEmission getMovementEmission() {
+        return MovementEmission.NONE;
+    }
+
+    @Override
     protected void onBlockHit(BlockState state) {
     }
 
