@@ -18,7 +18,7 @@ public final class CommandDate implements Command<CommandSourceStack> {
     private static final Command<CommandSourceStack> CMD = new CommandDate();
     private static final IntegerArgumentType DAY = IntegerArgumentType.integer(1, Time.DAYS_PER_MONTH);
     private static final EnumEvArgument<Date.Month> MONTH = EnumEvArgument.enumArgument(Date.Month.class);
-    private static final IntegerArgumentType YEAR = IntegerArgumentType.integer(1_000);
+    private static final IntegerArgumentType YEAR = IntegerArgumentType.integer(Time.STARTING_YEAR);
     private static final IntegerArgumentType HOUR = IntegerArgumentType.integer(0, 23);
     private static final IntegerArgumentType MINUTE = IntegerArgumentType.integer(0, 59);
 

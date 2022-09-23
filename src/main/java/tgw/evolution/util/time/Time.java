@@ -6,6 +6,7 @@ import tgw.evolution.util.math.Metric;
 
 public class Time {
     public static final Time START_TIME = new Time(6);
+    public static final int STARTING_YEAR = 1_000;
     public static final int TICKS_PER_HOUR;
     public static final int TICKS_PER_DAY = 36_000;
     public static final int TICKS_PER_MONTH;
@@ -48,10 +49,12 @@ public class Time {
     public static final int SIDEREAL_DAY_IN_TICKS;
 
     static {
+        //noinspection ConstantConditions
         if (TICKS_PER_DAY % 24 != 0) {
             throw new RuntimeException("Day should have a multiple of 24 number of ticks!");
         }
         TICKS_PER_HOUR = TICKS_PER_DAY / 24;
+        //noinspection ConstantConditions
         if (DAYS_PER_MONTH % 7 != 0) {
             throw new RuntimeException("Month should have a multiple of 7 number of days!");
         }

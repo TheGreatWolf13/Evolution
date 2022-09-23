@@ -6,7 +6,7 @@ import tgw.evolution.util.math.Metric;
 
 public class Date {
 
-    public static final Date STARTING_DATE = new Date(Month.JUNE, 1, 1_000);
+    public static final Date STARTING_DATE = new Date(Month.JUNE, 1, Time.STARTING_YEAR);
     public static final int DAYS_SINCE_MARCH_EQUINOX = 2 * Time.DAYS_PER_MONTH + 1;
     private final int day;
     private final Month month;
