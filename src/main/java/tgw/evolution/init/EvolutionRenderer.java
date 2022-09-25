@@ -2,15 +2,12 @@ package tgw.evolution.init;
 
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.client.renderer.entities.*;
 import tgw.evolution.client.renderer.tile.RenderTEChopping;
 import tgw.evolution.client.renderer.tile.RenderTEMolding;
 import tgw.evolution.client.renderer.tile.RenderTEPitKiln;
 import tgw.evolution.client.renderer.tile.RenderTESchematic;
 
-@OnlyIn(Dist.CLIENT)
 public final class EvolutionRenderer {
 
     private EvolutionRenderer() {

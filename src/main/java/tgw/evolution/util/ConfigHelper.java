@@ -96,7 +96,7 @@ public final class ConfigHelper {
             if (config.getType() == ModConfig.Type.SERVER && minecraft.player != null && minecraft.player.hasPermissions(2)) {
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 TomlFormat.instance().createWriter().write(config.getConfigData(), stream);
-                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSyncServerConfig(config.getFileName(), stream.toByteArray()));
+                EvolutionNetwork.sendToServer(new PacketCSSyncServerConfig(config.getFileName(), stream.toByteArray()));
                 stream.close();
             }
         }

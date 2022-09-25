@@ -26,9 +26,10 @@ public class PacketSCRemoveEffect implements IPacket {
     }
 
     public static void handle(PacketSCRemoveEffect packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> ClientEvents.removePotionEffect(packet.effect));
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> ClientEvents.removePotionEffect(packet.effect));
+            c.setPacketHandled(true);
         }
     }
 

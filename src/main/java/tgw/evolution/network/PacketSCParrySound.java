@@ -26,8 +26,9 @@ public class PacketSCParrySound implements IPacket {
     }
 
     public static void handle(PacketSCParrySound packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
                 SoundEvent sound;
                 if (packet.success) {
                     sound = EvolutionSounds.METAL_WEAPON_BLOCKS.get();
@@ -37,7 +38,7 @@ public class PacketSCParrySound implements IPacket {
                 }
                 Evolution.PROXY.getClientPlayer().playSound(sound, 0.4f, 0.8F + Evolution.PROXY.getClientLevel().random.nextFloat() * 0.4F);
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

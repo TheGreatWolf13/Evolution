@@ -31,8 +31,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.GUIUtils;
@@ -48,7 +46,6 @@ import tgw.evolution.util.collection.*;
 import java.util.Comparator;
 import java.util.Map;
 
-@OnlyIn(Dist.CLIENT)
 public class ScreenStats extends Screen implements StatsUpdateListener {
 
     private final R2OMap<Item, ItemStack> cachedModularItems = new R2OOpenHashMap<>();
@@ -277,7 +274,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         super.tick();
     }
 
-    @OnlyIn(Dist.CLIENT)
     class ListCustomStats extends ObjectSelectionList<ListCustomStats.Entry> {
 
         public ListCustomStats(Minecraft mc) {
@@ -305,7 +301,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             ScreenStats.this.renderBackground(matrices);
         }
 
-        @OnlyIn(Dist.CLIENT)
         final class Entry extends ObjectSelectionList.Entry<Entry> {
             private final String title;
             private final String value;
@@ -342,7 +337,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     class ListDamageStats extends ObjectSelectionList<ScreenStats.ListDamageStats.Entry> {
         protected final Comparator<EvolutionDamage.Type> comparator = new ListComparator();
         protected final RList<EvolutionDamage.Type> damageList;
@@ -482,7 +476,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.damageList.sort(this.comparator);
         }
 
-        @OnlyIn(Dist.CLIENT)
         final class ListComparator implements Comparator<EvolutionDamage.Type> {
 
             private ListComparator() {
@@ -520,7 +513,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
         }
 
-        @OnlyIn(Dist.CLIENT)
         final class Entry extends ObjectSelectionList.Entry<ScreenStats.ListDamageStats.Entry> {
 
             private Entry() {
@@ -561,7 +553,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     class ListDeathStats extends ObjectSelectionList<ListDeathStats.Entry> {
         private final Comparator<Stat<ResourceLocation>> comparator = new ListDeathStats.ListComparator();
         private final OList<Stat<ResourceLocation>> deathList;
@@ -641,7 +632,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.deathList.sort(this.comparator);
         }
 
-        @OnlyIn(Dist.CLIENT)
         final class ListComparator implements Comparator<Stat<ResourceLocation>> {
 
             @Override
@@ -662,7 +652,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
         }
 
-        @OnlyIn(Dist.CLIENT)
         class Entry extends ObjectSelectionList.Entry<ListDeathStats.Entry> {
 
             @Override
@@ -695,7 +684,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     class ListTimeStats extends ObjectSelectionList<ListTimeStats.Entry> {
         private final Comparator<Stat<ResourceLocation>> comparator = new ListTimeStats.ListComparator();
         private final int[] headerTexture = {1};
@@ -769,7 +757,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.timeList.sort(this.comparator);
         }
 
-        @OnlyIn(Dist.CLIENT)
         final class ListComparator implements Comparator<Stat<ResourceLocation>> {
 
             @Override
@@ -790,7 +777,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
         }
 
-        @OnlyIn(Dist.CLIENT)
         class Entry extends ObjectSelectionList.Entry<ListTimeStats.Entry> {
 
             @Override
@@ -818,7 +804,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     class ListDistanceStats extends ObjectSelectionList<ListDistanceStats.Entry> {
 
         private final Comparator<Stat<ResourceLocation>> comparator = new ListComparator();
@@ -893,7 +878,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.distanceList.sort(this.comparator);
         }
 
-        @OnlyIn(Dist.CLIENT)
         final class ListComparator implements Comparator<Stat<ResourceLocation>> {
 
             @Override
@@ -914,7 +898,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
         }
 
-        @OnlyIn(Dist.CLIENT)
         class Entry extends ObjectSelectionList.Entry<ScreenStats.ListDistanceStats.Entry> {
 
             @Override
@@ -942,7 +925,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     class ListMobStats extends ObjectSelectionList<ScreenStats.ListMobStats.Entry> {
 
         protected final RList<StatType<EntityType<?>>> statTypes;
@@ -1081,7 +1063,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.entityList.sort(this.comparator);
         }
 
-        @OnlyIn(Dist.CLIENT)
         class Entry extends ObjectSelectionList.Entry<ScreenStats.ListMobStats.Entry> {
 
             public Entry() {
@@ -1158,7 +1139,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
         }
 
-        @OnlyIn(Dist.CLIENT)
         final class ListComparator implements Comparator<EntityType<?>> {
 
             private ListComparator() {
@@ -1184,7 +1164,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     class ListStats extends ObjectSelectionList<ScreenStats.ListStats.Entry> {
         protected final RList<StatType<Block>> blockStatList;
         protected final Comparator<Item> comparator = new ListComparator();
@@ -1353,7 +1332,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             this.itemList.sort(this.comparator);
         }
 
-        @OnlyIn(Dist.CLIENT)
         final class ListComparator implements Comparator<Item> {
 
             private ListComparator() {
@@ -1383,7 +1361,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
             }
         }
 
-        @OnlyIn(Dist.CLIENT)
         final class Entry extends ObjectSelectionList.Entry<ScreenStats.ListStats.Entry> {
 
             private Entry() {

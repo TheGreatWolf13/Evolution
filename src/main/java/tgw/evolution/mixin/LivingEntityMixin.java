@@ -13,6 +13,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.CombatTracker;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.EntityDamageSource;
@@ -61,8 +62,7 @@ import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.items.IEvolutionItem;
 import tgw.evolution.items.IMelee;
-import tgw.evolution.network.PacketCSCollision;
-import tgw.evolution.network.PacketCSImpactDamage;
+import tgw.evolution.network.*;
 import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IMobEffectInstancePatch;
@@ -153,8 +153,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     private long lastDamageStamp;
     @Shadow
     private int noJumpDelay;
-    private byte specialAttackCooldown;
-    private byte specialAttackStopTicks;
+    private byte specialAttackFollowUp;
+    private byte specialAttackGracePeriod;
+    private byte specialAttackLockedTicks;
     private byte specialAttackTime;
     private @Nullable IMelee.IAttackType specialAttackType;
 
@@ -252,7 +253,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
                         if (blockAtPos instanceof ICollisionBlock collisionBlock) {
                             slowDown += collisionBlock.getSlowdownSide(stateAtPos);
                             //noinspection ObjectAllocationInLoop
-                            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSCollision(changingPos, speedX, Direction.Axis.X));
+                            EvolutionNetwork.sendToServer(new PacketCSCollision(changingPos, speedX, Direction.Axis.X));
                         }
                         else {
                             slowDown += 1;
@@ -294,7 +295,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
                         if (blockAtPos instanceof ICollisionBlock collisionBlock) {
                             slowDown += collisionBlock.getSlowdownSide(stateAtPos);
                             //noinspection ObjectAllocationInLoop
-                            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSCollision(changingPos, speedZ, Direction.Axis.Z));
+                            EvolutionNetwork.sendToServer(new PacketCSCollision(changingPos, speedZ, Direction.Axis.Z));
                         }
                         else {
                             slowDown += 1;
@@ -320,13 +321,24 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
             }
             else //noinspection ConstantConditions
                 if ((LivingEntity) (Object) this instanceof Player) {
-                    EvolutionNetwork.INSTANCE.sendToServer(new PacketCSImpactDamage(damage));
+                    EvolutionNetwork.sendToServer(new PacketCSImpactDamage(damage));
                 }
         }
     }
 
     @Shadow
     public abstract boolean canBeAffected(MobEffectInstance pPotioneffect);
+
+    @Override
+    public boolean canPerformFollowUp(IMelee.IAttackType type) {
+        if (this.specialAttackType != type) {
+            return false;
+        }
+        if (!this.isOnGracePeriod()) {
+            return false;
+        }
+        return type.getFollowUps() >= this.specialAttackFollowUp;
+    }
 
     @Shadow
     public abstract boolean canStandOnFluid(FluidState p_204042_);
@@ -426,6 +438,11 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     }
 
     @Override
+    public int getFollowUp() {
+        return this.specialAttackFollowUp;
+    }
+
+    @Override
     public float getFrictionModifier() {
         return 2.0f;
     }
@@ -456,7 +473,11 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Override
     public float getSpecialAttackProgress(float partialTicks) {
-        if (this.specialAttackStopTicks > 0) {
+        if (this.isOnGracePeriod()) {
+            assert this.specialAttackType != null;
+            return 1.0f;
+        }
+        if (this.isLockedInSpecialAttack()) {
             partialTicks = 1.0f;
         }
         assert this.specialAttackType != null;
@@ -844,11 +865,18 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     protected abstract void hurtHelmet(DamageSource p_147213_, float p_147214_);
 
     @Shadow
+    protected abstract int increaseAirSupply(int pCurrentAir);
+
+    @Shadow
     protected abstract boolean isAffectedByFluids();
 
     @Override
+    @Shadow
+    public abstract boolean isAlive();
+
+    @Override
     public boolean isCameraLocked() {
-        if (this.shouldRenderSpecialAttack()) {
+        if (this.isSpecialAttacking() || this.isLockedInSpecialAttack()) {
             assert this.specialAttackType != null;
             return this.specialAttackType.isCameraLocked(this.specialAttackTime);
         }
@@ -869,7 +897,10 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Override
     public boolean isInHitTicks() {
-        if (!this.isSpecialAttacking) {
+        if (!this.isSpecialAttacking()) {
+            return false;
+        }
+        if (this.isOnGracePeriod()) {
             return false;
         }
         assert this.specialAttackType != null;
@@ -877,20 +908,31 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     }
 
     @Override
-    public boolean isInSpecialAttack() {
-        if (this.isSpecialAttacking) {
-            return true;
+    public boolean isLateralMotionLocked() {
+        if (this.isSpecialAttacking() || this.isLockedInSpecialAttack()) {
+            assert this.specialAttackType != null;
+            return this.specialAttackType.isLateralMotionLocked(this.specialAttackTime);
         }
-        return this.specialAttackCooldown > 0 || this.specialAttackStopTicks > 0;
+        return false;
     }
 
     @Override
-    public boolean isMotionLocked() {
-        if (this.shouldRenderSpecialAttack()) {
+    public boolean isLockedInSpecialAttack() {
+        return this.specialAttackLockedTicks > 0;
+    }
+
+    @Override
+    public boolean isLongitudinalMotionLocked() {
+        if (this.isSpecialAttacking() || this.isLockedInSpecialAttack()) {
             assert this.specialAttackType != null;
-            return this.specialAttackType.isMotionLocked(this.specialAttackTime);
+            return this.specialAttackType.isLongitudinalMotionLocked(this.specialAttackTime);
         }
         return false;
+    }
+
+    @Override
+    public boolean isOnGracePeriod() {
+        return this.specialAttackGracePeriod > 0;
     }
 
     @Shadow
@@ -903,6 +945,15 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Shadow
     public abstract boolean isUsingItem();
+
+    @Override
+    public boolean isVerticalMotionLocked() {
+        if (this.isSpecialAttacking() || this.isLockedInSpecialAttack()) {
+            assert this.specialAttackType != null;
+            return this.specialAttackType.isVerticalMotionLocked(this.specialAttackTime);
+        }
+        return false;
+    }
 
     /**
      * @author TheGreatWolf
@@ -950,23 +1001,23 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Inject(method = "baseTick", at = @At(value = "TAIL"))
     public void onBaseTick(CallbackInfo ci) {
-        if (this.specialAttackCooldown > 0) {
-            this.specialAttackCooldown--;
+        if (this.specialAttackGracePeriod > 0) {
+            if (--this.specialAttackGracePeriod == 0) {
+                this.specialAttackFollowUp = 0;
+            }
         }
         if (this.isSpecialAttacking) {
-            this.specialAttackTime++;
             assert this.specialAttackType != null;
             int totalTime = this.specialAttackType.getAttackTime();
-            if (this.specialAttackTime > totalTime) {
+            if (++this.specialAttackTime >= totalTime) {
                 this.stopSpecialAttack(IMelee.StopReason.END);
             }
         }
         else {
-            if (this.specialAttackStopTicks > 0) {
-                this.specialAttackStopTicks--;
-            }
-            else {
-                this.specialAttackTime = 0;
+            if (this.specialAttackLockedTicks > 0) {
+                if (--this.specialAttackLockedTicks == 0) {
+                    this.specialAttackTime = 0;
+                }
             }
         }
     }
@@ -1019,6 +1070,12 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         }
     }
 
+    @Override
+    public void performFollowUp() {
+        assert this.specialAttackType != null;
+        this.startSpecialAttack(this.specialAttackType);
+    }
+
     @Shadow
     protected abstract void playHurtSound(DamageSource p_21160_);
 
@@ -1055,31 +1112,6 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Shadow
     public abstract void setArrowCount(int p_85034_1_);
 
-//    /**
-//     * @author TheGreatWolf
-//     * <p>
-//     * Remove the annoying noise when using an item for other players.
-//     */
-//    @Overwrite
-//    protected void playEquipSound(ItemStack stack) {
-//        if (!stack.isEmpty()) {
-//            SoundEvent sound = null;
-//            Item item = stack.getItem();
-//            if (item instanceof ArmorItem) {
-//                sound = ((ArmorItem) item).getMaterial().getEquipSound();
-//            }
-//            else if (item == Items.ELYTRA) {
-//                sound = SoundEvents.ARMOR_EQUIP_ELYTRA;
-//            }
-//            else if (item instanceof IAdditionalEquipment) {
-//                sound = ((IAdditionalEquipment) item).getEquipSound();
-//            }
-//            if (sound != null) {
-//                this.playSound(sound, 1.0F, 1.0F);
-//            }
-//        }
-//    }
-
     @Shadow
     public abstract void setLastHurtByMob(@Nullable LivingEntity p_70604_1_);
 
@@ -1087,18 +1119,23 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     public abstract void setStingerCount(int p_226300_1_);
 
     @Override
-    public boolean shouldRenderSpecialAttack() {
-        if (this.isSpecialAttacking) {
-            return true;
-        }
-        return this.specialAttackStopTicks > 0;
-    }
-
-    @Override
     public void startSpecialAttack(IMelee.IAttackType type) {
         this.isSpecialAttacking = true;
         this.specialAttackType = type;
         this.specialAttackTime = 0;
+        this.specialAttackGracePeriod = 0;
+        if (type == IMelee.BARE_HAND_ATTACK) {
+            this.swing(InteractionHand.MAIN_HAND);
+        }
+        if (this.level.isClientSide) {
+            //noinspection ConstantConditions
+            if ((Object) this instanceof Player) {
+                EvolutionNetwork.sendToServer(new PacketCSSpecialAttackStart(type));
+            }
+        }
+        else {
+            EvolutionNetwork.sendToTracking(this, new PacketSCSpecialAttackStart((LivingEntity) (Object) this, type));
+        }
     }
 
     @Shadow
@@ -1106,6 +1143,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Override
     public void stopSpecialAttack(IMelee.StopReason reason) {
+        this.isSpecialAttacking = false;
         if (reason == IMelee.StopReason.HIT_BLOCK) {
             ItemStack stack = this.getMainHandItem();
             SoundEvent sound;
@@ -1118,11 +1156,31 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
                         EvolutionSounds.METAL_WEAPON_HIT_BLOCK.get();
             }
             this.playSound(sound, 0.4f, 0.8F + this.random.nextFloat() * 0.4F);
-            this.specialAttackStopTicks = 5;
+            this.specialAttackLockedTicks = 10;
         }
-        this.specialAttackCooldown = 2;
-        this.isSpecialAttacking = false;
+        if (!this.isLockedInSpecialAttack()) {
+            assert this.specialAttackType != null;
+            if (this.specialAttackType.getFollowUps() >= ++this.specialAttackFollowUp) {
+                this.specialAttackGracePeriod = 10;
+            }
+            else {
+                this.specialAttackFollowUp = 0;
+                this.specialAttackGracePeriod = 0;
+            }
+        }
+        if (this.level.isClientSide) {
+            //noinspection ConstantConditions
+            if ((Object) this instanceof Player) {
+                EvolutionNetwork.sendToServer(new PacketCSSpecialAttackStop(reason));
+            }
+        }
+        else {
+            EvolutionNetwork.sendToTracking(this, new PacketSCSpecialAttackStop((LivingEntity) (Object) this, reason));
+        }
     }
+
+    @Shadow
+    public abstract void swing(InteractionHand pHand);
 
     /**
      * @author TheGreatWolf

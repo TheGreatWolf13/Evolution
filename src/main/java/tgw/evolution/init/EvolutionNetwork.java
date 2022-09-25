@@ -2,11 +2,14 @@ package tgw.evolution.init;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.network.*;
 import tgw.evolution.util.collection.I2OMap;
@@ -18,9 +21,10 @@ import java.util.function.Supplier;
 
 public final class EvolutionNetwork {
 
-    public static final SimpleChannel INSTANCE;
+    private static final SimpleChannel INSTANCE;
     private static final String PROTOCOL_VERSION = "1";
     private static final I2OMap<PacketDistributor.PacketTarget> PACKET_TARGET_CACHE = new I2OOpenHashMap<>();
+    private static @Nullable PacketDistributor.PacketTarget all;
     private static int id;
 
     static {
@@ -50,7 +54,6 @@ public final class EvolutionNetwork {
     public static void registerMessages() {
         register(PacketSCUpdateChunkStorage.class, PacketSCUpdateChunkStorage::encode, PacketSCUpdateChunkStorage::decode,
                  PacketSCUpdateChunkStorage::handle);
-        register(PacketSCHandAnimation.class, PacketSCHandAnimation::encode, PacketSCHandAnimation::decode, PacketSCHandAnimation::handle);
         register(PacketCSOpenExtendedInventory.class, PacketCSOpenExtendedInventory::encode, PacketCSOpenExtendedInventory::decode,
                  PacketCSOpenExtendedInventory::handle);
         register(PacketCSPlayerAttack.class, PacketCSPlayerAttack::encode, PacketCSPlayerAttack::decode, PacketCSPlayerAttack::handle);
@@ -103,6 +106,14 @@ public final class EvolutionNetwork {
         register(PacketSCUpdateCameraViewCenter.class, PacketSCUpdateCameraViewCenter::encode, PacketSCUpdateCameraViewCenter::decode,
                  PacketSCUpdateCameraViewCenter::handle);
         register(PacketSCMomentum.class, PacketSCMomentum::encode, PacketSCMomentum::decode, PacketSCMomentum::handle);
+        register(PacketCSSpecialAttackStart.class, PacketCSSpecialAttackStart::encode, PacketCSSpecialAttackStart::decode,
+                 PacketCSSpecialAttackStart::handle);
+        register(PacketSCSpecialAttackStart.class, PacketSCSpecialAttackStart::encode, PacketSCSpecialAttackStart::decode,
+                 PacketSCSpecialAttackStart::handle);
+        register(PacketCSSpecialAttackStop.class, PacketCSSpecialAttackStop::encode, PacketCSSpecialAttackStop::decode,
+                 PacketCSSpecialAttackStop::handle);
+        register(PacketSCSpecialAttackStop.class, PacketSCSpecialAttackStop::encode, PacketSCSpecialAttackStop::decode,
+                 PacketSCSpecialAttackStop::handle);
     }
 
     public static void resetCache() {
@@ -110,11 +121,30 @@ public final class EvolutionNetwork {
     }
 
     public static void send(ServerPlayer player, IPacket packet) {
+        assert packet.getDestinationSide() == LogicalSide.CLIENT;
         PacketDistributor.PacketTarget target = PACKET_TARGET_CACHE.get(player.getId());
         if (target == null) {
             target = PacketDistributor.PLAYER.with(() -> player);
             PACKET_TARGET_CACHE.put(player.getId(), target);
         }
         INSTANCE.send(target, packet);
+    }
+
+    public static void sendToAll(IPacket packet) {
+        assert packet.getDestinationSide() == LogicalSide.CLIENT;
+        if (all == null) {
+            all = PacketDistributor.ALL.noArg();
+        }
+        INSTANCE.send(all, packet);
+    }
+
+    public static void sendToServer(IPacket packet) {
+        assert packet.getDestinationSide() == LogicalSide.SERVER;
+        INSTANCE.sendToServer(packet);
+    }
+
+    public static void sendToTracking(Entity entity, IPacket packet) {
+        assert packet.getDestinationSide() == LogicalSide.CLIENT;
+        INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), packet);
     }
 }

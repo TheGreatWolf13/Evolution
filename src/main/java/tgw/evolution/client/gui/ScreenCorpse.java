@@ -16,8 +16,6 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import org.lwjgl.glfw.GLFW;
@@ -33,7 +31,6 @@ import tgw.evolution.util.time.FullDate;
 import java.util.Date;
 import java.util.List;
 
-@OnlyIn(Dist.CLIENT)
 public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
 
     private final List<FormattedCharSequence> deathMessage;

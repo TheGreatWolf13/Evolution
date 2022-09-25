@@ -18,6 +18,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.*;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.npc.InventoryCarrier;
@@ -31,8 +32,6 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.gui.ForgeIngameGui;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL14;
@@ -64,7 +63,6 @@ import tgw.evolution.util.math.MathHelper;
 import java.util.Collections;
 import java.util.Random;
 
-@OnlyIn(Dist.CLIENT)
 public class ClientRenderer {
 
     private static @Nullable ClientRenderer instance;
@@ -79,8 +77,6 @@ public class ClientRenderer {
     public boolean shouldRenderLeftArm = true;
     public boolean shouldRenderRightArm = true;
     private @Nullable RunnableAddingEffect addingEffect;
-    private ItemStack currentMainhandStack = ItemStack.EMPTY;
-    private ItemStack currentOffhandStack = ItemStack.EMPTY;
     private byte healthFlashTicks;
     private short healthTick;
     private byte hitmarkerTick;
@@ -96,14 +92,8 @@ public class ClientRenderer {
     private short lastNeutralCount;
     private int lastPlayerHealth;
     private ItemStack mainHandStack = ItemStack.EMPTY;
-    private float mainhandEquipProgress;
-    private boolean mainhandIsSwingInProgress;
-    private int mainhandSwingProgressInt;
     private short movingFinalCount;
-    private float offhandEquipProgress;
-    private boolean offhandIsSwingInProgress;
     private ItemStack offhandStack = ItemStack.EMPTY;
-    private int offhandSwingProgressInt;
     private byte thirstAlphaMult = 1;
     private float thirstFlashAlpha;
     private byte thirstFlashTicks;
@@ -223,6 +213,28 @@ public class ClientRenderer {
         return instance;
     }
 
+    private static void renderAttackIndicator(HumanoidArm arm, PoseStack matrices, int x, int y, float perc, boolean shouldRenderOther) {
+        int l = (int) (perc * 18.0F);
+        int baseIndex = 5;
+        int fullIndex = 6;
+        int i = 0;
+        if (arm == HumanoidArm.LEFT) {
+            baseIndex += 2;
+            fullIndex += 2;
+            if (shouldRenderOther) {
+                x -= 10;
+            }
+            i = 17 - l;
+        }
+        else if (shouldRenderOther) {
+            x += 10;
+        }
+        //Render base
+        blit(matrices, x, y, baseIndex * 17, EvolutionResources.ICON_17_17, 17, 17);
+        //Render full
+        blit(matrices, x + i, y, fullIndex * 17 + i, EvolutionResources.ICON_17_17, l, 17);
+    }
+
     private static int roundToHearts(float currentHealth) {
         return Mth.ceil(currentHealth / 2.5f);
     }
@@ -236,19 +248,14 @@ public class ClientRenderer {
         if (fromInvalid || toInvalid) {
             return true;
         }
-        boolean changed = false;
         if (slot != -1) {
-            changed = slot != slotMainHand;
-            slotMainHand = slot;
+            boolean changed = slot != slotMainHand;
+            if (changed) {
+                slotMainHand = slot;
+                return true;
+            }
         }
-        if (changed) {
-            return true;
-        }
-        return !MathHelper.areItemStacksSufficientlyEqual(from, to);
-    }
-
-    private static boolean shouldShowAttackIndicator(Entity entity) {
-        return entity.isAttackable() && entity.isAlive();
+        return !MathHelper.areStacksSimilar(from, to);
     }
 
     public void endTick() {
@@ -365,7 +372,6 @@ public class ClientRenderer {
 
     public void renderCrosshair(PoseStack matrices, float partialTicks, int width, int height) {
         Options options = this.mc.options;
-        RenderSystem.setShaderTexture(0, EvolutionResources.GUI_ICONS);
         if (options.getCameraType() == CameraType.FIRST_PERSON) {
             assert this.mc.gameMode != null;
             assert this.mc.player != null;
@@ -385,7 +391,9 @@ public class ClientRenderer {
                     RenderSystem.applyModelViewMatrix();
                 }
                 else {
+                    RenderSystem.setShaderTexture(0, EvolutionResources.GUI_ICONS);
                     RenderSystem.enableBlend();
+                    //Hitmarker
                     if (EvolutionConfig.CLIENT.hitmarkers.get()) {
                         if (this.killmarkerTick >= 0) {
                             if (this.killmarkerTick >= 10) {
@@ -409,26 +417,30 @@ public class ClientRenderer {
                     RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
                     Blending.INVERTED_ADD.apply();
                     RenderSystem.blendEquation(GL14.GL_FUNC_SUBTRACT);
-                    blit(matrices, (width - 17) / 2, (height - 17) / 2, 0, EvolutionResources.ICON_17_17, 17, 17);
-                    if (this.mc.options.attackIndicator == AttackIndicatorStatus.CROSSHAIR) {
-                        float leftCooledAttackStrength = this.client.getMainhandCooledAttackStrength(partialTicks);
-                        boolean shouldShowLeftAttackIndicator = false;
-                        if (this.client.leftPointedEntity instanceof LivingEntity && leftCooledAttackStrength >= 1) {
-                            shouldShowLeftAttackIndicator = shouldShowAttackIndicator(this.client.leftPointedEntity);
-                            assert this.mc.hitResult != null;
-                            if (this.mc.hitResult.getType() == HitResult.Type.BLOCK) {
-                                shouldShowLeftAttackIndicator = false;
-                            }
-                        }
-                        int x = width / 2 - 8;
-                        int y = height / 2 - 7 + 17;
-                        if (shouldShowLeftAttackIndicator) {
-                            blit(matrices, x, y, 6 * 17, EvolutionResources.ICON_17_17, 17, 17);
-                        }
-                        else if (leftCooledAttackStrength < 1.0F) {
-                            int l = (int) (leftCooledAttackStrength * 18.0F);
+                    //Crosshair
+                    int x = (width - 17) / 2;
+                    int y = (height - 17) / 2;
+                    blit(matrices, x, y, 0, EvolutionResources.ICON_17_17, 17, 17);
+                    //Interaction indicator
+                    //noinspection VariableNotUsedInsideIf
+                    if (this.client.leftPointedEntity != null) {
+                        assert this.mc.hitResult != null;
+                        if (this.mc.hitResult.getType() != HitResult.Type.BLOCK) {
                             blit(matrices, x, y, 4 * 17, EvolutionResources.ICON_17_17, 17, 17);
-                            blit(matrices, x, y, 5 * 17, EvolutionResources.ICON_17_17, l, 17);
+                        }
+                    }
+                    if (this.mc.options.attackIndicator == AttackIndicatorStatus.CROSSHAIR) {
+                        float mainhandPerc = this.client.getMainhandIndicatorPercentage(partialTicks);
+                        float offhandPerc = this.client.getOffhandIndicatorPercentage(partialTicks);
+                        boolean shouldRenderMain = mainhandPerc < 1;
+                        boolean shouldRenderOff = offhandPerc < 1;
+                        y += 17;
+                        if (shouldRenderMain) {
+                            renderAttackIndicator(this.mc.player.getMainArm(), matrices, x, y, mainhandPerc,
+                                                  shouldRenderOff || !this.mc.player.getOffhandItem().isEmpty());
+                        }
+                        if (shouldRenderOff) {
+                            renderAttackIndicator(this.mc.player.getMainArm().getOpposite(), matrices, x, y, offhandPerc, true);
                         }
                     }
                     RenderSystem.blendEquation(GL14.GL_FUNC_ADD);
@@ -1108,129 +1120,48 @@ public class ClientRenderer {
         this.mc.getProfiler().pop();
     }
 
-    public void resetEquipProgress(InteractionHand hand) {
-        if (hand == InteractionHand.MAIN_HAND) {
-            this.mainhandEquipProgress = 0;
-        }
-        else {
-            this.offhandEquipProgress = 0;
-        }
-    }
-
-    public void resetFullEquipProgress(InteractionHand hand) {
-        if (hand == InteractionHand.MAIN_HAND) {
-            this.mainhandEquipProgress = 0;
-        }
-        else {
-            this.offhandEquipProgress = 0;
-        }
-    }
-
     public void startTick() {
-//        this.updateArmSwingProgress();
         LocalPlayer player = this.mc.player;
         assert player != null;
         ItemStack mainhandStack = player.getMainHandItem();
         ItemStack offhandStack = player.getOffhandItem();
-        if (player.isHandsBusy()) {
-            this.mainhandEquipProgress = MathHelper.clamp(this.mainhandEquipProgress - 0.4F, 0.0F, 1.0F);
-            this.offhandEquipProgress = MathHelper.clamp(this.offhandEquipProgress - 0.4F, 0.0F, 1.0F);
-        }
-        else {
+        if (!player.isHandsBusy()) {
             boolean requipM = shouldCauseReequipAnimation(this.mainHandStack, mainhandStack, player.getInventory().selected);
             boolean requipO = shouldCauseReequipAnimation(this.offhandStack, offhandStack, -1);
             if (requipM) {
-                this.client.mainhandTimeSinceLastHit = 0;
-                if (!ItemStack.matches(this.currentMainhandStack, mainhandStack)) {
-                    this.currentMainhandStack = mainhandStack;
-                    if (this.currentMainhandStack.getItem() instanceof IMelee melee && melee.shouldPlaySheatheSound(this.currentMainhandStack)) {
+                this.client.resetCooldown(InteractionHand.MAIN_HAND);
+                if (!ItemStack.matches(this.mainHandStack, mainhandStack)) {
+                    if (mainhandStack.getItem() instanceof IMelee melee && melee.shouldPlaySheatheSound(mainhandStack)) {
                         this.mc.getSoundManager()
                                .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
-                        EvolutionNetwork.INSTANCE.sendToServer(
+                        EvolutionNetwork.sendToServer(
                                 new PacketCSPlaySoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE.get(), SoundSource.PLAYERS, 0.8f,
                                                                    1.0f));
                     }
                 }
             }
             else {
-                this.mainHandStack = mainhandStack.copy();
-                this.client.mainhandTimeSinceLastHit++;
+                this.client.incrementCooldown(InteractionHand.MAIN_HAND);
             }
             if (requipO) {
-                this.client.offhandTimeSinceLastHit = 0;
-                if (!ItemStack.matches(this.currentOffhandStack, offhandStack)) {
-                    this.currentOffhandStack = offhandStack;
-                    if (this.currentOffhandStack.getItem() instanceof IMelee melee && melee.shouldPlaySheatheSound(this.currentOffhandStack)) {
+                this.client.resetCooldown(InteractionHand.OFF_HAND);
+                if (!ItemStack.matches(this.offhandStack, offhandStack)) {
+                    if (offhandStack.getItem() instanceof IMelee melee && melee.shouldPlaySheatheSound(offhandStack)) {
                         this.mc.getSoundManager()
                                .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
-                        EvolutionNetwork.INSTANCE.sendToServer(
+                        EvolutionNetwork.sendToServer(
                                 new PacketCSPlaySoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_UNSHEATHE.get(), SoundSource.PLAYERS, 0.8f,
                                                                    1.0f));
                     }
                 }
             }
             else {
-                this.offhandStack = offhandStack.copy();
-                this.client.offhandTimeSinceLastHit++;
+                this.client.incrementCooldown(InteractionHand.OFF_HAND);
             }
-            float cooledAttackStrength = this.client.getOffhandCooledAttackStrength(1.0F);
-            this.offhandEquipProgress += MathHelper.clamp(
-                    (!requipO ? cooledAttackStrength * cooledAttackStrength * cooledAttackStrength : 0.0F) - this.offhandEquipProgress, -0.4f, 0.4F);
-            cooledAttackStrength = this.client.getMainhandCooledAttackStrength(1.0F);
-            this.mainhandEquipProgress += MathHelper.clamp(
-                    (!requipM ? cooledAttackStrength * cooledAttackStrength * cooledAttackStrength : 0.0F) - this.mainhandEquipProgress, -0.4F, 0.4F);
-
-        }
-        if (this.mainhandEquipProgress < 0.1F) {
-            this.mainHandStack = mainhandStack.copy();
-        }
-        if (this.offhandEquipProgress < 0.1F) {
-            this.offhandStack = offhandStack.copy();
+            this.offhandStack = offhandStack;
+            this.mainHandStack = mainhandStack;
         }
     }
-
-    public void swingArm(InteractionHand hand) {
-        if (hand == InteractionHand.OFF_HAND) {
-            if (!this.offhandIsSwingInProgress ||
-                this.offhandSwingProgressInt >= this.getArmSwingAnimationEnd() / 2 ||
-                this.offhandSwingProgressInt < 0) {
-                this.offhandSwingProgressInt = -1;
-                this.offhandIsSwingInProgress = true;
-            }
-        }
-        else {
-            if (!this.mainhandIsSwingInProgress ||
-                this.mainhandSwingProgressInt >= this.getArmSwingAnimationEnd() / 2 ||
-                this.mainhandSwingProgressInt < 0) {
-                this.mainhandSwingProgressInt = -1;
-                this.mainhandIsSwingInProgress = true;
-            }
-        }
-    }
-
-//    private void updateArmSwingProgress() {
-//        int i = this.getArmSwingAnimationEnd();
-//        if (this.offhandIsSwingInProgress) {
-//            ++this.offhandSwingProgressInt;
-//            if (this.offhandSwingProgressInt >= i) {
-//                this.offhandSwingProgressInt = 0;
-//                this.offhandIsSwingInProgress = false;
-//            }
-//        }
-//        else {
-//            this.offhandSwingProgressInt = 0;
-//        }
-//        if (this.mainhandIsSwingInProgress) {
-//            ++this.mainhandSwingProgressInt;
-//            if (this.mainhandSwingProgressInt >= i) {
-//                this.mainhandSwingProgressInt = 0;
-//                this.mainhandIsSwingInProgress = false;
-//            }
-//        }
-//        else {
-//            this.mainhandSwingProgressInt = 0;
-//        }
-//    }
 
     public void updateHitmarkers(boolean isKill) {
         if (isKill) {

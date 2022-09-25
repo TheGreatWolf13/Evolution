@@ -61,6 +61,10 @@ public class MaterialInstance {
         return this.material.getResistance();
     }
 
+    public boolean isSimilar(MaterialInstance other) {
+        return this.material == other.material;
+    }
+
     public CompoundTag write() {
         if (this.tag == null) {
             this.tag = new CompoundTag();

@@ -21,8 +21,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.IForgeShearable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +89,6 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public void animateTick(BlockState state, Level level, BlockPos pos, Random rand) {
         if (level.isRainingAt(pos.above()) && !level.getBlockState(pos.below()).canOcclude() && rand.nextInt(15) == 1) {
             double x = pos.getX() + rand.nextFloat();

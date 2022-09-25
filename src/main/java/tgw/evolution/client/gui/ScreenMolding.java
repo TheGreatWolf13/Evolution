@@ -11,8 +11,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.EnumMolding;
@@ -23,7 +21,6 @@ import tgw.evolution.network.PacketCSSetMoldingType;
 
 import java.util.Map;
 
-@OnlyIn(Dist.CLIENT)
 public class ScreenMolding extends Screen {
 
     private static final int WIDTH = 190;
@@ -103,7 +100,8 @@ public class ScreenMolding extends Screen {
     }
 
     private void setTile(EnumMolding type) {
-        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSetMoldingType(this.pos, type));
+        EvolutionNetwork.sendToServer(new PacketCSSetMoldingType(this.pos, type));
+        assert this.minecraft != null;
         this.minecraft.setScreen(null);
     }
 }

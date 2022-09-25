@@ -8,8 +8,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.ai.*;
 import tgw.evolution.util.constants.EntityStates;
@@ -122,7 +120,6 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
         return 9 * Time.TICKS_PER_MONTH;
     }
 
-    @OnlyIn(Dist.CLIENT)
     public float getHeadRotationAngleX(float partialTicks) {
         if (this.hurtTime > 0) {
             this.eatTimer = 0;
@@ -135,7 +132,6 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
         return this.eatTimer > 0 ? Mth.PI / 5.0F : Mth.DEG_TO_RAD * this.getXRot();
     }
 
-    @OnlyIn(Dist.CLIENT)
     public float getHeadRotationPointY(float partialTicks) {
         if (this.hurtTime > 0) {
             this.eatTimer = 0;
@@ -184,7 +180,6 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
         return this.isBaby() ? dimensions.height * 0.95F : 1.35F;
     }
 
-    @OnlyIn(Dist.CLIENT)
     private boolean getTailChanceX() {
         if (this.isDead() || this.isSleeping()) {
             return false;
@@ -192,7 +187,6 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
         return this.random.nextInt(10_000) == 0;
     }
 
-    @OnlyIn(Dist.CLIENT)
     private boolean getTailChanceZ() {
         if (this.isDead() || this.isSleeping()) {
             return false;
@@ -200,7 +194,6 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
         return this.random.nextInt(5_000) == 0;
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void handleEntityEvent(byte id) {
         if (id == EntityStates.EAT_GRASS) {
@@ -249,7 +242,6 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
 
     }
 
-    @OnlyIn(Dist.CLIENT)
     public float tailIncX() {
         if (this.tailTimerX-- > 0) {
             this.tailIncX += Mth.PI / 200.0F;
@@ -264,7 +256,6 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
         return this.tailIncX;
     }
 
-    @OnlyIn(Dist.CLIENT)
     public float tailIncZ() {
         if (this.tailTimerZ-- > 0) {
             this.tailIncZ += Mth.PI * 2 / 500.0F;

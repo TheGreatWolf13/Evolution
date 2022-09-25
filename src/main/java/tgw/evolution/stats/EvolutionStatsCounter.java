@@ -7,8 +7,6 @@ import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
 import net.minecraft.stats.StatsCounter;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.Evolution;
 
 public class EvolutionStatsCounter extends StatsCounter {
@@ -26,13 +24,11 @@ public class EvolutionStatsCounter extends StatsCounter {
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public <T> int getValue(StatType<T> statType, T stat) {
         Evolution.debug("Wrong stats method, called by {}", Thread.currentThread().getStackTrace()[2]);
         return 0;
     }
 
-    @OnlyIn(Dist.CLIENT)
     public <T> long getValueLong(StatType<T> statType, T stat) {
         return statType.contains(stat) ? this.getValueLong(statType.get(stat)) : 0;
     }

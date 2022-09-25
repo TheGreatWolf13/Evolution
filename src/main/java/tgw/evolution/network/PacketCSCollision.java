@@ -40,9 +40,11 @@ public class PacketCSCollision implements IPacket {
     }
 
     public static void handle(PacketCSCollision packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
-                ServerPlayer player = context.get().getSender();
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
+                ServerPlayer player = c.getSender();
+                assert player != null;
                 Level level = player.level;
                 BlockPos pos = BlockPos.of(packet.packedPos);
                 BlockState state = level.getBlockState(pos);
@@ -51,7 +53,7 @@ public class PacketCSCollision implements IPacket {
                     collisionBlock.collision(level, pos, player, packet.speed, mass, packet.axis);
                 }
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

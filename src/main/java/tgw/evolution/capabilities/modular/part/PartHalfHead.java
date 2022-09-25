@@ -132,6 +132,14 @@ public class PartHalfHead implements IPartHit<PartTypes.HalfHead, ItemPartHalfHe
     }
 
     @Override
+    public boolean isSimilar(PartHalfHead part) {
+        if (this.type != part.type) {
+            return false;
+        }
+        return this.material.isSimilar(part.material);
+    }
+
+    @Override
     public void loseSharp(int amount) {
         if (this.canBeSharpened()) {
             this.sharpAmount -= amount;
@@ -149,6 +157,9 @@ public class PartHalfHead implements IPartHit<PartTypes.HalfHead, ItemPartHalfHe
         tag.putInt("Durability", this.spentDurability);
         if (this.canBeSharpened()) {
             tag.putInt("SharpAmount", this.sharpAmount);
+        }
+        else {
+            tag.remove("SharpAmount");
         }
         return tag;
     }

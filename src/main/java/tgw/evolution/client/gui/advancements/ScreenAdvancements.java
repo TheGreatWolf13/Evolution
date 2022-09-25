@@ -14,8 +14,6 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.protocol.game.ServerboundSeenAdvancementsPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
@@ -30,7 +28,6 @@ import tgw.evolution.init.EvolutionResources;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@OnlyIn(Dist.CLIENT)
 public class ScreenAdvancements extends Screen implements ClientAdvancements.Listener {
 
     private static final int WIDTH = 252;

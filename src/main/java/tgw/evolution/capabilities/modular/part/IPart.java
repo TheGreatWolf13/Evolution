@@ -52,5 +52,7 @@ public interface IPart<T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>
 
     boolean isBroken();
 
+    boolean isSimilar(P part);
+
     void set(T type, MaterialInstance material);
 }

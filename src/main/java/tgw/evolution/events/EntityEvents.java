@@ -38,7 +38,6 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.capabilities.SerializableCapabilityProvider;
 import tgw.evolution.capabilities.food.CapabilityHunger;
@@ -202,7 +201,7 @@ public class EntityEvents {
             if (living instanceof Player player) {
                 if (player.level.isClientSide) {
                     if (player.equals(Evolution.PROXY.getClientPlayer())) {
-                        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSkinType());
+                        EvolutionNetwork.sendToServer(new PacketCSSkinType());
                     }
                 }
                 else if (player instanceof ServerPlayer serverPlayer) {
@@ -386,7 +385,7 @@ public class EntityEvents {
         double fallDistanceSlowDown = 1 - event.getDamageMultiplier();
         if (entity instanceof Player) {
             if (entity.level.isClientSide) {
-                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerFall(velocity, fallDistanceSlowDown));
+                EvolutionNetwork.sendToServer(new PacketCSPlayerFall(velocity, fallDistanceSlowDown));
             }
             return;
         }
@@ -492,7 +491,7 @@ public class EntityEvents {
                     EvolutionNetwork.send(serverPlayer, new PacketSCFixRotation(otherPlayer));
                 }
             }
-            EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> player), new PacketSCFixRotation(player));
+            EvolutionNetwork.sendToTracking(player, new PacketSCFixRotation(player));
         }
     }
 
@@ -548,7 +547,7 @@ public class EntityEvents {
                 EvolutionNetwork.send(player, new PacketSCFixRotation(otherPlayer));
             }
         }
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> player), new PacketSCFixRotation(player));
+        EvolutionNetwork.sendToTracking(player, new PacketSCFixRotation(player));
         EvolutionCapabilities.revive(player);
         ITemperature temperature = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityTemperature.INSTANCE);
         ClimateZone.Region region = temperature.getRegion();

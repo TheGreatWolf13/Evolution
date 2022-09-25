@@ -5,7 +5,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 
 import java.util.function.Supplier;
@@ -30,13 +29,14 @@ public class PacketCSUpdateBeltBackItem implements IPacket {
     }
 
     public static void handle(PacketCSUpdateBeltBackItem packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
-                ServerPlayer player = context.get().getSender();
-                EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> player),
-                                               new PacketSCUpdateBeltBackItem(player.getId(), packet.back, packet.stack));
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
+                ServerPlayer player = c.getSender();
+                assert player != null;
+                EvolutionNetwork.sendToTracking(player, new PacketSCUpdateBeltBackItem(player.getId(), packet.back, packet.stack));
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

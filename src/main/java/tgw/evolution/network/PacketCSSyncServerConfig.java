@@ -7,7 +7,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.util.ConfigHelper;
@@ -35,9 +34,11 @@ public class PacketCSSyncServerConfig implements IPacket {
     }
 
     public static void handle(PacketCSSyncServerConfig packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
-                ServerPlayer player = context.get().getSender();
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
+                ServerPlayer player = c.getSender();
+                assert player != null;
                 if (!player.hasPermissions(player.server.getOperatorUserPermissionLevel())) {
                     Evolution.warn("{} tried to update server config without operator status", player.getName().getString());
                     return;
@@ -48,10 +49,10 @@ public class PacketCSSyncServerConfig implements IPacket {
                     CommentedConfig data = TomlFormat.instance().createParser().parse(new ByteArrayInputStream(packet.data));
                     config.getConfigData().putAll(data);
                     ConfigHelper.resetCache(config);
-                    EvolutionNetwork.INSTANCE.send(PacketDistributor.ALL.noArg(), new PacketSCSyncServerConfig(packet.filename, packet.data));
+                    EvolutionNetwork.sendToAll(new PacketSCSyncServerConfig(packet.filename, packet.data));
                 }
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

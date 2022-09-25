@@ -24,9 +24,10 @@ public class PacketSCChangeTickrate implements IPacket {
     }
 
     public static void handle(PacketSCChangeTickrate packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> ClientEvents.getInstance().updateClientTickrate(packet.tickrate));
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> ClientEvents.getInstance().updateClientTickrate(packet.tickrate));
+            c.setPacketHandled(true);
         }
     }
 

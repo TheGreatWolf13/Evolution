@@ -3,8 +3,8 @@ package tgw.evolution.network;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -57,9 +57,11 @@ public class PacketCSChangeBlock implements IPacket {
     }
 
     public static void handle(PacketCSChangeBlock packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
-                Player player = context.get().getSender();
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
+                ServerPlayer player = c.getSender();
+                assert player != null;
                 Item item = player.getMainHandItem().getItem();
                 if (item instanceof BlockItem blockItem) {
                     Level level = player.level;
@@ -67,13 +69,15 @@ public class PacketCSChangeBlock implements IPacket {
                     UseOnContext itemContext = new UseOnContext(player, InteractionHand.MAIN_HAND, result);
                     BlockPlaceContext blockContext = new BlockPlaceContext(itemContext);
                     BlockState state = blockItem.getBlock().getStateForPlacement(blockContext);
-                    if (state.getBlock() instanceof ButtonBlock) {
-                        return;
+                    if (state != null) {
+                        if (state.getBlock() instanceof ButtonBlock) {
+                            return;
+                        }
+                        level.setBlockAndUpdate(packet.pos, state);
                     }
-                    level.setBlockAndUpdate(packet.pos, state);
                 }
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

@@ -7,7 +7,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.entity.EntityAccess;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.init.EvolutionNetwork;
 
 import java.util.function.Supplier;
@@ -25,6 +24,7 @@ public class PacketCSPlaySoundEntityEmitted implements IPacket {
                                           SoundSource category,
                                           float volume,
                                           float pitch) {
+        //noinspection ConstantConditions
         this(entity.getId(), sound.getRegistryName().toString(), category, volume, pitch);
     }
 
@@ -54,17 +54,16 @@ public class PacketCSPlaySoundEntityEmitted implements IPacket {
     }
 
     public static void handle(PacketCSPlaySoundEntityEmitted packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
-                ServerPlayer player = context.get().getSender();
-                EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> player),
-                                               new PacketSCPlaySoundEntityEmitted(packet.entityId,
-                                                                                  packet.sound,
-                                                                                  packet.category,
-                                                                                  packet.volume,
-                                                                                  packet.pitch));
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
+                ServerPlayer player = c.getSender();
+                assert player != null;
+                EvolutionNetwork.sendToTracking(player,
+                                                new PacketSCPlaySoundEntityEmitted(packet.entityId, packet.sound, packet.category, packet.volume,
+                                                                                   packet.pitch));
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

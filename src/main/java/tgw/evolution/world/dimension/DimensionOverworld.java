@@ -4,8 +4,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.util.earth.EarthHelper;
@@ -74,7 +72,6 @@ public class DimensionOverworld {
         return this.lastFogColor;
     }
 
-    @OnlyIn(Dist.CLIENT)
     public float getLatitude() {
         return this.latitude;
     }
@@ -97,7 +94,6 @@ public class DimensionOverworld {
         return Math.round(this.lunarEclipseDRightAscension);
     }
 
-    @OnlyIn(Dist.CLIENT)
     public float getMoonAltitude() {
         return this.moonAltitude;
     }
@@ -145,7 +141,6 @@ public class DimensionOverworld {
     /**
      * @return The angle the Sun makes with the Zenith, being 0º at the Zenith, 90º at the Horizon and 180º at Nadir
      */
-    @OnlyIn(Dist.CLIENT)
     public float getSunAltitude() {
         return this.sunAltitude;
     }

@@ -156,6 +156,11 @@ public interface IModularTool extends IModular {
         }
 
         @Override
+        public boolean isSimilar(IModular modular) {
+            return false;
+        }
+
+        @Override
         public boolean isSword() {
             return false;
         }

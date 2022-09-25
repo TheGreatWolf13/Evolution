@@ -69,7 +69,6 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.gui.ScreenCrash;
 import tgw.evolution.client.gui.ScreenOutOfMemory;
-import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.ICancelableUse;
@@ -143,6 +142,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Final
     public ParticleEngine particleEngine;
     @Shadow
+    public float pausePartialTick;
+    @Shadow
     @Nullable
     public LocalPlayer player;
     @Shadow
@@ -187,8 +188,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     private Overlay overlay;
     @Shadow
     private boolean pause;
-    @Shadow
-    private float pausePartialTick;
     @Shadow
     @Nullable
     private Connection pendingConnection;
@@ -271,7 +270,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
      */
     @Overwrite
     private void continueAttack(boolean leftClick) {
-        if (!leftClick || ClientEvents.getInstance().isInSpecialAttack()) {
+        if (!leftClick || ClientEvents.getInstance().shouldRenderSpecialAttack()) {
             this.missTime = 0;
         }
         assert this.player != null;
@@ -288,7 +287,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                         if (inputEvent.shouldSwingHand()) {
                             this.particleEngine.addBlockHitEffects(hitPos, blockRayTrace);
                             this.player.swing(InteractionHand.MAIN_HAND);
-                            ClientEvents.getInstance().swingArm(InteractionHand.MAIN_HAND);
                         }
                         return;
                     }
@@ -297,7 +295,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                         if (inputEvent.shouldSwingHand()) {
                             this.particleEngine.addBlockHitEffects(hitPos, blockRayTrace);
                             this.player.swing(InteractionHand.MAIN_HAND);
-                            ClientEvents.getInstance().swingArm(InteractionHand.MAIN_HAND);
                         }
                     }
                 }
@@ -406,7 +403,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         while (this.options.keySmoothCamera.consumeClick()) {
             this.options.smoothCamera = !this.options.smoothCamera;
         }
-        boolean isMainhandSpecialAttacking = ClientEvents.getInstance().isInSpecialAttack();
+        boolean isMainhandSpecialAttacking = ClientEvents.getInstance().shouldRenderSpecialAttack();
         for (int slot = 0; slot < 9; slot++) {
             boolean isSaveToolbarDown = this.options.keySaveHotbarActivator.isDown();
             boolean isLoadToolbarDown = this.options.keyLoadHotbarActivator.isDown();
@@ -479,6 +476,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             this.openChatScreen("/");
         }
         boolean shouldContinueAttacking = true;
+        boolean isAttackKeyDown;
         //Using item
         if (this.player.isUsingItem()) {
             if (!this.options.keyUse.isDown()) {
@@ -491,11 +489,11 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                     ItemStack usedStack = this.player.getUseItem();
                     if (usedStack.getItem() instanceof ICancelableUse cancelable) {
                         if (cancelable.isCancelable(usedStack) && this.cancelUseCooldown == 0) {
+                            ClientEvents.getInstance().resetCooldown(this.player.getUsedItemHand());
                             this.player.stopUsingItem();
                             this.cancelUseCooldown = 20;
-                            this.missTime = 20;
                             //noinspection ObjectAllocationInLoop
-                            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSStopUsingItem());
+                            EvolutionNetwork.sendToServer(new PacketCSStopUsingItem());
                         }
                     }
                     //TODO shield bash
@@ -505,6 +503,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
             while (this.options.keyPickItem.consumeClick()) {
             }
+            isAttackKeyDown = this.options.keyAttack.isDown();
         }
         //Not using item
         else {
@@ -520,7 +519,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                             shouldContinueAttacking = false;
                             IMelee.ChargeAttackType chargeAttackType = melee.getChargeAttackType(mainhandStack);
                             if (chargeAttackType != null) {
-                                if (!this.attackKeyPressed && ClientEvents.getInstance().getMainhandCooledAttackStrength(0.0f) >= 1.0f) {
+                                if (!this.attackKeyPressed && ClientEvents.getInstance().getMainhandIndicatorPercentage(0.0f) >= 1.0f) {
                                     if (++this.attackKeyTicks >= autoAttackTime) {
                                         //Hold Attack
                                         if (this.missTime == 0) {
@@ -534,7 +533,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                             else {
                                 if (++this.attackKeyTicks >= autoAttackTime) {
                                     //Break Block
-                                    shouldContinueAttacking = this.specialStartAttack();
+                                    shouldContinueAttacking = this.startAttack();
                                     this.attackKeyPressed = true;
                                 }
                             }
@@ -564,13 +563,18 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 else {
                     while (this.options.keyAttack.consumeClick()) {
                         if (!this.multiplayerPause) {
-                            shouldContinueAttacking = this.specialStartAttack();
+                            shouldContinueAttacking = this.startAttack();
                         }
                     }
                 }
+                isAttackKeyDown = this.options.keyAttack.isDown();
+            }
+            else {
+                isAttackKeyDown = this.options.keyAttack.isDown();
+                this.options.keyAttack.release();
             }
             while (this.options.keyUse.consumeClick()) {
-                if (!this.multiplayerPause && !ClientEvents.getInstance().isInSpecialAttack()) {
+                if (!this.multiplayerPause && !ClientEvents.getInstance().shouldRenderSpecialAttack()) {
                     this.startUseItem();
                 }
             }
@@ -581,14 +585,14 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
         }
         if (this.options.keyUse.isDown() && this.rightClickDelay == 0 && !this.player.isUsingItem()) {
-            if (!this.multiplayerPause && !ClientEvents.getInstance().isInSpecialAttack()) {
+            if (!this.multiplayerPause && !ClientEvents.getInstance().shouldRenderSpecialAttack()) {
                 this.startUseItem();
             }
         }
         this.continueAttack(
                 this.screen == null &&
                 shouldContinueAttacking &&
-                this.options.keyAttack.isDown() &&
+                isAttackKeyDown &&
                 this.mouseHandler.isMouseGrabbed() &&
                 !this.multiplayerPause);
     }
@@ -824,7 +828,12 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     protected abstract boolean shouldRenderFpsPie();
 
-    private boolean specialStartAttack() {
+    /**
+     * @author TheGreatWolf
+     * @reason Replace to handle Evolution's input.
+     */
+    @Overwrite
+    private boolean startAttack() {
         if (this.missTime > 0) {
             return true;
         }
@@ -889,75 +898,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
         }
         if (inputEvent.shouldSwingHand()) {
-            ClientEvents.getInstance().swingArm(InteractionHand.MAIN_HAND);
-            this.player.swing(InteractionHand.MAIN_HAND);
-        }
-        return shouldContinueAttacking;
-    }
-
-    /**
-     * @author TheGreatWolf
-     * @reason Replace to handle Evolution's input.
-     */
-    @Overwrite
-    private boolean startAttack() {
-        if (this.missTime > 0) {
-            return true;
-        }
-        assert this.gameMode != null;
-        if (this.hitResult == null) {
-            LOGGER.error("Null returned as 'hitResult', this shouldn't happen!");
-            if (this.gameMode.hasMissTime()) {
-                this.missTime = 10;
-            }
-            return true;
-        }
-        assert this.player != null;
-        assert this.level != null;
-        if (this.player.isHandsBusy()) {
-            return true;
-        }
-        boolean shouldContinueAttacking = true;
-        InputEvent.ClickInputEvent inputEvent = ForgeHooksClient.onClickInput(GLFW.GLFW_MOUSE_BUTTON_1, this.options.keyAttack,
-                                                                              InteractionHand.MAIN_HAND);
-        if (!inputEvent.isCanceled()) {
-            switch (this.hitResult.getType()) {
-                case ENTITY: {
-                    assert this.gameMode != null;
-                    if (this.gameMode.getPlayerMode() != GameType.SPECTATOR) {
-                        ClientEvents.getInstance().leftMouseClick();
-                    }
-                    else {
-                        assert this.crosshairPickEntity != null;
-                        this.gameMode.attack(this.player, this.crosshairPickEntity);
-                    }
-                    break;
-                }
-                case BLOCK: {
-                    BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
-                    BlockPos hitPos = blockRayTrace.getBlockPos();
-                    if (!this.level.isEmptyBlock(hitPos)) {
-                        this.gameMode.startDestroyBlock(hitPos, blockRayTrace.getDirection());
-                        if (this.level.getBlockState(hitPos).isAir()) {
-                            shouldContinueAttacking = false;
-                        }
-                        break;
-                    }
-                }
-                case MISS: {
-                    if (this.gameMode.hasMissTime()) {
-                        this.missTime = 10;
-                    }
-                    ForgeHooks.onEmptyLeftClick(this.player);
-                    if (this.attackKeyPressed) {
-                        return true;
-                    }
-                    break;
-                }
-            }
-        }
-        if (inputEvent.shouldSwingHand()) {
-            ClientEvents.getInstance().swingArm(InteractionHand.MAIN_HAND);
             this.player.swing(InteractionHand.MAIN_HAND);
         }
         return shouldContinueAttacking;
@@ -982,13 +922,12 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 if (this.cancelUseCooldown > 0) {
                     return;
                 }
-                for (InteractionHand hand : InteractionHand.values()) {
+                for (InteractionHand hand : MathHelper.HANDS_MAIN_PRIORITY) {
                     //noinspection ObjectAllocationInLoop
                     InputEvent.ClickInputEvent inputEvent = ForgeHooksClient.onClickInput(GLFW.GLFW_MOUSE_BUTTON_2, this.options.keyUse, hand);
                     if (inputEvent.isCanceled()) {
                         if (inputEvent.shouldSwingHand()) {
                             this.player.swing(hand);
-                            ClientEvents.getInstance().swingArm(hand);
                         }
                         return;
                     }
@@ -1005,7 +944,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                                 if (actionResult.shouldSwing()) {
                                     if (inputEvent.shouldSwingHand()) {
                                         this.player.swing(hand);
-                                        ClientEvents.getInstance().swingArm(hand);
                                     }
                                 }
                                 return;
@@ -1019,11 +957,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                                 if (actResult.shouldSwing()) {
                                     if (inputEvent.shouldSwingHand()) {
                                         this.player.swing(hand);
-                                        ClientEvents.getInstance().swingArm(hand);
                                     }
                                     if (!stack.isEmpty() && (stack.getCount() != count || this.gameMode.hasInfiniteItems())) {
                                         this.gameRenderer.itemInHandRenderer.itemUsed(hand);
-                                        ClientRenderer.getInstance().resetEquipProgress(hand);
                                     }
                                 }
                                 return;
@@ -1034,21 +970,26 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                         }
                     }
                 }
-                for (InteractionHand hand : MathHelper.HANDS_LEFT_PRIORITY) {
+                for (InteractionHand hand : MathHelper.HANDS_OFF_PRIORITY) {
                     ItemStack stack = this.player.getItemInHand(hand);
                     if (stack.isEmpty() && this.hitResult.getType() == HitResult.Type.MISS) {
                         ForgeHooks.onEmptyClick(this.player, hand);
                     }
-                    if (hand == InteractionHand.MAIN_HAND &&
-                        ClientEvents.getInstance().getMainhandCooledAttackStrength(0.0f) < 1.0f) {
-                        return;
+                    if (hand == InteractionHand.MAIN_HAND) {
+                        if (ClientEvents.getInstance().getMainhandIndicatorPercentage(0) < 1) {
+                            return;
+                        }
+                    }
+                    else {
+                        if (ClientEvents.getInstance().getOffhandIndicatorPercentage(0) < 1) {
+                            return;
+                        }
                     }
                     if (!stack.isEmpty()) {
                         InteractionResult actionResult = this.gameMode.useItem(this.player, this.level, hand);
                         if (actionResult.consumesAction()) {
                             if (actionResult.shouldSwing()) {
                                 this.player.swing(hand);
-                                ClientEvents.getInstance().swingArm(hand);
                             }
                             this.gameRenderer.itemInHandRenderer.itemUsed(hand);
                             return;

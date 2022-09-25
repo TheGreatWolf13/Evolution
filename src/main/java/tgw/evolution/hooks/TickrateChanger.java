@@ -1,7 +1,6 @@
 package tgw.evolution.hooks;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.network.PacketDistributor;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCChangeTickrate;
@@ -35,7 +34,7 @@ public final class TickrateChanger {
         Evolution.info("Updating server tickrate to " + tickrate);
         currentTickrate = tickrate;
         mspt = (long) (1_000L / tickrate);
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.ALL.noArg(), new PacketSCChangeTickrate(tickrate));
+        EvolutionNetwork.sendToAll(new PacketSCChangeTickrate(tickrate));
         return true;
     }
 }

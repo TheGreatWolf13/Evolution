@@ -27,10 +27,8 @@ import net.minecraftforge.event.ForgeEventFactory;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.items.*;
-import tgw.evolution.network.PacketSCHandAnimation;
 import tgw.evolution.stats.EvolutionServerStatsCounter;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Units;
@@ -377,7 +375,6 @@ public final class PlayerHelper {
             return;
         }
         swingArm(player, hand);
-        EvolutionNetwork.send(player, new PacketSCHandAnimation(hand));
         if (entity != null) {
             attackEntity(player, entity, hand, rayTraceHeight);
         }

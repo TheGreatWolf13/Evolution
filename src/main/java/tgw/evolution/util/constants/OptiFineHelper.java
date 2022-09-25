@@ -1,11 +1,9 @@
 package tgw.evolution.util.constants;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 
-@OnlyIn(Dist.CLIENT)
 public final class OptiFineHelper {
-    private static Boolean loaded;
+    private static @Nullable Boolean loaded;
 
     private OptiFineHelper() {
     }

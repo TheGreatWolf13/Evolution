@@ -3,6 +3,7 @@ package tgw.evolution.network;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.network.NetworkEvent;
@@ -44,9 +45,12 @@ public class PacketCSUpdatePuzzle implements IPacket {
     }
 
     public static void handle(PacketCSUpdatePuzzle packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
-                BlockEntity tile = context.get().getSender().level.getBlockEntity(packet.pos);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
+                ServerPlayer player = c.getSender();
+                assert player != null;
+                BlockEntity tile = player.level.getBlockEntity(packet.pos);
                 if (!(tile instanceof TEPuzzle puzzle)) {
                     Evolution.warn("Could not find TEPuzzle at " + packet.pos);
                     return;
@@ -56,7 +60,7 @@ public class PacketCSUpdatePuzzle implements IPacket {
                 puzzle.setFinalState(packet.finalState);
                 puzzle.setCheckBB(packet.checkBB);
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

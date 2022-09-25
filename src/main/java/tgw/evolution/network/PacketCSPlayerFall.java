@@ -1,6 +1,7 @@
 package tgw.evolution.network;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.events.EntityEvents;
@@ -27,10 +28,14 @@ public class PacketCSPlayerFall implements IPacket {
     }
 
     public static void handle(PacketCSPlayerFall packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get()
-                   .enqueueWork(() -> EntityEvents.calculateFallDamage(context.get().getSender(), packet.velocity, packet.distanceOfSlowDown, false));
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
+                ServerPlayer player = c.getSender();
+                assert player != null;
+                EntityEvents.calculateFallDamage(player, packet.velocity, packet.distanceOfSlowDown, false);
+            });
+            c.setPacketHandled(true);
         }
     }
 

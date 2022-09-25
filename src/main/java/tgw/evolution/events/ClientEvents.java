@@ -132,18 +132,19 @@ public class ClientEvents {
     public int effectToAddTicks;
     public @Nullable Entity leftPointedEntity;
     public @Nullable EntityHitResult leftRayTrace;
-    public int mainhandTimeSinceLastHit;
-    public int offhandTimeSinceLastHit;
     public @Nullable Entity rightPointedEntity;
     public @Nullable EntityHitResult rightRayTrace;
     private @Nullable IMelee.IAttackType cachedAttackType;
     private int cameraId = -1;
     private @Nullable DimensionOverworld dimension;
     private boolean initialized;
+    private int mainhandCooldownTime;
+    private int offhandCooldownTime;
     private @Nullable SkyRenderer skyRenderer;
     private int ticks;
     private float tps = 20.0f;
     private int warmUpTicks;
+    private boolean wasSpecialAttacking;
 
     public ClientEvents(Minecraft mc) {
         this.mc = mc;
@@ -202,6 +203,10 @@ public class ClientEvents {
             return new GuiContainerHandler(containerScreen);
         }
         return null;
+    }
+
+    public static void fixFont() {
+        Minecraft.getInstance().font.lineHeight = 10;
     }
 
     public static void fixInputMappings() {
@@ -413,27 +418,29 @@ public class ClientEvents {
         return this.cameraPos;
     }
 
-    public float getCurrentItemAttackStrengthDelay() {
-        assert this.mc.player != null;
-        ItemStack stack = this.mc.player.getMainHandItem();
-        Item item = stack.getItem();
-        if (item instanceof ItemModularTool) {
-            return (float) (1 / ((ItemModularTool) item).getAttackSpeed(stack) * 20);
-        }
-        return (float) (1 / PlayerHelper.ATTACK_SPEED * 20);
-    }
-
     public @Nullable DimensionOverworld getDimension() {
         return this.dimension;
     }
 
-    public float getMainhandCooledAttackStrength(float partialTicks) {
-        return MathHelper.clamp((this.mainhandTimeSinceLastHit + partialTicks) / this.getCurrentItemAttackStrengthDelay(), 0.0F, 1.0F);
+    public float getItemCooldown(InteractionHand hand) {
+        assert this.mc.player != null;
+        ItemStack stack = this.mc.player.getItemInHand(hand);
+        Item item = stack.getItem();
+        if (item instanceof ItemModularTool modular) {
+            return (float) (20 / modular.getAttackSpeed(stack));
+        }
+        return (float) (20 / PlayerHelper.ATTACK_SPEED);
     }
 
-    public float getOffhandCooledAttackStrength(float adjustTicks) {
-        float cooldown = (float) (1.0 / PlayerHelper.ATTACK_SPEED * 20.0);
-        return MathHelper.clamp((this.offhandTimeSinceLastHit + adjustTicks) / cooldown, 0.0F, 1.0F);
+    public float getMainhandIndicatorPercentage(float partialTicks) {
+        if (this.mc.player instanceof ILivingEntityPatch patch && (patch.isSpecialAttacking() || patch.isLockedInSpecialAttack())) {
+            return patch.getSpecialAttackProgress(partialTicks);
+        }
+        return MathHelper.clamp((this.mainhandCooldownTime + partialTicks) / this.getItemCooldown(InteractionHand.MAIN_HAND), 0.0F, 1.0F);
+    }
+
+    public float getOffhandIndicatorPercentage(float partialTicks) {
+        return MathHelper.clamp((this.offhandCooldownTime + partialTicks) / this.getItemCooldown(InteractionHand.OFF_HAND), 0.0F, 1.0F);
     }
 
     public ClientRenderer getRenderer() {
@@ -509,6 +516,15 @@ public class ClientEvents {
         return this.getShader(shaderId) != null;
     }
 
+    public void incrementCooldown(InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND) {
+            this.mainhandCooldownTime++;
+        }
+        else {
+            this.offhandCooldownTime++;
+        }
+    }
+
     public void init() {
         //Bind Sky Renderer
         this.dimension = new DimensionOverworld();
@@ -524,16 +540,9 @@ public class ClientEvents {
         System.gc();
     }
 
-    public boolean isInSpecialAttack() {
-        if (this.mc.player == null) {
-            return false;
-        }
-        return ((ILivingEntityPatch) this.mc.player).isInSpecialAttack();
-    }
-
     public void leftMouseClick() {
-        if (this.mainhandTimeSinceLastHit >= this.getCurrentItemAttackStrengthDelay()) {
-            this.mainhandTimeSinceLastHit = 0;
+        if (this.mainhandCooldownTime >= this.getItemCooldown(InteractionHand.MAIN_HAND)) {
+            this.mainhandCooldownTime = 0;
             double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getLocation().y : Double.NaN;
             if (this.leftRayTrace instanceof AdvancedEntityRayTraceResult adv) {
                 HitboxType part = HitboxType.ALL;
@@ -544,9 +553,8 @@ public class ClientEvents {
                 Evolution.debug("Part = {}", part);
             }
             if (this.leftPointedEntity != null) {
-                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSPlayerAttack(this.leftPointedEntity, InteractionHand.MAIN_HAND, rayTraceY));
+                EvolutionNetwork.sendToServer(new PacketCSPlayerAttack(this.leftPointedEntity, InteractionHand.MAIN_HAND, rayTraceY));
             }
-            this.swingArm(InteractionHand.MAIN_HAND);
         }
     }
 
@@ -651,17 +659,22 @@ public class ClientEvents {
                 if (mainHandStack.getItem() instanceof ITwoHanded twoHanded &&
                     twoHanded.isTwoHanded(mainHandStack) &&
                     !this.mc.player.getOffhandItem().isEmpty()) {
-                    this.mainhandTimeSinceLastHit = 0;
+                    this.mainhandCooldownTime = 0;
                     this.mc.missTime = Integer.MAX_VALUE;
                     this.mc.player.displayClientMessage(EvolutionTexts.ACTION_TWO_HANDED, true);
                 }
                 //Prevents the player from attacking if on cooldown
                 this.mc.getProfiler().popPush("cooldown");
-                if (this.getMainhandCooledAttackStrength(0.0F) != 1 &&
+                boolean isSpecialAttacking = ((ILivingEntityPatch) this.mc.player).shouldRenderSpecialAttack();
+                if (this.wasSpecialAttacking && !isSpecialAttacking) {
+                    this.resetCooldown(InteractionHand.MAIN_HAND);
+                }
+                if (this.getMainhandIndicatorPercentage(0.0F) != 1 &&
                     this.mc.hitResult != null &&
                     this.mc.hitResult.getType() != HitResult.Type.BLOCK) {
                     this.mc.missTime = Integer.MAX_VALUE;
                 }
+                this.wasSpecialAttacking = isSpecialAttacking;
                 this.mc.getProfiler().pop();
             }
         }
@@ -706,8 +719,7 @@ public class ClientEvents {
                         if (this.mc.hitResult.getType() == HitResult.Type.BLOCK) {
                             BlockPos pos = ((BlockHitResult) this.mc.hitResult).getBlockPos();
                             if (!this.mc.level.getBlockState(pos).isAir()) {
-                                EvolutionNetwork.INSTANCE.sendToServer(new PacketCSChangeBlock((BlockHitResult) this.mc.hitResult));
-                                this.swingArm(InteractionHand.MAIN_HAND);
+                                EvolutionNetwork.sendToServer(new PacketCSChangeBlock((BlockHitResult) this.mc.hitResult));
                                 this.mc.player.swing(InteractionHand.MAIN_HAND);
                             }
                         }
@@ -717,9 +729,6 @@ public class ClientEvents {
                 this.mc.getProfiler().popPush("swing");
                 this.ticks++;
                 assert this.mc.gameMode != null;
-                if (this.mc.gameMode.isDestroying()) {
-                    this.swingArm(InteractionHand.MAIN_HAND);
-                }
                 if (this.mc.player instanceof ILivingEntityPatch patch && patch.isSpecialAttacking()) {
                     this.cachedAttackType = patch.getSpecialAttackType();
                     if (patch.isInHitTicks()) {
@@ -790,7 +799,7 @@ public class ClientEvents {
         Screen screen = event.getScreen();
         if (screen instanceof InventoryScreen) {
             event.setCanceled(true);
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSOpenExtendedInventory());
+            EvolutionNetwork.sendToServer(new PacketCSOpenExtendedInventory());
         }
         else if (screen instanceof AdvancementsScreen) {
             assert this.mc.getConnection() != null;
@@ -1220,12 +1229,22 @@ public class ClientEvents {
         if (!(item instanceof IEvolutionItem)) {
             return;
         }
+        assert this.mc.player != null;
         ItemEvents.makeEvolutionTooltip(this.mc.player, event.getItemStack(), event.getTooltipElements());
     }
 
-    public void resetAttackCooldowns() {
-        this.mainhandTimeSinceLastHit = 0;
-        this.offhandTimeSinceLastHit = 0;
+    public void resetCooldown(InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND) {
+            this.mainhandCooldownTime = 0;
+        }
+        else {
+            this.offhandCooldownTime = 0;
+        }
+    }
+
+    public void resetCooldowns() {
+        this.mainhandCooldownTime = 0;
+        this.offhandCooldownTime = 0;
     }
 
     public void setCameraPos(Vec3d cameraPos) {
@@ -1242,11 +1261,21 @@ public class ClientEvents {
         this.cameraId = id;
     }
 
+    public boolean shouldRenderSpecialAttack() {
+        if (this.mc.player == null) {
+            return false;
+        }
+        return ((ILivingEntityPatch) this.mc.player).shouldRenderSpecialAttack();
+    }
+
     public void startChargeAttack(IMelee.ChargeAttackType chargeAttack) {
         assert this.mc.player != null;
         ILivingEntityPatch player = (ILivingEntityPatch) this.mc.player;
-        if (!player.isInSpecialAttack()) {
+        if (!player.isLockedInSpecialAttack()) {
             player.startSpecialAttack(chargeAttack);
+        }
+        else if (player.canPerformFollowUp(chargeAttack)) {
+            player.performFollowUp();
         }
     }
 
@@ -1254,23 +1283,16 @@ public class ClientEvents {
         assert this.mc.player != null;
         IMelee.IAttackType type = stack.getItem() instanceof IMelee melee ? melee.getBasicAttackType(stack) : IMelee.BARE_HAND_ATTACK;
         ILivingEntityPatch player = (ILivingEntityPatch) this.mc.player;
-        if (!player.isInSpecialAttack()) {
-            this.mainhandTimeSinceLastHit = 0;
-            player.startSpecialAttack(type);
+        if (player.isOnGracePeriod()) {
+            if (player.canPerformFollowUp(type)) {
+                player.performFollowUp();
+            }
         }
-        if (type == IMelee.BARE_HAND_ATTACK) {
-            this.swingArm(hand);
-            this.mc.player.swing(hand);
+        else {
+            if (!player.isSpecialAttacking() && !player.isLockedInSpecialAttack()) {
+                player.startSpecialAttack(type);
+            }
         }
-    }
-
-    public void swingArm(InteractionHand hand) {
-        assert this.mc.player != null;
-        ItemStack stack = this.mc.player.getItemInHand(hand);
-        if (!stack.isEmpty() && stack.onEntitySwing(this.mc.player)) {
-            return;
-        }
-        this.renderer.swingArm(hand);
     }
 
     private void updateBackItem() {
@@ -1297,7 +1319,7 @@ public class ClientEvents {
         }
         ItemStack oldStack = BACK_ITEMS.put(this.mc.player.getId(), backStack);
         if (oldStack != backStack) {
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateBeltBackItem(backStack, true));
+            EvolutionNetwork.sendToServer(new PacketCSUpdateBeltBackItem(backStack, true));
         }
     }
 
@@ -1328,11 +1350,11 @@ public class ClientEvents {
             if (beltStack.getItem() instanceof IMelee melee && melee.shouldPlaySheatheSound(beltStack)) {
                 this.mc.getSoundManager()
                        .play(new SoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
-                EvolutionNetwork.INSTANCE.sendToServer(
+                EvolutionNetwork.sendToServer(
                         new PacketCSPlaySoundEntityEmitted(this.mc.player, EvolutionSounds.SWORD_SHEATHE.get(), SoundSource.PLAYERS, 0.8f, 1.0f));
             }
             BELT_ITEMS.put(this.mc.player.getId(), beltStack);
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateBeltBackItem(beltStack, false));
+            EvolutionNetwork.sendToServer(new PacketCSUpdateBeltBackItem(beltStack, false));
         }
     }
 

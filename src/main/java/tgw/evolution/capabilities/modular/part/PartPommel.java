@@ -122,6 +122,14 @@ public class PartPommel implements IPartHit<PartTypes.Pommel, ItemPartPommel, Pa
     }
 
     @Override
+    public boolean isSimilar(PartPommel part) {
+        if (this.type != part.type) {
+            return false;
+        }
+        return this.material.isSimilar(part.material);
+    }
+
+    @Override
     public void loseSharp(int amount) {
     }
 

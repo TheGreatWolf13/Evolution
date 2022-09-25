@@ -42,4 +42,12 @@ public class PartHilt extends PartGrab<PartTypes.Hilt, ItemPartHilt, PartHilt> {
         //TODO implementation
         return false;
     }
+
+    @Override
+    public boolean isSimilar(PartHilt part) {
+        if (this.type != part.type) {
+            return false;
+        }
+        return this.material.isSimilar(part.material);
+    }
 }

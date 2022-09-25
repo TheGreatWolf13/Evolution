@@ -24,9 +24,10 @@ public class PacketSCToast implements IPacket {
     }
 
     public static void handle(PacketSCToast packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> ClientEvents.getInstance().addCustomRecipeToast(packet.id));
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> ClientEvents.getInstance().addCustomRecipeToast(packet.id));
+            c.setPacketHandled(true);
         }
     }
 

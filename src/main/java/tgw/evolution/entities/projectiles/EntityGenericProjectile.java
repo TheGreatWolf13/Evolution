@@ -29,8 +29,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.entity.IEntityAdditionalSpawnData;
 import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
@@ -206,7 +204,6 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public void lerpMotion(double x, double y, double z) {
         this.setDeltaMovement(x, y, z);
         if (this.xRotO == 0.0F && this.yRotO == 0.0F) {
@@ -221,7 +218,6 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public void lerpTo(double x, double y, double z, float yaw, float pitch, int posRotationIncrements, boolean teleport) {
         this.setPos(x, y, z);
         this.setRot(yaw, pitch);
@@ -445,7 +441,6 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public boolean shouldRenderAtSqrDistance(double distance) {
         double d0 = this.getBoundingBox().getSize() * 10;
         if (Double.isNaN(d0)) {

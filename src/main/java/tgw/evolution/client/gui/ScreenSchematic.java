@@ -12,8 +12,6 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 import tgw.evolution.blocks.tileentities.TESchematic;
@@ -30,7 +28,6 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
-@OnlyIn(Dist.CLIENT)
 public class ScreenSchematic extends Screen {
 
     private final DecimalFormat decimalFormat = new DecimalFormat("0.0###");
@@ -119,17 +116,20 @@ public class ScreenSchematic extends Screen {
         this.tile.setIgnoresEntities(this.ignoreEntities);
         this.tile.setShowAir(this.showAir);
         this.tile.setShowBoundingBox(this.showBoundingBox);
+        assert this.minecraft != null;
         this.minecraft.setScreen(null);
     }
 
     private void done() {
         if (this.sendUpdates(TESchematic.UpdateCommand.UPDATE_DATA)) {
+            assert this.minecraft != null;
             this.minecraft.setScreen(null);
         }
     }
 
     @Override
     protected void init() {
+        assert this.minecraft != null;
         this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
         this.addRenderableWidget(new Button(this.width / 2 - 4 - 150, 210, 150, 20, EvolutionTexts.GUI_GENERAL_DONE, button -> this.done()));
         this.addRenderableWidget(new Button(this.width / 2 + 4, 210, 150, 20, EvolutionTexts.GUI_GENERAL_CANCEL, button -> this.cancel()));
@@ -303,6 +303,7 @@ public class ScreenSchematic extends Screen {
 
     @Override
     public void onClose() {
+        assert this.minecraft != null;
         this.minecraft.keyboardHandler.setSendRepeatsToGui(false);
         this.cancel();
     }
@@ -376,19 +377,19 @@ public class ScreenSchematic extends Screen {
                                      parseCoordinate(this.sizeZEdit.getValue()));
         float integrity = parseIntegrity(this.integrityEdit.getValue());
         long seed = parseSeed(this.seedEdit.getValue());
-        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdateSchematicBlock(this.tile.getBlockPos(),
-                                                                                command,
-                                                                                this.tile.getMode(),
-                                                                                this.nameEdit.getValue(),
-                                                                                pos,
-                                                                                size,
-                                                                                this.tile.getMirror(),
-                                                                                this.tile.getRotation(),
-                                                                                this.tile.ignoresEntities(),
-                                                                                this.tile.showsAir(),
-                                                                                this.tile.showsBoundingBox(),
-                                                                                integrity,
-                                                                                seed));
+        EvolutionNetwork.sendToServer(new PacketCSUpdateSchematicBlock(this.tile.getBlockPos(),
+                                                                       command,
+                                                                       this.tile.getMode(),
+                                                                       this.nameEdit.getValue(),
+                                                                       pos,
+                                                                       size,
+                                                                       this.tile.getMirror(),
+                                                                       this.tile.getRotation(),
+                                                                       this.tile.ignoresEntities(),
+                                                                       this.tile.showsAir(),
+                                                                       this.tile.showsBoundingBox(),
+                                                                       integrity,
+                                                                       seed));
         return true;
     }
 

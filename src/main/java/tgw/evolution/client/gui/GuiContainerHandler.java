@@ -3,14 +3,11 @@ package tgw.evolution.client.gui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.inventory.*;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.util.MouseButton;
 
 import java.util.List;
 
-@OnlyIn(Dist.CLIENT)
 public class GuiContainerHandler implements IGuiScreenHandler {
     protected final Minecraft mc;
     private final AbstractContainerScreen<?> containerScreen;

@@ -28,6 +28,6 @@ public final class LivingEntityHooks {
         if (entity.getOffhandItem().getItem() == Items.CROSSBOW) {
             return CrossbowItem.isCharged(entity.getOffhandItem());
         }
-        return ((ILivingEntityPatch) entity).isInSpecialAttack();
+        return ((ILivingEntityPatch) entity).shouldRenderSpecialAttack();
     }
 }

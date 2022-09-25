@@ -19,8 +19,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.entity.IEntityAdditionalSpawnData;
 import net.minecraftforge.network.NetworkHooks;
 import tgw.evolution.blocks.BlockGenericSnowable;
@@ -143,7 +141,6 @@ public abstract class EntityGenericAnimal<T extends EntityGenericAnimal<T>> exte
         return level.getBlockState(pos.below()).getBlock() instanceof BlockGenericSnowable ? 10.0F : level.getBrightness(pos) - 0.5F;
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void handleEntityEvent(byte id) {
         if (id == EntityStates.LOVE_HEARTS_PARTICLES) {

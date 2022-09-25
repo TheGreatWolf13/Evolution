@@ -10,8 +10,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.client.model.data.ModelProperty;
@@ -25,7 +23,6 @@ import tgw.evolution.util.collection.RArrayList;
 import java.util.List;
 import java.util.Random;
 
-@OnlyIn(Dist.CLIENT)
 public class BakedModelFinalModularTool implements BakedModel {
 
     public static final ModelProperty<ItemMaterial> HEAD_MATERIAL = new ModelProperty<>();
@@ -85,16 +82,19 @@ public class BakedModelFinalModularTool implements BakedModel {
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random rand, IModelData extraData) {
         BakedModel head;
-        if (extraData.getData(IS_SHARP)) {
+        if (Boolean.TRUE == extraData.getData(IS_SHARP)) {
+            //noinspection ConstantConditions
             head = Minecraft.getInstance()
                             .getModelManager()
                             .getModel(EvolutionResources.MODULAR_HEADS_SHARP.get(extraData.getData(HEAD_TYPE), extraData.getData(HEAD_MATERIAL)));
         }
         else {
+            //noinspection ConstantConditions
             head = Minecraft.getInstance()
                             .getModelManager()
                             .getModel(EvolutionResources.MODULAR_HEADS.get(extraData.getData(HEAD_TYPE), extraData.getData(HEAD_MATERIAL)));
         }
+        //noinspection ConstantConditions
         BakedModel handle = Minecraft.getInstance()
                                      .getModelManager()
                                      .getModel(EvolutionResources.MODULAR_HANDLES.get(extraData.getData(HANDLE_TYPE),

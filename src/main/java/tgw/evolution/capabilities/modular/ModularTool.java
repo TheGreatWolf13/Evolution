@@ -6,6 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.level.material.Material;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.modular.part.PartHandle;
 import tgw.evolution.capabilities.modular.part.PartHead;
 import tgw.evolution.capabilities.modular.part.PartTypes;
@@ -22,7 +23,7 @@ public class ModularTool implements IModularTool {
 
     private final PartHandle handle = new PartHandle();
     private final PartHead head = new PartHead();
-    private CompoundTag tag;
+    private @Nullable CompoundTag tag;
 
     @Override
     public void appendTooltip(List<Either<FormattedText, TooltipComponent>> tooltip) {
@@ -203,6 +204,17 @@ public class ModularTool implements IModularTool {
     @Override
     public boolean isSharpened() {
         return this.head.getSharpAmount() > 0;
+    }
+
+    @Override
+    public boolean isSimilar(IModular modular) {
+        if (!(modular instanceof ModularTool tool)) {
+            return false;
+        }
+        if (!this.head.isSimilar(tool.head)) {
+            return false;
+        }
+        return this.handle.isSimilar(tool.handle);
     }
 
     @Override

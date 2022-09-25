@@ -94,64 +94,68 @@ public class PacketCSUpdateSchematicBlock implements IPacket {
     }
 
     public static void handle(PacketCSUpdateSchematicBlock packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            Player player = context.get().getSender();
-            assert player != null;
-            if (player.canUseGameMasterBlocks()) {
-                BlockPos tilePos = packet.tilePos;
-                BlockState state = player.level.getBlockState(tilePos);
-                BlockEntity tile = player.level.getBlockEntity(tilePos);
-                if (tile instanceof TESchematic teSchematic) {
-                    teSchematic.setMode(packet.mode);
-                    teSchematic.setName(packet.name);
-                    teSchematic.setSchematicPos(packet.schematicPos);
-                    teSchematic.setSize(packet.size);
-                    teSchematic.setMirror(packet.mirror);
-                    teSchematic.setRotation(packet.rotation);
-                    teSchematic.setIgnoresEntities(packet.ignoresEntities);
-                    teSchematic.setShowAir(packet.showAir);
-                    teSchematic.setShowBoundingBox(packet.showBB);
-                    teSchematic.setIntegrity(packet.integrity);
-                    teSchematic.setSeed(packet.seed);
-                    if (teSchematic.hasName()) {
-                        String s = teSchematic.getName();
-                        switch (packet.command) {
-                            case SAVE_AREA -> {
-                                if (teSchematic.saveStructure()) {
-                                    player.displayClientMessage(new TranslatableComponent("structure_block.save_success", s), false);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
+                Player player = c.getSender();
+                assert player != null;
+                if (player.canUseGameMasterBlocks()) {
+                    BlockPos tilePos = packet.tilePos;
+                    BlockState state = player.level.getBlockState(tilePos);
+                    BlockEntity tile = player.level.getBlockEntity(tilePos);
+                    if (tile instanceof TESchematic teSchematic) {
+                        teSchematic.setMode(packet.mode);
+                        teSchematic.setName(packet.name);
+                        teSchematic.setSchematicPos(packet.schematicPos);
+                        teSchematic.setSize(packet.size);
+                        teSchematic.setMirror(packet.mirror);
+                        teSchematic.setRotation(packet.rotation);
+                        teSchematic.setIgnoresEntities(packet.ignoresEntities);
+                        teSchematic.setShowAir(packet.showAir);
+                        teSchematic.setShowBoundingBox(packet.showBB);
+                        teSchematic.setIntegrity(packet.integrity);
+                        teSchematic.setSeed(packet.seed);
+                        if (teSchematic.hasName()) {
+                            String s = teSchematic.getName();
+                            switch (packet.command) {
+                                case SAVE_AREA -> {
+                                    if (teSchematic.saveStructure()) {
+                                        player.displayClientMessage(new TranslatableComponent("structure_block.save_success", s), false);
+                                    }
+                                    else {
+                                        player.displayClientMessage(new TranslatableComponent("structure_block.save_failure", s), false);
+                                    }
                                 }
-                                else {
-                                    player.displayClientMessage(new TranslatableComponent("structure_block.save_failure", s), false);
+                                case LOAD_AREA -> {
+                                    if (!teSchematic.isStructureLoadable()) {
+                                        player.displayClientMessage(new TranslatableComponent("structure_block.load_not_found", s), false);
+                                    }
+                                    else if (teSchematic.loadStructure((ServerLevel) player.level)) {
+                                        player.displayClientMessage(new TranslatableComponent("structure_block.load_success", s), false);
+                                    }
+                                    else {
+                                        player.displayClientMessage(new TranslatableComponent("structure_block.load_prepare", s), false);
+                                    }
                                 }
-                            }
-                            case LOAD_AREA -> {
-                                if (!teSchematic.isStructureLoadable()) {
-                                    player.displayClientMessage(new TranslatableComponent("structure_block.load_not_found", s), false);
-                                }
-                                else if (teSchematic.loadStructure((ServerLevel) player.level)) {
-                                    player.displayClientMessage(new TranslatableComponent("structure_block.load_success", s), false);
-                                }
-                                else {
-                                    player.displayClientMessage(new TranslatableComponent("structure_block.load_prepare", s), false);
-                                }
-                            }
-                            case SCAN_AREA -> {
-                                if (teSchematic.detectSize()) {
-                                    player.displayClientMessage(new TranslatableComponent("structure_block.size_success", s), false);
-                                }
-                                else {
-                                    player.displayClientMessage(new TranslatableComponent("structure_block.size_failure"), false);
+                                case SCAN_AREA -> {
+                                    if (teSchematic.detectSize()) {
+                                        player.displayClientMessage(new TranslatableComponent("structure_block.size_success", s), false);
+                                    }
+                                    else {
+                                        player.displayClientMessage(new TranslatableComponent("structure_block.size_failure"), false);
+                                    }
                                 }
                             }
                         }
+                        else {
+                            player.displayClientMessage(new TranslatableComponent("structure_block.invalid_structure_name", packet.name), false);
+                        }
+                        teSchematic.setChanged();
+                        player.level.sendBlockUpdated(tilePos, state, state, BlockFlags.NOTIFY_AND_UPDATE);
                     }
-                    else {
-                        player.displayClientMessage(new TranslatableComponent("structure_block.invalid_structure_name", packet.name), false);
-                    }
-                    teSchematic.setChanged();
-                    player.level.sendBlockUpdated(tilePos, state, state, BlockFlags.NOTIFY_AND_UPDATE);
                 }
-            }
+            });
+            c.setPacketHandled(true);
         }
     }
 

@@ -88,6 +88,14 @@ public class PartGuard implements IPart<PartTypes.Guard, ItemPartGuard, PartGuar
     }
 
     @Override
+    public boolean isSimilar(PartGuard part) {
+        if (this.type != part.type) {
+            return false;
+        }
+        return this.material.isSimilar(part.material);
+    }
+
+    @Override
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putByte("Type", this.type.getId());

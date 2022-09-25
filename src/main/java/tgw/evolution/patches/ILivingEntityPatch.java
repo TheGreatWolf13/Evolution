@@ -9,7 +9,11 @@ public interface ILivingEntityPatch<T extends LivingEntity> extends IEntityPatch
 
     void addAbsorptionSuggestion(float amount);
 
+    boolean canPerformFollowUp(IMelee.IAttackType type);
+
     EffectHelper getEffectHelper();
+
+    int getFollowUp();
 
     /**
      * @return The progress, from {@code 0.0f} to {@code 1.0f} of the special attack, given interpolation ticks.
@@ -32,28 +36,32 @@ public interface ILivingEntityPatch<T extends LivingEntity> extends IEntityPatch
      */
     boolean isInHitTicks();
 
-    /**
-     * @return Whether the special attack is in progress, is canceled, or on cooldown.
-     */
-    boolean isInSpecialAttack();
+    default boolean isInSpecialAttackOrGracePeriod() {
+        return this.isSpecialAttacking() || this.isOnGracePeriod();
+    }
 
-    /**
-     * @return Whether the current special attack should lock the player movement (but not the player's inertia, conservation
-     * of momentum is important).
-     */
-    boolean isMotionLocked();
+    boolean isLateralMotionLocked();
 
-    /**
-     * @return Whether the special attack is in progress, has NOT been canceled and is NOT on cooldown.
-     */
+    boolean isLockedInSpecialAttack();
+
+    boolean isLongitudinalMotionLocked();
+
+    boolean isOnGracePeriod();
+
     boolean isSpecialAttacking();
+
+    boolean isVerticalMotionLocked();
+
+    void performFollowUp();
 
     void removeAbsorptionSuggestion(float amount);
 
     /**
      * @return Whether the special attack should be rendered by clients.
      */
-    boolean shouldRenderSpecialAttack();
+    default boolean shouldRenderSpecialAttack() {
+        return this.isSpecialAttacking() || this.isOnGracePeriod() || this.isLockedInSpecialAttack();
+    }
 
     void startSpecialAttack(IMelee.IAttackType type);
 

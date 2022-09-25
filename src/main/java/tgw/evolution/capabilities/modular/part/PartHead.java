@@ -24,7 +24,7 @@ import java.util.List;
 public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead> {
 
     public static final PartHead DUMMY = new PartHead();
-    private MaterialInstance materialInstance = MaterialInstance.DUMMY;
+    private MaterialInstance material = MaterialInstance.DUMMY;
     private int sharpAmount;
     private int spentDurability;
     private @Nullable CompoundTag tag;
@@ -37,9 +37,9 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
     @Override
     public void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num) {
         tooltip.add(Either.left(this.type.getComponent()));
-        this.materialInstance.appendText(tooltip);
+        this.material.appendText(tooltip);
         if (this.canBeSharpened()) {
-            tooltip.add(Either.left(EvolutionTexts.sharp(this.sharpAmount, this.materialInstance.getHardness())));
+            tooltip.add(Either.left(EvolutionTexts.sharp(this.sharpAmount, this.material.getHardness())));
         }
         tooltip.add(Either.right(EvolutionTooltipMass.PARTS[num].mass(this.getMass())));
         tooltip.add(Either.right(EvolutionTooltipDurability.PARTS[num].durability(this.displayDurability(ItemStack.EMPTY))));
@@ -58,7 +58,7 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
     @Override
     public void deserializeNBT(CompoundTag nbt) {
         this.type = PartTypes.Head.byId(nbt.getByte("Type"));
-        this.materialInstance = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
+        this.material = MaterialInstance.read(nbt.getCompound("MaterialInstance"));
         this.spentDurability = nbt.getInt("Durability");
         if (this.canBeSharpened()) {
             this.sharpAmount = nbt.getInt("SharpAmount");
@@ -68,7 +68,7 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
     @Override
     public double getAttackDamageInternal(double preAttackDamage) {
         if (this.canBeSharpened()) {
-            if (this.sharpAmount > this.materialInstance.getHardness()) {
+            if (this.sharpAmount > this.material.getHardness()) {
                 //Very Sharp
                 return 1.15 * preAttackDamage;
             }
@@ -92,7 +92,7 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
 
     @Override
     public String getDescriptionId() {
-        return "item.evolution.part.head." + this.type.getName() + "." + this.materialInstance.getMaterial().getName();
+        return "item.evolution.part.head." + this.type.getName() + "." + this.material.getMaterial().getName();
     }
 
     @Override
@@ -107,22 +107,22 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
 
     @Override
     public int getHarvestLevel() {
-        return this.materialInstance.getHarvestLevel();
+        return this.material.getHarvestLevel();
     }
 
     @Override
     public MaterialInstance getMaterialInstance() {
-        return this.materialInstance;
+        return this.material;
     }
 
     @Override
     public int getMaxDurability() {
-        return Mth.ceil(this.materialInstance.getHardness() * this.materialInstance.getResistance() / 50.0);
+        return Mth.ceil(this.material.getHardness() * this.material.getResistance() / 50.0);
     }
 
     @Override
     public float getMiningSpeed() {
-        return this.materialInstance.getElasticModulus() * this.materialInstance.getHardness() / 500.0f;
+        return this.material.getElasticModulus() * this.material.getHardness() / 500.0f;
     }
 
     @Override
@@ -151,6 +151,14 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
     }
 
     @Override
+    public boolean isSimilar(PartHead part) {
+        if (this.type != part.type) {
+            return false;
+        }
+        return this.material.isSimilar(part.material);
+    }
+
+    @Override
     public void loseSharp(int amount) {
         if (this.canBeSharpened()) {
             this.sharpAmount -= amount;
@@ -167,7 +175,7 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
         }
         this.tag.putByte("Type", this.type.getId());
         this.tag.putInt("Durability", this.spentDurability);
-        this.tag.put("MaterialInstance", this.materialInstance.write());
+        this.tag.put("MaterialInstance", this.material.write());
         if (this.canBeSharpened()) {
             this.tag.putInt("SharpAmount", this.sharpAmount);
         }
@@ -180,13 +188,13 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
     @Override
     public void set(PartTypes.Head type, MaterialInstance material) {
         this.type = type;
-        this.materialInstance = material;
+        this.material = material;
     }
 
     @Override
     public void sharp() {
         if (this.canBeSharpened()) {
-            this.sharpAmount = Mth.ceil(1.5 * this.materialInstance.getHardness());
+            this.sharpAmount = Mth.ceil(1.5 * this.material.getHardness());
         }
     }
 }

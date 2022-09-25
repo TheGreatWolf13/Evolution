@@ -1,6 +1,7 @@
 package tgw.evolution.network;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.init.EvolutionDamage;
@@ -24,9 +25,14 @@ public class PacketCSImpactDamage implements IPacket {
     }
 
     public static void handle(PacketCSImpactDamage packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> context.get().getSender().hurt(EvolutionDamage.WALL_IMPACT, packet.damage));
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
+                ServerPlayer player = c.getSender();
+                assert player != null;
+                player.hurt(EvolutionDamage.WALL_IMPACT, packet.damage);
+            });
+            c.setPacketHandled(true);
         }
     }
 

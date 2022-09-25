@@ -3,6 +3,7 @@ package tgw.evolution.client.tooltip;
 import net.minecraft.network.chat.Component;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.init.EvolutionFormatter;
+import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
 
 public final class EvolutionTooltipDrink implements IEvolutionTooltip {
@@ -22,7 +23,7 @@ public final class EvolutionTooltipDrink implements IEvolutionTooltip {
 
     @Override
     public int getIconY() {
-        return 247;
+        return EvolutionResources.ICON_9_9;
     }
 
     @Override

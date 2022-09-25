@@ -28,6 +28,7 @@ public class PacketSCAddEffect implements IPacket {
     public static PacketSCAddEffect decode(FriendlyByteBuf buffer) {
         MobEffect effect = MobEffect.byId(buffer.readVarInt());
         boolean hasHiddenInstance = true;
+        assert effect != null;
         ClientEffectInstance instance = new ClientEffectInstance(effect);
         ClientEffectInstance returnInstance = instance;
         Logic logic = null;
@@ -68,9 +69,10 @@ public class PacketSCAddEffect implements IPacket {
     }
 
     public static void handle(PacketSCAddEffect packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> ClientEvents.getInstance().onPotionAdded(packet.instance, packet.logic));
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> ClientEvents.getInstance().onPotionAdded(packet.instance, packet.logic));
+            c.setPacketHandled(true);
         }
     }
 

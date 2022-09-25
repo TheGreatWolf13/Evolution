@@ -17,12 +17,14 @@ public class PacketCSStopUsingItem implements IPacket {
     }
 
     public static void handle(IPacket packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
-                ServerPlayer player = context.get().getSender();
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
+                ServerPlayer player = c.getSender();
+                assert player != null;
                 player.stopUsingItem();
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

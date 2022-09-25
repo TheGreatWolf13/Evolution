@@ -42,4 +42,12 @@ public class PartPole extends PartGrab<PartTypes.Pole, ItemPartPole, PartPole> {
         //TODO implementation
         return false;
     }
+
+    @Override
+    public boolean isSimilar(PartPole part) {
+        if (this.type != part.type) {
+            return false;
+        }
+        return this.material.isSimilar(part.material);
+    }
 }

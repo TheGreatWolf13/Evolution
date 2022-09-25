@@ -33,13 +33,14 @@ public class PacketSCHungerData implements IPacket {
     }
 
     public static void handle(PacketSCHungerData packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
                 IHunger hunger = HungerStats.CLIENT_INSTANCE;
                 hunger.setHungerLevel(packet.hungerLevel);
                 hunger.setSaturationLevel(packet.saturationLevel);
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

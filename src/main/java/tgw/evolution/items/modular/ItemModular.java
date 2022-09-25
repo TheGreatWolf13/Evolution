@@ -3,6 +3,7 @@ package tgw.evolution.items.modular;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.mojang.datafixers.util.Either;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -11,6 +12,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.modular.IModular;
 import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.IDurability;
@@ -99,6 +101,23 @@ public abstract class ItemModular extends ItemEv implements IDurability, IMass {
 
     protected abstract IModular getModularCap(ItemStack stack);
 
+    @Nullable
+    @Override
+    public CompoundTag getShareTag(ItemStack stack) {
+        CompoundTag baseTag = stack.getTag();
+        if (baseTag != null) {
+            baseTag = baseTag.copy();
+        }
+        else {
+            baseTag = new CompoundTag();
+        }
+        CompoundTag capabilityTag = this.getModularCap(stack).serializeNBT();
+        if (capabilityTag != null) {
+            baseTag.put("cap", capabilityTag);
+        }
+        return baseTag;
+    }
+
     public final <E extends LivingEntity> void hurtAndBreak(ItemStack stack, DamageCause cause, E entity, Consumer<E> onBroken) {
         this.hurtAndBreak(stack, cause, entity, onBroken, this.getModularCap(stack).getHarvestLevel());
     }
@@ -122,6 +141,18 @@ public abstract class ItemModular extends ItemEv implements IDurability, IMass {
     public void makeTooltip(List<Either<FormattedText, TooltipComponent>> tooltip, ItemStack stack) {
         IModular modularCap = this.getModularCap(stack);
         modularCap.appendTooltip(tooltip);
+    }
+
+    @Override
+    public void readShareTag(ItemStack stack, @Nullable CompoundTag nbt) {
+        if (nbt == null) {
+            stack.setTag(null);
+            return;
+        }
+        CompoundTag capabilityTag = nbt.getCompound("cap");
+        nbt.remove("cap");
+        stack.setTag(nbt);
+        this.getModularCap(stack).deserializeNBT(capabilityTag);
     }
 
     @Override

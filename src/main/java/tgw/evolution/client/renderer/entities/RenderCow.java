@@ -5,14 +5,11 @@ import com.mojang.math.Vector3f;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.models.entities.ModelCow;
 import tgw.evolution.entities.EntityCow;
 import tgw.evolution.util.math.MathHelper;
 
-@OnlyIn(Dist.CLIENT)
 public class RenderCow extends MobRenderer<EntityCow, ModelCow> {
 
     private static final ModelCow MODEL = new ModelCow();

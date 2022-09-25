@@ -2,13 +2,10 @@ package tgw.evolution.client.models.entities;
 
 import net.minecraft.client.model.AgeableListModel;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.entities.EntityCow;
 
 import java.util.Collections;
 
-@OnlyIn(Dist.CLIENT)
 public class ModelCow extends AgeableListModel<EntityCow> {
 
     //    public final ModelPart body;

@@ -31,12 +31,14 @@ public class PacketCSSkinType implements IPacket {
     }
 
     public static void handle(PacketCSSkinType packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
-                Player player = context.get().getSender();
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
+                Player player = c.getSender();
+                assert player != null;
                 EntityEvents.SKIN_TYPE.put(player.getUUID(), packet.skin);
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

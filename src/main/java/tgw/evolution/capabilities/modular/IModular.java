@@ -44,6 +44,8 @@ public interface IModular extends INBTSerializable<CompoundTag> {
 
     boolean isHammer();
 
+    boolean isSimilar(IModular modular);
+
     boolean isSword();
 
     boolean isTwoHanded();
@@ -119,6 +121,11 @@ public interface IModular extends INBTSerializable<CompoundTag> {
 
         @Override
         public boolean isHammer() {
+            return false;
+        }
+
+        @Override
+        public boolean isSimilar(IModular modular) {
             return false;
         }
 

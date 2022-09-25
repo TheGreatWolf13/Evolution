@@ -24,8 +24,6 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
@@ -119,7 +117,6 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
 //    }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public void animateTick(BlockState state, Level level, BlockPos pos, Random rand) {
         if (rand.nextInt(8) == 0) {
             level.playLocalSound(pos.getX() + 0.5,

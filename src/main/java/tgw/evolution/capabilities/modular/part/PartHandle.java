@@ -42,4 +42,12 @@ public class PartHandle extends PartGrab<PartTypes.Handle, ItemPartHandle, PartH
         //TODO implementation
         return false;
     }
+
+    @Override
+    public boolean isSimilar(PartHandle part) {
+        if (this.type != part.type) {
+            return false;
+        }
+        return this.material.isSimilar(part.material);
+    }
 }

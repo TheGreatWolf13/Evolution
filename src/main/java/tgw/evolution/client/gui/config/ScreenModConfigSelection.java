@@ -10,8 +10,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.*;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
@@ -110,7 +108,6 @@ public class ScreenModConfigSelection extends ScreenListMenu {
     protected void updateTooltip(int mouseX, int mouseY) {
     }
 
-    @OnlyIn(Dist.CLIENT)
     public class FileItem extends Item {
         protected final ModConfig config;
         protected final Component fileName;

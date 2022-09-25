@@ -11,8 +11,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.entity.IEntityAdditionalSpawnData;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
@@ -76,7 +74,6 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public boolean displayFireAnimation() {
         return false;
     }

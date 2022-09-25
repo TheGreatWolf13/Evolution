@@ -2,12 +2,9 @@ package tgw.evolution.client.gui.controls;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.function.Predicate;
 
-@OnlyIn(Dist.CLIENT)
 public enum DisplayMode {
     ALL(keyEntry -> true),
     UNBOUND(keyEntry -> keyEntry.getKey().isUnbound()),

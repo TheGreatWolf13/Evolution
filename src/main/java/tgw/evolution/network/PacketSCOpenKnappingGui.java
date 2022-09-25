@@ -29,9 +29,10 @@ public class PacketSCOpenKnappingGui implements IPacket {
     }
 
     public static void handle(PacketSCOpenKnappingGui packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> ScreenKnapping.open(packet.pos, packet.variant));
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> ScreenKnapping.open(packet.pos, packet.variant));
+            c.setPacketHandled(true);
         }
     }
 

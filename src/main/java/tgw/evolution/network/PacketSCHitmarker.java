@@ -24,9 +24,10 @@ public class PacketSCHitmarker implements IPacket {
     }
 
     public static void handle(PacketSCHitmarker packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> ClientEvents.getInstance().getRenderer().updateHitmarkers(packet.isKill));
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> ClientEvents.getInstance().getRenderer().updateHitmarkers(packet.isKill));
+            c.setPacketHandled(true);
         }
     }
 

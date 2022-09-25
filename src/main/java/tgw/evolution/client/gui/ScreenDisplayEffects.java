@@ -15,8 +15,6 @@ import net.minecraft.util.StringUtil;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.EffectRenderer;
 import net.minecraftforge.client.RenderProperties;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +29,6 @@ import tgw.evolution.util.math.MathHelper;
 import java.util.Collection;
 import java.util.Comparator;
 
-@OnlyIn(Dist.CLIENT)
 public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> extends AbstractContainerScreen<T> {
     protected final Inventory inventory;
     private final Comparator<MobEffectInstance> comparator = (a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.getEffect()

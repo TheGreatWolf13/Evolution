@@ -1,6 +1,5 @@
 package tgw.evolution.util.hitbox.hms;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
@@ -8,6 +7,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
+import tgw.evolution.Evolution;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.ArmPose;
@@ -399,7 +399,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                 attackingArm.addRotationZ(Mth.sin(this.attackTime() * Mth.PI) * -0.4F);
             }
         }
-        float partialTicks = Minecraft.getInstance().getFrameTime();
+        float partialTicks = Evolution.PROXY.getPartialTicks();
         if (((ILivingEntityPatch) entity).shouldRenderSpecialAttack()) {
             IMelee.IAttackType type = ((ILivingEntityPatch) entity).getSpecialAttackType();
             if (type instanceof IMelee.BasicAttackType basic) {
@@ -409,24 +409,25 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                         HM attackingArm = this.arm(attackingSide);
                         float progress = ((ILivingEntityPatch) entity).getSpecialAttackProgress(partialTicks);
                         attackingArm.setRotationX(progress * 2.25f);
-                        attackingArm.setRotationY(this.head().xRot() * 2 / 3);
+                        attackingArm.setRotationY(-this.head().xRot() * 2 / 3);
                         attackingArm.setRotationZ(Mth.PI / 6 + Mth.PI / 3 * progress);
                     }
                     case SPEAR_STAB -> {
                         HumanoidArm attackingSide = entity.getMainArm();
                         HM attackingArm = this.arm(attackingSide);
                         float progress = ((ILivingEntityPatch) entity).getSpecialAttackProgress(partialTicks);
+                        int mult = attackingSide == HumanoidArm.RIGHT ? 1 : -1;
                         if (progress < 0.5f) {
                             attackingArm.setRotationX(MathHelper.lerpRad(progress * 2, Mth.PI / 10, -Mth.PI / 4, false));
                         }
                         else if (progress < 0.75f) {
                             progress -= 0.5f;
                             attackingArm.setRotationX(MathHelper.lerpRad(progress * 4, -Mth.PI / 4, this.head().xRot() * 2 / 3 + Mth.HALF_PI, false));
-                            attackingArm.setRotationY(MathHelper.lerpRad(progress * 4, 0, Mth.PI / 20, false));
+                            attackingArm.setRotationY(mult * MathHelper.lerpRad(progress * 4, 0, Mth.PI / 20, false));
                         }
                         else {
                             attackingArm.setRotationX(this.head().xRot() * 2 / 3 + Mth.HALF_PI);
-                            attackingArm.setRotationY(Mth.PI / 20);
+                            attackingArm.setRotationY(mult * (Mth.PI / 20));
                         }
                     }
                 }

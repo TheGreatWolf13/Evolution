@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.ForgeHooksClient;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -63,7 +64,7 @@ public abstract class ForgeHooksClientMixin {
      * @reason Shutdown shaders it no shader found
      */
     @Overwrite
-    public static void loadEntityShader(Entity entity, GameRenderer gameRenderer) {
+    public static void loadEntityShader(@Nullable Entity entity, GameRenderer gameRenderer) {
         if (entity != null) {
             ResourceLocation shader = ClientRegistry.getEntityShader(entity.getClass());
             if (shader != null) {

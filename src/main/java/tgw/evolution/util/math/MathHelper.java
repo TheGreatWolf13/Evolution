@@ -13,6 +13,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -23,7 +24,9 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.Patterns;
+import tgw.evolution.capabilities.modular.IModularTool;
 import tgw.evolution.init.EvolutionShapes;
+import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.patches.*;
 import tgw.evolution.util.AdvancedEntityRayTraceResult;
 import tgw.evolution.util.HitInformation;
@@ -50,7 +53,8 @@ public final class MathHelper {
     public static final Random RANDOM = new Random();
     public static final DirectionDiagonal[][] DIAGONALS = {{DirectionDiagonal.NORTH_WEST, DirectionDiagonal.NORTH_EAST},
                                                            {DirectionDiagonal.SOUTH_WEST, DirectionDiagonal.SOUTH_EAST}};
-    public static final InteractionHand[] HANDS_LEFT_PRIORITY = {InteractionHand.OFF_HAND, InteractionHand.MAIN_HAND};
+    public static final InteractionHand[] HANDS_MAIN_PRIORITY = {InteractionHand.MAIN_HAND, InteractionHand.OFF_HAND};
+    public static final InteractionHand[] HANDS_OFF_PRIORITY = {InteractionHand.OFF_HAND, InteractionHand.MAIN_HAND};
     private static final Predicate<Entity> PREDICATE = e -> e != null && !e.isSpectator() && e.isPickable();
     private static final Pattern DIACRITICAL_MARKS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
@@ -70,7 +74,8 @@ public final class MathHelper {
         double b = 0.921_784_152_891_457_3;
         double c = -1.284_590_624_469_083_7;
         double d = 0.295_624_144_969_963_174;
-        return Math.PI / 2.0 + (a * value + b * value * value * value) / (1 + c * value * value + d * value * value * value * value);
+        double valueSqr = value * value;
+        return Math.PI / 2.0 + (a * value + b * valueSqr * value) / (1 + c * valueSqr + d * valueSqr * valueSqr);
     }
 
     /**
@@ -85,17 +90,27 @@ public final class MathHelper {
         return (float) (arcCos(value) * 180 / Math.PI);
     }
 
-    /**
-     * Checks whether two {@link ItemStack} are sufficiently equal.
-     * This means that they are the same item.
-     *
-     * @return {@code true} if the {@link ItemStack}s are sufficiently equal, {@code false} otherwise.
-     */
-    public static boolean areItemStacksSufficientlyEqual(ItemStack a, ItemStack b) {
-        if (a.isEmpty() && b.isEmpty()) {
+    public static boolean areStacksSimilar(ItemStack a, ItemStack b) {
+        if (a == b) {
             return true;
         }
-        return a.getItem() == b.getItem();
+        boolean aEmpty = a.isEmpty();
+        boolean bEmpty = b.isEmpty();
+        if (aEmpty && bEmpty) {
+            return true;
+        }
+        if (aEmpty || bEmpty) {
+            return false;
+        }
+        Item itemA = a.getItem();
+        Item itemB = b.getItem();
+        if (itemA != itemB) {
+            return false;
+        }
+        if (itemA instanceof ItemModularTool) {
+            return IModularTool.get(a).isSimilar(IModularTool.get(b));
+        }
+        return a.sameItem(b);
     }
 
     /**
@@ -346,13 +361,13 @@ public final class MathHelper {
             }
         }
         if (checkBlocks) {
-            hitResult[0] = collideWithBlocks(hits, entity, collider, partialTicks);
+            hitResult[0] = collideWithBlocks(hits, entity);
         }
         hits.release();
     }
 
     @Nullable
-    public static BlockHitResult collideWithBlocks(HitInformation hits, Entity hitter, Hitbox collider, float partialTicks) {
+    public static BlockHitResult collideWithBlocks(HitInformation hits, Entity hitter) {
         Level level = hitter.level;
         for (int e = 0; e < 12; e++) {
             BlockHitResult clip = level.clip(hits.getClipContext(e));

@@ -25,12 +25,14 @@ public class PacketCSSetCrawling implements IPacket {
     }
 
     public static void handle(PacketCSSetCrawling packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
-                ServerPlayer player = context.get().getSender();
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
+                ServerPlayer player = c.getSender();
+                assert player != null;
                 ((IPlayerPatch) player).setCrawling(packet.crawling);
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

@@ -8,8 +8,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.blocks.tileentities.TEPuzzle;
 import tgw.evolution.client.gui.widgets.AdvCheckBox;
@@ -21,7 +19,6 @@ import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketCSUpdatePuzzle;
 
-@OnlyIn(Dist.CLIENT)
 public class ScreenPuzzle extends Screen {
 
     private final Component textAttachmentType = new TranslatableComponent("evolution.gui.puzzle.attachmentType");
@@ -143,11 +140,11 @@ public class ScreenPuzzle extends Screen {
         this.tile.setAttachmentType(attachmentType);
         this.tile.setFinalState(finalState);
         this.tile.setCheckBB(this.checkBB);
-        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSUpdatePuzzle(this.tile.getBlockPos(),
-                                                                        attachmentType,
-                                                                        targetPool,
-                                                                        finalState,
-                                                                        this.checkBB));
+        EvolutionNetwork.sendToServer(new PacketCSUpdatePuzzle(this.tile.getBlockPos(),
+                                                               attachmentType,
+                                                               targetPool,
+                                                               finalState,
+                                                               this.checkBB));
         this.onClose();
     }
 

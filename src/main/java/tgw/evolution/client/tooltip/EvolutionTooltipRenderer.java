@@ -10,6 +10,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.ItemRenderer;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionResources;
 
 public final class EvolutionTooltipRenderer implements ClientTooltipComponent {
@@ -36,7 +37,7 @@ public final class EvolutionTooltipRenderer implements ClientTooltipComponent {
         }
     }
 
-    private IEvolutionTooltip tooltip;
+    private @Nullable IEvolutionTooltip tooltip;
 
     private EvolutionTooltipRenderer() {
     }

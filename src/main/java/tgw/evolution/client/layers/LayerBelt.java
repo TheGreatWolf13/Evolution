@@ -11,12 +11,9 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.util.constants.CommonRotations;
 
-@OnlyIn(Dist.CLIENT)
 public class LayerBelt extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
 
     public LayerBelt(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> playerRenderer) {

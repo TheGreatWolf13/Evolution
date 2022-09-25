@@ -25,8 +25,6 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.entity.IEntityAdditionalSpawnData;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
@@ -123,7 +121,6 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public boolean displayFireAnimation() {
         return false;
     }

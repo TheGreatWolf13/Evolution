@@ -24,9 +24,10 @@ public class PacketSCMultiplayerPause implements IPacket {
     }
 
     public static void handle(PacketSCMultiplayerPause packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> Evolution.PACKET_HANDLER.handleMultiplayerPause(packet.paused));
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> Evolution.PACKET_HANDLER.handleMultiplayerPause(packet.paused));
+            c.setPacketHandled(true);
         }
     }
 

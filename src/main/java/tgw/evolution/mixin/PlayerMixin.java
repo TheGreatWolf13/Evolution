@@ -5,7 +5,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Unit;
-import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
@@ -26,7 +29,6 @@ import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.PacketSCMovement;
-import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.patches.IPlayerPatch;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.constants.SkinType;
@@ -35,7 +37,7 @@ import tgw.evolution.util.hitbox.HitboxEntity;
 import tgw.evolution.util.math.MathHelper;
 
 @Mixin(Player.class)
-public abstract class PlayerMixin extends LivingEntity implements IEntityPatch, IPlayerPatch {
+public abstract class PlayerMixin extends LivingEntity implements IPlayerPatch {
 
     @Shadow
     @Final
@@ -156,7 +158,7 @@ public abstract class PlayerMixin extends LivingEntity implements IEntityPatch, 
 
     @Nullable
     @Override
-    public HitboxEntity<? extends Entity> getHitboxes() {
+    public HitboxEntity<Player> getHitboxes() {
         return EntityEvents.SKIN_TYPE.getOrDefault(this.getUUID(), SkinType.STEVE) == SkinType.STEVE ?
                EvolutionEntityHitboxes.PLAYER_STEVE :
                EvolutionEntityHitboxes.PLAYER_ALEX;

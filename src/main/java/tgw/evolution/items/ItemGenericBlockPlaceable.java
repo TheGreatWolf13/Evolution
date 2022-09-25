@@ -14,8 +14,6 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.network.PacketSCHandAnimation;
 
 public abstract class ItemGenericBlockPlaceable extends ItemBlock {
 
@@ -68,27 +66,28 @@ public abstract class ItemGenericBlockPlaceable extends ItemBlock {
         if (!this.placeBlock(context, stateForPlacement)) {
             return InteractionResult.FAIL;
         }
-        ServerPlayer player = (ServerPlayer) context.getPlayer();
-        ItemStack stack = context.getItemInHand();
-        BlockState stateAtPos = level.getBlockState(pos);
-        Block blockAtPos = stateAtPos.getBlock();
-        if (blockAtPos == stateForPlacement.getBlock()) {
-            CriteriaTriggers.PLACED_BLOCK.trigger(player, pos, stack);
+        if (context.getPlayer() instanceof ServerPlayer player) {
+            ItemStack stack = context.getItemInHand();
+            BlockState stateAtPos = level.getBlockState(pos);
+            Block blockAtPos = stateAtPos.getBlock();
+            if (blockAtPos == stateForPlacement.getBlock()) {
+                CriteriaTriggers.PLACED_BLOCK.trigger(player, pos, stack);
+            }
+            if (player.isCrouching()) {
+                this.sneakingAction(context);
+            }
+            SoundType soundtype = stateAtPos.getSoundType(level, pos, player);
+            level.playSound(null,
+                            pos,
+                            this.getPlaceSound(stateAtPos, level, pos, player),
+                            SoundSource.BLOCKS,
+                            (soundtype.getVolume() + 1.0F) / 2.0F,
+                            soundtype.getPitch() * 0.8F);
+            stack.shrink(1);
+            player.swing(context.getHand());
+            return InteractionResult.SUCCESS;
         }
-        if (player.isCrouching()) {
-            this.sneakingAction(context);
-        }
-        SoundType soundtype = stateAtPos.getSoundType(level, pos, context.getPlayer());
-        level.playSound(null,
-                        pos,
-                        this.getPlaceSound(stateAtPos, level, pos, context.getPlayer()),
-                        SoundSource.BLOCKS,
-                        (soundtype.getVolume() + 1.0F) / 2.0F,
-                        soundtype.getPitch() * 0.8F);
-        stack.shrink(1);
-        player.swing(context.getHand());
-        EvolutionNetwork.send(player, new PacketSCHandAnimation(context.getHand()));
-        return InteractionResult.SUCCESS;
+        return InteractionResult.PASS;
     }
 
     public void sneakingAction(BlockPlaceContext context) {

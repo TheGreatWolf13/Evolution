@@ -97,8 +97,9 @@ public abstract class ClientPacketListenerMixin {
                 }
             }
         }
-        for (RecipeCollection collection : recipeBook.getCollections()) {
-            collection.updateKnownRecipes(recipeBook);
+        List<RecipeCollection> collections = recipeBook.getCollections();
+        for (int i = 0, l = collections.size(); i < l; i++) {
+            collections.get(i).updateKnownRecipes(recipeBook);
         }
         if (this.minecraft.screen instanceof IRecipeBookUpdateListener recipeBookHolder) {
             recipeBookHolder.recipesUpdated();

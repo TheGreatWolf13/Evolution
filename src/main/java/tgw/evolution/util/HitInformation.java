@@ -75,7 +75,7 @@ public class HitInformation {
         Evolution.info("Collided with {} on {}", entity, hitbox);
         Set<HitboxType> set = this.data.get(entity.getId());
         if (set == null) {
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSHitInformation(entity));
+            EvolutionNetwork.sendToServer(new PacketCSHitInformation(entity));
             set = EnumSet.noneOf(HitboxType.class);
             this.data.put(entity.getId(), set);
         }
@@ -112,7 +112,7 @@ public class HitInformation {
     }
 
     public ClipContext getClipContext(@Range(from = 0, to = 11) int edge) {
-        this.clipContext.set(this.getOrMakeEdge(edge, true), this.getOrMakeEdge(edge, false), ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE,
+        this.clipContext.set(this.getOrMakeEdge(edge, true), this.getOrMakeEdge(edge, false), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE,
                              null);
         return this.clipContext;
     }
@@ -252,7 +252,7 @@ public class HitInformation {
     public void sendHits(IMelee.IAttackType type) {
         for (Int2ObjectMap.Entry<Set<HitboxType>> entry : this.data.int2ObjectEntrySet()) {
             //noinspection ObjectAllocationInLoop
-            EvolutionNetwork.INSTANCE.sendToServer(
+            EvolutionNetwork.sendToServer(
                     new PacketCSSpecialHit(entry.getIntKey(), type, entry.getValue().toArray(new HitboxType[this.data.size()])));
         }
     }

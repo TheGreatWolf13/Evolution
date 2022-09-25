@@ -30,12 +30,9 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelData;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.renderer.RenderHelper;
 
-@OnlyIn(Dist.CLIENT)
 public final class GUIUtils {
 
     private static DifficultyInstance difficulty = new DifficultyInstance(Difficulty.NORMAL, 0, 0, 0);

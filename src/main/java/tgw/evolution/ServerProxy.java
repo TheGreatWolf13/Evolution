@@ -26,6 +26,11 @@ public class ServerProxy implements IProxy {
     }
 
     @Override
+    public float getPartialTicks() {
+        return 1.0f;
+    }
+
+    @Override
     public SkinType getSkinType() {
         throw new AssertionError("Should only run on the client!");
     }
@@ -33,7 +38,7 @@ public class ServerProxy implements IProxy {
     @Override
     public void init() {
         IProxy.super.init();
-        Evolution.info("ServerProxy: Finished loading!");
+        Evolution.info("Finished loading!");
     }
 
     @Override

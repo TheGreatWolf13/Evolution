@@ -2,8 +2,6 @@ package tgw.evolution.mixin;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -13,12 +11,11 @@ import tgw.evolution.patches.IMinecraftPatch;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(Inventory.class)
-public abstract class InventoryMixin {
+public abstract class InventoryMixinClient {
 
-    @OnlyIn(Dist.CLIENT)
     @Inject(method = "swapPaint", at = @At("HEAD"), cancellable = true)
     private void onSwapPaint(double scrollAmount, CallbackInfo ci) {
-        if (((IMinecraftPatch) Minecraft.getInstance()).isMultiplayerPaused() || ClientEvents.getInstance().isInSpecialAttack()) {
+        if (((IMinecraftPatch) Minecraft.getInstance()).isMultiplayerPaused() || ClientEvents.getInstance().shouldRenderSpecialAttack()) {
             ci.cancel();
         }
     }

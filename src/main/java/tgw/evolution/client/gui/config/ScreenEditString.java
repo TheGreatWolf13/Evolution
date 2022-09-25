@@ -6,8 +6,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.widgets.AdvEditBox;
 import tgw.evolution.client.util.Key;
@@ -17,7 +15,6 @@ import tgw.evolution.init.EvolutionTexts;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-@OnlyIn(Dist.CLIENT)
 public class ScreenEditString extends Screen {
     private final Consumer<String> onSave;
     private final Screen parent;

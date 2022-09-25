@@ -12,7 +12,6 @@ import tgw.evolution.util.math.AABBMutable;
 public interface IMelee {
 
     IAttackType BARE_HAND_ATTACK = new IAttackType() {
-
         @Override
         public void encode(FriendlyByteBuf buf) {
             buf.writeByte(0);
@@ -29,6 +28,11 @@ public interface IMelee {
         }
 
         @Override
+        public int getFollowUps() {
+            return 0;
+        }
+
+        @Override
         public boolean isCameraLocked(int tick) {
             return false;
         }
@@ -39,7 +43,17 @@ public interface IMelee {
         }
 
         @Override
-        public boolean isMotionLocked(int tick) {
+        public boolean isLateralMotionLocked(int tick) {
+            return false;
+        }
+
+        @Override
+        public boolean isLongitudinalMotionLocked(int tick) {
+            return false;
+        }
+
+        @Override
+        public boolean isVerticalMotionLocked(int tick) {
             return false;
         }
     };
@@ -63,14 +77,16 @@ public interface IMelee {
     boolean shouldPlaySheatheSound(ItemStack stack);
 
     enum BasicAttackType implements IAttackType {
-        AXE_SWEEP(10),
-        SPEAR_STAB(15),
-        SWORD(10);
+        AXE_SWEEP(10, new ColliderHitbox(HitboxType.AXE, AABBMutable.block(0.25, -7.5, -4.75, -1.25, -14.5, 2.25))),
+        SPEAR_STAB(15, new ColliderHitbox(HitboxType.SPEAR, AABBMutable.block(0.25, -12.0, -1.25, -1.25, -20.0, 2.5))),
+        SWORD(10, null);
 
         private final int attackTime;
+        private final @Nullable ColliderHitbox collider;
 
-        BasicAttackType(int attackTime) {
+        BasicAttackType(int attackTime, @Nullable ColliderHitbox collider) {
             this.attackTime = attackTime;
+            this.collider = collider;
         }
 
         @Override
@@ -85,8 +101,16 @@ public interface IMelee {
         }
 
         @Override
-        public ColliderHitbox getCollider(HumanoidArm arm) {
-            return new ColliderHitbox(HitboxType.SPEAR, AABBMutable.block(0.25, -12.0, -1.25, -1.25, -20.0, 2.5));
+        public @Nullable ColliderHitbox getCollider(HumanoidArm arm) {
+            return this.collider;
+        }
+
+        @Override
+        public int getFollowUps() {
+            return switch (this) {
+                case AXE_SWEEP, SWORD -> 2;
+                case SPEAR_STAB -> 1;
+            };
         }
 
         @Override
@@ -106,7 +130,20 @@ public interface IMelee {
         }
 
         @Override
-        public boolean isMotionLocked(int tick) {
+        public boolean isLateralMotionLocked(int tick) {
+            return switch (this) {
+                case AXE_SWEEP, SWORD -> false;
+                case SPEAR_STAB -> tick >= 7;
+            };
+        }
+
+        @Override
+        public boolean isLongitudinalMotionLocked(int tick) {
+            return false;
+        }
+
+        @Override
+        public boolean isVerticalMotionLocked(int tick) {
             return switch (this) {
                 case AXE_SWEEP, SWORD -> false;
                 case SPEAR_STAB -> tick >= 7;
@@ -136,6 +173,12 @@ public interface IMelee {
         }
 
         @Override
+        public int getFollowUps() {
+            //TODO implementation
+            return 0;
+        }
+
+        @Override
         public boolean isCameraLocked(int tick) {
             //TODO implementation
             return false;
@@ -148,7 +191,19 @@ public interface IMelee {
         }
 
         @Override
-        public boolean isMotionLocked(int tick) {
+        public boolean isLateralMotionLocked(int tick) {
+            //TODO implementation
+            return false;
+        }
+
+        @Override
+        public boolean isLongitudinalMotionLocked(int tick) {
+            //TODO implementation
+            return false;
+        }
+
+        @Override
+        public boolean isVerticalMotionLocked(int tick) {
             //TODO implementation
             return false;
         }
@@ -179,10 +234,16 @@ public interface IMelee {
 
         @Nullable ColliderHitbox getCollider(HumanoidArm arm);
 
+        int getFollowUps();
+
         boolean isCameraLocked(int tick);
 
         boolean isHitTick(int tick);
 
-        boolean isMotionLocked(int tick);
+        boolean isLateralMotionLocked(int tick);
+
+        boolean isLongitudinalMotionLocked(int tick);
+
+        boolean isVerticalMotionLocked(int tick);
     }
 }

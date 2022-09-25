@@ -127,6 +127,14 @@ public class PartBlade implements IPartHit<PartTypes.Blade, ItemPartBlade, PartB
     }
 
     @Override
+    public boolean isSimilar(PartBlade part) {
+        if (this.type != part.type) {
+            return false;
+        }
+        return this.material.isSimilar(part.material);
+    }
+
+    @Override
     public void loseSharp(int amount) {
         if (this.canBeSharpened()) {
             this.sharpAmount -= amount;

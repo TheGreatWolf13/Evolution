@@ -30,9 +30,10 @@ public class PacketSCMovement implements IPacket {
     }
 
     public static void handle(PacketSCMovement packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> Evolution.PROXY.getClientPlayer().setDeltaMovement(packet.motionX, packet.motionY, packet.motionZ));
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> Evolution.PROXY.getClientPlayer().setDeltaMovement(packet.motionX, packet.motionY, packet.motionZ));
+            c.setPacketHandled(true);
         }
     }
 

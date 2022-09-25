@@ -24,7 +24,6 @@ import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.ForgeEventFactory;
-import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
@@ -118,6 +117,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
 
     @Inject(method = "tickServer", at = @At("HEAD"))
     private void onTickServer(BooleanSupplier supplier, CallbackInfo ci) {
+        //noinspection ConstantConditions
         if ((Object) this instanceof DedicatedServer) {
             for (ServerPlayer player : this.getPlayerList().getPlayers()) {
                 player.awardStat(EvolutionStats.TIME_WITH_WORLD_OPEN);
@@ -137,7 +137,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         else {
             Evolution.info("Resuming Multiplayer Server");
         }
-        EvolutionNetwork.INSTANCE.send(PacketDistributor.ALL.noArg(), new PacketSCMultiplayerPause(paused));
+        EvolutionNetwork.sendToAll(new PacketSCMultiplayerPause(paused));
     }
 
     /**
@@ -187,6 +187,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             tickTimes[this.tickCount % 100] = Util.getNanos() - tickStart;
         }
         this.profiler.popPush("connection");
+        assert this.getConnection() != null;
         this.getConnection().tick();
         this.profiler.popPush("players");
         this.playerList.tick();
@@ -228,6 +229,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
                     }
                 }
                 Collections.shuffle(Arrays.asList(agameprofile));
+                assert this.status.getPlayers() != null;
                 this.status.getPlayers().setSample(agameprofile);
             }
             this.status.invalidateJson();

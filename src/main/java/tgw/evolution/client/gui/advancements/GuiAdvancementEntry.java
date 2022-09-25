@@ -12,8 +12,6 @@ import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.GUIUtils;
@@ -23,7 +21,6 @@ import tgw.evolution.util.collection.OList;
 import java.util.Collections;
 import java.util.List;
 
-@OnlyIn(Dist.CLIENT)
 public class GuiAdvancementEntry extends GuiComponent {
 
     protected static final int ADVANCEMENT_SIZE = 26;

@@ -2,7 +2,7 @@ package tgw.evolution.network;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.network.NetworkEvent;
@@ -32,17 +32,19 @@ public class PacketCSSetKnappingType implements IPacket {
     }
 
     public static void handle(PacketCSSetKnappingType packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
-                Level world = context.get().getSender().level;
-                BlockEntity tile = world.getBlockEntity(packet.pos);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
+                ServerPlayer player = c.getSender();
+                assert player != null;
+                BlockEntity tile = player.level.getBlockEntity(packet.pos);
                 if (tile instanceof TEKnapping knapping) {
                     knapping.setType(packet.type);
                     return;
                 }
                 Evolution.warn("Could not find TEKnapping at {}", packet.pos);
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

@@ -78,8 +78,9 @@ public class PacketSCUpdateChunkStorage implements IPacket {
     }
 
     public static void handle(PacketSCUpdateChunkStorage packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
                 Level level = Evolution.PROXY.getClientLevel();
                 IChunkStorage storage = EvolutionCapabilities.getCapabilityOrThrow(level.getChunk(packet.chunkPos.x, packet.chunkPos.z),
                                                                                    CapabilityChunkStorage.INSTANCE);
@@ -93,7 +94,7 @@ public class PacketSCUpdateChunkStorage implements IPacket {
                     cs.setElement(EnumStorage.GAS_NITROGEN, packet.gasNitrogen);
                 }
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

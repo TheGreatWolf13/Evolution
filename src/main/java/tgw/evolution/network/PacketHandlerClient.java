@@ -3,6 +3,7 @@ package tgw.evolution.network;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlFormat;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
@@ -17,35 +18,36 @@ import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.util.ConfigHelper;
 
 import java.io.ByteArrayInputStream;
-import java.util.function.Supplier;
 
 public class PacketHandlerClient implements IPacketHandler {
 
     @Override
     public void handleMultiplayerPause(boolean paused) {
-        boolean wasPaused = ((IMinecraftPatch) Minecraft.getInstance()).isMultiplayerPaused();
+        Minecraft mc = Minecraft.getInstance();
+        boolean wasPaused = ((IMinecraftPatch) mc).isMultiplayerPaused();
         if (wasPaused == paused) {
             return;
         }
+        LocalPlayer player = mc.player;
+        assert player != null;
         if (paused) {
-            Minecraft.getInstance().player.displayClientMessage(EvolutionTexts.COMMAND_PAUSE_PAUSE_INFO, false);
+            player.displayClientMessage(EvolutionTexts.COMMAND_PAUSE_PAUSE_INFO, false);
             Evolution.info("Pausing Client due to Multiplayer Pause");
         }
         else {
-            Minecraft.getInstance().player.displayClientMessage(EvolutionTexts.COMMAND_PAUSE_RESUME_INFO, false);
+            player.displayClientMessage(EvolutionTexts.COMMAND_PAUSE_RESUME_INFO, false);
             Evolution.info("Resuming Client due to Multiplayer Resume");
         }
-        ((IMinecraftPatch) Minecraft.getInstance()).setMultiplayerPaused(paused);
+        ((IMinecraftPatch) mc).setMultiplayerPaused(paused);
     }
 
     @Override
-    public void handlePlaySoundEntityEmitted(PacketSCPlaySoundEntityEmitted packet, Supplier<NetworkEvent.Context> context) {
-        context.get().enqueueWork(() -> {
-            Minecraft mc = Minecraft.getInstance();
-            Entity entity = mc.level.getEntity(packet.entityId);
+    public void handlePlaySoundEntityEmitted(PacketSCPlaySoundEntityEmitted packet, NetworkEvent.Context context) {
+        context.enqueueWork(() -> {
+            Entity entity = Evolution.PROXY.getClientLevel().getEntity(packet.entityId);
             SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(packet.sound));
             if (entity != null && sound != null) {
-                mc.getSoundManager().play(new SoundEntityEmitted(entity, sound, packet.category, packet.volume, packet.pitch));
+                Minecraft.getInstance().getSoundManager().play(new SoundEntityEmitted(entity, sound, packet.category, packet.volume, packet.pitch));
             }
         });
     }

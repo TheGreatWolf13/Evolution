@@ -1,6 +1,7 @@
 package tgw.evolution.util.earth;
 
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
 import tgw.evolution.entities.projectiles.IAerodynamicEntity;
 import tgw.evolution.util.math.Units;
@@ -41,7 +42,7 @@ public final class Gravity {
      * Returns the horizontal drag due to air resistance in the given dimension, based on the area of the body.
      */
     public static double horizontalDrag(Entity entity) {
-        if (entity.level.dimensionType().effectsLocation() == DimensionType.OVERWORLD_EFFECTS) {
+        if (entity.level.dimension() == Level.OVERWORLD) {
             return 0.5 * AIR_DENSITY * entity.getBbWidth() * entity.getBbHeight() * coefOfDrag(entity);
         }
         return 0;
@@ -55,7 +56,7 @@ public final class Gravity {
      * Returns the vertical drag due to air resistance in the given dimension, based on the area of the body.
      */
     public static double verticalDrag(Entity entity) {
-        if (entity.level.dimensionType().effectsLocation() == DimensionType.OVERWORLD_EFFECTS) {
+        if (entity.level.dimension() == Level.OVERWORLD) {
             return 0.5 * AIR_DENSITY * entity.getBbWidth() * entity.getBbWidth() * coefOfDrag(entity);
         }
         return 0;

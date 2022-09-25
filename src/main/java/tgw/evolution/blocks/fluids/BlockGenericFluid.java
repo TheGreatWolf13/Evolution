@@ -22,9 +22,8 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.ForgeEventFactory;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.*;
 import tgw.evolution.blocks.tileentities.TELiquid;
@@ -37,7 +36,6 @@ import tgw.evolution.util.math.DirectionList;
 import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
 
-import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -323,7 +321,6 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public boolean skipRendering(BlockState state, BlockState adjacentBlockState, Direction side) {
         return adjacentBlockState.getFluidState().getType().isSame(this.getFluid()) || state.canOcclude();
     }

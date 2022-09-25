@@ -1,7 +1,7 @@
 package tgw.evolution;
 
 import com.mojang.logging.LogUtils;
-import net.minecraft.client.Minecraft;
+import net.minecraft.commands.synchronization.ArgumentTypes;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
@@ -26,6 +26,7 @@ import net.minecraftforge.registries.DataSerializerEntry;
 import org.slf4j.Logger;
 import tgw.evolution.blocks.BlockFire;
 import tgw.evolution.client.renderer.EvolutionRenderLayer;
+import tgw.evolution.commands.argument.EnumEvArgument;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ChunkEvents;
 import tgw.evolution.events.ClientEvents;
@@ -41,8 +42,8 @@ import tgw.evolution.util.EvolutionDataSerializers;
 public final class Evolution {
 
     public static final String MODID = "evolution";
-    public static final IProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> ServerProxy::new);
-    public static final IPacketHandler PACKET_HANDLER = DistExecutor.safeRunForDist(() -> PacketHandlerClient::new, () -> PacketHandlerDummy::new);
+    public static final IProxy PROXY = DistExecutor.unsafeRunForDist(() -> ClientProxy::new, () -> ServerProxy::new);
+    public static final IPacketHandler PACKET_HANDLER = DistExecutor.unsafeRunForDist(() -> PacketHandlerClient::new, () -> PacketHandlerDummy::new);
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public Evolution() {
@@ -131,7 +132,7 @@ public final class Evolution {
     private static void onClientSetup(FMLClientSetupEvent event) {
         EvolutionRenderLayer.setup();
         ClientEvents.fixInputMappings();
-        Minecraft.getInstance().font.lineHeight = 10;
+        ClientEvents.fixFont();
     }
 
     private static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
@@ -164,6 +165,7 @@ public final class Evolution {
 
     private static void setup(FMLCommonSetupEvent event) {
         PROXY.init();
+        ArgumentTypes.register("evolution:enum", EnumEvArgument.class, new EnumEvArgument.Serializer());
         EvolutionNetwork.registerMessages();
         MinecraftForge.EVENT_BUS.register(new WorldEvents());
         MinecraftForge.EVENT_BUS.register(new ChunkEvents());

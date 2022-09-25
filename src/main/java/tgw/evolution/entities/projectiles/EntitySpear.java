@@ -15,8 +15,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
 import org.jetbrains.annotations.Nullable;
@@ -175,7 +173,6 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public boolean shouldRender(double x, double y, double z) {
         return true;
     }

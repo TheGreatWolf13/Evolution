@@ -22,10 +22,10 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.util.EvolutionInput;
 import tgw.evolution.items.IEvolutionItem;
-import tgw.evolution.patches.ILivingEntityPatch;
+import tgw.evolution.patches.IPlayerPatch;
 
 @Mixin(LocalPlayer.class)
-public abstract class LocalPlayerMixin extends AbstractClientPlayer implements ILivingEntityPatch {
+public abstract class LocalPlayerMixin extends AbstractClientPlayer implements IPlayerPatch {
 
     @Shadow
     @Final
@@ -319,13 +319,17 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
     public void serverAiStep() {
         super.serverAiStep();
         if (this.isControlledCamera()) {
-            if (!this.isMotionLocked()) {
-                this.xxa = this.input.leftImpulse;
+            if (!this.isLongitudinalMotionLocked()) {
                 this.zza = this.input.forwardImpulse;
             }
             else {
-                this.xxa = 0;
                 this.zza = 0;
+            }
+            if (!this.isLateralMotionLocked()) {
+                this.xxa = this.input.leftImpulse;
+            }
+            else {
+                this.xxa = 0;
             }
             if (!this.jumping) {
                 this.jumping = this.input.jumping;

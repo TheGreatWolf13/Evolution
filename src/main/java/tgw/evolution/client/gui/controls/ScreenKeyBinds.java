@@ -13,8 +13,6 @@ import net.minecraft.client.gui.screens.controls.KeyBindsScreen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.settings.KeyModifier;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.widgets.AdvCheckBox;
@@ -27,7 +25,6 @@ import tgw.evolution.util.math.MathHelper;
 
 import java.util.function.Predicate;
 
-@OnlyIn(Dist.CLIENT)
 public class ScreenKeyBinds extends KeyBindsScreen {
     private final Options options;
     private final Component textCategory = new TranslatableComponent("evolution.gui.controls.category");

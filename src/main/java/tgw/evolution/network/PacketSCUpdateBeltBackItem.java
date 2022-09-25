@@ -31,8 +31,9 @@ public class PacketSCUpdateBeltBackItem implements IPacket {
     }
 
     public static void handle(PacketSCUpdateBeltBackItem packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
                 if (packet.back) {
                     ClientEvents.BACK_ITEMS.put(packet.entityId, packet.stack);
                 }
@@ -40,7 +41,7 @@ public class PacketSCUpdateBeltBackItem implements IPacket {
                     ClientEvents.BELT_ITEMS.put(packet.entityId, packet.stack);
                 }
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

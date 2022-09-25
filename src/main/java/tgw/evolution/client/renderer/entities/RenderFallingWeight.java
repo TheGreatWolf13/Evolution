@@ -16,13 +16,10 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ForgeHooksClient;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.util.math.MathHelper;
 
-@OnlyIn(Dist.CLIENT)
 public class RenderFallingWeight extends EntityRenderer<EntityFallingWeight> {
 
     private static final BlockPos.MutableBlockPos MUTABLE_POS = new BlockPos.MutableBlockPos();

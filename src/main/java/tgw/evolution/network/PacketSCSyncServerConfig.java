@@ -27,9 +27,10 @@ public class PacketSCSyncServerConfig implements IPacket {
     }
 
     public static void handle(PacketSCSyncServerConfig packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> Evolution.PACKET_HANDLER.handleSyncServerConfig(packet.filename, packet.data));
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> Evolution.PACKET_HANDLER.handleSyncServerConfig(packet.filename, packet.data));
+            c.setPacketHandled(true);
         }
     }
 

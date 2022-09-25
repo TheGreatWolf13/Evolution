@@ -41,9 +41,10 @@ public class PacketSCPlaySoundEntityEmitted implements IPacket {
     }
 
     public static void handle(PacketSCPlaySoundEntityEmitted packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            Evolution.PACKET_HANDLER.handlePlaySoundEntityEmitted(packet, context);
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            Evolution.PACKET_HANDLER.handlePlaySoundEntityEmitted(packet, c);
+            c.setPacketHandled(true);
         }
     }
 

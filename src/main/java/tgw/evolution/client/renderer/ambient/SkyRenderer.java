@@ -12,8 +12,6 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.Blending;
@@ -30,7 +28,6 @@ import tgw.evolution.world.dimension.DimensionOverworld;
 import java.util.Random;
 import java.util.random.RandomGenerator;
 
-@OnlyIn(Dist.CLIENT)
 public class SkyRenderer {
 
     private static final float SCALE_OF_CELESTIAL = 20.0f;

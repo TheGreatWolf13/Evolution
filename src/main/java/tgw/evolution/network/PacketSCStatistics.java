@@ -8,6 +8,7 @@ import net.minecraft.stats.Stat;
 import net.minecraft.stats.StatType;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.network.NetworkEvent;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 
 import java.util.function.Supplier;
@@ -44,16 +45,21 @@ public class PacketSCStatistics implements IPacket {
     }
 
     public static void handle(PacketSCStatistics packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> Evolution.PROXY.updateStats(packet.statsData));
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> Evolution.PROXY.updateStats(packet.statsData));
+            c.setPacketHandled(true);
         }
     }
 
-    private static <T> void readValues(Object2LongMap<Stat<?>> map, StatType<T> statType, FriendlyByteBuf buffer) {
+    private static <T> void readValues(Object2LongMap<Stat<?>> map, @Nullable StatType<T> statType, FriendlyByteBuf buffer) {
         int statId = buffer.readVarInt();
         long amount = buffer.readLong();
-        map.put(statType.get(statType.getRegistry().byId(statId)), amount);
+        if (statType != null) {
+            T t = statType.getRegistry().byId(statId);
+            assert t != null;
+            map.put(statType.get(t), amount);
+        }
     }
 
     @Override

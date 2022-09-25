@@ -38,9 +38,9 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -781,7 +781,7 @@ public abstract class LevelRendererMixin {
                           boolean isFoggy,
                           Runnable skyFogSetup) {
         skyFogSetup.run();
-        if (this.level.dimensionType().effectsLocation() == DimensionType.OVERWORLD_EFFECTS) {
+        if (this.level.dimension() == Level.OVERWORLD) {
             SkyRenderer skyRenderer = ClientEvents.getInstance().getSkyRenderer();
             if (skyRenderer != null) {
                 skyRenderer.render(partialTicks, matrices, this.level, this.minecraft, skyFogSetup);

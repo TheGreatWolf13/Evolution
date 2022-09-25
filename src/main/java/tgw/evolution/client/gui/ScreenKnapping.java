@@ -12,8 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.KnappingRecipe;
 import tgw.evolution.client.renderer.RenderHelper;
@@ -23,7 +21,6 @@ import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketCSSetKnappingType;
 import tgw.evolution.util.constants.RockVariant;
 
-@OnlyIn(Dist.CLIENT)
 public class ScreenKnapping extends Screen {
 
     private final BlockPos pos;
@@ -196,7 +193,7 @@ public class ScreenKnapping extends Screen {
     }
 
     private void setTile(KnappingRecipe type) {
-        EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSetKnappingType(this.pos, type));
+        EvolutionNetwork.sendToServer(new PacketCSSetKnappingType(this.pos, type));
         assert this.minecraft != null;
         this.minecraft.setScreen(null);
     }

@@ -22,8 +22,6 @@ import net.minecraft.stats.StatType;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
@@ -108,7 +106,6 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public <T> int getValue(StatType<T> statType, T stat) {
         Evolution.warn("Wrong stats method, called by {}", Thread.currentThread().getStackTrace()[2]);
         return 0;
@@ -120,7 +117,6 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
         return 0;
     }
 
-    @OnlyIn(Dist.CLIENT)
     public <T> long getValueLong(StatType<T> statType, T stat) {
         return statType.contains(stat) ? this.getValueLong(statType.get(stat)) : 0;
     }

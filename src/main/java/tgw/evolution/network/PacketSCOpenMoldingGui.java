@@ -25,9 +25,10 @@ public class PacketSCOpenMoldingGui implements IPacket {
     }
 
     public static void handle(PacketSCOpenMoldingGui packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> ScreenMolding.open(packet.pos));
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> ScreenMolding.open(packet.pos));
+            c.setPacketHandled(true);
         }
     }
 

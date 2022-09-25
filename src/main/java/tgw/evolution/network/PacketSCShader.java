@@ -27,9 +27,10 @@ public class PacketSCShader implements IPacket {
     }
 
     public static void handle(PacketSCShader packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> ClientEvents.getInstance().handleShaderPacket(packet.shaderId));
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> ClientEvents.getInstance().handleShaderPacket(packet.shaderId));
+            c.setPacketHandled(true);
         }
     }
 

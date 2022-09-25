@@ -1,10 +1,10 @@
 package tgw.evolution.network;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.Evolution;
+import tgw.evolution.util.math.Vec3d;
 
 import java.util.function.Supplier;
 
@@ -31,12 +31,10 @@ public class PacketSCMomentum implements IPacket {
     }
 
     public static void handle(PacketSCMomentum packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
-                Player player = Evolution.PROXY.getClientPlayer();
-                player.setDeltaMovement(player.getDeltaMovement().add(packet.x, packet.y, packet.z));
-            });
-            context.get().setPacketHandled(true);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> ((Vec3d) Evolution.PROXY.getClientPlayer().getDeltaMovement()).addMutable(packet.x, packet.y, packet.z));
+            c.setPacketHandled(true);
         }
     }
 

@@ -2,7 +2,7 @@ package tgw.evolution.network;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.network.NetworkEvent;
@@ -32,17 +32,19 @@ public class PacketCSSetMoldingType implements IPacket {
     }
 
     public static void handle(PacketCSSetMoldingType packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
-                Level level = context.get().getSender().level;
-                BlockEntity tile = level.getBlockEntity(packet.pos);
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
+                ServerPlayer player = c.getSender();
+                assert player != null;
+                BlockEntity tile = player.level.getBlockEntity(packet.pos);
                 if (tile instanceof TEMolding molding) {
                     molding.setType(packet.molding);
                     return;
                 }
                 Evolution.warn("Could not find TEMolding at {}", packet.pos);
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

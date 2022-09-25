@@ -4,13 +4,10 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.TextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.Blending;
 import tgw.evolution.init.EvolutionResources;
 
-@OnlyIn(Dist.CLIENT)
 public class ButtonIcon extends Button {
     private static final OnTooltip TOOLTIP = (b, m, mx, my) -> {
     };

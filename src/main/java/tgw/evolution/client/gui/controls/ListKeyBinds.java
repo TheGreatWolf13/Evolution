@@ -15,8 +15,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.ArrayUtils;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.util.collection.OArrayList;
@@ -25,7 +23,6 @@ import tgw.evolution.util.collection.OList;
 import java.util.Arrays;
 import java.util.List;
 
-@OnlyIn(Dist.CLIENT)
 public class ListKeyBinds extends KeyBindsList {
     public final OList<Entry> allEntries;
     private final ScreenKeyBinds screenKeyBinds;
@@ -82,7 +79,6 @@ public class ListKeyBinds extends KeyBindsList {
         return super.getScrollbarPosition() + 25;
     }
 
-    @OnlyIn(Dist.CLIENT)
     public class CategoryEntry extends KeyBindsList.Entry {
 
         private final Component name;
@@ -133,7 +129,6 @@ public class ListKeyBinds extends KeyBindsList {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     public final class KeyEntry extends KeyBindsList.Entry {
 
         private final Button changeButton;

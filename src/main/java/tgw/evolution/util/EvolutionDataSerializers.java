@@ -32,10 +32,10 @@ public final class EvolutionDataSerializers {
         }
 
         @Override
-        public void write(FriendlyByteBuf buffer, NonNullList<ItemStack> itemStacks) {
-            buffer.writeInt(itemStacks.size());
-            for (ItemStack itemStack : itemStacks) {
-                buffer.writeItem(itemStack);
+        public void write(FriendlyByteBuf buffer, NonNullList<ItemStack> stacks) {
+            buffer.writeInt(stacks.size());
+            for (ItemStack stack : stacks) {
+                buffer.writeItemStack(stack, false);
             }
         }
     };

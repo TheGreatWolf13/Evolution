@@ -16,8 +16,6 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.widgets.ButtonIcon;
@@ -33,7 +31,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@OnlyIn(Dist.CLIENT)
 public class ScreenEditList extends Screen {
     private final ScreenConfig.ListValueHolder holder;
     private final ListType listType;
@@ -195,9 +192,9 @@ public class ScreenEditList extends Screen {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     public class ObjectList extends ContainerObjectSelectionList<StringEntry> {
         public ObjectList() {
+            //noinspection ConstantConditions
             super(ScreenEditList.this.minecraft, ScreenEditList.this.width, ScreenEditList.this.height, 36, ScreenEditList.this.height - 36, 24);
             for (StringHolder value : ScreenEditList.this.values) {
                 //noinspection ObjectAllocationInLoop

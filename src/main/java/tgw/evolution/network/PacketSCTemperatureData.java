@@ -37,14 +37,15 @@ public class PacketSCTemperatureData implements IPacket {
     }
 
     public static void handle(PacketSCTemperatureData packet, Supplier<NetworkEvent.Context> context) {
-        if (IPacket.checkSide(packet, context)) {
-            context.get().enqueueWork(() -> {
+        NetworkEvent.Context c = context.get();
+        if (IPacket.checkSide(packet, c)) {
+            c.enqueueWork(() -> {
                 TemperatureClient temperature = TemperatureClient.CLIENT_INSTANCE;
                 temperature.setCurrentTemperature(packet.currentTemp);
                 temperature.setCurrentMaxComfort(packet.currentMaxComfort);
                 temperature.setCurrentMinComfort(packet.currentMinComfort);
             });
-            context.get().setPacketHandled(true);
+            c.setPacketHandled(true);
         }
     }
 

@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.util.ArmPose;
+import tgw.evolution.util.ArmPoseConverter;
 import tgw.evolution.util.hitbox.hms.HM;
 import tgw.evolution.util.hitbox.hms.HMHumanoid;
 
@@ -119,7 +120,7 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
 
     @Override
     public ArmPose leftArmPose() {
-        return ArmPose.fromVanilla(this.leftArmPose);
+        return ArmPoseConverter.fromVanilla(this.leftArmPose);
     }
 
     @Override
@@ -144,7 +145,7 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
 
     @Override
     public ArmPose rightArmPose() {
-        return ArmPose.fromVanilla(this.rightArmPose);
+        return ArmPoseConverter.fromVanilla(this.rightArmPose);
     }
 
     @Override
@@ -159,12 +160,12 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
 
     @Override
     public void setLeftArmPose(ArmPose leftArmPose) {
-        this.leftArmPose = leftArmPose.toVanilla();
+        this.leftArmPose = ArmPoseConverter.toVanilla(leftArmPose);
     }
 
     @Override
     public void setRightArmPose(ArmPose rightArmPose) {
-        this.rightArmPose = rightArmPose.toVanilla();
+        this.rightArmPose = ArmPoseConverter.toVanilla(rightArmPose);
     }
 
     @Override

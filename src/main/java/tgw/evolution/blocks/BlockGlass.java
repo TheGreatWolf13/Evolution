@@ -9,13 +9,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketCSCollision;
 import tgw.evolution.util.math.Units;
-
-import org.jetbrains.annotations.Nullable;
 
 public class BlockGlass extends BlockGeneric implements ICollisionBlock {
 
@@ -52,7 +51,7 @@ public class BlockGlass extends BlockGeneric implements ICollisionBlock {
                            Direction.Axis.Y);
         }
         else if (level.isClientSide && entity.equals(Evolution.PROXY.getClientPlayer())) {
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSCollision(pos, entity.getDeltaMovement().y, Direction.Axis.Y));
+            EvolutionNetwork.sendToServer(new PacketCSCollision(pos, entity.getDeltaMovement().y, Direction.Axis.Y));
         }
         super.fallOn(level, state, pos, entity, fallDistance);
     }

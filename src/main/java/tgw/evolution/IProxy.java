@@ -18,6 +18,8 @@ public interface IProxy {
 
     Player getClientPlayer();
 
+    float getPartialTicks();
+
     SkinType getSkinType();
 
     default void init() {

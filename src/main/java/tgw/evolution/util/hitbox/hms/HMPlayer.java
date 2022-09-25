@@ -1,10 +1,10 @@
 package tgw.evolution.util.hitbox.hms;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import tgw.evolution.Evolution;
 
 public interface HMPlayer<T extends LivingEntity> extends HMHumanoid<T> {
 
@@ -52,7 +52,7 @@ public interface HMPlayer<T extends LivingEntity> extends HMHumanoid<T> {
                 this.cloak().setPivotZ(3.125F + 0.7f);
                 this.cloak().setPivotY(24.0F + 0.85f);
             }
-            float partialTicks = Minecraft.getInstance().getFrameTime();
+            float partialTicks = Evolution.PROXY.getPartialTicks();
             double dx = Mth.lerp(partialTicks, player.xCloakO, player.xCloak) - Mth.lerp(partialTicks, entity.xo, entity.getX());
             double dy = Mth.lerp(partialTicks, player.yCloakO, player.yCloak) - Mth.lerp(partialTicks, entity.yo, entity.getY());
             double dz = Mth.lerp(partialTicks, player.zCloakO, player.zCloak) - Mth.lerp(partialTicks, entity.zo, entity.getZ());

@@ -13,8 +13,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.collection.OArrayList;
@@ -24,7 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-@OnlyIn(Dist.CLIENT)
 public class CriterionGrid {
     private static final CriterionGrid EMPTY = new CriterionGrid();
     public final int numRows;

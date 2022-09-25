@@ -17,8 +17,6 @@ import net.minecraft.client.resources.language.I18n;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.*;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
@@ -45,7 +43,6 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@OnlyIn(Dist.CLIENT)
 public class ScreenConfig extends ScreenListMenu {
     private static final Field CLAZZ = ObfuscationReflectionHelper.findField(ForgeConfigSpec.EnumValue.class, "clazz");
     private static final Pattern DOUBLE_SPACE = Pattern.compile("\\s++");

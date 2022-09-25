@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.achievement.StatsUpdateListener;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.stats.Stat;
@@ -150,6 +151,15 @@ public class ClientProxy implements IProxy {
     }
 
     @Override
+    public float getPartialTicks() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.isPaused()) {
+            return mc.pausePartialTick;
+        }
+        return mc.getFrameTime();
+    }
+
+    @Override
     public SkinType getSkinType() {
         return "default".equals(((AbstractClientPlayer) this.getClientPlayer()).getModelName()) ? SkinType.STEVE : SkinType.ALEX;
     }
@@ -169,7 +179,7 @@ public class ClientProxy implements IProxy {
 //        EvolutionParticles.register();
         registerTooltips();
         registerHUDOverlays();
-        Evolution.info("ClientProxy: Finished loading!");
+        Evolution.info("Finished loading!");
     }
 
     @Override
@@ -183,13 +193,16 @@ public class ClientProxy implements IProxy {
 
     @Override
     public void updateStats(Object2LongMap<Stat<?>> statsData) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        assert player != null;
+        EvolutionStatsCounter stats = (EvolutionStatsCounter) player.getStats();
         for (Map.Entry<Stat<?>, Long> entry : statsData.object2LongEntrySet()) {
             Stat<?> stat = entry.getKey();
             long i = entry.getValue();
-            ((EvolutionStatsCounter) Minecraft.getInstance().player.getStats()).setValueLong(stat, i);
+            stats.setValueLong(stat, i);
         }
-        if (Minecraft.getInstance().screen instanceof StatsUpdateListener) {
-            ((StatsUpdateListener) Minecraft.getInstance().screen).onStatsUpdated();
+        if (Minecraft.getInstance().screen instanceof StatsUpdateListener s) {
+            s.onStatsUpdated();
         }
     }
 }

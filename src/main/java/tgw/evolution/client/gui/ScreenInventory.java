@@ -11,8 +11,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.recipebook.ComponentRecipeBook;
 import tgw.evolution.client.gui.recipebook.ComponentRecipeBookSmall;
@@ -24,7 +22,6 @@ import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.inventory.extendedinventory.ContainerInventory;
 import tgw.evolution.util.math.MathHelper;
 
-@OnlyIn(Dist.CLIENT)
 public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> implements IRecipeBookUpdateListener {
 
     private final ComponentRecipeBook recipeBook = new ComponentRecipeBookSmall();

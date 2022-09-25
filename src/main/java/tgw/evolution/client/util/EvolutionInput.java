@@ -10,8 +10,6 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import tgw.evolution.ClientProxy;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionEffects;
@@ -20,7 +18,6 @@ import tgw.evolution.network.PacketCSSetCrawling;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IPlayerPatch;
 
-@OnlyIn(Dist.CLIENT)
 public class EvolutionInput extends Input {
 
     /**
@@ -56,7 +53,7 @@ public class EvolutionInput extends Input {
         this.onClimbable = player.onClimbable();
         boolean isCrawl = player.getPose() == Pose.SWIMMING && !player.isInWater();
         if (this.crawl != isCrawl) {
-            ClientEvents.getInstance().resetAttackCooldowns();
+            ClientEvents.getInstance().resetCooldowns();
             this.crawl = isCrawl;
         }
         //Default
@@ -81,7 +78,7 @@ public class EvolutionInput extends Input {
         else {
             this.tick = 0;
         }
-        if (!((ILivingEntityPatch) player).isMotionLocked()) {
+        if (!((ILivingEntityPatch) player).isVerticalMotionLocked()) {
             this.jumping = inverted ? this.options.keyShift.isDown() : this.options.keyJump.isDown();
             this.shiftKeyDown = inverted ? this.options.keyJump.isDown() : this.options.keyShift.isDown();
             this.crawlToggled = ClientProxy.KEY_CRAWL.isDown();
@@ -122,7 +119,7 @@ public class EvolutionInput extends Input {
                       this.onClimbable &&
                       player.level.getBlockState(this.mutablePos.set(player.blockPosition()).move(Direction.UP, 2)).getMaterial().blocksMotion();
         if (shouldCrawl != ((IPlayerPatch) player).isCrawling()) {
-            EvolutionNetwork.INSTANCE.sendToServer(new PacketCSSetCrawling(shouldCrawl));
+            EvolutionNetwork.sendToServer(new PacketCSSetCrawling(shouldCrawl));
             ((IPlayerPatch) player).setCrawling(shouldCrawl);
         }
     }
