@@ -308,6 +308,21 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
     @Shadow
     public abstract void renderLevel(float pPartialTicks, long pFinishTimeNano, PoseStack pMatrixStack);
 
+    /**
+     * @author TheGreatWolf
+     * @reason Resize shaders.
+     */
+    @Overwrite
+    public void resize(int width, int height) {
+        if (this.postEffect != null) {
+            this.postEffect.resize(width, height);
+        }
+        for (PostChain shader : this.postEffects.values()) {
+            shader.resize(width, height);
+        }
+        this.minecraft.levelRenderer.resize(width, height);
+    }
+
     @Override
     public void shutdownAllShaders() {
         for (PostChain effect : this.postEffects.values()) {
