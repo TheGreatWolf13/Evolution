@@ -27,7 +27,6 @@ public class DimensionOverworld {
     private float lunarEclipseDDeclination;
     private float lunarEclipseDRightAscension;
     private float moonAltitude;
-    private float moonCelestialRadius;
     private float moonDeclinationOffset;
     private MoonPhase moonPhase = MoonPhase.NEW_MOON;
     private float moonRightAscension;
@@ -36,7 +35,6 @@ public class DimensionOverworld {
     private float starsRightAscension;
     private float sunAltitude;
     private float sunAzimuth;
-    private float sunCelestialRadius;
     private float sunDeclinationOffset;
     private float sunRightAscension;
 
@@ -96,10 +94,6 @@ public class DimensionOverworld {
 
     public float getMoonAltitude() {
         return this.moonAltitude;
-    }
-
-    public float getMoonCelestialRadius() {
-        return this.moonCelestialRadius;
     }
 
     public float getMoonDeclinationOffset() {
@@ -165,10 +159,6 @@ public class DimensionOverworld {
             skyBrightness *= 1.0f - this.level.getThunderLevel(partialTicks) * 0.312_5f;
         }
         return skyBrightness;
-    }
-
-    public float getSunCelestialRadius() {
-        return this.sunCelestialRadius;
     }
 
     public float getSunDeclinationOffset() {
@@ -249,17 +239,15 @@ public class DimensionOverworld {
         Minecraft.getInstance().getProfiler().popPush("sun");
         this.sunRightAscension = EarthHelper.calculateSunRightAscension(dayTime);
         float seasonDeclination = EarthHelper.sunSeasonalDeclination(dayTime);
-        this.sunCelestialRadius = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(seasonDeclination);
         this.sunDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(seasonDeclination);
-        this.sunAltitude = EarthHelper.getSunAltitude(sinLatitude, cosLatitude, this.sunRightAscension * 360, this.sunCelestialRadius,
+        this.sunAltitude = EarthHelper.getSunAltitude(sinLatitude, cosLatitude, this.sunRightAscension * 360, EarthHelper.CELESTIAL_SPHERE_RADIUS,
                                                       this.sunDeclinationOffset);
         Minecraft.getInstance().getProfiler().popPush("moon");
         this.moonRightAscension = EarthHelper.calculateMoonRightAscension(dayTime);
         float monthlyDeclination = EarthHelper.lunarMonthlyDeclination(dayTime);
-        this.moonCelestialRadius = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(monthlyDeclination);
         this.moonDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(monthlyDeclination);
         this.moonPhase = MoonPhase.byAngles(this.sunRightAscension * 360, this.moonRightAscension * 360);
-        this.moonAltitude = EarthHelper.getMoonAltitude(sinLatitude, cosLatitude, this.moonRightAscension * 360, this.moonCelestialRadius,
+        this.moonAltitude = EarthHelper.getMoonAltitude(sinLatitude, cosLatitude, this.moonRightAscension * 360, EarthHelper.CELESTIAL_SPHERE_RADIUS,
                                                         this.moonDeclinationOffset);
         Minecraft.getInstance().getProfiler().popPush("eclipse");
         float dRightAscension = Mth.wrapDegrees(360 * (this.sunRightAscension - this.moonRightAscension));

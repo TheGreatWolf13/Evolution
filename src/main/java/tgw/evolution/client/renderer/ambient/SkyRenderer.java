@@ -385,7 +385,6 @@ public class SkyRenderer {
             MathHelper.getExtendedQuaternion(LATITUDE_TRANSFORM).set(Vector3f.ZP, latitude, true);
         }
         float sunRightAscension = this.dimension.getSunRightAscension();
-        float sunCelestialRadius = this.dimension.getSunCelestialRadius();
         float sunDeclinationOffset = this.dimension.getSunDeclinationOffset();
         float rainStrength = 1.0F - level.getRainLevel(partialTicks);
         Vec3f skyColor = EarthHelper.getSkyColor(level, mc.gameRenderer.getMainCamera().getBlockPosition(), partialTicks, this.dimension);
@@ -395,7 +394,6 @@ public class SkyRenderer {
             oldMoonRA = moonRightAscension;
             MathHelper.getExtendedQuaternion(MOON_TRANSFORM).set(Vector3f.XP, 360.0f * moonRightAscension + 180, true);
         }
-        float moonCelestialRadius = this.dimension.getMoonCelestialRadius();
         float sunBrightness = this.dimension.getSunBrightness(partialTicks);
         mc.getProfiler().popPush("dome");
         BufferBuilder builder = Tesselator.getInstance().getBuilder();
@@ -502,10 +500,10 @@ public class SkyRenderer {
             RenderSystem.setShaderColor(skyColor.x, skyColor.y, skyColor.z, planetStarBrightness);
             builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
             Matrix4f moonMatrix = matrices.last().pose();
-            builder.vertex(moonMatrix, SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).uv(0, 0).endVertex();
-            builder.vertex(moonMatrix, SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).uv(1, 0).endVertex();
-            builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, moonCelestialRadius, SCALE_OF_CELESTIAL).uv(1, 1).endVertex();
-            builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).uv(0, 1).endVertex();
+            builder.vertex(moonMatrix, SCALE_OF_CELESTIAL, EarthHelper.CELESTIAL_SPHERE_RADIUS, -SCALE_OF_CELESTIAL).uv(0, 0).endVertex();
+            builder.vertex(moonMatrix, SCALE_OF_CELESTIAL, EarthHelper.CELESTIAL_SPHERE_RADIUS, SCALE_OF_CELESTIAL).uv(1, 0).endVertex();
+            builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, EarthHelper.CELESTIAL_SPHERE_RADIUS, SCALE_OF_CELESTIAL).uv(1, 1).endVertex();
+            builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, EarthHelper.CELESTIAL_SPHERE_RADIUS, -SCALE_OF_CELESTIAL).uv(0, 1).endVertex();
             builder.end();
             BufferUploader.end(builder);
             //Finish drawing moon shadow
@@ -529,11 +527,12 @@ public class SkyRenderer {
         MathHelper.getExtendedMatrix(matrices).mulPoseX(360.0f * sunRightAscension + 180);
         //Draw the sun
         if (this.dimension.isInSolarEclipse()) {
-            drawSolarEclipse(level, partialTicks, matrices.last().pose(), builder, sunCelestialRadius, this.dimension, planetStarBrightness,
+            drawSolarEclipse(level, partialTicks, matrices.last().pose(), builder, EarthHelper.CELESTIAL_SPHERE_RADIUS, this.dimension,
+                             planetStarBrightness,
                              skyColor);
         }
         else {
-            drawSun(matrices.last().pose(), builder, sunCelestialRadius);
+            drawSun(matrices.last().pose(), builder, EarthHelper.CELESTIAL_SPHERE_RADIUS);
         }
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.disableBlend();
@@ -551,10 +550,10 @@ public class SkyRenderer {
         RenderSystem.enableTexture();
         //Draw the moon
         if (this.dimension.isInLunarEclipse()) {
-            this.drawLunarEclipse(level, partialTicks, matrices.last().pose(), builder, moonCelestialRadius);
+            this.drawLunarEclipse(level, partialTicks, matrices.last().pose(), builder, EarthHelper.CELESTIAL_SPHERE_RADIUS);
         }
         else {
-            this.drawMoon(builder, matrices.last().pose(), rainStrength, moonCelestialRadius, partialTicks);
+            this.drawMoon(builder, matrices.last().pose(), rainStrength, EarthHelper.CELESTIAL_SPHERE_RADIUS, partialTicks);
         }
         //Finish drawing moon
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
