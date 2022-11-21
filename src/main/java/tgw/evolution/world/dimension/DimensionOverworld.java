@@ -239,13 +239,13 @@ public class DimensionOverworld {
         Minecraft.getInstance().getProfiler().popPush("sun");
         this.sunRightAscension = EarthHelper.calculateSunRightAscension(dayTime);
         float seasonDeclination = EarthHelper.sunSeasonalDeclination(dayTime);
-        this.sunDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(seasonDeclination);
+        this.sunDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.tanDeg(seasonDeclination);
         this.sunAltitude = EarthHelper.getSunAltitude(sinLatitude, cosLatitude, this.sunRightAscension * 360, EarthHelper.CELESTIAL_SPHERE_RADIUS,
                                                       this.sunDeclinationOffset);
         Minecraft.getInstance().getProfiler().popPush("moon");
         this.moonRightAscension = EarthHelper.calculateMoonRightAscension(dayTime);
         float monthlyDeclination = EarthHelper.lunarMonthlyDeclination(dayTime);
-        this.moonDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(monthlyDeclination);
+        this.moonDeclinationOffset = -EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.tanDeg(monthlyDeclination);
         this.moonPhase = MoonPhase.byAngles(this.sunRightAscension * 360, this.moonRightAscension * 360);
         this.moonAltitude = EarthHelper.getMoonAltitude(sinLatitude, cosLatitude, this.moonRightAscension * 360, EarthHelper.CELESTIAL_SPHERE_RADIUS,
                                                         this.moonDeclinationOffset);

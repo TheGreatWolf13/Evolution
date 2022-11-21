@@ -589,6 +589,7 @@ public class SkyRenderer {
             }
             builder.end();
             BufferUploader.end(builder);
+            RenderSystem.disableBlend();
             matrices.popPose();
             //Popped matrix of dusk and dawn
         }

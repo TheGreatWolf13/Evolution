@@ -100,11 +100,11 @@ public final class PlanetsHelper {
         double ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
         double ra = MathHelper.atan2Deg(ye, xg);
         float dec = (float) MathHelper.atan2Deg(ze, Math.sqrt(xg * xg + ye * ye));
-        decOff1Mercury = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(dec);
+        decOff1Mercury = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.tanDeg(dec);
         ha1Mercury = (float) Mth.wrapDegrees(localTime - ra + 90);
         dist1Mercury = (float) MathHelper.relativize(Math.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_1MERCURY, MAX_DIST_1MERCURY);
         angSize1Mercury = Mth.lerp(dist1Mercury, 0.02f, 0.05f);
-        dist1Mercury = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(dec);
+        dist1Mercury = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS;
     }
 
     public static void calculateOrbit2Venus(long worldTime) {
@@ -121,11 +121,11 @@ public final class PlanetsHelper {
         double ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
         double ra = MathHelper.atan2Deg(ye, xg);
         float dec = (float) MathHelper.atan2Deg(ze, Math.sqrt(xg * xg + ye * ye));
-        decOff2Venus = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(dec);
+        decOff2Venus = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.tanDeg(dec);
         ha2Venus = (float) Mth.wrapDegrees(localTime - ra + 90);
         dist2Venus = (float) MathHelper.relativize(Math.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_2VENUS, MAX_DIST_2VENUS);
         angSize2Venus = Mth.lerp(dist2Venus, 0.03f, 0.23f);
-        dist2Venus = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(dec);
+        dist2Venus = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS;
     }
 
     public static void calculateOrbit4Mars(long worldTime) {
@@ -142,11 +142,11 @@ public final class PlanetsHelper {
         double ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
         double ra = MathHelper.atan2Deg(ye, xg);
         float dec = (float) MathHelper.atan2Deg(ze, Math.sqrt(xg * xg + ye * ye));
-        decOff4Mars = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(dec);
+        decOff4Mars = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.tanDeg(dec);
         ha4Mars = (float) Mth.wrapDegrees(localTime - ra + 90);
         dist4Mars = (float) MathHelper.relativize(Math.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_4MARS, MAX_DIST_4MARS);
         angSize4Mars = Mth.lerp(dist4Mars, 0.01f, 0.09f);
-        dist4Mars = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(dec);
+        dist4Mars = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS;
     }
 
     public static void calculateOrbit5Jupiter(long worldTime) {
@@ -165,11 +165,11 @@ public final class PlanetsHelper {
         double ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
         double ra = MathHelper.atan2Deg(ye, xg);
         float dec = (float) MathHelper.atan2Deg(ze, Math.sqrt(xg * xg + ye * ye));
-        decOff5Jupiter = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(dec);
+        decOff5Jupiter = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.tanDeg(dec);
         ha5Jupiter = (float) Mth.wrapDegrees(localTime - ra + 90);
         dist5Jupiter = (float) MathHelper.relativize(Math.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_5JUPITER, MAX_DIST_5JUPITER);
         angSize5Jupiter = Mth.lerp(dist5Jupiter, 0.10f, 0.17f);
-        dist5Jupiter = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(dec);
+        dist5Jupiter = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS;
     }
 
     public static void calculateOrbit6Saturn(long worldTime) {
@@ -186,11 +186,11 @@ public final class PlanetsHelper {
         double ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
         double ra = MathHelper.atan2Deg(ye, xg);
         float dec = (float) MathHelper.atan2Deg(ze, Math.sqrt(xg * xg + ye * ye));
-        decOff6Saturn = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.sinDeg(dec);
+        decOff6Saturn = EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.tanDeg(dec);
         ha6Saturn = (float) Mth.wrapDegrees(localTime - ra + 90);
         dist6Saturn = (float) MathHelper.relativize(Math.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_6SATURN, MAX_DIST_6SATURN);
         angSize6Saturn = Mth.lerp(dist6Saturn, 0.05f, 0.07f);
-        dist6Saturn = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS * MathHelper.cosDeg(dec);
+        dist6Saturn = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS;
     }
 
     public static float getAngSize1Mercury() {
