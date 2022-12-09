@@ -79,9 +79,9 @@ public abstract class ModelPart_CubeMixin implements ICubePatch {
         float y1 = v + dimZ;
         float y2 = v + dimZ + dimY;
         this.polygons[2] = new ModelPart.Polygon(new ModelPart.Vertex[]{v101, v001, v000, v100},
-                                                 x1, y0, x2, y1, width, height, mirror, Direction.DOWN);
+                                                 x1, y0, x2, y1, width, height, mirror, Direction.UP);
         this.polygons[3] = new ModelPart.Polygon(new ModelPart.Vertex[]{v110, v010, v011, v111},
-                                                 x2, y1, x3Up, y0, width, height, mirror, Direction.UP);
+                                                 x2, y1, x3Up, y0, width, height, mirror, Direction.DOWN);
         this.polygons[1] = new ModelPart.Polygon(new ModelPart.Vertex[]{v000, v001, v011, v010},
                                                  x0, y1, x1, y2, width, height, mirror, Direction.WEST);
         this.polygons[4] = new ModelPart.Polygon(new ModelPart.Vertex[]{v100, v000, v010, v110},
@@ -141,15 +141,15 @@ public abstract class ModelPart_CubeMixin implements ICubePatch {
         float y2 = v + dimZ + dimY;
         if (up) {
             this.polygons[2] = new ModelPart.Polygon(new ModelPart.Vertex[]{v101, v001, v000, v100},
-                                                     x1, y0, x2, y1, width, height, mirror, Direction.DOWN);
+                                                     x1, y0, x2, y1, width, height, mirror, Direction.UP);
             this.polygons[3] = new ModelPart.Polygon(new ModelPart.Vertex[]{v110, v010, v011, v111},
-                                                     x2, y2 - 1, x3Up, y2, width, height, mirror, Direction.UP);
+                                                     x2, y2 - 1, x3Up, y2, width, height, mirror, Direction.DOWN);
         }
         else {
             this.polygons[2] = new ModelPart.Polygon(new ModelPart.Vertex[]{v101, v001, v000, v100},
-                                                     x1, y1 + 1, x2, y1, width, height, mirror, Direction.DOWN);
+                                                     x1, y1 + 1, x2, y1, width, height, mirror, Direction.UP);
             this.polygons[3] = new ModelPart.Polygon(new ModelPart.Vertex[]{v110, v010, v011, v111},
-                                                     x2, y1 - dimY, x3Up, y0 - dimY, width, height, mirror, Direction.UP);
+                                                     x2, y1 - dimY, x3Up, y0 - dimY, width, height, mirror, Direction.DOWN);
         }
         this.polygons[1] = new ModelPart.Polygon(new ModelPart.Vertex[]{v000, v001, v011, v010},
                                                  x0, y1, x1, y2, width, height, mirror, Direction.WEST);
