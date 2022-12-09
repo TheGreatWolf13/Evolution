@@ -6,12 +6,12 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.hitbox.Hitbox;
 
-public class AdvancedEntityRayTraceResult extends EntityHitResult {
+public class AdvancedEntityHitResult extends EntityHitResult {
 
     @Nullable
     private final Hitbox hitbox;
 
-    public AdvancedEntityRayTraceResult(Entity entity, Vec3 hitVec, @Nullable Hitbox hitbox) {
+    public AdvancedEntityHitResult(Entity entity, Vec3 hitVec, @Nullable Hitbox hitbox) {
         super(entity, hitVec);
         this.hitbox = hitbox;
     }

@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static tgw.evolution.init.EvolutionStyles.CONFIG;
+import static tgw.evolution.init.EvolutionStyles.YELLOW_BOLD;
 
 public class ScreenModConfigSelection extends ScreenListMenu {
 
@@ -38,9 +38,9 @@ public class ScreenModConfigSelection extends ScreenListMenu {
     private final Component textModify = new TranslatableComponent("evolution.gui.config.modify");
     private final Component textNoPermission = new TranslatableComponent("evolution.gui.config.noPermission").withStyle(ChatFormatting.RED);
     private final Component textSelectWorld = new TranslatableComponent("evolution.gui.config.selectWorld");
-    private final Component textTitleClient = new TranslatableComponent("evolution.gui.config.title.client").setStyle(CONFIG);
-    private final Component textTitleCommon = new TranslatableComponent("evolution.gui.config.title.common").setStyle(CONFIG);
-    private final Component textTitleServer = new TranslatableComponent("evolution.gui.config.title.server").setStyle(CONFIG);
+    private final Component textTitleClient = new TranslatableComponent("evolution.gui.config.title.client").setStyle(YELLOW_BOLD);
+    private final Component textTitleCommon = new TranslatableComponent("evolution.gui.config.title.common").setStyle(YELLOW_BOLD);
+    private final Component textTitleServer = new TranslatableComponent("evolution.gui.config.title.server").setStyle(YELLOW_BOLD);
 
     public ScreenModConfigSelection(Screen parent, String displayName, Map<ModConfig.Type, Set<ModConfig>> configMap) {
         super(parent, new TextComponent(displayName), 30);

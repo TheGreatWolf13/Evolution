@@ -11,4 +11,11 @@ public final class ItemUtils {
     public static boolean isHammer(ItemStack stack) {
         return stack.getItem() instanceof ItemModular mod && mod.isHammer(stack);
     }
+
+    public static boolean usesModularRendering(ItemStack stack) {
+        if (stack.getItem() instanceof IEvolutionItem item) {
+            return item.usesModularRendering();
+        }
+        return false;
+    }
 }

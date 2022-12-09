@@ -157,6 +157,11 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittableB
     }
 
     @Override
+    public float getZOffset() {
+        return -0.2f;
+    }
+
+    @Override
     public boolean isReplaceable(BlockState state) {
         return true;
     }

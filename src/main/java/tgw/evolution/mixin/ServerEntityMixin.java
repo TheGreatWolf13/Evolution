@@ -137,7 +137,7 @@ public abstract class ServerEntityMixin {
                 Vec3 deltaPos = this.entity.position().subtract(ClientboundMoveEntityPacket.packetToEntity(this.xp, this.yp, this.zp));
                 boolean isDeltaSignif = deltaPos.lengthSqr() >= 7.629_394_5E-6F;
                 Packet<?> packet = null;
-                boolean shouldUpdatePos = isDeltaSignif || this.tickCount % 60 == 0;
+                boolean shouldUpdatePos = isDeltaSignif || this.entity.hasImpulse || this.tickCount % 60 == 0;
                 boolean shouldUpdateRot = Math.abs(yaw - this.yRotp) >= 1 || Math.abs(pitch - this.xRotp) >= 1;
                 if (this.tickCount > 0 || this.entity instanceof AbstractArrow) {
                     long i = ClientboundMoveEntityPacket.entityToPacket(deltaPos.x);

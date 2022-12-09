@@ -11,7 +11,7 @@ public class HitboxAttachable extends Hitbox {
 
     public HitboxAttachable(HitboxType part,
                             AABB aabb,
-                            HitboxEntity<?> parent,
+                            IRoot parent,
                             double localOriginX, double localOriginY, double localOriginZ) {
         super(part, aabb, parent);
         this.localOrigin.set(localOriginX, localOriginY, localOriginZ);

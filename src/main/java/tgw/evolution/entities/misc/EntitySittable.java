@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -15,6 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.entity.IEntityAdditionalSpawnData;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
 import org.jetbrains.annotations.Nullable;
@@ -26,12 +28,13 @@ import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.hitbox.HitboxEntity;
 import tgw.evolution.util.math.AABBMutable;
 
-public class EntitySittable extends Entity implements IEntityPatch<EntitySittable>, ISittableEntity {
+public class EntitySittable extends Entity implements IEntityPatch<EntitySittable>, ISittableEntity, IEntityAdditionalSpawnData {
 
     @Range(from = 0, to = 100)
     private byte comfort;
     @Nullable
     private BlockPos source;
+    private float zOffset;
 
     public EntitySittable(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -39,7 +42,7 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
         this.blocksBuilding = true;
     }
 
-    public EntitySittable(Level world, BlockPos pos, double yOffset, @Range(from = 0, to = 100) int comfort) {
+    public EntitySittable(Level world, BlockPos pos, double yOffset, float zOffset, @Range(from = 0, to = 100) int comfort) {
         this(EvolutionEntities.SIT.get(), world);
         this.setPos(pos.getX() + 0.5, pos.getY() + yOffset, pos.getZ() + 0.5);
         this.source = pos;
@@ -47,9 +50,10 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
         this.yo = pos.getY() + yOffset;
         this.zo = pos.getZ() + 0.5;
         this.comfort = (byte) comfort;
+        this.zOffset = zOffset;
     }
 
-    public EntitySittable(PlayMessages.SpawnEntity spawnEntity, Level level) {
+    public EntitySittable(@SuppressWarnings("unused") PlayMessages.SpawnEntity spawnEntity, Level level) {
         this(EvolutionEntities.SIT.get(), level);
     }
 
@@ -62,7 +66,7 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
                 if (level.collidesWithSuffocatingBlock(player, bbToCheck)) {
                     return false;
                 }
-                EntitySittable seat = new EntitySittable(level, pos, sittable.getYOffset(), sittable.getComfort());
+                EntitySittable seat = new EntitySittable(level, pos, sittable.getYOffset(), sittable.getZOffset(), sittable.getComfort());
                 level.addFreshEntity(seat);
                 player.startRiding(seat, false);
             }
@@ -77,6 +81,7 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
             compound.put("Source", NbtUtils.writeBlockPos(this.source));
         }
         compound.putByte("Comfort", this.comfort);
+        compound.putFloat("ZOffset", this.zOffset);
     }
 
     @Override
@@ -97,12 +102,6 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
     public @Range(from = 0, to = 100) int getComfort() {
         return this.comfort;
     }
-
-    //TODO
-//    @Override
-//    protected boolean canBeRidden(Entity entity) {
-//        return true;
-//    }
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity entity) {
@@ -157,9 +156,20 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
     }
 
     @Override
+    public float getZOffset() {
+        return this.zOffset;
+    }
+
+    @Override
     protected void readAdditionalSaveData(CompoundTag compound) {
         this.source = NbtUtils.readBlockPos(compound.getCompound("Source"));
         this.comfort = compound.getByte("Comfort");
+        this.zOffset = compound.getFloat("ZOffset");
+    }
+
+    @Override
+    public void readSpawnData(FriendlyByteBuf buffer) {
+        this.zOffset = buffer.readFloat();
     }
 
     @Override
@@ -177,5 +187,10 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
                 this.discard();
             }
         }
+    }
+
+    @Override
+    public void writeSpawnData(FriendlyByteBuf buffer) {
+        buffer.writeFloat(this.zOffset);
     }
 }

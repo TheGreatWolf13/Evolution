@@ -11,7 +11,7 @@ public final class Gravity {
     /**
      * The average gravity acceleration at the surface of Earth, in m/s^2.
      */
-    private static final double EARTH_GRAVITY = Units.toMSUAcceleration(9.8);
+    private static final double EARTH_GRAVITY = 9.8 * Units.METER_PER_SECOND_PER_SECOND;
     /**
      * The average air density in the atmosphere, in kg/m^3.
      */

@@ -13,9 +13,9 @@ import tgw.evolution.util.math.Vec3d;
 
 public class Hitbox implements HM {
 
-    private final AABB aabb;
+    protected final AABB aabb;
     private final HitboxType part;
-    protected @Nullable HitboxEntity<?> parent;
+    protected @Nullable IRoot parent;
     private float pivotX;
     private float pivotY;
     private float pivotZ;
@@ -23,7 +23,7 @@ public class Hitbox implements HM {
     private float rotationY;
     private float rotationZ;
 
-    public Hitbox(HitboxType part, AABB aabb, @Nullable HitboxEntity<?> parent) {
+    public Hitbox(HitboxType part, AABB aabb, @Nullable IRoot parent) {
         this.part = part;
         this.aabb = aabb;
         this.parent = parent;
@@ -81,25 +81,27 @@ public class Hitbox implements HM {
 
     public Matrix4d adjustedColliderTransform() {
         assert this.parent != null;
-        Matrix4d matrix = this.parent.helperColliderTransform;
+        Matrix4d matrix = this.parent.helperColliderTransform();
         matrix.setIdentity();
+        this.parent.transformParent(matrix);
         matrix.translate(this.pivotX, this.pivotY, this.pivotZ);
         matrix.rotateZRad(this.rotationZ);
         matrix.rotateYRad(this.rotationY);
         matrix.rotateXRad(this.rotationX);
-        matrix.scale(this.parent.scaleX, this.parent.scaleY, this.parent.scaleZ);
+        matrix.scale(this.parent.scaleX(), this.parent.scaleY(), this.parent.scaleZ());
         return matrix;
     }
 
     public Matrix4d adjustedTransform() {
         assert this.parent != null;
-        Matrix4d matrix = this.parent.helperTransform;
+        Matrix4d matrix = this.parent.helperTransform();
         matrix.setIdentity();
+        this.parent.transformParent(matrix);
         matrix.translate(this.pivotX, this.pivotY, this.pivotZ);
         matrix.rotateZRad(this.rotationZ);
         matrix.rotateYRad(this.rotationY);
         matrix.rotateXRad(this.rotationX);
-        matrix.scale(this.parent.scaleX, this.parent.scaleY, this.parent.scaleZ);
+        matrix.scale(this.parent.scaleX(), this.parent.scaleY(), this.parent.scaleZ());
         return matrix;
     }
 
@@ -236,7 +238,7 @@ public class Hitbox implements HM {
         return minDist;
     }
 
-    public @Nullable HitboxEntity<?> getParent() {
+    public @Nullable IRoot getParent() {
         return this.parent;
     }
 
@@ -330,6 +332,21 @@ public class Hitbox implements HM {
     @Override
     public String toString() {
         return "Hitbox{" + "part=" + this.part + ", aabb=" + this.aabb + '}';
+    }
+
+    @Override
+    public void translateX(float x) {
+        this.pivotX += x / 16.0f;
+    }
+
+    @Override
+    public void translateY(float y) {
+        this.pivotY += y / 16.0f;
+    }
+
+    @Override
+    public void translateZ(float z) {
+        this.pivotZ += z / 16.0f;
     }
 
     @Override

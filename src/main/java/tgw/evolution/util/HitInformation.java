@@ -1,6 +1,6 @@
 package tgw.evolution.util;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
@@ -11,26 +11,18 @@ import tgw.evolution.Evolution;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.IMelee;
-import tgw.evolution.network.PacketCSHitInformation;
 import tgw.evolution.network.PacketCSSpecialHit;
-import tgw.evolution.patches.IEntityPatch;
-import tgw.evolution.util.collection.I2OMap;
-import tgw.evolution.util.collection.I2OOpenHashMap;
-import tgw.evolution.util.hitbox.Hitbox;
-import tgw.evolution.util.hitbox.HitboxEntity;
-import tgw.evolution.util.hitbox.HitboxType;
-import tgw.evolution.util.hitbox.Matrix4d;
+import tgw.evolution.util.collection.I2LMap;
+import tgw.evolution.util.collection.I2LOpenHashMap;
+import tgw.evolution.util.hitbox.*;
 import tgw.evolution.util.math.ClipContextMutable;
 import tgw.evolution.util.math.Vec3d;
 
-import java.util.EnumSet;
-import java.util.Set;
-
-public class HitInformation {
+public class HitInformation implements IHitInfo {
 
     private final ClipContextMutable clipContext = new ClipContextMutable(Vec3.ZERO, Vec3.ZERO, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE,
                                                                           null);
-    private final I2OMap<Set<HitboxType>> data = new I2OOpenHashMap<>();
+    private final I2LMap data = new I2LOpenHashMap();
     private final Vec3d[] vertices = new Vec3d[8];
     private final Vec3d[] verticesInHBVS = new Vec3d[8];
     private final Vec3d[] verticesInHBVSPartial = new Vec3d[8];
@@ -70,29 +62,12 @@ public class HitInformation {
         };
     }
 
+    @Override
     public void addHitbox(Entity entity, HitboxType hitbox) {
         ClientEvents.getInstance().getRenderer().updateHitmarkers(false);
         Evolution.info("Collided with {} on {}", entity, hitbox);
-        Set<HitboxType> set = this.data.get(entity.getId());
-        if (set == null) {
-            EvolutionNetwork.sendToServer(new PacketCSHitInformation(entity));
-            set = EnumSet.noneOf(HitboxType.class);
-            this.data.put(entity.getId(), set);
-        }
-        set.add(hitbox);
-    }
-
-    public boolean areAllChecked(Entity entity) {
-        Set<HitboxType> set = this.data.get(entity.getId());
-        if (set == null) {
-            return false;
-        }
-        HitboxEntity<? extends Entity> hitboxes = ((IEntityPatch) entity).getHitboxes();
-        if (hitboxes == null) {
-            //If the entity does not have hitboxes, its only hitbox should be HitboxType.ALL
-            return set.size() >= 1;
-        }
-        return set.size() >= hitboxes.getBoxes().size();
+        final int id = entity.getId();
+        this.data.put(id, HitboxRegistry.append(entity.getType(), hitbox, this.data.get(id)));
     }
 
     public void clear() {
@@ -103,12 +78,13 @@ public class HitInformation {
         this.data.reset();
     }
 
+    @Override
     public boolean contains(Entity entity, HitboxType hitbox) {
-        Set<HitboxType> set = this.data.get(entity.getId());
-        if (set == null) {
+        long set = this.data.get(entity.getId());
+        if (set == 0) {
             return false;
         }
-        return set.contains(hitbox);
+        return HitboxRegistry.contains(entity.getType(), hitbox, set);
     }
 
     public ClipContext getClipContext(@Range(from = 0, to = 11) int edge) {
@@ -117,6 +93,7 @@ public class HitInformation {
         return this.clipContext;
     }
 
+    @Override
     public Vec3d getOrMakeEdge(@Range(from = 0, to = 11) int edge, boolean start) {
         @Range(from = 0, to = 7) int index;
         if (start) {
@@ -140,6 +117,7 @@ public class HitInformation {
         return this.getOrMakeVertex(index);
     }
 
+    @Override
     public Vec3d getOrMakeEdgeInHBVS(@Range(from = 0, to = 11) int edge, boolean start, Matrix4d transform) {
         @Range(from = 0, to = 7) int index;
         if (start) {
@@ -163,6 +141,7 @@ public class HitInformation {
         return this.getOrMakeVertexInHBVS(index, transform);
     }
 
+    @Override
     public Vec3d getOrMakeVertex(@Range(from = 0, to = 7) int index) {
         if (!this.prepared) {
             throw new IllegalStateException("Should prepare first!");
@@ -185,6 +164,7 @@ public class HitInformation {
                           this.transform.transformZ(x0, y0, z0) + this.hitterZ);
     }
 
+    @Override
     public Vec3d getOrMakeVertexInHBVS(@Range(from = 0, to = 7) int index, Matrix4d transform) {
         if (!this.prepared) {
             throw new IllegalStateException("Should prepare first!");
@@ -223,6 +203,7 @@ public class HitInformation {
         this.prepared = true;
     }
 
+    @Override
     public void prepareInHBVS(HitboxEntity<?> hitboxes, double victimX, double victimY, double victimZ) {
         this.hitboxes = hitboxes;
         this.victimX = victimX;
@@ -244,19 +225,23 @@ public class HitInformation {
         this.transform = null;
     }
 
+    @Override
     public void releaseInHBVS() {
         this.preparedInHBVS = false;
         this.hitboxes = null;
     }
 
     public void sendHits(IMelee.IAttackType type) {
-        for (Int2ObjectMap.Entry<Set<HitboxType>> entry : this.data.int2ObjectEntrySet()) {
-            //noinspection ObjectAllocationInLoop
-            EvolutionNetwork.sendToServer(
-                    new PacketCSSpecialHit(entry.getIntKey(), type, entry.getValue().toArray(new HitboxType[this.data.size()])));
+        for (Int2LongMap.Entry entry : this.data.int2LongEntrySet()) {
+            final long hitboxSet = entry.getLongValue();
+            if (hitboxSet != 0) {
+                //noinspection ObjectAllocationInLoop
+                EvolutionNetwork.sendToServer(new PacketCSSpecialHit(entry.getIntKey(), type, hitboxSet));
+            }
         }
     }
 
+    @Override
     public void softRelease() {
         for (Vec3d vertexInHBVS : this.verticesInHBVS) {
             vertexInHBVS.set(Vec3d.NULL);

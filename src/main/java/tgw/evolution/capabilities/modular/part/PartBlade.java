@@ -56,12 +56,6 @@ public class PartBlade implements IPartHit<PartTypes.Blade, ItemPartBlade, PartB
     }
 
     @Override
-    public double getAttackDamageInternal(double preAttackDamage) {
-        //TODO implementation
-        return preAttackDamage;
-    }
-
-    @Override
     public EvolutionDamage.Type getDamageType() {
         return this.sharpAmount > 0 ? EvolutionDamage.Type.SLASHING : EvolutionDamage.Type.CRUSHING;
     }
@@ -69,6 +63,12 @@ public class PartBlade implements IPartHit<PartTypes.Blade, ItemPartBlade, PartB
     @Override
     public String getDescriptionId() {
         return "item.evolution.part.blade." + this.type.getName() + "." + this.material.getMaterial().getName();
+    }
+
+    @Override
+    public double getDmgMultiplierInternal() {
+        //TODO implementation
+        return 1.0;
     }
 
     @Override

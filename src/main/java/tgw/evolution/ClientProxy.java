@@ -95,36 +95,20 @@ public class ClientProxy implements IProxy {
     }
 
     private static void registerTooltips() {
-        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipFood.class, EvolutionTooltipRenderer.FOOD::setTooltip);
-        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipDrink.class, EvolutionTooltipRenderer.DRINK::setTooltip);
-        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipDurability.class, t -> {
-            if (t == EvolutionTooltipDurability.MAIN) {
-                return EvolutionTooltipRenderer.DURABILITY.setTooltip(t);
-            }
-            for (int i = 0; i < 4; i++) {
-                if (t == EvolutionTooltipDurability.PARTS[i]) {
-                    return EvolutionTooltipRenderer.DURABILITY_PARTS[i].setTooltip(t);
-                }
-            }
-            throw new IllegalStateException("Should never reach here!");
-        });
-        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipMass.class, t -> {
-            if (t == EvolutionTooltipMass.MAIN) {
-                return EvolutionTooltipRenderer.MASS.setTooltip(t);
-            }
-            for (int i = 0; i < 4; i++) {
-                if (t == EvolutionTooltipMass.PARTS[i]) {
-                    return EvolutionTooltipRenderer.MASS_PARTS[i].setTooltip(t);
-                }
-            }
-            throw new IllegalStateException("Should never reach here!");
-        });
-        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipDamage.class, EvolutionTooltipRenderer.DAMAGE::setTooltip);
-        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipSpeed.class, EvolutionTooltipRenderer.SPEED::setTooltip);
-        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipReach.class, EvolutionTooltipRenderer.REACH::setTooltip);
-        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipMining.class, EvolutionTooltipRenderer.MINING::setTooltip);
-        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipHeat.class, EvolutionTooltipRenderer.HEAT::setTooltip);
-        MinecraftForgeClient.registerTooltipComponentFactory(EvolutionTooltipCold.class, EvolutionTooltipRenderer.COLD::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(TooltipCold.class, EvolutionTooltipRenderer.COLD::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(TooltipCooldown.class, EvolutionTooltipRenderer.COOLDOWN::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(TooltipDamage.class, TooltipDamage::setup);
+        MinecraftForgeClient.registerTooltipComponentFactory(TooltipDmgMultiplier.class, TooltipDmgMultiplier::setup);
+        MinecraftForgeClient.registerTooltipComponentFactory(TooltipDrink.class, EvolutionTooltipRenderer.DRINK::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(TooltipDurability.class, TooltipDurability::setup);
+        MinecraftForgeClient.registerTooltipComponentFactory(TooltipFollowUp.class, EvolutionTooltipRenderer.FOLLOW_UP::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(TooltipFood.class, EvolutionTooltipRenderer.FOOD::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(TooltipHeat.class, EvolutionTooltipRenderer.HEAT::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(TooltipInfo.class, EvolutionTooltipRenderer.INFO::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(TooltipMass.class, TooltipMass::setup);
+        MinecraftForgeClient.registerTooltipComponentFactory(TooltipMining.class, EvolutionTooltipRenderer.MINING::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(TooltipPrecision.class, EvolutionTooltipRenderer.PRECISION::setTooltip);
+        MinecraftForgeClient.registerTooltipComponentFactory(TooltipThrowSpeed.class, EvolutionTooltipRenderer.THROW_SPEED::setTooltip);
     }
 
     @Override

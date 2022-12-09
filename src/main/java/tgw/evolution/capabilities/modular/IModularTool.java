@@ -25,9 +25,11 @@ public interface IModularTool extends IModular {
         return EvolutionCapabilities.getCapability(stack, CapabilityModular.TOOL, NULL);
     }
 
-    double getAttackSpeed();
-
     int getBackPriority();
+
+    int getCooldown();
+
+    double getDmgMultiplier(EvolutionDamage.Type type);
 
     PartHandle getHandle();
 
@@ -54,7 +56,7 @@ public interface IModularTool extends IModular {
         }
 
         @Override
-        public void appendTooltip(List<Either<FormattedText, TooltipComponent>> tooltip) {
+        public void appendPartTooltip(List<Either<FormattedText, TooltipComponent>> tooltip) {
         }
 
         @Override
@@ -66,28 +68,23 @@ public interface IModularTool extends IModular {
         }
 
         @Override
-        public double getAttackDamage() {
-            return 0;
-        }
-
-        @Override
-        public double getAttackSpeed() {
-            return 0;
-        }
-
-        @Override
         public int getBackPriority() {
             return -1;
         }
 
         @Override
-        public EvolutionDamage.Type getDamageType() {
-            return EvolutionDamage.Type.GENERIC;
+        public int getCooldown() {
+            return 0;
         }
 
         @Override
         public String getDescriptionId() {
             return "null";
+        }
+
+        @Override
+        public double getDmgMultiplier(EvolutionDamage.Type type) {
+            return 0;
         }
 
         @Override
@@ -152,6 +149,11 @@ public interface IModularTool extends IModular {
 
         @Override
         public boolean isSharpened() {
+            return false;
+        }
+
+        @Override
+        public boolean isShovel() {
             return false;
         }
 

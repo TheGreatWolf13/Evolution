@@ -4,12 +4,18 @@ import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.EffectHelper;
 import tgw.evolution.items.IMelee;
+import tgw.evolution.util.damage.DamageSourceEv;
+import tgw.evolution.util.hitbox.HitboxType;
 
 public interface ILivingEntityPatch<T extends LivingEntity> extends IEntityPatch<T> {
 
     void addAbsorptionSuggestion(float amount);
 
     boolean canPerformFollowUp(IMelee.IAttackType type);
+
+    default int getAttackNumber() {
+        return this.isOnGracePeriod() ? this.getFollowUp() : this.getFollowUp() + 1;
+    }
 
     EffectHelper getEffectHelper();
 
@@ -66,4 +72,9 @@ public interface ILivingEntityPatch<T extends LivingEntity> extends IEntityPatch
     void startSpecialAttack(IMelee.IAttackType type);
 
     void stopSpecialAttack(IMelee.StopReason reason);
+
+    /**
+     * @return The damage that should be applied to the entity.
+     */
+    float tryHurt(DamageSourceEv source, float amount, float strength, HitboxType hitbox);
 }

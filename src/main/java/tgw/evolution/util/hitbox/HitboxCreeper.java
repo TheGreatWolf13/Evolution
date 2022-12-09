@@ -10,23 +10,24 @@ import tgw.evolution.util.hitbox.hrs.HRCreeper;
 
 public final class HitboxCreeper extends HitboxEntity<Creeper> implements HMCreeper<Creeper>, HRCreeper {
 
-    private final Hitbox head = this.addBox(HitboxType.HEAD, HitboxLib.HUMANOID_HEAD, 0, 18, 0);
-    private final Hitbox legFL = this.addBox(HitboxType.LEG_FRONT_LEFT, HitboxLib.CREEPER_LEG, -2, 6, -4);
-    private final Hitbox legFR = this.addBox(HitboxType.LEG_FRONT_RIGHT, HitboxLib.CREEPER_LEG, 2, 6, -4);
-    private final Hitbox legHL = this.addBox(HitboxType.LEG_HIND_LEFT, HitboxLib.CREEPER_LEG, -2, 6, 4);
-    private final Hitbox legHR = this.addBox(HitboxType.LEG_HIND_RIGHT, HitboxLib.CREEPER_LEG, 2, 6, 4);
+    private final Hitbox head;
+    private final Hitbox legFL;
+    private final Hitbox legFR;
+    private final Hitbox legHL;
+    private final Hitbox legHR;
 
     public HitboxCreeper() {
-        this.addBox(HitboxType.CHEST, box(-4, -12, -2, 8, 12, 4), 0, 18, 0);
+        this.head = this.addBox(HitboxType.HEAD, HitboxLib.HUMANOID_HEAD, 0, 18, 0, this);
+        this.addBox(HitboxType.CHEST, box(-4, -12, -2, 8, 12, 4), 0, 18, 0, this);
+        this.legFL = this.addBox(HitboxType.LEG_FRONT_LEFT, HitboxLib.CREEPER_LEG, -2, 6, -4, this);
+        this.legFR = this.addBox(HitboxType.LEG_FRONT_RIGHT, HitboxLib.CREEPER_LEG, 2, 6, -4, this);
+        this.legHL = this.addBox(HitboxType.LEG_HIND_LEFT, HitboxLib.CREEPER_LEG, -2, 6, 4, this);
+        this.legHR = this.addBox(HitboxType.LEG_HIND_RIGHT, HitboxLib.CREEPER_LEG, 2, 6, 4, this);
         this.finish();
     }
 
     @Override
-    protected void childFinish() {
-    }
-
-    @Override
-    protected @Nullable Hitbox childGetEquipFor(IMelee.@Nullable IAttackType type, HumanoidArm arm) {
+    protected @Nullable Hitbox childGetEquipFor(Creeper creeper, IMelee.@Nullable IAttackType type, HumanoidArm arm) {
         return null;
     }
 

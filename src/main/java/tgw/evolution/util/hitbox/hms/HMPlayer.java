@@ -2,55 +2,105 @@ package tgw.evolution.util.hitbox.hms;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import tgw.evolution.Evolution;
+import tgw.evolution.items.ItemUtils;
 
 public interface HMPlayer<T extends LivingEntity> extends HMHumanoid<T> {
 
-    HM cloak();
+    HM cape();
 
-    HM ear();
+    HM clothesArmL();
 
-    HM jacket();
+    HM clothesArmR();
 
-    HM leftPants();
+    HM clothesBody();
 
-    HM leftSleeve();
+    HM clothesForearmL();
 
-    HM rightPants();
+    HM clothesForearmR();
 
-    HM rightSleeve();
+    HM clothesForelegL();
+
+    HM clothesForelegR();
+
+    HM clothesLegL();
+
+    HM clothesLegR();
+
+    boolean isSlim();
 
     void setAllVisible(boolean visible);
 
     @Override
     default void setup(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         HMHumanoid.super.setup(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
-        this.leftPants().copy(this.leftLeg());
-        this.rightPants().copy(this.rightLeg());
-        this.leftSleeve().copy(this.leftArm());
-        this.rightSleeve().copy(this.rightArm());
-        this.jacket().copy(this.body());
-        if (entity instanceof Player player) {
-            this.cloak().setRotationY(Mth.DEG_TO_RAD * 180);
-            if (entity.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) {
-                if (this.crouching()) {
-                    this.cloak().setPivotZ(3.125F - 0.5f);
-                    this.cloak().setPivotY(24.0F - 1.85f);
+        if (!this.isSlim()) {
+            if (!ItemUtils.usesModularRendering(entity.getMainHandItem())) {
+                if (entity.getMainArm() == HumanoidArm.RIGHT) {
+                    this.itemR().translateX(-1);
                 }
                 else {
-                    this.cloak().setPivotZ(3.125F);
-                    this.cloak().setPivotY(24.0F);
+                    this.itemL().translateX(1);
+                }
+            }
+            if (!ItemUtils.usesModularRendering(entity.getOffhandItem())) {
+                if (entity.getMainArm() == HumanoidArm.RIGHT) {
+                    this.itemL().translateX(1);
+                }
+                else {
+                    this.itemR().translateX(-1);
+                }
+            }
+        }
+        else {
+            if (ItemUtils.usesModularRendering(entity.getMainHandItem())) {
+                if (entity.getMainArm() == HumanoidArm.RIGHT) {
+                    this.itemR().translateX(1);
+                }
+                else {
+                    this.itemL().translateX(-1);
+                }
+            }
+            if (ItemUtils.usesModularRendering(entity.getOffhandItem())) {
+                if (entity.getMainArm() == HumanoidArm.RIGHT) {
+                    this.itemL().translateX(-1);
+                }
+                else {
+                    this.itemR().translateX(1);
+                }
+            }
+        }
+        this.clothesLegL().copy(this.legL());
+        this.clothesLegR().copy(this.legR());
+        this.clothesArmL().copy(this.armL());
+        this.clothesArmR().copy(this.armR());
+        this.clothesForelegL().copy(this.forelegL());
+        this.clothesForelegR().copy(this.forelegR());
+        this.clothesForearmL().copy(this.forearmL());
+        this.clothesForearmR().copy(this.forearmR());
+        this.clothesBody().copy(this.body());
+        if (entity instanceof Player player) {
+            this.cape().setRotationY(Mth.DEG_TO_RAD * 180);
+            if (entity.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) {
+                if (this.crouching()) {
+                    this.cape().setPivotZ(3.125F - 0.5f);
+                    this.cape().setPivotY(24.0F - 1.85f);
+                }
+                else {
+                    this.cape().setPivotZ(3.125F);
+                    this.cape().setPivotY(24.0F);
                 }
             }
             else if (this.crouching()) {
-                this.cloak().setPivotZ(3.125f - 0.2F);
-                this.cloak().setPivotY(24.0f - 0.8F);
+                this.cape().setPivotZ(3.125f - 0.2F);
+                this.cape().setPivotY(24.0f - 0.8F);
             }
             else {
-                this.cloak().setPivotZ(3.125F + 0.7f);
-                this.cloak().setPivotY(24.0F + 0.85f);
+                this.cape().setPivotZ(3.125F + 0.7f);
+                this.cape().setPivotY(24.0F + 0.85f);
             }
             float partialTicks = Evolution.PROXY.getPartialTicks();
             double dx = Mth.lerp(partialTicks, player.xCloakO, player.xCloak) - Mth.lerp(partialTicks, entity.xo, entity.getX());
@@ -71,7 +121,7 @@ public interface HMPlayer<T extends LivingEntity> extends HMHumanoid<T> {
             if (entity.isCrouching()) {
                 f1 += 25.0F;
             }
-            this.cloak().setRotationX(Mth.DEG_TO_RAD * (6.0F + f2 / 2.0F + f1));
+            this.cape().setRotationX(Mth.DEG_TO_RAD * (6.0F + f2 / 2.0F + f1));
         }
     }
 }

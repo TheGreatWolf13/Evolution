@@ -12,10 +12,9 @@ import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.items.IMelee;
 
 public class DamageSourceEntity extends DamageSourceEv {
-    @Nullable
     protected final Entity damageSourceEntity;
 
-    public DamageSourceEntity(String damage, @Nullable Entity entity, EvolutionDamage.Type type) {
+    public DamageSourceEntity(String damage, Entity entity, EvolutionDamage.Type type) {
         super(damage, type);
         this.damageSourceEntity = entity;
     }
@@ -28,7 +27,10 @@ public class DamageSourceEntity extends DamageSourceEv {
 
     @Nullable
     public Component getItemDisplay() {
-        ItemStack heldStack = ((LivingEntity) this.damageSourceEntity).getMainHandItem();
+        if (!(this.damageSourceEntity instanceof LivingEntity living)) {
+            return null;
+        }
+        ItemStack heldStack = living.getMainHandItem();
         return heldStack.getItem() instanceof IMelee ? heldStack.getDisplayName() : null;
     }
 
@@ -44,11 +46,11 @@ public class DamageSourceEntity extends DamageSourceEv {
     @Override
     @Nullable
     public Vec3 getSourcePosition() {
-        return this.damageSourceEntity != null ? this.damageSourceEntity.position() : null;
+        return this.damageSourceEntity.position();
     }
 
     @Override
     public boolean scalesWithDifficulty() {
-        return this.damageSourceEntity != null && this.damageSourceEntity instanceof LivingEntity && !(this.damageSourceEntity instanceof Player);
+        return this.damageSourceEntity instanceof LivingEntity && !(this.damageSourceEntity instanceof Player);
     }
 }

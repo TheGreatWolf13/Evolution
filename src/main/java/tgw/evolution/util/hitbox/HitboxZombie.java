@@ -6,7 +6,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.monster.Zombie;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.util.ArmPose;
@@ -15,47 +14,68 @@ import tgw.evolution.util.hitbox.hms.HMAbstractZombie;
 import tgw.evolution.util.hitbox.hms.HMDummy;
 import tgw.evolution.util.math.MathHelper;
 
-public class HitboxZombie extends HitboxEntity<Zombie> implements HMAbstractZombie<Zombie> {
+public final class HitboxZombie extends HitboxEntity<Zombie> implements HMAbstractZombie<Zombie>, IHitboxArmed<Zombie> {
 
-    public static final Vec3 NECK_STANDING = new Vec3(0, 24 / 16.0, 0);
-    protected final Hitbox armL = this.addBox(HitboxType.ARM_LEFT, HitboxLib.HUMANOID_LEFT_ARM);
-    protected final Hitbox armR = this.addBox(HitboxType.ARM_RIGHT, HitboxLib.HUMANOID_RIGHT_ARM);
-    protected final Hitbox body = this.addBox(HitboxType.CHEST, HitboxLib.HUMANOID_CHEST);
-    protected final Hitbox footL = this.addBox(HitboxType.FOOT_LEFT, HitboxLib.HUMANOID_FOOT);
-    protected final Hitbox footR = this.addBox(HitboxType.FOOT_RIGHT, HitboxLib.HUMANOID_FOOT);
-    protected final Hitbox handL = this.addBox(HitboxType.HAND_LEFT, HitboxLib.HUMANOID_LEFT_HAND);
-    protected final Hitbox handR = this.addBox(HitboxType.HAND_RIGHT, HitboxLib.HUMANOID_RIGHT_HAND);
-    protected final Hitbox head = this.addBox(HitboxType.HEAD, HitboxLib.HUMANOID_HEAD);
-    protected final HitboxGroup leftArm;
-    protected final HitboxGroup leftLeg;
-    protected final Hitbox legL = this.addBox(HitboxType.LEG_LEFT, HitboxLib.HUMANOID_LEG);
-    protected final Hitbox legR = this.addBox(HitboxType.LEG_RIGHT, HitboxLib.HUMANOID_LEG);
-    protected final HitboxGroup rightArm;
-    protected final HitboxGroup rightLeg;
-    protected final Hitbox shoulderL = this.addBox(HitboxType.SHOULDER_LEFT, HitboxLib.HUMANOID_LEFT_SHOULDER);
-    protected final Hitbox shoulderR = this.addBox(HitboxType.SHOULDER_RIGHT, HitboxLib.HUMANOID_RIGHT_SHOULDER);
-    protected float attackTime;
-    protected boolean crouching;
-    protected ArmPose leftArmPose;
-    protected float limbSwing;
-    protected float limbSwingAmount;
-    protected float remainingItemUseTime;
-    protected boolean riding;
-    protected ArmPose rightArmPose;
-    protected float swimAmount;
-    protected boolean young;
+    private final Hitbox body;
+    private final HitboxAttachable handL;
+    private final HitboxAttachable handR;
+    private final Hitbox head;
+    private final HitboxGroup leftArm;
+    private final HitboxGroup leftLeg;
+    private final HitboxGroup rightArm;
+    private final HitboxGroup rightLeg;
+    private float attackTime;
+    private boolean crouching;
+    private ArmPose leftArmPose;
+    private float limbSwing;
+    private float limbSwingAmount;
+    private float remainingItemUseTime;
+    private boolean riding;
+    private ArmPose rightArmPose;
+    private boolean shouldCancelLeft;
+    private boolean shouldCancelRight;
+    private float swimAmount;
+    private boolean young;
 
     public HitboxZombie() {
-        this.leftArm = new HitboxGroup(this.shoulderL, this.armL, this.handL);
-        this.leftLeg = new HitboxGroup(this.legL, this.footL);
-        this.rightArm = new HitboxGroup(this.shoulderR, this.armR, this.handR);
-        this.rightLeg = new HitboxGroup(this.legR, this.footR);
+        //Head
+        this.head = this.addBox(HitboxType.HEAD, HitboxLib.HUMANOID_HEAD, this);
+        //Body
+        this.body = this.addBox(HitboxType.CHEST, HitboxLib.HUMANOID_CHEST, this);
+        //Left arm
+        this.leftArm = new HitboxGroup(this);
+        Hitbox shoulderL = this.addBox(HitboxType.SHOULDER_LEFT, HitboxLib.HUMANOID_LEFT_SHOULDER, this.leftArm);
+        Hitbox armL = this.addBox(HitboxType.ARM_LEFT, HitboxLib.HUMANOID_LEFT_ARM, this.leftArm);
+        this.handL = this.addBoxAttachable(HitboxType.HAND_LEFT, HitboxLib.HUMANOID_LEFT_HAND, -5, 22, 0, 0, -8, 0, this.leftArm);
+        //Right arm
+        this.rightArm = new HitboxGroup(this);
+        Hitbox shoulderR = this.addBox(HitboxType.SHOULDER_RIGHT, HitboxLib.HUMANOID_RIGHT_SHOULDER, this.rightArm);
+        Hitbox armR = this.addBox(HitboxType.ARM_RIGHT, HitboxLib.HUMANOID_RIGHT_ARM, this.rightArm);
+        this.handR = this.addBoxAttachable(HitboxType.HAND_RIGHT, HitboxLib.HUMANOID_RIGHT_HAND, 5, 22, 0, 0, -8, 0, this.rightArm);
+        //Left leg
+        this.leftLeg = new HitboxGroup(this);
+        Hitbox legL = this.addBox(HitboxType.LEG_LEFT, HitboxLib.HUMANOID_LEG, this.leftLeg);
+        Hitbox footL = this.addBox(HitboxType.FOOT_LEFT, HitboxLib.HUMANOID_FOOT, this.leftLeg);
+        //Right leg
+        this.rightLeg = new HitboxGroup(this);
+        Hitbox legR = this.addBox(HitboxType.LEG_RIGHT, HitboxLib.HUMANOID_LEG, this.rightLeg);
+        Hitbox footR = this.addBox(HitboxType.FOOT_RIGHT, HitboxLib.HUMANOID_FOOT, this.rightLeg);
         this.finish();
     }
 
     @Override
     public boolean aggresive(Zombie entity) {
         return entity.isAggressive();
+    }
+
+    @Override
+    public HM armL() {
+        return this.leftArm;
+    }
+
+    @Override
+    public HM armR() {
+        return this.rightArm;
     }
 
     @Override
@@ -69,15 +89,7 @@ public class HitboxZombie extends HitboxEntity<Zombie> implements HMAbstractZomb
     }
 
     @Override
-    protected void childFinish() {
-        this.leftArm.finish();
-        this.leftLeg.finish();
-        this.rightArm.finish();
-        this.rightLeg.finish();
-    }
-
-    @Override
-    protected @Nullable Hitbox childGetEquipFor(IMelee.@Nullable IAttackType type, HumanoidArm arm) {
+    protected @Nullable Hitbox childGetEquipFor(Zombie entity, IMelee.@Nullable IAttackType type, HumanoidArm arm) {
         return null;
     }
 
@@ -128,6 +140,41 @@ public class HitboxZombie extends HitboxEntity<Zombie> implements HMAbstractZomb
     }
 
     @Override
+    public HM forearmL() {
+        //TODO implementation
+        return HMDummy.DUMMY;
+    }
+
+    @Override
+    public HM forearmR() {
+        //TODO implementation
+        return HMDummy.DUMMY;
+    }
+
+    @Override
+    public HM forelegL() {
+        //TODO implementation
+        return HMDummy.DUMMY;
+    }
+
+    @Override
+    public HM forelegR() {
+        //TODO implementation
+        return HMDummy.DUMMY;
+    }
+
+    @Override
+    public Hitbox getHand(HumanoidArm arm) {
+        //TODO implementation
+        return null;
+    }
+
+    @Override
+    public HitboxAttachable getItemAttach(HumanoidArm arm) {
+        return arm == HumanoidArm.RIGHT ? this.handR : this.handL;
+    }
+
+    @Override
     public HM hat() {
         return HMDummy.DUMMY;
     }
@@ -143,8 +190,15 @@ public class HitboxZombie extends HitboxEntity<Zombie> implements HMAbstractZomb
     }
 
     @Override
-    public HM leftArm() {
-        return this.leftArm;
+    public HM itemL() {
+        //TODO implementation
+        return null;
+    }
+
+    @Override
+    public HM itemR() {
+        //TODO implementation
+        return null;
     }
 
     @Override
@@ -153,8 +207,13 @@ public class HitboxZombie extends HitboxEntity<Zombie> implements HMAbstractZomb
     }
 
     @Override
-    public HM leftLeg() {
+    public HM legL() {
         return this.leftLeg;
+    }
+
+    @Override
+    public HM legR() {
+        return this.rightLeg;
     }
 
     @Override
@@ -178,18 +237,8 @@ public class HitboxZombie extends HitboxEntity<Zombie> implements HMAbstractZomb
     }
 
     @Override
-    public HM rightArm() {
-        return this.rightArm;
-    }
-
-    @Override
     public ArmPose rightArmPose() {
         return this.rightArmPose;
-    }
-
-    @Override
-    public HM rightLeg() {
-        return this.rightLeg;
     }
 
     @Override
@@ -218,6 +267,16 @@ public class HitboxZombie extends HitboxEntity<Zombie> implements HMAbstractZomb
     }
 
     @Override
+    public void setShouldCancelLeft(boolean shouldCancel) {
+        this.shouldCancelLeft = shouldCancel;
+    }
+
+    @Override
+    public void setShouldCancelRight(boolean shouldCancel) {
+        this.shouldCancelRight = shouldCancel;
+    }
+
+    @Override
     public void setSwimAmount(float swimAmount) {
         this.swimAmount = swimAmount;
     }
@@ -225,6 +284,16 @@ public class HitboxZombie extends HitboxEntity<Zombie> implements HMAbstractZomb
     @Override
     public void setYoung(boolean young) {
         this.young = young;
+    }
+
+    @Override
+    public boolean shouldCancelLeft() {
+        return this.shouldCancelLeft;
+    }
+
+    @Override
+    public boolean shouldCancelRight() {
+        return this.shouldCancelRight;
     }
 
     @Override

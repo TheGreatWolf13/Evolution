@@ -5,7 +5,6 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -13,19 +12,21 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.items.IFireAspect;
-import tgw.evolution.items.IKnockback;
 import tgw.evolution.items.IMelee;
+import tgw.evolution.patches.ILivingEntityPatch;
+import tgw.evolution.util.damage.DamageSourceEv;
+import tgw.evolution.util.hitbox.HitboxRegistry;
 import tgw.evolution.util.hitbox.HitboxType;
-import tgw.evolution.util.math.MathHelper;
 
 public final class EntityHelper {
 
     private EntityHelper() {
     }
 
-    public static void attackEntity(LivingEntity attacker, Entity victim, IMelee.IAttackType attackType, HitboxType... hitbox) {
+    public static void attackEntity(LivingEntity attacker, Entity victim, IMelee.IAttackType attackType, long hitboxSet) {
         ItemStack stack = attacker.getMainHandItem();
         Item item = stack.getItem();
         if (!victim.isAttackable()) {
@@ -36,57 +37,35 @@ public final class EntityHelper {
         }
         float damage = (float) attacker.getAttributeValue(Attributes.ATTACK_DAMAGE);
         if (damage > 0.0F) {
-            int knockbackModifier = 0;
-            if (item instanceof IKnockback knockback) {
-                knockbackModifier += knockback.getLevel();
-            }
-            if (attacker.isSprinting()) {
-                attacker.level.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(), SoundEvents.PLAYER_ATTACK_KNOCKBACK,
-                                         attacker.getSoundSource(), 1.0F, 1.0F);
-                ++knockbackModifier;
-            }
             int fireAspectModifier = 0;
             if (item instanceof IFireAspect fireItem) {
-                if (attacker.getRandom().nextFloat() < fireItem.getChance()) {
-                    fireAspectModifier = fireItem.getLevel();
+                if (attacker.getRandom().nextFloat() < fireItem.fireLevel() * 0.1) {
+                    fireAspectModifier = fireItem.fireLevel();
                 }
             }
             float oldHealth = 0.0F;
-            boolean fireAspect = false;
+//            boolean fireAspect = false;
             if (victim instanceof LivingEntity livingVictim) {
                 oldHealth = livingVictim.getHealth();
-                if (fireAspectModifier > 0 && !livingVictim.isOnFire()) {
-                    fireAspect = true;
-                    livingVictim.setRemainingFireTicks(1);
-                }
+//                if (fireAspectModifier > 0 && !livingVictim.isOnFire()) {
+//                    fireAspect = true;
+//                    livingVictim.setRemainingFireTicks(1);
+//                }
             }
             Vec3 targetMotion = victim.getDeltaMovement();
-            EvolutionDamage.Type damageType = EvolutionDamage.Type.CRUSHING;
+            EvolutionDamage.Type damageType = attackType.getDamageType();
             if (item instanceof IMelee melee) {
-                damageType = melee.getDamageType(stack, attackType);
-                damage *= melee.getAttackDamage(stack, attackType);
+                damage *= attackType.getDmgMultiplier(melee, stack);
             }
-            DamageSource source;
+            DamageSourceEv source;
             if (attacker instanceof Player player) {
                 source = EvolutionDamage.causePlayerMeleeDamage(player, damageType);
             }
             else {
                 source = EvolutionDamage.causeMobMeleeDamage(attacker, damageType);
             }
-            boolean attackSuccessfull = victim.hurt(source, damage);
+            boolean attackSuccessfull = hurt(victim, source, damage, hitboxSet);
             if (attackSuccessfull) {
-                //Knockback calculations
-                if (knockbackModifier > 0) {
-                    if (victim instanceof LivingEntity) {
-                        ((LivingEntity) victim).knockback(knockbackModifier * 0.5F, MathHelper.sinDeg(attacker.getYRot()),
-                                                          -MathHelper.cosDeg(attacker.getYRot()));
-                    }
-                    else {
-                        victim.push(-MathHelper.sinDeg(attacker.getYRot()) * knockbackModifier * 0.5F, 0,
-                                    MathHelper.cosDeg(attacker.getYRot()) * knockbackModifier * 0.5F);
-                    }
-                    attacker.setDeltaMovement(attacker.getDeltaMovement().multiply(0.6, 1, 0.6));
-                }
                 //Calculated velocity changed
                 if (victim instanceof ServerPlayer player && victim.hurtMarked) {
                     player.connection.send(new ClientboundSetEntityMotionPacket(victim));
@@ -108,11 +87,10 @@ public final class EntityHelper {
                 if (victim instanceof LivingEntity living) {
                     float damageDealt = oldHealth - living.getHealth();
                     if (attacker instanceof Player player) {
-                        PlayerHelper.applyDamageRaw(player, damage, damageType);
-                        PlayerHelper.applyDamageActual(player, damageDealt, damageType, living);
+                        PlayerHelper.applyDamage(player, damage, damageType, living);
                     }
                     if (fireAspectModifier > 0) {
-                        living.setRemainingFireTicks(fireAspectModifier * 4);
+                        living.setRemainingFireTicks(Math.max(fireAspectModifier * 4, living.getRemainingFireTicks()));
                     }
                     if (attacker.level instanceof ServerLevel serverLevel && damageDealt >= 10.0F) {
                         int heartsToSpawn = (int) (damageDealt * 0.1);
@@ -127,10 +105,43 @@ public final class EntityHelper {
                     attacker.level.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(), SoundEvents.PLAYER_ATTACK_NODAMAGE,
                                              attacker.getSoundSource(), 1.0F, 1.0F);
                 }
-                if (fireAspect) {
-                    victim.clearFire();
+//                if (fireAspect) {
+//                    victim.clearFire();
+//                }
+            }
+        }
+    }
+
+    //TODO make armor calculations on every part and other stuff
+    public static boolean hurt(Entity entity, DamageSourceEv source, float amount, long hitboxSet) {
+        //All
+        Evolution.info("Entity {} took {} damage", entity, amount);
+        if ((hitboxSet & 1) != 0) {
+            return entity.hurt(source, amount);
+        }
+        int count = Long.bitCount(hitboxSet);
+        float strength = amount;
+        amount /= count;
+        float totalDamage = 0;
+        int alreadyCounted = 0;
+        for (int i = 1; i < 64; i++) {
+            if ((hitboxSet & 1L << i) != 0) {
+                alreadyCounted++;
+                HitboxType hitbox = HitboxRegistry.deserialize(entity.getType(), i);
+                float damage = amount * hitbox.getMultiplier();
+                Evolution.info("    {} damage on {}", damage, hitbox);
+                if (entity instanceof ILivingEntityPatch patch) {
+                    totalDamage += patch.tryHurt(source, damage, strength, hitbox);
+                }
+                else {
+                    totalDamage += damage;
+                }
+                if (alreadyCounted >= count) {
+                    break;
                 }
             }
         }
+        Evolution.info("    Total = {} damage", totalDamage);
+        return entity.hurt(source, totalDamage);
     }
 }

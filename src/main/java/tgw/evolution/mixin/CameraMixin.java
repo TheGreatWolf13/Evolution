@@ -101,7 +101,10 @@ public abstract class CameraMixin {
             if (hitresult.getType() != HitResult.Type.MISS) {
                 double dist = hitresult.getLocation().distanceTo(this.position);
                 if (dist < startingDistance) {
-                    startingDistance = dist;
+                    startingDistance = dist - 0.1;
+                    if (startingDistance < 0) {
+                        startingDistance = 0;
+                    }
                 }
             }
         }
@@ -173,18 +176,18 @@ public abstract class CameraMixin {
         this.entity = entity;
         this.detached = detached;
         this.setRotation(entity.getViewYRot(partialTicks), entity.getViewXRot(partialTicks));
-        if (detached) {
-            this.setPosition(Mth.lerp(partialTicks, entity.xo, entity.getX()),
-                             Mth.lerp(partialTicks, entity.yo, entity.getY()) + entity.getEyeHeight(),
-                             Mth.lerp(partialTicks, entity.zo, entity.getZ()));
+//        if (detached) {
+//            this.setPosition(Mth.lerp(partialTicks, entity.xo, entity.getX()),
+//                             Mth.lerp(partialTicks, entity.yo, entity.getY()) + entity.getEyeHeight(),
+//                             Mth.lerp(partialTicks, entity.zo, entity.getZ()));
+//        }
+//        else {
+        Vec3d cameraPos = ClientEvents.getInstance().getCameraPos();
+        if (cameraPos.isNull()) {
+            cameraPos = MathHelper.getCameraPosition(entity, partialTicks);
         }
-        else {
-            Vec3d cameraPos = ClientEvents.getInstance().getCameraPos();
-            if (cameraPos.isNull()) {
-                cameraPos = MathHelper.getCameraPosition(entity, partialTicks);
-            }
-            this.setPosition(cameraPos.x(), cameraPos.y(), cameraPos.z());
-        }
+        this.setPosition(cameraPos.x(), cameraPos.y(), cameraPos.z());
+//        }
         if (detached) {
             if (thirdPersonReverse) {
                 this.setRotation(this.yRot + 180.0F, -this.xRot);
@@ -201,7 +204,7 @@ public abstract class CameraMixin {
     private NearPlane setupAndGetNearPlane() {
         Minecraft minecraft = Minecraft.getInstance();
         double aspectRatio = minecraft.getWindow().getWidth() / (double) minecraft.getWindow().getHeight();
-        double d1 = Math.tan(minecraft.options.fov * (Mth.PI / 180.0F) / 2.0) * 0.05F;
+        double d1 = Math.tan(minecraft.options.fov * Mth.DEG_TO_RAD / 2.0) * 0.05F;
         double d2 = d1 * aspectRatio;
         this.nearPlane.setup(this.forwards, 0.05, this.left, d2, this.up, d1);
         return this.nearPlane;

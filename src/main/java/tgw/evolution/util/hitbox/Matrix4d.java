@@ -17,9 +17,9 @@ public class Matrix4d {
     private double m21;
     private double m22;
     private double m23;
-    private double m30;
-    private double m31;
-    private double m32;
+    private double scaleX;
+    private double scaleY;
+    private double scaleZ;
 
     public void rotateX(float deg) {
         this.rotateXRad(deg * Mth.DEG_TO_RAD);
@@ -85,9 +85,9 @@ public class Matrix4d {
     }
 
     public void scale(double x, double y, double z) {
-        this.m30 *= x;
-        this.m31 *= y;
-        this.m32 *= z;
+        this.scaleX *= x;
+        this.scaleY *= y;
+        this.scaleZ *= z;
     }
 
     public Matrix4d set(Matrix4d matrix) {
@@ -103,15 +103,16 @@ public class Matrix4d {
         this.m21 = matrix.m21;
         this.m22 = matrix.m22;
         this.m23 = matrix.m23;
-        this.m30 = matrix.m30;
-        this.m31 = matrix.m31;
-        this.m32 = matrix.m32;
+        this.scaleX = matrix.scaleX;
+        this.scaleY = matrix.scaleY;
+        this.scaleZ = matrix.scaleZ;
         return this;
     }
 
-    public void setIdentity() {
-        this.m00 = this.m11 = this.m22 = this.m30 = this.m31 = this.m32 = 1;
+    public Matrix4d setIdentity() {
+        this.m00 = this.m11 = this.m22 = this.scaleX = this.scaleY = this.scaleZ = 1;
         this.m01 = this.m02 = this.m03 = this.m10 = this.m12 = this.m13 = this.m20 = this.m21 = this.m23 = 0;
+        return this;
     }
 
     public Vec3d transform(Vec3d vec) {
@@ -119,15 +120,15 @@ public class Matrix4d {
     }
 
     public double transformX(double x, double y, double z) {
-        return (x * this.m00 + y * this.m01 + z * this.m02 + this.m03) * this.m30;
+        return (x * this.m00 + y * this.m01 + z * this.m02 + this.m03) * this.scaleX;
     }
 
     public double transformY(double x, double y, double z) {
-        return (x * this.m10 + y * this.m11 + z * this.m12 + this.m13) * this.m31;
+        return (x * this.m10 + y * this.m11 + z * this.m12 + this.m13) * this.scaleY;
     }
 
     public double transformZ(double x, double y, double z) {
-        return (x * this.m20 + y * this.m21 + z * this.m22 + this.m23) * this.m32;
+        return (x * this.m20 + y * this.m21 + z * this.m22 + this.m23) * this.scaleZ;
     }
 
     public void translate(double x, double y, double z) {
@@ -141,23 +142,23 @@ public class Matrix4d {
     }
 
     public double untransformX(double x, double y, double z) {
-        x /= this.m30;
-        y /= this.m31;
-        z /= this.m32;
+        x /= this.scaleX;
+        y /= this.scaleY;
+        z /= this.scaleZ;
         return x * this.m00 + y * this.m10 + z * this.m20 - this.m03;
     }
 
     public double untransformY(double x, double y, double z) {
-        x /= this.m30;
-        y /= this.m31;
-        z /= this.m32;
+        x /= this.scaleX;
+        y /= this.scaleY;
+        z /= this.scaleZ;
         return x * this.m01 + y * this.m11 + z * this.m21 - this.m13;
     }
 
     public double untransformZ(double x, double y, double z) {
-        x /= this.m30;
-        y /= this.m31;
-        z /= this.m32;
+        x /= this.scaleX;
+        y /= this.scaleY;
+        z /= this.scaleZ;
         return x * this.m02 + y * this.m12 + z * this.m22 - this.m23;
     }
 }

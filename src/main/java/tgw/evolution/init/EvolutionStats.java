@@ -103,13 +103,10 @@ public final class EvolutionStats {
 
     public static final DeferredRegister<StatType<?>> STATS = DeferredRegister.create(ForgeRegistries.STAT_TYPES, Evolution.MODID);
 
-    //Damage Dealt
-    public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_DEALT_ACTUAL = genDamage("dealt_actual", EvolutionDamage.PLAYER);
-    public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_DEALT_RAW = genDamage("dealt_raw", EvolutionDamage.PLAYER);
-    //Damage Taken
-    public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_TAKEN_ACTUAL = genDamage("taken_actual", EvolutionDamage.ALL);
-    public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_TAKEN_BLOCKED = genDamage("taken_blocked", EvolutionDamage.PLAYER);
-    public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_TAKEN_RAW = genDamage("taken_raw", EvolutionDamage.ALL);
+    //Damage
+    public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_DEALT_BY_TYPE = genDamage("dealt", EvolutionDamage.PLAYER);
+    public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_RESISTED_BY_TYPE = genDamage("resisted", EvolutionDamage.PLAYER);
+    public static final Map<EvolutionDamage.Type, ResourceLocation> DAMAGE_TAKEN_BY_TYPE = genDamage("taken", EvolutionDamage.ALL);
     //Deaths
     public static final Object2ObjectMap<String, ResourceLocation> DEATH_SOURCE = Util.make(new Object2ObjectOpenHashMap<>(), m -> {
         for (String src : EvolutionDamage.ALL_SOURCES) {

@@ -74,6 +74,7 @@ import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.ICancelableUse;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.network.PacketCSStopUsingItem;
+import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.util.math.MathHelper;
 
@@ -280,7 +281,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             if (leftClick && this.hitResult != null && this.hitResult.getType() == HitResult.Type.BLOCK) {
                 BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
                 BlockPos hitPos = blockRayTrace.getBlockPos();
-                if (!this.level.isEmptyBlock(hitPos)) {
+                if (!this.level.isEmptyBlock(hitPos) && !((ILivingEntityPatch) this.player).shouldRenderSpecialAttack()) {
                     InputEvent.ClickInputEvent inputEvent = ForgeHooksClient.onClickInput(GLFW.GLFW_MOUSE_BUTTON_1, this.options.keyAttack,
                                                                                           InteractionHand.MAIN_HAND);
                     if (inputEvent.isCanceled()) {
@@ -542,16 +543,18 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                     else {
                         if (!this.multiplayerPause) {
                             if (!this.attackKeyPressed) {
-                                if (this.attackKeyTicks >= minAttackTime) {
-                                    IMelee.ChargeAttackType chargeAttackType = melee.getChargeAttackType(mainhandStack);
-                                    if (chargeAttackType != null) {
-                                        //Hold Attack
-                                        ClientEvents.getInstance().startChargeAttack(chargeAttackType);
+                                if (ClientEvents.getInstance().getMainhandIndicatorPercentage(0.0f) >= 1.0f) {
+                                    if (this.attackKeyTicks >= minAttackTime) {
+                                        IMelee.ChargeAttackType chargeAttackType = melee.getChargeAttackType(mainhandStack);
+                                        if (chargeAttackType != null) {
+                                            //Hold Attack
+                                            ClientEvents.getInstance().startChargeAttack(chargeAttackType);
+                                        }
                                     }
-                                }
-                                else if (this.attackKeyTicks > 0) {
-                                    //Short Attack
-                                    ClientEvents.getInstance().startShortAttack(mainhandStack, InteractionHand.MAIN_HAND);
+                                    else if (this.attackKeyTicks > 0) {
+                                        //Short Attack
+                                        ClientEvents.getInstance().startShortAttack(mainhandStack);
+                                    }
                                 }
                             }
                             this.attackKeyTicks = 0;
@@ -567,11 +570,11 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                         }
                     }
                 }
-                isAttackKeyDown = this.options.keyAttack.isDown();
             }
-            else {
-                isAttackKeyDown = this.options.keyAttack.isDown();
-                this.options.keyAttack.release();
+            isAttackKeyDown = this.options.keyAttack.isDown();
+            if (ClientEvents.getInstance().getMainhandIndicatorPercentage(0.0f) < 1) {
+                while (this.options.keyAttack.consumeClick()) {
+                }
             }
             while (this.options.keyUse.consumeClick()) {
                 if (!this.multiplayerPause && !ClientEvents.getInstance().shouldRenderSpecialAttack()) {
@@ -859,7 +862,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                     assert this.gameMode != null;
                     if (this.gameMode.getPlayerMode() != GameType.SPECTATOR) {
                         if (!this.attackKeyPressed) {
-                            ClientEvents.getInstance().startShortAttack(this.player.getMainHandItem(), InteractionHand.MAIN_HAND);
+                            ClientEvents.getInstance().startShortAttack(this.player.getMainHandItem());
                             inputEvent.setSwingHand(false);
                         }
                         else {
@@ -875,7 +878,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 case BLOCK: {
                     BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
                     BlockPos hitPos = blockRayTrace.getBlockPos();
-                    if (!this.level.isEmptyBlock(hitPos)) {
+                    if (!this.level.isEmptyBlock(hitPos) && !((ILivingEntityPatch) this.player).shouldRenderSpecialAttack()) {
                         this.gameMode.startDestroyBlock(hitPos, blockRayTrace.getDirection());
                         if (this.level.getBlockState(hitPos).isAir()) {
                             shouldContinueAttacking = false;
@@ -891,7 +894,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                     if (this.attackKeyPressed) {
                         return true;
                     }
-                    ClientEvents.getInstance().startShortAttack(this.player.getMainHandItem(), InteractionHand.MAIN_HAND);
+                    ClientEvents.getInstance().startShortAttack(this.player.getMainHandItem());
                     inputEvent.setSwingHand(false);
                     break;
                 }

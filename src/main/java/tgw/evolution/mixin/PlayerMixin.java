@@ -2,9 +2,11 @@ package tgw.evolution.mixin;
 
 import com.mojang.datafixers.util.Either;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Unit;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -13,6 +15,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -24,14 +27,21 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import tgw.evolution.Evolution;
 import tgw.evolution.events.EntityEvents;
 import tgw.evolution.init.EvolutionAttributes;
+import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionStats;
+import tgw.evolution.network.PacketCSPlayerFall;
+import tgw.evolution.network.PacketSCHitmarker;
 import tgw.evolution.network.PacketSCMovement;
 import tgw.evolution.patches.IPlayerPatch;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.constants.SkinType;
+import tgw.evolution.util.damage.DamageSourceEntity;
+import tgw.evolution.util.damage.DamageSourceEntityIndirect;
+import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.hitbox.EvolutionEntityHitboxes;
 import tgw.evolution.util.hitbox.HitboxEntity;
 import tgw.evolution.util.math.MathHelper;
@@ -53,6 +63,70 @@ public abstract class PlayerMixin extends LivingEntity implements IPlayerPatch {
 
     protected PlayerMixin(EntityType<? extends LivingEntity> type, Level level) {
         super(type, level);
+    }
+
+    /**
+     * @author The Great Wolf
+     * @reason Handle Evolution damage system and stats.
+     */
+    @Override
+    @Overwrite
+    protected void actuallyHurt(DamageSource source, float amount) {
+        if (!this.isInvulnerableTo(source)) {
+            if (amount <= 0) {
+                return;
+            }
+            float damageAfterAbsorp = Math.max(amount - this.getAbsorptionAmount(), 0.0F);
+            float damageAbsorp = amount - damageAfterAbsorp;
+            this.setAbsorptionAmount(this.getAbsorptionAmount() - damageAbsorp);
+            if (damageAfterAbsorp != 0.0F) {
+                float oldHealth = this.getHealth();
+                this.getCombatTracker().recordDamage(source, oldHealth, damageAfterAbsorp);
+                this.setHealth(oldHealth - damageAfterAbsorp);
+                this.gameEvent(GameEvent.ENTITY_DAMAGED, source.getEntity());
+                //noinspection ConstantConditions
+                if ((Object) this instanceof ServerPlayer player) {
+                    if (source instanceof DamageSourceEv sourceEv) {
+                        EvolutionDamage.Type damageType = sourceEv.getType();
+                        ResourceLocation resLoc = EvolutionStats.DAMAGE_TAKEN_BY_TYPE.get(damageType);
+                        if (resLoc != null) {
+                            PlayerHelper.addStat(player, resLoc, damageAfterAbsorp);
+                        }
+                        if (source instanceof DamageSourceEntity) {
+                            if (source instanceof DamageSourceEntityIndirect) {
+                                PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_BY_TYPE.get(EvolutionDamage.Type.RANGED), damageAfterAbsorp);
+                            }
+                            else {
+                                PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_BY_TYPE.get(EvolutionDamage.Type.MELEE), damageAfterAbsorp);
+                            }
+                        }
+                        PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_BY_TYPE.get(EvolutionDamage.Type.TOTAL), damageAfterAbsorp);
+                    }
+                    else {
+                        Evolution.warn("Bad damage source: " + source);
+                    }
+                }
+            }
+            if (source.getEntity() instanceof ServerPlayer sourcePlayer) {
+                EvolutionNetwork.send(sourcePlayer, new PacketSCHitmarker(false));
+            }
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Make fall damage depend on kinetic energy, not fall distance.
+     */
+    @Override
+    @Overwrite
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
+        if (this.abilities.mayfly) {
+            return false;
+        }
+        if (this.level.isClientSide) {
+            EvolutionNetwork.sendToServer(new PacketCSPlayerFall(this.getDeltaMovement().y, 1 - multiplier));
+        }
+        return super.causeFallDamage(fallDistance, multiplier, source);
     }
 
     /**
@@ -194,9 +268,37 @@ public abstract class PlayerMixin extends LivingEntity implements IPlayerPatch {
         return true;
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason Remove damage scaling, as difficulty will be handled differently
+     */
+    @Override
+    @Overwrite
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isInvulnerableTo(source)) {
+            return false;
+        }
+        if (this.abilities.invulnerable && !source.isBypassInvul()) {
+            return false;
+        }
+        this.noActionTime = 0;
+        if (this.isDeadOrDying()) {
+            return false;
+        }
+        if (!this.level.isClientSide) {
+            this.removeEntitiesOnShoulder();
+        }
+        return amount > 0 && super.hurt(source, amount);
+    }
+
     @Override
     public boolean isCrawling() {
         return this.isCrawling;
+    }
+
+    @Override
+    public boolean isDiscrete() {
+        return this.isShiftKeyDown() || this.getSwimAmount(1.0f) > 0 && this.isOnGround() && !this.isInWater();
     }
 
     @Override
@@ -227,6 +329,9 @@ public abstract class PlayerMixin extends LivingEntity implements IPlayerPatch {
     private void proxyAiStep(Player player, float amount) {
         //Do nothing
     }
+
+    @Shadow
+    protected abstract void removeEntitiesOnShoulder();
 
     @Override
     public void setCrawling(boolean crawling) {

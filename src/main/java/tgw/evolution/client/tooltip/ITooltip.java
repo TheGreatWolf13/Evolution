@@ -3,7 +3,7 @@ package tgw.evolution.client.tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 
-public interface IEvolutionTooltip extends TooltipComponent {
+public interface ITooltip extends TooltipComponent {
 
     int getIconX();
 

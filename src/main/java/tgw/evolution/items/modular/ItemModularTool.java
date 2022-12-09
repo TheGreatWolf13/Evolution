@@ -3,6 +3,7 @@ package tgw.evolution.items.modular;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
@@ -27,17 +28,17 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.init.ItemMaterial;
 import tgw.evolution.items.IBackWeapon;
-import tgw.evolution.items.IMelee;
 import tgw.evolution.items.IThrowable;
 import tgw.evolution.items.ITwoHanded;
 import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Units;
 
 import java.util.function.Consumer;
 
-public class ItemModularTool extends ItemModular implements IThrowable, ITwoHanded, IBackWeapon, IMelee {
+public class ItemModularTool extends ItemModular implements IThrowable, ITwoHanded, IBackWeapon {
 
     public ItemModularTool(Properties builder) {
         super(builder);
@@ -86,16 +87,6 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     @Override
-    public double getAttackDamage(ItemStack stack, IMelee.IAttackType attackType) {
-        return IModularTool.get(stack).getAttackDamage();
-    }
-
-    @Override
-    public double getAttackSpeed(ItemStack stack) {
-        return IModularTool.get(stack).getAttackSpeed();
-    }
-
-    @Override
     public int getAutoAttackTime(ItemStack stack) {
         return 4;
     }
@@ -103,10 +94,25 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     @Override
     public BasicAttackType getBasicAttackType(ItemStack stack) {
         IModularTool tool = IModularTool.get(stack);
-        if (tool.getHead().getType() == PartTypes.Head.SPEAR) {
-            return BasicAttackType.SPEAR_STAB;
+        if (tool.isTwoHanded()) {
+            //TODO
+            return BasicAttackType.AXE_STRIKE_1;
         }
-        return BasicAttackType.AXE_SWEEP;
+        return switch (tool.getHead().getType()) {
+            case AXE -> BasicAttackType.AXE_STRIKE_1;
+            case HAMMER -> BasicAttackType.HAMMER_STRIKE_1;
+            case HOE -> BasicAttackType.HOE_STRIKE_1;
+            case MACE -> BasicAttackType.MACE_STRIKE_1;
+            case PICKAXE -> BasicAttackType.PICKAXE_STRIKE_1;
+            case SHOVEL -> BasicAttackType.SHOVEL_STRIKE_1;
+            case SPEAR -> BasicAttackType.JAVELIN_THRUST;
+            case NULL -> throw new IllegalStateException("Invalid type!");
+        };
+    }
+
+    @Override
+    public SoundEvent getBlockHitSound(ItemStack stack) {
+        return IModularTool.get(stack).getHead().getMaterialInstance().getMaterial().getBlockHitSound();
     }
 
     @Override
@@ -116,8 +122,8 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     @Override
-    public EvolutionDamage.Type getDamageType(ItemStack stack, IMelee.IAttackType attackType) {
-        return IModularTool.get(stack).getDamageType();
+    public int getCooldown(ItemStack stack) {
+        return IModularTool.get(stack).getCooldown();
     }
 
     @Override
@@ -145,6 +151,11 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     @Override
+    public double getDmgMultiplier(ItemStack stack, EvolutionDamage.Type type) {
+        return IModularTool.get(stack).getDmgMultiplier(type);
+    }
+
+    @Override
     public int getMinAttackTime(ItemStack stack) {
         return 4;
     }
@@ -161,6 +172,11 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     @Override
     public int getPriority(ItemStack stack) {
         return IModularTool.get(stack).getBackPriority();
+    }
+
+    @Override
+    public float getRenderOffsetY() {
+        return -4;
     }
 
     @Override
@@ -228,6 +244,11 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     @Override
+    public boolean isDamageProportionalToMomentum() {
+        return true;
+    }
+
+    @Override
     public boolean isHoldable(ItemStack stack) {
         return true;
     }
@@ -254,13 +275,28 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     @Override
+    public float precision() {
+        return 0.75f;
+    }
+
+    @Override
+    public EvolutionDamage.Type projectileDamageType() {
+        return EvolutionDamage.Type.PIERCING;
+    }
+
+    @Override
+    public double projectileSpeed() {
+        return 16.5 * Units.METER_PER_SECOND;
+    }
+
+    @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         if (entity instanceof Player player && this.isThrowable(stack)) {
             int i = this.getUseDuration(stack) - timeLeft;
             if (i >= 10) {
                 if (!level.isClientSide) {
                     EntitySpear spear = new EntitySpear(level, player, stack);
-                    spear.shoot(player, player.getXRot(), player.getYRot(), 0.825f, 2.5F);
+                    spear.shoot(player, player.getXRot(), player.getYRot(), this);
                     if (player.getAbilities().instabuild) {
                         spear.pickupStatus = EntityGenericProjectile.PickupStatus.CREATIVE_ONLY;
                     }

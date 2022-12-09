@@ -8,23 +8,11 @@ package tgw.evolution.util.math;
 public final class Units {
 
     private static final int TICKS_PER_SECOND = 20;
+    public static final double METER_PER_SECOND = 1.0 / TICKS_PER_SECOND;
+    public static final double METER_PER_SECOND_PER_SECOND = 1.0 / TICKS_PER_SECOND / TICKS_PER_SECOND;
+    public static final double NEWTON = 1.0 / TICKS_PER_SECOND / TICKS_PER_SECOND;
+    public static final double METER_PER_TICK = TICKS_PER_SECOND;
 
     private Units() {
-    }
-
-    public static double toMSUAcceleration(double siAcceleration) {
-        return siAcceleration / (TICKS_PER_SECOND * TICKS_PER_SECOND);
-    }
-
-    public static double toMSUForce(double siForce) {
-        return siForce / (TICKS_PER_SECOND * TICKS_PER_SECOND);
-    }
-
-    public static double toMSUSpeed(double siSpeed) {
-        return siSpeed / TICKS_PER_SECOND;
-    }
-
-    public static double toSISpeed(double msuSpeed) {
-        return msuSpeed * TICKS_PER_SECOND;
     }
 }

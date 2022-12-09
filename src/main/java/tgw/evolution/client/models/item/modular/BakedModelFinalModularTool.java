@@ -30,12 +30,18 @@ public class BakedModelFinalModularTool implements BakedModel {
     public static final ModelProperty<PartTypes.Handle> HANDLE_TYPE = new ModelProperty<>();
     public static final ModelProperty<ItemMaterial> HANDLE_MATERIAL = new ModelProperty<>();
     public static final ModelProperty<Boolean> IS_SHARP = new ModelProperty<>();
-
+    //    public static final TransformsModular TRANSFORMS = new TransformsModular(0.85f, 0.85f, 0.85f);
     private final BakedModel baseModel;
     private final IModelData modelData = getEmptyIModelData();
     private final List<BakedQuad> quadHolder = new RArrayList<>();
-    private boolean isSweeping;
-    private boolean isThrowing;
+//    private boolean isBasicAttacking;
+//    private boolean isThrowing;
+//    private float rx;
+//    private float ry;
+//    private float rz;
+//    private float x;
+//    private float y;
+//    private float z;
 
     public BakedModelFinalModularTool(BakedModel baseModel) {
         this.baseModel = baseModel;
@@ -107,12 +113,12 @@ public class BakedModelFinalModularTool implements BakedModel {
 
     @Override
     public ItemTransforms getTransforms() {
-        if (this.isThrowing) {
-            return Minecraft.getInstance().getModelManager().getModel(EvolutionResources.TOOL_THROWING).getTransforms();
-        }
-        if (this.isSweeping) {
-            return Minecraft.getInstance().getModelManager().getModel(EvolutionResources.TOOL_SWEEP).getTransforms();
-        }
+//        if (this.isThrowing) {
+//            return Minecraft.getInstance().getModelManager().getModel(EvolutionResources.TOOL_THROWING).getTransforms();
+//        }
+//        if (this.isBasicAttacking) {
+//            return TRANSFORMS.setup(this.x, this.y, this.z, this.rx, this.ry, this.rz);
+//        }
         return this.baseModel.getTransforms();
     }
 
@@ -126,6 +132,19 @@ public class BakedModelFinalModularTool implements BakedModel {
         return this.baseModel.isGui3d();
     }
 
+//    public void setBasicAttack(float x, float y, float z, float rx, float ry, float rz) {
+//        this.x = x / 16.0f;
+//        this.y = y / 16.0f;
+//        this.z = z / 16.0f;
+//        this.rx = rx;
+//        this.ry = ry;
+//        this.rz = rz;
+//    }
+
+//    public void setBasicAttacking(boolean basicAttacking) {
+//        this.isBasicAttacking = basicAttacking;
+//    }
+
     public void setModelData(PartTypes.Head headType,
                              ItemMaterial headMaterial,
                              PartTypes.Handle handleType,
@@ -138,13 +157,9 @@ public class BakedModelFinalModularTool implements BakedModel {
         this.modelData.setData(IS_SHARP, isSharp);
     }
 
-    public void setSweeping(boolean sweeping) {
-        this.isSweeping = sweeping;
-    }
-
-    public void setThrowing(boolean throwing) {
-        this.isThrowing = throwing;
-    }
+//    public void setThrowing(boolean throwing) {
+//        this.isThrowing = throwing;
+//    }
 
     @Override
     public boolean useAmbientOcclusion() {

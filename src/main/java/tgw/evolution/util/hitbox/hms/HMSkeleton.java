@@ -34,15 +34,15 @@ public interface HMSkeleton<T extends Mob & RangedAttackMob> extends HMHumanoid<
         if (entity.isAggressive() && (stack.isEmpty() || !stack.is(Items.BOW))) {
             float f = Mth.sin(this.attackTime() * Mth.PI);
             float f1 = Mth.sin((1.0F - (1.0F - this.attackTime()) * (1.0F - this.attackTime())) * Mth.PI);
-            this.rightArm().setRotationZ(0);
-            this.leftArm().setRotationZ(0);
-            this.rightArm().setRotationY(-(0.1F - f * 0.6F));
-            this.leftArm().setRotationY(0.1F - f * 0.6F);
-            this.rightArm().setRotationX(Mth.HALF_PI);
-            this.leftArm().setRotationX(Mth.HALF_PI);
-            this.rightArm().addRotationX(-f * 1.2F + f1 * 0.4F);
-            this.leftArm().addRotationX(-f * 1.2F + f1 * 0.4F);
-            AnimationUtils.bobArms(this.rightArm(), this.leftArm(), ageInTicks);
+            this.armR().setRotationZ(0);
+            this.armL().setRotationZ(0);
+            this.armR().setRotationY(-(0.1F - f * 0.6F));
+            this.armL().setRotationY(0.1F - f * 0.6F);
+            this.armR().setRotationX(Mth.HALF_PI);
+            this.armL().setRotationX(Mth.HALF_PI);
+            this.armR().addRotationX(-f * 1.2F + f1 * 0.4F);
+            this.armL().addRotationX(-f * 1.2F + f1 * 0.4F);
+            AnimationUtils.bobArms(this.armR(), this.armL(), ageInTicks);
         }
     }
 }

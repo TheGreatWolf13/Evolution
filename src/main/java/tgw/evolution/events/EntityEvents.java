@@ -59,8 +59,6 @@ import tgw.evolution.capabilities.thirst.IThirst;
 import tgw.evolution.capabilities.thirst.ThirstStats;
 import tgw.evolution.capabilities.toast.CapabilityToast;
 import tgw.evolution.capabilities.toast.ToastStats;
-import tgw.evolution.entities.EntityGenericCreature;
-import tgw.evolution.entities.IAgressive;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.init.*;
 import tgw.evolution.network.*;
@@ -71,10 +69,7 @@ import tgw.evolution.util.Temperature;
 import tgw.evolution.util.collection.O2ROpenHashMap;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.SkinType;
-import tgw.evolution.util.damage.DamageSourceEntity;
-import tgw.evolution.util.damage.DamageSourceEntityIndirect;
 import tgw.evolution.util.damage.DamageSourceEv;
-import tgw.evolution.util.damage.IHitLocation;
 import tgw.evolution.util.earth.ClimateZone;
 import tgw.evolution.util.earth.WindVector;
 import tgw.evolution.util.math.MathHelper;
@@ -88,24 +83,19 @@ public class EntityEvents {
     public static final WindVector WIND = new WindVector();
     public static final Map<UUID, SkinType> SKIN_TYPE = new O2ROpenHashMap<>();
     private static final RandomGenerator RANDOM = new Random();
-    private final Map<DamageSource, EquipmentSlot> damageMultipliers = new WeakHashMap<>();
 
-    public static void calculateFallDamage(LivingEntity entity, double velocity, double distanceOfSlowDown, boolean isWater) {
-        velocity = Units.toSISpeed(velocity);
+    public static float calculateFallDamage(LivingEntity entity, double velocity, double distanceOfSlowDown, boolean isWater) {
+        if (velocity == 0) {
+            return 0;
+        }
+        velocity *= Units.METER_PER_TICK;
+        //TODO leg height
         double legHeight = PlayerHelper.LEG_HEIGHT;
-        double baseMass = PlayerHelper.MASS;
-        if (entity instanceof EntityGenericCreature creature) {
-            legHeight = creature.getLegHeight();
-            baseMass = creature.getBaseMass();
-        }
         distanceOfSlowDown += legHeight;
-        double totalMass = baseMass;
-        if (entity instanceof Player) {
-            AttributeInstance massAttribute = entity.getAttribute(EvolutionAttributes.MASS.get());
-            assert massAttribute != null;
-            baseMass = massAttribute.getBaseValue();
-            totalMass = massAttribute.getValue();
-        }
+        AttributeInstance massAttribute = entity.getAttribute(EvolutionAttributes.MASS.get());
+        assert massAttribute != null;
+        double baseMass = massAttribute.getBaseValue();
+        double totalMass = massAttribute.getValue();
         double kineticEnergy = totalMass * velocity * velocity / 2;
         double forceOfImpact = kineticEnergy / distanceOfSlowDown;
         double area = entity.getBbWidth() * entity.getBbWidth();
@@ -121,6 +111,7 @@ public class EntityEvents {
                 entity.hurt(EvolutionDamage.FALL, amount);
             }
         }
+        return amount;
     }
 
     public static void calculateWaterFallDamage(LivingEntity entity) {
@@ -159,20 +150,18 @@ public class EntityEvents {
             event.addCapability(Evolution.getResource("extended_inventory"),
                                 new SerializableCapabilityProvider<>(CapabilityInventory.INSTANCE, new InventoryHandler(entity)));
         }
-        if (entity instanceof Player player) {
-            if (entity instanceof ServerPlayer) {
-                event.addCapability(Evolution.getResource("thirst"),
-                                    new SerializableCapabilityProvider<>(CapabilityThirst.INSTANCE, new ThirstStats()));
-                event.addCapability(Evolution.getResource("health"),
-                                    new SerializableCapabilityProvider<>(CapabilityHealth.INSTANCE, new HealthStats()));
-                event.addCapability(Evolution.getResource("toast"), new SerializableCapabilityProvider<>(CapabilityToast.INSTANCE, new ToastStats()));
-                event.addCapability(Evolution.getResource("hunger"),
-                                    new SerializableCapabilityProvider<>(CapabilityHunger.INSTANCE, new HungerStats()));
-                event.addCapability(Evolution.getResource("temperature"),
-                                    new SerializableCapabilityProvider<>(CapabilityTemperature.INSTANCE, new TemperatureStats()));
-                event.addCapability(Evolution.getResource("stamina"),
-                                    new SerializableCapabilityProvider<>(CapabilityStamina.INSTANCE, new StaminaStats()));
-            }
+        if (entity instanceof ServerPlayer) {
+            event.addCapability(Evolution.getResource("thirst"),
+                                new SerializableCapabilityProvider<>(CapabilityThirst.INSTANCE, new ThirstStats()));
+            event.addCapability(Evolution.getResource("health"),
+                                new SerializableCapabilityProvider<>(CapabilityHealth.INSTANCE, new HealthStats()));
+            event.addCapability(Evolution.getResource("toast"), new SerializableCapabilityProvider<>(CapabilityToast.INSTANCE, new ToastStats()));
+            event.addCapability(Evolution.getResource("hunger"),
+                                new SerializableCapabilityProvider<>(CapabilityHunger.INSTANCE, new HungerStats()));
+            event.addCapability(Evolution.getResource("temperature"),
+                                new SerializableCapabilityProvider<>(CapabilityTemperature.INSTANCE, new TemperatureStats()));
+            event.addCapability(Evolution.getResource("stamina"),
+                                new SerializableCapabilityProvider<>(CapabilityStamina.INSTANCE, new StaminaStats()));
         }
     }
 
@@ -268,80 +257,6 @@ public class EntityEvents {
     }
 
     @SubscribeEvent
-    public void onLivingAttack(LivingAttackEvent event) {
-        if (event.getEntityLiving().level.isClientSide) {
-            return;
-        }
-        LivingEntity hitEntity = event.getEntityLiving();
-        DamageSource source = event.getSource();
-        if (!hitEntity.isAlive()) {
-            return;
-        }
-        float damage = event.getAmount();
-        if (hitEntity instanceof ServerPlayer player) {
-            if (source instanceof DamageSourceEv sourceEv) {
-                EvolutionDamage.Type damageType = sourceEv.getType();
-                ResourceLocation resLoc = EvolutionStats.DAMAGE_TAKEN_RAW.get(damageType);
-                if (resLoc != null) {
-                    PlayerHelper.addStat(player, resLoc, damage);
-                }
-                if (source instanceof DamageSourceEntity) {
-                    if (source instanceof DamageSourceEntityIndirect) {
-                        PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_RAW.get(EvolutionDamage.Type.RANGED), damage);
-                    }
-                    else {
-                        PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_RAW.get(EvolutionDamage.Type.MELEE), damage);
-                    }
-                }
-                PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_RAW.get(EvolutionDamage.Type.TOTAL), damage);
-            }
-            else {
-                Evolution.warn("Bad damage source: " + source);
-            }
-        }
-        Evolution.debug("amount = " + damage);
-        //Raytracing projectile damage
-        if (source instanceof DamageSourceEntityIndirect && source.isProjectile()) {
-            if (hitEntity instanceof Player hitPlayer) {
-                EquipmentSlot hitLocation = PlayerHelper.getPartByPosition(source.getDirectEntity().getBoundingBox().minY, hitPlayer);
-                ((DamageSourceEntityIndirect) source).setHitLocation(hitLocation);
-                Evolution.debug("hitLocation ranged = {}", hitLocation);
-            }
-            return;
-        }
-        //Raytracing melee damage
-        if (source instanceof DamageSourceEntity) {
-            Entity trueSource = source.getEntity();
-            if (trueSource instanceof Player) {
-                return;
-            }
-            double range = 3;
-            if (trueSource instanceof IAgressive agressive) {
-                range = agressive.getReach();
-            }
-            EntityHitResult rayTrace = MathHelper.rayTraceEntityFromEyes(trueSource, 1.0F, range);
-            if (rayTrace == null) {
-                event.setCanceled(true);
-                return;
-            }
-            Entity rayTracedEntity = rayTrace.getEntity();
-            if (hitEntity.equals(rayTracedEntity)) {
-                if (hitEntity instanceof Player player) {
-                    EquipmentSlot type = PlayerHelper.getPartByPosition(rayTrace.getLocation().y, player);
-                    Evolution.debug("type = {}", type);
-                    this.damageMultipliers.put(source, type);
-                }
-            }
-            else {
-                rayTracedEntity.hurt(source, damage);
-                event.setCanceled(true);
-            }
-            return;
-        }
-        Evolution.debug("Damage Source not calculated: " + source.msgId);
-    }
-
-    @SubscribeEvent
     public void onLivingDeath(LivingDeathEvent event) {
         if (event.getEntity().level.isClientSide) {
             return;
@@ -379,64 +294,6 @@ public class EntityEvents {
     }
 
     @SubscribeEvent
-    public void onLivingFall(LivingFallEvent event) {
-        LivingEntity entity = event.getEntityLiving();
-        double velocity = entity.getDeltaMovement().y;
-        double fallDistanceSlowDown = 1 - event.getDamageMultiplier();
-        if (entity instanceof Player) {
-            if (entity.level.isClientSide) {
-                EvolutionNetwork.sendToServer(new PacketCSPlayerFall(velocity, fallDistanceSlowDown));
-            }
-            return;
-        }
-        calculateFallDamage(entity, velocity, fallDistanceSlowDown, false);
-    }
-
-    @SubscribeEvent
-    public void onLivingHurt(LivingHurtEvent event) {
-        if (event.getEntityLiving().level.isClientSide) {
-            return;
-        }
-        DamageSource source = event.getSource();
-        if (event.getEntityLiving() instanceof Player player) {
-            EquipmentSlot hitPart = this.damageMultipliers.remove(source);
-            if (source instanceof IHitLocation hitLocation) {
-                hitPart = hitLocation.getHitLocation();
-            }
-            EvolutionDamage.Type type = EvolutionDamage.Type.GENERIC;
-            if (source instanceof DamageSourceEv sourceEv) {
-                type = sourceEv.getType();
-            }
-            float computedDamage = PlayerHelper.getDamage(hitPart, player, event.getAmount(), type);
-            if (computedDamage > 0) {
-                float statDamage = computedDamage;
-                if (statDamage > player.getHealth() + player.getAbsorptionAmount()) {
-                    statDamage = player.getHealth() + player.getAbsorptionAmount();
-                }
-                ResourceLocation resLoc = EvolutionStats.DAMAGE_TAKEN_ACTUAL.get(type);
-                if (resLoc != null) {
-                    PlayerHelper.addStat(player, resLoc, statDamage);
-                }
-                if (source instanceof DamageSourceEntity) {
-                    if (source instanceof DamageSourceEntityIndirect) {
-                        PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_ACTUAL.get(EvolutionDamage.Type.RANGED), statDamage);
-                    }
-                    else {
-                        PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_ACTUAL.get(EvolutionDamage.Type.MELEE), statDamage);
-                    }
-                    PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN.get(), source.getEntity().getType(), statDamage);
-                }
-                PlayerHelper.addStat(player, EvolutionStats.DAMAGE_TAKEN_ACTUAL.get(EvolutionDamage.Type.TOTAL), statDamage);
-            }
-            event.setAmount(computedDamage);
-        }
-        Entity trueSource = source.getEntity();
-        if (trueSource instanceof ServerPlayer sourcePlayer) {
-            EvolutionNetwork.send(sourcePlayer, new PacketSCHitmarker(false));
-        }
-    }
-
-    @SubscribeEvent
     public void onLivingJump(LivingEvent.LivingJumpEvent event) {
         if (event.getEntityLiving() instanceof ServerPlayer player) {
             player.awardStat(EvolutionStats.JUMPS);
@@ -446,9 +303,6 @@ public class EntityEvents {
     @SubscribeEvent
     public void onLivingTick(LivingUpdateEvent event) {
         LivingEntity entity = event.getEntityLiving();
-        if (!(entity instanceof Player) && !(entity instanceof EntityGenericCreature)) {
-            return;
-        }
         //Removes damage immunity
         entity.invulnerableTime = 0;
         //Deals damage inside blocks

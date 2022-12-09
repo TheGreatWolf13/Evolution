@@ -544,9 +544,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
                 if (!onState.is(BlockTags.CLIMBABLE) && !onState.is(Blocks.POWDER_SNOW)) {
                     dy = 0.0;
                 }
-                this.walkDist += (float) allowedMovement.horizontalDistance() * 0.6F;
-                this.moveDist += (float) Math.sqrt(dx * dx + dy * dy + dz * dz) * 0.6F;
-                if (this.moveDist > this.nextStep && !onState.isAir()) {
+                this.walkDist += (float) allowedMovement.horizontalDistance() * 0.5F;
+                this.moveDist += (float) Math.sqrt(dx * dx + dy * dy + dz * dz) * 0.5F;
+                if (this.moveDist > this.nextStep && this.isOnGround() && !onState.isAir()) {
                     this.moveDist -= this.nextStep;
                     if (this.moveDist > this.nextStep) {
                         this.moveDist %= this.nextStep;

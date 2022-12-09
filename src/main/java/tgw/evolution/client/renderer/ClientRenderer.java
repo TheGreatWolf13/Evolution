@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.MobEffectTextureManager;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -53,6 +54,7 @@ import tgw.evolution.items.IFood;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.network.PacketCSPlaySoundEntityEmitted;
 import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IPoseStackPatch;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
@@ -441,6 +443,21 @@ public class ClientRenderer {
                         }
                         if (shouldRenderOff) {
                             renderAttackIndicator(this.mc.player.getMainArm().getOpposite(), matrices, x, y, offhandPerc, true);
+                        }
+                    }
+                    //FollowUp Indicator
+                    if (EvolutionConfig.CLIENT.followUps.get() && this.client.shouldRenderSpecialAttack()) {
+                        ILivingEntityPatch player = (ILivingEntityPatch) this.mc.player;
+                        IMelee.IAttackType type = player.getSpecialAttackType();
+                        if (type != null) {
+                            if (type.getFollowUps() > 0) {
+                                String s = String.valueOf(player.isOnGracePeriod() ? player.getFollowUp() : player.getFollowUp() + 1);
+                                MultiBufferSource.BufferSource bufferSource = this.mc.renderBuffers().bufferSource();
+                                this.mc.font.drawInBatch8xOutline(new TextComponent(s).getVisualOrderText(), (width - this.mc.font.width(s)) / 2.0f,
+                                                                  height / 2.0f - 17, 0xffff_ffff, 0x0,
+                                                                  matrices.last().pose(), bufferSource, 0xff_00ff);
+                                bufferSource.endBatch();
+                            }
                         }
                     }
                     RenderSystem.blendEquation(GL14.GL_FUNC_ADD);

@@ -3,18 +3,15 @@ package tgw.evolution.util.damage;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.init.EvolutionDamage;
 
-import org.jetbrains.annotations.Nullable;
-
-public class DamageSourceEntityIndirect extends DamageSourceEntity implements IHitLocation {
-    private final Entity trueSource;
+public class DamageSourceEntityIndirect extends DamageSourceEntity {
     @Nullable
-    private EquipmentSlot hitLocation;
+    private final Entity trueSource;
 
     public DamageSourceEntityIndirect(String damage, Entity source, @Nullable Entity trueSource, EvolutionDamage.Type type) {
         super(damage, source, type);
@@ -31,12 +28,6 @@ public class DamageSourceEntityIndirect extends DamageSourceEntity implements IH
     @Nullable
     public Entity getEntity() {
         return this.trueSource;
-    }
-
-    @Override
-    @Nullable
-    public EquipmentSlot getHitLocation() {
-        return this.hitLocation;
     }
 
     @Override
@@ -62,9 +53,5 @@ public class DamageSourceEntityIndirect extends DamageSourceEntity implements IH
         return itemComp != null ?
                new TranslatableComponent(message + ".item", deadEntity.getDisplayName(), sourceComp, itemComp) :
                new TranslatableComponent(message, deadEntity.getDisplayName(), sourceComp);
-    }
-
-    public void setHitLocation(@Nullable EquipmentSlot hitLocation) {
-        this.hitLocation = hitLocation;
     }
 }

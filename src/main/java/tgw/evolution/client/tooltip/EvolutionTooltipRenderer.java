@@ -15,18 +15,26 @@ import tgw.evolution.init.EvolutionResources;
 
 public final class EvolutionTooltipRenderer implements ClientTooltipComponent {
 
-    public static final EvolutionTooltipRenderer MASS = new EvolutionTooltipRenderer();
-    public static final EvolutionTooltipRenderer[] MASS_PARTS = new EvolutionTooltipRenderer[4];
+    public static final EvolutionTooltipRenderer COLD = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer COOLDOWN = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer DAMAGE_BASIC = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer DAMAGE_CHARGE = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer DAMAGE_THROWN = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer DMG_MULT_BASIC = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer DMG_MULT_CHARGE = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer DMG_MULT_THROWN = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer DRINK = new EvolutionTooltipRenderer();
     public static final EvolutionTooltipRenderer DURABILITY = new EvolutionTooltipRenderer();
     public static final EvolutionTooltipRenderer[] DURABILITY_PARTS = new EvolutionTooltipRenderer[4];
+    public static final EvolutionTooltipRenderer FOLLOW_UP = new EvolutionTooltipRenderer();
     public static final EvolutionTooltipRenderer FOOD = new EvolutionTooltipRenderer();
-    public static final EvolutionTooltipRenderer DRINK = new EvolutionTooltipRenderer();
-    public static final EvolutionTooltipRenderer DAMAGE = new EvolutionTooltipRenderer();
-    public static final EvolutionTooltipRenderer MINING = new EvolutionTooltipRenderer();
-    public static final EvolutionTooltipRenderer SPEED = new EvolutionTooltipRenderer();
-    public static final EvolutionTooltipRenderer REACH = new EvolutionTooltipRenderer();
-    public static final EvolutionTooltipRenderer COLD = new EvolutionTooltipRenderer();
     public static final EvolutionTooltipRenderer HEAT = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer INFO = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer MASS = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer[] MASS_PARTS = new EvolutionTooltipRenderer[4];
+    public static final EvolutionTooltipRenderer MINING = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer PRECISION = new EvolutionTooltipRenderer();
+    public static final EvolutionTooltipRenderer THROW_SPEED = new EvolutionTooltipRenderer();
 
     static {
         for (int i = 0; i < 4; i++) {
@@ -37,7 +45,7 @@ public final class EvolutionTooltipRenderer implements ClientTooltipComponent {
         }
     }
 
-    private @Nullable IEvolutionTooltip tooltip;
+    private @Nullable ITooltip tooltip;
 
     private EvolutionTooltipRenderer() {
     }
@@ -89,7 +97,7 @@ public final class EvolutionTooltipRenderer implements ClientTooltipComponent {
         }
     }
 
-    public EvolutionTooltipRenderer setTooltip(IEvolutionTooltip tooltip) {
+    public EvolutionTooltipRenderer setTooltip(ITooltip tooltip) {
         this.tooltip = tooltip;
         return this;
     }

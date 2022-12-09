@@ -64,6 +64,18 @@ public final class HMDummy implements HM {
     }
 
     @Override
+    public void translateX(float x) {
+    }
+
+    @Override
+    public void translateY(float y) {
+    }
+
+    @Override
+    public void translateZ(float z) {
+    }
+
+    @Override
     public float xRot() {
         return 0;
     }

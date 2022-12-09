@@ -186,7 +186,7 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
                 }
                 String amp = getFixedAmplifier(effect) > 0 ? " " + MathHelper.getRomanNumber(getFixedAmplifier(effect) + 1) : "";
                 this.tooltips.add(new TranslatableComponent(effect.getEffect().getDescriptionId()).append(new TextComponent(amp))
-                                                                                                  .withStyle(EvolutionStyles.EFFECTS));
+                                                                                                  .withStyle(EvolutionStyles.DARK_AQUA));
                 EvolutionEffects.getEffectDescription(this.tooltips, effect.getEffect(), getFixedAmplifier(effect));
                 if (this.lines == null) {
                     this.lines = new OArrayList<>();

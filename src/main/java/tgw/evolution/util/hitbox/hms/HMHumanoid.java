@@ -4,6 +4,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
@@ -31,14 +32,30 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
     }
 
     default HM arm(HumanoidArm side) {
-        return side == HumanoidArm.LEFT ? this.leftArm() : this.rightArm();
+        return side == HumanoidArm.LEFT ? this.armL() : this.armR();
     }
+
+    HM armL();
+
+    HM armR();
 
     HM body();
 
     boolean crouching();
 
-    private HumanoidArm getAttackArm(T entity) {
+    default HM forearm(HumanoidArm side) {
+        return side == HumanoidArm.LEFT ? this.forearmL() : this.forearmR();
+    }
+
+    HM forearmL();
+
+    HM forearmR();
+
+    HM forelegL();
+
+    HM forelegR();
+
+    private HumanoidArm getSwingingArm(T entity) {
         HumanoidArm arm = entity.getMainArm();
         return entity.swingingArm == InteractionHand.MAIN_HAND ? arm : arm.getOpposite();
     }
@@ -47,19 +64,30 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
 
     HM head();
 
-    HM leftArm();
+    default HM item(HumanoidArm arm) {
+        return arm == HumanoidArm.RIGHT ? this.itemR() : this.itemL();
+    }
+
+    HM itemL();
+
+    HM itemR();
 
     ArmPose leftArmPose();
 
-    HM leftLeg();
+    HM legL();
 
-    private boolean poseLeftArm(T entity) {
-        boolean shouldCancelFutureRepositions = false;
+    HM legR();
+
+    private void poseLeftArm(T entity) {
+        HM armL = this.armL();
+        HM itemL = this.itemL();
+        AnimationUtils.setupItemPosition(itemL, HumanoidArm.LEFT,
+                                         entity.getMainArm() == HumanoidArm.LEFT ? entity.getMainHandItem() : entity.getOffhandItem());
         switch (this.leftArmPose()) {
-            case EMPTY -> this.leftArm().setRotationY(0.0F);
+            case EMPTY -> armL.setRotationY(0.0F);
             case BLOCK -> {
-                this.leftArm().setRotationX(this.leftArm().xRot() * 0.5F + 0.3f * Mth.PI);
-                this.leftArm().setRotationY(-Mth.PI / 6.0F);
+                armL.setRotationX(armL.xRot() * 0.5F + 0.3f * Mth.PI);
+                armL.setRotationY(-Mth.PI / 6.0F);
             }
             case ITEM -> {
                 if (entity.isUsingItem()) {
@@ -68,53 +96,56 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                         Item useItem = stack.getItem();
                         UseAnim action = useItem.getUseAnimation(stack);
                         if (action == UseAnim.EAT || action == UseAnim.DRINK) {
-                            this.leftArm().setRotationX(-Mth.lerp(-1.0f * (entity.getXRot() - 90.0f) / 180.0f, 1.0f, 2.0f) -
-                                                        Mth.sin(entity.tickCount * 1.5f) * 0.1f);
-                            this.leftArm().setRotationY(-0.3f);
-                            this.leftArm().setRotationZ(-0.3f);
-                            return true;
+                            armL.setRotationX((90 - entity.getXRot()) * Mth.DEG_TO_RAD - 10 * Mth.DEG_TO_RAD + Mth.sin(
+                                    (entity.tickCount + Evolution.PROXY.getPartialTicks()) * 1.5f) * 3 * Mth.DEG_TO_RAD);
+                            armL.setRotationY(-0.3f);
+                            armL.setRotationZ(-0.3f);
+                            this.setShouldCancelLeft(true);
+                            return;
                         }
                     }
                 }
-                this.leftArm().setRotationX(this.leftArm().xRot() * 0.5F + Mth.PI / 10.0F);
-                this.leftArm().setRotationY(0.0F);
+                armL.setRotationX(armL.xRot() * 0.5F + Mth.PI / 10.0F);
+                armL.setRotationY(0.0F);
             }
             case THROW_SPEAR -> {
                 if (this.swimAmount() > 0 && entity.isInWater()) {
-                    this.leftArm().setRotationX(this.leftArm().xRot() * 0.5F + Mth.PI);
+                    armL.setRotationX(armL.xRot() * 0.5F + Mth.PI);
                 }
                 else {
-                    this.leftArm().setRotationX(this.leftArm().xRot() * 0.5F + (Mth.PI - entity.getXRot() * Mth.DEG_TO_RAD));
+                    armL.setRotationX(armL.xRot() * 0.5F + (Mth.PI - entity.getXRot() * Mth.DEG_TO_RAD));
                 }
-                this.leftArm().setRotationY(0.0F);
-                shouldCancelFutureRepositions = true;
+                armL.setRotationY(0.0F);
+                itemL.setRotationX(180 * Mth.DEG_TO_RAD);
             }
-            case BOW_AND_ARROW -> {
-                this.rightArm().setRotationY(0.1F - this.head().yRot() + 0.4F);
-                this.leftArm().setRotationY(-0.1F - this.head().yRot());
-                this.rightArm().setRotationX(Mth.HALF_PI - this.head().xRot());
-                this.leftArm().setRotationX(Mth.HALF_PI - this.head().xRot());
-            }
-            case CROSSBOW_CHARGE -> AnimationUtils.animateCrossbowCharge(this.rightArm(), this.leftArm(), entity, false);
-            case CROSSBOW_HOLD -> AnimationUtils.animateCrossbowHold(this.rightArm(), this.leftArm(), this.head(), false);
-            case SPYGLASS -> {
-                this.leftArm().setRotationX(Mth.clamp(this.head().xRot() + 1.919_862_2F + (entity.isCrouching() ? Mth.PI / 12 : 0.0F), -3.3F,
-                                                      3.3F));
-                this.leftArm().setRotationY(this.head().yRot() - Mth.PI / 12);
-            }
+//            case BOW_AND_ARROW -> {
+//                this.armR().setRotationY(0.1F - this.head().yRot() + 0.4F);
+//                this.armL().setRotationY(-0.1F - this.head().yRot());
+//                this.armR().setRotationX(Mth.HALF_PI - this.head().xRot());
+//                this.armL().setRotationX(Mth.HALF_PI - this.head().xRot());
+//            }
+//            case CROSSBOW_CHARGE -> AnimationUtils.animateCrossbowCharge(this.armR(), this.armL(), entity, false);
+//            case CROSSBOW_HOLD -> AnimationUtils.animateCrossbowHold(this.armR(), this.armL(), this.head(), false);
+//            case SPYGLASS -> {
+//                this.armL().setRotationX(Mth.clamp(this.head().xRot() + 1.919_862_2F + (entity.isCrouching() ? Mth.PI / 12 : 0.0F), -3.3F,
+//                                                   3.3F));
+//                this.armL().setRotationY(this.head().yRot() - Mth.PI / 12);
+//            }
         }
-        return shouldCancelFutureRepositions;
     }
 
-    private boolean poseRightArm(T entity) {
-        boolean shouldCancelFutureRepositions = false;
+    private void poseRightArm(T entity) {
+        HM armR = this.armR();
+        HM itemR = this.itemR();
+        AnimationUtils.setupItemPosition(itemR, HumanoidArm.RIGHT,
+                                         entity.getMainArm() == HumanoidArm.RIGHT ? entity.getMainHandItem() : entity.getOffhandItem());
         switch (this.rightArmPose()) {
-            case EMPTY -> this.rightArm().setRotationY(0.0F);
+            case EMPTY -> armR.setRotationY(0.0F);
             case BLOCK -> {
                 if (this.attackTime() == 0) {
-                    this.rightArm().setRotationX(this.rightArm().xRot() * 0.5F + 0.942_477_9F);
+                    armR.setRotationX(armR.xRot() * 0.5F + 0.942_477_9F);
                 }
-                this.rightArm().setRotationY(Mth.PI / 6.0F);
+                armR.setRotationY(Mth.PI / 6.0F);
             }
             case ITEM -> {
                 if (entity.isUsingItem()) {
@@ -123,44 +154,44 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                         Item useItem = stack.getItem();
                         UseAnim action = useItem.getUseAnimation(stack);
                         if (action == UseAnim.EAT || action == UseAnim.DRINK) {
-                            this.rightArm().setRotationX(Mth.lerp(-1.0f * (entity.getXRot() - 90.0f) / 180.0f, 1.0f, 2.0f) -
-                                                         Mth.sin(entity.tickCount * 1.5f) * 0.1f);
-                            this.rightArm().setRotationY(0.3f);
-                            this.rightArm().setRotationZ(0.3f);
-                            return true;
+                            armR.setRotationX((90 - entity.getXRot()) * Mth.DEG_TO_RAD - 10 * Mth.DEG_TO_RAD + Mth.sin(
+                                    (entity.tickCount + Evolution.PROXY.getPartialTicks()) * 1.5f) * 3 * Mth.DEG_TO_RAD);
+                            armR.setRotationY(0.3f);
+                            armR.setRotationZ(0.3f);
+                            this.setShouldCancelRight(true);
+                            return;
                         }
                     }
                 }
                 if (this.attackTime() == 0) {
-                    this.rightArm().setRotationX(this.rightArm().xRot() * 0.5F + Mth.PI / 10.0F);
+                    armR.setRotationX(armR.xRot() * 0.5F + Mth.PI / 10.0F);
                 }
-                this.rightArm().setRotationY(0.0F);
+                armR.setRotationY(0.0F);
             }
             case THROW_SPEAR -> {
                 if (this.swimAmount() > 0 && entity.isInWater()) {
-                    this.rightArm().setRotationX(this.rightArm().xRot() * 0.5F + Mth.PI);
+                    armR.setRotationX(armR.xRot() * 0.5F + Mth.PI);
                 }
                 else {
-                    this.rightArm().setRotationX(this.rightArm().xRot() * 0.5F + (Mth.PI - entity.getXRot() * Mth.DEG_TO_RAD));
+                    armR.setRotationX(armR.xRot() * 0.5F + (Mth.PI - entity.getXRot() * Mth.DEG_TO_RAD));
                 }
-                this.rightArm().setRotationY(0.0F);
-                shouldCancelFutureRepositions = true;
+                armR.setRotationY(0.0F);
+                itemR.setRotationX(180 * Mth.DEG_TO_RAD);
             }
-            case BOW_AND_ARROW -> {
-                this.rightArm().setRotationY(0.1F - this.head().yRot());
-                this.leftArm().setRotationY(-0.1F - this.head().yRot() - 0.4F);
-                this.rightArm().setRotationX(Mth.HALF_PI - this.head().xRot());
-                this.leftArm().setRotationX(Mth.HALF_PI - this.head().xRot());
-            }
-            case CROSSBOW_CHARGE -> AnimationUtils.animateCrossbowCharge(this.rightArm(), this.leftArm(), entity, true);
-            case CROSSBOW_HOLD -> AnimationUtils.animateCrossbowHold(this.rightArm(), this.leftArm(), this.head(), true);
-            case SPYGLASS -> {
-                this.rightArm()
-                    .setRotationX(Mth.clamp(this.head().xRot() + 1.919_862_2F + (entity.isCrouching() ? 0.261_799_4F : 0.0F), -3.3F, 3.3F));
-                this.rightArm().setRotationY(this.head().yRot() + 0.261_799_4F);
-            }
+//            case BOW_AND_ARROW -> {
+//                this.armR().setRotationY(0.1F - this.head().yRot());
+//                this.armL().setRotationY(-0.1F - this.head().yRot() - 0.4F);
+//                this.armR().setRotationX(Mth.HALF_PI - this.head().xRot());
+//                this.armL().setRotationX(Mth.HALF_PI - this.head().xRot());
+//            }
+//            case CROSSBOW_CHARGE -> AnimationUtils.animateCrossbowCharge(this.armR(), this.armL(), entity, true);
+//            case CROSSBOW_HOLD -> AnimationUtils.animateCrossbowHold(this.armR(), this.armL(), this.head(), true);
+//            case SPYGLASS -> {
+//                this.armR()
+//                    .setRotationX(Mth.clamp(this.head().xRot() + 1.919_862_2F + (entity.isCrouching() ? 0.261_799_4F : 0.0F), -3.3F, 3.3F));
+//                this.armR().setRotationY(this.head().yRot() + 0.261_799_4F);
+//            }
         }
-        return shouldCancelFutureRepositions;
     }
 
     @Override
@@ -169,11 +200,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
         HMAgeableList.super.prepare(entity, limbSwing, limbSwingAmount, partialTicks);
     }
 
-    HM rightArm();
-
     ArmPose rightArmPose();
-
-    HM rightLeg();
 
     void setCrouching(boolean crouching);
 
@@ -181,259 +208,352 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
 
     void setRightArmPose(ArmPose rightArmPose);
 
+    void setShouldCancelLeft(boolean shouldCancel);
+
+    void setShouldCancelRight(boolean shouldCancel);
+
     void setSwimAmount(float swimAmount);
 
     @Override
     default void setup(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        boolean isElytraFlying = entity.getFallFlyingTicks() > 4;
-        boolean isVisuallySwimming = entity.isVisuallySwimming();
-        this.head().setRotationY(netHeadYaw * Mth.DEG_TO_RAD);
-        this.head().setRotationZ(0); //Reset model
-        if (isElytraFlying) {
-            this.head().setRotationX(-Mth.PI / 4.0F);
+        //TODO fix other mobs
+        if (!(entity instanceof Player)) {
+            return;
         }
-        else if (this.swimAmount() > 0.0F) {
+        HM head = this.head();
+        HM body = this.body();
+        HM armR = this.armR();
+        HM forearmR = this.forearmR();
+        HM armL = this.armL();
+        HM forearmL = this.forearmL();
+        HM legR = this.legR();
+        HM forelegR = this.forelegR();
+        HM legL = this.legL();
+        HM forelegL = this.forelegL();
+        HM itemR = this.itemR();
+        HM itemL = this.itemL();
+        float swimAmount = this.swimAmount();
+        this.setShouldCancelLeft(false);
+        this.setShouldCancelRight(false);
+        boolean isVisuallySwimming = entity.isVisuallySwimming();
+        head.setRotationY(netHeadYaw * Mth.DEG_TO_RAD);
+        if (swimAmount > 0.0F) {
             if (isVisuallySwimming) {
                 if (!entity.isInWater()) {
                     //Crawling pose
-                    this.head().setRotationX(Mth.DEG_TO_RAD * (headPitch + 90));
+                    head.setRotationX(Mth.DEG_TO_RAD * (headPitch + 90));
                 }
                 else {
-                    this.head().setRotationX(rotlerpRad(this.swimAmount(), this.head().xRot(), Mth.HALF_PI));
+                    head.setRotationX(rotlerpRad(swimAmount, head.xRot(), Mth.HALF_PI));
                 }
-                this.head().setRotationY(0);
-                this.head().setRotationZ(Mth.DEG_TO_RAD * netHeadYaw);
+                head.setRotationY(0);
+                head.setRotationZ(Mth.DEG_TO_RAD * netHeadYaw);
             }
             else {
                 //Return from swimming or crawling
-                this.head().setRotationX(rotlerpRad(this.swimAmount(), this.head().xRot(), -Mth.DEG_TO_RAD * headPitch));
+                head.setRotationX(rotlerpRad(swimAmount, head.xRot(), -Mth.DEG_TO_RAD * headPitch));
+                head.setRotationZ(0);
             }
         }
         else {
-            this.head().setRotationX(Mth.DEG_TO_RAD * headPitch);
+            head.setRotationX(Mth.DEG_TO_RAD * headPitch);
+            head.setRotationZ(0);
         }
-        this.body().setRotationY(0.0F);
-        this.rightArm().setPivotZ(0.0F);
-        this.rightArm().setPivotX(5.0F);
-        this.leftArm().setPivotZ(0.0F);
-        this.leftArm().setPivotX(-5.0F);
-        this.leftLeg().setPivotX(-1.9f);
-        this.rightLeg().setPivotX(1.9f);
-        float f = 1.0F;
-        if (isElytraFlying) {
-            f = (float) entity.getDeltaMovement().lengthSqr();
-            f /= 0.2F;
-            f = f * f * f;
+        head.setPivotY(24);
+        body.setPivotY(24);
+        legR.setPivotY(-12);
+        legL.setPivotY(-12);
+        body.setRotationY(0);
+        forearmL.setRotationY(0);
+        forearmL.setRotationZ(0);
+        forearmR.setRotationY(0);
+        forearmR.setRotationZ(0);
+        armR.setRotationY(0);
+        armL.setRotationY(0);
+        armR.setRotationZ(0);
+        armL.setRotationZ(0);
+        legR.setPivotZ(0);
+        legR.setRotationY(0);
+        legL.setPivotZ(0);
+        legL.setRotationY(0);
+        itemR.setPivotX(0);
+        itemR.setPivotY(0);
+        itemR.setPivotZ(0);
+        itemR.setRotationX(0);
+        itemR.setRotationZ(0);
+        itemL.setPivotX(0);
+        itemL.setPivotY(0);
+        itemL.setPivotZ(0);
+        itemL.setRotationX(0);
+        itemL.setRotationZ(0);
+        //Walking animation
+        if (swimAmount == 0) {
+            float threeQuarterAmpl = 0.75f * limbSwingAmount;
+            float fixedLimbSwing = 0.5f * limbSwing;
+            float sinLS = Mth.sin(fixedLimbSwing);
+            float cosLS = Mth.cos(fixedLimbSwing);
+            armR.setRotationX(-threeQuarterAmpl * sinLS);
+            armL.setRotationX(threeQuarterAmpl * sinLS);
+            float halfAmpl = 0.5f * limbSwingAmount;
+            forearmR.setRotationX(Math.max(0, -halfAmpl * sinLS));
+            forearmL.setRotationX(Math.max(0, halfAmpl * sinLS));
+            legR.setRotationX(halfAmpl * sinLS);
+            legL.setRotationX(-halfAmpl * sinLS);
+            forelegR.setRotationX(Math.min(0, -limbSwingAmount * cosLS));
+            forelegL.setRotationX(Math.min(0, limbSwingAmount * cosLS));
+            if (entity.isOnGround()) {
+                float bodyMotion = limbSwingAmount * Mth.sin(limbSwing);
+                body.translateY(bodyMotion);
+                head.translateY(bodyMotion);
+            }
         }
-        if (f < 1.0F) {
-            f = 1.0F;
-        }
-        this.rightArm().setRotationX(-Mth.sin(limbSwing * 0.6F + Mth.PI) * 2.0F * limbSwingAmount * 0.5F / f);
-        this.leftArm().setRotationX(-Mth.sin(limbSwing * 0.6F) * 2.0F * limbSwingAmount * 0.5F / f);
-        this.rightArm().setRotationZ(0);
-        this.leftArm().setRotationZ(0);
-        this.leftLeg().setRotationX(Mth.sin(limbSwing * 0.6F) * 1.4F * limbSwingAmount / f);
-        this.rightLeg().setRotationX(Mth.sin(limbSwing * 0.6F + Mth.PI) * 1.4F * limbSwingAmount / f);
-        this.rightLeg().setRotationY(0);
-        this.leftLeg().setRotationY(0);
-        this.rightLeg().setRotationZ(0);
-        this.leftLeg().setRotationZ(0);
         if (this.riding()) {
-            this.rightArm().addRotationX(Mth.PI / 5);
-            this.leftArm().addRotationX(Mth.PI / 5);
-            this.rightLeg().setRotationX(0.45F * Mth.PI);
-            this.rightLeg().setRotationY(-Mth.PI / 10);
-            this.rightLeg().setRotationZ(Mth.PI / 40);
-            this.leftLeg().setRotationX(0.45F * Mth.PI);
-            this.leftLeg().setRotationY(Mth.PI / 10);
-            this.leftLeg().setRotationZ(-Mth.PI / 40);
+            armR.addRotationX(18 * Mth.DEG_TO_RAD);
+            forearmR.setRotationX(18 * Mth.DEG_TO_RAD);
+            armL.addRotationX(18 * Mth.DEG_TO_RAD);
+            forearmL.setRotationX(18 * Mth.DEG_TO_RAD);
+            legR.setRotationX(81 * Mth.DEG_TO_RAD);
+            legR.setRotationY(-18 * Mth.DEG_TO_RAD);
+            forelegR.setRotationX(-70 * Mth.DEG_TO_RAD);
+            legL.setRotationX(81 * Mth.DEG_TO_RAD);
+            legL.setRotationY(18 * Mth.DEG_TO_RAD);
+            forelegL.setRotationX(-70 * Mth.DEG_TO_RAD);
         }
-        this.rightArm().setRotationY(0);
-        this.leftArm().setRotationY(0);
         boolean isRightHanded = entity.getMainArm() == HumanoidArm.RIGHT;
         boolean isPoseTwoHanded = isRightHanded ? this.leftArmPose().isTwoHanded() : this.rightArmPose().isTwoHanded();
-        boolean shouldCancelRight;
-        boolean shouldCancelLeft;
         if (isRightHanded != isPoseTwoHanded) {
-            shouldCancelLeft = this.poseLeftArm(entity);
-            shouldCancelRight = this.poseRightArm(entity);
+            this.poseLeftArm(entity);
+            this.poseRightArm(entity);
         }
         else {
-            shouldCancelRight = this.poseRightArm(entity);
-            shouldCancelLeft = this.poseLeftArm(entity);
+            this.poseRightArm(entity);
+            this.poseLeftArm(entity);
         }
         this.setupAttackAnim(entity, ageInTicks);
         if (this.crouching()) {
-            this.body().setRotationX(-0.5F);
-            if (!shouldCancelRight) {
-                this.rightArm().addRotationX(-0.4F);
+            head.translateY(-7);
+            body.translateY(-6);
+            body.setRotationX(-30 * Mth.DEG_TO_RAD);
+            if (!this.shouldCancelRight()) {
+                armR.addRotationX(15 * Mth.DEG_TO_RAD);
+                forearmR.addRotationX(15 * Mth.DEG_TO_RAD);
             }
-            if (!shouldCancelLeft) {
-                this.leftArm().addRotationX(-0.4F);
+            if (!this.shouldCancelLeft()) {
+                armL.addRotationX(15 * Mth.DEG_TO_RAD);
+                forearmL.addRotationX(15 * Mth.DEG_TO_RAD);
             }
-            this.rightLeg().setPivotZ(4.0F);
-            this.leftLeg().setPivotZ(4.0F);
-            this.rightLeg().setPivotY(11.8F);
-            this.leftLeg().setPivotY(11.8F);
-            this.head().setPivotY(19.8F);
-            this.body().setPivotY(20.8F);
-            this.leftArm().setPivotY(18.8F);
-            this.rightArm().setPivotY(18.8F);
+            legR.translateY(1);
+            legR.addRotationX(75 * Mth.DEG_TO_RAD);
+            forelegR.addRotationX(-90 * Mth.DEG_TO_RAD);
+            legL.translateY(1);
+            legL.addRotationX(75 * Mth.DEG_TO_RAD);
+            forelegL.addRotationX(-90 * Mth.DEG_TO_RAD);
         }
         else {
-            this.body().setRotationX(0.0F);
-            this.rightLeg().setPivotZ(0.1F);
-            this.leftLeg().setPivotZ(0.1F);
-            this.rightLeg().setPivotY(12.0F);
-            this.leftLeg().setPivotY(12.0F);
-            this.head().setPivotY(24.0F);
-            this.body().setPivotY(24.0F);
-            this.leftArm().setPivotY(22.0F);
-            this.rightArm().setPivotY(22.0F);
+            body.setRotationX(0);
         }
         if (this.rightArmPose() != ArmPose.SPYGLASS) {
-            AnimationUtils.bobModelPart(this.rightArm(), ageInTicks, 1.0F);
+            AnimationUtils.bobModelPart(armR, ageInTicks, 1.0F);
         }
         if (this.leftArmPose() != ArmPose.SPYGLASS) {
-            AnimationUtils.bobModelPart(this.leftArm(), ageInTicks, -1.0F);
+            AnimationUtils.bobModelPart(armL, ageInTicks, -1.0F);
         }
-        if (this.swimAmount() > 0.0F) {
-            float f1 = limbSwing % 26.0F;
-            HumanoidArm attackArm = this.getAttackArm(entity);
-            float rightArmAnim = attackArm == HumanoidArm.RIGHT && this.attackTime() > 0.0F ? 0.0F : this.swimAmount();
-            float leftArmAnim = attackArm == HumanoidArm.LEFT && this.attackTime() > 0.0F ? 0.0F : this.swimAmount();
-            if (f1 < 14.0F) {
-                if (!shouldCancelRight) {
-                    this.rightArm().setRotationX(Mth.lerp(rightArmAnim, this.rightArm().xRot(), 0.0F));
-                    this.rightArm().setRotationY(Mth.lerp(rightArmAnim, this.rightArm().yRot(), -Mth.PI));
-                    this.rightArm()
-                        .setRotationZ(Mth.lerp(rightArmAnim, this.rightArm().zRot(),
-                                               Mth.PI - 1.870_796_4F * quadraticArmUpdate(f1) / quadraticArmUpdate(14.0F)));
-                }
-                else {
-                    this.rightArm().addRotationX(Mth.HALF_PI);
-                }
-                if (!shouldCancelLeft) {
-                    this.leftArm().setRotationX(rotlerpRad(leftArmAnim, this.leftArm().xRot(), 0.0F));
-                    this.leftArm().setRotationY(Mth.lerp(leftArmAnim, this.leftArm().yRot(), Mth.PI));
-                    this.leftArm()
-                        .setRotationZ(rotlerpRad(leftArmAnim, this.leftArm().zRot(),
-                                                 Mth.PI +
-                                                 1.870_796_4F * quadraticArmUpdate(f1) / quadraticArmUpdate(14.0F)));
-                }
-                else {
-                    this.leftArm().addRotationX(Mth.HALF_PI);
-                }
+        if (swimAmount > 0.0F) {
+            if (!entity.isInWater()) {
+                //Crawling
+                float sinLS = Mth.sin(limbSwing);
+                float positive = limbSwingAmount * sinLS + 90 * Mth.DEG_TO_RAD;
+                float negative = limbSwingAmount * -sinLS + 90 * Mth.DEG_TO_RAD;
+                armR.setRotationX(negative);
+                forearmR.setRotationX(positive);
+                armL.setRotationX(positive);
+                forearmL.setRotationX(negative);
+                float halfAmpl = 0.5f * limbSwingAmount;
+                legR.translateZ(1.9f);
+                positive = halfAmpl * sinLS;
+                negative = -positive;
+                legR.setRotationX(positive + 90 * Mth.DEG_TO_RAD);
+                forelegR.setRotationX(negative - 90 * Mth.DEG_TO_RAD);
+                legL.translateZ(1.9f);
+                legL.setRotationX(negative + 90 * Mth.DEG_TO_RAD);
+                forelegL.setRotationX(positive - 90 * Mth.DEG_TO_RAD);
             }
-            else if (f1 >= 14.0F && f1 < 22.0F) {
-                float f6 = (f1 - 14.0F) / 8.0F;
-                if (!shouldCancelRight) {
-                    this.rightArm().setRotationX(-Mth.lerp(rightArmAnim, -this.rightArm().xRot(), Mth.HALF_PI * f6));
-                    this.rightArm().setRotationY(Mth.lerp(rightArmAnim, this.rightArm().yRot(), -Mth.PI));
-                    this.rightArm().setRotationZ(Mth.lerp(rightArmAnim, this.rightArm().zRot(), 1.270_796_3F + 1.870_796_4F * f6));
+            else {
+                float anim = limbSwing % (4 * Mth.PI) * 6.5f;
+                HumanoidArm attackArm = this.getSwingingArm(entity);
+                float attackTime = this.attackTime();
+                float rightArmAnim = attackArm == HumanoidArm.RIGHT && attackTime > 0.0F ? 0.0F : swimAmount;
+                float leftArmAnim = attackArm == HumanoidArm.LEFT && attackTime > 0.0F ? 0.0F : swimAmount;
+                if (anim < 14 * Mth.PI) {
+                    if (!this.shouldCancelRight()) {
+                        armR.setRotationX(Mth.lerp(rightArmAnim, armR.xRot(), 0.0F));
+                        armR.setRotationY(Mth.lerp(rightArmAnim, armR.yRot(), -Mth.PI));
+                        armR.setRotationZ(
+                                Mth.lerp(rightArmAnim, armR.zRot(),
+                                         Mth.PI - 1.870_796_4F * quadraticArmUpdate(anim) / quadraticArmUpdate(14 * Mth.PI)));
+                    }
+                    else {
+                        armR.addRotationX(Mth.HALF_PI);
+                    }
+                    if (!this.shouldCancelLeft()) {
+                        armL.setRotationX(rotlerpRad(leftArmAnim, armL.xRot(), 0.0F));
+                        armL.setRotationY(Mth.lerp(leftArmAnim, armL.yRot(), Mth.PI));
+                        armL.setRotationZ(
+                                rotlerpRad(leftArmAnim, armL.zRot(),
+                                           Mth.PI + 1.870_796_4F * quadraticArmUpdate(anim) / quadraticArmUpdate(14 * Mth.PI)));
+                    }
+                    else {
+                        armL.addRotationX(Mth.HALF_PI);
+                    }
+                }
+                else if (anim >= 14 * Mth.PI && anim < 22 * Mth.PI) {
+                    float f6 = (anim - 14 * Mth.PI) / (8 * Mth.PI);
+                    if (!this.shouldCancelRight()) {
+                        armR.setRotationX(-Mth.lerp(rightArmAnim, -armR.xRot(), Mth.HALF_PI * f6));
+                        armR.setRotationY(Mth.lerp(rightArmAnim, armR.yRot(), -Mth.PI));
+                        armR.setRotationZ(Mth.lerp(rightArmAnim, armR.zRot(), 1.270_796_3F + 1.870_796_4F * f6));
+                    }
+                    else {
+                        armR.addRotationX(Mth.HALF_PI);
+                    }
+                    if (!this.shouldCancelLeft()) {
+                        armL.setRotationX(rotlerpRad(leftArmAnim, armL.xRot(), -Mth.HALF_PI * f6));
+                        armL.setRotationY(Mth.lerp(leftArmAnim, armL.yRot(), Mth.PI));
+                        armL.setRotationZ(rotlerpRad(leftArmAnim, armL.zRot(), 5.012_389F - 1.870_796_4F * f6));
+                    }
+                    else {
+                        armL.addRotationX(Mth.HALF_PI);
+                    }
                 }
                 else {
-                    this.rightArm().addRotationX(Mth.HALF_PI);
+                    float f4 = (anim - 22 * Mth.PI) / (4 * Mth.PI);
+                    if (!this.shouldCancelRight()) {
+                        armR.setRotationX(-Mth.lerp(rightArmAnim, -armR.xRot(), Mth.HALF_PI - Mth.HALF_PI * f4));
+                        armR.setRotationY(Mth.lerp(rightArmAnim, armR.yRot(), -Mth.PI));
+                        armR.setRotationZ(Mth.lerp(rightArmAnim, armR.zRot(), Mth.PI));
+                    }
+                    else {
+                        armR.addRotationX(Mth.HALF_PI);
+                    }
+                    if (!this.shouldCancelLeft()) {
+                        armL.setRotationX(-rotlerpRad(leftArmAnim, -armL.xRot(), Mth.HALF_PI - Mth.HALF_PI * f4));
+                        armL.setRotationY(Mth.lerp(leftArmAnim, armL.yRot(), Mth.PI));
+                        armL.setRotationZ(rotlerpRad(leftArmAnim, armL.zRot(), Mth.PI));
+                    }
+                    else {
+                        armL.addRotationX(Mth.HALF_PI);
+                    }
                 }
-                if (!shouldCancelLeft) {
-                    this.leftArm().setRotationX(rotlerpRad(leftArmAnim, this.leftArm().xRot(), -Mth.HALF_PI * f6));
-                    this.leftArm().setRotationY(Mth.lerp(leftArmAnim, this.leftArm().yRot(), Mth.PI));
-                    this.leftArm().setRotationZ(rotlerpRad(leftArmAnim, this.leftArm().zRot(), 5.012_389F - 1.870_796_4F * f6));
-                }
-                else {
-                    this.leftArm().addRotationX(Mth.HALF_PI);
-                }
+                float legRot = Mth.cos(limbSwing / 2);
+                legL.setRotationX(Mth.lerp(swimAmount, legL.xRot(), 0.3F * legRot));
+                legR.setRotationX(Mth.lerp(swimAmount, legR.xRot(), -0.3F * legRot));
+                forelegR.setRotationX(-15 * Mth.DEG_TO_RAD);
+                forelegL.setRotationX(-15 * Mth.DEG_TO_RAD);
             }
-            else if (f1 >= 22.0F && f1 < 26.0F) {
-                float f4 = (f1 - 22.0F) / 4.0F;
-                if (!shouldCancelRight) {
-                    this.rightArm().setRotationX(-Mth.lerp(rightArmAnim, -this.rightArm().xRot(), Mth.HALF_PI - Mth.HALF_PI * f4));
-                    this.rightArm().setRotationY(Mth.lerp(rightArmAnim, this.rightArm().yRot(), -Mth.PI));
-                    this.rightArm().setRotationZ(Mth.lerp(rightArmAnim, this.rightArm().zRot(), Mth.PI));
-                }
-                else {
-                    this.rightArm().addRotationX(Mth.HALF_PI);
-                }
-                if (!shouldCancelLeft) {
-                    this.leftArm().setRotationX(-rotlerpRad(leftArmAnim, -this.leftArm().xRot(), Mth.HALF_PI - Mth.HALF_PI * f4));
-                    this.leftArm().setRotationY(Mth.lerp(leftArmAnim, this.leftArm().yRot(), Mth.PI));
-                    this.leftArm().setRotationZ(rotlerpRad(leftArmAnim, this.leftArm().zRot(), Mth.PI));
-                }
-                else {
-                    this.leftArm().addRotationX(Mth.HALF_PI);
-                }
-            }
-            this.leftLeg().setRotationX(Mth.lerp(this.swimAmount(), this.leftLeg().xRot(), -0.3F * Mth.cos(limbSwing / 3 + Mth.PI)));
-            this.rightLeg().setRotationX(Mth.lerp(this.swimAmount(), this.rightLeg().xRot(), -0.3F * Mth.cos(limbSwing / 3)));
         }
-        this.hat().copy(this.head());
+        this.hat().copy(head);
     }
 
     default void setupAttackAnim(T entity, float ageInTicks) {
+        ILivingEntityPatch patch = (ILivingEntityPatch) entity;
+        HM body = this.body();
+        HM armR = this.armR();
+        HM armL = this.armL();
+        HM legL = this.legL();
+        HM legR = this.legR();
         if (this.attackTime() > 0.0F) {
-            HumanoidArm attackingSide = this.getAttackArm(entity);
-            if (!(((ILivingEntityPatch) entity).shouldRenderSpecialAttack() &&
-                  ((ILivingEntityPatch) entity).getSpecialAttackType() != IMelee.BARE_HAND_ATTACK &&
-                  entity.getMainArm() == this.getAttackArm(entity))) {
+            HumanoidArm attackingSide = this.getSwingingArm(entity);
+            if (!(patch.shouldRenderSpecialAttack() && entity.getMainArm() == this.getSwingingArm(entity))) {
                 HM attackingArm = this.arm(attackingSide);
                 float attackTime = this.attackTime();
-                this.body().setRotationY(-Mth.sin(MathHelper.sqrt(attackTime) * Mth.TWO_PI) * 0.2F);
+                body.setRotationY(-Mth.sin(MathHelper.sqrt(attackTime) * Mth.TWO_PI) * 0.2F);
                 if (attackingSide == HumanoidArm.LEFT) {
-                    this.body().invertRotationY();
+                    body.invertRotationY();
                 }
-                this.rightArm().setPivotZ(Mth.sin(this.body().yRot()) * 5.0F);
-                this.rightArm().setPivotX(Mth.cos(this.body().yRot()) * 5.0F);
-                this.leftArm().setPivotZ(-Mth.sin(this.body().yRot()) * 5.0F);
-                this.leftArm().setPivotX(-Mth.cos(this.body().yRot()) * 5.0F);
-                this.rightArm().addRotationY(this.body().yRot());
-                this.leftArm().addRotationY(this.body().yRot());
-                this.leftArm().addRotationX(this.body().yRot());
-                attackTime = 1.0F - this.attackTime();
+                armR.addRotationY(body.yRot());
+                armL.addRotationX(body.yRot());
+                legR.addRotationY(-body.yRot());
+                legL.addRotationY(-body.yRot());
+                attackTime = 1.0F - attackTime;
                 attackTime *= attackTime;
                 attackTime *= attackTime;
                 attackTime = 1.0F - attackTime;
                 float f1 = Mth.sin(attackTime * Mth.PI);
                 float f2 = Mth.sin(this.attackTime() * Mth.PI) * -(-this.head().xRot() - 0.7F) * 0.75F;
                 attackingArm.addRotationX(f1 * 1.2f + f2);
-                attackingArm.addRotationY(this.body().yRot() * 2.0F);
+                attackingArm.addRotationY(body.yRot() * 2.0F);
                 attackingArm.addRotationZ(Mth.sin(this.attackTime() * Mth.PI) * -0.4F);
             }
         }
         float partialTicks = Evolution.PROXY.getPartialTicks();
-        if (((ILivingEntityPatch) entity).shouldRenderSpecialAttack()) {
-            IMelee.IAttackType type = ((ILivingEntityPatch) entity).getSpecialAttackType();
-            if (type instanceof IMelee.BasicAttackType basic) {
-                switch (basic) {
-                    case AXE_SWEEP -> {
-                        HumanoidArm attackingSide = entity.getMainArm();
-                        HM attackingArm = this.arm(attackingSide);
-                        float progress = ((ILivingEntityPatch) entity).getSpecialAttackProgress(partialTicks);
-                        attackingArm.setRotationX(progress * 2.25f);
-                        attackingArm.setRotationY(-this.head().xRot() * 2 / 3);
-                        attackingArm.setRotationZ(Mth.PI / 6 + Mth.PI / 3 * progress);
+        if (patch.shouldRenderSpecialAttack()) {
+            IMelee.IAttackType type = patch.getSpecialAttackType();
+            if (type == IMelee.BARE_HAND_ATTACK) {
+                if (entity.getOffhandItem().isEmpty()) {
+                    int attackNumber = patch.getAttackNumber();
+                    //First punch
+                    if (attackNumber == 1) {
+                        AnimationUtils.animatePunch(entity, patch.getSpecialAttackProgress(partialTicks), entity.getMainArm(), this.head(),
+                                                    body, armR, armL, this.forearmR(), this.forearmL(), legR, legL,
+                                                    false, true);
                     }
-                    case SPEAR_STAB -> {
-                        HumanoidArm attackingSide = entity.getMainArm();
-                        HM attackingArm = this.arm(attackingSide);
-                        float progress = ((ILivingEntityPatch) entity).getSpecialAttackProgress(partialTicks);
-                        int mult = attackingSide == HumanoidArm.RIGHT ? 1 : -1;
-                        if (progress < 0.5f) {
-                            attackingArm.setRotationX(MathHelper.lerpRad(progress * 2, Mth.PI / 10, -Mth.PI / 4, false));
+                    //Offhand punch
+                    else if (attackNumber % 2 == 0) {
+                        AnimationUtils.animatePunch(entity, patch.getSpecialAttackProgress(partialTicks), entity.getMainArm().getOpposite(),
+                                                    this.head(), body, armR, armL, this.forearmR(), this.forearmL(), legR,
+                                                    legL, true, true);
+                    }
+                    //Mainhand punch
+                    else {
+                        AnimationUtils.animatePunch(entity, patch.getSpecialAttackProgress(partialTicks), entity.getMainArm(), this.head(),
+                                                    body, armR, armL, this.forearmR(), this.forearmL(), legR, legL,
+                                                    true, true);
+                    }
+                }
+                else {
+                    AnimationUtils.animatePunch(entity, patch.getSpecialAttackProgress(partialTicks), entity.getMainArm(), this.head(), body,
+                                                armR, armL, this.forearmR(), this.forearmL(), legR, legL, false, false);
+                }
+            }
+            else if (type instanceof IMelee.BasicAttackType basic) {
+                HumanoidArm attackingSide = entity.getMainArm();
+                HM arm = this.arm(attackingSide);
+                HM forearm = this.forearm(attackingSide);
+                float progress = patch.getSpecialAttackProgress(partialTicks);
+                int mult = attackingSide == HumanoidArm.RIGHT ? 1 : -1;
+                switch (basic) {
+                    case AXE_STRIKE_1 -> {
+                        switch (patch.getAttackNumber()) {
+                            case 1 -> AnimationUtils.strikeDown(progress, mult, body, legR, legL, arm, forearm);
+                            case 2 -> AnimationUtils.strikeFromFarSide(progress, mult, body, legR, legL, arm, forearm);
+                            case 3 -> AnimationUtils.strikeDown(progress, mult, body, legR, legL, arm, forearm, 40.804_9f * Mth.DEG_TO_RAD,
+                                                                mult * 14.666_2f * Mth.DEG_TO_RAD, mult * 43.341_7f * Mth.DEG_TO_RAD);
                         }
-                        else if (progress < 0.75f) {
-                            progress -= 0.5f;
-                            attackingArm.setRotationX(MathHelper.lerpRad(progress * 4, -Mth.PI / 4, this.head().xRot() * 2 / 3 + Mth.HALF_PI, false));
-                            attackingArm.setRotationY(mult * MathHelper.lerpRad(progress * 4, 0, Mth.PI / 20, false));
+                    }
+                    case HOE_STRIKE_1 -> {
+                        switch (patch.getAttackNumber()) {
+                            case 1 -> AnimationUtils.strikeDown(progress, mult, body, legR, legL, arm, forearm);
+                            case 2 -> AnimationUtils.strikeFromFarSide(progress, mult, body, legR, legL, arm, forearm);
+                        }
+                    }
+                    case JAVELIN_THRUST -> {
+                        AnimationUtils.trust(progress, mult, body, legR, legL, arm, forearm, this.item(attackingSide), this.head().xRot());
+                        if (attackingSide == HumanoidArm.RIGHT) {
+                            this.setShouldCancelRight(true);
                         }
                         else {
-                            attackingArm.setRotationX(this.head().xRot() * 2 / 3 + Mth.HALF_PI);
-                            attackingArm.setRotationY(mult * (Mth.PI / 20));
+                            this.setShouldCancelLeft(true);
                         }
                     }
+                    case PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> AnimationUtils.strikeDown(progress, mult, body, legR, legL, arm, forearm);
                 }
             }
         }
     }
+
+    boolean shouldCancelLeft();
+
+    boolean shouldCancelRight();
 
     private boolean shouldPoseArm(T entity, HumanoidArm side) {
         if (entity.getMainArm() == side) {

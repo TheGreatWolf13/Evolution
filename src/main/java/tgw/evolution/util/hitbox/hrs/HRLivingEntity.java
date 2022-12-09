@@ -30,7 +30,9 @@ public interface HRLivingEntity<T extends LivingEntity, M extends HMEntity<T>> e
         return 90.0f;
     }
 
-    M model();
+    default M model() {
+        throw new AssertionError();
+    }
 
     default void renderOrInit(T entity, HR hr, float partialTicks) {
         this.model().setAttackTime(this.attackAnim(entity, partialTicks));
@@ -70,13 +72,22 @@ public interface HRLivingEntity<T extends LivingEntity, M extends HMEntity<T>> e
         float limbSwingAmount = 0.0F;
         float limbSwing = 0.0F;
         if (!shouldSit && entity.isAlive()) {
-            limbSwingAmount = Mth.lerp(partialTicks, entity.animationSpeedOld, entity.animationSpeed);
-            limbSwing = entity.animationPosition - entity.animationSpeed * (1.0F - partialTicks);
+            limbSwingAmount = 2 * Mth.lerp(partialTicks, entity.animationSpeedOld, entity.animationSpeed);
+            limbSwing = entity.animationPosition + entity.animationSpeed * partialTicks;
             if (entity.isBaby()) {
                 limbSwing *= 3.0F;
             }
-            if (limbSwingAmount > 1.0F) {
-                limbSwingAmount = 1.0F;
+            if (limbSwing >= 4 * Mth.PI) {
+                limbSwing -= 4 * Mth.PI;
+            }
+            else if (limbSwing <= -4 * Mth.PI) {
+                limbSwing += 4 * Mth.PI;
+            }
+            if (limbSwingAmount > 1) {
+                limbSwingAmount = 1;
+            }
+            else if (limbSwingAmount < -1) {
+                limbSwingAmount = -1;
             }
         }
         this.setLimbSwing(limbSwing);
@@ -117,7 +128,9 @@ public interface HRLivingEntity<T extends LivingEntity, M extends HMEntity<T>> e
         }
     }
 
-    void setAgeInTicks(float ageInTicks);
+    default void setAgeInTicks(float ageInTicks) {
+        throw new AssertionError();
+    }
 
     default void setHeadPitch(float headPitch) {
     }

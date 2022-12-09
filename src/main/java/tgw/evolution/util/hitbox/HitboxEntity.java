@@ -21,7 +21,7 @@ import tgw.evolution.util.math.Vec3d;
 
 import java.util.List;
 
-public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HREntity<T>, HR, IHitboxAccess<T> {
+public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HREntity<T>, HR, IHitboxAccess<T>, IRoot {
 
     protected final Matrix4d helperColliderTransform = new Matrix4d();
     protected final Vec3d helperOffset = new Vec3d();
@@ -29,7 +29,6 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
     private final RList<Hitbox> boxes;
     private final Vec3d cachedRenderOffset = new Vec3d();
     private final Matrix4d colliderTransform = new Matrix4d();
-    private final RList<Hitbox> equipment;
     private final Matrix4d transform = new Matrix4d();
     protected float ageInTicks;
     protected float attackTime;
@@ -45,22 +44,14 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
 
     public HitboxEntity() {
         this.boxes = new RArrayList<>();
-        this.equipment = new RArrayList<>();
     }
 
     protected static AABB box(double minX, double minY, double minZ, double dimX, double dimY, double dimZ) {
         return new AABB(minX / 16, minY / 16, minZ / 16, (minX + dimX) / 16, (minY + dimY) / 16, (minZ + dimZ) / 16);
     }
 
-    protected final Hitbox addBox(HitboxType part, AABB aabb, float x, float y, float z) {
-        //Verify that every Hitbox has a unique HitboxType
-        //This code is not the fastest, but it is only run when creating the HitboxEntity instance.
-        for (int i = 0, l = this.boxes.size(); i < l; i++) {
-            if (this.boxes.get(i).getPart() == part) {
-                throw new IllegalStateException("Duplicate HitboxType: " + part);
-            }
-        }
-        Hitbox box = new Hitbox(part, aabb, this);
+    protected final Hitbox addBox(HitboxType part, AABB aabb, float x, float y, float z, IRoot parent) {
+        Hitbox box = new Hitbox(part, aabb, parent);
         this.boxes.add(box);
         box.setPivotX(x);
         box.setPivotY(y);
@@ -68,8 +59,8 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
         return box;
     }
 
-    protected final Hitbox addBox(HitboxType part, AABB aabb) {
-        return this.addBox(part, aabb, 0, 0, 0);
+    protected final Hitbox addBox(HitboxType part, AABB aabb, IRoot parent) {
+        return this.addBox(part, aabb, 0, 0, 0, parent);
     }
 
     protected final HitboxAttachable addBoxAttachable(HitboxType part,
@@ -79,32 +70,13 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
                                                       float z,
                                                       double localOriginX,
                                                       double localOriginY,
-                                                      double localOriginZ) {
-        //Verify that every Hitbox has a unique HitboxType
-        //This code is not the fastest, but it is only run when creating the HitboxEntity instance.
-        for (int i = 0, l = this.boxes.size(); i < l; i++) {
-            if (this.boxes.get(i).getPart() == part) {
-                throw new IllegalStateException("Duplicate HitboxType: " + part);
-            }
-        }
-        HitboxAttachable box = new HitboxAttachable(part, aabb, this, localOriginX / 16.0, localOriginY / 16.0, localOriginZ / 16.0);
+                                                      double localOriginZ,
+                                                      IRoot parent) {
+        HitboxAttachable box = new HitboxAttachable(part, aabb, parent, localOriginX / 16.0, localOriginY / 16.0, localOriginZ / 16.0);
         this.boxes.add(box);
         box.setPivotX(x);
         box.setPivotY(y);
         box.setPivotZ(z);
-        return box;
-    }
-
-    protected final Hitbox addEquip(HitboxType part, AABB aabb) {
-        //Verify that every Hitbox has a unique HitboxType
-        //This code is not the fastest, but it is only run when creating the HitboxEntity instance.
-        for (int i = 0, l = this.equipment.size(); i < l; i++) {
-            if (this.equipment.get(i).getPart() == part) {
-                throw new IllegalStateException("Duplicate HitboxType: " + part);
-            }
-        }
-        Hitbox box = new Hitbox(part, aabb, this);
-        this.equipment.add(box);
         return box;
     }
 
@@ -113,9 +85,7 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
         return this.attackTime;
     }
 
-    protected abstract void childFinish();
-
-    protected abstract @Nullable Hitbox childGetEquipFor(IMelee.IAttackType type, HumanoidArm arm);
+    protected abstract @Nullable Hitbox childGetEquipFor(T entity, IMelee.IAttackType type, HumanoidArm arm);
 
     protected abstract void childInit(T entity, float partialTicks);
 
@@ -148,8 +118,6 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
                               PoseStack matrices,
                               float x, float y, float z, float red, float green, float blue, float alpha) {
         this.init(entity, partialTicks);
-//        Vec3 offset = this.renderOffset(entity, partialTicks);
-//        matrices.translate(offset.x, offset.y, offset.z);
         Matrix4f pose = matrices.last().pose();
         Matrix3f normal = matrices.last().normal();
         hitbox.drawEdges(hitbox.adjustedTransform(), buffer, pose, normal, x, y, z, red, green, blue, alpha);
@@ -157,8 +125,6 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
 
     protected final void finish() {
         this.boxes.trimCollection();
-        this.equipment.trimCollection();
-        this.childFinish();
     }
 
     public final List<Hitbox> getBoxes() {
@@ -169,20 +135,16 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
         return this.colliderTransform.set(this.transform);
     }
 
-    public final @Nullable Hitbox getEquipFor(@Nullable IMelee.IAttackType type, HumanoidArm arm) {
+    public final @Nullable Hitbox getEquipFor(T entity, @Nullable IMelee.IAttackType type, HumanoidArm arm) {
         if (type == null) {
             return null;
         }
-        this.activeEquip = this.childGetEquipFor(type, arm);
+        this.activeEquip = this.childGetEquipFor(entity, type, arm);
         if (this.activeEquip == null) {
             Evolution.warn(
                     "No hitbox registered for AttackType " + type + " on " + (arm == HumanoidArm.RIGHT ? "Right Arm" : "Left Arm") + " of " + this);
         }
         return this.activeEquip;
-    }
-
-    public final List<Hitbox> getEquipment() {
-        return this.equipment;
     }
 
     public final Vec3d getOffsetForCamera(T entity, float partialTicks) {
@@ -200,8 +162,18 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
     protected abstract Hitbox headOrRoot();
 
     @Override
+    public final Matrix4d helperColliderTransform() {
+        return this.helperColliderTransform;
+    }
+
+    @Override
     public final Vec3d helperOffset() {
         return this.helperOffset;
+    }
+
+    @Override
+    public final Matrix4d helperTransform() {
+        return this.helperTransform;
     }
 
     @Override
@@ -249,6 +221,21 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
     }
 
     @Override
+    public final float scaleX() {
+        return this.scaleX;
+    }
+
+    @Override
+    public final float scaleY() {
+        return this.scaleY;
+    }
+
+    @Override
+    public final float scaleZ() {
+        return this.scaleZ;
+    }
+
+    @Override
     public void setAttackTime(float attackTime) {
         this.attackTime = attackTime;
     }
@@ -275,6 +262,11 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
 
     public final Vec3d transform(Vec3d vec) {
         return this.transform.transform(vec);
+    }
+
+    @Override
+    public final void transformParent(Matrix4d matrix) {
+        //Do nothing
     }
 
     @Override

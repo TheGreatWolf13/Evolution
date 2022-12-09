@@ -8,6 +8,7 @@ import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import tgw.evolution.blocks.tileentities.MoldingPatterns;
 import tgw.evolution.util.constants.SkinType;
+import tgw.evolution.util.hitbox.HitboxRegistry;
 import tgw.evolution.util.toast.Toasts;
 
 public interface IProxy {
@@ -25,6 +26,7 @@ public interface IProxy {
     default void init() {
         MoldingPatterns.load();
         Toasts.register();
+        HitboxRegistry.register();
     }
 
     void registerModels(ModelRegistryEvent event);

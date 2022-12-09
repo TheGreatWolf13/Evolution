@@ -2,6 +2,7 @@ package tgw.evolution.util.hitbox.hrs;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.PlayerModelPart;
@@ -10,12 +11,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.phys.Vec3;
+import tgw.evolution.entities.misc.ISittableEntity;
 import tgw.evolution.util.ArmPose;
 import tgw.evolution.util.hitbox.hms.HMPlayer;
 
-public interface HRPlayer extends HRLivingEntity<Player, HMPlayer<Player>> {
-
-    Vec3 OFFSET_PLAYER = new Vec3(0, -0.125, 0);
+public interface HRPlayer<T extends Player> extends HRLivingEntity<T, HMPlayer<T>> {
 
     private static ArmPose getArmPose(Player player, InteractionHand hand) {
         ItemStack handStack = player.getItemInHand(hand);
@@ -46,8 +46,8 @@ public interface HRPlayer extends HRLivingEntity<Player, HMPlayer<Player>> {
         return ArmPose.ITEM;
     }
 
-    default void modelProperties(Player player) {
-        HMPlayer<Player> model = this.model();
+    default void modelProperties(T player) {
+        HMPlayer<T> model = this.model();
         if (player.isSpectator()) {
             model.setAllVisible(false);
             model.head().setVisible(true);
@@ -56,11 +56,11 @@ public interface HRPlayer extends HRLivingEntity<Player, HMPlayer<Player>> {
         else {
             model.setAllVisible(true);
             model.hat().setVisible(player.isModelPartShown(PlayerModelPart.HAT));
-            model.jacket().setVisible(player.isModelPartShown(PlayerModelPart.JACKET));
-            model.leftPants().setVisible(player.isModelPartShown(PlayerModelPart.LEFT_PANTS_LEG));
-            model.rightPants().setVisible(player.isModelPartShown(PlayerModelPart.RIGHT_PANTS_LEG));
-            model.leftSleeve().setVisible(player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
-            model.rightSleeve().setVisible(player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE));
+            model.clothesBody().setVisible(player.isModelPartShown(PlayerModelPart.JACKET));
+            model.clothesLegL().setVisible(player.isModelPartShown(PlayerModelPart.LEFT_PANTS_LEG));
+            model.clothesLegR().setVisible(player.isModelPartShown(PlayerModelPart.RIGHT_PANTS_LEG));
+            model.clothesArmL().setVisible(player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
+            model.clothesArmR().setVisible(player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE));
             model.setCrouching(player.isCrouching());
             ArmPose mainArmPose = getArmPose(player, InteractionHand.MAIN_HAND);
             ArmPose offArmPose = getArmPose(player, InteractionHand.OFF_HAND);
@@ -79,14 +79,12 @@ public interface HRPlayer extends HRLivingEntity<Player, HMPlayer<Player>> {
     }
 
     @Override
-    default Vec3 renderOffset(Player entity, float partialTicks) {
-        return entity.isCrouching() && entity.getSwimAmount(partialTicks) == 0 ?
-               OFFSET_PLAYER :
-               HRLivingEntity.super.renderOffset(entity, partialTicks);
+    default Vec3 renderOffset(T entity, float partialTicks) {
+        return HRLivingEntity.super.renderOffset(entity, partialTicks);
     }
 
     @Override
-    default void rotations(Player entity, HR hr, float ageInTicks, float rotationYaw, float partialTicks) {
+    default void rotations(T entity, HR hr, float ageInTicks, float rotationYaw, float partialTicks) {
         float swimAmount = entity.getSwimAmount(partialTicks);
         if (entity.isFallFlying()) {
             HRLivingEntity.super.rotations(entity, hr, ageInTicks, rotationYaw, partialTicks);
@@ -113,7 +111,7 @@ public interface HRPlayer extends HRLivingEntity<Player, HMPlayer<Player>> {
                 if (!entity.isInWater()) {
                     //Crawling pose
                     hr.rotateXHR(interpXRot);
-                    hr.translateHR(0, -1, 0.3f);
+                    hr.translateHR(0, -1, 0.385f);
                 }
                 else {
                     //Swimming pose
@@ -129,11 +127,17 @@ public interface HRPlayer extends HRLivingEntity<Player, HMPlayer<Player>> {
         }
         else {
             HRLivingEntity.super.rotations(entity, hr, ageInTicks, rotationYaw, partialTicks);
+            if (entity.isPassenger()) {
+                Entity vehicle = entity.getVehicle();
+                if (vehicle != null && vehicle.shouldRiderSit() && vehicle instanceof ISittableEntity sittable) {
+                    hr.translateHR(0, 0, sittable.getZOffset());
+                }
+            }
         }
     }
 
     @Override
-    default void setScale(Player entity, HR hr, float partialTicks) {
+    default void setScale(T entity, HR hr, float partialTicks) {
         hr.scaleHR(0.937_5f, 0.937_5f, 0.937_5f);
         switch (entity.getPose()) {
             case STANDING, CROUCHING -> hr.translateHR(0, 0, 1 / 16.0f);

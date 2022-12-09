@@ -16,6 +16,16 @@ public final class EvolutionFormatter {
         return Metric.format(value, 1, temperature.getUnit(), true);
     };
 
+    public static final IFormatter SPEED = value -> {
+        Speed speed = EvolutionConfig.CLIENT.speed.get();
+        value = switch (speed) {
+            case KILOMETERS_PER_HOUR -> 3.6 * 20 * value;
+            case METERS_PER_SECOND -> 20 * value;
+            case MILES_PER_HOUR -> 2.237 * 20 * value;
+        };
+        return Metric.format(value, 2, speed.getUnit());
+    };
+
     public static final IFormatter FOOD = value -> {
         Food food = EvolutionConfig.CLIENT.food.get();
         value = switch (food) {
@@ -106,6 +116,28 @@ public final class EvolutionFormatter {
         private final String name;
 
         Mass(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getName() {
+            return this.name;
+        }
+
+        @Override
+        public String getUnit() {
+            return " " + this.name;
+        }
+    }
+
+    public enum Speed implements IUnit {
+        KILOMETERS_PER_HOUR("km/h"),
+        METERS_PER_SECOND("m/s"),
+        MILES_PER_HOUR("mph");
+
+        private final String name;
+
+        Speed(String name) {
             this.name = name;
         }
 

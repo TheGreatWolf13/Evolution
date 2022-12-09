@@ -1,14 +1,40 @@
 package tgw.evolution.util.hitbox;
 
-import net.minecraft.world.phys.AABB;
+import net.minecraft.world.entity.HumanoidArm;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.util.math.AABBMutable;
 
 public class ColliderHitbox extends Hitbox {
 
+    private final boolean shouldSwitch;
     private @Nullable HitboxAttachable attachedTo;
+    private boolean rightHanded = true;
 
-    public ColliderHitbox(HitboxType part, AABB aabb) {
-        super(part, aabb, null);
+    public ColliderHitbox(HitboxType part, double x0, double y0, double z0, double x1, double y1, double z1) {
+        this(part, x0, y0, z0, x1, y1, z1, true);
+    }
+
+    public ColliderHitbox(HitboxType part, double x0, double y0, double z0, double x1, double y1, double z1, boolean shouldSwitch) {
+        super(part, AABBMutable.block(x0, y0, z0, x1, y1, z1), null);
+        this.shouldSwitch = shouldSwitch;
+    }
+
+    public ColliderHitbox adjust(HumanoidArm arm) {
+        if (this.shouldSwitch) {
+            if (arm == HumanoidArm.RIGHT) {
+                if (!this.rightHanded) {
+                    ((AABBMutable) this.aabb).setX(-super.minX(), -super.maxX());
+                    this.rightHanded = true;
+                }
+            }
+            else {
+                if (this.rightHanded) {
+                    ((AABBMutable) this.aabb).setX(-super.minX(), -super.maxX());
+                    this.rightHanded = false;
+                }
+            }
+        }
+        return this;
     }
 
     @Override
@@ -64,7 +90,7 @@ public class ColliderHitbox extends Hitbox {
         return this.attachedTo.getLocalOrigin().z + super.minZ();
     }
 
-    public void setParent(HitboxEntity parent) {
+    public void setParent(IRoot parent) {
         this.parent = parent;
     }
 }

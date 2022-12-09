@@ -11,6 +11,7 @@ public final class EvolutionSounds {
 
     public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, Evolution.MODID);
 
+    public static final RegistryObject<SoundEvent> FIST_PUNCHES_BLOCK;
     public static final RegistryObject<SoundEvent> METAL_SPEAR_HIT_ENTITY;
     public static final RegistryObject<SoundEvent> METAL_SPEAR_THROW;
     public static final RegistryObject<SoundEvent> METAL_WEAPON_BLOCKS;
@@ -28,6 +29,7 @@ public final class EvolutionSounds {
     public static final RegistryObject<SoundEvent> WOOD_COLLAPSE;
 
     static {
+        FIST_PUNCHES_BLOCK = register("fist_punches_block");
         METAL_SPEAR_HIT_ENTITY = register("metal_spear_hit_entity");
         METAL_SPEAR_THROW = register("metal_spear_throw");
         METAL_WEAPON_BLOCKS = register("metal_weapon_blocks");

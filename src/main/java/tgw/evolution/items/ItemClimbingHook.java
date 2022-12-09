@@ -1,5 +1,6 @@
 package tgw.evolution.items;
 
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
@@ -11,9 +12,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntityHook;
+import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.math.MathHelper;
@@ -25,6 +28,44 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
     }
 
     @Override
+    public int getAutoAttackTime(ItemStack stack) {
+        return 4;
+    }
+
+    @Override
+    public BasicAttackType getBasicAttackType(ItemStack stack) {
+        //TODO implementation
+        return null;
+    }
+
+    @Override
+    public SoundEvent getBlockHitSound(ItemStack stack) {
+        //TODO implementation
+        return null;
+    }
+
+    @Override
+    public @Nullable ChargeAttackType getChargeAttackType(ItemStack stack) {
+        return null;
+    }
+
+    @Override
+    public int getCooldown(ItemStack stack) {
+        //TODO implementation
+        return 0;
+    }
+
+    @Override
+    public double getDmgMultiplier(ItemStack stack, EvolutionDamage.Type type) {
+        return 1;
+    }
+
+    @Override
+    public int getMinAttackTime(ItemStack stack) {
+        return 4;
+    }
+
+    @Override
     public UseAnim getUseAnimation(ItemStack stack) {
         return UseAnim.BOW;
     }
@@ -32,6 +73,31 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
     @Override
     public int getUseDuration(ItemStack stack) {
         return 72_000;
+    }
+
+    @Override
+    public boolean isDamageProportionalToMomentum() {
+        return true;
+    }
+
+    @Override
+    public boolean isHoldable(ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public float precision() {
+        return 0.8f;
+    }
+
+    @Override
+    public EvolutionDamage.Type projectileDamageType() {
+        return EvolutionDamage.Type.PIERCING;
+    }
+
+    @Override
+    public double projectileSpeed() {
+        return 0.5;
     }
 
     @Override
@@ -47,7 +113,7 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
             }
             if (!level.isClientSide) {
                 EntityHook hook = new EntityHook(level, player);
-                hook.shoot(player, player.getXRot(), player.getYRot(), 0.5f * strength, 1.0F);
+                hook.shoot(player, player.getXRot(), player.getYRot(), this);
                 hook.pickupStatus = EntityGenericProjectile.PickupStatus.CREATIVE_ONLY;
                 level.addFreshEntity(hook);
                 level.playSound(null, hook, SoundEvents.TRIDENT_THROW, SoundSource.PLAYERS, 1.0F, 1.0F);
@@ -59,6 +125,11 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
             player.awardStat(Stats.ITEM_USED.get(this));
             this.addStat(player);
         }
+    }
+
+    @Override
+    public boolean shouldPlaySheatheSound(ItemStack stack) {
+        return false;
     }
 
     @Override

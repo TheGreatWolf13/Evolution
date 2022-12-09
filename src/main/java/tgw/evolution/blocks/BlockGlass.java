@@ -24,7 +24,7 @@ public class BlockGlass extends BlockGeneric implements ICollisionBlock {
 
     @Override
     public boolean collision(Level level, BlockPos pos, Entity entity, double speed, double mass, @Nullable Direction.Axis axis) {
-        speed = Units.toSISpeed(speed);
+        speed *= Units.METER_PER_TICK;
         double kineticEnergy = speed * speed * mass / 2;
         double area = 0;
         if (axis == null) {

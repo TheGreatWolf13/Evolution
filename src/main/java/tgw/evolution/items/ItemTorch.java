@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
@@ -21,19 +22,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.TETorch;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntityTorch;
-import tgw.evolution.init.EvolutionBStates;
-import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.init.*;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.time.Time;
 
-import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowable {
@@ -70,16 +68,21 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     public static int getRemainingTime(Level level, ItemStack stack) {
+        assert stack.getTag() != null;
         return getRemainingTime(level.getDayTime(), stack.getTag().getLong("TimeCreated"));
     }
 
     public static int getRemainingTime(TETorch tile) {
+        assert tile.getLevel() != null;
         return getRemainingTime(tile.getLevel().getDayTime(), tile.getTimePlaced());
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         if (!stack.hasTag()) {
+            return;
+        }
+        if (level == null) {
             return;
         }
         int remainingTime = getRemainingTime(level, stack);
@@ -94,8 +97,35 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     @Override
-    public float getChance() {
-        return 0.2f;
+    public int fireLevel() {
+        return 2;
+    }
+
+    @Override
+    public int getAutoAttackTime(ItemStack stack) {
+        return 4;
+    }
+
+    @Override
+    public BasicAttackType getBasicAttackType(ItemStack stack) {
+        return BasicAttackType.TORCH_SWEEP;
+    }
+
+    @Override
+    public SoundEvent getBlockHitSound(ItemStack stack) {
+        //TODO implementation
+        return null;
+    }
+
+    @Override
+    public @Nullable ChargeAttackType getChargeAttackType(ItemStack stack) {
+        return null;
+    }
+
+    @Override
+    public int getCooldown(ItemStack stack) {
+        //TODO implementation
+        return 20;
     }
 
     @Override
@@ -104,8 +134,13 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     @Override
-    public int getLevel() {
-        return 2;
+    public double getDmgMultiplier(ItemStack stack, EvolutionDamage.Type type) {
+        return 1;
+    }
+
+    @Override
+    public int getMinAttackTime(ItemStack stack) {
+        return 4;
     }
 
     @Override
@@ -133,6 +168,32 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     @Override
+    public boolean isDamageProportionalToMomentum() {
+        return false;
+    }
+
+    @Override
+    public boolean isHoldable(ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public float precision() {
+        //TODO
+        return 0.9f;
+    }
+
+    @Override
+    public EvolutionDamage.Type projectileDamageType() {
+        return EvolutionDamage.Type.CRUSHING;
+    }
+
+    @Override
+    public double projectileSpeed() {
+        return 0.6;
+    }
+
+    @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity living, int timeLeft) {
         if (living instanceof Player player) {
             int charge = this.getUseDuration(stack) - timeLeft;
@@ -146,13 +207,14 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
             if (!level.isClientSide) {
                 long timeCreated;
                 if (stack.hasTag()) {
+                    assert stack.getTag() != null;
                     timeCreated = stack.getTag().getLong("TimeCreated");
                 }
                 else {
                     timeCreated = level.getDayTime();
                 }
                 EntityTorch torch = new EntityTorch(level, player, timeCreated);
-                torch.shoot(player, player.getXRot(), player.getYRot(), 0.6f * strength, 1.0F);
+                torch.shoot(player, player.getXRot(), player.getYRot(), this);
                 torch.pickupStatus = EntityGenericProjectile.PickupStatus.CREATIVE_ONLY;
                 level.addFreshEntity(torch);
                 level.playSound(null, torch, SoundEvents.CROSSBOW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F);
@@ -167,6 +229,11 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     }
 
     @Override
+    public boolean shouldPlaySheatheSound(ItemStack stack) {
+        return false;
+    }
+
+    @Override
     protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, @Nullable Player player, ItemStack stack, BlockState state) {
         if (!state.getValue(EvolutionBStates.LIT)) {
             level.levelEvent(LevelEvent.SOUND_EXTINGUISH_FIRE, pos, 0);
@@ -174,6 +241,7 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
         BlockEntity tile = level.getBlockEntity(pos);
         if (tile instanceof TETorch teTorch) {
             if (stack.hasTag()) {
+                assert stack.getTag() != null;
                 teTorch.setTimePlaced(stack.getTag().getLong("TimeCreated"));
             }
             else {

@@ -5,6 +5,18 @@ package tgw.evolution.items;
  */
 public interface IEvolutionItem {
 
+    default float getRenderOffsetX() {
+        return 0;
+    }
+
+    default float getRenderOffsetY() {
+        return 0;
+    }
+
+    default float getRenderOffsetZ() {
+        return 0;
+    }
+
     default int getTooltipLines() {
         return 0;
     }
@@ -21,5 +33,9 @@ public interface IEvolutionItem {
      */
     default double useItemSlowDownRate() {
         return 1.0;
+    }
+
+    default boolean usesModularRendering() {
+        return false;
     }
 }

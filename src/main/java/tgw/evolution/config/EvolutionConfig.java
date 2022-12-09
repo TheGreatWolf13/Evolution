@@ -58,18 +58,21 @@ public final class EvolutionConfig {
         public final ForgeConfigSpec.BooleanValue crazyMode;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Drink> drink;
         public final ForgeConfigSpec.BooleanValue ecliptic;
+        public final ForgeConfigSpec.BooleanValue followUps;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Food> food;
         public final ForgeConfigSpec.BooleanValue hitmarkers;
         public final ForgeConfigSpec.BooleanValue limitTimeUnitsToHour;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Mass> mass;
         public final ForgeConfigSpec.BooleanValue planets;
         public final ForgeConfigSpec.BooleanValue showPlanets;
+        public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Speed> speed;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Volume> volume;
 
         Client(final ForgeConfigSpec.Builder builder) {
             builder.push("Client");
             this.crazyMode = builder.translation("evolution.config.crazyMode").define("crazyMode", false);
             this.hitmarkers = builder.translation("evolution.config.hitmarkers").define("hitmarkers", true);
+            this.followUps = builder.translation("evolution.config.followUps").define("followUps", true);
             builder.push("performance");
             this.showPlanets = builder.translation("evolution.config.showPlanets").define("showPlanets", true);
             this.animatedTextures = builder.translation("evolution.config.animatedTextures").define("animatedTextures", true);
@@ -81,6 +84,7 @@ public final class EvolutionConfig {
             this.food = builder.translation("evolution.config.food").defineEnum("food", EvolutionFormatter.Food.KILOCALORIE);
             this.mass = builder.translation("evolution.config.mass").defineEnum("mass", EvolutionFormatter.Mass.KILOGRAM);
             this.drink = builder.translation("evolution.config.drink").defineEnum("drink", EvolutionFormatter.Drink.MILLILITER);
+            this.speed = builder.translation("evolution.config.speed").defineEnum("speed", EvolutionFormatter.Speed.METERS_PER_SECOND);
             this.volume = builder.translation("evolution.config.volume").defineEnum("volume", EvolutionFormatter.Volume.LITER);
             builder.pop();
             builder.push("debug");

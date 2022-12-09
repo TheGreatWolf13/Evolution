@@ -65,7 +65,9 @@ public class ScreenChangeEnum extends Screen {
         this.list = new EnumList(this.entries);
         this.list.setRenderBackground(!ScreenListMenu.isPlayingGame());
         Entry selected = null;
-        for (Entry entry : this.list.children()) {
+        List<Entry> children = this.list.children();
+        for (int i = 0, l = children.size(); i < l; i++) {
+            Entry entry = children.get(i);
             if (entry.getEnumValue() == this.selectedValue) {
                 selected = entry;
                 break;

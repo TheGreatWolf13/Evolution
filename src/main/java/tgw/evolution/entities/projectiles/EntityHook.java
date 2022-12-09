@@ -4,20 +4,17 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockClimbingStake;
 import tgw.evolution.blocks.BlockUtils;
@@ -26,6 +23,7 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.items.IProjectile;
 import tgw.evolution.util.damage.DamageSourceEv;
 
 import static tgw.evolution.init.EvolutionBStates.ATTACHED;
@@ -123,6 +121,17 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
     }
 
     @Override
+    protected DamageSourceEv createDamageSource() {
+        LivingEntity shooter = this.getShooter();
+        return EvolutionDamage.causeHookDamage(this, shooter == null ? this : shooter);
+    }
+
+    @Override
+    protected boolean damagesEntities() {
+        return true;
+    }
+
+    @Override
     public Packet<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
@@ -143,32 +152,30 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
     }
 
     @Override
+    protected @Nullable IProjectile getProjectile() {
+        return null;
+    }
+
+    @Override
+    protected void modifyMovementOnCollision() {
+        this.setDeltaMovement(this.getDeltaMovement().multiply(-0.1, -0.1, -0.1));
+    }
+
+    @Override
     protected void onBlockHit(BlockState state) {
     }
 
     @Override
-    protected void onEntityHit(EntityHitResult rayTraceResult) {
-        Entity entity = rayTraceResult.getEntity();
-        if (!this.hitEntities.contains(entity.getId())) {
-            this.hitEntities.add(entity.getId());
-            Entity shooter = this.getShooter();
-            DamageSourceEv source = EvolutionDamage.causeHookDamage(this, shooter == null ? this : shooter);
-            float damage = Mth.ceil(4 * this.getDeltaMovement().length());
-            if (entity instanceof LivingEntity living && entity.isAttackable()) {
-                float oldHealth = living.getHealth();
-                living.hurt(source, damage);
-                if (shooter instanceof ServerPlayer shooterPlayer) {
-                    this.applyDamageRaw(shooterPlayer, damage, source.getType());
-                    this.applyDamageActual(shooterPlayer, oldHealth - living.getHealth(), source.getType(), living);
-                }
-            }
-            this.setDeltaMovement(this.getDeltaMovement().multiply(-0.1, -0.1, -0.1));
-            this.playSound(SoundEvents.TRIDENT_HIT, 1.0F, 1.0F);
-            Player player = entity.level.getNearestPlayer(this, 128);
-            if (player != null) {
-                Evolution.usingPlaceholder(player, "sound");
-            }
+    protected void playHitEntitySound() {
+        this.playSound(SoundEvents.TRIDENT_HIT, 1.0F, 1.0F);
+        Player player = this.level.getNearestPlayer(this, 128);
+        if (player != null) {
+            Evolution.usingPlaceholder(player, "sound");
         }
+    }
+
+    @Override
+    protected void postHitLogic(boolean attackSuccessful) {
     }
 
     @Override

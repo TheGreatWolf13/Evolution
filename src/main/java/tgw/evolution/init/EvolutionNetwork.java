@@ -56,7 +56,6 @@ public final class EvolutionNetwork {
                  PacketSCUpdateChunkStorage::handle);
         register(PacketCSOpenExtendedInventory.class, PacketCSOpenExtendedInventory::encode, PacketCSOpenExtendedInventory::decode,
                  PacketCSOpenExtendedInventory::handle);
-        register(PacketCSPlayerAttack.class, PacketCSPlayerAttack::encode, PacketCSPlayerAttack::decode, PacketCSPlayerAttack::handle);
         register(PacketCSSetKnappingType.class, PacketCSSetKnappingType::encode, PacketCSSetKnappingType::decode, PacketCSSetKnappingType::handle);
         register(PacketSCOpenKnappingGui.class, PacketSCOpenKnappingGui::encode, PacketSCOpenKnappingGui::decode, PacketSCOpenKnappingGui::handle);
         register(PacketCSSetCrawling.class, PacketCSSetCrawling::encode, PacketCSSetCrawling::decode, PacketCSSetCrawling::handle);

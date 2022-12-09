@@ -140,7 +140,7 @@ public abstract class ItemModular extends ItemEv implements IDurability, IMass {
 
     public void makeTooltip(List<Either<FormattedText, TooltipComponent>> tooltip, ItemStack stack) {
         IModular modularCap = this.getModularCap(stack);
-        modularCap.appendTooltip(tooltip);
+        modularCap.appendPartTooltip(tooltip);
     }
 
     @Override
@@ -158,6 +158,11 @@ public abstract class ItemModular extends ItemEv implements IDurability, IMass {
     @Override
     public void setDamage(ItemStack stack, int damage) {
         //Disable vanilla logic
+    }
+
+    @Override
+    public boolean usesModularRendering() {
+        return true;
     }
 
     public enum DamageCause {

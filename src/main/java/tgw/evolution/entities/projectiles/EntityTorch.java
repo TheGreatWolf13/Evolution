@@ -15,16 +15,19 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.tileentities.TETorch;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.items.IProjectile;
 import tgw.evolution.items.ItemTorch;
+import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.math.MathHelper;
 
 public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
@@ -51,6 +54,16 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
     }
 
     @Override
+    protected DamageSourceEv createDamageSource() {
+        return EvolutionDamage.DUMMY;
+    }
+
+    @Override
+    protected boolean damagesEntities() {
+        return false;
+    }
+
+    @Override
     public Packet<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
@@ -66,11 +79,20 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
     }
 
     @Override
+    protected @Nullable IProjectile getProjectile() {
+        return null;
+    }
+
+    @Override
+    protected void modifyMovementOnCollision() {
+    }
+
+    @Override
     protected void onBlockHit(BlockState state) {
     }
 
     @Override
-    protected void onEntityHit(EntityHitResult rayTraceResult) {
+    protected boolean onHitEntityLogic() {
         SoundEvent soundevent = SoundEvents.ARROW_HIT;
         this.playSound(soundevent, 1.0F, 1.0F);
         Player player = this.level.getNearestPlayer(this, 128);
@@ -79,6 +101,15 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
         }
         BlockUtils.dropItemStack(this.level, this.blockPosition(), this.getArrowStack());
         this.discard();
+        return true;
+    }
+
+    @Override
+    protected void playHitEntitySound() {
+    }
+
+    @Override
+    protected void postHitLogic(boolean attackSuccessful) {
     }
 
     @Override

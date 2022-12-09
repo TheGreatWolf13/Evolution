@@ -26,7 +26,7 @@ public class ModularTool implements IModularTool {
     private @Nullable CompoundTag tag;
 
     @Override
-    public void appendTooltip(List<Either<FormattedText, TooltipComponent>> tooltip) {
+    public void appendPartTooltip(List<Either<FormattedText, TooltipComponent>> tooltip) {
         this.head.appendText(tooltip, 0);
         tooltip.add(Either.left(EvolutionTexts.EMPTY));
         this.handle.appendText(tooltip, 1);
@@ -93,23 +93,6 @@ public class ModularTool implements IModularTool {
     }
 
     @Override
-    public double getAttackDamage() {
-        double damage = switch (this.getDamageType()) {
-            case PIERCING -> this.head.getMaterialInstance().getElasticModulus() / 3.5;
-            case CRUSHING -> this.getMoment() * 12.5; //TODO divide by area
-            case SLASHING -> 0.87 * (0.65 * this.head.getMaterialInstance().getElasticModulus() / 3.5 + 0.35 * this.getMoment() * 12.5);
-            default -> 0;
-        };
-        return this.head.getAttackDamageInternal(damage) / PlayerHelper.ATTACK_DAMAGE;
-    }
-
-    @Override
-    public double getAttackSpeed() {
-        //TODO implementation
-        return 1;
-    }
-
-    @Override
     public int getBackPriority() {
         return switch (this.head.getType()) {
             case NULL -> -1;
@@ -122,8 +105,9 @@ public class ModularTool implements IModularTool {
     }
 
     @Override
-    public EvolutionDamage.Type getDamageType() {
-        return this.head.getDamageType();
+    public int getCooldown() {
+        //TODO implementation
+        return 20;
     }
 
     @Override
@@ -134,6 +118,17 @@ public class ModularTool implements IModularTool {
             }
         }
         return "item.evolution." + this.head.getType().getName() + "." + this.head.getMaterialInstance().getName();
+    }
+
+    @Override
+    public double getDmgMultiplier(EvolutionDamage.Type type) {
+        double mult = switch (type) {
+            case PIERCING -> this.head.getMaterialInstance().getElasticModulus() / 3.5;
+            case CRUSHING -> this.getMoment() * 12.5; //TODO divide by area
+            case SLASHING -> 0.87 * (0.65 * this.head.getMaterialInstance().getElasticModulus() / 3.5 + 0.35 * this.getMoment() * 12.5);
+            default -> 0;
+        };
+        return this.head.getDmgMultiplierInternal() * mult / PlayerHelper.ATTACK_DAMAGE;
     }
 
     @Override
@@ -204,6 +199,11 @@ public class ModularTool implements IModularTool {
     @Override
     public boolean isSharpened() {
         return this.head.getSharpAmount() > 0;
+    }
+
+    @Override
+    public boolean isShovel() {
+        return this.head.getType() == PartTypes.Head.SHOVEL;
     }
 
     @Override

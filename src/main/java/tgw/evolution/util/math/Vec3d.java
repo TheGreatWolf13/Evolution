@@ -41,6 +41,10 @@ public class Vec3d extends Vec3 {
         return new Vec3(this.x, this.y, this.z);
     }
 
+    public Vec3d crossMutable(Vec3 vec) {
+        return this.set(this.y * vec.z - this.z * vec.y, this.z * vec.x - this.x * vec.z, this.x * vec.y - this.y * vec.x);
+    }
+
     @Override
     public int hashCode() {
         throw new IllegalStateException("Cannot hash mutable object");
@@ -56,6 +60,11 @@ public class Vec3d extends Vec3 {
 
     public Vec3d multiplyMutable(Vec3 vec) {
         return this.multiplyMutable(vec.x, vec.y, vec.z);
+    }
+
+    public Vec3d normalizeMutable() {
+        double norm = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+        return norm < 1.0E-4D ? this.set(0, 0, 0) : this.set(this.x / norm, this.y / norm, this.z / norm);
     }
 
     @CanIgnoreReturnValue

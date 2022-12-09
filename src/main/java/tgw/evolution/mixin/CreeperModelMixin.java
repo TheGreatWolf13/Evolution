@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import tgw.evolution.client.models.CubeListBuilderEv;
 import tgw.evolution.util.hitbox.hms.HM;
 import tgw.evolution.util.hitbox.hms.HMCreeper;
 
@@ -49,12 +50,12 @@ public abstract class CreeperModelMixin<T extends Entity> extends HierarchicalMo
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition part = mesh.getRoot();
         part.addOrReplaceChild("head",
-                               CubeListBuilder.create().texOffs(0, 0).addBox(-4.0F, 0.0F, -4.0F, 8.0F, 8.0F, 8.0F, def),
+                               CubeListBuilderEv.create().requestFix().texOffs(0, 0).addBox(-4.0F, 0.0F, -4.0F, 8.0F, 8.0F, 8.0F, def),
                                PartPose.offset(0.0F, 18.0F, 0.0F));
         part.addOrReplaceChild("body",
-                               CubeListBuilder.create().texOffs(16, 16).addBox(-4.0F, -12.0F, -2.0F, 8.0F, 12.0F, 4.0F, def),
+                               CubeListBuilderEv.create().requestFix().texOffs(16, 16).addBox(-4.0F, -12.0F, -2.0F, 8.0F, 12.0F, 4.0F, def),
                                PartPose.offset(0.0F, 18.0F, 0.0F));
-        CubeListBuilder leg = CubeListBuilder.create().texOffs(0, 16).addBox(-2.0F, -6.0F, -2.0F, 4.0F, 6.0F, 4.0F, def);
+        CubeListBuilder leg = CubeListBuilderEv.create().requestFix().texOffs(0, 16).addBox(-2.0F, -6.0F, -2.0F, 4.0F, 6.0F, 4.0F, def);
         part.addOrReplaceChild("right_hind_leg", leg, PartPose.offset(2.0F, 6.0F, 4.0F));
         part.addOrReplaceChild("left_hind_leg", leg, PartPose.offset(-2.0F, 6.0F, 4.0F));
         part.addOrReplaceChild("right_front_leg", leg, PartPose.offset(2.0F, 6.0F, -4.0F));
@@ -78,7 +79,7 @@ public abstract class CreeperModelMixin<T extends Entity> extends HierarchicalMo
     }
 
     /**
-     * Why the hell are the legs switched leg and right in the original code? This cost me 2 hours.
+     * Why the hell are the legs switched left and right in the original code? This cost me 2 hours.
      */
     @Inject(method = "<init>", at = @At("TAIL"))
     private void onInit(ModelPart root, CallbackInfo ci) {

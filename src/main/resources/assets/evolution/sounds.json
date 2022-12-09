@@ -1,4 +1,13 @@
 {
+  "fist_punches_block": {
+    "subtitle": "evolution.subtitle.fist_punches_block",
+    "sounds": [
+      "evolution:fist_punches_block_1",
+      "evolution:fist_punches_block_2",
+      "evolution:fist_punches_block_3",
+      "evolution:fist_punches_block_4"
+    ]
+  },
   "metal_spear_hit_entity": {
     "subtitle": "evolution.subtitle.spear_hit_entity",
     "sounds": [

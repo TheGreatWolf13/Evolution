@@ -16,6 +16,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.EntityGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.*;
 import net.minecraft.world.phys.shapes.BooleanOp;
@@ -28,9 +29,11 @@ import tgw.evolution.capabilities.modular.IModularTool;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.patches.*;
-import tgw.evolution.util.AdvancedEntityRayTraceResult;
-import tgw.evolution.util.HitInformation;
-import tgw.evolution.util.hitbox.*;
+import tgw.evolution.util.*;
+import tgw.evolution.util.hitbox.Hitbox;
+import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.hitbox.HitboxType;
+import tgw.evolution.util.hitbox.Matrix4d;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -55,10 +58,21 @@ public final class MathHelper {
                                                            {DirectionDiagonal.SOUTH_WEST, DirectionDiagonal.SOUTH_EAST}};
     public static final InteractionHand[] HANDS_MAIN_PRIORITY = {InteractionHand.MAIN_HAND, InteractionHand.OFF_HAND};
     public static final InteractionHand[] HANDS_OFF_PRIORITY = {InteractionHand.OFF_HAND, InteractionHand.MAIN_HAND};
-    private static final Predicate<Entity> PREDICATE = e -> e != null && !e.isSpectator() && e.isPickable();
+    private static final Predicate<Entity> PICKABLE_ENTITIES = e -> e != null && !e.isSpectator() && e.isPickable();
+    private static final Predicate<Entity> ALIVE_ENTITIES = e -> e != null && !e.isSpectator() && e.isPickable() && e.isAlive();
     private static final Pattern DIACRITICAL_MARKS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
     private MathHelper() {
+    }
+
+    public static float animInterval(float progress, float start, float end) {
+        assert start >= 0;
+        assert end <= 1;
+        assert end > start;
+        assert 0 <= progress && progress <= 1;
+        progress -= start;
+        progress /= end - start;
+        return progress;
     }
 
     /**
@@ -287,7 +301,7 @@ public final class MathHelper {
     /**
      * @return The least distance between {@code from} and the {@link AABB}, given the ray clips, otherwise {@link Double#NaN}.
      */
-    public static double clipDist(AABB bb, Vec3d from, Vec3d to) {
+    public static double clipDist(AABB bb, Vec3 from, Vec3 to) {
         return clipDist(bb, from.x, from.y, from.z, to.x, to.y, to.z);
     }
 
@@ -327,29 +341,54 @@ public final class MathHelper {
                                               LivingEntity entity,
                                               float partialTicks,
                                               BlockHitResult[] hitResult,
-                                              boolean checkBlocks) {
+                                              boolean checkBlocks, boolean onlyBlocks) {
         HitboxEntity<LivingEntity> hitboxes = ((IEntityPatch) entity).getHitboxes();
         if (hitboxes == null) {
             return;
         }
-        Hitbox collider = hitboxes.getEquipFor(((ILivingEntityPatch) entity).getSpecialAttackType(), entity.getMainArm());
+        Hitbox collider = hitboxes.getEquipFor(entity, ((ILivingEntityPatch) entity).getSpecialAttackType(), entity.getMainArm());
         if (collider == null) {
             return;
         }
-        List<Entity> foundEntities = entity.level.getEntities(entity, entity.getBoundingBox().inflate(2.5), PREDICATE);
-        if (foundEntities.isEmpty() && !checkBlocks) {
+        boolean initialized = false;
+        double radiusX = 2.5;
+        double radiusY = 2.5;
+        double radiusZ = 2.5;
+        if (checkBlocks || onlyBlocks) {
+            hitboxes.init(entity, partialTicks);
+            Matrix4d colliderTransform = collider.adjustedColliderTransform();
+            Matrix4d transform = hitboxes.getColliderTransform();
+            double hitterPosX = Mth.lerp(partialTicks, entity.xOld, entity.getX());
+            double hitterPosY = Mth.lerp(partialTicks, entity.yOld, entity.getY());
+            double hitterPosZ = Mth.lerp(partialTicks, entity.zOld, entity.getZ());
+            hits.prepare(collider, colliderTransform, transform, hitterPosX, hitterPosY, hitterPosZ);
+            initialized = true;
+            BlockHitResult result = collideWithBlocks(hits, entity);
+            hitResult[0] = result;
+            if (onlyBlocks) {
+                return;
+            }
+            if (result != null && result.getType() != HitResult.Type.MISS) {
+                int mul = result.getDirection().getAxisDirection() == Direction.AxisDirection.POSITIVE ? -1 : 1;
+                switch (result.getDirection().getAxis()) {
+                    case X -> radiusX = Math.abs(result.getLocation().x - entity.getX() + mul * entity.getBbWidth() / 2);
+                    case Z -> radiusZ = Math.abs(result.getLocation().z - entity.getZ() + mul * entity.getBbWidth() / 2);
+                }
+            }
+        }
+        List<Entity> foundEntities = entity.level.getEntities(entity, entity.getBoundingBox().inflate(radiusX, radiusY, radiusZ), ALIVE_ENTITIES);
+        if (foundEntities.isEmpty()) {
             return;
         }
-        hitboxes.init(entity, partialTicks);
-        if (collider instanceof ColliderHitbox col) {
-            col.setParent(hitboxes);
+        if (!initialized) {
+            hitboxes.init(entity, partialTicks);
+            Matrix4d colliderTransform = collider.adjustedColliderTransform();
+            Matrix4d transform = hitboxes.getColliderTransform();
+            double hitterPosX = Mth.lerp(partialTicks, entity.xOld, entity.getX());
+            double hitterPosY = Mth.lerp(partialTicks, entity.yOld, entity.getY());
+            double hitterPosZ = Mth.lerp(partialTicks, entity.zOld, entity.getZ());
+            hits.prepare(collider, colliderTransform, transform, hitterPosX, hitterPosY, hitterPosZ);
         }
-        Matrix4d colliderTransform = collider.adjustedColliderTransform();
-        Matrix4d transform = hitboxes.getColliderTransform();
-        double hitterPosX = Mth.lerp(partialTicks, entity.xOld, entity.getX());
-        double hitterPosY = Mth.lerp(partialTicks, entity.yOld, entity.getY());
-        double hitterPosZ = Mth.lerp(partialTicks, entity.zOld, entity.getZ());
-        hits.prepare(collider, colliderTransform, transform, hitterPosX, hitterPosY, hitterPosZ);
         for (int i = 0, l = foundEntities.size(); i < l; i++) {
             Entity possibleVictim = foundEntities.get(i);
             HitboxEntity<Entity> victimHitboxes = ((IEntityPatch) possibleVictim).getHitboxes();
@@ -360,10 +399,17 @@ public final class MathHelper {
                 collidingWithEntityHitboxesInTheirVS(hits, possibleVictim, victimHitboxes, partialTicks);
             }
         }
-        if (checkBlocks) {
-            hitResult[0] = collideWithBlocks(hits, entity);
-        }
         hits.release();
+    }
+
+    public static void collideOBBWithProjectile(ProjectileHitInformation hits, float partialTicks, Entity victim) {
+        HitboxEntity<Entity> victimHitboxes = ((IEntityPatch) victim).getHitboxes();
+        if (victimHitboxes == null) {
+            collidingWithEntityBB(hits, victim);
+        }
+        else {
+            collidingWithEntityHitboxesInTheirVS(hits, victim, victimHitboxes, partialTicks);
+        }
     }
 
     @Nullable
@@ -378,7 +424,7 @@ public final class MathHelper {
         return null;
     }
 
-    private static void collidingWithEntityBB(HitInformation hits, Entity victim) {
+    private static void collidingWithEntityBB(IHitInfo hits, Entity victim) {
         AABB bb = victim.getBoundingBox();
         for (int v = 0; v < 8; v++) {
             if (bb.contains(hits.getOrMakeVertex(v))) {
@@ -394,7 +440,7 @@ public final class MathHelper {
         }
     }
 
-    private static void collidingWithEntityHitboxesInTheirVS(HitInformation hits,
+    private static void collidingWithEntityHitboxesInTheirVS(IHitInfo hits,
                                                              Entity victim,
                                                              HitboxEntity<Entity> victimHitboxes,
                                                              float partialTicks) {
@@ -406,18 +452,25 @@ public final class MathHelper {
         hits.prepareInHBVS(victimHitboxes, victimX, victimY, victimZ);
         boxes:
         for (int i = 0, l = boxes.size(); i < l; i++) {
-            hits.softRelease();
             Hitbox hitbox = boxes.get(i);
+            HitboxType part = hitbox.getPart();
+            if (part == HitboxType.NONE) {
+                continue;
+            }
+            if (hits.contains(victim, part)) {
+                continue;
+            }
+            hits.softRelease();
             Matrix4d transform = hitbox.adjustedTransform();
             for (int v = 0; v < 8; v++) {
                 if (hitbox.contains(hits.getOrMakeVertexInHBVS(v, transform))) {
-                    hits.addHitbox(victim, hitbox.getPart());
+                    hits.addHitbox(victim, part);
                     continue boxes;
                 }
             }
             for (int e = 0; e < 12; e++) {
                 if (!Double.isNaN(hitbox.clipDist(hits.getOrMakeEdgeInHBVS(e, true, transform), hits.getOrMakeEdgeInHBVS(e, false, transform)))) {
-                    hits.addHitbox(victim, hitbox.getPart());
+                    hits.addHitbox(victim, part);
                     continue boxes;
                 }
             }
@@ -620,6 +673,43 @@ public final class MathHelper {
             case Y -> Direction.UP;
             case Z -> Direction.SOUTH;
         };
+    }
+
+    @Nullable
+    public static MultipleEntityHitResult getProjectileHitResult(EntityGetter level,
+                                                                 Entity projectile,
+                                                                 Vec3 start,
+                                                                 Vec3 end,
+                                                                 Predicate<Entity> filter,
+                                                                 double inflation) {
+        List<Entity> foundEntities = level.getEntities(projectile, new AABBMutable(start, end).inflateMutable(inflation), filter);
+        AABBMutable tempBB = null;
+        MultipleEntityHitResult hitResult = null;
+        for (int i = 0, l = foundEntities.size(); i < l; i++) {
+            Entity probableVictim = foundEntities.get(i);
+            if (tempBB == null) {
+                tempBB = new AABBMutable();
+            }
+            tempBB.set(probableVictim.getBoundingBox()).inflateMutable(inflation);
+            if (tempBB.contains(start)) {
+                if (hitResult == null) {
+                    hitResult = new MultipleEntityHitResult(probableVictim, start, end);
+                }
+                hitResult.add(probableVictim, 0);
+                continue;
+            }
+            double dist = clipDist(tempBB, start, end);
+            if (!Double.isNaN(dist)) {
+                if (hitResult == null) {
+                    hitResult = new MultipleEntityHitResult(probableVictim, start, end);
+                }
+                hitResult.add(probableVictim, dist);
+            }
+        }
+        if (hitResult != null) {
+            hitResult.finish();
+        }
+        return hitResult;
     }
 
     /**
@@ -882,7 +972,7 @@ public final class MathHelper {
         double range = distanceSquared;
         Entity entity = null;
         Vec3 vec3d = null;
-        for (Entity entityInBoundingBox : level.getEntities(toExclude, boundingBox, PREDICATE)) {
+        for (Entity entityInBoundingBox : level.getEntities(toExclude, boundingBox, PICKABLE_ENTITIES)) {
             AABB aabb = entityInBoundingBox.getBoundingBox();
             Optional<Vec3> optional = aabb.clip(startVec, endVec);
             if (aabb.contains(startVec)) {
@@ -955,7 +1045,7 @@ public final class MathHelper {
         Hitbox promBox = null;
         double promDist = reach;
         //Scan for entities nearby
-        List<Entity> foundEntities = victim.level.getEntities(victim, new AABB(fromX, fromY, fromZ, toX, toY, toZ).inflate(2.5), PREDICATE);
+        List<Entity> foundEntities = victim.level.getEntities(victim, new AABB(fromX, fromY, fromZ, toX, toY, toZ).inflate(2.5), PICKABLE_ENTITIES);
         if (!foundEntities.isEmpty()) {
             Hitbox[] boxHolder = new Hitbox[1];
             //Iterate over the entities
@@ -983,7 +1073,7 @@ public final class MathHelper {
         double hitX = fromX + promDist * (toX - fromX);
         double hitY = fromY + promDist * (toY - fromY);
         double hitZ = fromZ + promDist * (toZ - fromZ);
-        return new AdvancedEntityRayTraceResult(promEntity, new Vec3(hitX, hitY, hitZ), promBox);
+        return new AdvancedEntityHitResult(promEntity, new Vec3(hitX, hitY, hitZ), promBox);
     }
 
     /**
@@ -1237,6 +1327,11 @@ public final class MathHelper {
      */
     public static VoxelShape subtract(VoxelShape A, VoxelShape B) {
         return Shapes.join(A, B, BooleanOp.ONLY_FIRST);
+    }
+
+    public static float tanDeg(float angle) {
+        angle *= Mth.DEG_TO_RAD;
+        return Mth.sin(angle) / Mth.cos(angle);
     }
 
     /**

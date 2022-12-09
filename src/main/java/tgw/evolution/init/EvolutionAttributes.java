@@ -45,7 +45,8 @@ public final class EvolutionAttributes {
     private static final UUID SLOW_FALLING_MOD = UUID.fromString("A5B6CF2A-2F7C-31EF-9022-7C3E7D5E6ABA");
 
     public static final AttributeModifier SLOW_FALLING = new AttributeModifier(SLOW_FALLING_MOD, "Slow falling acceleration reduction",
-                                                                               Units.toMSUAcceleration(-8), AttributeModifier.Operation.ADDITION);
+                                                                               -8 * Units.METER_PER_SECOND_PER_SECOND,
+                                                                               AttributeModifier.Operation.ADDITION);
 
     private EvolutionAttributes() {
     }

@@ -41,6 +41,12 @@ public interface HM {
 
     void setVisible(boolean visible);
 
+    void translateX(float x);
+
+    void translateY(float y);
+
+    void translateZ(float z);
+
     float xRot();
 
     float yRot();

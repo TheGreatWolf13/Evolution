@@ -7,11 +7,13 @@ import tgw.evolution.util.math.Vec3d;
 
 public interface IHitboxArmed<T extends LivingEntity> extends IHitboxAccess<T> {
 
-    HitboxAttachable getArm(HumanoidArm arm);
+    Hitbox getHand(HumanoidArm arm);
+
+    HitboxAttachable getItemAttach(HumanoidArm arm);
 
     default Vec3d getOffsetForArm(T entity, float partialTicks, HumanoidArm arm) {
         this.init(entity, partialTicks);
-        HitboxAttachable ha = this.getArm(arm);
+        HitboxAttachable ha = this.getItemAttach(arm);
         Matrix4d transform = ha.adjustedTransform();
         Vec3 origin = ha.getLocalOrigin();
         double x = transform.transformX(origin.x, origin.y, origin.z);

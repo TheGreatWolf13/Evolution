@@ -22,7 +22,6 @@ import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -34,13 +33,11 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
@@ -85,21 +82,18 @@ import tgw.evolution.hooks.TickrateChanger;
 import tgw.evolution.init.*;
 import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.items.*;
-import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.network.*;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.patches.IGameRendererPatch;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.stats.EvolutionStatsCounter;
-import tgw.evolution.util.AdvancedEntityRayTraceResult;
+import tgw.evolution.util.AdvancedEntityHitResult;
 import tgw.evolution.util.HitInformation;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.collection.*;
 import tgw.evolution.util.constants.OptiFineHelper;
-import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.HitboxEntity;
-import tgw.evolution.util.hitbox.HitboxType;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.toast.ToastHolderRecipe;
@@ -426,8 +420,8 @@ public class ClientEvents {
         assert this.mc.player != null;
         ItemStack stack = this.mc.player.getItemInHand(hand);
         Item item = stack.getItem();
-        if (item instanceof ItemModularTool modular) {
-            return (float) (20 / modular.getAttackSpeed(stack));
+        if (item instanceof IMelee melee) {
+            return melee.getCooldown(stack);
         }
         return (float) (20 / PlayerHelper.ATTACK_SPEED);
     }
@@ -538,24 +532,6 @@ public class ClientEvents {
         }
         this.mc.options.autoJump = false;
         System.gc();
-    }
-
-    public void leftMouseClick() {
-        if (this.mainhandCooldownTime >= this.getItemCooldown(InteractionHand.MAIN_HAND)) {
-            this.mainhandCooldownTime = 0;
-            double rayTraceY = this.leftRayTrace != null ? this.leftRayTrace.getLocation().y : Double.NaN;
-            if (this.leftRayTrace instanceof AdvancedEntityRayTraceResult adv) {
-                HitboxType part = HitboxType.ALL;
-                Hitbox hitbox = adv.getHitbox();
-                if (hitbox != null) {
-                    part = hitbox.getPart();
-                }
-                Evolution.debug("Part = {}", part);
-            }
-            if (this.leftPointedEntity != null) {
-                EvolutionNetwork.sendToServer(new PacketCSPlayerAttack(this.leftPointedEntity, InteractionHand.MAIN_HAND, rayTraceY));
-            }
-        }
     }
 
     @SubscribeEvent
@@ -732,7 +708,7 @@ public class ClientEvents {
                 if (this.mc.player instanceof ILivingEntityPatch patch && patch.isSpecialAttacking()) {
                     this.cachedAttackType = patch.getSpecialAttackType();
                     if (patch.isInHitTicks()) {
-                        MathHelper.collideOBBWithCollider(MAINHAND_HITS, this.mc.player, 1.0f, MAINHAND_HIT_RESULT, true);
+                        MathHelper.collideOBBWithCollider(MAINHAND_HITS, this.mc.player, 1.0f, MAINHAND_HIT_RESULT, true, false);
                         if (MAINHAND_HIT_RESULT[0] != null && MAINHAND_HIT_RESULT[0].getType() != HitResult.Type.MISS) {
                             patch.stopSpecialAttack(IMelee.StopReason.HIT_BLOCK);
                             Evolution.info("Collided with {} at {} on {}", this.mc.level.getBlockState(MAINHAND_HIT_RESULT[0].getBlockPos()),
@@ -1100,47 +1076,6 @@ public class ClientEvents {
         return true;
     }
 
-    @SubscribeEvent
-    public void onPlayerRenderPost(RenderPlayerEvent.Post event) {
-        this.renderer.isRenderingPlayer = false;
-    }
-
-    @SubscribeEvent
-    public void onPlayerRenderPre(RenderPlayerEvent.Pre event) {
-        PlayerRenderer renderer = event.getRenderer();
-        //Hide certain parts of the player model to not clip into the camera in certain situations
-        if (this.renderer.isRenderingPlayer) {
-            this.renderer.shouldRenderLeftArm = true;
-            this.renderer.shouldRenderRightArm = true;
-            LocalPlayer player = this.mc.player;
-            assert player != null;
-            //The hat should never be visible because it's placed enclosing the head, where the camera is placed
-            renderer.getModel().hat.visible = false;
-            //If in the swimming state, the head should not be visible, as the camera and the head will rotate in different ways
-            if (player.getSwimAmount(event.getPartialTick()) > 0.0f) {
-                renderer.getModel().head.visible = false;
-            }
-            if (player.isUsingItem() && player.getUseItem().getUseAnimation() == UseAnim.SPYGLASS) {
-                HumanoidArm arm = player.getMainArm();
-                if (player.getUsedItemHand() != InteractionHand.MAIN_HAND) {
-                    arm = arm.getOpposite();
-                }
-                switch (arm) {
-                    case RIGHT -> {
-                        renderer.getModel().rightArm.visible = false;
-                        renderer.getModel().rightSleeve.visible = false;
-                        this.renderer.shouldRenderRightArm = false;
-                    }
-                    case LEFT -> {
-                        renderer.getModel().leftArm.visible = false;
-                        renderer.getModel().leftSleeve.visible = false;
-                        this.renderer.shouldRenderLeftArm = false;
-                    }
-                }
-            }
-        }
-    }
-
     public void onPotionAdded(ClientEffectInstance instance, PacketSCAddEffect.Logic logic) {
         switch (logic) {
             case ADD, REPLACE -> EFFECTS_TO_ADD.add(instance);
@@ -1197,7 +1132,7 @@ public class ClientEvents {
             }
         }
         else if (rayTrace != null && rayTrace.getType() == HitResult.Type.ENTITY) {
-            if (this.mc.getEntityRenderDispatcher().shouldRenderHitBoxes() && rayTrace instanceof AdvancedEntityRayTraceResult advRayTrace) {
+            if (this.mc.getEntityRenderDispatcher().shouldRenderHitBoxes() && rayTrace instanceof AdvancedEntityHitResult advRayTrace) {
                 if (advRayTrace.getHitbox() != null) {
                     this.renderer.renderHitbox(matrices, buffer, advRayTrace.getEntity(), advRayTrace.getHitbox(), camera, event.getPartialTicks());
                 }
@@ -1279,7 +1214,7 @@ public class ClientEvents {
         }
     }
 
-    public void startShortAttack(ItemStack stack, InteractionHand hand) {
+    public void startShortAttack(ItemStack stack) {
         assert this.mc.player != null;
         IMelee.IAttackType type = stack.getItem() instanceof IMelee melee ? melee.getBasicAttackType(stack) : IMelee.BARE_HAND_ATTACK;
         ILivingEntityPatch player = (ILivingEntityPatch) this.mc.player;

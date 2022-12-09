@@ -5,7 +5,6 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
-import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.world.entity.LivingEntity;
@@ -13,6 +12,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.client.models.CubeListBuilderEv;
 import tgw.evolution.util.ArmPose;
 import tgw.evolution.util.ArmPoseConverter;
 import tgw.evolution.util.hitbox.hms.HM;
@@ -60,6 +60,8 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
 
     @Shadow
     public float swimAmount;
+    private boolean shouldCancelLeft;
+    private boolean shouldCancelRight;
 
     /**
      * @author TheGreatWolf
@@ -69,28 +71,52 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
     public static MeshDefinition createMesh(CubeDeformation deformation, float offset) {
         MeshDefinition meshDef = new MeshDefinition();
         PartDefinition partDef = meshDef.getRoot();
-        partDef.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0F, 0.0F, -4.0F, 8.0F, 8.0F, 8.0F, deformation),
+        partDef.addOrReplaceChild("head",
+                                  CubeListBuilderEv.create().requestFix().texOffs(0, 0).addBox(-4.0F, 0.0F, -4.0F, 8.0F, 8.0F, 8.0F, deformation),
                                   PartPose.offset(0.0F, 24.0F + offset, 0.0F));
         partDef.addOrReplaceChild("hat",
-                                  CubeListBuilder.create().texOffs(32, 0).addBox(-4.0F, 0.0f, -4.0F, 8.0F, 8.0F, 8.0F, deformation.extend(0.5F)),
+                                  CubeListBuilderEv.create()
+                                                   .requestFix()
+                                                   .texOffs(32, 0)
+                                                   .addBox(-4.0F, 0.0f, -4.0F, 8.0F, 8.0F, 8.0F, deformation.extend(0.5F)),
                                   PartPose.offset(0.0F, 24.0F + offset, 0.0F));
-        partDef.addOrReplaceChild("body", CubeListBuilder.create().texOffs(16, 16).addBox(-4.0F, -12.0F, -2.0F, 8.0F, 12.0F, 4.0F, deformation),
+        partDef.addOrReplaceChild("body", CubeListBuilderEv.create()
+                                                           .requestFix()
+                                                           .texOffs(16, 16)
+                                                           .addBox(-4.0F, -12.0F, -2.0F, 8.0F, 12.0F, 4.0F, deformation),
                                   PartPose.offset(0.0F, 24.0F + offset, 0.0F));
         partDef.addOrReplaceChild("right_arm",
-                                  CubeListBuilder.create().texOffs(40, 16).addBox(-1.0F, -10.0F, -2.0F, 4.0F, 12.0F, 4.0F, deformation),
+                                  CubeListBuilderEv.create()
+                                                   .requestFix()
+                                                   .texOffs(40, 16)
+                                                   .addBox(-1.0F, -10.0F, -2.0F, 4.0F, 12.0F, 4.0F, deformation),
                                   PartPose.offset(5.0F, 22.0F + offset, 0.0F));
-        partDef.addOrReplaceChild("left_arm", CubeListBuilder.create()
-                                                             .texOffs(40, 16)
-                                                             .mirror()
-                                                             .addBox(-3.0F, -10.0F, -2.0F, 4.0F, 12.0F, 4.0F, deformation),
+        partDef.addOrReplaceChild("left_arm", CubeListBuilderEv.create().requestFix()
+                                                               .texOffs(40, 16)
+                                                               .mirror()
+                                                               .addBox(-3.0F, -10.0F, -2.0F, 4.0F, 12.0F, 4.0F, deformation),
                                   PartPose.offset(-5.0F, 22.0F + offset, 0.0F));
         partDef.addOrReplaceChild("right_leg",
-                                  CubeListBuilder.create().texOffs(0, 16).addBox(-2.0F, -12.0F, -2.0F, 4.0F, 12.0F, 4.0F, deformation),
+                                  CubeListBuilderEv.create().requestFix().texOffs(0, 16).addBox(-2.0F, -12.0F, -2.0F, 4.0F, 12.0F, 4.0F, deformation),
                                   PartPose.offset(1.9F, 12.0F + offset, 0.0F));
         partDef.addOrReplaceChild("left_leg",
-                                  CubeListBuilder.create().texOffs(0, 16).mirror().addBox(-2.0F, -12.0F, -2.0F, 4.0F, 12.0F, 4.0F, deformation),
+                                  CubeListBuilderEv.create()
+                                                   .requestFix()
+                                                   .texOffs(0, 16)
+                                                   .mirror()
+                                                   .addBox(-2.0F, -12.0F, -2.0F, 4.0F, 12.0F, 4.0F, deformation),
                                   PartPose.offset(-1.9F, 12.0F + offset, 0.0F));
         return meshDef;
+    }
+
+    @Override
+    public HM armL() {
+        return (HM) (Object) this.leftArm;
+    }
+
+    @Override
+    public HM armR() {
+        return (HM) (Object) this.rightArm;
     }
 
     @Override
@@ -114,18 +140,18 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
     }
 
     @Override
-    public HM leftArm() {
-        return (HM) (Object) this.leftArm;
-    }
-
-    @Override
     public ArmPose leftArmPose() {
         return ArmPoseConverter.fromVanilla(this.leftArmPose);
     }
 
     @Override
-    public HM leftLeg() {
+    public HM legL() {
         return (HM) (Object) this.leftLeg;
+    }
+
+    @Override
+    public HM legR() {
+        return (HM) (Object) this.rightLeg;
     }
 
     /**
@@ -139,18 +165,8 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
     }
 
     @Override
-    public HM rightArm() {
-        return (HM) (Object) this.rightArm;
-    }
-
-    @Override
     public ArmPose rightArmPose() {
         return ArmPoseConverter.fromVanilla(this.rightArmPose);
-    }
-
-    @Override
-    public HM rightLeg() {
-        return (HM) (Object) this.rightLeg;
     }
 
     @Override
@@ -169,6 +185,16 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
     }
 
     @Override
+    public void setShouldCancelLeft(boolean shouldCancel) {
+        this.shouldCancelLeft = shouldCancel;
+    }
+
+    @Override
+    public void setShouldCancelRight(boolean shouldCancel) {
+        this.shouldCancelRight = shouldCancel;
+    }
+
+    @Override
     public void setSwimAmount(float swimAmount) {
         this.swimAmount = swimAmount;
     }
@@ -181,6 +207,16 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
     @Overwrite
     public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.setup(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+    }
+
+    @Override
+    public boolean shouldCancelLeft() {
+        return this.shouldCancelLeft;
+    }
+
+    @Override
+    public boolean shouldCancelRight() {
+        return this.shouldCancelRight;
     }
 
     @Override

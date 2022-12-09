@@ -7,7 +7,6 @@ import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.level.material.Material;
 import net.minecraftforge.common.util.INBTSerializable;
-import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.constants.HarvestLevel;
 
@@ -17,13 +16,9 @@ public interface IModular extends INBTSerializable<CompoundTag> {
 
     IModular NULL = new Impl();
 
-    void appendTooltip(List<Either<FormattedText, TooltipComponent>> tooltip);
+    void appendPartTooltip(List<Either<FormattedText, TooltipComponent>> tooltip);
 
     void damage(ItemModular.DamageCause cause, @HarvestLevel int harvestLevel);
-
-    double getAttackDamage();
-
-    EvolutionDamage.Type getDamageType();
 
     String getDescriptionId();
 
@@ -44,6 +39,8 @@ public interface IModular extends INBTSerializable<CompoundTag> {
 
     boolean isHammer();
 
+    boolean isShovel();
+
     boolean isSimilar(IModular modular);
 
     boolean isSword();
@@ -58,7 +55,7 @@ public interface IModular extends INBTSerializable<CompoundTag> {
         }
 
         @Override
-        public void appendTooltip(List<Either<FormattedText, TooltipComponent>> tooltip) {
+        public void appendPartTooltip(List<Either<FormattedText, TooltipComponent>> tooltip) {
         }
 
         @Override
@@ -67,16 +64,6 @@ public interface IModular extends INBTSerializable<CompoundTag> {
 
         @Override
         public void deserializeNBT(CompoundTag nbt) {
-        }
-
-        @Override
-        public double getAttackDamage() {
-            return 0;
-        }
-
-        @Override
-        public EvolutionDamage.Type getDamageType() {
-            return EvolutionDamage.Type.GENERIC;
         }
 
         @Override
@@ -121,6 +108,11 @@ public interface IModular extends INBTSerializable<CompoundTag> {
 
         @Override
         public boolean isHammer() {
+            return false;
+        }
+
+        @Override
+        public boolean isShovel() {
             return false;
         }
 

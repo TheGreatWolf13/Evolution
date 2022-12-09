@@ -52,12 +52,6 @@ public class PartPommel implements IPartHit<PartTypes.Pommel, ItemPartPommel, Pa
     }
 
     @Override
-    public double getAttackDamageInternal(double preAttackDamage) {
-        //TODO implementation
-        return preAttackDamage;
-    }
-
-    @Override
     public EvolutionDamage.Type getDamageType() {
         return EvolutionDamage.Type.CRUSHING;
     }
@@ -65,6 +59,12 @@ public class PartPommel implements IPartHit<PartTypes.Pommel, ItemPartPommel, Pa
     @Override
     public String getDescriptionId() {
         return "item.evolution.part.pommel." + this.type.getName() + "." + this.material.getMaterial().getName();
+    }
+
+    @Override
+    public double getDmgMultiplierInternal() {
+        //TODO implementation
+        return 1.0;
     }
 
     @Override

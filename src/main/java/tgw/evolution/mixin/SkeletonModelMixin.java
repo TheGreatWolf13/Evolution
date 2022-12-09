@@ -5,12 +5,16 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.SkeletonModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.client.model.geom.builders.*;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.RangedAttackMob;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import tgw.evolution.client.models.CubeListBuilderEv;
 import tgw.evolution.util.hitbox.hms.HMSkeleton;
 
 @Mixin(SkeletonModel.class)
@@ -27,12 +31,14 @@ public abstract class SkeletonModelMixin<T extends Mob & RangedAttackMob> extend
     @Overwrite
     public static LayerDefinition createBodyLayer() {
         MeshDefinition mesh = HumanoidModel.createMesh(CubeDeformation.NONE, 0.0F);
-        PartDefinition part = mesh.getRoot();
-        part.addOrReplaceChild("right_arm", CubeListBuilder.create().texOffs(40, 16).addBox(-1, -10, -1, 2, 12, 2), PartPose.offset(5, 22, 0));
-        part.addOrReplaceChild("left_arm", CubeListBuilder.create().texOffs(40, 16).mirror().addBox(-1, -10, -1, 2, 12, 2),
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild("right_arm", CubeListBuilderEv.create().requestFix().texOffs(40, 16).addBox(-1, -10, -1, 2, 12, 2),
+                               PartPose.offset(5, 22, 0));
+        root.addOrReplaceChild("left_arm", CubeListBuilderEv.create().requestFix().texOffs(40, 16).mirror().addBox(-1, -10, -1, 2, 12, 2),
                                PartPose.offset(-5, 22, 0));
-        part.addOrReplaceChild("right_leg", CubeListBuilder.create().texOffs(0, 16).addBox(-1, -12, -1, 2, 12, 2), PartPose.offset(2, 12, 0));
-        part.addOrReplaceChild("left_leg", CubeListBuilder.create().texOffs(0, 16).mirror().addBox(-1, -12, -1, 2, 12, 2),
+        root.addOrReplaceChild("right_leg", CubeListBuilderEv.create().requestFix().texOffs(0, 16).addBox(-1, -12, -1, 2, 12, 2),
+                               PartPose.offset(2, 12, 0));
+        root.addOrReplaceChild("left_leg", CubeListBuilderEv.create().requestFix().texOffs(0, 16).mirror().addBox(-1, -12, -1, 2, 12, 2),
                                PartPose.offset(-2, 12, 0));
         return LayerDefinition.create(mesh, 64, 32);
     }

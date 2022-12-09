@@ -12,7 +12,6 @@ import net.minecraft.network.chat.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
@@ -26,7 +25,6 @@ import tgw.evolution.init.EvolutionStyles;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.*;
 import tgw.evolution.items.modular.ItemModular;
-import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.items.modular.part.ItemPart;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
@@ -52,19 +50,19 @@ public final class ItemEvents {
             if (item instanceof ItemRock rock) {
                 switch (rock.getVariant()) {
                     case CHERT -> {
-                        add(tooltip, EvolutionTexts.EMPTY);
+                        tooltip.add(EvolutionTexts.EITHER_EMPTY);
                         add(tooltip, EvolutionTexts.EASTER_CHERT);
                     }
                     case GABBRO -> {
-                        add(tooltip, EvolutionTexts.EMPTY);
+                        tooltip.add(EvolutionTexts.EITHER_EMPTY);
                         add(tooltip, EvolutionTexts.EASTER_GABBRO);
                     }
                     case GNEISS -> {
-                        add(tooltip, EvolutionTexts.EMPTY);
+                        tooltip.add(EvolutionTexts.EITHER_EMPTY);
                         add(tooltip, EvolutionTexts.EASTER_GNEISS);
                     }
                     case SLATE -> {
-                        add(tooltip, EvolutionTexts.EMPTY);
+                        tooltip.add(EvolutionTexts.EITHER_EMPTY);
                         add(tooltip, EvolutionTexts.EASTER_SLATE);
                     }
                 }
@@ -74,17 +72,22 @@ public final class ItemEvents {
 
     private static void addEffectsTooltips(List<Either<FormattedText, TooltipComponent>> tooltip, ItemStack stack) {
         Item item = stack.getItem();
+        boolean isAltDown = Screen.hasAltDown();
         if (item instanceof IFireAspect fireAspect) {
             add(tooltip, EvolutionTexts.fireAspect(fireAspect));
+            if (isAltDown) {
+                add(tooltip, EvolutionTexts.fireAspectDesc(fireAspect));
+            }
         }
         if (item instanceof IHeavyAttack heavyAttack) {
             add(tooltip, EvolutionTexts.heavyAttack(heavyAttack));
+            if (isAltDown) {
+                add(tooltip, EvolutionTexts.heavyAttackDesc1(heavyAttack));
+                add(tooltip, EvolutionTexts.heavyAttackDesc2(heavyAttack));
+            }
         }
         if (item instanceof IKnockback knockback) {
             add(tooltip, EvolutionTexts.knockback(knockback));
-        }
-        if (item instanceof ISweepAttack sweepAttack) {
-            add(tooltip, EvolutionTexts.sweep(sweepAttack));
         }
     }
 
@@ -155,6 +158,17 @@ public final class ItemEvents {
         if (item instanceof IItemFluidContainer) {
             addFluidInfo(tooltip, stack);
         }
+        //Properties
+        boolean hasAddedLine = false;
+        if (item instanceof ITwoHanded twoHanded && twoHanded.isTwoHanded(stack)) {
+            add(tooltip, EvolutionTexts.TOOLTIP_TWO_HANDED);
+        }
+        if (item instanceof IThrowable throwable && throwable.isThrowable(stack)) {
+            add(tooltip, EvolutionTexts.TOOLTIP_THROWABLE);
+        }
+        if (item instanceof IParry) {
+            add(tooltip, EvolutionTexts.TOOLTIP_PARRY);
+        }
         //Effects
         addEffectsTooltips(tooltip, stack);
         if (stack.hasTag()) {
@@ -180,7 +194,7 @@ public final class ItemEvents {
                         try {
                             MutableComponent loreComponent = Component.Serializer.fromJson(s);
                             if (loreComponent != null) {
-                                add(tooltip, ComponentUtils.mergeStyles(loreComponent, EvolutionStyles.LORE));
+                                add(tooltip, ComponentUtils.mergeStyles(loreComponent, EvolutionStyles.LIGHT_PURPLE_ITALIC));
                             }
                         }
                         catch (JsonParseException exception) {
@@ -192,82 +206,45 @@ public final class ItemEvents {
         }
         //Part
         if (item instanceof ItemPart part) {
-            add(tooltip, EvolutionTexts.EMPTY);
+            tooltip.add(EvolutionTexts.EITHER_EMPTY);
             part.makeTooltip(tooltip, stack, 0);
         }
         //Modular
         if (item instanceof ItemModular modular) {
             if (Screen.hasControlDown()) {
-                add(tooltip, EvolutionTexts.EMPTY);
+                tooltip.add(EvolutionTexts.EITHER_EMPTY);
                 //Show Materials
                 modular.makeTooltip(tooltip, stack);
             }
             else {
-                add(tooltip, EvolutionTexts.EMPTY);
+                tooltip.add(EvolutionTexts.EITHER_EMPTY);
                 add(tooltip, EvolutionTexts.TOOLTIP_SHOW_PARTS);
             }
         }
-        //Mass
-        if (item instanceof IMass mass && !(item instanceof ItemPart)) {
-            add(tooltip, EvolutionTexts.EMPTY);
-            tooltip.add(Either.right(EvolutionTooltipMass.MAIN.mass(mass.getMass(stack))));
-        }
-        //Properties
-        boolean hasAddedLine = false;
-        if (item instanceof ITwoHanded twoHanded && twoHanded.isTwoHanded(stack)) {
-            add(tooltip, EvolutionTexts.EMPTY);
-            add(tooltip, EvolutionTexts.TOOLTIP_TWO_HANDED);
-            hasAddedLine = true;
-        }
-        if (item instanceof IThrowable throwable && throwable.isThrowable(stack)) {
-            if (!hasAddedLine) {
-                add(tooltip, EvolutionTexts.EMPTY);
-            }
-            add(tooltip, EvolutionTexts.TOOLTIP_THROWABLE);
-            hasAddedLine = true;
-        }
-        if (item instanceof IParry) {
-            if (!hasAddedLine) {
-                add(tooltip, EvolutionTexts.EMPTY);
-            }
-            add(tooltip, EvolutionTexts.TOOLTIP_PARRY);
-            hasAddedLine = true;
-        }
         //Consumable
         if (item instanceof IConsumable) {
-            if (!hasAddedLine) {
-                add(tooltip, EvolutionTexts.EMPTY);
-            }
+            tooltip.add(EvolutionTexts.EITHER_EMPTY);
             add(tooltip, EvolutionTexts.TOOLTIP_CONSUMABLE);
             hasAddedLine = true;
             if (item instanceof IFood food) {
-                tooltip.add(Either.right(EvolutionTooltipFood.INSTANCE.hunger(food.getHunger())));
+                tooltip.add(TooltipFood.hunger(food.getHunger()));
             }
             if (item instanceof IDrink drink) {
-                tooltip.add(Either.right(EvolutionTooltipDrink.INSTANCE.thirst(drink.getThirst())));
+                tooltip.add(TooltipDrink.thirst(drink.getThirst()));
             }
             if (item instanceof INutrient) {
                 //TODO make nutrient tooltip if even
             }
         }
-        //Melee attributes
+        //Melee item
         if (item instanceof IMelee melee) {
-            if (hasAddedLine) {
-                hasAddedLine = false;
+            if (Screen.hasAltDown()) {
+                tooltip.add(EvolutionTexts.EITHER_EMPTY);
+                //Show Stats
+                melee.makeTooltip(player, tooltip, stack);
             }
             else {
-                add(tooltip, EvolutionTexts.EMPTY);
-            }
-            add(tooltip, EvolutionTexts.TOOLTIP_MAINHAND);
-            IMelee.BasicAttackType basicAttackType = melee.getBasicAttackType(stack);
-            tooltip.add(Either.right(EvolutionTooltipDamage.INSTANCE.damage(melee.getDamageType(stack, basicAttackType),
-                                                                            player.getAttributeValue(Attributes.ATTACK_DAMAGE) *
-                                                                            melee.getAttackDamage(stack, basicAttackType))));
-            tooltip.add(Either.right(EvolutionTooltipSpeed.INSTANCE.speed(melee.getAttackSpeed(stack))));
-            if (item instanceof ItemModularTool tool) {
-                if (!tool.getModularCap(stack).getEffectiveMaterials().isEmpty()) {
-                    tooltip.add(Either.right(EvolutionTooltipMining.INSTANCE.mining(tool.getMiningSpeed(stack))));
-                }
+                add(tooltip, EvolutionTexts.TOOLTIP_SHOW_MELEE_STATS);
             }
         }
         //Additional Equipment stats
@@ -275,25 +252,31 @@ public final class ItemEvents {
             boolean hasAddedSlot = false;
             if (item instanceof IHeatResistant heatResistant) {
                 if (!hasAddedLine) {
-                    add(tooltip, EvolutionTexts.EMPTY);
+                    tooltip.add(EvolutionTexts.EITHER_EMPTY);
                     hasAddedLine = true;
                 }
                 add(tooltip, new TranslatableComponent("evolution.tooltip.slot." + ((IAdditionalEquipment) item).getValidSlot().getName()).withStyle(
                         ChatFormatting.GRAY));
                 hasAddedSlot = true;
-                tooltip.add(Either.right(EvolutionTooltipHeat.INSTANCE.heat(heatResistant.getHeatResistance())));
+                tooltip.add(TooltipHeat.heat(heatResistant.getHeatResistance()));
             }
             if (item instanceof IColdResistant coldResistant) {
                 if (!hasAddedLine) {
-                    add(tooltip, EvolutionTexts.EMPTY);
+                    tooltip.add(EvolutionTexts.EITHER_EMPTY);
                 }
                 if (!hasAddedSlot) {
                     add(tooltip,
                         new TranslatableComponent("evolution.tooltip.slot." + ((IAdditionalEquipment) item).getValidSlot().getName()).withStyle(
                                 ChatFormatting.GRAY));
                 }
-                tooltip.add(Either.right(EvolutionTooltipCold.INSTANCE.cold(coldResistant.getColdResistance())));
+                tooltip.add(TooltipCold.cold(coldResistant.getColdResistance()));
             }
+        }
+        addEasterEggs(tooltip, stack);
+        //Mass
+        if (item instanceof IMass mass && !(item instanceof ItemPart)) {
+            tooltip.add(EvolutionTexts.EITHER_EMPTY);
+            tooltip.add(TooltipMass.mass(mass.getMass(stack)));
         }
         //Unbreakable
         if (stack.hasTag()) {
@@ -302,11 +285,11 @@ public final class ItemEvents {
                 add(tooltip, EvolutionTexts.TOOLTIP_UNBREAKABLE);
             }
         }
+        //TODO modify to integrity
         //Durability
         if (stack.getItem() instanceof IDurability durability && !(item instanceof ItemPart)) {
-            tooltip.add(Either.right(EvolutionTooltipDurability.MAIN.durability(durability.displayDurability(stack))));
+            tooltip.add(TooltipDurability.durability(durability.displayDurability(stack)));
         }
-        addEasterEggs(tooltip, stack);
         //Advanced (registry name + nbt)
         if (isAdvanced) {
             ResourceLocation key = ForgeRegistries.ITEMS.getKey(stack.getItem());

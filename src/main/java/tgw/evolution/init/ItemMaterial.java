@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.sounds.SoundEvent;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.util.collection.B2RMap;
 import tgw.evolution.util.collection.B2ROpenHashMap;
@@ -96,6 +97,16 @@ public enum ItemMaterial {
 
     public double getAxeMass() {
         return this.density / 1_500.0;
+    }
+
+    public SoundEvent getBlockHitSound() {
+        if (this.isMetal()) {
+            return EvolutionSounds.METAL_WEAPON_HIT_BLOCK.get();
+        }
+        if (this.isStone()) {
+            return EvolutionSounds.STONE_WEAPON_HIT_BLOCK.get();
+        }
+        throw new IllegalStateException("Make sound for other types!");
     }
 
     public int getDensity() {
@@ -247,11 +258,27 @@ public enum ItemMaterial {
         return this.brittle;
     }
 
+    public boolean isMetal() {
+        return switch (this) {
+            case ANDESITE, BASALT, CHALK, CHERT, CONGLOMERATE, DACITE, DIORITE, DOLOMITE, GABBRO, GNEISS, GRANITE, LIMESTONE, MARBLE, PHYLLITE,
+                    QUARTZITE, RED_SANDSTONE, SANDSTONE, SCHIST, SHALE, SLATE, WOOD -> false;
+            case BISMUTH, COPPER, GOLD, IRON, LEAD, SILVER, TIN, ZINC -> true;
+        };
+    }
+
     public boolean isStone() {
         return switch (this) {
             case ANDESITE, BASALT, CHALK, CHERT, CONGLOMERATE, DACITE, DIORITE, DOLOMITE, GABBRO, GNEISS, GRANITE, LIMESTONE, MARBLE, PHYLLITE,
                     QUARTZITE, RED_SANDSTONE, SANDSTONE, SCHIST, SHALE, SLATE -> true;
             case BISMUTH, COPPER, GOLD, IRON, LEAD, SILVER, TIN, ZINC, WOOD -> false;
+        };
+    }
+
+    public boolean isWood() {
+        return switch (this) {
+            case ANDESITE, BASALT, CHALK, CHERT, CONGLOMERATE, DACITE, DIORITE, DOLOMITE, GABBRO, GNEISS, GRANITE, LIMESTONE, MARBLE, PHYLLITE,
+                    QUARTZITE, RED_SANDSTONE, SANDSTONE, SCHIST, SHALE, SLATE, BISMUTH, COPPER, GOLD, IRON, LEAD, SILVER, TIN, ZINC -> false;
+            case WOOD -> true;
         };
     }
 }

@@ -35,10 +35,10 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.patches.IEntityPatch;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.hitbox.HitboxEntity;
+
+import java.util.List;
 
 public class EntityFallingWeight extends Entity implements IEntityAdditionalSpawnData, IEntityPatch<EntityFallingWeight> {
 
@@ -103,9 +103,10 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
             return false;
         }
         float motionY = 20.0F * (float) this.getDeltaMovement().y;
-        OList<Entity> list = new OArrayList<>(this.level.getEntities(this, this.getBoundingBox()));
         float kinecticEnergy = this.mass * motionY * motionY / 2;
-        for (Entity entity : list) {
+        List<Entity> entities = this.level.getEntities(this, this.getBoundingBox());
+        for (int i = 0, l = entities.size(); i < l; i++) {
+            Entity entity = entities.get(i);
             float forceOfImpact = kinecticEnergy / entity.getBbHeight();
             float area = entity.getBbWidth() * entity.getBbWidth();
             float pressure = forceOfImpact / area;

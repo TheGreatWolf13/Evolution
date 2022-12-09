@@ -350,11 +350,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         public ListDamageStats(Minecraft mc) {
             super(mc, ScreenStats.this.width, ScreenStats.this.height, 32, ScreenStats.this.height - 64, 20);
             this.damageStatList = new OArrayList<>();
-            this.damageStatList.add(EvolutionStats.DAMAGE_DEALT_RAW);
-            this.damageStatList.add(EvolutionStats.DAMAGE_DEALT_ACTUAL);
-            this.damageStatList.add(EvolutionStats.DAMAGE_TAKEN_BLOCKED);
-            this.damageStatList.add(EvolutionStats.DAMAGE_TAKEN_RAW);
-            this.damageStatList.add(EvolutionStats.DAMAGE_TAKEN_ACTUAL);
+            this.damageStatList.add(EvolutionStats.DAMAGE_DEALT_BY_TYPE);
+            this.damageStatList.add(EvolutionStats.DAMAGE_RESISTED_BY_TYPE);
+            this.damageStatList.add(EvolutionStats.DAMAGE_TAKEN_BY_TYPE);
             this.setRenderHeader(true, 20);
             this.damageList = new RArrayList<>(EvolutionDamage.ALL);
             for (int i = 0; i < this.damageList.size(); i++) {

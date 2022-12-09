@@ -1,15 +1,18 @@
 package tgw.evolution.init;
 
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
+import com.mojang.datafixers.util.Either;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.*;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.blocks.fluids.FluidGeneric;
-import tgw.evolution.items.*;
+import tgw.evolution.items.IFireAspect;
+import tgw.evolution.items.IHeavyAttack;
+import tgw.evolution.items.IItemFluidContainer;
+import tgw.evolution.items.IKnockback;
 import tgw.evolution.util.math.MathHelper;
 
 import static net.minecraft.world.effect.MobEffectCategory.*;
@@ -38,10 +41,10 @@ public final class EvolutionTexts {
     //Death Messages
     public static final Component DEATH_FISTS = transl("death.item.fists");
     //Easter Eggs
-    public static final Component EASTER_CHERT = transl("evolution.easter.chert").setStyle(LORE);
-    public static final Component EASTER_GABBRO = transl("evolution.easter.gabbro").setStyle(LORE);
-    public static final Component EASTER_GNEISS = transl("evolution.easter.gneiss").setStyle(LORE);
-    public static final Component EASTER_SLATE = transl("evolution.easter.slate").setStyle(LORE);
+    public static final Component EASTER_CHERT = transl("evolution.easter.chert").setStyle(LIGHT_PURPLE_ITALIC);
+    public static final Component EASTER_GABBRO = transl("evolution.easter.gabbro").setStyle(LIGHT_PURPLE_ITALIC);
+    public static final Component EASTER_GNEISS = transl("evolution.easter.gneiss").setStyle(LIGHT_PURPLE_ITALIC);
+    public static final Component EASTER_SLATE = transl("evolution.easter.slate").setStyle(LIGHT_PURPLE_ITALIC);
     //Empty
     public static final Component EMPTY = new TextComponent(" ");
     //Fluid
@@ -68,49 +71,62 @@ public final class EvolutionTexts {
     public static final Component GUI_MENU_TO_TITLE = transl("evolution.gui.menu.toTitle");
     //Tooltip
     public static final Component TOOLTIP_BLUNT = new TextComponent("   ").append(transl("evolution.tooltip.blunt").setStyle(LIGHT_GREY));
-    public static final Component TOOLTIP_CLAY_MOLD = transl("evolution.tooltip.clayMold").setStyle(INFO);
+    public static final Component TOOLTIP_CLAY_MOLD = transl("evolution.tooltip.clayMold").setStyle(BLUE);
     public static final Component TOOLTIP_CONSUMABLE = transl("evolution.tooltip.consumable").setStyle(LIGHT_GREY);
-    public static final Component TOOLTIP_CONTAINER_EMPTY = transl("evolution.tooltip.containerEmpty").setStyle(INFO);
+    public static final Component TOOLTIP_CONTAINER_EMPTY = transl("evolution.tooltip.containerEmpty").setStyle(BLUE);
+    public static final Component TOOLTIP_DAMAGE_PROPORTIONAL = transl("evolution.tooltip.damageProportional").setStyle(LIGHT_GREY);
     public static final Component TOOLTIP_EFFECT_CAUSES = transl("evolution.tooltip.effect.causes").setStyle(LIGHT_GREY);
     public static final Component TOOLTIP_EFFECT_DISABLE_REGEN = arrow(HARMFUL).append(
             transl("evolution.tooltip.effect.disableRegen").withStyle(WHITE));
     public static final Component TOOLTIP_EFFECT_DISABLE_SPRINT = arrow(HARMFUL).append(
             transl("evolution.tooltip.effect.disableSprint").withStyle(WHITE));
     public static final Component TOOLTIP_EFFECT_MAY_CAUSE = transl("evolution.tooltip.effect.mayCause").setStyle(LIGHT_GREY);
-    public static final Component TOOLTIP_FIREWOOD_PILE = transl("evolution.tooltip.firewoodPile").setStyle(INFO);
+    public static final Component TOOLTIP_FIREWOOD_PILE = transl("evolution.tooltip.firewoodPile").setStyle(BLUE);
+    public static final Component TOOLTIP_FOLLOW_UP_SINGLE = transl("evolution.tooltip.followUp.single").setStyle(DARK_YELLOW);
     public static final Component TOOLTIP_MAINHAND = transl("evolution.tooltip.mainhand").setStyle(LIGHT_GREY);
-    public static final Component TOOLTIP_PARRY = transl("evolution.tooltip.parry").setStyle(PROPERTY);
-    public static final Component TOOLTIP_ROCK_KNAP = transl("evolution.tooltip.rockKnap").setStyle(INFO);
+    public static final Component TOOLTIP_PARRY = transl("evolution.tooltip.parry").setStyle(GOLD);
+    public static final Component TOOLTIP_ROCK_KNAP = transl("evolution.tooltip.rockKnap").setStyle(BLUE);
     public static final Component TOOLTIP_ROCK_TYPE_IGEXTRUSIVE = transl("evolution.tooltip.rockType.igneousExtrusive").setStyle(LIGHT_GREY);
     public static final Component TOOLTIP_ROCK_TYPE_IGINTRUSIVE = transl("evolution.tooltip.rockType.igneousIntrusive").setStyle(LIGHT_GREY);
     public static final Component TOOLTIP_ROCK_TYPE_METAMORPHIC = transl("evolution.tooltip.rockType.metamorphic").setStyle(LIGHT_GREY);
     public static final Component TOOLTIP_ROCK_TYPE_SEDIMENTARY = transl("evolution.tooltip.rockType.sedimentary").setStyle(LIGHT_GREY);
-    public static final Component TOOLTIP_ROPE = transl("evolution.tooltip.rope").setStyle(INFO);
-    public static final Component TOOLTIP_SHOW_PARTS = transl("evolution.tooltip.showParts").setStyle(INFO);
-    public static final Component TOOLTIP_STICK_LIT = transl("evolution.tooltip.stickLit").setStyle(INFO);
-    public static final Component TOOLTIP_THROWABLE = transl("evolution.tooltip.throwable").setStyle(PROPERTY);
-    public static final Component TOOLTIP_TORCH_RELIT = transl("evolution.tooltip.torchRelit").setStyle(INFO);
-    public static final Component TOOLTIP_TWO_HANDED = transl("evolution.tooltip.twoHanded").setStyle(PROPERTY);
-    public static final Component TOOLTIP_UNBREAKABLE = transl("evolution.tooltip.unbreakable").setStyle(INFO);
-    public static final Component TOOLTIP_VERY_EFFICIENT = transl("evolution.tooltip.veryEfficient").setStyle(INFO);
+    public static final Component TOOLTIP_ROPE = transl("evolution.tooltip.rope").setStyle(BLUE);
+    public static final Component TOOLTIP_SHOW_MELEE_STATS = transl("evolution.tooltip.showMeleeStats").setStyle(BLUE);
+    public static final Component TOOLTIP_SHOW_PARTS = transl("evolution.tooltip.showParts").setStyle(BLUE);
+    public static final Component TOOLTIP_STICK_LIT = transl("evolution.tooltip.stickLit").setStyle(BLUE);
+    public static final Component TOOLTIP_THROWABLE = transl("evolution.tooltip.throwable").setStyle(GOLD);
+    public static final Component TOOLTIP_TORCH_RELIT = transl("evolution.tooltip.torchRelit").setStyle(BLUE);
+    public static final Component TOOLTIP_TWO_HANDED = transl("evolution.tooltip.twoHanded").setStyle(GOLD);
+    public static final Component TOOLTIP_UNBREAKABLE = transl("evolution.tooltip.unbreakable").setStyle(BLUE);
+    public static final Component TOOLTIP_VERY_EFFICIENT = transl("evolution.tooltip.veryEfficient").setStyle(BLUE);
+    //Either
+    public static final Either<FormattedText, TooltipComponent> EITHER_EMPTY = Either.left(EMPTY);
 
     private EvolutionTexts() {
     }
 
     private static MutableComponent arrow(MobEffectCategory category) {
-        return new TextComponent(" \u25ba ").withStyle(category == BENEFICIAL ? DARK_GREEN : category == HARMFUL ? RED : YELLOW);
+        return new TextComponent(" \u25ba ").withStyle(category == BENEFICIAL ? DARK_GREEN : category == HARMFUL ? RED : DARK_YELLOW);
+    }
+
+    public static Either<FormattedText, TooltipComponent> basicAttack() {
+        return Either.left(
+                new TranslatableComponent("evolution.tooltip.basicAttack",
+                                          Minecraft.getInstance().options.keyAttack.getTranslatedKeyMessage()));
     }
 
     public static Component capacity(IItemFluidContainer container) {
-        return new TranslatableComponent("evolution.tooltip.containerCapacity", VOLUME.format(container.getMaxAmount() / 100.0f)).setStyle(INFO);
+        return new TranslatableComponent("evolution.tooltip.containerCapacity", VOLUME.format(container.getMaxAmount() / 100.0f)).setStyle(BLUE);
     }
 
-    private static MutableComponent chanceAndLevel(String message, float chance, int level) {
-        return new TranslatableComponent(message, PERCENT_ONE_PLACE.format(chance), MathHelper.getRomanNumber(level));
+    public static Either<FormattedText, TooltipComponent> chargeAttack() {
+        return Either.left(
+                new TranslatableComponent("evolution.tooltip.chargeAttack",
+                                          Minecraft.getInstance().options.keyAttack.getTranslatedKeyMessage()));
     }
 
     public static Component coldResistance(double amount) {
-        return new TranslatableComponent("evolution.tooltip.coldResistance", TEMPERATURE_BODY_RELATIVE.format(amount)).setStyle(COLD);
+        return new TranslatableComponent("evolution.tooltip.coldResistance", TEMPERATURE_BODY_RELATIVE.format(amount)).setStyle(COLD_BLUE);
     }
 
     public static Component configAllowedValues(String allowed) {
@@ -130,11 +146,19 @@ public final class EvolutionTexts {
                                          VOLUME.format(container.getAmount(stack) / 100.0f),
                                          container.getFluid() instanceof FluidGeneric ?
                                          ((FluidGeneric) container.getFluid()).getTextComp() :
-                                         "null").setStyle(INFO);
+                                         "null").setStyle(BLUE);
+    }
+
+    public static Component cooldown(double amount) {
+        return new TranslatableComponent("evolution.tooltip.cooldown", TWO_PLACES.format(amount / 20)).setStyle(GREEN);
     }
 
     public static Component damage(String damage, double amount) {
-        return new TranslatableComponent(damage, TWO_PLACES.format(amount)).setStyle(DAMAGE);
+        return new TranslatableComponent(damage, TWO_PLACES.format(amount)).setStyle(DARK_RED);
+    }
+
+    public static Component dmgMultiplier(double mult) {
+        return new TranslatableComponent("evolution.tooltip.damageMultiplier", TWO_PLACES.format(mult)).setStyle(AQUA);
     }
 
     public static Component drink(int amount) {
@@ -142,7 +166,7 @@ public final class EvolutionTexts {
     }
 
     public static Component durability(String durability) {
-        return new TranslatableComponent("evolution.tooltip.durability", durability).setStyle(DURABILITY);
+        return new TranslatableComponent("evolution.tooltip.durability", durability).setStyle(LIGHT_GREY);
     }
 
     public static Component effect(MobEffectInstance instance) {
@@ -232,7 +256,17 @@ public final class EvolutionTexts {
     }
 
     public static Component fireAspect(IFireAspect item) {
-        return chanceAndLevel("evolution.tooltip.fireAspect", item.getChance(), item.getLevel()).setStyle(EFFECTS);
+        return new TranslatableComponent("evolution.tooltip.fireAspect", MathHelper.getRomanNumber(item.fireLevel())).setStyle(DARK_AQUA);
+    }
+
+    public static FormattedText fireAspectDesc(IFireAspect fireAspect) {
+        return arrow(BENEFICIAL).append(
+                new TranslatableComponent("evolution.tooltip.fireAspect.desc", PERCENT_ONE_PLACE.format(fireAspect.fireLevel() * 0.1)));
+    }
+
+    public static Component followUp(int followUps) {
+        return followUps == 1 ? TOOLTIP_FOLLOW_UP_SINGLE : new TranslatableComponent("evolution.tooltip.followUp.plural", followUps).setStyle(
+                DARK_YELLOW);
     }
 
     public static Component food(int amount) {
@@ -240,35 +274,44 @@ public final class EvolutionTexts {
     }
 
     public static Component heatResistance(double amount) {
-        return new TranslatableComponent("evolution.tooltip.heatResistance", TEMPERATURE_BODY_RELATIVE.format(amount)).setStyle(HEAT);
+        return new TranslatableComponent("evolution.tooltip.heatResistance", TEMPERATURE_BODY_RELATIVE.format(amount)).setStyle(RED);
     }
 
     public static Component heavyAttack(IHeavyAttack item) {
-        return chanceAndLevel("evolution.tooltip.heavyAttack", item.getHeavyAttackChance(), item.getHeavyAttackLevel()).setStyle(EFFECTS);
+        return new TranslatableComponent("evolution.tooltip.heavyAttack", MathHelper.getRomanNumber(item.heavyAttackLevel())).setStyle(DARK_AQUA);
+    }
+
+    public static FormattedText heavyAttackDesc1(IHeavyAttack heavyAttack) {
+        return arrow(BENEFICIAL).append(new TranslatableComponent("evolution.tooltip.heavyAttack.desc1", 4 + heavyAttack.heavyAttackLevel()));
+    }
+
+    public static FormattedText heavyAttackDesc2(IHeavyAttack heavyAttack) {
+        return arrow(BENEFICIAL).append(
+                new TranslatableComponent("evolution.tooltip.heavyAttack.desc2", PERCENT_ONE_PLACE.format(0.1 * heavyAttack.heavyAttackLevel())));
     }
 
     public static Component knockback(IKnockback item) {
-        return new TranslatableComponent("evolution.tooltip.knockback", MathHelper.getRomanNumber(item.getLevel())).setStyle(EFFECTS);
+        return new TranslatableComponent("evolution.tooltip.knockback", MathHelper.getRomanNumber(item.knockbackLevel())).setStyle(DARK_AQUA);
     }
 
     public static Component mass(double amount) {
-        return new TranslatableComponent("evolution.tooltip.mass", EvolutionFormatter.MASS.format(amount)).setStyle(EvolutionStyles.MASS);
+        return new TranslatableComponent("evolution.tooltip.mass", MASS.format(amount)).setStyle(DARK_GREEN);
     }
 
     public static Component material(ItemMaterial material) {
-        return new TextComponent("   ").append(new TranslatableComponent("evolution.tooltip.material", material.getText())).setStyle(REACH);
+        return new TextComponent("   ").append(new TranslatableComponent("evolution.tooltip.material", material.getText())).setStyle(DARK_YELLOW);
     }
 
     public static Component mining(double miningSpeed) {
-        return new TranslatableComponent("evolution.tooltip.mining", TWO_PLACES.format(miningSpeed)).setStyle(MINING);
+        return new TranslatableComponent("evolution.tooltip.mining", TWO_PLACES.format(miningSpeed)).setStyle(AQUA);
     }
 
     public static Component oxydation(double oxydation) {
         return new TranslatableComponent("evolution.tooltip.metalOxidation", PERCENT_ONE_PLACE.format(oxydation)).setStyle(LIGHT_GREY);
     }
 
-    public static Component reach(double amount) {
-        return new TranslatableComponent("evolution.tooltip.distance", TWO_PLACES.format(amount)).setStyle(REACH);
+    public static Component precision(float precision) {
+        return new TranslatableComponent("evolution.tooltip.precision", PERCENT_ONE_PLACE.format(precision)).setStyle(DARK_YELLOW);
     }
 
     public static MutableComponent remaining(int number) {
@@ -282,21 +325,23 @@ public final class EvolutionTexts {
         if (sharpAmount > hardness) {
             return new TextComponent("   ").append(new TranslatableComponent("evolution.tooltip.verySharp",
                                                                              sharpAmount - hardness,
-                                                                             Mth.ceil(0.5 * hardness))).setStyle(EFFECTS);
+                                                                             Mth.ceil(0.5 * hardness))).setStyle(DARK_AQUA);
         }
-        return new TextComponent("   ").append(new TranslatableComponent("evolution.tooltip.sharp", sharpAmount, hardness)).setStyle(EFFECTS);
+        return new TextComponent("   ").append(new TranslatableComponent("evolution.tooltip.sharp", sharpAmount, hardness)).setStyle(DARK_AQUA);
     }
 
-    public static Component speed(double amount) {
-        return new TranslatableComponent("evolution.tooltip.speed", TWO_PLACES.format(amount)).setStyle(SPEED);
+    public static Either<FormattedText, TooltipComponent> throwAttack() {
+        return Either.left(
+                new TranslatableComponent("evolution.tooltip.throwAttack",
+                                          Minecraft.getInstance().options.keyUse.getTranslatedKeyMessage()));
     }
 
-    public static Component sweep(ISweepAttack item) {
-        return new TranslatableComponent("evolution.tooltip.sweep", PERCENT_ONE_PLACE.format(item.getSweepRatio())).setStyle(EFFECTS);
+    public static Component throwSpeed(double speed) {
+        return new TranslatableComponent("evolution.tooltip.throwSpeed", SPEED.format(speed)).setStyle(GREEN);
     }
 
     public static Component torch(int timeRemaining) {
-        return new TranslatableComponent("evolution.tooltip.torchTime", HOUR_FORMAT.format(timeRemaining)).setStyle(INFO);
+        return new TranslatableComponent("evolution.tooltip.torchTime", HOUR_FORMAT.format(timeRemaining)).setStyle(BLUE);
     }
 
     public static MutableComponent transl(String text) {

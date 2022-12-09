@@ -11,8 +11,8 @@ import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
-import tgw.evolution.client.tooltip.EvolutionTooltipDurability;
-import tgw.evolution.client.tooltip.EvolutionTooltipMass;
+import tgw.evolution.client.tooltip.TooltipDurability;
+import tgw.evolution.client.tooltip.TooltipMass;
 import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionTexts;
@@ -41,8 +41,8 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
         if (this.canBeSharpened()) {
             tooltip.add(Either.left(EvolutionTexts.sharp(this.sharpAmount, this.material.getHardness())));
         }
-        tooltip.add(Either.right(EvolutionTooltipMass.PARTS[num].mass(this.getMass())));
-        tooltip.add(Either.right(EvolutionTooltipDurability.PARTS[num].durability(this.displayDurability(ItemStack.EMPTY))));
+        tooltip.add(TooltipMass.part(num, this.getMass()));
+        tooltip.add(TooltipDurability.part(num, this.displayDurability(ItemStack.EMPTY)));
     }
 
     @Override
@@ -66,20 +66,6 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
     }
 
     @Override
-    public double getAttackDamageInternal(double preAttackDamage) {
-        if (this.canBeSharpened()) {
-            if (this.sharpAmount > this.material.getHardness()) {
-                //Very Sharp
-                return 1.15 * preAttackDamage;
-            }
-        }
-        if (this.type == PartTypes.Head.HOE) {
-            return 0.7 * preAttackDamage;
-        }
-        return preAttackDamage;
-    }
-
-    @Override
     public EvolutionDamage.Type getDamageType() {
         return switch (this.type) {
             case AXE -> this.sharpAmount > 0 ? EvolutionDamage.Type.SLASHING : EvolutionDamage.Type.CRUSHING;
@@ -93,6 +79,20 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
     @Override
     public String getDescriptionId() {
         return "item.evolution.part.head." + this.type.getName() + "." + this.material.getMaterial().getName();
+    }
+
+    @Override
+    public double getDmgMultiplierInternal() {
+        if (this.canBeSharpened()) {
+            if (this.sharpAmount > this.material.getHardness()) {
+                //Very Sharp
+                return 1.15;
+            }
+        }
+        if (this.type == PartTypes.Head.HOE) {
+            return 0.7;
+        }
+        return 1.0;
     }
 
     @Override

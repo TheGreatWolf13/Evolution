@@ -1,128 +1,113 @@
 package tgw.evolution.util.hitbox;
 
-import tgw.evolution.util.collection.RArrayList;
-import tgw.evolution.util.collection.RList;
 import tgw.evolution.util.hitbox.hms.HM;
 
-import java.util.Collections;
+public class HitboxGroup implements HM, IRoot {
 
-public class HitboxGroup implements HM {
+    private final IRoot parent;
+    private float pivotX;
+    private float pivotY;
+    private float pivotZ;
+    private float rotationX;
+    private float rotationY;
+    private float rotationZ;
 
-    private final RList<Hitbox> boxes = new RArrayList<>();
-//    private final RList<StartingRotation> rotations = new RArrayList<>();
+    public HitboxGroup(IRoot parent) {
+        this(parent, 0, 0, 0);
+    }
 
-    public HitboxGroup(Hitbox... boxes) {
-        Collections.addAll(this.boxes, boxes);
-//        for (int i = 0; i < boxes.length; i++) {
-//            this.rotations.add(StartingRotation.ZERO);
-//        }
+    public HitboxGroup(IRoot parent, float x, float y, float z) {
+        this.parent = parent;
+        assert this != parent;
+        this.setPivotX(x);
+        this.setPivotY(y);
+        this.setPivotZ(z);
     }
 
     @Override
     public void addRotationX(float x) {
-        for (int i = 0, l = this.boxes.size(); i < l; i++) {
-            this.boxes.get(i).addRotationX(x);
-        }
+        this.rotationX += x;
     }
 
     @Override
     public void addRotationY(float y) {
-        for (int i = 0, l = this.boxes.size(); i < l; i++) {
-            this.boxes.get(i).addRotationY(y);
-        }
+        this.rotationY += y;
     }
 
     @Override
     public void addRotationZ(float z) {
-        for (int i = 0, l = this.boxes.size(); i < l; i++) {
-            this.boxes.get(i).addRotationZ(z);
-        }
-    }
-
-    public void finish() {
-        this.boxes.trimCollection();
-//        this.rotations.trimCollection();
+        this.rotationZ += z;
     }
 
     @Override
     public float getPivotX() {
-        if (this.boxes.isEmpty()) {
-            throw new IllegalStateException("Empty group");
-        }
-        return this.boxes.get(0).getPivotX();
+        return this.pivotX * 16;
     }
 
     @Override
     public float getPivotY() {
-        if (this.boxes.isEmpty()) {
-            throw new IllegalStateException("Empty group");
-        }
-        return this.boxes.get(0).getPivotY();
+        return this.pivotY * 16;
     }
 
     @Override
     public float getPivotZ() {
-        if (this.boxes.isEmpty()) {
-            throw new IllegalStateException("Empty group");
-        }
-        return this.boxes.get(0).getPivotZ();
+        return this.pivotZ * 16;
+    }
+
+    @Override
+    public Matrix4d helperColliderTransform() {
+        return this.parent.helperColliderTransform();
+    }
+
+    @Override
+    public Matrix4d helperTransform() {
+        return this.parent.helperTransform();
+    }
+
+    @Override
+    public float scaleX() {
+        return this.parent.scaleX();
+    }
+
+    @Override
+    public float scaleY() {
+        return this.parent.scaleY();
+    }
+
+    @Override
+    public float scaleZ() {
+        return this.parent.scaleZ();
     }
 
     @Override
     public void setPivotX(float x) {
-        for (int i = 0, l = this.boxes.size(); i < l; i++) {
-            this.boxes.get(i).setPivotX(x);
-        }
+        this.pivotX = x / 16.0f;
     }
 
     @Override
     public void setPivotY(float y) {
-        for (int i = 0, l = this.boxes.size(); i < l; i++) {
-            this.boxes.get(i).setPivotY(y);
-        }
+        this.pivotY = y / 16.0f;
     }
 
     @Override
     public void setPivotZ(float z) {
-        for (int i = 0, l = this.boxes.size(); i < l; i++) {
-            this.boxes.get(i).setPivotZ(z);
-        }
+        this.pivotZ = z / 16.0f;
     }
 
     @Override
     public void setRotationX(float x) {
-        for (int i = 0; i < this.boxes.size(); i++) {
-            Hitbox box = this.boxes.get(i);
-            box.setRotationX(x/* + this.rotations.get(i).xRot*/);
-        }
+        this.rotationX = x;
     }
 
     @Override
     public void setRotationY(float y) {
-        for (int i = 0; i < this.boxes.size(); i++) {
-            Hitbox box = this.boxes.get(i);
-            box.setRotationY(y/* + this.rotations.get(i).yRot*/);
-        }
+        this.rotationY = y;
     }
 
     @Override
     public void setRotationZ(float z) {
-        for (int i = 0; i < this.boxes.size(); i++) {
-            Hitbox box = this.boxes.get(i);
-            box.setRotationZ(z/* + this.rotations.get(i).zRot*/);
-        }
+        this.rotationZ = z;
     }
-
-//    public void setStartingRotationForBox(int index, float xRot, float yRot, float zRot) {
-//        if (index < 0) {
-//            throw new ArrayIndexOutOfBoundsException("Negative index for Hitbox: " + index);
-//        }
-//        if (index >= this.rotations.size()) {
-//            throw new ArrayIndexOutOfBoundsException("HitboxGroup only contains " + this.rotations.size() + " hitboxes");
-//        }
-//        this.rotations.add(index, new StartingRotation(xRot, yRot, zRot));
-//        this.rotations.remove(index + 1);
-//    }
 
     @Override
     public void setVisible(boolean visible) {
@@ -130,31 +115,56 @@ public class HitboxGroup implements HM {
     }
 
     @Override
+    public void transformParent(Matrix4d matrix) {
+        this.parent.transformParent(matrix);
+        matrix.translate(this.pivotX, this.pivotY, this.pivotZ);
+        matrix.rotateZRad(this.rotationZ);
+        matrix.rotateYRad(this.rotationY);
+        matrix.rotateXRad(this.rotationX);
+    }
+
+    @Override
+    public double transformX(double x, double y, double z) {
+        return this.parent.transformX(x, y, z);
+    }
+
+    @Override
+    public double transformY(double x, double y, double z) {
+        return this.parent.transformY(x, y, z);
+    }
+
+    @Override
+    public double transformZ(double x, double y, double z) {
+        return this.parent.transformZ(x, y, z);
+    }
+
+    @Override
+    public void translateX(float x) {
+        this.pivotX += x / 16.0f;
+    }
+
+    @Override
+    public void translateY(float y) {
+        this.pivotY += y / 16.0f;
+    }
+
+    @Override
+    public void translateZ(float z) {
+        this.pivotZ += z / 16.0f;
+    }
+
+    @Override
     public float xRot() {
-        if (this.boxes.isEmpty()) {
-            throw new IllegalStateException("Empty group");
-        }
-        return this.boxes.get(0).xRot()/* - this.rotations.get(0).xRot*/;
+        return this.rotationX;
     }
 
     @Override
     public float yRot() {
-        if (this.boxes.isEmpty()) {
-            throw new IllegalStateException("Empty group");
-        }
-        return this.boxes.get(0).yRot()/* - this.rotations.get(0).yRot*/;
+        return this.rotationY;
     }
 
     @Override
     public float zRot() {
-        if (this.boxes.isEmpty()) {
-            throw new IllegalStateException("Empty group");
-        }
-        return this.boxes.get(0).zRot()/* - this.rotations.get(0).zRot*/;
+        return this.rotationZ;
     }
-
-//    public record StartingRotation(float xRot, float yRot, float zRot) {
-//
-//        public static final StartingRotation ZERO = new StartingRotation(0, 0, 0);
-//    }
 }

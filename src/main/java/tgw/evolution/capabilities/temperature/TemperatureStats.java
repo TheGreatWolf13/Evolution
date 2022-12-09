@@ -55,28 +55,26 @@ public class TemperatureStats implements ITemperature {
         return 20;
     }
 
-    private static double getTemperatureBasedOnHeight(double baseTemp, ServerPlayer player) {
+    private static double getTemperatureBasedOnHeight(double baseTemp, double y) {
         //Temperature will fluctuate above y=80 and below y=60
+        //IRL, temperature at 11km is -56.5ºC
         //Temperature at 1 km is -56.5ºC
-        //Temperature at y = 0 is 13ºC
         //Temperature at y = -64 is 1ºC
-        double y = player.getY();
         if (60 < y && y < 80) {
             return baseTemp;
         }
         if (y >= 1_000) {
             return -56.5;
         }
-        if (y >= 80) {
-            return (-113 / 1_840.0 - baseTemp / 920.0) * y + 113 / 23.0 + 25 * baseTemp / 23.0;
-        }
         if (y < -64) {
             return 1;
         }
-        if (y < 0) {
-            return MathHelper.relativize(y, -64, 0) * 12 + 1;
+        if (y >= 80) {
+            double t = MathHelper.relativize(y, 80, 1_000);
+            return t * -56.5 + (1 - t) * baseTemp;
         }
-        return MathHelper.relativize(y, 0, 60) * (baseTemp - 13) + 13;
+        double t = MathHelper.relativize(y, -64, 60);
+        return t * baseTemp + (1 - t);
     }
 
     private void calculateZone(ServerPlayer player) {
@@ -297,7 +295,7 @@ public class TemperatureStats implements ITemperature {
         double temp3 = getBiomeSurfaceTemperature(player, 0, 10);
         double temp4 = getBiomeSurfaceTemperature(player, 0, -10);
         double averageSurfaceTemp = (temp0 + temp1 + temp2 + temp3 + temp4) / 5;
-        this.desiredTemperature = getTemperatureBasedOnHeight(averageSurfaceTemp, player);
+        this.desiredTemperature = getTemperatureBasedOnHeight(averageSurfaceTemp, player.getY());
         if (player.isSprinting()) {
             this.desiredTemperature += 2;
         }

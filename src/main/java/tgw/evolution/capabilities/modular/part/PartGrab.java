@@ -9,8 +9,8 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.modular.IGrabType;
 import tgw.evolution.capabilities.modular.MaterialInstance;
-import tgw.evolution.client.tooltip.EvolutionTooltipDurability;
-import tgw.evolution.client.tooltip.EvolutionTooltipMass;
+import tgw.evolution.client.tooltip.TooltipDurability;
+import tgw.evolution.client.tooltip.TooltipMass;
 import tgw.evolution.items.modular.part.ItemPart;
 
 import java.util.List;
@@ -30,8 +30,8 @@ public abstract class PartGrab<T extends IGrabType<T, I, P>, I extends ItemPart<
     public void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num) {
         tooltip.add(Either.left(this.type.getComponent()));
         this.material.appendText(tooltip);
-        tooltip.add(Either.right(EvolutionTooltipMass.PARTS[num].mass(this.getMass())));
-        tooltip.add(Either.right(EvolutionTooltipDurability.PARTS[num].durability(this.displayDurability(ItemStack.EMPTY))));
+        tooltip.add(TooltipMass.part(num, this.getMass()));
+        tooltip.add(TooltipDurability.part(num, this.displayDurability(ItemStack.EMPTY)));
     }
 
     @Override

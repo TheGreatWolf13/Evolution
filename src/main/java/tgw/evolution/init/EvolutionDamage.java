@@ -5,7 +5,6 @@ import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.Util;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -38,23 +37,24 @@ public final class EvolutionDamage {
         m.add("player");
         m.add("spear");
     });
-    public static final DamageSource DEHYDRATION = createSrc(new DamageSourceEv("dehydration", Type.SICKNESS).bypassArmor().absolute());
-    public static final DamageSource DROWN = createSrc(new DamageSourceEv("drown", Type.DROWNING).bypassArmor());
-    public static final DamageSource DUMMY = new DamageSourceEv("dummy", Type.GENERIC);
-    public static final DamageSource EFFICIENCY = createSrc(new DamageSourceEv("efficiency", Type.VOID).bypassArmor().bypassInvul().absolute());
-    public static final DamageSource FALL = new DamageSourceEv("fall_damage", Type.IMPACT).bypassArmor();
-    public static final DamageSource FALLING_METAL = createSrc(new DamageSourceEv("falling_metal", Type.CRUSHING).bypassArmor());
-    public static final DamageSource FALLING_ROCK = createSrc(new DamageSourceEv("falling_rock", Type.CRUSHING).bypassArmor());
-    public static final DamageSource FALLING_SOIL = createSrc(new DamageSourceEv("falling_soil", Type.CRUSHING).bypassArmor());
-    public static final DamageSource FALLING_WOOD = createSrc(new DamageSourceEv("falling_wood", Type.CRUSHING).bypassArmor());
-    public static final DamageSource FALLING_TREE = createSrc(new DamageSourceEv("falling_tree", Type.CRUSHING).bypassArmor());
-    public static final DamageSource IN_FIRE = createSrc(new DamageSourceEv("in_fire", Type.FIRE).fire().bypassArmor());
-    public static final DamageSource IN_WALL = createSrc(new DamageSourceEv("in_wall", Type.SUFFOCATION).bypassArmor());
-    public static final DamageSource ON_FIRE = createSrc(new DamageSourceEv("on_fire", Type.FIRE).fire().bypassArmor());
-    public static final DamageSource VOID = createSrc(new DamageSourceEv("void", Type.VOID).bypassArmor().bypassInvul());
-    public static final DamageSource WALL_IMPACT = createSrc(new DamageSourceEv("wall_impact", Type.IMPACT).bypassArmor());
-    public static final DamageSource WATER_IMPACT = createSrc(new DamageSourceEv("water_impact", Type.IMPACT).bypassArmor());
-    public static final DamageSource WATER_INTOXICATION = createSrc(new DamageSourceEv("water_intoxication", Type.SICKNESS).bypassArmor().absolute());
+    public static final DamageSourceEv DEHYDRATION = createSrc(new DamageSourceEv("dehydration", Type.SICKNESS).bypassArmor().absolute());
+    public static final DamageSourceEv DROWN = createSrc(new DamageSourceEv("drown", Type.DROWNING).bypassArmor());
+    public static final DamageSourceEv DUMMY = new DamageSourceEv("dummy", Type.GENERIC);
+    public static final DamageSourceEv EFFICIENCY = createSrc(new DamageSourceEv("efficiency", Type.VOID).bypassArmor().bypassInvul().absolute());
+    public static final DamageSourceEv FALL = new DamageSourceEv("fall_damage", Type.IMPACT).bypassArmor();
+    public static final DamageSourceEv FALLING_METAL = createSrc(new DamageSourceEv("falling_metal", Type.CRUSHING).bypassArmor());
+    public static final DamageSourceEv FALLING_ROCK = createSrc(new DamageSourceEv("falling_rock", Type.CRUSHING).bypassArmor());
+    public static final DamageSourceEv FALLING_SOIL = createSrc(new DamageSourceEv("falling_soil", Type.CRUSHING).bypassArmor());
+    public static final DamageSourceEv FALLING_WOOD = createSrc(new DamageSourceEv("falling_wood", Type.CRUSHING).bypassArmor());
+    public static final DamageSourceEv FALLING_TREE = createSrc(new DamageSourceEv("falling_tree", Type.CRUSHING).bypassArmor());
+    public static final DamageSourceEv IN_FIRE = createSrc(new DamageSourceEv("in_fire", Type.FIRE).fire().bypassArmor());
+    public static final DamageSourceEv IN_WALL = createSrc(new DamageSourceEv("in_wall", Type.SUFFOCATION).bypassArmor());
+    public static final DamageSourceEv ON_FIRE = createSrc(new DamageSourceEv("on_fire", Type.FIRE).fire().bypassArmor());
+    public static final DamageSourceEv VOID = createSrc(new DamageSourceEv("void", Type.VOID).bypassArmor().bypassInvul());
+    public static final DamageSourceEv WALL_IMPACT = createSrc(new DamageSourceEv("wall_impact", Type.IMPACT).bypassArmor());
+    public static final DamageSourceEv WATER_IMPACT = createSrc(new DamageSourceEv("water_impact", Type.IMPACT).bypassArmor());
+    public static final DamageSourceEv WATER_INTOXICATION = createSrc(
+            new DamageSourceEv("water_intoxication", Type.SICKNESS).bypassArmor().absolute());
 
     private EvolutionDamage() {
     }
@@ -79,7 +79,7 @@ public final class EvolutionDamage {
         return new DamageSourceEntityIndirect("spear", source, trueSource, Type.PIERCING).projectile();
     }
 
-    private static DamageSource createSrc(DamageSource src) {
+    private static DamageSourceEv createSrc(DamageSourceEv src) {
         ALL_SOURCES.add(src.msgId);
         return src;
     }

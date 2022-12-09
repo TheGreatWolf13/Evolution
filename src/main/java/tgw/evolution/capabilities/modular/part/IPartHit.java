@@ -10,9 +10,9 @@ public interface IPartHit<T extends IAttachmentType<T, I, P>, I extends ItemPart
 
     boolean canBeSharpened();
 
-    double getAttackDamageInternal(double preAttackDamage);
-
     EvolutionDamage.Type getDamageType();
+
+    double getDmgMultiplierInternal();
 
     ReferenceSet<Material> getEffectiveMaterials();
 

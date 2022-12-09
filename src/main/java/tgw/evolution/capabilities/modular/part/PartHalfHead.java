@@ -56,12 +56,6 @@ public class PartHalfHead implements IPartHit<PartTypes.HalfHead, ItemPartHalfHe
     }
 
     @Override
-    public double getAttackDamageInternal(double preAttackDamage) {
-        //TODO implementation
-        return preAttackDamage;
-    }
-
-    @Override
     public EvolutionDamage.Type getDamageType() {
         return switch (this.type) {
             case NULL -> EvolutionDamage.Type.GENERIC;
@@ -74,6 +68,12 @@ public class PartHalfHead implements IPartHit<PartTypes.HalfHead, ItemPartHalfHe
     @Override
     public String getDescriptionId() {
         return "item.evolution.part.halfhead." + this.type.getName() + "." + this.material.getMaterial().getName();
+    }
+
+    @Override
+    public double getDmgMultiplierInternal() {
+        //TODO implementation
+        return 1.0;
     }
 
     @Override

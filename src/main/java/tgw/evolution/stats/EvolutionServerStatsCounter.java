@@ -26,7 +26,6 @@ import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.network.PacketSCStatistics;
 import tgw.evolution.util.math.HalfFloat;
 
@@ -145,16 +144,9 @@ public class EvolutionServerStatsCounter extends ServerStatsCounter {
         }
         if (Float.isInfinite(amount) || amount > Long.MAX_VALUE) {
             if (stat.getType() == Stats.CUSTOM) {
-                if (EvolutionStats.DAMAGE_TAKEN_RAW.containsValue(stat.getValue())) {
-                    amount = player.getHealth() + player.getAbsorptionAmount();
-                }
-                else {
-                    return;
-                }
-            }
-            else {
                 return;
             }
+            return;
         }
         long value = (long) amount;
         amount -= value;

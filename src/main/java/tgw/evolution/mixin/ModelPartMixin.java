@@ -160,6 +160,21 @@ public abstract class ModelPartMixin implements HM {
     }
 
     @Override
+    public void translateX(float x) {
+        this.x += x;
+    }
+
+    @Override
+    public void translateY(float y) {
+        this.y += y;
+    }
+
+    @Override
+    public void translateZ(float z) {
+        this.z += z;
+    }
+
+    @Override
     public float xRot() {
         return this.xRot;
     }

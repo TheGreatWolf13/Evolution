@@ -1,12 +1,15 @@
 package tgw.evolution.client.renderer;
 
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
 import tgw.evolution.util.collection.FArrayList;
 import tgw.evolution.util.collection.FList;
 import tgw.evolution.util.collection.IArrayList;
 import tgw.evolution.util.collection.IList;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public final class RenderHelper {
@@ -33,6 +36,9 @@ public final class RenderHelper {
     public static final Supplier<ShaderInstance> SHADER_POSITION_COLOR = GameRenderer::getPositionColorShader;
     public static final Supplier<ShaderInstance> SHADER_POSITION_COLOR_TEX = GameRenderer::getPositionColorTexShader;
     public static final Supplier<ShaderInstance> SHADER_POSITION_TEX = GameRenderer::getPositionTexShader;
+
+    public static final Function<ResourceLocation, RenderType> RENDER_TYPE_ENTITY_CUTOUT_NO_CULL = RenderType::entityCutoutNoCull;
+    public static final Function<ResourceLocation, RenderType> RENDER_TYPE_ENTITY_TRANSLUCENT = RenderType::entityTranslucent;
 
     private RenderHelper() {
     }

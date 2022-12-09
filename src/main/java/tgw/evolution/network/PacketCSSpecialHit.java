@@ -7,18 +7,17 @@ import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.network.NetworkEvent;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.util.EntityHelper;
-import tgw.evolution.util.hitbox.HitboxType;
 
 import java.util.function.Supplier;
 
 public class PacketCSSpecialHit implements IPacket {
 
-    private final HitboxType[] hitboxes;
+    private final long hitboxSet;
     private final IMelee.IAttackType type;
     private final int victimId;
 
-    public PacketCSSpecialHit(int victimId, IMelee.IAttackType type, HitboxType... hitboxes) {
-        this.hitboxes = hitboxes;
+    public PacketCSSpecialHit(int victimId, IMelee.IAttackType type, long hitboxSet) {
+        this.hitboxSet = hitboxSet;
         this.victimId = victimId;
         this.type = type;
     }
@@ -26,21 +25,14 @@ public class PacketCSSpecialHit implements IPacket {
     public static PacketCSSpecialHit decode(FriendlyByteBuf buffer) {
         int victimId = buffer.readVarInt();
         IMelee.IAttackType type = IMelee.IAttackType.decode(buffer);
-        int length = buffer.readVarInt();
-        HitboxType[] hitboxes = new HitboxType[length];
-        for (int i = 0; i < length; i++) {
-            hitboxes[i] = buffer.readEnum(HitboxType.class);
-        }
-        return new PacketCSSpecialHit(victimId, type, hitboxes);
+        long hitboxSet = buffer.readVarLong();
+        return new PacketCSSpecialHit(victimId, type, hitboxSet);
     }
 
     public static void encode(PacketCSSpecialHit packet, FriendlyByteBuf buffer) {
         buffer.writeVarInt(packet.victimId);
         packet.type.encode(buffer);
-        buffer.writeVarInt(packet.hitboxes.length);
-        for (HitboxType hitbox : packet.hitboxes) {
-            buffer.writeEnum(hitbox);
-        }
+        buffer.writeVarLong(packet.hitboxSet);
     }
 
     public static void handle(PacketCSSpecialHit packet, Supplier<NetworkEvent.Context> context) {
@@ -51,7 +43,7 @@ public class PacketCSSpecialHit implements IPacket {
                 assert player != null;
                 Entity victim = player.level.getEntity(packet.victimId);
                 if (victim != null) {
-                    EntityHelper.attackEntity(player, victim, packet.type, packet.hitboxes);
+                    EntityHelper.attackEntity(player, victim, packet.type, packet.hitboxSet);
                 }
             });
             c.setPacketHandled(true);

@@ -73,7 +73,7 @@ public abstract class ItemInHandLayerMixin<T extends LivingEntity, M extends Ent
             this.getParentModel().translateToHand(arm, matrices);
             matrices.mulPose(CommonRotations.XN90);
             boolean leftArm = arm == HumanoidArm.LEFT;
-            matrices.translate((leftArm ? -1 : 1) / 16.0, 0.125, -0.625);
+            matrices.translate((leftArm ? -1 : 1) / 16.0, 2 / 16.0, -6 / 16.0);
             Minecraft.getInstance().getItemInHandRenderer().renderItem(entity, stack, type, leftArm, matrices, buffer, light);
             matrices.popPose();
         }

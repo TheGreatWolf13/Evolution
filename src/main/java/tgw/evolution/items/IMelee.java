@@ -1,13 +1,23 @@
 package tgw.evolution.items;
 
+import com.mojang.datafixers.util.Either;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.client.tooltip.*;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.hitbox.ColliderHitbox;
 import tgw.evolution.util.hitbox.HitboxType;
-import tgw.evolution.util.math.AABBMutable;
+
+import java.util.List;
 
 public interface IMelee {
 
@@ -19,7 +29,7 @@ public interface IMelee {
 
         @Override
         public int getAttackTime() {
-            return 6;
+            return 10;
         }
 
         @Override
@@ -28,8 +38,18 @@ public interface IMelee {
         }
 
         @Override
+        public EvolutionDamage.Type getDamageType() {
+            return EvolutionDamage.Type.CRUSHING;
+        }
+
+        @Override
+        public double getDmgMultiplier(IMelee melee, ItemStack stack) {
+            return 1;
+        }
+
+        @Override
         public int getFollowUps() {
-            return 0;
+            return 9;
         }
 
         @Override
@@ -58,28 +78,74 @@ public interface IMelee {
         }
     };
 
-    double getAttackDamage(ItemStack stack, IAttackType attackType);
-
-    double getAttackSpeed(ItemStack stack);
-
     int getAutoAttackTime(ItemStack stack);
 
     BasicAttackType getBasicAttackType(ItemStack stack);
 
+    SoundEvent getBlockHitSound(ItemStack stack);
+
     @Nullable ChargeAttackType getChargeAttackType(ItemStack stack);
 
-    EvolutionDamage.Type getDamageType(ItemStack stack, IMelee.IAttackType attackType);
+    int getCooldown(ItemStack stack);
+
+    double getDmgMultiplier(ItemStack stack, EvolutionDamage.Type type);
 
     int getMinAttackTime(ItemStack stack);
 
     boolean isHoldable(ItemStack stack);
 
+    default void makeTooltip(Player player, List<Either<FormattedText, TooltipComponent>> tooltip, ItemStack stack) {
+        tooltip.add(EvolutionTexts.basicAttack());
+        IMelee.BasicAttackType basicAttack = this.getBasicAttackType(stack);
+        int followUps = basicAttack.getFollowUps();
+        if (followUps > 0) {
+            tooltip.add(TooltipFollowUp.followUp(followUps));
+        }
+        double mult = basicAttack.getDmgMultiplier(this, stack);
+        tooltip.add(TooltipDmgMultiplier.basic(mult));
+        double dmg = player.getAttributeValue(Attributes.ATTACK_DAMAGE);
+        tooltip.add(TooltipDamage.basic(basicAttack.getDamageType(), mult * dmg));
+        int cooldown = this.getCooldown(stack);
+        tooltip.add(TooltipCooldown.cooldown(cooldown));
+        IMelee.ChargeAttackType chargeAttack = this.getChargeAttackType(stack);
+        if (chargeAttack != null) {
+            tooltip.add(EvolutionTexts.EITHER_EMPTY);
+            tooltip.add(EvolutionTexts.chargeAttack());
+            mult = chargeAttack.getDmgMultiplier(this, stack);
+            tooltip.add(TooltipDmgMultiplier.charge(mult));
+            tooltip.add(TooltipDamage.charge(chargeAttack.getDamageType(), mult * dmg));
+            tooltip.add(TooltipCooldown.cooldown(cooldown));
+        }
+        if (stack.getItem() instanceof IThrowable throwable && throwable.isThrowable(stack)) {
+            tooltip.add(EvolutionTexts.EITHER_EMPTY);
+            tooltip.add(EvolutionTexts.throwAttack());
+            tooltip.add(TooltipThrowSpeed.throwSpeed(throwable.projectileSpeed()));
+            tooltip.add(TooltipPrecision.precision(throwable.precision()));
+            tooltip.add(TooltipDmgMultiplier.thrown(mult));
+            EvolutionDamage.Type type = throwable.projectileDamageType();
+            tooltip.add(TooltipDamage.thrown(type, dmg * this.getDmgMultiplier(stack, type)));
+            if (throwable.isDamageProportionalToMomentum()) {
+                tooltip.add(TooltipInfo.info(EvolutionTexts.TOOLTIP_DAMAGE_PROPORTIONAL));
+            }
+        }
+    }
+
     boolean shouldPlaySheatheSound(ItemStack stack);
 
     enum BasicAttackType implements IAttackType {
-        AXE_SWEEP(10, new ColliderHitbox(HitboxType.AXE, AABBMutable.block(0.25, -7.5, -4.75, -1.25, -14.5, 2.25))),
-        SPEAR_STAB(15, new ColliderHitbox(HitboxType.SPEAR, AABBMutable.block(0.25, -12.0, -1.25, -1.25, -20.0, 2.5))),
-        SWORD(10, null);
+        AXE_STRIKE_1(12, new ColliderHitbox(HitboxType.NONE, -0.75 * 0.85, 0, -5 * Mth.SQRT_OF_TWO * 0.85, 0.75 * 0.85, -5 * Mth.SQRT_OF_TWO * 0.85,
+                                            -9 * Mth.SQRT_OF_TWO * 0.85)),
+        HAMMER_STRIKE_1(12, null),
+        HOE_STRIKE_1(12, new ColliderHitbox(HitboxType.NONE, -1.25 * 0.85, 0, -6 * Mth.SQRT_OF_TWO * 0.85, 1.25 * 0.85, -5 * Mth.SQRT_OF_TWO * 0.85,
+                                            -9 * Mth.SQRT_OF_TWO * 0.85)),
+        JAVELIN_THRUST(15, new ColliderHitbox(HitboxType.NONE, -0.5 * 0.85, -1.5 * Mth.SQRT_OF_TWO * 0.85, -14 * Mth.SQRT_OF_TWO * 0.85, 0.5 * 0.85,
+                                              1.5 * Mth.SQRT_OF_TWO * 0.85, -8 * Mth.SQRT_OF_TWO * 0.85)),
+        MACE_STRIKE_1(12, null),
+        PICKAXE_STRIKE_1(12, new ColliderHitbox(HitboxType.NONE, -1 * 0.85, -4 * Mth.SQRT_OF_TWO * 0.85, -4 * Mth.SQRT_OF_TWO * 0.85, 1 * 0.85,
+                                                4 * Mth.SQRT_OF_TWO * 0.85, -7 * Mth.SQRT_OF_TWO * 0.85)),
+        SHOVEL_STRIKE_1(12, new ColliderHitbox(HitboxType.NONE, 0, -2 * Mth.SQRT_OF_TWO * 0.85, -6 * Mth.SQRT_OF_TWO * 0.85, -1.5 * 0.85,
+                                               2 * Mth.SQRT_OF_TWO * 0.85, -10 * Mth.SQRT_OF_TWO * 0.85, false)),
+        TORCH_SWEEP(10, null);
 
         private final int attackTime;
         private final @Nullable ColliderHitbox collider;
@@ -102,51 +168,77 @@ public interface IMelee {
 
         @Override
         public @Nullable ColliderHitbox getCollider(HumanoidArm arm) {
-            return this.collider;
+            if (this.collider != null) {
+                return this.collider.adjust(arm);
+            }
+            return null;
+        }
+
+        @Override
+        public EvolutionDamage.Type getDamageType() {
+            return switch (this) {
+                case AXE_STRIKE_1, HOE_STRIKE_1 -> EvolutionDamage.Type.SLASHING;
+                case HAMMER_STRIKE_1, MACE_STRIKE_1, SHOVEL_STRIKE_1, TORCH_SWEEP -> EvolutionDamage.Type.CRUSHING;
+                case JAVELIN_THRUST, PICKAXE_STRIKE_1 -> EvolutionDamage.Type.PIERCING;
+            };
+        }
+
+        @Override
+        public double getDmgMultiplier(IMelee melee, ItemStack stack) {
+            return melee.getDmgMultiplier(stack, this.getDamageType());
         }
 
         @Override
         public int getFollowUps() {
             return switch (this) {
-                case AXE_SWEEP, SWORD -> 2;
-                case SPEAR_STAB -> 1;
+                case AXE_STRIKE_1, MACE_STRIKE_1 -> 2;
+                case JAVELIN_THRUST, HAMMER_STRIKE_1, HOE_STRIKE_1 -> 1;
+                case PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> 0;
+                case TORCH_SWEEP -> 4;
             };
         }
 
         @Override
         public boolean isCameraLocked(int tick) {
             return switch (this) {
-                case AXE_SWEEP, SWORD -> false;
-                case SPEAR_STAB -> tick >= 7;
+                case AXE_STRIKE_1, HAMMER_STRIKE_1, HOE_STRIKE_1, MACE_STRIKE_1, PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> tick >= 6;
+                case JAVELIN_THRUST -> tick >= 8;
+                case TORCH_SWEEP -> false;
             };
         }
 
         @Override
         public boolean isHitTick(int tick) {
             return switch (this) {
-                case AXE_SWEEP, SWORD -> true;
-                case SPEAR_STAB -> tick > 10;
+                case AXE_STRIKE_1, HAMMER_STRIKE_1, HOE_STRIKE_1, MACE_STRIKE_1, PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> tick > 6;
+                case JAVELIN_THRUST -> tick > 7;
+                case TORCH_SWEEP -> true;
             };
         }
 
         @Override
         public boolean isLateralMotionLocked(int tick) {
             return switch (this) {
-                case AXE_SWEEP, SWORD -> false;
-                case SPEAR_STAB -> tick >= 7;
+                case AXE_STRIKE_1, HAMMER_STRIKE_1, HOE_STRIKE_1, MACE_STRIKE_1, PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> tick > 6;
+                case JAVELIN_THRUST -> tick >= 7;
+                case TORCH_SWEEP -> false;
             };
         }
 
         @Override
         public boolean isLongitudinalMotionLocked(int tick) {
-            return false;
+            return switch (this) {
+                case AXE_STRIKE_1, JAVELIN_THRUST, TORCH_SWEEP -> false;
+                case HAMMER_STRIKE_1, HOE_STRIKE_1, MACE_STRIKE_1, PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> tick > 8;
+            };
         }
 
         @Override
         public boolean isVerticalMotionLocked(int tick) {
             return switch (this) {
-                case AXE_SWEEP, SWORD -> false;
-                case SPEAR_STAB -> tick >= 7;
+                case AXE_STRIKE_1, HAMMER_STRIKE_1, HOE_STRIKE_1, MACE_STRIKE_1, PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> tick > 6;
+                case JAVELIN_THRUST -> tick >= 7;
+                case TORCH_SWEEP -> false;
             };
         }
     }
@@ -170,6 +262,18 @@ public interface IMelee {
         public ColliderHitbox getCollider(HumanoidArm arm) {
             //TODO implementation
             return null;
+        }
+
+        @Override
+        public EvolutionDamage.Type getDamageType() {
+            //TODO implementation
+            return null;
+        }
+
+        @Override
+        public double getDmgMultiplier(IMelee melee, ItemStack stack) {
+            //TODO implementation
+            return 0;
         }
 
         @Override
@@ -233,6 +337,10 @@ public interface IMelee {
         int getAttackTime();
 
         @Nullable ColliderHitbox getCollider(HumanoidArm arm);
+
+        EvolutionDamage.Type getDamageType();
+
+        double getDmgMultiplier(IMelee melee, ItemStack stack);
 
         int getFollowUps();
 
