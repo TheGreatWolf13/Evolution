@@ -7,8 +7,8 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import tgw.evolution.patches.IEntityPatch;
-import tgw.evolution.util.hitbox.EvolutionEntityHitboxes;
-import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.hitbox.LegacyEntityHitboxes;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 
 @Mixin(Zombie.class)
 public abstract class ZombieMixin extends Monster implements IEntityPatch {
@@ -20,6 +20,6 @@ public abstract class ZombieMixin extends Monster implements IEntityPatch {
     @Nullable
     @Override
     public HitboxEntity<Zombie> getHitboxes() {
-        return EvolutionEntityHitboxes.ZOMBIE;
+        return LegacyEntityHitboxes.ZOMBIE;
     }
 }

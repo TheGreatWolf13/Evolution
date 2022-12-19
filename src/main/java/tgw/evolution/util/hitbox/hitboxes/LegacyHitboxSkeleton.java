@@ -1,17 +1,18 @@
-package tgw.evolution.util.hitbox;
+package tgw.evolution.util.hitbox.hitboxes;
 
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.monster.AbstractSkeleton;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.util.ArmPose;
+import tgw.evolution.util.hitbox.*;
 import tgw.evolution.util.hitbox.hms.HM;
 import tgw.evolution.util.hitbox.hms.HMDummy;
-import tgw.evolution.util.hitbox.hms.HMSkeleton;
-import tgw.evolution.util.hitbox.hrs.HRSkeleton;
+import tgw.evolution.util.hitbox.hms.LegacyHMSkeleton;
+import tgw.evolution.util.hitbox.hrs.LegacyHRSkeleton;
 
-public final class HitboxSkeleton extends HitboxEntity<AbstractSkeleton>
-        implements HMSkeleton<AbstractSkeleton>, HRSkeleton, IHitboxArmed<AbstractSkeleton> {
+public final class LegacyHitboxSkeleton extends HitboxEntity<AbstractSkeleton>
+        implements LegacyHMSkeleton<AbstractSkeleton>, LegacyHRSkeleton, IHitboxArmed<AbstractSkeleton> {
 
     private final HitboxGroup armL;
     private final HitboxGroup armR;
@@ -28,7 +29,7 @@ public final class HitboxSkeleton extends HitboxEntity<AbstractSkeleton>
     private boolean shouldCancelRight;
     private float swimAmount;
 
-    public HitboxSkeleton() {
+    public LegacyHitboxSkeleton() {
         //Head
         this.head = this.addBox(HitboxType.HEAD, HitboxLib.HUMANOID_HEAD, 0, 24, 0, this);
         //Body
@@ -162,7 +163,7 @@ public final class HitboxSkeleton extends HitboxEntity<AbstractSkeleton>
     }
 
     @Override
-    public HMSkeleton<AbstractSkeleton> model() {
+    public LegacyHMSkeleton<AbstractSkeleton> model() {
         return this;
     }
 

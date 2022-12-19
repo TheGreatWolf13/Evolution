@@ -92,10 +92,10 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
         }
         matrices.pushPose();
         this.renderOrInit(entity, (HR) matrices, partialTicks);
-        Minecraft minecraft = Minecraft.getInstance();
+        Minecraft mc = Minecraft.getInstance();
         boolean bodyVisible = this.isBodyVisible(entity);
-        boolean translucent = !bodyVisible && !entity.isInvisibleTo(minecraft.player);
-        boolean glowing = minecraft.shouldEntityAppearGlowing(entity);
+        boolean translucent = !bodyVisible && mc.player != null && !entity.isInvisibleTo(mc.player);
+        boolean glowing = mc.shouldEntityAppearGlowing(entity);
         RenderType renderType = this.getRenderType(entity, bodyVisible, translucent, glowing);
         if (renderType != null) {
             VertexConsumer buffer = buf.getBuffer(renderType);

@@ -25,7 +25,7 @@ import tgw.evolution.blocks.ISittableBlock;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.patches.IEntityPatch;
-import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.AABBMutable;
 
 public class EntitySittable extends Entity implements IEntityPatch<EntitySittable>, ISittableEntity, IEntityAdditionalSpawnData {

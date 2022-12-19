@@ -38,6 +38,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
@@ -93,7 +94,7 @@ import tgw.evolution.util.HitInformation;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.collection.*;
 import tgw.evolution.util.constants.OptiFineHelper;
-import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.toast.ToastHolderRecipe;
@@ -1205,6 +1206,13 @@ public class ClientEvents {
 
     public void startChargeAttack(IMelee.ChargeAttackType chargeAttack) {
         assert this.mc.player != null;
+        assert this.mc.gameMode != null;
+        if (this.mc.gameMode.getPlayerMode() == GameType.SPECTATOR) {
+            if (this.mc.crosshairPickEntity != null) {
+                this.mc.gameMode.attack(this.mc.player, this.mc.crosshairPickEntity);
+            }
+            return;
+        }
         ILivingEntityPatch player = (ILivingEntityPatch) this.mc.player;
         if (!player.isLockedInSpecialAttack()) {
             player.startSpecialAttack(chargeAttack);
@@ -1216,6 +1224,13 @@ public class ClientEvents {
 
     public void startShortAttack(ItemStack stack) {
         assert this.mc.player != null;
+        assert this.mc.gameMode != null;
+        if (this.mc.gameMode.getPlayerMode() == GameType.SPECTATOR) {
+            if (this.mc.crosshairPickEntity != null) {
+                this.mc.gameMode.attack(this.mc.player, this.mc.crosshairPickEntity);
+            }
+            return;
+        }
         IMelee.IAttackType type = stack.getItem() instanceof IMelee melee ? melee.getBasicAttackType(stack) : IMelee.BARE_HAND_ATTACK;
         ILivingEntityPatch player = (ILivingEntityPatch) this.mc.player;
         if (player.isOnGracePeriod()) {

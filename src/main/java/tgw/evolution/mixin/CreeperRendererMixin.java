@@ -9,10 +9,10 @@ import net.minecraft.world.entity.monster.Creeper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import tgw.evolution.util.hitbox.hrs.HR;
-import tgw.evolution.util.hitbox.hrs.HRCreeper;
+import tgw.evolution.util.hitbox.hrs.LegacyHRCreeper;
 
 @Mixin(CreeperRenderer.class)
-public abstract class CreeperRendererMixin extends MobRenderer<Creeper, CreeperModel<Creeper>> implements HRCreeper {
+public abstract class CreeperRendererMixin extends MobRenderer<Creeper, CreeperModel<Creeper>> implements LegacyHRCreeper {
 
     public CreeperRendererMixin(EntityRendererProvider.Context pContext,
                                 CreeperModel<Creeper> pModel, float pShadowRadius) {

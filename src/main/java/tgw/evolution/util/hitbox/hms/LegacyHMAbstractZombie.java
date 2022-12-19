@@ -2,7 +2,7 @@ package tgw.evolution.util.hitbox.hms;
 
 import net.minecraft.world.entity.monster.Monster;
 
-public interface HMAbstractZombie<T extends Monster> extends HMHumanoid<T> {
+public interface LegacyHMAbstractZombie<T extends Monster> extends HMHumanoid<T> {
 
     boolean aggresive(T entity);
 

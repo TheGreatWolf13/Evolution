@@ -15,10 +15,10 @@ import net.minecraft.world.entity.monster.RangedAttackMob;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import tgw.evolution.client.models.CubeListBuilderEv;
-import tgw.evolution.util.hitbox.hms.HMSkeleton;
+import tgw.evolution.util.hitbox.hms.LegacyHMSkeleton;
 
 @Mixin(SkeletonModel.class)
-public abstract class SkeletonModelMixin<T extends Mob & RangedAttackMob> extends HumanoidModel<T> implements HMSkeleton<T> {
+public abstract class SkeletonModelMixin<T extends Mob & RangedAttackMob> extends HumanoidModel<T> implements LegacyHMSkeleton<T> {
 
     public SkeletonModelMixin(ModelPart pRoot) {
         super(pRoot);

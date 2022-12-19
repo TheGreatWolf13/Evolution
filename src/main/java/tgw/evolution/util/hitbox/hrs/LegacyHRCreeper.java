@@ -2,9 +2,9 @@ package tgw.evolution.util.hitbox.hrs;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.monster.Creeper;
-import tgw.evolution.util.hitbox.hms.HMCreeper;
+import tgw.evolution.util.hitbox.hms.LegacyHMCreeper;
 
-public interface HRCreeper extends HRMob<Creeper, HMCreeper<Creeper>> {
+public interface LegacyHRCreeper extends HRMob<Creeper, LegacyHMCreeper<Creeper>> {
 
     @Override
     default void setScale(Creeper entity, HR hr, float partialTicks) {

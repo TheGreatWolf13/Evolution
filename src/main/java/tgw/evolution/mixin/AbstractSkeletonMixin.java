@@ -7,8 +7,8 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import tgw.evolution.patches.ILivingEntityPatch;
-import tgw.evolution.util.hitbox.EvolutionEntityHitboxes;
-import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.hitbox.LegacyEntityHitboxes;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 
 @Mixin(AbstractSkeleton.class)
 public abstract class AbstractSkeletonMixin extends Monster implements ILivingEntityPatch<AbstractSkeleton> {
@@ -19,6 +19,6 @@ public abstract class AbstractSkeletonMixin extends Monster implements ILivingEn
 
     @Override
     public @Nullable HitboxEntity<AbstractSkeleton> getHitboxes() {
-        return EvolutionEntityHitboxes.SKELETON;
+        return LegacyEntityHitboxes.SKELETON;
     }
 }

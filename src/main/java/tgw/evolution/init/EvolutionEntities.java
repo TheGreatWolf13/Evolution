@@ -3,6 +3,7 @@ package tgw.evolution.init;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.biome.Biome;
@@ -100,16 +101,17 @@ public final class EvolutionEntities {
     }
 
     public static void modifyEntityAttribute(EntityAttributeModificationEvent event) {
-        event.add(EntityType.PLAYER, Attributes.MAX_HEALTH, PlayerHelper.MAX_HEALTH);
-        event.add(EntityType.PLAYER, Attributes.ATTACK_DAMAGE, PlayerHelper.ATTACK_DAMAGE);
+        //Player
         event.add(EntityType.PLAYER, Attributes.ATTACK_SPEED, PlayerHelper.ATTACK_SPEED);
         event.add(EntityType.PLAYER, ForgeMod.REACH_DISTANCE.get(), PlayerHelper.REACH_DISTANCE);
-        event.add(EntityType.PLAYER, Attributes.MOVEMENT_SPEED, PlayerHelper.WALK_FORCE);
-        event.add(EntityType.PLAYER, EvolutionAttributes.FRICTION.get());
         event.add(EntityType.PLAYER, EvolutionAttributes.COLD_RESISTANCE.get());
         event.add(EntityType.PLAYER, EvolutionAttributes.HEAT_RESISTANCE.get());
+        //Add mass and friction to all entities
+        final Attribute mass = EvolutionAttributes.MASS.get();
+        final Attribute friction = EvolutionAttributes.FRICTION.get();
         for (EntityType type : ForgeRegistries.ENTITIES.getValues()) {
-            event.add(type, EvolutionAttributes.MASS.get());
+            event.add(type, mass);
+            event.add(type, friction);
         }
     }
 

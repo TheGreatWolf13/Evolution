@@ -113,9 +113,11 @@ public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> 
         }
     }
 
-    public abstract float getBaseHealth();
+    @Override
+    public abstract double getBaseHealth();
 
-    public abstract float getBaseWalkForce();
+    @Override
+    public abstract double getBaseWalkForce();
 
     @Override
     public Direction getBedOrientation() {

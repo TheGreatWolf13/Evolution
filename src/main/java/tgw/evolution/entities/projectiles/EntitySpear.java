@@ -13,6 +13,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +27,8 @@ import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.damage.DamageSourceEv;
-import tgw.evolution.util.hitbox.HitboxEntity;
 import tgw.evolution.util.hitbox.IHitboxArmed;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.Vec3d;
 
 public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements IAerodynamicEntity {
@@ -126,7 +127,8 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
 
     @Override
     protected void modifyMovementOnCollision() {
-        this.setDeltaMovement(this.getDeltaMovement().multiply(-0.1, -0.1, -0.1));
+        Vec3 velocity = this.getDeltaMovement();
+        this.setDeltaMovement(velocity.x * -0.1, velocity.y * -0.1, velocity.z * -0.1);
     }
 
     @Override

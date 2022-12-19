@@ -1,4 +1,4 @@
-package tgw.evolution.util.hitbox;
+package tgw.evolution.util.hitbox.hitboxes;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -14,6 +14,7 @@ import tgw.evolution.items.IMelee;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.collection.RArrayList;
 import tgw.evolution.util.collection.RList;
+import tgw.evolution.util.hitbox.*;
 import tgw.evolution.util.hitbox.hms.HMEntity;
 import tgw.evolution.util.hitbox.hrs.HR;
 import tgw.evolution.util.hitbox.hrs.HREntity;
@@ -46,7 +47,7 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
         this.boxes = new RArrayList<>();
     }
 
-    protected static AABB box(double minX, double minY, double minZ, double dimX, double dimY, double dimZ) {
+    public static AABB box(double minX, double minY, double minZ, double dimX, double dimY, double dimZ) {
         return new AABB(minX / 16, minY / 16, minZ / 16, (minX + dimX) / 16, (minY + dimY) / 16, (minZ + dimZ) / 16);
     }
 
@@ -187,6 +188,30 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
         this.cachedRenderOffset.set(this.renderOffset(entity, partialTicks));
     }
 
+    public final double postUntransformX(double x, double y, double z) {
+        return this.transform.postUntransformX(x, y, z);
+    }
+
+    public final double postUntransformY(double x, double y, double z) {
+        return this.transform.postUntransformY(x, y, z);
+    }
+
+    public final double postUntransformZ(double x, double y, double z) {
+        return this.transform.postUntransformZ(x, y, z);
+    }
+
+    public final double preUntransformX(double x) {
+        return this.transform.preUntransformX(x);
+    }
+
+    public final double preUntransformY(double y) {
+        return this.transform.preUntransformY(y);
+    }
+
+    public final double preUntransformZ(double z) {
+        return this.transform.preUntransformZ(z);
+    }
+
     protected abstract double relativeHeadOrRootX();
 
     protected abstract double relativeHeadOrRootY();
@@ -256,6 +281,11 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
     }
 
     @Override
+    public void setShadowRadius(float radius) {
+        //Do nothing
+    }
+
+    @Override
     public void setYoung(boolean young) {
         this.young = young;
     }
@@ -292,18 +322,6 @@ public abstract class HitboxEntity<T extends Entity> implements HMEntity<T>, HRE
     @CanIgnoreReturnValue
     public final Vec3d untransform(Vec3d vec) {
         return this.transform.untransform(vec);
-    }
-
-    public final double untransformX(double x, double y, double z) {
-        return this.transform.untransformX(x, y, z);
-    }
-
-    public final double untransformY(double x, double y, double z) {
-        return this.transform.untransformY(x, y, z);
-    }
-
-    public final double untransformZ(double x, double y, double z) {
-        return this.transform.untransformZ(x, y, z);
     }
 
     @Override

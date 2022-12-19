@@ -1,4 +1,4 @@
-package tgw.evolution.client.models;
+package tgw.evolution.client.models.entities;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -9,7 +9,7 @@ import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
-import tgw.evolution.client.models.entities.ModelHumanoid;
+import tgw.evolution.client.models.CubeListBuilderEv;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.util.collection.RArrayList;
 import tgw.evolution.util.collection.RList;

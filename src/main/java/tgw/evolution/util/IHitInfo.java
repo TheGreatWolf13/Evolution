@@ -2,9 +2,9 @@ package tgw.evolution.util;
 
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Range;
-import tgw.evolution.util.hitbox.HitboxEntity;
 import tgw.evolution.util.hitbox.HitboxType;
 import tgw.evolution.util.hitbox.Matrix4d;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.Vec3d;
 
 public interface IHitInfo {

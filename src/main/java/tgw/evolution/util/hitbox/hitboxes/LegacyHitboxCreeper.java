@@ -1,14 +1,17 @@
-package tgw.evolution.util.hitbox;
+package tgw.evolution.util.hitbox.hitboxes;
 
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.monster.Creeper;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.items.IMelee;
+import tgw.evolution.util.hitbox.Hitbox;
+import tgw.evolution.util.hitbox.HitboxLib;
+import tgw.evolution.util.hitbox.HitboxType;
 import tgw.evolution.util.hitbox.hms.HM;
-import tgw.evolution.util.hitbox.hms.HMCreeper;
-import tgw.evolution.util.hitbox.hrs.HRCreeper;
+import tgw.evolution.util.hitbox.hms.LegacyHMCreeper;
+import tgw.evolution.util.hitbox.hrs.LegacyHRCreeper;
 
-public final class HitboxCreeper extends HitboxEntity<Creeper> implements HMCreeper<Creeper>, HRCreeper {
+public final class LegacyHitboxCreeper extends HitboxEntity<Creeper> implements LegacyHMCreeper<Creeper>, LegacyHRCreeper {
 
     private final Hitbox head;
     private final Hitbox legFL;
@@ -16,7 +19,7 @@ public final class HitboxCreeper extends HitboxEntity<Creeper> implements HMCree
     private final Hitbox legHL;
     private final Hitbox legHR;
 
-    public HitboxCreeper() {
+    public LegacyHitboxCreeper() {
         this.head = this.addBox(HitboxType.HEAD, HitboxLib.HUMANOID_HEAD, 0, 18, 0, this);
         this.addBox(HitboxType.CHEST, box(-4, -12, -2, 8, 12, 4), 0, 18, 0, this);
         this.legFL = this.addBox(HitboxType.LEG_FRONT_LEFT, HitboxLib.CREEPER_LEG, -2, 6, -4, this);
@@ -47,17 +50,27 @@ public final class HitboxCreeper extends HitboxEntity<Creeper> implements HMCree
     }
 
     @Override
-    public HM leftFrontLeg() {
+    public HM legFL() {
         return this.legFL;
     }
 
     @Override
-    public HM leftHindLeg() {
+    public HM legFR() {
+        return this.legFR;
+    }
+
+    @Override
+    public HM legHL() {
         return this.legHL;
     }
 
     @Override
-    public HMCreeper<Creeper> model() {
+    public HM legHR() {
+        return this.legHR;
+    }
+
+    @Override
+    public LegacyHMCreeper<Creeper> model() {
         return this;
     }
 
@@ -74,16 +87,6 @@ public final class HitboxCreeper extends HitboxEntity<Creeper> implements HMCree
     @Override
     protected double relativeHeadOrRootZ() {
         return -4 / 16.0;
-    }
-
-    @Override
-    public HM rightFrontLeg() {
-        return this.legFR;
-    }
-
-    @Override
-    public HM rightHindLeg() {
-        return this.legHR;
     }
 
     @Override

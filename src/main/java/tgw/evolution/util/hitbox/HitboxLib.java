@@ -2,7 +2,7 @@ package tgw.evolution.util.hitbox;
 
 import net.minecraft.world.phys.AABB;
 
-import static tgw.evolution.util.hitbox.HitboxEntity.box;
+import static tgw.evolution.util.hitbox.hitboxes.HitboxEntity.box;
 
 public final class HitboxLib {
 

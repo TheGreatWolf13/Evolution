@@ -514,7 +514,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Override
     public float getFrictionModifier() {
-        return 2.0f;
+        return (float) this.getAttributeValue(EvolutionAttributes.FRICTION.get());
     }
 
     @Shadow
@@ -722,43 +722,28 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         double frictionX = 0;
         double frictionZ = 0;
         boolean isActiveWalking = accX != 0 || accZ != 0;
-        if (!isActiveWalking) {
-            double norm = Math.sqrt(motionX * motionX + motionZ * motionZ);
-            if (norm != 0) {
-                frictionX = motionX / norm * frictionAcc;
-                frictionZ = motionZ / norm * frictionAcc;
-            }
-            if (Math.abs(motionX) < Math.abs(frictionX)) {
-                frictionX = motionX;
-            }
-            if (Math.abs(motionZ) < Math.abs(frictionZ)) {
-                frictionZ = motionZ;
-            }
+        if (!isActiveWalking && (motionX != 0 || motionZ != 0)) {
+            double norm = Mth.fastInvSqrt(motionX * motionX + motionZ * motionZ);
+            frictionX = motionX * norm * frictionAcc;
+            frictionZ = motionZ * norm * frictionAcc;
         }
         double dragX = Math.signum(motionX) * motionX * motionX * horizontalDrag;
-        if (Math.abs(dragX) > Math.abs(motionX)) {
-            dragX = motionX;
-        }
         double dragY = Math.signum(motionY) * motionY * motionY * verticalDrag;
+        double dragZ = Math.signum(motionZ) * motionZ * motionZ * horizontalDrag;
+        double dissipativeX = legSlowDownX + frictionX + dragX;
+        if (Math.abs(dissipativeX) > Math.abs(motionX)) {
+            dissipativeX = motionX;
+        }
         if (Math.abs(dragY) > Math.abs(motionY)) {
             dragY = motionY;
         }
-        double dragZ = Math.signum(motionZ) * motionZ * motionZ * horizontalDrag;
-        if (Math.abs(dragZ) > Math.abs(motionZ)) {
-            dragZ = motionZ;
+        double dissipativeZ = legSlowDownZ + frictionZ + dragZ;
+        if (Math.abs(dissipativeZ) > Math.abs(motionZ)) {
+            dissipativeZ = motionZ;
         }
-        motionX += accX - legSlowDownX - frictionX - dragX;
+        motionX += accX - dissipativeX;
         motionY += accY - dragY;
-        motionZ += accZ - legSlowDownZ - frictionZ - dragZ;
-        if (Math.abs(motionX) < 1e-6) {
-            motionX = 0;
-        }
-        if (Math.abs(motionY) < 1e-6) {
-            motionY = 0;
-        }
-        if (Math.abs(motionZ) < 1e-6) {
-            motionZ = 0;
-        }
+        motionZ += accZ - dissipativeZ;
         if (Double.isNaN(motionX)) {
             motionX = 0;
         }
@@ -1075,6 +1060,17 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         AttributeInstance massAtr = this.getAttribute(EvolutionAttributes.MASS.get());
         assert massAtr != null;
         massAtr.setBaseValue(this.getBaseMass());
+        AttributeInstance walkForceAtr = this.getAttribute(Attributes.MOVEMENT_SPEED);
+        assert walkForceAtr != null;
+        walkForceAtr.setBaseValue(this.getBaseWalkForce());
+        AttributeInstance healthAtr = this.getAttribute(Attributes.MAX_HEALTH);
+        assert healthAtr != null;
+        healthAtr.setBaseValue(this.getBaseHealth());
+        this.setHealth(this.getMaxHealth());
+        AttributeInstance damageAtr = this.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (damageAtr != null) {
+            damageAtr.setBaseValue(this.getBaseAttackDamage());
+        }
     }
 
     @Shadow

@@ -20,7 +20,8 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.client.models.ModelPlayer;
+import tgw.evolution.client.models.entities.ModelPlayer;
+import tgw.evolution.client.util.ModelUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -102,7 +103,7 @@ public abstract class LayerDefinitionsMixin {
         builder.put(ModelLayers.DROWNED, DrownedModel.createBodyLayer(CubeDeformation.NONE));
         builder.put(ModelLayers.DROWNED_INNER_ARMOR, innerArmor);
         builder.put(ModelLayers.DROWNED_OUTER_ARMOR, innerArmor);
-        builder.put(ModelLayers.DROWNED_OUTER_LAYER, DrownedModel.createBodyLayer(new CubeDeformation(0.25F)));
+        builder.put(ModelLayers.DROWNED_OUTER_LAYER, DrownedModel.createBodyLayer(ModelUtils.DEF_025));
         builder.put(ModelLayers.ELDER_GUARDIAN, GuardianModel.createBodyLayer());
         builder.put(ModelLayers.ELYTRA, ElytraModel.createLayer());
         builder.put(ModelLayers.ENDERMAN, EndermanModel.createBodyLayer());
@@ -131,7 +132,7 @@ public abstract class LayerDefinitionsMixin {
         builder.put(ModelLayers.IRON_GOLEM, IronGolemModel.createBodyLayer());
         builder.put(ModelLayers.LEASH_KNOT, LeashKnotModel.createBodyLayer());
         builder.put(ModelLayers.LLAMA, llama);
-        builder.put(ModelLayers.LLAMA_DECOR, LlamaModel.createBodyLayer(new CubeDeformation(0.5F)));
+        builder.put(ModelLayers.LLAMA_DECOR, LlamaModel.createBodyLayer(ModelUtils.DEF_05));
         builder.put(ModelLayers.LLAMA_SPIT, LlamaSpitModel.createBodyLayer());
         builder.put(ModelLayers.MAGMA_CUBE, LavaSlimeModel.createBodyLayer());
         builder.put(ModelLayers.MINECART, minecart);
@@ -142,7 +143,7 @@ public abstract class LayerDefinitionsMixin {
         builder.put(ModelLayers.PARROT, ParrotModel.createBodyLayer());
         builder.put(ModelLayers.PHANTOM, PhantomModel.createBodyLayer());
         builder.put(ModelLayers.PIG, PigModel.createBodyLayer(CubeDeformation.NONE));
-        builder.put(ModelLayers.PIG_SADDLE, PigModel.createBodyLayer(new CubeDeformation(0.5F)));
+        builder.put(ModelLayers.PIG_SADDLE, PigModel.createBodyLayer(ModelUtils.DEF_05));
         builder.put(ModelLayers.PIGLIN, piglin);
         builder.put(ModelLayers.PIGLIN_INNER_ARMOR, innerArmor);
         builder.put(ModelLayers.PIGLIN_OUTER_ARMOR, piglinOuterArmor);
@@ -185,7 +186,7 @@ public abstract class LayerDefinitionsMixin {
         builder.put(ModelLayers.STRAY, skeleton);
         builder.put(ModelLayers.STRAY_INNER_ARMOR, innerArmor);
         builder.put(ModelLayers.STRAY_OUTER_ARMOR, outerArmor);
-        builder.put(ModelLayers.STRAY_OUTER_LAYER, LayerDefinition.create(HumanoidModel.createMesh(new CubeDeformation(0.25F), 0), 64, 32));
+        builder.put(ModelLayers.STRAY_OUTER_LAYER, LayerDefinition.create(HumanoidModel.createMesh(ModelUtils.DEF_025, 0), 64, 32));
         builder.put(ModelLayers.STRIDER, strider);
         builder.put(ModelLayers.STRIDER_SADDLE, strider);
         builder.put(ModelLayers.TNT_MINECART, minecart);

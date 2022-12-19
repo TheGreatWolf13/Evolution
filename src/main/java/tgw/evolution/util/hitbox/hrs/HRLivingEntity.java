@@ -31,7 +31,7 @@ public interface HRLivingEntity<T extends LivingEntity, M extends HMEntity<T>> e
     }
 
     default M model() {
-        throw new AssertionError();
+        throw new AssertionError("Hitbox should override this method!");
     }
 
     default void renderOrInit(T entity, HR hr, float partialTicks) {
@@ -129,7 +129,7 @@ public interface HRLivingEntity<T extends LivingEntity, M extends HMEntity<T>> e
     }
 
     default void setAgeInTicks(float ageInTicks) {
-        throw new AssertionError();
+        throw new AssertionError("Hitbox should override this method!");
     }
 
     default void setHeadPitch(float headPitch) {

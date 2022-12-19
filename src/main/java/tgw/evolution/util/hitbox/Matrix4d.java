@@ -21,6 +21,33 @@ public class Matrix4d {
     private double scaleY;
     private double scaleZ;
 
+    public double postUntransformX(double x, double y, double z) {
+        return x * this.m00 + y * this.m10 + z * this.m20;
+    }
+
+    public double postUntransformY(double x, double y, double z) {
+        return x * this.m01 + y * this.m11 + z * this.m21;
+    }
+
+    public double postUntransformZ(double x, double y, double z) {
+        return x * this.m02 + y * this.m12 + z * this.m22;
+    }
+
+    public double preUntransformX(double x) {
+        x /= this.scaleX;
+        return x - this.m03;
+    }
+
+    public double preUntransformY(double y) {
+        y /= this.scaleY;
+        return y - this.m13;
+    }
+
+    public double preUntransformZ(double z) {
+        z /= this.scaleZ;
+        return z - this.m23;
+    }
+
     public void rotateX(float deg) {
         this.rotateXRad(deg * Mth.DEG_TO_RAD);
     }
@@ -138,27 +165,10 @@ public class Matrix4d {
     }
 
     public Vec3d untransform(Vec3d vec) {
-        return vec.set(this.untransformX(vec.x, vec.y, vec.z), this.untransformY(vec.x, vec.y, vec.z), this.untransformZ(vec.x, vec.y, vec.z));
-    }
-
-    public double untransformX(double x, double y, double z) {
-        x /= this.scaleX;
-        y /= this.scaleY;
-        z /= this.scaleZ;
-        return x * this.m00 + y * this.m10 + z * this.m20 - this.m03;
-    }
-
-    public double untransformY(double x, double y, double z) {
-        x /= this.scaleX;
-        y /= this.scaleY;
-        z /= this.scaleZ;
-        return x * this.m01 + y * this.m11 + z * this.m21 - this.m13;
-    }
-
-    public double untransformZ(double x, double y, double z) {
-        x /= this.scaleX;
-        y /= this.scaleY;
-        z /= this.scaleZ;
-        return x * this.m02 + y * this.m12 + z * this.m22 - this.m23;
+        vec.divideMutable(this.scaleX, this.scaleY, this.scaleZ).subMutable(this.m03, this.m13, this.m23);
+        double x = vec.x;
+        double y = vec.y;
+        double z = vec.z;
+        return vec.set(this.postUntransformX(x, y, z), this.postUntransformY(x, y, z), this.postUntransformZ(x, y, z));
     }
 }

@@ -26,7 +26,7 @@ import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Score;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraftforge.client.ForgeHooksClient;
-import tgw.evolution.client.models.ModelPlayer;
+import tgw.evolution.client.models.entities.ModelPlayer;
 import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.patches.IPoseStackPatch;
@@ -229,6 +229,11 @@ public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, M
                 model.leftArmPose = mainArmPose;
             }
         }
+    }
+
+    @Override
+    public void setShadowRadius(float radius) {
+        this.shadowRadius = radius;
     }
 
     @Override

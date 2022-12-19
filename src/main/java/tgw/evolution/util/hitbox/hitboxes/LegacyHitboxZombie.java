@@ -1,4 +1,4 @@
-package tgw.evolution.util.hitbox;
+package tgw.evolution.util.hitbox.hitboxes;
 
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -9,12 +9,13 @@ import net.minecraft.world.entity.monster.Zombie;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.util.ArmPose;
+import tgw.evolution.util.hitbox.*;
 import tgw.evolution.util.hitbox.hms.HM;
-import tgw.evolution.util.hitbox.hms.HMAbstractZombie;
 import tgw.evolution.util.hitbox.hms.HMDummy;
+import tgw.evolution.util.hitbox.hms.LegacyHMAbstractZombie;
 import tgw.evolution.util.math.MathHelper;
 
-public final class HitboxZombie extends HitboxEntity<Zombie> implements HMAbstractZombie<Zombie>, IHitboxArmed<Zombie> {
+public final class LegacyHitboxZombie extends HitboxEntity<Zombie> implements LegacyHMAbstractZombie<Zombie>, IHitboxArmed<Zombie> {
 
     private final Hitbox body;
     private final HitboxAttachable handL;
@@ -37,7 +38,7 @@ public final class HitboxZombie extends HitboxEntity<Zombie> implements HMAbstra
     private float swimAmount;
     private boolean young;
 
-    public HitboxZombie() {
+    public LegacyHitboxZombie() {
         //Head
         this.head = this.addBox(HitboxType.HEAD, HitboxLib.HUMANOID_HEAD, this);
         //Body

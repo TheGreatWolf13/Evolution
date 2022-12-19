@@ -56,7 +56,7 @@ import tgw.evolution.patches.ISynchedEntityDataPatch;
 import tgw.evolution.util.EvolutionDataSerializers;
 import tgw.evolution.util.constants.NBTHelper;
 import tgw.evolution.util.earth.Gravity;
-import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.time.Time;
 
 import java.util.Optional;

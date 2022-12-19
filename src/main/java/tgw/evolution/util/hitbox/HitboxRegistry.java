@@ -70,27 +70,45 @@ public final class HitboxRegistry {
 
     public static void register() {
         Builder player = new Builder();
-        player.add(HitboxType.HEAD);
-        player.add(HitboxType.CHEST);
-        player.add(HitboxType.SHOULDER_RIGHT);
-        player.add(HitboxType.SHOULDER_LEFT);
-        player.add(HitboxType.ARM_RIGHT);
-        player.add(HitboxType.ARM_LEFT);
-        player.add(HitboxType.HAND_RIGHT);
-        player.add(HitboxType.HAND_LEFT);
-        player.add(HitboxType.LEG_RIGHT);
-        player.add(HitboxType.LEG_LEFT);
-        player.add(HitboxType.FOOT_RIGHT);
-        player.add(HitboxType.FOOT_LEFT);
-        player.register(EntityType.PLAYER);
+        player.add(HitboxType.HEAD)
+              .add(HitboxType.CHEST)
+              .add(HitboxType.SHOULDER_RIGHT)
+              .add(HitboxType.SHOULDER_LEFT)
+              .addArms()
+              .addHands()
+              .addLegs()
+              .add(HitboxType.FOOT_RIGHT)
+              .add(HitboxType.FOOT_LEFT)
+              .register(EntityType.PLAYER);
         Builder creeper = new Builder();
-        creeper.add(HitboxType.HEAD);
-        creeper.add(HitboxType.CHEST);
-        creeper.add(HitboxType.LEG_FRONT_RIGHT);
-        creeper.add(HitboxType.LEG_FRONT_LEFT);
-        creeper.add(HitboxType.LEG_HIND_RIGHT);
-        creeper.add(HitboxType.LEG_HIND_LEFT);
-        creeper.register(EntityType.CREEPER);
+        creeper.add(HitboxType.HEAD)
+               .add(HitboxType.CHEST)
+               .add(HitboxType.LEG_FRONT_RIGHT)
+               .add(HitboxType.LEG_FRONT_LEFT)
+               .add(HitboxType.LEG_HIND_RIGHT)
+               .add(HitboxType.LEG_HIND_LEFT)
+               .register(EntityType.CREEPER);
+        Builder villager = new Builder();
+        villager.add(HitboxType.HEAD)
+                .add(HitboxType.NOSE)
+                .add(HitboxType.CHEST)
+                .addArms()
+                .addHands()
+                .addLegs()
+                .register(EntityType.VILLAGER);
+        Builder spider = new Builder();
+        spider.add(HitboxType.HEAD)
+              .add(HitboxType.CHEST)
+              .add(HitboxType.LEG_FRONT_RIGHT)
+              .add(HitboxType.LEG_FRONT_LEFT)
+              .add(HitboxType.LEG_FRONT_MIDDLE_RIGHT)
+              .add(HitboxType.LEG_FRONT_MIDDLE_LEFT)
+              .add(HitboxType.LEG_HIND_MIDDLE_RIGHT)
+              .add(HitboxType.LEG_HIND_MIDDLE_LEFT)
+              .add(HitboxType.LEG_HIND_RIGHT)
+              .add(HitboxType.LEG_HIND_LEFT)
+              .register(EntityType.SPIDER);
+        spider.register(EntityType.CAVE_SPIDER);
     }
 
     public static final class Builder {
@@ -117,6 +135,18 @@ public final class HitboxRegistry {
             this.list.add(type);
             this.counter++;
             return this;
+        }
+
+        public Builder addArms() {
+            return this.add(HitboxType.ARM_RIGHT).add(HitboxType.ARM_LEFT);
+        }
+
+        public Builder addHands() {
+            return this.add(HitboxType.HAND_RIGHT).add(HitboxType.HAND_LEFT);
+        }
+
+        public Builder addLegs() {
+            return this.add(HitboxType.LEG_RIGHT).add(HitboxType.LEG_LEFT);
         }
 
         public void register(EntityType type) {

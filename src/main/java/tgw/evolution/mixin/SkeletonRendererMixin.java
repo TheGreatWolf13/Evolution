@@ -7,10 +7,11 @@ import net.minecraft.client.renderer.entity.SkeletonRenderer;
 import net.minecraft.world.entity.monster.AbstractSkeleton;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import tgw.evolution.util.hitbox.hrs.HRSkeleton;
+import tgw.evolution.util.hitbox.hrs.LegacyHRSkeleton;
 
 @Mixin(SkeletonRenderer.class)
-public abstract class SkeletonRendererMixin extends HumanoidMobRenderer<AbstractSkeleton, SkeletonModel<AbstractSkeleton>> implements HRSkeleton {
+public abstract class SkeletonRendererMixin extends HumanoidMobRenderer<AbstractSkeleton, SkeletonModel<AbstractSkeleton>>
+        implements LegacyHRSkeleton {
 
     public SkeletonRendererMixin(EntityRendererProvider.Context pContext,
                                  SkeletonModel<AbstractSkeleton> pModel, float pShadowRadius) {

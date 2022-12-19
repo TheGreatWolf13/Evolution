@@ -1,4 +1,4 @@
-package tgw.evolution.util.hitbox;
+package tgw.evolution.util.hitbox.hitboxes;
 
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.ArmPose;
+import tgw.evolution.util.hitbox.*;
 import tgw.evolution.util.hitbox.hms.HM;
 import tgw.evolution.util.hitbox.hms.HMDummy;
 import tgw.evolution.util.hitbox.hms.HMPlayer;

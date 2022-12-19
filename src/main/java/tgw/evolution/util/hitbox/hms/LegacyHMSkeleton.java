@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import tgw.evolution.util.ArmPose;
 
-public interface HMSkeleton<T extends Mob & RangedAttackMob> extends HMHumanoid<T> {
+public interface LegacyHMSkeleton<T extends Mob & RangedAttackMob> extends HMHumanoid<T> {
 
     @Override
     default void prepare(T entity, float limbSwing, float limbSwingAmount, float partialTicks) {

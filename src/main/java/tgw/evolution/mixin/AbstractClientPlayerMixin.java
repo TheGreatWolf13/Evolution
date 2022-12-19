@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.hitbox.EvolutionEntityHitboxes;
-import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 
 @Mixin(AbstractClientPlayer.class)
 public abstract class AbstractClientPlayerMixin implements IEntityPatch {

@@ -46,7 +46,7 @@ import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.ProjectileHitInformation;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.earth.Gravity;
-import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.ClipContextMutable;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;

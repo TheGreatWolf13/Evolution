@@ -31,9 +31,9 @@ import tgw.evolution.items.modular.ItemModularTool;
 import tgw.evolution.patches.*;
 import tgw.evolution.util.*;
 import tgw.evolution.util.hitbox.Hitbox;
-import tgw.evolution.util.hitbox.HitboxEntity;
 import tgw.evolution.util.hitbox.HitboxType;
 import tgw.evolution.util.hitbox.Matrix4d;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -1123,32 +1123,44 @@ public final class MathHelper {
         final double posX = Mth.lerp(partialTicks, victim.xOld, victim.getX());
         final double posY = Mth.lerp(partialTicks, victim.yOld, victim.getY());
         final double posZ = Mth.lerp(partialTicks, victim.zOld, victim.getZ());
-        final double fromX0 = fromX - posX;
-        final double fromY0 = fromY - posY;
-        final double fromZ0 = fromZ - posZ;
-        final double fromXa = hitbox.untransformX(fromX0, fromY0, fromZ0);
-        final double fromYa = hitbox.untransformY(fromX0, fromY0, fromZ0);
-        final double fromZa = hitbox.untransformZ(fromX0, fromY0, fromZ0);
-        final double toX0 = toX - posX;
-        final double toY0 = toY - posY;
-        final double toZ0 = toZ - posZ;
-        final double toXa = hitbox.untransformX(toX0, toY0, toZ0);
-        final double toYa = hitbox.untransformY(toX0, toY0, toZ0);
-        final double toZa = hitbox.untransformZ(toX0, toY0, toZ0);
+        double fromX0 = fromX - posX;
+        double fromY0 = fromY - posY;
+        double fromZ0 = fromZ - posZ;
+        double fromXa = hitbox.preUntransformX(fromX0);
+        double fromYa = hitbox.preUntransformY(fromY0);
+        double fromZa = hitbox.preUntransformZ(fromZ0);
+        fromX0 = hitbox.postUntransformX(fromXa, fromYa, fromZa);
+        fromY0 = hitbox.postUntransformY(fromXa, fromYa, fromZa);
+        fromZ0 = hitbox.postUntransformZ(fromXa, fromYa, fromZa);
+        double toX0 = toX - posX;
+        double toY0 = toY - posY;
+        double toZ0 = toZ - posZ;
+        double toXa = hitbox.preUntransformX(toX0);
+        double toYa = hitbox.preUntransformY(toY0);
+        double toZa = hitbox.preUntransformZ(toZ0);
+        toX0 = hitbox.postUntransformX(toXa, toYa, toZa);
+        toY0 = hitbox.postUntransformY(toXa, toYa, toZa);
+        toZ0 = hitbox.postUntransformZ(toXa, toYa, toZa);
         double clipDist = Double.NaN;
         for (int i = 0, l = hitbox.getBoxes().size(); i < l; i++) {
             Hitbox box = hitbox.getBoxes().get(i);
             Matrix4d transform = box.adjustedTransform();
-            double newFromX = transform.untransformX(fromXa, fromYa, fromZa);
-            double newFromY = transform.untransformY(fromXa, fromYa, fromZa);
-            double newFromZ = transform.untransformZ(fromXa, fromYa, fromZa);
+            fromXa = transform.preUntransformX(fromX0);
+            fromYa = transform.preUntransformY(fromY0);
+            fromZa = transform.preUntransformZ(fromZ0);
+            double newFromX = transform.postUntransformX(fromXa, fromYa, fromZa);
+            double newFromY = transform.postUntransformY(fromXa, fromYa, fromZa);
+            double newFromZ = transform.postUntransformZ(fromXa, fromYa, fromZa);
             if (box.contains(newFromX, newFromY, newFromZ)) {
                 chosenBox[0] = box;
                 return 0;
             }
-            double newToX = transform.untransformX(toXa, toYa, toZa);
-            double newToY = transform.untransformY(toXa, toYa, toZa);
-            double newToZ = transform.untransformZ(toXa, toYa, toZa);
+            toXa = transform.preUntransformX(toX0);
+            toYa = transform.preUntransformY(toY0);
+            toZa = transform.preUntransformZ(toZ0);
+            double newToX = transform.postUntransformX(toXa, toYa, toZa);
+            double newToY = transform.postUntransformY(toXa, toYa, toZa);
+            double newToZ = transform.postUntransformZ(toXa, toYa, toZa);
             double dist = box.clipDist(newFromX, newFromY, newFromZ, newToX, newToY, newToZ);
             if (!Double.isNaN(dist)) {
                 if (dist < oldDist) {

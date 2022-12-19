@@ -124,17 +124,17 @@ public class Hitbox implements HM {
         return this.aabb.contains(vec);
     }
 
-    protected void drawEdges(Matrix4d transform,
-                             VertexConsumer buffer,
-                             Matrix4f pose,
-                             Matrix3f normal,
-                             float x,
-                             float y,
-                             float z,
-                             float r,
-                             float g,
-                             float b,
-                             float a) {
+    public void drawEdges(Matrix4d transform,
+                          VertexConsumer buffer,
+                          Matrix4f pose,
+                          Matrix3f normal,
+                          float x,
+                          float y,
+                          float z,
+                          float r,
+                          float g,
+                          float b,
+                          float a) {
         double minX = this.minX();
         double maxX = this.maxX();
         double minY = this.minY();

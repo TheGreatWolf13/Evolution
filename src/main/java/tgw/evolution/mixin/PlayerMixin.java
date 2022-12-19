@@ -43,7 +43,7 @@ import tgw.evolution.util.damage.DamageSourceEntity;
 import tgw.evolution.util.damage.DamageSourceEntityIndirect;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.hitbox.EvolutionEntityHitboxes;
-import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.MathHelper;
 
 @Mixin(Player.class)
@@ -218,6 +218,26 @@ public abstract class PlayerMixin extends LivingEntity implements IPlayerPatch {
                 PlayerHelper.addStat(player, EvolutionStats.TOTAL_DISTANCE_TRAVELED, dist);
             }
         }
+    }
+
+    @Override
+    public double getBaseAttackDamage() {
+        return PlayerHelper.ATTACK_DAMAGE;
+    }
+
+    @Override
+    public double getBaseHealth() {
+        return PlayerHelper.MAX_HEALTH;
+    }
+
+    @Override
+    public double getBaseMass() {
+        return PlayerHelper.MASS;
+    }
+
+    @Override
+    public double getBaseWalkForce() {
+        return PlayerHelper.WALK_FORCE;
     }
 
     /**

@@ -53,11 +53,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
     private final ResourceLocation resIcons = Evolution.getResource("textures/gui/stats_icons.png");
     private final EvolutionStatsCounter stats;
     private final Component textDamageButton = new TranslatableComponent("evolution.gui.stats.damageButton");
-    private final Component textDamageDealtActual = new TranslatableComponent("evolution.gui.stats.damageDealtActual");
-    private final Component textDamageDealtRaw = new TranslatableComponent("evolution.gui.stats.damageDealtRaw");
-    private final Component textDamageTakenActual = new TranslatableComponent("evolution.gui.stats.damageTakenActual");
-    private final Component textDamageTakenBlocked = new TranslatableComponent("evolution.gui.stats.damageTakenBlocked");
-    private final Component textDamageTakenRaw = new TranslatableComponent("evolution.gui.stats.damageTakenRaw");
+    private final Component textDamageDealt = new TranslatableComponent("evolution.gui.stats.damageDealt");
+    private final Component textDamageResisted = new TranslatableComponent("evolution.gui.stats.damageResisted");
+    private final Component textDamageTaken = new TranslatableComponent("evolution.gui.stats.damageTaken");
     private final Component textDeathButton = new TranslatableComponent("evolution.gui.stats.deathButton");
     private final Component textDistanceButton = new TranslatableComponent("evolution.gui.stats.distanceButton");
     private final Component textGeneralButton = new TranslatableComponent("evolution.gui.stats.generalButton");
@@ -220,7 +218,6 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         for (Item item : this.cachedModularItems.keySet()) {
             this.cachedModularItems.put(item, item.getDefaultInstance());
         }
-        Evolution.info("Refreshed");
         this.refreshCacheCooldown = 30;
     }
 
@@ -341,7 +338,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         protected final Comparator<EvolutionDamage.Type> comparator = new ListComparator();
         protected final RList<EvolutionDamage.Type> damageList;
         protected final OList<Map<EvolutionDamage.Type, ResourceLocation>> damageStatList;
-        private final int[] headerTexture = {1, 2, 3, 4, 5};
+        private final int[] headerTexture = {1, 2, 3};
         protected int currentHeader = -1;
         protected int sortOrder;
         @Nullable
@@ -392,7 +389,7 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
 
         @Override
         public int getRowWidth() {
-            return 375;
+            return super.getRowWidth() + 4 * 18;
         }
 
         @Override
@@ -425,11 +422,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                             int l = getCategoryOffset(k);
                             if (j >= l - 18 && j <= l) {
                                 switch (k) {
-                                    case 0 -> tooltip = ScreenStats.this.textDamageDealtRaw;
-                                    case 1 -> tooltip = ScreenStats.this.textDamageDealtActual;
-                                    case 2 -> tooltip = ScreenStats.this.textDamageTakenBlocked;
-                                    case 3 -> tooltip = ScreenStats.this.textDamageTakenRaw;
-                                    case 4 -> tooltip = ScreenStats.this.textDamageTakenActual;
+                                    case 0 -> tooltip = ScreenStats.this.textDamageDealt;
+                                    case 1 -> tooltip = ScreenStats.this.textDamageResisted;
+                                    case 2 -> tooltip = ScreenStats.this.textDamageTaken;
                                 }
                                 break;
                             }
@@ -728,21 +723,21 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
 
         @Override
-        protected void renderHeader(PoseStack matrices, int mouseX, int mouseY, Tesselator tesselator) {
+        protected void renderHeader(PoseStack matrices, int x, int y, Tesselator tesselator) {
             if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.currentHeader = -1;
             }
             for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(i) - 18, mouseY + 1, 0, this.currentHeader == i ? 0 : 72);
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(i) - 18, y + 1, 0, this.currentHeader == i ? 0 : 72);
             }
             if (this.sortOrder != 0) {
                 int k = getCategoryOffset(0) - 18 * 2;
                 int j = this.sortOrder == 1 ? 2 : 1;
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + k, mouseY + 1, 18 * j, 0);
+                ScreenStats.this.blitSlotIcon(matrices, x + k, y + 1, 18 * j, 0);
             }
             for (int l = 0; l < this.headerTexture.length; ++l) {
                 int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(l) - 18 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 72);
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(l) - 18 + i1, y + 1 + i1, 18 * this.headerTexture[l], 72);
             }
         }
 
@@ -1297,21 +1292,21 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         }
 
         @Override
-        protected void renderHeader(PoseStack matrices, int mouseX, int mouseY, Tesselator tesselator) {
+        protected void renderHeader(PoseStack matrices, int x, int y, Tesselator tesselator) {
             if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.currentHeader = -1;
             }
             for (int i = 0; i < this.headerTexture.length; ++i) {
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(i) - 18, mouseY + 1, 0, this.currentHeader == i ? 0 : 18);
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(i) - 18, y + 1, 0, this.currentHeader == i ? 0 : 18);
             }
             if (this.sorting != null) {
                 int k = getCategoryOffset(this.indexOf(this.sorting)) - 36;
                 int j = this.sortOrder == 1 ? 2 : 1;
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + k, mouseY + 1, 18 * j, 0);
+                ScreenStats.this.blitSlotIcon(matrices, x + k, y + 1, 18 * j, 0);
             }
             for (int l = 0; l < this.headerTexture.length; ++l) {
                 int i1 = this.currentHeader == l ? 1 : 0;
-                ScreenStats.this.blitSlotIcon(matrices, mouseX + getCategoryOffset(l) - 18 + i1, mouseY + 1 + i1, 18 * this.headerTexture[l], 18);
+                ScreenStats.this.blitSlotIcon(matrices, x + getCategoryOffset(l) - 18 + i1, y + 1 + i1, 18 * this.headerTexture[l], 18);
             }
         }
 

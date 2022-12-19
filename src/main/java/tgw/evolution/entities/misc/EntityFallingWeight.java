@@ -36,7 +36,7 @@ import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.earth.Gravity;
-import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 
 import java.util.List;
 

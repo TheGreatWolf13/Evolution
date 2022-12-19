@@ -45,6 +45,10 @@ public class Vec3d extends Vec3 {
         return this.set(this.y * vec.z - this.z * vec.y, this.z * vec.x - this.x * vec.z, this.x * vec.y - this.y * vec.x);
     }
 
+    public Vec3d divideMutable(double x, double y, double z) {
+        return this.set(this.x / x, this.y / y, this.z / z);
+    }
+
     @Override
     public int hashCode() {
         throw new IllegalStateException("Cannot hash mutable object");

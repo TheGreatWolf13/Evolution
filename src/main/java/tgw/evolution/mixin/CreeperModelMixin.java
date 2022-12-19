@@ -12,10 +12,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.client.models.CubeListBuilderEv;
 import tgw.evolution.util.hitbox.hms.HM;
-import tgw.evolution.util.hitbox.hms.HMCreeper;
+import tgw.evolution.util.hitbox.hms.LegacyHMCreeper;
 
 @Mixin(CreeperModel.class)
-public abstract class CreeperModelMixin<T extends Entity> extends HierarchicalModel<T> implements HMCreeper<T> {
+public abstract class CreeperModelMixin<T extends Entity> extends HierarchicalModel<T> implements LegacyHMCreeper<T> {
 
     @Shadow
     @Final
@@ -69,13 +69,23 @@ public abstract class CreeperModelMixin<T extends Entity> extends HierarchicalMo
     }
 
     @Override
-    public HM leftFrontLeg() {
+    public HM legFL() {
         return (HM) (Object) this.leftFrontLeg;
     }
 
     @Override
-    public HM leftHindLeg() {
+    public HM legFR() {
+        return (HM) (Object) this.rightFrontLeg;
+    }
+
+    @Override
+    public HM legHL() {
         return (HM) (Object) this.leftHindLeg;
+    }
+
+    @Override
+    public HM legHR() {
+        return (HM) (Object) this.rightHindLeg;
     }
 
     /**
@@ -89,16 +99,6 @@ public abstract class CreeperModelMixin<T extends Entity> extends HierarchicalMo
         temp = this.leftFrontLeg;
         this.leftFrontLeg = this.rightFrontLeg;
         this.rightFrontLeg = temp;
-    }
-
-    @Override
-    public HM rightFrontLeg() {
-        return (HM) (Object) this.rightFrontLeg;
-    }
-
-    @Override
-    public HM rightHindLeg() {
-        return (HM) (Object) this.rightHindLeg;
     }
 
     /**

@@ -11,7 +11,7 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.ai.*;
 import tgw.evolution.util.constants.EntityStates;
-import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.time.Time;
 
 public class EntityCow extends EntityGenericAnimal<EntityCow> {
@@ -80,7 +80,7 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     }
 
     @Override
-    public float getBaseHealth() {
+    public double getBaseHealth() {
         //TODO implementation
         return 10;
     }
@@ -92,7 +92,7 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     }
 
     @Override
-    public float getBaseWalkForce() {
+    public double getBaseWalkForce() {
         //TODO implementation
         return 0.025f;
     }

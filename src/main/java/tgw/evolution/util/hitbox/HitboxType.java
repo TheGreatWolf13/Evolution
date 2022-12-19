@@ -18,11 +18,18 @@ public enum HitboxType {
     LEG_LEFT(1.0f, 0.3f, true, false, true),
     FOOT_RIGHT(0.75f, 0.4f, true, false, true),
     FOOT_LEFT(0.75f, 0.4f, true, false, true),
+    //      Body Parts
+    NOSE(0.4f, Float.POSITIVE_INFINITY, false, false, false),
     //      Quadrupeds
     LEG_FRONT_RIGHT(0.75f, 0.3f, true, false, true),
     LEG_FRONT_LEFT(0.75f, 0.3f, true, false, true),
     LEG_HIND_RIGHT(0.75f, 0.3f, true, false, true),
-    LEG_HIND_LEFT(0.75f, 0.3f, true, false, true);
+    LEG_HIND_LEFT(0.75f, 0.3f, true, false, true),
+    //      Octopeds
+    LEG_FRONT_MIDDLE_RIGHT(0.75F, 0.3f, true, false, true),
+    LEG_FRONT_MIDDLE_LEFT(0.75f, 0.3f, true, false, true),
+    LEG_HIND_MIDDLE_RIGHT(0.75f, 0.3f, true, false, true),
+    LEG_HIND_MIDDLE_LEFT(0.75f, 0.3f, true, false, true);
 
     /**
      * Bit 0: canBleed; <br>

@@ -14,7 +14,11 @@ import tgw.evolution.items.IMelee;
 import tgw.evolution.network.PacketCSSpecialHit;
 import tgw.evolution.util.collection.I2LMap;
 import tgw.evolution.util.collection.I2LOpenHashMap;
-import tgw.evolution.util.hitbox.*;
+import tgw.evolution.util.hitbox.Hitbox;
+import tgw.evolution.util.hitbox.HitboxRegistry;
+import tgw.evolution.util.hitbox.HitboxType;
+import tgw.evolution.util.hitbox.Matrix4d;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.ClipContextMutable;
 import tgw.evolution.util.math.Vec3d;
 

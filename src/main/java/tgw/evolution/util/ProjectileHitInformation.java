@@ -5,10 +5,10 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.Evolution;
-import tgw.evolution.util.hitbox.HitboxEntity;
 import tgw.evolution.util.hitbox.HitboxRegistry;
 import tgw.evolution.util.hitbox.HitboxType;
 import tgw.evolution.util.hitbox.Matrix4d;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.Vec3d;
 
 public class ProjectileHitInformation implements IHitInfo {

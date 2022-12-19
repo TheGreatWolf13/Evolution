@@ -59,7 +59,7 @@ import tgw.evolution.patches.IPoseStackPatch;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.hitbox.Hitbox;
-import tgw.evolution.util.hitbox.HitboxEntity;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.MathHelper;
 
 import java.util.Collections;

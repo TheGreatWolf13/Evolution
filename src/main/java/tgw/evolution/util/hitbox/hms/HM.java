@@ -33,6 +33,12 @@ public interface HM {
 
     void setPivotZ(float z);
 
+    default void setRotation(float xRot, float yRot, float zRot) {
+        this.setRotationX(xRot);
+        this.setRotationY(yRot);
+        this.setRotationZ(zRot);
+    }
+
     void setRotationX(float rotX);
 
     void setRotationY(float rotY);

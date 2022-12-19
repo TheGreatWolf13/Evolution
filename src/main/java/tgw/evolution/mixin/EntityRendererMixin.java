@@ -7,6 +7,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import tgw.evolution.util.hitbox.hrs.HREntity;
@@ -14,6 +15,9 @@ import tgw.evolution.util.hitbox.hrs.HREntity;
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererMixin<T extends Entity> implements HREntity<T> {
+
+    @Shadow
+    protected float shadowRadius;
 
     /**
      * @author TheGreatWolf
@@ -34,6 +38,11 @@ public abstract class EntityRendererMixin<T extends Entity> implements HREntity<
             , index = 7)
     private boolean modifyRenderName(boolean renderThroughWalls) {
         return false;
+    }
+
+    @Override
+    public void setShadowRadius(float radius) {
+        this.shadowRadius = radius;
     }
 
     /**

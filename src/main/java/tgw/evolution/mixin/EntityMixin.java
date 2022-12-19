@@ -39,11 +39,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.constants.LevelEvents;
-import tgw.evolution.util.hitbox.HitboxEntity;
-import tgw.evolution.util.math.AABBMutable;
-import tgw.evolution.util.math.ChunkPosMutable;
-import tgw.evolution.util.math.MathHelper;
-import tgw.evolution.util.math.Vec3d;
+import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
+import tgw.evolution.util.math.*;
 
 import java.util.List;
 
@@ -268,8 +265,23 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     public abstract void gameEvent(GameEvent pEvent);
 
     @Override
+    public double getBaseAttackDamage() {
+        return 2.5;
+    }
+
+    @Override
+    public double getBaseHealth() {
+        return 20;
+    }
+
+    @Override
     public double getBaseMass() {
-        return 1.0;
+        return 1;
+    }
+
+    @Override
+    public double getBaseWalkForce() {
+        return 1_000 * Units.NEWTON;
     }
 
     @Shadow
@@ -414,11 +426,6 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Shadow
     public abstract boolean hurt(DamageSource p_19946_, float p_19947_);
-
-    @Override
-    public boolean hurtInternal(DamageSource source, float damage) {
-        return this.hurt(source, damage);
-    }
 
     @Shadow
     public abstract boolean isAddedToWorld();
