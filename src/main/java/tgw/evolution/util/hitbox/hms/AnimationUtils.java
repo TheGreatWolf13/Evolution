@@ -250,15 +250,15 @@ public final class AnimationUtils {
         }
     }
 
-    public static void trust(float progress,
-                             int mult,
-                             HM body,
-                             HM legR,
-                             HM legL,
-                             HM arm,
-                             HM forearm,
-                             HM holder,
-                             float headPitch) {
+    public static void thrust(float progress,
+                              int mult,
+                              HM body,
+                              HM legR,
+                              HM legL,
+                              HM arm,
+                              HM forearm,
+                              HM holder,
+                              float headPitch) {
         if (progress < 0.5f) {
             float t = MathHelper.animInterval(progress, 0, 0.5f);
             body.setRotationY(MathHelper.lerpRad(t, 0, -10 * Mth.DEG_TO_RAD * mult, false));

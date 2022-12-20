@@ -86,7 +86,7 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
             double horizMotionSqr = motion.horizontalDistanceSqr();
             double horizViewSqr = viewVec.horizontalDistanceSqr();
             if (horizMotionSqr > 0 && horizViewSqr > 0) {
-                double d2 = (motion.x * viewVec.x + motion.z * viewVec.z) / Math.sqrt(horizMotionSqr * horizViewSqr);
+                double d2 = (motion.x * viewVec.x + motion.z * viewVec.z) * Mth.fastInvSqrt(horizMotionSqr * horizViewSqr);
                 double d3 = motion.x * viewVec.z - motion.z * viewVec.x;
                 matricesExt.mulPoseYRad((float) (Math.signum(d3) * Math.acos(d2)));
             }

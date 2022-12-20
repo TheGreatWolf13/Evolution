@@ -230,7 +230,7 @@ public class SkyRenderer {
             double dz = random.nextFloat() * 2.0F - 1.0F;
             double lengthSquared = dx * dx + dy * dy + dz * dz;
             if (lengthSquared < 1.0 && lengthSquared > 0.01) {
-                lengthSquared = 1.0 / Math.sqrt(lengthSquared);
+                lengthSquared = Mth.fastInvSqrt(lengthSquared);
                 dx *= lengthSquared;
                 dy *= lengthSquared;
                 dz *= lengthSquared;

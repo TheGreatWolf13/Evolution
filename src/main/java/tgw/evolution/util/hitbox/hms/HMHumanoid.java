@@ -536,15 +536,8 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                             case 2 -> AnimationUtils.strikeFromFarSide(progress, mult, body, legR, legL, arm, forearm);
                         }
                     }
-                    case JAVELIN_THRUST -> {
-                        AnimationUtils.trust(progress, mult, body, legR, legL, arm, forearm, this.item(attackingSide), this.head().xRot());
-                        if (attackingSide == HumanoidArm.RIGHT) {
-                            this.setShouldCancelRight(true);
-                        }
-                        else {
-                            this.setShouldCancelLeft(true);
-                        }
-                    }
+                    case JAVELIN_THRUST -> AnimationUtils.thrust(progress, mult, body, legR, legL, arm, forearm, this.item(attackingSide),
+                                                                 this.head().xRot());
                     case PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> AnimationUtils.strikeDown(progress, mult, body, legR, legL, arm, forearm);
                 }
             }

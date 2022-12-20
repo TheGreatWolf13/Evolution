@@ -824,16 +824,16 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
             //noinspection ConstantConditions
             if (!((Object) this instanceof Player)) {
                 //flow = flow.normalize();
-                double norm = Math.sqrt(flowX * flowX + flowY * flowY + flowZ * flowZ);
-                if (norm < 1.0E-4) {
+                double norm = Mth.fastInvSqrt(flowX * flowX + flowY * flowY + flowZ * flowZ);
+                if (norm > 1.0E4) {
                     flowX = 0.0;
                     flowY = 0.0;
                     flowZ = 0.0;
                 }
                 else {
-                    flowX /= norm;
-                    flowY /= norm;
-                    flowZ /= norm;
+                    flowX *= norm;
+                    flowY *= norm;
+                    flowZ *= norm;
                 }
             }
             Vec3 velocity = this.getDeltaMovement();
@@ -846,20 +846,20 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
                 Math.abs(velocity.z) < 0.003 &&
                 flowX * flowX + flowY * flowY + flowZ * flowZ < 0.000_020_250_000_000_000_004_5) {
                 //flow = flow.normalize().scale(0.004_500_000_000_000_000_5);
-                double norm = Math.sqrt(flowX * flowX + flowY * flowY + flowZ * flowZ);
-                if (norm < 1.0E-4) {
+                double norm = Mth.fastInvSqrt(flowX * flowX + flowY * flowY + flowZ * flowZ);
+                if (norm > 1.0E4) {
                     flowX = 0.0;
                     flowY = 0.0;
                     flowZ = 0.0;
                 }
                 else {
-                    flowX /= norm;
-                    flowY /= norm;
-                    flowZ /= norm;
+                    flowX *= norm;
+                    flowY *= norm;
+                    flowZ *= norm;
                 }
-                flowX *= 0.004_500_000_000_000_000_5;
-                flowY *= 0.004_500_000_000_000_000_5;
-                flowZ *= 0.004_500_000_000_000_000_5;
+                flowX *= 0.004_5;
+                flowY *= 0.004_5;
+                flowZ *= 0.004_5;
             }
             //velocity.add(flow)
             flowX += velocity.x;

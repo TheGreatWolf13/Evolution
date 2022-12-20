@@ -2,6 +2,7 @@ package tgw.evolution.util.math;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.mojang.math.Vector3f;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import tgw.evolution.patches.IVec3Patch;
 
@@ -67,8 +68,8 @@ public class Vec3d extends Vec3 {
     }
 
     public Vec3d normalizeMutable() {
-        double norm = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-        return norm < 1.0E-4D ? this.set(0, 0, 0) : this.set(this.x / norm, this.y / norm, this.z / norm);
+        double norm = Mth.fastInvSqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+        return norm > 1.0E4 ? this.set(0, 0, 0) : this.set(this.x * norm, this.y * norm, this.z * norm);
     }
 
     @CanIgnoreReturnValue
