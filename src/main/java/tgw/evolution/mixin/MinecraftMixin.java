@@ -263,6 +263,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     public abstract void clearLevel(Screen p_213231_1_);
 
     @Shadow
+    public abstract void clearResourcePacksOnError(Throwable pThrowable, @Nullable Component pErrorMessage);
+
+    @Shadow
     protected abstract ProfilerFiller constructProfiler(boolean p_167971_, @Nullable SingleTickProfiler p_167972_);
 
     /**
@@ -553,7 +556,12 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                                     }
                                     else if (this.attackKeyTicks > 0) {
                                         //Short Attack
-                                        ClientEvents.getInstance().startShortAttack(mainhandStack);
+                                        if (ClientEvents.getInstance().checkHitResultBeforeShortAttack()) {
+                                            ClientEvents.getInstance().startShortAttack(mainhandStack);
+                                        }
+                                        else {
+                                            shouldContinueAttacking = this.startAttack();
+                                        }
                                     }
                                 }
                             }
@@ -925,7 +933,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 if (this.cancelUseCooldown > 0) {
                     return;
                 }
-                for (InteractionHand hand : MathHelper.HANDS_MAIN_PRIORITY) {
+                for (InteractionHand hand : MathHelper.HANDS_OFF_PRIORITY) {
                     //noinspection ObjectAllocationInLoop
                     InputEvent.ClickInputEvent inputEvent = ForgeHooksClient.onClickInput(GLFW.GLFW_MOUSE_BUTTON_2, this.options.keyUse, hand);
                     if (inputEvent.isCanceled()) {
@@ -935,6 +943,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                         return;
                     }
                     ItemStack stack = this.player.getItemInHand(hand);
+                    if (hand == InteractionHand.OFF_HAND && stack.isEmpty()) {
+                        continue;
+                    }
                     switch (this.hitResult.getType()) {
                         case ENTITY -> {
                             EntityHitResult entityRayTrace = (EntityHitResult) this.hitResult;

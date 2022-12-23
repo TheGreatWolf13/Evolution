@@ -3,6 +3,8 @@ package tgw.evolution.blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -32,6 +34,7 @@ import tgw.evolution.entities.misc.EntitySittable;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemLog;
+import tgw.evolution.items.ItemUtils;
 import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.HarvestLevel;
@@ -61,6 +64,10 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittableB
             if (stackInHand.getItem() instanceof ItemModular tool && tool.isAxe(stackInHand)) {
                 if (chopping.increaseBreakProgress() == 3) {
                     chopping.breakLog(player);
+                    level.playSound(player, pos, SoundEvents.WOOD_BREAK, SoundSource.PLAYERS, 1.0f, 1.0f);
+                }
+                else {
+                    level.playSound(player, pos, SoundEvents.WOOD_HIT, SoundSource.PLAYERS, 1.0f, 1.0f);
                 }
             }
         }
@@ -197,6 +204,18 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittableB
         if (level.getBlockEntity(pos) instanceof TEChopping te) {
             te.dropLog();
         }
+    }
+
+    @Override
+    public boolean preventsShortAttacking(Level level, BlockPos pos, BlockState state, Player player) {
+        BlockEntity tile = level.getBlockEntity(pos);
+        if (!(tile instanceof TEChopping chopping)) {
+            return super.preventsShortAttacking(level, pos, state, player);
+        }
+        if (chopping.hasLog() && ItemUtils.isAxe(player.getMainHandItem())) {
+            return true;
+        }
+        return super.preventsShortAttacking(level, pos, state, player);
     }
 
     @Override

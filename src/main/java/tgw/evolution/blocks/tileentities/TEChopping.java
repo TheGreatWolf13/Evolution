@@ -6,6 +6,8 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -127,6 +129,7 @@ public class TEChopping extends BlockEntity implements ILoggable {
         this.id = -1;
         this.breakProgress = 0;
         TEUtils.sendRenderUpdate(this);
+        player.level.playSound(player, player, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f, 1.0f);
     }
 
     @Override
@@ -156,6 +159,7 @@ public class TEChopping extends BlockEntity implements ILoggable {
         if (!player.isCreative()) {
             player.getItemInHand(hand).shrink(1);
         }
+        player.level.playSound(player, player, SoundEvents.WOOD_PLACE, SoundSource.PLAYERS, 1.0f, 0.8f);
     }
 
     @Override

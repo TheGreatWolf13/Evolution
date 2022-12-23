@@ -8,6 +8,10 @@ public final class ItemUtils {
     private ItemUtils() {
     }
 
+    public static boolean isAxe(ItemStack stack) {
+        return stack.getItem() instanceof ItemModular mod && mod.isAxe(stack);
+    }
+
     public static boolean isHammer(ItemStack stack) {
         return stack.getItem() instanceof ItemModular mod && mod.isHammer(stack);
     }

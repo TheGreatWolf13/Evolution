@@ -41,6 +41,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -60,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.ClientProxy;
 import tgw.evolution.Evolution;
+import tgw.evolution.blocks.BlockGeneric;
 import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.blocks.BlockMolding;
 import tgw.evolution.blocks.tileentities.TEKnapping;
@@ -309,6 +311,21 @@ public class ClientEvents {
         for (ToastHolderRecipe toast : Toasts.getHolderForId(id)) {
             ToastCustomRecipe.addOrUpdate(this.mc.getToasts(), toast);
         }
+    }
+
+    /**
+     * @return Whether the current hit result situation allows for short attacking, i.e. if the player is holding an axe while looking at a
+     * chopping block that has a log, the player won't short attack, so return false.
+     */
+    public boolean checkHitResultBeforeShortAttack() {
+        if (this.mc.hitResult instanceof BlockHitResult blockHitResult) {
+            assert this.mc.level != null;
+            assert this.mc.player != null;
+            BlockPos pos = blockHitResult.getBlockPos();
+            BlockState state = this.mc.level.getBlockState(pos);
+            return !(state.getBlock() instanceof BlockGeneric block) || !block.preventsShortAttacking(this.mc.level, pos, state, this.mc.player);
+        }
+        return true;
     }
 
     public void clearMemory() {
