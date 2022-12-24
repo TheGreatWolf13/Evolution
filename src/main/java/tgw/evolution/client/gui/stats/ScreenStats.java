@@ -323,13 +323,9 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
                                int mouseY,
                                boolean hovered,
                                float partialTicks) {
-                drawString(matrices, ScreenStats.this.font, this.title, x + 2, y + 1, index % 2 == 0 ? 0xff_ffff : 0x75_7575);
-                drawString(matrices,
-                           ScreenStats.this.font,
-                           this.value,
-                           x + 2 + 213 - ScreenStats.this.font.width(this.value),
-                           y + 1,
-                           index % 2 == 0 ? 0xff_ffff : 0x75_7575);
+                int color = index % 2 == 0 ? 0xff_ffff : 0x75_7575;
+                drawString(matrices, ScreenStats.this.font, this.title, x + 2, y + 1, color);
+                drawString(matrices, ScreenStats.this.font, this.value, x + 2 + 213 - ScreenStats.this.font.width(this.value), y + 1, color);
             }
         }
     }

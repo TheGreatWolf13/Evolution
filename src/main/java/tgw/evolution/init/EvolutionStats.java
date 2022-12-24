@@ -91,7 +91,7 @@ public final class EvolutionStats {
     public static final IEvoStatFormatter DISTANCE = new IEvoStatFormatter() {
         @Override
         public String format(long millimeters) {
-            return Metric.format(Metric.fromMetric(millimeters, Metric.MILLI), 2, "m");
+            return EvolutionFormatter.DISTANCE.format(millimeters);
         }
 
         @Override

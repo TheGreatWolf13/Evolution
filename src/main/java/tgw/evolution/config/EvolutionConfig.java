@@ -56,6 +56,7 @@ public final class EvolutionConfig {
         public final ForgeConfigSpec.BooleanValue celestialForceAll;
         public final ForgeConfigSpec.BooleanValue celestialPoles;
         public final ForgeConfigSpec.BooleanValue crazyMode;
+        public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Distance> distance;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Drink> drink;
         public final ForgeConfigSpec.BooleanValue ecliptic;
         public final ForgeConfigSpec.BooleanValue followUps;
@@ -81,6 +82,7 @@ public final class EvolutionConfig {
             builder.pop();
             builder.push("units");
             this.limitTimeUnitsToHour = builder.translation("evolution.config.limitTimeUnitsToHour").define("limitTimeUnitsToHour", false);
+            this.distance = builder.translation("evolution.config.distance").defineEnum("distance", EvolutionFormatter.Distance.METRIC);
             this.bodyTemperature = builder.translation("evolution.config.bodyTemperature")
                                           .defineEnum("bodyTemperature", EvolutionFormatter.Temperature.CELSIUS);
             this.food = builder.translation("evolution.config.food").defineEnum("food", EvolutionFormatter.Food.KILOCALORIE);

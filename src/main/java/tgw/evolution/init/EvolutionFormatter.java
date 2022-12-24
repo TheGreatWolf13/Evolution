@@ -1,10 +1,35 @@
 package tgw.evolution.init;
 
 import tgw.evolution.config.EvolutionConfig;
+import tgw.evolution.util.UnregisteredFeatureException;
 import tgw.evolution.util.math.IFormatter;
 import tgw.evolution.util.math.Metric;
 
 public final class EvolutionFormatter {
+
+    public static final IFormatter DISTANCE = mm -> {
+        Distance distance = EvolutionConfig.CLIENT.distance.get();
+        switch (distance) {
+            case METRIC -> {
+                return Metric.format(Metric.fromMetric(mm, Metric.MILLI), 1, "m");
+            }
+            case IMPERIAL -> {
+                double inches = mm / 25.4;
+                if (inches < 12) {
+                    return Metric.ONE_PLACE.format(inches) + "in";
+                }
+                if (inches >= 5_280 * 12) {
+                    return Metric.ONE_PLACE.format(inches / (5_280 * 12)) + "mi";
+                }
+                double feet = inches / 12;
+                if (feet < 1_000) {
+                    return Metric.ONE_PLACE.format(feet) + "ft";
+                }
+                return Metric.ONE_PLACE.format(feet / 3) + "yd";
+            }
+        }
+        throw new UnregisteredFeatureException("Unknown distance system of unit: " + distance);
+    };
 
     public static final IFormatter TEMPERATURE_BODY_RELATIVE = value -> {
         Temperature temperature = EvolutionConfig.CLIENT.bodyTemperature.get();
@@ -65,6 +90,11 @@ public final class EvolutionFormatter {
     };
 
     private EvolutionFormatter() {
+    }
+
+    public enum Distance {
+        IMPERIAL,
+        METRIC
     }
 
     public enum Drink implements IUnit {

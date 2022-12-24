@@ -5,15 +5,17 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Matrix4f;
+import com.mojang.math.Quaternion;
+import com.mojang.math.Vector3f;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
@@ -49,8 +51,8 @@ public final class GUIUtils {
         font.draw(matrices, charSequence, xCentre - font.width(charSequence) / 2.0f, y, color);
     }
 
-    public static void drawEntityOnScreen(int posX, int posY, int scale, float mouseX, float mouseY, LivingEntity entity) {
-        InventoryScreen.renderEntityInInventory(posX, posY, scale, posX - mouseX, posY - 30 - mouseY, entity);
+    public static void drawEntityOnScreen(int posX, int posY, float scale, float mouseX, float mouseY, LivingEntity entity) {
+        renderEntityInInventory(posX, posY, scale, posX - mouseX, posY - 30 - mouseY, entity);
     }
 
     public static void drawRect(double x, double y, double x2, double y2, double width, int color) {
@@ -143,7 +145,7 @@ public final class GUIUtils {
         return entity;
     }
 
-    public static int getEntityScale(LivingEntity entity, float baseScale, float targetHeight, float targetWidth) {
+    public static float getEntityScale(LivingEntity entity, float baseScale, float targetHeight, float targetWidth) {
         if (entity.getType() == EntityType.ENDER_DRAGON) {
             targetWidth *= 3;
             targetHeight *= 2;
@@ -151,7 +153,7 @@ public final class GUIUtils {
         else if (entity.getType() == EntityType.SQUID) {
             targetHeight /= 2.5;
         }
-        return (int) (Math.min(targetWidth / entity.getBbWidth(), targetHeight / entity.getBbHeight()) * baseScale);
+        return Math.min(targetWidth / entity.getBbWidth(), targetHeight / entity.getBbHeight()) * baseScale;
     }
 
     public static void hLine(PoseStack matrices, int x0, int x1, int y, int color, boolean over) {
@@ -201,6 +203,50 @@ public final class GUIUtils {
 
     public static void renderAndDecorateFakeItemLighting(ItemRenderer renderer, ItemStack stack, int x, int y, int packedLight) {
         renderItemIntoGUI(renderer, null, stack, x, y, packedLight);
+    }
+
+    public static void renderEntityInInventory(int posX, int posY, float scale, float mouseX, float mouseY, LivingEntity entity) {
+        float x = (float) Math.atan(mouseX / 40.0F);
+        float y = (float) Math.atan(mouseY / 40.0F);
+        PoseStack internalMat = RenderSystem.getModelViewStack();
+        internalMat.pushPose();
+        internalMat.translate(posX, posY, 1_050);
+        internalMat.scale(1.0F, 1.0F, -1.0F);
+        RenderSystem.applyModelViewMatrix();
+        PoseStack matrices = new PoseStack();
+        matrices.translate(0, 0, 1_000);
+        matrices.scale(scale, scale, scale);
+        Quaternion zRot = Vector3f.ZP.rotationDegrees(180.0F);
+        Quaternion xRot = Vector3f.XP.rotationDegrees(y * 20.0F);
+        zRot.mul(xRot);
+        matrices.mulPose(zRot);
+        float bodyYaw = entity.yBodyRot;
+        float yaw = entity.getYRot();
+        float pitch = entity.getXRot();
+        float headYaw0 = entity.yHeadRotO;
+        float headYaw = entity.yHeadRot;
+        entity.yBodyRot = 180.0F + x * 20.0F;
+        entity.setYRot(180.0F + x * 40.0F);
+        entity.setXRot(-y * 20.0F);
+        entity.yHeadRot = entity.getYRot();
+        entity.yHeadRotO = entity.getYRot();
+        Lighting.setupForEntityInInventory();
+        EntityRenderDispatcher dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
+        xRot.conj();
+        dispatcher.overrideCameraOrientation(xRot);
+        dispatcher.setRenderShadow(false);
+        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+        RenderSystem.runAsFancy(() -> dispatcher.render(entity, 0, 0, 0, 0.0F, 1.0F, matrices, bufferSource, 0xf0_00f0));
+        bufferSource.endBatch();
+        dispatcher.setRenderShadow(true);
+        entity.yBodyRot = bodyYaw;
+        entity.setYRot(yaw);
+        entity.setXRot(pitch);
+        entity.yHeadRotO = headYaw0;
+        entity.yHeadRot = headYaw;
+        internalMat.popPose();
+        RenderSystem.applyModelViewMatrix();
+        Lighting.setupFor3DItems();
     }
 
     private static void renderGuiItem(ItemRenderer renderer, ItemStack stack, int x, int y, BakedModel model, int packedLight) {
