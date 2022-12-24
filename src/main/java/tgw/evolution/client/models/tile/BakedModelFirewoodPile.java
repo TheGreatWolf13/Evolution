@@ -1,8 +1,9 @@
 package tgw.evolution.client.models.tile;
 
-import com.google.common.collect.ImmutableList;
 import com.mojang.math.Vector3f;
-import net.minecraft.client.renderer.block.model.*;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BlockFaceUV;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureManager;
@@ -21,21 +22,28 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.TEFirewoodPile;
+import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.util.collection.BArrayList;
 import tgw.evolution.util.collection.BList;
+import tgw.evolution.util.collection.RArrayList;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 public class BakedModelFirewoodPile implements BakedModel {
 
     public static final ModelProperty<byte[]> FIREWOOD = new ModelProperty<>();
     private static final byte[] EMPTY_FIREWOOD = new byte[16];
-    private static final Vector3f FROM = new Vector3f();
-    private static final Vector3f TO = new Vector3f();
-    private static final FaceBakery FACE_BAKERY = new FaceBakery();
     private static final byte[] LOG_ORDER = new byte[16];
+    private static final ThreadLocal<ModelDataMap> MODEL_DATA = ThreadLocal.withInitial(() -> {
+        ModelDataMap.Builder builder = new ModelDataMap.Builder();
+        builder.withInitial(FIREWOOD, EMPTY_FIREWOOD);
+        return builder.build();
+    });
 
     static {
         Arrays.fill(EMPTY_FIREWOOD, (byte) -1);
@@ -54,12 +62,6 @@ public class BakedModelFirewoodPile implements BakedModel {
 
     public BakedModelFirewoodPile(BakedModel baseModel) {
         this.baseModel = baseModel;
-    }
-
-    public static ModelDataMap getEmptyIModelData() {
-        ModelDataMap.Builder builder = new ModelDataMap.Builder();
-        builder.withInitial(FIREWOOD, EMPTY_FIREWOOD);
-        return builder.build();
     }
 
     private static int getFaceRotation(Direction modelFace, Direction stateFacing, int firewoodIndex) {
@@ -145,11 +147,13 @@ public class BakedModelFirewoodPile implements BakedModel {
                                                 byte variantId,
                                                 Direction modelFace,
                                                 Direction stateFacing) {
-        FROM.set(minX, minY, minZ);
-        TO.set(maxX, maxY, maxZ);
-        BlockFaceUV blockFaceUV = new BlockFaceUV(getUVs(modelFace, stateFacing, firewoodIndex),
-                                                  getFaceRotation(modelFace, stateFacing, firewoodIndex));
-        BlockElementFace blockPartFace = new BlockElementFace(null, -1, "", blockFaceUV);
+        Vector3f from = RenderHelper.MODEL_FROM.get();
+        from.set(minX, minY, minZ);
+        Vector3f to = RenderHelper.MODEL_TO.get();
+        to.set(maxX, maxY, maxZ);
+        BlockFaceUV blockFaceUV = RenderHelper.MODEL_FACE_UV.get();
+        blockFaceUV.uvs = getUVs(modelFace, stateFacing, firewoodIndex);
+        blockFaceUV.rotation = getFaceRotation(modelFace, stateFacing, firewoodIndex);
         TextureAtlasSprite sprite;
         byte realIndex = LOG_ORDER[firewoodIndex];
         switch (modelFace) {
@@ -188,20 +192,22 @@ public class BakedModelFirewoodPile implements BakedModel {
             }
             default -> throw new IllegalStateException("Unknown direction: " + modelFace);
         }
-        return FACE_BAKERY.bakeQuad(FROM,
-                                    TO,
-                                    blockPartFace,
-                                    sprite,
-                                    whichFace,
-                                    SimpleModelState.IDENTITY,
-                                    null,
-                                    true,
-                                    TextureManager.INTENTIONAL_MISSING_TEXTURE);
+        return RenderHelper.MODEL_FACE_BAKERY.bakeQuad(from,
+                                                       to,
+                                                       RenderHelper.MODEL_FACE.get(),
+                                                       sprite,
+                                                       whichFace,
+                                                       SimpleModelState.IDENTITY,
+                                                       null,
+                                                       true,
+                                                       TextureManager.INTENTIONAL_MISSING_TEXTURE);
     }
 
     private static List<BakedQuad> getQuadsFromFirewood(Direction stateFacing, int firewoodCount, byte[] firewood, @Nullable Direction side) {
+        assert ForgeModelBakery.instance() != null;
         TextureAtlas blockAtlas = ForgeModelBakery.instance().getSpriteMap().getAtlas(TextureAtlas.LOCATION_BLOCKS);
-        ImmutableList.Builder<BakedQuad> builder = new ImmutableList.Builder<>();
+        List<BakedQuad> quads = RenderHelper.MODEL_QUAD_HOLDER.get();
+        quads.clear();
         if (side != null) {
             if (stateFacing == side) {
                 //Back face -> North
@@ -212,18 +218,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               4 * i,
-                                                               4 * j,
-                                                               0,
-                                                               4 * i + 4,
-                                                               4 * j + 4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.NORTH,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 4 * i, 4 * j, 0, 4 * i + 4, 4 * j + 4, 16, firewoodIndex, variantIndex,
+                                                             Direction.NORTH, stateFacing));
                             }
                         }
                     }
@@ -233,18 +229,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               12 - 4 * i,
-                                                               4 * j,
-                                                               0,
-                                                               16 - 4 * i,
-                                                               4 * j + 4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.NORTH,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 12 - 4 * i, 4 * j, 0, 16 - 4 * i, 4 * j + 4, 16, firewoodIndex,
+                                                             variantIndex, Direction.NORTH, stateFacing));
                             }
                         }
                     }
@@ -254,18 +240,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               0,
-                                                               4 * j,
-                                                               12 - 4 * i,
-                                                               16,
-                                                               4 * j + 4,
-                                                               16 - 4 * i,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.NORTH,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 0, 4 * j, 12 - 4 * i, 16, 4 * j + 4, 16 - 4 * i, firewoodIndex,
+                                                             variantIndex, Direction.NORTH, stateFacing));
                             }
                         }
                     }
@@ -275,18 +251,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               0,
-                                                               4 * j,
-                                                               4 * i,
-                                                               16,
-                                                               4 * j + 4,
-                                                               4 * i + 4,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.NORTH,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 0, 4 * j, 4 * i, 16, 4 * j + 4, 4 * i + 4, firewoodIndex, variantIndex,
+                                                             Direction.NORTH, stateFacing));
                             }
                         }
                     }
@@ -301,18 +267,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               4 * i,
-                                                               4 * j,
-                                                               0,
-                                                               4 * i + 4,
-                                                               4 * j + 4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.SOUTH,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 4 * i, 4 * j, 0, 4 * i + 4, 4 * j + 4, 16, firewoodIndex, variantIndex,
+                                                             Direction.SOUTH, stateFacing));
                             }
                         }
                     }
@@ -322,18 +278,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               12 - 4 * i,
-                                                               4 * j,
-                                                               0,
-                                                               16 - 4 * i,
-                                                               4 * j + 4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.SOUTH,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 12 - 4 * i, 4 * j, 0, 16 - 4 * i, 4 * j + 4, 16, firewoodIndex,
+                                                             variantIndex, Direction.SOUTH, stateFacing));
                             }
                         }
                     }
@@ -343,18 +289,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               0,
-                                                               4 * j,
-                                                               12 - 4 * i,
-                                                               16,
-                                                               4 * j + 4,
-                                                               16 - 4 * i,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.SOUTH,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 0, 4 * j, 12 - 4 * i, 16, 4 * j + 4, 16 - 4 * i, firewoodIndex,
+                                                             variantIndex, Direction.SOUTH, stateFacing));
                             }
                         }
                     }
@@ -364,18 +300,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               0,
-                                                               4 * j,
-                                                               4 * i,
-                                                               16,
-                                                               4 * j + 4,
-                                                               4 * i + 4,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.SOUTH,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 0, 4 * j, 4 * i, 16, 4 * j + 4, 4 * i + 4, firewoodIndex, variantIndex,
+                                                             Direction.SOUTH, stateFacing));
                             }
                         }
                     }
@@ -389,18 +315,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               12,
-                                                               4 * j,
-                                                               0,
-                                                               16,
-                                                               4 * j + 4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.EAST,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 12, 4 * j, 0, 16, 4 * j + 4, 16, firewoodIndex, variantIndex,
+                                                             Direction.EAST, stateFacing));
                             }
                         }
                     }
@@ -409,18 +325,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               0,
-                                                               4 * j,
-                                                               0,
-                                                               4,
-                                                               4 * j + 4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.EAST,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 0, 4 * j, 0, 4, 4 * j + 4, 16, firewoodIndex, variantIndex,
+                                                             Direction.EAST, stateFacing));
                             }
                         }
                     }
@@ -429,18 +335,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               0,
-                                                               4 * j,
-                                                               0,
-                                                               16,
-                                                               4 * j + 4,
-                                                               4,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.EAST,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 0, 4 * j, 0, 16, 4 * j + 4, 4, firewoodIndex, variantIndex,
+                                                             Direction.EAST, stateFacing));
                             }
                         }
                     }
@@ -449,18 +345,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               0,
-                                                               4 * j,
-                                                               12,
-                                                               16,
-                                                               4 * j + 4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.EAST,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 0, 4 * j, 12, 16, 4 * j + 4, 16, firewoodIndex, variantIndex,
+                                                             Direction.EAST, stateFacing));
                             }
                         }
                     }
@@ -474,18 +360,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               0,
-                                                               4 * j,
-                                                               0,
-                                                               4,
-                                                               4 * j + 4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.WEST,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 0, 4 * j, 0, 4, 4 * j + 4, 16, firewoodIndex, variantIndex,
+                                                             Direction.WEST, stateFacing));
                             }
                         }
                     }
@@ -494,18 +370,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               12,
-                                                               4 * j,
-                                                               0,
-                                                               16,
-                                                               4 * j + 4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.WEST,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 12, 4 * j, 0, 16, 4 * j + 4, 16, firewoodIndex, variantIndex,
+                                                             Direction.WEST, stateFacing));
                             }
                         }
                     }
@@ -514,18 +380,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               0,
-                                                               4 * j,
-                                                               12,
-                                                               16,
-                                                               4 * j + 4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.WEST,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 0, 4 * j, 12, 16, 4 * j + 4, 16, firewoodIndex, variantIndex,
+                                                             Direction.WEST, stateFacing));
                             }
                         }
                     }
@@ -534,18 +390,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int j = firewoodIndex / 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               0,
-                                                               4 * j,
-                                                               0,
-                                                               16,
-                                                               4 * j + 4,
-                                                               4,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.WEST,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 0, 4 * j, 0, 16, 4 * j + 4, 4, firewoodIndex, variantIndex,
+                                                             Direction.WEST, stateFacing));
                             }
                         }
                     }
@@ -559,18 +405,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               4 * i,
-                                                               12,
-                                                               0,
-                                                               4 * i + 4,
-                                                               16,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.UP,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 4 * i, 12, 0, 4 * i + 4, 16, 16, firewoodIndex, variantIndex,
+                                                             Direction.UP, stateFacing));
                             }
                         }
                     }
@@ -579,18 +415,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               12 - 4 * i,
-                                                               12,
-                                                               0,
-                                                               16 - 4 * i,
-                                                               16,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.UP,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 12 - 4 * i, 12, 0, 16 - 4 * i, 16, 16, firewoodIndex, variantIndex,
+                                                             Direction.UP, stateFacing));
                             }
                         }
                     }
@@ -599,18 +425,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               0,
-                                                               12,
-                                                               12 - 4 * i,
-                                                               16,
-                                                               16,
-                                                               16 - 4 * i,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.UP,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 0, 12, 12 - 4 * i, 16, 16, 16 - 4 * i, firewoodIndex, variantIndex,
+                                                             Direction.UP, stateFacing));
                             }
                         }
                     }
@@ -619,18 +435,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               0,
-                                                               12,
-                                                               4 * i,
-                                                               16,
-                                                               16,
-                                                               4 * i + 4,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.UP,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 0, 12, 4 * i, 16, 16, 4 * i + 4, firewoodIndex, variantIndex,
+                                                             Direction.UP, stateFacing));
                             }
                         }
                     }
@@ -644,18 +450,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               4 * i,
-                                                               0,
-                                                               0,
-                                                               4 * i + 4,
-                                                               4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.DOWN,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 4 * i, 0, 0, 4 * i + 4, 4, 16, firewoodIndex, variantIndex,
+                                                             Direction.DOWN, stateFacing));
                             }
                         }
                     }
@@ -664,18 +460,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               12 - 4 * i,
-                                                               0,
-                                                               0,
-                                                               16 - 4 * i,
-                                                               4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.DOWN,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 12 - 4 * i, 0, 0, 16 - 4 * i, 4, 16, firewoodIndex, variantIndex,
+                                                             Direction.DOWN, stateFacing));
                             }
                         }
                     }
@@ -684,18 +470,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               0,
-                                                               0,
-                                                               12 - 4 * i,
-                                                               16,
-                                                               4,
-                                                               16 - 4 * i,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.DOWN,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 0, 0, 12 - 4 * i, 16, 4, 16 - 4 * i, firewoodIndex, variantIndex,
+                                                             Direction.DOWN, stateFacing));
                             }
                         }
                     }
@@ -704,18 +480,8 @@ public class BakedModelFirewoodPile implements BakedModel {
                             byte variantIndex = firewood[firewoodIndex];
                             if (variantIndex != -1) {
                                 int i = firewoodIndex % 4;
-                                builder.add(getQuadForFirewood(side,
-                                                               blockAtlas,
-                                                               0,
-                                                               0,
-                                                               4 * i,
-                                                               16,
-                                                               4,
-                                                               4 * i + 4,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.DOWN,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(side, blockAtlas, 0, 0, 4 * i, 16, 4, 4 * i + 4, firewoodIndex, variantIndex,
+                                                             Direction.DOWN, stateFacing));
                             }
                         }
                     }
@@ -732,33 +498,13 @@ public class BakedModelFirewoodPile implements BakedModel {
                             int j = firewoodIndex / 4;
                             //Up
                             if (j != 3 && firewood[firewoodIndex + 4] == -1) {
-                                builder.add(getQuadForFirewood(Direction.UP,
-                                                               blockAtlas,
-                                                               4 * i,
-                                                               4 * j,
-                                                               0,
-                                                               4 * i + 4,
-                                                               4 * j + 4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.UP,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(Direction.UP, blockAtlas, 4 * i, 4 * j, 0, 4 * i + 4, 4 * j + 4, 16, firewoodIndex,
+                                                             variantIndex, Direction.UP, stateFacing));
                             }
                             //Right
                             if (i != 3 && firewood[firewoodIndex + 1] == -1) {
-                                builder.add(getQuadForFirewood(Direction.EAST,
-                                                               blockAtlas,
-                                                               4 * i,
-                                                               4 * j,
-                                                               0,
-                                                               4 * i + 4,
-                                                               4 * j + 4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.EAST,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(Direction.EAST, blockAtlas, 4 * i, 4 * j, 0, 4 * i + 4, 4 * j + 4, 16, firewoodIndex,
+                                                             variantIndex, Direction.EAST, stateFacing));
                             }
                         }
                     }
@@ -771,33 +517,14 @@ public class BakedModelFirewoodPile implements BakedModel {
                             int j = firewoodIndex / 4;
                             //Up
                             if (j != 3 && firewood[firewoodIndex + 4] == -1) {
-                                builder.add(getQuadForFirewood(Direction.UP,
-                                                               blockAtlas,
-                                                               12 - 4 * i,
-                                                               4 * j,
-                                                               0,
-                                                               16 - 4 * i,
-                                                               4 * j + 4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.UP,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(Direction.UP, blockAtlas, 12 - 4 * i, 4 * j, 0, 16 - 4 * i, 4 * j + 4, 16, firewoodIndex,
+                                                             variantIndex, Direction.UP, stateFacing));
                             }
                             //Right
                             if (i != 3 && firewood[firewoodIndex + 1] == -1) {
-                                builder.add(getQuadForFirewood(Direction.WEST,
-                                                               blockAtlas,
-                                                               12 - 4 * i,
-                                                               4 * j,
-                                                               0,
-                                                               16 - 4 * i,
-                                                               4 * j + 4,
-                                                               16,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.EAST,
-                                                               stateFacing));
+                                quads.add(
+                                        getQuadForFirewood(Direction.WEST, blockAtlas, 12 - 4 * i, 4 * j, 0, 16 - 4 * i, 4 * j + 4, 16, firewoodIndex,
+                                                           variantIndex, Direction.EAST, stateFacing));
                             }
                         }
                     }
@@ -810,33 +537,13 @@ public class BakedModelFirewoodPile implements BakedModel {
                             int j = firewoodIndex / 4;
                             //Up
                             if (j != 3 && firewood[firewoodIndex + 4] == -1) {
-                                builder.add(getQuadForFirewood(Direction.UP,
-                                                               blockAtlas,
-                                                               0,
-                                                               4 * j,
-                                                               4 * i,
-                                                               16,
-                                                               4 * j + 4,
-                                                               4 * i + 4,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.UP,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(Direction.UP, blockAtlas, 0, 4 * j, 4 * i, 16, 4 * j + 4, 4 * i + 4, firewoodIndex,
+                                                             variantIndex, Direction.UP, stateFacing));
                             }
                             //Right
                             if (i != 3 && firewood[firewoodIndex + 1] == -1) {
-                                builder.add(getQuadForFirewood(Direction.SOUTH,
-                                                               blockAtlas,
-                                                               0,
-                                                               4 * j,
-                                                               4 * i,
-                                                               16,
-                                                               4 * j + 4,
-                                                               4 * i + 4,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.EAST,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(Direction.SOUTH, blockAtlas, 0, 4 * j, 4 * i, 16, 4 * j + 4, 4 * i + 4, firewoodIndex,
+                                                             variantIndex, Direction.EAST, stateFacing));
                             }
                         }
                     }
@@ -849,106 +556,151 @@ public class BakedModelFirewoodPile implements BakedModel {
                             int j = firewoodIndex / 4;
                             //Up
                             if (j != 3 && firewood[firewoodIndex + 4] == -1) {
-                                builder.add(getQuadForFirewood(Direction.UP,
-                                                               blockAtlas,
-                                                               0,
-                                                               4 * j,
-                                                               12 - 4 * i,
-                                                               16,
-                                                               4 * j + 4,
-                                                               16 - 4 * i,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.UP,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(Direction.UP, blockAtlas, 0, 4 * j, 12 - 4 * i, 16, 4 * j + 4, 16 - 4 * i, firewoodIndex,
+                                                             variantIndex, Direction.UP, stateFacing));
                             }
                             //Right
                             if (i != 3 && firewood[firewoodIndex + 1] == -1) {
-                                builder.add(getQuadForFirewood(Direction.NORTH,
-                                                               blockAtlas,
-                                                               0,
-                                                               4 * j,
-                                                               12 - 4 * i,
-                                                               16,
-                                                               4 * j + 4,
-                                                               16 - 4 * i,
-                                                               firewoodIndex,
-                                                               variantIndex,
-                                                               Direction.EAST,
-                                                               stateFacing));
+                                quads.add(getQuadForFirewood(Direction.NORTH, blockAtlas, 0, 4 * j, 12 - 4 * i, 16, 4 * j + 4, 16 - 4 * i,
+                                                             firewoodIndex, variantIndex, Direction.EAST, stateFacing));
                             }
                         }
                     }
                 }
             }
         }
-        return builder.build();
+        return quads;
     }
 
     private static float[] getUVs(Direction modelFace, Direction stateFacing, int firewoodIndex) {
         byte realIndex = LOG_ORDER[firewoodIndex];
         int i = realIndex % 4;
         int j = realIndex / 4;
+        float[] uv = RenderHelper.MODEL_UV.get();
         switch (modelFace) {
             case SOUTH -> {
                 switch (stateFacing) {
                     case SOUTH, WEST -> {
-                        return new float[]{12 - 4 * i, 4 * j, 16 - 4 * i, 4 * j + 4};
+                        uv[0] = 12 - 4 * i;
+                        uv[1] = 4 * j;
+                        uv[2] = 16 - 4 * i;
+                        uv[3] = 4 * j + 4;
+                        return uv;
                     }
                 }
-                return new float[]{4 * i, 12 - 4 * j, 4 * i + 4, 16 - 4 * j};
+                uv[0] = 4 * i;
+                uv[1] = 12 - 4 * j;
+                uv[2] = 4 * i + 4;
+                uv[3] = 16 - 4 * j;
+                return uv;
             }
             case NORTH -> {
                 switch (stateFacing) {
                     case EAST, NORTH -> {
-                        return new float[]{4 * i, 4 * j, 4 * i + 4, 4 * j + 4};
+                        uv[0] = 4 * i;
+                        uv[1] = 4 * j;
+                        uv[2] = 4 * i + 4;
+                        uv[3] = 4 * j + 4;
+                        return uv;
                     }
                 }
-                return new float[]{12 - 4 * i, 12 - 4 * j, 16 - 4 * i, 16 - 4 * j};
+                uv[0] = 12 - 4 * i;
+                uv[1] = 12 - 4 * j;
+                uv[2] = 16 - 4 * i;
+                uv[3] = 16 - 4 * j;
+                return uv;
             }
             case UP -> {
                 if (j == 3) {
                     switch (stateFacing) {
                         case SOUTH, WEST -> {
-                            return new float[]{12 - 4 * i, 0, 16 - 4 * i, 16};
+                            uv[0] = 12 - 4 * i;
+                            uv[1] = 0;
+                            uv[2] = 16 - 4 * i;
+                            uv[3] = 16;
+                            return uv;
                         }
                     }
-                    return new float[]{4 * i, 0, 4 * i + 4, 16};
+                    uv[0] = 4 * i;
+                    uv[1] = 0;
+                    uv[2] = 4 * i + 4;
+                    uv[3] = 16;
+                    return uv;
                 }
-                return new float[]{7, 12 - 4 * i, 9, 16 - 4 * i};
+                uv[0] = 7;
+                uv[1] = 12 - 4 * i;
+                uv[2] = 9;
+                uv[3] = 16 - 4 * i;
+                return uv;
             }
             case DOWN -> {
                 if (j == 0) {
                     switch (stateFacing) {
                         case SOUTH, WEST -> {
-                            return new float[]{4 * i, 0, 4 * i + 4, 16};
+                            uv[0] = 4 * i;
+                            uv[1] = 0;
+                            uv[2] = 4 * i + 4;
+                            uv[3] = 16;
+                            return uv;
                         }
                     }
-                    return new float[]{12 - 4 * i, 0, 16 - 4 * i, 16};
+                    uv[0] = 12 - 4 * i;
+                    uv[1] = 0;
+                    uv[2] = 16 - 4 * i;
+                    uv[3] = 16;
+                    return uv;
                 }
-                return new float[]{7, 12 - 4 * i, 9, 16 - 4 * i};
+                uv[0] = 7;
+                uv[1] = 12 - 4 * i;
+                uv[2] = 9;
+                uv[3] = 16 - 4 * i;
+                return uv;
             }
             case EAST -> {
                 if (i == 3) {
                     switch (stateFacing) {
                         case EAST, NORTH -> {
-                            return new float[]{12 - 4 * j, 0, 16 - 4 * j, 16};
+                            uv[0] = 12 - 4 * j;
+                            uv[1] = 0;
+                            uv[2] = 16 - 4 * j;
+                            uv[3] = 16;
+                            return uv;
                         }
                     }
-                    return new float[]{4 * j, 0, 4 * j + 4, 16};
+                    uv[0] = 4 * j;
+                    uv[1] = 0;
+                    uv[2] = 4 * j + 4;
+                    uv[3] = 16;
+                    return uv;
                 }
-                return new float[]{7, 12 - 4 * j, 9, 16 - 4 * j};
+                uv[0] = 7;
+                uv[1] = 12 - 4 * j;
+                uv[2] = 9;
+                uv[3] = 16 - 4 * j;
+                return uv;
             }
             case WEST -> {
                 if (i == 0) {
                     switch (stateFacing) {
                         case SOUTH, WEST -> {
-                            return new float[]{12 - 4 * j, 0, 16 - 4 * j, 16};
+                            uv[0] = 12 - 4 * j;
+                            uv[1] = 0;
+                            uv[2] = 16 - 4 * j;
+                            uv[3] = 16;
+                            return uv;
                         }
                     }
-                    return new float[]{4 * j, 0, 4 * j + 4, 16};
+                    uv[0] = 4 * j;
+                    uv[1] = 0;
+                    uv[2] = 4 * j + 4;
+                    uv[3] = 16;
+                    return uv;
                 }
-                return new float[]{7, 12 - 4 * j, 9, 16 - 4 * j};
+                uv[0] = 7;
+                uv[1] = 12 - 4 * j;
+                uv[2] = 9;
+                uv[3] = 16 - 4 * j;
+                return uv;
             }
         }
         throw new IllegalStateException("Unknown direction: " + modelFace);
@@ -958,15 +710,16 @@ public class BakedModelFirewoodPile implements BakedModel {
                                                         @Nullable Direction side,
                                                         Random rand,
                                                         IModelData data) {
-        if (!data.hasProperty(FIREWOOD)) {
+        if (!data.hasProperty(FIREWOOD) || state == null) {
             Evolution.error("IModelData did not have expected property FIREWOOD");
             return this.baseModel.getQuads(state, side, rand);
         }
         byte[] firewood = data.getData(FIREWOOD);
-        return new ArrayList<>(getQuadsFromFirewood(state.getValue(EvolutionBStates.DIRECTION_HORIZONTAL),
-                                                    state.getValue(EvolutionBStates.FIREWOOD_COUNT),
-                                                    firewood,
-                                                    side));
+        assert firewood != null;
+        return new RArrayList<>(getQuadsFromFirewood(state.getValue(EvolutionBStates.DIRECTION_HORIZONTAL),
+                                                     state.getValue(EvolutionBStates.FIREWOOD_COUNT),
+                                                     firewood,
+                                                     side));
     }
 
     @Override
@@ -975,7 +728,7 @@ public class BakedModelFirewoodPile implements BakedModel {
                                             BlockState state,
                                             IModelData tileData) {
         BlockEntity tile = level.getBlockEntity(pos);
-        ModelDataMap modelDataMap = getEmptyIModelData();
+        ModelDataMap modelDataMap = MODEL_DATA.get();
         if (tile instanceof TEFirewoodPile teFirewoodPile) {
             modelDataMap.setData(FIREWOOD, teFirewoodPile.getFirewood());
         }

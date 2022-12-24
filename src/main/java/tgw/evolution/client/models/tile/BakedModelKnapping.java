@@ -1,8 +1,9 @@
 package tgw.evolution.client.models.tile;
 
-import com.google.common.collect.ImmutableList;
 import com.mojang.math.Vector3f;
-import net.minecraft.client.renderer.block.model.*;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BlockFaceUV;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureManager;
@@ -22,31 +23,28 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.tileentities.Patterns;
 import tgw.evolution.blocks.tileentities.TEKnapping;
+import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.util.collection.RArrayList;
 import tgw.evolution.util.constants.RockVariant;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 public class BakedModelKnapping implements BakedModel {
 
     public static final ModelProperty<Long> PARTS = new ModelProperty<>();
-    private static final Vector3f FROM = new Vector3f();
-    private static final Vector3f TO = new Vector3f();
-    private static final FaceBakery FACE_BAKERY = new FaceBakery();
+    private static final ThreadLocal<ModelDataMap> MODEL_DATA = ThreadLocal.withInitial(() -> {
+        ModelDataMap.Builder builder = new ModelDataMap.Builder();
+        builder.withInitial(PARTS, -1L);
+        return builder.build();
+    });
     private final BakedModel baseModel;
     private final RockVariant variant;
 
     public BakedModelKnapping(BakedModel baseModel, RockVariant variant) {
         this.baseModel = baseModel;
         this.variant = variant;
-    }
-
-    public static ModelDataMap getEmptyIModelData() {
-        ModelDataMap.Builder builder = new ModelDataMap.Builder();
-        builder.withInitial(PARTS, -1L);
-        return builder.build();
     }
 
     private static BakedQuad getQuadForPart(Direction whichFace,
@@ -59,29 +57,62 @@ public class BakedModelKnapping implements BakedModel {
                                             float maxZ,
                                             int i,
                                             int j) {
-        FROM.set(minX, minY, minZ);
-        TO.set(maxX, maxY, maxZ);
-        BlockFaceUV blockFaceUV = new BlockFaceUV(getUVs(whichFace, i, j), 0);
-        BlockElementFace blockPartFace = new BlockElementFace(null, -1, "", blockFaceUV);
-        return FACE_BAKERY.bakeQuad(FROM,
-                                    TO,
-                                    blockPartFace,
-                                    sprite,
-                                    whichFace,
-                                    SimpleModelState.IDENTITY,
-                                    null,
-                                    true,
-                                    TextureManager.INTENTIONAL_MISSING_TEXTURE);
+        Vector3f from = RenderHelper.MODEL_FROM.get();
+        from.set(minX, minY, minZ);
+        Vector3f to = RenderHelper.MODEL_TO.get();
+        to.set(maxX, maxY, maxZ);
+        BlockFaceUV blockFaceUV = RenderHelper.MODEL_FACE_UV.get();
+        blockFaceUV.uvs = getUVs(whichFace, i, j);
+        blockFaceUV.rotation = 0;
+        return RenderHelper.MODEL_FACE_BAKERY.bakeQuad(from, to, RenderHelper.MODEL_FACE.get(), sprite, whichFace, SimpleModelState.IDENTITY, null,
+                                                       true, TextureManager.INTENTIONAL_MISSING_TEXTURE);
     }
 
     private static float[] getUVs(Direction side, int i, int j) {
+        float[] uv = RenderHelper.MODEL_UV.get();
         return switch (side) {
-            case UP -> new float[]{2 * i, 2 * j, 2 * i + 2, 2 * j + 2};
-            case DOWN -> new float[]{2 * i, 14 - 2 * j, 2 * i + 2, 16 - 2 * j};
-            case NORTH -> new float[]{14 - 2 * i, 15, 16 - 2 * i, 16};
-            case SOUTH -> new float[]{2 * i, 15, 2 * i + 2, 16};
-            case EAST -> new float[]{14 - 2 * j, 15, 16 - 2 * j, 16};
-            case WEST -> new float[]{2 * j, 15, 2 * j + 2, 16};
+            case UP -> {
+                uv[0] = 2 * i;
+                uv[1] = 2 * j;
+                uv[2] = 2 * i + 2;
+                uv[3] = 2 * j + 2;
+                yield uv;
+            }
+            case DOWN -> {
+                uv[0] = 2 * i;
+                uv[1] = 14 - 2 * j;
+                uv[2] = 2 * i + 2;
+                uv[3] = 16 - 2 * j;
+                yield uv;
+            }
+            case NORTH -> {
+                uv[0] = 14 - 2 * i;
+                uv[1] = 15;
+                uv[2] = 16 - 2 * i;
+                uv[3] = 16;
+                yield uv;
+            }
+            case SOUTH -> {
+                uv[0] = 2 * i;
+                uv[1] = 15;
+                uv[2] = 2 * i + 2;
+                uv[3] = 16;
+                yield uv;
+            }
+            case EAST -> {
+                uv[0] = 14 - 2 * j;
+                uv[1] = 15;
+                uv[2] = 16 - 2 * j;
+                uv[3] = 16;
+                yield uv;
+            }
+            case WEST -> {
+                uv[0] = 2 * j;
+                uv[1] = 15;
+                uv[2] = 2 * j + 2;
+                uv[3] = 16;
+                yield uv;
+            }
         };
     }
 
@@ -95,7 +126,7 @@ public class BakedModelKnapping implements BakedModel {
         }
         //noinspection ConstantConditions
         long parts = data.getData(PARTS);
-        return new ArrayList<>(this.getQuadsFromParts(parts, side));
+        return new RArrayList<>(this.getQuadsFromParts(parts, side));
     }
 
     @Override
@@ -104,7 +135,7 @@ public class BakedModelKnapping implements BakedModel {
                                             BlockState state,
                                             IModelData tileData) {
         BlockEntity tile = level.getBlockEntity(pos);
-        ModelDataMap modelDataMap = getEmptyIModelData();
+        ModelDataMap modelDataMap = MODEL_DATA.get();
         if (tile instanceof TEKnapping teKnapping) {
             modelDataMap.setData(PARTS, teKnapping.getParts());
         }
@@ -138,14 +169,15 @@ public class BakedModelKnapping implements BakedModel {
         assert ForgeModelBakery.instance() != null;
         TextureAtlas blockAtlas = ForgeModelBakery.instance().getSpriteMap().getAtlas(TextureAtlas.LOCATION_BLOCKS);
         TextureAtlasSprite sprite = blockAtlas.getSprite(EvolutionResources.BLOCK_KNAPPING[this.variant.getId()]);
-        ImmutableList.Builder<BakedQuad> builder = new ImmutableList.Builder<>();
+        List<BakedQuad> quads = RenderHelper.MODEL_QUAD_HOLDER.get();
+        quads.clear();
         if (side != null) {
             switch (side) {
                 case UP, DOWN -> {
                     for (int j = 0; j < 8; j++) {
                         for (int i = 0; i < 8; i++) {
                             if ((parts & 1L << 8 * j + i) != 0) {
-                                builder.add(getQuadForPart(side, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
+                                quads.add(getQuadForPart(side, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
                             }
                         }
                     }
@@ -154,7 +186,7 @@ public class BakedModelKnapping implements BakedModel {
                     for (int i = 0; i < 8; i++) {
                         //j = 0
                         if ((parts & 1L << i) != 0) {
-                            builder.add(getQuadForPart(side, sprite, 2 * i, 0, 0, 2 * i + 2, 1, 2, i, 0));
+                            quads.add(getQuadForPart(side, sprite, 2 * i, 0, 0, 2 * i + 2, 1, 2, i, 0));
                         }
                     }
                 }
@@ -162,7 +194,7 @@ public class BakedModelKnapping implements BakedModel {
                     for (int i = 0; i < 8; i++) {
                         //j = 7
                         if ((parts & 1L << 56 + i) != 0) {
-                            builder.add(getQuadForPart(side, sprite, 2 * i, 0, 14, 2 * i + 2, 1, 16, i, 7));
+                            quads.add(getQuadForPart(side, sprite, 2 * i, 0, 14, 2 * i + 2, 1, 16, i, 7));
                         }
                     }
                 }
@@ -170,7 +202,7 @@ public class BakedModelKnapping implements BakedModel {
                     for (int j = 0; j < 8; j++) {
                         //i = 7
                         if ((parts & 1L << 8 * j + 7) != 0) {
-                            builder.add(getQuadForPart(side, sprite, 14, 0, 2 * j, 16, 1, 2 * j + 2, 7, j));
+                            quads.add(getQuadForPart(side, sprite, 14, 0, 2 * j, 16, 1, 2 * j + 2, 7, j));
                         }
                     }
                 }
@@ -178,7 +210,7 @@ public class BakedModelKnapping implements BakedModel {
                     for (int j = 0; j < 8; j++) {
                         //i = 0
                         if ((parts & 1L << 8 * j) != 0) {
-                            builder.add(getQuadForPart(side, sprite, 0, 0, 2 * j, 2, 1, 2 * j + 2, 0, j));
+                            quads.add(getQuadForPart(side, sprite, 0, 0, 2 * j, 2, 1, 2 * j + 2, 0, j));
                         }
                     }
                 }
@@ -187,28 +219,29 @@ public class BakedModelKnapping implements BakedModel {
         else {
             for (int j = 0; j < 8; j++) {
                 for (int i = 0; i < 8; i++) {
-                    if ((parts & 1L << 8 * j + i) != 0) {
+                    int index = 8 * j + i;
+                    if ((parts & 1L << index) != 0) {
                         //j - 1
                         if (j > 0 && (parts & 1L << 8 * (j - 1) + i) == 0) {
-                            builder.add(getQuadForPart(Direction.NORTH, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
+                            quads.add(getQuadForPart(Direction.NORTH, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
                         }
                         //j + 1
                         if (j < 7 && (parts & 1L << 8 * (j + 1) + i) == 0) {
-                            builder.add(getQuadForPart(Direction.SOUTH, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
+                            quads.add(getQuadForPart(Direction.SOUTH, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
                         }
                         //i - 1
-                        if (i > 0 && (parts & 1L << 8 * j + i - 1) == 0) {
-                            builder.add(getQuadForPart(Direction.WEST, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
+                        if (i > 0 && (parts & 1L << index - 1) == 0) {
+                            quads.add(getQuadForPart(Direction.WEST, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
                         }
                         //i + 1
                         if (i < 7 && (parts & 1L << 8 * j + i + 1) == 0) {
-                            builder.add(getQuadForPart(Direction.EAST, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
+                            quads.add(getQuadForPart(Direction.EAST, sprite, 2 * i, 0, 2 * j, 2 * i + 2, 1, 2 * j + 2, i, j));
                         }
                     }
                 }
             }
         }
-        return builder.build();
+        return quads;
     }
 
     @Override

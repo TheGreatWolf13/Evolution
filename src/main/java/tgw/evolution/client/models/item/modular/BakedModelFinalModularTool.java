@@ -113,12 +113,6 @@ public class BakedModelFinalModularTool implements BakedModel {
 
     @Override
     public ItemTransforms getTransforms() {
-//        if (this.isThrowing) {
-//            return Minecraft.getInstance().getModelManager().getModel(EvolutionResources.TOOL_THROWING).getTransforms();
-//        }
-//        if (this.isBasicAttacking) {
-//            return TRANSFORMS.setup(this.x, this.y, this.z, this.rx, this.ry, this.rz);
-//        }
         return this.baseModel.getTransforms();
     }
 
@@ -132,19 +126,6 @@ public class BakedModelFinalModularTool implements BakedModel {
         return this.baseModel.isGui3d();
     }
 
-//    public void setBasicAttack(float x, float y, float z, float rx, float ry, float rz) {
-//        this.x = x / 16.0f;
-//        this.y = y / 16.0f;
-//        this.z = z / 16.0f;
-//        this.rx = rx;
-//        this.ry = ry;
-//        this.rz = rz;
-//    }
-
-//    public void setBasicAttacking(boolean basicAttacking) {
-//        this.isBasicAttacking = basicAttacking;
-//    }
-
     public void setModelData(PartTypes.Head headType,
                              ItemMaterial headMaterial,
                              PartTypes.Handle handleType,
@@ -156,10 +137,6 @@ public class BakedModelFinalModularTool implements BakedModel {
         this.modelData.setData(HANDLE_MATERIAL, handleMaterial);
         this.modelData.setData(IS_SHARP, isSharp);
     }
-
-//    public void setThrowing(boolean throwing) {
-//        this.isThrowing = throwing;
-//    }
 
     @Override
     public boolean useAmbientOcclusion() {

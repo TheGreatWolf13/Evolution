@@ -16,7 +16,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -100,6 +102,29 @@ public class BlockFirewoodPile extends BlockMass implements IReplaceable, Entity
     public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
         TEFirewoodPile tile = (TEFirewoodPile) level.getBlockEntity(pos);
         assert tile != null;
+        if (target instanceof BlockHitResult hit) {
+            Vec3 location = hit.getLocation();
+            int y = (int) ((location.y - pos.getY() + 0.001) * 16) / 4;
+            Direction stateDirection = state.getValue(DIRECTION_HORIZONTAL);
+            int x;
+            if (stateDirection.getAxis() == Direction.Axis.Z) {
+                x = (int) ((location.x - pos.getX() + 0.001) * 16) / 4;
+            }
+            else {
+                x = (int) ((location.z - pos.getZ() + 0.001) * 16) / 4;
+            }
+            Direction hitDirection = hit.getDirection();
+            if (hitDirection == Direction.UP) {
+                y--;
+            }
+            else if (hitDirection.getAxisDirection() == Direction.AxisDirection.POSITIVE && hitDirection.getAxis() != stateDirection.getAxis()) {
+                x--;
+            }
+            if (stateDirection == Direction.SOUTH || stateDirection == Direction.WEST) {
+                x = 3 - x;
+            }
+            return new ItemStack(tile.getFirewoodAt(4 * y + x));
+        }
         return new ItemStack(tile.getFirewoodAt(0));
     }
 

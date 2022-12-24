@@ -116,6 +116,7 @@
     "EntityRenderDispatcherMixin",
     "EntityRendererMixin",
     "EntityRenderersMixin",
+    "FaceBakeryMixin",
     "FogRendererMixin",
     "FontMixin",
     "ForgeHooksClientMixin",
