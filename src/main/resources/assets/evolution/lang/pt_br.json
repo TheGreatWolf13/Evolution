@@ -42,6 +42,8 @@
   "evolution.config.label.server": "Servidor",
   "evolution.config.label.sky": "Céu",
   "evolution.config.label.units": "Unidades",
+  "evolution.config.leavesCulling": "Culling de Folhas",
+  "evolution.config.leavesCulling.comment": "Depois de quantas camadas de folhas o jogo deve começar a usar occlusion culling para escondê-las. \nSó afeta gráficos detalhados e fabulosos. \n1 resulta na melhor performance, mas nos piores visuais. \n8 pode resultar numa performance um pouco melhor que o vanilla, mas os visuais se mantêm em sua maioria inafetados. \n0 vai desabilitar occlusion culling para as folhas (comportamento vanilla).",
   "evolution.config.limitTimeUnitsToHour": "Limitar Unidades de Tempo em Horas",
   "evolution.config.limitTimeUnitsToHour.comment": "Limita as unidades de tempo na tela de estatísticas em horas, ao invés de dias e anos.",
   "evolution.config.mass": "Unidade de Massa",

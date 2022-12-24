@@ -61,6 +61,7 @@ public final class EvolutionConfig {
         public final ForgeConfigSpec.BooleanValue followUps;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Food> food;
         public final ForgeConfigSpec.BooleanValue hitmarkers;
+        public final ForgeConfigSpec.IntValue leavesCulling;
         public final ForgeConfigSpec.BooleanValue limitTimeUnitsToHour;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Mass> mass;
         public final ForgeConfigSpec.BooleanValue planets;
@@ -74,6 +75,7 @@ public final class EvolutionConfig {
             this.hitmarkers = builder.translation("evolution.config.hitmarkers").define("hitmarkers", true);
             this.followUps = builder.translation("evolution.config.followUps").define("followUps", true);
             builder.push("performance");
+            this.leavesCulling = builder.translation("evolution.config.leavesCulling").defineInRange("leavesCulling", 3, 0, 8);
             this.showPlanets = builder.translation("evolution.config.showPlanets").define("showPlanets", true);
             this.animatedTextures = builder.translation("evolution.config.animatedTextures").define("animatedTextures", true);
             builder.pop();

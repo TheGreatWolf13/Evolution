@@ -42,6 +42,8 @@
   "evolution.config.label.server": "Server",
   "evolution.config.label.sky": "Sky",
   "evolution.config.label.units": "Units",
+  "evolution.config.leavesCulling": "Leaves Culling",
+  "evolution.config.leavesCulling.comment": "After how many layers of leaves the game should start to use occlusion culling to hide them. \nOnly affects fancy and fabulous graphics. \n1 provides the best performance, but the worst visuals. \n8 may provide only a slightly better performance than vanilla, but the visuals remain mostly unaffected. \n0 will disable occlusion culling for leaves (vanilla behavior).",
   "evolution.config.limitTimeUnitsToHour": "Limit Time Units to Hour",
   "evolution.config.limitTimeUnitsToHour.comment": "Limits the time units in the statistics screen to hours, instead of days and years.",
   "evolution.config.mass": "Mass Unit",

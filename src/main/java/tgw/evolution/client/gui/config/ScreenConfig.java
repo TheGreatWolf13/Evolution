@@ -173,6 +173,7 @@ public class ScreenConfig extends ScreenListMenu {
         if (this.folderEntry.isRoot()) {
             this.saveButton = this.addRenderableWidget(new Button(this.width / 2 - 160, this.height - 29, 100, 20, this.textSave, button -> {
                 this.saveConfig();
+                this.minecraft.levelRenderer.allChanged();
                 this.minecraft.setScreen(this.parent);
             }));
             this.restoreButton = this.addRenderableWidget(

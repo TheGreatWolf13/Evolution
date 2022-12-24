@@ -1,5 +1,6 @@
 package tgw.evolution.client.renderer;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.level.block.Block;
@@ -11,12 +12,19 @@ import tgw.evolution.init.EvolutionFluids;
 public enum EvolutionRenderLayer {
     CUTOUT,
     CUTOUT_MIPPED,
+    LEAVES,
     TRANSLUCENT;
 
     private static void set(RegistryObject<? extends Block> block, EvolutionRenderLayer layer) {
         switch (layer) {
             case CUTOUT -> ItemBlockRenderTypes.setRenderLayer(block.get(), RenderType.cutout());
             case CUTOUT_MIPPED -> ItemBlockRenderTypes.setRenderLayer(block.get(), RenderType.cutoutMipped());
+            case LEAVES -> ItemBlockRenderTypes.setRenderLayer(block.get(), renderType -> {
+                if (!Minecraft.useFancyGraphics()) {
+                    return renderType == RenderType.solid();
+                }
+                return renderType == RenderType.cutoutMipped();
+            });
             case TRANSLUCENT -> ItemBlockRenderTypes.setRenderLayer(block.get(), RenderType.translucent());
         }
     }
@@ -33,7 +41,7 @@ public enum EvolutionRenderLayer {
         setFluid(EvolutionFluids.FRESH_WATER, TRANSLUCENT);
         setFluid(EvolutionFluids.SALT_WATER, TRANSLUCENT);
         set(EvolutionBlocks.CLIMBING_HOOK, CUTOUT);
-        set(EvolutionBlocks.CLIMBING_STAKE, CUTOUT_MIPPED);
+        set(EvolutionBlocks.CLIMBING_STAKE, CUTOUT);
         for (RegistryObject<Block> block : EvolutionBlocks.ALL_DRY_GRASS.values()) {
             set(block, CUTOUT_MIPPED);
         }
@@ -44,7 +52,7 @@ public enum EvolutionRenderLayer {
         }
         set(EvolutionBlocks.GROUND_ROPE, CUTOUT_MIPPED);
         for (RegistryObject<Block> block : EvolutionBlocks.ALL_LEAVES.values()) {
-            set(block, CUTOUT_MIPPED);
+            set(block, LEAVES);
         }
         set(EvolutionBlocks.ROPE, CUTOUT_MIPPED);
         for (RegistryObject<Block> block : EvolutionBlocks.ALL_SAPLING.values()) {

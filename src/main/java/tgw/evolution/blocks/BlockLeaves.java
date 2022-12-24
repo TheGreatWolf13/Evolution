@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -24,6 +25,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.IForgeShearable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.util.constants.BlockFlags;
@@ -39,6 +41,7 @@ import static tgw.evolution.init.EvolutionBStates.TREE;
 public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShearable {
 
     private static final Vec3 MOTION_MULTIPLIER = new Vec3(0.5, 1, 0.5);
+    private static final ThreadLocal<BlockPos.MutableBlockPos> MUTABLE_POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
 
     public BlockLeaves() {
         super(Properties.of(Material.LEAVES).strength(0.2F, 0.2F).sound(SoundType.GRASS).noCollission());
@@ -210,11 +213,23 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
     }
 
     @Override
-    public boolean skipRendering(BlockState state, BlockState adjacentState, Direction direction) {
+    public boolean shouldCull(BlockGetter level, BlockState state, BlockPos pos, BlockState adjacentState, BlockPos adjacentPos, Direction face) {
         if (!Minecraft.useFancyGraphics()) {
-            return adjacentState.getBlock() instanceof BlockLeaves;
+            return adjacentState.getBlock() == this;
         }
-        return super.skipRendering(state, adjacentState, direction);
+        int leavesCulling = EvolutionConfig.CLIENT.leavesCulling.get();
+        if (leavesCulling == 0) {
+            return false;
+        }
+        Vec3i vec = face.getNormal();
+        BlockPos.MutableBlockPos mutablePos = MUTABLE_POS.get();
+        for (int i = 1; i <= leavesCulling; i++) {
+            BlockState s = level.getBlockState(mutablePos.set(pos).move(face, i));
+            if (!(s.getBlock() == this)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
