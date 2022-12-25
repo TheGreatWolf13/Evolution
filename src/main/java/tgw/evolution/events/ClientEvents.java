@@ -58,6 +58,7 @@ import net.minecraftforge.fml.config.ConfigTracker;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.ClientProxy;
 import tgw.evolution.Evolution;
@@ -135,6 +136,7 @@ public class ClientEvents {
     private int cameraId = -1;
     private @Nullable DimensionOverworld dimension;
     private boolean initialized;
+    private @Range(from = 0, to = 1) int lastInventoryTab;
     private int mainhandCooldownTime;
     private int offhandCooldownTime;
     private @Nullable SkyRenderer skyRenderer;
@@ -442,6 +444,10 @@ public class ClientEvents {
             return melee.getCooldown(stack);
         }
         return (float) (20 / PlayerHelper.ATTACK_SPEED);
+    }
+
+    public @Range(from = 0, to = 1) int getLastInventoryTab() {
+        return this.lastInventoryTab;
     }
 
     public float getMainhandIndicatorPercentage(float partialTicks) {
@@ -1208,6 +1214,10 @@ public class ClientEvents {
         else {
             this.cameraPos.set(Vec3d.NULL);
         }
+    }
+
+    public void setLastInventoryTab(@Range(from = 0, to = 1) int tab) {
+        this.lastInventoryTab = tab;
     }
 
     public void setNotLoadedCameraId(int id) {

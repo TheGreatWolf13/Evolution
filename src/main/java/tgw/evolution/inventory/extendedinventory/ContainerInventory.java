@@ -16,6 +16,7 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Range;
 import tgw.evolution.capabilities.inventory.CapabilityInventory;
 import tgw.evolution.capabilities.inventory.IInventory;
 import tgw.evolution.init.EvolutionCapabilities;
@@ -35,6 +36,7 @@ public class ContainerInventory extends RecipeBookMenu<CraftingContainer> {
     private final CraftingContainer craftingContainer = new CraftingContainer(this, 2, 2);
     private final Player player;
     private final ResultContainer resultContainer = new ResultContainer();
+    private @Range(from = 0, to = 1) int selectedTab;
 
     @SuppressWarnings("ObjectAllocationInLoop")
     public ContainerInventory(int windowId, Inventory inventory) {
@@ -44,11 +46,27 @@ public class ContainerInventory extends RecipeBookMenu<CraftingContainer> {
         this.isClientSide = this.player.level.isClientSide;
         this.handler = EvolutionCapabilities.getCapabilityOrThrow(this.player, CapabilityInventory.INSTANCE);
         //Crafting result slot
-        this.addSlot(new ResultSlot(inventory.player, this.craftingContainer, this.resultContainer, 0, 232, 31));
+        this.addSlot(new ResultSlot(inventory.player, this.craftingContainer, this.resultContainer, 0, 125, 42) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 1) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
         //Crafting slots
         for (int j = 0; j < 2; j++) {
             for (int i = 0; i < 2; i++) {
-                this.addSlot(new Slot(this.craftingContainer, i + j * 2, 178 + i * 18, 22 + j * 18));
+                this.addSlot(new Slot(this.craftingContainer, i + j * 2, 44 + i * 18, 33 + j * 18) {
+                    @Override
+                    public boolean isActive() {
+                        if (ContainerInventory.this.selectedTab != 1) {
+                            return false;
+                        }
+                        return super.isActive();
+                    }
+                });
             }
         }
         //Armor slots
@@ -60,7 +78,15 @@ public class ContainerInventory extends RecipeBookMenu<CraftingContainer> {
                 case 3 -> EquipmentSlot.FEET;
                 default -> throw new IllegalStateException("Unexpected value: " + k);
             };
-            this.addSlot(new SlotArmor(inventory, 39 - k, 26, 15 + k * 18, equip, this.player));
+            this.addSlot(new SlotArmor(inventory, 39 - k, 26, 15 + k * 18, equip, this.player) {
+                @Override
+                public boolean isActive() {
+                    if (ContainerInventory.this.selectedTab != 0) {
+                        return false;
+                    }
+                    return super.isActive();
+                }
+            });
         }
         //Main inventory slots
         for (int j = 0; j < 3; ++j) {
@@ -75,6 +101,14 @@ public class ContainerInventory extends RecipeBookMenu<CraftingContainer> {
         //Offhand slot
         this.addSlot(new SlotEquip(inventory, 40, 152, 51, this.player) {
             @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+
+            @Override
             public void set(ItemStack stack) {
                 if (stack.getEquipmentSlot() == EquipmentSlot.OFFHAND && !ItemStack.isSame(stack, this.getItem())) {
                     this.entity.equipEventAndSound(stack);
@@ -82,20 +116,132 @@ public class ContainerInventory extends RecipeBookMenu<CraftingContainer> {
                 super.set(stack);
             }
         }.setBackground(InventoryMenu.BLOCK_ATLAS, EvolutionResources.SLOT_OFFHAND));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_HEAD.getIndex(), 116, 15));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_CHEST.getIndex(), 116, 33));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_LEGS.getIndex(), 116, 51));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_FEET.getIndex(), 116, 69));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.FACE.getIndex(), 134, 24));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.NECK.getIndex(), 152, 33));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.BACK.getIndex(), 134, 42));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.BELT.getIndex(), 134, 60));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_SHOULDER_LEFT.getIndex(), 44, 24));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_SHOULDER_RIGHT.getIndex(), 8, 24));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_ARM_LEFT.getIndex(), 44, 42));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_ARM_RIGHT.getIndex(), 8, 42));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_HAND_LEFT.getIndex(), 44, 60));
-        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_HAND_RIGHT.getIndex(), 8, 60));
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_HEAD.getIndex(), 116, 15) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_CHEST.getIndex(), 116, 33) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_LEGS.getIndex(), 116, 51) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.CLOTHES_FEET.getIndex(), 116, 69) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.FACE.getIndex(), 134, 24) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.NECK.getIndex(), 152, 33) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.BACK.getIndex(), 134, 42) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.BELT.getIndex(), 134, 60) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_SHOULDER_LEFT.getIndex(), 44, 24) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_SHOULDER_RIGHT.getIndex(), 8, 24) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_ARM_LEFT.getIndex(), 44, 42) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_ARM_RIGHT.getIndex(), 8, 42) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_HAND_LEFT.getIndex(), 44, 60) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
+        this.addSlot(new SlotExtended(this.player, this.handler, SlotType.ARMOR_HAND_RIGHT.getIndex(), 8, 60) {
+            @Override
+            public boolean isActive() {
+                if (ContainerInventory.this.selectedTab != 0) {
+                    return false;
+                }
+                return super.isActive();
+            }
+        });
     }
 
     protected static void slotChangedCraftingGrid(AbstractContainerMenu container,
@@ -253,6 +399,10 @@ public class ContainerInventory extends RecipeBookMenu<CraftingContainer> {
         if (!player.level.isClientSide) {
             this.clearContainer(player, this.craftingContainer);
         }
+    }
+
+    public void setSelectedTab(@Range(from = 0, to = 1) int tab) {
+        this.selectedTab = tab;
     }
 
     @Override

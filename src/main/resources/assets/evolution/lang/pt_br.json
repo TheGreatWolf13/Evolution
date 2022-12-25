@@ -448,6 +448,8 @@
   "evolution.gui.crash.summary": "O Minecraft encontrou um problema e crashou.",
   "evolution.gui.inventory": "Inventário",
   "evolution.gui.inventory.equipment": "Equipamento",
+  "evolution.gui.inventory.tabCrafting": "Fabricação",
+  "evolution.gui.inventory.tabInventory": "Inventário e Equipamento",
   "evolution.gui.knapping": "Lascando",
   "evolution.gui.menu.modOptions": "Opções de Mods...",
   "evolution.gui.menu.quit": "Sair do Jogo",

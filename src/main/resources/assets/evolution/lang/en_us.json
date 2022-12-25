@@ -448,6 +448,8 @@
   "evolution.gui.crash.summary": "Minecraft ran into a problem and crashed.",
   "evolution.gui.inventory": "Inventory",
   "evolution.gui.inventory.equipment": "Equipment",
+  "evolution.gui.inventory.tabCrafting": "Crafting",
+  "evolution.gui.inventory.tabInventory": "Inventory and Equipment",
   "evolution.gui.knapping": "Knapping",
   "evolution.gui.menu.modOptions": "Mod Options...",
   "evolution.gui.menu.quit": "Quit Game",

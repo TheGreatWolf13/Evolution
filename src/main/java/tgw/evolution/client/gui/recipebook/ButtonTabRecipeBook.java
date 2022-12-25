@@ -63,7 +63,6 @@ public class ButtonTabRecipeBook extends StateSwitchingButton {
         Minecraft mc = Minecraft.getInstance();
         RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
         RenderSystem.setShaderTexture(0, this.resourceLocation);
-//        RenderSystem.disableDepthTest();
         int i = this.xTexStart;
         int j = this.yTexStart;
         if (this.isStateTriggered) {
@@ -78,7 +77,6 @@ public class ButtonTabRecipeBook extends StateSwitchingButton {
         }
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         this.blit(matrices, k, this.y, i, j, this.width, this.height);
-//        RenderSystem.enableDepthTest();
         this.renderIcon(mc.getItemRenderer());
         if (this.animationTime > 0.0F) {
             matrices.popPose();

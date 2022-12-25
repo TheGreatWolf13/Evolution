@@ -37,9 +37,7 @@ public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
     private final Label lblDeathDate;
     private final ResourceLocation resDeath = Evolution.getResource("textures/gui/corpse_death.png");
     private final ResourceLocation resInv = Evolution.getResource("textures/gui/corpse.png");
-    //TODO replace with Evolution Item
     private final ItemStack tab0Stack = new ItemStack(Items.CHEST);
-    //TODO replace with Evolution Item
     private final ItemStack tab1Stack = new ItemStack(Items.SKELETON_SKULL);
     private final Component textTabDeath = new TranslatableComponent("evolution.gui.corpse.tabDeath");
     private final Component textTabInventory = new TranslatableComponent("evolution.gui.corpse.tabInventory");
@@ -120,8 +118,8 @@ public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
         }
         else {
             this.renderDeathTab(matrices, mouseX, mouseY);
+            this.drawTabs(matrices);
         }
-        this.drawTabs(matrices);
         this.renderTooltip(matrices, mouseX, mouseY);
     }
 
@@ -132,6 +130,7 @@ public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
         int relX = (this.width - this.imageWidth) / 2;
         int relY = (this.height - this.imageHeight) / 2;
         this.blit(matrices, relX, relY, 0, 0, this.imageWidth, this.imageHeight);
+        this.drawTabs(matrices);
     }
 
     protected void renderDeathTab(PoseStack matrices, double mouseX, double mouseY) {
@@ -150,12 +149,8 @@ public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
         y += 5;
         this.messageEnd = y;
         this.lblDeathDate.render(this.font, matrices, x, y, this.imageWidth - 12, mouseX, mouseY);
-        GUIUtils.drawCenteredStringNoShadow(matrices,
-                                            this.font,
-                                            this.menu.getCorpse().getName(),
-                                            this.leftPos + this.imageWidth / 2.0f,
-                                            this.topPos + 5,
-                                            0x40_4040);
+        GUIUtils.drawCenteredStringNoShadow(matrices, this.font, this.menu.getCorpse().getName(), this.leftPos + this.imageWidth / 2.0f,
+                                            this.topPos + 5, 0x40_4040);
     }
 
     @Override
@@ -176,12 +171,7 @@ public class ScreenCorpse extends AbstractContainerScreen<ContainerCorpse> {
             return;
         }
         if (this.selectedTab == 1) {
-            if (MathHelper.isMouseInRange(mouseX,
-                                          mouseY,
-                                          this.leftPos + 6,
-                                          this.messageStart,
-                                          this.leftPos + this.imageWidth - 6,
-                                          this.messageEnd)) {
+            if (MathHelper.isMouseInRange(mouseX, mouseY, this.leftPos + 6, this.messageStart, this.leftPos + this.imageWidth - 6, this.messageEnd)) {
                 Style style = this.getClickedComponentStyleAt(mouseX, mouseY);
                 this.renderComponentHoverEffect(matrices, style, mouseX, mouseY);
                 return;

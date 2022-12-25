@@ -212,11 +212,13 @@ public abstract class ScreenDisplayEffects<T extends AbstractContainerMenu> exte
 
     @Override
     public void render(PoseStack matrices, int mouseX, int mouseY, float partialTicks) {
-        if (this.hasActivePotionEffects) {
+        if (this.hasActivePotionEffects && this.shouldDrawPotionEffects()) {
             this.drawActivePotionEffects(matrices);
         }
         super.render(matrices, mouseX, mouseY, partialTicks);
     }
+
+    protected abstract boolean shouldDrawPotionEffects();
 
     public void updateActivePotionEffects() {
         assert this.minecraft != null;
