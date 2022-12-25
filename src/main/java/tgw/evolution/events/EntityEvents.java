@@ -61,6 +61,7 @@ import tgw.evolution.capabilities.toast.CapabilityToast;
 import tgw.evolution.capabilities.toast.ToastStats;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.init.*;
+import tgw.evolution.items.ItemUtils;
 import tgw.evolution.network.*;
 import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.patches.IEntityPatch;
@@ -325,11 +326,11 @@ public class EntityEvents {
     public void onPlayerBreakBlock(PlayerEvent.BreakSpeed event) {
         BlockState state = event.getState();
         //If the block is breakable by hand, do nothing
-        if (((IBlockPatch) state.getBlock()).getHarvestLevel(state) <= HarvestLevel.HAND) {
+        if (((IBlockPatch) state.getBlock()).getHarvestLevel(state, event.getPlayer().level, event.getPos()) <= HarvestLevel.HAND) {
             return;
         }
         //Prevents players from breaking blocks if their tool cannot harvest the block
-        if (!event.getPlayer().getMainHandItem().isCorrectToolForDrops(event.getState())) {
+        if (!ItemUtils.isCorrectToolForDrops(event.getPlayer().getMainHandItem(), state, event.getPlayer().level, event.getPos())) {
             event.setCanceled(true);
         }
     }

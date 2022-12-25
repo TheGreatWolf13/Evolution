@@ -62,7 +62,7 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittableB
         if (chopping.hasLog()) {
             ItemStack stackInHand = player.getMainHandItem();
             if (stackInHand.getItem() instanceof ItemModular tool && tool.isAxe(stackInHand)) {
-                if (chopping.increaseBreakProgress() == 3) {
+                if (chopping.increaseBreakProgress() == 4) {
                     chopping.breakLog(player);
                     level.playSound(player, pos, SoundEvents.WOOD_BREAK, SoundSource.PLAYERS, 1.0f, 1.0f);
                 }
@@ -130,7 +130,15 @@ public class BlockChopping extends BlockMass implements IReplaceable, ISittableB
     }
 
     @Override
-    public int getHarvestLevel(BlockState state) {
+    public int getHarvestLevel(BlockState state, @Nullable Level level, @Nullable BlockPos pos) {
+        if (level != null && pos != null) {
+            BlockEntity tile = level.getBlockEntity(pos);
+            if (tile instanceof TEChopping te) {
+                if (te.hasLog()) {
+                    return HarvestLevel.UNBREAKABLE;
+                }
+            }
+        }
         return HarvestLevel.STONE;
     }
 

@@ -1,5 +1,11 @@
 package tgw.evolution.items;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Interface present in all {@code Item}s from the Mod to control tooltips and other properties.
  */
@@ -20,6 +26,8 @@ public interface IEvolutionItem {
     default int getTooltipLines() {
         return 0;
     }
+
+    boolean isCorrectToolForDrops(ItemStack stack, BlockState state, @Nullable Level level, @Nullable BlockPos pos);
 
     /**
      * @return Whether this item should prevent the player from sprinting and cancel the sprinting if it's being used.

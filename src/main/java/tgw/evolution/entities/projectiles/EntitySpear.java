@@ -136,7 +136,7 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
         LivingEntity shooter = this.getShooter();
         if (shooter != null) {
             ItemEvents.damageItem(this.stack, shooter, ItemModular.DamageCause.HIT_BLOCK, null,
-                                  ((IBlockPatch) state.getBlock()).getHarvestLevel(state));
+                                  ((IBlockPatch) state.getBlock()).getHarvestLevel(state, this.level, null));
         }
     }
 

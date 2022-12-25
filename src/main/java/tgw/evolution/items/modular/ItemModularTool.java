@@ -235,10 +235,10 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     @Override
-    public boolean isCorrectToolForDrops(ItemStack stack, BlockState state) {
+    public boolean isCorrectToolForDrops(ItemStack stack, BlockState state, @Nullable Level level, @Nullable BlockPos pos) {
         IModularTool tool = IModularTool.get(stack);
         if (tool.getEffectiveMaterials().contains(state.getMaterial())) {
-            return tool.getHarvestLevel() >= ((IBlockPatch) state.getBlock()).getHarvestLevel(state);
+            return tool.getHarvestLevel() >= ((IBlockPatch) state.getBlock()).getHarvestLevel(state, level, pos);
         }
         return false;
     }

@@ -3,19 +3,32 @@ package tgw.evolution.mixin;
 import it.unimi.dsi.fastutil.objects.Object2ByteLinkedOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.util.constants.HarvestLevel;
+
+import java.util.List;
+import java.util.function.Supplier;
 
 @Mixin(Block.class)
 public abstract class BlockMixin extends BlockBehaviour implements IBlockPatch {
@@ -26,6 +39,101 @@ public abstract class BlockMixin extends BlockBehaviour implements IBlockPatch {
 
     public BlockMixin(Properties properties) {
         super(properties);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Remove lambda allocation
+     */
+    @Overwrite
+    public static void dropResources(BlockState state, LootContext.Builder builder) {
+        ServerLevel level = builder.getLevel();
+        BlockPos pos = new BlockPos(builder.getParameter(LootContextParams.ORIGIN));
+        List<ItemStack> drops = state.getDrops(builder);
+        for (int i = 0, l = drops.size(); i < l; i++) {
+            popResource(level, pos, drops.get(i));
+        }
+        state.spawnAfterBreak(level, pos, ItemStack.EMPTY);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid lambda allocation
+     */
+    @Overwrite
+    public static void dropResources(BlockState state, Level level, BlockPos pos) {
+        if (level instanceof ServerLevel serverLevel) {
+            List<ItemStack> drops = getDrops(state, serverLevel, pos, null);
+            for (int i = 0, l = drops.size(); i < l; i++) {
+                popResource(level, pos, drops.get(i));
+            }
+            state.spawnAfterBreak(serverLevel, pos, ItemStack.EMPTY);
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid lambda allocation
+     */
+    @Overwrite
+    public static void dropResources(BlockState state, LevelAccessor level, BlockPos pos, @javax.annotation.Nullable BlockEntity te) {
+        if (level instanceof ServerLevel serverLevel) {
+            List<ItemStack> drops = getDrops(state, serverLevel, pos, te);
+            for (int i = 0, l = drops.size(); i < l; i++) {
+                popResource(serverLevel, pos, drops.get(i));
+            }
+            state.spawnAfterBreak(serverLevel, pos, ItemStack.EMPTY);
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid lambda allocation
+     */
+    @Overwrite
+    public static void dropResources(BlockState state,
+                                     Level level,
+                                     BlockPos pos,
+                                     @javax.annotation.Nullable BlockEntity te,
+                                     Entity entity,
+                                     ItemStack tool) {
+        if (level instanceof ServerLevel serverLevel) {
+            List<ItemStack> drops = getDrops(state, serverLevel, pos, te, entity, tool);
+            for (int i = 0, len = drops.size(); i < len; i++) {
+                popResource(level, pos, drops.get(i));
+            }
+            state.spawnAfterBreak(serverLevel, pos, tool);
+        }
+
+    }
+
+    @Shadow
+    public static List<ItemStack> getDrops(BlockState pState,
+                                           ServerLevel pLevel,
+                                           BlockPos pPos,
+                                           @Nullable BlockEntity pBlockEntity) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    public static List<ItemStack> getDrops(BlockState pState,
+                                           ServerLevel pLevel,
+                                           BlockPos pPos,
+                                           @Nullable BlockEntity pBlockEntity,
+                                           @Nullable Entity pEntity,
+                                           ItemStack pTool) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    public static void popResource(Level pLevel, BlockPos pPos, ItemStack pStack) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    private static void popResource(Level pLevel,
+                                    Supplier<ItemEntity> pItemEntitySupplier,
+                                    ItemStack pStack) {
     }
 
     /**
@@ -69,7 +177,7 @@ public abstract class BlockMixin extends BlockBehaviour implements IBlockPatch {
     }
 
     @Override
-    public int getHarvestLevel(BlockState state) {
+    public int getHarvestLevel(BlockState state, @Nullable Level level, @Nullable BlockPos pos) {
         return HarvestLevel.HAND;
     }
 }

@@ -48,7 +48,7 @@ public class TEChopping extends BlockEntity implements ILoggable {
             BlockUtils.dropItemStack(this.level, this.worldPosition, stack, 0.5);
             Block block = WoodVariant.byId(this.id).getLog();
             ItemEvents.damageItem(player.getMainHandItem(), player, ItemModular.DamageCause.BREAK_BLOCK, EquipmentSlot.MAINHAND,
-                                  ((IBlockPatch) block).getHarvestLevel(block.defaultBlockState()));
+                                  ((IBlockPatch) block).getHarvestLevel(block.defaultBlockState(), this.level, null));
             player.awardStat(Stats.ITEM_CRAFTED.get(firewood), 16);
         }
         this.id = -1;

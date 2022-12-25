@@ -300,7 +300,7 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
                 Vec3 vec3d1 = vec3d.normalize().scale(0.05);
                 this.setPosRaw(this.getX() - vec3d1.x, this.getY() - vec3d1.y, this.getZ() - vec3d1.z);
                 this.playSound(this.getHitBlockSound(), 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
-                this.inBlockState = this.level.getBlockState(blockHitResult.getBlockPos());
+                this.inBlockState = this.level.getBlockState(pos);
                 this.inGround = true;
                 this.setPierceLevel((byte) 0);
                 this.resetHitEntities();
