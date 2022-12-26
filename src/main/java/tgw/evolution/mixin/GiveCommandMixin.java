@@ -27,7 +27,7 @@ public abstract class GiveCommandMixin {
                                                                                                                         CommandSyntaxException {
         int maxStackSize = item.getItem().getMaxStackSize();
         int max = maxStackSize * 100;
-        ItemStack stack = item.createItemStack(count, false);
+        ItemStack stack = item.createItemStack(Math.min(maxStackSize, count), false);
         if (count > max) {
             source.sendFailure(new TranslatableComponent("commands.give.failed.toomanyitems", max, stack.getDisplayName()));
             return 0;
