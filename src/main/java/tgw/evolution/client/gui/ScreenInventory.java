@@ -124,8 +124,8 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
             this.tabX = this.leftPos + 6;
             this.tabY = this.topPos - 28;
             this.recipeBookVisible = this.recipeBook.isVisible();
+            this.setSelectedTab(ClientEvents.getInstance().getLastInventoryTab(), false);
         }
-        this.setSelectedTab(ClientEvents.getInstance().getLastInventoryTab(), false);
     }
 
     @Override
