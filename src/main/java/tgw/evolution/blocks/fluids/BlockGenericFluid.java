@@ -2,15 +2,16 @@ package tgw.evolution.blocks.fluids;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.*;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LevelEvent;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -23,12 +24,11 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.event.ForgeEventFactory;
-import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
-import tgw.evolution.blocks.*;
-import tgw.evolution.blocks.tileentities.TELiquid;
-import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
-import tgw.evolution.capabilities.chunkstorage.EnumStorage;
+import tgw.evolution.blocks.BlockPhysics;
+import tgw.evolution.blocks.BlockUtils;
+import tgw.evolution.blocks.IBlockFluidContainer;
+import tgw.evolution.blocks.IReplaceable;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
@@ -43,41 +43,28 @@ import java.util.function.Supplier;
 
 import static tgw.evolution.init.EvolutionBStates.LEVEL_1_8;
 
-public abstract class BlockGenericFluid extends BlockMass implements IBlockFluidContainer, IReplaceable, EntityBlock {
+public abstract class BlockGenericFluid extends BlockPhysics implements IBlockFluidContainer, IReplaceable {
     public static final IntegerProperty LEVEL = LEVEL_1_8;
     public static final BooleanProperty FULL = EvolutionBStates.FULL;
     private final OList<FluidState> fluidStateCache;
     private final Supplier<? extends FluidGeneric> supplier;
     private boolean fluidStateCacheInitialized;
 
-    public BlockGenericFluid(Supplier<? extends FluidGeneric> fluid, Properties properties, int mass) {
-        super(properties, mass);
+    public BlockGenericFluid(Supplier<? extends FluidGeneric> fluid, Properties properties) {
+        super(properties);
         this.fluidStateCache = new OArrayList<>();
         this.registerDefaultState(this.defaultBlockState().setValue(LEVEL, 8).setValue(FULL, true));
         this.supplier = fluid;
     }
 
-    public static int getFluidAmount(Level level, BlockPos pos, BlockState state, FluidState fluid) {
+    public static int getFluidAmount(BlockGetter level, BlockPos pos, BlockState state, FluidState fluid) {
         if (fluid.isEmpty()) {
             return 0;
         }
         Block block = state.getBlock();
         if (block instanceof BlockGenericFluid) {
             int layers = fluid.getValue(LEVEL_1_8);
-            int amount = 12_500 * layers;
-            if (!fluid.getValue(EvolutionBStates.FALL)) {
-                BlockEntity tile = level.getBlockEntity(pos);
-                if (tile instanceof TELiquid teLiquid) {
-                    amount -= teLiquid.getMissingLiquid();
-                }
-                else {
-                    Evolution.warn("Invalid tile entity for block at {}: {}", pos, tile);
-                }
-            }
-            return amount;
-        }
-        if (block instanceof IFluidLoggable fluidLoggable) {
-            return fluidLoggable.getCurrentAmount(level, pos, state);
+            return 12_500 * layers;
         }
         return 0;
     }
@@ -115,19 +102,7 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
         int amountRemoved = Math.min(amountAtPos, maxAmount);
         amountAtPos -= amountRemoved;
         this.getFluid().setBlockState(level, pos, amountAtPos);
-        for (Direction dir : DirectionUtil.ALL) {
-            BlockPos offsetPos = pos.relative(dir);
-            BlockState stateAtOffset = level.getBlockState(offsetPos);
-            if (stateAtOffset.getBlock() instanceof IFluidLoggable) {
-                BlockUtils.scheduleBlockTick(level, offsetPos, 2);
-            }
-        }
         return amountRemoved;
-    }
-
-    @Override
-    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        return NonNullList.of(ItemStack.EMPTY);
     }
 
     @Override
@@ -154,16 +129,6 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
             level += 8;
         }
         return this.fluidStateCache.get(level);
-    }
-
-    @Override
-    public int getMass(Level level, BlockPos pos, BlockState state) {
-        return this.getMass(state);
-    }
-
-    @Override
-    public int getMass(BlockState state) {
-        return state.getValue(LEVEL) * this.getBaseMass() / 8;
     }
 
     @Override
@@ -205,12 +170,6 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
         }
     }
 
-    @Nullable
-    @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new TELiquid(pos, state);
-    }
-
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         if (this.reactWithNeighbors(level, pos)) {
@@ -238,15 +197,6 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
         if (currentAmount == 0) {
             return;
         }
-        if (newBlock instanceof IFluidLoggable fluidLoggable) {
-            int maxAmount = fluidLoggable.getFluidCapacity(newState);
-            int placed = Math.min(currentAmount, maxAmount);
-            ((IFluidLoggable) newBlock).setBlockState(level, pos, newState, this.getFluid(), placed);
-            currentAmount -= placed;
-        }
-        if (currentAmount == 0) {
-            return;
-        }
         BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
         DirectionList list = new DirectionList();
         list.fillHorizontal();
@@ -263,11 +213,7 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
         if (currentAmount == 0) {
             return;
         }
-        CapabilityChunkStorage.add(level.getChunkAt(pos), EnumStorage.WATER, currentAmount);
-    }
-
-    @Override
-    public void onReplaced(BlockState state, Level level, BlockPos pos) {
+//        CapabilityChunkStorage.add(level.getChunkAt(pos), EnumStorage.WATER, currentAmount);
     }
 
     @Override
@@ -351,7 +297,6 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
                 int capacity = FluidGeneric.getCapacity(stateAtPos);
                 int placed = Math.min(amountAlreadyAtPos + amount, capacity);
                 this.getFluid().setBlockState(level, mutablePos, placed);
-                FluidGeneric.onReplace(level, mutablePos, stateAtPos);
                 amount = amount - placed + amountAlreadyAtPos;
                 if (amount == 0) {
                     return 0;
@@ -373,12 +318,12 @@ public abstract class BlockGenericFluid extends BlockMass implements IBlockFluid
 
     @Override
     public BlockState updateShape(BlockState state,
-                                  Direction facing,
-                                  BlockState facingState,
+                                  Direction direction,
+                                  BlockState fromState,
                                   LevelAccessor level,
-                                  BlockPos currentPos,
-                                  BlockPos facingPos) {
-        BlockUtils.scheduleFluidTick(level, currentPos);
-        return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
+                                  BlockPos pos,
+                                  BlockPos fromPos) {
+        BlockUtils.scheduleFluidTick(level, pos);
+        return super.updateShape(state, direction, fromState, level, pos, fromPos);
     }
 }

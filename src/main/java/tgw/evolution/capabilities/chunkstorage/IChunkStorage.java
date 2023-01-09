@@ -1,48 +1,21 @@
 package tgw.evolution.capabilities.chunkstorage;
 
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.common.util.INBTSerializable;
+import tgw.evolution.blocks.IAir;
 
-import java.util.Map;
+public interface IChunkStorage extends INBTSerializable<CompoundTag> {
 
-public interface IChunkStorage {
+    default void scheduleAtmTick(LevelChunk chunk, int x, int y, int z, boolean forceUpdate) {
+        this.scheduleAtmTick(chunk, IAir.packInternalPos(x & 15, y, z & 15, forceUpdate));
+    }
 
-    /**
-     * Adds an element to the storage. Returns quantity of that element that was accepted.
-     */
-    int addElement(EnumStorage element, int amount);
+    void scheduleAtmTick(LevelChunk chunk, int internalPos);
 
-    /**
-     * Adds a set of elements and their respective amounts to the storage.
-     */
-    void addMany(Map<EnumStorage, Integer> elements);
+    void scheduleBlockTick(LevelChunk chunk, long pos);
 
-    /**
-     * Get the {@link ChunkPos} of this instance's chunk.
-     *
-     * @return The chunk position
-     */
-    ChunkPos getChunkPos();
+    boolean setContinuousAtmDebug(LevelChunk chunk, boolean debug);
 
-    /**
-     * Returns the amount of energy currently stored.
-     */
-    int getElementStored(EnumStorage element);
-
-    /**
-     * Get the {@link Level} containing this instance's chunk.
-     *
-     * @return The World
-     */
-    Level getLevel();
-
-    /**
-     * Removes an element from the storage. Returns {@code true} if succeeded, {@code false} otherwise.
-     */
-    boolean removeElement(EnumStorage element, int amount);
-
-    /**
-     * Removes a set of elements and their respective amounts from the storage. Returns TRUE if succeeded, FALSE otherwise.
-     */
-    boolean removeMany(Map<EnumStorage, Integer> elements);
+    void tick(LevelChunk chunk);
 }

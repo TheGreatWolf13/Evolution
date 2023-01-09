@@ -4,7 +4,7 @@ import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.init.EvolutionCapabilities;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPartHilt;
 
 public class PartHilt extends PartGrab<PartTypes.Hilt, ItemPartHilt, PartHilt> {
@@ -30,7 +30,7 @@ public class PartHilt extends PartGrab<PartTypes.Hilt, ItemPartHilt, PartHilt> {
     }
 
     @Override
-    public void init(PartTypes.Hilt type, ItemMaterial material) {
+    public void init(PartTypes.Hilt type, Material material) {
         if (!material.isAllowedBy(type)) {
             throw new IllegalStateException("Material " + material + " does not allow HiltType " + type);
         }

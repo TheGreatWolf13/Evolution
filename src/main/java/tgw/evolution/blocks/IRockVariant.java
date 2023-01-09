@@ -4,5 +4,5 @@ import tgw.evolution.util.constants.RockVariant;
 
 public interface IRockVariant {
 
-    RockVariant getVariant();
+    RockVariant rockVariant();
 }

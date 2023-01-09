@@ -37,14 +37,14 @@ public final class ModelRegistry {
         }
         registerModel(event, EvolutionBlocks.FIREWOOD_PILE.get(), BakedModelFirewoodPile::new);
         registerModel(event, EvolutionItems.MODULAR_TOOL.get(), BakedModelModularTool::new);
-        registerModel(event, EvolutionItems.BLADE_PART.get(), BakedModelPartBlade::new);
-        registerModel(event, EvolutionItems.GUARD_PART.get(), BakedModelPartGuard::new);
-        registerModel(event, EvolutionItems.HALFHEAD_PART.get(), BakedModelPartHalfHead::new);
-        registerModel(event, EvolutionItems.HANDLE_PART.get(), BakedModelPartHandle::new);
-        registerModel(event, EvolutionItems.HEAD_PART.get(), BakedModelPartHead::new);
-        registerModel(event, EvolutionItems.HILT_PART.get(), BakedModelPartHilt::new);
-        registerModel(event, EvolutionItems.POLE_PART.get(), BakedModelPartPole::new);
-        registerModel(event, EvolutionItems.POMMEL_PART.get(), BakedModelPartPommel::new);
+        registerModel(event, EvolutionItems.PART_BLADE.get(), BakedModelPartBlade::new);
+        registerModel(event, EvolutionItems.PART_GUARD.get(), BakedModelPartGuard::new);
+        registerModel(event, EvolutionItems.PART_HALFHEAD.get(), BakedModelPartHalfHead::new);
+        registerModel(event, EvolutionItems.PART_HANDLE.get(), BakedModelPartHandle::new);
+        registerModel(event, EvolutionItems.PART_HEAD.get(), BakedModelPartHead::new);
+        registerModel(event, EvolutionItems.PART_GRIP.get(), BakedModelPartHilt::new);
+        registerModel(event, EvolutionItems.PART_POLE.get(), BakedModelPartPole::new);
+        registerModel(event, EvolutionItems.PART_POMMEL.get(), BakedModelPartPommel::new);
     }
 
     private static void registerModel(ModelBakeEvent event, Item item, Function<BakedModel, BakedModel> newModel) {

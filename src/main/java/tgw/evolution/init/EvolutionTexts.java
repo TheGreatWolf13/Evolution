@@ -298,7 +298,7 @@ public final class EvolutionTexts {
         return new TranslatableComponent("evolution.tooltip.mass", MASS.format(amount)).setStyle(DARK_GREEN);
     }
 
-    public static Component material(ItemMaterial material) {
+    public static Component material(Material material) {
         return new TextComponent("   ").append(new TranslatableComponent("evolution.tooltip.material", material.getText())).setStyle(DARK_YELLOW);
     }
 

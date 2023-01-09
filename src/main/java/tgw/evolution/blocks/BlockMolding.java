@@ -2,7 +2,6 @@ package tgw.evolution.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -72,11 +71,6 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
     @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult hitResult, BlockGetter level, BlockPos pos, Player player) {
         return new ItemStack(EvolutionItems.CLAYBALL.get());
-    }
-
-    @Override
-    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.CLAY.get(), state.getValue(LAYERS_1_5)));
     }
 
     @Override

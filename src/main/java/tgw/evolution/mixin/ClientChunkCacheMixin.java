@@ -60,14 +60,15 @@ public abstract class ClientChunkCacheMixin extends ChunkSource implements IClie
                 this.storage.replace(index, chunk, null);
             }
         }
-        else if ((Object) this.storage instanceof IClientChunkCache_StoragePatch patch && patch.inCameraRange(x, z)) {
-            int index = patch.getCameraIndex(x, z);
-            LevelChunk chunk = patch.getCameraChunk(index);
-            if (isValidChunk(chunk, x, z)) {
-                MinecraftForge.EVENT_BUS.post(new ChunkEvent.Unload(chunk));
-                patch.cameraReplace(index, chunk, null);
+        else //noinspection ConstantConditions
+            if ((Object) this.storage instanceof IClientChunkCache_StoragePatch patch && patch.inCameraRange(x, z)) {
+                int index = patch.getCameraIndex(x, z);
+                LevelChunk chunk = patch.getCameraChunk(index);
+                if (isValidChunk(chunk, x, z)) {
+                    MinecraftForge.EVENT_BUS.post(new ChunkEvent.Unload(chunk));
+                    patch.cameraReplace(index, chunk, null);
+                }
             }
-        }
     }
 
     /**
@@ -97,12 +98,13 @@ public abstract class ClientChunkCacheMixin extends ChunkSource implements IClie
                 return chunk;
             }
         }
-        else if ((Object) this.storage instanceof IClientChunkCache_StoragePatch patch && patch.inCameraRange(x, z)) {
-            LevelChunk chunk = patch.getCameraChunk(patch.getCameraIndex(x, z));
-            if (isValidChunk(chunk, x, z)) {
-                return chunk;
+        else //noinspection ConstantConditions
+            if ((Object) this.storage instanceof IClientChunkCache_StoragePatch patch && patch.inCameraRange(x, z)) {
+                LevelChunk chunk = patch.getCameraChunk(patch.getCameraIndex(x, z));
+                if (isValidChunk(chunk, x, z)) {
+                    return chunk;
+                }
             }
-        }
         return load ? this.emptyChunk : null;
     }
 
@@ -135,7 +137,13 @@ public abstract class ClientChunkCacheMixin extends ChunkSource implements IClie
         }
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason Handle when camera is not the player
+     */
+    @javax.annotation.Nullable
     @Nullable
+    @Overwrite
     public LevelChunk replaceWithPacketData(int x,
                                             int z,
                                             FriendlyByteBuf buf,
@@ -157,6 +165,7 @@ public abstract class ClientChunkCacheMixin extends ChunkSource implements IClie
             MinecraftForge.EVENT_BUS.post(new ChunkEvent.Load(chunk));
             return chunk;
         }
+        //noinspection ConstantConditions
         if ((Object) this.storage instanceof IClientChunkCache_StoragePatch patch && patch.inCameraRange(x, z)) {
             int index = patch.getCameraIndex(x, z);
             LevelChunk chunk = patch.getCameraChunk(index);

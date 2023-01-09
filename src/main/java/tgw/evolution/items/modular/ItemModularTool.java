@@ -26,7 +26,7 @@ import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.items.IBackWeapon;
 import tgw.evolution.items.IThrowable;
 import tgw.evolution.items.ITwoHanded;
@@ -45,9 +45,9 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     public static ItemStack createNew(PartTypes.Head headType,
-                                      ItemMaterial headMaterial,
+                                      Material headMaterial,
                                       PartTypes.Handle handleType,
-                                      ItemMaterial handleMaterial,
+                                      Material handleMaterial,
                                       boolean sharp) {
         if (!headMaterial.isAllowedBy(headType)) {
             throw new RuntimeException("Invalid material for " + headType.getName() + ": " + headMaterial.getName());
@@ -77,9 +77,9 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     public void fillItemCategory(CreativeModeTab tab, NonNullList<ItemStack> items) {
         if (this.allowdedIn(tab)) {
             for (PartTypes.Head head : PartTypes.Head.VALUES) {
-                for (ItemMaterial material : ItemMaterial.VALUES) {
+                for (Material material : Material.VALUES) {
                     if (material.isAllowedBy(head)) {
-                        items.add(createNew(head, material, PartTypes.Handle.ONE_HANDED, ItemMaterial.WOOD, true));
+                        items.add(createNew(head, material, PartTypes.Handle.ONE_HANDED, Material.WOOD, true));
                     }
                 }
             }
@@ -129,14 +129,14 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     @Override
     public ItemStack getDefaultInstance() {
         PartTypes.Head head = PartTypes.Head.getRandom(MathHelper.RANDOM);
-        ItemMaterial headMaterial = ItemMaterial.getRandom(MathHelper.RANDOM);
+        Material headMaterial = Material.getRandom(MathHelper.RANDOM);
         while (!head.hasVariantIn(headMaterial)) {
-            headMaterial = ItemMaterial.getRandom(MathHelper.RANDOM);
+            headMaterial = Material.getRandom(MathHelper.RANDOM);
         }
         PartTypes.Handle handle = PartTypes.Handle.getRandom(MathHelper.RANDOM);
-        ItemMaterial handleMaterial = ItemMaterial.getRandom(MathHelper.RANDOM);
+        Material handleMaterial = Material.getRandom(MathHelper.RANDOM);
         while (!handle.hasVariantIn(handleMaterial)) {
-            handleMaterial = ItemMaterial.getRandom(MathHelper.RANDOM);
+            handleMaterial = Material.getRandom(MathHelper.RANDOM);
         }
         return createNew(head, headMaterial, handle, handleMaterial, true);
     }

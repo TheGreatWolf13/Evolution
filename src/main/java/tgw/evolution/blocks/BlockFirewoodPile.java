@@ -2,7 +2,6 @@ package tgw.evolution.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
@@ -33,10 +32,10 @@ import tgw.evolution.util.math.MathHelper;
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
 import static tgw.evolution.init.EvolutionBStates.FIREWOOD_COUNT;
 
-public class BlockFirewoodPile extends BlockMass implements IReplaceable, EntityBlock {
+public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, EntityBlock, IPoppable {
 
     public BlockFirewoodPile() {
-        super(Properties.of(Material.WOOD).strength(-1, 2.0F).sound(SoundType.WOOD), 400);
+        super(Properties.of(Material.WOOD).strength(-1, 2.0F).sound(SoundType.WOOD));
         this.registerDefaultState(this.defaultBlockState().setValue(FIREWOOD_COUNT, 1).setValue(DIRECTION_HORIZONTAL, Direction.NORTH));
     }
 
@@ -129,18 +128,6 @@ public class BlockFirewoodPile extends BlockMass implements IReplaceable, Entity
     }
 
     @Override
-    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        NonNullList<ItemStack> drops = NonNullList.withSize(state.getValue(FIREWOOD_COUNT), ItemStack.EMPTY);
-        TEFirewoodPile tile = (TEFirewoodPile) level.getBlockEntity(pos);
-        assert tile != null;
-        for (int i = 0; i < drops.size(); i++) {
-            //noinspection ObjectAllocationInLoop
-            drops.set(i, new ItemStack(tile.getFirewoodAt(i)));
-        }
-        return drops;
-    }
-
-    @Override
     public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction face) {
         return EvolutionBlocks.FIRE.get().getActualEncouragement(state);
     }
@@ -156,13 +143,17 @@ public class BlockFirewoodPile extends BlockMass implements IReplaceable, Entity
     }
 
     @Override
-    public int getHarvestLevel(BlockState state) {
+    public int getHarvestLevel(BlockState state, @Nullable Level level, @Nullable BlockPos pos) {
         return HarvestLevel.UNBREAKABLE;
     }
 
     @Override
-    public int getMass(BlockState state) {
-        return state.getValue(FIREWOOD_COUNT) * this.getBaseMass() / 16;
+    public double getMass(Level level, BlockPos pos, BlockState state) {
+        BlockEntity tile = level.getBlockEntity(pos);
+        if (tile instanceof TEFirewoodPile te) {
+            return te.calculateMass();
+        }
+        return 0;
     }
 
     @Override
@@ -173,21 +164,21 @@ public class BlockFirewoodPile extends BlockMass implements IReplaceable, Entity
         }
         VoxelShape shape = Shapes.empty();
         if (logCount >= 12) {
-            shape = EvolutionShapes.LOG_PILE[12];
+            shape = EvolutionShapes.LOG_PILE[12 - 1];
         }
         else if (logCount >= 8) {
-            shape = EvolutionShapes.LOG_PILE[8];
+            shape = EvolutionShapes.LOG_PILE[8 - 1];
         }
         else if (logCount >= 4) {
-            shape = EvolutionShapes.LOG_PILE[4];
+            shape = EvolutionShapes.LOG_PILE[4 - 1];
         }
-        return MathHelper.union(shape,
-                                MathHelper.rotateShape(Direction.NORTH, state.getValue(DIRECTION_HORIZONTAL), EvolutionShapes.LOG_PILE[logCount]));
+        return MathHelper.union(shape, MathHelper.rotateShape(Direction.NORTH, state.getValue(DIRECTION_HORIZONTAL),
+                                                              EvolutionShapes.LOG_PILE[logCount - 1]));
     }
 
     @Override
     public boolean isReplaceable(BlockState state) {
-        return state.getValue(FIREWOOD_COUNT) < 13;
+        return state.getValue(FIREWOOD_COUNT) < 16;
     }
 
     @Override
@@ -195,23 +186,21 @@ public class BlockFirewoodPile extends BlockMass implements IReplaceable, Entity
         return state.rotate(mirror.getRotation(state.getValue(DIRECTION_HORIZONTAL)));
     }
 
-    @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!level.isClientSide) {
-            if (!state.canSurvive(level, pos)) {
-                for (ItemStack stack : this.getDrops(level, pos, state)) {
-                    popResource(level, pos, stack);
-                }
-                level.removeBlock(pos, false);
-            }
-        }
-        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
-    }
-
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new TEFirewoodPile(pos, state);
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock())) {
+            BlockEntity tile = level.getBlockEntity(pos);
+            if (tile instanceof TEFirewoodPile te) {
+                te.dropAll(level, pos);
+            }
+        }
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 
     @Override

@@ -9,6 +9,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntityHook;
+import tgw.evolution.init.EvolutionCreativeTabs;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
@@ -24,7 +26,7 @@ import tgw.evolution.util.math.MathHelper;
 public class ItemClimbingHook extends ItemEv implements IThrowable {
 
     public ItemClimbingHook() {
-        super(EvolutionItems.propMisc().stacksTo(1));
+        super(new Item.Properties().tab(EvolutionCreativeTabs.MISC).stacksTo(1));
     }
 
     @Override
@@ -138,7 +140,7 @@ public class ItemClimbingHook extends ItemEv implements IThrowable {
         if (hand == InteractionHand.OFF_HAND) {
             return new InteractionResultHolder<>(InteractionResult.FAIL, stack);
         }
-        if (player.getOffhandItem().getItem() != EvolutionItems.rope.get()) {
+        if (player.getOffhandItem().getItem() != EvolutionItems.ROPE.get()) {
             player.displayClientMessage(EvolutionTexts.ACTION_HOOK, true);
             return new InteractionResultHolder<>(InteractionResult.FAIL, stack);
         }

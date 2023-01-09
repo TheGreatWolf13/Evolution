@@ -7,7 +7,6 @@ import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
@@ -16,7 +15,7 @@ import tgw.evolution.client.tooltip.TooltipMass;
 import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPartHead;
 
 import java.util.List;
@@ -101,7 +100,7 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
     }
 
     @Override
-    public ReferenceSet<Material> getEffectiveMaterials() {
+    public ReferenceSet<net.minecraft.world.level.material.Material> getEffectiveMaterials() {
         return this.type.getEffectiveMaterials();
     }
 
@@ -136,7 +135,7 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
     }
 
     @Override
-    public void init(PartTypes.Head type, ItemMaterial material) {
+    public void init(PartTypes.Head type, Material material) {
         if (!material.isAllowedBy(type)) {
             throw new IllegalStateException("Material " + material + " does not allow HeadType " + type);
         }

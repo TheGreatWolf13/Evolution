@@ -1,17 +1,28 @@
 package tgw.evolution.blocks.fluids;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionFluids;
 
 public class BlockFreshWater extends BlockGenericFluid {
-
     public BlockFreshWater() {
-        super(EvolutionFluids.FRESH_WATER, Block.Properties.of(Material.WATER).noCollission().noDrops(), 997);
+        super(EvolutionFluids.FRESH_WATER, Block.Properties.of(Material.WATER).noCollission().noDrops());
+    }
+
+    @Override
+    public @Nullable SoundEvent fallingSound() {
+        return null;
+    }
+
+    @Override
+    public double getMass(Level level, BlockPos pos, BlockState state) {
+        return 997 / 8.0 * state.getValue(LEVEL);
     }
 
     @Override
@@ -22,7 +33,6 @@ public class BlockFreshWater extends BlockGenericFluid {
                 int capacity = FluidGeneric.getCapacity(state);
                 int placed = Math.min(amountAlreadyAtPos + amount, capacity);
                 EvolutionFluids.SALT_WATER.get().setBlockState(level, pos, placed);
-                FluidGeneric.onReplace(level, pos, state);
                 amount = amount - placed + amountAlreadyAtPos;
                 return amount;
             }

@@ -14,6 +14,7 @@ public final class EvolutionRenderer {
     }
 
     public static void registryEntityRenders() {
+        //Entities
         EntityRenderers.register(EvolutionEntities.COW.get(), RenderCow::new);
         EntityRenderers.register(EvolutionEntities.FALLING_PEAT.get(), RenderFallingPeat::new);
         EntityRenderers.register(EvolutionEntities.FALLING_WEIGHT.get(), RenderFallingWeight::new);
@@ -22,6 +23,7 @@ public final class EvolutionRenderer {
         EntityRenderers.register(EvolutionEntities.SIT.get(), RenderDummy::new);
         EntityRenderers.register(EvolutionEntities.SPEAR.get(), RenderSpear::new);
         EntityRenderers.register(EvolutionEntities.TORCH.get(), RenderTorch::new);
+        //Tile Entities
         BlockEntityRenderers.register(EvolutionTEs.CHOPPING.get(), RenderTEChopping::new);
         BlockEntityRenderers.register(EvolutionTEs.MOLDING.get(), RenderTEMolding::new);
         BlockEntityRenderers.register(EvolutionTEs.PIT_KILN.get(), RenderTEPitKiln::new);

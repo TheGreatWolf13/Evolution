@@ -71,7 +71,7 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
                     return ropeCount;
                 }
             }
-            if (currentMovement != Direction.DOWN && stateTemp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
+            if (currentMovement != Direction.DOWN && stateTemp.getBlock() == EvolutionBlocks.ROPE_GROUND.get()) {
                 if (stateTemp.getValue(DIRECTION_HORIZONTAL) == support) {
                     continue;
                 }
@@ -86,29 +86,29 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
                     }
                     return ropeCount;
                 }
-                if (stateTemp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
+                if (stateTemp.getBlock() == EvolutionBlocks.ROPE_GROUND.get()) {
                     return ropeCount;
                 }
-                if (stateTemp.getBlock() instanceof IReplaceable replaceable) {
-                    for (ItemStack stack : replaceable.getDrops(level, mutablePos, stateTemp)) {
-                        BlockUtils.dropItemStack(level, mutablePos, stack);
-                    }
-                }
+//                if (stateTemp.getBlock() instanceof IReplaceable replaceable) {
+//                    for (ItemStack stack : replaceable.getDrops(level, mutablePos, stateTemp)) {
+//                        BlockUtils.dropItemStack(level, mutablePos, stack);
+//                    }
+//                }
                 level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
                 ropeCount++;
                 continue;
             }
-            if (stateTemp.getBlock() instanceof IReplaceable replaceable) {
-                for (ItemStack stack : replaceable.getDrops(level, mutablePos, stateTemp)) {
-                    BlockUtils.dropItemStack(level, mutablePos, stack);
-                }
-            }
+//            if (stateTemp.getBlock() instanceof IReplaceable replaceable) {
+//                for (ItemStack stack : replaceable.getDrops(level, mutablePos, stateTemp)) {
+//                    BlockUtils.dropItemStack(level, mutablePos, stack);
+//                }
+//            }
             if (currentMovement == Direction.DOWN) {
                 level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
                 ropeCount++;
                 continue;
             }
-            level.setBlockAndUpdate(mutablePos, EvolutionBlocks.GROUND_ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
+            level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE_GROUND.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
             ropeCount++;
         }
         return ropeCount;
@@ -138,7 +138,7 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
 
     @Override
     protected ItemStack getArrowStack() {
-        return new ItemStack(EvolutionItems.climbing_hook.get());
+        return new ItemStack(EvolutionItems.CLIMBING_HOOK.get());
     }
 
     @Override
@@ -213,7 +213,7 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
             LivingEntity shooter = this.getShooter();
             if (shooter instanceof Player) {
                 ItemStack stack = shooter.getOffhandItem();
-                if (stack.getItem() == EvolutionItems.rope.get()) {
+                if (stack.getItem() == EvolutionItems.ROPE.get()) {
                     int count = stack.getCount();
                     int placed = tryPlaceRopes(this.level, pos, this.facing, count);
                     if (placed > 0) {

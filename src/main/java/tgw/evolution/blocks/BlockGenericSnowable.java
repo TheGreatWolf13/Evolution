@@ -14,10 +14,10 @@ import org.jetbrains.annotations.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.SNOWY;
 
-public abstract class BlockGenericSnowable extends BlockGravity implements ICollisionBlock {
+public abstract class BlockGenericSnowable extends BlockPhysics implements ICollisionBlock {
 
-    protected BlockGenericSnowable(Block.Properties builder, int mass) {
-        super(builder, mass);
+    protected BlockGenericSnowable(Block.Properties builder, double mass) {
+        super(builder);
         this.registerDefaultState(this.defaultBlockState().setValue(SNOWY, false));
     }
 
@@ -53,15 +53,15 @@ public abstract class BlockGenericSnowable extends BlockGravity implements IColl
 
     @Override
     public BlockState updateShape(BlockState state,
-                                  Direction facing,
-                                  BlockState facingState,
+                                  Direction direction,
+                                  BlockState fromState,
                                   LevelAccessor level,
-                                  BlockPos currentPos,
-                                  BlockPos facingPos) {
-        if (facing != Direction.UP) {
-            return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
+                                  BlockPos pos,
+                                  BlockPos fromPos) {
+        if (direction != Direction.UP) {
+            return super.updateShape(state, direction, fromState, level, pos, fromPos);
         }
-        Block block = facingState.getBlock();
+        Block block = fromState.getBlock();
         //TODO proper snow
         return state.setValue(SNOWY, block == Blocks.SNOW_BLOCK || block == Blocks.SNOW);
     }

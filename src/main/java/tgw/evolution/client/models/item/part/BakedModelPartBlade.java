@@ -8,7 +8,7 @@ import net.minecraftforge.client.model.data.ModelProperty;
 import tgw.evolution.capabilities.modular.part.PartBlade;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPartBlade;
 
 public class BakedModelPartBlade extends BakedModelPart<PartTypes.Blade, ItemPartBlade, PartBlade, BakedModelPartBlade.BakedModelFinalPartBlade> {
@@ -52,7 +52,7 @@ public class BakedModelPartBlade extends BakedModelPart<PartTypes.Blade, ItemPar
             return EvolutionResources.MODULAR_BLADES.get(extraData.getData(this.type), extraData.getData(this.material));
         }
 
-        public void setData(PartTypes.Blade type, ItemMaterial material, boolean isSharp) {
+        public void setData(PartTypes.Blade type, Material material, boolean isSharp) {
             this.modelData.setData(this.type, type);
             this.modelData.setData(this.material, material);
             this.modelData.setData(this.isSharp, isSharp);

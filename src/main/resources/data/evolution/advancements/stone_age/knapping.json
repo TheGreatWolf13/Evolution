@@ -1,0 +1,45 @@
+{
+  "parent": "evolution:stone_age/definitely_a_rock",
+  "display": {
+    "icon": {
+      "item": "evolution:part_head",
+      "cap": "{Parent:{Type:1b,SharpAmount:375,MaterialInstance:{Material:0b}}}"
+    },
+    "title": {
+      "translate": "evolution.advancements.stone_age.knapping.title"
+    },
+    "description": {
+      "translate": "evolution.advancements.stone_age.knapping.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "placed_block": {
+      "trigger": "minecraft:placed_block",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "flags": {
+                "is_sneaking": true
+              }
+            }
+          }
+        ],
+        "item": {
+          "tag": "evolution:rocks"
+        }
+      }
+    }
+  },
+  "requirements": [
+    [
+      "placed_block"
+    ]
+  ]
+}		

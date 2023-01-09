@@ -11,10 +11,14 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.capabilities.SerializableCapabilityProvider;
+import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
+import tgw.evolution.capabilities.chunkstorage.ChunkStorage;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 
 public class WorldEvents {
@@ -45,6 +49,14 @@ public class WorldEvents {
             }
         }
         return null;
+    }
+
+    @SubscribeEvent
+    public void attachChunkCapabilities(AttachCapabilitiesEvent<LevelChunk> event) {
+        if (!event.getObject().getLevel().isClientSide) {
+            event.addCapability(CapabilityChunkStorage.LOC,
+                                new SerializableCapabilityProvider<>(CapabilityChunkStorage.INSTANCE, new ChunkStorage()));
+        }
     }
 
     @SubscribeEvent

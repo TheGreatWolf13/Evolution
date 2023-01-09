@@ -15,7 +15,7 @@
 //
 //import org.jetbrains.annotations.Nullable;
 //
-//public class BlockShadowHound extends BlockMass {
+//public class BlockShadowHound extends BlockPhysics {
 //
 //    public BlockShadowHound() {
 //        super(Block.Properties.create(Material.SHULKER).hardnessAndResistance(2F, 6F).sound(SoundType.SWEET_BERRY_BUSH), 500);

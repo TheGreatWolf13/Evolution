@@ -38,29 +38,30 @@ public enum EvolutionRenderLayer {
     }
 
     public static void setup() {
+        set(EvolutionBlocks.ATM, CUTOUT);
         setFluid(EvolutionFluids.FRESH_WATER, TRANSLUCENT);
         setFluid(EvolutionFluids.SALT_WATER, TRANSLUCENT);
         set(EvolutionBlocks.CLIMBING_HOOK, CUTOUT);
         set(EvolutionBlocks.CLIMBING_STAKE, CUTOUT);
-        for (RegistryObject<Block> block : EvolutionBlocks.ALL_DRY_GRASS.values()) {
+        for (RegistryObject<Block> block : EvolutionBlocks.DRY_GRASSES.values()) {
             set(block, CUTOUT_MIPPED);
         }
         set(EvolutionBlocks.FIRE, CUTOUT);
         set(EvolutionBlocks.GRASS, CUTOUT);
-        for (RegistryObject<Block> block : EvolutionBlocks.ALL_GRASS.values()) {
+        for (RegistryObject<Block> block : EvolutionBlocks.GRASSES.values()) {
             set(block, CUTOUT_MIPPED);
         }
-        set(EvolutionBlocks.GROUND_ROPE, CUTOUT_MIPPED);
-        for (RegistryObject<Block> block : EvolutionBlocks.ALL_LEAVES.values()) {
+        set(EvolutionBlocks.ROPE_GROUND, CUTOUT_MIPPED);
+        for (RegistryObject<Block> block : EvolutionBlocks.LEAVES.values()) {
             set(block, LEAVES);
         }
         set(EvolutionBlocks.ROPE, CUTOUT_MIPPED);
-        for (RegistryObject<Block> block : EvolutionBlocks.ALL_SAPLING.values()) {
+        for (RegistryObject<Block> block : EvolutionBlocks.SAPLINGS.values()) {
             set(block, CUTOUT);
         }
         set(EvolutionBlocks.TALLGRASS, CUTOUT);
         set(EvolutionBlocks.TORCH, CUTOUT);
-        set(EvolutionBlocks.WALL_TORCH, CUTOUT);
+        set(EvolutionBlocks.TORCH_WALL, CUTOUT);
         set(EvolutionBlocks.GLASS, CUTOUT);
     }
 }

@@ -7,24 +7,24 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.util.constants.HarvestLevel;
 
 import java.util.List;
 
 public class MaterialInstance {
 
-    public static final MaterialInstance DUMMY = new MaterialInstance(ItemMaterial.ANDESITE);
-    private final ItemMaterial material;
+    public static final MaterialInstance DUMMY = new MaterialInstance(Material.ANDESITE);
+    private final Material material;
     private @Nullable CompoundTag tag;
 
-    public MaterialInstance(ItemMaterial material) {
+    public MaterialInstance(Material material) {
         this.material = material;
     }
 
     @Contract(pure = true, value = "_ -> new")
     public static MaterialInstance read(CompoundTag nbt) {
-        ItemMaterial material = ItemMaterial.byId(nbt.getByte("Material"));
+        Material material = Material.byId(nbt.getByte("Material"));
         return new MaterialInstance(material);
     }
 
@@ -49,7 +49,7 @@ public class MaterialInstance {
         return this.material.getHarvestLevel();
     }
 
-    public ItemMaterial getMaterial() {
+    public Material getMaterial() {
         return this.material;
     }
 

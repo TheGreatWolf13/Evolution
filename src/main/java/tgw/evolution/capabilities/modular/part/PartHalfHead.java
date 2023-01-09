@@ -7,12 +7,11 @@ import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.material.Material;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPartHalfHead;
 
 import java.util.List;
@@ -82,7 +81,7 @@ public class PartHalfHead implements IPartHit<PartTypes.HalfHead, ItemPartHalfHe
     }
 
     @Override
-    public ReferenceSet<Material> getEffectiveMaterials() {
+    public ReferenceSet<net.minecraft.world.level.material.Material> getEffectiveMaterials() {
         return this.type.getEffectiveMaterials();
     }
 
@@ -117,7 +116,7 @@ public class PartHalfHead implements IPartHit<PartTypes.HalfHead, ItemPartHalfHe
     }
 
     @Override
-    public void init(PartTypes.HalfHead type, ItemMaterial material) {
+    public void init(PartTypes.HalfHead type, Material material) {
         if (!material.isAllowedBy(type)) {
             throw new IllegalStateException("Material " + material + " does not allow HalfHead" + type);
         }

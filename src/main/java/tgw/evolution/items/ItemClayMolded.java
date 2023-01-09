@@ -10,10 +10,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionCreativeTabs;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.MathHelper;
 
@@ -21,12 +20,12 @@ public class ItemClayMolded extends ItemBlock {
 
     public final boolean single;
 
-    public ItemClayMolded(RegistryObject<Block> block) {
+    public ItemClayMolded(Block block) {
         this(block, false);
     }
 
-    public ItemClayMolded(RegistryObject<Block> block, boolean single) {
-        super(block.get(), EvolutionItems.propMisc());
+    public ItemClayMolded(Block block, boolean single) {
+        super(block, new Properties().tab(EvolutionCreativeTabs.MISC));
         this.single = single;
     }
 

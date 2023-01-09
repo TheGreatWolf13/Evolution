@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.init.EvolutionCapabilities;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPartGuard;
 
 import java.util.List;
@@ -74,7 +74,7 @@ public class PartGuard implements IPart<PartTypes.Guard, ItemPartGuard, PartGuar
     }
 
     @Override
-    public void init(PartTypes.Guard type, ItemMaterial material) {
+    public void init(PartTypes.Guard type, Material material) {
         if (!material.isAllowedBy(type)) {
             throw new IllegalStateException("Material " + material + " does not allow GuardPart " + type);
         }

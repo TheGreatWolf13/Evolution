@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "evolution:cobblestone_andesite"
+    },
+    "title": {
+      "translate": "evolution.advancements.stone_age.root.title"
+    },
+    "description": {
+      "translate": "evolution.advancements.stone_age.root.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false,
+    "background": "evolution:textures/block/cobblestone_andesite.png"
+  },
+  "criteria": {
+    "crafting_table": {
+      "trigger": "minecraft:tick"
+    }
+  }
+}

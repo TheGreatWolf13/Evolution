@@ -6,6 +6,7 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.util.collection.ChanceEffectHolder;
@@ -15,8 +16,8 @@ import tgw.evolution.util.collection.OList;
 
 public class EffectDehydration extends EffectGeneric {
 
-    private OList<EffectHolder> causes;
-    private OList<ChanceEffectHolder> mayCause;
+    private @Nullable OList<EffectHolder> causes;
+    private @Nullable OList<ChanceEffectHolder> mayCause;
 
     public EffectDehydration() {
         super(MobEffectCategory.HARMFUL, 0);

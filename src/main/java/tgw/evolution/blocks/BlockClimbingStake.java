@@ -2,7 +2,6 @@ package tgw.evolution.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -68,7 +67,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                     }
                     continue;
                 }
-                if (stateTest.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
+                if (stateTest.getBlock() == EvolutionBlocks.ROPE_GROUND.get()) {
                     if (DirectionUtil.getOpposite(stateTest.getValue(DIRECTION_HORIZONTAL)) == direction) {
                         continue;
                     }
@@ -106,10 +105,10 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
             int rope = this.removeRope(state, level, pos);
             while (rope > 64) {
                 //noinspection ObjectAllocationInLoop
-                BlockUtils.dropItemStack(level, pos, new ItemStack(EvolutionItems.rope.get(), 64));
+                BlockUtils.dropItemStack(level, pos, new ItemStack(EvolutionItems.ROPE.get(), 64));
                 rope -= 64;
             }
-            BlockUtils.dropItemStack(level, pos, new ItemStack(EvolutionItems.rope.get(), rope));
+            BlockUtils.dropItemStack(level, pos, new ItemStack(EvolutionItems.ROPE.get(), rope));
         }
         level.removeBlock(pos, true);
         dropResources(state, level, pos);
@@ -143,11 +142,6 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(DIRECTION_EXCEPT_UP, HIT, DOWN, EAST, NORTH, SOUTH, WEST);
-    }
-
-    @Override
-    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        return NonNullList.of(ItemStack.EMPTY, new ItemStack(this));
     }
 
     @Override
@@ -213,7 +207,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                 BlockPos downPos = pos.below();
                 for (Direction direction : DirectionUtil.HORIZ_NESW) {
                     if (state.getValue(directionToProperty(direction))) {
-                        BlockUtils.scheduleBlockTick(level, downPos.relative(direction), 2);
+//                        BlockUtils.scheduleBlockTick(level, downPos.relative(direction));
                     }
                 }
             }
@@ -251,7 +245,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                 for (int removingRope = 1; removingRope <= this.getRopeLength(); removingRope++) {
                     mutablePos.move(movement);
                     temp = level.getBlockState(mutablePos);
-                    if (movement != Direction.DOWN && temp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
+                    if (movement != Direction.DOWN && temp.getBlock() == EvolutionBlocks.ROPE_GROUND.get()) {
                         if (temp.getValue(DIRECTION_HORIZONTAL) == DirectionUtil.getOpposite(movement)) {
                             count++;
                             toRemove.add(mutablePos.immutable());
@@ -319,7 +313,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                     return ropeCount;
                 }
             }
-            if (currentMovement != Direction.DOWN && stateTemp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
+            if (currentMovement != Direction.DOWN && stateTemp.getBlock() == EvolutionBlocks.ROPE_GROUND.get()) {
                 if (stateTemp.getValue(DIRECTION_HORIZONTAL) == support) {
                     continue;
                 }
@@ -334,29 +328,29 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
                     }
                     return ropeCount;
                 }
-                if (stateTemp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
+                if (stateTemp.getBlock() == EvolutionBlocks.ROPE_GROUND.get()) {
                     return ropeCount;
                 }
-                if (stateTemp.getBlock() instanceof IReplaceable) {
-                    for (ItemStack stack : ((IReplaceable) stateTemp.getBlock()).getDrops(level, mutablePos, stateTemp)) {
-                        BlockUtils.dropItemStack(level, mutablePos, stack);
-                    }
-                }
+//                if (stateTemp.getBlock() instanceof IReplaceable) {
+//                    for (ItemStack stack : ((IReplaceable) stateTemp.getBlock()).getDrops(level, mutablePos, stateTemp)) {
+//                        BlockUtils.dropItemStack(level, mutablePos, stack);
+//                    }
+//                }
                 level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
                 ropeCount++;
                 continue;
             }
-            if (stateTemp.getBlock() instanceof IReplaceable) {
-                for (ItemStack stack : ((IReplaceable) stateTemp.getBlock()).getDrops(level, mutablePos, stateTemp)) {
-                    BlockUtils.dropItemStack(level, mutablePos, stack);
-                }
-            }
+//            if (stateTemp.getBlock() instanceof IReplaceable) {
+//                for (ItemStack stack : ((IReplaceable) stateTemp.getBlock()).getDrops(level, mutablePos, stateTemp)) {
+//                    BlockUtils.dropItemStack(level, mutablePos, stack);
+//                }
+//            }
             if (currentMovement == Direction.DOWN) {
                 level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
                 ropeCount++;
                 continue;
             }
-            level.setBlockAndUpdate(mutablePos, EvolutionBlocks.GROUND_ROPE.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
+            level.setBlockAndUpdate(mutablePos, EvolutionBlocks.ROPE_GROUND.get().defaultBlockState().setValue(DIRECTION_HORIZONTAL, support));
             ropeCount++;
         }
         return ropeCount;
@@ -365,7 +359,7 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         ItemStack heldStack = player.getItemInHand(hand);
-        if (heldStack.getItem() == EvolutionItems.rope.get()) {
+        if (heldStack.getItem() == EvolutionItems.ROPE.get()) {
             if (!state.getValue(HIT)) {
                 player.displayClientMessage(EvolutionTexts.ACTION_HIT_STAKE, true);
                 return InteractionResult.PASS;

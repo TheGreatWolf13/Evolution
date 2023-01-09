@@ -21,8 +21,6 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.IFireSource;
-import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
-import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
@@ -34,7 +32,7 @@ import static tgw.evolution.init.EvolutionBStates.LIT;
 public class ItemTorchUnlit extends ItemWallOrFloor {
 
     public ItemTorchUnlit(Properties properties) {
-        super(EvolutionBlocks.TORCH.get(), EvolutionBlocks.WALL_TORCH.get(), properties);
+        super(EvolutionBlocks.TORCH.get(), EvolutionBlocks.TORCH_WALL.get(), properties);
     }
 
     @Override
@@ -74,19 +72,16 @@ public class ItemTorchUnlit extends ItemWallOrFloor {
         Block block = state.getBlock();
         if (block instanceof IFireSource fireSource && fireSource.isFireSource(state)) {
             LevelChunk chunk = level.getChunkAt(pos);
-            if (CapabilityChunkStorage.remove(chunk, EnumStorage.OXYGEN, 1)) {
-                CapabilityChunkStorage.add(chunk, EnumStorage.CARBON_DIOXIDE, 1);
-                Player player = context.getPlayer();
-                context.getItemInHand().shrink(1);
-                ItemStack stack = ItemTorch.createStack(level, 1);
-                if (!player.getInventory().add(stack)) {
-                    BlockUtils.dropItemStack(level, pos, stack);
-                }
-                level.playSound(player, pos, SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 1.0F, level.random.nextFloat() * 0.7F + 0.3F);
-                player.awardStat(Stats.ITEM_CRAFTED.get(EvolutionItems.torch.get()));
-                return InteractionResult.SUCCESS;
+            Player player = context.getPlayer();
+            context.getItemInHand().shrink(1);
+            ItemStack stack = ItemTorch.createStack(level, 1);
+            assert player != null;
+            if (!player.getInventory().add(stack)) {
+                BlockUtils.dropItemStack(level, pos, stack);
             }
-            return InteractionResult.FAIL;
+            level.playSound(player, pos, SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 1.0F, level.random.nextFloat() * 0.7F + 0.3F);
+            player.awardStat(Stats.ITEM_CRAFTED.get(EvolutionItems.TORCH.get()));
+            return InteractionResult.SUCCESS;
         }
         return super.useOn(context);
     }

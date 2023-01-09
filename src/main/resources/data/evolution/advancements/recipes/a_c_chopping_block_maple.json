@@ -11,7 +11,9 @@
       "conditions": {
         "items": [
           {
-            "item": "evolution:log_maple"
+            "items": [
+				"evolution:log_maple"
+			]
           }
         ]
       }

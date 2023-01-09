@@ -3,7 +3,6 @@ package tgw.evolution.blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -61,7 +60,7 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
      * Called when this block should fall.
      */
     private static void fall(Level level, BlockPos pos) {
-        EntityFallingWeight entity = new EntityFallingWeight(level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.getBlockState(pos));
+        EntityFallingWeight entity = new EntityFallingWeight(level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.getBlockState(pos), pos);
         level.addFreshEntity(entity);
     }
 
@@ -149,11 +148,6 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
         if (entity instanceof LivingEntity) {
             entity.makeStuckInBlock(state, MOTION_MULTIPLIER);
         }
-    }
-
-    @Override
-    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        return NonNullList.of(ItemStack.EMPTY);
     }
 
     @Override

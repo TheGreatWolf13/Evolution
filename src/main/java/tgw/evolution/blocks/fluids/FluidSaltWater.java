@@ -64,7 +64,6 @@ public abstract class FluidSaltWater extends FluidGeneric {
                 }
                 int stay = rlThis - amountToSwap;
                 this.setBlockState(level, pos, stay);
-                onReplace(level, auxPos, stateAtOffset);
                 int receive = amountToSwap + rlAtPos;
                 this.setBlockState(level, auxPos, receive);
                 return true;

@@ -7,7 +7,7 @@ import net.minecraftforge.client.model.data.ModelDataMap;
 import tgw.evolution.capabilities.modular.part.PartHandle;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPartHandle;
 
 public class BakedModelPartHandle
@@ -45,7 +45,7 @@ public class BakedModelPartHandle
             return EvolutionResources.MODULAR_HANDLES.get(extraData.getData(this.type), extraData.getData(this.material));
         }
 
-        protected void setData(PartTypes.Handle type, ItemMaterial material) {
+        protected void setData(PartTypes.Handle type, Material material) {
             this.modelData.setData(this.type, type);
             this.modelData.setData(this.material, material);
         }

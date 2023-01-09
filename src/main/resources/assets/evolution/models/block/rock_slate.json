@@ -1,7 +1,7 @@
 {
 	"parent": "evolution:block/rock",
 	"textures": {
-		"0": "evolution:block/cobble_slate",
-		"particle": "evolution:block/cobble_slate"
+		"0": "evolution:block/cobblestone_slate",
+		"particle": "evolution:block/cobblestone_slate"
 	}
 }

@@ -273,7 +273,7 @@ public abstract class PlayerMixin extends LivingEntity implements IPlayerPatch {
         return this.motionZ;
     }
 
-    private float getStepHeight() {
+    private float getStepHeightInternal() {
         AttributeInstance massAttribute = this.getAttribute(EvolutionAttributes.MASS.get());
         assert massAttribute != null;
         double baseMass = massAttribute.getBaseValue();
@@ -338,7 +338,7 @@ public abstract class PlayerMixin extends LivingEntity implements IPlayerPatch {
     private void onTick(CallbackInfo ci) {
         if (this.isVisuallyCrawling()) {
             this.setSprinting(false);
-            this.maxUpStep = this.getStepHeight();
+            this.maxUpStep = this.getStepHeightInternal();
         }
         else {
             this.maxUpStep = 0.6f;

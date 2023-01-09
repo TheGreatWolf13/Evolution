@@ -25,7 +25,7 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
     private final RockVariant variant;
 
     public BlockDryGrass(RockVariant variant) {
-        super(Properties.of(Material.DIRT).strength(3.0F, 0.6F).sound(SoundType.GRASS).randomTicks(), variant.getMass() / 4);
+        super(Properties.of(Material.DIRT).strength(3.0F, 0.6F).sound(SoundType.GRASS).randomTicks(), variant.getMass() / 4.0);
         this.variant = variant;
     }
 
@@ -45,7 +45,7 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
     }
 
     @Override
-    public SoundEvent fallSound() {
+    public SoundEvent fallingSound() {
         return EvolutionSounds.SOIL_COLLAPSE.get();
     }
 
@@ -55,13 +55,13 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
     }
 
     @Override
-    public BlockState getStateForFalling(BlockState state) {
-        return this.variant.getDirt().defaultBlockState();
+    public double getMass(Level level, BlockPos pos, BlockState state) {
+        return this.rockVariant().getMass() / 4;
     }
 
     @Override
-    public RockVariant getVariant() {
-        return this.variant;
+    public BlockState getStateForPhysicsChange(BlockState state) {
+        return this.variant.getDirt().defaultBlockState();
     }
 
     @Override
@@ -91,7 +91,7 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
                     Block blockAtPos = level.getBlockState(randomPos).getBlock();
                     if (blockAtPos instanceof BlockDirt && canSustainGrassWater(level, randomPos)) {
                         //TODO proper snow
-                        level.setBlockAndUpdate(randomPos, ((IRockVariant) blockAtPos).getVariant()
+                        level.setBlockAndUpdate(randomPos, ((IRockVariant) blockAtPos).rockVariant()
                                                                                       .getDryGrass()
                                                                                       .defaultBlockState()
                                                                                       .setValue(SNOWY,
@@ -101,5 +101,10 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
                 }
             }
         }
+    }
+
+    @Override
+    public RockVariant rockVariant() {
+        return this.variant;
     }
 }

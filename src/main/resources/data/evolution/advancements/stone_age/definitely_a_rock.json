@@ -1,0 +1,35 @@
+{
+  "parent": "evolution:stone_age/root",
+  "display": {
+    "icon": {
+      "tag": "evolution:rocks"
+    },
+    "title": {
+      "translate": "evolution.advancements.stone_age.definitely_a_rock.title"
+    },
+    "description": {
+      "translate": "evolution.advancements.stone_age.definitely_a_rock.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_any_rock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "tag": "evolution:rocks"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_any_rock"
+    ]
+  ]
+}													

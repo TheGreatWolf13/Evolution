@@ -55,9 +55,9 @@ public enum MetalVariant {
             case COPPER -> {
                 return switch (oxidation) {
                     case NONE -> EvolutionBlocks.BLOCK_METAL_COPPER.get();
-                    case EXPOSED -> EvolutionBlocks.BLOCK_METAL_COPPER_EXP.get();
-                    case WEATHERED -> EvolutionBlocks.BLOCK_METAL_COPPER_WEAT.get();
-                    case OXIDIZED -> EvolutionBlocks.BLOCK_METAL_COPPER_OXID.get();
+                    case EXPOSED -> EvolutionBlocks.BLOCK_METAL_COPPER_E.get();
+                    case WEATHERED -> EvolutionBlocks.BLOCK_METAL_COPPER_W.get();
+                    case OXIDIZED -> EvolutionBlocks.BLOCK_METAL_COPPER_O.get();
                 };
             }
             default -> throw new UnregisteredFeatureException("Unregistered variant: " + this);

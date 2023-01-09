@@ -12,6 +12,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.context.UseOnContext;
@@ -22,13 +23,13 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.common.ForgeMod;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionCreativeTabs;
 import tgw.evolution.util.math.MathHelper;
 
 public class ItemFireStarter extends ItemEv implements IDurability {
 
     public ItemFireStarter() {
-        super(EvolutionItems.propMisc().durability(10));
+        super(new Item.Properties().tab(EvolutionCreativeTabs.MISC).durability(10));
     }
 
     public static boolean canSetFire(LevelReader level, BlockPos pos) {

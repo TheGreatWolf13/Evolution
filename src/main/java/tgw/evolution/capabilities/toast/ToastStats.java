@@ -24,6 +24,11 @@ public class ToastStats implements IToastData {
     }
 
     @Override
+    public void reset() {
+        this.unlocked.clear();
+    }
+
+    @Override
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
         nbt.putIntArray("Unlocked", this.unlocked.toIntArray());

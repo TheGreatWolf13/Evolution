@@ -11,7 +11,9 @@
       "conditions": {
         "items": [
           {
-            "item": "evolution:log_oak"
+            "items": [
+				"evolution:log_oak"
+			]
           }
         ]
       }

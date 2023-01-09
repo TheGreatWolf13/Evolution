@@ -2,7 +2,6 @@ package tgw.evolution.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -61,7 +60,7 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
                 ropeCount--;
                 continue;
             }
-            if (currentState.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
+            if (currentState.getBlock() == EvolutionBlocks.ROPE_GROUND.get()) {
                 if (currentState.getValue(DIRECTION_HORIZONTAL) == facing) {
                     continue;
                 }
@@ -94,17 +93,12 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
 
     @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
-        return new ItemStack(EvolutionItems.rope.get());
+        return new ItemStack(EvolutionItems.ROPE.get());
     }
 
     @Override
     public Direction getDirection(BlockState state) {
         return state.getValue(DIRECTION_HORIZONTAL);
-    }
-
-    @Override
-    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.rope.get()));
     }
 
     @Override

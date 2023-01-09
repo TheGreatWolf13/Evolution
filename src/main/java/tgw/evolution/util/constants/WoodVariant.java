@@ -45,12 +45,12 @@ public enum WoodVariant implements IVariant {
         REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
     }
 
-    private final int density;
+    private final double density;
     private final byte id;
     private final String name;
     private final int shearStrength;
 
-    WoodVariant(int id, String name, int density, int shearStrength) {
+    WoodVariant(int id, String name, double density, int shearStrength) {
         this.id = (byte) id;
         this.name = name;
         this.shearStrength = shearStrength;
@@ -66,11 +66,11 @@ public enum WoodVariant implements IVariant {
     }
 
     public Block getChoppingBlock() {
-        return EvolutionBlocks.ALL_CHOPPING_BLOCK.get(this).get();
+        return EvolutionBlocks.CHOPPING_BLOCKS.get(this).get();
     }
 
     public Item getFirewood() {
-        return EvolutionItems.ALL_FIREWOOD.get(this).get();
+        return EvolutionItems.FIREWOODS.get(this).get();
     }
 
     public byte getId() {
@@ -78,18 +78,18 @@ public enum WoodVariant implements IVariant {
     }
 
     public Block getLeaves() {
-        return EvolutionBlocks.ALL_LEAVES.get(this).get();
+        return EvolutionBlocks.LEAVES.get(this).get();
     }
 
     public Block getLog() {
-        return EvolutionBlocks.ALL_LOG.get(this).get();
+        return EvolutionBlocks.LOGS.get(this).get();
     }
 
     public Item getLogItem() {
-        return EvolutionItems.ALL_LOG.get(this).get();
+        return EvolutionItems.LOGS.get(this).get();
     }
 
-    public int getMass() {
+    public double getMass() {
         return this.density;
     }
 
@@ -99,15 +99,15 @@ public enum WoodVariant implements IVariant {
     }
 
     public Item getPlank() {
-        return EvolutionItems.ALL_PLANK.get(this).get();
+        return EvolutionItems.PLANK.get(this).get();
     }
 
     public Block getPlanks() {
-        return EvolutionBlocks.ALL_PLANKS.get(this).get();
+        return EvolutionBlocks.PLANKS.get(this).get();
     }
 
     public Block getSapling() {
-        return EvolutionBlocks.ALL_SAPLING.get(this).get();
+        return EvolutionBlocks.SAPLINGS.get(this).get();
     }
 
     public int getShearStrength() {

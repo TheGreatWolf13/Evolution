@@ -2,7 +2,6 @@ package tgw.evolution.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -26,7 +25,6 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
-import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.math.DirectionUtil;
 
 import java.util.Random;
@@ -44,7 +42,7 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
     public static void checkSides(BlockState state, Level level, BlockPos pos) {
         Direction direction = state.getValue(DIRECTION_HORIZONTAL);
         BlockState stateTest = level.getBlockState(pos.relative(direction));
-        if (stateTest.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
+        if (stateTest.getBlock() == EvolutionBlocks.ROPE_GROUND.get()) {
             if (DirectionUtil.getOpposite(stateTest.getValue(DIRECTION_HORIZONTAL)) == direction) {
                 return;
             }
@@ -64,7 +62,7 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
     public void attack(BlockState state, Level level, BlockPos pos, Player player) {
         if (!level.isClientSide) {
             int rope = this.removeRope(state, level, pos);
-            BlockUtils.dropItemStack(level, pos, new ItemStack(EvolutionItems.rope.get(), rope));
+            BlockUtils.dropItemStack(level, pos, new ItemStack(EvolutionItems.ROPE.get(), rope));
         }
         level.removeBlock(pos, true);
         dropResources(state, level, pos);
@@ -98,12 +96,7 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
 
     @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult hitResult, BlockGetter level, BlockPos pos, Player player) {
-        return new ItemStack(EvolutionItems.climbing_hook.get());
-    }
-
-    @Override
-    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.climbing_hook.get()));
+        return new ItemStack(EvolutionItems.CLIMBING_HOOK.get());
     }
 
     @Override
@@ -159,7 +152,7 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!level.isClientSide && !isMoving && state.getBlock() != newState.getBlock()) {
-            BlockUtils.scheduleBlockTick(level, pos.below().relative(state.getValue(DIRECTION_HORIZONTAL)), BlockFlags.BLOCK_UPDATE);
+//            BlockUtils.scheduleBlockTick(level, pos.below().relative(state.getValue(DIRECTION_HORIZONTAL)));
         }
     }
 
@@ -173,7 +166,7 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
         for (int removingRope = 1; removingRope <= this.getRopeLength(); removingRope++) {
             mutablePos.move(movement);
             BlockState temp = level.getBlockState(mutablePos);
-            if (movement != Direction.DOWN && temp.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
+            if (movement != Direction.DOWN && temp.getBlock() == EvolutionBlocks.ROPE_GROUND.get()) {
                 if (temp.getValue(DIRECTION_HORIZONTAL) == DirectionUtil.getOpposite(movement)) {
                     count++;
                     toRemove.add(mutablePos.immutable());

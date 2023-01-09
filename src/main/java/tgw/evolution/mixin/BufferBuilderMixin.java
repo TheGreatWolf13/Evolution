@@ -83,7 +83,7 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
     @Override
     public <T extends IVertexSink> T createSink(IVertexType<T> factory) {
         IBlittableVertexType<T> blittable = factory.asBlittable();
-        if (blittable != null && blittable.getBufferVertexFormat() == this.getVertexFormat()) {
+        if (blittable != null && blittable.getBufferVertexFormat() == this.vertexFormat()) {
             return blittable.createBufferWriter(this, true);
         }
         return factory.createFallbackWriter(this);
@@ -164,11 +164,6 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
                                                                         this.sortZ);
         ((ISortStatePatch) sortState).putNewSortingPoints(this.newSortingPoints);
         return sortState;
-    }
-
-    @Override
-    public IBufferVertexFormat getVertexFormat() {
-        return IBufferVertexFormat.from(this.format);
     }
 
     @Override
@@ -319,5 +314,10 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
                 }
             }
         }
+    }
+
+    @Override
+    public IBufferVertexFormat vertexFormat() {
+        return IBufferVertexFormat.from(this.format);
     }
 }

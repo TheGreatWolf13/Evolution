@@ -2,7 +2,6 @@ package tgw.evolution.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -43,7 +42,7 @@ public class BlockRopeGround extends BlockGeneric implements IReplaceable {
                 }
                 return ((IRopeSupport) currentState.getBlock()).getRopeLength() >= ropeCount;
             }
-            if (currentState.getBlock() == EvolutionBlocks.GROUND_ROPE.get()) {
+            if (currentState.getBlock() == EvolutionBlocks.ROPE_GROUND.get()) {
                 if (currentState.getValue(DIRECTION_HORIZONTAL) == facing) {
                     continue;
                 }
@@ -79,12 +78,7 @@ public class BlockRopeGround extends BlockGeneric implements IReplaceable {
 
     @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
-        return new ItemStack(EvolutionItems.rope.get());
-    }
-
-    @Override
-    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.rope.get()));
+        return new ItemStack(EvolutionItems.ROPE.get());
     }
 
     @Override
@@ -122,7 +116,7 @@ public class BlockRopeGround extends BlockGeneric implements IReplaceable {
         if (!level.isClientSide) {
             Direction opposite = state.getValue(DIRECTION_HORIZONTAL).getOpposite();
             if (!(level.getBlockState(pos.relative(opposite)).getBlock() == this)) {
-                BlockUtils.scheduleBlockTick(level, pos.below().relative(opposite), 2);
+                BlockUtils.scheduleBlockTick(level, pos.getX() + opposite.getStepX(), pos.getY() - 1, pos.getZ() + opposite.getStepZ());
             }
         }
     }

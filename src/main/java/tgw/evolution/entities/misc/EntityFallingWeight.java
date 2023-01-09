@@ -7,10 +7,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
-import net.minecraft.sounds.SoundEvents;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.item.ItemStack;
@@ -19,7 +20,6 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
@@ -30,31 +30,39 @@ import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
-import tgw.evolution.blocks.*;
+import tgw.evolution.blocks.BlockKnapping;
+import tgw.evolution.blocks.BlockUtils;
+import tgw.evolution.blocks.IPhysics;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
+import tgw.evolution.util.math.ClipContextMutable;
+import tgw.evolution.util.math.Vec3d;
 
 import java.util.List;
 
 public class EntityFallingWeight extends Entity implements IEntityAdditionalSpawnData, IEntityPatch<EntityFallingWeight> {
 
+    private final ClipContextMutable clipContext = new ClipContextMutable(Vec3.ZERO, Vec3.ZERO, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE,
+                                                                          null);
+    private final Vec3d from = new Vec3d();
     private final MutableBlockPos mutablePos = new MutableBlockPos();
+    private final Vec3d to = new Vec3d();
     public int fallTime;
-    private int mass = 500;
+    private double mass = 500;
     private BlockState state = EvolutionBlocks.DESTROY_9.get().defaultBlockState();
 
     public EntityFallingWeight(EntityType<EntityFallingWeight> type, Level level) {
         super(type, level);
     }
 
-    public EntityFallingWeight(Level level, double x, double y, double z, BlockState state) {
+    public EntityFallingWeight(Level level, double x, double y, double z, BlockState state, BlockPos pos) {
         this(EvolutionEntities.FALLING_WEIGHT.get(), level);
         this.state = state;
-        this.mass = this.state.getBlock() instanceof BlockMass ? ((BlockMass) this.state.getBlock()).getMass(this.state) : 500;
+        this.mass = this.state.getBlock() instanceof IPhysics physics ? physics.getMass(this.level, pos, this.state) : 500;
         this.blocksBuilding = true;
         this.setPos(x, y, z);
         this.setDeltaMovement(Vec3.ZERO);
@@ -102,17 +110,17 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
             Evolution.warn("No falling damage for block {}", this.state);
             return false;
         }
-        float motionY = 20.0F * (float) this.getDeltaMovement().y;
-        float kinecticEnergy = this.mass * motionY * motionY / 2;
-        List<Entity> entities = this.level.getEntities(this, this.getBoundingBox());
+        double motionY = 20 * this.getDeltaMovement().y;
+        double kinecticEnergy = this.mass * motionY * motionY / 2;
+        List<Entity> entities = this.level.getEntities(this, this.getBoundingBox(), EntitySelector.LIVING_ENTITY_STILL_ALIVE);
         for (int i = 0, l = entities.size(); i < l; i++) {
             Entity entity = entities.get(i);
-            float forceOfImpact = kinecticEnergy / entity.getBbHeight();
-            float area = entity.getBbWidth() * entity.getBbWidth();
-            float pressure = forceOfImpact / area;
+            double forceOfImpact = kinecticEnergy / entity.getBbHeight();
+            double area = entity.getBbWidth() * entity.getBbWidth();
+            double pressure = forceOfImpact / area;
             pressure += this.mass * Gravity.gravity(this.level.dimensionType()) / area;
-            float damage = pressure / 344_738.0F * 100.0F;
-            entity.hurt(source, damage);
+            double damage = pressure / 344_738 * 100;
+            entity.hurt(source, (float) damage);
         }
         return false;
     }
@@ -164,12 +172,6 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         return 0;
     }
 
-    //TODO
-//    @Override
-//    public boolean func_241845_aY() {
-//        return this.isAlive();
-//    }
-
     @Override
     protected MovementEmission getMovementEmission() {
         return MovementEmission.NONE;
@@ -179,11 +181,6 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     public boolean isAttackable() {
         return false;
     }
-
-//    @Override
-//    protected boolean isMovementNoisy() {
-//        return false;
-//    }
 
     @Override
     public void push(Entity entity) {
@@ -201,6 +198,7 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         if (tag != null) {
             this.state = NbtUtils.readBlockState(tag);
         }
+        this.mass = buffer.readDouble();
     }
 
     @Override
@@ -212,17 +210,6 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         this.xo = this.getX();
         this.yo = this.getY();
         this.zo = this.getZ();
-        Block carryingBlock = this.state.getBlock();
-        if (this.fallTime++ == 0) {
-            BlockPos pos = this.blockPosition();
-            if (this.level.getBlockState(pos).getBlock() == carryingBlock) {
-                this.level.removeBlock(pos, false);
-            }
-            else if (!this.level.isClientSide) {
-                this.discard();
-                return;
-            }
-        }
         Vec3 motion = this.getDeltaMovement();
         double motionX = motion.x;
         double motionY = motion.y;
@@ -259,79 +246,35 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         }
         this.setDeltaMovement(motionX, motionY, motionZ);
         this.move(MoverType.SELF, this.getDeltaMovement());
-        this.mutablePos.set(this.getX(), this.getY(), this.getZ());
-        if (this.level.getBlockState(this.mutablePos.below()).getBlock() instanceof BlockLeaves) {
-            if (this.state.getBlock() instanceof BlockLeaves) {
-                this.level.setBlockAndUpdate(this.mutablePos, this.state);
-                this.discard();
-            }
-        }
-        if (this.level.getBlockState(this.mutablePos).getBlock() instanceof BlockLeaves) {
-            if (!(this.state.getBlock() instanceof BlockLeaves)) {
-                this.level.setBlockAndUpdate(this.mutablePos, Blocks.AIR.defaultBlockState());
-                this.playSound(SoundEvents.GRASS_BREAK, 1.0f, 1.0f);
-            }
-        }
         this.mutablePos.set(this.blockPosition());
         boolean isInWater = this.level.getFluidState(this.mutablePos).is(FluidTags.WATER);
-        double d0 = this.getDeltaMovement().lengthSqr();
-        if (d0 > 1) {
-            BlockHitResult raytraceresult = this.level.clip(
-                    new ClipContext(new Vec3(this.xo, this.yo, this.zo), new Vec3(this.getX(), this.getY(), this.getZ()), ClipContext.Block.COLLIDER,
-                                    ClipContext.Fluid.SOURCE_ONLY, this));
-            if (raytraceresult.getType() != HitResult.Type.MISS && this.level.getFluidState(raytraceresult.getBlockPos()).is(FluidTags.WATER)) {
-                this.mutablePos.set(raytraceresult.getBlockPos());
+        double motionLenSqr = this.getDeltaMovement().lengthSqr();
+        if (motionLenSqr > 1) {
+            BlockHitResult hitResult = this.level.clip(
+                    this.clipContext.set(this.from.set(this.xo, this.yo, this.zo), this.to.set(this.getX(), this.getY(), this.getZ()),
+                                         ClipContext.Block.COLLIDER, ClipContext.Fluid.SOURCE_ONLY, this));
+            if (hitResult.getType() != HitResult.Type.MISS && this.level.getFluidState(hitResult.getBlockPos()).is(FluidTags.WATER)) {
+                this.mutablePos.set(hitResult.getBlockPos());
                 isInWater = true;
             }
         }
-        if (!this.onGround && !isInWater) {
-            if (this.fallTime > 100 && !this.level.isClientSide && (this.mutablePos.getY() < 1 || this.mutablePos.getY() > 256) ||
-                this.fallTime > 6_000) {
-                if (this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
-                    if (carryingBlock instanceof BlockCobblestone) {
-                        this.spawnAtLocation(new ItemStack(((BlockCobblestone) carryingBlock).getVariant().getRock(), 4));
-                    }
-                    else {
-                        this.spawnAtLocation(carryingBlock);
-                    }
-                }
-                this.discard();
+        if (BlockUtils.isReplaceable(BlockUtils.getBlockState(this.level, this.getX(), this.getY() - 0.01, this.getZ()))) {
+            if (!isInWater) {
+                this.onGround = false;
+                return;
             }
         }
-        else {
-            BlockState state = this.level.getBlockState(this.mutablePos);
-            BlockPos posDown = new BlockPos(this.getX(), this.getY() - 0.01, this.getZ());
-            if (this.level.isEmptyBlock(posDown)) {
-                if (!isInWater && FallingBlock.isFree(this.level.getBlockState(posDown))) {
-                    this.onGround = false;
-                    return;
-                }
+        BlockState state = this.level.getBlockState(this.mutablePos);
+        if ((!isInWater || this.onGround) && state.getBlock() != Blocks.MOVING_PISTON) {
+            this.discard();
+            if (BlockUtils.isReplaceable(state)) {
+                BlockUtils.destroyBlock(this.level, this.mutablePos);
+                this.level.setBlockAndUpdate(this.mutablePos, this.state);
             }
-            if ((!isInWater || this.onGround) && state.getBlock() != Blocks.MOVING_PISTON) {
-                this.discard();
-                if (BlockUtils.isReplaceable(state)) {
-//                    NonNullList<ItemStack> drops;
-//                    if (state.getBlock() instanceof IReplaceable) {
-//                        drops = ((IReplaceable) state.getBlock()).getDrops(this.level, this.mutablePos, state);
-//                    }
-//                    else {
-//                        drops = NonNullList.of(ItemStack.EMPTY, new ItemStack(state.getBlock()));
-//                    }
-//                    if (this.level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) {
-//                        for (ItemStack stack : drops) {
-//                            this.spawnAtLocation(stack);
-//                        }
-//                    }
-                    BlockUtils.destroyBlock(this.level, this.mutablePos);
-                    this.level.setBlockAndUpdate(this.mutablePos, this.state);
-                }
-                else if (this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
-                    if (carryingBlock instanceof BlockCobblestone cobble) {
-                        this.spawnAtLocation(new ItemStack(cobble.getVariant().getRock(), 4));
-                    }
-                    else {
-                        this.spawnAtLocation(carryingBlock);
-                    }
+            else if (this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS) && !this.level.isClientSide) {
+                List<ItemStack> drops = Block.getDrops(this.state, (ServerLevel) this.level, this.mutablePos.immutable(), null);
+                for (int i = 0, len = drops.size(); i < len; i++) {
+                    this.spawnAtLocation(drops.get(i));
                 }
             }
         }
@@ -340,5 +283,6 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     @Override
     public void writeSpawnData(FriendlyByteBuf buffer) {
         buffer.writeNbt(NbtUtils.writeBlockState(this.state));
+        buffer.writeDouble(this.mass);
     }
 }

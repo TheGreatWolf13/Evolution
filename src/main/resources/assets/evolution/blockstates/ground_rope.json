@@ -1,8 +1,0 @@
-{
-	"variants": {
-    	"facing=south": {"model": "evolution:block/ground_rope"},
-    	"facing=east": {"model": "evolution:block/ground_rope", "y": 90},
-		"facing=north": {"model": "evolution:block/ground_rope", "y": 180},
-    	"facing=west": {"model": "evolution:block/ground_rope", "y": 270}
-	}
-}

@@ -32,14 +32,14 @@ public final class EvolutionCreativeTabs {
     public static final CreativeModeTab PARTS_AND_TOOLS = new CreativeModeTab("evolution.parts_and_tools") {
         @Override
         public ItemStack makeIcon() {
-            return ItemModularTool.createNew(PartTypes.Head.PICKAXE, ItemMaterial.COPPER, PartTypes.Handle.ONE_HANDED, ItemMaterial.WOOD, false);
+            return ItemModularTool.createNew(PartTypes.Head.PICKAXE, Material.COPPER, PartTypes.Handle.ONE_HANDED, Material.WOOD, false);
         }
     };
 
     public static final CreativeModeTab TREES_AND_WOOD = new CreativeModeTab("evolution.trees_and_wood") {
         @Override
         public ItemStack makeIcon() {
-            return new ItemStack(EvolutionBlocks.ALL_LOG.get(WoodVariant.OAK).get());
+            return new ItemStack(EvolutionBlocks.LOGS.get(WoodVariant.OAK).get());
         }
     };
 
@@ -50,12 +50,12 @@ public final class EvolutionCreativeTabs {
         }
     };
 
-    public static final CreativeModeTab LIQUIDS = new CreativeModeTab("evolution.liquids") {
-        @Override
-        public ItemStack makeIcon() {
-            return new ItemStack(EvolutionItems.bucket_ceramic_empty.get());
-        }
-    };
+//    public static final CreativeModeTab LIQUIDS = new CreativeModeTab("evolution.liquids") {
+//        @Override
+//        public ItemStack makeIcon() {
+//            return new ItemStack(EvolutionItems.bucket_ceramic_empty.get());
+//        }
+//    };
 
     private EvolutionCreativeTabs() {
     }

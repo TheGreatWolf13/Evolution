@@ -7,5 +7,7 @@ import net.minecraftforge.common.util.INBTSerializable;
 
 public interface IToastData extends INBTSerializable<CompoundTag> {
 
+    void reset();
+
     void trigger(ServerPlayer player, ItemStack stack);
 }

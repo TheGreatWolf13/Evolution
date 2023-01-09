@@ -1,0 +1,12 @@
+{
+    "variants": {
+		"facing=east,lit=true": { "model": "evolution:block/torch_wall" },
+        "facing=south,lit=true": { "model": "evolution:block/torch_wall", "y": 90 },
+        "facing=west,lit=true": { "model": "evolution:block/torch_wall", "y": 180 },
+        "facing=north,lit=true": { "model": "evolution:block/torch_wall", "y": 270 },
+		"facing=east,lit=false": { "model": "evolution:block/torch_wall_unlit" },
+        "facing=south,lit=false": { "model": "evolution:block/torch_wall_unlit", "y": 90 },
+        "facing=west,lit=false": { "model": "evolution:block/torch_wall_unlit", "y": 180 },
+        "facing=north,lit=false": { "model": "evolution:block/torch_wall_unlit", "y": 270 }
+    }
+}

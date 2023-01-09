@@ -33,11 +33,8 @@ import static net.minecraft.world.entity.MobCategory.MISC;
 
 public final class EvolutionEntities {
 
-    public static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(ForgeRegistries.ENTITIES, Evolution.MODID);
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Evolution.MODID);
-
+    //Entities
     public static final RegistryObject<EntityType<EntityCow>> COW;
-    public static final RegistryObject<Item> SPAWN_EGG_COW;
     public static final RegistryObject<EntityType<EntityFallingPeat>> FALLING_PEAT;
     public static final RegistryObject<EntityType<EntityFallingWeight>> FALLING_WEIGHT;
     public static final RegistryObject<EntityType<EntityHook>> HOOK;
@@ -45,10 +42,15 @@ public final class EvolutionEntities {
     public static final RegistryObject<EntityType<EntitySpear>> SPEAR;
     public static final RegistryObject<EntityType<EntitySittable>> SIT;
     public static final RegistryObject<EntityType<EntityTorch>> TORCH;
+    //Spawn Eggs
+    public static final RegistryObject<Item> SPAWN_EGG_COW;
+    //
+    private static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(ForgeRegistries.ENTITIES, Evolution.MODID);
+    private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Evolution.MODID);
 
     static {
+        //Entities
         COW = register("cow", () -> EntityType.Builder.of(EntityCow::new, CREATURE).sized(0.9f, 1.4f));
-        SPAWN_EGG_COW = ITEMS.register("spawn_egg_cow", () -> genEgg(COW));
         FALLING_PEAT = register("falling_peat", () -> EntityType.Builder.<EntityFallingPeat>of(EntityFallingPeat::new, MISC)
                                                                         .sized(1.0F, 1.0F)
                                                                         .setTrackingRange(10)
@@ -88,6 +90,8 @@ public final class EvolutionEntities {
                                                           .setUpdateInterval(20)
                                                           .setCustomClientFactory(EntityTorch::new)
                                                           .setShouldReceiveVelocityUpdates(true));
+        //Spawn Eggs
+        SPAWN_EGG_COW = ITEMS.register("spawn_egg_cow", () -> genEgg(COW));
     }
 
     private EvolutionEntities() {
@@ -115,13 +119,13 @@ public final class EvolutionEntities {
         }
     }
 
-    private static <E extends Entity> RegistryObject<EntityType<E>> register(String name, Supplier<EntityType.Builder<E>> builder) {
-        return ENTITIES.register(name, () -> builder.get().build(name));
-    }
-
     public static void register() {
         ENTITIES.register(FMLJavaModLoadingContext.get().getModEventBus());
         ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
+    }
+
+    private static <E extends Entity> RegistryObject<EntityType<E>> register(String name, Supplier<EntityType.Builder<E>> builder) {
+        return ENTITIES.register(name, () -> builder.get().build(name));
     }
 
     public static void registerEntityAttribute(EntityAttributeCreationEvent event) {

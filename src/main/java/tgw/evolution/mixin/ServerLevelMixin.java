@@ -5,24 +5,35 @@ import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.animal.horse.SkeletonHorse;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.WritableLevelData;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
+import tgw.evolution.capabilities.chunkstorage.IChunkStorage;
+import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.patches.ILevelPatch;
 
-import java.util.Random;
 import java.util.function.Supplier;
 
-@SuppressWarnings("MethodMayBeStatic")
 @Mixin(ServerLevel.class)
-public abstract class ServerLevelMixin extends Level {
+public abstract class ServerLevelMixin extends Level implements ILevelPatch {
 
     private final BlockPos.MutableBlockPos randomPosInChunkCachedPos = new BlockPos.MutableBlockPos();
 
@@ -33,37 +44,90 @@ public abstract class ServerLevelMixin extends Level {
         super(pLevelData, pDimension, pDimensionTypeRegistration, pProfiler, pIsClientSide, pIsDebug, pBiomeZoomSeed);
     }
 
-    @Override
     @Shadow
-    public abstract void blockUpdated(BlockPos pPos, Block pBlock);
+    protected abstract BlockPos findLightningTargetAround(BlockPos pPos);
 
     /**
-     * Ensure an immutable block position is passed on block tick
+     * @author TheGreatWolf
+     * @reason Remove allocations, handle evolution pending ticking
      */
-    @Redirect(method = "tickChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;randomTick" +
-                                                                        "(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;" +
-                                                                        "Ljava/util/Random;)V"))
-    private void proxyBlockStateTick(BlockState blockState, ServerLevel level, BlockPos pos, Random rand) {
-        blockState.randomTick(level, pos.immutable(), rand);
-    }
-
-    /**
-     * Ensure an immutable block position is passed on fluid tick
-     */
-    @Redirect(method = "tickChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/material/FluidState;randomTick" +
-                                                                        "(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;" +
-                                                                        "Ljava/util/Random;)V"))
-    private void proxyFluidStateTick(FluidState fluidState, Level level, BlockPos pos, Random rand) {
-        fluidState.randomTick(level, pos.immutable(), rand);
-    }
-
-    /**
-     * Avoid allocating BlockPos every invocation through using our allocation-free variant
-     */
-    @Redirect(method = "tickChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;getBlockRandomPos(IIII)" +
-                                                                        "Lnet/minecraft/core/BlockPos;"))
-    private BlockPos proxyTickGetRandomPosInChunk(ServerLevel level, int x, int y, int z, int mask) {
-        ((ILevelPatch) level).getRandomPosInChunk(x, y, z, mask, this.randomPosInChunkCachedPos);
-        return this.randomPosInChunkCachedPos;
+    @Overwrite
+    public void tickChunk(LevelChunk chunk, int randomTickSpeed) {
+        ChunkPos chunkPos = chunk.getPos();
+        boolean raining = this.isRaining();
+        int minX = chunkPos.getMinBlockX();
+        int minZ = chunkPos.getMinBlockZ();
+        ProfilerFiller profiler = this.getProfiler();
+        profiler.push("thunder");
+        if (raining && this.isThundering() && this.random.nextInt(100_000) == 0) {
+            BlockPos lightningPos = this.findLightningTargetAround(this.getRandomPosInChunk(minX, 0, minZ, 15, this.randomPosInChunkCachedPos));
+            if (this.isRainingAt(lightningPos)) {
+                DifficultyInstance difficulty = this.getCurrentDifficultyAt(lightningPos);
+                boolean shouldSpawnSkeletonTrap = this.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING) &&
+                                                  this.random.nextDouble() < difficulty.getEffectiveDifficulty() * 0.01 &&
+                                                  !this.getBlockState(lightningPos.below()).is(Blocks.LIGHTNING_ROD);
+                if (shouldSpawnSkeletonTrap) {
+                    SkeletonHorse skeletonHorse = EntityType.SKELETON_HORSE.create(this);
+                    assert skeletonHorse != null;
+                    skeletonHorse.setTrap(true);
+                    skeletonHorse.setAge(0);
+                    skeletonHorse.setPos(lightningPos.getX(), lightningPos.getY(), lightningPos.getZ());
+                    this.addFreshEntity(skeletonHorse);
+                }
+                LightningBolt lightningBolt = EntityType.LIGHTNING_BOLT.create(this);
+                assert lightningBolt != null;
+                lightningBolt.moveTo(Vec3.atBottomCenterOf(lightningPos));
+                lightningBolt.setVisualOnly(shouldSpawnSkeletonTrap);
+                this.addFreshEntity(lightningBolt);
+            }
+        }
+        profiler.popPush("iceandsnow");
+        if (this.random.nextInt(16) == 0) {
+            BlockPos topPos = this.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING,
+                                                   this.getRandomPosInChunk(minX, 0, minZ, 15, this.randomPosInChunkCachedPos));
+            BlockPos belowTopPos = topPos.below();
+            Biome biome = this.getBiome(topPos).value();
+            // Forge: check area to avoid loading neighbors in unloaded chunks
+            if (this.isAreaLoaded(topPos, 1)) {
+                if (biome.shouldFreeze(this, belowTopPos)) {
+                    this.setBlockAndUpdate(belowTopPos, Blocks.ICE.defaultBlockState());
+                }
+            }
+            if (raining) {
+                if (biome.shouldSnow(this, topPos)) {
+                    this.setBlockAndUpdate(topPos, Blocks.SNOW.defaultBlockState());
+                }
+                BlockState stateBelowTopPos = this.getBlockState(belowTopPos);
+                Biome.Precipitation precipitation = biome.getPrecipitation();
+                if (precipitation == Biome.Precipitation.RAIN && biome.coldEnoughToSnow(belowTopPos)) {
+                    precipitation = Biome.Precipitation.SNOW;
+                }
+                stateBelowTopPos.getBlock().handlePrecipitation(stateBelowTopPos, this, belowTopPos, precipitation);
+            }
+        }
+        profiler.popPush("tickBlocks");
+        IChunkStorage chunkStorage = EvolutionCapabilities.getCapabilityOrThrow(chunk, CapabilityChunkStorage.INSTANCE);
+        chunkStorage.tick(chunk);
+        if (randomTickSpeed > 0) {
+            for (LevelChunkSection section : chunk.getSections()) {
+                if (section.isRandomlyTicking()) {
+                    int minY = section.bottomBlockY();
+                    for (int k = 0; k < randomTickSpeed; ++k) {
+                        BlockPos randomPos = this.getRandomPosInChunk(minX, minY, minZ, 15, this.randomPosInChunkCachedPos);
+                        profiler.push("randomTick");
+                        BlockState randomState = section.getBlockState(randomPos.getX() - minX, randomPos.getY() - minY, randomPos.getZ() - minZ);
+                        if (randomState.isRandomlyTicking()) {
+                            randomState.randomTick((ServerLevel) (Object) this, randomPos.immutable(), this.random);
+                        }
+                        FluidState randomFluidState = randomState.getFluidState();
+                        if (randomFluidState.isRandomlyTicking()) {
+                            randomFluidState.randomTick(this, randomPos.immutable(), this.random);
+                        }
+                        profiler.pop();
+                    }
+                }
+            }
+        }
+        profiler.pop();
     }
 }

@@ -26,6 +26,13 @@ public class DirectionList {
         this.current = 4;
     }
 
+    public Direction getLastAndRemove() {
+        if (this.current == 0) {
+            throw new IllegalStateException("List is empty, cannot get last Direction");
+        }
+        return this.values[--this.current];
+    }
+
     public Direction getRandomAndRemove(RandomGenerator random) {
         if (this.current == 0) {
             throw new IllegalStateException("List is empty, cannot get a random Direction");

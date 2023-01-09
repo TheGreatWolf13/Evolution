@@ -26,9 +26,9 @@ import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import tgw.evolution.init.EvolutionItems;
-
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.init.EvolutionCreativeTabs;
+
 import java.util.function.Supplier;
 
 public class ItemSpawnEgg<E extends Entity> extends ItemEv {
@@ -36,7 +36,7 @@ public class ItemSpawnEgg<E extends Entity> extends ItemEv {
     private final Supplier<EntityType<E>> type;
 
     public ItemSpawnEgg(Supplier<EntityType<E>> type) {
-        super(EvolutionItems.propEgg());
+        super(new Properties().tab(EvolutionCreativeTabs.EGGS));
         this.type = type;
     }
 

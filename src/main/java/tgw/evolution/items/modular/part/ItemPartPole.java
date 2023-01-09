@@ -3,7 +3,7 @@ package tgw.evolution.items.modular.part;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.modular.part.PartPole;
 import tgw.evolution.capabilities.modular.part.PartTypes;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.util.math.MathHelper;
 
 public class ItemPartPole extends ItemPart<PartTypes.Pole, ItemPartPole, PartPole> {
@@ -25,9 +25,9 @@ public class ItemPartPole extends ItemPart<PartTypes.Pole, ItemPartPole, PartPol
     @Override
     public ItemStack getDefaultInstance() {
         PartTypes.Pole pole = PartTypes.Pole.getRandom(MathHelper.RANDOM);
-        ItemMaterial material = ItemMaterial.getRandom(MathHelper.RANDOM);
+        Material material = Material.getRandom(MathHelper.RANDOM);
         while (!pole.hasVariantIn(material)) {
-            material = ItemMaterial.getRandom(MathHelper.RANDOM);
+            material = Material.getRandom(MathHelper.RANDOM);
         }
         return this.newStack(pole, material);
     }

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.util.collection.RArrayList;
 
 import java.util.List;
@@ -25,10 +25,10 @@ import java.util.Random;
 
 public class BakedModelFinalModularTool implements BakedModel {
 
-    public static final ModelProperty<ItemMaterial> HEAD_MATERIAL = new ModelProperty<>();
+    public static final ModelProperty<Material> HEAD_MATERIAL = new ModelProperty<>();
     public static final ModelProperty<PartTypes.Head> HEAD_TYPE = new ModelProperty<>();
     public static final ModelProperty<PartTypes.Handle> HANDLE_TYPE = new ModelProperty<>();
-    public static final ModelProperty<ItemMaterial> HANDLE_MATERIAL = new ModelProperty<>();
+    public static final ModelProperty<Material> HANDLE_MATERIAL = new ModelProperty<>();
     public static final ModelProperty<Boolean> IS_SHARP = new ModelProperty<>();
     //    public static final TransformsModular TRANSFORMS = new TransformsModular(0.85f, 0.85f, 0.85f);
     private final BakedModel baseModel;
@@ -49,9 +49,9 @@ public class BakedModelFinalModularTool implements BakedModel {
 
     public static ModelDataMap getEmptyIModelData() {
         ModelDataMap.Builder builder = new ModelDataMap.Builder();
-        builder.withInitial(HEAD_MATERIAL, ItemMaterial.ANDESITE);
+        builder.withInitial(HEAD_MATERIAL, Material.ANDESITE);
         builder.withInitial(HEAD_TYPE, PartTypes.Head.NULL);
-        builder.withInitial(HANDLE_MATERIAL, ItemMaterial.ANDESITE);
+        builder.withInitial(HANDLE_MATERIAL, Material.ANDESITE);
         builder.withInitial(HANDLE_TYPE, PartTypes.Handle.NULL);
         builder.withInitial(IS_SHARP, false);
         return builder.build();
@@ -127,9 +127,9 @@ public class BakedModelFinalModularTool implements BakedModel {
     }
 
     public void setModelData(PartTypes.Head headType,
-                             ItemMaterial headMaterial,
+                             Material headMaterial,
                              PartTypes.Handle handleType,
-                             ItemMaterial handleMaterial,
+                             Material handleMaterial,
                              boolean isSharp) {
         this.modelData.setData(HEAD_TYPE, headType);
         this.modelData.setData(HEAD_MATERIAL, headMaterial);

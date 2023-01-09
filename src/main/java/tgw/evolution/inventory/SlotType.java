@@ -24,6 +24,8 @@ public enum SlotType {
     BACK(6),
     BELT(7);
 
+    public static final SlotType[] VALUES = values();
+
     private final int index;
 
     SlotType(int index) {

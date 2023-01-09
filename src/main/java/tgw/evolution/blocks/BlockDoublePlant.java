@@ -2,7 +2,6 @@ package tgw.evolution.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -22,9 +21,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.util.NutrientHelper;
 import tgw.evolution.util.constants.BlockFlags;
 
 import static tgw.evolution.init.EvolutionBStates.HALF;
@@ -53,14 +50,6 @@ public class BlockDoublePlant extends BlockBush {
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(HALF);
-    }
-
-    @Override
-    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        if (state.getBlock() == EvolutionBlocks.TALLGRASS.get()) {
-            return NonNullList.of(ItemStack.EMPTY);
-        }
-        return super.getDrops(level, pos, state);
     }
 
     @Override
@@ -94,11 +83,6 @@ public class BlockDoublePlant extends BlockBush {
     }
 
     @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        CapabilityChunkStorage.addElements(level.getChunkAt(pos), NutrientHelper.DECAY_TALL_GRASS);
-    }
-
-    @Override
     public void playerDestroy(Level level, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity tile, ItemStack stack) {
         super.playerDestroy(level, player, pos, Blocks.AIR.defaultBlockState(), tile, stack);
     }
@@ -126,18 +110,18 @@ public class BlockDoublePlant extends BlockBush {
 
     @Override
     public BlockState updateShape(BlockState state,
-                                  Direction facing,
-                                  BlockState facingState,
+                                  Direction direction,
+                                  BlockState fromState,
                                   LevelAccessor level,
-                                  BlockPos currentPos,
-                                  BlockPos facingPos) {
+                                  BlockPos pos,
+                                  BlockPos fromPos) {
         DoubleBlockHalf doubleblockhalf = state.getValue(HALF);
-        if (facing.getAxis() != Direction.Axis.Y ||
-            doubleblockhalf == DoubleBlockHalf.LOWER != (facing == Direction.UP) ||
-            facingState.getBlock() == this && facingState.getValue(HALF) != doubleblockhalf) {
-            return doubleblockhalf == DoubleBlockHalf.LOWER && facing == Direction.DOWN && !state.canSurvive(level, currentPos) ?
+        if (direction.getAxis() != Direction.Axis.Y ||
+            doubleblockhalf == DoubleBlockHalf.LOWER != (direction == Direction.UP) ||
+            fromState.getBlock() == this && fromState.getValue(HALF) != doubleblockhalf) {
+            return doubleblockhalf == DoubleBlockHalf.LOWER && direction == Direction.DOWN && !state.canSurvive(level, pos) ?
                    Blocks.AIR.defaultBlockState() :
-                   super.updateShape(state, facing, facingState, level, currentPos, facingPos);
+                   super.updateShape(state, direction, fromState, level, pos, fromPos);
         }
         return Blocks.AIR.defaultBlockState();
     }

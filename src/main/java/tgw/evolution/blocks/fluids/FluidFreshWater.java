@@ -64,7 +64,6 @@ public abstract class FluidFreshWater extends FluidGeneric {
                 }
                 int stay = rlThis - amountToSwap;
                 this.setBlockState(level, pos, stay);
-                onReplace(level, auxPos, stateAtOffset);
                 int receive = amountToSwap + rlAtPos;
                 EvolutionFluids.SALT_WATER.get().setBlockState(level, auxPos, receive);
                 return true;

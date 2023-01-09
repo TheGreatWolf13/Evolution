@@ -9,48 +9,19 @@ import tgw.evolution.util.math.MathHelper;
 public final class EvolutionShapes {
 
     //Simple shapes
-    //2 Sections
-    public static final VoxelShape SLAB_LOWER = Block.box(0, 0, 0, 16, 8, 16);
-    //4 Sections
-    public static final VoxelShape QUARTER_SLAB_LOWER_1 = Block.box(0, 0, 0, 16, 4, 16);
-    public static final VoxelShape QUARTER_SLAB_LOWER_2 = SLAB_LOWER;
-    public static final VoxelShape OCTAVE_SLAB_LOWER_4 = QUARTER_SLAB_LOWER_2;
-    public static final VoxelShape SIXTEENTH_SLAB_LOWER_8 = OCTAVE_SLAB_LOWER_4;
-    public static final VoxelShape QUARTER_SLAB_LOWER_3 = Block.box(0, 0, 0, 16, 12, 16);
-    //8 Sections
-    public static final VoxelShape OCTAVE_SLAB_LOWER_1 = Block.box(0, 0, 0, 16, 2, 16);
-    public static final VoxelShape OCTAVE_SLAB_LOWER_2 = QUARTER_SLAB_LOWER_1;
-    public static final VoxelShape SIXTEENTH_SLAB_LOWER_4 = OCTAVE_SLAB_LOWER_2;
-    public static final VoxelShape OCTAVE_SLAB_LOWER_3 = Block.box(0, 0, 0, 16, 6, 16);
-    //16 Sections
-    public static final VoxelShape SIXTEENTH_SLAB_LOWER_1 = Block.box(0, 0, 0, 16, 1, 16);
-    public static final VoxelShape SIXTEENTH_SLAB_LOWER_2 = OCTAVE_SLAB_LOWER_1;
-    public static final VoxelShape SIXTEENTH_SLAB_LOWER_3 = Block.box(0, 0, 0, 16, 3, 16);
-    public static final VoxelShape SIXTEENTH_SLAB_LOWER_5 = Block.box(0, 0, 0, 16, 5, 16);
-    public static final VoxelShape SIXTEENTH_SLAB_LOWER_6 = OCTAVE_SLAB_LOWER_3;
-    public static final VoxelShape SIXTEENTH_SLAB_LOWER_7 = Block.box(0, 0, 0, 16, 7, 16);
-    public static final VoxelShape SIXTEENTH_SLAB_UPPER_1 = Block.box(0, 15, 0, 16, 16, 16);
-    public static final VoxelShape SIXTEENTH_SLAB_WEST_1 = Block.box(0, 0, 0, 1, 16, 16);
-    public static final VoxelShape SIXTEENTH_SLAB_EAST_1 = Block.box(15, 0, 0, 16, 16, 16);
-    public static final VoxelShape SIXTEENTH_SLAB_NORTH_1 = Block.box(0, 0, 0, 16, 16, 1);
-    public static final VoxelShape SIXTEENTH_SLAB_SOUTH_1 = Block.box(0, 0, 15, 16, 16, 16);
+    public static final VoxelShape SLAB_2_D;
+    public static final VoxelShape[] SLAB_4_D;
+    public static final VoxelShape[] SLAB_8_D;
+    public static final VoxelShape[] SLAB_16_D;
+    public static final VoxelShape SLAB_16_U;
+    public static final VoxelShape SLAB_16_N;
+    public static final VoxelShape SLAB_16_S;
+    public static final VoxelShape SLAB_16_E;
+    public static final VoxelShape SLAB_16_W;
     //Knapping
     public static final VoxelShape KNAPPING_PART = Block.box(0, 0, 0, 2, 1, 2);
     //Molding
     public static final VoxelShape MOLDING_PART = Block.box(0, 0, 0, 2, 2, 2);
-    //Log
-    public static final VoxelShape LOG_SINGLE_1 = Block.box(0, 0, 0, 4, 4, 16);
-    public static final VoxelShape LOG_SINGLE_2 = Block.box(0, 0, 0, 4, 8, 16);
-    public static final VoxelShape LOG_SINGLE_3 = Block.box(0, 0, 0, 4, 12, 16);
-    public static final VoxelShape LOG_SINGLE_4 = Block.box(0, 0, 0, 4, 16, 16);
-    public static final VoxelShape LOG_DOUBLE_1 = Block.box(0, 0, 0, 8, 4, 16);
-    public static final VoxelShape LOG_DOUBLE_2 = Block.box(0, 0, 0, 8, 8, 16);
-    public static final VoxelShape LOG_DOUBLE_3 = Block.box(0, 0, 0, 8, 12, 16);
-    public static final VoxelShape LOG_DOUBLE_4 = Block.box(0, 0, 0, 8, 16, 16);
-    public static final VoxelShape LOG_TRIPLE_1 = Block.box(0, 0, 0, 12, 4, 16);
-    public static final VoxelShape LOG_TRIPLE_2 = Block.box(0, 0, 0, 12, 8, 16);
-    public static final VoxelShape LOG_TRIPLE_3 = Block.box(0, 0, 0, 12, 12, 16);
-    public static final VoxelShape LOG_TRIPLE_4 = Block.box(0, 0, 0, 12, 16, 16);
     //General Blocks
     public static final VoxelShape GRASS = Block.box(2, 0, 2, 14, 13, 14);
     public static final VoxelShape GROUND_ITEM = Block.box(5, 0, 5, 11, 0.5, 11);
@@ -81,9 +52,6 @@ public final class EvolutionShapes {
     //Groups
     public static final VoxelShape[] LOG_PILE;
     public static final VoxelShape[] MOLD_CLAY;
-    public static final VoxelShape[] PEAT;
-    public static final VoxelShape[] PIT_KILN;
-
     private static final VoxelShape PICKAXE1_THICK = Block.box(3.5, 0.5, 3.5, 12.5, 3, 6.5);
     private static final VoxelShape PICKAXE2_THICK = Block.box(0.5, 0.5, 6.5, 3.5, 3, 9.5);
     private static final VoxelShape PICKAXE3_THICK = Block.box(12.5, 0.5, 6.5, 15.5, 3, 9.5);
@@ -94,32 +62,33 @@ public final class EvolutionShapes {
     public static final VoxelShape AXE_THICK = Shapes.or(AXE1_THICK, AXE2_THICK, AXE3_THICK);
 
     static {
-        PEAT = new VoxelShape[]{Shapes.empty(),
-                                QUARTER_SLAB_LOWER_1,
-                                QUARTER_SLAB_LOWER_2,
-                                QUARTER_SLAB_LOWER_3,
-                                Shapes.block()};
-        PIT_KILN = new VoxelShape[]{SIXTEENTH_SLAB_LOWER_1,
-                                    SIXTEENTH_SLAB_LOWER_1,
-                                    SIXTEENTH_SLAB_LOWER_2,
-                                    SIXTEENTH_SLAB_LOWER_3,
-                                    SIXTEENTH_SLAB_LOWER_4,
-                                    SIXTEENTH_SLAB_LOWER_5,
-                                    SIXTEENTH_SLAB_LOWER_6,
-                                    SIXTEENTH_SLAB_LOWER_7,
-                                    SIXTEENTH_SLAB_LOWER_8,
-                                    MathHelper.union(LOG_SINGLE_3, SIXTEENTH_SLAB_LOWER_8),
-                                    MathHelper.union(LOG_DOUBLE_3, SIXTEENTH_SLAB_LOWER_8),
-                                    MathHelper.union(LOG_TRIPLE_3, SIXTEENTH_SLAB_LOWER_8),
-                                    QUARTER_SLAB_LOWER_3,
-                                    MathHelper.union(LOG_SINGLE_4, QUARTER_SLAB_LOWER_3),
-                                    MathHelper.union(LOG_DOUBLE_4, QUARTER_SLAB_LOWER_3),
-                                    MathHelper.union(LOG_TRIPLE_4, QUARTER_SLAB_LOWER_3),
+        SLAB_2_D = Block.box(0, 0, 0, 16, 8, 16);
+        SLAB_4_D = new VoxelShape[]{Block.box(0, 0, 0, 16, 4, 16),
+                                    SLAB_2_D,
+                                    Block.box(0, 0, 0, 16, 12, 16),
                                     Shapes.block()};
-        LOG_PILE = new VoxelShape[]{Shapes.empty(), LOG_SINGLE_1, LOG_DOUBLE_1, LOG_TRIPLE_1,
-                                    QUARTER_SLAB_LOWER_1, LOG_SINGLE_2, LOG_DOUBLE_2, LOG_TRIPLE_2,
-                                    SLAB_LOWER, LOG_SINGLE_3, LOG_DOUBLE_3, LOG_TRIPLE_3,
-                                    QUARTER_SLAB_LOWER_3, LOG_SINGLE_4, LOG_DOUBLE_4, LOG_TRIPLE_4};
+        SLAB_8_D = new VoxelShape[]{Block.box(0, 0, 0, 16, 2, 16),
+                                    SLAB_4_D[0],
+                                    Block.box(0, 0, 0, 16, 6, 16),
+                                    SLAB_4_D[1],
+                                    };
+        SLAB_16_D = new VoxelShape[]{Block.box(0, 0, 0, 16, 1, 16),
+                                     SLAB_8_D[0],
+                                     Block.box(0, 0, 0, 16, 3, 16),
+                                     SLAB_8_D[1],
+                                     Block.box(0, 0, 0, 16, 5, 16),
+                                     SLAB_8_D[2],
+                                     Block.box(0, 0, 0, 16, 7, 16),
+                                     SLAB_8_D[3]};
+        SLAB_16_U = Block.box(0, 15, 0, 16, 16, 16);
+        SLAB_16_N = Block.box(0, 0, 0, 16, 16, 1);
+        SLAB_16_S = Block.box(0, 0, 15, 16, 16, 16);
+        SLAB_16_E = Block.box(15, 0, 0, 16, 16, 16);
+        SLAB_16_W = Block.box(0, 0, 0, 1, 16, 16);
+        LOG_PILE = new VoxelShape[]{Block.box(0, 0, 0, 4, 4, 16), Block.box(0, 0, 0, 8, 4, 16), Block.box(0, 0, 0, 12, 4, 16), SLAB_4_D[0],
+                                    Block.box(0, 0, 0, 4, 8, 16), Block.box(0, 0, 0, 8, 8, 16), Block.box(0, 0, 0, 12, 8, 16), SLAB_4_D[1],
+                                    Block.box(0, 0, 0, 4, 12, 16), Block.box(0, 0, 0, 8, 12, 16), Block.box(0, 0, 0, 12, 12, 16), SLAB_4_D[2],
+                                    Block.box(0, 0, 0, 4, 16, 16), Block.box(0, 0, 0, 8, 16, 16), Block.box(0, 0, 0, 12, 16, 16)};
         MOLD_CLAY = new VoxelShape[]{MOLD_1, MOLD_2, MOLD_3, MOLD_4, MOLD_5};
         VoxelShape moldBase = Shapes.box(0, 0, 0, 1, 0.5 / 16, 1);
         VoxelShape moldBaseN = Shapes.box(0, 0, 0, 1, 3 / 16.0, 0.5 / 16);

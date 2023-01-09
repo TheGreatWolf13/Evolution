@@ -15,7 +15,7 @@ public enum EnumMolding {
     AXE(1,
         MathHelper.subtract(EvolutionShapes.MOLD_1, EvolutionShapes.AXE_THICK),
         MoldingPatterns.AXE,
-        new ItemStack(EvolutionItems.mold_clay_axe.get())),
+        new ItemStack(EvolutionItems.MOLD_CLAY_AXE.get())),
     ;
 //    PICKAXE(2,
 //            MathHelper.subtract(EvolutionShapes.MOLD_1, EvolutionShapes.PICKAXE_THICK),

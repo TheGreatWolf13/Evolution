@@ -5,12 +5,11 @@ import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.level.material.Material;
 import tgw.evolution.capabilities.modular.IAttachmentType;
 import tgw.evolution.capabilities.modular.IGrabType;
 import tgw.evolution.capabilities.modular.IToolType;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.*;
 import tgw.evolution.util.collection.B2RMap;
 import tgw.evolution.util.collection.B2ROpenHashMap;
@@ -96,7 +95,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(ItemMaterial material) {
+        public double getVolume(Material material) {
             //TODO implementation
             return switch (this) {
                 case NULL -> 0;
@@ -106,7 +105,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(ItemMaterial material) {
+        public boolean hasVariantIn(Material material) {
             return material.isAllowedBy(this);
         }
 
@@ -119,7 +118,7 @@ public final class PartTypes {
 
         @Override
         public ItemPartBlade partItem() {
-            return EvolutionItems.BLADE_PART.get();
+            return EvolutionItems.PART_BLADE.get();
         }
     }
 
@@ -195,7 +194,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(ItemMaterial material) {
+        public double getVolume(Material material) {
             return switch (this) {
                 case NULL -> 0;
                 case CROSSGUARD -> Double.NaN;
@@ -203,7 +202,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(ItemMaterial material) {
+        public boolean hasVariantIn(Material material) {
             return material.isAllowedBy(this);
         }
 
@@ -214,7 +213,7 @@ public final class PartTypes {
 
         @Override
         public ItemPartGuard partItem() {
-            return EvolutionItems.GUARD_PART.get();
+            return EvolutionItems.PART_GUARD.get();
         }
     }
 
@@ -226,9 +225,9 @@ public final class PartTypes {
      */
     public enum HalfHead implements IToolType<HalfHead, ItemPartHalfHead, PartHalfHead> {
         NULL(0, "null", ReferenceSet.of()),
-        AXE(1, "axe", ReferenceSet.of(Material.WOOD)),
+        AXE(1, "axe", ReferenceSet.of(net.minecraft.world.level.material.Material.WOOD)),
         HAMMER(2, "hammer", ReferenceSet.of()),
-        PICKAXE(3, "pickaxe", ReferenceSet.of(Material.STONE, Material.METAL));
+        PICKAXE(3, "pickaxe", ReferenceSet.of(net.minecraft.world.level.material.Material.STONE, net.minecraft.world.level.material.Material.METAL));
 
         public static final HalfHead[] VALUES = values();
         private static final Byte2ReferenceMap<HalfHead> REGISTRY;
@@ -245,11 +244,11 @@ public final class PartTypes {
         }
 
         private final Component component;
-        private final ReferenceSet<Material> effectiveMaterials;
+        private final ReferenceSet<net.minecraft.world.level.material.Material> effectiveMaterials;
         private final byte id;
         private final String name;
 
-        HalfHead(int id, String name, ReferenceSet<Material> effectiveMaterials) {
+        HalfHead(int id, String name, ReferenceSet<net.minecraft.world.level.material.Material> effectiveMaterials) {
             this.name = name;
             this.id = MathHelper.toByteExact(id);
             this.effectiveMaterials = effectiveMaterials;
@@ -279,7 +278,7 @@ public final class PartTypes {
         }
 
         @Override
-        public ReferenceSet<Material> getEffectiveMaterials() {
+        public ReferenceSet<net.minecraft.world.level.material.Material> getEffectiveMaterials() {
             return this.effectiveMaterials;
         }
 
@@ -300,7 +299,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(ItemMaterial material) {
+        public double getVolume(Material material) {
             return switch (this) {
                 case NULL -> 0;
                 case AXE, PICKAXE, HAMMER -> Double.NaN;
@@ -308,7 +307,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(ItemMaterial material) {
+        public boolean hasVariantIn(Material material) {
             return material.isAllowedBy(this);
         }
 
@@ -319,7 +318,7 @@ public final class PartTypes {
 
         @Override
         public ItemPartHalfHead partItem() {
-            return EvolutionItems.HALFHEAD_PART.get();
+            return EvolutionItems.PART_HALFHEAD.get();
         }
     }
 
@@ -407,7 +406,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(ItemMaterial material) {
+        public double getVolume(Material material) {
             return switch (this) {
                 case NULL -> 0;
                 case ONE_HANDED -> 26;
@@ -416,7 +415,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(ItemMaterial material) {
+        public boolean hasVariantIn(Material material) {
             return material.isAllowedBy(this);
         }
 
@@ -430,7 +429,7 @@ public final class PartTypes {
 
         @Override
         public ItemPartHandle partItem() {
-            return EvolutionItems.HANDLE_PART.get();
+            return EvolutionItems.PART_HANDLE.get();
         }
     }
 
@@ -440,12 +439,12 @@ public final class PartTypes {
      */
     public enum Head implements IToolType<Head, ItemPartHead, PartHead> {
         NULL(0, "null", ReferenceSet.of()),
-        AXE(1, "axe", ReferenceSet.of(Material.WOOD)),
+        AXE(1, "axe", ReferenceSet.of(net.minecraft.world.level.material.Material.WOOD)),
         HAMMER(2, "hammer", ReferenceSet.of()),
-        HOE(3, "hoe", ReferenceSet.of(Material.GRASS)),
+        HOE(3, "hoe", ReferenceSet.of(net.minecraft.world.level.material.Material.GRASS)),
         MACE(4, "mace", ReferenceSet.of()),
-        PICKAXE(5, "pickaxe", ReferenceSet.of(Material.STONE, Material.METAL)),
-        SHOVEL(6, "shovel", ReferenceSet.of(Material.DIRT, Material.SAND)),
+        PICKAXE(5, "pickaxe", ReferenceSet.of(net.minecraft.world.level.material.Material.STONE, net.minecraft.world.level.material.Material.METAL)),
+        SHOVEL(6, "shovel", ReferenceSet.of(net.minecraft.world.level.material.Material.DIRT, net.minecraft.world.level.material.Material.SAND)),
         SPEAR(7, "spear", ReferenceSet.of());
 
         public static final Head[] VALUES = values();
@@ -463,11 +462,11 @@ public final class PartTypes {
         }
 
         private final Component component;
-        private final ReferenceSet<Material> effectiveMaterials;
+        private final ReferenceSet<net.minecraft.world.level.material.Material> effectiveMaterials;
         private final byte id;
         private final String name;
 
-        Head(int id, String name, ReferenceSet<Material> effectiveMaterials) {
+        Head(int id, String name, ReferenceSet<net.minecraft.world.level.material.Material> effectiveMaterials) {
             this.name = name;
             this.id = MathHelper.toByteExact(id);
             this.effectiveMaterials = effectiveMaterials;
@@ -497,7 +496,7 @@ public final class PartTypes {
         }
 
         @Override
-        public ReferenceSet<Material> getEffectiveMaterials() {
+        public ReferenceSet<net.minecraft.world.level.material.Material> getEffectiveMaterials() {
             return this.effectiveMaterials;
         }
 
@@ -525,7 +524,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(ItemMaterial material) {
+        public double getVolume(Material material) {
             return switch (this) {
                 case NULL -> 0;
                 case AXE -> material.isStone() ? 58.5f : 58;
@@ -538,7 +537,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(ItemMaterial material) {
+        public boolean hasVariantIn(Material material) {
             return material.isAllowedBy(this);
         }
 
@@ -549,7 +548,7 @@ public final class PartTypes {
 
         @Override
         public ItemPartHead partItem() {
-            return EvolutionItems.HEAD_PART.get();
+            return EvolutionItems.PART_HEAD.get();
         }
     }
 
@@ -631,7 +630,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(ItemMaterial material) {
+        public double getVolume(Material material) {
             return switch (this) {
                 case NULL -> 0;
                 case ONE_HANDED -> 17.5;
@@ -639,7 +638,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(ItemMaterial material) {
+        public boolean hasVariantIn(Material material) {
             return material.isAllowedBy(this);
         }
 
@@ -652,7 +651,7 @@ public final class PartTypes {
 
         @Override
         public ItemPartHilt partItem() {
-            return EvolutionItems.HILT_PART.get();
+            return EvolutionItems.PART_GRIP.get();
         }
     }
 
@@ -735,7 +734,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(ItemMaterial material) {
+        public double getVolume(Material material) {
             return switch (this) {
                 case NULL -> 0;
                 case POLE -> Double.NaN;
@@ -743,7 +742,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(ItemMaterial material) {
+        public boolean hasVariantIn(Material material) {
             return material.isAllowedBy(this);
         }
 
@@ -754,7 +753,7 @@ public final class PartTypes {
 
         @Override
         public ItemPartPole partItem() {
-            return EvolutionItems.POLE_PART.get();
+            return EvolutionItems.PART_POLE.get();
         }
     }
 
@@ -832,7 +831,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(ItemMaterial material) {
+        public double getVolume(Material material) {
             return switch (this) {
                 case NULL -> 0;
                 case POMMEL -> 12.5;
@@ -840,7 +839,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(ItemMaterial material) {
+        public boolean hasVariantIn(Material material) {
             return material.isAllowedBy(this);
         }
 
@@ -851,7 +850,7 @@ public final class PartTypes {
 
         @Override
         public ItemPartPommel partItem() {
-            return EvolutionItems.POMMEL_PART.get();
+            return EvolutionItems.PART_POMMEL.get();
         }
     }
 }

@@ -52,8 +52,6 @@ public final class EvolutionNetwork {
     }
 
     public static void registerMessages() {
-        register(PacketSCUpdateChunkStorage.class, PacketSCUpdateChunkStorage::encode, PacketSCUpdateChunkStorage::decode,
-                 PacketSCUpdateChunkStorage::handle);
         register(PacketCSOpenExtendedInventory.class, PacketCSOpenExtendedInventory::encode, PacketCSOpenExtendedInventory::decode,
                  PacketCSOpenExtendedInventory::handle);
         register(PacketCSSetKnappingType.class, PacketCSSetKnappingType::encode, PacketCSSetKnappingType::decode, PacketCSSetKnappingType::handle);

@@ -1,7 +1,7 @@
 {
 	"parent": "evolution:block/rock",
 	"textures": {
-		"0": "evolution:block/cobble_phyllite",
-		"particle": "evolution:block/cobble_phyllite"
+		"0": "evolution:block/cobblestone_phyllite",
+		"particle": "evolution:block/cobblestone_phyllite"
 	}
 }

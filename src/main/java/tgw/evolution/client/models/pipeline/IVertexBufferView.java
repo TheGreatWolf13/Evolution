@@ -32,12 +32,12 @@ public interface IVertexBufferView {
     ByteBuffer getDirectBuffer();
 
     /**
-     * @return The current vertex format of the buffer
-     */
-    IBufferVertexFormat getVertexFormat();
-
-    /**
      * @return The position at which new data should be written to, in bytes
      */
     int getWriterPosition();
+
+    /**
+     * @return The current vertex format of the buffer
+     */
+    IBufferVertexFormat vertexFormat();
 }

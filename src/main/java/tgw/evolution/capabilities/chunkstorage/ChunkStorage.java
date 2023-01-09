@@ -1,283 +1,279 @@
 package tgw.evolution.capabilities.chunkstorage;
 
-import net.minecraft.nbt.LongArrayTag;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
-import net.minecraftforge.common.util.INBTSerializable;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.levelgen.Heightmap;
+import org.jetbrains.annotations.Nullable;
+import tgw.evolution.blocks.IAir;
+import tgw.evolution.commands.CommandAtm;
+import tgw.evolution.init.EvolutionCapabilities;
+import tgw.evolution.patches.ILevelChunkSectionPatch;
+import tgw.evolution.util.ChunkHolder;
+import tgw.evolution.util.collection.IArrayList;
+import tgw.evolution.util.collection.IList;
+import tgw.evolution.util.collection.LArrayList;
+import tgw.evolution.util.collection.LList;
+import tgw.evolution.util.math.DirectionList;
+import tgw.evolution.util.math.DirectionUtil;
 
-import java.util.Map;
+public class ChunkStorage implements IChunkStorage {
 
-public class ChunkStorage implements IChunkStorage, INBTSerializable<LongArrayTag> {
+    private static final ThreadLocal<BlockPos.MutableBlockPos> MUTABLE_POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
+    private static final ThreadLocal<ChunkHolder> HOLDER = ThreadLocal.withInitial(ChunkHolder::new);
+    private static final ThreadLocal<DirectionList> DIRECTION_LIST = ThreadLocal.withInitial(DirectionList::new);
+    private final IList pendingAtmTicks = new IArrayList();
+    private final LList pendingBlockTicks = new LArrayList();
+    private boolean continuousAtmDebug;
+    private byte updateTicks;
 
-    protected final int capacity;
-    private final ChunkPos chunkPos;
-    private final Level level;
-    protected int carbonDioxide;
-    protected int gasNitrogen;
-    protected int methane;
-    protected int nitrogen;
-    protected int oxygen;
-    protected int phosphorus;
-    protected int potassium;
-    protected int water;
+    private static int safeGetAtm(LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, int x, int y, int z, int index) {
+        if (x < 0 || x > 15 || z < 0 || z > 15) {
+            //Accessing beyond the border horizontally
+            Direction dir = x < 0 ? Direction.WEST : x > 15 ? Direction.EAST : z < 0 ? Direction.NORTH : Direction.SOUTH;
+            LevelChunk held = holder.getHeld(dir);
+            assert held != null : "Chunk to the " + dir + " is null, how did you access it in the first place?";
+            section = held.getSection(index);
+        }
+        else if (y < 0) {
+            assert index - 1 >= 0 : "Accessing into the inferior void";
+            section = chunk.getSection(index - 1);
+        }
+        else if (y > 15) {
+            assert index + 1 < chunk.getSections().length : "Accessing into the superior void";
+            section = chunk.getSection(index + 1);
+        }
+        return ((ILevelChunkSectionPatch) section).getAtmStorage().get(x & 15, y & 15, z & 15);
+    }
 
-    public ChunkStorage(int capacity, Level level, ChunkPos chunkPos) {
-        this.capacity = capacity;
-        this.level = level;
-        this.chunkPos = chunkPos;
-        this.nitrogen = 0;
-        this.phosphorus = 0;
-        this.potassium = 0;
-        this.water = 0;
-        this.carbonDioxide = 0;
-        this.oxygen = 0;
-        this.gasNitrogen = 0;
-        this.methane = 0;
+    private static BlockState safeGetBlockstate(LevelChunk chunk, LevelChunkSection section, ChunkHolder holder, int x, int y, int z, int index) {
+        if (x < 0 || x > 15 || z < 0 || z > 15) {
+            //Accessing beyond the border horizontally
+            Direction dir = x < 0 ? Direction.WEST : x > 15 ? Direction.EAST : z < 0 ? Direction.NORTH : Direction.SOUTH;
+            holder.setupIfNeeded(chunk.getLevel(), chunk.getPos(), dir);
+            LevelChunk held = holder.getHeld(dir);
+            if (held == null) {
+                return Blocks.BEDROCK.defaultBlockState();
+            }
+            section = held.getSection(index);
+        }
+        else if (y < 0) {
+            if (index - 1 < 0) {
+                //Accessing into the inferior void
+                return Blocks.BEDROCK.defaultBlockState();
+            }
+            section = chunk.getSection(index - 1);
+        }
+        else if (y > 15) {
+            if (index + 1 >= chunk.getSections().length) {
+                //Accessing into the superior void
+                return Blocks.BEDROCK.defaultBlockState();
+            }
+            section = chunk.getSection(index + 1);
+        }
+        if (section.hasOnlyAir()) {
+            return Blocks.AIR.defaultBlockState();
+        }
+        return section.getBlockState(x & 15, y & 15, z & 15);
     }
 
     @Override
-    public int addElement(EnumStorage element, int amount) {
-        int elementReceived = 0;
-        switch (element) {
-            case NITROGEN -> {
-                elementReceived = Math.min(this.capacity - this.nitrogen, amount);
-                this.nitrogen += elementReceived;
-            }
-            case PHOSPHORUS -> {
-                elementReceived = Math.min(this.capacity - this.phosphorus, amount);
-                this.phosphorus += elementReceived;
-            }
-            case POTASSIUM -> {
-                elementReceived = Math.min(this.capacity - this.potassium, amount);
-                this.potassium += elementReceived;
-            }
-            case WATER -> {
-                elementReceived = Math.min(this.capacity - this.water, amount);
-                this.water += elementReceived;
-            }
-            case CARBON_DIOXIDE -> {
-                elementReceived = Math.min(this.capacity - this.carbonDioxide, amount);
-                this.carbonDioxide += elementReceived;
-            }
-            case OXYGEN -> {
-                elementReceived = Math.min(this.capacity - this.oxygen, amount);
-                this.oxygen += elementReceived;
-            }
-            case GAS_NITROGEN -> {
-                elementReceived = Math.min(this.capacity - this.gasNitrogen, amount);
-                this.gasNitrogen += elementReceived;
-            }
-            case ORGANIC -> {
-                elementReceived = Math.min(this.capacity - this.methane, amount);
-                this.methane += elementReceived;
+    public void deserializeNBT(CompoundTag nbt) {
+        long[] pendingBlockTicks = nbt.getLongArray("PendingBlockTicks");
+        this.pendingBlockTicks.size(pendingBlockTicks.length);
+        this.pendingBlockTicks.setElements(pendingBlockTicks);
+        int[] pendingAtmTicks = nbt.getIntArray("PendingAtmTicks");
+        this.pendingAtmTicks.size(pendingAtmTicks.length);
+        this.pendingAtmTicks.setElements(pendingAtmTicks);
+        this.continuousAtmDebug = nbt.getBoolean("ContinuousAtmDebug");
+        if (this.continuousAtmDebug) {
+            this.updateTicks = 40;
+        }
+    }
+
+    @Override
+    public void scheduleAtmTick(LevelChunk chunk, int internalPos) {
+        this.pendingAtmTicks.add(internalPos);
+        chunk.setUnsaved(true);
+        if (this.continuousAtmDebug) {
+            this.updateTicks = 40;
+        }
+    }
+
+    @Override
+    public void scheduleBlockTick(LevelChunk chunk, long pos) {
+        this.pendingBlockTicks.add(pos);
+        chunk.setUnsaved(true);
+        if (this.continuousAtmDebug) {
+            this.updateTicks = 40;
+        }
+    }
+
+    @Override
+    public CompoundTag serializeNBT() {
+        CompoundTag nbt = new CompoundTag();
+        if (!this.pendingBlockTicks.isEmpty()) {
+            nbt.putLongArray("PendingBlockTicks", this.pendingBlockTicks.toLongArray());
+        }
+        if (!this.pendingAtmTicks.isEmpty()) {
+            nbt.putIntArray("PendingAtmTicks", this.pendingAtmTicks.toIntArray());
+        }
+        if (this.continuousAtmDebug) {
+            nbt.putBoolean("ContinuousAtmDebug", true);
+        }
+        return nbt;
+    }
+
+    private void setAndUpdate(LevelChunk chunk,
+                              LevelChunkSection section,
+                              ChunkHolder holder,
+                              int x,
+                              int y,
+                              int z,
+                              int atm,
+                              int globalY,
+                              @Nullable DirectionList list) {
+        ((ILevelChunkSectionPatch) section).getAtmStorage().set(x, y, z, atm);
+        chunk.setUnsaved(true);
+        if (list == null) {
+            for (Direction dir : DirectionUtil.ALL) {
+                this.update(chunk, holder, x, globalY, z, dir);
             }
         }
-        if (elementReceived != 0) {
-            this.onElementChanged();
-        }
-        return elementReceived;
-    }
-
-    @Override
-    public void addMany(Map<EnumStorage, Integer> elements) {
-        for (Map.Entry<EnumStorage, Integer> entry : elements.entrySet()) {
-            this.addElement(entry.getKey(), entry.getValue());
+        else {
+            while (!list.isEmpty()) {
+                this.update(chunk, holder, x, globalY, z, list.getLastAndRemove());
+            }
         }
     }
 
     @Override
-    public void deserializeNBT(LongArrayTag nbt) {
-        this.nitrogen = nbt.get(EnumStorage.NITROGEN.getId()).getAsInt();
-        this.phosphorus = nbt.get(EnumStorage.PHOSPHORUS.getId()).getAsInt();
-        this.potassium = nbt.get(EnumStorage.POTASSIUM.getId()).getAsInt();
-        this.water = nbt.get(EnumStorage.WATER.getId()).getAsInt();
-        this.carbonDioxide = nbt.get(EnumStorage.CARBON_DIOXIDE.getId()).getAsInt();
-        this.oxygen = nbt.get(EnumStorage.OXYGEN.getId()).getAsInt();
-        this.gasNitrogen = nbt.get(EnumStorage.GAS_NITROGEN.getId()).getAsInt();
-        this.methane = nbt.get(EnumStorage.ORGANIC.getId()).getAsInt();
+    public boolean setContinuousAtmDebug(LevelChunk chunk, boolean debug) {
+        boolean old = this.continuousAtmDebug;
+        this.continuousAtmDebug = debug;
+        if (old && !debug) {
+            CommandAtm.fill(chunk, CommandAtm.ATM, false, CommandAtm.AIR_MAKER);
+        }
+        return old != debug;
     }
 
     @Override
-    public ChunkPos getChunkPos() {
-        return this.chunkPos;
-    }
-
-    @Override
-    public int getElementStored(EnumStorage element) {
-        return switch (element) {
-            case NITROGEN -> this.nitrogen;
-            case PHOSPHORUS -> this.phosphorus;
-            case POTASSIUM -> this.potassium;
-            case WATER -> this.water;
-            case CARBON_DIOXIDE -> this.carbonDioxide;
-            case OXYGEN -> this.oxygen;
-            case GAS_NITROGEN -> this.gasNitrogen;
-            case ORGANIC -> this.methane;
-        };
-    }
-
-    @Override
-    public Level getLevel() {
-        return this.level;
-    }
-
-    protected void onElementChanged() {
-        if (this.level.isClientSide) {
+    public void tick(LevelChunk chunk) {
+        if (chunk.getLevel().isClientSide) {
             return;
         }
-//        if (this.level.getChunkSource().isEntityTickingChunk(this.chunkPos)) {
-//            LevelChunk chunk = this.level.getChunk(this.chunkPos.x, this.chunkPos.z);
-//            chunk.markUnsaved();
-//            EvolutionNetwork.INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> chunk), new PacketSCUpdateChunkStorage(this));
-//        }
+        ServerLevel level = (ServerLevel) chunk.getLevel();
+        BlockPos.MutableBlockPos mutablePos = MUTABLE_POS.get();
+        int len = this.pendingBlockTicks.size();
+        for (int i = 0; i < len; i++) {
+            long pos = this.pendingBlockTicks.getLong(i);
+            BlockState state = level.getBlockState(mutablePos.set(pos));
+            state.tick(level, mutablePos, level.random);
+        }
+        this.pendingBlockTicks.removeElements(0, len);
+        ChunkHolder holder = HOLDER.get();
+        holder.reset();
+        len = this.pendingAtmTicks.size();
+        for (int i = 0; i < len; i++) {
+            this.updateAtm(chunk, holder, this.pendingAtmTicks.getInt(i));
+        }
+        this.pendingAtmTicks.removeElements(0, len);
+        if (this.continuousAtmDebug) {
+            if ((chunk.isUnsaved() || this.updateTicks > 0) && level.getGameTime() % 20 == 0) {
+                CommandAtm.fill(chunk, CommandAtm.AIR, true, CommandAtm.ATM_MAKER);
+            }
+            if (this.updateTicks > 0) {
+                --this.updateTicks;
+            }
+        }
     }
 
-    @Override
-    public boolean removeElement(EnumStorage element, int amount) {
-        boolean extracted = false;
-        switch (element) {
-            case NITROGEN:
-                if (this.nitrogen - amount >= 0) {
-                    this.nitrogen -= amount;
-                    extracted = true;
-                }
-                break;
-            case PHOSPHORUS:
-                if (this.phosphorus - amount >= 0) {
-                    this.phosphorus -= amount;
-                    extracted = true;
-                }
-                break;
-            case POTASSIUM:
-                if (this.potassium - amount >= 0) {
-                    this.potassium -= amount;
-                    extracted = true;
-                }
-                break;
-            case WATER:
-                if (this.water - amount >= 0) {
-                    this.water -= amount;
-                    extracted = true;
-                }
-                break;
-            case CARBON_DIOXIDE:
-                if (this.carbonDioxide - amount >= 0) {
-                    this.carbonDioxide -= amount;
-                    extracted = true;
-                }
-                break;
-            case OXYGEN:
-                if (this.oxygen - amount >= 0) {
-                    this.oxygen -= amount;
-                    extracted = true;
-                }
-                break;
-            case GAS_NITROGEN:
-                if (this.gasNitrogen - amount >= 0) {
-                    this.gasNitrogen -= amount;
-                    extracted = true;
-                }
-                break;
-            case ORGANIC:
-                if (this.methane - amount >= 0) {
-                    this.methane -= amount;
-                    extracted = true;
-                }
-                break;
+    private void update(LevelChunk chunk, ChunkHolder holder, int x, int globalY, int z, Direction dir) {
+        int x1 = x + dir.getStepX();
+        int z1 = z + dir.getStepZ();
+        if (0 <= x1 && x1 < 16 && 0 <= z1 && z1 < 16) {
+            this.scheduleAtmTick(chunk, x1, globalY + dir.getStepY(), z1, false);
         }
-        if (extracted) {
-            this.onElementChanged();
+        else {
+            holder.setupIfNeeded(chunk.getLevel(), chunk.getPos(), dir);
+            LevelChunk held = holder.getHeld(dir);
+            if (held != null) {
+                IChunkStorage chunkStorage = EvolutionCapabilities.getCapabilityOrThrow(held, CapabilityChunkStorage.INSTANCE);
+                chunkStorage.scheduleAtmTick(held, x1, globalY, z1, false);
+            }
         }
-        return extracted;
     }
 
-    @Override
-    public boolean removeMany(Map<EnumStorage, Integer> elementsAndAmounts) {
-        boolean success = true;
-        for (Map.Entry<EnumStorage, Integer> entry : elementsAndAmounts.entrySet()) {
-            switch (entry.getKey()) {
-                case NITROGEN -> {
-                    if (this.nitrogen - entry.getValue() >= 0) {
-                        continue;
-                    }
-                    success = false;
+    private void updateAtm(LevelChunk chunk, ChunkHolder holder, int internalPos) {
+        int globalY = IAir.unpackY(internalPos);
+        int index = chunk.getSectionIndex(globalY);
+        if (0 > index || index >= chunk.getSections().length) {
+            return;
+        }
+        LevelChunkSection section = chunk.getSection(index);
+        int x = IAir.unpackX(internalPos);
+        int y = globalY & 15;
+        int z = IAir.unpackZ(internalPos);
+        int oldAtm = safeGetAtm(chunk, section, holder, x, y, z, index);
+        BlockState state = section.hasOnlyAir() ? Blocks.AIR.defaultBlockState() : section.getBlockState(x, y, z);
+        boolean isAir = state.isAir();
+        IAir air = null;
+        if (!isAir) {
+            if (state.getBlock() instanceof IAir a) {
+                air = a;
+            }
+            else {
+                if (oldAtm != 63) {
+                    this.setAndUpdate(chunk, section, holder, x, y, z, 63, globalY, null);
                 }
-                case CARBON_DIOXIDE -> {
-                    if (this.carbonDioxide - entry.getValue() >= 0) {
-                        continue;
-                    }
-                    success = false;
+                return;
+            }
+        }
+        if (isAir || air.allowsFrom(state, Direction.UP)) {
+            if (globalY == chunk.getMaxBuildHeight() - 1 || globalY > chunk.getHeight(Heightmap.Types.WORLD_SURFACE, x, z)) {
+                if (oldAtm != 0 || IAir.unpackForceUpdate(internalPos)) {
+                    this.setAndUpdate(chunk, section, holder, x, y, z, 0, globalY, null);
                 }
-                case GAS_NITROGEN -> {
-                    if (this.gasNitrogen - entry.getValue() >= 0) {
-                        continue;
+                return;
+            }
+        }
+        int lowestAtm = 63;
+        DirectionList list = DIRECTION_LIST.get();
+        list.clear();
+        for (Direction dir : DirectionUtil.ALL) {
+            if (!isAir && !air.allowsFrom(state, dir)) {
+                continue;
+            }
+            int x1 = x + dir.getStepX();
+            int y1 = y + dir.getStepY();
+            int z1 = z + dir.getStepZ();
+            BlockState stateAtDir = safeGetBlockstate(chunk, section, holder, x1, y1, z1, index);
+            if (stateAtDir.isAir() || stateAtDir.getBlock() instanceof IAir a && a.allowsFrom(stateAtDir, dir.getOpposite())) {
+                list.add(dir);
+                int atm = safeGetAtm(chunk, section, holder, x1, y1, z1, index);
+                if (dir != Direction.UP || atm != 0) {
+                    if (isAir) {
+                        ++atm;
                     }
-                    success = false;
+                    else {
+                        atm += air.increment(state, dir);
+                    }
                 }
-                case OXYGEN -> {
-                    if (this.oxygen - entry.getValue() >= 0) {
-                        continue;
-                    }
-                    success = false;
-                }
-                case PHOSPHORUS -> {
-                    if (this.phosphorus - entry.getValue() >= 0) {
-                        continue;
-                    }
-                    success = false;
-                }
-                case POTASSIUM -> {
-                    if (this.potassium - entry.getValue() >= 0) {
-                        continue;
-                    }
-                    success = false;
-                }
-                case WATER -> {
-                    if (this.water - entry.getValue() >= 0) {
-                        continue;
-                    }
-                    success = false;
-                }
-                case ORGANIC -> {
-                    if (this.methane - entry.getValue() >= 0) {
-                        continue;
-                    }
-                    success = false;
+                if (lowestAtm > atm) {
+                    lowestAtm = atm;
                 }
             }
         }
-        if (success) {
-            for (Map.Entry<EnumStorage, Integer> entry : elementsAndAmounts.entrySet()) {
-                this.removeElement(entry.getKey(), entry.getValue());
-            }
-            this.onElementChanged();
+        if (IAir.unpackForceUpdate(internalPos)) {
+            this.setAndUpdate(chunk, section, holder, x, y, z, lowestAtm, globalY, null);
         }
-        return success;
-    }
-
-    @Override
-    public LongArrayTag serializeNBT() {
-        return new LongArrayTag(new long[]{this.getElementStored(EnumStorage.NITROGEN),
-                                           this.getElementStored(EnumStorage.PHOSPHORUS),
-                                           this.getElementStored(EnumStorage.POTASSIUM),
-                                           this.getElementStored(EnumStorage.WATER),
-                                           this.getElementStored(EnumStorage.CARBON_DIOXIDE),
-                                           this.getElementStored(EnumStorage.OXYGEN),
-                                           this.getElementStored(EnumStorage.GAS_NITROGEN),
-                                           this.getElementStored(EnumStorage.ORGANIC)});
-    }
-
-    public void setElement(EnumStorage element, int amount) {
-        switch (element) {
-            case NITROGEN -> this.nitrogen = amount;
-            case PHOSPHORUS -> this.phosphorus = amount;
-            case POTASSIUM -> this.potassium = amount;
-            case WATER -> this.water = amount;
-            case CARBON_DIOXIDE -> this.carbonDioxide = amount;
-            case OXYGEN -> this.oxygen = amount;
-            case GAS_NITROGEN -> this.gasNitrogen = amount;
-            case ORGANIC -> this.methane = amount;
+        else if (lowestAtm != oldAtm) {
+            this.setAndUpdate(chunk, section, holder, x, y, z, lowestAtm, globalY, list);
         }
-        this.onElementChanged();
     }
 }

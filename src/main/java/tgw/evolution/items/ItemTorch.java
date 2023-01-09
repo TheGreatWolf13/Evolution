@@ -37,7 +37,7 @@ import java.util.List;
 public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowable {
 
     public ItemTorch(Properties properties) {
-        super(EvolutionBlocks.TORCH.get(), EvolutionBlocks.WALL_TORCH.get(), properties);
+        super(EvolutionBlocks.TORCH.get(), EvolutionBlocks.TORCH_WALL.get(), properties);
     }
 
     public static ItemStack createStack(Level level, int count) {
@@ -47,14 +47,14 @@ public class ItemTorch extends ItemWallOrFloor implements IFireAspect, IThrowabl
     public static ItemStack createStack(long timeCreated, int count) {
         CompoundTag tag = new CompoundTag();
         tag.putLong("TimeCreated", Time.roundToLastFullHour(timeCreated));
-        ItemStack stack = new ItemStack(EvolutionItems.torch.get(), count);
+        ItemStack stack = new ItemStack(EvolutionItems.TORCH.get(), count);
         stack.setTag(tag);
         return stack;
     }
 
     public static ItemStack getDroppedStack(TETorch tile) {
         if (getRemainingTime(tile) <= 0) {
-            return new ItemStack(EvolutionItems.torch_unlit.get());
+            return new ItemStack(EvolutionItems.TORCH_UNLIT.get());
         }
         return createStack(tile.getTimePlaced(), 1);
     }

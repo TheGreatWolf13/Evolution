@@ -16,58 +16,6 @@ public interface IMobEffectPatch {
 
     float attackSpeed(int lvl);
 
-    default boolean causesAnything(int lvl) {
-        if (this.disablesNaturalRegen()) {
-            return true;
-        }
-        if (this.disablesSprint()) {
-            return true;
-        }
-        if (this.hungerMod(lvl) != 0.0f) {
-            return true;
-        }
-        if (this.thirstMod(lvl) != 0.0f) {
-            return true;
-        }
-        if (this.staminaMod() != 0.0f) {
-            return true;
-        }
-        if (this.tempMod() != 0.0) {
-            return true;
-        }
-        if (this.absorption(lvl) != 0) {
-            return true;
-        }
-        if (this.health(lvl) != 0) {
-            return true;
-        }
-        if (this.instantHP(lvl) != 0) {
-            return true;
-        }
-        if (this.meleeDmg(lvl) != 0) {
-            return true;
-        }
-        if (this.attackSpeed(lvl) != 0) {
-            return true;
-        }
-        if (this.miningSpeed(lvl) != 0) {
-            return true;
-        }
-        if (this.jumpMod(lvl) != 0) {
-            return true;
-        }
-        if (this.moveSpeedMod(lvl) != 0) {
-            return true;
-        }
-        if (this.luck(lvl) != 0) {
-            return true;
-        }
-        if (this.resistance(lvl) != 0) {
-            return true;
-        }
-        return !this.causesEffect().isEmpty();
-    }
-
     default boolean causesDmg(int lvl) {
         return this.regen(lvl) < 0;
     }

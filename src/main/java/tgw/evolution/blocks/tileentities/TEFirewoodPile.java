@@ -5,6 +5,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +31,28 @@ public class TEFirewoodPile extends BlockEntity {
     public void addFirewood(ItemFirewood itemInHand) {
         this.firewood[this.currentIndex++] = itemInHand.getVariant().getId();
         this.sendRenderUpdate();
+    }
+
+    public double calculateMass() {
+        double mass = 0;
+        for (int i = 0; i < 16; i++) {
+            byte id = this.firewood[i];
+            if (id == -1) {
+                return mass;
+            }
+            mass += WoodVariant.byId(id).getMass() / 16.0;
+        }
+        return mass;
+    }
+
+    public void dropAll(Level level, BlockPos pos) {
+        while (this.currentIndex > 0) {
+            Item item = this.removeLastFirewood();
+            if (item != null) {
+                //noinspection ObjectAllocationInLoop
+                Block.popResource(level, pos, new ItemStack(item));
+            }
+        }
     }
 
     public byte[] getFirewood() {

@@ -12,7 +12,7 @@ import tgw.evolution.capabilities.modular.part.IPartType;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.IVariant;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPart;
 import tgw.evolution.util.UnregisteredFeatureException;
 import tgw.evolution.util.collection.B2RMap;
@@ -61,13 +61,13 @@ public enum RockVariant implements IVariant {
         REGISTRY = Byte2ReferenceMaps.unmodifiable(map);
     }
 
-    private final int density;
+    private final double density;
     private final byte id;
     private final String name;
     private final @Nullable RockType rockType;
     private final int shearStrength;
 
-    RockVariant(int id, @Nullable RockType rockType, String name, int densityInkg, int shearStrengthInPa) {
+    RockVariant(int id, @Nullable RockType rockType, String name, double densityInkg, int shearStrengthInPa) {
         this.id = (byte) id;
         this.rockType = rockType;
         this.name = name;
@@ -99,7 +99,7 @@ public enum RockVariant implements IVariant {
     public Block getCobble() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a cobble type!");
-            default -> EvolutionBlocks.ALL_COBBLE.get(this).get();
+            default -> EvolutionBlocks.COBBLESTONES.get(this).get();
         };
     }
 
@@ -107,25 +107,25 @@ public enum RockVariant implements IVariant {
         return switch (this) {
             case CLAY -> EvolutionBlocks.CLAY.get();
             case PEAT -> EvolutionBlocks.PEAT.get();
-            default -> EvolutionBlocks.ALL_DIRT.get(this).get();
+            default -> EvolutionBlocks.DIRTS.get(this).get();
         };
     }
 
     public Block getDryGrass() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a dry grass type!");
-            default -> EvolutionBlocks.ALL_DRY_GRASS.get(this).get();
+            default -> EvolutionBlocks.DRY_GRASSES.get(this).get();
         };
     }
 
     public Block getGrass() {
-        return EvolutionBlocks.ALL_GRASS.get(this).get();
+        return EvolutionBlocks.GRASSES.get(this).get();
     }
 
     public Block getGravel() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a gravel type!");
-            default -> EvolutionBlocks.ALL_GRAVEL.get(this).get();
+            default -> EvolutionBlocks.GRAVELS.get(this).get();
         };
     }
 
@@ -149,37 +149,37 @@ public enum RockVariant implements IVariant {
     public Block getKnapping() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a knapping type!");
-            default -> EvolutionBlocks.ALL_KNAPPING.get(this).get();
+            default -> EvolutionBlocks.KNAPPING_BLOCKS.get(this).get();
         };
     }
 
-    public int getMass() {
+    public double getMass() {
         return this.density;
     }
 
-    private ItemMaterial getMaterial() {
+    private Material getMaterial() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant is not a valid material!");
-            case ANDESITE -> ItemMaterial.ANDESITE;
-            case BASALT -> ItemMaterial.BASALT;
-            case CHALK -> ItemMaterial.CHALK;
-            case CHERT -> ItemMaterial.CHERT;
-            case CONGLOMERATE -> ItemMaterial.CONGLOMERATE;
-            case DACITE -> ItemMaterial.DACITE;
-            case DIORITE -> ItemMaterial.DIORITE;
-            case DOLOMITE -> ItemMaterial.DOLOMITE;
-            case GABBRO -> ItemMaterial.GABBRO;
-            case GNEISS -> ItemMaterial.GNEISS;
-            case GRANITE -> ItemMaterial.GRANITE;
-            case LIMESTONE -> ItemMaterial.LIMESTONE;
-            case MARBLE -> ItemMaterial.MARBLE;
-            case PHYLLITE -> ItemMaterial.PHYLLITE;
-            case QUARTZITE -> ItemMaterial.QUARTZITE;
-            case RED_SANDSTONE -> ItemMaterial.RED_SANDSTONE;
-            case SANDSTONE -> ItemMaterial.SANDSTONE;
-            case SCHIST -> ItemMaterial.SCHIST;
-            case SHALE -> ItemMaterial.SHALE;
-            case SLATE -> ItemMaterial.SLATE;
+            case ANDESITE -> Material.ANDESITE;
+            case BASALT -> Material.BASALT;
+            case CHALK -> Material.CHALK;
+            case CHERT -> Material.CHERT;
+            case CONGLOMERATE -> Material.CONGLOMERATE;
+            case DACITE -> Material.DACITE;
+            case DIORITE -> Material.DIORITE;
+            case DOLOMITE -> Material.DOLOMITE;
+            case GABBRO -> Material.GABBRO;
+            case GNEISS -> Material.GNEISS;
+            case GRANITE -> Material.GRANITE;
+            case LIMESTONE -> Material.LIMESTONE;
+            case MARBLE -> Material.MARBLE;
+            case PHYLLITE -> Material.PHYLLITE;
+            case QUARTZITE -> Material.QUARTZITE;
+            case RED_SANDSTONE -> Material.RED_SANDSTONE;
+            case SANDSTONE -> Material.SANDSTONE;
+            case SCHIST -> Material.SCHIST;
+            case SHALE -> Material.SHALE;
+            case SLATE -> Material.SLATE;
         };
     }
 
@@ -196,25 +196,28 @@ public enum RockVariant implements IVariant {
     public Block getPolishedStone() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a polished stone type!");
-            default -> EvolutionBlocks.ALL_POLISHED_STONE.get(this).get();
+            default -> EvolutionBlocks.POLISHED_STONES.get(this).get();
         };
     }
 
     public Block getRock() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a rock type!");
-            default -> EvolutionBlocks.ALL_ROCK.get(this).get();
+            default -> EvolutionBlocks.ROCKS.get(this).get();
         };
     }
 
-    public @Nullable RockType getRockType() {
+    public RockType getRockType() {
+        if (this.rockType == null) {
+            throw new IllegalStateException("RockVariant " + this + " does not have a RockType");
+        }
         return this.rockType;
     }
 
     public Block getSand() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a sand type!");
-            default -> EvolutionBlocks.ALL_SAND.get(this).get();
+            default -> EvolutionBlocks.SANDS.get(this).get();
         };
     }
 
@@ -225,14 +228,14 @@ public enum RockVariant implements IVariant {
     public Block getStone() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a stone type!");
-            default -> EvolutionBlocks.ALL_STONE.get(this).get();
+            default -> EvolutionBlocks.STONES.get(this).get();
         };
     }
 
     public Block getStoneBricks() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a stone bricks type!");
-            default -> EvolutionBlocks.ALL_STONE_BRICKS.get(this).get();
+            default -> EvolutionBlocks.STONE_BRICKS.get(this).get();
         };
     }
 }

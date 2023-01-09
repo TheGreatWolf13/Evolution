@@ -7,7 +7,7 @@ import net.minecraftforge.client.model.data.ModelDataMap;
 import tgw.evolution.capabilities.modular.part.PartHilt;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPartHilt;
 
 public class BakedModelPartHilt extends BakedModelPart<PartTypes.Hilt, ItemPartHilt, PartHilt, BakedModelPartHilt.BakedModelFinalPartHilt> {
@@ -43,7 +43,7 @@ public class BakedModelPartHilt extends BakedModelPart<PartTypes.Hilt, ItemPartH
             return EvolutionResources.MODULAR_HILTS.get(extraData.getData(this.type), extraData.getData(this.material));
         }
 
-        protected void setData(PartTypes.Hilt type, ItemMaterial material) {
+        protected void setData(PartTypes.Hilt type, Material material) {
             this.modelData.setData(this.type, type);
             this.modelData.setData(this.material, material);
         }

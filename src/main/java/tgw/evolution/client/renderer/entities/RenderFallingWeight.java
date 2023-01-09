@@ -47,16 +47,8 @@ public class RenderFallingWeight extends EntityRenderer<EntityFallingWeight> {
                 if (ItemBlockRenderTypes.canRenderInLayer(state, type)) {
                     ForgeHooksClient.setRenderType(type);
                     dispatcher.getModelRenderer()
-                              .tesselateBlock(level,
-                                              dispatcher.getBlockModel(state),
-                                              state,
-                                              MUTABLE_POS,
-                                              matrices,
-                                              buffer.getBuffer(type),
-                                              false,
-                                              MathHelper.RANDOM,
-                                              Mth.getSeed(MUTABLE_POS),
-                                              OverlayTexture.NO_OVERLAY);
+                              .tesselateBlock(level, dispatcher.getBlockModel(state), state, MUTABLE_POS, matrices, buffer.getBuffer(type), false,
+                                              MathHelper.RANDOM, Mth.getSeed(MUTABLE_POS), OverlayTexture.NO_OVERLAY);
                 }
             }
             ForgeHooksClient.setRenderType(null);

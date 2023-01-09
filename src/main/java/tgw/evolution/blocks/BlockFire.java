@@ -4,13 +4,11 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
@@ -26,8 +24,6 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
-import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
-import tgw.evolution.capabilities.chunkstorage.EnumStorage;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionShapes;
@@ -251,16 +247,11 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     public int getActualEncouragement(BlockState state) {
-        return state.hasProperty(FLUID_LOGGED) && state.getValue(FLUID_LOGGED) ? 0 : this.encouragements.getInt(state.getBlock());
+        return this.encouragements.getInt(state.getBlock());
     }
 
     public int getActualFlammability(BlockState state) {
-        return state.hasProperty(FLUID_LOGGED) && state.getValue(FLUID_LOGGED) ? 0 : this.flammabilities.getInt(state.getBlock());
-    }
-
-    @Override
-    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        return NonNullList.of(ItemStack.EMPTY);
+        return this.flammabilities.getInt(state.getBlock());
     }
 
     @Override
@@ -272,22 +263,22 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         VoxelShape shape = Shapes.empty();
         if (state.getValue(NORTH)) {
-            shape = EvolutionShapes.SIXTEENTH_SLAB_NORTH_1;
+            shape = EvolutionShapes.SLAB_16_N;
         }
         if (state.getValue(SOUTH)) {
-            shape = Shapes.join(shape, EvolutionShapes.SIXTEENTH_SLAB_SOUTH_1, BooleanOp.OR);
+            shape = Shapes.join(shape, EvolutionShapes.SLAB_16_S, BooleanOp.OR);
         }
         if (state.getValue(EAST)) {
-            shape = Shapes.join(shape, EvolutionShapes.SIXTEENTH_SLAB_EAST_1, BooleanOp.OR);
+            shape = Shapes.join(shape, EvolutionShapes.SLAB_16_E, BooleanOp.OR);
         }
         if (state.getValue(WEST)) {
-            shape = Shapes.join(shape, EvolutionShapes.SIXTEENTH_SLAB_WEST_1, BooleanOp.OR);
+            shape = Shapes.join(shape, EvolutionShapes.SLAB_16_W, BooleanOp.OR);
         }
         if (state.getValue(UP)) {
-            shape = Shapes.join(shape, EvolutionShapes.SIXTEENTH_SLAB_UPPER_1, BooleanOp.OR);
+            shape = Shapes.join(shape, EvolutionShapes.SLAB_16_U, BooleanOp.OR);
         }
         if (shape == Shapes.empty()) {
-            return EvolutionShapes.SIXTEENTH_SLAB_LOWER_1;
+            return EvolutionShapes.SLAB_16_D[0];
         }
         return shape;
     }
@@ -449,10 +440,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
                                   LevelAccessor level,
                                   BlockPos currentPos,
                                   BlockPos facingPos) {
-        return this.canSurvive(state, level, currentPos) &&
-               CapabilityChunkStorage.contains(level.getChunkSource().getChunk(currentPos.getX() >> 4, currentPos.getZ() >> 4, false),
-                                               EnumStorage.OXYGEN,
-                                               1) ?
+        return this.canSurvive(state, level, currentPos) ?
                this.getStateForPlacement(level, currentPos).setValue(AGE_0_15, state.getValue(AGE_0_15)) :
                Blocks.AIR.defaultBlockState();
     }

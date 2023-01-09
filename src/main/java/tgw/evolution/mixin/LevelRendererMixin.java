@@ -49,13 +49,16 @@ import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.common.ForgeConfig;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11C;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
+import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.events.ClientEvents;
+import tgw.evolution.patches.IDebugRendererPatch;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.constants.CommonRotations;
@@ -84,6 +87,9 @@ public abstract class LevelRendererMixin {
     @Shadow
     @Final
     private static ResourceLocation MOON_LOCATION;
+    @Shadow
+    @Final
+    private static Logger LOGGER;
     private final BlockPos.MutableBlockPos destructionPos = new BlockPos.MutableBlockPos();
     private final OList<ChunkRenderDispatcher.RenderChunk> renderChunks = new OArrayList<>();
     @Shadow
@@ -122,6 +128,8 @@ public abstract class LevelRendererMixin {
     @Shadow
     @Final
     private Vector3d frustumPos;
+    @Shadow
+    private boolean generateClouds;
     @Shadow
     @Final
     private Set<BlockEntity> globalBlockEntities;
@@ -213,8 +221,54 @@ public abstract class LevelRendererMixin {
     @Shadow
     private double zTransparentOld;
 
-    @Shadow
-    public abstract void allChanged();
+    /**
+     * @author TheGreatWolf
+     * @reason Add support for renderers
+     */
+    @Overwrite
+    public void allChanged() {
+        if (this.level != null) {
+            ((IDebugRendererPatch) this.minecraft.debugRenderer).setRenderHeightmap(EvolutionConfig.CLIENT.renderHeightmap.get());
+            this.graphicsChanged();
+            this.level.clearTintCaches();
+            if (this.chunkRenderDispatcher == null) {
+                this.chunkRenderDispatcher = new ChunkRenderDispatcher(this.level, (LevelRenderer) (Object) this, Util.backgroundExecutor(),
+                                                                       this.minecraft.is64Bit(), this.renderBuffers.fixedBufferPack());
+            }
+            else {
+                this.chunkRenderDispatcher.setLevel(this.level);
+            }
+            this.needsFullRenderChunkUpdate = true;
+            this.generateClouds = true;
+            this.recentlyCompiledChunks.clear();
+            ItemBlockRenderTypes.setFancy(Minecraft.useFancyGraphics());
+            this.lastViewDistance = this.minecraft.options.getEffectiveRenderDistance();
+            if (this.viewArea != null) {
+                this.viewArea.releaseAllBuffers();
+            }
+            this.chunkRenderDispatcher.blockUntilClear();
+            synchronized (this.globalBlockEntities) {
+                this.globalBlockEntities.clear();
+            }
+            this.viewArea = new ViewArea(this.chunkRenderDispatcher, this.level, this.minecraft.options.getEffectiveRenderDistance(),
+                                         (LevelRenderer) (Object) this);
+            if (this.lastFullRenderChunkUpdate != null) {
+                try {
+                    this.lastFullRenderChunkUpdate.get();
+                    this.lastFullRenderChunkUpdate = null;
+                }
+                catch (Exception exception) {
+                    LOGGER.warn("Full update failed", exception);
+                }
+            }
+            this.renderChunkStorage.set(new LevelRenderer.RenderChunkStorage(this.viewArea.chunks.length));
+            this.renderChunksInFrustum.clear();
+            Entity entity = this.minecraft.getCameraEntity();
+            if (entity != null) {
+                this.viewArea.repositionCamera(entity.getX(), entity.getZ());
+            }
+        }
+    }
 
     @Shadow
     protected abstract void applyFrustum(Frustum pFrustrum);
@@ -292,6 +346,9 @@ public abstract class LevelRendererMixin {
     protected abstract ChunkRenderDispatcher.RenderChunk getRelativeFrom(BlockPos pCameraChunkPos,
                                                                          ChunkRenderDispatcher.RenderChunk pRenderChunk,
                                                                          Direction pFacing);
+
+    @Shadow
+    public abstract void graphicsChanged();
 
     @Shadow
     protected abstract void initializeQueueForFullUpdate(Camera pCamera, Queue<LevelRenderer.RenderChunkInfo> pInfoQueue);

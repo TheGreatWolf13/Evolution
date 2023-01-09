@@ -12,10 +12,15 @@ import tgw.evolution.blocks.fluids.FluidSaltWater;
 
 public final class EvolutionFluids {
 
-    public static final DeferredRegister<Fluid> FLUIDS = DeferredRegister.create(ForgeRegistries.FLUIDS, Evolution.MODID);
+    public static final RegistryObject<FluidGeneric> FRESH_WATER;
+    public static final RegistryObject<FluidGeneric> SALT_WATER;
+    //
+    private static final DeferredRegister<Fluid> FLUIDS = DeferredRegister.create(ForgeRegistries.FLUIDS, Evolution.MODID);
 
-    public static final RegistryObject<FluidGeneric> FRESH_WATER = FLUIDS.register("fresh_water", FluidFreshWater.Source::new);
-    public static final RegistryObject<FluidGeneric> SALT_WATER = FLUIDS.register("salt_water", FluidSaltWater.Source::new);
+    static {
+        FRESH_WATER = FLUIDS.register("fresh_water", FluidFreshWater.Source::new);
+        SALT_WATER = FLUIDS.register("salt_water", FluidSaltWater.Source::new);
+    }
 
     private EvolutionFluids() {
     }

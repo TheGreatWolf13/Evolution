@@ -1,7 +1,10 @@
 package tgw.evolution.events;
 
+import com.mojang.brigadier.CommandDispatcher;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.commands.ResetChunksCommand;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -24,18 +27,16 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import tgw.evolution.Evolution;
@@ -73,7 +74,6 @@ import tgw.evolution.util.constants.SkinType;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.earth.ClimateZone;
 import tgw.evolution.util.earth.WindVector;
-import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Units;
 
 import java.util.*;
@@ -148,21 +148,17 @@ public class EntityEvents {
     public void attachCapabilitiesEntities(AttachCapabilitiesEvent<Entity> event) {
         Entity entity = event.getObject();
         if (((IEntityPatch) entity).hasExtendedInventory()) {
-            event.addCapability(Evolution.getResource("extended_inventory"),
+            event.addCapability(CapabilityInventory.LOC,
                                 new SerializableCapabilityProvider<>(CapabilityInventory.INSTANCE, new InventoryHandler(entity)));
         }
         if (entity instanceof ServerPlayer) {
-            event.addCapability(Evolution.getResource("thirst"),
-                                new SerializableCapabilityProvider<>(CapabilityThirst.INSTANCE, new ThirstStats()));
-            event.addCapability(Evolution.getResource("health"),
-                                new SerializableCapabilityProvider<>(CapabilityHealth.INSTANCE, new HealthStats()));
-            event.addCapability(Evolution.getResource("toast"), new SerializableCapabilityProvider<>(CapabilityToast.INSTANCE, new ToastStats()));
-            event.addCapability(Evolution.getResource("hunger"),
-                                new SerializableCapabilityProvider<>(CapabilityHunger.INSTANCE, new HungerStats()));
-            event.addCapability(Evolution.getResource("temperature"),
+            event.addCapability(CapabilityThirst.LOC, new SerializableCapabilityProvider<>(CapabilityThirst.INSTANCE, new ThirstStats()));
+            event.addCapability(CapabilityHealth.LOC, new SerializableCapabilityProvider<>(CapabilityHealth.INSTANCE, new HealthStats()));
+            event.addCapability(CapabilityToast.LOC, new SerializableCapabilityProvider<>(CapabilityToast.INSTANCE, new ToastStats()));
+            event.addCapability(CapabilityHunger.LOC, new SerializableCapabilityProvider<>(CapabilityHunger.INSTANCE, new HungerStats()));
+            event.addCapability(CapabilityTemperature.LOC,
                                 new SerializableCapabilityProvider<>(CapabilityTemperature.INSTANCE, new TemperatureStats()));
-            event.addCapability(Evolution.getResource("stamina"),
-                                new SerializableCapabilityProvider<>(CapabilityStamina.INSTANCE, new StaminaStats()));
+            event.addCapability(CapabilityStamina.LOC, new SerializableCapabilityProvider<>(CapabilityStamina.INSTANCE, new StaminaStats()));
         }
     }
 
@@ -182,6 +178,13 @@ public class EntityEvents {
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityTemperature.INSTANCE);
         EvolutionCapabilities.clonePlayer(oldPlayer, newPlayer, CapabilityStamina.INSTANCE);
         EvolutionCapabilities.invalidate(oldPlayer);
+    }
+
+    @SubscribeEvent
+    public void onCommandsRegister(RegisterCommandsEvent event) {
+        CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
+        EvolutionCommands.register(dispatcher);
+        ResetChunksCommand.register(dispatcher);
     }
 
     @SubscribeEvent
@@ -233,27 +236,6 @@ public class EntityEvents {
         entity.hurtMarked = true;
         if (entity instanceof ServerPlayer player) {
             EvolutionNetwork.send(player, new PacketSCUpdateCameraTilt(player));
-        }
-    }
-
-    @SubscribeEvent
-    public void onLeftClick(PlayerInteractEvent.LeftClickBlock event) {
-        if (event.getWorld().isClientSide) {
-            return;
-        }
-        Player player = event.getPlayer();
-        if (player == null) {
-            return;
-        }
-        //Makes players able to hit through non-collidable blocks
-        BlockState state = event.getWorld().getBlockState(event.getPos());
-        if (!state.getCollisionShape(event.getWorld(), event.getPos()).isEmpty()) {
-            return;
-        }
-        EntityHitResult rayTraceResult = MathHelper.rayTraceEntityFromEyes(player, 1, player.getAttributeValue(ForgeMod.REACH_DISTANCE.get()));
-        if (rayTraceResult != null) {
-            player.attack(rayTraceResult.getEntity());
-            player.resetAttackStrengthTicker();
         }
     }
 
@@ -481,14 +463,14 @@ public class EntityEvents {
                     ItemStack mainHand = player.getMainHandItem();
                     ItemStack offHand = player.getOffhandItem();
                     boolean torch = false;
-                    if (mainHand.getItem() == EvolutionItems.torch.get()) {
+                    if (mainHand.getItem() == EvolutionItems.TORCH.get()) {
                         int count = mainHand.getCount();
-                        player.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(EvolutionItems.torch_unlit.get(), count));
+                        player.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(EvolutionItems.TORCH_UNLIT.get(), count));
                         torch = true;
                     }
-                    if (offHand.getItem() == EvolutionItems.torch.get()) {
+                    if (offHand.getItem() == EvolutionItems.TORCH.get()) {
                         int count = offHand.getCount();
-                        player.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(EvolutionItems.torch_unlit.get(), count));
+                        player.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(EvolutionItems.TORCH_UNLIT.get(), count));
                         torch = true;
                     }
                     if (torch) {
@@ -546,11 +528,6 @@ public class EntityEvents {
             return;
         }
         EvolutionNetwork.send(player, new PacketSCRemoveEffect(event.getPotion()));
-    }
-
-    @SubscribeEvent
-    public void onServerStart(ServerStartingEvent event) {
-        EvolutionCommands.register(event.getServer().getCommands().getDispatcher());
     }
 
     @SubscribeEvent

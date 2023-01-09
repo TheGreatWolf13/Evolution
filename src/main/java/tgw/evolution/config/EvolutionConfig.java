@@ -66,6 +66,7 @@ public final class EvolutionConfig {
         public final ForgeConfigSpec.BooleanValue limitTimeUnitsToHour;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Mass> mass;
         public final ForgeConfigSpec.BooleanValue planets;
+        public final ForgeConfigSpec.BooleanValue renderHeightmap;
         public final ForgeConfigSpec.BooleanValue showPlanets;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Speed> speed;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Volume> volume;
@@ -92,6 +93,7 @@ public final class EvolutionConfig {
             this.volume = builder.translation("evolution.config.volume").defineEnum("volume", EvolutionFormatter.Volume.LITER);
             builder.pop();
             builder.push("debug");
+            this.renderHeightmap = builder.translation("evolution.config.renderHeightmap").define("renderHeightmap", false);
             builder.push("sky");
             this.celestialForceAll = builder.translation("evolution.config.celestialForceAll").define("celestialForceAll", false);
             this.celestialEquator = builder.translation("evolution.config.celestialEquator").define("celestialEquator", false);

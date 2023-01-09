@@ -13,16 +13,17 @@ import tgw.evolution.inventory.extendedinventory.ContainerInventory;
 
 public final class EvolutionContainers {
 
-    public static final DeferredRegister<MenuType<?>> CONTAINERS = DeferredRegister.create(ForgeRegistries.CONTAINERS, Evolution.MODID);
-
     public static final RegistryObject<MenuType<ContainerCorpse>> CORPSE;
     public static final RegistryObject<MenuType<ContainerInventory>> EXTENDED_INVENTORY;
+    //
+    private static final DeferredRegister<MenuType<?>> CONTAINERS = DeferredRegister.create(ForgeRegistries.CONTAINERS, Evolution.MODID);
 
     static {
         CORPSE = CONTAINERS.register("corpse", () -> IForgeMenuType.create((id, inv, data) -> {
-            int entityId = data.readInt();
-            EntityPlayerCorpse corpse = (EntityPlayerCorpse) inv.player.level.getEntity(entityId);
-            return new ContainerCorpse(id, corpse, inv);
+            if (inv.player.level.getEntity(data.readInt()) instanceof EntityPlayerCorpse corpse) {
+                return new ContainerCorpse(id, corpse, inv);
+            }
+            throw new IllegalStateException("Could not find EntityPlayerCorpse with id " + id + " to open container!");
         }));
         EXTENDED_INVENTORY = CONTAINERS.register("extended_inventory",
                                                  () -> IForgeMenuType.create((id, inv, data) -> new ContainerInventory(id, inv)));

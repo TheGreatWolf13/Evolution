@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.EntityBlock;
@@ -19,7 +18,7 @@ import tgw.evolution.util.constants.Oxidation;
 
 import java.util.Random;
 
-public class BlockMetal extends BlockGravity implements EntityBlock {
+public class BlockMetal extends BlockPhysics implements EntityBlock {
 
     private final MetalVariant metal;
     private final Oxidation oxidation;
@@ -27,14 +26,20 @@ public class BlockMetal extends BlockGravity implements EntityBlock {
     public BlockMetal(MetalVariant variant, Oxidation oxidation) {
         super(Properties.of(Material.METAL)
                         .sound(variant == MetalVariant.COPPER ? SoundType.COPPER : SoundType.METAL)
-                        .strength(variant.getHardness(oxidation), variant.getResistance(oxidation)), variant.getDensity());
+                        .strength(variant.getHardness(oxidation), variant.getResistance(oxidation)));
         this.metal = variant;
         this.oxidation = oxidation;
     }
 
+//    @Override
+//    public SoundEvent fallSound() {
+//        return SoundEvents.ANVIL_LAND;
+//    }
+
     @Override
-    public SoundEvent fallSound() {
-        return SoundEvents.ANVIL_LAND;
+    public @Nullable SoundEvent fallingSound() {
+        //TODO implementation
+        return null;
     }
 
     @Override
@@ -43,8 +48,14 @@ public class BlockMetal extends BlockGravity implements EntityBlock {
     }
 
     @Override
-    public int getHarvestLevel(BlockState state) {
+    public int getHarvestLevel(BlockState state, @Nullable Level level, @Nullable BlockPos pos) {
         return this.metal.getHarvestLevel();
+    }
+
+    @Override
+    public double getMass(Level level, BlockPos pos, BlockState state) {
+        //TODO implementation
+        return 0;
     }
 
     public MetalVariant getMetal() {
@@ -110,13 +121,13 @@ public class BlockMetal extends BlockGravity implements EntityBlock {
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction dir, BlockState facingState, LevelAccessor level, BlockPos pos, BlockPos facingPos) {
+    public BlockState updateShape(BlockState state, Direction direction, BlockState fromState, LevelAccessor level, BlockPos pos, BlockPos fromPos) {
         if (!level.isClientSide() && this.metal.doesOxidize() && this.oxidation != Oxidation.OXIDIZED) {
             TEMetal tile = (TEMetal) level.getBlockEntity(pos);
             if (tile != null) {
                 tile.oxidationTick(this.metal, this.oxidation);
             }
         }
-        return super.updateShape(state, dir, facingState, level, pos, facingPos);
+        return super.updateShape(state, direction, fromState, level, pos, fromPos);
     }
 }

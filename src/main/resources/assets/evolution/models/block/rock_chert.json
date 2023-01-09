@@ -1,7 +1,7 @@
 {
 	"parent": "evolution:block/rock",
 	"textures": {
-		"0": "evolution:block/cobble_chert",
-		"particle": "evolution:block/cobble_chert"
+		"0": "evolution:block/cobblestone_chert",
+		"particle": "evolution:block/cobblestone_chert"
 	}
 }

@@ -9,6 +9,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import org.jetbrains.annotations.Contract;
 import tgw.evolution.Evolution;
 import tgw.evolution.patches.IMobEffectInstancePatch;
 import tgw.evolution.patches.IMobEffectPatch;
@@ -19,8 +20,6 @@ import tgw.evolution.util.collection.EffectHolder;
 import java.util.List;
 
 public final class EvolutionEffects {
-
-    public static final DeferredRegister<MobEffect> EFFECTS = DeferredRegister.create(ForgeRegistries.MOB_EFFECTS, Evolution.MODID);
 
     public static final RegistryObject<EffectGeneric> ANAEMIA;
     public static final RegistryObject<EffectDehydration> DEHYDRATION;
@@ -34,9 +33,8 @@ public final class EvolutionEffects {
     public static final RegistryObject<EffectSweating> SWEATING;
     public static final RegistryObject<EffectThirst> THIRST;
     public static final RegistryObject<EffectWaterIntoxication> WATER_INTOXICATION;
-
-//    private static final RSet<MobEffect> DISABLE_NATURAL_REGEN = new ROpenHashSet<>();
-//    private static final RSet<MobEffect> DISABLE_SPRINT_EFFECTS = new ROpenHashSet<>();
+    //
+    private static final DeferredRegister<MobEffect> EFFECTS = DeferredRegister.create(ForgeRegistries.MOB_EFFECTS, Evolution.MODID);
 
     static {
         ANAEMIA = EFFECTS.register("anaemia", () -> new EffectGeneric(MobEffectCategory.HARMFUL, 0xdd_dd00));
@@ -56,27 +54,15 @@ public final class EvolutionEffects {
     private EvolutionEffects() {
     }
 
-//    public static boolean canNaturalRegen(LivingEntity entity) {
-//        return Collections.disjoint(entity.getActiveEffectsMap().keySet(), DISABLE_NATURAL_REGEN);
-//    }
-//
-//    public static boolean canSprint(LivingEntity entity) {
-//        return Collections.disjoint(entity.getActiveEffectsMap().keySet(), DISABLE_SPRINT_EFFECTS);
-//    }
-
-//    public static void finishRegisters() {
-//        for (MobEffect effect : ForgeRegistries.MOB_EFFECTS.getValues()) {
-//            IMobEffectPatch patch = (IMobEffectPatch) effect;
-//            if (patch.disablesNaturalRegen()) {
-//                DISABLE_NATURAL_REGEN.add(effect);
-//            }
-//            if (patch.disablesSprint()) {
-//                DISABLE_SPRINT_EFFECTS.add(effect);
-//            }
-//        }
-//        DISABLE_NATURAL_REGEN.trimCollection();
-//        DISABLE_SPRINT_EFFECTS.trimCollection();
-//    }
+    @Contract("_, _, _ -> true")
+    private static boolean addCause(List<Component> tooltips, Component text, boolean addedCausesHeader) {
+        if (!addedCausesHeader) {
+            tooltips.add(EvolutionTexts.EMPTY);
+            tooltips.add(EvolutionTexts.TOOLTIP_EFFECT_CAUSES);
+        }
+        tooltips.add(text);
+        return true;
+    }
 
     private static Component getEffectComp(MobEffect effect, int lvl) {
         return ((IMobEffectPatch) effect).getDescription(lvl);
@@ -85,75 +71,71 @@ public final class EvolutionEffects {
     public static void getEffectDescription(List<Component> tooltips, MobEffect effect, int lvl) {
         tooltips.add(getEffectComp(effect, lvl));
         IMobEffectPatch patch = (IMobEffectPatch) effect;
-        boolean causesAnything = patch.causesAnything(lvl);
-        if (causesAnything) {
-            tooltips.add(EvolutionTexts.EMPTY);
-            tooltips.add(EvolutionTexts.TOOLTIP_EFFECT_CAUSES);
-            if (patch.disablesNaturalRegen()) {
-                tooltips.add(EvolutionTexts.TOOLTIP_EFFECT_DISABLE_REGEN);
-            }
-            if (patch.disablesSprint()) {
-                tooltips.add(EvolutionTexts.TOOLTIP_EFFECT_DISABLE_SPRINT);
-            }
-            float f = patch.absorption(lvl);
-            if (f > 0) {
-                tooltips.add(EvolutionTexts.effectAbsorption(f));
-            }
-            f = patch.health(lvl);
-            if (f != 0) {
-                tooltips.add(EvolutionTexts.effectHealth(f));
-            }
-            f = patch.instantHP(lvl);
-            if (f != 0) {
-                tooltips.add(EvolutionTexts.effectInstaHP(f));
-            }
-            f = patch.resistance(lvl);
-            if (f > 0) {
-                tooltips.add(EvolutionTexts.effectResist(f));
-            }
-            f = patch.meleeDmg(lvl);
-            if (f != 0) {
-                tooltips.add(EvolutionTexts.effectMeleeDmg(f));
-            }
-            f = patch.attackSpeed(lvl);
-            if (f != 0) {
-                tooltips.add(EvolutionTexts.effectAttSpeed(f));
-            }
-            f = patch.miningSpeed(lvl);
-            if (f != 0) {
-                tooltips.add(EvolutionTexts.effectMining(f));
-            }
-            f = patch.hungerMod(lvl);
-            if (f > 0) {
-                tooltips.add(EvolutionTexts.effectHunger(f));
-            }
-            f = patch.thirstMod(lvl);
-            if (f > 0) {
-                tooltips.add(EvolutionTexts.effectThirst(f));
-            }
-            double d = patch.tempMod();
-            if (d != 0) {
-                tooltips.add(EvolutionTexts.effectTemperature(d));
-            }
-            f = patch.moveSpeedMod(lvl);
-            if (f != 0) {
-                tooltips.add(EvolutionTexts.effectSpeed(f));
-            }
-            f = patch.jumpMod(lvl);
-            if (f != 0) {
-                tooltips.add(EvolutionTexts.effectJump(f));
-            }
-            int i = patch.luck(lvl);
-            if (i != 0) {
-                tooltips.add(EvolutionTexts.effectLuck(i));
-            }
-            ObjectList<EffectHolder> causes = patch.causesEffect();
-            if (!causes.isEmpty()) {
-                for (int index = 0, l = causes.size(); index < l; index++) {
-                    MobEffectInstance instance = causes.get(index).getInstance(lvl);
-                    if (instance != null) {
-                        tooltips.add(EvolutionTexts.effect(instance));
-                    }
+        boolean addedCausesHeader = false;
+        if (patch.disablesNaturalRegen()) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.TOOLTIP_EFFECT_DISABLE_REGEN, false);
+        }
+        if (patch.disablesSprint()) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.TOOLTIP_EFFECT_DISABLE_SPRINT, addedCausesHeader);
+        }
+        float f = patch.absorption(lvl);
+        if (f > 0) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.effectAbsorption(f), addedCausesHeader);
+        }
+        f = patch.health(lvl);
+        if (f != 0) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.effectHealth(f), addedCausesHeader);
+        }
+        f = patch.instantHP(lvl);
+        if (f != 0) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.effectInstaHP(f), addedCausesHeader);
+        }
+        f = patch.resistance(lvl);
+        if (f > 0) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.effectResist(f), addedCausesHeader);
+        }
+        f = patch.meleeDmg(lvl);
+        if (f != 0) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.effectMeleeDmg(f), addedCausesHeader);
+        }
+        f = patch.attackSpeed(lvl);
+        if (f != 0) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.effectAttSpeed(f), addedCausesHeader);
+        }
+        f = patch.miningSpeed(lvl);
+        if (f != 0) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.effectMining(f), addedCausesHeader);
+        }
+        f = patch.hungerMod(lvl);
+        if (f > 0) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.effectHunger(f), addedCausesHeader);
+        }
+        f = patch.thirstMod(lvl);
+        if (f > 0) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.effectThirst(f), addedCausesHeader);
+        }
+        double d = patch.tempMod();
+        if (d != 0) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.effectTemperature(d), addedCausesHeader);
+        }
+        f = patch.moveSpeedMod(lvl);
+        if (f != 0) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.effectSpeed(f), addedCausesHeader);
+        }
+        f = patch.jumpMod(lvl);
+        if (f != 0) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.effectJump(f), addedCausesHeader);
+        }
+        int i = patch.luck(lvl);
+        if (i != 0) {
+            addedCausesHeader = addCause(tooltips, EvolutionTexts.effectLuck(i), addedCausesHeader);
+        }
+        ObjectList<EffectHolder> causes = patch.causesEffect();
+        if (!causes.isEmpty()) {
+            for (int index = 0, l = causes.size(); index < l; index++) {
+                MobEffectInstance instance = causes.get(index).getInstance(lvl);
+                if (instance != null) {
+                    addedCausesHeader = addCause(tooltips, EvolutionTexts.effect(instance), addedCausesHeader);
                 }
             }
         }
@@ -173,14 +155,15 @@ public final class EvolutionEffects {
         }
         if (patch.causesRegen(lvl)) {
             tooltips.add(EvolutionTexts.EMPTY);
-            tooltips.add(EvolutionTexts.effectRegen(patch.regen(lvl), patch.tickInterval(lvl), causesAnything || mayCauseAnything));
+            tooltips.add(EvolutionTexts.effectRegen(patch.regen(lvl), patch.tickInterval(lvl), addedCausesHeader || mayCauseAnything));
         }
         else if (patch.causesDmg(lvl)) {
             tooltips.add(EvolutionTexts.EMPTY);
-            tooltips.add(EvolutionTexts.effectDmg(-patch.regen(lvl), patch.tickInterval(lvl), causesAnything || mayCauseAnything));
+            tooltips.add(EvolutionTexts.effectDmg(-patch.regen(lvl), patch.tickInterval(lvl), addedCausesHeader || mayCauseAnything));
         }
     }
 
+    @Contract("_, _, _, _, _ -> new")
     public static MobEffectInstance infiniteOf(MobEffect effect, int amplifier, boolean isAmbient, boolean showParticles, boolean showIcon) {
         MobEffectInstance instance = new MobEffectInstance(effect, 10, amplifier, isAmbient, showParticles, showIcon);
         ((IMobEffectInstancePatch) instance).setInfinite(true);

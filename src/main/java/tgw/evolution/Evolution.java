@@ -28,7 +28,6 @@ import tgw.evolution.blocks.BlockFire;
 import tgw.evolution.client.renderer.EvolutionRenderLayer;
 import tgw.evolution.commands.argument.EnumEvArgument;
 import tgw.evolution.config.EvolutionConfig;
-import tgw.evolution.events.ChunkEvents;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.events.EntityEvents;
 import tgw.evolution.events.WorldEvents;
@@ -168,7 +167,6 @@ public final class Evolution {
         ArgumentTypes.register("evolution:enum", EnumEvArgument.class, new EnumEvArgument.Serializer());
         EvolutionNetwork.registerMessages();
         MinecraftForge.EVENT_BUS.register(new WorldEvents());
-        MinecraftForge.EVENT_BUS.register(new ChunkEvents());
         MinecraftForge.EVENT_BUS.register(new EntityEvents());
         LOGGER.info("Setup registries done.");
     }

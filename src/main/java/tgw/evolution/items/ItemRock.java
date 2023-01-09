@@ -8,6 +8,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.blocks.IRockVariant;
 import tgw.evolution.init.EvolutionNetwork;
@@ -15,7 +16,6 @@ import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketSCOpenKnappingGui;
 import tgw.evolution.util.constants.RockVariant;
 
-import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ItemRock extends ItemGenericBlockPlaceable implements IRockVariant {
@@ -55,7 +55,7 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IRockVariant 
     }
 
     @Override
-    public RockVariant getVariant() {
+    public RockVariant rockVariant() {
         return this.variant;
     }
 

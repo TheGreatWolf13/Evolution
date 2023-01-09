@@ -6,7 +6,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -16,7 +15,6 @@ import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.BlockPeat;
-import tgw.evolution.blocks.IReplaceable;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionEntities;
@@ -206,11 +204,11 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
                 BlockState state = this.level.getBlockState(pos);
                 if (state.getBlock() != Blocks.MOVING_PISTON) {
                     BlockPeat.placeLayersOn(this.level, pos, this.layers);
-                    if (state.getBlock() instanceof IReplaceable && state.getBlock() != this.getBlockState().getBlock()) {
-                        for (ItemStack stack : ((IReplaceable) state.getBlock()).getDrops(this.level, pos, state)) {
-                            this.spawnAtLocation(stack);
-                        }
-                    }
+//                    if (state.getBlock() instanceof IReplaceable && state.getBlock() != this.getBlockState().getBlock()) {
+//                        for (ItemStack stack : ((IReplaceable) state.getBlock()).getDrops(this.level, pos, state)) {
+//                            this.spawnAtLocation(stack);
+//                        }
+//                    }
                     this.discard();
                 }
             }

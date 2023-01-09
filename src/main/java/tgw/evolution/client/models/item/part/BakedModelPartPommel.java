@@ -7,7 +7,7 @@ import net.minecraftforge.client.model.data.ModelDataMap;
 import tgw.evolution.capabilities.modular.part.PartPommel;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPartPommel;
 
 public class BakedModelPartPommel
@@ -45,7 +45,7 @@ public class BakedModelPartPommel
             return EvolutionResources.MODULAR_POMMELS.get(extraData.getData(this.type), extraData.getData(this.material));
         }
 
-        protected void setData(PartTypes.Pommel type, ItemMaterial material) {
+        protected void setData(PartTypes.Pommel type, Material material) {
             this.modelData.setData(this.type, type);
             this.modelData.setData(this.material, material);
         }

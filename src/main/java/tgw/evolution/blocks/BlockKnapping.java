@@ -2,7 +2,6 @@ package tgw.evolution.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -12,7 +11,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -23,23 +21,29 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemRock;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.math.MathHelper;
 
-public class BlockKnapping extends BlockGravity implements IReplaceable, IRockVariant, EntityBlock {
+public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVariant, EntityBlock, IPoppable, IAir {
 
     private final RockVariant variant;
 
-    public BlockKnapping(RockVariant variant, int mass) {
-        super(Properties.of(Material.DECORATION).sound(SoundType.STONE).noOcclusion(), mass);
+    public BlockKnapping(RockVariant variant) {
+        super(Properties.of(Material.DECORATION).sound(SoundType.STONE).noOcclusion());
         this.variant = variant;
     }
 
     public static VoxelShape calculateHitbox(TEKnapping tile) {
         return MathHelper.generateShapeFromPattern(tile.getParts());
+    }
+
+    @Override
+    public boolean allowsFrom(BlockState state, Direction from) {
+        return from != Direction.DOWN;
     }
 
     @Override
@@ -67,13 +71,13 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IRockVa
     }
 
     @Override
-    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        return NonNullList.of(ItemStack.EMPTY, new ItemStack(this.variant.getRock()));
+    public float getFrictionCoefficient(BlockState state) {
+        return 1.0F;
     }
 
     @Override
-    public float getFrictionCoefficient(BlockState state) {
-        return 1.0F;
+    public double getMass(Level level, BlockPos pos, BlockState state) {
+        return 0;
     }
 
     @Override
@@ -86,12 +90,12 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IRockVa
             tile.hitbox = calculateHitbox(tile);
             return tile.hitbox;
         }
-        return EvolutionShapes.SIXTEENTH_SLAB_LOWER_1;
+        return EvolutionShapes.SLAB_16_D[0];
     }
 
     @Override
-    public RockVariant getVariant() {
-        return this.variant;
+    public @Range(from = 1, to = 63) int increment(BlockState state, Direction from) {
+        return 1;
     }
 
     @Override
@@ -99,20 +103,15 @@ public class BlockKnapping extends BlockGravity implements IReplaceable, IRockVa
         return true;
     }
 
-    @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!level.isClientSide) {
-            if (!state.canSurvive(level, pos)) {
-                dropResources(state, level, pos);
-                level.removeBlock(pos, false);
-            }
-        }
-    }
-
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new TEKnapping(pos, state);
+    }
+
+    @Override
+    public RockVariant rockVariant() {
+        return this.variant;
     }
 
     @Override

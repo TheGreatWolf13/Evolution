@@ -2,7 +2,6 @@ package tgw.evolution.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -24,12 +23,12 @@ import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEPitKiln;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemClayMolded;
 import tgw.evolution.items.ItemLog;
 import tgw.evolution.util.math.DirectionDiagonal;
@@ -97,7 +96,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
         }
         if (layers <= 8) {
             level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers - 1));
-            ItemStack stack = new ItemStack(EvolutionItems.straw.get());
+            ItemStack stack = new ItemStack(EvolutionItems.STRAW.get());
             if (!player.getInventory().add(stack)) {
                 BlockUtils.dropItemStack(level, pos, stack);
             }
@@ -136,12 +135,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
 
     @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult hit, BlockGetter level, BlockPos pos, Player player) {
-        return new ItemStack(EvolutionItems.straw.get());
-    }
-
-    @Override
-    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        return NonNullList.of(ItemStack.EMPTY, new ItemStack(EvolutionItems.straw.get(), MathHelper.clamp(state.getValue(LAYERS_0_16), 0, 8)));
+        return new ItemStack(EvolutionItems.STRAW.get());
     }
 
     @Override
@@ -151,7 +145,8 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return EvolutionShapes.PIT_KILN[state.getValue(LAYERS_0_16)];
+        //TODO implementation
+        return Shapes.block();
     }
 
     @Override
@@ -178,18 +173,6 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
     @Override
     public boolean isReplaceable(BlockState state) {
         return state.getValue(LAYERS_0_16) < 13;
-    }
-
-    @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!level.isClientSide) {
-            if (!state.canSurvive(level, pos)) {
-                for (ItemStack stack : this.getDrops(level, pos, state)) {
-                    BlockUtils.dropItemStack(level, pos, stack);
-                }
-                level.removeBlock(pos, false);
-            }
-        }
     }
 
     @Nullable
@@ -230,7 +213,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
         }
         ItemStack stack = player.getItemInHand(hand);
         if (layers == 0) {
-            if (stack.getItem() == EvolutionItems.straw.get() && !tile.hasFinished()) {
+            if (stack.getItem() == EvolutionItems.STRAW.get() && !tile.hasFinished()) {
                 level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, 1));
                 if (!player.isCreative()) {
                     stack.shrink(1);
@@ -246,7 +229,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
             return manageStack(tile, stack, player, MathHelper.DIAGONALS[z][x]);
         }
         if (layers < 8) {
-            if (stack.getItem() == EvolutionItems.straw.get()) {
+            if (stack.getItem() == EvolutionItems.STRAW.get()) {
                 level.setBlockAndUpdate(pos, state.setValue(LAYERS_0_16, layers + 1));
                 if (!player.isCreative()) {
                     stack.shrink(1);

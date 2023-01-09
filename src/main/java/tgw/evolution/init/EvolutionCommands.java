@@ -10,15 +10,16 @@ public final class EvolutionCommands {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        CommandTickrate.register(dispatcher);
-        CommandGamemode.register(dispatcher);
-        CommandRegen.register(dispatcher);
+        CommandAtm.register(dispatcher);
+        CommandCamera.register(dispatcher);
         CommandDate.register(dispatcher);
+        CommandGamemode.register(dispatcher);
+        CommandGC.register(dispatcher);
         CommandHeal.register(dispatcher);
         CommandPause.register(dispatcher);
+        CommandRegen.register(dispatcher);
         CommandShader.register(dispatcher);
         CommandTemperature.register(dispatcher);
-        CommandGC.register(dispatcher);
-        CommandCamera.register(dispatcher);
+        CommandTickrate.register(dispatcher);
     }
 }

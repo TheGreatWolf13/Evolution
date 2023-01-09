@@ -79,14 +79,14 @@ public class ScreenStats extends Screen implements StatsUpdateListener {
         super(new TranslatableComponent("gui.stats"));
         this.stats = (EvolutionStatsCounter) statsCounter;
         this.cachedModularItems.put(EvolutionItems.MODULAR_TOOL.get(), EvolutionItems.MODULAR_TOOL.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.BLADE_PART.get(), EvolutionItems.BLADE_PART.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.GUARD_PART.get(), EvolutionItems.GUARD_PART.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.HALFHEAD_PART.get(), EvolutionItems.HALFHEAD_PART.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.HANDLE_PART.get(), EvolutionItems.HANDLE_PART.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.HEAD_PART.get(), EvolutionItems.HEAD_PART.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.HILT_PART.get(), EvolutionItems.HILT_PART.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.POLE_PART.get(), EvolutionItems.POLE_PART.get().getDefaultInstance());
-        this.cachedModularItems.put(EvolutionItems.POMMEL_PART.get(), EvolutionItems.POMMEL_PART.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_BLADE.get(), EvolutionItems.PART_BLADE.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_GUARD.get(), EvolutionItems.PART_GUARD.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_HALFHEAD.get(), EvolutionItems.PART_HALFHEAD.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_HANDLE.get(), EvolutionItems.PART_HANDLE.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_HEAD.get(), EvolutionItems.PART_HEAD.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_GRIP.get(), EvolutionItems.PART_GRIP.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_POLE.get(), EvolutionItems.PART_POLE.get().getDefaultInstance());
+        this.cachedModularItems.put(EvolutionItems.PART_POMMEL.get(), EvolutionItems.PART_POMMEL.get().getDefaultInstance());
         this.cachedModularItems.trimCollection();
         this.refreshCacheCooldown = 30;
     }

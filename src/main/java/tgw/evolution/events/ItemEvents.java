@@ -48,7 +48,7 @@ public final class ItemEvents {
         if (Screen.hasControlDown()) {
             Item item = stack.getItem();
             if (item instanceof ItemRock rock) {
-                switch (rock.getVariant()) {
+                switch (rock.rockVariant()) {
                     case CHERT -> {
                         tooltip.add(EvolutionTexts.EITHER_EMPTY);
                         add(tooltip, EvolutionTexts.EASTER_CHERT);

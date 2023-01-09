@@ -4,7 +4,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.core.SectionPos;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -14,15 +16,25 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.IPlantable;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
+import tgw.evolution.capabilities.chunkstorage.IChunkStorage;
+import tgw.evolution.init.EvolutionCapabilities;
+import tgw.evolution.util.math.DirectionList;
 import tgw.evolution.util.math.DirectionToIntMap;
 import tgw.evolution.util.math.DirectionUtil;
 
+import java.util.Random;
+
 public final class BlockUtils {
+
+    private static final ThreadLocal<MutableBlockPos> MUTABLE_POS = ThreadLocal.withInitial(MutableBlockPos::new);
+    private static final DirectionList DIRECTION_LIST = new DirectionList();
 
     private BlockUtils() {
     }
@@ -68,6 +80,18 @@ public final class BlockUtils {
         dropItemStack(world, pos, stack, 0);
     }
 
+    public static BlockState getBlockState(BlockGetter level, double x, double y, double z) {
+        return getBlockState(level, Mth.floor(x), Mth.floor(y), Mth.floor(z));
+    }
+
+    public static BlockState getBlockState(BlockGetter level, int x, int y, int z) {
+        return level.getBlockState(MUTABLE_POS.get().set(x, y, z));
+    }
+
+    public static BlockState getBlockStateAtSide(BlockGetter level, int x, int y, int z, Direction side) {
+        return getBlockState(level, x + side.getStepX(), y + side.getStepY(), z + side.getStepZ());
+    }
+
     /**
      * @param state The BlockState of the ladder
      * @return The ladder up movement speed, in m/t.
@@ -97,7 +121,7 @@ public final class BlockUtils {
     }
 
     public static boolean hasMass(BlockState state) {
-        return state.getBlock() instanceof BlockMass;
+        return state.getBlock() instanceof BlockPhysics;
     }
 
     public static boolean hasSolidSide(BlockGetter world, BlockPos pos, Direction side) {
@@ -124,79 +148,16 @@ public final class BlockUtils {
         return false;
     }
 
-    /**
-     * Returns whether the tree trunk is supported.
-     */
-//    public static boolean isTrunkSustained(World world, OriginMutableBlockPos pos) {
-//        BlockState state = world.getBlockState(pos.down().getPos());
-//        if (!isReplaceable(state)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().down().north().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().down().south().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().down().west().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().down().east().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().down().north().east().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().down().north().west().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().down().west().south().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().down().east().south().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().north().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().south().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().east().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().west().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().north().west().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().south().west().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().north().east().getPos());
-//        if (state.getBlock() instanceof BlockLog && state.getValue(TREE)) {
-//            return true;
-//        }
-//        state = world.getBlockState(pos.reset().south().east().getPos());
-//        return state.getBlock() instanceof BlockLog && state.getValue(TREE);
-//    }
-    public static void scheduleBlockTick(Level level, BlockPos pos, int tickrate) {
-        level.scheduleTick(pos, level.getBlockState(pos).getBlock(), tickrate);
+    public static void scheduleBlockTick(LevelAccessor level, int x, int y, int z) {
+        if (level.isClientSide()) {
+            return;
+        }
+        LevelChunk chunk = level.getChunkSource().getChunkNow(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z));
+        if (chunk == null) {
+            return;
+        }
+        IChunkStorage chunkStorage = EvolutionCapabilities.getCapabilityOrThrow(chunk, CapabilityChunkStorage.INSTANCE);
+        chunkStorage.scheduleBlockTick(chunk, BlockPos.asLong(x, y, z));
     }
 
     public static void scheduleFluidTick(LevelAccessor level, BlockPos pos) {
@@ -206,5 +167,27 @@ public final class BlockUtils {
         }
         Fluid fluid = fluidState.getType();
         level.scheduleTick(pos, fluid, fluid.getTickDelay(level));
+    }
+
+    public static void updateSlopingBlocks(LevelAccessor level, BlockPos pos) {
+        if (!isReplaceable(level.getBlockState(pos))) {
+            int x = pos.getX();
+            int y = pos.getY();
+            int z = pos.getZ();
+            if (isReplaceable(getBlockState(level, x, y + 1, z))) {
+                DIRECTION_LIST.clear();
+                for (Direction direction : DirectionUtil.HORIZ_NESW) {
+                    BlockState state = getBlockStateAtSide(level, x, y + 1, z, direction);
+                    if (state.getBlock() instanceof IPhysics physics && physics.slopes()) {
+                        DIRECTION_LIST.add(direction);
+                    }
+                }
+                Random random = level.getRandom();
+                while (!DIRECTION_LIST.isEmpty()) {
+                    Direction direction = DIRECTION_LIST.getRandomAndRemove(random);
+                    scheduleBlockTick(level, x + direction.getStepX(), y + 1, z + direction.getStepZ());
+                }
+            }
+        }
     }
 }

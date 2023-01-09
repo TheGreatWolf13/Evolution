@@ -70,8 +70,8 @@ public class GuiAdvancementEntry extends GuiComponent {
     }
 
     public void draw(PoseStack matrices, int scrollX, int scrollY) {
-        if (!this.displayInfo.isHidden() || this.advancementProgress != null && this.advancementProgress.isDone()) {
-            float percent = this.advancementProgress == null ? 0.0F : this.advancementProgress.getPercent();
+        if (!this.displayInfo.isHidden() || this.advancementProgress.isDone()) {
+            float percent = this.advancementProgress.getPercent();
             AdvancementWidgetType advancementState = percent >= 1.0f ? AdvancementWidgetType.OBTAINED : AdvancementWidgetType.UNOBTAINED;
             RenderSystem.setShaderTexture(0, this.resWidgets);
             GUIUtils.setColor(0xff_ffff);
@@ -111,7 +111,7 @@ public class GuiAdvancementEntry extends GuiComponent {
     }
 
     public void drawConnection(PoseStack matrices, GuiAdvancementEntry parent, int scrollX, int scrollY, boolean drawInside) {
-        boolean isCompleted = this.advancementProgress != null && this.advancementProgress.isDone();
+        boolean isCompleted = this.advancementProgress.isDone();
         int innerLineColor = isCompleted ? 0xffff_ffff : 0xff33_3333;
         int startX = scrollX + parent.x + ADVANCEMENT_SIZE / 2;
         int endXHalf = scrollX + parent.x + ADVANCEMENT_SIZE + 6;
@@ -148,7 +148,7 @@ public class GuiAdvancementEntry extends GuiComponent {
     public void drawHover(PoseStack matrices, int scrollX, int scrollY, int left, int top) {
         this.refreshHover();
         boolean drawLeft = left + scrollX + this.x + this.width + ADVANCEMENT_SIZE >= this.betterAdvancementTabGui.getScreen().width;
-        String s = this.advancementProgress == null ? null : this.advancementProgress.getProgressText();
+        String s = this.advancementProgress.getProgressText();
         int i = s == null ? 0 : this.mc.font.width(s);
         boolean drawTop;
         if (this.criterionGrid.height < this.betterAdvancementTabGui.getScreen().height) {
@@ -158,7 +158,7 @@ public class GuiAdvancementEntry extends GuiComponent {
         else {
             drawTop = false;
         }
-        float percentageObtained = this.advancementProgress == null ? 0.0F : this.advancementProgress.getPercent();
+        float percentageObtained = this.advancementProgress.getPercent();
         int j = Mth.floor(percentageObtained * this.width);
         AdvancementWidgetType stateTitleLeft;
         AdvancementWidgetType stateTitleRight;
@@ -218,42 +218,21 @@ public class GuiAdvancementEntry extends GuiComponent {
         }
         GUIUtils.setColor(0xff_ffff);
         int leftSide = Math.min(j, WIDGET_WIDTH - 16);
-        this.blit(matrices, drawX, drawY, 0, (stateTitleLeft == AdvancementWidgetType.OBTAINED ? 0 : 1) * WIDGET_HEIGHT, leftSide, WIDGET_HEIGHT);
+        int v = (stateTitleLeft == AdvancementWidgetType.OBTAINED ? 0 : 1) * WIDGET_HEIGHT;
+        this.blit(matrices, drawX, drawY, 0, v, leftSide, WIDGET_HEIGHT);
         if (leftSide < j) {
-            this.blit(matrices,
-                      drawX + leftSide,
-                      drawY,
-                      16,
-                      (stateTitleLeft == AdvancementWidgetType.OBTAINED ? 0 : 1) * WIDGET_HEIGHT,
-                      j - leftSide,
-                      WIDGET_HEIGHT);
+            this.blit(matrices, drawX + leftSide, drawY, 16, v, j - leftSide, WIDGET_HEIGHT);
         }
         GUIUtils.setColor(0xff_ffff);
         int rightSide = Math.min(k, WIDGET_WIDTH - 4);
-        this.blit(matrices,
-                  drawX + j,
-                  drawY,
-                  WIDGET_WIDTH - rightSide,
-                  (stateTitleRight == AdvancementWidgetType.OBTAINED ? 0 : 1) * WIDGET_HEIGHT,
-                  rightSide,
-                  WIDGET_HEIGHT);
+        v = (stateTitleRight == AdvancementWidgetType.OBTAINED ? 0 : 1) * WIDGET_HEIGHT;
+        this.blit(matrices, drawX + j, drawY, WIDGET_WIDTH - rightSide, v, rightSide, WIDGET_HEIGHT);
         if (rightSide < k) {
-            this.blit(matrices,
-                      drawX + j + rightSide - 2,
-                      drawY,
-                      WIDGET_WIDTH - k + rightSide - 2,
-                      (stateTitleRight == AdvancementWidgetType.OBTAINED ? 0 : 1) * WIDGET_HEIGHT,
-                      k - rightSide + 2,
-                      WIDGET_HEIGHT);
+            this.blit(matrices, drawX + j + rightSide - 2, drawY, WIDGET_WIDTH - k + rightSide - 2, v, k - rightSide + 2, WIDGET_HEIGHT);
         }
         GUIUtils.setColor(0xff_ffff);
-        this.blit(matrices,
-                  scrollX + this.x + 3,
-                  scrollY + this.y,
-                  this.displayInfo.getFrame().getTexture(),
-                  ICON_OFFSET + ICON_SIZE * (stateIcon == AdvancementWidgetType.OBTAINED ? 0 : 1),
-                  ICON_SIZE,
-                  ICON_SIZE);
+        this.blit(matrices, scrollX + this.x + 3, scrollY + this.y, this.displayInfo.getFrame().getTexture(),
+                  ICON_OFFSET + ICON_SIZE * (stateIcon == AdvancementWidgetType.OBTAINED ? 0 : 1), ICON_SIZE, ICON_SIZE);
         if (drawLeft) {
             this.mc.font.drawShadow(matrices, this.title, drawX + 5, scrollY + this.y + 9, -1);
             if (s != null) {
@@ -276,16 +255,14 @@ public class GuiAdvancementEntry extends GuiComponent {
         for (int k1 = 0; k1 < this.description.size(); ++k1) {
             this.mc.font.draw(matrices, this.description.get(k1), drawX + 5, yOffset + k1 * (this.mc.font.lineHeight + 1), 0xffaa_aaaa);
         }
-        if (this.criterionGrid != null) {
-            yOffset += this.description.size() * (this.mc.font.lineHeight + 1);
-            int xOffset = drawX + 5;
-            for (int colIndex = 0; colIndex < this.criterionGrid.columns.size(); colIndex++) {
-                CriterionGrid.Column col = this.criterionGrid.columns.get(colIndex);
-                for (int rowIndex = 0; rowIndex < col.cells().size(); rowIndex++) {
-                    this.mc.font.draw(matrices, col.cells().get(rowIndex), xOffset, yOffset + rowIndex * (this.mc.font.lineHeight + 1), 0xffaa_aaaa);
-                }
-                xOffset += col.width();
+        yOffset += this.description.size() * (this.mc.font.lineHeight + 1);
+        int xOffset = drawX + 5;
+        for (int colIndex = 0; colIndex < this.criterionGrid.columns.size(); colIndex++) {
+            CriterionGrid.Column col = this.criterionGrid.columns.get(colIndex);
+            for (int rowIndex = 0; rowIndex < col.cells().size(); rowIndex++) {
+                this.mc.font.draw(matrices, col.cells().get(rowIndex), xOffset, yOffset + rowIndex * (this.mc.font.lineHeight + 1), 0xffaa_aaaa);
             }
+            xOffset += col.width();
         }
         this.mc.getItemRenderer().renderAndDecorateFakeItem(this.displayInfo.getIcon(), scrollX + this.x + 8, scrollY + this.y + 5);
     }
@@ -334,7 +311,7 @@ public class GuiAdvancementEntry extends GuiComponent {
     }
 
     public boolean isMouseOver(double scrollX, double scrollY, double mouseX, double mouseY) {
-        if (!this.displayInfo.isHidden() || this.advancementProgress != null && this.advancementProgress.isDone()) {
+        if (!this.displayInfo.isHidden() || this.advancementProgress.isDone()) {
             double left = scrollX + this.x;
             double right = left + ADVANCEMENT_SIZE;
             double top = scrollY + this.y;
@@ -375,71 +352,33 @@ public class GuiAdvancementEntry extends GuiComponent {
         // Top left corner
         this.blit(matrices, x, y, textureX, textureY, textureHeight, textureHeight);
         // Top side
-        GUIUtils.renderRepeating(matrices,
-                                 this,
-                                 x + textureHeight,
-                                 y,
-                                 width - textureHeight - textureHeight,
-                                 textureHeight,
-                                 textureX + textureHeight,
-                                 textureY,
-                                 textureWidth - textureHeight - textureHeight,
+        int actualWidth = width - textureHeight - textureHeight;
+        int actualTexWidth = textureWidth - textureHeight - textureHeight;
+        GUIUtils.renderRepeating(matrices, this, x + textureHeight, y, actualWidth, textureHeight, textureX + textureHeight, textureY, actualTexWidth,
                                  textureDistance);
         // Top right corner
-        this.blit(matrices, x + width - textureHeight, y, textureX + textureWidth - textureHeight, textureY, textureHeight, textureHeight);
+        int x1 = x + width - textureHeight;
+        int u1 = textureX + textureWidth - textureHeight;
+        this.blit(matrices, x1, y, u1, textureY, textureHeight, textureHeight);
         // Bottom left corner
-        this.blit(matrices, x, y + height - textureHeight, textureX, textureY + textureDistance - textureHeight, textureHeight, textureHeight);
+        int y1 = y + height - textureHeight;
+        int v1 = textureY + textureDistance - textureHeight;
+        this.blit(matrices, x, y1, textureX, v1, textureHeight, textureHeight);
         // Bottom side
-        GUIUtils.renderRepeating(matrices,
-                                 this,
-                                 x + textureHeight,
-                                 y + height - textureHeight,
-                                 width - textureHeight - textureHeight,
-                                 textureHeight,
-                                 textureX + textureHeight,
-                                 textureY + textureDistance - textureHeight,
-                                 textureWidth - textureHeight - textureHeight,
+        GUIUtils.renderRepeating(matrices, this, x + textureHeight, y1, actualWidth, textureHeight, textureX + textureHeight, v1, actualTexWidth,
                                  textureDistance);
         // Bottom right corner
-        this.blit(matrices,
-                  x + width - textureHeight,
-                  y + height - textureHeight,
-                  textureX + textureWidth - textureHeight,
-                  textureY + textureDistance - textureHeight,
-                  textureHeight,
-                  textureHeight);
+        this.blit(matrices, x1, y1, u1, v1, textureHeight, textureHeight);
         // Left side
-        GUIUtils.renderRepeating(matrices,
-                                 this,
-                                 x,
-                                 y + textureHeight,
-                                 textureHeight,
-                                 height - textureHeight - textureHeight,
-                                 textureX,
-                                 textureY + textureHeight,
-                                 textureWidth,
-                                 textureDistance - textureHeight - textureHeight);
+        int texHeight1 = textureDistance - textureHeight - textureHeight;
+        int height1 = height - textureHeight - textureHeight;
+        GUIUtils.renderRepeating(matrices, this, x, y + textureHeight, textureHeight, height1, textureX, textureY + textureHeight, textureWidth,
+                                 texHeight1);
         // Center
-        GUIUtils.renderRepeating(matrices,
-                                 this,
-                                 x + textureHeight,
-                                 y + textureHeight,
-                                 width - textureHeight - textureHeight,
-                                 height - textureHeight - textureHeight,
-                                 textureX + textureHeight,
-                                 textureY + textureHeight,
-                                 textureWidth - textureHeight - textureHeight,
-                                 textureDistance - textureHeight - textureHeight);
+        GUIUtils.renderRepeating(matrices, this, x + textureHeight, y + textureHeight, actualWidth, height1, textureX + textureHeight,
+                                 textureY + textureHeight, actualTexWidth, texHeight1);
         // Right side
-        GUIUtils.renderRepeating(matrices,
-                                 this,
-                                 x + width - textureHeight,
-                                 y + textureHeight,
-                                 textureHeight,
-                                 height - textureHeight - textureHeight,
-                                 textureX + textureWidth - textureHeight,
-                                 textureY + textureHeight,
-                                 textureWidth,
-                                 textureDistance - textureHeight - textureHeight);
+        GUIUtils.renderRepeating(matrices, this, x1, y + textureHeight, textureHeight, height1, u1, textureY + textureHeight, textureWidth,
+                                 texHeight1);
     }
 }

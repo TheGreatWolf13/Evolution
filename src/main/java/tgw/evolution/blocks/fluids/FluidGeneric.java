@@ -12,7 +12,6 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.FlowingFluid;
@@ -23,9 +22,6 @@ import net.minecraftforge.fluids.FluidAttributes;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockUtils;
-import tgw.evolution.blocks.IFluidLoggable;
-import tgw.evolution.blocks.IReplaceable;
-import tgw.evolution.blocks.tileentities.TELiquid;
 import tgw.evolution.init.EvolutionFluids;
 import tgw.evolution.util.math.*;
 
@@ -68,46 +64,25 @@ public abstract class FluidGeneric extends FlowingFluid {
     }
 
     public static boolean canSendToOrReceiveFrom(BlockState state, Direction direction) {
-        Block block = state.getBlock();
-        if (block instanceof IFluidLoggable fluidLoggable) {
-            return fluidLoggable.canFlowThrough(state, direction);
-        }
         return true;
     }
 
-    public static int getApparentAmount(Level level, BlockPos pos) {
+    public static int getApparentAmount(BlockGetter level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
         Block block = state.getBlock();
-        if (block instanceof IFluidLoggable fluidLoggable) {
-            return fluidLoggable.getApparentAmount(level, pos, state);
-        }
         FluidState fluidState = level.getFluidState(pos);
         if (block instanceof BlockGenericFluid) {
             int layers = fluidState.getValue(LEVEL);
-            int amount = 12_500 * layers;
-            if (!fluidState.getValue(FALLING)) {
-                BlockEntity tile = level.getBlockEntity(pos);
-                if (tile instanceof TELiquid teLiquid) {
-                    amount -= teLiquid.getMissingLiquid();
-                }
-                else {
-                    Evolution.warn("Invalid tile entity for block at {}: {}", pos, tile);
-                }
-            }
-            return amount;
+            return 12_500 * layers;
         }
         return 0;
     }
 
     public static int getCapacity(BlockState state) {
-        Block block = state.getBlock();
-        if (block instanceof IFluidLoggable fluidLoggable) {
-            return fluidLoggable.getFluidCapacity(state);
-        }
         return 100_000;
     }
 
-    public static int getFluidAmount(Level level, BlockPos pos, FluidState state) {
+    public static int getFluidAmount(BlockGetter level, BlockPos pos, FluidState state) {
         if (state.isEmpty()) {
             return 0;
         }
@@ -115,20 +90,7 @@ public abstract class FluidGeneric extends FlowingFluid {
         Block block = stateAtPos.getBlock();
         if (block instanceof BlockGenericFluid) {
             int layers = state.getValue(LEVEL);
-            int amount = 12_500 * layers;
-            if (!state.getValue(FALLING)) {
-                BlockEntity tile = level.getBlockEntity(pos);
-                if (tile instanceof TELiquid teLiquid) {
-                    amount -= teLiquid.getMissingLiquid();
-                }
-                else {
-                    Evolution.warn("Invalid tile entity for block at {}: {}", pos, tile);
-                }
-            }
-            return amount;
-        }
-        if (block instanceof IFluidLoggable fluidLoggable) {
-            return fluidLoggable.getCurrentAmount(level, pos, stateAtPos);
+            return 12_500 * layers;
         }
         return 0;
     }
@@ -144,12 +106,9 @@ public abstract class FluidGeneric extends FlowingFluid {
         return level.getFluidState(posUp).isEmpty() ? 250 : 0;
     }
 
-    public static boolean isFull(Level world, BlockPos pos) {
+    public static boolean isFull(BlockGetter world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
         Block block = state.getBlock();
-        if (block instanceof IFluidLoggable fluidLoggable) {
-            return fluidLoggable.isFull(world, pos, state);
-        }
         FluidState fluidState = world.getFluidState(pos);
         if (fluidState.isEmpty()) {
             return false;
@@ -158,16 +117,6 @@ public abstract class FluidGeneric extends FlowingFluid {
             return false;
         }
         return fluidState.getValue(LEVEL) == 8;
-    }
-
-    public static void onReplace(Level level, BlockPos pos, BlockState state) {
-        Block block = state.getBlock();
-        if (block instanceof IFluidLoggable) {
-            return;
-        }
-        if (block instanceof IReplaceable replaceable) {
-            replaceable.onReplaced(state, level, pos);
-        }
     }
 
     @Override
@@ -287,40 +236,14 @@ public abstract class FluidGeneric extends FlowingFluid {
 
     public void setBlockState(Level level, BlockPos pos, int fluidAmount) {
         pos = pos.immutable();
-        BlockState state = level.getBlockState(pos);
-        Block block = state.getBlock();
-        if (block instanceof IFluidLoggable fluidLoggable) {
-            fluidLoggable.setBlockState(level, pos, state, this, fluidAmount);
-            return;
-        }
         this.setBlockStateInternal(level, pos, fluidAmount);
     }
 
     public void setBlockStateInternal(Level level, BlockPos pos, int amount) {
         int layers = Mth.ceil(amount / 12_500.0);
-        int missing = layers * 12_500 - amount;
-        boolean isFull = missing == 0;
-        BlockState stateForPlacement = this.getBlockstate(layers, isFull);
+        BlockState stateForPlacement = this.getBlockstate(layers, true);
         level.setBlockAndUpdate(pos, stateForPlacement);
-        if (!isFull) {
-            BlockEntity tile = level.getBlockEntity(pos);
-            if (tile instanceof TELiquid teLiquid) {
-                teLiquid.setMissingLiquid(missing);
-            }
-            else {
-                Evolution.warn("Invalid tile entity for fluid at {}: {}", pos, tile);
-            }
-        }
-        else {
-            level.removeBlockEntity(pos);
-        }
-        for (Direction dir : DirectionUtil.ALL) {
-            BlockPos offsetPos = pos.relative(dir);
-            BlockState stateAtOffset = level.getBlockState(offsetPos);
-            if (stateAtOffset.getBlock() instanceof IFluidLoggable) {
-                BlockUtils.scheduleBlockTick(level, offsetPos, this.tickRate);
-            }
-        }
+        level.removeBlockEntity(pos);
     }
 
     @Override
@@ -365,7 +288,6 @@ public abstract class FluidGeneric extends FlowingFluid {
                 }
                 int stay = rlThis - amountToSwap;
                 this.setBlockState(level, pos, stay);
-                onReplace(level, this.auxPos, stateAtOffset);
                 int receive = amountToSwap + rlAtPos;
                 this.setBlockState(level, this.auxPos, receive);
                 break;
@@ -407,7 +329,6 @@ public abstract class FluidGeneric extends FlowingFluid {
                 int rlAtPos = getFluidAmount(level, posDown, fluidAtFall);
                 int amountForFall = Math.min(rlThis + rlAtPos, getCapacity(stateAtFall));
                 this.setBlockState(level, posDown, amountForFall);
-                onReplace(level, posDown, stateAtFall);
                 int amountRemaining = rlThis + rlAtPos - amountForFall;
                 this.setBlockState(level, pos, amountRemaining);
                 return true;

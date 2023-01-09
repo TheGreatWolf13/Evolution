@@ -2,8 +2,6 @@ package tgw.evolution.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -14,7 +12,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraftforge.common.IPlantable;
 
-public class BlockBush extends BlockGeneric implements IPlantable, IReplaceable {
+public class BlockBush extends BlockPhysics implements IPlantable, IReplaceable, IPoppable {
 
     protected BlockBush(Properties builder) {
         super(builder);
@@ -48,17 +46,17 @@ public class BlockBush extends BlockGeneric implements IPlantable, IReplaceable 
     }
 
     @Override
-    public NonNullList<ItemStack> getDrops(Level level, BlockPos pos, BlockState state) {
-        return NonNullList.of(ItemStack.EMPTY, new ItemStack(this));
-    }
-
-    @Override
     public float getFrictionCoefficient(BlockState state) {
         return 0;
     }
 
     @Override
     public int getLightBlock(BlockState state, BlockGetter level, BlockPos pos) {
+        return 0;
+    }
+
+    @Override
+    public double getMass(Level level, BlockPos pos, BlockState state) {
         return 0;
     }
 
@@ -83,13 +81,13 @@ public class BlockBush extends BlockGeneric implements IPlantable, IReplaceable 
 
     @Override
     public BlockState updateShape(BlockState state,
-                                  Direction facing,
-                                  BlockState facingState,
+                                  Direction direction,
+                                  BlockState fromState,
                                   LevelAccessor level,
-                                  BlockPos currentPos,
-                                  BlockPos facingPos) {
-        return !state.canSurvive(level, currentPos) ?
+                                  BlockPos pos,
+                                  BlockPos fromPos) {
+        return !state.canSurvive(level, pos) ?
                Blocks.AIR.defaultBlockState() :
-               super.updateShape(state, facing, facingState, level, currentPos, facingPos);
+               super.updateShape(state, direction, fromState, level, pos, fromPos);
     }
 }

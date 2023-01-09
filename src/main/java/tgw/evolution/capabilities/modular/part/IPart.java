@@ -7,7 +7,7 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.util.INBTSerializable;
 import tgw.evolution.capabilities.modular.MaterialInstance;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.items.IDurability;
 import tgw.evolution.items.modular.part.ItemPart;
 import tgw.evolution.util.constants.HarvestLevel;
@@ -48,7 +48,7 @@ public interface IPart<T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>
 
     T getType();
 
-    void init(T type, ItemMaterial material);
+    void init(T type, Material material);
 
     boolean isBroken();
 

@@ -31,7 +31,7 @@ public class TEKnapping extends BlockEntity {
         if (this.level != null && !this.level.isClientSide) {
             IRockVariant block = (IRockVariant) this.level.getBlockState(this.worldPosition).getBlock();
             if (this.parts == this.type.getPattern()) {
-                this.spawnDrops(block.getVariant().getKnappedStack(this.type));
+                this.spawnDrops(block.rockVariant().getKnappedStack(this.type));
                 player.awardStat(EvolutionStats.TIMES_KNAPPING);
             }
         }

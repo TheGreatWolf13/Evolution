@@ -1422,7 +1422,10 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Overwrite
     public void travel(Vec3 travelVector) {
         if (this.isEffectiveAi() || this.isControlledByLocalInstance()) {
-            if (this.level.getChunkAt(this.blockPosition()).isEmpty()) {
+            //noinspection ConstantConditions
+            if (this.level.isClientSide &&
+                !((Object) this instanceof Player player && (player.isSpectator() || player.isCreative())) &&
+                this.level.getChunkAt(this.blockPosition()).isEmpty()) {
                 //Prevents players from moving in unloaded chunks, gaining momentum and then taking damage when the ground finally loads.
                 return;
             }

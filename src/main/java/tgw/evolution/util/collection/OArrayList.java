@@ -14,6 +14,10 @@ public class OArrayList<K> extends ObjectArrayList<K> implements OList<K> {
         super(c);
     }
 
+    public OArrayList(final int capacity) {
+        super(capacity);
+    }
+
     public OArrayList(ObjectCollection<? extends K> c) {
         super(c);
     }

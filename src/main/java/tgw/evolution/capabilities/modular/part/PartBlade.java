@@ -7,12 +7,11 @@ import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.material.Material;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.init.ItemMaterial;
+import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPartBlade;
 
 import java.util.List;
@@ -77,7 +76,7 @@ public class PartBlade implements IPartHit<PartTypes.Blade, ItemPartBlade, PartB
     }
 
     @Override
-    public ReferenceSet<Material> getEffectiveMaterials() {
+    public ReferenceSet<net.minecraft.world.level.material.Material> getEffectiveMaterials() {
         return ReferenceSet.of();
     }
 
@@ -112,7 +111,7 @@ public class PartBlade implements IPartHit<PartTypes.Blade, ItemPartBlade, PartB
     }
 
     @Override
-    public void init(PartTypes.Blade type, ItemMaterial material) {
+    public void init(PartTypes.Blade type, Material material) {
         if (!material.isAllowedBy(type)) {
             throw new IllegalStateException("Material " + material + " does not allow BladeType " + type);
         }

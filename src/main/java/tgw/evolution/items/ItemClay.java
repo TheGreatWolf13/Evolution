@@ -9,7 +9,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionCreativeTabs;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketSCOpenMoldingGui;
@@ -19,7 +19,7 @@ import java.util.List;
 public class ItemClay extends ItemGenericPlaceable {
 
     public ItemClay() {
-        super(EvolutionItems.propMisc());
+        super(new Properties().tab(EvolutionCreativeTabs.MISC));
     }
 
     @Override
@@ -39,7 +39,7 @@ public class ItemClay extends ItemGenericPlaceable {
 
     @Override
     public BlockState getSneakingState(BlockPlaceContext context) {
-        return EvolutionBlocks.MOLDING.get().defaultBlockState();
+        return EvolutionBlocks.MOLDING_BLOCK.get().defaultBlockState();
     }
 
     @Override

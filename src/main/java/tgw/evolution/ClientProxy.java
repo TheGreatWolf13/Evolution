@@ -57,7 +57,7 @@ public class ClientProxy implements IProxy {
 //                                                                                                                                () ==
 //                                                                                                                                stack ? 1.0f : 0
 //                                                                                                                                .0f);
-        ItemProperties.register(EvolutionItems.shield_dev.get(), new ResourceLocation("blocking"),
+        ItemProperties.register(EvolutionItems.SHIELD_DEV.get(), new ResourceLocation("blocking"),
                                 (stack, level, entity, seed) -> entity != null && entity.isUsingItem() && entity.getUseItem() == stack ? 1.0F : 0.0F);
     }
 

@@ -14,7 +14,7 @@ import tgw.evolution.blocks.BlockFirewoodPile;
 import tgw.evolution.blocks.tileentities.TEFirewoodPile;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionCreativeTabs;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.util.constants.WoodVariant;
 
@@ -27,7 +27,7 @@ public class ItemFirewood extends ItemGenericPlaceable {
     private final WoodVariant variant;
 
     public ItemFirewood(WoodVariant variant) {
-        super(EvolutionItems.propTreesAndWood().stacksTo(16));
+        super(new Properties().tab(EvolutionCreativeTabs.TREES_AND_WOOD).stacksTo(16));
         this.variant = variant;
     }
 

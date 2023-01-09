@@ -29,7 +29,7 @@ public final class Toasts {
     }
 
     public static void register() {
-        ItemStack knapping = new ItemStack(EvolutionItems.ALL_ROCK.get(RockVariant.ANDESITE).get());
+        ItemStack knapping = new ItemStack(EvolutionItems.ROCKS.get(RockVariant.ANDESITE).get());
         for (RockVariant rock : RockVariant.VALUES) {
             Item rockItem;
             try {
@@ -49,7 +49,7 @@ public final class Toasts {
             }
             registerRecipe(rockItem, rockRecipes);
         }
-        ItemStack chopping = new ItemStack(EvolutionItems.ALL_CHOPPING_BLOCK.get(WoodVariant.ACACIA).get());
+        ItemStack chopping = new ItemStack(EvolutionItems.CHOPPING_BLOCKS.get(WoodVariant.OAK).get());
         for (WoodVariant wood : WoodVariant.VALUES) {
             Item woodItem = wood.getLogItem();
             //noinspection ObjectAllocationInLoop
@@ -66,7 +66,7 @@ public final class Toasts {
         registerRecipe(index++, trigger, toasts);
     }
 
-    public static void registerRecipe(int id, Item trigger, ToastHolderRecipe... toasts) {
+    private static void registerRecipe(int id, Item trigger, ToastHolderRecipe... toasts) {
         if (toasts.length == 0) {
             throw new IllegalStateException("Cannot register empty toast!");
         }
@@ -74,7 +74,7 @@ public final class Toasts {
         RECIPES.put(id, toasts);
     }
 
-    public static void registerRecipe(int id, Item trigger, List<ToastHolderRecipe> toasts) {
+    private static void registerRecipe(int id, Item trigger, List<ToastHolderRecipe> toasts) {
         registerRecipe(id, trigger, toasts.toArray(new ToastHolderRecipe[toasts.size()]));
     }
 }

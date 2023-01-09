@@ -9,8 +9,6 @@ import tgw.evolution.Evolution;
 
 public final class EvolutionSounds {
 
-    public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, Evolution.MODID);
-
     public static final RegistryObject<SoundEvent> FIST_PUNCHES_BLOCK;
     public static final RegistryObject<SoundEvent> METAL_SPEAR_HIT_ENTITY;
     public static final RegistryObject<SoundEvent> METAL_SPEAR_THROW;
@@ -27,6 +25,8 @@ public final class EvolutionSounds {
     public static final RegistryObject<SoundEvent> TREE_FALLING;
     public static final RegistryObject<SoundEvent> WOOD_BREAK;
     public static final RegistryObject<SoundEvent> WOOD_COLLAPSE;
+
+    private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, Evolution.MODID);
 
     static {
         FIST_PUNCHES_BLOCK = register("fist_punches_block");

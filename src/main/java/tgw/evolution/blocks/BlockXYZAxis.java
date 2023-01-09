@@ -10,10 +10,10 @@ import org.jetbrains.annotations.Nullable;
 
 import static tgw.evolution.init.EvolutionBStates.AXIS;
 
-public abstract class BlockXYZAxis extends BlockGravity {
+public abstract class BlockXYZAxis extends BlockPhysics {
 
-    public BlockXYZAxis(Properties builder, int mass) {
-        super(builder, mass);
+    public BlockXYZAxis(Properties builder, double mass) {
+        super(builder);
         this.registerDefaultState(this.defaultBlockState().setValue(AXIS, Direction.Axis.Y));
     }
 

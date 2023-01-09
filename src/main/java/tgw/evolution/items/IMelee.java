@@ -133,18 +133,18 @@ public interface IMelee {
     boolean shouldPlaySheatheSound(ItemStack stack);
 
     enum BasicAttackType implements IAttackType {
-        AXE_STRIKE_1(12, new ColliderHitbox(HitboxType.NONE, -0.75 * 0.85, 0, -5 * Mth.SQRT_OF_TWO * 0.85, 0.75 * 0.85, -5 * Mth.SQRT_OF_TWO * 0.85,
-                                            -9 * Mth.SQRT_OF_TWO * 0.85)),
+        AXE_STRIKE_1(12, new ColliderHitbox(HitboxType.NONE, -0.75 * 0.85, 0, -5 * 0.85 * Mth.SQRT_OF_TWO, 0.75 * 0.85, -5 * 0.85 * Mth.SQRT_OF_TWO,
+                                            -9 * 0.85 * Mth.SQRT_OF_TWO)),
         HAMMER_STRIKE_1(12, null),
-        HOE_STRIKE_1(12, new ColliderHitbox(HitboxType.NONE, -1.25 * 0.85, 0, -6 * Mth.SQRT_OF_TWO * 0.85, 1.25 * 0.85, -5 * Mth.SQRT_OF_TWO * 0.85,
-                                            -9 * Mth.SQRT_OF_TWO * 0.85)),
-        JAVELIN_THRUST(15, new ColliderHitbox(HitboxType.NONE, -0.5 * 0.85, -1.5 * Mth.SQRT_OF_TWO * 0.85, -14 * Mth.SQRT_OF_TWO * 0.85, 0.5 * 0.85,
-                                              1.5 * Mth.SQRT_OF_TWO * 0.85, -8 * Mth.SQRT_OF_TWO * 0.85)),
+        HOE_STRIKE_1(12, new ColliderHitbox(HitboxType.NONE, -1.25 * 0.85, 0, -6 * 0.85 * Mth.SQRT_OF_TWO, 1.25 * 0.85, -5 * 0.85 * Mth.SQRT_OF_TWO,
+                                            -9 * 0.85 * Mth.SQRT_OF_TWO)),
+        JAVELIN_THRUST(15, new ColliderHitbox(HitboxType.NONE, -0.5 * 0.85, -1.5 * 0.85 * Mth.SQRT_OF_TWO, -14 * 0.85 * Mth.SQRT_OF_TWO, 0.5 * 0.85,
+                                              1.5 * 0.85 * Mth.SQRT_OF_TWO, -8 * 0.85 * Mth.SQRT_OF_TWO)),
         MACE_STRIKE_1(12, null),
-        PICKAXE_STRIKE_1(12, new ColliderHitbox(HitboxType.NONE, -1 * 0.85, -4 * Mth.SQRT_OF_TWO * 0.85, -4 * Mth.SQRT_OF_TWO * 0.85, 1 * 0.85,
-                                                4 * Mth.SQRT_OF_TWO * 0.85, -7 * Mth.SQRT_OF_TWO * 0.85)),
-        SHOVEL_STRIKE_1(12, new ColliderHitbox(HitboxType.NONE, 0, -2 * Mth.SQRT_OF_TWO * 0.85, -6 * Mth.SQRT_OF_TWO * 0.85, -1.5 * 0.85,
-                                               2 * Mth.SQRT_OF_TWO * 0.85, -10 * Mth.SQRT_OF_TWO * 0.85, false)),
+        PICKAXE_STRIKE_1(12, new ColliderHitbox(HitboxType.NONE, -1 * 0.85, -4 * 0.85 * Mth.SQRT_OF_TWO, -4 * 0.85 * Mth.SQRT_OF_TWO, 1 * 0.85,
+                                                4 * 0.85 * Mth.SQRT_OF_TWO, -7 * 0.85 * Mth.SQRT_OF_TWO)),
+        SHOVEL_STRIKE_1(12, new ColliderHitbox(HitboxType.NONE, 0, -2 * 0.85 * Mth.SQRT_OF_TWO, -6 * 0.85 * Mth.SQRT_OF_TWO, -1.5 * 0.85,
+                                               2 * 0.85 * Mth.SQRT_OF_TWO, -10 * 0.85 * Mth.SQRT_OF_TWO, false)),
         TORCH_SWEEP(10, null);
 
         private final int attackTime;

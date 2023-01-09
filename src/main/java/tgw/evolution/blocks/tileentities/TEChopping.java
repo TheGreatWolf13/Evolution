@@ -17,11 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.Fluids;
-import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.BlockUtils;
-import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.events.ItemEvents;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.items.ItemLog;
@@ -29,12 +25,9 @@ import tgw.evolution.items.modular.ItemModular;
 import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.util.constants.WoodVariant;
 
-public class TEChopping extends BlockEntity implements ILoggable {
+public class TEChopping extends BlockEntity {
 
     private byte breakProgress;
-    @Nullable
-    private FluidGeneric fluid;
-    private int fluidAmount;
     private byte id = -1;
 
     public TEChopping(BlockPos pos, BlockState state) {
@@ -69,16 +62,6 @@ public class TEChopping extends BlockEntity implements ILoggable {
         return this.breakProgress;
     }
 
-    @Override
-    public Fluid getFluid() {
-        return this.fluid == null ? Fluids.EMPTY : this.fluid;
-    }
-
-    @Override
-    public int getFluidAmount() {
-        return this.fluidAmount;
-    }
-
     public ItemStack getItemStack() {
         return new ItemStack(WoodVariant.byId(this.id).getLogItem());
     }
@@ -110,8 +93,6 @@ public class TEChopping extends BlockEntity implements ILoggable {
         super.load(compound);
         this.id = compound.getByte("Wood");
         this.breakProgress = compound.getByte("Break");
-        this.fluid = FluidGeneric.byId(compound.getByte("Fluid"));
-        this.fluidAmount = compound.getInt("Amount");
     }
 
     @Override
@@ -137,20 +118,6 @@ public class TEChopping extends BlockEntity implements ILoggable {
         super.saveAdditional(compound);
         compound.putByte("Wood", this.id);
         compound.putByte("Break", this.breakProgress);
-        compound.putInt("Amount", this.fluidAmount);
-        compound.putByte("Fluid", this.fluid == null ? 0 : this.fluid.getId());
-    }
-
-    @Override
-    public void setAmountAndFluid(int amount, @Nullable FluidGeneric fluid) {
-        this.fluid = fluid;
-        this.setFluidAmount(amount);
-    }
-
-    @Override
-    public void setFluidAmount(int amount) {
-        this.fluidAmount = amount;
-        TEUtils.sendRenderUpdate(this);
     }
 
     public void setStack(Player player, InteractionHand hand) {
@@ -167,10 +134,6 @@ public class TEChopping extends BlockEntity implements ILoggable {
         return "TEChopping{" +
                "breakProgress=" +
                this.breakProgress +
-               ", fluid=" +
-               this.fluid +
-               ", fluidAmount=" +
-               this.fluidAmount +
                ", id=" +
                this.id +
                '}';
