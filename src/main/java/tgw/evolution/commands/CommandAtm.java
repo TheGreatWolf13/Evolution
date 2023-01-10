@@ -11,8 +11,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.level.ColumnPos;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -72,61 +70,48 @@ public final class CommandAtm implements Command<CommandSourceStack> {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("atm")
                                     .requires(cs -> cs.getEntity() instanceof Player && cs.hasPermission(2))
-                                    .then(Commands.literal("debug").executes(CMD))
-                                    .then(Commands.literal("reset").executes(CMD))
-                                    .then(Commands.literal("mark").then(Commands.argument("pos", ColumnPosArgument.columnPos()).executes(CMD)))
-                                    .then(Commands.literal("remove").then(Commands.argument("pos", ColumnPosArgument.columnPos()).executes(CMD))));
+                                    .then(Commands.literal("debug")
+                                                  .executes(CMD)
+                                                  .then(Commands.argument("pos", ColumnPosArgument.columnPos())
+                                                                .executes(CMD)))
+                                    .then(Commands.literal("reset")
+                                                  .executes(CMD)
+                                                  .then(Commands.argument("pos", ColumnPosArgument.columnPos())
+                                                                .executes(CMD))));
     }
 
     @Override
     public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        String input = context.getInput();
         CommandSourceStack source = context.getSource();
-        ServerLevel level = source.getLevel();
-        boolean add = false;
-        boolean remove = false;
-        if (input.contains("mark")) {
-            add = true;
+        BlockPos pos = source.getPlayerOrException().blockPosition();
+        int x = pos.getX();
+        int z = pos.getZ();
+        try {
+            ColumnPos columnPos = ColumnPosArgument.getColumnPos(context, "pos");
+            x = columnPos.x;
+            z = columnPos.z;
         }
-        else if (input.contains("remove")) {
-            remove = true;
+        catch (Throwable ignored) {
         }
-        if (add || remove) {
-            ColumnPos pos = ColumnPosArgument.getColumnPos(context, "pos");
-            LevelChunk chunk = level.getChunk(SectionPos.blockToSectionCoord(pos.x), SectionPos.blockToSectionCoord(pos.z));
-            if (chunk.isEmpty()) {
-                source.sendFailure(new TranslatableComponent("command.evolution.atm.chunkEmpty"));
-                return 0;
-            }
-            IChunkStorage chunkStorage = EvolutionCapabilities.getCapabilityOrThrow(chunk, CapabilityChunkStorage.INSTANCE);
-            if (add) {
-                if (chunkStorage.setContinuousAtmDebug(chunk, true)) {
-                    source.sendSuccess(new TranslatableComponent("command.evolution.atm.markSuccess"), true);
-                    return SINGLE_SUCCESS;
-                }
-                source.sendFailure(new TranslatableComponent("command.evolution.atm.markFail"));
-                return 0;
-            }
-            if (chunkStorage.setContinuousAtmDebug(chunk, false)) {
-                source.sendSuccess(new TranslatableComponent("command.evolution.atm.removeSuccess"), true);
-                return SINGLE_SUCCESS;
-            }
-            source.sendFailure(new TranslatableComponent("command.evolution.atm.removeFail"));
-            return 0;
-        }
-        ServerPlayer player = source.getPlayerOrException();
-        BlockPos pos = player.blockPosition();
-        LevelChunk chunk = level.getChunkAt(pos);
+        LevelChunk chunk = source.getLevel().getChunk(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z));
         if (chunk.isEmpty()) {
             source.sendFailure(new TranslatableComponent("command.evolution.atm.chunkEmpty"));
             return 0;
         }
-        int count = 0;
-        switch (input) {
-            case "/atm debug" -> count = fill(chunk, AIR, true, ATM_MAKER);
-            case "/atm reset" -> count = fill(chunk, ATM, false, AIR_MAKER);
+        IChunkStorage chunkStorage = EvolutionCapabilities.getCapabilityOrThrow(chunk, CapabilityChunkStorage.INSTANCE);
+        if (context.getInput().contains("debug")) {
+            if (chunkStorage.setContinuousAtmDebug(chunk, true)) {
+                source.sendSuccess(new TranslatableComponent("command.evolution.atm.debugSuccess"), true);
+                return SINGLE_SUCCESS;
+            }
+            source.sendFailure(new TranslatableComponent("command.evolution.atm.debugFail"));
+            return 0;
         }
-        source.sendSuccess(new TranslatableComponent("command.evolution.atm.success", count), true);
-        return SINGLE_SUCCESS;
+        if (chunkStorage.setContinuousAtmDebug(chunk, false)) {
+            source.sendSuccess(new TranslatableComponent("command.evolution.atm.resetSuccess"), true);
+            return SINGLE_SUCCESS;
+        }
+        source.sendFailure(new TranslatableComponent("command.evolution.atm.resetFail"));
+        return 0;
     }
 }

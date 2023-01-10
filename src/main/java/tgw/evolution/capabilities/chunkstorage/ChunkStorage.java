@@ -156,10 +156,16 @@ public class ChunkStorage implements IChunkStorage {
     public boolean setContinuousAtmDebug(LevelChunk chunk, boolean debug) {
         boolean old = this.continuousAtmDebug;
         this.continuousAtmDebug = debug;
-        if (old && !debug) {
-            CommandAtm.fill(chunk, CommandAtm.ATM, false, CommandAtm.AIR_MAKER);
+        boolean changed = old != debug;
+        if (changed) {
+            if (debug) {
+                CommandAtm.fill(chunk, CommandAtm.AIR, true, CommandAtm.ATM_MAKER);
+            }
+            else {
+                CommandAtm.fill(chunk, CommandAtm.ATM, false, CommandAtm.AIR_MAKER);
+            }
         }
-        return old != debug;
+        return changed;
     }
 
     @Override
