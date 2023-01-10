@@ -1,0 +1,100 @@
+{
+  "variants": {
+    "atm=0": {
+      "model": "evolution:block/atm_0"
+    },
+    "atm=1": {
+      "model": "evolution:block/atm_1"
+    },
+    "atm=2": {
+      "model": "evolution:block/atm_2"
+    },
+    "atm=3": {
+      "model": "evolution:block/atm_3"
+    },
+    "atm=4": {
+      "model": "evolution:block/atm_4"
+    },
+    "atm=5": {
+      "model": "evolution:block/atm_5"
+    },
+    "atm=6": {
+      "model": "evolution:block/atm_6"
+    },
+    "atm=7": {
+      "model": "evolution:block/atm_7"
+    },
+    "atm=8": {
+      "model": "evolution:block/atm_8"
+    },
+    "atm=9": {
+      "model": "evolution:block/atm_9"
+    },
+    "atm=10": {
+      "model": "evolution:block/atm_10"
+    },
+    "atm=11": {
+      "model": "evolution:block/atm_11"
+    },
+    "atm=12": {
+      "model": "evolution:block/atm_12"
+    },
+    "atm=13": {
+      "model": "evolution:block/atm_13"
+    },
+    "atm=14": {
+      "model": "evolution:block/atm_14"
+    },
+    "atm=15": {
+      "model": "evolution:block/atm_15"
+    },
+    "atm=16": {
+      "model": "evolution:block/atm_16"
+    },
+    "atm=17": {
+      "model": "evolution:block/atm_17"
+    },
+    "atm=18": {
+      "model": "evolution:block/atm_18"
+    },
+    "atm=19": {
+      "model": "evolution:block/atm_19"
+    },
+    "atm=20": {
+      "model": "evolution:block/atm_20"
+    },
+    "atm=21": {
+      "model": "evolution:block/atm_21"
+    },
+    "atm=22": {
+      "model": "evolution:block/atm_22"
+    },
+    "atm=23": {
+      "model": "evolution:block/atm_23"
+    },
+    "atm=24": {
+      "model": "evolution:block/atm_24"
+    },
+    "atm=25": {
+      "model": "evolution:block/atm_25"
+    },
+    "atm=26": {
+      "model": "evolution:block/atm_26"
+    },
+    "atm=27": {
+      "model": "evolution:block/atm_27"
+    },
+    "atm=28": {
+      "model": "evolution:block/atm_28"
+    },
+    "atm=29": {
+      "model": "evolution:block/atm_29"
+    },
+    "atm=30": {
+      "model": "evolution:block/atm_30"
+    },
+    "atm=31": {
+      "model": "evolution:block/atm_31"
+    }
+  }
+}

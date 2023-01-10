@@ -165,29 +165,29 @@ public abstract class LevelChunkMixin extends ChunkAccess implements ICapability
                     BlockState state = section.hasOnlyAir() ? Blocks.AIR.defaultBlockState() : section.getBlockState(x, localY, z);
                     if (state.isAir()) {
                         if (atm != 0) {
-                            ((ILevelChunkSectionPatch) section).getAtmStorage().set(x, localY, z, 63);
+                            ((ILevelChunkSectionPatch) section).getAtmStorage().set(x, localY, z, 31);
                             toUpdate.add(IAir.packInternalPos(x, y, z));
                         }
                     }
                     else if (state.getBlock() instanceof IAir air) {
                         if (air.allowsFrom(state, Direction.UP)) {
                             if (atm != 0) {
-                                ((ILevelChunkSectionPatch) section).getAtmStorage().set(x, localY, z, 63);
+                                ((ILevelChunkSectionPatch) section).getAtmStorage().set(x, localY, z, 31);
                                 toUpdate.add(IAir.packInternalPos(x, y, z));
                             }
                             else if (!air.allowsFrom(state, Direction.DOWN)) {
-                                atm = 63;
+                                atm = 31;
                             }
                         }
                         else {
-                            atm = 63;
-                            ((ILevelChunkSectionPatch) section).getAtmStorage().set(x, localY, z, 63);
+                            atm = 31;
+                            ((ILevelChunkSectionPatch) section).getAtmStorage().set(x, localY, z, 31);
                             toUpdate.add(IAir.packInternalPos(x, y, z));
                         }
                     }
                     else {
-                        atm = 63;
-                        ((ILevelChunkSectionPatch) section).getAtmStorage().set(x, localY, z, 63);
+                        atm = 31;
+                        ((ILevelChunkSectionPatch) section).getAtmStorage().set(x, localY, z, 31);
                     }
                     if (atm == 0 && deepestY > y) {
                         deepestY = y;
@@ -425,7 +425,7 @@ public abstract class LevelChunkMixin extends ChunkAccess implements ICapability
                     continue;
                 }
             }
-            int lowestAtm = 63;
+            int lowestAtm = 31;
             list.clear();
             for (Direction dir : DirectionUtil.ALL) {
                 if (!isAir && !air.allowsFrom(state, dir)) {
@@ -449,7 +449,7 @@ public abstract class LevelChunkMixin extends ChunkAccess implements ICapability
                     }
                 }
             }
-            if (lowestAtm < 63) {
+            if (lowestAtm < 31) {
                 ((ILevelChunkSectionPatch) section).getAtmStorage().set(x, y, z, lowestAtm);
                 while (!list.isEmpty()) {
                     Direction dir = list.getLastAndRemove();

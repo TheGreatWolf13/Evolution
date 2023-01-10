@@ -228,8 +228,8 @@ public class ChunkStorage implements IChunkStorage {
                 air = a;
             }
             else {
-                if (oldAtm != 63) {
-                    this.setAndUpdate(chunk, section, holder, x, y, z, 63, globalY, null);
+                if (oldAtm != 31) {
+                    this.setAndUpdate(chunk, section, holder, x, y, z, 31, globalY, null);
                 }
                 return;
             }
@@ -242,7 +242,7 @@ public class ChunkStorage implements IChunkStorage {
                 return;
             }
         }
-        int lowestAtm = 63;
+        int lowestAtm = 31;
         DirectionList list = DIRECTION_LIST.get();
         list.clear();
         for (Direction dir : DirectionUtil.ALL) {

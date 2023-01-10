@@ -56,7 +56,7 @@ public class BlockPlaceableItem extends BlockPhysics implements IReplaceable, IP
     }
 
     @Override
-    public @Range(from = 1, to = 63) int increment(BlockState state, Direction from) {
+    public @Range(from = 1, to = 31) int increment(BlockState state, Direction from) {
         return 1;
     }
 

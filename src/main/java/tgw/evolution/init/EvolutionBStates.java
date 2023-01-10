@@ -23,7 +23,7 @@ public final class EvolutionBStates {
     public static final BooleanProperty WEST = BlockStateProperties.WEST;
     //Int
     public static final IntegerProperty AGE_0_15 = BlockStateProperties.AGE_15;
-    public static final IntegerProperty ATM = IntegerProperty.create("atm", 0, 63);
+    public static final IntegerProperty ATM = IntegerProperty.create("atm", 0, 31);
     public static final IntegerProperty DISTANCE_0_7 = BlockStateProperties.STABILITY_DISTANCE;
     public static final IntegerProperty FIREWOOD_COUNT = IntegerProperty.create("log_count", 1, 16);
     public static final IntegerProperty LAYERS_0_16 = IntegerProperty.create("layers", 0, 16);
