@@ -263,7 +263,7 @@ public class DimensionOverworld {
         }
         else if (178.5f <= Math.abs(dRightAscension) || Math.abs(dRightAscension) <= -178.5f) {
             float dDeclination = Mth.wrapDegrees(seasonDeclination - monthlyDeclination);
-            if (Math.abs(dDeclination) <= 14.0f) {
+            if (Math.abs(dDeclination) <= 7.0f) {
                 if (dRightAscension > 0) {
                     dRightAscension -= 180;
                 }
@@ -274,7 +274,8 @@ public class DimensionOverworld {
                 this.isInLunarEclipse = true;
                 this.lunarEclipseDRightAscension = EarthHelper.getEclipseAmount(
                         Math.signum(dRightAscension) * dRightAscension * dRightAscension * 7.0f / (1.5f * 1.5f));
-                this.lunarEclipseDDeclination = EarthHelper.getEclipseAmount(dDeclination * dDeclination * dDeclination / 392.0f);
+                float latitudeFactor = 4 / 90.0f * (90 - Math.abs(this.latitude)) + 1;
+                this.lunarEclipseDDeclination = EarthHelper.getEclipseAmount(dDeclination * dDeclination * dDeclination / (49.0f * latitudeFactor));
                 this.eclipsePhase = EarthHelper.phaseByEclipseIntensity(this.getLunarEclipseRightAscensionIndex(),
                                                                         this.getLunarEclipseDeclinationIndex());
             }

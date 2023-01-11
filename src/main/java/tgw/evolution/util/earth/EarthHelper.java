@@ -71,7 +71,7 @@ public final class EarthHelper {
      * @return A float, from -9 to 9.
      */
     public static float getEclipseAmount(float dRightAsc) {
-        return dRightAsc * 9.0f / 7.0F;
+        return 9.0f / 7.0F * dRightAsc;
     }
 
     public static float getMoonAltitude(float sinLatitude, float cosLatitude, float rightAscension, float celestialRadius, float declination) {
@@ -172,7 +172,7 @@ public final class EarthHelper {
      * The maximum declination depends on the lunar standstill (which varies from -5.1 degrees to +5.1 degrees)
      * and the tilt of the Earth's orbit (23.5 degrees).
      * <p>
-     * Obs.: The {@code worldTime} is increased by 1000 ticks in order to make the first solar eclipse a total one instead of a partial.
+     * Obs.: The {@code worldTime} is increased by 1.9 hours in order to make the first solar eclipse a total one instead of a partial.
      *
      * @param worldTime The time of the world, in ticks.
      * @return A value in degrees representing the declination of the Moon in the skies from -28.6 to +28.6.
