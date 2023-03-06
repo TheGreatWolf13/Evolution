@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.ThreadingDetector;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Range;
+import tgw.evolution.Evolution;
 
 public class AtmStorage {
 
@@ -125,6 +126,10 @@ public class AtmStorage {
         try {
             this.set(16 * (x & 0b11) + z, 20 * y + 5 * (x >> 2), value);
         }
+        catch (Exception e) {
+            Evolution.error("Atm Storage encountered an error at {}, {}, {}; value = {}", x, y, z, value);
+            Evolution.error(e.getMessage());
+        }
         finally {
             this.release();
         }
@@ -132,7 +137,13 @@ public class AtmStorage {
 
     private void set(int localZ, int offset, int value) {
         assert 0 <= value && value <= 31 : "Value out of bounds: " + value;
-        if (value != 0) {
+        if (value == 0) {
+            if (this.nonEmptyCount == 0) {
+                return;
+            }
+            this.data = new long[5 * 4_096 / 64];
+        }
+        else {
             if (this.nonEmptyCount++ == 0) {
                 this.data = new long[5 * 4_096 / 64];
             }
