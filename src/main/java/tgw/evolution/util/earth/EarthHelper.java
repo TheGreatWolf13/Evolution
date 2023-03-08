@@ -235,6 +235,6 @@ public final class EarthHelper {
      */
     public static float sunSeasonalDeclination(long worldTime) {
         float dayTime = (float) worldTime / Time.TICKS_PER_DAY + Date.DAYS_SINCE_MARCH_EQUINOX;
-        return ECLIPTIC_INCLINATION * Mth.sin(Mth.TWO_PI * dayTime / Time.DAYS_PER_YEAR);
+        return ECLIPTIC_INCLINATION * Mth.sin(Mth.TWO_PI / Time.DAYS_PER_YEAR * dayTime);
     }
 }
