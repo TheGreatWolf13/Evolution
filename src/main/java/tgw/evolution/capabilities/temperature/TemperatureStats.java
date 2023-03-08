@@ -1,6 +1,7 @@
 package tgw.evolution.capabilities.temperature;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionAttributes;
@@ -49,33 +50,6 @@ public class TemperatureStats implements ITemperature {
     private byte flags;
     private boolean needsUpdate = true;
     private byte ticks;
-
-    private static double getBiomeSurfaceTemperature(ServerPlayer player, int xOffset, int zOffset) {
-        //TODO biome surface temperature is a function of the biome itself, time of the day, season and weather
-        return 20;
-    }
-
-    private static double getTemperatureBasedOnHeight(double baseTemp, double y) {
-        //Temperature will fluctuate above y=80 and below y=60
-        //IRL, temperature at 11km is -56.5ºC
-        //Temperature at 1 km is -56.5ºC
-        //Temperature at y = -64 is 1ºC
-        if (60 < y && y < 80) {
-            return baseTemp;
-        }
-        if (y >= 1_000) {
-            return -56.5;
-        }
-        if (y < -64) {
-            return 1;
-        }
-        if (y >= 80) {
-            double t = MathHelper.relativize(y, 80, 1_000);
-            return t * -56.5 + (1 - t) * baseTemp;
-        }
-        double t = MathHelper.relativize(y, -64, 60);
-        return t * baseTemp + (1 - t);
-    }
 
     private void calculateZone(ServerPlayer player) {
         if ((this.flags & 0b11) == 0) {
@@ -289,13 +263,10 @@ public class TemperatureStats implements ITemperature {
     }
 
     private void updateDesiredTemperature(ServerPlayer player) {
-        double temp0 = getBiomeSurfaceTemperature(player, 0, 0);
-        double temp1 = getBiomeSurfaceTemperature(player, 10, 0);
-        double temp2 = getBiomeSurfaceTemperature(player, -10, 0);
-        double temp3 = getBiomeSurfaceTemperature(player, 0, 10);
-        double temp4 = getBiomeSurfaceTemperature(player, 0, -10);
-        double averageSurfaceTemp = (temp0 + temp1 + temp2 + temp3 + temp4) / 5;
-        this.desiredTemperature = getTemperatureBasedOnHeight(averageSurfaceTemp, player.getY());
+        ServerLevel level = player.getLevel();
+        try (Temperature temperature = Temperature.getInstance(level, player.getX(), player.getY() + 0.5, player.getZ(), level.getDayTime())) {
+            this.desiredTemperature = Temperature.K2C(temperature.getLocalTemperature());
+        }
         if (player.isSprinting()) {
             this.desiredTemperature += 2;
         }

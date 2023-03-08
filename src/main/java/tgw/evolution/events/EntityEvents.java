@@ -15,8 +15,10 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -33,8 +35,11 @@ import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.entity.living.*;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
+import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
+import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
@@ -74,6 +79,7 @@ import tgw.evolution.util.constants.SkinType;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.earth.ClimateZone;
 import tgw.evolution.util.earth.WindVector;
+import tgw.evolution.util.math.Metric;
 import tgw.evolution.util.math.Units;
 
 import java.util.*;
@@ -84,6 +90,7 @@ public class EntityEvents {
     public static final WindVector WIND = new WindVector();
     public static final Map<UUID, SkinType> SKIN_TYPE = new O2ROpenHashMap<>();
     private static final RandomGenerator RANDOM = new Random();
+    private static final double[] LAST_TEMPERATURES = new double[20];
 
     public static float calculateFallDamage(LivingEntity entity, double velocity, double distanceOfSlowDown, boolean isWater) {
         if (velocity == 0) {
@@ -436,6 +443,21 @@ public class EntityEvents {
             profiler.popPush("status");
             //Handles Status Updates
             if (!player.level.isClientSide) {
+                long time = player.level.getDayTime();
+                try (Temperature temperature = Temperature.getInstance((ServerLevel) player.level, player.getX(), player.getY(), player.getZ(),
+                                                                       time)) {
+                    LAST_TEMPERATURES[(int) (time % 20)] = Temperature.K2C(temperature.getAmbientBasedTemperature());
+                }
+                catch (Exception e) {
+                    Evolution.warn("An exception was thrown while calculating temperature!");
+                }
+                if (player.isCrouching() && time % 20 == 0) {
+                    double sum = 0;
+                    for (double lastTemperature : LAST_TEMPERATURES) {
+                        sum += lastTemperature;
+                    }
+                    Evolution.info("Average Temperature at {} is {}\u00B0C", time, Metric.TWO_PLACES.format(sum / 20.0));
+                }
                 //Ticks Player systems
                 if (!player.isCreative() && !player.isSpectator()) {
                     ServerPlayer sPlayer = (ServerPlayer) player;
@@ -533,23 +555,5 @@ public class EntityEvents {
     @SubscribeEvent
     public void onServerStop(ServerStoppedEvent event) {
         EvolutionNetwork.resetCache();
-    }
-
-    @SubscribeEvent
-    public void onSetAttackTarget(LivingSetAttackTargetEvent event) {
-        if (event.getEntity() instanceof Mob mob) {
-            if (mob.getTarget() != null && event.getTarget() != null) {
-                MobEffectInstance effect = mob.getEffect(MobEffects.BLINDNESS);
-                if (effect != null) {
-                    int effectLevel = 3 - effect.getAmplifier();
-                    if (effectLevel < 0) {
-                        effectLevel = 0;
-                    }
-                    if (mob.distanceTo(event.getTarget()) > effectLevel) {
-                        mob.setTarget(null);
-                    }
-                }
-            }
-        }
     }
 }

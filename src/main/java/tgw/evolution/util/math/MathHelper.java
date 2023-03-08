@@ -101,7 +101,15 @@ public final class MathHelper {
      * @return The angle represented by this arc, in degrees.
      */
     public static float arcCosDeg(double value) {
-        return (float) (arcCos(value) * 180 / Math.PI);
+        return (float) (arcCos(value) * (180 / Math.PI));
+    }
+
+    public static double arcSin(double value) {
+        return Mth.atan2(value, Math.sqrt(1 - value * value));
+    }
+
+    public static double arcSinDeg(double value) {
+        return Math.toDegrees(arcSin(value));
     }
 
     public static boolean areStacksSimilar(ItemStack a, ItemStack b) {
