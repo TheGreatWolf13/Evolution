@@ -11,5 +11,5 @@ public interface IServerPlayerPatch {
 
     void setCameraUnload(boolean shouldUnload);
 
-    void setLastCameraSectionPos(SectionPos pos);
+    void setLastCameraSectionPos(@Nullable SectionPos pos);
 }

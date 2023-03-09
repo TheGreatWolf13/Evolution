@@ -147,7 +147,7 @@ public abstract class ServerPlayerMixin extends Player implements IServerPlayerP
     }
 
     @Override
-    public void setLastCameraSectionPos(SectionPos pos) {
+    public void setLastCameraSectionPos(@Nullable SectionPos pos) {
         this.lastCameraSectionPos = pos;
     }
 }
