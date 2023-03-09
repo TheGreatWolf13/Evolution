@@ -8,19 +8,32 @@ import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.SectionPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityLinkPacket;
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.server.level.*;
 import net.minecraft.util.Mth;
+import net.minecraft.util.thread.BlockableEventLoop;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.ProtoChunk;
+import net.minecraft.world.level.chunk.storage.ChunkSerializer;
 import net.minecraft.world.level.chunk.storage.ChunkStorage;
+import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.event.world.ChunkDataEvent;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableObject;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -31,14 +44,19 @@ import tgw.evolution.patches.IServerPlayerPatch;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 
-import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.BooleanSupplier;
+import java.util.stream.Collectors;
 
 @Mixin(ChunkMap.class)
 public abstract class ChunkMapMixin extends ChunkStorage {
 
+    @Shadow
+    @Final
+    private static Logger LOGGER;
     private final LongSet chunksLoaded = new LongOpenHashSet();
     private final LongSet chunksToLoad = new LongOpenHashSet();
     private final LongSet chunksToUnload = new LongOpenHashSet();
@@ -58,10 +76,18 @@ public abstract class ChunkMapMixin extends ChunkStorage {
     private ThreadedLevelLightEngine lightEngine;
     @Shadow
     @Final
+    private BlockableEventLoop<Runnable> mainThreadExecutor;
+    @Shadow
+    @Final
     private PlayerMap playerMap;
     @Shadow
     @Final
+    private PoiManager poiManager;
+    @Shadow
+    @Final
     private Long2ObjectLinkedOpenHashMap<ChunkHolder> updatingChunkMap;
+    @Shadow
+    private volatile Long2ObjectLinkedOpenHashMap<ChunkHolder> visibleChunkMap;
 
     public ChunkMapMixin(Path pRegionFolder, DataFixer pFixerUpper, boolean pSync) {
         super(pRegionFolder, pFixerUpper, pSync);
@@ -106,6 +132,12 @@ public abstract class ChunkMapMixin extends ChunkStorage {
     @Shadow
     @Nullable
     protected abstract ChunkHolder getVisibleChunkIfPresent(long p_140328_);
+
+    @Shadow
+    protected abstract boolean isExistingChunkFull(ChunkPos pChunkPos);
+
+    @Shadow
+    protected abstract byte markPosition(ChunkPos p_140230_, ChunkStatus.ChunkType p_140231_);
 
     /**
      * @author TheGreatWolf
@@ -368,6 +400,83 @@ public abstract class ChunkMapMixin extends ChunkStorage {
             }
         }
     }
+
+    @Shadow
+    protected abstract void processUnloads(BooleanSupplier pHasMoreTime);
+
+    /**
+     * @author TheGreatWolf
+     * @reason Fix MC-224729
+     */
+    @Overwrite
+    private boolean save(ChunkAccess chunk) {
+        this.poiManager.flush(chunk.getPos());
+        if (!chunk.isUnsaved()) {
+            return false;
+        }
+        chunk.setUnsaved(false);
+        ChunkPos pos = chunk.getPos();
+        try {
+            ChunkStatus status = chunk.getStatus();
+            if (status.getChunkType() != ChunkStatus.ChunkType.LEVELCHUNK) {
+                if (this.isExistingChunkFull(pos)) {
+                    return false;
+                }
+                if (status == ChunkStatus.EMPTY && chunk.getAllStarts().values().stream().noneMatch(StructureStart::isValid)) {
+                    return false;
+                }
+            }
+            this.level.getProfiler().incrementCounter("chunkSave");
+            CompoundTag compoundtag = ChunkSerializer.write(this.level, chunk);
+            MinecraftForge.EVENT_BUS.post(
+                    new ChunkDataEvent.Save(chunk, chunk.getWorldForge() != null ? chunk.getWorldForge() : this.level, compoundtag));
+            this.write(pos, compoundtag);
+            this.markPosition(pos, status.getChunkType());
+            return true;
+        }
+        catch (Exception exception) {
+            LOGGER.error("Failed to save chunk {},{}", pos.x, pos.z, exception);
+            return false;
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Fix MC-224729
+     */
+    @Overwrite
+    protected void saveAllChunks(boolean flush) {
+        if (flush) {
+            List<ChunkHolder> list = this.visibleChunkMap.values()
+                                                         .stream()
+                                                         //Remove filter to make it always accessible flush save
+                                                         .peek(ChunkHolder::refreshAccessibility)
+                                                         .collect(Collectors.toList());
+            MutableBoolean mutableboolean = new MutableBoolean();
+            do {
+                mutableboolean.setFalse();
+                //noinspection ObjectAllocationInLoop
+                list.stream().map(p_203102_ -> {
+                    CompletableFuture<ChunkAccess> completablefuture;
+                    do {
+                        completablefuture = p_203102_.getChunkToSave();
+                        //noinspection ObjectAllocationInLoop
+                        this.mainThreadExecutor.managedBlock(completablefuture::isDone);
+                    } while (completablefuture != p_203102_.getChunkToSave());
+                    return completablefuture.join();
+                }).filter(c -> c instanceof LevelChunk /*save proto chunks*/ || c instanceof ProtoChunk).filter(this::save).forEach(
+                        p_203051_ -> mutableboolean.setTrue());
+            } while (mutableboolean.isTrue());
+            this.processUnloads(() -> true);
+            this.flushWorker();
+        }
+        else {
+            this.visibleChunkMap.values().forEach(this::saveChunkIfNeeded);
+        }
+    }
+
+    @Shadow
+    protected abstract boolean saveChunkIfNeeded(ChunkHolder p_198875_);
 
     /**
      * @author TheGreatWolf
