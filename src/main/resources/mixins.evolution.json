@@ -59,6 +59,7 @@
     "MinecraftServerMixin",
     "MobEffectInstanceMixin",
     "MobEffectMixin",
+    "NbtUtilsMixin",
     "NonNullListMixin",
     "OverlayRegistryMixin",
     "PlayerAdvancementsMixin",
