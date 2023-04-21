@@ -4,7 +4,7 @@ import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.init.EvolutionCapabilities;
-import tgw.evolution.init.Material;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.ItemPartHandle;
 
 public class PartHandle extends PartGrab<PartTypes.Handle, ItemPartHandle, PartHandle> {
@@ -30,9 +30,9 @@ public class PartHandle extends PartGrab<PartTypes.Handle, ItemPartHandle, PartH
     }
 
     @Override
-    public void init(PartTypes.Handle type, Material material) {
+    public void init(PartTypes.Handle type, EvolutionMaterials material) {
         if (!material.isAllowedBy(type)) {
-            throw new IllegalStateException("Material " + material + " does not allow HandleType " + type);
+            throw new IllegalStateException("EvolutionMaterials " + material + " does not allow HandleType " + type);
         }
         this.set(type, new MaterialInstance(material));
     }

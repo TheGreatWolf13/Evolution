@@ -63,26 +63,35 @@ public final class EvolutionResources {
     public static final ModelResourceLocation TOOL_SWEEP = new ModelResourceLocation(Evolution.getResource("modular_tool_sweep"), "inventory");
     public static final ModelResourceLocation TOOL_THROWING = new ModelResourceLocation(Evolution.getResource("modular_tool_throwing"), "inventory");
     //          Blade
-    public static final BiEnumMap<Blade, Material, ModelResourceLocation> MODULAR_BLADES = new BiEnumMap<>(Blade.class, Material.class);
-    public static final BiEnumMap<Blade, Material, ModelResourceLocation> MODULAR_BLADES_SHARP = new BiEnumMap<>(Blade.class, Material.class);
+    public static final BiEnumMap<Blade, EvolutionMaterials, ModelResourceLocation> MODULAR_BLADES = new BiEnumMap<>(Blade.class,
+                                                                                                                     EvolutionMaterials.class);
+    public static final BiEnumMap<Blade, EvolutionMaterials, ModelResourceLocation> MODULAR_BLADES_SHARP = new BiEnumMap<>(Blade.class,
+                                                                                                                           EvolutionMaterials.class);
     //          Guard
-    public static final BiEnumMap<Guard, Material, ModelResourceLocation> MODULAR_GUARDS = new BiEnumMap<>(Guard.class, Material.class);
+    public static final BiEnumMap<Guard, EvolutionMaterials, ModelResourceLocation> MODULAR_GUARDS = new BiEnumMap<>(Guard.class,
+                                                                                                                     EvolutionMaterials.class);
     //          Half Head
-    public static final BiEnumMap<HalfHead, Material, ModelResourceLocation> MODULAR_HALF_HEADS = new BiEnumMap<>(HalfHead.class,
-                                                                                                                  Material.class);
-    public static final BiEnumMap<HalfHead, Material, ModelResourceLocation> MODULAR_HALF_HEADS_SHARP = new BiEnumMap<>(HalfHead.class,
-                                                                                                                        Material.class);
+    public static final BiEnumMap<HalfHead, EvolutionMaterials, ModelResourceLocation> MODULAR_HALF_HEADS = new BiEnumMap<>(HalfHead.class,
+                                                                                                                            EvolutionMaterials.class);
+    public static final BiEnumMap<HalfHead, EvolutionMaterials, ModelResourceLocation> MODULAR_HALF_HEADS_SHARP = new BiEnumMap<>(HalfHead.class,
+                                                                                                                                  EvolutionMaterials.class);
     //          Handle
-    public static final BiEnumMap<Handle, Material, ModelResourceLocation> MODULAR_HANDLES = new BiEnumMap<>(Handle.class, Material.class);
+    public static final BiEnumMap<Handle, EvolutionMaterials, ModelResourceLocation> MODULAR_HANDLES = new BiEnumMap<>(Handle.class,
+                                                                                                                       EvolutionMaterials.class);
     //          Head
-    public static final BiEnumMap<Head, Material, ModelResourceLocation> MODULAR_HEADS = new BiEnumMap<>(Head.class, Material.class);
-    public static final BiEnumMap<Head, Material, ModelResourceLocation> MODULAR_HEADS_SHARP = new BiEnumMap<>(Head.class, Material.class);
+    public static final BiEnumMap<Head, EvolutionMaterials, ModelResourceLocation> MODULAR_HEADS = new BiEnumMap<>(Head.class,
+                                                                                                                   EvolutionMaterials.class);
+    public static final BiEnumMap<Head, EvolutionMaterials, ModelResourceLocation> MODULAR_HEADS_SHARP = new BiEnumMap<>(Head.class,
+                                                                                                                         EvolutionMaterials.class);
     //          Hilt
-    public static final BiEnumMap<Hilt, Material, ModelResourceLocation> MODULAR_HILTS = new BiEnumMap<>(Hilt.class, Material.class);
+    public static final BiEnumMap<Hilt, EvolutionMaterials, ModelResourceLocation> MODULAR_HILTS = new BiEnumMap<>(Hilt.class,
+                                                                                                                   EvolutionMaterials.class);
     //          Pole
-    public static final BiEnumMap<Pole, Material, ModelResourceLocation> MODULAR_POLES = new BiEnumMap<>(Pole.class, Material.class);
+    public static final BiEnumMap<Pole, EvolutionMaterials, ModelResourceLocation> MODULAR_POLES = new BiEnumMap<>(Pole.class,
+                                                                                                                   EvolutionMaterials.class);
     //          Pommel
-    public static final BiEnumMap<Pommel, Material, ModelResourceLocation> MODULAR_POMMELS = new BiEnumMap<>(Pommel.class, Material.class);
+    public static final BiEnumMap<Pommel, EvolutionMaterials, ModelResourceLocation> MODULAR_POMMELS = new BiEnumMap<>(Pommel.class,
+                                                                                                                       EvolutionMaterials.class);
 
     static {
         BLOCK_KNAPPING = new ResourceLocation[RockVariant.VALUES.length];
@@ -108,7 +117,7 @@ public final class EvolutionResources {
             BLOCK_PIT_LOG[variant.getId()] = Evolution.getResource("textures/block/pit_" + variant.getName() + ".png");
         }
         for (Blade blade : Blade.VALUES) {
-            for (Material material : Material.VALUES) {
+            for (EvolutionMaterials material : EvolutionMaterials.VALUES) {
                 if (material.isAllowedBy(blade)) {
                     MODULAR_BLADES.put(blade, material, itemModel("modular/blade", blade, material, false));
                     if (blade.canBeSharpened()) {
@@ -118,14 +127,14 @@ public final class EvolutionResources {
             }
         }
         for (Guard guard : Guard.VALUES) {
-            for (Material material : Material.VALUES) {
+            for (EvolutionMaterials material : EvolutionMaterials.VALUES) {
                 if (material.isAllowedBy(guard)) {
                     MODULAR_GUARDS.put(guard, material, itemModel("modular/guard", guard, material, false));
                 }
             }
         }
         for (HalfHead halfHead : HalfHead.VALUES) {
-            for (Material material : Material.VALUES) {
+            for (EvolutionMaterials material : EvolutionMaterials.VALUES) {
                 if (material.isAllowedBy(halfHead)) {
                     MODULAR_HALF_HEADS.put(halfHead, material, itemModel("modular/halfhead", halfHead, material, false));
                     if (halfHead.canBeSharpened()) {
@@ -135,14 +144,14 @@ public final class EvolutionResources {
             }
         }
         for (Handle handle : Handle.VALUES) {
-            for (Material material : Material.VALUES) {
+            for (EvolutionMaterials material : EvolutionMaterials.VALUES) {
                 if (material.isAllowedBy(handle)) {
                     MODULAR_HANDLES.put(handle, material, itemModel("modular/handle", handle, material, false));
                 }
             }
         }
         for (Head head : Head.VALUES) {
-            for (Material material : Material.VALUES) {
+            for (EvolutionMaterials material : EvolutionMaterials.VALUES) {
                 if (material.isAllowedBy(head)) {
                     MODULAR_HEADS.put(head, material, itemModel("modular/head", head, material, false));
                     if (head.canBeSharpened()) {
@@ -152,21 +161,21 @@ public final class EvolutionResources {
             }
         }
         for (Hilt hilt : Hilt.VALUES) {
-            for (Material material : Material.VALUES) {
+            for (EvolutionMaterials material : EvolutionMaterials.VALUES) {
                 if (material.isAllowedBy(hilt)) {
                     MODULAR_HILTS.put(hilt, material, itemModel("modular/hilt", hilt, material, false));
                 }
             }
         }
         for (Pole pole : Pole.VALUES) {
-            for (Material material : Material.VALUES) {
+            for (EvolutionMaterials material : EvolutionMaterials.VALUES) {
                 if (material.isAllowedBy(pole)) {
                     MODULAR_POLES.put(pole, material, itemModel("modular/pole", pole, material, false));
                 }
             }
         }
         for (Pommel pommel : Pommel.VALUES) {
-            for (Material material : Material.VALUES) {
+            for (EvolutionMaterials material : EvolutionMaterials.VALUES) {
                 if (material.isAllowedBy(pommel)) {
                     MODULAR_POMMELS.put(pommel, material, itemModel("modular/pommel", pommel, material, false));
                 }
@@ -197,7 +206,7 @@ public final class EvolutionResources {
     private EvolutionResources() {
     }
 
-    private static ModelResourceLocation itemModel(String path, IPartType<?, ?, ?> part, Material material, boolean sharp) {
+    private static ModelResourceLocation itemModel(String path, IPartType<?, ?, ?> part, EvolutionMaterials material, boolean sharp) {
         String name = path + "/" + part.getName() + "_" + material.getName() + (sharp ? "_sharp" : "");
         ModelResourceLocation model = new ModelResourceLocation(Evolution.getResource(name), "inventory");
         MODULAR_MODELS.add(model);

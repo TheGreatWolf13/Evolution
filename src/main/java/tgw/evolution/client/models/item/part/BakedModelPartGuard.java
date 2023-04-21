@@ -6,8 +6,8 @@ import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelDataMap;
 import tgw.evolution.capabilities.modular.part.PartGuard;
 import tgw.evolution.capabilities.modular.part.PartTypes;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPartGuard;
 
 public class BakedModelPartGuard extends BakedModelPart<PartTypes.Guard, ItemPartGuard, PartGuard, BakedModelPartGuard.BakedModelFinalPartGuard> {
@@ -43,7 +43,7 @@ public class BakedModelPartGuard extends BakedModelPart<PartTypes.Guard, ItemPar
             return EvolutionResources.MODULAR_GUARDS.get(extraData.getData(this.type), extraData.getData(this.material));
         }
 
-        public void setData(PartTypes.Guard type, Material material) {
+        public void setData(PartTypes.Guard type, EvolutionMaterials material) {
             this.modelData.setData(this.type, type);
             this.modelData.setData(this.material, material);
         }

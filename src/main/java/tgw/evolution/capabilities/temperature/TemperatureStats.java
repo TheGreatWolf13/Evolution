@@ -10,7 +10,7 @@ import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketSCTemperatureData;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.Temperature;
-import tgw.evolution.util.earth.ClimateZone;
+import tgw.evolution.util.physics.ClimateZone;
 import tgw.evolution.util.math.MathHelper;
 
 public class TemperatureStats implements ITemperature {

@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.modular.part.IPart;
 import tgw.evolution.capabilities.modular.part.IPartType;
-import tgw.evolution.init.Material;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.ItemPart;
 
 import java.util.List;
@@ -26,7 +26,7 @@ import java.util.Random;
 
 public abstract class BakedModelFinalPart<T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>> implements BakedModel {
 
-    public final ModelProperty<Material> material = new ModelProperty<>();
+    public final ModelProperty<EvolutionMaterials> material = new ModelProperty<>();
     public final ModelProperty<T> type = new ModelProperty<>();
     protected final BakedModel baseModel;
     protected final IModelData modelData;
@@ -40,7 +40,7 @@ public abstract class BakedModelFinalPart<T extends IPartType<T, I, P>, I extend
 
     private ModelDataMap getEmptyIModelData(T nullPart) {
         ModelDataMap.Builder builder = new ModelDataMap.Builder();
-        builder.withInitial(this.material, Material.ANDESITE);
+        builder.withInitial(this.material, EvolutionMaterials.ANDESITE);
         builder.withInitial(this.type, nullPart);
         this.appendToEmptyModelData(builder);
         return builder.build();

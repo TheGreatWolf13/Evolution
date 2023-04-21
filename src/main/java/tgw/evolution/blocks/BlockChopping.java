@@ -103,7 +103,7 @@ public class BlockChopping extends BlockPhysics implements IReplaceable, ISittab
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 0.62F;
+        return 0.7F;
     }
 
     @Override

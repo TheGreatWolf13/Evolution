@@ -38,7 +38,7 @@ public class BlockCobblestone extends BlockPhysics implements IRockVariant, ISlo
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 1.0F;
+        return 0.8F;
     }
 
     @Override

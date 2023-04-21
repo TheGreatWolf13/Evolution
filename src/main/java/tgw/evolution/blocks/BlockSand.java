@@ -36,7 +36,7 @@ public class BlockSand extends BlockPhysics implements IRockVariant, ISloppable 
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 0.3f;
+        return 0.55f;
     }
 
     @Override

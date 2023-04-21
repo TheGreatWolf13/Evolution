@@ -56,11 +56,6 @@ public class BlockTorchWall extends BlockTorch {
     }
 
     @Override
-    public float getFrictionCoefficient(BlockState state) {
-        return 0;
-    }
-
-    @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return switch (state.getValue(DIRECTION_HORIZONTAL)) {
             case WEST -> EvolutionShapes.TORCH_WEST;

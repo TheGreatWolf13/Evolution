@@ -14,7 +14,6 @@ import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketCSCollision;
-import tgw.evolution.util.math.Units;
 
 public class BlockGlass extends BlockGeneric implements ICollisionBlock {
 
@@ -24,7 +23,6 @@ public class BlockGlass extends BlockGeneric implements ICollisionBlock {
 
     @Override
     public boolean collision(Level level, BlockPos pos, Entity entity, double speed, double mass, @Nullable Direction.Axis axis) {
-        speed *= Units.METER_PER_TICK;
         double kineticEnergy = speed * speed * mass / 2;
         double area = 0;
         if (axis == null) {
@@ -37,7 +35,7 @@ public class BlockGlass extends BlockGeneric implements ICollisionBlock {
             }
         }
         double energyDensity = kineticEnergy / area;
-        if (energyDensity >= 5_000) {
+        if (energyDensity >= 5_000 * 400) {
             BlockUtils.destroyBlock(level, pos);
             return true;
         }

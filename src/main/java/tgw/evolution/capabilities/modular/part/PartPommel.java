@@ -11,7 +11,7 @@ import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.init.Material;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.ItemPartPommel;
 
 import java.util.List;
@@ -107,9 +107,9 @@ public class PartPommel implements IPartHit<PartTypes.Pommel, ItemPartPommel, Pa
     }
 
     @Override
-    public void init(PartTypes.Pommel type, Material material) {
+    public void init(PartTypes.Pommel type, EvolutionMaterials material) {
         if (!material.isAllowedBy(type)) {
-            throw new IllegalStateException("Material " + material + " does not allow PommelType " + type);
+            throw new IllegalStateException("EvolutionMaterials " + material + " does not allow PommelType " + type);
         }
         this.set(type, new MaterialInstance(material));
     }

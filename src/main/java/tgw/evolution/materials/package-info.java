@@ -1,7 +1,7 @@
 @FieldsAreNotNullByDefault
 @MethodsReturnNotNullByDefault
 @ParametersAreNotNullByDefault
-package tgw.evolution.util.earth;
+package tgw.evolution.materials;
 
 import tgw.evolution.util.FieldsAreNotNullByDefault;
 import tgw.evolution.util.MethodsReturnNotNullByDefault;

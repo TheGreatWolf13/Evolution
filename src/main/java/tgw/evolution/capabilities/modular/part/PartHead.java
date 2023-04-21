@@ -14,8 +14,8 @@ import tgw.evolution.client.tooltip.TooltipDurability;
 import tgw.evolution.client.tooltip.TooltipMass;
 import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionDamage;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPartHead;
 
 import java.util.List;
@@ -135,9 +135,9 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
     }
 
     @Override
-    public void init(PartTypes.Head type, Material material) {
+    public void init(PartTypes.Head type, EvolutionMaterials material) {
         if (!material.isAllowedBy(type)) {
-            throw new IllegalStateException("Material " + material + " does not allow HeadType " + type);
+            throw new IllegalStateException("EvolutionMaterials " + material + " does not allow HeadType " + type);
         }
         this.set(type, new MaterialInstance(material));
         this.sharp();

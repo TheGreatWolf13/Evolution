@@ -16,10 +16,10 @@ import java.util.random.RandomGenerator;
 /**
  * Values for metals and alloys are real. Values for rocks are tweaked for balance, but a stronger rock is still stronger than a weaker one.
  */
-public enum Material {
+public enum EvolutionMaterials {
     //Stone
-    ANDESITE(0, "andesite", HarvestLevel.STONE, 2_565, 250, 25, 13, true),
-    BASALT(1, "basalt", HarvestLevel.STONE, 2_768, 234, 25, 13, true),
+    ANDESITE(0, "andesite", HarvestLevel.STONE, 2_425, 250, 40, 13, true),
+    BASALT(1, "basalt", HarvestLevel.STONE, 2_850, 234, 80, 13, true),
     CHALK(2, "chalk", HarvestLevel.STONE, 2_499, 31, 21, 10, true),
     CHERT(3, "chert", HarvestLevel.STONE, 2_564, 234, 24, 12, true),
     CONGLOMERATE(4, "conglomerate", HarvestLevel.STONE, 2_570, 63, 23, 10, true),
@@ -50,14 +50,14 @@ public enum Material {
     //Wood
     WOOD(28, "wood", HarvestLevel.HAND, 1_500, 4, 10, 105, false);
 
-    public static final Material[] VALUES = values();
-    private static final Byte2ReferenceMap<Material> REGISTRY;
+    public static final EvolutionMaterials[] VALUES = values();
+    private static final Byte2ReferenceMap<EvolutionMaterials> REGISTRY;
 
     static {
-        B2RMap<Material> map = new B2ROpenHashMap<>();
-        for (Material material : VALUES) {
+        B2RMap<EvolutionMaterials> map = new B2ROpenHashMap<>();
+        for (EvolutionMaterials material : VALUES) {
             if (map.put(material.id, material) != null) {
-                throw new IllegalStateException("Material " + material + " has duplicate id: " + material.id);
+                throw new IllegalStateException("EvolutionMaterials " + material + " has duplicate id: " + material.id);
             }
         }
         map.trimCollection();
@@ -75,7 +75,14 @@ public enum Material {
     private final int resistance;
     private final Component text;
 
-    Material(int id, String name, @HarvestLevel int harvestLevel, int density, int hardness, int modElasticity, int resistance, boolean brittle) {
+    EvolutionMaterials(int id,
+                       String name,
+                       @HarvestLevel int harvestLevel,
+                       int density,
+                       int hardness,
+                       int modElasticity,
+                       int resistance,
+                       boolean brittle) {
         this.id = MathHelper.toByteExact(id);
         this.harvestLevel = MathHelper.toShortExact(harvestLevel);
         this.name = name;
@@ -87,11 +94,11 @@ public enum Material {
         this.text = new TranslatableComponent("evolution.material." + name);
     }
 
-    public static Material byId(byte id) {
+    public static EvolutionMaterials byId(byte id) {
         return REGISTRY.getOrDefault(id, ANDESITE);
     }
 
-    public static Material getRandom(RandomGenerator random) {
+    public static EvolutionMaterials getRandom(RandomGenerator random) {
         return VALUES[random.nextInt(VALUES.length)];
     }
 

@@ -7,7 +7,7 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import tgw.evolution.util.earth.EarthHelper;
+import tgw.evolution.util.physics.EarthHelper;
 import tgw.evolution.util.math.Metric;
 
 public class ItemSextant extends ItemEv {

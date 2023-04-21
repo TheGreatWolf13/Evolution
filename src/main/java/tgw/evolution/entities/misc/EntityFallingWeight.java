@@ -9,6 +9,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
@@ -37,10 +38,12 @@ import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.patches.IEntityPatch;
-import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.ClipContextMutable;
 import tgw.evolution.util.math.Vec3d;
+import tgw.evolution.util.physics.Fluid;
+import tgw.evolution.util.physics.Physics;
+import tgw.evolution.util.physics.SI;
 
 import java.util.List;
 
@@ -113,12 +116,16 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         double motionY = 20 * this.getDeltaMovement().y;
         double kinecticEnergy = this.mass * motionY * motionY / 2;
         List<Entity> entities = this.level.getEntities(this, this.getBoundingBox(), EntitySelector.LIVING_ENTITY_STILL_ALIVE);
+        double weight;
+        try (Physics physics = Physics.getInstance(this, Fluid.AIR)) {
+            weight = this.mass * physics.calcAccGravity();
+        }
         for (int i = 0, l = entities.size(); i < l; i++) {
             Entity entity = entities.get(i);
             double forceOfImpact = kinecticEnergy / entity.getBbHeight();
             double area = entity.getBbWidth() * entity.getBbWidth();
             double pressure = forceOfImpact / area;
-            pressure += this.mass * Gravity.gravity(this.level.dimensionType()) / area;
+            pressure += weight / area;
             double damage = pressure / 344_738 * 100;
             entity.hurt(source, (float) damage);
         }
@@ -178,6 +185,11 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
     }
 
     @Override
+    public double getVolume() {
+        return 1 * SI.CUBIC_METER;
+    }
+
+    @Override
     public boolean isAttackable() {
         return false;
     }
@@ -214,35 +226,61 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         double motionX = motion.x;
         double motionY = motion.y;
         double motionZ = motion.z;
-        double gravity = 0;
-        if (!this.isNoGravity()) {
-            gravity = Gravity.gravity(this.level.dimensionType());
-        }
-        double horizontalDrag = this.isInWater() ? Gravity.horizontalWaterDrag(this) / this.mass : Gravity.horizontalDrag(this) / this.mass;
-        double verticalDrag = this.isInWater() ? Gravity.verticalWaterDrag(this) / this.mass : Gravity.verticalDrag(this) / this.mass;
-        double dragX = Math.signum(motionX) * motionX * motionX * horizontalDrag;
-        if (Math.abs(dragX) > Math.abs(motionX)) {
-            dragX = motionX;
-        }
-        double dragY = Math.signum(motionY) * motionY * motionY * verticalDrag;
-        if (Math.abs(dragY) > Math.abs(motionY)) {
-            dragY = motionY;
-        }
-        double dragZ = Math.signum(motionZ) * motionZ * motionZ * horizontalDrag;
-        if (Math.abs(dragZ) > Math.abs(motionZ)) {
-            dragZ = motionZ;
-        }
-        motionX -= dragX;
-        motionY += -gravity - dragY;
-        motionZ -= dragZ;
-        if (Math.abs(motionX) < 1e-6) {
-            motionX = 0;
-        }
-        if (Math.abs(motionY) < 1e-6) {
-            motionY = 0;
-        }
-        if (Math.abs(motionZ) < 1e-6) {
-            motionZ = 0;
+        try (Physics physics = Physics.getInstance(this, this.isInWater() ? Fluid.WATER : this.isInLava() ? Fluid.LAVA : Fluid.AIR)) {
+            double accY = 0;
+            if (!this.isNoGravity()) {
+                accY += physics.calcAccGravity();
+            }
+            if (!this.isOnGround()) {
+                accY += physics.calcForceBuoyancy(this) / this.mass;
+            }
+            //Pseudo-forces
+            double accCoriolisX = physics.calcAccCoriolisX();
+            double accCoriolisY = physics.calcAccCoriolisY();
+            double accCoriolisZ = physics.calcAccCoriolisZ();
+            double accCentrifugalY = physics.calcAccCentrifugalY();
+            double accCentrifugalZ = physics.calcAccCentrifugalZ();
+            //Dissipative Forces
+            double dissipativeX = 0;
+            double dissipativeZ = 0;
+            if (this.isOnGround() && (motionX != 0 || motionZ != 0)) {
+                double norm = Mth.fastInvSqrt(motionX * motionX + motionZ * motionZ);
+                double frictionAcc = physics.calcAccNormal() * physics.calcKineticFrictionCoef(this);
+                double frictionX = motionX * norm * frictionAcc;
+                double frictionZ = motionZ * norm * frictionAcc;
+                dissipativeX = frictionX;
+                if (Math.abs(dissipativeX) > Math.abs(motionX)) {
+                    dissipativeX = motionX;
+                }
+                dissipativeZ = frictionZ;
+                if (Math.abs(dissipativeZ) > Math.abs(motionZ)) {
+                    dissipativeZ = motionZ;
+                }
+            }
+            //Drag
+            //TODO wind speed
+            double windVelX = 0;
+            double windVelY = 0;
+            double windVelZ = 0;
+            double dragX = physics.calcForceDragX(windVelX) / this.mass;
+            double dragY = physics.calcForceDragY(windVelY) / this.mass;
+            double dragZ = physics.calcForceDragZ(windVelZ) / this.mass;
+            double maxDrag = Math.abs(windVelX - motionX);
+            if (Math.abs(dragX) > maxDrag) {
+                dragX = Math.signum(dragX) * maxDrag;
+            }
+            maxDrag = Math.abs(windVelY - motionY);
+            if (Math.abs(dragY) > maxDrag) {
+                dragY = Math.signum(dragY) * maxDrag;
+            }
+            maxDrag = Math.abs(windVelZ - motionZ);
+            if (Math.abs(dragZ) > maxDrag) {
+                dragZ = Math.signum(dragZ) * maxDrag;
+            }
+            //Update Motion
+            motionX += -dissipativeX + dragX + accCoriolisX;
+            motionY += accY + dragY + accCoriolisY + accCentrifugalY;
+            motionZ += -dissipativeZ + dragZ + accCoriolisZ + accCentrifugalZ;
         }
         this.setDeltaMovement(motionX, motionY, motionZ);
         this.move(MoverType.SELF, this.getDeltaMovement());

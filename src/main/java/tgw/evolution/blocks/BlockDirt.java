@@ -41,7 +41,7 @@ public class BlockDirt extends BlockPhysics implements IRockVariant, ISloppable 
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 0.55f;
+        return 0.63f;
     }
 
     @Override

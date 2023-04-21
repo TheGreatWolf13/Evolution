@@ -145,11 +145,6 @@ public class BlockClimbingStake extends BlockGeneric implements IReplaceable, IR
     }
 
     @Override
-    public float getFrictionCoefficient(BlockState state) {
-        return 0;
-    }
-
-    @Override
     public int getRopeLength() {
         return 64;
     }

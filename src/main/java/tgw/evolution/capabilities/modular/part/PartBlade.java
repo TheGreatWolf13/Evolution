@@ -11,7 +11,7 @@ import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.init.Material;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.ItemPartBlade;
 
 import java.util.List;
@@ -111,9 +111,9 @@ public class PartBlade implements IPartHit<PartTypes.Blade, ItemPartBlade, PartB
     }
 
     @Override
-    public void init(PartTypes.Blade type, Material material) {
+    public void init(PartTypes.Blade type, EvolutionMaterials material) {
         if (!material.isAllowedBy(type)) {
-            throw new IllegalStateException("Material " + material + " does not allow BladeType " + type);
+            throw new IllegalStateException("EvolutionMaterials " + material + " does not allow BladeType " + type);
         }
         this.set(type, new MaterialInstance(material));
         this.sharp();

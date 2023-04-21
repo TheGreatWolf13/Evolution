@@ -77,10 +77,9 @@ import tgw.evolution.util.collection.O2ROpenHashMap;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.SkinType;
 import tgw.evolution.util.damage.DamageSourceEv;
-import tgw.evolution.util.earth.ClimateZone;
-import tgw.evolution.util.earth.WindVector;
 import tgw.evolution.util.math.Metric;
-import tgw.evolution.util.math.Units;
+import tgw.evolution.util.physics.ClimateZone;
+import tgw.evolution.util.physics.WindVector;
 
 import java.util.*;
 import java.util.random.RandomGenerator;
@@ -96,7 +95,6 @@ public class EntityEvents {
         if (velocity == 0) {
             return 0;
         }
-        velocity *= Units.METER_PER_TICK;
         //TODO leg height
         double legHeight = PlayerHelper.LEG_HEIGHT;
         distanceOfSlowDown += legHeight;
@@ -109,7 +107,7 @@ public class EntityEvents {
         double area = entity.getBbWidth() * entity.getBbWidth();
         double pressureOfFall = forceOfImpact / area;
         double maxSupportedPressure = baseMass / (area * 0.035);
-        double deltaPressure = Math.max(pressureOfFall - maxSupportedPressure, 0);
+        double deltaPressure = Math.max(400 * pressureOfFall - maxSupportedPressure, 0);
         float amount = (float) Math.pow(deltaPressure, 1.7) / 750_000;
         if (amount >= 1) {
             if (isWater) {

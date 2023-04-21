@@ -29,6 +29,7 @@ import tgw.evolution.items.IProjectile;
 import tgw.evolution.items.ItemTorch;
 import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.physics.SI;
 
 public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
 
@@ -81,6 +82,11 @@ public class EntityTorch extends EntityGenericProjectile<EntityTorch> {
     @Override
     protected @Nullable IProjectile getProjectile() {
         return null;
+    }
+
+    @Override
+    public double getVolume() {
+        return 10.0 * 2 * 2 / 16 / 16 / 16 * SI.CUBIC_METER;
     }
 
     @Override

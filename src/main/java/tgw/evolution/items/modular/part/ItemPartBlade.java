@@ -3,7 +3,7 @@ package tgw.evolution.items.modular.part;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.modular.part.PartBlade;
 import tgw.evolution.capabilities.modular.part.PartTypes;
-import tgw.evolution.init.Material;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.util.math.MathHelper;
 
 public class ItemPartBlade extends ItemPart<PartTypes.Blade, ItemPartBlade, PartBlade> {
@@ -25,9 +25,9 @@ public class ItemPartBlade extends ItemPart<PartTypes.Blade, ItemPartBlade, Part
     @Override
     public ItemStack getDefaultInstance() {
         PartTypes.Blade blade = PartTypes.Blade.getRandom(MathHelper.RANDOM);
-        Material material = Material.getRandom(MathHelper.RANDOM);
+        EvolutionMaterials material = EvolutionMaterials.getRandom(MathHelper.RANDOM);
         while (!blade.hasVariantIn(material)) {
-            material = Material.getRandom(MathHelper.RANDOM);
+            material = EvolutionMaterials.getRandom(MathHelper.RANDOM);
         }
         return this.newStack(blade, material);
     }

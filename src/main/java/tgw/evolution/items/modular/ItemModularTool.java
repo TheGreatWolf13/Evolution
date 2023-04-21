@@ -25,8 +25,8 @@ import tgw.evolution.entities.projectiles.EntityGenericProjectile;
 import tgw.evolution.entities.projectiles.EntitySpear;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.init.Material;
 import tgw.evolution.items.IBackWeapon;
 import tgw.evolution.items.IThrowable;
 import tgw.evolution.items.ITwoHanded;
@@ -34,7 +34,7 @@ import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.math.MathHelper;
-import tgw.evolution.util.math.Units;
+import tgw.evolution.util.physics.SI;
 
 import java.util.function.Consumer;
 
@@ -45,9 +45,9 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     public static ItemStack createNew(PartTypes.Head headType,
-                                      Material headMaterial,
+                                      EvolutionMaterials headMaterial,
                                       PartTypes.Handle handleType,
-                                      Material handleMaterial,
+                                      EvolutionMaterials handleMaterial,
                                       boolean sharp) {
         if (!headMaterial.isAllowedBy(headType)) {
             throw new RuntimeException("Invalid material for " + headType.getName() + ": " + headMaterial.getName());
@@ -77,9 +77,9 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     public void fillItemCategory(CreativeModeTab tab, NonNullList<ItemStack> items) {
         if (this.allowdedIn(tab)) {
             for (PartTypes.Head head : PartTypes.Head.VALUES) {
-                for (Material material : Material.VALUES) {
+                for (EvolutionMaterials material : EvolutionMaterials.VALUES) {
                     if (material.isAllowedBy(head)) {
-                        items.add(createNew(head, material, PartTypes.Handle.ONE_HANDED, Material.WOOD, true));
+                        items.add(createNew(head, material, PartTypes.Handle.ONE_HANDED, EvolutionMaterials.WOOD, true));
                     }
                 }
             }
@@ -129,14 +129,14 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     @Override
     public ItemStack getDefaultInstance() {
         PartTypes.Head head = PartTypes.Head.getRandom(MathHelper.RANDOM);
-        Material headMaterial = Material.getRandom(MathHelper.RANDOM);
+        EvolutionMaterials headMaterial = EvolutionMaterials.getRandom(MathHelper.RANDOM);
         while (!head.hasVariantIn(headMaterial)) {
-            headMaterial = Material.getRandom(MathHelper.RANDOM);
+            headMaterial = EvolutionMaterials.getRandom(MathHelper.RANDOM);
         }
         PartTypes.Handle handle = PartTypes.Handle.getRandom(MathHelper.RANDOM);
-        Material handleMaterial = Material.getRandom(MathHelper.RANDOM);
+        EvolutionMaterials handleMaterial = EvolutionMaterials.getRandom(MathHelper.RANDOM);
         while (!handle.hasVariantIn(handleMaterial)) {
-            handleMaterial = Material.getRandom(MathHelper.RANDOM);
+            handleMaterial = EvolutionMaterials.getRandom(MathHelper.RANDOM);
         }
         return createNew(head, headMaterial, handle, handleMaterial, true);
     }
@@ -286,7 +286,7 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
 
     @Override
     public double projectileSpeed() {
-        return 16.5 * Units.METER_PER_SECOND;
+        return 16.5 * SI.METER / SI.SECOND;
     }
 
     @Override

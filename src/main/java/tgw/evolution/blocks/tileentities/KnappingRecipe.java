@@ -6,6 +6,7 @@ import tgw.evolution.util.math.MathHelper;
 
 public enum KnappingRecipe {
     NULL(0, Patterns.MATRIX_FALSE),
+    PRIMITIVE_KNIFE(7, Patterns.PRIMITIVE_KNIFE),
     AXE(1, Patterns.AXE_TRUE),
     SPEAR(2, Patterns.JAVELIN_TRUE),
     SHOVEL(3, Patterns.SHOVEL_TRUE),
@@ -33,6 +34,7 @@ public enum KnappingRecipe {
             case 4 -> HAMMER;
             case 5 -> HOE;
             case 6 -> KNIFE;
+            case 7 -> PRIMITIVE_KNIFE;
             default -> {
                 Evolution.warn("Could not find KnappingRecipe with id {}, replacing with NULL", id);
                 yield NULL;

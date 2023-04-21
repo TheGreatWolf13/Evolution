@@ -21,7 +21,7 @@ import tgw.evolution.capabilities.SerializableCapabilityProvider;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.part.IPart;
 import tgw.evolution.capabilities.modular.part.IPartType;
-import tgw.evolution.init.Material;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.IDurability;
 import tgw.evolution.items.IMass;
@@ -47,7 +47,7 @@ public abstract class ItemPart<T extends IPartType<T, I, P>, I extends ItemPart<
     public final void fillItemCategory(CreativeModeTab tab, NonNullList<ItemStack> items) {
         if (this.allowdedIn(tab)) {
             for (T t : this.iterable()) {
-                for (Material material : Material.VALUES) {
+                for (EvolutionMaterials material : EvolutionMaterials.VALUES) {
                     if (t.hasVariantIn(material)) {
                         //noinspection ObjectAllocationInLoop
                         items.add(this.newStack(t, material));
@@ -127,7 +127,7 @@ public abstract class ItemPart<T extends IPartType<T, I, P>, I extends ItemPart<
     }
 
     @Contract(pure = true, value = "_, _ -> new")
-    public final ItemStack newStack(T type, Material material) {
+    public final ItemStack newStack(T type, EvolutionMaterials material) {
         ItemStack stack = new ItemStack(this);
         this.getPartCap(stack).init(type, material);
         return stack;

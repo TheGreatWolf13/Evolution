@@ -139,7 +139,7 @@ public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, Ent
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 0.62f;
+        return 0.7f;
     }
 
     @Override

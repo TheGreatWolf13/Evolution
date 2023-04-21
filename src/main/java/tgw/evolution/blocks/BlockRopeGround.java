@@ -83,7 +83,7 @@ public class BlockRopeGround extends BlockGeneric implements IReplaceable {
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 0.5f;
+        return 0.6f;
     }
 
     @Override

@@ -2,6 +2,7 @@ package tgw.evolution.util.constants;
 
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Contract;
@@ -11,8 +12,9 @@ import tgw.evolution.capabilities.modular.part.IPart;
 import tgw.evolution.capabilities.modular.part.IPartType;
 import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.init.EvolutionItems;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.init.IVariant;
-import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPart;
 import tgw.evolution.util.UnregisteredFeatureException;
 import tgw.evolution.util.collection.B2RMap;
@@ -143,6 +145,7 @@ public enum RockVariant implements IVariant {
             case KNIFE -> this.getPart(PartTypes.Blade.KNIFE);
             case SHOVEL -> this.getPart(PartTypes.Head.SHOVEL);
             case SPEAR -> this.getPart(PartTypes.Head.SPEAR);
+            case PRIMITIVE_KNIFE -> new ItemStack(this.getPrimitiveKnife());
         };
     }
 
@@ -157,29 +160,29 @@ public enum RockVariant implements IVariant {
         return this.density;
     }
 
-    private Material getMaterial() {
+    private EvolutionMaterials getMaterial() {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant is not a valid material!");
-            case ANDESITE -> Material.ANDESITE;
-            case BASALT -> Material.BASALT;
-            case CHALK -> Material.CHALK;
-            case CHERT -> Material.CHERT;
-            case CONGLOMERATE -> Material.CONGLOMERATE;
-            case DACITE -> Material.DACITE;
-            case DIORITE -> Material.DIORITE;
-            case DOLOMITE -> Material.DOLOMITE;
-            case GABBRO -> Material.GABBRO;
-            case GNEISS -> Material.GNEISS;
-            case GRANITE -> Material.GRANITE;
-            case LIMESTONE -> Material.LIMESTONE;
-            case MARBLE -> Material.MARBLE;
-            case PHYLLITE -> Material.PHYLLITE;
-            case QUARTZITE -> Material.QUARTZITE;
-            case RED_SANDSTONE -> Material.RED_SANDSTONE;
-            case SANDSTONE -> Material.SANDSTONE;
-            case SCHIST -> Material.SCHIST;
-            case SHALE -> Material.SHALE;
-            case SLATE -> Material.SLATE;
+            case ANDESITE -> EvolutionMaterials.ANDESITE;
+            case BASALT -> EvolutionMaterials.BASALT;
+            case CHALK -> EvolutionMaterials.CHALK;
+            case CHERT -> EvolutionMaterials.CHERT;
+            case CONGLOMERATE -> EvolutionMaterials.CONGLOMERATE;
+            case DACITE -> EvolutionMaterials.DACITE;
+            case DIORITE -> EvolutionMaterials.DIORITE;
+            case DOLOMITE -> EvolutionMaterials.DOLOMITE;
+            case GABBRO -> EvolutionMaterials.GABBRO;
+            case GNEISS -> EvolutionMaterials.GNEISS;
+            case GRANITE -> EvolutionMaterials.GRANITE;
+            case LIMESTONE -> EvolutionMaterials.LIMESTONE;
+            case MARBLE -> EvolutionMaterials.MARBLE;
+            case PHYLLITE -> EvolutionMaterials.PHYLLITE;
+            case QUARTZITE -> EvolutionMaterials.QUARTZITE;
+            case RED_SANDSTONE -> EvolutionMaterials.RED_SANDSTONE;
+            case SANDSTONE -> EvolutionMaterials.SANDSTONE;
+            case SCHIST -> EvolutionMaterials.SCHIST;
+            case SHALE -> EvolutionMaterials.SHALE;
+            case SLATE -> EvolutionMaterials.SLATE;
         };
     }
 
@@ -197,6 +200,13 @@ public enum RockVariant implements IVariant {
         return switch (this) {
             case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a polished stone type!");
             default -> EvolutionBlocks.POLISHED_STONES.get(this).get();
+        };
+    }
+
+    public Item getPrimitiveKnife() {
+        return switch (this) {
+            case CLAY, PEAT -> throw new IllegalStateException("This variant does not have a primitive knife type!");
+            default -> EvolutionItems.PRIMITIVE_KNIVES.get(this).get();
         };
     }
 

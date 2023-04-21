@@ -30,6 +30,7 @@ import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.hitbox.IHitboxArmed;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.Vec3d;
+import tgw.evolution.util.physics.SI;
 
 public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements IAerodynamicEntity {
 
@@ -123,6 +124,12 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
 
     public ItemStack getStack() {
         return this.stack;
+    }
+
+    @Override
+    public double getVolume() {
+        //TODO
+        return 500 * SI.CUBIC_CENTIMETER;
     }
 
     @Override

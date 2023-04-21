@@ -7,9 +7,9 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.patches.ILevelChunkSectionPatch;
-import tgw.evolution.util.earth.ClimateZone;
-import tgw.evolution.util.earth.EarthHelper;
 import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.physics.ClimateZone;
+import tgw.evolution.util.physics.EarthHelper;
 import tgw.evolution.util.time.Time;
 
 /**
@@ -212,7 +212,8 @@ public final class Temperature implements ILocked {
 
     public static Temperature getInstance(ServerLevel level, double x, double y, double z, long t) {
         Temperature temperature = CACHE.get();
-        assert !temperature.isLocked() : "The local instance of Temperature is locked, you probably forgot to unlock it!";
+        assert !temperature.isLocked() : "The local instance of Temperature is locked, you probably forgot to unlock it! Use it with " +
+                                         "try-with-resources to unlock automatically.";
         temperature.x = x;
         temperature.y = y;
         temperature.z = z;

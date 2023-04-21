@@ -65,7 +65,7 @@ public class BlockLog extends BlockXYZAxis implements IWoodVariant {
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 0.62f;
+        return 0.7f;
     }
 
     @Override

@@ -75,7 +75,7 @@ public class BlockMolding extends BlockGeneric implements IReplaceable, EntityBl
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 0.45F;
+        return 0.6F;
     }
 
     @Override

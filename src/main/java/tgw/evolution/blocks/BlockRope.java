@@ -108,7 +108,7 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 0.5f;
+        return 0.6f;
     }
 
     @Override

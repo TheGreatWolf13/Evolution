@@ -23,7 +23,6 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
     private float tailIncZ;
     private int tailTimerX;
     private int tailTimerZ;
-
     public EntityCow(EntityType<EntityCow> type, Level level) {
         super(type, level);
         super.setAge(this.getAdultAge());
@@ -192,6 +191,12 @@ public class EntityCow extends EntityGenericAnimal<EntityCow> {
             return false;
         }
         return this.random.nextInt(5_000) == 0;
+    }
+
+    @Override
+    public double getVolume() {
+        //TODO implementation
+        return 0;
     }
 
     @Override

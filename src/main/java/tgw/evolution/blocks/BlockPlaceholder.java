@@ -20,6 +20,11 @@ public class BlockPlaceholder extends BlockPhysics {
     }
 
     @Override
+    public float getFrictionCoefficient(BlockState state) {
+        return 1.0f;
+    }
+
+    @Override
     public double getMass(Level level, BlockPos pos, BlockState state) {
         return 1_000_000;
     }

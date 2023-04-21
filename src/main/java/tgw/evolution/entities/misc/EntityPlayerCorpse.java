@@ -8,7 +8,6 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import joptsimple.internal.Strings;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -55,8 +54,10 @@ import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.patches.ISynchedEntityDataPatch;
 import tgw.evolution.util.EvolutionDataSerializers;
 import tgw.evolution.util.constants.NBTHelper;
-import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
+import tgw.evolution.util.physics.Fluid;
+import tgw.evolution.util.physics.Physics;
+import tgw.evolution.util.physics.SI;
 import tgw.evolution.util.time.Time;
 
 import java.util.Optional;
@@ -298,6 +299,11 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     }
 
     @Override
+    public double getVolume() {
+        return 70_000 * SI.CUBIC_CENTIMETER;
+    }
+
+    @Override
     public InteractionResult interact(Player player, InteractionHand hand) {
         if (!this.level.isClientSide) {
             NetworkHooks.openGui((ServerPlayer) player, new ContainerCorpseProvider(this), packet -> packet.writeInt(this.getId()));
@@ -457,60 +463,63 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         double motionX = motion.x;
         double motionY = motion.y;
         double motionZ = motion.z;
-        double gravity = 0;
-        if (!this.isNoGravity()) {
-            gravity = Gravity.gravity(this.level.dimensionType());
-        }
-        else {
-            motionY = 0;
-        }
-        BlockPos blockBelow = new BlockPos(this.getX(), this.getBoundingBox().minY - 1, this.getZ());
-        float slipperiness = this.level.getBlockState(blockBelow).getFriction(this.level, blockBelow, this);
-        if (Float.compare(slipperiness, 0.6F) < 0.01F) {
-            slipperiness = 0.15F;
-        }
-        float frictionCoef = this.onGround ? 1.0F - slipperiness : 0.0F;
-        double frictionX = 0;
-        double frictionZ = 0;
-        if (this.onGround) {
-            double norm = Mth.fastInvSqrt(motionX * motionX + motionZ * motionZ);
-            if (norm != 0) {
-                double frictionAcc = frictionCoef * gravity;
-                frictionX = motionX * norm * frictionAcc;
-                frictionZ = motionZ * norm * frictionAcc;
+        double mass = this.getBaseMass();
+        //TODO fix, add pseudo-forces
+        try (Physics physics = Physics.getInstance(this, this.isInWater() ? Fluid.WATER : this.isInLava() ? Fluid.LAVA : Fluid.AIR)) {
+            double accY = 0;
+            if (!this.isNoGravity()) {
+                accY += physics.calcAccGravity();
             }
-            if (Math.abs(motionX) < Math.abs(frictionX)) {
-                frictionX = motionX;
+            if (!this.isOnGround()) {
+                accY += physics.calcForceBuoyancy(this) / mass;
             }
-            if (Math.abs(motionZ) < Math.abs(frictionZ)) {
-                frictionZ = motionZ;
+            //Pseudo-forces
+            double accCoriolisX = physics.calcAccCoriolisX();
+            double accCoriolisY = physics.calcAccCoriolisY();
+            double accCoriolisZ = physics.calcAccCoriolisZ();
+            double accCentrifugalY = physics.calcAccCentrifugalY();
+            double accCentrifugalZ = physics.calcAccCentrifugalZ();
+            //Dissipative Forces
+            double dissipativeX = 0;
+            double dissipativeZ = 0;
+            if (this.isOnGround() && (motionX != 0 || motionZ != 0)) {
+                double norm = Mth.fastInvSqrt(motionX * motionX + motionZ * motionZ);
+                double frictionAcc = physics.calcAccNormal() * physics.calcKineticFrictionCoef(this);
+                double frictionX = motionX * norm * frictionAcc;
+                double frictionZ = motionZ * norm * frictionAcc;
+                dissipativeX = frictionX;
+                if (Math.abs(dissipativeX) > Math.abs(motionX)) {
+                    dissipativeX = motionX;
+                }
+                dissipativeZ = frictionZ;
+                if (Math.abs(dissipativeZ) > Math.abs(motionZ)) {
+                    dissipativeZ = motionZ;
+                }
             }
-        }
-        double horizontalDrag = this.isInWater() ? Gravity.horizontalWaterDrag(this) / 70 : Gravity.horizontalDrag(this) / 70;
-        double verticalDrag = this.isInWater() ? Gravity.verticalWaterDrag(this) / 70 : Gravity.verticalDrag(this) / 70;
-        double dragX = Math.signum(motionX) * motionX * motionX * horizontalDrag;
-        if (Math.abs(dragX) > Math.abs(motionX)) {
-            dragX = motionX;
-        }
-        double dragY = Math.signum(motionY) * motionY * motionY * verticalDrag;
-        if (Math.abs(dragY) > Math.abs(motionY)) {
-            dragY = motionY;
-        }
-        double dragZ = Math.signum(motionZ) * motionZ * motionZ * horizontalDrag;
-        if (Math.abs(dragZ) > Math.abs(motionZ)) {
-            dragZ = motionZ;
-        }
-        motionX += -frictionX - dragX;
-        motionY += -gravity - dragY;
-        motionZ += -frictionZ - dragZ;
-        if (Math.abs(motionX) < 1e-6) {
-            motionX = 0;
-        }
-        if (Math.abs(motionY) < 1e-6) {
-            motionY = 0;
-        }
-        if (Math.abs(motionZ) < 1e-6) {
-            motionZ = 0;
+            //Drag
+            //TODO wind speed
+            double windVelX = 0;
+            double windVelY = 0;
+            double windVelZ = 0;
+            double dragX = physics.calcForceDragX(windVelX) / mass;
+            double dragY = physics.calcForceDragY(windVelY) / mass;
+            double dragZ = physics.calcForceDragZ(windVelZ) / mass;
+            double maxDrag = Math.abs(windVelX - motionX);
+            if (Math.abs(dragX) > maxDrag) {
+                dragX = Math.signum(dragX) * maxDrag;
+            }
+            maxDrag = Math.abs(windVelY - motionY);
+            if (Math.abs(dragY) > maxDrag) {
+                dragY = Math.signum(dragY) * maxDrag;
+            }
+            maxDrag = Math.abs(windVelZ - motionZ);
+            if (Math.abs(dragZ) > maxDrag) {
+                dragZ = Math.signum(dragZ) * maxDrag;
+            }
+            //Update Motion
+            motionX += -dissipativeX + dragX + accCoriolisX;
+            motionY += accY + dragY + accCoriolisY + accCentrifugalY;
+            motionZ += -dissipativeZ + dragZ + accCoriolisZ + accCentrifugalZ;
         }
         this.setDeltaMovement(motionX, motionY, motionZ);
         this.move(MoverType.SELF, this.getDeltaMovement());

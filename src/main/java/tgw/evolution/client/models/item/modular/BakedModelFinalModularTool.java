@@ -16,8 +16,8 @@ import net.minecraftforge.client.model.data.ModelProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.capabilities.modular.part.PartTypes;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.init.Material;
 import tgw.evolution.util.collection.RArrayList;
 
 import java.util.List;
@@ -25,10 +25,10 @@ import java.util.Random;
 
 public class BakedModelFinalModularTool implements BakedModel {
 
-    public static final ModelProperty<Material> HEAD_MATERIAL = new ModelProperty<>();
+    public static final ModelProperty<EvolutionMaterials> HEAD_MATERIAL = new ModelProperty<>();
     public static final ModelProperty<PartTypes.Head> HEAD_TYPE = new ModelProperty<>();
     public static final ModelProperty<PartTypes.Handle> HANDLE_TYPE = new ModelProperty<>();
-    public static final ModelProperty<Material> HANDLE_MATERIAL = new ModelProperty<>();
+    public static final ModelProperty<EvolutionMaterials> HANDLE_MATERIAL = new ModelProperty<>();
     public static final ModelProperty<Boolean> IS_SHARP = new ModelProperty<>();
     //    public static final TransformsModular TRANSFORMS = new TransformsModular(0.85f, 0.85f, 0.85f);
     private final BakedModel baseModel;
@@ -49,9 +49,9 @@ public class BakedModelFinalModularTool implements BakedModel {
 
     public static ModelDataMap getEmptyIModelData() {
         ModelDataMap.Builder builder = new ModelDataMap.Builder();
-        builder.withInitial(HEAD_MATERIAL, Material.ANDESITE);
+        builder.withInitial(HEAD_MATERIAL, EvolutionMaterials.ANDESITE);
         builder.withInitial(HEAD_TYPE, PartTypes.Head.NULL);
-        builder.withInitial(HANDLE_MATERIAL, Material.ANDESITE);
+        builder.withInitial(HANDLE_MATERIAL, EvolutionMaterials.ANDESITE);
         builder.withInitial(HANDLE_TYPE, PartTypes.Handle.NULL);
         builder.withInitial(IS_SHARP, false);
         return builder.build();
@@ -127,9 +127,9 @@ public class BakedModelFinalModularTool implements BakedModel {
     }
 
     public void setModelData(PartTypes.Head headType,
-                             Material headMaterial,
+                             EvolutionMaterials headMaterial,
                              PartTypes.Handle handleType,
-                             Material handleMaterial,
+                             EvolutionMaterials handleMaterial,
                              boolean isSharp) {
         this.modelData.setData(HEAD_TYPE, headType);
         this.modelData.setData(HEAD_MATERIAL, headMaterial);

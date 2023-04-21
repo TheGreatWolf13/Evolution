@@ -255,11 +255,6 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
     }
 
     @Override
-    public float getFrictionCoefficient(BlockState state) {
-        return 0;
-    }
-
-    @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         VoxelShape shape = Shapes.empty();
         if (state.getValue(NORTH)) {

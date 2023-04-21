@@ -6,8 +6,8 @@ import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelDataMap;
 import tgw.evolution.capabilities.modular.part.PartPole;
 import tgw.evolution.capabilities.modular.part.PartTypes;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPartPole;
 
 public class BakedModelPartPole extends BakedModelPart<PartTypes.Pole, ItemPartPole, PartPole, BakedModelPartPole.BakedModelFinalPartPole> {
@@ -44,7 +44,7 @@ public class BakedModelPartPole extends BakedModelPart<PartTypes.Pole, ItemPartP
             return EvolutionResources.MODULAR_POLES.get(extraData.getData(this.type), extraData.getData(this.material));
         }
 
-        protected void setData(PartTypes.Pole type, Material material) {
+        protected void setData(PartTypes.Pole type, EvolutionMaterials material) {
             this.modelData.setData(this.type, type);
             this.modelData.setData(this.material, material);
         }

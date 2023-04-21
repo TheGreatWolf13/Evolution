@@ -45,11 +45,12 @@ import tgw.evolution.util.MultipleEntityHitResult;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.ProjectileHitInformation;
 import tgw.evolution.util.damage.DamageSourceEv;
-import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.ClipContextMutable;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
+import tgw.evolution.util.physics.Fluid;
+import tgw.evolution.util.physics.Physics;
 
 import java.util.UUID;
 
@@ -414,8 +415,8 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
 
     public void shoot(LivingEntity shooter, float pitch, float yaw, IProjectile throwable) {
         float stdDev = 1 - throwable.precision();
-        pitch += 12 * this.random.nextGaussian() * stdDev;
-        yaw += 12 * this.random.nextGaussian() * stdDev;
+        pitch += 12 * MathHelper.clamp(this.random.nextGaussian(), -3, 3) * stdDev;
+        yaw += 12 * MathHelper.clamp(this.random.nextGaussian(), -3, 3) * stdDev;
         float cosPitch = MathHelper.cosDeg(pitch);
         float x = -MathHelper.sinDeg(yaw) * cosPitch;
         float y = -MathHelper.sinDeg(pitch);
@@ -534,34 +535,52 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
             this.setXRot((float) MathHelper.atan2Deg(motionY, motion.horizontalDistance()));
             this.setXRot(lerpRotation(this.xRotO, this.getXRot()));
             this.setYRot(lerpRotation(this.yRotO, this.getYRot()));
-            double horizontalDrag = this.isInWater() ? Gravity.horizontalWaterDrag(this) / this.mass : Gravity.horizontalDrag(this) / this.mass;
-            double verticalDrag = this.isInWater() ? Gravity.verticalWaterDrag(this) / this.mass : Gravity.verticalDrag(this) / this.mass;
-            double dragX = Math.signum(motionX) * motionX * motionX * horizontalDrag;
-            if (Math.abs(dragX) > Math.abs(motionX)) {
-                dragX = motionX;
-            }
-            double dragY = Math.signum(motionY) * motionY * motionY * verticalDrag;
-            if (Math.abs(dragY) > Math.abs(motionY)) {
-                dragY = motionY;
-            }
-            double dragZ = Math.signum(motionZ) * motionZ * motionZ * horizontalDrag;
-            if (Math.abs(dragZ) > Math.abs(motionZ)) {
-                dragZ = motionZ;
-            }
-            if (this.isInWater()) {
-                for (int j = 0; j < 4; ++j) {
-                    this.level.addParticle(ParticleTypes.BUBBLE, this.getX() - motionX * 0.25, this.getY() - motionY * 0.25,
-                                           this.getZ() - motionZ * 0.25, motionX, motionY, motionZ);
+            try (Physics physics = Physics.getInstance(this, this.isInWater() ? Fluid.WATER : this.isInLava() ? Fluid.LAVA : Fluid.AIR)) {
+                double accY = 0;
+                if (!this.isNoGravity()) {
+                    accY += physics.calcAccGravity();
                 }
+                if (!this.isOnGround()) {
+                    accY += physics.calcForceBuoyancy(this) / this.mass;
+                }
+                //Pseudo-forces
+                double accCoriolisX = physics.calcAccCoriolisX();
+                double accCoriolisY = physics.calcAccCoriolisY();
+                double accCoriolisZ = physics.calcAccCoriolisZ();
+                double accCentrifugalY = physics.calcAccCentrifugalY();
+                double accCentrifugalZ = physics.calcAccCentrifugalZ();
+                //Drag
+                //TODO wind speed
+                double windVelX = 0;
+                double windVelY = 0;
+                double windVelZ = 0;
+                double dragX = physics.calcForceDragX(windVelX) / this.mass;
+                double dragY = physics.calcForceDragY(windVelY) / this.mass;
+                double dragZ = physics.calcForceDragZ(windVelZ) / this.mass;
+                double maxDrag = Math.abs(windVelX - motionX);
+                if (Math.abs(dragX) > maxDrag) {
+                    dragX = Math.signum(dragX) * maxDrag;
+                }
+                maxDrag = Math.abs(windVelY - motionY);
+                if (Math.abs(dragY) > maxDrag) {
+                    dragY = Math.signum(dragY) * maxDrag;
+                }
+                maxDrag = Math.abs(windVelZ - motionZ);
+                if (Math.abs(dragZ) > maxDrag) {
+                    dragZ = Math.signum(dragZ) * maxDrag;
+                }
+                if (this.isInWater()) {
+                    for (int j = 0; j < 4; ++j) {
+                        this.level.addParticle(ParticleTypes.BUBBLE, this.getX() - motionX * 0.25, this.getY() - motionY * 0.25,
+                                               this.getZ() - motionZ * 0.25, motionX, motionY, motionZ);
+                    }
+                }
+                this.setPos(this.getX() + motionX, this.getY() + motionY, this.getZ() + motionZ);
+                //Update Motion
+                motionX += dragX + accCoriolisX;
+                motionY += accY + dragY + accCoriolisY + accCentrifugalY;
+                motionZ += dragZ + accCoriolisZ + accCentrifugalZ;
             }
-            double gravity = 0;
-            if (!this.isNoGravity()) {
-                gravity = Gravity.gravity(this.level.dimensionType());
-            }
-            this.setPos(this.getX() + motionX, this.getY() + motionY, this.getZ() + motionZ);
-            motionX -= dragX;
-            motionY += -gravity - dragY;
-            motionZ -= dragZ;
             this.setDeltaMovement(motionX, motionY, motionZ);
             this.checkInsideBlocks();
         }

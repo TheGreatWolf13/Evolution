@@ -101,11 +101,6 @@ public class BlockTorch extends BlockPhysics implements IReplaceable, IFireSourc
     }
 
     @Override
-    public float getFrictionCoefficient(BlockState state) {
-        return 0;
-    }
-
-    @Override
     public double getMass(Level level, BlockPos pos, BlockState state) {
         return 0;
     }

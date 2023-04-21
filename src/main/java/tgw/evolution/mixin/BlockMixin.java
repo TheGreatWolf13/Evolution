@@ -173,7 +173,7 @@ public abstract class BlockMixin extends BlockBehaviour implements IBlockPatch {
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 0.85f;
+        return 0.8f;
     }
 
     @Override

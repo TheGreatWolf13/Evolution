@@ -125,7 +125,7 @@ public class ModularTool implements IModularTool {
         double mult = switch (type) {
             case PIERCING -> this.head.getMaterialInstance().getElasticModulus() / 3.5;
             case CRUSHING -> this.getMoment() * 12.5; //TODO divide by area
-            case SLASHING -> 0.87 * (0.65 * this.head.getMaterialInstance().getElasticModulus() / 3.5 + 0.35 * this.getMoment() * 12.5);
+            case SLASHING -> 0.87 * 0.65 / 3.5 * this.head.getMaterialInstance().getElasticModulus() + 0.87 * 0.35 * 12.5 * this.getMoment();
             default -> 0;
         };
         return this.head.getDmgMultiplierInternal() * mult / PlayerHelper.ATTACK_DAMAGE;

@@ -1,4 +1,4 @@
-package tgw.evolution.util.earth;
+package tgw.evolution.util.physics;
 
 import java.util.random.RandomGenerator;
 

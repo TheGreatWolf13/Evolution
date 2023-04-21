@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.hitbox.LegacyEntityHitboxes;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
-import tgw.evolution.util.math.Units;
+import tgw.evolution.util.physics.SI;
 
 @Mixin(CaveSpider.class)
 public abstract class CaveSpiderMixin extends Spider implements ILivingEntityPatch<CaveSpider> {
@@ -35,7 +35,7 @@ public abstract class CaveSpiderMixin extends Spider implements ILivingEntityPat
 
     @Override
     public double getBaseWalkForce() {
-        return 520 * Units.NEWTON;
+        return 520 * SI.NEWTON;
     }
 
     @Override

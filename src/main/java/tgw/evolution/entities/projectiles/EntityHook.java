@@ -25,6 +25,7 @@ import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.IProjectile;
 import tgw.evolution.util.damage.DamageSourceEv;
+import tgw.evolution.util.physics.SI;
 
 import static tgw.evolution.init.EvolutionBStates.ATTACHED;
 import static tgw.evolution.init.EvolutionBStates.DIRECTION_HORIZONTAL;
@@ -154,6 +155,12 @@ public class EntityHook extends EntityGenericProjectile<EntityHook> {
     @Override
     protected @Nullable IProjectile getProjectile() {
         return null;
+    }
+
+    @Override
+    public double getVolume() {
+        //TODO
+        return 150 * SI.CUBIC_CENTIMETER;
     }
 
     @Override

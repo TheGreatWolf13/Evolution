@@ -32,7 +32,7 @@ public class BlockPolishedStone extends BlockPhysics implements IRockVariant, IF
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 1.0f;
+        return 0.8f;
     }
 
     @Override

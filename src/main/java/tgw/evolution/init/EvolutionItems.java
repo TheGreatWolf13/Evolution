@@ -47,6 +47,7 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> SCHEMATIC_BLOCK;
     public static final RegistryObject<Item> SEXTANT;
     public static final RegistryObject<Item> SHIELD_DEV;
+    public static final RegistryObject<Item> SPEEDOMETER;
     //Independent
     public static final RegistryObject<Item> BLOCK_METAL_COPPER;
     public static final RegistryObject<Item> BLOCK_METAL_COPPER_E;
@@ -132,6 +133,7 @@ public final class EvolutionItems {
         SCHEMATIC_BLOCK = makeBlock(EvolutionBlocks.SCHEMATIC_BLOCK, b -> () -> new ItemBlock(b.get(), propDev()));
         SEXTANT = ITEMS.register("sextant", () -> new ItemSextant(propDev()));
         SHIELD_DEV = ITEMS.register("shield_dev", () -> new ItemShield(propDev().durability(400)));
+        SPEEDOMETER = ITEMS.register("speedometer", () -> new ItemSpeedometer(propDev()));
         //Independent
         BLOCK_METAL_COPPER = makeBlock(EvolutionBlocks.BLOCK_METAL_COPPER, b -> () -> new ItemBlock(b.get(), propMetal()));
         BLOCK_METAL_COPPER_E = makeBlock(EvolutionBlocks.BLOCK_METAL_COPPER_E, b -> () -> new ItemBlock(b.get(), propMetal()));

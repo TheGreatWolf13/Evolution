@@ -4,7 +4,7 @@
 //import net.minecraft.block.BlockRenderType;
 //import net.minecraft.block.BlockState;
 //import net.minecraft.block.SoundType;
-//import net.minecraft.block.material.Material;
+//import net.minecraft.block.material.EvolutionMaterials;
 //import net.minecraft.tileentity.TileEntity;
 //import net.minecraft.util.Direction;
 //import net.minecraft.util.math.BlockPos;
@@ -18,7 +18,7 @@
 //public class BlockShadowHound extends BlockPhysics {
 //
 //    public BlockShadowHound() {
-//        super(Block.Properties.create(Material.SHULKER).hardnessAndResistance(2F, 6F).sound(SoundType.SWEET_BERRY_BUSH), 500);
+//        super(Block.Properties.create(EvolutionMaterials.SHULKER).hardnessAndResistance(2F, 6F).sound(SoundType.SWEET_BERRY_BUSH), 500);
 //    }
 //
 //    @Override

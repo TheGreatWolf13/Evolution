@@ -100,11 +100,6 @@ public class BlockClimbingHook extends BlockGeneric implements IReplaceable, IRo
     }
 
     @Override
-    public float getFrictionCoefficient(BlockState state) {
-        return 0;
-    }
-
-    @Override
     public int getRopeLength() {
         return 8;
     }

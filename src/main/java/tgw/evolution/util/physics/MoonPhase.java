@@ -1,4 +1,4 @@
-package tgw.evolution.util.earth;
+package tgw.evolution.util.physics;
 
 public enum MoonPhase {
     NEW_MOON(0.0f, 0.0f, 0.03f),

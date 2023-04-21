@@ -140,7 +140,7 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 0.45f;
+        return 0.6f;
     }
 
     @Override

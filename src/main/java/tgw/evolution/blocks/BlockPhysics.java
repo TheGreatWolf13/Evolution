@@ -87,11 +87,6 @@ public abstract class BlockPhysics extends BlockGeneric implements IPhysics {
     }
 
     @Override
-    public float getFrictionCoefficient(BlockState state) {
-        return 0.85F;
-    }
-
-    @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         if (!level.isClientSide) {
             if (this.pops()) {

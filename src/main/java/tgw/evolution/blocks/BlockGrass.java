@@ -75,9 +75,9 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
     @Override
     public float getFrictionCoefficient(BlockState state) {
         if (state.getValue(SNOWY)) {
-            return 0.25F;
+            return 0.5F;
         }
-        return 0.35F;
+        return 0.6F;
     }
 
 //    @Override

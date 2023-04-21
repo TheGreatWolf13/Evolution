@@ -45,6 +45,7 @@ import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.hitbox.EvolutionEntityHitboxes;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.physics.SI;
 
 @Mixin(Player.class)
 public abstract class PlayerMixin extends LivingEntity implements IPlayerPatch {
@@ -281,6 +282,11 @@ public abstract class PlayerMixin extends LivingEntity implements IPlayerPatch {
         double equipMass = totalMass - baseMass;
         double stepHeight = 1.062_5f - equipMass * 0.001_14f;
         return (float) Math.max(stepHeight, 0.6);
+    }
+
+    @Override
+    public double getVolume() {
+        return 70_000 * SI.CUBIC_CENTIMETER;
     }
 
     @Override

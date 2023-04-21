@@ -26,7 +26,7 @@ public class BlockClay extends BlockPhysics {
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 0.45F;
+        return 0.6F;
     }
 
     @Override

@@ -49,7 +49,7 @@ public class BlockStone extends BlockPhysics implements IRockVariant, IPoppable,
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 1.0f;
+        return 0.8f;
     }
 
 //    @Override

@@ -3,7 +3,7 @@
 //import com.google.common.collect.Lists;
 //import com.mojang.datafixers.Dynamic;
 //import net.minecraft.block.BlockState;
-//import net.minecraft.block.material.Material;
+//import net.minecraft.block.material.EvolutionMaterials;
 //import net.minecraft.util.Direction;
 //import net.minecraft.util.math.BlockPos;
 //import net.minecraft.util.math.MathHelper;
@@ -106,7 +106,7 @@
 //                if (Math.pow(Math.abs(j) + 0.5D, 2.0D) + Math.pow(Math.abs(k) + 0.5D, 2.0D) <= p_208529_3_ * p_208529_3_) {
 //                    BlockPos blockpos = pos.add(j, 0, k);
 //                    BlockState iblockstate = ((IBlockReader) worldIn).getBlockState(blockpos);
-//                    if (iblockstate.isAir((IBlockReader) worldIn, blockpos) || iblockstate.getMaterial() == Material.LEAVES) {
+//                    if (iblockstate.isAir((IBlockReader) worldIn, blockpos) || iblockstate.getMaterial() == EvolutionMaterials.LEAVES) {
 //                        this.setBlockState(worldIn, blockpos, LEAVES);
 //                    }
 //                }

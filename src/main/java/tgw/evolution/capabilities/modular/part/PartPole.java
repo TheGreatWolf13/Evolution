@@ -4,7 +4,7 @@ import net.minecraft.world.item.ItemStack;
 import tgw.evolution.capabilities.modular.CapabilityModular;
 import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.init.EvolutionCapabilities;
-import tgw.evolution.init.Material;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.ItemPartPole;
 
 public class PartPole extends PartGrab<PartTypes.Pole, ItemPartPole, PartPole> {
@@ -30,9 +30,9 @@ public class PartPole extends PartGrab<PartTypes.Pole, ItemPartPole, PartPole> {
     }
 
     @Override
-    public void init(PartTypes.Pole type, Material material) {
+    public void init(PartTypes.Pole type, EvolutionMaterials material) {
         if (!material.isAllowedBy(type)) {
-            throw new IllegalStateException("Material " + material + " does not allow PoleType " + type);
+            throw new IllegalStateException("EvolutionMaterials " + material + " does not allow PoleType " + type);
         }
         this.set(type, new MaterialInstance(material));
     }

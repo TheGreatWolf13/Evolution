@@ -9,7 +9,7 @@ import tgw.evolution.capabilities.modular.IAttachmentType;
 import tgw.evolution.capabilities.modular.IGrabType;
 import tgw.evolution.capabilities.modular.IToolType;
 import tgw.evolution.init.EvolutionItems;
-import tgw.evolution.init.Material;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.*;
 import tgw.evolution.util.collection.B2RMap;
 import tgw.evolution.util.collection.B2ROpenHashMap;
@@ -95,7 +95,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(Material material) {
+        public double getVolume(EvolutionMaterials material) {
             //TODO implementation
             return switch (this) {
                 case NULL -> 0;
@@ -105,7 +105,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(Material material) {
+        public boolean hasVariantIn(EvolutionMaterials material) {
             return material.isAllowedBy(this);
         }
 
@@ -194,7 +194,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(Material material) {
+        public double getVolume(EvolutionMaterials material) {
             return switch (this) {
                 case NULL -> 0;
                 case CROSSGUARD -> Double.NaN;
@@ -202,7 +202,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(Material material) {
+        public boolean hasVariantIn(EvolutionMaterials material) {
             return material.isAllowedBy(this);
         }
 
@@ -299,7 +299,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(Material material) {
+        public double getVolume(EvolutionMaterials material) {
             return switch (this) {
                 case NULL -> 0;
                 case AXE, PICKAXE, HAMMER -> Double.NaN;
@@ -307,7 +307,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(Material material) {
+        public boolean hasVariantIn(EvolutionMaterials material) {
             return material.isAllowedBy(this);
         }
 
@@ -406,7 +406,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(Material material) {
+        public double getVolume(EvolutionMaterials material) {
             return switch (this) {
                 case NULL -> 0;
                 case ONE_HANDED -> 26;
@@ -415,7 +415,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(Material material) {
+        public boolean hasVariantIn(EvolutionMaterials material) {
             return material.isAllowedBy(this);
         }
 
@@ -524,7 +524,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(Material material) {
+        public double getVolume(EvolutionMaterials material) {
             return switch (this) {
                 case NULL -> 0;
                 case AXE -> material.isStone() ? 58.5f : 58;
@@ -537,7 +537,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(Material material) {
+        public boolean hasVariantIn(EvolutionMaterials material) {
             return material.isAllowedBy(this);
         }
 
@@ -630,7 +630,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(Material material) {
+        public double getVolume(EvolutionMaterials material) {
             return switch (this) {
                 case NULL -> 0;
                 case ONE_HANDED -> 17.5;
@@ -638,7 +638,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(Material material) {
+        public boolean hasVariantIn(EvolutionMaterials material) {
             return material.isAllowedBy(this);
         }
 
@@ -734,7 +734,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(Material material) {
+        public double getVolume(EvolutionMaterials material) {
             return switch (this) {
                 case NULL -> 0;
                 case POLE -> Double.NaN;
@@ -742,7 +742,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(Material material) {
+        public boolean hasVariantIn(EvolutionMaterials material) {
             return material.isAllowedBy(this);
         }
 
@@ -831,7 +831,7 @@ public final class PartTypes {
         }
 
         @Override
-        public double getVolume(Material material) {
+        public double getVolume(EvolutionMaterials material) {
             return switch (this) {
                 case NULL -> 0;
                 case POMMEL -> 12.5;
@@ -839,7 +839,7 @@ public final class PartTypes {
         }
 
         @Override
-        public boolean hasVariantIn(Material material) {
+        public boolean hasVariantIn(EvolutionMaterials material) {
             return material.isAllowedBy(this);
         }
 

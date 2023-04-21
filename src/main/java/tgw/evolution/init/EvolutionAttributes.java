@@ -9,7 +9,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.Evolution;
 import tgw.evolution.inventory.SlotType;
-import tgw.evolution.util.math.Units;
+import tgw.evolution.util.physics.SI;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -25,7 +25,7 @@ public final class EvolutionAttributes {
     //Modifier
     public static final AttributeModifier SLOW_FALLING = new AttributeModifier(UUID.fromString("A5B6CF2A-2F7C-31EF-9022-7C3E7D5E6ABA"),
                                                                                "Slow falling acceleration reduction",
-                                                                               -8 * Units.METER_PER_SECOND_PER_SECOND,
+                                                                               -8 * SI.METER / SI.SECOND / SI.SECOND,
                                                                                AttributeModifier.Operation.ADDITION);
     //UUIDs
     private static final UUIDHolder UUID_HEAT_RESISTANCE = new UUIDHolder("3c051607-b4ae-462c-b2aa-b0e5e02902ec");

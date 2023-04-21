@@ -32,7 +32,8 @@ public final class EvolutionCreativeTabs {
     public static final CreativeModeTab PARTS_AND_TOOLS = new CreativeModeTab("evolution.parts_and_tools") {
         @Override
         public ItemStack makeIcon() {
-            return ItemModularTool.createNew(PartTypes.Head.PICKAXE, Material.COPPER, PartTypes.Handle.ONE_HANDED, Material.WOOD, false);
+            return ItemModularTool.createNew(PartTypes.Head.PICKAXE, EvolutionMaterials.COPPER, PartTypes.Handle.ONE_HANDED, EvolutionMaterials.WOOD,
+                                             false);
         }
     };
 

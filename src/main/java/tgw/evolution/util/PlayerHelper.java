@@ -15,7 +15,7 @@ import net.minecraftforge.common.util.FakePlayer;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.stats.EvolutionServerStatsCounter;
-import tgw.evolution.util.math.Units;
+import tgw.evolution.util.physics.SI;
 
 import java.util.Map;
 
@@ -48,7 +48,7 @@ public final class PlayerHelper {
     /**
      * The force the player uses to push its feet against the ground.
      */
-    public static final double WALK_FORCE = 1_000 * Units.NEWTON;
+    public static final double WALK_FORCE = 1_000 * SI.NEWTON;
     public static final EntityDimensions STANDING_SIZE = EntityDimensions.scalable(0.65F, 1.8F);
     public static final Map<Pose, EntityDimensions> SIZE_BY_POSE = ImmutableMap.<Pose, EntityDimensions>builder()
                                                                                .put(Pose.STANDING, STANDING_SIZE)

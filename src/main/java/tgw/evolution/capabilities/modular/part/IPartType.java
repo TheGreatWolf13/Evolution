@@ -1,7 +1,7 @@
 package tgw.evolution.capabilities.modular.part;
 
 import net.minecraft.network.chat.Component;
-import tgw.evolution.init.Material;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.ItemPart;
 
 public interface IPartType<T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>> {
@@ -14,9 +14,9 @@ public interface IPartType<T extends IPartType<T, I, P>, I extends ItemPart<T, I
 
     String getName();
 
-    double getVolume(Material material);
+    double getVolume(EvolutionMaterials material);
 
-    boolean hasVariantIn(Material material);
+    boolean hasVariantIn(EvolutionMaterials material);
 
     boolean isTwoHanded();
 

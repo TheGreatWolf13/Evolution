@@ -156,6 +156,11 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
     }
 
     @Override
+    public double getVolume() {
+        return 0;
+    }
+
+    @Override
     public float getZOffset() {
         return this.zOffset;
     }

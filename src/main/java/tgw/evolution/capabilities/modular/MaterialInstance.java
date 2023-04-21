@@ -6,25 +6,25 @@ import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.init.EvolutionTexts;
-import tgw.evolution.init.Material;
 import tgw.evolution.util.constants.HarvestLevel;
 
 import java.util.List;
 
 public class MaterialInstance {
 
-    public static final MaterialInstance DUMMY = new MaterialInstance(Material.ANDESITE);
-    private final Material material;
+    public static final MaterialInstance DUMMY = new MaterialInstance(EvolutionMaterials.ANDESITE);
+    private final EvolutionMaterials material;
     private @Nullable CompoundTag tag;
 
-    public MaterialInstance(Material material) {
+    public MaterialInstance(EvolutionMaterials material) {
         this.material = material;
     }
 
     @Contract(pure = true, value = "_ -> new")
     public static MaterialInstance read(CompoundTag nbt) {
-        Material material = Material.byId(nbt.getByte("Material"));
+        EvolutionMaterials material = EvolutionMaterials.byId(nbt.getByte("EvolutionMaterials"));
         return new MaterialInstance(material);
     }
 
@@ -49,7 +49,7 @@ public class MaterialInstance {
         return this.material.getHarvestLevel();
     }
 
-    public Material getMaterial() {
+    public EvolutionMaterials getMaterial() {
         return this.material;
     }
 
@@ -69,7 +69,7 @@ public class MaterialInstance {
         if (this.tag == null) {
             this.tag = new CompoundTag();
         }
-        this.tag.putByte("Material", this.material.getId());
+        this.tag.putByte("EvolutionMaterials", this.material.getId());
         return this.tag;
     }
 }

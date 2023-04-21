@@ -7,8 +7,8 @@ import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.client.model.data.ModelProperty;
 import tgw.evolution.capabilities.modular.part.PartHead;
 import tgw.evolution.capabilities.modular.part.PartTypes;
+import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.init.EvolutionResources;
-import tgw.evolution.init.Material;
 import tgw.evolution.items.modular.part.ItemPartHead;
 
 public class BakedModelPartHead extends BakedModelPart<PartTypes.Head, ItemPartHead, PartHead, BakedModelPartHead.BakedModelFinalPartHead> {
@@ -51,7 +51,7 @@ public class BakedModelPartHead extends BakedModelPart<PartTypes.Head, ItemPartH
             return EvolutionResources.MODULAR_HEADS.get(extraData.getData(this.type), extraData.getData(this.material));
         }
 
-        protected void setData(PartTypes.Head type, Material material, boolean isSharp) {
+        protected void setData(PartTypes.Head type, EvolutionMaterials material, boolean isSharp) {
             this.modelData.setData(this.type, type);
             this.modelData.setData(this.material, material);
             this.modelData.setData(this.isSharp, isSharp);

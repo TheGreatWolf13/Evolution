@@ -1,4 +1,4 @@
-package tgw.evolution.util.earth;
+package tgw.evolution.util.physics;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -15,9 +15,9 @@ public final class EarthHelper {
 
     public static final float CELESTIAL_SPHERE_RADIUS = 100.0f;
     public static final float ECLIPTIC_INCLINATION = 23.5f; //º
-    public static final long POLE = 100_000L;
-    public static final long POLAR_CIRCLE = (long) -calculateZFromLatitude(90 - ECLIPTIC_INCLINATION);
-    public static final long TROPIC = (long) -calculateLatitude(ECLIPTIC_INCLINATION);
+    public static final int POLE = 100_000;
+    public static final int POLAR_CIRCLE = (int) -calculateZFromLatitude(90 - ECLIPTIC_INCLINATION);
+    public static final int TROPIC = (int) -calculateLatitude(ECLIPTIC_INCLINATION);
     private static final Vec3f ZENITH = new Vec3f(0, CELESTIAL_SPHERE_RADIUS, 0);
     private static final Vec3f SUN = new Vec3f(0, 0, 0);
     private static final Vec3f MOON = new Vec3f(0, 0, 0);
@@ -38,8 +38,7 @@ public final class EarthHelper {
      * @return A {@code float} representing the latitude angle in degrees.
      */
     public static float calculateLatitude(double posZ) {
-        posZ = MathHelper.clamp(posZ, -POLE, POLE);
-        return -90.0f * (float) posZ / POLE;
+        return PlanetsHelper.calculateLatitude(POLE, posZ);
     }
 
     public static float calculateMoonRightAscension(long worldTime) {
@@ -61,7 +60,7 @@ public final class EarthHelper {
     }
 
     public static double calculateZFromLatitude(float latitude) {
-        return -POLE * MathHelper.sinDeg(latitude);
+        return PlanetsHelper.calculateZFromLatitude(POLE, latitude);
     }
 
     /**

@@ -40,7 +40,11 @@ import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.constants.LevelEvents;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
-import tgw.evolution.util.math.*;
+import tgw.evolution.util.math.AABBMutable;
+import tgw.evolution.util.math.ChunkPosMutable;
+import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Vec3d;
+import tgw.evolution.util.physics.SI;
 
 import java.util.List;
 
@@ -109,6 +113,8 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     private ChunkPos chunkPosition;
     @Shadow
     private Vec3 deltaMovement;
+    @Shadow
+    private EntityDimensions dimensions;
     @Shadow
     @javax.annotation.Nullable
     private BlockState feetBlockState;
@@ -281,7 +287,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Override
     public double getBaseWalkForce() {
-        return 1_000 * Units.NEWTON;
+        return 1_000 * SI.NEWTON;
     }
 
     @Shadow
@@ -389,6 +395,17 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Shadow
     public abstract float getViewXRot(float pPartialTicks);
+
+    @Override
+    public double getVolume() {
+        return 0;
+    }
+
+    @Override
+    public double getVolumeCorrectionFactor() {
+        float width = this.dimensions.width;
+        return this.getVolume() / (width * width * this.dimensions.height);
+    }
 
     @Shadow
     public abstract double getX(double pScale);

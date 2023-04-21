@@ -21,9 +21,9 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.patches.obj.IVec3dFetcher;
-import tgw.evolution.util.earth.EarthHelper;
 import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.math.Vec3f;
+import tgw.evolution.util.physics.EarthHelper;
 
 @Mixin(FogRenderer.class)
 public abstract class FogRendererMixin {

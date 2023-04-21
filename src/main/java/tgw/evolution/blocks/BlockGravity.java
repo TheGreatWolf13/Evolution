@@ -7,11 +7,11 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.material.Material;
 import tgw.evolution.init.EvolutionSounds;
-import tgw.evolution.util.earth.Gravity;
 import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.physics.Fluid;
+import tgw.evolution.util.physics.Physics;
 
 import static tgw.evolution.init.EvolutionBStates.LAYERS_1_4;
 
@@ -237,8 +237,10 @@ public class BlockGravity {
         return false;
     }
 
-    public final int shearStrength(DimensionType dim) {
-        return (int) (this.getShearStrength() / (Gravity.gravity(dim) * 400));
+    public final int shearStrength(Level level, int x, int y, int z) {
+        try (Physics physics = Physics.getInstance(level, x, y, z, 0, 0, 0, 0, 0, 0, 0, Fluid.AIR)) {
+            return (int) (this.getShearStrength() / (physics.calcAccGravity() * 400));
+        }
     }
 
     public boolean shouldFall(BlockGetter level, BlockPos pos) {

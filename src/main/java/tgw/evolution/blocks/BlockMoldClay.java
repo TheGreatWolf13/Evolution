@@ -65,7 +65,7 @@ public class BlockMoldClay extends BlockGeneric implements IReplaceable {
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 0.45f;
+        return 0.6f;
     }
 
     @Override

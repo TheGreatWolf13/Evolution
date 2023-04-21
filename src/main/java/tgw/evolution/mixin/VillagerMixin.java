@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.hitbox.LegacyEntityHitboxes;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
-import tgw.evolution.util.math.Units;
+import tgw.evolution.util.physics.SI;
 
 @Mixin(Villager.class)
 public abstract class VillagerMixin extends AbstractVillager implements ILivingEntityPatch<Villager> {
@@ -30,7 +30,7 @@ public abstract class VillagerMixin extends AbstractVillager implements ILivingE
 
     @Override
     public double getBaseWalkForce() {
-        return 5_000 * Units.NEWTON;
+        return 5_000 * SI.NEWTON;
     }
 
     @Override

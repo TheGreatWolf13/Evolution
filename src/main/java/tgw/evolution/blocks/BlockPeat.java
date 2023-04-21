@@ -141,7 +141,7 @@ public class BlockPeat extends BlockPhysics implements IReplaceable, IAir {
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 0.55f;
+        return 0.63f;
     }
 
     @Override

@@ -72,7 +72,7 @@ public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVa
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 1.0F;
+        return 0.8F;
     }
 
     @Override

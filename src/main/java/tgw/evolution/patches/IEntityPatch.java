@@ -3,9 +3,13 @@ package tgw.evolution.patches;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
-import tgw.evolution.util.math.Units;
+import tgw.evolution.util.physics.SI;
 
 public interface IEntityPatch<T extends Entity> {
+
+    default double getAcceleration() {
+        return 0;
+    }
 
     default double getBaseAttackDamage() {
         return 1;
@@ -23,7 +27,7 @@ public interface IEntityPatch<T extends Entity> {
     }
 
     default double getBaseWalkForce() {
-        return 1 * Units.NEWTON;
+        return 1 * SI.NEWTON;
     }
 
     default int getFireDamageImmunity() {
@@ -39,6 +43,16 @@ public interface IEntityPatch<T extends Entity> {
      * @return Controls the deceleration because of the motion of your legs.
      */
     double getLegSlowdown();
+
+    default int getNoJumpDelay() {
+        return 0;
+    }
+
+    double getVolume();
+
+    default double getVolumeCorrectionFactor() {
+        return 0;
+    }
 
     default boolean hasCollidedOnXAxis() {
         return false;

@@ -46,11 +46,6 @@ public class BlockBush extends BlockPhysics implements IPlantable, IReplaceable,
     }
 
     @Override
-    public float getFrictionCoefficient(BlockState state) {
-        return 0;
-    }
-
-    @Override
     public int getLightBlock(BlockState state, BlockGetter level, BlockPos pos) {
         return 0;
     }

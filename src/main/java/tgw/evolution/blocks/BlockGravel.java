@@ -36,7 +36,7 @@ public class BlockGravel extends BlockPhysics implements IRockVariant, ISloppabl
 
     @Override
     public float getFrictionCoefficient(BlockState state) {
-        return 0.5f;
+        return 0.57f;
     }
 
     @Override
