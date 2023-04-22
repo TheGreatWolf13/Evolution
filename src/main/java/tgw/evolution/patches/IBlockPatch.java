@@ -18,7 +18,9 @@ public interface IBlockPatch {
      * 0.61 = Dry Grass; <br>
      * 0.63 = Dirt; <br>
      * 0.70 = Wood; <br>
+     * 0.73 = MAXIMUM WALK SPEED; <br>
      * 0.80 = Stone; <br>
+     * 0.95 = MAXIMUM SPRINT SPEED; <br>
      */
     float getFrictionCoefficient(BlockState state);
 
