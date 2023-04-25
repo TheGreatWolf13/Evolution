@@ -166,6 +166,7 @@
     "PlayerModelMixin",
     "PlayerRendererMixin",
     "PoseStackMixin",
+    "RecipeBookTabButtonMixin",
     "RecipeButtonMixin",
     "RecipeCollectionMixin",
     "RenderSystemMixin",
