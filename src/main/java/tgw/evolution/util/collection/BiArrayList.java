@@ -46,8 +46,6 @@ public class BiArrayList<L, R> {
         java.util.Arrays.fill(this.a, 0, this.size, null);
         java.util.Arrays.fill(this.b, 0, this.size, null);
         this.size = 0;
-        assert this.size <= this.a.length;
-        assert this.size <= this.b.length;
     }
 
     public L getLeft(final int index) {
