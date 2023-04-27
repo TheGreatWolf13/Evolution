@@ -37,7 +37,6 @@ import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.time.Time;
 
-import java.util.Objects;
 import java.util.Random;
 
 import static tgw.evolution.init.EvolutionBStates.LAYERS_0_16;
@@ -185,7 +184,9 @@ public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBl
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (state.getBlock() != newState.getBlock()) {
-            ((TEPitKiln) Objects.requireNonNull(level.getBlockEntity(pos))).onRemoved();
+            TEPitKiln te = (TEPitKiln) level.getBlockEntity(pos);
+            assert te != null;
+            te.onRemoved();
         }
         super.onRemove(state, level, pos, newState, isMoving);
     }
