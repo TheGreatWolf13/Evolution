@@ -192,7 +192,7 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
             else {
                 this.recipeBook.render(matrices, mouseX, mouseY, partialTicks);
                 super.render(matrices, mouseX, mouseY, partialTicks);
-                this.recipeBook.renderGhostRecipe(matrices, this.leftPos, this.topPos, false, partialTicks);
+                this.recipeBook.renderGhostRecipe(matrices, this.leftPos, this.topPos, true, partialTicks);
             }
             this.recipeBook.renderTooltip(matrices, this.leftPos, this.topPos, mouseX, mouseY);
         }

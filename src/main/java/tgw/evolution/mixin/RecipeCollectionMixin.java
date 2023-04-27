@@ -2,6 +2,8 @@ package tgw.evolution.mixin;
 
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
+import net.minecraft.stats.RecipeBook;
+import net.minecraft.world.entity.player.StackedContents;
 import net.minecraft.world.item.crafting.Recipe;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
@@ -9,6 +11,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import tgw.evolution.inventory.StackedContentsEv;
+import tgw.evolution.util.collection.BiIIArrayList;
 import tgw.evolution.util.collection.RArrayList;
 
 import java.util.HashSet;
@@ -37,6 +41,29 @@ public abstract class RecipeCollectionMixin {
     @Shadow
     @Final
     private List<Recipe<?>> recipes;
+
+    /**
+     * @author TheGreatWolf
+     * @reason Make use of {@link tgw.evolution.inventory.StackedContentsEv}
+     */
+    @Overwrite
+    public void canCraft(StackedContents helper, int width, int height, RecipeBook book) {
+        for (Recipe<?> recipe : this.recipes) {
+            boolean flag = recipe.canCraftInDimensions(width, height) && book.contains(recipe);
+            if (flag) {
+                this.fitsDimensions.add(recipe);
+            }
+            else {
+                this.fitsDimensions.remove(recipe);
+            }
+            if (flag && (helper instanceof StackedContentsEv s ? s.canCraft(recipe, (BiIIArrayList) null) : helper.canCraft(recipe, null))) {
+                this.craftable.add(recipe);
+            }
+            else {
+                this.craftable.remove(recipe);
+            }
+        }
+    }
 
     /**
      * @author TheGreatWolf

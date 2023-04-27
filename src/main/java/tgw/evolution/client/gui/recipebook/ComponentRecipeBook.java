@@ -21,7 +21,6 @@ import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.game.ServerboundRecipeBookChangeSettingsPacket;
 import net.minecraft.recipebook.PlaceRecipe;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.StackedContents;
 import net.minecraft.world.inventory.RecipeBookMenu;
 import net.minecraft.world.inventory.RecipeBookType;
 import net.minecraft.world.inventory.Slot;
@@ -37,6 +36,7 @@ import tgw.evolution.client.util.Key;
 import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.inventory.StackedContentsEv;
 import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.util.collection.RArrayList;
 import tgw.evolution.util.math.MathHelper;
@@ -51,7 +51,7 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
     protected final GhostRecipe ghostRecipe = new GhostRecipe();
     protected final ResourceLocation resBackground;
     private final PageRecipeBook recipeBookPage;
-    private final StackedContents stackedContents = new StackedContents();
+    private final StackedContentsEv stackedContents = new StackedContentsEv();
     private final List<ButtonTabRecipeBook> tabButtons = new RArrayList<>();
     private final int texHeight;
     private final int texWidth;
@@ -377,8 +377,8 @@ public class ComponentRecipeBook extends GuiComponent implements IRecipeBook, Gu
         }
     }
 
-    public void renderGhostRecipe(PoseStack matrices, int leftPos, int topPos, boolean p_100326_, float partialTicks) {
-        this.ghostRecipe.render(matrices, this.minecraft, leftPos, topPos, p_100326_, partialTicks);
+    public void renderGhostRecipe(PoseStack matrices, int leftPos, int topPos, boolean bigResultSlot, float partialTicks) {
+        this.ghostRecipe.render(matrices, this.minecraft, leftPos, topPos, bigResultSlot, partialTicks);
     }
 
     private void renderGhostRecipeTooltip(PoseStack matrices, int renderX, int renderY, int mouseX, int mouseY) {

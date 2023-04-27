@@ -11,24 +11,27 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraftforge.common.crafting.IShapedRecipe;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.collection.IArrayList;
-import tgw.evolution.util.collection.IList;
+import tgw.evolution.util.collection.BiIIArrayList;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
-
-import java.util.Iterator;
 
 public final class ServerPlaceRecipeEv {
 
     private ServerPlaceRecipeEv() {
     }
 
-    public static void addItemToSlot(RecipeBookMenu<?> menu, Inventory inventory, Iterator<Integer> ingredients, int slotId, int maxAmount) {
+    public static void addItemToSlot(RecipeBookMenu<?> menu,
+                                     Inventory inventory,
+                                     BiIIArrayList ingredients,
+                                     int ingredientCounter,
+                                     int slotId,
+                                     int maxAmount) {
         Slot slot = menu.getSlot(slotId);
-        ItemStack itemstack = StackedContents.fromStackingIndex(ingredients.next());
-        if (!itemstack.isEmpty()) {
-            for (int i = 0; i < maxAmount; ++i) {
-                moveItemToGrid(inventory, slot, itemstack);
+        ItemStack stack = StackedContents.fromStackingIndex(ingredients.getLeft(ingredientCounter));
+        if (!stack.isEmpty()) {
+            int totalAmount = maxAmount * ingredients.getRight(ingredientCounter);
+            for (int i = 0; i < totalAmount; ++i) {
+                moveItemToGrid(inventory, slot, stack);
             }
         }
     }
@@ -54,7 +57,7 @@ public final class ServerPlaceRecipeEv {
         return count;
     }
 
-    private static int getStackSize(RecipeBookMenu<?> menu, boolean placeAll, int maxPossible, boolean recipeMatches) {
+    private static int getStackSize(RecipeBookMenu<?> menu, boolean placeAll, int maxPossible, boolean recipeMatches, int increment) {
         if (placeAll) {
             return maxPossible;
         }
@@ -64,8 +67,8 @@ public final class ServerPlaceRecipeEv {
             for (int j = 0; j < menu.getGridWidth() * menu.getGridHeight() + 1; ++j) {
                 if (j != menu.getResultSlotIndex()) {
                     ItemStack itemstack = menu.getSlot(j).getItem();
-                    if (!itemstack.isEmpty() && i > itemstack.getCount()) {
-                        i = itemstack.getCount();
+                    if (!itemstack.isEmpty() && i > itemstack.getCount() / increment) {
+                        i = itemstack.getCount() / increment;
                     }
                 }
             }
@@ -76,34 +79,47 @@ public final class ServerPlaceRecipeEv {
         return i;
     }
 
-    private static void handleRecipeClicked(StackedContents helper,
+    private static void handleRecipeClicked(StackedContentsEv helper,
                                             RecipeBookMenu<?> menu,
                                             Inventory inventory,
                                             Recipe recipe,
                                             boolean placeAll) {
         boolean recipeMatches = menu.recipeMatches(recipe);
-        int maxPossible = helper.getBiggestCraftableStack(recipe, null);
-        if (recipeMatches) {
-            for (int j = 0; j < menu.getGridHeight() * menu.getGridWidth() + 1; ++j) {
-                if (j != menu.getResultSlotIndex()) {
-                    ItemStack stack = menu.getSlot(j).getItem();
-                    if (!stack.isEmpty() && Math.min(maxPossible, stack.getMaxStackSize()) < stack.getCount() + 1) {
-                        return;
-                    }
-                }
+        BiIIArrayList itemIdsList = new BiIIArrayList();
+        int maxPossible = helper.getBiggestCraftableStack(recipe, itemIdsList);
+        int minimumIngredientCount = Integer.MAX_VALUE;
+        for (int i = 0, len = itemIdsList.size(); i < len; i++) {
+            int count = itemIdsList.getRight(i);
+            if (count != 0 && count < minimumIngredientCount) {
+                minimumIngredientCount = count;
             }
         }
-        int stackSize = getStackSize(menu, placeAll, maxPossible, recipeMatches);
-        IList intList = new IArrayList();
-        if (helper.canCraft(recipe, intList, stackSize)) {
+//        if (recipeMatches) {
+//            for (int j = 0; j < menu.getGridHeight() * menu.getGridWidth() + 1; ++j) {
+//                if (j != menu.getResultSlotIndex()) {
+//                    ItemStack stack = menu.getSlot(j).getItem();
+//                    if (!stack.isEmpty()) {
+//                        if (Math.min(maxPossible, stack.getMaxStackSize()) < stack.getCount() + 1) {
+//                            return;
+//                        }
+//                    }
+//                }
+//            }
+//        }
+        int stackSize = getStackSize(menu, placeAll, maxPossible, recipeMatches, minimumIngredientCount);
+        if (helper.canCraft(recipe, itemIdsList, stackSize)) {
             int newSize = stackSize;
-            for (int j = 0, l = intList.size(); j < l; j++) {
-                int maxSize = StackedContents.fromStackingIndex(intList.get(j)).getMaxStackSize();
+            for (int j = 0, l = itemIdsList.size(); j < l; j++) {
+                ItemStack stack = StackedContents.fromStackingIndex(itemIdsList.getLeft(j));
+                if (stack.isEmpty()) {
+                    continue;
+                }
+                int maxSize = stack.getMaxStackSize() / itemIdsList.getRight(j);
                 if (maxSize < newSize) {
                     newSize = maxSize;
                 }
             }
-            if (helper.canCraft(recipe, intList, newSize)) {
+            if (helper.canCraft(recipe, itemIdsList, newSize)) {
                 clearGrid(menu, inventory);
                 placeRecipe(menu,
                             inventory,
@@ -111,7 +127,7 @@ public final class ServerPlaceRecipeEv {
                             menu.getGridHeight(),
                             menu.getResultSlotIndex(),
                             recipe,
-                            intList.it(),
+                            itemIdsList,
                             newSize);
             }
         }
@@ -133,7 +149,9 @@ public final class ServerPlaceRecipeEv {
                     slotToFill.set(stack);
                 }
                 else {
-                    slotToFill.getItem().grow(1);
+                    ItemStack stackAlreadyInGrid = slotToFill.getItem();
+                    stackAlreadyInGrid.grow(1);
+                    slotToFill.set(stackAlreadyInGrid);
                 }
             }
         }
@@ -145,7 +163,7 @@ public final class ServerPlaceRecipeEv {
                                     int height,
                                     int outputSlot,
                                     Recipe<?> recipe,
-                                    Iterator<Integer> ingredients,
+                                    BiIIArrayList ingredients,
                                     int maxAmount) {
         int newWidth = width;
         int newHeight = height;
@@ -154,6 +172,7 @@ public final class ServerPlaceRecipeEv {
             newHeight = shapedrecipe.getRecipeHeight();
         }
         int k1 = 0;
+        int ingredientCounter = 0;
         for (int k = 0; k < height; ++k) {
             if (k1 == outputSlot) {
                 ++k1;
@@ -165,7 +184,7 @@ public final class ServerPlaceRecipeEv {
                 ++k;
             }
             for (int i1 = 0; i1 < width; ++i1) {
-                if (!ingredients.hasNext()) {
+                if (ingredientCounter == ingredients.size()) {
                     return;
                 }
                 flag = newWidth < width / 2.0F;
@@ -177,7 +196,7 @@ public final class ServerPlaceRecipeEv {
                     flag1 = l <= i1 && i1 < l + newWidth;
                 }
                 if (flag1) {
-                    addItemToSlot(container, inventory, ingredients, k1, maxAmount);
+                    addItemToSlot(container, inventory, ingredients, ingredientCounter++, k1, maxAmount);
                 }
                 else if (j1 == i1) {
                     k1 += width - i1;
@@ -191,10 +210,10 @@ public final class ServerPlaceRecipeEv {
     public static void recipeClicked(RecipeBookMenu<?> menu, ServerPlayer player, @Nullable Recipe<?> recipe, boolean placeAll) {
         if (recipe != null && player.getRecipeBook().contains(recipe)) {
             if (testClearGrid(menu, player.getInventory()) || player.isCreative()) {
-                StackedContents recipeItemHelper = new StackedContents();
+                StackedContentsEv recipeItemHelper = new StackedContentsEv();
                 player.getInventory().fillStackedContents(recipeItemHelper);
                 menu.fillCraftSlotsStackedContents(recipeItemHelper);
-                if (recipeItemHelper.canCraft(recipe, null)) {
+                if (recipeItemHelper.canCraft(recipe, (BiIIArrayList) null)) {
                     handleRecipeClicked(recipeItemHelper, menu, player.getInventory(), recipe, placeAll);
                 }
                 else {
