@@ -21,7 +21,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fluids.FluidAttributes;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
-import tgw.evolution.blocks.BlockUtils;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionFluids;
 import tgw.evolution.util.math.*;
 

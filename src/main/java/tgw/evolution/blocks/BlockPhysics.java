@@ -10,6 +10,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionDamage;
 
 import java.util.Random;

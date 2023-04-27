@@ -1,4 +1,4 @@
-package tgw.evolution.blocks;
+package tgw.evolution.blocks.util;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
@@ -22,6 +22,7 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.IPlantable;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.blocks.*;
 import tgw.evolution.capabilities.chunkstorage.CapabilityChunkStorage;
 import tgw.evolution.capabilities.chunkstorage.IChunkStorage;
 import tgw.evolution.init.EvolutionCapabilities;

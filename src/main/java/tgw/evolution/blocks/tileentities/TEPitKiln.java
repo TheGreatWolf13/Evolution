@@ -8,7 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.blocks.BlockUtils;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.util.constants.WoodVariant;
 import tgw.evolution.util.math.DirectionDiagonal;

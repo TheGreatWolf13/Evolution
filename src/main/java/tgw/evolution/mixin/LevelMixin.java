@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.blocks.BlockUtils;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.patches.ILevelPatch;
 import tgw.evolution.util.constants.BlockFlags;
 

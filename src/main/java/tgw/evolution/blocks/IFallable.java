@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.Level;
 import tgw.evolution.Evolution;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 
 /**

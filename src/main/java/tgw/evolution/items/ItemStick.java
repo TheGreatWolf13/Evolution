@@ -15,8 +15,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.blocks.BlockUtils;
 import tgw.evolution.blocks.IFireSource;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTexts;
 

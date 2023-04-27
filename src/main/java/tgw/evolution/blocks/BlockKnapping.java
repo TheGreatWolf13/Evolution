@@ -23,6 +23,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.blocks.tileentities.TEKnapping;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemRock;
 import tgw.evolution.util.constants.RockVariant;

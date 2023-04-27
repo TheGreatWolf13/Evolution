@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraftforge.common.IPlantable;
+import tgw.evolution.blocks.util.BlockUtils;
 
 public class BlockBush extends BlockPhysics implements IPlantable, IReplaceable, IPoppable {
 

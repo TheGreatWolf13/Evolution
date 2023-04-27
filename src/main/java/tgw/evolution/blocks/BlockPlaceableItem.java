@@ -11,6 +11,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Range;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionShapes;
 
 public class BlockPlaceableItem extends BlockPhysics implements IReplaceable, IPoppable, IAir {

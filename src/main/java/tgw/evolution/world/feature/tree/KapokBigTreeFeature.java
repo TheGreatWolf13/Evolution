@@ -14,7 +14,7 @@
 //import net.minecraft.world.gen.feature.HugeTreesFeature;
 //import net.minecraft.world.gen.feature.NoFeatureConfig;
 //import net.minecraftforge.common.IPlantable;
-//import tgw.evolution.blocks.BlockUtils;
+//import tgw.evolution.blocks.util.BlockUtils;
 //import tgw.evolution.init.EvolutionBlocks;
 //import tgw.evolution.util.TreeUtils;
 //

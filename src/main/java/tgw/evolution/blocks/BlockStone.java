@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.HarvestLevel;
 import tgw.evolution.util.constants.RockVariant;

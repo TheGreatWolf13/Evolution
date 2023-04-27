@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionShapes;
 
 import java.util.Random;

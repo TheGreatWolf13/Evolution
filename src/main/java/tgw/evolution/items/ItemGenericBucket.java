@@ -27,12 +27,12 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import tgw.evolution.blocks.BlockUtils;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.IBlockFluidContainer;
 import tgw.evolution.blocks.fluids.BlockGenericFluid;
 import tgw.evolution.blocks.fluids.FluidGeneric;
+import tgw.evolution.blocks.util.BlockUtils;
 
-import org.jetbrains.annotations.Nullable;
 import java.util.function.Supplier;
 
 public abstract class ItemGenericBucket extends ItemEv implements IItemFluidContainer {

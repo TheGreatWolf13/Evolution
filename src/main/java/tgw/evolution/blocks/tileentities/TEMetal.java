@@ -7,7 +7,7 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import tgw.evolution.blocks.BlockUtils;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.util.constants.MetalVariant;
 import tgw.evolution.util.constants.Oxidation;

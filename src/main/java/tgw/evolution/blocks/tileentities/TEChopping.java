@@ -17,7 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import tgw.evolution.blocks.BlockUtils;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.events.ItemEvents;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.items.ItemLog;

@@ -5,6 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.entities.misc.EntityFallingWeight;
 import tgw.evolution.util.math.AABBMutable;
 import tgw.evolution.util.math.DirectionList;

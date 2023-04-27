@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
+import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketCSCollision;

@@ -8,7 +8,7 @@
 //import net.minecraft.world.gen.ChunkGenerator;
 //import net.minecraft.world.gen.feature.Feature;
 //import net.minecraft.world.gen.feature.SphereReplaceConfig;
-//import tgw.evolution.blocks.BlockUtils;
+//import tgw.evolution.blocks.util.BlockUtils;
 //
 //import java.util.Random;
 //
