@@ -1,5 +1,7 @@
 package tgw.evolution.client.gui.advancements;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import net.minecraft.Util;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.advancements.FrameType;
@@ -61,6 +63,29 @@ public class TagDisplayInfo extends DisplayInfo {
             }
         }
         return this.icons.get(this.index);
+    }
+
+    private JsonObject serializeIcon() {
+        JsonObject json = new JsonObject();
+        json.addProperty("tag", this.tag.location().toString());
+        return json;
+    }
+
+    @Override
+    public JsonElement serializeToJson() {
+        JsonObject json = new JsonObject();
+        json.add("icon", this.serializeIcon());
+        json.add("title", Component.Serializer.toJsonTree(this.getTitle()));
+        json.add("description", Component.Serializer.toJsonTree(this.getDescription()));
+        json.addProperty("frame", this.getFrame().getName());
+        json.addProperty("show_toast", this.shouldShowToast());
+        json.addProperty("announce_to_chat", this.shouldAnnounceChat());
+        json.addProperty("hidden", this.isHidden());
+        ResourceLocation background = this.getBackground();
+        if (background != null) {
+            json.addProperty("background", background.toString());
+        }
+        return json;
     }
 
     @Override
