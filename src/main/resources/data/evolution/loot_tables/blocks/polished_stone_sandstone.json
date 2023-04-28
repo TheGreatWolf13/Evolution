@@ -2,23 +2,12 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "name": "polished_stone_sandstone",
-      "rolls": 1,
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
       "entries": [
         {
           "type": "minecraft:item",
           "name": "evolution:polished_stone_sandstone"
-        }
-      ],
-      "functions": [
-        {
-          "function": "minecraft:set_count",
-          "conditions": [
-            {
-              "condition": "minecraft:survives_explosion"
-            }
-          ],
-          "count": 1
         }
       ]
     }

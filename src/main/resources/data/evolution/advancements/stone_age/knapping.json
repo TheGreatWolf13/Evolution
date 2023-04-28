@@ -3,7 +3,8 @@
   "display": {
     "icon": {
       "item": "evolution:part_head",
-      "cap": "{Parent:{Type:1b,SharpAmount:375,MaterialInstance:{Material:0b}}}"
+      "nbt": "{Damage:0}",
+      "cap": "{Parent:{Durability:0,MaterialInstance:{Material:0b},SharpAmount:375,Type:1b}}"
     },
     "title": {
       "translate": "evolution.advancements.stone_age.knapping.title"
@@ -23,12 +24,12 @@
         "player": [
           {
             "condition": "minecraft:entity_properties",
-            "entity": "this",
             "predicate": {
               "flags": {
                 "is_sneaking": true
               }
-            }
+            },
+            "entity": "this"
           }
         ],
         "item": {
@@ -42,4 +43,4 @@
       "placed_block"
     ]
   ]
-}		
+}

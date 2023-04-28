@@ -2,23 +2,12 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "name": "planks_redwood",
-      "rolls": 1,
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
       "entries": [
         {
           "type": "minecraft:item",
           "name": "evolution:planks_redwood"
-        }
-      ],
-      "functions": [
-        {
-          "function": "minecraft:set_count",
-          "conditions": [
-            {
-              "condition": "minecraft:survives_explosion"
-            }
-          ],
-          "count": 1
         }
       ]
     }

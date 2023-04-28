@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
+import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.items.ItemFirewood;
 import tgw.evolution.util.constants.BlockFlags;
@@ -65,7 +66,7 @@ public class TEFirewoodPile extends BlockEntity {
         if (id == -1) {
             return null;
         }
-        return WoodVariant.byId(id).getFirewood();
+        return WoodVariant.byId(id).get(EvolutionItems.FIREWOODS);
     }
 
     @Nullable
@@ -114,7 +115,7 @@ public class TEFirewoodPile extends BlockEntity {
         if (id == -1) {
             return null;
         }
-        return WoodVariant.byId(id).getFirewood();
+        return WoodVariant.byId(id).get(EvolutionItems.FIREWOODS);
     }
 
     @Override

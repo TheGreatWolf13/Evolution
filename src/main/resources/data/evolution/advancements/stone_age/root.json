@@ -16,8 +16,14 @@
     "background": "evolution:textures/block/cobblestone_andesite.png"
   },
   "criteria": {
-    "crafting_table": {
-      "trigger": "minecraft:tick"
+    "spawned": {
+      "trigger": "minecraft:tick",
+      "conditions": {}
     }
-  }
+  },
+  "requirements": [
+    [
+      "spawned"
+    ]
+  ]
 }

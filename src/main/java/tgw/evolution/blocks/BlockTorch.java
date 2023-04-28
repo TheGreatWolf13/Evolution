@@ -47,7 +47,7 @@ import static tgw.evolution.init.EvolutionBStates.LIT;
 public class BlockTorch extends BlockPhysics implements IReplaceable, IFireSource, EntityBlock, IPoppable, IAir {
 
     public BlockTorch() {
-        super(Properties.of(Material.DECORATION).strength(0.0F).randomTicks().noCollission().sound(SoundType.WOOD));
+        super(Properties.of(Material.DECORATION).strength(0.0F).randomTicks().noDrops().noCollission().sound(SoundType.WOOD));
         this.registerDefaultState(this.defaultBlockState().setValue(LIT, true));
     }
 

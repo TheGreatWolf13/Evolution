@@ -143,6 +143,7 @@ public interface IMelee {
         MACE_STRIKE_1(12, null),
         PICKAXE_STRIKE_1(12, new ColliderHitbox(HitboxType.NONE, -1 * 0.85, -4 * 0.85 * Mth.SQRT_OF_TWO, -4 * 0.85 * Mth.SQRT_OF_TWO, 1 * 0.85,
                                                 4 * 0.85 * Mth.SQRT_OF_TWO, -7 * 0.85 * Mth.SQRT_OF_TWO)),
+        PRIMITIVE_KNIFE_STRIKE(10, null),
         SHOVEL_STRIKE_1(12, new ColliderHitbox(HitboxType.NONE, 0, -2 * 0.85 * Mth.SQRT_OF_TWO, -6 * 0.85 * Mth.SQRT_OF_TWO, -1.5 * 0.85,
                                                2 * 0.85 * Mth.SQRT_OF_TWO, -10 * 0.85 * Mth.SQRT_OF_TWO, false)),
         TORCH_SWEEP(10, null);
@@ -177,7 +178,7 @@ public interface IMelee {
         @Override
         public EvolutionDamage.Type getDamageType() {
             return switch (this) {
-                case AXE_STRIKE_1, HOE_STRIKE_1 -> EvolutionDamage.Type.SLASHING;
+                case AXE_STRIKE_1, HOE_STRIKE_1, PRIMITIVE_KNIFE_STRIKE -> EvolutionDamage.Type.SLASHING;
                 case HAMMER_STRIKE_1, MACE_STRIKE_1, SHOVEL_STRIKE_1, TORCH_SWEEP -> EvolutionDamage.Type.CRUSHING;
                 case JAVELIN_THRUST, PICKAXE_STRIKE_1 -> EvolutionDamage.Type.PIERCING;
             };
@@ -194,7 +195,7 @@ public interface IMelee {
                 case AXE_STRIKE_1, MACE_STRIKE_1 -> 2;
                 case JAVELIN_THRUST, HAMMER_STRIKE_1, HOE_STRIKE_1 -> 1;
                 case PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> 0;
-                case TORCH_SWEEP -> 4;
+                case PRIMITIVE_KNIFE_STRIKE, TORCH_SWEEP -> 4;
             };
         }
 
@@ -203,7 +204,7 @@ public interface IMelee {
             return switch (this) {
                 case AXE_STRIKE_1, HAMMER_STRIKE_1, HOE_STRIKE_1, MACE_STRIKE_1, PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> tick >= 6;
                 case JAVELIN_THRUST -> tick >= 8;
-                case TORCH_SWEEP -> false;
+                case PRIMITIVE_KNIFE_STRIKE, TORCH_SWEEP -> false;
             };
         }
 
@@ -212,7 +213,7 @@ public interface IMelee {
             return switch (this) {
                 case AXE_STRIKE_1, HAMMER_STRIKE_1, HOE_STRIKE_1, MACE_STRIKE_1, PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> tick > 6;
                 case JAVELIN_THRUST -> tick > 7;
-                case TORCH_SWEEP -> true;
+                case PRIMITIVE_KNIFE_STRIKE, TORCH_SWEEP -> true;
             };
         }
 
@@ -221,14 +222,14 @@ public interface IMelee {
             return switch (this) {
                 case AXE_STRIKE_1, HAMMER_STRIKE_1, HOE_STRIKE_1, MACE_STRIKE_1, PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> tick > 6;
                 case JAVELIN_THRUST -> tick >= 7;
-                case TORCH_SWEEP -> false;
+                case PRIMITIVE_KNIFE_STRIKE, TORCH_SWEEP -> false;
             };
         }
 
         @Override
         public boolean isLongitudinalMotionLocked(int tick) {
             return switch (this) {
-                case AXE_STRIKE_1, JAVELIN_THRUST, TORCH_SWEEP -> false;
+                case AXE_STRIKE_1, JAVELIN_THRUST, PRIMITIVE_KNIFE_STRIKE, TORCH_SWEEP -> false;
                 case HAMMER_STRIKE_1, HOE_STRIKE_1, MACE_STRIKE_1, PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> tick > 8;
             };
         }
@@ -238,7 +239,7 @@ public interface IMelee {
             return switch (this) {
                 case AXE_STRIKE_1, HAMMER_STRIKE_1, HOE_STRIKE_1, MACE_STRIKE_1, PICKAXE_STRIKE_1, SHOVEL_STRIKE_1 -> tick > 6;
                 case JAVELIN_THRUST -> tick >= 7;
-                case TORCH_SWEEP -> false;
+                case PRIMITIVE_KNIFE_STRIKE, TORCH_SWEEP -> false;
             };
         }
     }

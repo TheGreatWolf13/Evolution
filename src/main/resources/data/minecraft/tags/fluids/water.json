@@ -1,8 +1,6 @@
 {
   "replace": false,
   "values": [
-    "minecraft:water",
-    "minecraft:flowing_water",
     "evolution:fresh_water",
     "evolution:salt_water"
   ]

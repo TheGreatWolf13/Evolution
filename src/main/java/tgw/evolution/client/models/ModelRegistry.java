@@ -25,14 +25,8 @@ public final class ModelRegistry {
     }
 
     public static void register(ModelBakeEvent event) {
-        for (RockVariant variant : RockVariant.VALUES) {
-            Block block;
-            try {
-                block = variant.getKnapping();
-            }
-            catch (IllegalStateException e) {
-                continue;
-            }
+        for (RockVariant variant : RockVariant.VALUES_STONE) {
+            Block block = variant.get(EvolutionBlocks.KNAPPING_BLOCKS);
             registerModel(event, block, variant, BakedModelKnapping::new);
         }
         registerModel(event, EvolutionBlocks.FIREWOOD_PILE.get(), BakedModelFirewoodPile::new);

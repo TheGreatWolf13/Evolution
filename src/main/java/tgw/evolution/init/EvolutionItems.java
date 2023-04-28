@@ -103,6 +103,7 @@ public final class EvolutionItems {
     public static final Map<WoodVariant, RegistryObject<Item>> PLANK;
     public static final Map<WoodVariant, RegistryObject<Item>> PLANKS;
     public static final Map<RockVariant, RegistryObject<Item>> POLISHED_STONES;
+    public static final Map<RockVariant, RegistryObject<Item>> PRIMITIVE_KNIVES;
     public static final Map<RockVariant, RegistryObject<Item>> ROCKS;
     public static final Map<RockVariant, RegistryObject<Item>> SANDS;
     public static final Map<WoodVariant, RegistryObject<Item>> SAPLINGS;
@@ -177,23 +178,24 @@ public final class EvolutionItems {
         TORCH = makeBlock(EvolutionBlocks.TORCH, b -> () -> new ItemTorch(propMisc()));
         TORCH_UNLIT = ITEMS.register("torch_unlit", () -> new ItemTorchUnlit(propMisc()));
         //Collection
-        CHOPPING_BLOCKS = makeBlock(WoodVariant.class, EvolutionBlocks.CHOPPING_BLOCKS, e -> () -> woodBlock(e.getChoppingBlock()));
-        COBBLESTONES = makeBlock(RockVariant.class, EvolutionBlocks.COBBLESTONES, e -> () -> itemBlock(e.getCobble()));
-        DIRTS = makeBlock(RockVariant.class, EvolutionBlocks.DIRTS, e -> () -> itemBlock(e.getDirt()));
-        DRY_GRASSES = makeBlock(RockVariant.class, EvolutionBlocks.DRY_GRASSES, e -> () -> itemBlock(e.getDryGrass()));
+        CHOPPING_BLOCKS = makeBlock(WoodVariant.class, EvolutionBlocks.CHOPPING_BLOCKS, e -> () -> woodBlock(e.get(EvolutionBlocks.CHOPPING_BLOCKS)));
+        COBBLESTONES = makeBlock(RockVariant.class, EvolutionBlocks.COBBLESTONES, e -> () -> itemBlock(e.get(EvolutionBlocks.COBBLESTONES)));
+        DIRTS = makeBlock(RockVariant.class, EvolutionBlocks.DIRTS, e -> () -> itemBlock(e.get(EvolutionBlocks.DIRTS)));
+        DRY_GRASSES = makeBlock(RockVariant.class, EvolutionBlocks.DRY_GRASSES, e -> () -> itemBlock(e.get(EvolutionBlocks.DRY_GRASSES)));
         FIREWOODS = make(WoodVariant.class, WoodVariant.VALUES, "firewood_", e -> () -> new ItemFirewood(e));
-        GRASSES = makeBlock(RockVariant.class, EvolutionBlocks.GRASSES, e -> () -> itemBlock(e.getGrass()));
-        GRAVELS = makeBlock(RockVariant.class, EvolutionBlocks.GRAVELS, e -> () -> itemBlock(e.getGravel()));
-        LEAVES = makeBlock(WoodVariant.class, EvolutionBlocks.LEAVES, e -> () -> woodBlock(e.getLeaves()));
-        LOGS = makeBlock(WoodVariant.class, EvolutionBlocks.LOGS, e -> () -> new ItemLog(e, e.getLog(), propTreesAndWood()));
+        GRASSES = makeBlock(RockVariant.class, EvolutionBlocks.GRASSES, e -> () -> itemBlock(e.get(EvolutionBlocks.GRASSES)));
+        GRAVELS = makeBlock(RockVariant.class, EvolutionBlocks.GRAVELS, e -> () -> itemBlock(e.get(EvolutionBlocks.GRAVELS)));
+        LEAVES = makeBlock(WoodVariant.class, EvolutionBlocks.LEAVES, e -> () -> woodBlock(e.get(EvolutionBlocks.LEAVES)));
+        LOGS = makeBlock(WoodVariant.class, EvolutionBlocks.LOGS, e -> () -> new ItemLog(e, e.get(EvolutionBlocks.LOGS), propTreesAndWood()));
         PLANK = make(WoodVariant.class, WoodVariant.VALUES, "plank_", e -> EvolutionItems::wood);
-        PLANKS = makeBlock(WoodVariant.class, EvolutionBlocks.PLANKS, e -> () -> woodBlock(e.getPlanks()));
-        POLISHED_STONES = makeBlock(RockVariant.class, EvolutionBlocks.POLISHED_STONES, e -> () -> itemBlock(e.getPolishedStone()));
-        ROCKS = makeBlock(RockVariant.class, EvolutionBlocks.ROCKS, e -> () -> new ItemRock(e.getRock(), propMisc(), e));
-        SANDS = makeBlock(RockVariant.class, EvolutionBlocks.SANDS, e -> () -> itemBlock(e.getSand()));
-        SAPLINGS = makeBlock(WoodVariant.class, EvolutionBlocks.SAPLINGS, e -> () -> woodBlock(e.getSapling()));
-        STONE_BRICKS = makeBlock(RockVariant.class, EvolutionBlocks.STONE_BRICKS, e -> () -> itemBlock(e.getStoneBricks()));
-        STONES = makeBlock(RockVariant.class, EvolutionBlocks.STONES, e -> () -> itemBlock(e.getStone()));
+        PLANKS = makeBlock(WoodVariant.class, EvolutionBlocks.PLANKS, e -> () -> woodBlock(e.get(EvolutionBlocks.PLANKS)));
+        POLISHED_STONES = makeBlock(RockVariant.class, EvolutionBlocks.POLISHED_STONES, e -> () -> itemBlock(e.get(EvolutionBlocks.POLISHED_STONES)));
+        PRIMITIVE_KNIVES = make(RockVariant.class, RockVariant.VALUES_STONE, "primitive_knife_", e -> () -> new ItemEv(propPartTool()));
+        ROCKS = makeBlock(RockVariant.class, EvolutionBlocks.ROCKS, e -> () -> new ItemRock(e.get(EvolutionBlocks.ROCKS), propMisc(), e));
+        SANDS = makeBlock(RockVariant.class, EvolutionBlocks.SANDS, e -> () -> itemBlock(e.get(EvolutionBlocks.SANDS)));
+        SAPLINGS = makeBlock(WoodVariant.class, EvolutionBlocks.SAPLINGS, e -> () -> woodBlock(e.get(EvolutionBlocks.SAPLINGS)));
+        STONE_BRICKS = makeBlock(RockVariant.class, EvolutionBlocks.STONE_BRICKS, e -> () -> itemBlock(e.get(EvolutionBlocks.STONE_BRICKS)));
+        STONES = makeBlock(RockVariant.class, EvolutionBlocks.STONES, e -> () -> itemBlock(e.get(EvolutionBlocks.STONES)));
     }
 
     private EvolutionItems() {

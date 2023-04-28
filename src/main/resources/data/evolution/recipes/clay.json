@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "##",
+    "##"
+  ],
+  "key": {
+    "#": {
+      "type": "forge:nbt",
+      "item": "evolution:clayball",
+      "count": 2
+    }
+  },
+  "result": {
+    "item": "evolution:clay"
+  }
+}

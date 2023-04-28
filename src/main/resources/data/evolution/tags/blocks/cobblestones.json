@@ -1,0 +1,20 @@
+{
+  "replace": false,
+  "values": [
+    "evolution:cobblestone_andesite",
+    "evolution:cobblestone_basalt",
+    "evolution:cobblestone_chert",
+    "evolution:cobblestone_diorite",
+    "evolution:cobblestone_gabbro",
+    "evolution:cobblestone_gneiss",
+    "evolution:cobblestone_granite",
+    "evolution:cobblestone_limestone",
+    "evolution:cobblestone_marble",
+    "evolution:cobblestone_red_sandstone",
+    "evolution:cobblestone_rhyolite",
+    "evolution:cobblestone_sandstone",
+    "evolution:cobblestone_schist",
+    "evolution:cobblestone_shale",
+    "evolution:cobblestone_slate"
+  ]
+}

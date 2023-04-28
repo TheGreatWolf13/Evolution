@@ -101,12 +101,11 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
         if (!level.isClientSide) {
             if (pos.above().equals(fromPos)) {
                 if (BlockUtils.hasSolidSide(level, fromPos, Direction.DOWN) &&
-                    !(level.getBlockState(fromPos)
-                           .getBlock() instanceof BlockMolding/* || worldIn.getBlockState(fromPos).getBlock() instanceof BlockShadowHound*/) &&
+                    !(level.getBlockState(fromPos).getBlock() instanceof BlockMolding) &&
                     !(level.getBlockState(fromPos).getBlock() instanceof BlockPitKiln && level.getBlockState(fromPos).getValue(LAYERS_0_16) < 9)) {
                     level.setBlockAndUpdate(pos, this == EvolutionBlocks.GRASSES.get(RockVariant.PEAT).get() ?
                                                  EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, 4) :
-                                                 this.variant.getDirt().defaultBlockState());
+                                                 this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState());
                     for (Direction direction : DirectionUtil.HORIZ_NESW) {
                         BlockPos offset = pos.relative(direction);
                         Block blockAtOffset = level.getBlockState(offset).getBlock();
@@ -138,7 +137,7 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
                 if (!canSustainGrass(state, level, pos)) {
                     level.setBlockAndUpdate(pos, this == EvolutionBlocks.GRASSES.get(RockVariant.PEAT).get() ?
                                                  EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, 4) :
-                                                 this.variant.getDirt().defaultBlockState());
+                                                 this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState());
                 }
                 else {
                     if (level.getBrightness(LightLayer.SKY, pos.above()) >= 9) {
@@ -153,8 +152,6 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
                                     if (stateAtPos.getValue(LAYERS_1_4) != 4) {
                                         return;
                                     }
-                                }
-                                if (blockAtPos instanceof BlockPeat) {
                                     //TODO proper snow
                                     level.setBlockAndUpdate(randomPos, EvolutionBlocks.GRASSES.get(RockVariant.PEAT)
                                                                                               .get()
@@ -167,7 +164,7 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
                                     //TODO proper snow
                                     IRockVariant rockVariant = (IRockVariant) blockAtPos;
                                     level.setBlockAndUpdate(randomPos, rockVariant.rockVariant()
-                                                                                  .getGrass()
+                                                                                  .get(EvolutionBlocks.GRASSES)
                                                                                   .defaultBlockState()
                                                                                   .setValue(SNOWY,
                                                                                             level.getBlockState(randomPos.above()).getBlock() ==

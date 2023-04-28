@@ -3,6 +3,7 @@ package tgw.evolution.init;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.properties.*;
 import tgw.evolution.blocks.tileentities.SchematicMode;
+import tgw.evolution.blocks.util.IntProperty;
 
 public final class EvolutionBStates {
 
@@ -22,15 +23,15 @@ public final class EvolutionBStates {
     public static final BooleanProperty UP = BlockStateProperties.UP;
     public static final BooleanProperty WEST = BlockStateProperties.WEST;
     //Int
-    public static final IntegerProperty AGE_0_15 = BlockStateProperties.AGE_15;
-    public static final IntegerProperty ATM = IntegerProperty.create("atm", 0, 31);
-    public static final IntegerProperty DISTANCE_0_7 = BlockStateProperties.STABILITY_DISTANCE;
-    public static final IntegerProperty FIREWOOD_COUNT = IntegerProperty.create("log_count", 1, 16);
-    public static final IntegerProperty LAYERS_0_16 = IntegerProperty.create("layers", 0, 16);
-    public static final IntegerProperty LAYERS_1_4 = IntegerProperty.create("layers", 1, 4);
-    public static final IntegerProperty LAYERS_1_5 = IntegerProperty.create("layers", 1, 5);
-    public static final IntegerProperty LEVEL_1_8 = IntegerProperty.create("level", 1, 8);
-    public static final IntegerProperty STAGE_0_1 = BlockStateProperties.STAGE;
+    public static final IntProperty AGE_0_15 = IntProperty.create("age", 0, 15);
+    public static final IntProperty ATM = IntProperty.create("atm", 0, 31);
+    public static final IntProperty DISTANCE_0_7 = IntProperty.create("distance", 0, 7);
+    public static final IntProperty FIREWOOD_COUNT = IntProperty.create("log_count", 1, 16);
+    public static final IntProperty LAYERS_0_16 = IntProperty.create("layers", 0, 16);
+    public static final IntProperty LAYERS_1_4 = IntProperty.create("layers", 1, 4);
+    public static final IntProperty LAYERS_1_5 = IntProperty.create("layers", 1, 5);
+    public static final IntProperty LEVEL_1_8 = IntProperty.create("level", 1, 8);
+    public static final IntProperty STAGE_0_1 = IntProperty.create("stage", 0, 1);
     //Direction
     public static final DirectionProperty DIRECTION_EXCEPT_UP = BlockStateProperties.FACING_HOPPER;
     public static final DirectionProperty DIRECTION_HORIZONTAL = BlockStateProperties.HORIZONTAL_FACING;

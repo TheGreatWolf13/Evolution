@@ -11,6 +11,7 @@ import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.registries.RegistryObject;
+import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.items.IItemTemperature;
 import tgw.evolution.util.constants.RockVariant;
@@ -41,7 +42,9 @@ public final class ColorManager {
     }
 
     public static void registerBlockColorHandlers(BlockColors colors) {
-        BlockColor grass = (state, world, pos, color) -> BiomeColors.getAverageGrassColor(world, pos);
+        BlockColor grass = (state, world, pos, color) -> world != null && pos != null ?
+                                                         BiomeColors.getAverageGrassColor(world, pos) :
+                                                         GrassColor.get(0.5, 1.0);
         BlockColor spruce = (state, world, pos, color) -> FoliageColor.getEvergreenColor();
         BlockColor birch = (state, world, pos, color) -> FoliageColor.getBirchColor();
         BlockColor aspen = (state, world, pos, color) -> 0xff_fc00;
@@ -49,13 +52,11 @@ public final class ColorManager {
                                                           BiomeColors.getAverageFoliageColor(world, pos) :
                                                           FoliageColor.getDefaultColor();
         //Grass
-        for (RockVariant rock : RockVariant.VALUES) {
-            register(colors, grass, rock.getGrass());
-            try {
-                register(colors, grass, rock.getDryGrass());
-            }
-            catch (IllegalStateException ignored) {
-            }
+        for (RockVariant variant : RockVariant.VALUES) {
+            register(colors, grass, variant.get(EvolutionBlocks.GRASSES));
+        }
+        for (RockVariant variant : RockVariant.VALUES_STONE) {
+            register(colors, grass, variant.get(EvolutionBlocks.DRY_GRASSES));
         }
         register(colors, grass, GRASS);
         register(colors, grass, TALLGRASS);
@@ -63,19 +64,19 @@ public final class ColorManager {
         for (WoodVariant wood : WoodVariant.VALUES) {
             switch (wood) {
                 case ASPEN -> {
-                    register(colors, aspen, wood.getLeaves());
+                    register(colors, aspen, wood.get(EvolutionBlocks.LEAVES));
                     continue;
                 }
                 case BIRCH -> {
-                    register(colors, birch, wood.getLeaves());
+                    register(colors, birch, wood.get(EvolutionBlocks.LEAVES));
                     continue;
                 }
                 case EUCALYPTUS, FIR, PINE, SPRUCE -> {
-                    register(colors, spruce, wood.getLeaves());
+                    register(colors, spruce, wood.get(EvolutionBlocks.LEAVES));
                     continue;
                 }
             }
-            register(colors, leaves, wood.getLeaves());
+            register(colors, leaves, wood.get(EvolutionBlocks.LEAVES));
         }
     }
 
@@ -95,13 +96,11 @@ public final class ColorManager {
             return 0xffff_ffff;
         };
         //Grass
-        for (RockVariant rock : RockVariant.VALUES) {
-            register(colors, grass, rock.getGrass());
-            try {
-                register(colors, grass, rock.getDryGrass());
-            }
-            catch (IllegalStateException ignored) {
-            }
+        for (RockVariant variant : RockVariant.VALUES) {
+            register(colors, grass, variant.get(EvolutionItems.GRASSES));
+        }
+        for (RockVariant variant : RockVariant.VALUES_STONE) {
+            register(colors, grass, variant.get(EvolutionItems.DRY_GRASSES));
         }
         register(colors, grass, GRASS);
         register(colors, grass, TALLGRASS);
@@ -109,19 +108,19 @@ public final class ColorManager {
         for (WoodVariant wood : WoodVariant.VALUES) {
             switch (wood) {
                 case ASPEN -> {
-                    register(colors, aspen, wood.getLeaves());
+                    register(colors, aspen, wood.get(EvolutionItems.LEAVES));
                     continue;
                 }
                 case BIRCH -> {
-                    register(colors, birch, wood.getLeaves());
+                    register(colors, birch, wood.get(EvolutionItems.LEAVES));
                     continue;
                 }
                 case EUCALYPTUS, FIR, PINE, SPRUCE -> {
-                    register(colors, spruce, wood.getLeaves());
+                    register(colors, spruce, wood.get(EvolutionItems.LEAVES));
                     continue;
                 }
             }
-            register(colors, leaves, wood.getLeaves());
+            register(colors, leaves, wood.get(EvolutionItems.LEAVES));
         }
         register(colors, temperature, EvolutionItems.INGOT_COPPER.get());
     }

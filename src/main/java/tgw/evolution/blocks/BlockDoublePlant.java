@@ -28,9 +28,16 @@ import static tgw.evolution.init.EvolutionBStates.HALF;
 
 public class BlockDoublePlant extends BlockBush {
 
-    public BlockDoublePlant() {
-        super(Properties.of(Material.PLANT).noCollission().strength(0.0F).sound(SoundType.GRASS));
+    protected BlockDoublePlant(Properties properties) {
+        super(properties);
         this.registerDefaultState(this.defaultBlockState().setValue(HALF, DoubleBlockHalf.LOWER));
+    }
+
+    public static BlockDoublePlant make(boolean drops) {
+        if (drops) {
+            return new BlockDoublePlant(Properties.of(Material.PLANT).noCollission().strength(0.0F).sound(SoundType.GRASS));
+        }
+        return new BlockDoublePlant(Properties.of(Material.PLANT).noCollission().strength(0.0F).sound(SoundType.GRASS).noDrops());
     }
 
     @Override

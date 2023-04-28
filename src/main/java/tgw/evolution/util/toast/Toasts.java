@@ -29,15 +29,9 @@ public final class Toasts {
     }
 
     public static void register() {
-        ItemStack knapping = new ItemStack(EvolutionItems.ROCKS.get(RockVariant.ANDESITE).get());
-        for (RockVariant rock : RockVariant.VALUES) {
-            Item rockItem;
-            try {
-                rockItem = rock.getRock().asItem();
-            }
-            catch (IllegalStateException e) {
-                continue;
-            }
+        ItemStack knapping = new ItemStack(RockVariant.ANDESITE.get(EvolutionItems.ROCKS));
+        for (RockVariant variant : RockVariant.VALUES_STONE) {
+            Item rockItem = variant.get(EvolutionItems.ROCKS);
             //noinspection ObjectAllocationInLoop
             RList<ToastHolderRecipe> rockRecipes = new RArrayList<>(KnappingRecipe.VALUES.length - 1);
             for (KnappingRecipe recipe : KnappingRecipe.VALUES) {
@@ -45,15 +39,15 @@ public final class Toasts {
                     continue;
                 }
                 //noinspection ObjectAllocationInLoop
-                rockRecipes.add(new ToastHolderRecipe(knapping, rock.getKnappedStack(recipe)));
+                rockRecipes.add(new ToastHolderRecipe(knapping, variant.getKnappedStack(recipe)));
             }
             registerRecipe(rockItem, rockRecipes);
         }
         ItemStack chopping = new ItemStack(EvolutionItems.CHOPPING_BLOCKS.get(WoodVariant.OAK).get());
         for (WoodVariant wood : WoodVariant.VALUES) {
-            Item woodItem = wood.getLogItem();
+            Item woodItem = wood.get(EvolutionItems.LOGS);
             //noinspection ObjectAllocationInLoop
-            registerRecipe(woodItem, new ToastHolderRecipe(chopping, wood.getFirewood()));
+            registerRecipe(woodItem, new ToastHolderRecipe(chopping, wood.get(EvolutionItems.FIREWOODS)));
         }
         Evolution.info("Registered custom toasts");
     }

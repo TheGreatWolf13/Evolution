@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.blocks.IRockVariant;
+import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.network.PacketSCOpenKnappingGui;
@@ -28,7 +29,7 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IRockVariant 
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flagIn) {
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flagIn) {
         switch (this.variant.getRockType()) {
             case IGNEOUS_EXTRUSIVE -> tooltip.add(EvolutionTexts.TOOLTIP_ROCK_TYPE_IGEXTRUSIVE);
             case IGNEOUS_INTRUSIVE -> tooltip.add(EvolutionTexts.TOOLTIP_ROCK_TYPE_IGINTRUSIVE);
@@ -51,7 +52,7 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IRockVariant 
 
     @Override
     public BlockState getSneakingState(BlockPlaceContext context) {
-        return this.variant.getKnapping().defaultBlockState();
+        return this.variant.get(EvolutionBlocks.KNAPPING_BLOCKS).defaultBlockState();
     }
 
     @Override
@@ -61,6 +62,8 @@ public class ItemRock extends ItemGenericBlockPlaceable implements IRockVariant 
 
     @Override
     public void sneakingAction(BlockPlaceContext context) {
-        EvolutionNetwork.send((ServerPlayer) context.getPlayer(), new PacketSCOpenKnappingGui(context.getClickedPos(), this.variant));
+        if (context.getPlayer() instanceof ServerPlayer player) {
+            EvolutionNetwork.send(player, new PacketSCOpenKnappingGui(context.getClickedPos(), this.variant));
+        }
     }
 }

@@ -15,7 +15,6 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.PathComputationType;
@@ -29,6 +28,7 @@ import tgw.evolution.blocks.BlockPhysics;
 import tgw.evolution.blocks.IBlockFluidContainer;
 import tgw.evolution.blocks.IReplaceable;
 import tgw.evolution.blocks.util.BlockUtils;
+import tgw.evolution.blocks.util.IntProperty;
 import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
@@ -44,7 +44,7 @@ import java.util.function.Supplier;
 import static tgw.evolution.init.EvolutionBStates.LEVEL_1_8;
 
 public abstract class BlockGenericFluid extends BlockPhysics implements IBlockFluidContainer, IReplaceable {
-    public static final IntegerProperty LEVEL = LEVEL_1_8;
+    public static final IntProperty LEVEL = LEVEL_1_8;
     public static final BooleanProperty FULL = EvolutionBStates.FULL;
     private final OList<FluidState> fluidStateCache;
     private final Supplier<? extends FluidGeneric> supplier;

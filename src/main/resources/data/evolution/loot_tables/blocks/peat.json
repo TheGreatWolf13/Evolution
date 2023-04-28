@@ -2,64 +2,12 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "rolls": 1,
+      "rolls": 1.0,
+      "bonus_rolls": 0.0,
       "entries": [
         {
-          "type": "minecraft:alternatives",
-          "children": [
-            {
-              "type": "minecraft:item",
-              "conditions": [
-                {
-                  "condition": "minecraft:block_state_property",
-                  "block": "evolution:peat",
-                  "properties": {
-                    "layers": "1"
-                  }
-                }
-              ],
-              "name": "evolution:peat"
-            },
-            {
-              "type": "minecraft:item",
-              "conditions": [
-                {
-                  "condition": "minecraft:block_state_property",
-                  "block": "evolution:peat",
-                  "properties": {
-                    "layers": "2"
-                  }
-                }
-              ],
-              "name": "evolution:peat"
-            },
-            {
-              "type": "minecraft:item",
-              "conditions": [
-                {
-                  "condition": "minecraft:block_state_property",
-                  "block": "evolution:peat",
-                  "properties": {
-                    "layers": "3"
-                  }
-                }
-              ],
-              "name": "evolution:peat"
-            },
-            {
-              "type": "minecraft:item",
-              "conditions": [
-                {
-                  "condition": "minecraft:block_state_property",
-                  "block": "evolution:peat",
-                  "properties": {
-                    "layers": "4"
-                  }
-                }
-              ],
-              "name": "evolution:peat"
-            }
-          ]
+          "type": "minecraft:item",
+          "name": "evolution:peat"
         }
       ]
     }

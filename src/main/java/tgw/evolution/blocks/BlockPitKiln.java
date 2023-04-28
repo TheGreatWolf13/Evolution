@@ -44,7 +44,7 @@ import static tgw.evolution.init.EvolutionBStates.LAYERS_0_16;
 public class BlockPitKiln extends BlockGeneric implements IReplaceable, EntityBlock {
 
     public BlockPitKiln() {
-        super(Properties.of(Material.GRASS).randomTicks().noOcclusion());
+        super(Properties.of(Material.GRASS).noDrops().randomTicks().noOcclusion());
         this.registerDefaultState(this.defaultBlockState().setValue(LAYERS_0_16, 0));
     }
 

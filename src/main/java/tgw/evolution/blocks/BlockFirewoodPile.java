@@ -36,7 +36,7 @@ import static tgw.evolution.init.EvolutionBStates.FIREWOOD_COUNT;
 public class BlockFirewoodPile extends BlockPhysics implements IReplaceable, EntityBlock, IPoppable {
 
     public BlockFirewoodPile() {
-        super(Properties.of(Material.WOOD).strength(-1, 2.0F).sound(SoundType.WOOD));
+        super(Properties.of(Material.WOOD).strength(-1, 2.0F).sound(SoundType.WOOD).noDrops());
         this.registerDefaultState(this.defaultBlockState().setValue(FIREWOOD_COUNT, 1).setValue(DIRECTION_HORIZONTAL, Direction.NORTH));
     }
 

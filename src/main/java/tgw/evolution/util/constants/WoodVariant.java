@@ -2,14 +2,13 @@ package tgw.evolution.util.constants;
 
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMap;
 import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
-import tgw.evolution.init.EvolutionBlocks;
-import tgw.evolution.init.EvolutionItems;
+import net.minecraftforge.registries.RegistryObject;
 import tgw.evolution.init.IVariant;
 import tgw.evolution.util.UnregisteredFeatureException;
 import tgw.evolution.util.collection.B2RMap;
 import tgw.evolution.util.collection.B2ROpenHashMap;
+
+import java.util.Map;
 
 public enum WoodVariant implements IVariant {
     ACACIA(0, "acacia", 750, 14_412_500),
@@ -65,28 +64,14 @@ public enum WoodVariant implements IVariant {
         return variant;
     }
 
-    public Block getChoppingBlock() {
-        return EvolutionBlocks.CHOPPING_BLOCKS.get(this).get();
-    }
-
-    public Item getFirewood() {
-        return EvolutionItems.FIREWOODS.get(this).get();
+    public <T> T get(Map<WoodVariant, RegistryObject<T>> registry) {
+        RegistryObject<T> object = registry.get(this);
+        this.checkNull(object);
+        return object.get();
     }
 
     public byte getId() {
         return this.id;
-    }
-
-    public Block getLeaves() {
-        return EvolutionBlocks.LEAVES.get(this).get();
-    }
-
-    public Block getLog() {
-        return EvolutionBlocks.LOGS.get(this).get();
-    }
-
-    public Item getLogItem() {
-        return EvolutionItems.LOGS.get(this).get();
     }
 
     public double getMass() {
@@ -96,18 +81,6 @@ public enum WoodVariant implements IVariant {
     @Override
     public String getName() {
         return this.name;
-    }
-
-    public Item getPlank() {
-        return EvolutionItems.PLANK.get(this).get();
-    }
-
-    public Block getPlanks() {
-        return EvolutionBlocks.PLANKS.get(this).get();
-    }
-
-    public Block getSapling() {
-        return EvolutionBlocks.SAPLINGS.get(this).get();
     }
 
     public int getShearStrength() {

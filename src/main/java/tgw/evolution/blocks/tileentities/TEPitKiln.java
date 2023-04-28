@@ -9,6 +9,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.util.BlockUtils;
+import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.util.constants.WoodVariant;
 import tgw.evolution.util.math.DirectionDiagonal;
@@ -58,7 +59,7 @@ public class TEPitKiln extends BlockEntity {
     }
 
     public ItemStack getLogStack(int index) {
-        return new ItemStack(WoodVariant.byId(this.logs[index]).getLogItem());
+        return new ItemStack(WoodVariant.byId(this.logs[index]).get(EvolutionItems.FIREWOODS));
     }
 
     public byte[] getLogs() {
@@ -134,7 +135,8 @@ public class TEPitKiln extends BlockEntity {
             for (int i = 0; i < 8; i++) {
                 if (this.logs[i] != -1) {
                     //noinspection ObjectAllocationInLoop
-                    BlockUtils.dropItemStack(this.level, this.worldPosition, new ItemStack(WoodVariant.byId(this.logs[i]).getLogItem()));
+                    BlockUtils.dropItemStack(this.level, this.worldPosition,
+                                             new ItemStack(WoodVariant.byId(this.logs[i]).get(EvolutionItems.FIREWOODS)));
                 }
                 else {
                     break;

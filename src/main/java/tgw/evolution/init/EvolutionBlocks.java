@@ -92,7 +92,7 @@ public final class EvolutionBlocks {
     public static final RegistryObject<BlockGenericFluid> FRESH_WATER;
     public static final RegistryObject<BlockGenericFluid> SALT_WATER;
     //
-    private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Evolution.MODID);
+    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Evolution.MODID);
 
     static {
         //Temporary Blocks used for testing
@@ -100,9 +100,9 @@ public final class EvolutionBlocks {
         GLASS = BLOCKS.register("glass", BlockGlass::new);
         //Dev Blocks
         ATM = BLOCKS.register("atm", BlockAtm::new);
-        DESTROY_3 = BLOCKS.register("destroy_3", () -> new GlassBlock(Block.Properties.of(Material.AIR)));
-        DESTROY_6 = BLOCKS.register("destroy_6", () -> new GlassBlock(Block.Properties.of(Material.AIR)));
-        DESTROY_9 = BLOCKS.register("destroy_9", () -> new GlassBlock(Block.Properties.of(Material.AIR)));
+        DESTROY_3 = BLOCKS.register("destroy_3", () -> new GlassBlock(Block.Properties.of(Material.AIR).noDrops()));
+        DESTROY_6 = BLOCKS.register("destroy_6", () -> new GlassBlock(Block.Properties.of(Material.AIR).noDrops()));
+        DESTROY_9 = BLOCKS.register("destroy_9", () -> new GlassBlock(Block.Properties.of(Material.AIR).noDrops()));
         PUZZLE = BLOCKS.register("puzzle", BlockPuzzle::new);
         SCHEMATIC_BLOCK = BLOCKS.register("schematic_block", BlockSchematic::new);
         //Independent
@@ -135,7 +135,7 @@ public final class EvolutionBlocks {
         ROPE = BLOCKS.register("rope", BlockRope::new);
         ROPE_GROUND = BLOCKS.register("rope_ground", BlockRopeGround::new);
         STICK = BLOCKS.register("stick", () -> new BlockPlaceableItem(Block.Properties.of(Material.DECORATION).sound(SoundType.WOOD)));
-        TALLGRASS = BLOCKS.register("tallgrass", BlockDoublePlant::new);
+        TALLGRASS = BLOCKS.register("tallgrass", () -> BlockDoublePlant.make(false));
         TORCH = BLOCKS.register("torch", BlockTorch::new);
         TORCH_WALL = BLOCKS.register("torch_wall", BlockTorchWall::new);
         //Collection

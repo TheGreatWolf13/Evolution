@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "evolution:cobblestones",
+  "pattern": [
+    "##",
+    "##"
+  ],
+  "key": {
+    "#": {
+      "type": "forge:nbt",
+      "item": "evolution:rock_marble",
+      "count": 2
+    }
+  },
+  "result": {
+    "item": "evolution:cobblestone_marble"
+  }
+}

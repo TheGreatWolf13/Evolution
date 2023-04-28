@@ -1,0 +1,34 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "evolution:cobblestone_granite"
+    ]
+  },
+  "criteria": {
+    "has_rock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "evolution:rock_granite"
+            ]
+          }
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "evolution:cobblestone_granite"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_rock",
+      "has_the_recipe"
+    ]
+  ]
+}

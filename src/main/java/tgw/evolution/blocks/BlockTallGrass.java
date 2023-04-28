@@ -15,7 +15,7 @@ import tgw.evolution.init.EvolutionShapes;
 public class BlockTallGrass extends BlockBush implements IForgeShearable {
 
     public BlockTallGrass() {
-        super(Properties.of(Material.PLANT).noCollission().strength(0.0F).sound(SoundType.GRASS));
+        super(Properties.of(Material.PLANT).noCollission().noDrops().strength(0.0F).sound(SoundType.GRASS));
     }
 
     @Override

@@ -19,6 +19,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.events.ItemEvents;
+import tgw.evolution.init.EvolutionBlocks;
+import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionTEs;
 import tgw.evolution.items.ItemLog;
 import tgw.evolution.items.modular.ItemModular;
@@ -36,10 +38,10 @@ public class TEChopping extends BlockEntity {
 
     public void breakLog(Player player) {
         if (this.level != null && !this.level.isClientSide) {
-            Item firewood = WoodVariant.byId(this.id).getFirewood();
+            Item firewood = WoodVariant.byId(this.id).get(EvolutionItems.FIREWOODS);
             ItemStack stack = new ItemStack(firewood, 16);
             BlockUtils.dropItemStack(this.level, this.worldPosition, stack, 0.5);
-            Block block = WoodVariant.byId(this.id).getLog();
+            Block block = WoodVariant.byId(this.id).get(EvolutionBlocks.LOGS);
             ItemEvents.damageItem(player.getMainHandItem(), player, ItemModular.DamageCause.BREAK_BLOCK, EquipmentSlot.MAINHAND,
                                   ((IBlockPatch) block).getHarvestLevel(block.defaultBlockState(), this.level, null));
             player.awardStat(Stats.ITEM_CRAFTED.get(firewood), 16);
@@ -63,7 +65,7 @@ public class TEChopping extends BlockEntity {
     }
 
     public ItemStack getItemStack() {
-        return new ItemStack(WoodVariant.byId(this.id).getLogItem());
+        return new ItemStack(WoodVariant.byId(this.id).get(EvolutionItems.LOGS));
     }
 
     @Override

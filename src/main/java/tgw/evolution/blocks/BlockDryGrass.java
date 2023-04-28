@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import tgw.evolution.blocks.util.BlockUtils;
+import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionSounds;
 import tgw.evolution.util.constants.RockVariant;
 
@@ -62,7 +63,7 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
 
     @Override
     public BlockState getStateForPhysicsChange(BlockState state) {
-        return this.variant.getDirt().defaultBlockState();
+        return this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState();
     }
 
     @Override
@@ -71,7 +72,7 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
         if (!level.isClientSide) {
             if (pos.above().equals(fromPos)) {
                 if (BlockUtils.hasSolidSide(level, fromPos, Direction.DOWN)) {
-                    level.setBlockAndUpdate(pos, this.variant.getDirt().defaultBlockState());
+                    level.setBlockAndUpdate(pos, this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState());
                 }
             }
         }
@@ -84,20 +85,18 @@ public class BlockDryGrass extends BlockGenericSnowable implements IRockVariant 
         }
         if (random.nextInt(2) == 0) {
             if (!canSustainGrass(level, pos)) {
-                level.setBlockAndUpdate(pos, this.variant.getDirt().defaultBlockState());
+                level.setBlockAndUpdate(pos, this.variant.get(EvolutionBlocks.DIRTS).defaultBlockState());
             }
             else {
                 for (int i = 0; i < 4; ++i) {
                     BlockPos randomPos = pos.offset(random.nextInt(3) - 1, random.nextInt(5) - 3, random.nextInt(3) - 1);
                     Block blockAtPos = level.getBlockState(randomPos).getBlock();
-                    if (blockAtPos instanceof BlockDirt && canSustainGrassWater(level, randomPos)) {
+                    if (blockAtPos instanceof BlockDirt dirt && canSustainGrassWater(level, randomPos)) {
                         //TODO proper snow
-                        level.setBlockAndUpdate(randomPos, ((IRockVariant) blockAtPos).rockVariant()
-                                                                                      .getDryGrass()
-                                                                                      .defaultBlockState()
-                                                                                      .setValue(SNOWY,
-                                                                                                level.getBlockState(randomPos.above()).getBlock() ==
-                                                                                                Blocks.SNOW));
+                        level.setBlockAndUpdate(randomPos, dirt.rockVariant()
+                                                               .get(EvolutionBlocks.DRY_GRASSES)
+                                                               .defaultBlockState()
+                                                               .setValue(SNOWY, level.getBlockState(randomPos.above()).getBlock() == Blocks.SNOW));
                     }
                 }
             }

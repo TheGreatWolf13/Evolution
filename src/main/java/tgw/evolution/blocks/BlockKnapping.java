@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.blocks.tileentities.TEKnapping;
 import tgw.evolution.blocks.util.BlockUtils;
+import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.init.EvolutionShapes;
 import tgw.evolution.items.ItemRock;
 import tgw.evolution.util.constants.RockVariant;
@@ -68,7 +69,7 @@ public class BlockKnapping extends BlockPhysics implements IReplaceable, IRockVa
 
     @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter world, BlockPos pos, Player player) {
-        return new ItemStack(this.variant.getRock());
+        return new ItemStack(this.variant.get(EvolutionItems.ROCKS));
     }
 
     @Override
