@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.gui.advancements.TagDisplayInfo;
+import tgw.evolution.patches.IItemStackPatch;
 
 @Mixin(DisplayInfo.class)
 public abstract class DisplayInfoMixin {
@@ -151,6 +152,26 @@ public abstract class DisplayInfoMixin {
     private static TagKey<Item> getTag(JsonObject json) {
         String name = GsonHelper.getAsString(json, "tag");
         return TagKey.create(Registry.ITEM_REGISTRY, new ResourceLocation(name));
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Add capabilities to serialization
+     */
+    @Overwrite
+    private JsonObject serializeIcon() {
+        JsonObject json = new JsonObject();
+        json.addProperty("item", Registry.ITEM.getKey(this.icon.getItem()).toString());
+        if (this.icon.hasTag()) {
+            assert this.icon.getTag() != null;
+            json.addProperty("nbt", this.icon.getTag().toString());
+        }
+        ((IItemStackPatch) (Object) this.icon).forceSerializeCaps();
+        CompoundTag capNBT = ((IItemStackPatch) (Object) this.icon).getCapNBT();
+        if (capNBT != null) {
+            json.addProperty("cap", capNBT.toString());
+        }
+        return json;
     }
 
     /**

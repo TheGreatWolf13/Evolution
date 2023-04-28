@@ -6,6 +6,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.common.capabilities.CapabilityProvider;
 import net.minecraftforge.registries.IRegistryDelegate;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -33,7 +34,12 @@ public abstract class ItemStackMixin extends CapabilityProvider<ItemStack> imple
     }
 
     @Override
-    public CompoundTag getCapNBT() {
+    public void forceSerializeCaps() {
+        this.capNBT = this.serializeCaps();
+    }
+
+    @Override
+    public @Nullable CompoundTag getCapNBT() {
         return this.capNBT;
     }
 
