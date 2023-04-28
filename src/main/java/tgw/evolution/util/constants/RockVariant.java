@@ -90,7 +90,7 @@ public enum RockVariant implements IVariant {
             case GRASS -> this.get(EvolutionBlocks.GRASSES);
             case SAND -> this.get(EvolutionBlocks.SANDS);
             case STONE -> this.get(EvolutionBlocks.STONES);
-            case STONE_BRICKS -> this.get(EvolutionBlocks.STONE_BRICKS);
+            case STONE_BRICKS -> this.get(EvolutionBlocks.STONEBRICKS);
         };
     }
 

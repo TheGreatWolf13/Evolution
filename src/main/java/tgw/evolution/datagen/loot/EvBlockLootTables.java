@@ -114,7 +114,7 @@ public class EvBlockLootTables extends BlockLoot {
             this.dropSelf(variant.get(EvolutionBlocks.POLISHED_STONES));
             this.dropSelf(rock);
             this.dropSelf(variant.get(EvolutionBlocks.SANDS));
-            this.dropSelf(variant.get(EvolutionBlocks.STONE_BRICKS));
+            this.dropSelf(variant.get(EvolutionBlocks.STONEBRICKS));
             this.dropOther(variant.get(EvolutionBlocks.STONES), rock, 4);
         }
         this.dropOther(EvolutionBlocks.GRASSES.get(RockVariant.PEAT).get(), EvolutionItems.PEAT.get());

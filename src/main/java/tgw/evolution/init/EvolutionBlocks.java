@@ -86,7 +86,7 @@ public final class EvolutionBlocks {
     public static final Map<RockVariant, RegistryObject<Block>> ROCKS;
     public static final Map<RockVariant, RegistryObject<Block>> SANDS;
     public static final Map<WoodVariant, RegistryObject<Block>> SAPLINGS;
-    public static final Map<RockVariant, RegistryObject<Block>> STONE_BRICKS;
+    public static final Map<RockVariant, RegistryObject<Block>> STONEBRICKS;
     public static final Map<RockVariant, RegistryObject<Block>> STONES;
     //Fluids
     public static final RegistryObject<BlockGenericFluid> FRESH_WATER;
@@ -153,7 +153,7 @@ public final class EvolutionBlocks {
         ROCKS = make(RockVariant.class, RockVariant.VALUES_STONE, "rock_", e -> BlockPlaceableRock::new);
         SANDS = make(RockVariant.class, RockVariant.VALUES_STONE, "sand_", e -> () -> new BlockSand(e));
         SAPLINGS = make(WoodVariant.class, WoodVariant.VALUES, "sapling_", e -> () -> new BlockSapling(null));
-        STONE_BRICKS = make(RockVariant.class, RockVariant.VALUES_STONE, "stone_bricks_", e -> () -> new BlockStoneBricks(e));
+        STONEBRICKS = make(RockVariant.class, RockVariant.VALUES_STONE, "stonebricks_", e -> () -> new BlockStoneBricks(e));
         STONES = make(RockVariant.class, RockVariant.VALUES_STONE, "stone_", e -> () -> new BlockStone(e));
         //Fluids
         FRESH_WATER = BLOCKS.register("fresh_water", BlockFreshWater::new);

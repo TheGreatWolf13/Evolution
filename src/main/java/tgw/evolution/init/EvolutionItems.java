@@ -107,7 +107,7 @@ public final class EvolutionItems {
     public static final Map<RockVariant, RegistryObject<Item>> ROCKS;
     public static final Map<RockVariant, RegistryObject<Item>> SANDS;
     public static final Map<WoodVariant, RegistryObject<Item>> SAPLINGS;
-    public static final Map<RockVariant, RegistryObject<Item>> STONE_BRICKS;
+    public static final Map<RockVariant, RegistryObject<Item>> STONEBRICKS;
     public static final Map<RockVariant, RegistryObject<Item>> STONES;
 
     static {
@@ -194,7 +194,7 @@ public final class EvolutionItems {
         ROCKS = makeBlock(RockVariant.class, EvolutionBlocks.ROCKS, e -> () -> new ItemRock(e.get(EvolutionBlocks.ROCKS), propMisc(), e));
         SANDS = makeBlock(RockVariant.class, EvolutionBlocks.SANDS, e -> () -> itemBlock(e.get(EvolutionBlocks.SANDS)));
         SAPLINGS = makeBlock(WoodVariant.class, EvolutionBlocks.SAPLINGS, e -> () -> woodBlock(e.get(EvolutionBlocks.SAPLINGS)));
-        STONE_BRICKS = makeBlock(RockVariant.class, EvolutionBlocks.STONE_BRICKS, e -> () -> itemBlock(e.get(EvolutionBlocks.STONE_BRICKS)));
+        STONEBRICKS = makeBlock(RockVariant.class, EvolutionBlocks.STONEBRICKS, e -> () -> itemBlock(e.get(EvolutionBlocks.STONEBRICKS)));
         STONES = makeBlock(RockVariant.class, EvolutionBlocks.STONES, e -> () -> itemBlock(e.get(EvolutionBlocks.STONES)));
     }
 
