@@ -24,7 +24,7 @@ public class MaterialInstance {
 
     @Contract(pure = true, value = "_ -> new")
     public static MaterialInstance read(CompoundTag nbt) {
-        EvolutionMaterials material = EvolutionMaterials.byId(nbt.getByte("EvolutionMaterials"));
+        EvolutionMaterials material = EvolutionMaterials.byId(nbt.getByte("Material"));
         return new MaterialInstance(material);
     }
 
@@ -69,7 +69,7 @@ public class MaterialInstance {
         if (this.tag == null) {
             this.tag = new CompoundTag();
         }
-        this.tag.putByte("EvolutionMaterials", this.material.getId());
+        this.tag.putByte("Material", this.material.getId());
         return this.tag;
     }
 }
