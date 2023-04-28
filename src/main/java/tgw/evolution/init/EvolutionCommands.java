@@ -21,5 +21,6 @@ public final class EvolutionCommands {
         CommandShader.register(dispatcher);
         CommandTemperature.register(dispatcher);
         CommandTickrate.register(dispatcher);
+        CommandVariantDebug.register(dispatcher);
     }
 }
