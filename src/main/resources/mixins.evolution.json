@@ -34,6 +34,7 @@
     "CraftingContainerMixin",
     "CraftingMenuMixin",
     "DataFixersMixin",
+    "DatagenModLoaderMixin",
     "DataLayerMixin",
     "DirectionMixin",
     "DisplayInfoMixin",

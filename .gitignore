@@ -26,3 +26,6 @@ forge*changelog.txt
 /src/generated/
 /src/test/
 /.gitattributes
+/src/main/resources/assets/evolution/textures/block/0Texture Factory/
+/src/main/resources/assets/evolution/textures/item/vanilla/
+/src/main/resources/assets/evolution/textures/item/Nova pasta/

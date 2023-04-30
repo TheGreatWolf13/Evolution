@@ -1,5 +1,10 @@
 package tgw.evolution.util.math;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.internal.LazilyParsedNumber;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
@@ -43,10 +48,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.Collator;
 import java.text.Normalizer;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -860,6 +862,75 @@ public final class MathHelper {
 
     public static boolean isSitting(LivingEntity victim) {
         return victim.isPassenger() && victim.getVehicle() != null && victim.getVehicle().shouldRiderSit();
+    }
+
+    /**
+     * Compare two {@link JsonElement}s, taking into account nulls and number conversions.
+     */
+    public static boolean jsonEquals(JsonElement a, JsonElement b) {
+        if (a == b) {
+            return true;
+        }
+        //If one JsonObject has a key that the other one doesn't, verify that its value is not null.
+        //If it's null, then it doesn't matter that the other one doesn't have the key.
+        if (a instanceof JsonObject oa && b instanceof JsonObject ob) {
+            Set<Map.Entry<String, JsonElement>> aEntries = oa.entrySet();
+            for (Map.Entry<String, JsonElement> aEntry : aEntries) {
+                String key = aEntry.getKey();
+                if (!ob.has(key)) {
+                    if (aEntry.getValue().isJsonNull()) {
+                        continue;
+                    }
+                    return false;
+                }
+                if (!jsonEquals(ob.get(key), aEntry.getValue())) {
+                    return false;
+                }
+            }
+            Set<Map.Entry<String, JsonElement>> bEntries = oa.entrySet();
+            for (Map.Entry<String, JsonElement> bEntry : bEntries) {
+                String key = bEntry.getKey();
+                if (!oa.has(key)) {
+                    if (bEntry.getValue().isJsonNull()) {
+                        continue;
+                    }
+                    return false;
+                }
+                if (!jsonEquals(oa.get(key), bEntry.getValue())) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        //JsonArrays contain JsonElements, so ensure that equality is checked using this method.
+        if (a instanceof JsonArray aa && b instanceof JsonArray ab) {
+            if (aa.size() != ab.size()) {
+                return false;
+            }
+            for (int i = 0, len = aa.size(); i < len; i++) {
+                if (!jsonEquals(aa.get(i), ab.get(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        //In theory, JsonPrimitives shouldn't have a problem when comparing, since can't have keys with null values.
+        //However, if one JsonPrimitive is saved using a Float and the other is saved using a LazilyParsedNumber, the internal comparison upcasts
+        //it into a double, which causes the original float number to acquire rounding errors. E.g. (double)0.05f = 0.05000000074505806.
+        //So we have to ensure that, in this case, the comparison is made using floats.
+        if (a instanceof JsonPrimitive pa && b instanceof JsonPrimitive pb) {
+            if (pa.isNumber() && pb.isNumber()) {
+                Number aNumber = pa.getAsNumber();
+                Number bNumber = pb.getAsNumber();
+                if (aNumber instanceof LazilyParsedNumber && bNumber instanceof Float) {
+                    return aNumber.floatValue() == bNumber.floatValue();
+                }
+                if (bNumber instanceof LazilyParsedNumber && aNumber instanceof Float) {
+                    return aNumber.floatValue() == bNumber.floatValue();
+                }
+            }
+        }
+        return a.equals(b);
     }
 
     public static float lerpDeg(float partialTicks, float prevAngle, float angle, boolean wrap) {

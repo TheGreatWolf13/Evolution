@@ -23,7 +23,7 @@ import tgw.evolution.util.constants.WoodVariant;
 
 import java.util.function.IntUnaryOperator;
 
-public class EvBlockLootTables extends BlockLoot {
+public class BlockLootTables extends BlockLoot {
 
     protected static LootTable.Builder createDropByIntProperty(Block block, ItemLike drop, IntProperty property, int delta) {
         int min = property.getMinValue();
@@ -74,7 +74,7 @@ public class EvBlockLootTables extends BlockLoot {
         this.dropSelf(EvolutionBlocks.BLOCK_METAL_COPPER_W.get());
         this.dropSelf(EvolutionBlocks.BLOCK_METAL_COPPER_O.get());
         this.dropSelf(EvolutionBlocks.BRICK_CLAY.get());
-        this.dropOther(EvolutionBlocks.CLAY.get(), EvolutionItems.CLAYBALL.get(), 4);
+        this.dropOther(EvolutionBlocks.CLAY.get(), EvolutionItems.CLAYBALL.get(), 8);
         this.dropSelf(EvolutionBlocks.CLIMBING_HOOK.get());
         this.dropSelf(EvolutionBlocks.CLIMBING_STAKE.get());
         this.dropSelf(EvolutionBlocks.CRUCIBLE_CLAY.get());
@@ -103,7 +103,7 @@ public class EvBlockLootTables extends BlockLoot {
             this.dropSelf(sapling);
         }
         for (RockVariant variant : RockVariant.VALUES_STONE) {
-            this.dropSelf(variant.get(EvolutionBlocks.COBBLESTONES));
+            this.dropOther(variant.get(EvolutionBlocks.COBBLESTONES), variant.get(EvolutionItems.ROCKS), 8);
             Block dirt = variant.get(EvolutionBlocks.DIRTS);
             this.dropSelf(dirt);
             this.dropOther(variant.get(EvolutionBlocks.DRY_GRASSES), dirt);
@@ -115,10 +115,10 @@ public class EvBlockLootTables extends BlockLoot {
             this.dropSelf(rock);
             this.dropSelf(variant.get(EvolutionBlocks.SANDS));
             this.dropSelf(variant.get(EvolutionBlocks.STONEBRICKS));
-            this.dropOther(variant.get(EvolutionBlocks.STONES), rock, 4);
+            this.dropOther(variant.get(EvolutionBlocks.STONES), rock, 8);
         }
         this.dropOther(EvolutionBlocks.GRASSES.get(RockVariant.PEAT).get(), EvolutionItems.PEAT.get());
-        this.dropOther(EvolutionBlocks.GRASSES.get(RockVariant.CLAY).get(), EvolutionItems.CLAYBALL.get(), 4);
+        this.dropOther(EvolutionBlocks.GRASSES.get(RockVariant.CLAY).get(), EvolutionItems.CLAYBALL.get(), 8);
     }
 
     @Override

@@ -7,7 +7,14 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "evolution:cobblestone_andesite"
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": 8.0,
+              "add": false
+            }
+          ],
+          "name": "evolution:rock_andesite"
         }
       ]
     }

@@ -1,4 +1,4 @@
 package tgw.evolution.datagen.loot;
 
-public class EvChestLootTables {
+public class ChestLootTables {
 }
