@@ -618,6 +618,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         return new Vec3(speedX, speedY, speedZ);
     }
 
+    @SuppressWarnings("ConstantConditions")
     private void handleNormalMovement(Vec3 travelVector, Fluid fluid, double slowdown) {
         Vec3 motion = this.getDeltaMovement();
         double motionX = motion.x;
@@ -625,6 +626,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         double motionZ = motion.z;
         double mass = this.getAttributeValue(EvolutionAttributes.MASS.get());
         try (Physics physics = Physics.getInstance(this, fluid)) {
+            boolean isFlyingPlayer = (Object) this instanceof Player player && player.getAbilities().flying;
             physics.calcAccAbsolute(this, travelVector, physics.calcAccMagnitude(this, slowdown));
             double accX = physics.getAccAbsoluteX();
             double accY = physics.getAccAbsoluteY();
@@ -632,10 +634,10 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
             if ((this.horizontalCollision || this.jumping) && this.onClimbable()) {
                 motionY = BlockUtils.getLadderUpSpeed(this.getFeetBlockState());
             }
-            else if (!this.isNoGravity()) {
+            else if (!this.isNoGravity() && !isFlyingPlayer) {
                 accY += physics.calcAccGravity();
             }
-            if (!this.isOnGround() && this.isAffectedByFluids()) {
+            if (!this.isOnGround() && this.isAffectedByFluids() && !isFlyingPlayer) {
                 accY += physics.calcForceBuoyancy(this) / mass;
             }
             if (this.hasCollidedOnXAxis()) {
@@ -646,9 +648,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
             }
             //Pseudo-forces
             double accCoriolisX = physics.calcAccCoriolisX();
-            double accCoriolisY = physics.calcAccCoriolisY();
+            double accCoriolisY = isFlyingPlayer ? 0 : physics.calcAccCoriolisY();
             double accCoriolisZ = physics.calcAccCoriolisZ();
-            double accCentrifugalY = physics.calcAccCentrifugalY();
+            double accCentrifugalY = isFlyingPlayer ? 0 : physics.calcAccCentrifugalY();
             double accCentrifugalZ = physics.calcAccCentrifugalZ();
             //Dissipative Forces
             double legSlowDownX = 0;
