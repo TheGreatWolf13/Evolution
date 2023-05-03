@@ -33,6 +33,7 @@ public final class EvolutionBStates {
     public static final IntProperty LEVEL_1_8 = IntProperty.create("level", 1, 8);
     public static final IntProperty STAGE_0_1 = IntProperty.create("stage", 0, 1);
     //Direction
+    public static final DirectionProperty DIRECTION = BlockStateProperties.FACING;
     public static final DirectionProperty DIRECTION_EXCEPT_UP = BlockStateProperties.FACING_HOPPER;
     public static final DirectionProperty DIRECTION_HORIZONTAL = BlockStateProperties.HORIZONTAL_FACING;
     //Enum

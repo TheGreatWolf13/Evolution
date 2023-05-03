@@ -178,12 +178,12 @@ public class BlockGrass extends BlockGenericSnowable implements IRockVariant {
             if (random.nextInt(200) == 0) {
                 BlockPos posUp = pos.above();
                 if (level.getBlockState(posUp).isAir()) {
-                    level.setBlock(posUp, EvolutionBlocks.GRASS.get().defaultBlockState(), BlockFlags.BLOCK_UPDATE);
+                    level.setBlock(posUp, EvolutionBlocks.TALLGRASS.get().defaultBlockState(), BlockFlags.BLOCK_UPDATE);
                 }
                 else if (level.getBlockState(posUp).getBlock() instanceof BlockTallGrass) {
-                    level.setBlock(posUp, EvolutionBlocks.TALLGRASS.get().defaultBlockState().setValue(HALF, DoubleBlockHalf.LOWER),
+                    level.setBlock(posUp, EvolutionBlocks.TALLGRASS_HIGH.get().defaultBlockState().setValue(HALF, DoubleBlockHalf.LOWER),
                                    BlockFlags.BLOCK_UPDATE);
-                    level.setBlock(pos.above(2), EvolutionBlocks.TALLGRASS.get().defaultBlockState().setValue(HALF, DoubleBlockHalf.UPPER),
+                    level.setBlock(pos.above(2), EvolutionBlocks.TALLGRASS_HIGH.get().defaultBlockState().setValue(HALF, DoubleBlockHalf.UPPER),
                                    BlockFlags.BLOCK_UPDATE);
                 }
             }

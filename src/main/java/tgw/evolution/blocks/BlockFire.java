@@ -92,8 +92,8 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
         //        fire.setFireInfo(Blocks.BOOKSHELF, 30, 20);
         //        fire.setFireInfo(Blocks.TNT, 15, 100);
         fire.setFireInfo(EvolutionBlocks.FIREWOOD_PILE.get(), 5, 5);
-        fire.setFireInfo(EvolutionBlocks.GRASS.get(), 60, 100);
         fire.setFireInfo(EvolutionBlocks.TALLGRASS.get(), 60, 100);
+        fire.setFireInfo(EvolutionBlocks.TALLGRASS_HIGH.get(), 60, 100);
         //        fire.setFireInfo(Blocks.WHITE_WOOL, 30, 60);
         //        fire.setFireInfo(Blocks.VINE, 15, 100);
         //        fire.setFireInfo(Blocks.COAL_BLOCK, 5, 5);

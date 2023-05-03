@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.bytes.Byte2ReferenceMaps;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.level.material.Material;
 import tgw.evolution.capabilities.modular.IAttachmentType;
 import tgw.evolution.capabilities.modular.IGrabType;
 import tgw.evolution.capabilities.modular.IToolType;
@@ -225,9 +226,9 @@ public final class PartTypes {
      */
     public enum HalfHead implements IToolType<HalfHead, ItemPartHalfHead, PartHalfHead> {
         NULL(0, "null", ReferenceSet.of()),
-        AXE(1, "axe", ReferenceSet.of(net.minecraft.world.level.material.Material.WOOD)),
+        AXE(1, "axe", ReferenceSet.of(Material.WOOD)),
         HAMMER(2, "hammer", ReferenceSet.of()),
-        PICKAXE(3, "pickaxe", ReferenceSet.of(net.minecraft.world.level.material.Material.STONE, net.minecraft.world.level.material.Material.METAL));
+        PICKAXE(3, "pickaxe", ReferenceSet.of(Material.STONE, Material.METAL));
 
         public static final HalfHead[] VALUES = values();
         private static final Byte2ReferenceMap<HalfHead> REGISTRY;
@@ -244,11 +245,11 @@ public final class PartTypes {
         }
 
         private final Component component;
-        private final ReferenceSet<net.minecraft.world.level.material.Material> effectiveMaterials;
+        private final ReferenceSet<Material> effectiveMaterials;
         private final byte id;
         private final String name;
 
-        HalfHead(int id, String name, ReferenceSet<net.minecraft.world.level.material.Material> effectiveMaterials) {
+        HalfHead(int id, String name, ReferenceSet<Material> effectiveMaterials) {
             this.name = name;
             this.id = MathHelper.toByteExact(id);
             this.effectiveMaterials = effectiveMaterials;
@@ -278,7 +279,7 @@ public final class PartTypes {
         }
 
         @Override
-        public ReferenceSet<net.minecraft.world.level.material.Material> getEffectiveMaterials() {
+        public ReferenceSet<Material> getEffectiveMaterials() {
             return this.effectiveMaterials;
         }
 
@@ -439,12 +440,12 @@ public final class PartTypes {
      */
     public enum Head implements IToolType<Head, ItemPartHead, PartHead> {
         NULL(0, "null", ReferenceSet.of()),
-        AXE(1, "axe", ReferenceSet.of(net.minecraft.world.level.material.Material.WOOD)),
+        AXE(1, "axe", ReferenceSet.of(Material.WOOD)),
         HAMMER(2, "hammer", ReferenceSet.of()),
-        HOE(3, "hoe", ReferenceSet.of(net.minecraft.world.level.material.Material.GRASS)),
+        HOE(3, "hoe", ReferenceSet.of(Material.GRASS)),
         MACE(4, "mace", ReferenceSet.of()),
-        PICKAXE(5, "pickaxe", ReferenceSet.of(net.minecraft.world.level.material.Material.STONE, net.minecraft.world.level.material.Material.METAL)),
-        SHOVEL(6, "shovel", ReferenceSet.of(net.minecraft.world.level.material.Material.DIRT, net.minecraft.world.level.material.Material.SAND)),
+        PICKAXE(5, "pickaxe", ReferenceSet.of(Material.STONE, Material.METAL)),
+        SHOVEL(6, "shovel", ReferenceSet.of(Material.DIRT, Material.SAND)),
         SPEAR(7, "spear", ReferenceSet.of());
 
         public static final Head[] VALUES = values();
@@ -462,11 +463,11 @@ public final class PartTypes {
         }
 
         private final Component component;
-        private final ReferenceSet<net.minecraft.world.level.material.Material> effectiveMaterials;
+        private final ReferenceSet<Material> effectiveMaterials;
         private final byte id;
         private final String name;
 
-        Head(int id, String name, ReferenceSet<net.minecraft.world.level.material.Material> effectiveMaterials) {
+        Head(int id, String name, ReferenceSet<Material> effectiveMaterials) {
             this.name = name;
             this.id = MathHelper.toByteExact(id);
             this.effectiveMaterials = effectiveMaterials;
@@ -496,7 +497,7 @@ public final class PartTypes {
         }
 
         @Override
-        public ReferenceSet<net.minecraft.world.level.material.Material> getEffectiveMaterials() {
+        public ReferenceSet<Material> getEffectiveMaterials() {
             return this.effectiveMaterials;
         }
 
@@ -544,6 +545,14 @@ public final class PartTypes {
         @Override
         public boolean isTwoHanded() {
             return false;
+        }
+
+        @Override
+        public String modelSuffix(EvolutionMaterials material) {
+            if (this == AXE || this == SHOVEL || this == SPEAR) {
+                return material.isStone() ? "__stone" : "";
+            }
+            return "";
         }
 
         @Override

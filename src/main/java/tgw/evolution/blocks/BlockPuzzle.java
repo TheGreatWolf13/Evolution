@@ -18,33 +18,34 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.blocks.tileentities.TEPuzzle;
 import tgw.evolution.client.gui.ScreenPuzzle;
+import tgw.evolution.init.EvolutionBStates;
 
 public class BlockPuzzle extends DirectionalBlock implements EntityBlock, GameMasterBlock {
 
     public BlockPuzzle() {
         super(Properties.of(Material.METAL, MaterialColor.COLOR_LIGHT_GRAY).strength(-1.0F, 3_600_000.0F).sound(SoundType.METAL).noDrops());
-        this.registerDefaultState(this.defaultBlockState().setValue(FACING, Direction.UP));
+        this.registerDefaultState(this.defaultBlockState().setValue(EvolutionBStates.DIRECTION, Direction.UP));
     }
 
     public static boolean canAttach(StructureTemplate.StructureBlockInfo puzzle, StructureTemplate.StructureBlockInfo other) {
-        return puzzle.state.getValue(FACING) == other.state.getValue(FACING).getOpposite() &&
-               puzzle.nbt.getString("AttachementType").equals(other.nbt.getString("AttachementType"));
+        return puzzle.state.getValue(EvolutionBStates.DIRECTION) == other.state.getValue(EvolutionBStates.DIRECTION).getOpposite() &&
+               puzzle.nbt.getString("AttachmentType").equals(other.nbt.getString("AttachmentType"));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(EvolutionBStates.DIRECTION);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(FACING, context.getClickedFace());
+        return this.defaultBlockState().setValue(EvolutionBStates.DIRECTION, context.getClickedFace());
     }
 
     @Override
     @Deprecated
     public BlockState mirror(BlockState state, Mirror mirror) {
-        return state.setValue(FACING, mirror.mirror(state.getValue(FACING)));
+        return state.setValue(EvolutionBStates.DIRECTION, mirror.mirror(state.getValue(EvolutionBStates.DIRECTION)));
     }
 
     @Nullable
@@ -55,7 +56,7 @@ public class BlockPuzzle extends DirectionalBlock implements EntityBlock, GameMa
 
     @Override
     public BlockState rotate(BlockState state, Rotation rot) {
-        return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
+        return state.setValue(EvolutionBStates.DIRECTION, rot.rotate(state.getValue(EvolutionBStates.DIRECTION)));
     }
 
     @Override

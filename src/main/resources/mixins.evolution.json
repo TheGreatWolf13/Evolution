@@ -61,6 +61,7 @@
     "MinecraftServerMixin",
     "MobEffectInstanceMixin",
     "MobEffectMixin",
+    "ModelBuilderMixin",
     "NBTIngredientMixin",
     "NbtUtilsMixin",
     "NonNullListMixin",

@@ -47,7 +47,7 @@ public enum EvolutionRenderLayer {
             set(block, CUTOUT_MIPPED);
         }
         set(EvolutionBlocks.FIRE, CUTOUT);
-        set(EvolutionBlocks.GRASS, CUTOUT);
+        set(EvolutionBlocks.TALLGRASS, CUTOUT);
         for (RegistryObject<Block> block : EvolutionBlocks.GRASSES.values()) {
             set(block, CUTOUT_MIPPED);
         }
@@ -59,7 +59,7 @@ public enum EvolutionRenderLayer {
         for (RegistryObject<Block> block : EvolutionBlocks.SAPLINGS.values()) {
             set(block, CUTOUT);
         }
-        set(EvolutionBlocks.TALLGRASS, CUTOUT);
+        set(EvolutionBlocks.TALLGRASS_HIGH, CUTOUT);
         set(EvolutionBlocks.TORCH, CUTOUT);
         set(EvolutionBlocks.TORCH_WALL, CUTOUT);
         set(EvolutionBlocks.GLASS, CUTOUT);

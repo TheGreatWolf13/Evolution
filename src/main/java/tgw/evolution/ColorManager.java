@@ -17,8 +17,8 @@ import tgw.evolution.items.IItemTemperature;
 import tgw.evolution.util.constants.RockVariant;
 import tgw.evolution.util.constants.WoodVariant;
 
-import static tgw.evolution.init.EvolutionBlocks.GRASS;
 import static tgw.evolution.init.EvolutionBlocks.TALLGRASS;
+import static tgw.evolution.init.EvolutionBlocks.TALLGRASS_HIGH;
 
 public final class ColorManager {
 
@@ -58,8 +58,8 @@ public final class ColorManager {
         for (RockVariant variant : RockVariant.VALUES_STONE) {
             register(colors, grass, variant.get(EvolutionBlocks.DRY_GRASSES));
         }
-        register(colors, grass, GRASS);
         register(colors, grass, TALLGRASS);
+        register(colors, grass, TALLGRASS_HIGH);
         //Leaves
         for (WoodVariant wood : WoodVariant.VALUES) {
             switch (wood) {
@@ -102,8 +102,8 @@ public final class ColorManager {
         for (RockVariant variant : RockVariant.VALUES_STONE) {
             register(colors, grass, variant.get(EvolutionItems.DRY_GRASSES));
         }
-        register(colors, grass, GRASS);
         register(colors, grass, TALLGRASS);
+        register(colors, grass, TALLGRASS_HIGH);
         //Leaves
         for (WoodVariant wood : WoodVariant.VALUES) {
             switch (wood) {

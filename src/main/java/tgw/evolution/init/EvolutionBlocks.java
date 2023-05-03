@@ -50,7 +50,6 @@ public final class EvolutionBlocks {
     public static final RegistryObject<Block> CRUCIBLE_CLAY;
     public static final RegistryObject<BlockFire> FIRE;
     public static final RegistryObject<Block> FIREWOOD_PILE;
-    public static final RegistryObject<Block> GRASS;
     public static final RegistryObject<Block> MOLD_CLAY_AXE;
     public static final RegistryObject<Block> MOLD_CLAY_GUARD;
     public static final RegistryObject<Block> MOLD_CLAY_HAMMER;
@@ -69,6 +68,7 @@ public final class EvolutionBlocks {
     public static final RegistryObject<Block> ROPE_GROUND;
     public static final RegistryObject<Block> STICK;
     public static final RegistryObject<Block> TALLGRASS;
+    public static final RegistryObject<Block> TALLGRASS_HIGH;
     public static final RegistryObject<Block> TORCH;
     public static final RegistryObject<Block> TORCH_WALL;
     //Collections
@@ -80,7 +80,7 @@ public final class EvolutionBlocks {
     public static final Map<RockVariant, RegistryObject<Block>> GRAVELS;
     public static final Map<RockVariant, RegistryObject<Block>> KNAPPING_BLOCKS;
     public static final Map<WoodVariant, RegistryObject<Block>> LEAVES;
-    public static final Map<WoodVariant, RegistryObject<Block>> LOGS;
+    public static final Map<WoodVariant, RegistryObject<BlockLog>> LOGS;
     public static final Map<WoodVariant, RegistryObject<Block>> PLANKS;
     public static final Map<RockVariant, RegistryObject<Block>> POLISHED_STONES;
     public static final Map<RockVariant, RegistryObject<Block>> ROCKS;
@@ -117,7 +117,6 @@ public final class EvolutionBlocks {
         CRUCIBLE_CLAY = BLOCKS.register("crucible_clay", () -> new BlockMoldClay(5));
         FIRE = BLOCKS.register("fire", BlockFire::new);
         FIREWOOD_PILE = BLOCKS.register("firewood_pile", BlockFirewoodPile::new);
-        GRASS = BLOCKS.register("grass", BlockTallGrass::new);
         MOLD_CLAY_AXE = BLOCKS.register("mold_clay_axe", () -> new BlockMoldClay(1));
         MOLD_CLAY_GUARD = BLOCKS.register("mold_clay_guard", () -> new BlockMoldClay(1));
         MOLD_CLAY_HAMMER = BLOCKS.register("mold_clay_hammer", () -> new BlockMoldClay(1));
@@ -135,7 +134,8 @@ public final class EvolutionBlocks {
         ROPE = BLOCKS.register("rope", BlockRope::new);
         ROPE_GROUND = BLOCKS.register("rope_ground", BlockRopeGround::new);
         STICK = BLOCKS.register("stick", () -> new BlockPlaceableItem(Block.Properties.of(Material.DECORATION).sound(SoundType.WOOD)));
-        TALLGRASS = BLOCKS.register("tallgrass", () -> BlockDoublePlant.make(false));
+        TALLGRASS = BLOCKS.register("tallgrass", BlockTallGrass::new);
+        TALLGRASS_HIGH = BLOCKS.register("tallgrass_high", () -> BlockDoublePlant.make(false));
         TORCH = BLOCKS.register("torch", BlockTorch::new);
         TORCH_WALL = BLOCKS.register("torch_wall", BlockTorchWall::new);
         //Collection
@@ -164,11 +164,11 @@ public final class EvolutionBlocks {
     }
 
     @Contract("_, _, _, _ -> new")
-    private static <E extends Enum<E> & IVariant> Map<E, RegistryObject<Block>> make(Class<E> clazz,
-                                                                                     E[] values,
-                                                                                     String name,
-                                                                                     Function<E, Supplier<Block>> block) {
-        Map<E, RegistryObject<Block>> map = new EnumMap<>(clazz);
+    private static <E extends Enum<E> & IVariant, B extends Block> Map<E, RegistryObject<B>> make(Class<E> clazz,
+                                                                                                  E[] values,
+                                                                                                  String name,
+                                                                                                  Function<E, Supplier<B>> block) {
+        Map<E, RegistryObject<B>> map = new EnumMap<>(clazz);
         for (E e : values) {
             map.put(e, BLOCKS.register(name + e.getName(), block.apply(e)));
         }

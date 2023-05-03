@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 public interface EvolutionDataProvider<T> extends DataProvider {
 
     Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    Gson BLOCKSTATE_GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     default <R> boolean checkForExistance(R key, JsonElement json, Function<R, String> pathMaker) {
         List<Path> pathToCheck = this.getPathToCheck(key, pathMaker);
@@ -30,7 +31,8 @@ public interface EvolutionDataProvider<T> extends DataProvider {
             if (Files.exists(path)) {
                 //noinspection ObjectAllocationInLoop
                 try (FileReader reader = new FileReader(path.toString())) {
-                    JsonElement j = GSON.fromJson(reader, JsonElement.class);
+                    Gson gson = path.toString().contains("blockstates") ? BLOCKSTATE_GSON : GSON;
+                    JsonElement j = gson.fromJson(reader, JsonElement.class);
                     if (MathHelper.jsonEquals(json, j)) {
                         return false;
                     }
@@ -58,7 +60,8 @@ public interface EvolutionDataProvider<T> extends DataProvider {
 
     default <R> void save(HashCache cache, JsonElement json, Path path, R key, Function<R, String> pathMaker) {
         try {
-            String jsonString = GSON.toJson(json);
+            Gson gson = path.toString().contains("blockstates") ? BLOCKSTATE_GSON : GSON;
+            String jsonString = gson.toJson(json);
             String hash = SHA1.hashUnencodedChars(jsonString).toString();
             if (!Objects.equals(cache.getHash(path), hash) || this.checkForExistance(key, json, pathMaker)) {
                 Files.createDirectories(path.getParent());

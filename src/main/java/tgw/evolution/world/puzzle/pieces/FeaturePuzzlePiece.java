@@ -94,7 +94,7 @@
 //    public CompoundNBT writeNBT() {
 //        CompoundNBT compoundnbt = new CompoundNBT();
 //        compoundnbt.putString("TargetPool", "minecraft:empty");
-//        compoundnbt.putString("AttachementType", "minecraft:bottom");
+//        compoundnbt.putString("AttachmentType", "minecraft:bottom");
 //        compoundnbt.putString("FinalState", "minecraft:air");
 //        return compoundnbt;
 //    }

@@ -31,5 +31,9 @@ public final class DataGenerators {
         generator.addProvider(blockTagsProvider);
         generator.addProvider(new ItemTagsProvider(bundle, blockTagsProvider));
         generator.addProvider(new FluidTagsProvider(bundle));
+        generator.addProvider(new BuiltinItemModelProvider(bundle));
+        generator.addProvider(new BlockModelProvider(bundle));
+        generator.addProvider(new ItemModelProvider(bundle));
+        generator.addProvider(new BlockStateProvider(bundle));
     }
 }

@@ -60,8 +60,6 @@ public final class EvolutionResources {
     //Models
     //      Modular
     public static final RList<ModelResourceLocation> MODULAR_MODELS = new RArrayList<>();
-    public static final ModelResourceLocation TOOL_SWEEP = new ModelResourceLocation(Evolution.getResource("modular_tool_sweep"), "inventory");
-    public static final ModelResourceLocation TOOL_THROWING = new ModelResourceLocation(Evolution.getResource("modular_tool_throwing"), "inventory");
     //          Blade
     public static final BiEnumMap<Blade, EvolutionMaterials, ModelResourceLocation> MODULAR_BLADES = new BiEnumMap<>(Blade.class,
                                                                                                                      EvolutionMaterials.class);
@@ -109,7 +107,7 @@ public final class EvolutionResources {
         BLOCK_LOG_TOP = new ResourceLocation[WoodVariant.VALUES.length];
         for (WoodVariant variant : WoodVariant.VALUES) {
             //noinspection ObjectAllocationInLoop
-            BLOCK_LOG_TOP[variant.getId()] = Evolution.getResource("block/log_top_" + variant.getName());
+            BLOCK_LOG_TOP[variant.getId()] = Evolution.getResource("block/log_" + variant.getName() + "_top");
         }
         BLOCK_PIT_LOG = new ResourceLocation[WoodVariant.VALUES.length];
         for (WoodVariant variant : WoodVariant.VALUES) {
@@ -181,8 +179,6 @@ public final class EvolutionResources {
                 }
             }
         }
-        MODULAR_MODELS.add(TOOL_SWEEP);
-        MODULAR_MODELS.add(TOOL_THROWING);
         SLOT_EXTENDED = new ResourceLocation[AdditionalSlotType.VALUES.length];
         for (int i = 0, l = AdditionalSlotType.VALUES.length; i < l; i++) {
             AdditionalSlotType slotType = AdditionalSlotType.VALUES[i];

@@ -42,7 +42,7 @@ public final class ModelRegistry {
     }
 
     private static void registerModel(ModelBakeEvent event, Item item, Function<BakedModel, BakedModel> newModel) {
-        ModelResourceLocation modelResLoc = new ModelResourceLocation(item.getRegistryName(), "inventory");
+        @SuppressWarnings("ConstantConditions") ModelResourceLocation modelResLoc = new ModelResourceLocation(item.getRegistryName(), "inventory");
         BakedModel oldModel = event.getModelManager().getModel(modelResLoc);
         event.getModelRegistry().put(modelResLoc, newModel.apply(oldModel));
     }

@@ -60,7 +60,7 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> CLIMBING_STAKE;
     public static final RegistryObject<Item> CRUCIBLE_CLAY;
     public static final RegistryObject<Item> FIRE_STARTER;
-    public static final RegistryObject<Item> GRASS;
+    public static final RegistryObject<Item> TALLGRASS;
     public static final RegistryObject<Item> INGOT_COPPER;
     public static final RegistryObject<Item> MODULAR_TOOL;
     public static final RegistryObject<Item> MOLD_CLAY_AXE;
@@ -87,7 +87,7 @@ public final class EvolutionItems {
     public static final RegistryObject<Item> ROPE;
     public static final RegistryObject<Item> STICK;
     public static final RegistryObject<Item> STRAW;
-    public static final RegistryObject<Item> TALLGRASS;
+    public static final RegistryObject<Item> TALLGRASS_HIGH;
     public static final RegistryObject<Item> TORCH;
     public static final RegistryObject<Item> TORCH_UNLIT;
     //Collection
@@ -147,7 +147,6 @@ public final class EvolutionItems {
         CLIMBING_STAKE = ITEMS.register("climbing_stake", () -> itemBlock(EvolutionBlocks.CLIMBING_STAKE.get()));
         CRUCIBLE_CLAY = makeBlock(EvolutionBlocks.CRUCIBLE_CLAY, b -> () -> new ItemClayMolded(b.get(), true));
         FIRE_STARTER = ITEMS.register("fire_starter", ItemFireStarter::new);
-        GRASS = makeBlock(EvolutionBlocks.GRASS, b -> () -> itemBlock(b.get()));
         INGOT_COPPER = ITEMS.register("ingot_copper", () -> new ItemIngot(propMetal()));
         MODULAR_TOOL = ITEMS.register("modular_tool", () -> new ItemModularTool(propPartTool()));
         MOLD_CLAY_AXE = makeBlock(EvolutionBlocks.MOLD_CLAY_AXE, b -> () -> new ItemClayMolded(b.get()));
@@ -175,6 +174,7 @@ public final class EvolutionItems {
         STICK = makeBlock(EvolutionBlocks.STICK, b -> () -> new ItemStick(b.get(), propTreesAndWood()));
         STRAW = ITEMS.register("straw", () -> item(propMisc()));
         TALLGRASS = makeBlock(EvolutionBlocks.TALLGRASS, b -> () -> itemBlock(b.get()));
+        TALLGRASS_HIGH = makeBlock(EvolutionBlocks.TALLGRASS_HIGH, b -> () -> itemBlock(b.get()));
         TORCH = makeBlock(EvolutionBlocks.TORCH, b -> () -> new ItemTorch(propMisc()));
         TORCH_UNLIT = ITEMS.register("torch_unlit", () -> new ItemTorchUnlit(propMisc()));
         //Collection
@@ -244,11 +244,11 @@ public final class EvolutionItems {
     }
 
     @Contract(pure = true, value = "_, _, _ -> new")
-    private static <E extends Enum<E> & IVariant> Map<E, RegistryObject<Item>> makeBlock(Class<E> clazz,
-                                                                                         Map<E, RegistryObject<Block>> blocks,
-                                                                                         Function<E, Supplier<Item>> item) {
+    private static <E extends Enum<E> & IVariant, B extends Block> Map<E, RegistryObject<Item>> makeBlock(Class<E> clazz,
+                                                                                                          Map<E, RegistryObject<B>> blocks,
+                                                                                                          Function<E, Supplier<Item>> item) {
         Map<E, RegistryObject<Item>> map = new EnumMap<>(clazz);
-        for (Map.Entry<E, RegistryObject<Block>> entry : blocks.entrySet()) {
+        for (Map.Entry<E, RegistryObject<B>> entry : blocks.entrySet()) {
             E e = entry.getKey();
             map.put(e, ITEMS.register(entry.getValue().getId().getPath(), item.apply(e)));
         }
