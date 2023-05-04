@@ -1,7 +1,7 @@
 {
-	"parent": "evolution:item/firewood",
-	"textures": {
-		"0": "evolution:block/log_kapok",
-		"1": "evolution:block/log_top_kapok"
-	}
+  "parent": "evolution:item/firewood",
+  "textures": {
+    "side": "evolution:block/log_kapok",
+    "end": "evolution:block/log_kapok_top"
+  }
 }

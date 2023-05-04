@@ -1,7 +1,7 @@
 {
-    "parent": "block/cube_column",
-    "textures": {
-        "end": "evolution:block/log_top_maple",
-        "side": "evolution:block/log_maple"
-    }
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "evolution:block/log_maple",
+    "end": "evolution:block/log_maple_top"
+  }
 }

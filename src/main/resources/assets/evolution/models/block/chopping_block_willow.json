@@ -1,8 +1,8 @@
 {
-    "parent": "block/slab",
-    "textures": {
-        "top": "evolution:block/log_top_willow",
-        "side": "evolution:block/log_willow",
-		"bottom": "evolution:block/log_top_willow"
-    }
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "side": "evolution:block/log_willow",
+    "bottom": "evolution:block/log_willow_top",
+    "top": "evolution:block/log_willow_top"
+  }
 }

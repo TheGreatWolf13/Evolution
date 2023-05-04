@@ -1,7 +1,7 @@
 {
-    "parent": "block/cube_column",
-    "textures": {
-        "end": "evolution:block/log_top_ebony",
-        "side": "evolution:block/log_ebony"
-    }
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "evolution:block/log_ebony",
+    "end": "evolution:block/log_ebony_top"
+  }
 }

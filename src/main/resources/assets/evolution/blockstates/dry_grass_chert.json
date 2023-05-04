@@ -1,16 +1,24 @@
 {
-	"variants": {
-    	"snowy=false": [
-			{"model": "evolution:block/dry_grass_chert"},
-			{"model": "evolution:block/dry_grass_chert", "y": 90},
-			{"model": "evolution:block/dry_grass_chert", "y": 180},
-			{"model": "evolution:block/dry_grass_chert", "y": 270}
-		],
-    	"snowy=true": [
-			{"model": "evolution:block/dry_grass_chert_snow"},
-			{"model": "evolution:block/dry_grass_chert_snow", "y": 90},
-			{"model": "evolution:block/dry_grass_chert_snow", "y": 180},
-			{"model": "evolution:block/dry_grass_chert_snow", "y": 270}
-		]
-	}
+  "variants": {
+    "snowy=false": [
+      {
+        "model": "evolution:block/dry_grass_chert"
+      },
+      {
+        "model": "evolution:block/dry_grass_chert",
+        "y": 90
+      },
+      {
+        "model": "evolution:block/dry_grass_chert",
+        "y": 180
+      },
+      {
+        "model": "evolution:block/dry_grass_chert",
+        "y": 270
+      }
+    ],
+    "snowy=true": {
+      "model": "evolution:block/dry_grass_chert_snow"
+    }
+  }
 }

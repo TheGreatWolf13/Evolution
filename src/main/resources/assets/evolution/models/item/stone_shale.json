@@ -1,1 +1,3 @@
-{"parent": "evolution:block/stone_shale"}
+{
+  "parent": "evolution:block/stone_shale"
+}

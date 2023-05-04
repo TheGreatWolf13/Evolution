@@ -1,6 +1,6 @@
 {
-    "parent": "block/cross",
-    "textures": {
-        "cross": "evolution:block/atm_19"
-    }
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "evolution:block/atm_19"
+  }
 }

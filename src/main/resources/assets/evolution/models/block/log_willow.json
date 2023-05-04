@@ -1,7 +1,7 @@
 {
-    "parent": "block/cube_column",
-    "textures": {
-        "end": "evolution:block/log_top_willow",
-        "side": "evolution:block/log_willow"
-    }
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "evolution:block/log_willow",
+    "end": "evolution:block/log_willow_top"
+  }
 }

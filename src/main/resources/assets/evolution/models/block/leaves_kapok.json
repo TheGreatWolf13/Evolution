@@ -1,6 +1,6 @@
 {
-    "parent": "block/leaves",
-    "textures": {
-        "all": "evolution:block/leaves_kapok"
-    }
+  "parent": "minecraft:block/leaves",
+  "textures": {
+    "all": "evolution:block/leaves_kapok"
+  }
 }

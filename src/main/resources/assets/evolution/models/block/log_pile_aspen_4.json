@@ -1,8 +1,0 @@
-{
-    "parent": "evolution:block/log_pile_4",
-    "textures": {
-        "bark": "evolution:block/log_aspen",
-        "inside": "evolution:block/log_top_aspen",
-		"particle": "evolution:block/log_aspen"
-    }
-}

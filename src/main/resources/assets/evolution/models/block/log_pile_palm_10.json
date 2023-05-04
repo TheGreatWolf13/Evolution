@@ -1,8 +1,0 @@
-{
-    "parent": "evolution:block/log_pile_10",
-    "textures": {
-        "bark": "evolution:block/log_palm",
-        "inside": "evolution:block/log_top_palm",
-		"particle": "evolution:block/log_palm"
-    }
-}

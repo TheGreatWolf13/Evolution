@@ -1,5 +1,7 @@
 {
-    "variants": {
-        "": { "model": "evolution:block/glass" }
+  "variants": {
+    "": {
+      "model": "evolution:block/glass"
     }
+  }
 }

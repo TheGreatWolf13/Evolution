@@ -1,7 +1,7 @@
 {
-	"parent": "evolution:item/firewood",
-	"textures": {
-		"0": "evolution:block/log_oak",
-		"1": "evolution:block/log_top_oak"
-	}
+  "parent": "evolution:item/firewood",
+  "textures": {
+    "side": "evolution:block/log_oak",
+    "end": "evolution:block/log_oak_top"
+  }
 }

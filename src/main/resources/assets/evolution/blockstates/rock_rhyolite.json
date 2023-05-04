@@ -1,0 +1,10 @@
+{
+    "variants": {
+        "": [
+			{"model": "evolution:block/rock_rhyolite"},
+			{"model": "evolution:block/rock_rhyolite", "y": 90},
+			{"model": "evolution:block/rock_rhyolite", "y": 180},
+			{"model": "evolution:block/rock_rhyolite", "y": 270}
+		]
+    }
+}

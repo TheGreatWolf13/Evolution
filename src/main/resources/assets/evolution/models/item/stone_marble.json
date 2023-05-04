@@ -1,1 +1,3 @@
-{"parent": "evolution:block/stone_marble"}
+{
+  "parent": "evolution:block/stone_marble"
+}

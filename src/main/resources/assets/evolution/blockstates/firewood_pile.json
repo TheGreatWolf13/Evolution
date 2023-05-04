@@ -1,5 +1,7 @@
 {
-	"variants": {
-    	"": {"model": "evolution:block/firewood_pile"}
-	}
+  "variants": {
+    "": {
+      "model": "evolution:block/firewood_pile"
+    }
+  }
 }

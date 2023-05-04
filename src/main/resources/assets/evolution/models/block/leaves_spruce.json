@@ -1,6 +1,6 @@
 {
-    "parent": "block/leaves",
-    "textures": {
-        "all": "evolution:block/leaves_spruce"
-    }
+  "parent": "minecraft:block/leaves",
+  "textures": {
+    "all": "evolution:block/leaves_spruce"
+  }
 }

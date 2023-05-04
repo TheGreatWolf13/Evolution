@@ -1,6 +1,6 @@
 {
-    "parent": "block/leaves",
-    "textures": {
-        "all": "evolution:block/leaves_old_oak"
-    }
+  "parent": "minecraft:block/leaves",
+  "textures": {
+    "all": "evolution:block/leaves_old_oak"
+  }
 }

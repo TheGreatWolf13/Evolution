@@ -1,6 +1,6 @@
 {
-    "parent": "block/cube_all",
-    "textures": {
-        "all": "evolution:block/peat"
-    }
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "evolution:block/peat"
+  }
 }

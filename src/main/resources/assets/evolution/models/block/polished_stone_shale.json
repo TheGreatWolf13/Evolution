@@ -1,4 +1,6 @@
 {
-    "parent": "block/cube_all",
-    "textures": {"all": "evolution:block/polished_stone_shale"}
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "evolution:block/polished_stone_shale"
+  }
 }

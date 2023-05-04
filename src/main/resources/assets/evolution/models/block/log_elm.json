@@ -1,7 +1,7 @@
 {
-    "parent": "block/cube_column",
-    "textures": {
-        "end": "evolution:block/log_top_elm",
-        "side": "evolution:block/log_elm"
-    }
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "evolution:block/log_elm",
+    "end": "evolution:block/log_elm_top"
+  }
 }

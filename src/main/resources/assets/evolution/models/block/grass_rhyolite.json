@@ -1,0 +1,10 @@
+{
+    "parent": "evolution:block/grass",
+    "textures": {
+        "side": "evolution:block/dirt_rhyolite",
+        "top": "evolution:block/grass_top",
+        "overlay": "evolution:block/grass_side_overlay",
+        "bottom": "evolution:block/dirt_rhyolite",
+        "particle": "evolution:block/dirt_rhyolite"
+    }
+}

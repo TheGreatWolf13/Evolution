@@ -1,7 +1,7 @@
 {
-    "parent": "block/cube_column",
-    "textures": {
-        "end": "evolution:block/log_top_acacia",
-        "side": "evolution:block/log_acacia"
-    }
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "evolution:block/log_acacia",
+    "end": "evolution:block/log_acacia_top"
+  }
 }

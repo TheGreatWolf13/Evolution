@@ -1,7 +1,7 @@
 {
-    "parent": "block/cube_column",
-    "textures": {
-        "end": "evolution:block/log_top_mangrove",
-        "side": "evolution:block/log_mangrove"
-    }
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "evolution:block/log_mangrove",
+    "end": "evolution:block/log_mangrove_top"
+  }
 }

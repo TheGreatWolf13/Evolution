@@ -1,8 +1,8 @@
 {
-    "parent": "block/slab",
-    "textures": {
-        "top": "evolution:block/log_top_eucalyptus",
-        "side": "evolution:block/log_eucalyptus",
-		"bottom": "evolution:block/log_top_eucalyptus"
-    }
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "side": "evolution:block/log_eucalyptus",
+    "bottom": "evolution:block/log_eucalyptus_top",
+    "top": "evolution:block/log_eucalyptus_top"
+  }
 }

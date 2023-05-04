@@ -1,7 +1,7 @@
 {
-    "parent": "block/cube_column",
-    "textures": {
-        "end": "evolution:block/log_top_aspen",
-        "side": "evolution:block/log_aspen"
-    }
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "evolution:block/log_aspen",
+    "end": "evolution:block/log_aspen_top"
+  }
 }

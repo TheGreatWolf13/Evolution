@@ -1,10 +1,10 @@
 {
-    "variants": {
-        "": [
-            { "model": "evolution:block/dirt_chert" },
-            { "model": "evolution:block/dirt_chert", "y": 90 },
-            { "model": "evolution:block/dirt_chert", "y": 180 },
-            { "model": "evolution:block/dirt_chert", "y": 270 }
-        ]
-    }
+	"variants": {
+		"": [
+			{"model": "evolution:block/dirt_chert"},
+			{"model": "evolution:block/dirt_chert", "y": 90},
+			{"model": "evolution:block/dirt_chert", "y": 180},
+			{"model": "evolution:block/dirt_chert", "y": 270}
+		]
+	}
 }
