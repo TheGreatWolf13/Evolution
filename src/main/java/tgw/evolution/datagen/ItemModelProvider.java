@@ -38,6 +38,15 @@ public class ItemModelProvider extends ModelProvider<ItemModelBuilder> {
     @SuppressWarnings("ObjectAllocationInLoop")
     @Override
     protected void registerModels() {
+        //Dev
+        this.simpleItem(EvolutionItems.CLOCK.get());
+        this.simpleItem(EvolutionItems.CRICKET.get());
+        this.simpleItem(EvolutionItems.DEBUG_ITEM.get());
+        this.simpleItem(EvolutionItems.DEV_DRINK.get());
+        this.simpleItem(EvolutionItems.DEV_FOOD.get());
+        this.simpleItem(EvolutionItems.SEXTANT.get());
+        this.simpleItem(EvolutionItems.SPEEDOMETER.get());
+        //Independent
         this.simpleItem(EvolutionItems.CLAYBALL.get());
         this.simpleItem(EvolutionItems.FIRE_STARTER.get());
         this.getBuilder("evolution:item/modular_tool")
@@ -82,6 +91,7 @@ public class ItemModelProvider extends ModelProvider<ItemModelBuilder> {
             .end();
         this.simpleItemFolder(EvolutionItems.TALLGRASS.get(), "block");
         this.simpleItemFolder(EvolutionItems.TALLGRASS_HIGH.get(), "block", "_top");
+        //Collection
         for (WoodVariant variant : WoodVariant.VALUES) {
             this.withExistingParent(name(variant.get(EvolutionItems.FIREWOODS)), "evolution:item/firewood")
                 .texture("side", blockTexture(variant.get(EvolutionBlocks.LOGS)))
