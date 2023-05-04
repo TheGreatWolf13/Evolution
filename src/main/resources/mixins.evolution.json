@@ -101,6 +101,7 @@
     "AbstractClientPlayerMixin",
     "AbstractContainerScreenMixin",
     "AbstractSelectionListMixin",
+    "AbstractWidgetMixin",
     "AbstractZombieModelMixin",
     "AccessibilityOptionsScreenMixin",
     "AgeableListModelMixin",

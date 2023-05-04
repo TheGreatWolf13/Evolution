@@ -2,6 +2,7 @@ package tgw.evolution.client.gui;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Matrix4f;
@@ -46,6 +47,10 @@ public final class GUIUtils {
     private GUIUtils() {
     }
 
+    public static void disableScissor() {
+        RenderSystem.disableScissor();
+    }
+
     public static void drawCenteredStringNoShadow(PoseStack matrices, Font font, Component text, float xCentre, float y, int color) {
         FormattedCharSequence charSequence = text.getVisualOrderText();
         font.draw(matrices, charSequence, xCentre - font.width(charSequence) / 2.0f, y, color);
@@ -85,6 +90,17 @@ public final class GUIUtils {
         tessellator.end();
         RenderSystem.enableTexture();
         RenderSystem.disableBlend();
+    }
+
+    public static void enableScissor(int x1, int y1, int x2, int y2) {
+        Window window = Minecraft.getInstance().getWindow();
+        int i = window.getScreenHeight();
+        double d = window.getGuiScale();
+        double e = x1 * d;
+        double f = i - y2 * d;
+        double g = (x2 - x1) * d;
+        double h = (y2 - y1) * d;
+        RenderSystem.enableScissor((int) e, (int) f, Math.max(0, (int) g), Math.max(0, (int) h));
     }
 
     public static void fill(Matrix4f matrix, int x0, int y1, int x1, int y0, int color, boolean over) {
