@@ -1,6 +1,0 @@
-{
-  "parent": "evolution:item/modular/head/axe__stone__sharp",
-  "textures": {
-    "0": "evolution:item/modular/head/axe_conglomerate"
-  }
-}

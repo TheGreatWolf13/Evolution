@@ -1,6 +1,6 @@
 {
   "parent": "evolution:item/modular/head/shovel__stone",
   "textures": {
-    "0": "evolution:item/modular/head/shovel_chalk"
+    "0": "evolution:item/modular/head/shovel_rhyolite"
   }
 }
