@@ -44,7 +44,7 @@ public enum EvolutionRenderLayer {
         set(EvolutionBlocks.CLIMBING_HOOK, CUTOUT);
         set(EvolutionBlocks.CLIMBING_STAKE, CUTOUT);
         for (RegistryObject<Block> block : EvolutionBlocks.DRY_GRASSES.values()) {
-            set(block, CUTOUT_MIPPED);
+            set(block, CUTOUT);
         }
         set(EvolutionBlocks.FIRE, CUTOUT);
         set(EvolutionBlocks.TALLGRASS, CUTOUT);
