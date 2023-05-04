@@ -4,10 +4,9 @@ import com.google.common.collect.Iterables;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.authlib.properties.Property;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import joptsimple.internal.Strings;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -49,6 +48,9 @@ import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.inventory.AdditionalSlotType;
+import tgw.evolution.inventory.ContainerChecker;
+import tgw.evolution.inventory.IContainerCheckable;
+import tgw.evolution.inventory.corpse.ContainerCorpse;
 import tgw.evolution.inventory.corpse.ContainerCorpseProvider;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.patches.ISynchedEntityDataPatch;
@@ -63,7 +65,7 @@ import tgw.evolution.util.time.Time;
 import java.util.Optional;
 import java.util.UUID;
 
-public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawnData, IEntityPatch<EntityPlayerCorpse> {
+public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawnData, IEntityPatch<EntityPlayerCorpse>, IContainerCheckable {
 
     public static final EntityDataAccessor<Boolean> SKELETON = SynchedEntityData.defineId(EntityPlayerCorpse.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<NonNullList<ItemStack>> EQUIPMENT = SynchedEntityData.defineId(EntityPlayerCorpse.class,
@@ -72,7 +74,6 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     private static @Nullable MinecraftSessionService sessionService;
     private final LazyOptional<IItemHandler> handler;
     private final ItemStackHandler itemHandler;
-    private final IntSet playersInteracting = new IntOpenHashSet();
     private Component deathMessage = EvolutionTexts.EMPTY;
     private int deathTimer;
     private long gameDeathTime;
@@ -83,6 +84,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     private String playerName = "";
     private @Nullable GameProfile playerProfile;
     private UUID playerUUID = EntityUtils.UUID_ZERO;
+    private byte recheckTime;
     private int selected;
     private @Nullable EntitySkeletonDummy skeleton;
     private long systemDeathTime;
@@ -138,7 +140,35 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
             }
         };
         this.handler = LazyOptional.of(() -> this.itemHandler);
-    }
+    }    private final ContainerChecker<EntityPlayerCorpse> containerChecker = new ContainerChecker<>() {
+
+        @Override
+        protected boolean isOwnContainer(Player player) {
+            if (!(player.containerMenu instanceof ContainerCorpse container)) {
+                return false;
+            }
+            EntityPlayerCorpse corpse = container.getCorpse();
+            return EntityPlayerCorpse.this.equals(corpse);
+        }
+
+        @Override
+        protected void onClose(Level level, BlockPos pos, EntityPlayerCorpse obj) {
+            EntityPlayerCorpse.this.tryDespawn();
+        }
+
+        @Override
+        protected void onOpen(Level level, BlockPos pos, EntityPlayerCorpse obj) {
+        }
+
+        @Override
+        protected void openerCountChanged(Level level, BlockPos pos, EntityPlayerCorpse obj, int count, int newCount) {
+        }
+
+        @Override
+        public void scheduleRecheck(Level level, BlockPos pos, EntityPlayerCorpse state) {
+            EntityPlayerCorpse.this.recheckTime = 5;
+        }
+    };
 
     public EntityPlayerCorpse(@SuppressWarnings("unused") PlayMessages.SpawnEntity spawnEntity, Level level) {
         this(EvolutionEntities.PLAYER_CORPSE.get(), level);
@@ -176,6 +206,9 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     @Override
     protected void addAdditionalSaveData(CompoundTag compound) {
         compound.put("Inventory", this.itemHandler.serializeNBT());
+        if (this.recheckTime != 0) {
+            compound.putByte("RecheckTime", this.recheckTime);
+        }
         compound.putInt("DeathTimer", this.deathTimer);
         compound.putBoolean("IsSkeleton", this.isSkeleton);
         compound.putByte("Model", this.model);
@@ -330,12 +363,14 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         return this.entityData.get(SKELETON);
     }
 
+    @Override
     public void onClose(Player player) {
-        this.playersInteracting.remove(player.getId());
+        this.containerChecker.decrementOpeners(player, this.level, this.blockPosition(), this);
     }
 
+    @Override
     public void onOpen(Player player) {
-        this.playersInteracting.add(player.getId());
+        this.containerChecker.incrementOpeners(player, this.level, this.blockPosition(), this);
     }
 
     @Override
@@ -361,6 +396,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     @Override
     protected void readAdditionalSaveData(CompoundTag compound) {
         this.itemHandler.deserializeNBT(compound.getCompound("Inventory"));
+        this.recheckTime = compound.getByte("RecheckTime");
         this.deathTimer = compound.getInt("DeathTimer");
         this.isSkeleton = compound.getBoolean("IsSkeleton");
         this.entityData.set(SKELETON, this.isSkeleton);
@@ -458,13 +494,17 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
                 this.isSkeleton = true;
             }
             this.lastTick = currentTick;
+            if (this.recheckTime > 0) {
+                if (--this.recheckTime == 0) {
+                    this.containerChecker.recheckOpeners(this.level, this.blockPosition(), this);
+                }
+            }
         }
         Vec3 motion = this.getDeltaMovement();
         double motionX = motion.x;
         double motionY = motion.y;
         double motionZ = motion.z;
         double mass = this.getBaseMass();
-        //TODO fix, add pseudo-forces
         try (Physics physics = Physics.getInstance(this, this.isInWater() ? Fluid.WATER : this.isInLava() ? Fluid.LAVA : Fluid.AIR)) {
             double accY = 0;
             if (!this.isNoGravity()) {
@@ -526,7 +566,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     }
 
     public void tryDespawn() {
-        if (!this.playersInteracting.isEmpty()) {
+        if (this.containerChecker.getOpenerCount() != 0) {
             return;
         }
         for (int i = 0; i < this.itemHandler.getSlots(); i++) {
@@ -551,4 +591,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         buffer.writeLong(this.gameDeathTime);
         buffer.writeComponent(this.deathMessage);
     }
+
+
+
 }
