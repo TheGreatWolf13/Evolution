@@ -98,7 +98,7 @@ public class ScreenKnapping extends Screen {
         this.scrolling = false;
         int dx = this.cornerX + 9;
         int dy = this.cornerY + 15;
-        int maxIndex = this.startIndex + 18;
+        int maxIndex = Math.min(this.startIndex + 18, this.stacks.length);
         for (int i = this.startIndex; i < maxIndex; i++) {
             int index = i - this.startIndex;
             double x = mouseX - (dx + index % 6 * 18);
