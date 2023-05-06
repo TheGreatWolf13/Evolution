@@ -13,16 +13,17 @@ import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.opengl.GL11;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.Blending;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.util.constants.CommonRotations;
+import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Vec3f;
 import tgw.evolution.util.physics.EarthHelper;
 import tgw.evolution.util.physics.MoonPhase;
 import tgw.evolution.util.physics.PlanetsHelper;
-import tgw.evolution.util.math.MathHelper;
-import tgw.evolution.util.math.Vec3f;
 import tgw.evolution.world.dimension.DimensionOverworld;
 
 import java.util.Random;
@@ -84,7 +85,6 @@ public class SkyRenderer {
                                       float x1,
                                       float y1) {
         Blending.DEFAULT.apply();
-        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, starBrightness);
         RenderSystem.setShaderTexture(0, EvolutionResources.ENVIRONMENT_MOONLIGHT);
         builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
@@ -341,14 +341,22 @@ public class SkyRenderer {
         BufferUploader.end(builder);
     }
 
-    private void drawMoon(BufferBuilder builder, Matrix4f moonMatrix, float rainStrength, float moonCelestialRadius, float partialTicks) {
-        MoonPhase phase = this.dimension.getMoonPhase();
+    private void drawMoon(BufferBuilder builder,
+                          Matrix4f moonMatrix,
+                          MoonPhase phase,
+                          boolean moonlight,
+                          float rainStrength,
+                          float moonCelestialRadius,
+                          float partialTicks) {
         float textureX0 = phase.getTextureX();
         float textureY0 = phase.getTextureY();
         float textureX1 = textureX0 + 0.2f;
         float textureY1 = textureY0 + 0.25f;
-        drawMoonlight(builder, moonMatrix, 1 - this.dimension.getSunBrightness(partialTicks) * rainStrength, moonCelestialRadius, textureX0,
-                      textureY0, textureX1, textureY1);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
+        if (moonlight) {
+            drawMoonlight(builder, moonMatrix, 1 - this.dimension.getSunBrightness(partialTicks) * rainStrength, moonCelestialRadius, textureX0,
+                          textureY0, textureX1, textureY1);
+        }
         Blending.DEFAULT.apply();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainStrength);
         RenderSystem.setShaderTexture(0, EvolutionResources.ENVIRONMENT_MOON);
@@ -359,6 +367,19 @@ public class SkyRenderer {
         builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, moonCelestialRadius, -SCALE_OF_CELESTIAL).uv(textureX0, textureY1).endVertex();
         builder.end();
         BufferUploader.end(builder);
+    }
+
+    @Override
+    protected void finalize() {
+        if (this.darkBuffer != null) {
+            this.darkBuffer.close();
+        }
+        if (this.skyBuffer != null) {
+            this.skyBuffer.close();
+        }
+        if (this.starBuffer != null) {
+            this.starBuffer.close();
+        }
     }
 
     private void fog(boolean fog) {
@@ -373,7 +394,7 @@ public class SkyRenderer {
         }
     }
 
-    public void render(float partialTicks, PoseStack matrices, ClientLevel level, Minecraft mc, Runnable fogSetup) {
+    public void render(float partialTick, PoseStack matrices, ClientLevel level, Minecraft mc, Runnable fogSetup) {
         mc.getProfiler().push("init");
         this.fogSetup = fogSetup;
         this.fogEnabled = true;
@@ -386,27 +407,59 @@ public class SkyRenderer {
         }
         float sunRightAscension = this.dimension.getSunRightAscension();
         float sunDeclinationOffset = this.dimension.getSunDeclinationOffset();
-        float rainStrength = 1.0F - level.getRainLevel(partialTicks);
-        Vec3f skyColor = EarthHelper.getSkyColor(level, mc.gameRenderer.getMainCamera().getBlockPosition(), partialTicks, this.dimension);
+        float rainStrength = 1.0F - level.getRainLevel(partialTick);
+        Vec3f skyColor = EarthHelper.getSkyColor(level, mc.gameRenderer.getMainCamera().getBlockPosition(), partialTick, this.dimension);
         float moonDeclinationOffset = this.dimension.getMoonDeclinationOffset();
         float moonRightAscension = this.dimension.getMoonRightAscension();
         if (oldMoonRA != moonRightAscension) {
             oldMoonRA = moonRightAscension;
             MathHelper.getExtendedQuaternion(MOON_TRANSFORM).set(Vector3f.XP, 360.0f * moonRightAscension + 180, true);
         }
-        float sunBrightness = this.dimension.getSunBrightness(partialTicks);
-        mc.getProfiler().popPush("dome");
+        float sunBrightness = this.dimension.getSunBrightness(partialTick);
         BufferBuilder builder = Tesselator.getInstance().getBuilder();
-        RenderSystem.depthMask(false);
-        RenderSystem.setShaderColor(skyColor.x, skyColor.y, skyColor.z, 1.0f);
         ShaderInstance shader = RenderSystem.getShader();
-        assert this.skyBuffer != null;
         assert shader != null;
+        RenderSystem.depthMask(false);
+        float starBrightness = (1.0f - sunBrightness) * rainStrength;
+        float planetStarBrightness = 1.25f - sunBrightness * sunBrightness;
+        if (sunBrightness >= 0.95f) {
+            planetStarBrightness -= (1.0f - (1.0f - sunBrightness) / 0.05f) * 0.25f;
+        }
+        planetStarBrightness *= rainStrength;
+        RenderSystem.clear(GL11.GL_STENCIL_BUFFER_BIT, false);
+        mc.getProfiler().popPush("moonShadow");
+        if (planetStarBrightness > 0 || starBrightness > 0) {
+            //Pushed the matrix to draw moon shadow
+            matrices.pushPose();
+            RenderSystem.enableBlend();
+            RenderSystem.enableTexture();
+            //Translate the moon in the sky based on monthly amplitude.
+            matrices.mulPose(CommonRotations.YN90);
+            matrices.mulPose(LATITUDE_TRANSFORM);
+            matrices.translate(moonDeclinationOffset, 0, 0);
+            matrices.mulPose(MOON_TRANSFORM);
+            //Setup Stencil with value 1
+            RenderSystem.colorMask(false, false, false, false);
+            GL11.glEnable(GL11.GL_STENCIL_TEST);
+            RenderSystem.stencilOp(GL11.GL_REPLACE, GL11.GL_REPLACE, GL11.GL_REPLACE);
+            RenderSystem.stencilFunc(GL11.GL_ALWAYS, 1, 0b1);
+            //Draw the moon shadow
+            this.drawMoon(builder, matrices.last().pose(), MoonPhase.FULL_MOON, false, 1.0f, EarthHelper.CELESTIAL_SPHERE_RADIUS, partialTick);
+            //Finish drawing moon shadow
+            GL11.glDisable(GL11.GL_STENCIL_TEST);
+            RenderSystem.colorMask(true, true, true, true);
+            matrices.popPose();
+            //Popped the matrix to draw moon shadow
+        }
+        mc.getProfiler().popPush("dome");
+        RenderSystem.disableTexture();
+        RenderSystem.disableBlend();
+        RenderSystem.setShaderColor(skyColor.x, skyColor.y, skyColor.z, 1.0f);
+        assert this.skyBuffer != null;
         this.skyBuffer.drawWithShader(matrices.last().pose(), RenderSystem.getProjectionMatrix(), shader);
         RenderSystem.enableBlend();
         //Render background stars
         mc.getProfiler().popPush("stars");
-        float starBrightness = (1.0f - sunBrightness) * rainStrength;
         if (starBrightness > 0.0F) {
             float starsRightAscension = this.dimension.getStarsRightAscension();
             RenderSystem.disableTexture();
@@ -420,22 +473,24 @@ public class SkyRenderer {
             RenderSystem.setShaderColor(starBrightness, starBrightness, starBrightness, starBrightness);
             assert this.starBuffer != null;
             assert GameRenderer.getPositionShader() != null;
+            GL11.glEnable(GL11.GL_STENCIL_TEST);
+            RenderSystem.stencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
+            RenderSystem.stencilFunc(GL11.GL_NOTEQUAL, 1, 0b1);
             this.starBuffer.drawWithShader(matrices.last().pose(), RenderSystem.getProjectionMatrix(), GameRenderer.getPositionShader());
+            GL11.glDisable(GL11.GL_STENCIL_TEST);
             matrices.popPose();
             //Popped the matrix to draw the background stars
-
         }
-        float planetStarBrightness = 1.25f - sunBrightness * sunBrightness;
-        if (sunBrightness >= 0.95f) {
-            planetStarBrightness -= (1.0f - (1.0f - sunBrightness) / 0.05f) * 0.25f;
-        }
-        planetStarBrightness *= rainStrength;
         if (EvolutionConfig.CLIENT.showPlanets.get()) {
             //Render planets
             mc.getProfiler().popPush("planets");
             if (planetStarBrightness > 0.0F) {
                 this.fog(false);
                 RenderSystem.disableTexture();
+                RenderSystem.setShader(RenderHelper.SHADER_POSITION);
+                GL11.glEnable(GL11.GL_STENCIL_TEST);
+                RenderSystem.stencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
+                RenderSystem.stencilFunc(GL11.GL_NOTEQUAL, 1, 0b1);
                 //Pushed the matrix to draw the planets
                 Blending.ADDITIVE_ALPHA.apply();
                 matrices.pushPose();
@@ -477,39 +532,10 @@ public class SkyRenderer {
                 MathHelper.getExtendedMatrix(matrices).mulPoseX(PlanetsHelper.getHa6Saturn() + 180);
                 RenderSystem.setShaderColor(planetStarBrightness, planetStarBrightness, planetStarBrightness, planetStarBrightness);
                 drawPlanet(builder, matrices.last().pose(), PlanetsHelper.getDist6Saturn(), PlanetsHelper.getAngSize6Saturn() * 5);
+                GL11.glDisable(GL11.GL_STENCIL_TEST);
                 matrices.popPose();
                 //Popped the matrix to draw the planets
             }
-        }
-        //Render moon shadow
-        mc.getProfiler().popPush("moonShadow");
-        if (starBrightness > 0 && this.dimension.getMoonPhase() != MoonPhase.NEW_MOON) {
-            //Pushed the matrix to draw moon shadow
-            RenderSystem.enableTexture();
-            this.fog(true);
-            matrices.pushPose();
-            matrices.mulPose(CommonRotations.YN90);
-            //Translate the moon in the sky based on monthly amplitude.
-            matrices.mulPose(LATITUDE_TRANSFORM);
-            matrices.translate(moonDeclinationOffset, 0, 0);
-            matrices.mulPose(MOON_TRANSFORM);
-            //Draw the moon shadow
-            Blending.DEFAULT.apply();
-            RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
-            RenderSystem.setShaderTexture(0, EvolutionResources.ENVIRONMENT_MOON_SHADOW);
-            RenderSystem.setShaderColor(skyColor.x, skyColor.y, skyColor.z, planetStarBrightness);
-            builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-            Matrix4f moonMatrix = matrices.last().pose();
-            builder.vertex(moonMatrix, SCALE_OF_CELESTIAL, EarthHelper.CELESTIAL_SPHERE_RADIUS, -SCALE_OF_CELESTIAL).uv(0, 0).endVertex();
-            builder.vertex(moonMatrix, SCALE_OF_CELESTIAL, EarthHelper.CELESTIAL_SPHERE_RADIUS, SCALE_OF_CELESTIAL).uv(1, 0).endVertex();
-            builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, EarthHelper.CELESTIAL_SPHERE_RADIUS, SCALE_OF_CELESTIAL).uv(1, 1).endVertex();
-            builder.vertex(moonMatrix, -SCALE_OF_CELESTIAL, EarthHelper.CELESTIAL_SPHERE_RADIUS, -SCALE_OF_CELESTIAL).uv(0, 1).endVertex();
-            builder.end();
-            BufferUploader.end(builder);
-            //Finish drawing moon shadow
-            matrices.popPose();
-            RenderSystem.disableTexture();
-            //Popped the matrix to draw moon shadow
         }
         //Render the sun
         mc.getProfiler().popPush("sun");
@@ -527,9 +553,8 @@ public class SkyRenderer {
         MathHelper.getExtendedMatrix(matrices).mulPoseX(360.0f * sunRightAscension + 180);
         //Draw the sun
         if (this.dimension.isInSolarEclipse()) {
-            drawSolarEclipse(level, partialTicks, matrices.last().pose(), builder, EarthHelper.CELESTIAL_SPHERE_RADIUS, this.dimension,
-                             planetStarBrightness,
-                             skyColor);
+            drawSolarEclipse(level, partialTick, matrices.last().pose(), builder, EarthHelper.CELESTIAL_SPHERE_RADIUS, this.dimension,
+                             planetStarBrightness, skyColor);
         }
         else {
             drawSun(matrices.last().pose(), builder, EarthHelper.CELESTIAL_SPHERE_RADIUS);
@@ -550,10 +575,11 @@ public class SkyRenderer {
         RenderSystem.enableTexture();
         //Draw the moon
         if (this.dimension.isInLunarEclipse()) {
-            this.drawLunarEclipse(level, partialTicks, matrices.last().pose(), builder, EarthHelper.CELESTIAL_SPHERE_RADIUS);
+            this.drawLunarEclipse(level, partialTick, matrices.last().pose(), builder, EarthHelper.CELESTIAL_SPHERE_RADIUS);
         }
         else {
-            this.drawMoon(builder, matrices.last().pose(), rainStrength, EarthHelper.CELESTIAL_SPHERE_RADIUS, partialTicks);
+            this.drawMoon(builder, matrices.last().pose(), this.dimension.getMoonPhase(), true, rainStrength, EarthHelper.CELESTIAL_SPHERE_RADIUS,
+                          partialTick);
         }
         //Finish drawing moon
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -691,7 +717,7 @@ public class SkyRenderer {
         RenderSystem.setShaderColor(0.0F, 0.0F, 0.0F, 1.0f);
         Entity cameraEntity = mc.getCameraEntity();
         assert cameraEntity != null;
-        double distanceAboveTheHorizon = cameraEntity.getEyePosition(partialTicks).y - level.getLevelData().getHorizonHeight(level);
+        double distanceAboveTheHorizon = cameraEntity.getEyePosition(partialTick).y - level.getLevelData().getHorizonHeight(level);
         if (distanceAboveTheHorizon < 0.0) {
             this.fog(true);
             //Pushed matrix to draw the dark void

@@ -151,18 +151,20 @@ public class ClientProxy implements IProxy {
     @Override
     public void init() {
         IProxy.super.init();
+        Minecraft mc = Minecraft.getInstance();
         EvolutionRenderer.registryEntityRenders();
         addOverrides();
         registerScreens();
-        ColorManager.registerBlockColorHandlers(Minecraft.getInstance().getBlockColors());
-        ColorManager.registerItemColorHandlers(Minecraft.getInstance().getItemColors());
+        ColorManager.registerBlockColorHandlers(mc.getBlockColors());
+        ColorManager.registerItemColorHandlers(mc.getItemColors());
         FMLJavaModLoadingContext.get().getModEventBus().addListener(ClientEvents::onModelBakeEvent);
-        MinecraftForge.EVENT_BUS.register(new ClientEvents(Minecraft.getInstance()));
+        MinecraftForge.EVENT_BUS.register(new ClientEvents(mc));
         registerKeyBinds();
         changeWorldOrders();
 //        EvolutionParticles.register();
         registerTooltips();
         registerHUDOverlays();
+        mc.getMainRenderTarget().enableStencil();
         Evolution.info("Finished loading!");
     }
 
