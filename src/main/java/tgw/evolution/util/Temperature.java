@@ -331,6 +331,10 @@ public final class Temperature implements ILocked {
             //Outside
             return this.getSolarHighLowFactor();
         }
+        if (this.y > this.level.getMaxBuildHeight()) {
+            //Outside
+            return this.getSolarHighLowFactor();
+        }
         int y = Mth.floor(this.y);
         int index = chunk.getSectionIndex(y);
         ILevelChunkSectionPatch section = (ILevelChunkSectionPatch) chunk.getSection(index);
