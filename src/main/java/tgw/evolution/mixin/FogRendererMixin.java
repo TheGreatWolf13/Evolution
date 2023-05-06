@@ -7,15 +7,12 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.material.FogType;
-import net.minecraftforge.client.event.EntityViewRenderEvent;
-import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -97,7 +94,7 @@ public abstract class FogRendererMixin {
         switch (fogType) {
             case WATER -> {
                 long i = Util.getMillis();
-                int j = level.getBiome(new BlockPos(camera.getPosition())).value().getWaterFogColor();
+                int j = level.getBiome(camera.getBlockPosition()).value().getWaterFogColor();
                 if (biomeChangedTime < 0L) {
                     targetBiomeFog = j;
                     previousBiomeFog = j;
@@ -235,11 +232,6 @@ public abstract class FogRendererMixin {
             fogGreen = fogGreen * (1.0f - f6) + fogGreen * f8 * f6;
             fogBlue = fogBlue * (1.0f - f6) + fogBlue * f8 * f6;
         }
-        EntityViewRenderEvent.FogColors event = new EntityViewRenderEvent.FogColors(camera, partialTicks, fogRed, fogGreen, fogBlue);
-        MinecraftForge.EVENT_BUS.post(event);
-        fogRed = event.getRed();
-        fogGreen = event.getGreen();
-        fogBlue = event.getBlue();
         if (ClientEvents.getInstance().getDimension() != null) {
             ClientEvents.getInstance().getDimension().setFogColor(fogRed, fogGreen, fogBlue);
         }
