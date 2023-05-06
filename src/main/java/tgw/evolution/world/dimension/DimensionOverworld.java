@@ -185,7 +185,7 @@ public class DimensionOverworld {
         if (this.moonAltitude < 90) {
             return 1.0f - moonLight;
         }
-        float mult = 1.0f - (this.moonAltitude - 90) / 5.0f;
+        float mult = 1.0f - (this.moonAltitude - 90) / 6.0f;
         return 0.97f - (moonLight - 0.03f) * mult;
     }
 
