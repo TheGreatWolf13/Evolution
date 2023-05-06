@@ -324,7 +324,12 @@ public final class Temperature implements ILocked {
         int z = Mth.floor(this.z);
         LevelChunk chunk = this.level.getChunk(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z));
         if (chunk.isEmpty()) {
-            return 0.0f;
+            //Outside
+            return this.getSolarHighLowFactor();
+        }
+        if (this.y > this.level.getMaxBuildHeight()) {
+            //Outside
+            return this.getSolarHighLowFactor();
         }
         int y = Mth.floor(this.y);
         int index = chunk.getSectionIndex(y);
