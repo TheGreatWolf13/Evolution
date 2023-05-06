@@ -94,13 +94,12 @@ public final class GUIUtils {
 
     public static void enableScissor(int x1, int y1, int x2, int y2) {
         Window window = Minecraft.getInstance().getWindow();
-        int i = window.getScreenHeight();
-        double d = window.getGuiScale();
-        double e = x1 * d;
-        double f = i - y2 * d;
-        double g = (x2 - x1) * d;
-        double h = (y2 - y1) * d;
-        RenderSystem.enableScissor((int) e, (int) f, Math.max(0, (int) g), Math.max(0, (int) h));
+        double scale = window.getGuiScale();
+        double x = x1 * scale;
+        double y = window.getScreenHeight() - y2 * scale;
+        double width = (x2 - x1) * scale;
+        double height = (y2 - y1) * scale;
+        RenderSystem.enableScissor((int) x, (int) y, Math.max(0, (int) width), Math.max(0, (int) height));
     }
 
     public static void fill(Matrix4f matrix, int x0, int y1, int x1, int y0, int color, boolean over) {
