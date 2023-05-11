@@ -173,8 +173,6 @@
     "OptionsListMixin",
     "OptionsMixin",
     "PlayerItemInHandLayerMixin",
-    "PlayerModelMixin",
-    "PlayerRendererMixin",
     "PoseStackMixin",
     "RecipeBookComponentMixin",
     "RecipeBookTabButtonMixin",
