@@ -40,6 +40,8 @@ public abstract class CapeLayerMixin extends RenderLayer<AbstractClientPlayer, P
                        float ageInTicks,
                        float netHeadYaw,
                        float headPitch) {
+        //TODO
+        //When implementing the cape, just remember to interpolate yBodyRot using Mth.rotLerp
         if (entity.isCapeLoaded() &&
             !entity.isInvisible() &&
             entity.isModelPartShown(PlayerModelPart.CAPE) &&
