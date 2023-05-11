@@ -178,6 +178,7 @@
     "RecipeBookTabButtonMixin",
     "RecipeButtonMixin",
     "RecipeCollectionMixin",
+    "RemotePlayerMixin",
     "RenderSystemMixin",
     "SheetedDecalTextureGeneratorMixin",
     "SheetsMixin",
