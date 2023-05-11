@@ -1381,16 +1381,6 @@ public final class MathHelper {
      * @param value The value to calculate the square root from.
      * @return A {@code float} value of the resulting square root.
      */
-    public static float sqrt(float value) {
-        return (float) Math.sqrt(value);
-    }
-
-    /**
-     * Calculates the square root.
-     *
-     * @param value The value to calculate the square root from.
-     * @return A {@code float} value of the resulting square root.
-     */
     public static float sqrt(double value) {
         return (float) Math.sqrt(value);
     }

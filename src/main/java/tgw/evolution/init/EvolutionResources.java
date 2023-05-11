@@ -35,12 +35,11 @@ public final class EvolutionResources {
     //      Empty
     public static final ResourceLocation EMPTY = Evolution.getResource("empty");
     //      Environment
-    public static final ResourceLocation ENVIRONMENT_LUNAR_ECLIPSE = Evolution.getResource("textures/environment/lunar_eclipse.png");
     public static final ResourceLocation ENVIRONMENT_MOON = Evolution.getResource("textures/environment/moon.png");
     public static final ResourceLocation ENVIRONMENT_MOONLIGHT = Evolution.getResource("textures/environment/moonlight.png");
-    public static final ResourceLocation ENVIRONMENT_MOON_SHADOW_ECLIPSE = Evolution.getResource("textures/environment/moon_shadow_eclipse.png");
-    public static final ResourceLocation ENVIRONMENT_SOLAR_ECLIPSE = Evolution.getResource("textures/environment/solar_eclipse.png");
+    public static final ResourceLocation ENVIRONMENT_PLANETS = Evolution.getResource("textures/environment/planets.png");
     public static final ResourceLocation ENVIRONMENT_SUN = Evolution.getResource("textures/environment/sun.png");
+    public static final ResourceLocation ENVIRONMENT_SUNLIGHT = Evolution.getResource("textures/environment/sunlight.png");
     //      Fluids
     public static final ResourceLocation FLUID_FRESH_WATER = Evolution.getResource("block/fluid/fresh_water");
     //      GUI

@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3f;
-import tgw.evolution.util.time.Date;
 import tgw.evolution.util.time.Time;
 import tgw.evolution.world.dimension.DimensionOverworld;
 
@@ -42,21 +41,24 @@ public final class EarthHelper {
     }
 
     public static float calculateMoonRightAscension(long worldTime) {
-        worldTime += 19.8 * Time.TICKS_PER_HOUR;
-        worldTime %= 1.05 * Time.TICKS_PER_DAY;
-        return (float) (worldTime / (1.05 * Time.TICKS_PER_DAY));
+        worldTime += (long) (19.8 * Time.TICKS_PER_HOUR);
+        long dayTime = worldTime % (long) (1.05f * Time.TICKS_PER_DAY);
+        return Mth.wrapDegrees(360.0f / (long) (1.05f * Time.TICKS_PER_DAY) * dayTime);
     }
 
     public static float calculateStarsRightAscension(long worldTime) {
-        worldTime += 6L * Time.TICKS_PER_HOUR;
-        worldTime %= Time.SIDEREAL_DAY_IN_TICKS;
-        return (float) worldTime / Time.SIDEREAL_DAY_IN_TICKS;
+        worldTime += Time.TICKS_PER_DAY;
+        //In theory all these modulus shouldn't be necessary, but when the worldTime exceeds a few years, floating point errors start to make these
+        // numbers jittery.
+        long dayTime = worldTime % Time.TICKS_PER_DAY;
+        long yearTime = worldTime % Time.TICKS_PER_YEAR;
+        return Mth.wrapDegrees(360.0f / Time.TICKS_PER_DAY * dayTime + 360.0f / Time.TICKS_PER_YEAR * yearTime);
     }
 
     public static float calculateSunRightAscension(long worldTime) {
         worldTime += 6L * Time.TICKS_PER_HOUR;
-        worldTime %= Time.TICKS_PER_DAY;
-        return (float) worldTime / Time.TICKS_PER_DAY;
+        long dayTime = worldTime % Time.TICKS_PER_DAY;
+        return Mth.wrapDegrees(360.0f / Time.TICKS_PER_DAY * dayTime);
     }
 
     public static double calculateZFromLatitude(float latitude) {
@@ -107,7 +109,7 @@ public final class EarthHelper {
             sunAngle = -elevationAngle * elevationAngle / 784.0f + 10.0f * elevationAngle / 49.0f - 7.163_265f;
             sunAngle = MathHelper.clamp(sunAngle, 0.0F, 1.0F);
         }
-        if (dimension != null && dimension.isInSolarEclipse()) {
+        if (dimension != null && dimension.isCloseToSolarEclipse()) {
             float intensity = Math.max(0.2f, dimension.getSolarEclipseIntensity());
             intensity -= 0.2f;
             intensity = 1.0f - intensity;
@@ -171,31 +173,23 @@ public final class EarthHelper {
      * The maximum declination depends on the lunar standstill (which varies from -5.1 degrees to +5.1 degrees)
      * and the tilt of the Earth's orbit (23.5 degrees).
      * <p>
-     * Obs.: The {@code worldTime} is increased by 1.9 hours in order to make the first solar eclipse a total one instead of a partial.
+     * Obs.: The {@code worldTime} is increased by 66.2 hours in order to make the first solar eclipse a total one instead of a partial.
      *
      * @param worldTime The time of the world, in ticks.
      * @return A value in degrees representing the declination of the Moon in the skies from -28.6 to +28.6.
      */
     public static float lunarMonthlyDeclination(long worldTime) {
-        float amplitude = lunarStandStillAmplitude(worldTime) + ECLIPTIC_INCLINATION;
-        return amplitude * Mth.sin(Mth.TWO_PI * (worldTime + 1.9f * Time.TICKS_PER_HOUR) / Time.TICKS_PER_MONTH);
+        long monthTime = (worldTime + (long) (16.2 * Time.TICKS_PER_HOUR)) % (long) (Time.TICKS_PER_MONTH);
+        float amplitude = -23.5f + 5.1f * Mth.sin(Mth.TWO_PI / (long) (Time.TICKS_PER_MONTH) * monthTime);
+        long yearTime = worldTime % (long) (Time.TICKS_PER_YEAR / 13.0);
+        return amplitude * Mth.sin(Mth.TWO_PI / (long) (Time.TICKS_PER_YEAR / 13.0) * yearTime);
     }
 
-    /**
-     * Calculates the amplitude of the declination of the lunar orbit. This phenomenon is cyclic and repeats every 18.6 years,
-     * with maximum amplitude of 5.1 degrees.
-     *
-     * @param worldTime The time of the world, in ticks.
-     * @return A value in degrees representing the lunar orbit amplitude.
-     */
-    public static float lunarStandStillAmplitude(long worldTime) {
-        return 5.1f * Mth.cos(Mth.TWO_PI * worldTime / (Time.TICKS_PER_YEAR * 18.6f));
-    }
-
-    public static MoonPhase phaseByEclipseIntensity(int rightAscension, int declination) {
-        int rightAscMod = 9 - Math.abs(rightAscension);
-        int declinationMod = 9 - Math.abs(declination);
-        float intensity = rightAscMod * declinationMod / 81.0F;
+    public static MoonPhase phaseByEclipseIntensity(float intensity) {
+        intensity *= intensity;
+        if (intensity == 0) {
+            return MoonPhase.FULL_MOON;
+        }
         if (intensity < 0.111_111f) {
             return MoonPhase.WAXING_GIBBOUS_4;
         }
@@ -220,7 +214,7 @@ public final class EarthHelper {
         if (intensity < 0.888_889f) {
             return MoonPhase.WAXING_CRESCENT_2;
         }
-        if (intensity < 1.0f) {
+        if (intensity <= 1.0f) {
             return MoonPhase.WAXING_CRESCENT_1;
         }
         return MoonPhase.NEW_MOON;
@@ -233,7 +227,8 @@ public final class EarthHelper {
      * @return A {@code float} value representing the Sun declination angle in degrees.
      */
     public static float sunSeasonalDeclination(long worldTime) {
-        float dayTime = (float) worldTime / Time.TICKS_PER_DAY + Date.DAYS_SINCE_MARCH_EQUINOX;
-        return ECLIPTIC_INCLINATION * Mth.sin(Mth.TWO_PI / Time.DAYS_PER_YEAR * dayTime);
+        worldTime += Time.TICKS_PER_DAY;
+        long yearTime = worldTime % Time.TICKS_PER_YEAR;
+        return ECLIPTIC_INCLINATION * Mth.sin(Mth.TWO_PI / Time.TICKS_PER_YEAR * yearTime);
     }
 }

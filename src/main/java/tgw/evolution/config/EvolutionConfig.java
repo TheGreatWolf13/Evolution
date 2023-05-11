@@ -69,6 +69,7 @@ public final class EvolutionConfig {
         public final ForgeConfigSpec.BooleanValue renderHeightmap;
         public final ForgeConfigSpec.BooleanValue showPlanets;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Speed> speed;
+        public final ForgeConfigSpec.BooleanValue sunPath;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Volume> volume;
 
         Client(final ForgeConfigSpec.Builder builder) {
@@ -99,6 +100,7 @@ public final class EvolutionConfig {
             this.celestialEquator = builder.translation("evolution.config.celestialEquator").define("celestialEquator", false);
             this.celestialPoles = builder.translation("evolution.config.celestialPoles").define("celestialPoles", false);
             this.ecliptic = builder.translation("evolution.config.ecliptic").define("ecliptic", false);
+            this.sunPath = builder.translation("evolution.config.sunPath").define("sunPath", false);
             this.planets = builder.translation("evolution.config.planets").define("planets", false);
             builder.pop();
             builder.pop();

@@ -348,8 +348,11 @@ public class ClientEvents {
             this.warmUpTicks = 0;
         }
         if (this.dimension != null || this.skyRenderer != null) {
+            if (this.skyRenderer != null) {
+                this.skyRenderer.clearMemory();
+                this.skyRenderer = null;
+            }
             this.dimension = null;
-            this.skyRenderer = null;
             System.gc();
         }
     }

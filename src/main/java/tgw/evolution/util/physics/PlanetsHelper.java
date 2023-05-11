@@ -2,6 +2,7 @@ package tgw.evolution.util.physics;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import tgw.evolution.Evolution;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.time.Time;
 
@@ -9,12 +10,12 @@ import static tgw.evolution.util.physics.OrbitalConstants.*;
 
 public final class PlanetsHelper {
 
-    public static final float ARGUMENT_PERIHELION_0SUN = 282.940_4F * SI.DEGREE;
-    public static final float ARGUMENT_PERIHELION_1MERCURY = 29.124_1F * SI.DEGREE;
-    public static final float ARGUMENT_PERIHELION_2VENUS = 54.891_0f * SI.DEGREE;
-    public static final float ARGUMENT_PERIHELION_4MARS = 286.501_6f * SI.DEGREE;
-    public static final float ARGUMENT_PERIHELION_5JUPITER = 273.877_7f * SI.DEGREE;
-    public static final float ARGUMENT_PERIHELION_6SATURN = 339.393_9f * SI.DEGREE;
+    public static final float ARGUMENT_PERIHELION_0SUN = 270.0F * SI.DEGREE;
+    public static final float ARGUMENT_PERIHELION_1MERCURY = 16.183_7F * SI.DEGREE;
+    public static final float ARGUMENT_PERIHELION_2VENUS = 41.950_6f * SI.DEGREE;
+    public static final float ARGUMENT_PERIHELION_4MARS = 273.561_2f * SI.DEGREE;
+    public static final float ARGUMENT_PERIHELION_5JUPITER = 260.937_3f * SI.DEGREE;
+    public static final float ARGUMENT_PERIHELION_6SATURN = 326.453_5f * SI.DEGREE;
     public static final float INCLINATION_1MERCURY = 7.004_7f * SI.DEGREE;
     public static final float INCLINATION_2VENUS = 3.394_6f * SI.DEGREE;
     public static final float INCLINATION_4MARS = 1.849_7f * SI.DEGREE;
@@ -40,19 +41,17 @@ public final class PlanetsHelper {
     private static float decOff4Mars;
     private static float decOff5Jupiter;
     private static float decOff6Saturn;
-    private static float dist1Mercury;
-    private static float dist2Venus;
-    private static float dist4Mars;
-    private static float dist5Jupiter;
-    private static float dist6Saturn;
     private static float ha1Mercury;
     private static float ha2Venus;
     private static float ha4Mars;
     private static float ha5Jupiter;
     private static float ha6Saturn;
-    private static float sinLongSun;
-    private static float cosLongSun;
+    private static float ySun;
+    private static float xSun;
     private static float localTime;
+    private static float sunRA;
+    private static boolean is1MercuryTransiting;
+    private static boolean is2VenusTransiting;
 
     private PlanetsHelper() {
     }
@@ -67,11 +66,14 @@ public final class PlanetsHelper {
     }
 
     private static float calculateMeanAnomaly0Sun(long worldTime) {
-        return MathHelper.wrapRadians(356.047_0f * SI.DEGREE + Mth.TWO_PI / Time.TICKS_PER_YEAR * (worldTime % Time.TICKS_PER_YEAR));
+        worldTime += 3L * Time.TICKS_PER_MONTH + Time.TICKS_PER_DAY;
+        long yearTime = worldTime % Time.TICKS_PER_YEAR;
+        return MathHelper.wrapRadians(Mth.TWO_PI / Time.TICKS_PER_YEAR * yearTime);
     }
 
     private static float calculateMeanAnomaly1Mercury(long worldTime) {
-        return MathHelper.wrapRadians(168.656_2f * SI.DEGREE + Mth.TWO_PI / Time.MERCURIAN_YEAR * (worldTime % Time.MERCURIAN_YEAR));
+        long yearTime = worldTime % Time.MERCURIAN_YEAR;
+        return MathHelper.wrapRadians(168.656_2f * SI.DEGREE + Mth.TWO_PI / Time.MERCURIAN_YEAR * yearTime);
     }
 
     /**
@@ -79,19 +81,23 @@ public final class PlanetsHelper {
      * If the eccentricity of the orbit is low, it approaches the value of the true anomaly, which accounts for the eccentricity.
      */
     private static float calculateMeanAnomaly2Venus(long worldTime) {
-        return MathHelper.wrapRadians(48.005_2f * SI.DEGREE + Mth.TWO_PI / Time.VENUSIAN_YEAR * (worldTime % Time.VENUSIAN_YEAR));
+        long yearTime = worldTime % Time.VENUSIAN_YEAR;
+        return MathHelper.wrapRadians(48.005_2f * SI.DEGREE + Mth.TWO_PI / Time.VENUSIAN_YEAR * yearTime);
     }
 
     private static float calculateMeanAnomaly4Mars(long worldTime) {
-        return MathHelper.wrapRadians(18.602_1f * SI.DEGREE + Mth.TWO_PI / Time.MARTIAN_YEAR * (worldTime % Time.MARTIAN_YEAR));
+        long yearTime = worldTime % Time.MARTIAN_YEAR;
+        return MathHelper.wrapRadians(18.602_1f * SI.DEGREE + Mth.TWO_PI / Time.MARTIAN_YEAR * yearTime);
     }
 
     private static float calculateMeanAnomaly5Jupiter(long worldTime) {
-        return MathHelper.wrapRadians(19.895_0f * SI.DEGREE + Mth.TWO_PI / Time.JUPITERIAN_YEAR * (worldTime % Time.JUPITERIAN_YEAR));
+        long yearTime = worldTime % Time.JUPITERIAN_YEAR;
+        return MathHelper.wrapRadians(19.895_0f * SI.DEGREE + Mth.TWO_PI / Time.JUPITERIAN_YEAR * yearTime);
     }
 
     private static float calculateMeanAnomaly6Saturn(long worldTime) {
-        return MathHelper.wrapRadians(316.967_0f * SI.DEGREE + Mth.TWO_PI / Time.SATURNIAN_YEAR * (worldTime % Time.SATURNIAN_YEAR));
+        long yearTime = worldTime % Time.SATURNIAN_YEAR;
+        return MathHelper.wrapRadians(316.967_0f * SI.DEGREE + Mth.TWO_PI / Time.SATURNIAN_YEAR * yearTime);
     }
 
     public static void calculateOrbit1Mercury(long worldTime) {
@@ -99,21 +105,31 @@ public final class PlanetsHelper {
         float trueLong = meanAnomaly + ARGUMENT_PERIHELION_1MERCURY;
         float sinLong = Mth.sin(trueLong);
         float cosLong = Mth.cos(trueLong);
-        double xh = SEMI_MAJOR_AXIS_1MERCURY *
-                    (COS_LONG_ASC_NODE_1MERCURY * cosLong - SIN_LONG_ASC_NODE_1MERCURY * sinLong * COS_INCLINATION_1MERCURY);
-        double yh = SEMI_MAJOR_AXIS_1MERCURY *
-                    (SIN_LONG_ASC_NODE_1MERCURY * cosLong + COS_LONG_ASC_NODE_1MERCURY * sinLong * COS_INCLINATION_1MERCURY);
-        double zh = SEMI_MAJOR_AXIS_1MERCURY * (sinLong * SIN_INCLINATION_1MERCURY);
-        double xg = xh + cosLongSun;
-        double yg = yh + sinLongSun;
-        double ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
-        double ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
-        double ra = MathHelper.atan2Deg(ye, xg);
-        decOff1Mercury = (float) (EarthHelper.CELESTIAL_SPHERE_RADIUS * (ze / Math.sqrt(xg * xg + ye * ye)));
-        ha1Mercury = (float) Mth.wrapDegrees(localTime - ra + 90);
-        dist1Mercury = (float) MathHelper.relativize(Math.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_1MERCURY, MAX_DIST_1MERCURY);
-        angSize1Mercury = Mth.lerp(dist1Mercury, 0.02f, 0.05f);
-        dist1Mercury = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS;
+        //Heliocentric coordinates
+        float xh = SEMI_MAJOR_AXIS_1MERCURY *
+                   (COS_LONG_ASC_NODE_1MERCURY * cosLong - SIN_LONG_ASC_NODE_1MERCURY * sinLong * COS_INCLINATION_1MERCURY);
+        float yh = SEMI_MAJOR_AXIS_1MERCURY *
+                   (SIN_LONG_ASC_NODE_1MERCURY * cosLong + COS_LONG_ASC_NODE_1MERCURY * sinLong * COS_INCLINATION_1MERCURY);
+        float zh = SEMI_MAJOR_AXIS_1MERCURY * (sinLong * SIN_INCLINATION_1MERCURY);
+        //Geocentric coordinates
+        float xg = xh + xSun;
+        float yg = yh + ySun;
+        // zg = zh
+        //Equatorial coordinates
+        // xe = xg
+        float ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
+        float ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
+        //
+        float ra = (float) MathHelper.atan2Deg(ye, xg);
+        if (Math.abs(Mth.wrapDegrees(ra - sunRA)) > 30) {
+            Evolution.warn("Mercury dRA is greater than 30º: " + Math.abs(Mth.wrapDegrees(ra - sunRA)));
+        }
+        decOff1Mercury = -EarthHelper.CELESTIAL_SPHERE_RADIUS * ze / Mth.sqrt(xg * xg + ye * ye);
+        ha1Mercury = Mth.wrapDegrees(localTime - ra + 90);
+        float dist = Mth.sqrt(xg * xg + ye * ye + ze * ze);
+        is1MercuryTransiting = dist < 1;
+        float dist1Mercury = MathHelper.relativize(dist, MIN_DIST_1MERCURY, MAX_DIST_1MERCURY);
+        angSize1Mercury = Mth.lerp(dist1Mercury, 0.1f, 0.05f);
     }
 
     public static void calculateOrbit2Venus(long worldTime) {
@@ -121,19 +137,23 @@ public final class PlanetsHelper {
         float trueLong = meanAnomaly + ARGUMENT_PERIHELION_2VENUS;
         float sinLong = Mth.sin(trueLong);
         float cosLong = Mth.cos(trueLong);
-        double xh = SEMI_MAJOR_AXIS_2VENUS * (COS_LONG_ASC_NODE_2VENUS * cosLong - SIN_LONG_ASC_NODE_2VENUS * sinLong * COS_INCLINATION_2VENUS);
-        double yh = SEMI_MAJOR_AXIS_2VENUS * (SIN_LONG_ASC_NODE_2VENUS * cosLong + COS_LONG_ASC_NODE_2VENUS * sinLong * COS_INCLINATION_2VENUS);
-        double zh = SEMI_MAJOR_AXIS_2VENUS * (sinLong * SIN_INCLINATION_2VENUS);
-        double xg = xh + cosLongSun;
-        double yg = yh + sinLongSun;
-        double ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
-        double ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
-        double ra = MathHelper.atan2Deg(ye, xg);
-        decOff2Venus = (float) (EarthHelper.CELESTIAL_SPHERE_RADIUS * (ze / Math.sqrt(xg * xg + ye * ye)));
-        ha2Venus = (float) Mth.wrapDegrees(localTime - ra + 90);
-        dist2Venus = (float) MathHelper.relativize(Math.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_2VENUS, MAX_DIST_2VENUS);
-        angSize2Venus = Mth.lerp(dist2Venus, 0.03f, 0.23f);
-        dist2Venus = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS;
+        float xh = SEMI_MAJOR_AXIS_2VENUS * (COS_LONG_ASC_NODE_2VENUS * cosLong - SIN_LONG_ASC_NODE_2VENUS * sinLong * COS_INCLINATION_2VENUS);
+        float yh = SEMI_MAJOR_AXIS_2VENUS * (SIN_LONG_ASC_NODE_2VENUS * cosLong + COS_LONG_ASC_NODE_2VENUS * sinLong * COS_INCLINATION_2VENUS);
+        float zh = SEMI_MAJOR_AXIS_2VENUS * (sinLong * SIN_INCLINATION_2VENUS);
+        float xg = xh + xSun;
+        float yg = yh + ySun;
+        float ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
+        float ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
+        float ra = (float) MathHelper.atan2Deg(ye, xg);
+        if (Math.abs(Mth.wrapDegrees(ra - sunRA)) > 51) {
+            Evolution.warn("Venus dRA is greater than 51º: " + Math.abs(Mth.wrapDegrees(ra - sunRA)));
+        }
+        decOff2Venus = -EarthHelper.CELESTIAL_SPHERE_RADIUS * ze / Mth.sqrt(xg * xg + ye * ye);
+        ha2Venus = Mth.wrapDegrees(localTime - ra + 90);
+        float dist = Mth.sqrt(xg * xg + ye * ye + ze * ze);
+        is2VenusTransiting = dist < 1;
+        float dist2Venus = MathHelper.relativize(dist, MIN_DIST_2VENUS, MAX_DIST_2VENUS);
+        angSize2Venus = Mth.lerp(dist2Venus, 0.23f, 0.05f);
     }
 
     public static void calculateOrbit4Mars(long worldTime) {
@@ -141,19 +161,18 @@ public final class PlanetsHelper {
         float trueLong = meanAnomaly + ARGUMENT_PERIHELION_4MARS;
         float sinLong = Mth.sin(trueLong);
         float cosLong = Mth.cos(trueLong);
-        double xh = SEMI_MAJOR_AXIS_4MARS * (COS_LONG_ASC_NODE_4MARS * cosLong - SIN_LONG_ASC_NODE_4MARS * sinLong * COS_INCLINATION_4MARS);
-        double yh = SEMI_MAJOR_AXIS_4MARS * (SIN_LONG_ASC_NODE_4MARS * cosLong + COS_LONG_ASC_NODE_4MARS * sinLong * COS_INCLINATION_4MARS);
-        double zh = SEMI_MAJOR_AXIS_4MARS * (sinLong * SIN_INCLINATION_4MARS);
-        double xg = xh + cosLongSun;
-        double yg = yh + sinLongSun;
-        double ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
-        double ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
-        double ra = MathHelper.atan2Deg(ye, xg);
-        decOff4Mars = (float) (EarthHelper.CELESTIAL_SPHERE_RADIUS * (ze / Math.sqrt(xg * xg + ye * ye)));
-        ha4Mars = (float) Mth.wrapDegrees(localTime - ra + 90);
-        dist4Mars = (float) MathHelper.relativize(Math.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_4MARS, MAX_DIST_4MARS);
-        angSize4Mars = Mth.lerp(dist4Mars, 0.01f, 0.09f);
-        dist4Mars = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS;
+        float xh = SEMI_MAJOR_AXIS_4MARS * (COS_LONG_ASC_NODE_4MARS * cosLong - SIN_LONG_ASC_NODE_4MARS * sinLong * COS_INCLINATION_4MARS);
+        float yh = SEMI_MAJOR_AXIS_4MARS * (SIN_LONG_ASC_NODE_4MARS * cosLong + COS_LONG_ASC_NODE_4MARS * sinLong * COS_INCLINATION_4MARS);
+        float zh = SEMI_MAJOR_AXIS_4MARS * (sinLong * SIN_INCLINATION_4MARS);
+        float xg = xh + xSun;
+        float yg = yh + ySun;
+        float ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
+        float ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
+        float ra = (float) MathHelper.atan2Deg(ye, xg);
+        decOff4Mars = -EarthHelper.CELESTIAL_SPHERE_RADIUS * ze / Mth.sqrt(xg * xg + ye * ye);
+        ha4Mars = Mth.wrapDegrees(localTime - ra + 90);
+        float dist4Mars = MathHelper.relativize(Mth.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_4MARS, MAX_DIST_4MARS);
+        angSize4Mars = Mth.lerp(dist4Mars, 0.1f, 0.05f);
     }
 
     public static void calculateOrbit5Jupiter(long worldTime) {
@@ -161,21 +180,20 @@ public final class PlanetsHelper {
         float trueLong = meanAnomaly + ARGUMENT_PERIHELION_5JUPITER;
         float sinLong = Mth.sin(trueLong);
         float cosLong = Mth.cos(trueLong);
-        double xh = SEMI_MAJOR_AXIS_5JUPITER *
-                    (COS_LONG_ASC_NODE_5JUPITER * cosLong - SIN_LONG_ASC_NODE_5JUPITER * sinLong * COS_INCLINATION_5JUPITER);
-        double yh = SEMI_MAJOR_AXIS_5JUPITER *
-                    (SIN_LONG_ASC_NODE_5JUPITER * cosLong + COS_LONG_ASC_NODE_5JUPITER * sinLong * COS_INCLINATION_5JUPITER);
-        double zh = SEMI_MAJOR_AXIS_5JUPITER * (sinLong * SIN_INCLINATION_5JUPITER);
-        double xg = xh + cosLongSun;
-        double yg = yh + sinLongSun;
-        double ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
-        double ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
-        double ra = MathHelper.atan2Deg(ye, xg);
-        decOff5Jupiter = (float) (EarthHelper.CELESTIAL_SPHERE_RADIUS * (ze / Math.sqrt(xg * xg + ye * ye)));
-        ha5Jupiter = (float) Mth.wrapDegrees(localTime - ra + 90);
-        dist5Jupiter = (float) MathHelper.relativize(Math.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_5JUPITER, MAX_DIST_5JUPITER);
-        angSize5Jupiter = Mth.lerp(dist5Jupiter, 0.10f, 0.17f);
-        dist5Jupiter = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS;
+        float xh = SEMI_MAJOR_AXIS_5JUPITER *
+                   (COS_LONG_ASC_NODE_5JUPITER * cosLong - SIN_LONG_ASC_NODE_5JUPITER * sinLong * COS_INCLINATION_5JUPITER);
+        float yh = SEMI_MAJOR_AXIS_5JUPITER *
+                   (SIN_LONG_ASC_NODE_5JUPITER * cosLong + COS_LONG_ASC_NODE_5JUPITER * sinLong * COS_INCLINATION_5JUPITER);
+        float zh = SEMI_MAJOR_AXIS_5JUPITER * (sinLong * SIN_INCLINATION_5JUPITER);
+        float xg = xh + xSun;
+        float yg = yh + ySun;
+        float ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
+        float ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
+        float ra = (float) MathHelper.atan2Deg(ye, xg);
+        decOff5Jupiter = -EarthHelper.CELESTIAL_SPHERE_RADIUS * ze / Mth.sqrt(xg * xg + ye * ye);
+        ha5Jupiter = Mth.wrapDegrees(localTime - ra + 90);
+        float dist5Jupiter = MathHelper.relativize(Mth.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_5JUPITER, MAX_DIST_5JUPITER);
+        angSize5Jupiter = Mth.lerp(dist5Jupiter, 0.17f, 0.10f);
     }
 
     public static void calculateOrbit6Saturn(long worldTime) {
@@ -183,23 +201,18 @@ public final class PlanetsHelper {
         float trueLong = meanAnomaly + ARGUMENT_PERIHELION_6SATURN;
         float sinLong = Mth.sin(trueLong);
         float cosLong = Mth.cos(trueLong);
-        double xh = SEMI_MAJOR_AXIS_6SATURN * (COS_LONG_ASC_NODE_6SATURN * cosLong - SIN_LONG_ASC_NODE_6SATURN * sinLong * COS_INCLINATION_6SATURN);
-        double yh = SEMI_MAJOR_AXIS_6SATURN * (SIN_LONG_ASC_NODE_6SATURN * cosLong + COS_LONG_ASC_NODE_6SATURN * sinLong * COS_INCLINATION_6SATURN);
-        double zh = SEMI_MAJOR_AXIS_6SATURN * (sinLong * SIN_INCLINATION_6SATURN);
-        double xg = xh + cosLongSun;
-        double yg = yh + sinLongSun;
-        double ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
-        double ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
-        double ra = MathHelper.atan2Deg(ye, xg);
-        decOff6Saturn = (float) (EarthHelper.CELESTIAL_SPHERE_RADIUS * (ze / Math.sqrt(xg * xg + ye * ye)));
-        ha6Saturn = (float) Mth.wrapDegrees(localTime - ra + 90);
-        dist6Saturn = (float) MathHelper.relativize(Math.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_6SATURN, MAX_DIST_6SATURN);
-        angSize6Saturn = Mth.lerp(dist6Saturn, 0.05f, 0.07f);
-        dist6Saturn = 1.1f * EarthHelper.CELESTIAL_SPHERE_RADIUS;
-    }
-
-    public static float calculateZFromLatitude(Level level, float latitude) {
-        return calculateZFromLatitude(getQuarterCircunference(level), latitude);
+        float xh = SEMI_MAJOR_AXIS_6SATURN * (COS_LONG_ASC_NODE_6SATURN * cosLong - SIN_LONG_ASC_NODE_6SATURN * sinLong * COS_INCLINATION_6SATURN);
+        float yh = SEMI_MAJOR_AXIS_6SATURN * (SIN_LONG_ASC_NODE_6SATURN * cosLong + COS_LONG_ASC_NODE_6SATURN * sinLong * COS_INCLINATION_6SATURN);
+        float zh = SEMI_MAJOR_AXIS_6SATURN * (sinLong * SIN_INCLINATION_6SATURN);
+        float xg = xh + xSun;
+        float yg = yh + ySun;
+        float ye = yg * COS_ECLIPTIC - zh * SIN_ECLIPTIC;
+        float ze = yg * SIN_ECLIPTIC + zh * COS_ECLIPTIC;
+        float ra = (float) MathHelper.atan2Deg(ye, xg);
+        decOff6Saturn = -EarthHelper.CELESTIAL_SPHERE_RADIUS * ze / Mth.sqrt(xg * xg + ye * ye);
+        ha6Saturn = Mth.wrapDegrees(localTime - ra + 90);
+        float dist6Saturn = MathHelper.relativize(Mth.sqrt(xg * xg + ye * ye + ze * ze), MIN_DIST_6SATURN, MAX_DIST_6SATURN);
+        angSize6Saturn = Mth.lerp(dist6Saturn, 0.1f, 0.05f);
     }
 
     public static float calculateZFromLatitude(int quarterCircunference, float latitude) {
@@ -246,26 +259,6 @@ public final class PlanetsHelper {
         return decOff6Saturn;
     }
 
-    public static float getDist1Mercury() {
-        return dist1Mercury;
-    }
-
-    public static float getDist2Venus() {
-        return dist2Venus;
-    }
-
-    public static float getDist4Mars() {
-        return dist4Mars;
-    }
-
-    public static float getDist5Jupiter() {
-        return dist5Jupiter;
-    }
-
-    public static float getDist6Saturn() {
-        return dist6Saturn;
-    }
-
     public static float getHa1Mercury() {
         return ha1Mercury;
     }
@@ -286,15 +279,31 @@ public final class PlanetsHelper {
         return ha6Saturn;
     }
 
+    public static float getLocalTime() {
+        return localTime;
+    }
+
     public static int getQuarterCircunference(Level level) {
         return EarthHelper.POLE;
+    }
+
+    public static boolean is1MercuryTransiting() {
+        return is1MercuryTransiting;
+    }
+
+    public static boolean is2VenusTransiting() {
+        return is2VenusTransiting;
     }
 
     public static void preCalculations(long worldTime) {
         float meanAnomaly = calculateMeanAnomaly0Sun(worldTime);
         float lonSun = meanAnomaly + ARGUMENT_PERIHELION_0SUN;
-        sinLongSun = Mth.sin(lonSun);
-        cosLongSun = Mth.cos(lonSun);
-        localTime = EarthHelper.calculateStarsRightAscension(worldTime) * 360;
+        //Geocentric
+        xSun = Mth.cos(lonSun);
+        ySun = Mth.sin(lonSun);
+        float xe = xSun;
+        float ye = ySun * COS_ECLIPTIC;
+        sunRA = (float) MathHelper.atan2Deg(ye, xe);
+        localTime = EarthHelper.calculateStarsRightAscension(worldTime);
     }
 }
