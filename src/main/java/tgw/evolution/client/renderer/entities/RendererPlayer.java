@@ -2,14 +2,11 @@ package tgw.evolution.client.renderer.entities;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.geom.ModelLayers;
-import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -25,7 +22,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Score;
 import net.minecraft.world.scores.Scoreboard;
-import net.minecraftforge.client.ForgeHooksClient;
 import tgw.evolution.client.models.entities.ModelPlayer;
 import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.events.ClientEvents;
@@ -145,31 +141,6 @@ public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, M
         super.render(player, entityYaw, partialTicks, matrices, buffer, light);
     }
 
-    private void renderHand(PoseStack matrices,
-                            MultiBufferSource buffer,
-                            int light,
-                            AbstractClientPlayer player,
-                            ModelPart arm,
-                            ModelPart clothesArm) {
-        ModelPlayer<AbstractClientPlayer> model = this.getModel();
-        this.setModelProperties(player);
-        model.attackTime = 0.0F;
-        model.crouching = false;
-        model.swimAmount = 0.0F;
-        model.setupAnim(player, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
-        arm.xRot = 0.0F;
-        arm.render(matrices, buffer.getBuffer(RenderType.entitySolid(player.getSkinTextureLocation())), light, OverlayTexture.NO_OVERLAY);
-        clothesArm.xRot = 0.0F;
-        clothesArm.render(matrices, buffer.getBuffer(RenderType.entityTranslucent(player.getSkinTextureLocation())), light,
-                          OverlayTexture.NO_OVERLAY);
-    }
-
-    public void renderLeftHand(PoseStack matrices, MultiBufferSource buffer, int light, AbstractClientPlayer player) {
-        if (!ForgeHooksClient.renderSpecificFirstPersonArm(matrices, buffer, light, player, HumanoidArm.LEFT)) {
-            this.renderHand(matrices, buffer, light, player, this.model.armL, this.model.clothesArmL);
-        }
-    }
-
     @Override
     protected void renderNameTag(AbstractClientPlayer entity, Component name, PoseStack matrices, MultiBufferSource buffer, int light) {
         double dist = this.entityRenderDispatcher.distanceToSqr(entity);
@@ -186,12 +157,6 @@ public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, M
         }
         super.renderNameTag(entity, name, matrices, buffer, light);
         matrices.popPose();
-    }
-
-    public void renderRightHand(PoseStack matrices, MultiBufferSource buffer, int light, AbstractClientPlayer player) {
-        if (!ForgeHooksClient.renderSpecificFirstPersonArm(matrices, buffer, light, player, HumanoidArm.RIGHT)) {
-            this.renderHand(matrices, buffer, light, player, this.model.armR, this.model.clothesArmR);
-        }
     }
 
     @Override
