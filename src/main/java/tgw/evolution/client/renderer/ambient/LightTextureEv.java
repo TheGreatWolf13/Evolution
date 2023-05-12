@@ -47,8 +47,9 @@ public class LightTextureEv extends LightTexture {
         this.lightTexture.upload();
     }
 
-    private static float getLightBrightness(LevelReader level, int lightLevel) {
+    public static float getLightBrightness(LevelReader level, int lightLevel) {
         if (level.dimensionType().natural()) {
+            assert ClientEvents.getInstance().getDimension() != null;
             return ClientEvents.getInstance().getDimension().getAmbientLight(lightLevel);
         }
         return level.dimensionType().brightness(lightLevel);
