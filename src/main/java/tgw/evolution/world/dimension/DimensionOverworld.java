@@ -175,14 +175,14 @@ public class DimensionOverworld {
     }
 
     public float moonlightMult() {
-        if (this.moonAltitude > 96) {
+        if (this.moonAltitude > 93) {
             return 0.97F;
         }
         float moonLight = this.isCloseToLunarEclipse ? (1.0f - this.getLunarEclipseIntensity()) * 0.27f + 0.03f : this.moonPhase.getMoonLight();
         if (this.moonAltitude < 90) {
             return 1.0f - moonLight;
         }
-        float mult = 1.0f - (this.moonAltitude - 90) / 6.0f;
+        float mult = 1.0f - (this.moonAltitude - 90) / 3.0f;
         return 0.97f - (moonLight - 0.03f) * mult;
     }
 
