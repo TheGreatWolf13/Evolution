@@ -13,6 +13,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.LevelReader;
 import org.lwjgl.opengl.GL11C;
 import tgw.evolution.events.ClientEvents;
+import tgw.evolution.world.dimension.DimensionOverworld;
 
 public class LightTextureEv extends LightTexture {
 
@@ -49,8 +50,10 @@ public class LightTextureEv extends LightTexture {
 
     public static float getLightBrightness(LevelReader level, int lightLevel) {
         if (level.dimensionType().natural()) {
-            assert ClientEvents.getInstance().getDimension() != null;
-            return ClientEvents.getInstance().getDimension().getAmbientLight(lightLevel);
+            DimensionOverworld dimension = ClientEvents.getInstance().getDimension();
+            if (dimension != null) {
+                return dimension.getAmbientLight(lightLevel);
+            }
         }
         return level.dimensionType().brightness(lightLevel);
     }
