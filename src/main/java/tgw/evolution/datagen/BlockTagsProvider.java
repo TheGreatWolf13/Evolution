@@ -17,6 +17,7 @@ public class BlockTagsProvider extends TagsProvider<Block> {
     @Override
     protected void addTags() {
         this.tag(BlockTags.VALID_SPAWN).add(EvolutionBlocks.GRASSES.values().stream().map(RegistryObject::get).toArray(Block[]::new));
+        this.tag(EvolutionBlockTags.BLOCKS_COMBINED_STEP_SOUND).addTag(BlockTags.CARPETS);
         this.tag(EvolutionBlockTags.COBBLESTONES).add(EvolutionBlocks.COBBLESTONES.values().stream().map(RegistryObject::get).toArray(Block[]::new));
         this.tag(EvolutionBlockTags.ROCKS).add(EvolutionBlocks.ROCKS.values().stream().map(RegistryObject::get).toArray(Block[]::new));
     }

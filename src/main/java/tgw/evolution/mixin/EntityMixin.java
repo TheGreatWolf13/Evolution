@@ -6,6 +6,7 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
@@ -17,6 +18,8 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FenceGateBlock;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.entity.EntityInLevelCallback;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -36,6 +39,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import tgw.evolution.blocks.IClimbable;
+import tgw.evolution.init.EvolutionBlockTags;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.constants.LevelEvents;
@@ -374,14 +379,47 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     protected abstract Entity.MovementEmission getMovementEmission();
 
-    @Shadow
-    public abstract BlockPos getOnPos();
+    /**
+     * @author TheGreatWolf
+     * @reason Use proper stepping pos
+     */
+    @Overwrite
+    public BlockPos getOnPos() {
+        return this.getPosWithYOffset(0.2f);
+    }
 
     @Shadow
     public abstract float getPickRadius();
 
+    private BlockPos getPosWithYOffset(float offset) {
+        BlockPos pos = new BlockPos(Mth.floor(this.position.x), Mth.floor(this.position.y - offset), Mth.floor(this.position.z));
+        if (this.level.getBlockState(pos).isAir()) {
+            BlockPos posBelow = pos.below();
+            BlockState below = this.level.getBlockState(posBelow);
+            //TODO use proper tags or classes
+            if (below.is(BlockTags.FENCES) || below.is(BlockTags.WALLS) || below.getBlock() instanceof FenceGateBlock) {
+                return posBelow;
+            }
+        }
+        return pos;
+    }
+
     @Shadow
     public abstract Pose getPose();
+
+    private BlockPos getStepSoundPos(BlockPos pos) {
+        BlockPos blockPos = pos.above();
+        BlockState blockState = this.level.getBlockState(blockPos);
+        if (blockState.is(BlockTags.INSIDE_STEP_SOUND_BLOCKS) || blockState.is(EvolutionBlockTags.BLOCKS_COMBINED_STEP_SOUND)) {
+            return blockPos;
+        }
+        return pos;
+    }
+
+    @Override
+    public BlockPos getSteppingPos() {
+        return this.getPosWithYOffset(1e-5f);
+    }
 
     @Shadow
     public abstract int getTicksFrozen();
@@ -545,71 +583,71 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         this.checkFallDamage(allowedMovement.y, this.onGround, onState, onPos);
         if (this.isRemoved()) {
             this.level.getProfiler().pop();
+            return;
         }
-        else {
-            if (this.horizontalCollision) {
-                Vec3 updatedDeltaMovement = this.getDeltaMovement();
-                this.setDeltaMovement(this.hasCollidedOnX ? 0.0 : updatedDeltaMovement.x, updatedDeltaMovement.y,
-                                      this.hasCollidedOnZ ? 0.0 : updatedDeltaMovement.z);
-            }
-            Block block = onState.getBlock();
-            if (deltaMovement.y != allowedMovement.y) {
-                block.updateEntityAfterFallOn(this.level, (Entity) (Object) this);
-            }
-            if (this.onGround && !this.isSteppingCarefully()) {
-                block.stepOn(this.level, onPos, onState, (Entity) (Object) this);
-            }
-            Entity.MovementEmission movementEmission = this.getMovementEmission();
-            if (movementEmission.emitsAnything() && !this.isPassenger()) {
-                double dx = allowedMovement.x;
-                double dy = allowedMovement.y;
-                double dz = allowedMovement.z;
-                this.flyDist += allowedMovement.length() * 0.6;
-                if (!onState.is(BlockTags.CLIMBABLE) && !onState.is(Blocks.POWDER_SNOW)) {
-                    dy = 0.0;
-                }
-                this.walkDist += (float) allowedMovement.horizontalDistance() * 0.5F;
-                this.moveDist += (float) Math.sqrt(dx * dx + dy * dy + dz * dz) * 0.5F;
-                if (this.moveDist > this.nextStep && this.isOnGround() && !onState.isAir()) {
-                    this.moveDist -= this.nextStep;
-                    if (this.moveDist > this.nextStep) {
-                        this.moveDist %= this.nextStep;
-                    }
-                    this.nextStep = this.nextStep();
-                    if (this.isInWater()) {
-                        if (movementEmission.emitsSounds()) {
-                            Entity entity = this.isVehicle() && this.getControllingPassenger() != null ?
-                                            this.getControllingPassenger() :
-                                            (Entity) (Object) this;
-                            float f = entity == (Object) this ? 0.35F : 0.4F;
-                            Vec3 updatedDeltaMovement = entity.getDeltaMovement();
-                            float f1 = Math.min(1.0F, (float) Math.sqrt(updatedDeltaMovement.x * updatedDeltaMovement.x * 0.2F +
-                                                                        updatedDeltaMovement.y * updatedDeltaMovement.y +
-                                                                        updatedDeltaMovement.z * updatedDeltaMovement.z * 0.2F) * f);
-                            this.playSwimSound(f1);
-                        }
-                        if (movementEmission.emitsEvents()) {
-                            this.gameEvent(GameEvent.SWIM);
-                        }
-                    }
-                    else {
-                        if (movementEmission.emitsSounds()) {
-                            this.playAmethystStepSound(onState);
-                            this.playStepSound(onPos, onState);
-                        }
-                        if (movementEmission.emitsEvents() && !onState.is(BlockTags.OCCLUDES_VIBRATION_SIGNALS)) {
-                            this.gameEvent(GameEvent.STEP);
-                        }
-                    }
-                }
-                else if (onState.isAir()) {
-                    this.processFlappingMovement();
-                }
-            }
-            this.tryCheckInsideBlocks();
-            float blockSpeedFactor = this.getBlockSpeedFactor();
-            ((Vec3d) this.getDeltaMovement()).multiplyMutable(blockSpeedFactor, 1.0, blockSpeedFactor);
+        if (this.horizontalCollision) {
+            Vec3 updatedDeltaMovement = this.getDeltaMovement();
+            this.setDeltaMovement(this.hasCollidedOnX ? 0.0 : updatedDeltaMovement.x, updatedDeltaMovement.y,
+                                  this.hasCollidedOnZ ? 0.0 : updatedDeltaMovement.z);
         }
+        Block block = onState.getBlock();
+        if (deltaMovement.y != allowedMovement.y) {
+            block.updateEntityAfterFallOn(this.level, (Entity) (Object) this);
+        }
+        if (this.onGround && !this.isSteppingCarefully()) {
+            block.stepOn(this.level, onPos, onState, (Entity) (Object) this);
+        }
+        Entity.MovementEmission movementEmission = this.getMovementEmission();
+        if (movementEmission.emitsAnything() && !this.isPassenger()) {
+            double dx = allowedMovement.x;
+            double dy = allowedMovement.y;
+            double dz = allowedMovement.z;
+            this.flyDist += allowedMovement.length() * 0.6;
+            boolean disconsiderY = onState.getBlock() instanceof IClimbable climbable &&
+                                   climbable.isClimbable(onState, this.level, onPos, (Entity) (Object) this);
+            if (!disconsiderY) {
+                dy = 0.0;
+            }
+            this.walkDist += (float) allowedMovement.horizontalDistance() * 0.5F;
+            this.moveDist += (float) Math.sqrt(dx * dx + dy * dy + dz * dz) * 0.5F;
+            if (this.moveDist > this.nextStep && !onState.isAir()) {
+                this.moveDist -= this.nextStep;
+                if (this.moveDist > this.nextStep) {
+                    this.moveDist %= this.nextStep;
+                }
+                this.nextStep = this.nextStep();
+                if (this.isOnGround() || disconsiderY) {
+                    if (movementEmission.emitsSounds()) {
+                        this.playStepSounds(onPos, onState);
+                    }
+                    if (movementEmission.emitsEvents()) {
+                        this.level.gameEvent((Entity) (Object) this, GameEvent.STEP, this.getSteppingPos());
+                    }
+                }
+                else if (this.isInWater()) {
+                    if (movementEmission.emitsSounds()) {
+                        Entity entity = this.isVehicle() && this.getControllingPassenger() != null ?
+                                        this.getControllingPassenger() :
+                                        (Entity) (Object) this;
+                        float f = entity == (Object) this ? 0.35F : 0.4F;
+                        Vec3 updatedDeltaMovement = entity.getDeltaMovement();
+                        float f1 = Math.min(1.0F, (float) Math.sqrt(updatedDeltaMovement.x * updatedDeltaMovement.x * 0.2F +
+                                                                    updatedDeltaMovement.y * updatedDeltaMovement.y +
+                                                                    updatedDeltaMovement.z * updatedDeltaMovement.z * 0.2F) * f);
+                        this.playSwimSound(f1);
+                    }
+                    if (movementEmission.emitsEvents()) {
+                        this.gameEvent(GameEvent.SWIM);
+                    }
+                }
+            }
+            else if (onState.isAir()) {
+                this.processFlappingMovement();
+            }
+        }
+        this.tryCheckInsideBlocks();
+        float blockSpeedFactor = this.getBlockSpeedFactor();
+        ((Vec3d) this.getDeltaMovement()).multiplyMutable(blockSpeedFactor, 1.0, blockSpeedFactor);
         if (this.level.getBlockStatesIfLoaded(this.getBoundingBox().deflate(1.0E-6)).noneMatch(s -> s.is(BlockTags.FIRE) || s.is(Blocks.LAVA))) {
             if (this.remainingFireTicks <= 0) {
                 this.setRemainingFireTicks(-this.getFireImmuneTicks());
@@ -668,11 +706,39 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     protected abstract void playAmethystStepSound(BlockState pState);
 
+    private void playCombinationStepSounds(BlockState primaryState, BlockState secondaryState) {
+        SoundType primarySoundType = primaryState.getSoundType();
+        SoundType secondarySoundType = secondaryState.getSoundType();
+        this.playSound(primarySoundType.getStepSound(), primarySoundType.getVolume() * 0.15f, primarySoundType.getPitch());
+        this.playSound(secondarySoundType.getStepSound(), secondarySoundType.getVolume() * 0.05f, secondarySoundType.getPitch() * 0.8f);
+    }
+
     @Shadow
     protected abstract void playEntityOnFireExtinguishedSound();
 
     @Shadow
+    public abstract void playSound(SoundEvent pSound, float pVolume, float pPitch);
+
+    @Shadow
     protected abstract void playStepSound(BlockPos pPos, BlockState pState);
+
+    private void playStepSounds(BlockPos pos, BlockState state) {
+        BlockPos blockPos = this.getStepSoundPos(pos);
+        //noinspection ConstantConditions
+        if ((Object) this instanceof Player && !pos.equals(blockPos)) {
+            BlockState blockState = this.level.getBlockState(blockPos);
+            if (blockState.is(EvolutionBlockTags.BLOCKS_COMBINED_STEP_SOUND)) {
+                this.playCombinationStepSounds(blockState, state);
+            }
+            else {
+                this.playStepSound(blockPos, blockState);
+            }
+        }
+        else {
+            this.playStepSound(pos, state);
+        }
+        this.playAmethystStepSound(state);
+    }
 
     @Shadow
     protected abstract void playSwimSound(float pVolume);

@@ -3,7 +3,7 @@ package tgw.evolution.blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -158,7 +158,7 @@ public class BlockRope extends BlockGeneric implements IReplaceable, IFallSufixB
     }
 
     @Override
-    public boolean isClimbable(BlockState state, LevelReader level, BlockPos pos, LivingEntity entity) {
+    public boolean isClimbable(BlockState state, LevelReader level, BlockPos pos, Entity entity) {
         return true;
     }
 

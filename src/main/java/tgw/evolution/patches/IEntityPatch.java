@@ -1,5 +1,6 @@
 package tgw.evolution.patches;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
@@ -46,6 +47,10 @@ public interface IEntityPatch<T extends Entity> {
 
     default int getNoJumpDelay() {
         return 0;
+    }
+
+    default BlockPos getSteppingPos() {
+        return BlockPos.ZERO;
     }
 
     double getVolume();
