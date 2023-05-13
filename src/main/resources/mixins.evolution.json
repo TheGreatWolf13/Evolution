@@ -169,6 +169,7 @@
     "ModelPart_CubeMixin",
     "ModelPartMixin",
     "MouseHandlerMixin",
+    "MultiPlayerGameModeMixin",
     "NarratorChatListenerMixin",
     "OptionsListMixin",
     "OptionsMixin",

@@ -5,11 +5,14 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
+import com.mojang.math.Vector3f;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.Util;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
@@ -28,11 +31,14 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11C;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.patches.IGameRendererPatch;
+import tgw.evolution.patches.IPoseStackPatch;
 import tgw.evolution.util.collection.I2OMap;
 import tgw.evolution.util.collection.I2OOpenHashMap;
 import tgw.evolution.util.math.MathHelper;
@@ -64,13 +70,55 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
     private LightTexture lightTexture;
     @Shadow
     @Final
+    private Camera mainCamera;
+    @Shadow
+    @Final
     private Minecraft minecraft;
     @Shadow
     @Nullable
     private PostChain postEffect;
     @Shadow
+    private float renderDistance;
+    @Shadow
     @Final
     private ResourceManager resourceManager;
+    @Shadow
+    private int tick;
+    @Shadow
+    private float zoom;
+    @Shadow
+    private float zoomX;
+    @Shadow
+    private float zoomY;
+
+    @Shadow
+    protected abstract void bobHurt(PoseStack pMatrixStack, float pPartialTicks);
+
+    @Shadow
+    public abstract float getDepthFar();
+
+    @Shadow
+    protected abstract double getFov(Camera pActiveRenderInfo, float pPartialTicks, boolean pUseFOVSetting);
+
+    /**
+     * @author TheGreatWolf
+     * @reason Modify the near clipping plane to improve first person camera.
+     */
+    @Overwrite
+    public Matrix4f getProjectionMatrix(double fov) {
+        PoseStack matrices = new PoseStack();
+        matrices.last().pose().setIdentity();
+        if (this.zoom != 1.0F) {
+            matrices.translate(this.zoomX, -this.zoomY, 0);
+            matrices.scale(this.zoom, this.zoom, 1.0F);
+        }
+        matrices.last()
+                .pose()
+                .multiply(
+                        Matrix4f.perspective(fov, this.minecraft.getWindow().getWidth() / (float) this.minecraft.getWindow().getHeight(), 0.006_25f,
+                                             this.getDepthFar()));
+        return matrices.last().pose();
+    }
 
     /**
      * @author TheGreatWolf
@@ -113,19 +161,6 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
                 LOGGER.warn("Failed to parse shader: {}", resLoc, e);
             }
         }
-    }
-
-    /**
-     * Modify the near clipping plane to improve first person camera.
-     */
-    @ModifyConstant(method = "getProjectionMatrix", constant = @Constant(floatValue = 0.05f))
-    private float modifyGetProjectionMatrix(float original) {
-        return 0.006_25f;
-    }
-
-    @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
-    private void onBobView(PoseStack matrices, float partialTicks, CallbackInfo ci) {
-        ci.cancel();
     }
 
     @Inject(method = "<init>", at = @At("TAIL"))
@@ -305,8 +340,63 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
     @Shadow
     protected abstract void renderItemActivationAnimation(int pWidthsp, int pHeightScaled, float pPartialTicks);
 
+    /**
+     * @author TheGreatWolf
+     * @reason Remove references to hand rendering, as even if we cancel the event, a lot of calculations still run.
+     */
+    @Overwrite
+    public void renderLevel(float partialTicks, long finishTimeNano, PoseStack matrices) {
+        this.lightTexture.updateLightTexture(partialTicks);
+        assert this.minecraft.player != null;
+        if (this.minecraft.getCameraEntity() == null) {
+            this.minecraft.setCameraEntity(this.minecraft.player);
+        }
+        this.pick(partialTicks);
+        this.minecraft.getProfiler().push("center");
+        boolean shouldRenderOutline = this.shouldRenderBlockOutline();
+        this.minecraft.getProfiler().popPush("camera");
+        Camera camera = this.mainCamera;
+        this.renderDistance = this.minecraft.options.getEffectiveRenderDistance() * 16;
+        PoseStack posestack = new PoseStack();
+        double fov = this.getFov(camera, partialTicks, true);
+        posestack.last().pose().multiply(this.getProjectionMatrix(fov));
+        this.bobHurt(posestack, partialTicks);
+        float portalWarp = Mth.lerp(partialTicks, this.minecraft.player.oPortalTime, this.minecraft.player.portalTime) *
+                           this.minecraft.options.screenEffectScale *
+                           this.minecraft.options.screenEffectScale;
+        if (portalWarp > 0.0F) {
+            int i = this.minecraft.player.hasEffect(MobEffects.CONFUSION) ? 7 : 20;
+            float f1 = 5.0F / (portalWarp * portalWarp + 5.0F) - portalWarp * 0.04F;
+            f1 *= f1;
+            Vector3f vector3f = new Vector3f(0.0F, Mth.SQRT_OF_TWO / 2.0F, Mth.SQRT_OF_TWO / 2.0F);
+            posestack.mulPose(vector3f.rotationDegrees((this.tick + partialTicks) * i));
+            posestack.scale(1.0F / f1, 1.0F, 1.0F);
+            float f2 = -(this.tick + partialTicks) * i;
+            posestack.mulPose(vector3f.rotationDegrees(f2));
+        }
+        Matrix4f matrix4f = posestack.last().pose();
+        this.resetProjectionMatrix(matrix4f);
+        assert this.minecraft.level != null;
+        camera.setup(this.minecraft.level,
+                     this.minecraft.getCameraEntity() == null ? this.minecraft.player : this.minecraft.getCameraEntity(),
+                     !this.minecraft.options.getCameraType().isFirstPerson(), this.minecraft.options.getCameraType().isMirrored(), partialTicks);
+        IPoseStackPatch extendedMatrix = MathHelper.getExtendedMatrix(matrices);
+//        extendedMatrix.mulPoseZ(0);
+        extendedMatrix.mulPoseX(camera.getXRot());
+        extendedMatrix.mulPoseY(camera.getYRot() + 180.0F);
+        Matrix3f matrix3f = matrices.last().normal().copy();
+        if (matrix3f.invert()) {
+            RenderSystem.setInverseViewRotationMatrix(matrix3f);
+        }
+        this.minecraft.levelRenderer.prepareCullFrustum(matrices, camera.getPosition(),
+                                                        this.getProjectionMatrix(Math.max(fov, this.minecraft.options.fov)));
+        this.minecraft.levelRenderer.renderLevel(matrices, partialTicks, finishTimeNano, shouldRenderOutline, camera, (GameRenderer) (Object) this,
+                                                 this.lightTexture, matrix4f);
+        this.minecraft.getProfiler().pop();
+    }
+
     @Shadow
-    public abstract void renderLevel(float pPartialTicks, long pFinishTimeNano, PoseStack pMatrixStack);
+    public abstract void resetProjectionMatrix(Matrix4f pMatrix);
 
     /**
      * @author TheGreatWolf
@@ -322,6 +412,9 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
         }
         this.minecraft.levelRenderer.resize(width, height);
     }
+
+    @Shadow
+    protected abstract boolean shouldRenderBlockOutline();
 
     @Override
     public void shutdownAllShaders() {

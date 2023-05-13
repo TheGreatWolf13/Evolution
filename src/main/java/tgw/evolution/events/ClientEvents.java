@@ -1129,11 +1129,6 @@ public class ClientEvents {
         this.onRenderHightlight(event);
     }
 
-    @SubscribeEvent
-    public void onRenderHand(RenderHandEvent event) {
-        event.setCanceled(true);
-    }
-
     private void onRenderHightlight(DrawSelectionEvent event) {
         event.setCanceled(true);
         PoseStack matrices = event.getPoseStack();
