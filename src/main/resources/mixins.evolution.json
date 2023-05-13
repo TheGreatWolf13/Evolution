@@ -195,6 +195,7 @@
     "VertexBufferMixin",
     "VertexConsumerMixin",
     "VertexFormatMixin",
+    "VideoSettingsScreenMixin",
     "VillagerModelMixin",
     "VillagerRendererMixin",
     "WeightedBakedModel_Builder",
