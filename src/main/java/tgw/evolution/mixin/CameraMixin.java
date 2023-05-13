@@ -176,18 +176,18 @@ public abstract class CameraMixin {
         this.entity = entity;
         this.detached = detached;
         this.setRotation(entity.getViewYRot(partialTicks), entity.getViewXRot(partialTicks));
-//        if (detached) {
-//            this.setPosition(Mth.lerp(partialTicks, entity.xo, entity.getX()),
-//                             Mth.lerp(partialTicks, entity.yo, entity.getY()) + entity.getEyeHeight(),
-//                             Mth.lerp(partialTicks, entity.zo, entity.getZ()));
-//        }
-//        else {
-        Vec3d cameraPos = ClientEvents.getInstance().getCameraPos();
-        if (cameraPos.isNull()) {
-            cameraPos = MathHelper.getCameraPosition(entity, partialTicks);
+        if (detached) {
+            this.setPosition(Mth.lerp(partialTicks, entity.xo, entity.getX()),
+                             Mth.lerp(partialTicks, entity.yo, entity.getY()) + entity.getEyeHeight(),
+                             Mth.lerp(partialTicks, entity.zo, entity.getZ()));
         }
-        this.setPosition(cameraPos.x(), cameraPos.y(), cameraPos.z());
-//        }
+        else {
+            Vec3d cameraPos = ClientEvents.getInstance().getCameraPos();
+            if (cameraPos.isNull()) {
+                cameraPos = MathHelper.getCameraPosition(entity, partialTicks);
+            }
+            this.setPosition(cameraPos.x(), cameraPos.y(), cameraPos.z());
+        }
         if (detached) {
             if (thirdPersonReverse) {
                 this.setRotation(this.yRot + 180.0F, -this.xRot);
