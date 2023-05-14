@@ -32,6 +32,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.FluidState;
@@ -399,9 +400,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
         boolean flag = super.causeFallDamage(fallDistance, multiplier, source);
         float amount = EntityEvents.calculateFallDamage((LivingEntity) (Object) this, this.getDeltaMovement().y, 1 - multiplier, false);
-        if (fallDistance > 0.5) {
-            this.playBlockFallSound();
-        }
+        this.playBlockFallSound();
         if (amount > 1) {
             this.playSound(this.getFallDamageSound((int) amount), 1.0F, 1.0F);
             return true;
@@ -1091,8 +1090,21 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         }
     }
 
-    @Shadow
-    protected abstract void playBlockFallSound();
+    /**
+     * @author TheGreatWolf
+     * @reason Use supportingPos
+     */
+    @Overwrite
+    protected void playBlockFallSound() {
+        if (!this.isSilent()) {
+            BlockPos landingPos = this.getOnPos();
+            BlockState landingState = this.level.getBlockState(landingPos);
+            if (!landingState.isAir()) {
+                SoundType sound = landingState.getSoundType(this.level, landingPos, this);
+                this.playSound(sound.getFallSound(), sound.getVolume() * 0.5F, sound.getPitch() * 0.75F);
+            }
+        }
+    }
 
     @Shadow
     protected abstract void playHurtSound(DamageSource p_21160_);
