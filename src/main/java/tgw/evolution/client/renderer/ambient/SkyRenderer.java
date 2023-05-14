@@ -91,32 +91,11 @@ public class SkyRenderer {
         BufferUploader.end(builder);
     }
 
-    private static void drawMoonlight(Matrix4f moonMatrix,
-                                      BufferBuilder builder,
-                                      float starBrightness,
-                                      float x0,
-                                      float y0,
-                                      float x1,
-                                      float y1) {
+    private static void drawMoonlight(Matrix4f moonMatrix, BufferBuilder builder, float x0, float y0, float x1, float y1) {
         Blending.DEFAULT.apply();
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, starBrightness);
         RenderSystem.setShaderTexture(0, EvolutionResources.ENVIRONMENT_MOONLIGHT);
         drawCelestial(moonMatrix, builder, x0, y0, x1, y1);
     }
-
-//    private static void drawPlanet(BufferBuilder builder, Matrix4f matrix, float angularSize) {
-//        builder.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION);
-//        builder.vertex(matrix, -angularSize / 3, EarthHelper.CELESTIAL_SPHERE_RADIUS, angularSize).endVertex();
-//        builder.vertex(matrix, -angularSize, EarthHelper.CELESTIAL_SPHERE_RADIUS, angularSize / 3).endVertex();
-//        builder.vertex(matrix, -angularSize, EarthHelper.CELESTIAL_SPHERE_RADIUS, -angularSize / 3).endVertex();
-//        builder.vertex(matrix, -angularSize / 3, EarthHelper.CELESTIAL_SPHERE_RADIUS, -angularSize).endVertex();
-//        builder.vertex(matrix, angularSize / 3, EarthHelper.CELESTIAL_SPHERE_RADIUS, -angularSize).endVertex();
-//        builder.vertex(matrix, angularSize, EarthHelper.CELESTIAL_SPHERE_RADIUS, -angularSize / 3).endVertex();
-//        builder.vertex(matrix, angularSize, EarthHelper.CELESTIAL_SPHERE_RADIUS, angularSize / 3).endVertex();
-//        builder.vertex(matrix, angularSize / 3, EarthHelper.CELESTIAL_SPHERE_RADIUS, angularSize).endVertex();
-//        builder.end();
-//        BufferUploader.end(builder);
-//    }
 
     private static void drawPlanet(BufferBuilder builder, Matrix4f matrix, float angularSize, @Range(from = 1, to = 6) int planet) {
         planet -= 1;
@@ -263,6 +242,7 @@ public class SkyRenderer {
         float x1 = x0 + 0.2f;
         float y1 = y0 + 0.25f;
         RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX);
+        float starBrightness = 1 - this.dimension.getSunBrightness(partialTicks);
         boolean stencil = false;
         if (trueMoon) {
             float eclipseIntensity = this.dimension.isCloseToLunarEclipse() ? this.dimension.getLunarEclipseIntensity() : 0;
@@ -270,15 +250,14 @@ public class SkyRenderer {
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainStrength);
             RenderSystem.setShaderTexture(0, EvolutionResources.ENVIRONMENT_MOON);
             if (eclipseIntensity == 0) {
-                drawMoonlight(matrix, builder, 1 - this.dimension.getSunBrightness(partialTicks) * rainStrength, x0, y0, x1, y1);
+                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, starBrightness * rainStrength);
+                drawMoonlight(matrix, builder, x0, y0, x1, y1);
             }
             else {
-                MoonPhase eclipsePhase = this.dimension.getEclipsePhase();
-                float x0e = eclipsePhase.getTextureX();
-                float y0e = eclipsePhase.getTextureY();
-                float x1e = x0e + 0.2f;
-                float y1e = y0e + 0.25f;
-                drawMoonlight(matrix, builder, 1 - this.dimension.getSunBrightness(partialTicks) * rainStrength, x0e, y0e, x1e, y1e);
+                float color = 1 - this.dimension.getLunarEclipseIntensity();
+                color = Mth.sqrt(color);
+                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, color * starBrightness * rainStrength);
+                drawMoonlight(matrix, builder, x0, y0, x1, y1);
                 GL11.glEnable(GL11.GL_STENCIL_TEST);
                 RenderSystem.stencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
                 RenderSystem.stencilFunc(GL11.GL_EQUAL, 0, 16);
@@ -292,12 +271,15 @@ public class SkyRenderer {
         if (stencil) {
             RenderSystem.stencilFunc(GL11.GL_EQUAL, 16, 16);
             float color = Math.min(1 - this.dimension.getLunarEclipseIntensity(), 0.5f);
+            if (starBrightness < 1) {
+                color = Math.max(color, 1 - starBrightness);
+            }
             if (color < 0.1) {
                 float red = color < 0.05 ? 0.3f - 6 * color : 0;
-                RenderSystem.setShaderColor(0.1f + red, 0.1f, 0.1f, rainStrength);
+                RenderSystem.setShaderColor(0.1f + red, 0.1f, 0.1f, (0.1f - color) * 6 * rainStrength);
             }
             else {
-                RenderSystem.setShaderColor(color, color, color, rainStrength);
+                RenderSystem.setShaderColor(color, color, color, starBrightness * color * rainStrength);
             }
             drawCelestial(matrix, builder, x0, y0, x1, y1);
             GL11.glDisable(GL11.GL_STENCIL_TEST);
