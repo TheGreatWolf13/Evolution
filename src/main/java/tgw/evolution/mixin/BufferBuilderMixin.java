@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.gl.IBufferVertexFormat;
-import tgw.evolution.client.models.pipeline.*;
+import tgw.evolution.client.models.pipeline.IVertexBufferView;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.patches.IBakedQuadPatch;
 import tgw.evolution.patches.IMatrix4fPatch;
@@ -27,13 +27,14 @@ import tgw.evolution.util.collection.IList;
 import tgw.evolution.util.math.ColorABGR;
 import tgw.evolution.util.math.IColor;
 import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Norm3b;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.List;
 
 @Mixin(BufferBuilder.class)
-public abstract class BufferBuilderMixin extends DefaultedVertexConsumer implements BufferVertexConsumer, IVertexBufferView, IVertexDrain {
+public abstract class BufferBuilderMixin extends DefaultedVertexConsumer implements BufferVertexConsumer, IVertexBufferView {
 
     @Shadow
     @Final
@@ -78,15 +79,6 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
     @Shadow
     private static int roundUp(int pX) {
         throw new AbstractMethodError();
-    }
-
-    @Override
-    public <T extends IVertexSink> T createSink(IVertexType<T> factory) {
-        IBlittableVertexType<T> blittable = factory.asBlittable();
-        if (blittable != null && blittable.getBufferVertexFormat() == this.vertexFormat()) {
-            return blittable.createBufferWriter(this, true);
-        }
-        return factory.createFallbackWriter(this);
     }
 
     /**
@@ -159,6 +151,11 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
         return this.buffer;
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason Use newSortingPoints
+     */
+    @Overwrite
     public BufferBuilder.SortState getSortState() {
         BufferBuilder.SortState sortState = new BufferBuilder.SortState(this.mode, this.vertices, this.sortingPoints, this.sortX, this.sortY,
                                                                         this.sortZ);
@@ -218,8 +215,9 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
         IMatrix4fPatch poseExt = MathHelper.getExtendedMatrix(pose);
         Matrix3f normal = matrices.normal();
         int norm = MathHelper.computeNormal(normal, quad.getDirection());
-        IQuadVertexSink drain = IVertexDrain.of(this).createSink(VanillaVertexTypes.QUADS);
-        drain.ensureCapacity(4);
+        float nx = Norm3b.unpackX(norm);
+        float ny = Norm3b.unpackY(norm);
+        float nz = Norm3b.unpackZ(norm);
         for (int i = 0; i < 4; i++) {
             float x = quadView.getX(i);
             float y = quadView.getY(i);
@@ -244,13 +242,11 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
             }
             float u = quadView.getTexU(i);
             float v = quadView.getTexV(i);
-            int color = ColorABGR.pack(fR, fG, fB, 1.0F);
             float x2 = poseExt.transformVecX(x, y, z);
             float y2 = poseExt.transformVecY(x, y, z);
             float z2 = poseExt.transformVecZ(x, y, z);
-            drain.writeQuad(x2, y2, z2, color, u, v, light[i], overlay, norm);
+            this.vertex(x2, y2, z2).color(fR, fG, fB, 1.0f).uv(u, v).uv2(light[i]).overlayCoords(overlay).normal(nx, ny, nz).endVertex();
         }
-        drain.flush();
     }
 
     /**
@@ -285,6 +281,11 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
         }
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason Use newSortingPoints.
+     */
+    @Overwrite
     public void restoreSortState(BufferBuilder.SortState sortState) {
         this.buffer.clear();
         this.mode = sortState.mode;

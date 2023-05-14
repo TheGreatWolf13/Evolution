@@ -69,6 +69,28 @@ public abstract class ModelPartMixin implements HM {
                          float alpha) {
         IMatrix4fPatch poseExt = MathHelper.getExtendedMatrix(matrices.pose());
         IMatrix3fPatch normalExt = MathHelper.getExtendedMatrix(matrices.normal());
+//        IQuadVertexSink drain = IVertexDrain.of(vertexConsumer).createSink(VanillaVertexTypes.QUADS);
+//        drain.ensureCapacity(this.cubes.size() * 6 * 4);
+//        int color = ColorABGR.pack(red, green, blue, alpha);
+//        for (ModelPart.Cube cuboid : this.cubes) {
+//            for (ModelPart.Polygon quad : cuboid.polygons) {
+//                float normX = normalExt.transformVecX(quad.normal);
+//                float normY = normalExt.transformVecY(quad.normal);
+//                float normZ = normalExt.transformVecZ(quad.normal);
+//                int norm = Norm3b.pack(normX, normY, normZ);
+//                for (ModelPart.Vertex vertex : quad.vertices) {
+//                    Vector3f pos = vertex.pos;
+//                    float x1 = pos.x() * (1 / 16.0f);
+//                    float y1 = pos.y() * (1 / 16.0f);
+//                    float z1 = pos.z() * (1 / 16.0f);
+//                    float x2 = poseExt.transformVecX(x1, y1, z1);
+//                    float y2 = poseExt.transformVecY(x1, y1, z1);
+//                    float z2 = poseExt.transformVecZ(x1, y1, z1);
+//                    drain.writeQuad(x2, y2, z2, color, vertex.u, vertex.v, light, overlay, norm);
+//                }
+//            }
+//        }
+//        drain.flush();
         for (ModelPart.Cube cube : this.cubes) {
             for (ModelPart.Polygon polygon : cube.polygons) {
                 float normX = normalExt.transformVecX(polygon.normal);

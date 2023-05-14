@@ -22,17 +22,17 @@ import java.util.function.Supplier;
 
 public class TEMolding extends BlockEntity {
 
+    private final long[] parts = {Patterns.MATRIX_TRUE,
+                                  Patterns.MATRIX_FALSE,
+                                  Patterns.MATRIX_FALSE,
+                                  Patterns.MATRIX_FALSE,
+                                  Patterns.MATRIX_FALSE,
+                                  Patterns.MATRIX_FALSE,
+                                  Patterns.MATRIX_FALSE,
+                                  Patterns.MATRIX_FALSE};
     public EnumMolding molding = EnumMolding.NULL;
     @Nullable
     private VoxelShape hitbox;
-    private long[] parts = {Patterns.MATRIX_TRUE,
-                            Patterns.MATRIX_FALSE,
-                            Patterns.MATRIX_FALSE,
-                            Patterns.MATRIX_FALSE,
-                            Patterns.MATRIX_FALSE,
-                            Patterns.MATRIX_FALSE,
-                            Patterns.MATRIX_FALSE,
-                            Patterns.MATRIX_FALSE};
 
     public TEMolding(BlockPos pos, BlockState state) {
         super(EvolutionTEs.MOLDING.get(), pos, state);

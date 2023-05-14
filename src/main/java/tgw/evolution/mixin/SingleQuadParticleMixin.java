@@ -12,9 +12,7 @@ import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.client.models.pipeline.IParticleVertexSink;
-import tgw.evolution.client.models.pipeline.IVertexDrain;
-import tgw.evolution.client.models.pipeline.VanillaVertexTypes;
+import org.spongepowered.asm.mixin.Unique;
 import tgw.evolution.util.math.ColorABGR;
 
 @Mixin(SingleQuadParticle.class)
@@ -24,7 +22,8 @@ public abstract class SingleQuadParticleMixin extends Particle {
         super(pLevel, pX, pY, pZ);
     }
 
-    private static void addVertex(IParticleVertexSink drain,
+    @Unique
+    private static void addVertex(VertexConsumer buffer,
                                   Quaternion rotation,
                                   float x,
                                   float y,
@@ -61,7 +60,11 @@ public abstract class SingleQuadParticleMixin extends Particle {
         float fx = q3x * size + posX;
         float fy = q3y * size + posY;
         float fz = q3z * size + posZ;
-        drain.writeParticle(fx, fy, fz, u, v, color, light);
+        buffer.vertex(fx, fy, fz)
+              .uv(u, v)
+              .color(color)
+              .uv2(light)
+              .endVertex();
     }
 
     @Shadow
@@ -106,11 +109,9 @@ public abstract class SingleQuadParticleMixin extends Particle {
         float minV = this.getV0();
         float maxV = this.getV1();
         int color = ColorABGR.pack(this.rCol, this.gCol, this.bCol, this.alpha);
-        IParticleVertexSink drain = IVertexDrain.of(vertexConsumer).createSink(VanillaVertexTypes.PARTICLES);
-        addVertex(drain, quaternion, -1.0F, -1.0F, x, y, z, maxU, maxV, color, light, size);
-        addVertex(drain, quaternion, -1.0F, 1.0F, x, y, z, maxU, minV, color, light, size);
-        addVertex(drain, quaternion, 1.0F, 1.0F, x, y, z, minU, minV, color, light, size);
-        addVertex(drain, quaternion, 1.0F, -1.0F, x, y, z, minU, maxV, color, light, size);
-        drain.flush();
+        addVertex(vertexConsumer, quaternion, -1.0F, -1.0F, x, y, z, maxU, maxV, color, light, size);
+        addVertex(vertexConsumer, quaternion, -1.0F, 1.0F, x, y, z, maxU, minV, color, light, size);
+        addVertex(vertexConsumer, quaternion, 1.0F, 1.0F, x, y, z, minU, minV, color, light, size);
+        addVertex(vertexConsumer, quaternion, 1.0F, -1.0F, x, y, z, minU, maxV, color, light, size);
     }
 }

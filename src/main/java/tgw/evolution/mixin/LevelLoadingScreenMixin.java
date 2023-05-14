@@ -10,13 +10,11 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.progress.StoringChunkProgressListener;
 import net.minecraft.world.level.chunk.ChunkStatus;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.client.models.pipeline.IBasicScreenQuadVertexSink;
-import tgw.evolution.client.models.pipeline.IVertexDrain;
-import tgw.evolution.client.models.pipeline.VanillaVertexTypes;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.util.math.ColorABGR;
 import tgw.evolution.util.math.ColorARGB;
@@ -29,17 +27,18 @@ public abstract class LevelLoadingScreenMixin extends Screen {
     @Shadow
     @Final
     private static Object2IntMap<ChunkStatus> COLORS;
+    @Nullable
     private static Reference2IntOpenHashMap<ChunkStatus> STATUS_TO_COLOR_FAST;
 
     protected LevelLoadingScreenMixin(Component text) {
         super(text);
     }
 
-    private static void addRect(Matrix4f matrix, IBasicScreenQuadVertexSink sink, int x1, int y1, int x2, int y2, int color) {
-        sink.writeQuad(matrix, x1, y2, 0, color);
-        sink.writeQuad(matrix, x2, y2, 0, color);
-        sink.writeQuad(matrix, x2, y1, 0, color);
-        sink.writeQuad(matrix, x1, y1, 0, color);
+    private static void addRect(Matrix4f matrix, VertexConsumer buffer, int x1, int y1, int x2, int y2, int color) {
+        buffer.vertex(matrix, x1, y2, 0).color(color).endVertex();
+        buffer.vertex(matrix, x2, y2, 0).color(color).endVertex();
+        buffer.vertex(matrix, x2, y1, 0).color(color).endVertex();
+        buffer.vertex(matrix, x1, y1, 0).color(color).endVertex();
     }
 
     /**
@@ -63,20 +62,17 @@ public abstract class LevelLoadingScreenMixin extends Screen {
         RenderSystem.defaultBlendFunc();
         BufferBuilder buffer = tessellator.getBuilder();
         buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        IBasicScreenQuadVertexSink sink = IVertexDrain.of(buffer).createSink(VanillaVertexTypes.BASIC_SCREEN_QUADS);
         int centerSize = tracker.getFullDiameter();
         int size = tracker.getDiameter();
         int tileSize = mapScale + mapPadding;
         if (mapPadding != 0) {
-            sink.ensureCapacity(4 * 4);
             int mapRenderCenterSize = centerSize * tileSize - mapPadding;
             int radius = mapRenderCenterSize / 2 + 1;
-            addRect(matrix, sink, mapX - radius, mapY - radius, mapX - radius + 1, mapY + radius, DEFAULT_STATUS_COLOR);
-            addRect(matrix, sink, mapX + radius - 1, mapY - radius, mapX + radius, mapY + radius, DEFAULT_STATUS_COLOR);
-            addRect(matrix, sink, mapX - radius, mapY - radius, mapX + radius, mapY - radius + 1, DEFAULT_STATUS_COLOR);
-            addRect(matrix, sink, mapX - radius, mapY + radius - 1, mapX + radius, mapY + radius, DEFAULT_STATUS_COLOR);
+            addRect(matrix, buffer, mapX - radius, mapY - radius, mapX - radius + 1, mapY + radius, DEFAULT_STATUS_COLOR);
+            addRect(matrix, buffer, mapX + radius - 1, mapY - radius, mapX + radius, mapY + radius, DEFAULT_STATUS_COLOR);
+            addRect(matrix, buffer, mapX - radius, mapY - radius, mapX + radius, mapY - radius + 1, DEFAULT_STATUS_COLOR);
+            addRect(matrix, buffer, mapX - radius, mapY + radius - 1, mapX + radius, mapY + radius, DEFAULT_STATUS_COLOR);
         }
-        sink.ensureCapacity(size * size * 4);
         ChunkStatus prevStatus = null;
         int prevColor = NULL_STATUS_COLOR;
         int mapRenderSize = size * tileSize - mapPadding;
@@ -97,10 +93,9 @@ public abstract class LevelLoadingScreenMixin extends Screen {
                     prevStatus = status;
                     prevColor = color;
                 }
-                addRect(matrix, sink, tileX, tileY, tileX + mapScale, tileY + mapScale, color);
+                addRect(matrix, buffer, tileX, tileY, tileX + mapScale, tileY + mapScale, color);
             }
         }
-        sink.flush();
         tessellator.end();
         RenderSystem.enableTexture();
         RenderSystem.disableBlend();

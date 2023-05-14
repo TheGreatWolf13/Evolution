@@ -13,9 +13,6 @@ import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.client.models.pipeline.IVertexDrain;
-import tgw.evolution.client.models.pipeline.IVertexSink;
-import tgw.evolution.client.models.pipeline.IVertexType;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.patches.IMatrix3fPatch;
 import tgw.evolution.patches.IMatrix4fPatch;
@@ -26,12 +23,7 @@ import java.nio.IntBuffer;
 import java.util.Arrays;
 
 @Mixin(VertexConsumer.class)
-public interface VertexConsumerMixin extends IForgeVertexConsumer, IVertexDrain {
-
-    @Override
-    default <T extends IVertexSink> T createSink(IVertexType<T> factory) {
-        return factory.createFallbackWriter((VertexConsumer) this);
-    }
+public interface VertexConsumerMixin extends IForgeVertexConsumer {
 
     /**
      * @reason Avoid allocations

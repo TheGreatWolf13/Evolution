@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Matrix4f;
 import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
@@ -18,17 +19,11 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.client.models.pipeline.IQuadVertexSink;
-import tgw.evolution.client.models.pipeline.IVertexDrain;
-import tgw.evolution.client.models.pipeline.VanillaVertexTypes;
 import tgw.evolution.client.renderer.EvAmbientOcclusionFace;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.util.ModelQuadUtil;
 import tgw.evolution.patches.IBakedQuadPatch;
-import tgw.evolution.util.math.ColorABGR;
-import tgw.evolution.util.math.DirectionUtil;
-import tgw.evolution.util.math.MathHelper;
-import tgw.evolution.util.math.XoRoShiRoRandom;
+import tgw.evolution.util.math.*;
 
 import java.util.BitSet;
 import java.util.List;
@@ -49,18 +44,27 @@ public abstract class ModelBlockRendererMixin {
     @Final
     private BlockColors blockColors;
 
-    private static void renderQuad(PoseStack.Pose entry, IQuadVertexSink drain, int defaultColor, List<BakedQuad> list, int light, int overlay) {
+    private static void renderQuad(PoseStack.Pose entry, VertexConsumer consumer, int defaultColor, List<BakedQuad> list, int light, int overlay) {
         if (list.isEmpty()) {
             return;
         }
-        drain.ensureCapacity(list.size() * 4);
+        Matrix4f matrix = entry.pose();
         for (int i = 0, l = list.size(); i < l; i++) {
             BakedQuad bakedQuad = list.get(i);
             int color = bakedQuad.isTinted() ? defaultColor : 0xFFFF_FFFF;
             IBakedQuadPatch quad = (IBakedQuadPatch) bakedQuad;
+            int norm = ModelQuadUtil.getFacingNormal(bakedQuad.getDirection());
+            float nx = Norm3b.unpackX(norm);
+            float ny = Norm3b.unpackX(norm);
+            float nz = Norm3b.unpackX(norm);
             for (int v = 0; v < 4; v++) {
-                drain.writeQuad(entry, quad.getX(v), quad.getY(v), quad.getZ(v), color, quad.getTexU(v), quad.getTexV(v), light, overlay,
-                                ModelQuadUtil.getFacingNormal(bakedQuad.getDirection()));
+                consumer.vertex(matrix, quad.getX(v), quad.getY(v), quad.getZ(v))
+                        .color(color)
+                        .uv(quad.getTexU(v), quad.getTexV(v))
+                        .uv2(light)
+                        .overlayCoords(overlay)
+                        .normal(nx, ny, nz)
+                        .endVertex();
             }
         }
     }
@@ -131,7 +135,6 @@ public abstract class ModelBlockRendererMixin {
                             int light,
                             int overlay,
                             IModelData modelData) {
-        IQuadVertexSink drain = IVertexDrain.of(consumer).createSink(VanillaVertexTypes.QUADS);
         XoRoShiRoRandom random = this.random;
         red = MathHelper.clamp(red, 0.0F, 1.0F);
         green = MathHelper.clamp(green, 0.0F, 1.0F);
@@ -140,14 +143,13 @@ public abstract class ModelBlockRendererMixin {
         for (Direction direction : DirectionUtil.ALL) {
             List<BakedQuad> quads = bakedModel.getQuads(state, direction, random.setSeedAndReturn(42L));
             if (!quads.isEmpty()) {
-                renderQuad(entry, drain, defaultColor, quads, light, overlay);
+                renderQuad(entry, consumer, defaultColor, quads, light, overlay);
             }
         }
         List<BakedQuad> quads = bakedModel.getQuads(state, null, random.setSeedAndReturn(42L));
         if (!quads.isEmpty()) {
-            renderQuad(entry, drain, defaultColor, quads, light, overlay);
+            renderQuad(entry, consumer, defaultColor, quads, light, overlay);
         }
-        drain.flush();
     }
 
     /**

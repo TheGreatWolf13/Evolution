@@ -179,8 +179,8 @@ public final class EarthHelper {
      * @return A value in degrees representing the declination of the Moon in the skies from -28.6 to +28.6.
      */
     public static float lunarMonthlyDeclination(long worldTime) {
-        long monthTime = (worldTime + (long) (16.2 * Time.TICKS_PER_HOUR)) % (long) (Time.TICKS_PER_MONTH);
-        float amplitude = -23.5f + 5.1f * Mth.sin(Mth.TWO_PI / (long) (Time.TICKS_PER_MONTH) * monthTime);
+        long monthTime = (worldTime + (long) (16.2 * Time.TICKS_PER_HOUR)) % Time.TICKS_PER_MONTH;
+        float amplitude = -23.5f + 5.1f * Mth.sin(Mth.TWO_PI / (long) Time.TICKS_PER_MONTH * monthTime);
         long yearTime = worldTime % (long) (Time.TICKS_PER_YEAR / 13.0);
         return amplitude * Mth.sin(Mth.TWO_PI / (long) (Time.TICKS_PER_YEAR / 13.0) * yearTime);
     }

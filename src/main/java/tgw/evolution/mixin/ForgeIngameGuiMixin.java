@@ -19,7 +19,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(ForgeIngameGui.class)
@@ -46,11 +45,6 @@ public abstract class ForgeIngameGuiMixin extends Gui {
         if (gui.minecraft.options.hideGui) {
             ci.cancel();
         }
-    }
-
-    @Inject(method = "shouldDrawSurvivalElements", at = @At("HEAD"), cancellable = true)
-    private void onShouldDrawSurvivalElements(CallbackInfoReturnable<Boolean> cir) {
-        cir.setReturnValue(this.minecraft.gameMode.canHurtPlayer());
     }
 
     @Redirect(method = "renderAir", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getCameraEntity()" +
@@ -102,5 +96,15 @@ public abstract class ForgeIngameGuiMixin extends Gui {
             }
         }
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Assure the elements draw when the player is not the camera.
+     */
+    @Overwrite
+    public boolean shouldDrawSurvivalElements() {
+        assert this.minecraft.gameMode != null;
+        return this.minecraft.gameMode.canHurtPlayer();
     }
 }
