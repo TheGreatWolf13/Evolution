@@ -13,12 +13,14 @@ public final class EvolutionBlockTags {
 
     public static final ObjectList<TagKey<Block>> ALL;
 
+    public static final TagKey<Block> BLOCKS_COMBINED_STEP_PARTICLE;
     public static final TagKey<Block> BLOCKS_COMBINED_STEP_SOUND;
     public static final TagKey<Block> COBBLESTONES;
     public static final TagKey<Block> ROCKS;
 
     static {
         OList<TagKey<Block>> list = new OArrayList<>();
+        BLOCKS_COMBINED_STEP_PARTICLE = register(list, "blocks_combined_step_particle");
         BLOCKS_COMBINED_STEP_SOUND = register(list, "blocks_combined_step_sound");
         COBBLESTONES = register(list, "cobblestones");
         ROCKS = register(list, "rocks");

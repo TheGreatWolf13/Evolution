@@ -11,7 +11,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.projectiles.IAerodynamicEntity;
@@ -142,7 +141,6 @@ public final class Physics implements ILocked {
                 magnitude *= item.useItemSlowDownRate();
             }
         }
-        Vec3 acceleration = direction.normalize();
         double norm = Mth.fastInvSqrt(lengthSqr);
         double accX = direction.x * norm * magnitude;
         double accY = direction.y * norm * magnitude;
@@ -309,20 +307,7 @@ public final class Physics implements ILocked {
             return 0;
         }
         assert this.level != null;
-        AABB aabb = entity.getBoundingBox();
-        BlockState state = this.level.getBlockState(this.helperPos.set(this.x, aabb.minY - 0.001, this.z));
-        if (state.isAir() || state.getCollisionShape(this.level, this.helperPos).isEmpty()) {
-            outer:
-            for (double x = Mth.floor(aabb.minX); x <= Mth.ceil(aabb.maxX); x++) {
-                for (double z = Mth.floor(aabb.minZ); z <= Mth.ceil(aabb.maxZ); z++) {
-                    this.helperPos.set(x, aabb.minY - 0.001, z);
-                    state = this.level.getBlockState(this.helperPos);
-                    if (!state.isAir() && !state.getCollisionShape(this.level, this.helperPos).isEmpty()) {
-                        break outer;
-                    }
-                }
-            }
-        }
+        BlockState state = this.level.getBlockState(((IEntityPatch) entity).getFrictionPos());
         if (state.isAir() || state.getCollisionShape(this.level, this.helperPos).isEmpty()) {
             return 0;
         }

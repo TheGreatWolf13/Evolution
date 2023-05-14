@@ -3,6 +3,8 @@ package tgw.evolution.mixin;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -16,10 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.FenceGateBlock;
-import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.entity.EntityInLevelCallback;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -32,9 +31,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.CapabilityProvider;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -43,6 +40,7 @@ import tgw.evolution.blocks.IClimbable;
 import tgw.evolution.init.EvolutionBlockTags;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.util.OptionalMutableBlockPos;
 import tgw.evolution.util.constants.LevelEvents;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.AABBMutable;
@@ -50,14 +48,24 @@ import tgw.evolution.util.math.ChunkPosMutable;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.physics.SI;
+import tgw.evolution.world.util.LevelUtils;
 
 import java.util.List;
+import java.util.Random;
 
 @Mixin(Entity.class)
 public abstract class EntityMixin extends CapabilityProvider<Entity> implements IEntityPatch<Entity> {
 
+    @Unique
     private final AABBMutable bbForPose = new AABBMutable();
+    @Unique
     private final Vec3d eyePosition = new Vec3d();
+    @Unique
+    private final BlockPos.MutableBlockPos frictionPos = new BlockPos.MutableBlockPos();
+    private final BlockPos.MutableBlockPos landingPos = new BlockPos.MutableBlockPos();
+    @Unique
+    private final OptionalMutableBlockPos supportingPos = new OptionalMutableBlockPos();
+    @Unique
     private final Vec3d viewVector = new Vec3d();
     @Shadow
     public float fallDistance;
@@ -101,15 +109,21 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     public double zo;
     @Shadow
     protected int boardingCooldown;
+    @Unique
     protected int fireDamageImmunity;
     @Shadow
     protected boolean firstTick;
     @Shadow
     protected Object2DoubleMap<TagKey<Fluid>> fluidHeight;
+    @Unique
     protected boolean hasCollidedOnX;
+    @Unique
     protected boolean hasCollidedOnZ;
     @Shadow
     protected boolean onGround;
+    @Shadow
+    @Final
+    protected Random random;
     @Shadow
     protected Vec3 stuckSpeedMultiplier;
     @Shadow
@@ -242,6 +256,13 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         return this.viewVector.set(sinYaw * cosPitch, -sinPitch, cosYaw * cosPitch);
     }
 
+    @Unique
+    private boolean canClimb(BlockState state, BlockPos pos) {
+        return state.is(BlockTags.CLIMBABLE) ||
+               state.is(Blocks.POWDER_SNOW) ||
+               state.getBlock() instanceof IClimbable climbable && climbable.isClimbable(state, this.level, pos, (Entity) (Object) this);
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Avoid allocations
@@ -362,6 +383,11 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         return 2.0f;
     }
 
+    @Override
+    public BlockPos getFrictionPos() {
+        return this.getPosWithYOffset(0.500_000_1f, this.frictionPos);
+    }
+
     @Shadow
     @Nullable
     public abstract GameEventListenerRegistrar getGameEventListenerRegistrar();
@@ -381,32 +407,36 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     /**
      * @author TheGreatWolf
-     * @reason Use proper stepping pos
+     * @reason Use proper stepping pos // This is called landingPos on Yarn
      */
     @Overwrite
     public BlockPos getOnPos() {
-        return this.getPosWithYOffset(0.2f);
+        return this.getPosWithYOffset(0.2f, this.landingPos);
     }
 
     @Shadow
     public abstract float getPickRadius();
 
-    private BlockPos getPosWithYOffset(float offset) {
-        BlockPos pos = new BlockPos(Mth.floor(this.position.x), Mth.floor(this.position.y - offset), Mth.floor(this.position.z));
-        if (this.level.getBlockState(pos).isAir()) {
-            BlockPos posBelow = pos.below();
-            BlockState below = this.level.getBlockState(posBelow);
-            //TODO use proper tags or classes
-            if (below.is(BlockTags.FENCES) || below.is(BlockTags.WALLS) || below.getBlock() instanceof FenceGateBlock) {
-                return posBelow;
+    @Unique
+    private BlockPos getPosWithYOffset(float offset, BlockPos.MutableBlockPos pos) {
+        if (this.supportingPos.isPresent()) {
+            if (offset > 1.0E-5f) {
+                BlockState state = this.level.getBlockState(this.supportingPos.get());
+                //TODO use proper tags or classes
+                if (offset <= 0.5 && state.is(BlockTags.FENCES) || state.is(BlockTags.WALLS) || state.getBlock() instanceof FenceGateBlock) {
+                    return pos.set(this.supportingPos.get());
+                }
+                return pos.set(this.supportingPos.get()).setY(Mth.floor(this.position.y - offset));
             }
+            return pos.set(this.supportingPos.get());
         }
-        return pos;
+        return pos.set(Mth.floor(this.position.x), Mth.floor(this.position.y - offset), Mth.floor(this.position.z));
     }
 
     @Shadow
     public abstract Pose getPose();
 
+    @Unique
     private BlockPos getStepSoundPos(BlockPos pos) {
         BlockPos blockPos = pos.above();
         BlockState blockState = this.level.getBlockState(blockPos);
@@ -418,7 +448,10 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Override
     public BlockPos getSteppingPos() {
-        return this.getPosWithYOffset(1e-5f);
+        if (this.supportingPos.isPresent()) {
+            return this.supportingPos.get();
+        }
+        return this.getPosWithYOffset(1e-5f, new BlockPos.MutableBlockPos());
     }
 
     @Shadow
@@ -440,6 +473,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     }
 
     @Override
+    @Unique
     public double getVolumeCorrectionFactor() {
         float width = this.dimensions.width;
         return this.getVolume() / (width * width * this.dimensions.height);
@@ -486,6 +520,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     public abstract boolean isAddedToWorld();
 
     @Shadow
+    public abstract boolean isCrouching();
+
+    @Shadow
     protected abstract boolean isHorizontalCollisionMinor(Vec3 pDeltaMovement);
 
     @Shadow
@@ -514,6 +551,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Shadow
     public abstract boolean isSteppingCarefully();
+
+    @Shadow
+    public abstract boolean isSwimming();
 
     @Shadow
     public abstract boolean isVehicle();
@@ -570,17 +610,17 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         this.level.getProfiler().push("rest");
         this.horizontalCollision = this.hasCollidedOnX || this.hasCollidedOnZ;
         this.verticalCollision = deltaMovement.y != allowedMovement.y;
-        this.verticalCollisionBelow = this.verticalCollision && deltaMovement.y < 0.0;
+        this.verticalCollisionBelow = this.verticalCollision && deltaMovement.y < 0;
         if (this.horizontalCollision) {
             this.minorHorizontalCollision = this.isHorizontalCollisionMinor(allowedMovement);
         }
         else {
             this.minorHorizontalCollision = false;
         }
-        this.onGround = this.verticalCollision && deltaMovement.y < 0.0D;
-        BlockPos onPos = this.getOnPos();
-        BlockState onState = this.level.getBlockState(onPos);
-        this.checkFallDamage(allowedMovement.y, this.onGround, onState, onPos);
+        this.setOnGround(this.verticalCollisionBelow);
+        BlockPos landingPos = this.getOnPos();
+        BlockState landingState = this.level.getBlockState(landingPos);
+        this.checkFallDamage(allowedMovement.y, this.isOnGround(), landingState, landingPos);
         if (this.isRemoved()) {
             this.level.getProfiler().pop();
             return;
@@ -590,12 +630,12 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
             this.setDeltaMovement(this.hasCollidedOnX ? 0.0 : updatedDeltaMovement.x, updatedDeltaMovement.y,
                                   this.hasCollidedOnZ ? 0.0 : updatedDeltaMovement.z);
         }
-        Block block = onState.getBlock();
+        Block block = landingState.getBlock();
         if (deltaMovement.y != allowedMovement.y) {
             block.updateEntityAfterFallOn(this.level, (Entity) (Object) this);
         }
         if (this.onGround && !this.isSteppingCarefully()) {
-            block.stepOn(this.level, onPos, onState, (Entity) (Object) this);
+            block.stepOn(this.level, landingPos, landingState, (Entity) (Object) this);
         }
         Entity.MovementEmission movementEmission = this.getMovementEmission();
         if (movementEmission.emitsAnything() && !this.isPassenger()) {
@@ -603,45 +643,42 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
             double dy = allowedMovement.y;
             double dz = allowedMovement.z;
             this.flyDist += allowedMovement.length() * 0.6;
-            boolean disconsiderY = onState.getBlock() instanceof IClimbable climbable &&
-                                   climbable.isClimbable(onState, this.level, onPos, (Entity) (Object) this);
-            if (!disconsiderY) {
+            BlockPos steppingPos = this.getSteppingPos();
+            BlockState steppingState = this.level.getBlockState(steppingPos);
+            boolean canClimb = this.canClimb(steppingState, steppingPos);
+            if (!canClimb) {
                 dy = 0.0;
             }
-            this.walkDist += (float) allowedMovement.horizontalDistance() * 0.5F;
-            this.moveDist += (float) Math.sqrt(dx * dx + dy * dy + dz * dz) * 0.5F;
-            if (this.moveDist > this.nextStep && !onState.isAir()) {
-                this.moveDist -= this.nextStep;
-                if (this.moveDist > this.nextStep) {
-                    this.moveDist %= this.nextStep;
+            this.walkDist += allowedMovement.horizontalDistance() * 0.5;
+            this.moveDist += Math.sqrt(dx * dx + dy * dy + dz * dz) * 0.5;
+            if (this.moveDist > this.nextStep && !steppingState.isAir()) {
+                boolean landingIsStepping = landingPos.equals(steppingPos);
+                boolean stepOnBlock = this.stepOnBlock(landingPos, landingState, movementEmission.emitsSounds(), landingIsStepping, deltaMovement);
+                if (!landingIsStepping) {
+                    stepOnBlock |= this.stepOnBlock(steppingPos, steppingState, false, movementEmission.emitsEvents(), deltaMovement);
                 }
-                this.nextStep = this.nextStep();
-                if (this.isOnGround() || disconsiderY) {
-                    if (movementEmission.emitsSounds()) {
-                        this.playStepSounds(onPos, onState);
+                if (stepOnBlock) {
+                    this.moveDist -= this.nextStep;
+                    if (this.moveDist > this.nextStep) {
+                        this.moveDist %= this.nextStep;
                     }
-                    if (movementEmission.emitsEvents()) {
-                        this.level.gameEvent((Entity) (Object) this, GameEvent.STEP, this.getSteppingPos());
-                    }
+                    this.nextStep = this.nextStep();
                 }
                 else if (this.isInWater()) {
                     if (movementEmission.emitsSounds()) {
-                        Entity entity = this.isVehicle() && this.getControllingPassenger() != null ?
-                                        this.getControllingPassenger() :
-                                        (Entity) (Object) this;
-                        float f = entity == (Object) this ? 0.35F : 0.4F;
-                        Vec3 updatedDeltaMovement = entity.getDeltaMovement();
-                        float f1 = Math.min(1.0F, (float) Math.sqrt(updatedDeltaMovement.x * updatedDeltaMovement.x * 0.2F +
-                                                                    updatedDeltaMovement.y * updatedDeltaMovement.y +
-                                                                    updatedDeltaMovement.z * updatedDeltaMovement.z * 0.2F) * f);
-                        this.playSwimSound(f1);
+                        this.moveDist -= this.nextStep;
+                        if (this.moveDist > this.nextStep) {
+                            this.moveDist %= this.nextStep;
+                        }
+                        this.nextStep = this.nextStep();
+                        this.playSwimSound();
                     }
                     if (movementEmission.emitsEvents()) {
                         this.gameEvent(GameEvent.SWIM);
                     }
                 }
             }
-            else if (onState.isAir()) {
+            else if (steppingState.isAir()) {
                 this.processFlappingMovement();
             }
         }
@@ -661,6 +698,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         }
         this.level.getProfiler().pop();
     }
+
+    @Shadow
+    public abstract void moveRelative(float pAmount, Vec3 pRelative);
 
     /**
      * @author TheGreatWolf
@@ -706,6 +746,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     protected abstract void playAmethystStepSound(BlockState pState);
 
+    @Unique
     private void playCombinationStepSounds(BlockState primaryState, BlockState secondaryState) {
         SoundType primarySoundType = primaryState.getSoundType();
         SoundType secondarySoundType = secondaryState.getSoundType();
@@ -722,6 +763,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     protected abstract void playStepSound(BlockPos pPos, BlockState pState);
 
+    @Unique
     private void playStepSounds(BlockPos pos, BlockState state) {
         BlockPos blockPos = this.getStepSoundPos(pos);
         //noinspection ConstantConditions
@@ -740,11 +782,32 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         this.playAmethystStepSound(state);
     }
 
+    @Unique
+    private void playSwimSound() {
+        Entity entity;
+        Entity controller;
+        float mult;
+        if (this.isVehicle() && (controller = this.getControllingPassenger()) != null) {
+            entity = controller;
+            mult = 0.4f;
+        }
+        else {
+            entity = (Entity) (Object) this;
+            mult = 0.35f;
+        }
+        Vec3 velocity = entity.getDeltaMovement();
+        float vol = Math.min(1.0f, (float) Math.sqrt(velocity.x * velocity.x * 0.2 + velocity.y * velocity.y + velocity.z * velocity.z * 0.2) * mult);
+        this.playSwimSound(vol);
+    }
+
     @Shadow
     protected abstract void playSwimSound(float pVolume);
 
     @Shadow
     public abstract Vec3 position();
+
+    @Shadow
+    public abstract void positionRider(Entity pPassenger);
 
     @Shadow
     protected abstract void processFlappingMovement();
@@ -773,6 +836,16 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Override
     public void setFireDamageImmunity(int immunity) {
         this.fireDamageImmunity = immunity;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Add supporting pos
+     */
+    @Overwrite
+    public void setOnGround(boolean onGround) {
+        this.onGround = onGround;
+        this.updateSupportingBlockPos(onGround);
     }
 
     @Shadow
@@ -825,8 +898,58 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     public abstract void setYRot(float pYRot);
 
-    @Shadow
-    protected abstract void spawnSprintParticle();
+    /**
+     * @author TheGreatWolf
+     * @reason Fix incorrect particles displaying
+     */
+    @Overwrite
+    protected void spawnSprintParticle() {
+        if (!this.isOnGround()) {
+            return;
+        }
+        BlockPos landingPos = this.getOnPos();
+        BlockState landingState = this.level.getBlockState(landingPos);
+        if (landingState.addRunningEffects(this.level, landingPos, (Entity) (Object) this)) {
+            return;
+        }
+        BlockPos above = landingPos.above();
+        BlockState aboveState = this.level.getBlockState(above);
+        if (aboveState.is(EvolutionBlockTags.BLOCKS_COMBINED_STEP_PARTICLE)) {
+            landingState = aboveState;
+        }
+        if (landingState.getRenderShape() != RenderShape.INVISIBLE) {
+            Vec3 velocity = this.getDeltaMovement();
+            BlockPos pos = this.blockPosition();
+            double x = this.getX() + (this.random.nextDouble() - 0.5) * this.dimensions.width;
+            double z = this.getZ() + (this.random.nextDouble() - 0.5) * this.dimensions.width;
+            if (pos.getX() != landingPos.getX()) {
+                x = MathHelper.clamp(x, landingPos.getX(), landingPos.getX() + 1.0);
+            }
+            if (pos.getZ() != landingPos.getZ()) {
+                z = MathHelper.clamp(z, landingPos.getZ(), landingPos.getZ() + 1.0);
+            }
+            this.level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, landingState), x, this.getY() + 0.1, z,
+                                   velocity.x * -4.0, 1.5, velocity.z * -4.0);
+        }
+    }
+
+    @Unique
+    private boolean stepOnBlock(BlockPos pos, BlockState state, boolean playSound, boolean emitEvent, Vec3 movement) {
+        if (state.isAir()) {
+            return false;
+        }
+        boolean climbable = this.canClimb(state, pos);
+        if ((this.isOnGround() || climbable || this.isCrouching() && movement.y == 0.0) && !this.isSwimming()) {
+            if (playSound) {
+                this.playStepSounds(pos, state);
+            }
+            if (emitEvent) {
+                this.level.gameEvent((Entity) (Object) this, GameEvent.STEP, this.blockPosition());
+            }
+            return true;
+        }
+        return false;
+    }
 
     @Shadow
     public abstract void stopRiding();
@@ -959,6 +1082,18 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Shadow
     protected abstract boolean updateInWaterStateAndDoFluidPushing();
+
+    @Unique
+    private void updateSupportingBlockPos(boolean onGround) {
+        if (onGround) {
+            AABB bb = this.getBoundingBox();
+            LevelUtils.findSupportingBlockPos(this.level, (Entity) (Object) this, bb.minX, bb.minY - 1.0E-6, bb.minZ, bb.maxX, bb.minY, bb.maxZ,
+                                              this.supportingPos);
+        }
+        else {
+            this.supportingPos.remove();
+        }
+    }
 
     @Shadow
     public abstract void updateSwimming();

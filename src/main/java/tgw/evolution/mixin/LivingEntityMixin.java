@@ -4,9 +4,11 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.stats.Stats;
@@ -409,6 +411,42 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Shadow
     protected abstract boolean checkBedExists();
+
+    /**
+     * @author TheGreatWolf
+     * @reason Use supportingPos
+     */
+    @Override
+    @Overwrite
+    protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
+        if (!this.isInWater()) {
+            this.updateInWaterStateAndDoWaterCurrentPushing();
+        }
+        if (!this.level.isClientSide && onGround && this.fallDistance > 0.0F) {
+            this.removeSoulSpeed();
+            this.tryAddSoulSpeed();
+        }
+        if (!this.level.isClientSide && this.fallDistance > 3.0F && onGround && !state.isAir()) {
+            double entityX = this.getX();
+            double entityZ = this.getZ();
+            BlockPos entityPos = this.blockPosition();
+            if (pos.getX() != entityPos.getX() || pos.getZ() != entityPos.getZ()) {
+                double dx = entityX - pos.getX() - 0.5;
+                double dz = entityZ - pos.getZ() - 0.5;
+                double max = Math.max(Math.abs(dx), Math.abs(dz));
+                entityX = pos.getX() + 0.5 + dx / max * 0.5;
+                entityZ = pos.getZ() + 0.5 + dz / max * 0.5;
+            }
+            float j = Mth.ceil(this.fallDistance - 3.0F);
+            double k = Math.min(0.2 + j / 15.0, 2.5);
+            int count = (int) (150 * k);
+            if (!state.addLandingEffects((ServerLevel) this.level, pos, state, (LivingEntity) (Object) this, count)) {
+                ((ServerLevel) this.level).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, state).setPos(pos), entityX,
+                                                         this.getY(), entityZ, count, 0, 0, 0, 0.15);
+            }
+        }
+        super.checkFallDamage(y, onGround, state, pos);
+    }
 
     @Shadow
     protected abstract boolean checkTotemDeathProtection(DamageSource p_21263_);
@@ -1087,6 +1125,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     }
 
     @Shadow
+    protected abstract void removeSoulSpeed();
+
+    @Shadow
     public abstract void setAbsorptionAmount(float pAmount);
 
     @Shadow
@@ -1480,6 +1521,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         }
         this.calculateEntityAnimation((LivingEntity) (Object) this, this instanceof FlyingAnimal);
     }
+
+    @Shadow
+    protected abstract void tryAddSoulSpeed();
 
     @Override
     public float tryHurt(DamageSourceEv source, float amount, float strength, HitboxType hitbox) {

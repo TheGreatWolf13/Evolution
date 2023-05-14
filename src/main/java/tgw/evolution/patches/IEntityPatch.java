@@ -37,6 +37,10 @@ public interface IEntityPatch<T extends Entity> {
 
     float getFrictionModifier();
 
+    default BlockPos getFrictionPos() {
+        return BlockPos.ZERO;
+    }
+
     @Nullable
     HitboxEntity<T> getHitboxes();
 
