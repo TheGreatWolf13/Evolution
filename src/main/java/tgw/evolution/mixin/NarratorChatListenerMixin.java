@@ -8,9 +8,10 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.patches.INarratorChatListenerPatch;
 
 @Mixin(NarratorChatListener.class)
-public abstract class NarratorChatListenerMixin {
+public abstract class NarratorChatListenerMixin implements INarratorChatListenerPatch {
 
     @Shadow
     @Final
@@ -22,6 +23,11 @@ public abstract class NarratorChatListenerMixin {
      */
     @Overwrite
     public boolean isActive() {
-        return this.narrator.active() && Minecraft.getInstance().options.narratorStatus != NarratorStatus.OFF;
+        return this.isAvailable() && Minecraft.getInstance().options.narratorStatus != NarratorStatus.OFF;
+    }
+
+    @Override
+    public boolean isAvailable() {
+        return this.narrator.active();
     }
 }

@@ -23,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.client.util.Action;
 import tgw.evolution.client.util.Key;
 import tgw.evolution.client.util.Modifiers;
+import tgw.evolution.patches.INarratorChatListenerPatch;
 
 @Mixin(KeyboardHandler.class)
 public abstract class KeyboardListenerMixin {
@@ -138,7 +139,7 @@ public abstract class KeyboardListenerMixin {
                     ((KeyBindsScreen) this.minecraft.screen).selectedKey = null; //Forge: Unset pure modifiers.
                 }
             }
-            if (NarratorChatListener.INSTANCE.isActive()) {
+            if (((INarratorChatListenerPatch) NarratorChatListener.INSTANCE).isAvailable()) {
                 boolean flag = screen == null || !(screen.getFocused() instanceof EditBox) || !((EditBox) screen.getFocused()).canConsumeInput();
                 if (action != GLFW.GLFW_RELEASE && key == GLFW.GLFW_KEY_B && Screen.hasControlDown() && flag) {
                     boolean flag1 = this.minecraft.options.narratorStatus == NarratorStatus.OFF;
