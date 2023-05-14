@@ -191,6 +191,7 @@
     "SkeletonRendererMixin",
     "SpiderModelMixin",
     "SpiderRendererMixin",
+    "SplashManagerMixin",
     "SpriteCoordinateExpanderMixin",
     "TextureAtlasSprite_AnimatedTextureMixin",
     "TextureAtlasSprite_InterpolationDataMixin",
