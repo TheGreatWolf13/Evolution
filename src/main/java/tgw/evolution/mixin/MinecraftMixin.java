@@ -651,7 +651,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Overwrite
     public void run() {
         this.gameThread = Thread.currentThread();
-        if (Runtime.getRuntime().availableProcessors() > 4) {
+        if (Runtime.getRuntime().availableProcessors() >= 4) {
             this.gameThread.setPriority(10);
         }
         try {
