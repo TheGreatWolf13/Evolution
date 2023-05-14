@@ -108,6 +108,9 @@ public class EntityEvents {
         double pressureOfFall = forceOfImpact / area;
         double maxSupportedPressure = baseMass / (area * 0.035);
         double deltaPressure = Math.max(400 * pressureOfFall - maxSupportedPressure, 0);
+        if (deltaPressure <= 1) {
+            return 0;
+        }
         float amount = (float) Math.pow(deltaPressure, 1.7) / 750_000;
         if (amount >= 1) {
             if (isWater) {

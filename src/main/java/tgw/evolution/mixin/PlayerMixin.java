@@ -126,8 +126,9 @@ public abstract class PlayerMixin extends LivingEntity implements IPlayerPatch {
         }
         if (this.level.isClientSide) {
             EvolutionNetwork.sendToServer(new PacketCSPlayerFall(this.getDeltaMovement().y, 1 - multiplier));
+            return super.causeFallDamage(fallDistance, multiplier, source);
         }
-        return super.causeFallDamage(fallDistance, multiplier, source);
+        return false;
     }
 
     /**
