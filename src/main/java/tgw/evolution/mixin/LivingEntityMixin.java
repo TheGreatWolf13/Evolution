@@ -35,6 +35,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
@@ -1128,6 +1129,11 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Overwrite
     protected void pushEntities() {
         if (this.level.isClientSide) {
+            List<Player> entities = this.level.getEntities(EntityTypeTest.forClass(Player.class), this.getBoundingBox(),
+                                                           EntitySelector.pushableBy(this));
+            for (int i = 0, len = entities.size(); i < len; i++) {
+                this.doPush(entities.get(i));
+            }
             return;
         }
         List<Entity> pushable = this.level.getEntities(this, this.getBoundingBox(), EntitySelector.pushableBy(this));
