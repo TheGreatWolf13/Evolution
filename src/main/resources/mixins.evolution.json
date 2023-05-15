@@ -74,6 +74,7 @@
     "RecipeManagerMixin",
     "RegistryDelegateMixin",
     "RegistryObjectMixin",
+    "ResourceLocationMixin",
     "ResultSlotMixin",
     "ServerChunkCacheMixin",
     "ServerEntityMixin",

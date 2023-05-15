@@ -4,7 +4,6 @@ var InsnList = Java.type("org.objectweb.asm.tree.InsnList");
 var LdcInsnNode = Java.type("org.objectweb.asm.tree.LdcInsnNode");
 var MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
 
-var OLD_NAME = "func_240802_v_";
 var RUN = ASMAPI.mapMethod("m_130011_");
 
 function log(message) {
