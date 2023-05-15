@@ -56,10 +56,7 @@ import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.entities.EffectHelper;
 import tgw.evolution.events.EntityEvents;
 import tgw.evolution.hooks.LivingEntityHooks;
-import tgw.evolution.init.EvolutionAttributes;
-import tgw.evolution.init.EvolutionDamage;
-import tgw.evolution.init.EvolutionNetwork;
-import tgw.evolution.init.EvolutionSounds;
+import tgw.evolution.init.*;
 import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.items.IMelee;
 import tgw.evolution.network.*;
@@ -399,7 +396,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
         boolean flag = super.causeFallDamage(fallDistance, multiplier, source);
         float amount = EntityEvents.calculateFallDamage((LivingEntity) (Object) this, this.getDeltaMovement().y, 1 - multiplier, false);
-        this.playBlockFallSound();
+        if (fallDistance > 1 / 16.0f) {
+            this.playBlockFallSound();
+        }
         if (amount > 1) {
             this.playSound(this.getFallDamageSound((int) amount), 1.0F, 1.0F);
             return true;
@@ -1101,6 +1100,11 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         if (!this.isSilent()) {
             BlockPos landingPos = this.getOnPos();
             BlockState landingState = this.level.getBlockState(landingPos);
+            BlockPos above = landingPos.above();
+            BlockState aboveState = this.level.getBlockState(above);
+            if (aboveState.is(EvolutionBlockTags.BLOCKS_COMBINED_STEP_PARTICLE)) {
+                landingState = aboveState;
+            }
             if (!landingState.isAir()) {
                 SoundType sound = landingState.getSoundType(this.level, landingPos, this);
                 this.playSound(sound.getFallSound(), sound.getVolume() * 0.5F, sound.getPitch() * 0.75F);
