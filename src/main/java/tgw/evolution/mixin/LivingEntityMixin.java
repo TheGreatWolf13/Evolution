@@ -29,6 +29,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -73,10 +74,7 @@ import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.physics.Fluid;
 import tgw.evolution.util.physics.Physics;
 
-import java.util.ConcurrentModificationException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(LivingEntity.class)
@@ -455,6 +453,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Shadow
     public abstract void die(DamageSource p_21014_);
+
+    @Shadow
+    protected abstract void doPush(Entity pEntity);
 
     @Shadow
     public abstract float getAbsorptionAmount();
@@ -1118,6 +1119,36 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/Maps;newHashMap()Ljava/util/HashMap;"))
     private HashMap proxyInit() {
         return null;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Prevent physics from being called on the client.
+     */
+    @Overwrite
+    protected void pushEntities() {
+        if (this.level.isClientSide) {
+            return;
+        }
+        List<Entity> pushable = this.level.getEntities(this, this.getBoundingBox(), EntitySelector.pushableBy(this));
+        if (!pushable.isEmpty()) {
+            int maxCramming = this.level.getGameRules().getInt(GameRules.RULE_MAX_ENTITY_CRAMMING);
+            if (maxCramming > 0 && pushable.size() > maxCramming - 1 && this.random.nextInt(4) == 0) {
+                int i = 0;
+                for (int k = 0, len = pushable.size(); k < len; ++k) {
+                    if (!pushable.get(k).isPassenger()) {
+                        ++i;
+                    }
+                }
+                if (i > maxCramming - 1) {
+                    this.hurt(DamageSource.CRAMMING, 6.0F);
+                }
+            }
+            for (int l = 0, len = pushable.size(); l < len; ++l) {
+                Entity entity = pushable.get(l);
+                this.doPush(entity);
+            }
+        }
     }
 
     @Override

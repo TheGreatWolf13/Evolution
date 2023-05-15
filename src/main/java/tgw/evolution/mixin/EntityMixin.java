@@ -29,6 +29,9 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.capabilities.CapabilityProvider;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
@@ -527,6 +530,52 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Shadow
     public abstract boolean isInLava();
+
+    /**
+     * @author TheGreatWolf
+     * @reason Prevent physics from being calculated on the client. Also avoid allocations when possible.
+     */
+    @Overwrite
+    public boolean isInWall() {
+        if (this.noPhysics || this.level.isClientSide) {
+            return false;
+        }
+        float dWidth = this.dimensions.width * 0.8F / 2;
+        Vec3 eyePos = this.getEyePosition();
+        double minX = eyePos.x - dWidth;
+        double minY = eyePos.y - 0.5E-6;
+        double minZ = eyePos.z - dWidth;
+        double maxX = eyePos.x + dWidth;
+        double maxY = eyePos.y + 0.5E-6;
+        double maxZ = eyePos.z + dWidth;
+        int x0 = Mth.floor(minX);
+        int y0 = Mth.floor(minY);
+        int z0 = Mth.floor(minZ);
+        int x1 = Mth.floor(maxX);
+        int y1 = Mth.floor(maxY);
+        int z1 = Mth.floor(maxZ);
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        VoxelShape comparing = null;
+        for (int x = x0; x <= x1; x++) {
+            mutablePos.setX(x);
+            for (int y = y0; y <= y1; y++) {
+                mutablePos.setY(y);
+                for (int z = z0; z <= z1; z++) {
+                    mutablePos.setZ(z);
+                    BlockState state = this.level.getBlockState(mutablePos);
+                    if (!state.isAir() && state.isSuffocating(this.level, mutablePos)) {
+                        if (comparing == null) {
+                            comparing = Shapes.create(minX, minY, minZ, maxX, maxY, maxZ);
+                        }
+                        if (Shapes.joinIsNotEmpty(state.getCollisionShape(this.level, mutablePos).move(x, y, z), comparing, BooleanOp.AND)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
     @Shadow
     public abstract boolean isInWater();
