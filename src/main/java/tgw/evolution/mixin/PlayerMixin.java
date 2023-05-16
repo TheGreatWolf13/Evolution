@@ -122,6 +122,9 @@ public abstract class PlayerMixin extends LivingEntity implements IPlayerPatch {
     @Overwrite
     public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
         if (this.abilities.mayfly) {
+            if (fallDistance > 1 / 16.0f) {
+                this.playBlockFallSound();
+            }
             return false;
         }
         if (this.level.isClientSide) {
