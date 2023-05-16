@@ -1,17 +1,9 @@
 var ASMAPI = Java.type("net.minecraftforge.coremod.api.ASMAPI");
 var Opcodes = Java.type("org.objectweb.asm.Opcodes");
-var InsnList = Java.type("org.objectweb.asm.tree.InsnList");
-var LdcInsnNode = Java.type("org.objectweb.asm.tree.LdcInsnNode");
 var MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
 var VarInsnNode = Java.type("org.objectweb.asm.tree.VarInsnNode");
 var FieldInsnNode = Java.type("org.objectweb.asm.tree.FieldInsnNode");
-var JumpInsnNode = Java.type("org.objectweb.asm.tree.JumpInsnNode");
-var LabelNode = Java.type("org.objectweb.asm.tree.LabelNode");
-var Label = Java.type("org.objectweb.asm.Label");
-var TypeInsnNode = Java.type("org.objectweb.asm.tree.TypeInsnNode");
 var InsnNode = Java.type("org.objectweb.asm.tree.InsnNode");
-var InvokeDynamicInsnNode = Java.type("org.objectweb.asm.tree.InvokeDynamicInsnNode");
-var Handle = Java.type("org.objectweb.asm.Handle");
 var IntInsnNode = Java.type("org.objectweb.asm.tree.IntInsnNode");
 
 var VARIANT = ASMAPI.mapField("f_119435_");

@@ -1,6 +1,5 @@
 var ASMAPI = Java.type("net.minecraftforge.coremod.api.ASMAPI");
 var Opcodes = Java.type("org.objectweb.asm.Opcodes");
-var InsnList = Java.type("org.objectweb.asm.tree.InsnList");
 var LdcInsnNode = Java.type("org.objectweb.asm.tree.LdcInsnNode");
 var MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
 var VarInsnNode = Java.type("org.objectweb.asm.tree.VarInsnNode");
