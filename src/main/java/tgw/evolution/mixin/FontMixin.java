@@ -6,11 +6,14 @@ import com.mojang.math.Vector3f;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.StringDecomposer;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.client.renderer.StringSink;
 import tgw.evolution.patches.IFontPatch;
 
 import java.util.List;
@@ -109,6 +112,27 @@ public abstract class FontMixin implements IFontPatch {
         }
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid allocations
+     */
+    @Overwrite
+    private float renderText(String text,
+                             float x,
+                             float y,
+                             int color,
+                             boolean shadow,
+                             Matrix4f matrix,
+                             MultiBufferSource buffer,
+                             boolean transparent,
+                             int bgColor,
+                             int packedLight) {
+        StringSink sink = StringSink.INSTANCE;
+        sink.set((Font) (Object) this, buffer, x, y, color, shadow, matrix, transparent, packedLight);
+        StringDecomposer.iterateFormatted(text, Style.EMPTY, sink);
+        return sink.finish(bgColor, x);
+    }
+
     @Shadow
     protected abstract float renderText(FormattedCharSequence p_92927_,
                                         float p_92928_,
@@ -120,18 +144,6 @@ public abstract class FontMixin implements IFontPatch {
                                         boolean p_92934_,
                                         int p_92935_,
                                         int p_92936_);
-
-    @Shadow
-    protected abstract float renderText(String pText,
-                                        float pX,
-                                        float pY,
-                                        int pColor,
-                                        boolean pIsShadow,
-                                        Matrix4f pMatrix,
-                                        MultiBufferSource pBuffer,
-                                        boolean pIsTransparent,
-                                        int pColorBackground,
-                                        int pPackedLight);
 
     @Shadow
     public abstract List<FormattedCharSequence> split(FormattedText pText, int pMaxWidth);
