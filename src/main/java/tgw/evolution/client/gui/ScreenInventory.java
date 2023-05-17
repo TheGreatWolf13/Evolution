@@ -121,6 +121,7 @@ public class ScreenInventory extends ScreenDisplayEffects<ContainerInventory> im
                         ((ImageButton) button).setPosition(this.leftPos + 13, this.topPos + 41);
                         this.buttonClicked = true;
                     }));
+            this.recipeBookButton.visible = this.selectedTab == 1;
             this.tabX = this.leftPos + 6;
             this.tabY = this.topPos - 28;
             this.recipeBookVisible = this.recipeBook.isVisible();
