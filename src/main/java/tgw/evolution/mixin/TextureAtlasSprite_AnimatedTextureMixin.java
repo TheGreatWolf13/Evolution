@@ -1,6 +1,7 @@
 package tgw.evolution.mixin;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -33,7 +34,7 @@ public abstract class TextureAtlasSprite_AnimatedTextureMixin {
     @Overwrite
     public void tick() {
         //Evolution start
-        if (!EvolutionConfig.CLIENT.animatedTextures.get()) {
+        if (!EvolutionConfig.CLIENT.animatedTextures.get() || Minecraft.getInstance().isPaused()) {
             return;
         }
         //Evolution end
