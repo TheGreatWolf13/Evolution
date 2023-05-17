@@ -3,14 +3,15 @@ package tgw.evolution.mixin;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.logging.LogUtils;
+import com.mojang.math.Matrix4f;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.Util;
 import net.minecraft.client.*;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.chat.NarratorChatListener;
 import net.minecraft.client.gui.components.toasts.ToastComponent;
@@ -25,10 +26,7 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.FogRenderer;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.RenderBuffers;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.searchtree.SearchRegistry;
 import net.minecraft.client.server.IntegratedServer;
@@ -44,8 +42,10 @@ import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.util.FrameTimer;
 import net.minecraft.util.MemoryReserve;
+import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfileResults;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.util.profiling.ResultField;
 import net.minecraft.util.profiling.SingleTickProfiler;
 import net.minecraft.util.profiling.metrics.profiling.MetricsRecorder;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
@@ -72,6 +72,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.gui.ScreenCrash;
 import tgw.evolution.client.gui.ScreenOutOfMemory;
 import tgw.evolution.client.renderer.ICrashReset;
+import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.ICancelableUse;
@@ -80,10 +81,13 @@ import tgw.evolution.network.PacketCSStopUsingItem;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Metric;
 
 import java.io.File;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -106,6 +110,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     @Nullable
     public Entity crosshairPickEntity;
+    @Shadow
+    @Final
+    public Font font;
     @Shadow
     public String fpsString;
     @Shadow
@@ -162,6 +169,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     private boolean attackKeyPressed;
     private int attackKeyTicks;
     private int cancelUseCooldown;
+    @Shadow
+    private String debugPath;
     @Shadow
     @Nullable
     private Supplier<CrashReport> delayedCrash;
@@ -327,7 +336,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         catch (Throwable t) {
             LOGGER.error("An uncaught exception occurred while displaying the crash screen, making normal report instead", t);
             crash(report);
-            //noinspection ConstantConditions
             ServerLifecycleHooks.handleExit(report.getSaveFile() != null ? -1 : -2);
         }
     }
@@ -649,8 +657,109 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     public abstract RenderBuffers renderBuffers();
 
-    @Shadow
-    protected abstract void renderFpsMeter(PoseStack p_91141_, ProfileResults p_91142_);
+    /**
+     * @author TheGreatWolf
+     * @reason Improve performance
+     */
+    @Overwrite
+    private void renderFpsMeter(PoseStack matrices, ProfileResults results) {
+        List<ResultField> list = results.getTimes(this.debugPath);
+        RenderSystem.clear(256, ON_OSX);
+        RenderSystem.setShader(RenderHelper.SHADER_POSITION_COLOR);
+        Matrix4f ortho = Matrix4f.orthographic(0.0F, this.window.getWidth(), 0.0F, this.window.getHeight(), 1_000.0F, 3_000.0F);
+        RenderSystem.setProjectionMatrix(ortho);
+        PoseStack internalMat = RenderSystem.getModelViewStack();
+        internalMat.setIdentity();
+        internalMat.translate(0, 0, -2_000);
+        RenderSystem.applyModelViewMatrix();
+        RenderSystem.lineWidth(1.0F);
+        RenderSystem.disableTexture();
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder builder = tesselator.getBuilder();
+        int x = this.window.getWidth() - 160 - 10;
+        int y = this.window.getHeight() - 320;
+        RenderSystem.enableBlend();
+        builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        builder.vertex(x - 176.0F, y - 96.0F - 16.0F, 0).color(200, 0, 0, 0).endVertex();
+        builder.vertex(x - 176.0F, y + 320, 0).color(200, 0, 0, 0).endVertex();
+        builder.vertex(x + 176.0F, y + 320, 0).color(200, 0, 0, 0).endVertex();
+        builder.vertex(x + 176.0F, y - 96.0F - 16.0F, 0).color(200, 0, 0, 0).endVertex();
+        tesselator.end();
+        RenderSystem.disableBlend();
+        double d0 = 0;
+        for (int i = 0, len = list.size(); i < len; i++) {
+            ResultField result = list.get(i);
+            int l = Mth.floor(result.percentage * (1 / 4.0)) + 1;
+            builder.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+            int color = result.getColor();
+            int r = color >> 16 & 255;
+            int g = color >> 8 & 255;
+            int b = color & 255;
+            builder.vertex(x, y, 0).color(r, g, b, 255).endVertex();
+            for (int i2 = l; i2 >= 0; --i2) {
+                float f = (float) ((d0 + result.percentage * i2 / l) * (Mth.TWO_PI / 100));
+                float f1 = 160.0F * Mth.sin(f);
+                float f2 = 160.0F * 0.5F * Mth.cos(f);
+                builder.vertex(x + f1, y - f2, 0).color(r, g, b, 255).endVertex();
+            }
+            tesselator.end();
+            builder.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+            for (int l2 = l; l2 >= 0; --l2) {
+                float f3 = (float) ((d0 + result.percentage * l2 / l) * (Mth.TWO_PI / 100));
+                float f4 = 160.0F * Mth.sin(f3);
+                float f5 = 160.0F * 0.5F * Mth.cos(f3);
+                if (!(f5 > 0.0F)) {
+                    builder.vertex(x + f4, y - f5, 0)
+                           .color(r >> 1, g >> 1, b >> 1, 255)
+                           .endVertex();
+                    builder.vertex(x + f4, y - f5 + 10.0F, 0)
+                           .color(r >> 1, g >> 1, b >> 1, 255)
+                           .endVertex();
+                }
+            }
+            tesselator.end();
+            d0 += result.percentage;
+        }
+        ResultField result = list.remove(0);
+        DecimalFormat format = Metric.PERCENT_TWO_PLACES_FULL;
+        RenderSystem.enableTexture();
+        String demanglePath = ProfileResults.demanglePath(result.name);
+        String s1 = "";
+        if (!"unspecified".equals(demanglePath)) {
+            s1 += "[0] ";
+        }
+        if (demanglePath.isEmpty()) {
+            s1 += "ROOT ";
+        }
+        else {
+            s1 = s1 + demanglePath + " ";
+        }
+        MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(builder);
+        Matrix4f matrix = matrices.last().pose();
+        this.font.drawInBatch(s1, x - 160, y - 80 - 16, 16_777_215, true, matrix, buffer, false, 0, 15_728_880, false);
+        s1 = format.format(result.globalPercentage * (1 / 100.0));
+        this.font.drawInBatch(s1, x + 160 - this.font.width(s1), y - 80 - 16, 16_777_215, true, matrix, buffer, false, 0, 15_728_880, false);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0, len = list.size(); i < len; i++) {
+            stringBuilder.setLength(0);
+            ResultField resultField = list.get(i);
+            if ("unspecified".equals(resultField.name)) {
+                stringBuilder.append("[?] ");
+            }
+            else {
+                stringBuilder.append("[").append(i + 1).append("] ");
+            }
+            String s2 = stringBuilder.append(resultField.name).toString();
+            int y1 = y + 80 + i * 8 + 20;
+            int color = resultField.getColor();
+            this.font.drawInBatch(s2, x - 160, y1, color, true, matrix, buffer, false, 0, 15_728_880, false);
+            s2 = format.format(resultField.percentage * (1 / 100.0));
+            this.font.drawInBatch(s2, x + 160 - 50 - this.font.width(s2), y1, color, true, matrix, buffer, false, 0, 15_728_880, false);
+            s2 = format.format(resultField.globalPercentage * (1 / 100.0));
+            this.font.drawInBatch(s2, x + 160 - this.font.width(s2), y1, color, true, matrix, buffer, false, 0, 15_728_880, false);
+        }
+        buffer.endBatch();
+    }
 
     /**
      * @author TheGreatWolf
@@ -743,8 +852,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             int j = this.timer.advanceTime(Util.getMillis());
             this.profiler.push("scheduledExecutables");
             this.runAllTasks();
-            this.profiler.pop();
-            this.profiler.push("tick");
+            this.profiler.popPush("tick");
             for (int k = 0; k < Math.min(10, j); ++k) {
                 this.profiler.incrementCounter("clientTick");
                 this.tick();
@@ -755,8 +863,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         this.window.setErrorSection("Render");
         this.profiler.push("sound");
         this.soundManager.updateSource(this.gameRenderer.getMainCamera());
-        this.profiler.pop();
-        this.profiler.push("render");
+        this.profiler.popPush("render");
         PoseStack matrices = RenderSystem.getModelViewStack();
         matrices.pushPose();
         RenderSystem.applyModelViewMatrix();

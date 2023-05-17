@@ -6,6 +6,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 public enum Blending {
 
     DEFAULT(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA),
+    DEFAULT_1_0(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE,
+                GlStateManager.DestFactor.ZERO),
     ALPHA(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.SRC_ALPHA),
     PRE_ALPHA(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA),
     MULTIPLY(GlStateManager.SourceFactor.DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA),
@@ -14,7 +16,9 @@ public enum Blending {
     OVERLAY_DARK(GlStateManager.SourceFactor.SRC_COLOR, GlStateManager.DestFactor.ONE),
     ADDITIVE_ALPHA(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE),
     CONSTANT_ALPHA(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_CONSTANT_ALPHA),
-    INVERTED_ADD(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR);
+    INVERTED_ADD(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR),
+    VIGNETTE(GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE,
+             GlStateManager.DestFactor.ZERO);
 
     private final GlStateManager.DestFactor alphaDstFactor;
     private final GlStateManager.SourceFactor alphaSrcFactor;
@@ -36,6 +40,7 @@ public enum Blending {
     }
 
     public void apply() {
+        RenderSystem.enableBlend();
         RenderSystem.blendFuncSeparate(this.colorSrcFactor, this.colorDstFactor, this.alphaSrcFactor, this.alphaDstFactor);
     }
 }

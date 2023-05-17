@@ -36,17 +36,14 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.util.AllocationRateCalculator;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.math.Metric;
 import tgw.evolution.util.time.Time;
 
-import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
@@ -65,12 +62,20 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
     protected HitResult block;
     @Shadow
     protected HitResult liquid;
+    @Nullable
+    @Unique
     private String cpu;
+    @Unique
+    @Nullable
     private String javaVersion;
     @Shadow
     @Nullable
     private ChunkPos lastPos;
+    @Unique
+    @Nullable
     private String mc;
+    @Unique
+    @Nullable
     private String mcFull;
     @Shadow
     @Final
@@ -100,6 +105,9 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
      */
     @Overwrite
     protected List<String> getGameInformation() {
+        assert this.minecraft.player != null;
+        assert this.minecraft.level != null;
+        assert this.minecraft.getConnection() != null;
         this.gameInfo.clear();
         IntegratedServer integratedServer = this.minecraft.getSingleplayerServer();
         Connection connection = this.minecraft.getConnection().getConnection();
@@ -153,7 +161,7 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
             this.clearChunkCache();
         }
         Level level = this.getLevel();
-        LongSet forcedChunks = level instanceof ServerLevel ? ((ServerLevel) level).getForcedChunks() : LongSets.EMPTY_SET;
+        LongSet forcedChunks = level instanceof ServerLevel server ? server.getForcedChunks() : LongSets.EMPTY_SET;
         this.gameInfo.add(this.getMCFull());
         this.gameInfo.add(this.minecraft.fpsString);
         this.gameInfo.add(pct);

@@ -17,8 +17,6 @@ import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
-import net.minecraftforge.client.gui.ForgeIngameGui;
-import net.minecraftforge.client.gui.OverlayRegistry;
 import net.minecraftforge.client.model.ForgeModelBakery;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
@@ -26,6 +24,8 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.lwjgl.glfw.GLFW;
 import tgw.evolution.client.gui.ScreenCorpse;
 import tgw.evolution.client.gui.ScreenInventory;
+import tgw.evolution.client.gui.overlays.EvolutionOverlays;
+import tgw.evolution.client.gui.overlays.VanillaOverlays;
 import tgw.evolution.client.tooltip.*;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionContainers;
@@ -73,15 +73,6 @@ public class ClientProxy implements IProxy {
 //        WorldType evWorld = WorldType.WORLD_TYPES[evId];
 //        System.arraycopy(WorldType.WORLD_TYPES, 0, WorldType.WORLD_TYPES, 1, evId);
 //        WorldType.WORLD_TYPES[0] = evWorld;
-    }
-
-    private static void registerHUDOverlays() {
-        OverlayRegistry.enableOverlay(ForgeIngameGui.PLAYER_HEALTH_ELEMENT, false);
-        OverlayRegistry.enableOverlay(ForgeIngameGui.ARMOR_LEVEL_ELEMENT, false);
-        OverlayRegistry.enableOverlay(ForgeIngameGui.FOOD_LEVEL_ELEMENT, false);
-        OverlayRegistry.enableOverlay(ForgeIngameGui.EXPERIENCE_BAR_ELEMENT, false);
-        OverlayRegistry.enableOverlay(ForgeIngameGui.CROSSHAIR_ELEMENT, false);
-        OverlayRegistry.enableOverlay(ForgeIngameGui.POTION_ICONS_ELEMENT, false);
     }
 
     private static void registerKeyBinds() {
@@ -163,7 +154,8 @@ public class ClientProxy implements IProxy {
         changeWorldOrders();
 //        EvolutionParticles.register();
         registerTooltips();
-        registerHUDOverlays();
+        VanillaOverlays.register();
+        EvolutionOverlays.init();
         mc.getMainRenderTarget().enableStencil();
         Evolution.info("Finished loading!");
     }

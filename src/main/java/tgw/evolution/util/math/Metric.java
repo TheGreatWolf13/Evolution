@@ -51,6 +51,8 @@ public enum Metric {
     public static final DecimalFormat LATITUDE_FORMAT = initFormat("#0.## \u00B0");
     public static final DecimalFormat PERCENT_ONE_PLACE = initFormat(",##0.#%");
     public static final DecimalFormat PERCENT_ONE_PLACE_BONUS = initFormat(",##0.#%", "+");
+    public static final DecimalFormat PERCENT_TWO_PLACES_FULL = initFormat("##0.00%");
+
     private final String fullName;
     private final double inNumber;
     private final String prefix;
