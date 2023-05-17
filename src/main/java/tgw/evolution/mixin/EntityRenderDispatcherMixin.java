@@ -4,16 +4,23 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
+import net.minecraft.CrashReport;
+import net.minecraft.CrashReportCategory;
+import net.minecraft.ReportedException;
 import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
@@ -26,6 +33,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
+import tgw.evolution.events.ClientEvents;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
 
@@ -37,6 +45,15 @@ public abstract class EntityRenderDispatcherMixin {
     private static RenderType SHADOW_RENDER_TYPE;
     @Shadow
     public Camera camera;
+    @Shadow
+    @Final
+    public Options options;
+    @Shadow
+    private Level level;
+    @Shadow
+    private boolean renderHitBoxes;
+    @Shadow
+    private boolean shouldRenderShadow;
 
     /**
      * @author TheGreatWolf
@@ -92,6 +109,11 @@ public abstract class EntityRenderDispatcherMixin {
         }
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason Fix collision box rendering
+     */
+    @Overwrite
     private static void renderHitbox(PoseStack matrices, VertexConsumer buffer, Entity entity, float partialTicks) {
         AABB box = entity.getBoundingBox().move(-entity.getX(), -entity.getY(), -entity.getZ());
         LevelRenderer.renderLineBox(matrices, buffer, box, 1.0F, 1.0F, 1.0F, 1.0F);
@@ -182,4 +204,65 @@ public abstract class EntityRenderDispatcherMixin {
                                      float pTexV) {
         throw new AbstractMethodError();
     }
+
+    @Shadow
+    public abstract double distanceToSqr(double pX, double pY, double pZ);
+
+    @Shadow
+    public abstract <T extends Entity> EntityRenderer<? super T> getRenderer(T pEntity);
+
+    /**
+     * @author TheGreatWolf
+     * @reason Make flame not render whilst rendering player
+     */
+    @Overwrite
+    public <E extends Entity> void render(E entity,
+                                          double x,
+                                          double y,
+                                          double z,
+                                          float rotYaw,
+                                          float partialTicks,
+                                          PoseStack matrices,
+                                          MultiBufferSource buffer,
+                                          int light) {
+        EntityRenderer<? super E> renderer = this.getRenderer(entity);
+        try {
+            Vec3 vec3 = renderer.getRenderOffset(entity, partialTicks);
+            double d2 = x + vec3.x();
+            double d3 = y + vec3.y();
+            double d0 = z + vec3.z();
+            matrices.pushPose();
+            matrices.translate(d2, d3, d0);
+            renderer.render(entity, rotYaw, partialTicks, matrices, buffer, light);
+            if (entity.displayFireAnimation() && !ClientEvents.getInstance().getRenderer().isRenderingPlayer()) {
+                this.renderFlame(matrices, buffer, entity);
+            }
+            matrices.translate(-vec3.x(), -vec3.y(), -vec3.z());
+            if (this.options.entityShadows && this.shouldRenderShadow && renderer.shadowRadius > 0.0F && !entity.isInvisible()) {
+                double distSqr = this.distanceToSqr(entity.getX(), entity.getY(), entity.getZ());
+                float f = (float) ((1.0 - distSqr / 256.0) * renderer.shadowStrength);
+                if (f > 0.0F) {
+                    renderShadow(matrices, buffer, entity, f, partialTicks, this.level, renderer.shadowRadius);
+                }
+            }
+            if (this.renderHitBoxes && !entity.isInvisible() && !Minecraft.getInstance().showOnlyReducedInfo()) {
+                renderHitbox(matrices, buffer.getBuffer(RenderType.lines()), entity, partialTicks);
+            }
+            matrices.popPose();
+        }
+        catch (Throwable t) {
+            CrashReport crashReport = CrashReport.forThrowable(t, "Rendering entity in world");
+            CrashReportCategory category = crashReport.addCategory("Entity being rendered");
+            entity.fillCrashReportCategory(category);
+            CrashReportCategory addCategory = crashReport.addCategory("Renderer details");
+            addCategory.setDetail("Assigned renderer", renderer);
+            addCategory.setDetail("Location", CrashReportCategory.formatLocation(this.level, x, y, z));
+            addCategory.setDetail("Rotation", rotYaw);
+            addCategory.setDetail("Delta", partialTicks);
+            throw new ReportedException(crashReport);
+        }
+    }
+
+    @Shadow
+    protected abstract void renderFlame(PoseStack pMatrixStack, MultiBufferSource pBuffer, Entity pEntity);
 }

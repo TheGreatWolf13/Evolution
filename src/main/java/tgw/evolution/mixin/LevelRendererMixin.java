@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11C;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.config.EvolutionConfig;
@@ -669,9 +670,11 @@ public abstract class LevelRendererMixin {
             else {
                 multiBufferSource = buffer;
             }
-            ClientEvents.getInstance().getRenderer().isRenderingPlayer = true;
+
+            ClientRenderer renderer = ClientEvents.getInstance().getRenderer();
+            renderer.setRenderingPlayer(true);
             this.renderEntity(cameraEntity, camX, camY, camZ, partialTick, matrices, multiBufferSource);
-            ClientEvents.getInstance().getRenderer().isRenderingPlayer = false;
+            renderer.setRenderingPlayer(false);
         }
         buffer.endLastBatch();
         this.checkPoseStack(matrices);

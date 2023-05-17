@@ -76,9 +76,6 @@ public class ClientRenderer {
     private final Random rand = new Random();
     private final ListRunnable runnables = new ListRunnable();
     public boolean isAddingEffect;
-    public boolean isRenderingPlayer;
-    public boolean shouldRenderLeftArm = true;
-    public boolean shouldRenderRightArm = true;
     private @Nullable RunnableAddingEffect addingEffect;
     private byte healthFlashTicks;
     private short healthTick;
@@ -87,6 +84,7 @@ public class ClientRenderer {
     private float hungerFlashAlpha;
     private byte hungerFlashTicks;
     private short hungerTick;
+    private boolean isRenderingPlayer;
     private byte killmarkerTick;
     private short lastBeneficalCount;
     private int lastDisplayedHealth;
@@ -97,6 +95,8 @@ public class ClientRenderer {
     private ItemStack mainHandStack = ItemStack.EMPTY;
     private short movingFinalCount;
     private ItemStack offhandStack = ItemStack.EMPTY;
+    private boolean shouldRenderLeftArm = true;
+    private boolean shouldRenderRightArm = true;
     private byte thirstAlphaMult = 1;
     private float thirstFlashAlpha;
     private byte thirstFlashTicks;
@@ -339,6 +339,10 @@ public class ClientRenderer {
             }
         }
         return y;
+    }
+
+    public boolean isRenderingPlayer() {
+        return this.isRenderingPlayer;
     }
 
     private boolean rayTraceMouse(@Nullable HitResult rayTraceResult) {
@@ -1125,6 +1129,37 @@ public class ClientRenderer {
             blitInBatch(matrix, width / 2 + 92, height - 29, 198, EvolutionResources.ICON_TEMPERATURE, 5, 5);
         }
         GUIUtils.endBlitBatch();
+    }
+
+    public void setRenderingPlayer(boolean rendering) {
+        this.isRenderingPlayer = rendering;
+    }
+
+    public void setVisibility(HumanoidArm arm, boolean visible) {
+        if (arm == HumanoidArm.RIGHT) {
+            this.shouldRenderRightArm = visible;
+        }
+        else {
+            this.shouldRenderLeftArm = visible;
+        }
+    }
+
+    public boolean shouldRenderArm(HumanoidArm arm) {
+        return arm == HumanoidArm.RIGHT ? this.shouldRenderRightArm() : this.shouldRenderLeftArm();
+    }
+
+    public boolean shouldRenderLeftArm() {
+        if (!this.isRenderingPlayer) {
+            return true;
+        }
+        return this.shouldRenderLeftArm;
+    }
+
+    public boolean shouldRenderRightArm() {
+        if (!this.isRenderingPlayer) {
+            return true;
+        }
+        return this.shouldRenderRightArm;
     }
 
     public void startTick() {

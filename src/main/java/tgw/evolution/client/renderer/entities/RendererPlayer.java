@@ -109,9 +109,9 @@ public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, M
         this.modelProperties(player);
         //When rendering the player in first person, hide certain parts of the player model to not clip into the camera in certain situations
         ClientRenderer renderer = ClientEvents.getInstance().getRenderer();
-        if (renderer.isRenderingPlayer) {
-            renderer.shouldRenderLeftArm = true;
-            renderer.shouldRenderRightArm = true;
+        if (renderer.isRenderingPlayer()) {
+            renderer.setVisibility(HumanoidArm.LEFT, true);
+            renderer.setVisibility(HumanoidArm.RIGHT, true);
             //The hat should never be visible because it's placed enclosing the head, where the camera is placed
             this.model.hat.visible = false;
             //If in the swimming state, the head should not be visible, as the camera and the head will rotate in different ways
@@ -123,20 +123,18 @@ public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, M
                 if (player.getUsedItemHand() != InteractionHand.MAIN_HAND) {
                     arm = arm.getOpposite();
                 }
+                renderer.setVisibility(arm, false);
                 switch (arm) {
                     case RIGHT -> {
                         this.model.armR.visible = false;
                         this.model.clothesArmR.visible = false;
-                        renderer.shouldRenderRightArm = false;
                     }
                     case LEFT -> {
                         this.model.armL.visible = false;
                         this.model.clothesArmL.visible = false;
-                        renderer.shouldRenderLeftArm = false;
                     }
                 }
             }
-            renderer.isRenderingPlayer = false;
         }
         super.render(player, entityYaw, partialTicks, matrices, buffer, light);
     }
