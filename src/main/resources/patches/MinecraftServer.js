@@ -41,17 +41,11 @@ function initializeCoreMod() {
 
 function patchServer(instructions) {
     var list = new InsnList();
-	for (var i = 0; i < instructions.size(); i++) {
+	for (var i = 0, l = instructions.size(); i < l; i++) {
 	    var inst = instructions.get(i);
-	    if(inst instanceof LdcInsnNode) {
-            if(inst.cst == 50) {
-                list.add(new MethodInsnNode(Opcodes.INVOKESTATIC,
-                                            "tgw/evolution/hooks/TickrateChanger",
-                                            "getMSPT",
-                                            "()J",
-                                            false));
-                continue;
-            }
+	    if (inst instanceof LdcInsnNode && inst.cst == 50) {
+            list.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "tgw/evolution/hooks/TickrateChanger", "getMSPT", "()J",  false));
+            continue;
         }
         list.add(inst);
     }
