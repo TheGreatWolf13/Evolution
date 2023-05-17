@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import tgw.evolution.util.math.ColorABGR;
 
 @Mixin(SingleQuadParticle.class)
 public abstract class SingleQuadParticleMixin extends Particle {
@@ -32,7 +31,7 @@ public abstract class SingleQuadParticleMixin extends Particle {
                                   float posZ,
                                   float u,
                                   float v,
-                                  int color,
+                                  float r, float g, float b, float a,
                                   int light,
                                   float size) {
         // Quaternion q0 = new Quaternion(rotation);
@@ -62,7 +61,7 @@ public abstract class SingleQuadParticleMixin extends Particle {
         float fz = q3z * size + posZ;
         buffer.vertex(fx, fy, fz)
               .uv(u, v)
-              .color(color)
+              .color(r, g, b, a)
               .uv2(light)
               .endVertex();
     }
@@ -108,10 +107,9 @@ public abstract class SingleQuadParticleMixin extends Particle {
         float maxU = this.getU1();
         float minV = this.getV0();
         float maxV = this.getV1();
-        int color = ColorABGR.pack(this.rCol, this.gCol, this.bCol, this.alpha);
-        addVertex(vertexConsumer, quaternion, -1.0F, -1.0F, x, y, z, maxU, maxV, color, light, size);
-        addVertex(vertexConsumer, quaternion, -1.0F, 1.0F, x, y, z, maxU, minV, color, light, size);
-        addVertex(vertexConsumer, quaternion, 1.0F, 1.0F, x, y, z, minU, minV, color, light, size);
-        addVertex(vertexConsumer, quaternion, 1.0F, -1.0F, x, y, z, minU, maxV, color, light, size);
+        addVertex(vertexConsumer, quaternion, -1.0F, -1.0F, x, y, z, maxU, maxV, this.rCol, this.gCol, this.bCol, this.alpha, light, size);
+        addVertex(vertexConsumer, quaternion, -1.0F, 1.0F, x, y, z, maxU, minV, this.rCol, this.gCol, this.bCol, this.alpha, light, size);
+        addVertex(vertexConsumer, quaternion, 1.0F, 1.0F, x, y, z, minU, minV, this.rCol, this.gCol, this.bCol, this.alpha, light, size);
+        addVertex(vertexConsumer, quaternion, 1.0F, -1.0F, x, y, z, minU, maxV, this.rCol, this.gCol, this.bCol, this.alpha, light, size);
     }
 }
