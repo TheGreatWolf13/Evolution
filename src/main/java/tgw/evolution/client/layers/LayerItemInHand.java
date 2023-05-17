@@ -1,4 +1,4 @@
-package tgw.evolution.mixin;
+package tgw.evolution.client.layers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -7,32 +7,23 @@ import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
-import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import tgw.evolution.util.constants.CommonRotations;
 
-@Mixin(ItemInHandLayer.class)
-public abstract class ItemInHandLayerMixin<T extends LivingEntity, M extends EntityModel<T> & ArmedModel> extends RenderLayer<T, M> {
+public class LayerItemInHand<E extends LivingEntity, M extends EntityModel<E> & ArmedModel> extends RenderLayer<E, M> {
 
-    public ItemInHandLayerMixin(RenderLayerParent<T, M> pRenderer) {
-        super(pRenderer);
+    public LayerItemInHand(RenderLayerParent<E, M> renderer) {
+        super(renderer);
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Fix HMs
-     */
     @Override
-    @Overwrite
     public void render(PoseStack matrices,
                        MultiBufferSource buffer,
                        int light,
-                       T entity,
+                       E entity,
                        float limbSwing,
                        float limbSwingAmount,
                        float partialTicks,
@@ -56,12 +47,7 @@ public abstract class ItemInHandLayerMixin<T extends LivingEntity, M extends Ent
         }
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Fix HMs
-     */
-    @Overwrite
-    protected void renderArmWithItem(LivingEntity entity,
+    protected void renderArmWithItem(E entity,
                                      ItemStack stack,
                                      ItemTransforms.TransformType type,
                                      HumanoidArm arm,

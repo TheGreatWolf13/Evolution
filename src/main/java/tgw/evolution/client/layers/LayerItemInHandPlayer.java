@@ -1,4 +1,4 @@
-package tgw.evolution.mixin;
+package tgw.evolution.client.layers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -10,60 +10,39 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.CustomHeadLayer;
-import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
-import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import net.minecraft.world.item.Items;
 import tgw.evolution.events.ClientEvents;
 
-@SuppressWarnings("MethodMayBeStatic")
-@Mixin(PlayerItemInHandLayer.class)
-public abstract class PlayerItemInHandLayerMixin<T extends Player, M extends EntityModel<T> & ArmedModel & HeadedModel>
-        extends ItemInHandLayer<T, M> {
+public class LayerItemInHandPlayer<P extends Player, M extends EntityModel<P> & ArmedModel & HeadedModel> extends LayerItemInHand<P, M> {
 
-    public PlayerItemInHandLayerMixin(RenderLayerParent<T, M> p_117183_) {
-        super(p_117183_);
+    public LayerItemInHandPlayer(RenderLayerParent<P, M> renderer) {
+        super(renderer);
     }
 
-    @Inject(method = "renderArmWithItem", at = @At(value = "HEAD"), cancellable = true)
-    private void onRenderArmWithItem(LivingEntity entity,
+    @Override
+    protected void renderArmWithItem(P player,
                                      ItemStack stack,
-                                     ItemTransforms.TransformType transformType,
+                                     ItemTransforms.TransformType type,
                                      HumanoidArm arm,
                                      PoseStack matrices,
                                      MultiBufferSource buffer,
-                                     int light,
-                                     CallbackInfo ci) {
-        if (ClientEvents.getInstance().getRenderer().isRenderingPlayer) {
-            switch (arm) {
-                case RIGHT -> {
-                    if (!ClientEvents.getInstance().getRenderer().shouldRenderRightArm) {
-                        ci.cancel();
-                    }
-                }
-                case LEFT -> {
-                    if (!ClientEvents.getInstance().getRenderer().shouldRenderLeftArm) {
-                        ci.cancel();
-                    }
-                }
-            }
+                                     int light) {
+        if (!ClientEvents.getInstance().getRenderer().shouldRenderArm(arm)) {
+            return;
+        }
+        if (stack.is(Items.SPYGLASS) && player.getUseItem() == stack && player.swingTime == 0) {
+            this.renderArmWithSpyglass(player, stack, arm, matrices, buffer, light);
+        }
+        else {
+            super.renderArmWithItem(player, stack, type, arm, matrices, buffer, light);
         }
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Fix HMs
-     */
-    @Overwrite
-    private void renderArmWithSpyglass(LivingEntity entity,
+    private void renderArmWithSpyglass(P entity,
                                        ItemStack stack,
                                        HumanoidArm arm,
                                        PoseStack matrices,

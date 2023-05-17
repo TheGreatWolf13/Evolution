@@ -6,7 +6,6 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -22,6 +21,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Score;
 import net.minecraft.world.scores.Scoreboard;
+import tgw.evolution.client.layers.LayerItemInHandPlayer;
 import tgw.evolution.client.models.entities.ModelPlayer;
 import tgw.evolution.client.renderer.ClientRenderer;
 import tgw.evolution.events.ClientEvents;
@@ -39,7 +39,7 @@ public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, M
 //        this.addLayer(new HumanoidArmorLayer<>(this, new HumanoidModel(
 //                context.bakeLayer(slim ? ModelLayers.PLAYER_SLIM_INNER_ARMOR : ModelLayers.PLAYER_INNER_ARMOR)), new HumanoidModel(
 //                context.bakeLayer(slim ? ModelLayers.PLAYER_SLIM_OUTER_ARMOR : ModelLayers.PLAYER_OUTER_ARMOR))));
-        this.addLayer(new PlayerItemInHandLayer<>(this));
+        this.addLayer(new LayerItemInHandPlayer<>(this));
 //        this.addLayer(new ArrowLayer<>(context, this));
 //        this.addLayer(new Deadmau5EarsLayer(this));
 //        this.addLayer(new CapeLayer(this));
