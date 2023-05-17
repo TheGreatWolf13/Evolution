@@ -1,7 +1,6 @@
 package tgw.evolution.mixin;
 
 import com.google.common.primitives.Floats;
-import com.mojang.blaze3d.platform.GlUtil;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
@@ -15,8 +14,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.client.gl.IBufferVertexFormat;
-import tgw.evolution.client.models.pipeline.IVertexBufferView;
+import tgw.evolution.client.renderer.ICrashReset;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.patches.IBakedQuadPatch;
 import tgw.evolution.patches.IMatrix4fPatch;
@@ -34,7 +32,7 @@ import java.nio.FloatBuffer;
 import java.util.List;
 
 @Mixin(BufferBuilder.class)
-public abstract class BufferBuilderMixin extends DefaultedVertexConsumer implements BufferVertexConsumer, IVertexBufferView {
+public abstract class BufferBuilderMixin extends DefaultedVertexConsumer implements BufferVertexConsumer, ICrashReset {
 
     @Shadow
     @Final
@@ -117,39 +115,8 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
         this.indexOnly = false;
     }
 
-    @Override
-    public boolean ensureBufferCapacity(int bytes) {
-        // Ensure that there is always space for 1 more vertex; see BufferBuilder.next()
-        bytes += this.format.getVertexSize();
-        if (this.elementIndex + bytes <= this.buffer.capacity()) {
-            return false;
-        }
-        int newSize = this.buffer.capacity() + roundUp(bytes);
-        LOGGER.debug("Needed to grow BufferBuilder buffer: Old size {} bytes, new size {} bytes.", this.buffer.capacity(), newSize);
-        this.buffer.position(0);
-        ByteBuffer byteBuffer = GlUtil.allocateMemory(newSize);
-        byteBuffer.put(this.buffer);
-        byteBuffer.rewind();
-        this.buffer = byteBuffer;
-        return true;
-    }
-
     @Shadow
     protected abstract void ensureCapacity(int pIncreaseAmount);
-
-    @Override
-    public void flush(int vertexCount, IBufferVertexFormat format) {
-        if (IBufferVertexFormat.from(this.format) != format) {
-            throw new IllegalStateException("Mis-matched vertex format (expected: [" + format + "], currently using: [" + this.format + "])");
-        }
-        this.vertices += vertexCount;
-        this.elementIndex += vertexCount * format.getStride();
-    }
-
-    @Override
-    public ByteBuffer getDirectBuffer() {
-        return this.buffer;
-    }
 
     /**
      * @author TheGreatWolf
@@ -161,11 +128,6 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
                                                                         this.sortZ);
         ((ISortStatePatch) sortState).putNewSortingPoints(this.newSortingPoints);
         return sortState;
-    }
-
-    @Override
-    public int getWriterPosition() {
-        return this.elementIndex;
     }
 
     @Shadow
@@ -281,6 +243,20 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
         }
     }
 
+    @Override
+    public void resetAfterCrash() {
+        this.buffer.clear();
+        this.building = false;
+        this.vertices = 0;
+        this.currentElement = null;
+        this.elementIndex = 0;
+        this.newSortingPoints.clear();
+        this.sortX = Float.NaN;
+        this.sortY = Float.NaN;
+        this.sortZ = Float.NaN;
+        this.indexOnly = false;
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Use newSortingPoints.
@@ -315,10 +291,5 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
                 }
             }
         }
-    }
-
-    @Override
-    public IBufferVertexFormat vertexFormat() {
-        return IBufferVertexFormat.from(this.format);
     }
 }

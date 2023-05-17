@@ -4,6 +4,7 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.logging.LogUtils;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
@@ -27,6 +28,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.searchtree.SearchRegistry;
 import net.minecraft.client.server.IntegratedServer;
@@ -69,6 +71,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.gui.ScreenCrash;
 import tgw.evolution.client.gui.ScreenOutOfMemory;
+import tgw.evolution.client.renderer.ICrashReset;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.ICancelableUse;
@@ -232,7 +235,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
 
     @Shadow
     public static void crash(CrashReport p_71377_0_) {
-
+        throw new AbstractMethodError();
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -338,6 +341,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         try {
             try {
                 MemoryReserve.release();
+                ((ICrashReset) Tesselator.getInstance().getBuilder()).resetAfterCrash();
+                ((ICrashReset) this.renderBuffers().bufferSource()).resetAfterCrash();
                 this.levelRenderer.clear();
             }
             catch (Throwable ignored) {
@@ -640,6 +645,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     @Deprecated
     public abstract CompletableFuture<Void> reloadResourcePacks();
+
+    @Shadow
+    public abstract RenderBuffers renderBuffers();
 
     @Shadow
     protected abstract void renderFpsMeter(PoseStack p_91141_, ProfileResults p_91142_);
