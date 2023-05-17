@@ -184,6 +184,7 @@
     "RecipeCollectionMixin",
     "RemotePlayerMixin",
     "RenderSystemMixin",
+    "RenderType_CompositeRenderTypeMixin",
     "SheetedDecalTextureGeneratorMixin",
     "SheetsMixin",
     "SimpleBakedModel_BuilderMixin",

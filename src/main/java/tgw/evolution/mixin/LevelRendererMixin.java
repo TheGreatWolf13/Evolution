@@ -12,7 +12,6 @@ import com.mojang.math.Vector3d;
 import com.mojang.math.Vector3f;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectListIterator;
 import net.minecraft.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CloudStatus;
@@ -50,10 +49,7 @@ import net.minecraftforge.common.ForgeConfig;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11C;
 import org.slf4j.Logger;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.renderer.ambient.SkyRenderer;
 import tgw.evolution.config.EvolutionConfig;
@@ -95,6 +91,8 @@ public abstract class LevelRendererMixin {
     @Shadow
     @Final
     private BlockEntityRenderDispatcher blockEntityRenderDispatcher;
+    @Unique
+    private int cachedCount;
     @Shadow
     private boolean captureFrustum;
     @Shadow
@@ -148,6 +146,8 @@ public abstract class LevelRendererMixin {
     private double lastCameraY;
     @Shadow
     private double lastCameraZ;
+    @Unique
+    private long lastCountUpdate;
     @Shadow
     @Nullable
     private Future<?> lastFullRenderChunkUpdate;
@@ -341,6 +341,44 @@ public abstract class LevelRendererMixin {
         this.minecraft.getProfiler().pop();
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason Prevent iterator allocation, cache result.
+     */
+    @Overwrite
+    public int countRenderedChunks() {
+        long now = Util.getMillis();
+        if (now >= this.lastCountUpdate + 200) {
+            this.lastCountUpdate = now;
+            int count = 0;
+            for (int i = 0, len = this.renderChunksInFrustum.size(); i < len; i++) {
+                if (!this.renderChunksInFrustum.get(i).chunk.getCompiledChunk().hasNoRenderableLayers()) {
+                    ++count;
+                }
+            }
+            this.cachedCount = count;
+            return count;
+        }
+        return this.cachedCount;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason String.format is quite slow, use normal concatenation
+     */
+    @Overwrite
+    public String getChunkStatistics() {
+        assert this.viewArea != null;
+        int totalChunks = this.viewArea.chunks.length;
+        int visibleChunks = this.countRenderedChunks();
+        String str = "C: " + visibleChunks + "/" + totalChunks + " ";
+        if (this.minecraft.smartCull) {
+            str += "(s) ";
+        }
+        str += "D: " + this.lastViewDistance + ", " + (this.chunkRenderDispatcher == null ? "null" : this.chunkRenderDispatcher.getStats());
+        return str;
+    }
+
     @Shadow
     @Nullable
     protected abstract ChunkRenderDispatcher.RenderChunk getRelativeFrom(BlockPos pCameraChunkPos,
@@ -364,6 +402,7 @@ public abstract class LevelRendererMixin {
     private void renderChunkLayer(RenderType renderType, PoseStack matrices, double camX, double camY, double camZ, Matrix4f projectionMatrix) {
         RenderSystem.assertOnRenderThread();
         renderType.setupRenderState();
+        int size = this.renderChunksInFrustum.size();
         if (renderType == RenderType.translucent()) {
             this.minecraft.getProfiler().push("translucent_sort");
             double d0 = camX - this.xTransparentOld;
@@ -374,7 +413,7 @@ public abstract class LevelRendererMixin {
                 this.yTransparentOld = camY;
                 this.zTransparentOld = camZ;
                 int j = 0;
-                for (int i = 0, l = this.renderChunksInFrustum.size(); i < l; i++) {
+                for (int i = 0; i < size; i++) {
                     if (j < 15 && this.renderChunksInFrustum.get(i).chunk.resortTransparency(renderType, this.chunkRenderDispatcher)) {
                         j++;
                     }
@@ -382,74 +421,79 @@ public abstract class LevelRendererMixin {
             }
             this.minecraft.getProfiler().pop();
         }
-        this.minecraft.getProfiler().push("filterempty");
-        this.minecraft.getProfiler().popPush(() -> "render_" + renderType);
-        boolean flag = renderType != RenderType.translucent();
-        ObjectListIterator<LevelRenderer.RenderChunkInfo> it = this.renderChunksInFrustum.listIterator(flag ? 0 : this.renderChunksInFrustum.size());
-        VertexFormat vertexformat = renderType.format();
-        ShaderInstance shaderinstance = RenderSystem.getShader();
+        this.minecraft.getProfiler().push(renderType::toString);
+        boolean notTranslucent = renderType != RenderType.translucent();
+        int pos = notTranslucent ? 0 : size;
+        VertexFormat format = renderType.format();
+        ShaderInstance shader = RenderSystem.getShader();
         BufferUploader.reset();
         for (int k = 0; k < 12; ++k) {
             int i = RenderSystem.getShaderTexture(k);
             //Avoid allocating fixed name strings
-            shaderinstance.setSampler(RenderHelper.SAMPLER_NAMES[k], i);
+            shader.setSampler(RenderHelper.SAMPLER_NAMES[k], i);
         }
-        if (shaderinstance.MODEL_VIEW_MATRIX != null) {
-            shaderinstance.MODEL_VIEW_MATRIX.set(matrices.last().pose());
+        if (shader.MODEL_VIEW_MATRIX != null) {
+            shader.MODEL_VIEW_MATRIX.set(matrices.last().pose());
         }
-        if (shaderinstance.PROJECTION_MATRIX != null) {
-            shaderinstance.PROJECTION_MATRIX.set(projectionMatrix);
+        if (shader.PROJECTION_MATRIX != null) {
+            shader.PROJECTION_MATRIX.set(projectionMatrix);
         }
-        if (shaderinstance.COLOR_MODULATOR != null) {
-            shaderinstance.COLOR_MODULATOR.set(RenderSystem.getShaderColor());
+        if (shader.COLOR_MODULATOR != null) {
+            shader.COLOR_MODULATOR.set(RenderSystem.getShaderColor());
         }
-        if (shaderinstance.FOG_START != null) {
-            shaderinstance.FOG_START.set(RenderSystem.getShaderFogStart());
+        if (shader.FOG_START != null) {
+            shader.FOG_START.set(RenderSystem.getShaderFogStart());
         }
-        if (shaderinstance.FOG_END != null) {
-            shaderinstance.FOG_END.set(RenderSystem.getShaderFogEnd());
+        if (shader.FOG_END != null) {
+            shader.FOG_END.set(RenderSystem.getShaderFogEnd());
         }
-        if (shaderinstance.FOG_COLOR != null) {
-            shaderinstance.FOG_COLOR.set(RenderSystem.getShaderFogColor());
+        if (shader.FOG_COLOR != null) {
+            shader.FOG_COLOR.set(RenderSystem.getShaderFogColor());
         }
-        if (shaderinstance.TEXTURE_MATRIX != null) {
-            shaderinstance.TEXTURE_MATRIX.set(RenderSystem.getTextureMatrix());
+        if (shader.TEXTURE_MATRIX != null) {
+            shader.TEXTURE_MATRIX.set(RenderSystem.getTextureMatrix());
         }
-        if (shaderinstance.GAME_TIME != null) {
-            shaderinstance.GAME_TIME.set(RenderSystem.getShaderGameTime());
+        if (shader.GAME_TIME != null) {
+            shader.GAME_TIME.set(RenderSystem.getShaderGameTime());
         }
-        RenderSystem.setupShaderLights(shaderinstance);
-        shaderinstance.apply();
-        Uniform uniform = shaderinstance.CHUNK_OFFSET;
-        boolean flag1 = false;
+        RenderSystem.setupShaderLights(shader);
+        shader.apply();
+        Uniform uniform = shader.CHUNK_OFFSET;
+        boolean drewStuff = false;
         while (true) {
-            if (flag) {
-                if (!it.hasNext()) {
+            if (notTranslucent) {
+                //!iterator.hasNext
+                if (pos >= size) {
                     break;
                 }
             }
-            else if (!it.hasPrevious()) {
+            //!iterator.hasPrevious
+            else if (pos <= 0) {
                 break;
             }
-            LevelRenderer.RenderChunkInfo renderChunkInfo = flag ? it.next() : it.previous();
+            LevelRenderer.RenderChunkInfo renderChunkInfo = notTranslucent ?
+                                                            //iterator.next
+                                                            this.renderChunksInFrustum.get(pos++) :
+                                                            //iterator.previous
+                                                            this.renderChunksInFrustum.get(--pos);
             ChunkRenderDispatcher.RenderChunk chunk = renderChunkInfo.chunk;
             if (!chunk.getCompiledChunk().isEmpty(renderType)) {
-                VertexBuffer vertexbuffer = chunk.getBuffer(renderType);
-                BlockPos blockpos = chunk.getOrigin();
+                VertexBuffer buffer = chunk.getBuffer(renderType);
+                BlockPos origin = chunk.getOrigin();
                 if (uniform != null) {
-                    uniform.set((float) (blockpos.getX() - camX), (float) (blockpos.getY() - camY), (float) (blockpos.getZ() - camZ));
+                    uniform.set((float) (origin.getX() - camX), (float) (origin.getY() - camY), (float) (origin.getZ() - camZ));
                     uniform.upload();
                 }
-                vertexbuffer.drawChunkLayer();
-                flag1 = true;
+                buffer.drawChunkLayer();
+                drewStuff = true;
             }
         }
         if (uniform != null) {
             uniform.set(Vector3f.ZERO);
         }
-        shaderinstance.clear();
-        if (flag1) {
-            vertexformat.clearBufferState();
+        shader.clear();
+        if (drewStuff) {
+            format.clearBufferState();
         }
         VertexBuffer.unbind();
         VertexBuffer.unbindVertexArray();
@@ -981,11 +1025,11 @@ public abstract class LevelRendererMixin {
      */
     @Overwrite
     private void setupRender(Camera camera, Frustum frustum, boolean hasCapturedFrustrum, boolean isSpectator) {
-        Vec3 camPos = camera.getPosition();
         if (this.minecraft.options.getEffectiveRenderDistance() != this.lastViewDistance) {
             this.allChanged();
         }
         this.level.getProfiler().push("camera");
+        Vec3 camPos = camera.getPosition();
         double camX = this.minecraft.cameraEntity.getX();
         double camY = this.minecraft.cameraEntity.getY();
         double camZ = this.minecraft.cameraEntity.getZ();
