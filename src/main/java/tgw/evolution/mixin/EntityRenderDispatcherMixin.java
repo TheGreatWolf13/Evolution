@@ -121,6 +121,7 @@ public abstract class EntityRenderDispatcherMixin {
             double x = -Mth.lerp(partialTicks, entity.xOld, entity.getX());
             double y = -Mth.lerp(partialTicks, entity.yOld, entity.getY());
             double z = -Mth.lerp(partialTicks, entity.zOld, entity.getZ());
+            //noinspection ConstantConditions
             for (PartEntity<?> part : entity.getParts()) {
                 matrices.pushPose();
                 double xp = x + Mth.lerp(partialTicks, part.xOld, part.getX());
@@ -133,10 +134,10 @@ public abstract class EntityRenderDispatcherMixin {
             }
         }
         if (entity instanceof LivingEntity) {
-            Vec3d cameraPosition = MathHelper.getCameraPosition(entity, partialTicks);
-            float eyeX = (float) (cameraPosition.x - Mth.lerp(partialTicks, entity.xOld, entity.getX()));
-            double eyeHeight = cameraPosition.y - Mth.lerp(partialTicks, entity.yOld, entity.getY());
-            float eyeZ = (float) (cameraPosition.z - Mth.lerp(partialTicks, entity.zOld, entity.getZ()));
+            Vec3d cameraPosition = MathHelper.getRelativeEyePosition(entity, partialTicks, null);
+            float eyeX = (float) cameraPosition.x;
+            double eyeHeight = cameraPosition.y;
+            float eyeZ = (float) cameraPosition.z;
             LevelRenderer.renderLineBox(matrices, buffer, box.minX, eyeHeight - 0.01, box.minZ, box.maxX, eyeHeight + 0.01, box.maxZ,
                                         1.0F, 0.0F, 0.0F, 1.0F);
             Vec3 view = entity.getViewVector(partialTicks);

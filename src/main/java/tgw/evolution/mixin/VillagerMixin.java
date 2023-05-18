@@ -35,6 +35,6 @@ public abstract class VillagerMixin extends AbstractVillager implements ILivingE
 
     @Override
     public @Nullable HitboxEntity<Villager> getHitboxes() {
-        return LegacyEntityHitboxes.VILLAGER;
+        return LegacyEntityHitboxes.VILLAGER.get((Villager) (Object) this);
     }
 }

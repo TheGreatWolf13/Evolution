@@ -99,7 +99,6 @@ import tgw.evolution.util.collection.*;
 import tgw.evolution.util.constants.OptiFineHelper;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.MathHelper;
-import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.toast.ToastHolderRecipe;
 import tgw.evolution.util.toast.Toasts;
 import tgw.evolution.world.dimension.DimensionOverworld;
@@ -121,7 +120,6 @@ public class ClientEvents {
     private static double accumulatedScrollDelta;
     private static boolean canDoLMBDrag;
     private static boolean canDoRMBDrag;
-    private final Vec3d cameraPos = new Vec3d();
     private final ISet currentShaders = new IOpenHashSet();
     private final ISet desiredShaders = new IOpenHashSet();
     private final ISet forcedShaders = new IOpenHashSet();
@@ -429,10 +427,6 @@ public class ClientEvents {
             return null;
         }
         return rv;
-    }
-
-    public Vec3d getCameraPos() {
-        return this.cameraPos;
     }
 
     public @Nullable DimensionOverworld getDimension() {
@@ -1202,16 +1196,6 @@ public class ClientEvents {
     public void resetCooldowns() {
         this.mainhandCooldownTime = 0;
         this.offhandCooldownTime = 0;
-    }
-
-    public void setCameraPos(Vec3d cameraPos) {
-        assert this.mc.player != null;
-        if (this.mc.player.equals(this.mc.getCameraEntity())) {
-            this.cameraPos.set(cameraPos);
-        }
-        else {
-            this.cameraPos.set(Vec3d.NULL);
-        }
     }
 
     public void setLastInventoryTab(@Range(from = 0, to = 1) int tab) {

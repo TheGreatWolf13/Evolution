@@ -1,5 +1,8 @@
 package tgw.evolution.mixin;
 
+import com.google.common.base.Objects;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
@@ -7,12 +10,17 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.stats.Stats;
+import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.CombatTracker;
@@ -20,8 +28,10 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.EntityDamageSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffectUtil;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
@@ -40,10 +50,13 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.PlayerTeam;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.PotionEvent;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -69,6 +82,7 @@ import tgw.evolution.util.damage.DamageSourceEv;
 import tgw.evolution.util.damage.EvolutionCombatTracker;
 import tgw.evolution.util.hitbox.HitboxType;
 import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.physics.Fluid;
 import tgw.evolution.util.physics.Physics;
 
@@ -78,6 +92,9 @@ import java.util.*;
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity implements ILivingEntityPatch<LivingEntity> {
 
+    @Shadow
+    @Final
+    private static Logger LOGGER;
     @Shadow
     @Final
     private static EntityDataAccessor<Boolean> DATA_EFFECT_AMBIENCE_ID;
@@ -90,6 +107,8 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Shadow
     public float attackAnim;
     @Shadow
+    public int deathTime;
+    @Shadow
     public float flyingSpeed;
     @Shadow
     public float hurtDir;
@@ -97,6 +116,8 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     public int hurtDuration;
     @Shadow
     public int hurtTime;
+    @Shadow
+    public float oAttackAnim;
     @Shadow
     public int removeArrowTime;
     @Shadow
@@ -106,6 +127,8 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Shadow
     public boolean swinging;
     @Shadow
+    public float xxa;
+    @Shadow
     public float yBodyRot;
     @Shadow
     public float yBodyRotO;
@@ -114,7 +137,17 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Shadow
     public float yHeadRotO;
     @Shadow
+    public float yya;
+    @Shadow
+    public float zza;
+    @Shadow
     protected float animStep;
+    @Shadow
+    protected float animStepO;
+    @Shadow
+    protected int autoSpinAttackTicks;
+    @Shadow
+    protected Brain<?> brain;
     @Shadow
     protected int fallFlyTicks;
     @Shadow
@@ -126,6 +159,22 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     protected Player lastHurtByPlayer;
     @Shadow
     protected int lastHurtByPlayerTime;
+    @Shadow
+    protected int lerpHeadSteps;
+    @Shadow
+    protected int lerpSteps;
+    @Shadow
+    protected double lerpX;
+    @Shadow
+    protected double lerpXRot;
+    @Shadow
+    protected double lerpY;
+    @Shadow
+    protected double lerpYRot;
+    @Shadow
+    protected double lerpZ;
+    @Shadow
+    protected double lyHeadRot;
     @Shadow
     protected int noActionTime;
     @Shadow
@@ -147,6 +196,15 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     private DamageSource lastDamageSource;
     @Shadow
     private long lastDamageStamp;
+    @Shadow
+    @javax.annotation.Nullable
+    private LivingEntity lastHurtByMob;
+    @Shadow
+    private int lastHurtByMobTimestamp;
+    @Shadow
+    private @Nullable LivingEntity lastHurtMob;
+    @Shadow
+    private BlockPos lastPos;
     @Shadow
     private int noJumpDelay;
     private byte specialAttackFollowUp;
@@ -196,6 +254,43 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     /**
      * @author TheGreatWolf
+     * @reason Add evolution hooks
+     */
+    @Override
+    @Overwrite
+    public void addAdditionalSaveData(CompoundTag tag) {
+        tag.putFloat("Health", this.getHealth());
+        tag.putShort("HurtTime", (short) this.hurtTime);
+        tag.putInt("HurtByTimestamp", this.lastHurtByMobTimestamp);
+        tag.putShort("DeathTime", (short) this.deathTime);
+        tag.putFloat("AbsorptionAmount", this.getAbsorptionAmount());
+        tag.put("Attributes", this.getAttributes().save());
+        if (!this.activeEffects.isEmpty()) {
+            ListTag list = new ListTag();
+            for (MobEffectInstance effect : this.activeEffects.values()) {
+                //noinspection ObjectAllocationInLoop
+                list.add(effect.save(new CompoundTag()));
+            }
+            tag.put("ActiveEffects", list);
+        }
+        tag.putBoolean("FallFlying", this.isFallFlying());
+        Optional<BlockPos> sleepingPos = this.getSleepingPos();
+        if (sleepingPos.isPresent()) {
+            BlockPos pos = sleepingPos.get();
+            tag.putInt("SleepingX", pos.getX());
+            tag.putInt("SleepingY", pos.getY());
+            tag.putInt("SleepingZ", pos.getZ());
+        }
+        DataResult<Tag> brainStart = this.brain.serializeStart(NbtOps.INSTANCE);
+        Optional<Tag> brainResult = brainStart.resultOrPartial(LOGGER::error);
+        if (brainResult.isPresent()) {
+            tag.put("Brain", brainResult.get());
+        }
+        tag.put("EffectHelper", this.effectHelper.save());
+    }
+
+    /**
+     * @author TheGreatWolf
      * @reason When an effect is overwritten to a hidden effect, its attribute modifiers are removed and readded. However, instead of removing the
      * modifiers based on the old instance of the effect (which has a lower amplifier), the original code removes and readds the attributes based
      * on the new instance (which has a higher amplifier), resulting in weird behaviours.
@@ -219,8 +314,262 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         return false;
     }
 
-    @Shadow
-    public abstract void aiStep();
+    /**
+     * @author TheGreatWolf
+     * @reason Add evolution hooks.
+     */
+    @Overwrite
+    public void aiStep() {
+        if (this.noJumpDelay > 0) {
+            --this.noJumpDelay;
+        }
+        if (this.isControlledByLocalInstance()) {
+            this.lerpSteps = 0;
+            this.setPacketCoordinates(this.getX(), this.getY(), this.getZ());
+        }
+        if (this.lerpSteps > 0) {
+            double x = this.getX() + (this.lerpX - this.getX()) / this.lerpSteps;
+            double y = this.getY() + (this.lerpY - this.getY()) / this.lerpSteps;
+            double z = this.getZ() + (this.lerpZ - this.getZ()) / this.lerpSteps;
+            double ry = Mth.wrapDegrees(this.lerpYRot - this.getYRot());
+            this.setYRot(this.getYRot() + (float) ry / this.lerpSteps);
+            this.setXRot(this.getXRot() + (float) (this.lerpXRot - this.getXRot()) / this.lerpSteps);
+            --this.lerpSteps;
+            this.setPos(x, y, z);
+            this.setRot(this.getYRot(), this.getXRot());
+        }
+        if (this.lerpHeadSteps > 0) {
+            this.yHeadRot += (float) Mth.wrapDegrees(this.lyHeadRot - this.yHeadRot) / this.lerpHeadSteps;
+            --this.lerpHeadSteps;
+        }
+        Vec3 velocity = this.getDeltaMovement();
+        double velX = velocity.x;
+        double velY = velocity.y;
+        double velZ = velocity.z;
+        if (Math.abs(velocity.x) < 0.003) {
+            velX = 0;
+        }
+        if (Math.abs(velocity.y) < 0.003) {
+            velY = 0;
+        }
+        if (Math.abs(velocity.z) < 0.003) {
+            velZ = 0;
+        }
+        this.setDeltaMovement(velX, velY, velZ);
+        this.level.getProfiler().push("ai");
+        if (this.isImmobile()) {
+            this.jumping = false;
+            this.xxa = 0.0F;
+            this.zza = 0.0F;
+        }
+        else if (this.isEffectiveAi()) {
+            this.level.getProfiler().push("newAi");
+            this.serverAiStep();
+            this.level.getProfiler().pop();
+        }
+        this.level.getProfiler().pop();
+        this.level.getProfiler().push("jump");
+        if (this.jumping && this.isAffectedByFluids()) {
+            double fluidHeight;
+            if (this.isInLava()) {
+                fluidHeight = this.getFluidHeight(FluidTags.LAVA);
+            }
+            else {
+                fluidHeight = this.getFluidHeight(FluidTags.WATER);
+            }
+            boolean isInWater = this.isInWater() && fluidHeight > 0;
+            double threshold = this.getFluidJumpThreshold();
+            if (!isInWater || this.onGround && fluidHeight <= threshold) {
+                if (!this.isInLava() || this.onGround && fluidHeight <= threshold) {
+                    if ((this.onGround || isInWater && fluidHeight <= threshold) && this.noJumpDelay == 0) {
+                        this.jumpFromGround();
+                        this.noJumpDelay = 10;
+                    }
+                }
+                else {
+                    this.jumpInLiquid(FluidTags.LAVA);
+                }
+            }
+            else {
+                if (fluidHeight > this.getHeightForNotDrowning()) {
+                    this.jumpInLiquid(FluidTags.WATER);
+                }
+            }
+        }
+        else {
+            this.noJumpDelay = 0;
+        }
+        this.level.getProfiler().pop();
+        this.level.getProfiler().push("travel");
+        this.xxa *= 0.98F;
+        this.zza *= 0.98F;
+        this.updateFallFlying();
+        this.travel(new Vec3(this.xxa, this.yya, this.zza));
+        this.level.getProfiler().pop();
+        this.level.getProfiler().push("freezing");
+        boolean flag = this.getType().is(EntityTypeTags.FREEZE_HURTS_EXTRA_TYPES);
+        if (!this.level.isClientSide && !this.isDeadOrDying()) {
+            int i = this.getTicksFrozen();
+            if (this.isInPowderSnow && this.canFreeze()) {
+                this.setTicksFrozen(Math.min(this.getTicksRequiredToFreeze(), i + 1));
+            }
+            else {
+                this.setTicksFrozen(Math.max(0, i - 2));
+            }
+        }
+        this.removeFrost();
+        this.tryAddFrost();
+        if (!this.level.isClientSide && this.tickCount % 40 == 0 && this.isFullyFrozen() && this.canFreeze()) {
+            int j = flag ? 5 : 1;
+            this.hurt(DamageSource.FREEZE, j);
+        }
+        this.level.getProfiler().pop();
+        this.level.getProfiler().push("push");
+        if (this.autoSpinAttackTicks > 0) {
+            --this.autoSpinAttackTicks;
+            AABB aabb = this.getBoundingBox();
+            this.checkAutoSpinAttack(aabb, this.getBoundingBox());
+        }
+        this.pushEntities();
+        this.level.getProfiler().pop();
+        if (!this.level.isClientSide && this.isSensitiveToWater() && this.isInWaterRainOrBubble()) {
+            if (this.tickCount % 10 == 0) {
+                this.hurt(EvolutionDamage.DROWN, 2.5F);
+            }
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Add evolution hooks
+     */
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    @Overwrite
+    public void baseTick() {
+        this.oAttackAnim = this.attackAnim;
+        if (this.firstTick) {
+            Optional<BlockPos> sleepingPos = this.getSleepingPos();
+            if (sleepingPos.isPresent()) {
+                this.setPosToBed(sleepingPos.get());
+            }
+        }
+        if (this.canSpawnSoulSpeedParticle()) {
+            this.spawnSoulSpeedParticle();
+        }
+        super.baseTick();
+        this.level.getProfiler().push("livingEntityBaseTick");
+        if (this.fireImmune() || this.level.isClientSide) {
+            this.clearFire();
+        }
+        if (this.isAlive()) {
+            boolean isPlayer = (Object) this instanceof Player;
+            if (this.isInWall()) {
+                this.hurt(EvolutionDamage.IN_WALL, 1.0F);
+            }
+            else if (isPlayer && !this.level.getWorldBorder().isWithinBounds(this.getBoundingBox())) {
+                double dist = this.level.getWorldBorder().getDistanceToBorder(this) + this.level.getWorldBorder().getDamageSafeZone();
+                if (dist < 0) {
+                    double dpB = this.level.getWorldBorder().getDamagePerBlock();
+                    if (dpB > 0) {
+                        this.hurt(EvolutionDamage.BORDER, Math.max(1, Mth.floor(-dist * dpB)));
+                    }
+                }
+            }
+            if (this.isEyeInFluid(FluidTags.WATER) && !this.level.getBlockState(this.eyeBlockPosition()).is(Blocks.BUBBLE_COLUMN)) {
+                boolean drowns = !this.canBreatheUnderwater() &&
+                                 !MobEffectUtil.hasWaterBreathing((LivingEntity) (Object) this) &&
+                                 (!isPlayer || !((Player) (Object) this).getAbilities().invulnerable);
+                if (drowns) {
+                    this.setAirSupply(this.decreaseAirSupply(this.getAirSupply()));
+                    if (this.getAirSupply() == -20) {
+                        this.setAirSupply(0);
+                        Vec3 vel = this.getDeltaMovement();
+                        for (int i = 0; i < 8; ++i) {
+                            double dx = this.random.nextDouble() - this.random.nextDouble();
+                            double dy = this.random.nextDouble() - this.random.nextDouble();
+                            double dz = this.random.nextDouble() - this.random.nextDouble();
+                            this.level.addParticle(ParticleTypes.BUBBLE, this.getX() + dx, this.getY() + dy, this.getZ() + dz, vel.x, vel.y, vel.z);
+                        }
+                        this.hurt(EvolutionDamage.DROWN, 2.5F);
+                    }
+                }
+                if (!this.level.isClientSide && this.isPassenger() && this.getVehicle() != null && !this.getVehicle().canBeRiddenInWater(this)) {
+                    this.stopRiding();
+                }
+            }
+            else if (this.getAirSupply() < this.getMaxAirSupply()) {
+                this.setAirSupply(this.increaseAirSupply(this.getAirSupply()));
+            }
+            if (!this.level.isClientSide) {
+                BlockPos pos = this.blockPosition();
+                if (!Objects.equal(this.lastPos, pos)) {
+                    this.lastPos = pos;
+                    this.onChangedBlock(pos);
+                }
+            }
+        }
+        if (this.isAlive() && (this.isInWaterRainOrBubble() || this.isInPowderSnow)) {
+            if (!this.level.isClientSide && this.wasOnFire) {
+                this.playEntityOnFireExtinguishedSound();
+            }
+            this.clearFire();
+        }
+        if (this.hurtTime > 0) {
+            --this.hurtTime;
+        }
+        if (this.invulnerableTime > 0 && !((Object) this instanceof ServerPlayer)) {
+            --this.invulnerableTime;
+        }
+        if (this.isDeadOrDying() && this.level.shouldTickDeath(this)) {
+            this.tickDeath();
+        }
+        if (this.lastHurtByPlayerTime > 0) {
+            --this.lastHurtByPlayerTime;
+        }
+        else {
+            this.lastHurtByPlayer = null;
+        }
+        if (this.lastHurtMob != null && !this.lastHurtMob.isAlive()) {
+            this.lastHurtMob = null;
+        }
+        if (this.lastHurtByMob != null) {
+            if (!this.lastHurtByMob.isAlive()) {
+                this.setLastHurtByMob(null);
+            }
+            else if (this.tickCount - this.lastHurtByMobTimestamp > 100) {
+                this.setLastHurtByMob(null);
+            }
+        }
+        this.tickEffects();
+        this.animStepO = this.animStep;
+        this.yBodyRotO = this.yBodyRot;
+        this.yHeadRotO = this.yHeadRot;
+        this.yRotO = this.getYRot();
+        this.xRotO = this.getXRot();
+        //Special attacks
+        if (this.specialAttackGracePeriod > 0) {
+            if (--this.specialAttackGracePeriod == 0) {
+                this.specialAttackFollowUp = 0;
+            }
+        }
+        if (this.isSpecialAttacking) {
+            assert this.specialAttackType != null;
+            int totalTime = this.specialAttackType.getAttackTime();
+            if (++this.specialAttackTime >= totalTime) {
+                this.stopSpecialAttack(IMelee.StopReason.END);
+            }
+        }
+        else {
+            if (this.specialAttackLockedTicks > 0) {
+                if (--this.specialAttackLockedTicks == 0) {
+                    this.specialAttackTime = 0;
+                    this.specialAttackFollowUp = 0;
+                }
+            }
+        }
+        this.level.getProfiler().pop();
+    }
 
     @Shadow
     protected abstract void blockUsingShield(LivingEntity p_190629_1_);
@@ -373,6 +722,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Shadow
     public abstract boolean canBeAffected(MobEffectInstance pPotioneffect);
 
+    @Shadow
+    public abstract boolean canBreatheUnderwater();
+
     @Override
     public boolean canPerformFollowUp(IMelee.IAttackType type) {
         if (this.specialAttackType != type) {
@@ -383,6 +735,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         }
         return type.getFollowUps() >= this.specialAttackFollowUp;
     }
+
+    @Shadow
+    public abstract boolean canSpawnSoulSpeedParticle();
 
     @Shadow
     public abstract boolean canStandOnFluid(FluidState p_204042_);
@@ -405,6 +760,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         }
         return flag;
     }
+
+    @Shadow
+    protected abstract void checkAutoSpinAttack(AABB pBoundingBoxBeforeSpin, AABB pBoundingBoxAfterSpin);
 
     @Shadow
     protected abstract boolean checkBedExists();
@@ -447,6 +805,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Shadow
     protected abstract boolean checkTotemDeathProtection(DamageSource p_21263_);
+
+    @Shadow
+    protected abstract int decreaseAirSupply(int pCurrentAir);
 
     @Shadow
     protected abstract void detectEquipmentUpdates();
@@ -496,6 +857,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     public abstract CombatTracker getCombatTracker();
 
     @Shadow
+    protected abstract int getCurrentSwingDuration();
+
+    @Shadow
     @Nullable
     protected abstract SoundEvent getDeathSound();
 
@@ -523,6 +887,11 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Shadow
     public abstract float getHealth();
+
+    @Unique
+    private double getHeightForNotDrowning() {
+        return Math.min(this.getEyeHeight() * 0.9, this.getBbHeight() * 0.75);
+    }
 
     @Shadow
     public abstract ItemStack getItemBySlot(EquipmentSlot p_21127_);
@@ -555,6 +924,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Shadow
     public abstract ItemStack getOffhandItem();
+
+    @Shadow
+    public abstract Optional<BlockPos> getSleepingPos();
 
     @Shadow
     protected abstract float getSoundVolume();
@@ -908,6 +1280,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Shadow
     public abstract boolean isFallFlying();
 
+    @Shadow
+    protected abstract boolean isImmobile();
+
     @Override
     public boolean isInHitTicks() {
         if (!this.isSpecialAttacking()) {
@@ -947,6 +1322,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     public boolean isOnGracePeriod() {
         return this.specialAttackGracePeriod > 0;
     }
+
+    @Shadow
+    public abstract boolean isSensitiveToWater();
 
     @Shadow
     public abstract boolean isSleeping();
@@ -991,37 +1369,23 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         ForgeHooks.onLivingJump((LivingEntity) (Object) this);
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason Fix liquid physics
+     */
+    @Overwrite
+    protected void jumpInLiquid(TagKey<net.minecraft.world.level.material.Fluid> fluid) {
+        ((Vec3d) this.getDeltaMovement()).addMutable(0, 0.02 * this.getAttributeValue(ForgeMod.SWIM_SPEED.get()), 0);
+    }
+
     @Shadow
     public abstract void knockback(double p_147241_, double p_147242_, double p_147243_);
 
-    @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
-    private void onAddAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
-        tag.put("EffectHelper", this.effectHelper.save());
-    }
+    @Shadow
+    protected abstract Brain<?> makeBrain(Dynamic<?> pDynamic);
 
-    @Inject(method = "baseTick", at = @At(value = "TAIL"))
-    public void onBaseTick(CallbackInfo ci) {
-        if (this.specialAttackGracePeriod > 0) {
-            if (--this.specialAttackGracePeriod == 0) {
-                this.specialAttackFollowUp = 0;
-            }
-        }
-        if (this.isSpecialAttacking) {
-            assert this.specialAttackType != null;
-            int totalTime = this.specialAttackType.getAttackTime();
-            if (++this.specialAttackTime >= totalTime) {
-                this.stopSpecialAttack(IMelee.StopReason.END);
-            }
-        }
-        else {
-            if (this.specialAttackLockedTicks > 0) {
-                if (--this.specialAttackLockedTicks == 0) {
-                    this.specialAttackTime = 0;
-                    this.specialAttackFollowUp = 0;
-                }
-            }
-        }
-    }
+    @Shadow
+    protected abstract void onChangedBlock(BlockPos pPos);
 
     /**
      * @author TheGreatWolf
@@ -1039,6 +1403,8 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Inject(method = "<init>", at = @At(value = "TAIL"))
     private void onConstructor(EntityType<? extends LivingEntity> type, Level level, CallbackInfo ci) {
+        this.activeEffects = new Reference2ObjectOpenHashMap<>();
+        this.combatTracker = new EvolutionCombatTracker((LivingEntity) (Object) this);
         AttributeInstance massAtr = this.getAttribute(EvolutionAttributes.MASS.get());
         assert massAtr != null;
         massAtr.setBaseValue(this.getBaseMass());
@@ -1063,24 +1429,6 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Shadow
     public abstract void onEffectUpdated(MobEffectInstance p_147192_, boolean p_147193_, @Nullable Entity p_147194_);
-
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInit(EntityType type, Level level, CallbackInfo ci) {
-        this.activeEffects = new Reference2ObjectOpenHashMap<>();
-        this.combatTracker = new EvolutionCombatTracker((LivingEntity) (Object) this);
-    }
-
-    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
-    private void onReadAdditionalSaveData(CompoundTag tag, CallbackInfo ci) {
-        this.effectHelper.fromNBT(tag.getCompound("EffectHelper"));
-    }
-
-    @Inject(method = "updateSwingTime", at = @At("HEAD"), cancellable = true)
-    private void onUpdateSwingTime(CallbackInfo ci) {
-        if (!this.swinging && this.swingTime == 0) {
-            ci.cancel();
-        }
-    }
 
     @Override
     public void performFollowUp() {
@@ -1114,11 +1462,6 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Shadow
     protected abstract void playHurtSound(DamageSource p_21160_);
-
-    @Redirect(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isEffectiveAi()Z", ordinal = 0))
-    private boolean proxyAiStep(LivingEntity entity) {
-        return true;
-    }
 
     @Nullable
     @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/Maps;newHashMap()Ljava/util/HashMap;"))
@@ -1161,6 +1504,58 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         }
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason Add Evolution Hooks
+     */
+    @Override
+    @Overwrite
+    public void readAdditionalSaveData(CompoundTag tag) {
+        this.setAbsorptionAmount(tag.getFloat("AbsorptionAmount"));
+        if (tag.contains("Attributes", 9) && !this.level.isClientSide) {
+            this.getAttributes().load(tag.getList("Attributes", 10));
+        }
+        if (tag.contains("ActiveEffects", 9)) {
+            ListTag effects = tag.getList("ActiveEffects", 10);
+            for (int i = 0; i < effects.size(); ++i) {
+                CompoundTag compound = effects.getCompound(i);
+                MobEffectInstance effect = MobEffectInstance.load(compound);
+                if (effect != null) {
+                    this.activeEffects.put(effect.getEffect(), effect);
+                }
+            }
+        }
+        if (tag.contains("Health", 99)) {
+            this.setHealth(tag.getFloat("Health"));
+        }
+        this.hurtTime = tag.getShort("HurtTime");
+        this.deathTime = tag.getShort("DeathTime");
+        this.lastHurtByMobTimestamp = tag.getInt("HurtByTimestamp");
+        if (tag.contains("Team", 8)) {
+            String teamName = tag.getString("Team");
+            PlayerTeam team = this.level.getScoreboard().getPlayerTeam(teamName);
+            boolean teamExists = team != null && this.level.getScoreboard().addPlayerToTeam(this.getStringUUID(), team);
+            if (!teamExists) {
+                LOGGER.warn("Unable to add mob to team \"{}\" (that team probably doesn't exist)", teamName);
+            }
+        }
+        if (tag.getBoolean("FallFlying")) {
+            this.setSharedFlag(7, true);
+        }
+        if (tag.contains("SleepingX", 99) && tag.contains("SleepingY", 99) && tag.contains("SleepingZ", 99)) {
+            BlockPos blockpos = new BlockPos(tag.getInt("SleepingX"), tag.getInt("SleepingY"), tag.getInt("SleepingZ"));
+            this.setSleepingPos(blockpos);
+            this.entityData.set(DATA_POSE, Pose.SLEEPING);
+            if (!this.firstTick) {
+                this.setPosToBed(blockpos);
+            }
+        }
+        if (tag.contains("Brain", 10)) {
+            this.brain = this.makeBrain(new Dynamic<>(NbtOps.INSTANCE, tag.get("Brain")));
+        }
+        this.effectHelper.fromNBT(tag.getCompound("EffectHelper"));
+    }
+
     @Override
     public void removeAbsorptionSuggestion(float amount) {
         if (amount > 0) {
@@ -1178,7 +1573,13 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     }
 
     @Shadow
+    protected abstract void removeFrost();
+
+    @Shadow
     protected abstract void removeSoulSpeed();
+
+    @Shadow
+    protected abstract void serverAiStep();
 
     @Shadow
     public abstract void setAbsorptionAmount(float pAmount);
@@ -1193,7 +1594,16 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     public abstract void setLastHurtByMob(@Nullable LivingEntity p_70604_1_);
 
     @Shadow
+    protected abstract void setPosToBed(BlockPos p_21081_);
+
+    @Shadow
+    public abstract void setSleepingPos(BlockPos pPos);
+
+    @Shadow
     public abstract void setStingerCount(int p_226300_1_);
+
+    @Shadow
+    protected abstract void spawnSoulSpeedParticle();
 
     @Override
     public void startSpecialAttack(IMelee.IAttackType type) {
@@ -1368,6 +1778,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
             ((EvolutionCombatTracker) this.combatTracker).setLastSuffix(null);
         }
     }
+
+    @Shadow
+    protected abstract void tickDeath();
 
     /**
      * @author TheGreatWolf
@@ -1576,6 +1989,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     }
 
     @Shadow
+    protected abstract void tryAddFrost();
+
+    @Shadow
     protected abstract void tryAddSoulSpeed();
 
     @Override
@@ -1624,6 +2040,9 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     }
 
     @Shadow
+    protected abstract void updateFallFlying();
+
+    @Shadow
     protected abstract void updateGlowingStatus();
 
     @Shadow
@@ -1631,6 +2050,29 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Shadow
     protected abstract void updateSwimAmount();
+
+    /**
+     * @author TheGreatWolf
+     * @reason Fix special attack
+     */
+    @Overwrite
+    protected void updateSwingTime() {
+        if (!this.swinging && this.swingTime == 0) {
+            return;
+        }
+        int i = this.getCurrentSwingDuration();
+        if (this.swinging) {
+            ++this.swingTime;
+            if (this.swingTime >= i) {
+                this.swingTime = 0;
+                this.swinging = false;
+            }
+        }
+        else {
+            this.swingTime = 0;
+        }
+        this.attackAnim = this.swingTime / (float) i;
+    }
 
     @Shadow
     protected abstract void updatingUsingItem();

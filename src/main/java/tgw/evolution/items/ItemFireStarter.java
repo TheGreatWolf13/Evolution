@@ -24,7 +24,6 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.common.ForgeMod;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionCreativeTabs;
-import tgw.evolution.util.math.MathHelper;
 
 public class ItemFireStarter extends ItemEv implements IDurability {
 
@@ -45,9 +44,9 @@ public class ItemFireStarter extends ItemEv implements IDurability {
         }
         float distance = 3.0F;
         if (living instanceof Player) {
-            distance = (float) living.getAttribute(ForgeMod.REACH_DISTANCE.get()).getValue();
+            distance = (float) living.getAttributeValue(ForgeMod.REACH_DISTANCE.get());
         }
-        BlockHitResult rayTrace = MathHelper.rayTraceBlocksFromEyes(living, 1, distance, false);
+        BlockHitResult rayTrace = (BlockHitResult) living.pick(distance, 1.0f, false);
         BlockPos pos = rayTrace.getBlockPos();
         BlockPos facingPos = pos.relative(rayTrace.getDirection());
         if (rayTrace.getType() == HitResult.Type.BLOCK && canSetFire(level, facingPos)) {
@@ -80,8 +79,8 @@ public class ItemFireStarter extends ItemEv implements IDurability {
         if (player.level.isClientSide) {
             return;
         }
-        float distance = (float) player.getAttribute(ForgeMod.REACH_DISTANCE.get()).getValue();
-        BlockHitResult hitResult = MathHelper.rayTraceBlocksFromEyes(player, 1, distance, false);
+        float distance = (float) player.getAttributeValue(ForgeMod.REACH_DISTANCE.get());
+        BlockHitResult hitResult = (BlockHitResult) player.pick(distance, 1.0f, false);
         ((ServerLevel) player.level).sendParticles(ParticleTypes.SMOKE,
                                                    hitResult.getBlockPos().getX() + 0.5,
                                                    hitResult.getBlockPos().getY() + 1,
@@ -117,8 +116,8 @@ public class ItemFireStarter extends ItemEv implements IDurability {
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        float distance = (float) player.getAttribute(ForgeMod.REACH_DISTANCE.get()).getValue();
-        BlockHitResult hitResult = MathHelper.rayTraceBlocksFromEyes(player, 1, distance, false);
+        float distance = (float) player.getAttributeValue(ForgeMod.REACH_DISTANCE.get());
+        BlockHitResult hitResult = (BlockHitResult) player.pick(distance, 1.0f, false);
         if (hitResult.getType() == HitResult.Type.BLOCK && canSetFire(level, hitResult.getBlockPos().relative(hitResult.getDirection()))) {
             player.startUsingItem(hand);
             return new InteractionResultHolder<>(InteractionResult.CONSUME, player.getItemInHand(hand));

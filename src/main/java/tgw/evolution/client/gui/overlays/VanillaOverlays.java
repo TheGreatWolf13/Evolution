@@ -414,20 +414,10 @@ public final class VanillaOverlays {
             return;
         }
         if (!entity.noPhysics) {
-            BlockState state = null;
             Vec3 eyePos = entity.getEyePosition(partialTicks);
-            for (int i = 0; i < 8; ++i) {
-                double x = eyePos.x + (i % 2 - 0.5F) * entity.getBbWidth() * 0.8F;
-                double y = eyePos.y + ((i >> 1) % 2 - 0.5F) * 0.1F;
-                double z = eyePos.z + ((i >> 2) % 2 - 0.5F) * entity.getBbWidth() * 0.8F;
-                POS.set(x, y, z);
-                BlockState tryingState = entity.level.getBlockState(POS);
-                if (tryingState.getRenderShape() != RenderShape.INVISIBLE && tryingState.isViewBlocking(entity.level, POS)) {
-                    state = tryingState;
-                    break;
-                }
-            }
-            if (state != null) {
+            POS.set(eyePos.x, eyePos.y, eyePos.z);
+            BlockState state = entity.level.getBlockState(POS);
+            if (state.getRenderShape() != RenderShape.INVISIBLE && state.isViewBlocking(entity.level, POS)) {
                 TextureAtlasSprite sprite = mc.getBlockRenderer().getBlockModelShaper().getTexture(state, entity.level, POS);
                 GUIUtils.renderTex(width, height, mc.getBlockRenderer().getBlockModelShaper().getTexture(state, entity.level, POS), matrices);
             }

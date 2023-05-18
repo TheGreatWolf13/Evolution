@@ -45,6 +45,7 @@
     "ForgeModMixin",
     "FriendlyByteBufMixin",
     "GiveCommandMixin",
+    "Holder_ReferenceMixin",
     "HoverEvent_ItemStackInfoMixin",
     "InventoryChangeTriggerMixin",
     "InventoryMenuMixin",

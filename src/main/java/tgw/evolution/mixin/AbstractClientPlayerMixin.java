@@ -26,7 +26,7 @@ public abstract class AbstractClientPlayerMixin extends Player implements IEntit
     @Nullable
     @Override
     public HitboxEntity<? extends Entity> getHitboxes() {
-        return "default".equals(this.getModelName()) ? EvolutionEntityHitboxes.PLAYER_STEVE : EvolutionEntityHitboxes.PLAYER_ALEX;
+        return "default".equals(this.getModelName()) ? EvolutionEntityHitboxes.PLAYER_STEVE.get(this) : EvolutionEntityHitboxes.PLAYER_ALEX.get(this);
     }
 
     @Shadow

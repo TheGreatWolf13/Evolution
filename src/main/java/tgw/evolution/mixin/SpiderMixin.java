@@ -39,6 +39,6 @@ public abstract class SpiderMixin extends Monster implements ILivingEntityPatch<
 
     @Override
     public @Nullable HitboxEntity<Spider> getHitboxes() {
-        return LegacyEntityHitboxes.SPIDER;
+        return LegacyEntityHitboxes.SPIDER.get((Spider) (Object) this);
     }
 }

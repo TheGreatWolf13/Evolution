@@ -13,6 +13,6 @@ public abstract class CreeperMixin implements ILivingEntityPatch<Creeper> {
     @Nullable
     @Override
     public HitboxEntity<Creeper> getHitboxes() {
-        return LegacyEntityHitboxes.CREEPER;
+        return LegacyEntityHitboxes.CREEPER.get((Creeper) (Object) this);
     }
 }

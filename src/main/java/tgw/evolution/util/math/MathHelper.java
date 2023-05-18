@@ -1,5 +1,6 @@
 package tgw.evolution.util.math;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -575,19 +576,6 @@ public final class MathHelper {
         return victim.oAttackAnim + f * partialTick;
     }
 
-    public static <T extends Entity> Vec3d getCameraPosition(T victim, float partialTicks) {
-        double x = Mth.lerp(partialTicks, victim.xo, victim.getX());
-        double y = Mth.lerp(partialTicks, victim.yo, victim.getY());
-        double z = Mth.lerp(partialTicks, victim.zo, victim.getZ());
-        if (!(victim instanceof LivingEntity living && living.isDeadOrDying())) {
-            HitboxEntity<T> hitboxes = ((IEntityPatch<T>) victim).getHitboxes();
-            if (hitboxes != null) {
-                return hitboxes.getOffsetForCamera(victim, partialTicks).addMutable(x, y, z);
-            }
-        }
-        return new Vec3d(x, y + victim.getEyeHeight(), z);
-    }
-
     public static IPoseStackPatch getExtendedMatrix(PoseStack matrices) {
         return (IPoseStackPatch) matrices;
     }
@@ -735,6 +723,23 @@ public final class MathHelper {
             f = 1.0F;
         }
         return f;
+    }
+
+    @CanIgnoreReturnValue
+    public static <E extends Entity> Vec3d getRelativeEyePosition(E entity, float partialTicks, @Nullable Vec3d result) {
+        if (!(entity instanceof LivingEntity living && living.isDeadOrDying())) {
+            HitboxEntity<E> hitboxes = ((IEntityPatch<E>) entity).getHitboxes();
+            if (hitboxes != null) {
+                if (result != null) {
+                    return result.set(hitboxes.getOffsetForCamera(entity, partialTicks));
+                }
+                return hitboxes.getOffsetForCamera(entity, partialTicks);
+            }
+        }
+        if (result != null) {
+            return result.set(0, entity.getEyeHeight(), 0);
+        }
+        return new Vec3d(0, entity.getEyeHeight(), 0);
     }
 
     /**
@@ -976,38 +981,9 @@ public final class MathHelper {
         return !(value > end);
     }
 
-    public static BlockHitResult rayTraceBlocksFromCamera(Entity victim,
-                                                          Vec3d cameraPos,
-                                                          float partialTicks,
-                                                          double distance,
-                                                          boolean fluid) {
-        Vec3 from = cameraPos.isNull() ? victim.getEyePosition(partialTicks) : cameraPos.asImmutable();
-        Vec3 look = victim.getViewVector(partialTicks);
-        Vec3 to = from.add(look.x * distance, look.y * distance, look.z * distance);
-        return victim.level.clip(
-                new ClipContext(from, to, ClipContext.Block.OUTLINE, fluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, victim));
-    }
-
-    /**
-     * Casts a ray tracing for {@code Block}s starting from the eyes of the desired {@link Entity}.
-     *
-     * @param victim       The {@link Entity} from whose eyes to cast the ray off.
-     * @param partialTicks The partial ticks to interpolate, between {@code 0.0f} and {@code 1.0f}.
-     * @param distance     The maximum distance the ray will travel.
-     * @param fluid        {@code true} if the ray can hit fluids, {@code false} if the ray can go through them.
-     * @return A {@link BlockHitResult} containing the {@link net.minecraft.core.BlockPos} of the {@code Block} hit.
-     */
-    public static BlockHitResult rayTraceBlocksFromEyes(Entity victim, float partialTicks, double distance, boolean fluid) {
-        Vec3 from = victim.getEyePosition(partialTicks);
-        Vec3 look = victim.getViewVector(partialTicks);
-        Vec3 to = from.add(look.x * distance, look.y * distance, look.z * distance);
-        return victim.level.clip(
-                new ClipContext(from, to, ClipContext.Block.OUTLINE, fluid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, victim));
-    }
-
     /**
      * Casts a ray tracing for {@code Block}s based on the {@link Entity}'s {@link Entity#yRot} and {@link Entity#xRot}.
-     * This method is useful for Entities that are projectiles, as {@link MathHelper#rayTraceBlocksFromEyes(Entity, float, double, boolean)}
+     * This method is useful for Entities that are projectiles, as {@link Entity#pick(double, float, boolean)}
      * usually do not work on them.
      *
      * @param victim   The {@link Entity} from whose {@code yaw} and {@code pitch} to cast the ray.
@@ -1096,41 +1072,28 @@ public final class MathHelper {
      * containing the position of the hit. If no {@link Entity} was hit by the ray, this {@link EntityHitResult} will be {@code null}.
      */
     @Nullable
-    public static EntityHitResult rayTraceEntitiesFromEyes(Entity victim, Vec3d cameraPos, float partialTicks, final double reach) {
+    public static EntityHitResult rayTraceEntitiesFromEyes(Entity victim, float partialTicks, final double reach) {
         //From vector
-        final double fromX;
-        final double fromY;
-        final double fromZ;
-        if (cameraPos.isNull()) {
-            //Eye position
-            fromX = Mth.lerp(partialTicks, victim.xo, victim.getX());
-            fromY = Mth.lerp(partialTicks, victim.yo, victim.getY());
-            fromZ = Mth.lerp(partialTicks, victim.zo, victim.getZ());
-        }
-        else {
-            //Camera position
-            fromX = cameraPos.x();
-            fromY = cameraPos.y();
-            fromZ = cameraPos.z();
-        }
+        Vec3 from = victim.getEyePosition(partialTicks);
         //Entity view vector (won't result in new allocations as we already dealt with those)
         Vec3 look = victim.getViewVector(partialTicks);
         //To vector
-        final double toX = fromX + look.x * reach;
-        final double toY = fromY + look.y * reach;
-        final double toZ = fromZ + look.z * reach;
+        final double toX = from.x + look.x * reach;
+        final double toY = from.y + look.y * reach;
+        final double toZ = from.z + look.z * reach;
         //Promising variables
         Entity promEntity = null;
         Hitbox promBox = null;
         double promDist = reach;
         //Scan for entities nearby
-        List<Entity> foundEntities = victim.level.getEntities(victim, new AABB(fromX, fromY, fromZ, toX, toY, toZ).inflate(2.5), PICKABLE_ENTITIES);
+        List<Entity> foundEntities = victim.level.getEntities(victim, new AABB(from.x, from.y, from.z, toX, toY, toZ).inflate(2.5),
+                                                              PICKABLE_ENTITIES);
         if (!foundEntities.isEmpty()) {
             Hitbox[] boxHolder = new Hitbox[1];
             //Iterate over the entities
             for (int i = 0, l = foundEntities.size(); i < l; i++) {
                 Entity entityInBB = foundEntities.get(i);
-                double dist = rayTracingEntityHitboxes(entityInBB, fromX, fromY, fromZ, look.x, look.y, look.z, promDist, partialTicks,
+                double dist = rayTracingEntityHitboxes(entityInBB, from.x, from.y, from.z, look.x, look.y, look.z, promDist, partialTicks,
                                                        boxHolder);
                 if (!Double.isNaN(dist)) {
                     //Collided with victim, checking if the results are better than what we have
@@ -1149,9 +1112,9 @@ public final class MathHelper {
             return null;
         }
         //Create vector from distance
-        double hitX = fromX + promDist * (toX - fromX);
-        double hitY = fromY + promDist * (toY - fromY);
-        double hitZ = fromZ + promDist * (toZ - fromZ);
+        double hitX = from.x + promDist * (toX - from.x);
+        double hitY = from.y + promDist * (toY - from.y);
+        double hitZ = from.z + promDist * (toZ - from.z);
         return new AdvancedEntityHitResult(promEntity, new Vec3(hitX, hitY, hitZ), promBox);
     }
 

@@ -1,5 +1,6 @@
 package tgw.evolution.mixin;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -10,11 +11,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -43,6 +46,7 @@ import tgw.evolution.blocks.IClimbable;
 import tgw.evolution.init.EvolutionBlockTags;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.patches.IHolderReferencePatch;
 import tgw.evolution.util.OptionalMutableBlockPos;
 import tgw.evolution.util.constants.LevelEvents;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
@@ -55,6 +59,7 @@ import tgw.evolution.world.util.LevelUtils;
 
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 @Mixin(Entity.class)
 public abstract class EntityMixin extends CapabilityProvider<Entity> implements IEntityPatch<Entity> {
@@ -62,10 +67,15 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Unique
     private final AABBMutable bbForPose = new AABBMutable();
     @Unique
-    private final Vec3d eyePosition = new Vec3d();
+    private final BlockPos.MutableBlockPos eyeBlockPos = new BlockPos.MutableBlockPos();
+    @Unique
+    private final Vec3d eyePosition = new Vec3d(Vec3d.NULL);
     @Unique
     private final BlockPos.MutableBlockPos frictionPos = new BlockPos.MutableBlockPos();
+    @Unique
     private final BlockPos.MutableBlockPos landingPos = new BlockPos.MutableBlockPos();
+    @Unique
+    private final Vec3d partialEyePosition = new Vec3d(Vec3d.NULL);
     @Unique
     private final OptionalMutableBlockPos supportingPos = new OptionalMutableBlockPos();
     @Unique
@@ -130,7 +140,11 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     protected Vec3 stuckSpeedMultiplier;
     @Shadow
+    protected boolean wasEyeInWater;
+    @Shadow
     private BlockPos blockPosition;
+    @Unique
+    private boolean cachedFluidOnEyes;
     @Shadow
     private ChunkPos chunkPosition;
     @Shadow
@@ -140,6 +154,11 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     @javax.annotation.Nullable
     private BlockState feetBlockState;
+    @Shadow
+    @Final
+    private Set<TagKey<Fluid>> fluidOnEyes;
+    @Unique
+    private float lastPartialTickEyePosition;
     @Shadow
     private EntityInLevelCallback levelCallback;
     @Shadow
@@ -180,6 +199,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
      */
     @Overwrite
     public void baseTick() {
+        this.eyePosition.set(Vec3d.NULL);
+        this.partialEyePosition.set(Vec3d.NULL);
+        this.cachedFluidOnEyes = false;
         //Count down fire immunity
         if (this.fireDamageImmunity > 0) {
             this.fireDamageImmunity--;
@@ -203,7 +225,6 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         this.wasInPowderSnow = this.isInPowderSnow;
         this.isInPowderSnow = false;
         this.updateInWaterStateAndDoFluidPushing();
-        this.updateFluidOnEyes();
         this.updateSwimming();
         if (this.level.isClientSide) {
             this.clearFire();
@@ -293,6 +314,16 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     protected abstract Vec3 collide(Vec3 pVec);
 
+    /**
+     * @author TheGreatWolf
+     * @reason Use cached pos
+     */
+    @Overwrite
+    public BlockPos eyeBlockPosition() {
+        Vec3 eyePosition = this.getEyePosition();
+        return this.eyeBlockPos.set(eyePosition.x, eyePosition.y, eyePosition.z);
+    }
+
     @Shadow
     public abstract boolean fireImmune();
 
@@ -320,6 +351,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     }
 
     @Shadow
+    public abstract float getBbHeight();
+
+    @Shadow
     protected abstract float getBlockSpeedFactor();
 
     @Shadow
@@ -334,6 +368,18 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         EntityDimensions dim = this.getDimensions(pose);
         float f = dim.width / 2.0F;
         return this.bbForPose.set(this.getX() - f, this.getY(), this.getZ() - f, this.getX() + f, this.getY() + dim.height, this.getZ() + f);
+    }
+
+    @Unique
+    @CanIgnoreReturnValue
+    private Vec3d getCameraPosition(float partialTicks) {
+        if (partialTicks == 1.0f) {
+            return MathHelper.getRelativeEyePosition((Entity) (Object) this, 1.0f, this.eyePosition).addMutable(this.position);
+        }
+        double x = Mth.lerp(partialTicks, this.xo, this.getX());
+        double y = Mth.lerp(partialTicks, this.yo, this.getY());
+        double z = Mth.lerp(partialTicks, this.zo, this.getZ());
+        return MathHelper.getRelativeEyePosition((Entity) (Object) this, partialTicks, this.partialEyePosition).addMutable(x, y, z);
     }
 
     @Shadow
@@ -351,23 +397,30 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     /**
      * @author TheGreatWolf
-     * @reason Avoid allocations
+     * @reason Avoid allocations, use proper eye position
      */
     @Overwrite
     public final Vec3 getEyePosition() {
-        return this.eyePosition.set(this.getX(), this.getEyeY(), this.getZ());
+        if (this.eyePosition.isNull()) {
+            this.getCameraPosition(1.0f);
+        }
+        return this.eyePosition;
     }
 
     /**
      * @author TheGreatWolf
-     * @reason Avoid allocations
+     * @reason Avoid allocations, use proper eye position
      */
     @Overwrite
     public final Vec3 getEyePosition(float partialTicks) {
-        double x = Mth.lerp(partialTicks, this.xo, this.getX());
-        double y = Mth.lerp(partialTicks, this.yo, this.getY()) + this.getEyeHeight();
-        double z = Mth.lerp(partialTicks, this.zo, this.getZ());
-        return this.eyePosition.set(x, y, z);
+        if (partialTicks == 1.0f) {
+            return this.getEyePosition();
+        }
+        if (this.partialEyePosition.isNull() || this.lastPartialTickEyePosition != partialTicks) {
+            this.getCameraPosition(partialTicks);
+            this.lastPartialTickEyePosition = partialTicks;
+        }
+        return this.partialEyePosition;
     }
 
     @Shadow
@@ -380,6 +433,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Shadow
     protected abstract int getFireImmuneTicks();
+
+    @Shadow
+    public abstract double getFluidHeight(TagKey<Fluid> pFluidTag);
 
     @Override
     public float getFrictionModifier() {
@@ -525,6 +581,26 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     public abstract boolean isCrouching();
 
+    /**
+     * @author TheGreatWolf
+     * @reason Only calculate eye in fluid when needed
+     */
+    @Overwrite
+    public boolean isEyeInFluid(TagKey<Fluid> fluid) {
+        if (fluid == FluidTags.WATER) {
+            if (!this.isInWater()) {
+                return false;
+            }
+            if (this.getFluidHeight(fluid) >= this.getBbHeight()) {
+                return true;
+            }
+        }
+        if (!this.cachedFluidOnEyes) {
+            this.updateFluidOnEyes();
+        }
+        return this.fluidOnEyes.contains(fluid);
+    }
+
     @Shadow
     protected abstract boolean isHorizontalCollisionMinor(Vec3 pDeltaMovement);
 
@@ -540,14 +616,13 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         if (this.noPhysics || this.level.isClientSide) {
             return false;
         }
-        float dWidth = this.dimensions.width * 0.8F / 2;
-        Vec3 eyePos = this.getEyePosition();
-        double minX = eyePos.x - dWidth;
-        double minY = eyePos.y - 0.5E-6;
-        double minZ = eyePos.z - dWidth;
-        double maxX = eyePos.x + dWidth;
-        double maxY = eyePos.y + 0.5E-6;
-        double maxZ = eyePos.z + dWidth;
+        float dWidth = this.dimensions.width * 0.4F;
+        double minX = this.getX() - dWidth;
+        double minY = this.getEyeY() - 0.5E-6;
+        double minZ = this.getZ() - dWidth;
+        double maxX = this.getX() + dWidth;
+        double maxY = this.getEyeY() + 0.5E-6;
+        double maxZ = this.getZ() + dWidth;
         int x0 = Mth.floor(minX);
         int y0 = Mth.floor(minY);
         int z0 = Mth.floor(minZ);
@@ -785,7 +860,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
      */
     @Overwrite
     public HitResult pick(double distance, float partialTicks, boolean checkFluids) {
-        Vec3 camera = MathHelper.getCameraPosition((Entity) (Object) this, partialTicks).asImmutable();
+        Vec3 camera = this.getEyePosition(partialTicks);
         Vec3 viewVec = this.getViewVector(partialTicks);
         Vec3 to = camera.add(viewVec.x * distance, viewVec.y * distance, viewVec.z * distance);
         return this.level.clip(new ClipContext(camera, to, ClipContext.Block.OUTLINE, checkFluids ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE,
@@ -1126,8 +1201,30 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         return isInFluid;
     }
 
-    @Shadow
-    protected abstract void updateFluidOnEyes();
+    /**
+     * @author TheGreatWolf
+     * @reason Use proper eye position.
+     */
+    @Overwrite
+    private void updateFluidOnEyes() {
+        this.cachedFluidOnEyes = true;
+        this.wasEyeInWater = this.isEyeInFluid(FluidTags.WATER);
+        this.fluidOnEyes.clear();
+        Vec3 eyePosition = this.getEyePosition();
+        double eyeY = eyePosition.y;
+        Entity vehicle = this.getVehicle();
+        if (vehicle instanceof Boat boat) {
+            if (!boat.isUnderWater() && boat.getBoundingBox().maxY >= eyeY && boat.getBoundingBox().minY <= eyeY) {
+                return;
+            }
+        }
+        BlockPos eyePos = this.eyeBlockPosition();
+        FluidState fluidstate = this.level.getFluidState(eyePos);
+        double height = eyePos.getY() + fluidstate.getHeight(this.level, eyePos);
+        if (height > eyeY) {
+            this.fluidOnEyes.addAll(((IHolderReferencePatch<Fluid>) fluidstate.getType().builtInRegistryHolder()).getTags());
+        }
+    }
 
     @Shadow
     protected abstract boolean updateInWaterStateAndDoFluidPushing();

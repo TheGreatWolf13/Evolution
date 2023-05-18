@@ -6,12 +6,12 @@ import tgw.evolution.util.hitbox.hitboxes.*;
 
 public final class LegacyEntityHitboxes {
 
-    public static final HitboxEntity<CaveSpider> CAVE_SPIDER = new LegacyHitboxCaveSpider();
-    public static final HitboxEntity<Creeper> CREEPER = new LegacyHitboxCreeper();
-    public static final HitboxEntity<AbstractSkeleton> SKELETON = new LegacyHitboxSkeleton();
-    public static final HitboxEntity<Spider> SPIDER = new LegacyHitboxSpider<>();
-    public static final HitboxEntity<Villager> VILLAGER = new LegacyHitboxVillager();
-    public static final HitboxEntity<Zombie> ZOMBIE = new LegacyHitboxZombie();
+    public static final HitboxHolder<CaveSpider> CAVE_SPIDER = new HitboxHolder<>(LegacyHitboxCaveSpider::new);
+    public static final HitboxHolder<Creeper> CREEPER = new HitboxHolder<>(LegacyHitboxCreeper::new);
+    public static final HitboxHolder<AbstractSkeleton> SKELETON = new HitboxHolder<>(LegacyHitboxSkeleton::new);
+    public static final HitboxHolder<Spider> SPIDER = new HitboxHolder<>(LegacyHitboxSpider::new);
+    public static final HitboxHolder<Villager> VILLAGER = new HitboxHolder<>(LegacyHitboxVillager::new);
+    public static final HitboxHolder<Zombie> ZOMBIE = new HitboxHolder<>(LegacyHitboxZombie::new);
 
     private LegacyEntityHitboxes() {
     }

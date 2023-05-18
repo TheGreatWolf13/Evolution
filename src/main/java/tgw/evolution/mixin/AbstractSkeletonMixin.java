@@ -19,6 +19,6 @@ public abstract class AbstractSkeletonMixin extends Monster implements ILivingEn
 
     @Override
     public @Nullable HitboxEntity<AbstractSkeleton> getHitboxes() {
-        return LegacyEntityHitboxes.SKELETON;
+        return LegacyEntityHitboxes.SKELETON.get((AbstractSkeleton) (Object) this);
     }
 }

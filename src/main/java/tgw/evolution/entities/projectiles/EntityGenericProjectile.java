@@ -119,7 +119,7 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
     }
 
     protected void adjustPos(LivingEntity shooter, HumanoidArm arm) {
-        Vec3d pos = MathHelper.getCameraPosition(shooter, 1.0f);
+        Vec3 pos = shooter.getEyePosition();
         this.setPos(pos.x(), pos.y(), pos.z());
     }
 

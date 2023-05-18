@@ -25,6 +25,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.common.ForgeMod;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,6 @@ import tgw.evolution.patches.IPoseStackPatch;
 import tgw.evolution.util.collection.I2OMap;
 import tgw.evolution.util.collection.I2OOpenHashMap;
 import tgw.evolution.util.math.MathHelper;
-import tgw.evolution.util.math.Vec3d;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -180,13 +180,12 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
             if (this.minecraft.level != null) {
                 this.minecraft.getProfiler().push("pick");
                 double reachDistance = this.minecraft.player.getAttributeValue(ForgeMod.REACH_DISTANCE.get());
-                Vec3d cameraPos = MathHelper.getCameraPosition(entity, partialTicks);
-                ClientEvents.getInstance().setCameraPos(cameraPos);
-                this.minecraft.hitResult = MathHelper.rayTraceBlocksFromCamera(entity, cameraPos, partialTicks, reachDistance, false);
+                Vec3 cameraPos = entity.getEyePosition(partialTicks);
+                this.minecraft.hitResult = entity.pick(reachDistance, partialTicks, false);
                 if (this.minecraft.hitResult.getType() == HitResult.Type.BLOCK) {
                     reachDistance = cameraPos.distanceTo(this.minecraft.hitResult.getLocation());
                 }
-                EntityHitResult leftRayTrace = MathHelper.rayTraceEntitiesFromEyes(this.minecraft.player, cameraPos, partialTicks, reachDistance);
+                EntityHitResult leftRayTrace = MathHelper.rayTraceEntitiesFromEyes(this.minecraft.player, partialTicks, reachDistance);
                 if (leftRayTrace != null) {
                     this.minecraft.hitResult = leftRayTrace;
                     this.minecraft.crosshairPickEntity = leftRayTrace.getEntity();

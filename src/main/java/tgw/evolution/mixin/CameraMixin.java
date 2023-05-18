@@ -20,11 +20,9 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.events.ClientEvents;
 import tgw.evolution.patches.IQuaternionPatch;
 import tgw.evolution.patches.obj.NearPlane;
 import tgw.evolution.util.math.ClipContextMutable;
-import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
 
 @Mixin(Camera.class)
@@ -182,11 +180,8 @@ public abstract class CameraMixin {
                              Mth.lerp(partialTicks, entity.zo, entity.getZ()));
         }
         else {
-            Vec3d cameraPos = ClientEvents.getInstance().getCameraPos();
-            if (cameraPos.isNull()) {
-                cameraPos = MathHelper.getCameraPosition(entity, partialTicks);
-            }
-            this.setPosition(cameraPos.x(), cameraPos.y(), cameraPos.z());
+            Vec3 eyePosition = entity.getEyePosition(partialTicks);
+            this.setPosition(eyePosition.x(), eyePosition.y(), eyePosition.z());
         }
         if (detached) {
             if (thirdPersonReverse) {

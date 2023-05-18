@@ -259,8 +259,8 @@ public abstract class PlayerMixin extends LivingEntity implements IPlayerPatch {
     @Override
     public HitboxEntity<Player> getHitboxes() {
         return EntityEvents.SKIN_TYPE.getOrDefault(this.getUUID(), SkinType.STEVE) == SkinType.STEVE ?
-               EvolutionEntityHitboxes.PLAYER_STEVE :
-               EvolutionEntityHitboxes.PLAYER_ALEX;
+               EvolutionEntityHitboxes.PLAYER_STEVE.get((Player) (Object) this) :
+               EvolutionEntityHitboxes.PLAYER_ALEX.get((Player) (Object) this);
     }
 
     @Override

@@ -40,6 +40,6 @@ public abstract class CaveSpiderMixin extends Spider implements ILivingEntityPat
 
     @Override
     public @Nullable HitboxEntity<CaveSpider> getHitboxes() {
-        return LegacyEntityHitboxes.CAVE_SPIDER;
+        return LegacyEntityHitboxes.CAVE_SPIDER.get((CaveSpider) (Object) this);
     }
 }

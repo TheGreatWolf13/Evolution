@@ -20,6 +20,6 @@ public abstract class ZombieMixin extends Monster implements IEntityPatch {
     @Nullable
     @Override
     public HitboxEntity<Zombie> getHitboxes() {
-        return LegacyEntityHitboxes.ZOMBIE;
+        return LegacyEntityHitboxes.ZOMBIE.get((Zombie) (Object) this);
     }
 }
