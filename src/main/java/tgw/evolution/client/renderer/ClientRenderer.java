@@ -966,8 +966,8 @@ public class ClientRenderer {
         int normalHearts = Mth.ceil(healthMax / 10);
         int heartRows = Mth.ceil((absorbHearts + normalHearts) / 10.0F);
         EvolutionGui gui = (EvolutionGui) this.mc.gui;
-        int top = height - gui.getLeftHeightAndIncrease(10 * heartRows);
         int rowHeight = Math.max(10 - (heartRows - 2), 3);
+        int top = height - gui.getLeftHeightAndIncrease(rowHeight * heartRows + 10 - rowHeight);
         int regen = -1;
         if (player.hasEffect(MobEffects.REGENERATION)) {
             regen = this.client.getTickCount() % Math.max(normalHearts + absorbHearts, 25);
