@@ -37,6 +37,7 @@ public final class EvolutionDamage {
         m.add("player");
         m.add("spear");
     });
+    public static final DamageSourceEv BORDER = createSrc(new DamageSourceEv("border", Type.SUFFOCATION).bypassArmor());
     public static final DamageSourceEv DEHYDRATION = createSrc(new DamageSourceEv("dehydration", Type.SICKNESS).bypassArmor().absolute());
     public static final DamageSourceEv DROWN = createSrc(new DamageSourceEv("drown", Type.DROWNING).bypassArmor());
     public static final DamageSourceEv DUMMY = new DamageSourceEv("dummy", Type.GENERIC);
@@ -49,6 +50,7 @@ public final class EvolutionDamage {
     public static final DamageSourceEv FALLING_TREE = createSrc(new DamageSourceEv("falling_tree", Type.CRUSHING).bypassArmor());
     public static final DamageSourceEv IN_FIRE = createSrc(new DamageSourceEv("in_fire", Type.FIRE).fire().bypassArmor());
     public static final DamageSourceEv IN_WALL = createSrc(new DamageSourceEv("in_wall", Type.SUFFOCATION).bypassArmor());
+    public static final DamageSourceEv KILL = createSrc(new DamageSourceEv("kill", Type.VOID).bypassArmor().bypassInvul().absolute());
     public static final DamageSourceEv ON_FIRE = createSrc(new DamageSourceEv("on_fire", Type.FIRE).fire().bypassArmor());
     public static final DamageSourceEv VOID = createSrc(new DamageSourceEv("void", Type.VOID).bypassArmor().bypassInvul());
     public static final DamageSourceEv WALL_IMPACT = createSrc(new DamageSourceEv("wall_impact", Type.IMPACT).bypassArmor());
