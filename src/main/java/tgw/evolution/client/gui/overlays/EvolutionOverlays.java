@@ -62,12 +62,12 @@ public final class EvolutionOverlays {
     }
 
     public static void init() {
-        Overlays.registerOverlayAbove(VanillaOverlays.HOTBAR, CROSSHAIR, EvolutionOverlays::crosshair);
-        Overlays.registerOverlayBelow(VanillaOverlays.AIR_LEVEL, HEALTH, EvolutionOverlays::health);
-        Overlays.registerOverlayAbove(HEALTH, STAMINA, EvolutionOverlays::stamina);
-        Overlays.registerOverlayBelow(VanillaOverlays.AIR_LEVEL, FOOD_AND_THIRST, EvolutionOverlays::foodAndThirst);
-        Overlays.registerOverlayAbove(VanillaOverlays.FPS_GRAPH, EFFECTS, EvolutionOverlays::effects);
-        Overlays.registerOverlayBelow(VanillaOverlays.JUMP_BAR, TEMPERATURE, EvolutionOverlays::temperature);
+        Overlays.registerHudOverlayAbove(VanillaOverlays.HOTBAR, CROSSHAIR, EvolutionOverlays::crosshair);
+        Overlays.registerHudOverlayBelow(VanillaOverlays.AIR_LEVEL, HEALTH, EvolutionOverlays::health);
+        Overlays.registerHudOverlayAbove(HEALTH, STAMINA, EvolutionOverlays::stamina);
+        Overlays.registerHudOverlayBelow(VanillaOverlays.AIR_LEVEL, FOOD_AND_THIRST, EvolutionOverlays::foodAndThirst);
+        Overlays.registerHudOverlayAbove(VanillaOverlays.FPS_GRAPH, EFFECTS, EvolutionOverlays::effects);
+        Overlays.registerHudOverlayBelow(VanillaOverlays.JUMP_BAR, TEMPERATURE, EvolutionOverlays::temperature);
         Evolution.info("Registered Evolution HUD Overlays");
     }
 

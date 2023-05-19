@@ -119,7 +119,7 @@ public class EvolutionGui extends Gui {
         this.rightHeight = 39;
         this.leftHeight = 39;
         this.random.setSeed(this.tickCount * 312_871L);
-        Overlays.renderAll(this.minecraft, this, matrices, partialTicks, this.screenWidth, this.screenHeight);
+        Overlays.renderAllHud(this.minecraft, this, matrices, partialTicks, this.screenWidth, this.screenHeight);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 

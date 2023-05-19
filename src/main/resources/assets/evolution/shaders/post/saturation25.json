@@ -4,7 +4,7 @@
   ],
   "passes": [
     {
-      "name": "color_convolve",
+      "name": "evolution:color_convolve",
       "intarget": "minecraft:main",
       "outtarget": "swap",
       "uniforms": [

@@ -360,27 +360,27 @@ public final class VanillaOverlays {
     }
 
     public static void register() {
-        Overlays.registerOverlayTop(SCREEN_EFFECTS, VanillaOverlays::screenEffects);
-        Overlays.registerOverlayTop(VIGNETTE, VanillaOverlays::vignette);
-        Overlays.registerOverlayTop(SPYGLASS, VanillaOverlays::spyglass);
-        Overlays.registerOverlayTop(PUMPKIN, VanillaOverlays::pumpkin);
-        Overlays.registerOverlayTop(FROSTBITE, VanillaOverlays::frostbite);
-        Overlays.registerOverlayTop(PORTAL, VanillaOverlays::portal);
-        Overlays.registerOverlayTop(HOTBAR, VanillaOverlays::hotbar);
-        Overlays.registerOverlayTop(BOSS_HEALTH, VanillaOverlays::bossHealth);
-        Overlays.registerOverlayTop(MOUNT_HEALTH, VanillaOverlays::mountHealth);
-        Overlays.registerOverlayTop(AIR_LEVEL, VanillaOverlays::airLevel);
-        Overlays.registerOverlayTop(JUMP_BAR, VanillaOverlays::jumpBar);
-        Overlays.registerOverlayTop(ITEM_NAME, VanillaOverlays::itemName);
-        Overlays.registerOverlayTop(SLEEP_FADE, VanillaOverlays::sleepFade);
-        Overlays.registerOverlayTop(TEXT_COLUMNS, VanillaOverlays::textColumns);
-        Overlays.registerOverlayTop(FPS_GRAPH, VanillaOverlays::fpsGraph);
-        Overlays.registerOverlayTop(RECORD, VanillaOverlays::record);
-        Overlays.registerOverlayTop(SUBTITLES, VanillaOverlays::subtitles);
-        Overlays.registerOverlayTop(TITLE_TEXT, VanillaOverlays::titleText);
-        Overlays.registerOverlayTop(SCOREBOARD, VanillaOverlays::scoreboard);
-        Overlays.registerOverlayTop(CHAT_HISTORY, VanillaOverlays::chatHistory);
-        Overlays.registerOverlayTop(PLAYER_LIST, VanillaOverlays::playerList);
+        Overlays.registerGameOverlayTop(SCREEN_EFFECTS, VanillaOverlays::screenEffects);
+        Overlays.registerGameOverlayTop(VIGNETTE, VanillaOverlays::vignette);
+        Overlays.registerGameOverlayTop(SPYGLASS, VanillaOverlays::spyglass);
+        Overlays.registerGameOverlayTop(PUMPKIN, VanillaOverlays::pumpkin);
+        Overlays.registerGameOverlayTop(FROSTBITE, VanillaOverlays::frostbite);
+        Overlays.registerGameOverlayTop(PORTAL, VanillaOverlays::portal);
+        Overlays.registerHudOverlayTop(HOTBAR, VanillaOverlays::hotbar);
+        Overlays.registerHudOverlayTop(BOSS_HEALTH, VanillaOverlays::bossHealth);
+        Overlays.registerHudOverlayTop(MOUNT_HEALTH, VanillaOverlays::mountHealth);
+        Overlays.registerHudOverlayTop(AIR_LEVEL, VanillaOverlays::airLevel);
+        Overlays.registerHudOverlayTop(JUMP_BAR, VanillaOverlays::jumpBar);
+        Overlays.registerHudOverlayTop(ITEM_NAME, VanillaOverlays::itemName);
+        Overlays.registerGameOverlayTop(SLEEP_FADE, VanillaOverlays::sleepFade);
+        Overlays.registerHudOverlayTop(TEXT_COLUMNS, VanillaOverlays::textColumns);
+        Overlays.registerHudOverlayTop(FPS_GRAPH, VanillaOverlays::fpsGraph);
+        Overlays.registerHudOverlayTop(RECORD, VanillaOverlays::record);
+        Overlays.registerHudOverlayTop(SUBTITLES, VanillaOverlays::subtitles);
+        Overlays.registerHudOverlayTop(TITLE_TEXT, VanillaOverlays::titleText);
+        Overlays.registerHudOverlayTop(SCOREBOARD, VanillaOverlays::scoreboard);
+        Overlays.registerHudOverlayTop(CHAT_HISTORY, VanillaOverlays::chatHistory);
+        Overlays.registerHudOverlayTop(PLAYER_LIST, VanillaOverlays::playerList);
         Evolution.info("Registered Vanilla HUD Overlays");
     }
 

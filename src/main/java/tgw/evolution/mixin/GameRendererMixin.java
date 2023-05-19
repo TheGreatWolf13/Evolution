@@ -36,6 +36,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import tgw.evolution.client.gui.EvolutionGui;
+import tgw.evolution.client.gui.overlays.Overlays;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.patches.IGameRendererPatch;
@@ -229,16 +231,33 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
             this.lastActiveTime = Util.getMillis();
         }
         if (!this.minecraft.noRender) {
-            int mouseX = (int) (this.minecraft.mouseHandler.xpos() * this.minecraft.getWindow().getGuiScaledWidth() /
-                                this.minecraft.getWindow().getScreenWidth());
-            int mouseY = (int) (this.minecraft.mouseHandler.ypos() * this.minecraft.getWindow().getGuiScaledHeight() /
-                                this.minecraft.getWindow().getScreenHeight());
-            RenderSystem.viewport(0, 0, this.minecraft.getWindow().getWidth(), this.minecraft.getWindow().getHeight());
+            Window window = this.minecraft.getWindow();
+            int guiScaledWidth = window.getGuiScaledWidth();
+            int guiScaledHeight = window.getGuiScaledHeight();
+            int width = window.getWidth();
+            int height = window.getHeight();
+            double guiScale = window.getGuiScale();
+            int mouseX = (int) (this.minecraft.mouseHandler.xpos() * guiScaledWidth / window.getScreenWidth());
+            int mouseY = (int) (this.minecraft.mouseHandler.ypos() * guiScaledHeight / window.getScreenHeight());
+            RenderSystem.viewport(0, 0, width, height);
+            boolean setupHud = false;
             if (renderLevel && this.minecraft.level != null) {
                 this.minecraft.getProfiler().push("level");
                 this.renderLevel(partialTicks, nanoTime, new PoseStack());
                 this.tryTakeScreenshotIfNeeded();
                 this.minecraft.levelRenderer.doEntityOutline();
+                RenderSystem.clear(GL11C.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
+                Matrix4f orthoMat = Matrix4f.orthographic(0.0F, (float) (width / guiScale), 0.0F, (float) (height / guiScale), 1_000.0F,
+                                                          ForgeHooksClient.getGuiFarPlane());
+                RenderSystem.setProjectionMatrix(orthoMat);
+                PoseStack internalMat = RenderSystem.getModelViewStack();
+                internalMat.setIdentity();
+                internalMat.translate(0, 0, 1_000 - ForgeHooksClient.getGuiFarPlane());
+                RenderSystem.applyModelViewMatrix();
+                Lighting.setupFor3DItems();
+                setupHud = true;
+                Overlays.renderAllGame(this.minecraft, (EvolutionGui) this.minecraft.gui, new PoseStack(), partialTicks, guiScaledWidth,
+                                       guiScaledHeight);
                 if (this.effectActive) {
                     if (this.postEffect != null) {
                         RenderSystem.disableBlend();
@@ -257,17 +276,17 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
                 }
                 this.minecraft.getMainRenderTarget().bindWrite(true);
             }
-            Window window = this.minecraft.getWindow();
-            RenderSystem.clear(GL11C.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
-            Matrix4f orthoMat = Matrix4f.orthographic(0.0F, (float) (window.getWidth() / window.getGuiScale()), 0.0F,
-                                                      (float) (window.getHeight() / window.getGuiScale()), 1_000.0F,
-                                                      ForgeHooksClient.getGuiFarPlane());
-            RenderSystem.setProjectionMatrix(orthoMat);
-            PoseStack internalMat = RenderSystem.getModelViewStack();
-            internalMat.setIdentity();
-            internalMat.translate(0, 0, 1_000 - ForgeHooksClient.getGuiFarPlane());
-            RenderSystem.applyModelViewMatrix();
-            Lighting.setupFor3DItems();
+            if (!setupHud) {
+                RenderSystem.clear(GL11C.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
+                Matrix4f orthoMat = Matrix4f.orthographic(0.0F, (float) (width / guiScale), 0.0F, (float) (height / guiScale), 1_000.0F,
+                                                          ForgeHooksClient.getGuiFarPlane());
+                RenderSystem.setProjectionMatrix(orthoMat);
+                PoseStack internalMat = RenderSystem.getModelViewStack();
+                internalMat.setIdentity();
+                internalMat.translate(0, 0, 1_000 - ForgeHooksClient.getGuiFarPlane());
+                RenderSystem.applyModelViewMatrix();
+                Lighting.setupFor3DItems();
+            }
             PoseStack matrices = new PoseStack();
             if (renderLevel && this.minecraft.level != null) {
                 this.minecraft.getProfiler().popPush("gui");
@@ -280,8 +299,7 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
                     }
                 }
                 if (!this.minecraft.options.hideGui || this.minecraft.screen != null) {
-                    this.renderItemActivationAnimation(this.minecraft.getWindow().getGuiScaledWidth(),
-                                                       this.minecraft.getWindow().getGuiScaledHeight(), partialTicks);
+                    this.renderItemActivationAnimation(guiScaledWidth, guiScaledHeight, partialTicks);
                 }
                 //Removed these two lines of code from the if block above and added them here
                 this.minecraft.gui.render(matrices, partialTicks);
@@ -312,10 +330,7 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
                                                                       this.minecraft.mouseHandler.xpos(), this.minecraft.mouseHandler.ypos()));
                     crashReportCategory.setDetail("Screen size",
                                                   () -> String.format(Locale.ROOT, "Scaled: (%d, %d). Absolute: (%d, %d). Scale factor of %f",
-                                                                      this.minecraft.getWindow().getGuiScaledWidth(),
-                                                                      this.minecraft.getWindow().getGuiScaledHeight(),
-                                                                      this.minecraft.getWindow().getWidth(), this.minecraft.getWindow().getHeight(),
-                                                                      this.minecraft.getWindow().getGuiScale()));
+                                                                      guiScaledWidth, guiScaledHeight, width, height, guiScale));
                     throw new ReportedException(crashReport);
                 }
                 try {
