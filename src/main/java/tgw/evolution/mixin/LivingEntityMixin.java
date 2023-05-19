@@ -287,6 +287,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
             tag.put("Brain", brainResult.get());
         }
         tag.put("EffectHelper", this.effectHelper.save());
+        ((EvolutionCombatTracker) this.getCombatTracker()).saveAdditional(tag);
     }
 
     /**
@@ -419,7 +420,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         }
         this.removeFrost();
         this.tryAddFrost();
-        if (!this.level.isClientSide && this.tickCount % 40 == 0 && this.isFullyFrozen() && this.canFreeze()) {
+        if (!this.level.isClientSide && this.isFullyFrozen() && this.canFreeze()) {
             int j = flag ? 5 : 1;
             this.hurt(DamageSource.FREEZE, j);
         }
@@ -433,9 +434,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         this.pushEntities();
         this.level.getProfiler().pop();
         if (!this.level.isClientSide && this.isSensitiveToWater() && this.isInWaterRainOrBubble()) {
-            if (this.tickCount % 10 == 0) {
-                this.hurt(EvolutionDamage.DROWN, 2.5F);
-            }
+            this.hurt(EvolutionDamage.DROWN, 2.5F);
         }
     }
 
@@ -482,7 +481,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
                                  (!isPlayer || !((Player) (Object) this).getAbilities().invulnerable);
                 if (drowns) {
                     this.setAirSupply(this.decreaseAirSupply(this.getAirSupply()));
-                    if (this.getAirSupply() == -20) {
+                    if (this.getAirSupply() == -EvolutionDamage.DROWNING_IMMUNITY) {
                         this.setAirSupply(0);
                         Vec3 vel = this.getDeltaMovement();
                         for (int i = 0; i < 8; ++i) {
@@ -491,7 +490,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
                             double dz = this.random.nextDouble() - this.random.nextDouble();
                             this.level.addParticle(ParticleTypes.BUBBLE, this.getX() + dx, this.getY() + dy, this.getZ() + dz, vel.x, vel.y, vel.z);
                         }
-                        this.hurt(EvolutionDamage.DROWN, 2.5F);
+                        this.hurt(EvolutionDamage.DROWN, 10.0F);
                     }
                 }
                 if (!this.level.isClientSide && this.isPassenger() && this.getVehicle() != null && !this.getVehicle().canBeRiddenInWater(this)) {
@@ -1149,6 +1148,10 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         if (source.isFire() && this.hasEffect(MobEffects.FIRE_RESISTANCE)) {
             return false;
         }
+        amount = ((EvolutionCombatTracker) this.combatTracker).accountForImmunity(source, amount);
+        if (amount <= 0) {
+            return false;
+        }
         if (this.isSleeping() && !this.level.isClientSide) {
             this.stopSleeping();
         }
@@ -1378,6 +1381,16 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         ((Vec3d) this.getDeltaMovement()).addMutable(0, 0.02 * this.getAttributeValue(ForgeMod.SWIM_SPEED.get()), 0);
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason Use Evolution damage.
+     */
+    @Override
+    @Overwrite
+    public void kill() {
+        this.hurt(EvolutionDamage.KILL, Float.MAX_VALUE);
+    }
+
     @Shadow
     public abstract void knockback(double p_147241_, double p_147242_, double p_147243_);
 
@@ -1554,6 +1567,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
             this.brain = this.makeBrain(new Dynamic<>(NbtOps.INSTANCE, tag.get("Brain")));
         }
         this.effectHelper.fromNBT(tag.getCompound("EffectHelper"));
+        ((EvolutionCombatTracker) this.getCombatTracker()).readAdditional(tag);
     }
 
     @Override
@@ -1699,6 +1713,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
                 }
             }
             this.detectEquipmentUpdates();
+            ((EvolutionCombatTracker) this.getCombatTracker()).tick();
             if (this.tickCount % 20 == 0) {
                 this.getCombatTracker().recheckStatus();
             }

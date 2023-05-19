@@ -6,7 +6,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvent;
@@ -41,7 +40,6 @@ import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tgw.evolution.blocks.IClimbable;
 import tgw.evolution.init.EvolutionBlockTags;
 import tgw.evolution.init.EvolutionDamage;
@@ -122,8 +120,6 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     public double zo;
     @Shadow
     protected int boardingCooldown;
-    @Unique
-    protected int fireDamageImmunity;
     @Shadow
     protected boolean firstTick;
     @Shadow
@@ -202,10 +198,6 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         this.eyePosition.set(Vec3d.NULL);
         this.partialEyePosition.set(Vec3d.NULL);
         this.cachedFluidOnEyes = false;
-        //Count down fire immunity
-        if (this.fireDamageImmunity > 0) {
-            this.fireDamageImmunity--;
-        }
         this.level.getProfiler().push("entityBaseTick");
         this.feetBlockState = null;
         //noinspection ConstantConditions
@@ -239,9 +231,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
             else {
                 if (this.remainingFireTicks % 20 == 0 && !this.isInLava()) {
                     //Change to evolution damage checking for fire immunity
-                    if (this.fireDamageImmunity <= 0) {
-                        this.hurt(EvolutionDamage.ON_FIRE, 2.5f);
-                    }
+                    this.hurt(EvolutionDamage.ON_FIRE, 2.5f);
                 }
                 this.setRemainingFireTicks(this.remainingFireTicks - 1);
             }
@@ -425,11 +415,6 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Shadow
     public abstract double getEyeY();
-
-    @Override
-    public int getFireDamageImmunity() {
-        return this.fireDamageImmunity;
-    }
 
     @Shadow
     protected abstract int getFireImmuneTicks();
@@ -843,17 +828,6 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         this.chunkPosition = new ChunkPosMutable();
     }
 
-    @Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/CompoundTag;getShort(Ljava/lang/String;)S", ordinal = 0))
-    private void onLoad(CompoundTag nbt, CallbackInfo ci) {
-        this.fireDamageImmunity = nbt.getByte("FireImmunity");
-    }
-
-    @Inject(method = "saveWithoutId", at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/CompoundTag;putShort(Ljava/lang/String;S)V", ordinal
-            = 0))
-    private void onSaveWithoutId(CompoundTag nbt, CallbackInfoReturnable<CompoundTag> cir) {
-        nbt.putByte("FireImmunity", (byte) this.fireDamageImmunity);
-    }
-
     /**
      * @author TheGreatWolf
      * @reason Overwrite to handle camera pos.
@@ -955,11 +929,6 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Overwrite
     public void setDeltaMovement(double x, double y, double z) {
         ((Vec3d) this.deltaMovement).set(x, y, z);
-    }
-
-    @Override
-    public void setFireDamageImmunity(int immunity) {
-        this.fireDamageImmunity = immunity;
     }
 
     /**

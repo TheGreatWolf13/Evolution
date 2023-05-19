@@ -1,5 +1,8 @@
 package tgw.evolution.util.damage;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -14,12 +17,13 @@ import tgw.evolution.blocks.IFallSufixBlock;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.items.IMelee;
-import tgw.evolution.util.collection.OArrayList;
-import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.collection.*;
 
 public class EvolutionCombatTracker extends CombatTracker {
+    private final R2BMap<EvolutionDamage.Type> damageImmunity = new R2BOpenHashMap<>();
     private final OList<EvolutionCombatEntry> entries = new OArrayList<>();
     private final LivingEntity fighter;
+    private final R2FMap<EvolutionDamage.Type> lastDamages = new R2FOpenHashMap<>();
     private int combatEndTime;
     private int combatStartTime;
     private boolean inCombat;
@@ -34,6 +38,29 @@ public class EvolutionCombatTracker extends CombatTracker {
 
     private static String getFallSuffix(EvolutionCombatEntry entry) {
         return entry.getFallSuffix() == null ? "generic" : entry.getFallSuffix();
+    }
+
+    public float accountForImmunity(DamageSource source, float amount) {
+        if (!(source instanceof DamageSourceEv dmg)) {
+            return amount;
+        }
+        EvolutionDamage.Type type = dmg.getType();
+        byte maxImmunity = type.getImmunity();
+        if (maxImmunity == 0) {
+            return amount;
+        }
+        byte immunity = this.damageImmunity.getOrDefault(type, (byte) 0);
+        if (immunity == 0) {
+            this.damageImmunity.put(type, maxImmunity);
+            this.lastDamages.put(type, amount);
+            return amount;
+        }
+        float lastDmg = this.lastDamages.getOrDefault(type, 0);
+        if (lastDmg >= amount) {
+            return 0;
+        }
+        this.lastDamages.put(type, amount);
+        return amount - lastDmg;
     }
 
     /**
@@ -196,6 +223,26 @@ public class EvolutionCombatTracker extends CombatTracker {
         return this.fighter;
     }
 
+    public void readAdditional(CompoundTag tag) {
+        if (tag.contains("RecordedDamages", Tag.TAG_LIST)) {
+            ListTag list = tag.getList("RecordedDamages", Tag.TAG_COMPOUND);
+            for (int i = 0, len = list.size(); i < len; i++) {
+                CompoundTag t = list.getCompound(i);
+                EvolutionDamage.Type type = EvolutionDamage.Type.byName(t.getString("Type"));
+                if (type != null) {
+                    byte immunity = t.getByte("Immunity");
+                    if (immunity > 0) {
+                        float dmg = t.getFloat("Damage");
+                        if (dmg > 0) {
+                            this.damageImmunity.put(type, immunity);
+                            this.lastDamages.put(type, dmg);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     @Override
     public void recheckStatus() {
         int time = this.inCombat ? 300 : 100;
@@ -226,7 +273,47 @@ public class EvolutionCombatTracker extends CombatTracker {
         }
     }
 
+    public void saveAdditional(CompoundTag tag) {
+        if (this.damageImmunity.isEmpty()) {
+            return;
+        }
+        ListTag list = new ListTag();
+        for (EvolutionDamage.Type type : EvolutionDamage.Type.VALUES) {
+            byte immunity = this.damageImmunity.getOrDefault(type, (byte) 0);
+            if (immunity > 0) {
+                float dmg = this.lastDamages.getOrDefault(type, 0);
+                if (dmg > 0) {
+                    //noinspection ObjectAllocationInLoop
+                    CompoundTag t = new CompoundTag();
+                    t.putString("Type", type.getName());
+                    t.putByte("Immunity", immunity);
+                    t.putFloat("Damage", dmg);
+                    list.add(t);
+                }
+            }
+        }
+        if (!list.isEmpty()) {
+            tag.put("RecordedDamages", list);
+        }
+    }
+
     public void setLastSuffix(@Nullable IFallSufixBlock lastSuffix) {
         this.lastSuffix = lastSuffix;
+    }
+
+    public void tick() {
+        if (this.damageImmunity.isEmpty()) {
+            return;
+        }
+        for (EvolutionDamage.Type value : EvolutionDamage.Type.VALUES) {
+            byte immunity = this.damageImmunity.getOrDefault(value, (byte) 0);
+            if (--immunity <= 0) {
+                this.damageImmunity.removeByte(value);
+                this.lastDamages.removeFloat(value);
+            }
+            else {
+                this.damageImmunity.put(value, immunity);
+            }
+        }
     }
 }

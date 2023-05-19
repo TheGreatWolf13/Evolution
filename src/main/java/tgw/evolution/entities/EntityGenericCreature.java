@@ -170,11 +170,6 @@ public abstract class EntityGenericCreature<T extends EntityGenericCreature<T>> 
         return this.entityData.get(SKELETON);
     }
 
-    @Override
-    public void kill() {
-        this.hurt(EvolutionDamage.VOID, Float.MAX_VALUE);
-    }
-
     /**
      * Kills this entity.
      */

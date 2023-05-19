@@ -28,7 +28,6 @@ import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.init.EvolutionBlocks;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionShapes;
-import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.constants.BlockFlags;
 import tgw.evolution.util.constants.WoodVariant;
 import tgw.evolution.util.math.DirectionUtil;
@@ -239,10 +238,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
             if (entity.getRemainingFireTicks() == 0) {
                 entity.setSecondsOnFire(8);
             }
-            if (((IEntityPatch) entity).getFireDamageImmunity() == 0) {
-                entity.hurt(EvolutionDamage.IN_FIRE, 2.5f);
-                ((IEntityPatch) entity).setFireDamageImmunity(10);
-            }
+            entity.hurt(EvolutionDamage.IN_FIRE, 2.5f);
         }
         super.entityInside(state, level, pos, entity);
     }

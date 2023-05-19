@@ -31,10 +31,6 @@ public interface IEntityPatch<T extends Entity> {
         return 1 * SI.NEWTON;
     }
 
-    default int getFireDamageImmunity() {
-        return 0;
-    }
-
     float getFrictionModifier();
 
     default BlockPos getFrictionPos() {
@@ -73,8 +69,5 @@ public interface IEntityPatch<T extends Entity> {
 
     default boolean hasExtendedInventory() {
         return false;
-    }
-
-    default void setFireDamageImmunity(int immunity) {
     }
 }
