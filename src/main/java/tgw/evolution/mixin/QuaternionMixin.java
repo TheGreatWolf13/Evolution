@@ -34,7 +34,7 @@ public abstract class QuaternionMixin implements IQuaternionPatch {
         if (degrees) {
             angle = Mth.DEG_TO_RAD * angle;
         }
-        angle /= 2.0f;
+        angle *= 0.5f;
         float f = sin(angle);
         this.i = axis.x() * f;
         this.j = axis.y() * f;
