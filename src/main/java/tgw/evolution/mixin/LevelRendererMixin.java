@@ -686,7 +686,8 @@ public abstract class LevelRendererMixin {
         for (int i = 0, l = this.renderChunksInFrustum.size(); i < l; i++) {
             List<BlockEntity> blockEntities = this.renderChunksInFrustum.get(i).chunk.getCompiledChunk().getRenderableBlockEntities();
             if (!blockEntities.isEmpty()) {
-                for (BlockEntity blockEntity : blockEntities) {
+                for (int j = 0, len = blockEntities.size(); j < len; j++) {
+                    BlockEntity blockEntity = blockEntities.get(j);
                     if (!frustum.isVisible(blockEntity.getRenderBoundingBox())) {
                         continue;
                     }
