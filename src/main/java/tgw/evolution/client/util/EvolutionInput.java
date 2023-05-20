@@ -1,6 +1,5 @@
 package tgw.evolution.client.util;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.player.Input;
 import net.minecraft.core.BlockPos;
@@ -11,6 +10,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import tgw.evolution.ClientProxy;
+import tgw.evolution.Evolution;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
@@ -85,7 +85,7 @@ public class EvolutionInput extends Input {
         }
         //Prevent jumping when crawling
         boolean isJumpPressed = this.jumping;
-        if (player.getSwimAmount(Minecraft.getInstance().getFrameTime()) > 0 && !player.isInWater() && !this.onClimbable) {
+        if (player.getSwimAmount(Evolution.PROXY.getPartialTicks()) > 0 && !player.isInWater() && !this.onClimbable) {
             this.jumping = false;
         }
         //Stand up if jump is pressed
