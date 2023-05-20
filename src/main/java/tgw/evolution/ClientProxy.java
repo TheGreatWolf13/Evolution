@@ -155,7 +155,7 @@ public class ClientProxy implements IProxy {
 //        EvolutionParticles.register();
         registerTooltips();
         VanillaOverlays.register();
-        EvolutionOverlays.init();
+        EvolutionOverlays.register();
         mc.getMainRenderTarget().enableStencil();
         Evolution.info("Finished loading!");
     }

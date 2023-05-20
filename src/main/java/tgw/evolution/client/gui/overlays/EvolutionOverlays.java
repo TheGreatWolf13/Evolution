@@ -61,14 +61,14 @@ public final class EvolutionOverlays {
         ClientRenderer.getInstance().renderHealth(matrices, width, height);
     }
 
-    public static void init() {
+    public static void register() {
         Overlays.registerHudOverlayAbove(VanillaOverlays.HOTBAR, CROSSHAIR, EvolutionOverlays::crosshair);
         Overlays.registerHudOverlayBelow(VanillaOverlays.AIR_LEVEL, HEALTH, EvolutionOverlays::health);
         Overlays.registerHudOverlayAbove(HEALTH, STAMINA, EvolutionOverlays::stamina);
         Overlays.registerHudOverlayBelow(VanillaOverlays.AIR_LEVEL, FOOD_AND_THIRST, EvolutionOverlays::foodAndThirst);
         Overlays.registerHudOverlayAbove(VanillaOverlays.FPS_GRAPH, EFFECTS, EvolutionOverlays::effects);
         Overlays.registerHudOverlayBelow(VanillaOverlays.JUMP_BAR, TEMPERATURE, EvolutionOverlays::temperature);
-        Evolution.info("Registered Evolution HUD Overlays");
+        Evolution.info("Registered Evolution Overlays");
     }
 
     private static void stamina(Minecraft mc, EvolutionGui gui, PoseStack matrices, float partialTicks, int width, int height) {

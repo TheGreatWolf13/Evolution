@@ -381,7 +381,7 @@ public final class VanillaOverlays {
         Overlays.registerHudOverlayTop(SCOREBOARD, VanillaOverlays::scoreboard);
         Overlays.registerHudOverlayTop(CHAT_HISTORY, VanillaOverlays::chatHistory);
         Overlays.registerHudOverlayTop(PLAYER_LIST, VanillaOverlays::playerList);
-        Evolution.info("Registered Vanilla HUD Overlays");
+        Evolution.info("Registered Vanilla Overlays");
     }
 
     private static void scoreboard(Minecraft mc, EvolutionGui gui, PoseStack matrices, float partialTicks, int width, int height) {
