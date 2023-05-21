@@ -77,8 +77,8 @@ public abstract class MultiPlayerGameModeMixin {
             if (this.destroyProgress >= 1.0F) {
                 this.sendBlockAction(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, pos, face);
                 this.destroyBlock(pos);
-                this.destroyProgress = 0.0F;
-                this.destroyTicks = 0.0F;
+                this.destroyProgress = 0;
+                this.destroyTicks = 0;
                 this.destroyDelay = 5;
             }
             this.minecraft.level.destroyBlockProgress(this.minecraft.player.getId(), this.destroyBlockPos, this.getBlockBreakingProgress());
@@ -94,7 +94,10 @@ public abstract class MultiPlayerGameModeMixin {
     protected abstract void ensureHasSentCarriedItem();
 
     private int getBlockBreakingProgress() {
-        return (int) (this.destroyProgress * 10.0f);
+        if (this.destroyProgress == 0) {
+            return -1;
+        }
+        return Mth.floor(this.destroyProgress * 10.0f);
     }
 
     /**
@@ -149,7 +152,7 @@ public abstract class MultiPlayerGameModeMixin {
                 this.isDestroying = true;
                 this.destroyBlockPos = pos;
                 this.destroyingItem = this.minecraft.player.getMainHandItem();
-                this.destroyProgress = 0.0F;
+                this.destroyProgress = 0;
                 this.destroyTicks = 0.0F;
                 this.minecraft.level.destroyBlockProgress(this.minecraft.player.getId(), this.destroyBlockPos, this.getBlockBreakingProgress());
             }
