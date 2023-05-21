@@ -68,16 +68,6 @@ public final class MathHelper {
     private MathHelper() {
     }
 
-    public static float animInterval(float progress, float start, float end) {
-        assert start >= 0;
-        assert end <= 1;
-        assert end > start;
-        assert 0 <= progress && progress <= 1;
-        progress -= start;
-        progress /= end - start;
-        return progress;
-    }
-
     /**
      * Approximates the function arc cosine.
      * The max error is 0.017 rad.

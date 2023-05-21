@@ -271,6 +271,7 @@
   "effect.minecraft.weakness.desc": "Você se sente mais fraco e dá menos dano corpo a corpo.",
   "effect.minecraft.wither.desc": "Você está apodrecendo, lentamente virando pó.",
   "_COMMENT": "____________________________________________________________________________________________________________________________ACTIONBAR",
+  "evolution.actionbar.attackPose": "Você não pode atacar desta pose",
   "evolution.actionbar.cancelThrow": "Pressione %1$s para cancelar arremesso",
   "evolution.actionbar.hitStake": "Você deveria cravar a estaca com um martelo antes",
   "evolution.actionbar.hook": "Você deveria ter um pouco de corda na outra mão antes",

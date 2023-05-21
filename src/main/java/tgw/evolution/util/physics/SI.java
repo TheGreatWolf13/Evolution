@@ -24,6 +24,7 @@ public final class SI {
     private static final int TICKS_PER_SECOND = 20;
     public static final double SECOND = TICKS_PER_SECOND;
     public static final double NEWTON = KILOGRAM * METER / (SECOND * SECOND);
+    public static final double PASCAL = NEWTON / METER / METER;
 
     private SI() {
     }

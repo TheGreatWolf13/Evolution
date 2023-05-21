@@ -108,6 +108,7 @@
     "AccessibilityOptionsScreenMixin",
     "AgeableListModelMixin",
     "BakedQuadMixin",
+    "BlockEntityRenderDispatcherMixin",
     "BufferBuilder_SortStateMixin",
     "BufferBuilderMixin",
     "BufferUploaderMixin",

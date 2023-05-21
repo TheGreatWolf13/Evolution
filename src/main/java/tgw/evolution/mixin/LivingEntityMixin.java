@@ -212,6 +212,10 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     private byte specialAttackLockedTicks;
     private byte specialAttackTime;
     private @Nullable IMelee.IAttackType specialAttackType;
+    @Shadow
+    private float swimAmount;
+    @Shadow
+    private float swimAmountO;
 
     public LivingEntityMixin(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -1046,8 +1050,14 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
             else if (!this.isNoGravity() && !isFlyingPlayer) {
                 accY += physics.calcAccGravity();
             }
-            if (!this.isOnGround() && this.isAffectedByFluids() && !isFlyingPlayer) {
+            if (this.isAffectedByFluids() && !isFlyingPlayer) {
                 accY += physics.calcForceBuoyancy(this) / mass;
+                if (this.horizontalCollision) {
+                    if ((!this.level.getFluidState(this.getFrictionPos()).isEmpty() || !this.level.getFluidState(this.blockPosition()).isEmpty()) &&
+                        this.level.getFluidState(this.eyeBlockPosition()).isEmpty()) {
+                        motionY = -5 * physics.calcAccGravity();
+                    }
+                }
             }
             if (this.hasCollidedOnXAxis()) {
                 accX = Math.signum(accX) * 0.001;
@@ -2063,8 +2073,20 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Shadow
     protected abstract void updateInvisibilityStatus();
 
-    @Shadow
-    protected abstract void updateSwimAmount();
+    /**
+     * @author TheGreatWolf
+     * @reason Make animation last longer
+     */
+    @Overwrite
+    private void updateSwimAmount() {
+        this.swimAmountO = this.swimAmount;
+        if (this.isVisuallySwimming()) {
+            this.swimAmount = Math.min(1.0F, this.swimAmount + 0.067_5F);
+        }
+        else {
+            this.swimAmount = Math.max(0.0F, this.swimAmount - 0.067_5F);
+        }
+    }
 
     /**
      * @author TheGreatWolf

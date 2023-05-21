@@ -271,6 +271,7 @@
   "effect.minecraft.weakness.desc": "You feel weaker and deal less melee damage.",
   "effect.minecraft.wither.desc": "You are withering, slowly decaying to ash.",
   "_COMMENT": "____________________________________________________________________________________________________________________________ACTIONBAR",
+  "evolution.actionbar.attackPose": "You cannot attack from this pose",
   "evolution.actionbar.cancelThrow": "Press %1$s to cancel throw",
   "evolution.actionbar.hitStake": "You should hit the stake with a Hammer first",
   "evolution.actionbar.hook": "You should have some rope in your offhand first",

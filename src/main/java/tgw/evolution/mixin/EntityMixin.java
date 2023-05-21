@@ -41,6 +41,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.blocks.IClimbable;
+import tgw.evolution.hooks.LivingEntityHooks;
 import tgw.evolution.init.EvolutionBlockTags;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.patches.IEntityPatch;
@@ -56,6 +57,7 @@ import tgw.evolution.util.physics.SI;
 import tgw.evolution.world.util.LevelUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 
@@ -148,6 +150,8 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     private EntityDimensions dimensions;
     @Shadow
+    private float eyeHeight;
+    @Shadow
     @javax.annotation.Nullable
     private BlockState feetBlockState;
     @Shadow
@@ -187,6 +191,23 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
             mutable.append(removeAction(siblings.get(i)));
         }
         return mutable;
+    }
+
+    @Shadow
+    public abstract void absMoveTo(double pX, double pY, double pZ);
+
+    /**
+     * @author TheGreatWolf
+     * @reason Make it so xRot is not hard limited.
+     */
+    @Overwrite
+    public void absMoveTo(double x, double y, double z, float yRot, float xRot) {
+        this.absMoveTo(x, y, z);
+        this.setYRot(yRot % 360.0F);
+        float xDelta = LivingEntityHooks.xDelta((Entity) (Object) this, 1.0f);
+        this.setXRot(Mth.clamp(xRot, -90.0F - xDelta, 90.0F - xDelta) % 360.0F);
+        this.yRotO = this.getYRot();
+        this.xRotO = this.getXRot();
     }
 
     /**
@@ -282,7 +303,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
      * @reason Avoid allocations
      */
     @Overwrite
-    protected boolean canEnterPose(Pose pPose) {
+    public boolean canEnterPose(Pose pPose) {
         return this.level.noCollision((Entity) (Object) this, ((AABBMutable) this.getBoundingBoxForPose(pPose)).deflateMutable(1.0E-7));
     }
 
@@ -381,6 +402,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Shadow
     public abstract EntityDimensions getDimensions(Pose pPose);
+
+    @Shadow
+    protected abstract float getEyeHeight(Pose pPose, EntityDimensions pDimensions);
 
     @Shadow
     public abstract float getEyeHeight();
@@ -910,6 +934,37 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     protected abstract void processFlappingMovement();
 
+    /**
+     * @author TheGreatWolf
+     * @reason Handle dynamic poses
+     */
+    @SuppressWarnings("ConstantConditions")
+    @Overwrite
+    public void refreshDimensions() {
+        EntityDimensions oldDims = this.dimensions;
+        Pose pose = this.getPose();
+        EntityDimensions newDims = this.getDimensions(pose);
+        this.dimensions = newDims;
+        this.eyeHeight = this.getEyeHeight(pose, newDims);
+        boolean isSmall = newDims.width <= 4 && newDims.height <= 4;
+        if (!this.level.isClientSide &&
+            !this.firstTick &&
+            !this.noPhysics &&
+            isSmall &&
+            (newDims.width > oldDims.width || newDims.height > oldDims.height) &&
+            !((Object) this instanceof Player)) {
+            Vec3 center = this.position().add(0, oldDims.height / 2, 0);
+            double dWidth = Math.max(0.0F, newDims.width - oldDims.width) + 1.0E-6;
+            double dHeight = Math.max(0.0F, newDims.height - oldDims.height) + 1.0E-6;
+            VoxelShape shape = Shapes.create(AABB.ofSize(center, dWidth, dHeight, dWidth));
+            Optional<Vec3> freePosition = this.level.findFreePosition((Entity) (Object) this, shape, center, newDims.width, newDims.height,
+                                                                      newDims.width);
+            if (freePosition.isPresent()) {
+                this.setPos(freePosition.get().add(0, -newDims.height / 2, 0));
+            }
+        }
+    }
+
     @Shadow
     public abstract void resetFallDistance();
 
@@ -1069,7 +1124,6 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         int maxY = Mth.ceil(aabb.maxY - 0.001);
         int minZ = Mth.floor(aabb.minZ + 0.001);
         int maxZ = Mth.ceil(aabb.maxZ - 0.001);
-        double unMinY = aabb.minY + 0.001;
         double height = 0.0;
         boolean pushedByFluid = this.isPushedByFluid();
         boolean isInFluid = false;
@@ -1080,15 +1134,17 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         int flowCount = 0;
         BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
         for (int dx = minX; dx < maxX; ++dx) {
+            mutableBlockPos.setX(dx);
             for (int dy = minY; dy < maxY; ++dy) {
+                mutableBlockPos.setY(dy);
                 for (int dz = minZ; dz < maxZ; ++dz) {
-                    mutableBlockPos.set(dx, dy, dz);
+                    mutableBlockPos.setZ(dz);
                     FluidState fluidState = this.level.getFluidState(mutableBlockPos);
                     if (fluidState.is(fluid)) {
                         double localHeight = dy + fluidState.getHeight(this.level, mutableBlockPos);
-                        if (localHeight >= unMinY) {
+                        if (localHeight >= aabb.minY) {
                             isInFluid = true;
-                            height = Math.max(localHeight - unMinY, height);
+                            height = Math.max(localHeight - aabb.minY, height);
                             if (pushedByFluid) {
                                 Vec3 localFlow = fluidState.getFlow(this.level, mutableBlockPos);
                                 double localFlowX = localFlow.x;

@@ -458,6 +458,13 @@ public class ClientEvents {
         return MathHelper.clamp((this.offhandCooldownTime + partialTicks) / this.getItemCooldown(InteractionHand.OFF_HAND), 0.0F, 1.0F);
     }
 
+    public float getPartialTicks() {
+        if (this.mc.isPaused()) {
+            return this.mc.pausePartialTick;
+        }
+        return this.mc.getFrameTime();
+    }
+
     public ClientRenderer getRenderer() {
         return this.renderer;
     }
@@ -1224,9 +1231,17 @@ public class ClientEvents {
         }
         ILivingEntityPatch player = (ILivingEntityPatch) this.mc.player;
         if (!player.isLockedInSpecialAttack()) {
+            if (this.mc.player.getSwimAmount(this.getPartialTicks()) != 0) {
+                this.mc.player.displayClientMessage(EvolutionTexts.ACTION_ATTACK_POSE, true);
+                return;
+            }
             player.startSpecialAttack(chargeAttack);
         }
         else if (player.canPerformFollowUp(chargeAttack)) {
+            if (this.mc.player.getSwimAmount(this.getPartialTicks()) != 0) {
+                this.mc.player.displayClientMessage(EvolutionTexts.ACTION_ATTACK_POSE, true);
+                return;
+            }
             player.performFollowUp();
         }
     }
@@ -1244,11 +1259,19 @@ public class ClientEvents {
         ILivingEntityPatch player = (ILivingEntityPatch) this.mc.player;
         if (player.isOnGracePeriod()) {
             if (player.canPerformFollowUp(type)) {
+                if (this.mc.player.getSwimAmount(this.getPartialTicks()) != 0) {
+                    this.mc.player.displayClientMessage(EvolutionTexts.ACTION_ATTACK_POSE, true);
+                    return;
+                }
                 player.performFollowUp();
             }
         }
         else {
             if (!player.isSpecialAttacking() && !player.isLockedInSpecialAttack()) {
+                if (this.mc.player.getSwimAmount(this.getPartialTicks()) != 0) {
+                    this.mc.player.displayClientMessage(EvolutionTexts.ACTION_ATTACK_POSE, true);
+                    return;
+                }
                 player.startSpecialAttack(type);
             }
         }

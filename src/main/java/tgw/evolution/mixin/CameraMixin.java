@@ -16,10 +16,7 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.patches.IQuaternionPatch;
 import tgw.evolution.patches.obj.NearPlane;
 import tgw.evolution.util.math.ClipContextMutable;
@@ -28,12 +25,18 @@ import tgw.evolution.util.math.Vec3d;
 @Mixin(Camera.class)
 public abstract class CameraMixin {
 
+    @Unique
     private final ClipContextMutable clipContext = new ClipContextMutable(Vec3.ZERO, Vec3.ZERO, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE,
                                                                           null);
+    @Unique
     private final Vec3d clipFrom = new Vec3d();
+    @Unique
     private final Vec3d clipTo = new Vec3d();
+    @Unique
     private final NearPlane nearPlane = new NearPlane();
+    @Unique
     private final Quaternion quatX = new Quaternion(Vector3f.XP, 0, true);
+    @Unique
     private final Quaternion quatY = new Quaternion(Vector3f.YP, 0, true);
     @Shadow
     @Final

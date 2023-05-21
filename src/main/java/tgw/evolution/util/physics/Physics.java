@@ -12,6 +12,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.ForgeMod;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.entities.projectiles.IAerodynamicEntity;
 import tgw.evolution.items.IEvolutionItem;
@@ -228,7 +229,7 @@ public final class Physics implements ILocked {
             (entity instanceof FlyingAnimal flying && flying.isFlying() || entity instanceof Player player && player.getAbilities().flying)) {
             return living.flyingSpeed;
         }
-        if (entity.isOnGround() || entity instanceof LivingEntity living && living.onClimbable()) {
+        if (entity.isOnGround() || this.fluid != null || entity instanceof LivingEntity living && living.onClimbable()) {
             //noinspection CastConflictsWithInstanceof
             double acceleration = ((IEntityPatch) entity).getAcceleration() * slowdown;
             if (acceleration == 0) {
@@ -304,6 +305,10 @@ public final class Physics implements ILocked {
 
     public float calcStaticFrictionCoef(Entity entity) {
         if (!entity.isOnGround()) {
+            if (this.fluid != null && this.fluid != Fluid.VACUUM && entity instanceof LivingEntity living) {
+                float mult = living.isSwimming() ? 50_000 : 10_000;
+                return mult * (float) (this.fluid.viscosity() * living.getAttributeValue(ForgeMod.SWIM_SPEED.get()));
+            }
             return 0;
         }
         assert this.level != null;

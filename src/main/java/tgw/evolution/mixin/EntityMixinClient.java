@@ -15,7 +15,9 @@ import net.minecraftforge.common.capabilities.CapabilityProvider;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.Evolution;
 import tgw.evolution.blocks.IClimbable;
+import tgw.evolution.hooks.LivingEntityHooks;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.util.math.MathHelper;
@@ -50,16 +52,26 @@ public abstract class EntityMixinClient extends CapabilityProvider<Entity> {
     public abstract Pose getPose();
 
     @Shadow
+    @Nullable
+    public abstract Entity getVehicle();
+
+    @Shadow
     public abstract float getXRot();
 
     @Shadow
     public abstract float getYRot();
 
     @Shadow
+    public abstract boolean isCrouching();
+
+    @Shadow
     public abstract boolean isInWater();
 
     @Shadow
     public abstract boolean isOnGround();
+
+    @Shadow
+    public abstract boolean isPassenger();
 
     @Shadow
     public abstract void setXRot(float pXRot);
@@ -71,6 +83,7 @@ public abstract class EntityMixinClient extends CapabilityProvider<Entity> {
      * @author TheGreatWolf
      * @reason Lock or adjust camera in certain situations
      */
+    @SuppressWarnings("ConstantConditions")
     @Overwrite
     public void turn(double yaw, double pitch) {
         if (((IMinecraftPatch) Minecraft.getInstance()).isMultiplayerPaused()) {
@@ -82,6 +95,7 @@ public abstract class EntityMixinClient extends CapabilityProvider<Entity> {
                 return;
             }
         }
+        float swimAmount = 0;
         //noinspection ConstantConditions
         if ((Object) this instanceof LivingEntity living) {
             if (!this.isOnGround() && living.onClimbable() && !(living instanceof Player player && player.getAbilities().flying)) {
@@ -172,35 +186,16 @@ public abstract class EntityMixinClient extends CapabilityProvider<Entity> {
                     return;
                 }
             }
-            float swimAmount = living.getSwimAmount(Minecraft.getInstance().getFrameTime());
-            if (swimAmount > 0 && swimAmount < 1) {
-                this.xRot = 0;
-                this.xRotO = 0;
-                return;
-            }
-            if (this.getPose() == Pose.SWIMMING && !this.isInWater()) {
-                double dPitch = pitch * 0.15;
-                this.xRot += dPitch;
-                double dYaw = yaw * 0.15;
-                this.yRot += dYaw;
-                this.xRot = MathHelper.clamp(this.xRot, 0.0F, 90.0F);
-                this.xRotO += dPitch;
-                this.yRotO += dYaw;
-                this.xRotO = MathHelper.clamp(this.xRotO, 0.0F, 90.0F);
-                if (this.vehicle != null) {
-                    this.vehicle.onPassengerTurned((Entity) (Object) this);
-                }
-                return;
-            }
         }
+        float xDelta = LivingEntityHooks.xDelta((Entity) (Object) this, Evolution.PROXY.getPartialTicks());
         float f = (float) pitch * 0.15F;
         float f1 = (float) yaw * 0.15F;
         this.setXRot(this.getXRot() + f);
         this.setYRot(this.getYRot() + f1);
-        this.setXRot(Mth.clamp(this.getXRot(), -90.0F, 90.0F));
+        this.setXRot(Mth.clamp(this.getXRot(), -90.0F - xDelta, 90.0F - xDelta));
         this.xRotO += f;
         this.yRotO += f1;
-        this.xRotO = Mth.clamp(this.xRotO, -90.0F, 90.0F);
+        this.xRotO = Mth.clamp(this.xRotO, -90.0F - xDelta, 90.0F - xDelta);
         if (this.vehicle != null) {
             this.vehicle.onPassengerTurned((Entity) (Object) this);
         }

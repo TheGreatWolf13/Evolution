@@ -23,6 +23,7 @@ import static tgw.evolution.util.math.Metric.*;
 public final class EvolutionTexts {
 
     //Action Bar
+    public static final Component ACTION_ATTACK_POSE = transl("evolution.actionbar.attackPose").setStyle(WHITE);
     public static final Component ACTION_HIT_STAKE = transl("evolution.actionbar.hitStake").setStyle(WHITE);
     public static final Component ACTION_HOOK = transl("evolution.actionbar.hook").setStyle(WHITE);
     public static final Component ACTION_TWO_HANDED = transl("evolution.actionbar.twoHanded").setStyle(WHITE);

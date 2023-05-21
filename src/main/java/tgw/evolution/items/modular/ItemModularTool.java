@@ -291,7 +291,7 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
 
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
-        if (entity instanceof Player player && this.isThrowable(stack)) {
+        if (entity instanceof Player player && this.isThrowable(stack) && entity.getSwimAmount(1.0f) == 0) {
             int i = this.getUseDuration(stack) - timeLeft;
             if (i >= 10) {
                 if (!level.isClientSide) {

@@ -4,6 +4,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -81,8 +82,6 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
     private void poseLeftArm(T entity) {
         HM armL = this.armL();
         HM itemL = this.itemL();
-        AnimationUtils.setupItemPosition(itemL, HumanoidArm.LEFT,
-                                         entity.getMainArm() == HumanoidArm.LEFT ? entity.getMainHandItem() : entity.getOffhandItem());
         switch (this.leftArmPose()) {
             case EMPTY -> armL.setRotationY(0.0F);
             case BLOCK -> {
@@ -137,8 +136,6 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
     private void poseRightArm(T entity) {
         HM armR = this.armR();
         HM itemR = this.itemR();
-        AnimationUtils.setupItemPosition(itemR, HumanoidArm.RIGHT,
-                                         entity.getMainArm() == HumanoidArm.RIGHT ? entity.getMainHandItem() : entity.getOffhandItem());
         switch (this.rightArmPose()) {
             case EMPTY -> armR.setRotationY(0.0F);
             case BLOCK -> {
@@ -233,84 +230,45 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
         HM itemR = this.itemR();
         HM itemL = this.itemL();
         float swimAmount = this.swimAmount();
+        boolean inWater = entity.isInWater();
         this.setShouldCancelLeft(false);
         this.setShouldCancelRight(false);
-        boolean isVisuallySwimming = entity.isVisuallySwimming();
-        head.setRotationY(netHeadYaw * Mth.DEG_TO_RAD);
-        if (swimAmount > 0.0F) {
-            if (isVisuallySwimming) {
-                if (!entity.isInWater()) {
-                    //Crawling pose
-                    head.setRotationX(Mth.DEG_TO_RAD * (headPitch + 90));
-                }
-                else {
-                    head.setRotationX(rotlerpRad(swimAmount, head.xRot(), Mth.HALF_PI));
-                }
-                head.setRotationY(0);
-                head.setRotationZ(Mth.DEG_TO_RAD * netHeadYaw);
-            }
-            else {
-                //Return from swimming or crawling
-                head.setRotationX(rotlerpRad(swimAmount, head.xRot(), -Mth.DEG_TO_RAD * headPitch));
-                head.setRotationZ(0);
-            }
-        }
-        else {
-            head.setRotationX(Mth.DEG_TO_RAD * headPitch);
-            head.setRotationZ(0);
-        }
+        //Reset model
+        //  Pivots
         head.setPivotY(24);
         body.setPivotY(24);
         legR.setPivotY(-12);
-        legL.setPivotY(-12);
-        body.setRotationY(0);
-        forearmL.setRotationY(0);
-        forearmL.setRotationZ(0);
-        forearmR.setRotationY(0);
-        forearmR.setRotationZ(0);
-        armR.setRotationY(0);
-        armL.setRotationY(0);
-        armR.setRotationZ(0);
-        armL.setRotationZ(0);
         legR.setPivotZ(0);
-        legR.setRotationY(0);
+        legL.setPivotY(-12);
         legL.setPivotZ(0);
+        itemR.setPivot(0, 0, 0);
+        itemL.setPivot(0, 0, 0);
+        //  Rotation
+        head.setRotationX(Mth.DEG_TO_RAD * headPitch);
+        head.setRotationY(Mth.DEG_TO_RAD * netHeadYaw);
+        body.setRotationX(0);
+        body.setRotationY(0);
+        armR.setRotation(0, 0, 0);
+        forearmR.setRotation(0, 0, 0);
+        armL.setRotation(0, 0, 0);
+        forearmL.setRotation(0, 0, 0);
+        legR.setRotationX(0);
+        legR.setRotationY(0);
+        forelegR.setRotationX(0);
+        legL.setRotationX(0);
         legL.setRotationY(0);
-        itemR.setPivotX(0);
-        itemR.setPivotY(0);
-        itemR.setPivotZ(0);
-        itemR.setRotationX(0);
-        itemR.setRotationZ(0);
-        itemL.setPivotX(0);
-        itemL.setPivotY(0);
-        itemL.setPivotZ(0);
-        itemL.setRotationX(0);
-        itemL.setRotationZ(0);
-        //Walking animation
-        if (swimAmount == 0) {
-            float threeQuarterAmpl = 0.75f * limbSwingAmount;
-            float fixedLimbSwing = 0.5f * limbSwing;
-            float sinLS = Mth.sin(fixedLimbSwing);
-            float cosLS = Mth.cos(fixedLimbSwing);
-            armR.setRotationX(-threeQuarterAmpl * sinLS);
-            armL.setRotationX(threeQuarterAmpl * sinLS);
-            float halfAmpl = 0.5f * limbSwingAmount;
-            forearmR.setRotationX(Math.max(0, -halfAmpl * sinLS));
-            forearmL.setRotationX(Math.max(0, halfAmpl * sinLS));
-            legR.setRotationX(halfAmpl * sinLS);
-            legL.setRotationX(-halfAmpl * sinLS);
-            forelegR.setRotationX(Math.min(0, -limbSwingAmount * cosLS));
-            forelegL.setRotationX(Math.min(0, limbSwingAmount * cosLS));
-            if (entity.isOnGround()) {
-                float bodyMotion = limbSwingAmount * Mth.sin(limbSwing);
-                body.translateY(bodyMotion);
-                head.translateY(bodyMotion);
-            }
-        }
+        forelegL.setRotationX(0);
+        itemR.setRotation(0, 0, 0);
+        itemL.setRotation(0, 0, 0);
+        //Setup poses
+        boolean crouching = this.crouching();
+        boolean crawling = !inWater && (swimAmount > 0 || entity.getPose() == Pose.SWIMMING);
+        boolean swimming = inWater && swimAmount == 1;
+        boolean shouldWalk = false;
         if (this.riding()) {
-            armR.addRotationX(18 * Mth.DEG_TO_RAD);
+            armR.setRotationX(18 * Mth.DEG_TO_RAD);
             forearmR.setRotationX(18 * Mth.DEG_TO_RAD);
-            armL.addRotationX(18 * Mth.DEG_TO_RAD);
+            armL.setRotationX(18 * Mth.DEG_TO_RAD);
             forearmL.setRotationX(18 * Mth.DEG_TO_RAD);
             legR.setRotationX(81 * Mth.DEG_TO_RAD);
             legR.setRotationY(-18 * Mth.DEG_TO_RAD);
@@ -319,66 +277,201 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
             legL.setRotationY(18 * Mth.DEG_TO_RAD);
             forelegL.setRotationX(-70 * Mth.DEG_TO_RAD);
         }
-        boolean isRightHanded = entity.getMainArm() == HumanoidArm.RIGHT;
-        boolean isPoseTwoHanded = isRightHanded ? this.leftArmPose().isTwoHanded() : this.rightArmPose().isTwoHanded();
-        if (isRightHanded != isPoseTwoHanded) {
-            this.poseLeftArm(entity);
-            this.poseRightArm(entity);
-        }
-        else {
-            this.poseRightArm(entity);
-            this.poseLeftArm(entity);
-        }
-        this.setupAttackAnim(entity, ageInTicks);
-        if (this.crouching()) {
-            head.translateY(-7);
-            body.translateY(-6);
-            body.setRotationX(-30 * Mth.DEG_TO_RAD);
-            if (!this.shouldCancelRight()) {
-                armR.addRotationX(15 * Mth.DEG_TO_RAD);
-                forearmR.addRotationX(15 * Mth.DEG_TO_RAD);
-            }
-            if (!this.shouldCancelLeft()) {
-                armL.addRotationX(15 * Mth.DEG_TO_RAD);
-                forearmL.addRotationX(15 * Mth.DEG_TO_RAD);
-            }
-            legR.translateY(1);
-            legR.addRotationX(75 * Mth.DEG_TO_RAD);
-            forelegR.addRotationX(-90 * Mth.DEG_TO_RAD);
-            legL.translateY(1);
-            legL.addRotationX(75 * Mth.DEG_TO_RAD);
-            forelegL.addRotationX(-90 * Mth.DEG_TO_RAD);
-        }
-        else {
-            body.setRotationX(0);
-        }
-        if (this.rightArmPose() != ArmPose.SPYGLASS) {
-            AnimationUtils.bobModelPart(armR, ageInTicks, 1.0F);
-        }
-        if (this.leftArmPose() != ArmPose.SPYGLASS) {
-            AnimationUtils.bobModelPart(armL, ageInTicks, -1.0F);
-        }
-        if (swimAmount > 0.0F) {
-            if (!entity.isInWater()) {
-                //Crawling
-                float sinLS = Mth.sin(limbSwing);
-                float positive = limbSwingAmount * sinLS + 90 * Mth.DEG_TO_RAD;
-                float negative = limbSwingAmount * -sinLS + 90 * Mth.DEG_TO_RAD;
-                armR.setRotationX(negative);
-                forearmR.setRotationX(positive);
-                armL.setRotationX(positive);
-                forearmL.setRotationX(negative);
-                float halfAmpl = 0.5f * limbSwingAmount;
-                legR.translateZ(1.9f);
-                positive = halfAmpl * sinLS;
-                negative = -positive;
-                legR.setRotationX(positive + 90 * Mth.DEG_TO_RAD);
-                forelegR.setRotationX(negative - 90 * Mth.DEG_TO_RAD);
-                legL.translateZ(1.9f);
-                legL.setRotationX(negative + 90 * Mth.DEG_TO_RAD);
-                forelegL.setRotationX(positive - 90 * Mth.DEG_TO_RAD);
+        else if (crawling) {
+            if (swimAmount < 1) {
+                //Transition
+                float headOffset;
+                float bodyOffset;
+                float legOffset;
+                float bodyRot0;
+                if (!entity.canEnterPose(Pose.STANDING)) {
+                    headOffset = -7;
+                    bodyOffset = -6;
+                    legOffset = 1;
+                    bodyRot0 = -30 * Mth.DEG_TO_RAD;
+                }
+                else {
+                    headOffset = 0;
+                    bodyOffset = 0;
+                    legOffset = 0;
+                    bodyRot0 = 0;
+                }
+                if (swimAmount < 0.25) {
+                    float t = AnimationUtils.normPar(swimAmount, 0, 0.25f);
+                    float quadIn = AnimationUtils.easingQuadraticIn(t);
+                    float offset = -5 * quadIn;
+                    float antiT = 1 - t;
+                    head.translateY(offset + headOffset);
+                    body.translateY(offset + bodyOffset);
+                    body.setRotationX(bodyRot0);
+                    legR.translateY(legOffset * antiT);
+                    legR.addRotationX(-35 * Mth.DEG_TO_RAD * t);
+                    forelegR.addRotationX(-55 * Mth.DEG_TO_RAD * t);
+                    legL.translateY(legOffset * antiT);
+                    legL.addRotationX(80 * Mth.DEG_TO_RAD * t);
+                    forelegL.addRotationX(-80 * Mth.DEG_TO_RAD * t);
+                }
+                else if (swimAmount < 0.5) {
+                    float t = AnimationUtils.normPar(swimAmount, 0.25f, 0.5f);
+                    float quadOut = AnimationUtils.easingQuadraticOut(t);
+                    float offset = -4 + (-5 + 4) * quadOut;
+                    head.translateY(offset + headOffset);
+                    body.translateY(offset + bodyOffset);
+                    body.setRotationX(bodyRot0);
+                    legR.addRotationX(-35 * Mth.DEG_TO_RAD + 35 * Mth.DEG_TO_RAD * t);
+                    forelegR.addRotationX(-55 * Mth.DEG_TO_RAD + (-90 * Mth.DEG_TO_RAD + 55 * Mth.DEG_TO_RAD) * t);
+                    legL.addRotationX(80 * Mth.DEG_TO_RAD - 80 * Mth.DEG_TO_RAD * t);
+                    forelegL.addRotationX(-80 * Mth.DEG_TO_RAD + (-90 * Mth.DEG_TO_RAD + 80 * Mth.DEG_TO_RAD) * t);
+                }
+                else {
+                    float t = AnimationUtils.normPar(swimAmount, 0.5f, 1.0f);
+                    float sineIn = AnimationUtils.easingSineIn(t);
+                    float offset18 = -4 + (-18 + 4) * sineIn;
+                    float offset2 = 1.99f * sineIn;
+                    float rot90 = 90 * Mth.DEG_TO_RAD * t;
+                    float antiT = 1 - t;
+                    head.translateY(offset18 + headOffset * antiT);
+                    body.translateY(offset18 + bodyOffset * antiT);
+                    body.setRotationX(bodyRot0 - (90 * Mth.DEG_TO_RAD + bodyRot0) * t);
+                    armR.addRotationX(rot90);
+                    forearmR.addRotationX(rot90);
+                    armL.addRotationX(rot90);
+                    forearmL.addRotationX(rot90);
+                    legR.translateZ(offset2);
+                    legR.addRotationX(rot90);
+                    forelegR.addRotationX(-90 * Mth.DEG_TO_RAD);
+                    legL.translateZ(offset2);
+                    legL.addRotationX(rot90);
+                    forelegL.addRotationX(-90 * Mth.DEG_TO_RAD);
+                }
             }
             else {
+                //Crawling Animation
+                float sinLS = Mth.sin(limbSwing);
+                float rot90 = limbSwingAmount * sinLS;
+                float halfRot90 = 0.5f * limbSwingAmount * sinLS;
+                head.translateY(-18);
+                body.translateY(-18);
+                body.addRotationX(-90 * Mth.DEG_TO_RAD);
+                armR.addRotationX(-rot90 + 90 * Mth.DEG_TO_RAD);
+                forearmR.addRotationX(rot90 + 90 * Mth.DEG_TO_RAD);
+                armL.addRotationX(rot90 + 90 * Mth.DEG_TO_RAD);
+                forearmL.addRotationX(-rot90 + 90 * Mth.DEG_TO_RAD);
+                legR.translateZ(1.99f);
+                legR.addRotationX(halfRot90 + 90 * Mth.DEG_TO_RAD);
+                forelegR.addRotationX(-halfRot90 - 90 * Mth.DEG_TO_RAD);
+                legL.translateZ(1.99f);
+                legL.addRotationX(-halfRot90 + 90 * Mth.DEG_TO_RAD);
+                forelegL.addRotationX(halfRot90 - 90 * Mth.DEG_TO_RAD);
+            }
+        }
+        else if (crouching) {
+            shouldWalk = true;
+            head.setPivotY(17);
+            body.setPivotY(18);
+            body.setRotationX(-30 * Mth.DEG_TO_RAD);
+            if (!this.shouldCancelRight()) {
+                armR.setRotationX(15 * Mth.DEG_TO_RAD);
+                forearmR.setRotationX(15 * Mth.DEG_TO_RAD);
+            }
+            if (!this.shouldCancelLeft()) {
+                armL.setRotationX(15 * Mth.DEG_TO_RAD);
+                forearmL.setRotationX(15 * Mth.DEG_TO_RAD);
+            }
+            legR.setPivotY(-11);
+            legR.setRotationX(75 * Mth.DEG_TO_RAD);
+            forelegR.setRotationX(-90 * Mth.DEG_TO_RAD);
+            legL.setPivotY(-11);
+            legL.setRotationX(75 * Mth.DEG_TO_RAD);
+            forelegL.setRotationX(-90 * Mth.DEG_TO_RAD);
+        }
+        else if (swimming) {
+
+        }
+        else {
+            //Standing
+            shouldWalk = true;
+        }
+        if (shouldWalk) {
+            //Walking animation
+            float threeQuarterAmpl = 0.75f * limbSwingAmount;
+            float fixedLimbSwing = 0.5f * limbSwing;
+            float sinLS = Mth.sin(fixedLimbSwing);
+            float cosLS = Mth.cos(fixedLimbSwing);
+            armR.addRotationX(-threeQuarterAmpl * sinLS);
+            armL.addRotationX(threeQuarterAmpl * sinLS);
+            float halfAmpl = 0.5f * limbSwingAmount;
+            forearmR.addRotationX(Math.max(0, -halfAmpl * sinLS));
+            forearmL.addRotationX(Math.max(0, halfAmpl * sinLS));
+            legR.addRotationX(halfAmpl * sinLS);
+            legL.addRotationX(-halfAmpl * sinLS);
+            forelegR.addRotationX(Math.min(0, -limbSwingAmount * cosLS));
+            forelegL.addRotationX(Math.min(0, limbSwingAmount * cosLS));
+            if (entity.isOnGround()) {
+                float bodyMotion = limbSwingAmount * Mth.sin(limbSwing);
+                head.translateY(bodyMotion);
+                body.translateY(bodyMotion);
+            }
+        }
+        //Setup hand poses
+        AnimationUtils.setupItemPosition(itemR, HumanoidArm.RIGHT,
+                                         entity.getMainArm() == HumanoidArm.RIGHT ? entity.getMainHandItem() : entity.getOffhandItem());
+        AnimationUtils.setupItemPosition(itemL, HumanoidArm.LEFT,
+                                         entity.getMainArm() == HumanoidArm.LEFT ? entity.getMainHandItem() : entity.getOffhandItem());
+        if (!crawling) {
+            boolean isRightHanded = entity.getMainArm() == HumanoidArm.RIGHT;
+            boolean isPoseTwoHanded = isRightHanded ? this.leftArmPose().isTwoHanded() : this.rightArmPose().isTwoHanded();
+            if (isRightHanded != isPoseTwoHanded) {
+                this.poseLeftArm(entity);
+                this.poseRightArm(entity);
+            }
+            else {
+                this.poseRightArm(entity);
+                this.poseLeftArm(entity);
+            }
+        }
+        this.setupAttackAnim(entity, ageInTicks);
+        //
+        if (true) {
+            return;
+        }
+        if (0 < swimAmount && swimAmount < 1) {
+            if (!entity.isInWater()) {
+                //Start crawling
+
+            }
+//            if (isVisuallySwimming) {
+//                if (!entity.isInWater()) {
+//                    //Crawling pose
+//                    head.setRotationX(Mth.DEG_TO_RAD * (headPitch + 90));
+//                }
+//                else {
+//                    head.setRotationX(rotlerpRad(swimAmount, head.xRot(), Mth.HALF_PI));
+//                }
+//                head.setRotationY(0);
+//                head.setRotationZ(Mth.DEG_TO_RAD * netHeadYaw);
+//            }
+//            else {
+//                //Return from swimming or crawling
+//                head.setRotationX(rotlerpRad(swimAmount, head.xRot(), -Mth.DEG_TO_RAD * headPitch));
+//                head.setRotationZ(0);
+//            }
+        }
+
+        if (swimAmount == 0) {
+            if (this.rightArmPose() != ArmPose.SPYGLASS) {
+                AnimationUtils.bobModelPart(armR, ageInTicks, 1.0F);
+            }
+            if (this.leftArmPose() != ArmPose.SPYGLASS) {
+                AnimationUtils.bobModelPart(armL, ageInTicks, -1.0F);
+            }
+        }
+        else if (swimAmount == 1.0F) {
+            if (!entity.isInWater()) {
+
+            }
+            else {
+                //Swimming Animation
                 float anim = limbSwing % (4 * Mth.PI) * 6.5f;
                 HumanoidArm attackArm = this.getSwingingArm(entity);
                 float attackTime = this.attackTime();

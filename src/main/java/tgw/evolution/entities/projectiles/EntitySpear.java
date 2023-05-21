@@ -129,7 +129,7 @@ public class EntitySpear extends EntityGenericProjectile<EntitySpear> implements
     @Override
     public double getVolume() {
         //TODO
-        return 500 * SI.CUBIC_CENTIMETER;
+        return 50 * SI.CUBIC_CENTIMETER;
     }
 
     @Override

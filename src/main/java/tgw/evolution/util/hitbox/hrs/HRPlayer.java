@@ -105,25 +105,25 @@ public interface HRPlayer<T extends Player> extends HRLivingEntity<T, HMPlayer<T
         }
         else if (swimAmount > 0.0F) {
             HRLivingEntity.super.rotations(entity, hr, ageInTicks, rotationYaw, partialTicks);
-            float desiredXRot = entity.isInWater() ? -90.0F - entity.getXRot() : -90.0F;
-            float interpXRot = Mth.lerp(swimAmount, 0.0F, desiredXRot);
-            if (entity.isVisuallySwimming()) {
-                if (!entity.isInWater()) {
-                    //Crawling pose
-                    hr.rotateXHR(interpXRot);
-                    hr.translateHR(0, -1, 0.385f);
-                }
-                else {
-                    //Swimming pose
-                    hr.translateHR(0, 0.4f, 0);
-                    hr.rotateXHR(interpXRot);
-                    hr.translateHR(0, -1.4f, -0.25f);
-                }
-            }
-            else {
-                hr.rotateXHR(interpXRot);
-                hr.translateHR(0, -1.3f, 0.2f);
-            }
+//            float desiredXRot = entity.isInWater() ? -90.0F - entity.getXRot() : -90.0F;
+//            float interpXRot = Mth.lerp(swimAmount, 0.0F, desiredXRot);
+//            if (entity.isVisuallySwimming()) {
+//                if (!entity.isInWater()) {
+//                    //Crawling pose
+//                    hr.rotateXHR(interpXRot);
+//                    hr.translateHR(0, -1, 0.385f);
+//                }
+//                else {
+//                    //Swimming pose
+//                    hr.translateHR(0, 0.4f, 0);
+//                    hr.rotateXHR(interpXRot);
+//                    hr.translateHR(0, -1.4f, -0.25f);
+//                }
+//            }
+//            else {
+//                hr.rotateXHR(interpXRot);
+//                hr.translateHR(0, -1.3f, 0.2f);
+//            }
         }
         else {
             HRLivingEntity.super.rotations(entity, hr, ageInTicks, rotationYaw, partialTicks);
@@ -143,7 +143,7 @@ public interface HRPlayer<T extends Player> extends HRLivingEntity<T, HMPlayer<T
             case STANDING, CROUCHING -> hr.translateHR(0, 0, 1 / 16.0f);
             case SWIMMING -> {
                 if (!entity.isInWater()) {
-                    hr.translateHR(0, -9 / 16.0f, -0.5f / 16.0f);
+//                    hr.translateHR(0, -9 / 16.0f, -0.5f / 16.0f);
                 }
             }
         }
