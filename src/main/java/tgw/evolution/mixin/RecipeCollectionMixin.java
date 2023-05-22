@@ -6,11 +6,10 @@ import net.minecraft.stats.RecipeBook;
 import net.minecraft.world.entity.player.StackedContents;
 import net.minecraft.world.item.crafting.Recipe;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.inventory.StackedContentsEv;
 import tgw.evolution.util.collection.BiIIArrayList;
 import tgw.evolution.util.collection.RArrayList;
@@ -96,15 +95,26 @@ public abstract class RecipeCollectionMixin {
         return list;
     }
 
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInit(List recipes, CallbackInfo ci) {
-        this.craftable = new ReferenceOpenHashSet<>();
-        this.fitsDimensions = new ReferenceOpenHashSet<>();
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/screens/recipebook/RecipeCollection;" +
+                                                                    "known:Ljava/util/Set;", opcode = Opcodes.PUTFIELD))
+    private void onInit(RecipeCollection instance, Set<Recipe<?>> value) {
         this.known = new ReferenceOpenHashSet<>();
     }
 
     @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/Sets;newHashSet()Ljava/util/HashSet;"), require = 3)
-    private @Nullable HashSet proxyInit() {
+    private @Nullable HashSet onInit() {
         return null;
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/screens/recipebook/RecipeCollection;" +
+                                                                    "craftable:Ljava/util/Set;", opcode = Opcodes.PUTFIELD))
+    private void onInit0(RecipeCollection instance, Set<Recipe<?>> value) {
+        this.craftable = new ReferenceOpenHashSet<>();
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/screens/recipebook/RecipeCollection;" +
+                                                                    "fitsDimensions:Ljava/util/Set;", opcode = Opcodes.PUTFIELD))
+    private void onInit1(RecipeCollection instance, Set<Recipe<?>> value) {
+        this.fitsDimensions = new ReferenceOpenHashSet<>();
     }
 }

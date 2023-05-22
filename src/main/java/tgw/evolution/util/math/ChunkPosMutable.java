@@ -12,6 +12,10 @@ public class ChunkPosMutable extends ChunkPos {
         this(0, 0);
     }
 
+    public ChunkPosMutable(ChunkPos pos) {
+        this(pos.x, pos.z);
+    }
+
     public ChunkPosMutable(int x, int y) {
         super(x, y);
     }

@@ -17,7 +17,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.PostChain;
-import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.Mth;
@@ -30,12 +29,11 @@ import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.common.ForgeMod;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11C;
+import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.client.gui.EvolutionGui;
 import tgw.evolution.client.gui.overlays.Overlays;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
@@ -165,9 +163,11 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
         }
     }
 
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void onConstructor(Minecraft mc, ResourceManager resourceManager, RenderBuffers buffers, CallbackInfo ci) {
-        this.lightTexture = new LightTextureEv((GameRenderer) (Object) this, mc);
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/GameRenderer;" +
+                                                                    "lightTexture:Lnet/minecraft/client/renderer/LightTexture;", opcode =
+            Opcodes.PUTFIELD))
+    private void onConstructor(GameRenderer instance, LightTexture value) {
+        this.lightTexture = new LightTextureEv((GameRenderer) (Object) this, this.minecraft);
     }
 
     /**

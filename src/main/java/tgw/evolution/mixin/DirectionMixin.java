@@ -2,10 +2,7 @@ package tgw.evolution.mixin;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -16,8 +13,11 @@ public abstract class DirectionMixin {
     @Shadow
     @Final
     private static Direction[] VALUES;
+    @Unique
     private int offsetX;
+    @Unique
     private int offsetY;
+    @Unique
     private int offsetZ;
     @Shadow
     @Final

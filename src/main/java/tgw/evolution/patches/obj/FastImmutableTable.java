@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.HashCommon;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
@@ -25,9 +26,6 @@ public class FastImmutableTable<R, C, V> implements Table<R, C, V> {
     private V[] values;
 
     public FastImmutableTable(Table<R, C, V> table, FastImmutableTableCache<R, C, V> cache) {
-        if (cache == null) {
-            throw new IllegalArgumentException("Cache must not be null");
-        }
         Set<R> rowKeySet = table.rowKeySet();
         Set<C> colKeySet = table.columnKeySet();
         int rowCount = rowKeySet.size();
@@ -66,7 +64,6 @@ public class FastImmutableTable<R, C, V> implements Table<R, C, V> {
             int i = find(keys, mask, obj);
             if (i < 0) {
                 int pos = -i - 1;
-
                 keys[pos] = obj;
                 indices[pos] = index++;
             }
@@ -115,7 +112,7 @@ public class FastImmutableTable<R, C, V> implements Table<R, C, V> {
 
     @Override
     @NotNull
-    public Map<R, V> column(C columnKey) {
+    public Map<R, V> column(@Nullable C columnKey) {
         throw new UnsupportedOperationException();
     }
 
@@ -132,27 +129,27 @@ public class FastImmutableTable<R, C, V> implements Table<R, C, V> {
     }
 
     @Override
-    public boolean contains(Object rowKey, Object columnKey) {
+    public boolean contains(@Nullable Object rowKey, @Nullable Object columnKey) {
         return this.get(rowKey, columnKey) != null;
     }
 
     @Override
-    public boolean containsColumn(Object columnKey) {
+    public boolean containsColumn(@Nullable Object columnKey) {
         return find(this.colKeys, this.colMask, columnKey) >= 0;
     }
 
     @Override
-    public boolean containsRow(Object rowKey) {
+    public boolean containsRow(@Nullable Object rowKey) {
         return find(this.rowKeys, this.rowMask, rowKey) >= 0;
     }
 
     @Override
-    public boolean containsValue(Object value) {
+    public boolean containsValue(@Nullable Object value) {
         return ArrayUtils.contains(this.values, value);
     }
 
     @Override
-    public V get(Object rowKey, Object columnKey) {
+    public V get(@Nullable Object rowKey, @Nullable Object columnKey) {
         final int row = getIndex(this.rowKeys, this.rowIndices, this.rowMask, rowKey);
         final int col = getIndex(this.colKeys, this.colIndices, this.colMask, columnKey);
         if (row < 0 || col < 0) {
@@ -167,7 +164,7 @@ public class FastImmutableTable<R, C, V> implements Table<R, C, V> {
     }
 
     @Override
-    public V put(R rowKey, C columnKey, V val) {
+    public V put(@Nullable R rowKey, @Nullable C columnKey, @Nullable V val) {
         throw new UnsupportedOperationException();
     }
 
@@ -177,13 +174,13 @@ public class FastImmutableTable<R, C, V> implements Table<R, C, V> {
     }
 
     @Override
-    public V remove(Object rowKey, Object columnKey) {
+    public V remove(@Nullable Object rowKey, @Nullable Object columnKey) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     @NotNull
-    public Map<C, V> row(R rowKey) {
+    public Map<C, V> row(@Nullable R rowKey) {
         throw new UnsupportedOperationException();
     }
 

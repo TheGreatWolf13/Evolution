@@ -11,6 +11,10 @@ public class AABBMutable extends AABB {
         this(0, 0, 0, 0, 0, 0);
     }
 
+    public AABBMutable(AABB bb) {
+        this(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ);
+    }
+
     public AABBMutable(Vec3 start, Vec3 end) {
         this(start.x, start.y, start.z, end.x, end.y, end.z);
     }
@@ -38,6 +42,17 @@ public class AABBMutable extends AABB {
 
     public AABBMutable inflateMutable(double x, double y, double z) {
         return this.set(this.minX - x, this.minY - y, this.minZ - z, this.maxX + x, this.maxY + y, this.maxZ + z);
+    }
+
+    @Override
+    public AABBMutable minmax(AABB other) {
+        double x0 = Math.min(this.minX, other.minX);
+        double y0 = Math.min(this.minY, other.minY);
+        double z0 = Math.min(this.minZ, other.minZ);
+        double x1 = Math.max(this.maxX, other.maxX);
+        double y1 = Math.max(this.maxY, other.maxY);
+        double z1 = Math.max(this.maxZ, other.maxZ);
+        return this.set(x0, y0, z0, x1, y1, z1);
     }
 
     public AABBMutable set(double x1, double y1, double z1, double x2, double y2, double z2) {

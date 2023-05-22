@@ -3,20 +3,37 @@ package tgw.evolution.mixin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Inventory;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.patches.IMinecraftPatch;
 
-@SuppressWarnings("MethodMayBeStatic")
 @Mixin(Inventory.class)
 public abstract class InventoryMixinClient {
 
-    @Inject(method = "swapPaint", at = @At("HEAD"), cancellable = true)
-    private void onSwapPaint(double scrollAmount, CallbackInfo ci) {
+    @Shadow
+    public int selected;
+
+    /**
+     * @author TheGreatWolf
+     * @reason Prevent swapping when paused or special attacking
+     */
+    @Overwrite
+    public void swapPaint(double dir) {
         if (((IMinecraftPatch) Minecraft.getInstance()).isMultiplayerPaused() || ClientEvents.getInstance().shouldRenderSpecialAttack()) {
-            ci.cancel();
+            return;
+        }
+        if (dir > 0) {
+            --this.selected;
+            if (this.selected < 0) {
+                this.selected = 8;
+            }
+        }
+        else {
+            ++this.selected;
+            if (this.selected >= 9) {
+                this.selected = 0;
+            }
         }
     }
 }

@@ -6,18 +6,24 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.patches.IAbstractContainerMenuPatch;
 
 @Mixin(AbstractContainerMenu.class)
 public abstract class AbstractContainerMenuMixin implements IAbstractContainerMenuPatch {
 
+    @Shadow
+    private ItemStack carried;
     private Player player;
 
-    @Inject(method = "setCarried", at = @At("RETURN"))
-    private void onSetCarried(ItemStack stack, CallbackInfo ci) {
+    /**
+     * @author TheGreatWolf
+     * @reason Trigger advancements for carried stack
+     */
+    @Overwrite
+    public void setCarried(ItemStack stack) {
+        this.carried = stack;
         if (this.player instanceof ServerPlayer serverPlayer) {
             CriteriaTriggers.INVENTORY_CHANGED.trigger(serverPlayer, this.player.getInventory(), stack);
         }

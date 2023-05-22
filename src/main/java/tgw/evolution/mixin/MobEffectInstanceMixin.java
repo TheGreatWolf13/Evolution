@@ -5,20 +5,22 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.extensions.IForgeMobEffectInstance;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.patches.IMobEffectInstancePatch;
 import tgw.evolution.patches.IMobEffectPatch;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Mixin(MobEffectInstance.class)
-public abstract class MobEffectInstanceMixin implements IMobEffectInstancePatch {
+public abstract class MobEffectInstanceMixin implements IMobEffectInstancePatch, IForgeMobEffectInstance {
 
     @Shadow
     @Final
@@ -27,6 +29,8 @@ public abstract class MobEffectInstanceMixin implements IMobEffectInstancePatch 
     private boolean ambient;
     @Shadow
     private int amplifier;
+    @Shadow
+    private List<ItemStack> curativeItems;
     @Shadow
     private int duration;
     @Shadow
@@ -108,6 +112,12 @@ public abstract class MobEffectInstanceMixin implements IMobEffectInstancePatch 
         return this.duration;
     }
 
+    @Shadow
+    public abstract int getAmplifier();
+
+    @Shadow
+    public abstract int getDuration();
+
     @Nullable
     @Override
     public MobEffectInstance getHiddenEffect() {
@@ -130,28 +140,31 @@ public abstract class MobEffectInstanceMixin implements IMobEffectInstancePatch 
         return 31 * i + (this.ambient ? 1 : 0);
     }
 
+    @Shadow
+    public abstract boolean isAmbient();
+
     @Override
     public boolean isInfinite() {
         return this.infinite;
     }
 
-    @Inject(method = "setDetailsFrom", at = @At(value = "TAIL"))
-    void onSetDetailsFrom(MobEffectInstance other, CallbackInfo ci) {
+    @Shadow
+    public abstract boolean isVisible();
+
+    @Overwrite
+    void setDetailsFrom(MobEffectInstance other) {
+        this.duration = other.getDuration();
+        this.amplifier = other.getAmplifier();
+        this.ambient = other.isAmbient();
+        this.visible = other.isVisible();
+        this.showIcon = other.showIcon();
+        this.curativeItems = other.getCurativeItems() == null ? null : new ArrayList(other.getCurativeItems());
         this.setInfinite(((IMobEffectInstancePatch) other).isInfinite());
         MobEffectInstance hiddenEffect = ((IMobEffectInstancePatch) other).getHiddenEffect();
         if (hiddenEffect != null) {
             this.hiddenEffect = new MobEffectInstance(hiddenEffect);
         }
     }
-
-    @Inject(method = "writeDetailsTo", at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/CompoundTag;putBoolean(Ljava/lang/String;Z)V",
-            ordinal = 0))
-    private void onWriteDetailsTo(CompoundTag nbt, CallbackInfo ci) {
-        nbt.putBoolean("Infinite", this.infinite);
-    }
-
-    @Shadow
-    abstract void setDetailsFrom(MobEffectInstance pEffectInstance);
 
     @Override
     public void setHiddenEffect(@Nullable MobEffectInstance hiddenInstance) {
@@ -165,6 +178,9 @@ public abstract class MobEffectInstanceMixin implements IMobEffectInstancePatch 
             this.duration = 20_000_000;
         }
     }
+
+    @Shadow
+    public abstract boolean showIcon();
 
     /**
      * @author TheGreatWolf
@@ -307,5 +323,21 @@ public abstract class MobEffectInstanceMixin implements IMobEffectInstancePatch 
             return true;
         }
         return changed;
+    }
+
+    @Overwrite
+    private void writeDetailsTo(CompoundTag nbt) {
+        nbt.putByte("Amplifier", (byte) this.getAmplifier());
+        nbt.putInt("Duration", this.getDuration());
+        nbt.putBoolean("Infinite", this.infinite);
+        nbt.putBoolean("Ambient", this.isAmbient());
+        nbt.putBoolean("ShowParticles", this.isVisible());
+        nbt.putBoolean("ShowIcon", this.showIcon());
+        if (this.hiddenEffect != null) {
+            CompoundTag hidden = new CompoundTag();
+            this.hiddenEffect.save(hidden);
+            nbt.put("HiddenEffect", hidden);
+        }
+        this.writeCurativeItems(nbt);
     }
 }

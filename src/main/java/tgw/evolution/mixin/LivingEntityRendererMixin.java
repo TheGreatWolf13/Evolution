@@ -14,11 +14,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.common.MinecraftForge;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.hitbox.hms.HMEntity;
 import tgw.evolution.util.hitbox.hrs.HR;
@@ -68,8 +67,9 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
         return (HMEntity<T>) this.model;
     }
 
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInit(EntityRendererProvider.Context context, EntityModel model, float shadowRadius, CallbackInfo ci) {
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;" +
+                                                                    "layers:Ljava/util/List;", opcode = Opcodes.PUTFIELD))
+    private void onInit(LivingEntityRenderer instance, List<RenderLayer<T, M>> value) {
         this.layers = new OArrayList<>();
     }
 

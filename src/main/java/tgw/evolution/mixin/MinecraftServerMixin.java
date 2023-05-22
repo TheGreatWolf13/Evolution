@@ -30,9 +30,6 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.Evolution;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.init.EvolutionStats;
@@ -114,16 +111,6 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
 
     @Shadow
     public abstract boolean isSingleplayer();
-
-    @Inject(method = "tickServer", at = @At("HEAD"))
-    private void onTickServer(BooleanSupplier supplier, CallbackInfo ci) {
-        //noinspection ConstantConditions
-        if ((Object) this instanceof DedicatedServer) {
-            for (ServerPlayer player : this.getPlayerList().getPlayers()) {
-                player.awardStat(EvolutionStats.TIME_WITH_WORLD_OPEN);
-            }
-        }
-    }
 
     @Shadow
     public abstract boolean saveEverything(boolean p_195515_, boolean p_195516_, boolean p_195517_);
@@ -207,6 +194,13 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
      */
     @Overwrite
     public void tickServer(BooleanSupplier booleanSupplier) {
+        //noinspection ConstantConditions
+        if ((Object) this instanceof DedicatedServer) {
+            List<ServerPlayer> players = this.getPlayerList().getPlayers();
+            for (int i = 0, len = players.size(); i < len; i++) {
+                players.get(i).awardStat(EvolutionStats.TIME_WITH_WORLD_OPEN);
+            }
+        }
         long i = Util.getNanos();
         ForgeEventFactory.onPreServerTick(booleanSupplier);
         if (!this.isMultiplayerPaused) { //Added check for multiplayer pause

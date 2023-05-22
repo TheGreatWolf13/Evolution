@@ -19,14 +19,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.MapItem;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.minecraft.world.phys.Vec3;
+import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.util.collection.RArrayList;
 import tgw.evolution.util.math.Vec3d;
@@ -84,8 +84,9 @@ public abstract class ServerEntityMixin {
     @Shadow
     protected abstract void broadcastAndSend(Packet<?> pPacket);
 
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInit(ServerLevel level, Entity entity, int updateInterval, boolean trackDelta, Consumer broadcast, CallbackInfo ci) {
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/server/level/ServerEntity;ap:Lnet/minecraft/world/phys/Vec3;",
+            opcode = Opcodes.PUTFIELD))
+    private void onInit(ServerEntity instance, Vec3 value) {
         this.ap = new Vec3d();
     }
 

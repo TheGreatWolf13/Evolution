@@ -6,10 +6,10 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.world.entity.Entity;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.client.models.CubeListBuilderEv;
 import tgw.evolution.util.hitbox.hms.HM;
 import tgw.evolution.util.hitbox.hms.LegacyHMCreeper;
@@ -91,14 +91,41 @@ public abstract class CreeperModelMixin<T extends Entity> extends HierarchicalMo
     /**
      * Why the hell are the legs switched left and right in the original code? This cost me 2 hours.
      */
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInit(ModelPart root, CallbackInfo ci) {
-        ModelPart temp = this.leftHindLeg;
-        this.leftHindLeg = this.rightHindLeg;
-        this.rightHindLeg = temp;
-        temp = this.leftFrontLeg;
-        this.leftFrontLeg = this.rightFrontLeg;
-        this.rightFrontLeg = temp;
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/model/CreeperModel;" +
+                                                                    "rightFrontLeg:Lnet/minecraft/client/model/geom/ModelPart;", opcode =
+            Opcodes.PUTFIELD))
+    private void onInitLF(CreeperModel instance, ModelPart value) {
+        this.leftFrontLeg = value;
+    }
+
+    /**
+     * Why the hell are the legs switched left and right in the original code? This cost me 2 hours.
+     */
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/model/CreeperModel;" +
+                                                                    "rightHindLeg:Lnet/minecraft/client/model/geom/ModelPart;", opcode =
+            Opcodes.PUTFIELD))
+    private void onInitLH(CreeperModel instance, ModelPart value) {
+        this.leftHindLeg = value;
+    }
+
+    /**
+     * Why the hell are the legs switched left and right in the original code? This cost me 2 hours.
+     */
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/model/CreeperModel;" +
+                                                                    "leftFrontLeg:Lnet/minecraft/client/model/geom/ModelPart;", opcode =
+            Opcodes.PUTFIELD))
+    private void onInitRF(CreeperModel instance, ModelPart value) {
+        this.rightFrontLeg = value;
+    }
+
+    /**
+     * Why the hell are the legs switched left and right in the original code? This cost me 2 hours.
+     */
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/model/CreeperModel;" +
+                                                                    "leftHindLeg:Lnet/minecraft/client/model/geom/ModelPart;", opcode =
+            Opcodes.PUTFIELD))
+    private void onInitRH(CreeperModel instance, ModelPart value) {
+        this.rightHindLeg = value;
     }
 
     /**

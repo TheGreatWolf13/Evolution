@@ -3,14 +3,13 @@ package tgw.evolution.mixin;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.storage.WritableLevelData;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.Overwrite;
 import tgw.evolution.events.ClientEvents;
 
 import java.util.function.Supplier;
@@ -26,10 +25,18 @@ public abstract class ClientLevelMixin extends Level {
         super(pLevelData, pDimension, pDimensionTypeRegistration, pProfiler, pIsClientSide, pIsDebug, pBiomeZoomSeed);
     }
 
-    @Inject(method = "getStarBrightness", at = @At(value = "HEAD"), cancellable = true)
-    private void onGetStarBrightness(float partialTicks, CallbackInfoReturnable<Float> cir) {
+    /**
+     * @author TheGreatWolf
+     * @reason Use Evolution dimension
+     */
+    @Overwrite
+    public float getStarBrightness(float partialTicks) {
         if (ClientEvents.getInstance().getDimension() != null) {
-            cir.setReturnValue(ClientEvents.getInstance().getDimension().getSkyBrightness(partialTicks));
+            return ClientEvents.getInstance().getDimension().getSkyBrightness(partialTicks);
         }
+        float timeOfDay = this.getTimeOfDay(partialTicks);
+        float f = 1.0F - (Mth.cos(timeOfDay * Mth.TWO_PI) * 2.0F + 0.25F);
+        f = Mth.clamp(f, 0, 1);
+        return f * f * 0.5F;
     }
 }
