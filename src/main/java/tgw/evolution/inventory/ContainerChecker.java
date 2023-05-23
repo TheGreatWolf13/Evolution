@@ -4,12 +4,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.EntityGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.entity.EntityTypeTest;
-import tgw.evolution.util.math.AABBMutable;
+
+import java.util.List;
 
 public abstract class ContainerChecker<T extends IContainerCheckable> {
 
-    private final AABBMutable aabb = new AABBMutable();
     private int openCount;
 
     public void decrementOpeners(Player player, Level level, BlockPos pos, T obj) {
@@ -20,12 +19,15 @@ public abstract class ContainerChecker<T extends IContainerCheckable> {
         this.openerCountChanged(level, pos, obj, i, this.openCount);
     }
 
-    private int getOpenCount(EntityGetter level, BlockPos pos) {
-        int x = pos.getX();
-        int y = pos.getY();
-        int z = pos.getZ();
-        this.aabb.set(x - 5.0F, y - 5.0F, z - 5.0F, (x + 1) + 5.0F, (y + 1) + 5.0F, (z + 1) + 5.0F);
-        return level.getEntities(EntityTypeTest.forClass(Player.class), this.aabb, this::isOwnContainer).size();
+    private int getOpenCount(EntityGetter level) {
+        int count = 0;
+        List<? extends Player> players = level.players();
+        for (int i = 0, len = players.size(); i < len; i++) {
+            if (this.isOwnContainer(players.get(i))) {
+                ++count;
+            }
+        }
+        return count;
     }
 
     public int getOpenerCount() {
@@ -50,7 +52,7 @@ public abstract class ContainerChecker<T extends IContainerCheckable> {
     protected abstract void openerCountChanged(Level level, BlockPos pos, T obj, int count, int newCount);
 
     public void recheckOpeners(Level level, BlockPos pos, T obj) {
-        int openCount = this.getOpenCount(level, pos);
+        int openCount = this.getOpenCount(level);
         int currentOpenCount = this.openCount;
         if (currentOpenCount != openCount) {
             boolean shouldBeOpen = openCount != 0;

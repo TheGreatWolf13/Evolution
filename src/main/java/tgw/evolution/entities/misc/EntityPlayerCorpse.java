@@ -72,6 +72,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
                                                                                                            EvolutionDataSerializers.ITEM_LIST);
     private static @Nullable GameProfileCache profileCache;
     private static @Nullable MinecraftSessionService sessionService;
+    private final ContainerChecker<EntityPlayerCorpse> containerChecker;
     private final LazyOptional<IItemHandler> handler;
     private final ItemStackHandler itemHandler;
     private Component deathMessage = EvolutionTexts.EMPTY;
@@ -88,6 +89,38 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
     private int selected;
     private @Nullable EntitySkeletonDummy skeleton;
     private long systemDeathTime;
+
+    {
+        this.containerChecker = new ContainerChecker<>() {
+
+            @Override
+            protected boolean isOwnContainer(Player player) {
+                if (!(player.containerMenu instanceof ContainerCorpse container)) {
+                    return false;
+                }
+                EntityPlayerCorpse corpse = container.getCorpse();
+                return EntityPlayerCorpse.this.equals(corpse);
+            }
+
+            @Override
+            protected void onClose(Level level, BlockPos pos, EntityPlayerCorpse obj) {
+                EntityPlayerCorpse.this.tryDespawn();
+            }
+
+            @Override
+            protected void onOpen(Level level, BlockPos pos, EntityPlayerCorpse obj) {
+            }
+
+            @Override
+            protected void openerCountChanged(Level level, BlockPos pos, EntityPlayerCorpse obj, int count, int newCount) {
+            }
+
+            @Override
+            public void scheduleRecheck(Level level, BlockPos pos, EntityPlayerCorpse state) {
+                EntityPlayerCorpse.this.recheckTime = 5;
+            }
+        };
+    }
 
     public EntityPlayerCorpse(Player player) {
         this(EvolutionEntities.PLAYER_CORPSE.get(), player.level);
@@ -140,35 +173,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
             }
         };
         this.handler = LazyOptional.of(() -> this.itemHandler);
-    }    private final ContainerChecker<EntityPlayerCorpse> containerChecker = new ContainerChecker<>() {
-
-        @Override
-        protected boolean isOwnContainer(Player player) {
-            if (!(player.containerMenu instanceof ContainerCorpse container)) {
-                return false;
-            }
-            EntityPlayerCorpse corpse = container.getCorpse();
-            return EntityPlayerCorpse.this.equals(corpse);
-        }
-
-        @Override
-        protected void onClose(Level level, BlockPos pos, EntityPlayerCorpse obj) {
-            EntityPlayerCorpse.this.tryDespawn();
-        }
-
-        @Override
-        protected void onOpen(Level level, BlockPos pos, EntityPlayerCorpse obj) {
-        }
-
-        @Override
-        protected void openerCountChanged(Level level, BlockPos pos, EntityPlayerCorpse obj, int count, int newCount) {
-        }
-
-        @Override
-        public void scheduleRecheck(Level level, BlockPos pos, EntityPlayerCorpse state) {
-            EntityPlayerCorpse.this.recheckTime = 5;
-        }
-    };
+    }
 
     public EntityPlayerCorpse(@SuppressWarnings("unused") PlayMessages.SpawnEntity spawnEntity, Level level) {
         this(EvolutionEntities.PLAYER_CORPSE.get(), level);
@@ -333,7 +338,7 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
 
     @Override
     public double getVolume() {
-        return 70_000 * SI.CUBIC_CENTIMETER;
+        return 60_000 * SI.CUBIC_CENTIMETER;
     }
 
     @Override
@@ -591,7 +596,4 @@ public class EntityPlayerCorpse extends Entity implements IEntityAdditionalSpawn
         buffer.writeLong(this.gameDeathTime);
         buffer.writeComponent(this.deathMessage);
     }
-
-
-
 }
