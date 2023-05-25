@@ -1,20 +1,36 @@
 package tgw.evolution.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.datafixers.util.Either;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.locale.Language;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.ForgeHooksClient;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.patches.IEitherPatch;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
+
+import java.util.List;
+import java.util.Optional;
 
 @Mixin(ForgeHooksClient.class)
 public abstract class ForgeHooksClientMixin {
@@ -26,6 +42,88 @@ public abstract class ForgeHooksClientMixin {
     @Shadow
     @Final
     private static Matrix3f flipXNormal;
+
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid some allocations.
+     */
+    @Overwrite
+    public static List<ClientTooltipComponent> gatherTooltipComponents(ItemStack stack,
+                                                                       List<? extends FormattedText> textElements,
+                                                                       Optional<TooltipComponent> itemComponent,
+                                                                       int mouseX,
+                                                                       int screenWidth,
+                                                                       int screenHeight,
+                                                                       @Nullable Font forcedFont,
+                                                                       Font fallbackFont) {
+        Font font = getTooltipFont(forcedFont, stack, fallbackFont);
+        OList<Either<FormattedText, TooltipComponent>> elements = new OArrayList<>(textElements.size());
+        for (int i = 0, len = textElements.size(); i < len; i++) {
+            //noinspection ObjectAllocationInLoop
+            elements.add(Either.left(textElements.get(i)));
+        }
+        if (itemComponent.isPresent()) {
+            elements.add(1, Either.right(itemComponent.get()));
+        }
+        // text wrapping
+        int tooltipTextWidth = 0;
+        for (int i = 0, len = elements.size(); i < len; i++) {
+            IEitherPatch<FormattedText, TooltipComponent> either = (IEitherPatch<FormattedText, TooltipComponent>) elements.get(i);
+            int w = either.isLeft() ? font.width(either.left()) : 0;
+            if (w > tooltipTextWidth) {
+                tooltipTextWidth = w;
+            }
+        }
+        boolean needsWrap = false;
+        int tooltipX = mouseX + 12;
+        if (tooltipX + tooltipTextWidth + 4 > screenWidth) {
+            tooltipX = mouseX - 16 - tooltipTextWidth;
+            if (tooltipX < 4) { // if the tooltip doesn't fit on the screen
+                if (mouseX > screenWidth / 2) {
+                    tooltipTextWidth = mouseX - 12 - 8;
+                }
+                else {
+                    tooltipTextWidth = screenWidth - 16 - mouseX;
+                }
+                needsWrap = true;
+            }
+        }
+        OList<ClientTooltipComponent> list = new OArrayList<>();
+        if (needsWrap) {
+            for (int i = 0, len = elements.size(); i < len; i++) {
+                IEitherPatch<FormattedText, TooltipComponent> either = (IEitherPatch<FormattedText, TooltipComponent>) elements.get(i);
+                if (either.isLeft()) {
+                    List<FormattedCharSequence> split = font.split(either.left(), tooltipTextWidth);
+                    for (int j = 0, len1 = split.size(); j < len1; j++) {
+                        //noinspection ObjectAllocationInLoop
+                        list.add(ClientTooltipComponent.create(split.get(j)));
+                    }
+                }
+                else {
+                    list.add(ClientTooltipComponent.create(either.right()));
+                }
+            }
+            return list;
+        }
+        for (int i = 0, len = elements.size(); i < len; i++) {
+            IEitherPatch<FormattedText, TooltipComponent> either = (IEitherPatch<FormattedText, TooltipComponent>) elements.get(i);
+            if (either.isLeft()) {
+                FormattedText left = either.left();
+                //noinspection ObjectAllocationInLoop
+                list.add(ClientTooltipComponent.create(
+                        left instanceof Component comp ? comp.getVisualOrderText() : Language.getInstance().getVisualOrder(left)));
+            }
+            else {
+                list.add(ClientTooltipComponent.create(either.right()));
+            }
+        }
+        return list;
+    }
+
+    @Shadow
+    public static Font getTooltipFont(@Nullable Font forcedFont, @NotNull ItemStack stack, Font fallbackFont) {
+        throw new AbstractMethodError();
+    }
 
     /**
      * @author TheGreatWolf
