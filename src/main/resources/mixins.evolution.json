@@ -15,6 +15,7 @@
     "BaseComponentMixin",
     "BlockEntityType_BuilderMixin",
     "BlockMixin",
+    "BlockPos_MutableBlockPosMixin",
     "BlockPosMixin",
     "CapabilityDispatcherMixin",
     "CaveSpiderMixin",
