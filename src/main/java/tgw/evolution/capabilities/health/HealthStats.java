@@ -9,6 +9,7 @@ public class HealthStats implements IHealth {
 
     public static final int REGEN_TICKS = 100;
     public static final float REGEN_FACTOR = 0.01f;
+    private static final float MIN_HEALTH = 1.0f;
     private int tick;
 
     public boolean canNaturalRegen(ServerPlayer player) {
@@ -24,7 +25,7 @@ public class HealthStats implements IHealth {
     }
 
     public void naturalRegen(ServerPlayer player) {
-        float currentHealth = player.getHealth();
+        float currentHealth = Math.max(MIN_HEALTH, player.getHealth());
         player.heal(REGEN_FACTOR * currentHealth);
     }
 
