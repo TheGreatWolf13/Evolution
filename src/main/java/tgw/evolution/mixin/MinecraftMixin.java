@@ -775,8 +775,10 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             boolean hasAlreadyBeenOutOfMemory = false;
             while (this.running) {
                 if (this.delayedCrash != null) {
-                    crash(this.delayedCrash.get());
-                    return;
+                    this.emergencySave();
+                    LOGGER.error(LogUtils.FATAL_MARKER, "Exception thrown on another thread!");
+                    this.displayCrashScreen(this.delayedCrash.get());
+                    this.delayedCrash = null;
                 }
                 try {
                     SingleTickProfiler singleTickProfiler = SingleTickProfiler.createTickProfiler("Renderer");
