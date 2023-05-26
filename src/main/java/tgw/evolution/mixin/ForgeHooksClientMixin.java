@@ -25,7 +25,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.patches.IEitherPatch;
+import tgw.evolution.events.ClientEvents;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 
@@ -65,11 +65,12 @@ public abstract class ForgeHooksClientMixin {
         if (itemComponent.isPresent()) {
             elements.add(1, Either.right(itemComponent.get()));
         }
+        ClientEvents.getInstance().renderTooltip(stack, elements);
         // text wrapping
         int tooltipTextWidth = 0;
         for (int i = 0, len = elements.size(); i < len; i++) {
-            IEitherPatch<FormattedText, TooltipComponent> either = (IEitherPatch<FormattedText, TooltipComponent>) elements.get(i);
-            int w = either.isLeft() ? font.width(either.left()) : 0;
+            Optional<FormattedText> left = elements.get(i).left();
+            int w = left.isPresent() ? font.width(left.get()) : 0;
             if (w > tooltipTextWidth) {
                 tooltipTextWidth = w;
             }
@@ -91,30 +92,32 @@ public abstract class ForgeHooksClientMixin {
         OList<ClientTooltipComponent> list = new OArrayList<>();
         if (needsWrap) {
             for (int i = 0, len = elements.size(); i < len; i++) {
-                IEitherPatch<FormattedText, TooltipComponent> either = (IEitherPatch<FormattedText, TooltipComponent>) elements.get(i);
-                if (either.isLeft()) {
-                    List<FormattedCharSequence> split = font.split(either.left(), tooltipTextWidth);
+                Either<FormattedText, TooltipComponent> either = elements.get(i);
+                Optional<FormattedText> left = either.left();
+                if (left.isPresent()) {
+                    List<FormattedCharSequence> split = font.split(left.get(), tooltipTextWidth);
                     for (int j = 0, len1 = split.size(); j < len1; j++) {
                         //noinspection ObjectAllocationInLoop
                         list.add(ClientTooltipComponent.create(split.get(j)));
                     }
                 }
                 else {
-                    list.add(ClientTooltipComponent.create(either.right()));
+                    list.add(ClientTooltipComponent.create(either.right().get()));
                 }
             }
             return list;
         }
         for (int i = 0, len = elements.size(); i < len; i++) {
-            IEitherPatch<FormattedText, TooltipComponent> either = (IEitherPatch<FormattedText, TooltipComponent>) elements.get(i);
-            if (either.isLeft()) {
-                FormattedText left = either.left();
+            Either<FormattedText, TooltipComponent> either = elements.get(i);
+            Optional<FormattedText> left = either.left();
+            if (left.isPresent()) {
+                FormattedText text = left.get();
                 //noinspection ObjectAllocationInLoop
                 list.add(ClientTooltipComponent.create(
-                        left instanceof Component comp ? comp.getVisualOrderText() : Language.getInstance().getVisualOrder(left)));
+                        text instanceof Component comp ? comp.getVisualOrderText() : Language.getInstance().getVisualOrder(text)));
             }
             else {
-                list.add(ClientTooltipComponent.create(either.right()));
+                list.add(ClientTooltipComponent.create(either.right().get()));
             }
         }
         return list;

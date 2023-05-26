@@ -3,6 +3,7 @@ package tgw.evolution.events;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
@@ -25,6 +26,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -35,6 +37,7 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -1178,17 +1181,13 @@ public class ClientEvents {
         this.onRenderHightlight(event);
     }
 
-    @SubscribeEvent
-    public void renderTooltip(RenderTooltipEvent.GatherComponents event) {
-        if (event.isCanceled()) {
-            return;
-        }
-        Item item = event.getItemStack().getItem();
+    public void renderTooltip(ItemStack stack, List<Either<FormattedText, TooltipComponent>> tooltip) {
+        Item item = stack.getItem();
         if (!(item instanceof IEvolutionItem)) {
             return;
         }
         assert this.mc.player != null;
-        ItemEvents.makeEvolutionTooltip(this.mc.player, event.getItemStack(), event.getTooltipElements());
+        ItemEvents.makeEvolutionTooltip(this.mc.player, stack, tooltip);
     }
 
     public void resetCooldown(InteractionHand hand) {
