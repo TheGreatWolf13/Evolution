@@ -4,7 +4,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.mojang.math.Vector3f;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import tgw.evolution.patches.IVec3Patch;
+import tgw.evolution.mixin.Vec3Accessor;
 
 @SuppressWarnings("EqualsAndHashcode")
 public class Vec3d extends Vec3 {
@@ -86,9 +86,9 @@ public class Vec3d extends Vec3 {
     }
 
     public Vec3d set(double x, double y, double z) {
-        ((IVec3Patch) this).setPosX(x);
-        ((IVec3Patch) this).setPosY(y);
-        ((IVec3Patch) this).setPosZ(z);
+        ((Vec3Accessor) this).setX(x);
+        ((Vec3Accessor) this).setY(y);
+        ((Vec3Accessor) this).setZ(z);
         return this;
     }
 

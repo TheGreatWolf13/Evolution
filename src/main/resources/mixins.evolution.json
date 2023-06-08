@@ -95,7 +95,7 @@
     "SynchedEntityDataMixin",
     "TimeCommandMixin",
     "UtilMixin",
-    "Vec3Mixin",
+    "Vec3Accessor",
     "Vector3fMixin",
     "Vector4fMixin",
     "VillagerMixin",
