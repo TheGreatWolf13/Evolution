@@ -1,33 +1,11 @@
 package tgw.evolution.patches;
 
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-
 public interface IBakedQuadPatch {
 
     /**
      * @return The integer-encoded color of the vertex at index {@param idx}
      */
     int getColor(int idx);
-
-    /**
-     * @return The integer bit flags containing the {@link ModelQuadFlags} for this quad
-     */
-    int getFlags();
-
-    /**
-     * @return The lightmap texture coordinates for the vertex at index {@param idx}
-     */
-    int getLight(int idx);
-
-    /**
-     * @return The integer-encoded normal vector for the vertex at index {@param idx}
-     */
-    int getNormal(int idx);
-
-    /**
-     * @return The sprite texture used by this quad, or null if none is attached
-     */
-    TextureAtlasSprite getSprite();
 
     /**
      * @return The texture x-coordinate for the vertex at index {@param idx}
@@ -38,11 +16,6 @@ public interface IBakedQuadPatch {
      * @return The texture y-coordinate for the vertex at index {@param idx}
      */
     float getTexV(int idx);
-
-    /**
-     * @return The color index of this quad.
-     */
-    int getTintIndex();
 
     /**
      * @return The x-position of the vertex at index {@param idx}
