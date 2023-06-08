@@ -3,7 +3,7 @@ package tgw.evolution.util.math;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
-import tgw.evolution.patches.IChunkPosPatch;
+import tgw.evolution.mixin.ChunkPosAccessor;
 
 @SuppressWarnings("EqualsAndHashcode")
 public class ChunkPosMutable extends ChunkPos {
@@ -30,8 +30,8 @@ public class ChunkPosMutable extends ChunkPos {
     }
 
     public ChunkPosMutable set(int x, int z) {
-        ((IChunkPosPatch) this).setX(x);
-        ((IChunkPosPatch) this).setZ(z);
+        ((ChunkPosAccessor) this).setX(x);
+        ((ChunkPosAccessor) this).setZ(z);
         return this;
     }
 }
