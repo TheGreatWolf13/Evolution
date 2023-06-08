@@ -44,7 +44,6 @@ import tgw.evolution.client.gui.recipebook.IRecipeBookUpdateListener;
 import tgw.evolution.client.util.EvolutionInput;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.patches.IClientboundLoginPacketPatch;
-import tgw.evolution.patches.IClientboundSetCameraPacketPatch;
 
 import java.util.Collections;
 import java.util.List;
@@ -293,7 +292,7 @@ public abstract class ClientPacketListenerMixin implements ClientGamePacketListe
             this.minecraft.setCameraEntity(entity);
         }
         else {
-            ClientEvents.getInstance().setNotLoadedCameraId(((IClientboundSetCameraPacketPatch) packet).getId());
+            ClientEvents.getInstance().setNotLoadedCameraId(((ClientboundSetCameraPacketAccessor) packet).getCameraId());
         }
     }
 
