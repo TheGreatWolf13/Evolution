@@ -20,11 +20,13 @@ public abstract class ItemStackMixin extends CapabilityProvider<ItemStack> imple
     @Final
     public static ItemStack EMPTY;
     @Shadow
+    @Nullable
     private CompoundTag capNBT;
     @Shadow
     private int count;
     @Shadow
     @Final
+    @Nullable
     private IRegistryDelegate<Item> delegate;
     @Shadow
     private boolean emptyCacheFlag;
@@ -66,10 +68,11 @@ public abstract class ItemStackMixin extends CapabilityProvider<ItemStack> imple
      */
     @Overwrite
     private void updateEmptyCacheFlag() {
+        //noinspection ConstantConditions
         if ((Object) this == EMPTY) {
             this.emptyCacheFlag = true;
         }
-        else if (this.getItemInternal() != null && !this.isInternal(Items.AIR)) {
+        else if (!this.isInternal(Items.AIR)) {
             this.emptyCacheFlag = this.count <= 0;
         }
         else {
