@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 public interface IClientChunkCache_StoragePatch {
 
     @CanIgnoreReturnValue
-    LevelChunk cameraReplace(int index, LevelChunk oldChunk, LevelChunk newChunk);
+    LevelChunk cameraReplace(int index, LevelChunk oldChunk, @Nullable LevelChunk newChunk);
 
     void cameraReplace(int index, LevelChunk chunk);
 

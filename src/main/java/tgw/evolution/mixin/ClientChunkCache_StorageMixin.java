@@ -3,10 +3,7 @@ package tgw.evolution.mixin;
 import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.patches.IClientChunkCache_StoragePatch;
 
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -17,9 +14,14 @@ public abstract class ClientChunkCache_StorageMixin implements IClientChunkCache
     @Shadow
     @Final
     public AtomicReferenceArray<LevelChunk> chunks;
+    @Unique
     int cameraChunkCount;
+    @Nullable
+    @Unique
     AtomicReferenceArray<LevelChunk> cameraChunks;
+    @Unique
     volatile int cameraViewCenterX;
+    @Unique
     volatile int cameraViewCenterZ;
     @Shadow
     int chunkCount;
@@ -34,7 +36,10 @@ public abstract class ClientChunkCache_StorageMixin implements IClientChunkCache
     private int viewRange;
 
     @Override
-    public LevelChunk cameraReplace(int index, LevelChunk oldChunk, LevelChunk newChunk) {
+    public LevelChunk cameraReplace(int index, LevelChunk oldChunk, @Nullable LevelChunk newChunk) {
+        if (this.cameraChunks == null) {
+            this.cameraChunks = new AtomicReferenceArray<>(this.viewRange * this.viewRange);
+        }
         if (this.cameraChunks.compareAndSet(index, oldChunk, newChunk) && newChunk == null) {
             this.chunkCount--;
             this.cameraChunkCount--;
@@ -58,10 +63,10 @@ public abstract class ClientChunkCache_StorageMixin implements IClientChunkCache
                 this.this$0.level.unload(oldChunk);
             }
         }
-        //noinspection VariableNotUsedInsideIf
-        if (chunk != null) {
-            this.cameraChunkCount++;
-        }
+//        //noinspection VariableNotUsedInsideIf
+//        if (chunk != null) {
+//            this.cameraChunkCount++;
+//        }
     }
 
     @Override
