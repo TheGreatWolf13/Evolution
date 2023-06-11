@@ -230,8 +230,8 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     @Override
-    public boolean isCancelable(ItemStack stack) {
-        return this.isThrowable(stack);
+    public boolean isCancelable(ItemStack stack, LivingEntity entity) {
+        return this.isThrowable(stack, entity);
     }
 
     @Override
@@ -254,8 +254,8 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
     }
 
     @Override
-    public boolean isThrowable(ItemStack stack) {
-        return IModularTool.get(stack).getHead().getType() == PartTypes.Head.SPEAR;
+    public boolean isThrowable(ItemStack stack, LivingEntity entity) {
+        return IModularTool.get(stack).getHead().getType() == PartTypes.Head.SPEAR && entity.getSwimAmount(1.0f) == 0;
     }
 
     @Override
@@ -291,7 +291,7 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
 
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
-        if (entity instanceof Player player && this.isThrowable(stack) && entity.getSwimAmount(1.0f) == 0) {
+        if (entity instanceof Player player && this.isThrowable(stack, entity)) {
             int i = this.getUseDuration(stack) - timeLeft;
             if (i >= 10) {
                 if (!level.isClientSide) {
@@ -326,7 +326,7 @@ public class ItemModularTool extends ItemModular implements IThrowable, ITwoHand
         if (this.isBroken(stack) || this.isTwoHanded(stack) && hand == InteractionHand.OFF_HAND) {
             return new InteractionResultHolder<>(InteractionResult.FAIL, stack);
         }
-        if (!((ILivingEntityPatch) player).shouldRenderSpecialAttack() && this.isThrowable(stack)) {
+        if (!((ILivingEntityPatch) player).shouldRenderSpecialAttack() && this.isThrowable(stack, player)) {
             player.startUsingItem(hand);
             return new InteractionResultHolder<>(InteractionResult.CONSUME, stack);
         }

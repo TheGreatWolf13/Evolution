@@ -26,7 +26,7 @@ import tgw.evolution.init.EvolutionBStates;
 import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
-import tgw.evolution.util.math.AABBMutable;
+import tgw.evolution.world.util.LevelUtils;
 
 public class EntitySittable extends Entity implements IEntityPatch<EntitySittable>, ISittableEntity, IEntityAdditionalSpawnData {
 
@@ -62,8 +62,9 @@ public class EntitySittable extends Entity implements IEntityPatch<EntitySittabl
         if (block instanceof ISittableBlock sittable) {
             if (!level.isClientSide) {
                 AABB bb = player.getBoundingBox();
-                AABB bbToCheck = new AABBMutable(pos.getX(), bb.minY, pos.getZ(), pos.getX() + 1.0, bb.maxY, pos.getZ() + 1.0).deflateMutable(1.0E-7);
-                if (level.collidesWithSuffocatingBlock(player, bbToCheck)) {
+                if (LevelUtils.collidesWithSuffocatingBlock(level, player,
+                                                            pos.getX() + 1e-7, bb.minY + 1e-7, pos.getZ() + 1e-7,
+                                                            pos.getX() + 1 - 1e-7, bb.maxY - 1e-7, pos.getZ() + 1 - 1e-7)) {
                     return false;
                 }
                 EntitySittable seat = new EntitySittable(level, pos, sittable.getYOffset(), sittable.getZOffset(), sittable.getComfort());

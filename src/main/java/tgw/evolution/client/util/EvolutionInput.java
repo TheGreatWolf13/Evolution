@@ -15,6 +15,7 @@ import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionEffects;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.network.PacketCSSetCrawling;
+import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IPlayerPatch;
 
@@ -35,13 +36,10 @@ public class EvolutionInput extends Input {
     }
 
     private boolean canCrawl(Player player) {
-        if (player.isInWater()) {
-            return false;
-        }
-        if (player.isInLava()) {
-            return false;
-        }
         if (player.getVehicle() != null) {
+            return false;
+        }
+        if (((IEntityPatch) player).isInAnyFluid()) {
             return false;
         }
         return !this.onClimbable || !this.jumping && player.isOnGround();
@@ -51,7 +49,9 @@ public class EvolutionInput extends Input {
         //Crawl cooldown
         boolean wasShiftKeyDown = this.shiftKeyDown;
         this.onClimbable = player.onClimbable();
-        boolean isCrawl = player.getPose() == Pose.SWIMMING && !player.isInWater();
+        Pose pose = player.getPose();
+        boolean isCrawl = pose == Pose.SWIMMING && !player.isInWater();
+        boolean isSwimming = !isCrawl && pose == Pose.SWIMMING && player.isInWater();
         if (this.crawl != isCrawl) {
             ClientEvents.getInstance().resetCooldowns();
             this.crawl = isCrawl;
@@ -62,8 +62,8 @@ public class EvolutionInput extends Input {
         this.down = inverted ? this.options.keyUp.isDown() : this.options.keyDown.isDown();
         this.left = inverted ? this.options.keyRight.isDown() : this.options.keyLeft.isDown();
         this.right = inverted ? this.options.keyLeft.isDown() : this.options.keyRight.isDown();
-        this.forwardImpulse = this.up == this.down ? 0.0F : this.up ? 1 : -1;
-        this.leftImpulse = this.left == this.right ? 0.0F : this.left ? 1 : -1;
+        this.forwardImpulse = this.up == this.down ? 0.0F : this.up ? 1 : isSwimming ? 0 : -1;
+        this.leftImpulse = this.left == this.right || isSwimming ? 0.0F : this.left ? 1 : -1;
         MobEffectInstance dizziness = player.getEffect(EvolutionEffects.DIZZINESS.get());
         if (dizziness != null) {
             if (this.forwardImpulse != 0) {

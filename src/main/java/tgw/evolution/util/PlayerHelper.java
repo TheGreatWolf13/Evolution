@@ -1,6 +1,5 @@
 package tgw.evolution.util;
 
-import com.google.common.collect.ImmutableMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
@@ -17,6 +16,7 @@ import tgw.evolution.init.EvolutionStats;
 import tgw.evolution.stats.EvolutionServerStatsCounter;
 import tgw.evolution.util.physics.SI;
 
+import java.util.EnumMap;
 import java.util.Map;
 
 public final class PlayerHelper {
@@ -42,23 +42,24 @@ public final class PlayerHelper {
      */
     public static final double MAX_HEALTH = 100;
     /**
-     * The height of the Player legs in m. Used to calculate fall damage.
-     */
-    public static final double LEG_HEIGHT = 0.875;
-    /**
      * The force the player uses to push its feet against the ground.
      */
     public static final double WALK_FORCE = 1_000 * SI.NEWTON;
+    public static final double VOLUME = 84_000 * SI.CUBIC_CENTIMETER;
+    public static final double LUNG_CAPACITY = 13.8 * SI.LITER;
     public static final EntityDimensions STANDING_SIZE = EntityDimensions.scalable(0.65F, 1.8F);
-    public static final Map<Pose, EntityDimensions> SIZE_BY_POSE = ImmutableMap.<Pose, EntityDimensions>builder()
-                                                                               .put(Pose.STANDING, STANDING_SIZE)
-                                                                               .put(Pose.SLEEPING, EntityDimensions.fixed(0.2F, 0.2F))
-                                                                               .put(Pose.FALL_FLYING, EntityDimensions.scalable(0.65F, 0.65F))
-                                                                               .put(Pose.SWIMMING, EntityDimensions.scalable(0.65F, 0.65F))
-                                                                               .put(Pose.SPIN_ATTACK, EntityDimensions.scalable(0.65F, 0.65F))
-                                                                               .put(Pose.CROUCHING, EntityDimensions.scalable(0.65F, 1.5F))
-                                                                               .put(Pose.DYING, EntityDimensions.fixed(0.2F, 0.2F))
-                                                                               .build();
+    public static final EntityDimensions SWIMMING_SIZE = EntityDimensions.scalable(0.65F, 0.65F);
+    public static final Map<Pose, EntityDimensions> SIZE_BY_POSE = new EnumMap(Pose.class);
+
+    static {
+        SIZE_BY_POSE.put(Pose.STANDING, STANDING_SIZE);
+        SIZE_BY_POSE.put(Pose.SLEEPING, EntityDimensions.fixed(0.2F, 0.2F));
+        SIZE_BY_POSE.put(Pose.FALL_FLYING, EntityDimensions.scalable(0.65F, 0.65F));
+        SIZE_BY_POSE.put(Pose.SWIMMING, SWIMMING_SIZE);
+        SIZE_BY_POSE.put(Pose.SPIN_ATTACK, EntityDimensions.scalable(0.65F, 0.65F));
+        SIZE_BY_POSE.put(Pose.CROUCHING, EntityDimensions.scalable(0.65F, 1.5F));
+        SIZE_BY_POSE.put(Pose.DYING, EntityDimensions.fixed(0.2F, 0.2F));
+    }
 
     private PlayerHelper() {
     }

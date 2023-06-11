@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.IClimbable;
-import tgw.evolution.hooks.LivingEntityHooks;
+import tgw.evolution.hooks.LivingHooks;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.util.math.MathHelper;
@@ -187,7 +187,7 @@ public abstract class EntityMixinClient extends CapabilityProvider<Entity> {
                 }
             }
         }
-        float xDelta = LivingEntityHooks.xDelta((Entity) (Object) this, Evolution.PROXY.getPartialTicks());
+        float xDelta = LivingHooks.xDelta((Entity) (Object) this, Evolution.PROXY.getPartialTicks());
         float f = (float) pitch * 0.15F;
         float f1 = (float) yaw * 0.15F;
         this.setXRot(this.getXRot() + f);

@@ -163,7 +163,7 @@ public final class ItemEvents {
         if (item instanceof ITwoHanded twoHanded && twoHanded.isTwoHanded(stack)) {
             add(tooltip, EvolutionTexts.TOOLTIP_TWO_HANDED);
         }
-        if (item instanceof IThrowable throwable && throwable.isThrowable(stack)) {
+        if (item instanceof IThrowable throwable && throwable.isThrowable(stack, player)) {
             add(tooltip, EvolutionTexts.TOOLTIP_THROWABLE);
         }
         if (item instanceof IParry) {

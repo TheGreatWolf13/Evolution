@@ -100,7 +100,7 @@ public class TEMetal extends BlockEntity {
                 }
             }
             if (!air) {
-                if (!BlockUtils.hasSolidSide(this.level, mutablePos, DirectionUtil.getOpposite(dir))) {
+                if (!BlockUtils.hasSolidSide(this.level, mutablePos, dir.getOpposite())) {
                     FluidState fluid = this.level.getFluidState(mutablePos);
                     if (fluid.isEmpty()) {
                         air = true;

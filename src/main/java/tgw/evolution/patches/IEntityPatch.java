@@ -1,7 +1,10 @@
 package tgw.evolution.patches;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.physics.SI;
@@ -40,10 +43,18 @@ public interface IEntityPatch<T extends Entity> {
     @Nullable
     HitboxEntity<T> getHitboxes();
 
+    default @Nullable Pose getLastPose() {
+        return null;
+    }
+
     /**
      * @return Controls the deceleration because of the motion of your legs.
      */
     double getLegSlowdown();
+
+    default double getLungCapacity() {
+        return 0;
+    }
 
     default int getNoJumpDelay() {
         return 0;
@@ -59,6 +70,10 @@ public interface IEntityPatch<T extends Entity> {
         return 0;
     }
 
+    default boolean hasAnyFluidInEye() {
+        return false;
+    }
+
     default boolean hasCollidedOnXAxis() {
         return false;
     }
@@ -68,6 +83,14 @@ public interface IEntityPatch<T extends Entity> {
     }
 
     default boolean hasExtendedInventory() {
+        return false;
+    }
+
+    default boolean isFullySubmerged(TagKey<Fluid> fluid) {
+        return false;
+    }
+
+    default boolean isInAnyFluid() {
         return false;
     }
 }

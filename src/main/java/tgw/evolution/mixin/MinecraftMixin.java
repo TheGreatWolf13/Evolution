@@ -505,7 +505,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 if (!this.multiplayerPause) {
                     ItemStack usedStack = this.player.getUseItem();
                     if (usedStack.getItem() instanceof ICancelableUse cancelable) {
-                        if (cancelable.isCancelable(usedStack) && this.cancelUseCooldown == 0) {
+                        if (cancelable.isCancelable(usedStack, this.player) && this.cancelUseCooldown == 0) {
                             ClientEvents.getInstance().resetCooldown(this.player.getUsedItemHand());
                             this.player.stopUsingItem();
                             this.cancelUseCooldown = 20;

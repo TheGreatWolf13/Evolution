@@ -26,12 +26,7 @@ import tgw.evolution.util.math.Vec3d;
 public abstract class CameraMixin {
 
     @Unique
-    private final ClipContextMutable clipContext = new ClipContextMutable(Vec3.ZERO, Vec3.ZERO, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE,
-                                                                          null);
-    @Unique
-    private final Vec3d clipFrom = new Vec3d();
-    @Unique
-    private final Vec3d clipTo = new Vec3d();
+    private final ClipContextMutable clipContext = new ClipContextMutable();
     @Unique
     private final NearPlane nearPlane = new NearPlane();
     @Unique
@@ -93,12 +88,13 @@ public abstract class CameraMixin {
             dx *= 0.1F;
             dy *= 0.1F;
             dz *= 0.1F;
-            this.clipFrom.set(this.position).addMutable(dx, dy, dz);
-            this.clipTo.set(this.position.x - this.forwards.x() * startingDistance + dx + dz,
-                            this.position.y - this.forwards.y() * startingDistance + dy,
-                            this.position.z - this.forwards.z() * startingDistance + dz);
             HitResult hitresult = this.level.clip(
-                    this.clipContext.set(this.clipFrom, this.clipTo, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, this.entity));
+                    this.clipContext.set(this.position.x + dx, this.position.y + dy, this.position.z + dz,
+                                         this.position.x - this.forwards.x() * startingDistance + dx + dz,
+                                         this.position.y - this.forwards.y() * startingDistance + dy,
+                                         this.position.z - this.forwards.z() * startingDistance + dz,
+                                         ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, this.entity));
+            this.clipContext.reset();
             if (hitresult.getType() != HitResult.Type.MISS) {
                 double dist = hitresult.getLocation().distanceTo(this.position);
                 if (dist < startingDistance) {

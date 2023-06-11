@@ -1,12 +1,16 @@
 package tgw.evolution.mixin;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.CapabilityProvider;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -29,9 +33,49 @@ public abstract class LevelMixin extends CapabilityProvider<Level> implements IL
         super(baseClass);
     }
 
+    /**
+     * Force override. The default method allocates a {@link net.minecraft.core.BlockPos.MutableBlockPos} which isn't ideal and also has to fetch
+     * the chunk every time. This implementation should increase performance for large {@link AABB}s and also actually checks for
+     * {@link FluidState}s instead of legacy {@link BlockState#getFluidState()}.
+     */
+    @Override
+    public boolean containsAnyLiquid(AABB bb) {
+        int minX = Mth.floor(bb.minX);
+        int maxX = Mth.ceil(bb.maxX);
+        int minY = Mth.floor(bb.minY);
+        int maxY = Mth.ceil(bb.maxY);
+        int minZ = Mth.floor(bb.minZ);
+        int maxZ = Mth.ceil(bb.maxZ);
+        int cachedX = Integer.MAX_VALUE;
+        int cachedZ = Integer.MAX_VALUE;
+        LevelChunk cachedChunk = null;
+        for (int x = minX; x < maxX; ++x) {
+            int chunkX = SectionPos.blockToSectionCoord(x);
+            for (int z = minZ; z < maxZ; ++z) {
+                int chunkZ = SectionPos.blockToSectionCoord(z);
+                if (chunkX != cachedX || chunkZ != cachedZ) {
+                    cachedX = chunkX;
+                    cachedZ = chunkZ;
+                    cachedChunk = this.getChunk(chunkX, chunkZ);
+                }
+                assert cachedChunk != null;
+                for (int y = minY; y < maxY; ++y) {
+                    if (!cachedChunk.getFluidState(x, y, z).isEmpty()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     @Override
     @Shadow
     public abstract BlockState getBlockState(BlockPos pos);
+
+    @Override
+    @Shadow
+    public abstract LevelChunk getChunk(int pChunkX, int pChunkZ);
 
     @Override
     @Shadow

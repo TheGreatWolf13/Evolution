@@ -17,7 +17,9 @@ public final class SI {
     public static final double METER = 1.0;
     public static final double CUBIC_METER = METER * METER * METER;
     public static final double CENTIMETER = 1e-2;
+    public static final double DECIMETER = 1e-1;
     public static final double CUBIC_CENTIMETER = CENTIMETER * CENTIMETER * CENTIMETER;
+    public static final double LITER = DECIMETER * DECIMETER * DECIMETER;
     public static final double KILOGRAM = 1.0;
     public static final float RADIAN = 1.0f;
     public static final float DEGREE = (float) (Math.PI / 180.0);

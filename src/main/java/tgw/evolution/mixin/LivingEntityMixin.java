@@ -52,23 +52,21 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.PotionEvent;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import tgw.evolution.Evolution;
 import tgw.evolution.blocks.IClimbable;
 import tgw.evolution.blocks.ICollisionBlock;
 import tgw.evolution.blocks.IFallSufixBlock;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.entities.EffectHelper;
-import tgw.evolution.events.EntityEvents;
-import tgw.evolution.hooks.LivingEntityHooks;
+import tgw.evolution.hooks.LivingHooks;
 import tgw.evolution.init.*;
 import tgw.evolution.inventory.AdditionalSlotType;
 import tgw.evolution.items.IMelee;
@@ -101,7 +99,10 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Shadow
     @Final
     private static EntityDataAccessor<Integer> DATA_EFFECT_COLOR_ID;
+    @Unique
     private final EffectHelper effectHelper = new EffectHelper();
+    @Unique
+    private final Vec3d travelVec = new Vec3d();
     @Shadow
     public float animationSpeed;
     @Shadow
@@ -181,6 +182,10 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     protected float oRun;
     @Shadow
     protected float run;
+    @Shadow
+    protected float swimAmount;
+    @Shadow
+    protected float swimAmountO;
     @Mutable
     @Shadow
     @Final
@@ -191,14 +196,16 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     private CombatTracker combatTracker;
     @Shadow
     private boolean effectsDirty;
+    @Unique
+    private byte emergeTicks;
+    @Unique
     private boolean isSpecialAttacking;
     @Shadow
     private DamageSource lastDamageSource;
     @Shadow
     private long lastDamageStamp;
     @Shadow
-    @javax.annotation.Nullable
-    private LivingEntity lastHurtByMob;
+    private @Nullable LivingEntity lastHurtByMob;
     @Shadow
     private int lastHurtByMobTimestamp;
     @Shadow
@@ -207,15 +214,16 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     private BlockPos lastPos;
     @Shadow
     private int noJumpDelay;
+    @Unique
     private byte specialAttackFollowUp;
+    @Unique
     private byte specialAttackGracePeriod;
+    @Unique
     private byte specialAttackLockedTicks;
+    @Unique
     private byte specialAttackTime;
+    @Unique
     private @Nullable IMelee.IAttackType specialAttackType;
-    @Shadow
-    private float swimAmount;
-    @Shadow
-    private float swimAmountO;
 
     public LivingEntityMixin(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -347,20 +355,20 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
             this.yHeadRot += (float) Mth.wrapDegrees(this.lyHeadRot - this.yHeadRot) / this.lerpHeadSteps;
             --this.lerpHeadSteps;
         }
-        Vec3 velocity = this.getDeltaMovement();
-        double velX = velocity.x;
-        double velY = velocity.y;
-        double velZ = velocity.z;
-        if (Math.abs(velocity.x) < 0.003) {
-            velX = 0;
-        }
-        if (Math.abs(velocity.y) < 0.003) {
-            velY = 0;
-        }
-        if (Math.abs(velocity.z) < 0.003) {
-            velZ = 0;
-        }
-        this.setDeltaMovement(velX, velY, velZ);
+//        Vec3 velocity = this.getDeltaMovement();
+//        double velX = velocity.x;
+//        double velY = velocity.y;
+//        double velZ = velocity.z;
+//        if (Math.abs(velocity.x) < 0.003) {
+//            velX = 0;
+//        }
+//        if (Math.abs(velocity.y) < 0.003) {
+//            velY = 0;
+//        }
+//        if (Math.abs(velocity.z) < 0.003) {
+//            velZ = 0;
+//        }
+//        this.setDeltaMovement(velX, velY, velZ);
         this.level.getProfiler().push("ai");
         if (this.isImmobile()) {
             this.jumping = false;
@@ -374,31 +382,10 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         }
         this.level.getProfiler().pop();
         this.level.getProfiler().push("jump");
-        if (this.jumping && this.isAffectedByFluids()) {
-            double fluidHeight;
-            if (this.isInLava()) {
-                fluidHeight = this.getFluidHeight(FluidTags.LAVA);
-            }
-            else {
-                fluidHeight = this.getFluidHeight(FluidTags.WATER);
-            }
-            boolean isInWater = this.isInWater() && fluidHeight > 0;
-            double threshold = this.getFluidJumpThreshold();
-            if (!isInWater || this.onGround && fluidHeight <= threshold) {
-                if (!this.isInLava() || this.onGround && fluidHeight <= threshold) {
-                    if ((this.onGround || isInWater && fluidHeight <= threshold) && this.noJumpDelay == 0) {
-                        this.jumpFromGround();
-                        this.noJumpDelay = 10;
-                    }
-                }
-                else {
-                    this.jumpInLiquid(FluidTags.LAVA);
-                }
-            }
-            else {
-                if (fluidHeight > this.getHeightForNotDrowning()) {
-                    this.jumpInLiquid(FluidTags.WATER);
-                }
+        if (this.jumping) {
+            if (this.onGround) {
+                this.jumpFromGround();
+                this.noJumpDelay = 10;
             }
         }
         else {
@@ -409,7 +396,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         this.xxa *= 0.98F;
         this.zza *= 0.98F;
         this.updateFallFlying();
-        this.travel(new Vec3(this.xxa, this.yya, this.zza));
+        this.travel(this.travelVec.set(this.xxa, this.yya, this.zza));
         this.level.getProfiler().pop();
         this.level.getProfiler().push("freezing");
         boolean flag = this.getType().is(EntityTypeTags.FREEZE_HURTS_EXTRA_TYPES);
@@ -468,7 +455,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         if (this.isAlive()) {
             boolean isPlayer = (Object) this instanceof Player;
             if (this.isInWall()) {
-                this.hurt(EvolutionDamage.IN_WALL, 1.0F);
+                this.hurt(EvolutionDamage.IN_WALL, 5.0F);
             }
             else if (isPlayer && !this.level.getWorldBorder().isWithinBounds(this.getBoundingBox())) {
                 double dist = this.level.getWorldBorder().getDistanceToBorder(this) + this.level.getWorldBorder().getDamageSafeZone();
@@ -520,9 +507,6 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         }
         if (this.hurtTime > 0) {
             --this.hurtTime;
-        }
-        if (this.invulnerableTime > 0 && !((Object) this instanceof ServerPlayer)) {
-            --this.invulnerableTime;
         }
         if (this.isDeadOrDying() && this.level.shouldTickDeath(this)) {
             this.tickDeath();
@@ -585,11 +569,12 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     public void calculateEntityAnimation(LivingEntity entity, boolean flies) {
         entity.animationSpeedOld = entity.animationSpeed;
         if (this.isOnGround() || this.isInWater() || flies) {
+            boolean isSwimming = this.isInWater() && this.getPose() == Pose.SWIMMING;
             if (entity.animationSpeed < 0) {
                 entity.animationSpeed = -entity.animationSpeed;
             }
             double dx = entity.getX() - entity.xo;
-            double dy = flies ? entity.getY() - entity.yo : 0;
+            double dy = flies || isSwimming ? entity.getY() - entity.yo : 0;
             double dz = entity.getZ() - entity.zo;
             float dSSq = MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * Mth.PI;
             if (dSSq == 0 && entity.animationSpeed <= 1E-3) {
@@ -598,10 +583,12 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
             }
             entity.animationSpeed += (dSSq - entity.animationSpeed) * (Mth.PI / 10);
             if (dx != 0 && dz != 0) {
-                double angle = -Mth.atan2(dx, dz) * Mth.RAD_TO_DEG;
-                //Should be backwards
-                if (Math.abs(Mth.wrapDegrees(entity.getYRot() - angle)) > 91) {
-                    entity.animationSpeed = -entity.animationSpeed;
+                if (!isSwimming) {
+                    double angle = -Mth.atan2(dx, dz) * Mth.RAD_TO_DEG;
+                    //Should be backwards
+                    if (Math.abs(Mth.wrapDegrees(entity.getYRot() - angle)) > 91) {
+                        entity.animationSpeed = -entity.animationSpeed;
+                    }
                 }
             }
             else {
@@ -614,10 +601,10 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
             entity.animationSpeed *= 0.9;
         }
         entity.animationPosition += entity.animationSpeed;
-        if (entity.animationPosition > 4 * Mth.PI) {
+        if (entity.animationPosition >= 4 * Mth.PI) {
             entity.animationPosition -= 4 * Mth.PI;
         }
-        else if (entity.animationPosition < -4 * Mth.PI) {
+        else if (entity.animationPosition <= -4 * Mth.PI) {
             entity.animationPosition += 4 * Mth.PI;
         }
     }
@@ -753,7 +740,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Overwrite
     public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
         boolean flag = super.causeFallDamage(fallDistance, multiplier, source);
-        float amount = EntityEvents.calculateFallDamage((LivingEntity) (Object) this, this.getDeltaMovement().y, 1 - multiplier, false);
+        float amount = LivingHooks.calculateFallDamage((LivingEntity) (Object) this, this.getDeltaMovement().y, 1 - multiplier, false);
         if (fallDistance > 1 / 16.0f) {
             this.playBlockFallSound();
         }
@@ -965,79 +952,96 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Shadow
     protected abstract float getWaterSlowDown();
 
-    private Vec3 handleLadderMotion(double speedX, double speedY, double speedZ) {
-        //noinspection ConstantConditions
-        boolean isCreativeFlying = (Object) this instanceof Player && ((Player) (Object) this).getAbilities().flying;
-        //noinspection ConstantConditions
-        if (this.onClimbable() && !isCreativeFlying) {
-            BlockState state = this.getFeetBlockState();
-            Block block = state.getBlock();
-            double dx = 0;
-            double dz = 0;
-            if (block instanceof IClimbable climbable) {
-                double climbableOffset = climbable.getXPos(state);
-                if (!Double.isNaN(climbableOffset)) {
-                    if (climbableOffset < 0) {
-                        double temp = this.blockPosition().getX() - climbableOffset + this.getBbWidth() / 2.0;
-                        if (temp < this.getX()) {
-                            dx = (this.getX() - temp) / 20.0;
-                        }
-                    }
-                    else if (climbableOffset > 0) {
-                        double temp = this.blockPosition().getX() + 1 - climbableOffset - this.getBbWidth() / 2.0;
-                        if (temp > this.getX()) {
-                            dx = (this.getX() - temp) / 20.0;
-                        }
-                    }
-                }
-                climbableOffset = climbable.getZPos(state);
-                if (!Double.isNaN(climbableOffset)) {
-                    if (climbableOffset < 0) {
-                        double temp = this.blockPosition().getZ() - climbableOffset + this.getBbWidth() / 2.0;
-                        if (temp < this.getZ()) {
-                            dz = (this.getZ() - temp) / 20.0;
-                        }
-                    }
-                    else if (climbableOffset > 0) {
-                        double temp = this.blockPosition().getZ() + 1 - climbableOffset - this.getBbWidth() / 2.0;
-                        if (temp > this.getZ()) {
-                            dz = (this.getZ() - temp) / 20.0;
-                        }
-                    }
-                }
-            }
-            this.fallDistance = 1.0F;
-            double newX;
-            double newZ;
-            if (!this.isOnGround()) {
-                newX = MathHelper.clamp(speedX, -0.025, 0.025);
-                newX *= 0.8;
-                newX -= dx;
-                newZ = MathHelper.clamp(speedZ, -0.025, 0.025);
-                newZ *= 0.8;
-                newZ -= dz;
-            }
-            else {
-                newX = speedX;
-                newZ = speedZ;
-            }
-            double newY = speedY < -0.3 ? speedY : Math.max(speedY, this.isCrouching() ? 0 : -0.15);
-            //noinspection ConstantConditions
-            if (newY < 0 && block != Blocks.SCAFFOLDING && this.isCrouching() && (Object) this instanceof Player) {
-                newY = 0;
-            }
-            return new Vec3(newX, newY, newZ);
+    /**
+     * @author TheGreatWolf
+     * @reason Should never be called, buoyancy will ensure entities that should float will float and entities that should sink will sink.
+     */
+    @Overwrite
+    protected void goDownInWater() {
+        Evolution.warn("Calling goDownInWater! This method should not be called!");
+    }
+
+    @Unique
+    private void handleLadderMotion() {
+        if (!this.onClimbable()) {
+            return;
         }
-        return new Vec3(speedX, speedY, speedZ);
+        //noinspection ConstantConditions
+        if ((Object) this instanceof Player && ((Player) (Object) this).getAbilities().flying) {
+            return;
+        }
+        Vec3 deltaMovement = this.getDeltaMovement();
+        double speedX = deltaMovement.x;
+        double speedY = deltaMovement.y;
+        double speedZ = deltaMovement.z;
+        BlockState state = this.getFeetBlockState();
+        Block block = state.getBlock();
+        double dx = 0;
+        double dz = 0;
+        if (block instanceof IClimbable climbable) {
+            double climbableOffset = climbable.getXPos(state);
+            if (!Double.isNaN(climbableOffset)) {
+                if (climbableOffset < 0) {
+                    double temp = this.blockPosition().getX() - climbableOffset + this.getBbWidth() / 2.0;
+                    if (temp < this.getX()) {
+                        dx = (this.getX() - temp) / 20.0;
+                    }
+                }
+                else if (climbableOffset > 0) {
+                    double temp = this.blockPosition().getX() + 1 - climbableOffset - this.getBbWidth() / 2.0;
+                    if (temp > this.getX()) {
+                        dx = (this.getX() - temp) / 20.0;
+                    }
+                }
+            }
+            climbableOffset = climbable.getZPos(state);
+            if (!Double.isNaN(climbableOffset)) {
+                if (climbableOffset < 0) {
+                    double temp = this.blockPosition().getZ() - climbableOffset + this.getBbWidth() / 2.0;
+                    if (temp < this.getZ()) {
+                        dz = (this.getZ() - temp) / 20.0;
+                    }
+                }
+                else if (climbableOffset > 0) {
+                    double temp = this.blockPosition().getZ() + 1 - climbableOffset - this.getBbWidth() / 2.0;
+                    if (temp > this.getZ()) {
+                        dz = (this.getZ() - temp) / 20.0;
+                    }
+                }
+            }
+        }
+        this.fallDistance = 1.0F;
+        double newX;
+        double newZ;
+        if (!this.isOnGround()) {
+            newX = MathHelper.clamp(speedX, -0.025, 0.025);
+            newX *= 0.8;
+            newX -= dx;
+            newZ = MathHelper.clamp(speedZ, -0.025, 0.025);
+            newZ *= 0.8;
+            newZ -= dz;
+        }
+        else {
+            newX = speedX;
+            newZ = speedZ;
+        }
+        double newY = speedY < -0.3 ? speedY : Math.max(speedY, this.isCrouching() ? 0 : -0.15);
+        //noinspection ConstantConditions
+        if (newY < 0 && block != Blocks.SCAFFOLDING && this.isCrouching() && (Object) this instanceof Player) {
+            newY = 0;
+        }
+        this.setDeltaMovement(newX, newY, newZ);
     }
 
     @SuppressWarnings("ConstantConditions")
-    private void handleNormalMovement(Vec3 travelVector, Fluid fluid, double slowdown) {
+    @Unique
+    private void handleNormalMovement(Vec3d travelVector, Fluid fluid, double slowdown) {
         Vec3 motion = this.getDeltaMovement();
         double motionX = motion.x;
         double motionY = motion.y;
         double motionZ = motion.z;
         double mass = this.getAttributeValue(EvolutionAttributes.MASS.get());
+        double gravity = 0;
         try (Physics physics = Physics.getInstance(this, fluid)) {
             boolean isFlyingPlayer = (Object) this instanceof Player player && player.getAbilities().flying;
             physics.calcAccAbsolute(this, travelVector, physics.calcAccMagnitude(this, slowdown));
@@ -1048,16 +1052,11 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
                 motionY = BlockUtils.getLadderUpSpeed(this.getFeetBlockState());
             }
             else if (!this.isNoGravity() && !isFlyingPlayer) {
-                accY += physics.calcAccGravity();
+                gravity = physics.calcAccGravity();
+                accY += gravity;
             }
             if (this.isAffectedByFluids() && !isFlyingPlayer) {
                 accY += physics.calcForceBuoyancy(this) / mass;
-                if (this.horizontalCollision) {
-                    if ((!this.level.getFluidState(this.getFrictionPos()).isEmpty() || !this.level.getFluidState(this.blockPosition()).isEmpty()) &&
-                        this.level.getFluidState(this.eyeBlockPosition()).isEmpty()) {
-                        motionY = -5 * physics.calcAccGravity();
-                    }
-                }
             }
             if (this.hasCollidedOnXAxis()) {
                 accX = Math.signum(accX) * 0.001;
@@ -1097,28 +1096,34 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
             }
             //Drag
             //TODO wind speed
-            double windVelX = 0;
-            double windVelY = 0;
-            double windVelZ = 0;
-            double dragX = physics.calcForceDragX(windVelX) / mass;
-            double dragY = physics.calcForceDragY(windVelY) / mass;
-            double dragZ = physics.calcForceDragZ(windVelZ) / mass;
-            double maxDrag = Math.abs(windVelX - motionX);
-            if (Math.abs(dragX) > maxDrag) {
-                dragX = Math.signum(dragX) * maxDrag;
-            }
-            maxDrag = Math.abs(windVelY - motionY);
-            if (Math.abs(dragY) > maxDrag) {
-                dragY = Math.signum(dragY) * maxDrag;
-            }
-            maxDrag = Math.abs(windVelZ - motionZ);
-            if (Math.abs(dragZ) > maxDrag) {
-                dragZ = Math.signum(dragZ) * maxDrag;
-            }
+//            double windVelX = 0;
+//            double windVelY = 0;
+//            double windVelZ = 0;
+//            double dragX = physics.calcForceDragX(windVelX) / mass;
+//            double dragY = physics.calcForceDragY(windVelY) / mass;
+//            double dragZ = physics.calcForceDragZ(windVelZ) / mass;
+//            double maxDrag = Math.abs(windVelX - motionX);
+//            if (Math.abs(dragX) > maxDrag) {
+//                dragX = Math.signum(dragX) * maxDrag;
+//            }
+//            maxDrag = Math.abs(windVelY - motionY);
+//            if (Math.abs(dragY) > maxDrag) {
+//                if (fluid == Fluid.WATER) {
+//                    LivingHooks.calculateWaterFallDamage((LivingEntity) (Object) this);
+//                }
+//                else if (fluid == Fluid.LAVA) {
+//                    LivingHooks.calculateFallDamage((LivingEntity) (Object) this, 0.1);
+//                }
+//                dragY = Math.signum(dragY) * maxDrag;
+//            }
+//            maxDrag = Math.abs(windVelZ - motionZ);
+//            if (Math.abs(dragZ) > maxDrag) {
+//                dragZ = Math.signum(dragZ) * maxDrag;
+//            }
             //Update Motion
-            motionX += accX - dissipativeX + dragX + accCoriolisX;
-            motionY += accY + dragY + accCoriolisY + accCentrifugalY;
-            motionZ += accZ - dissipativeZ + dragZ + accCoriolisZ + accCentrifugalZ;
+            motionX += accX - dissipativeX + /*dragX +*/ accCoriolisX;
+            motionY += accY + /*dragY +*/ accCoriolisY + accCentrifugalY;
+            motionZ += accZ - dissipativeZ + /*dragZ +*/ accCoriolisZ + accCentrifugalZ;
             if (Double.isNaN(motionX)) {
                 motionX = 0;
             }
@@ -1129,10 +1134,29 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
                 motionZ = 0;
             }
         }
-        this.setDeltaMovement(this.handleLadderMotion(motionX, motionY, motionZ));
+        this.setDeltaMovement(motionX, motionY, motionZ);
+        this.handleLadderMotion();
+        double oldY = this.getY();
         this.move(MoverType.SELF, this.getDeltaMovement());
+        boolean updatedEmerge = false;
         if (this.horizontalCollision) {
             this.calculateWallImpact(motionX, motionZ, mass);
+            if (LivingHooks.hasEmptySpaceForEmerging(this, motionX, motionY, motionZ, oldY)) {
+                updatedEmerge = true;
+                boolean canEmergeFromFluid = this.isInAnyFluid() && !this.hasAnyFluidInEye();
+                if (canEmergeFromFluid) {
+                    this.emergeTicks = 7;
+                }
+                if (this.emergeTicks > 0) {
+                    --this.emergeTicks;
+                    Vec3 movement = this.getDeltaMovement();
+                    motionY = -5 * gravity;
+                    this.setDeltaMovement(movement.x, motionY, movement.z);
+                }
+            }
+        }
+        if (!updatedEmerge) {
+            this.emergeTicks = 0;
         }
     }
 
@@ -1265,6 +1289,11 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     @Shadow
     protected abstract int increaseAirSupply(int pCurrentAir);
 
+    @Override
+    public double intrinsicSlowdown() {
+        return this.getBbHeight() * 0.5;
+    }
+
     @Shadow
     protected abstract boolean isAffectedByFluids();
 
@@ -1379,16 +1408,15 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         this.setDeltaMovement(motion.x, upwardsAcc, motion.z);
         this.hasImpulse = true;
         this.noJumpDelay = 10;
-        ForgeHooks.onLivingJump((LivingEntity) (Object) this);
     }
 
     /**
      * @author TheGreatWolf
-     * @reason Fix liquid physics
+     * @reason Should never be called, buoyancy will ensure entities that should float will float and entities that should sink will sink.
      */
     @Overwrite
     protected void jumpInLiquid(TagKey<net.minecraft.world.level.material.Fluid> fluid) {
-        ((Vec3d) this.getDeltaMovement()).addMutable(0, 0.02 * this.getAttributeValue(ForgeMod.SWIM_SPEED.get()), 0);
+        Evolution.warn("Calling jumpInLiquid! This method should not be called!");
     }
 
     /**
@@ -1424,10 +1452,35 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         return state.isLadder(this.level, pos, (LivingEntity) (Object) this);
     }
 
-    @Inject(method = "<init>", at = @At(value = "TAIL"))
-    private void onConstructor(EntityType<? extends LivingEntity> type, Level level, CallbackInfo ci) {
+    @Shadow
+    protected abstract void onEffectAdded(MobEffectInstance p_147190_, @Nullable Entity p_147191_);
+
+    @Shadow
+    protected abstract void onEffectRemoved(MobEffectInstance pEffect);
+
+    @Shadow
+    public abstract void onEffectUpdated(MobEffectInstance p_147192_, boolean p_147193_, @Nullable Entity p_147194_);
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/Maps;newHashMap()Ljava/util/HashMap;"))
+    private @Nullable HashMap onInit() {
+        return null;
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/LivingEntity;activeEffects:Ljava/util/Map;",
+            opcode = Opcodes.PUTFIELD))
+    private void onInit(LivingEntity instance, Map<MobEffect, MobEffectInstance> value) {
         this.activeEffects = new Reference2ObjectOpenHashMap<>();
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/LivingEntity;" +
+                                                                    "combatTracker:Lnet/minecraft/world/damagesource/CombatTracker;", opcode =
+            Opcodes.PUTFIELD))
+    private void onInit(LivingEntity instance, CombatTracker value) {
         this.combatTracker = new EvolutionCombatTracker((LivingEntity) (Object) this);
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;setHealth(F)V"))
+    private void onInit(LivingEntity instance, float pHealth) {
         AttributeInstance massAtr = this.getAttribute(EvolutionAttributes.MASS.get());
         assert massAtr != null;
         massAtr.setBaseValue(this.getBaseMass());
@@ -1443,15 +1496,6 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
             damageAtr.setBaseValue(this.getBaseAttackDamage());
         }
     }
-
-    @Shadow
-    protected abstract void onEffectAdded(MobEffectInstance p_147190_, @Nullable Entity p_147191_);
-
-    @Shadow
-    protected abstract void onEffectRemoved(MobEffectInstance pEffect);
-
-    @Shadow
-    public abstract void onEffectUpdated(MobEffectInstance p_147192_, boolean p_147193_, @Nullable Entity p_147194_);
 
     @Override
     public void performFollowUp() {
@@ -1485,12 +1529,6 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
 
     @Shadow
     protected abstract void playHurtSound(DamageSource p_21160_);
-
-    @Nullable
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/Maps;newHashMap()Ljava/util/HashMap;"))
-    private HashMap proxyInit() {
-        return null;
-    }
 
     /**
      * @author TheGreatWolf
@@ -1751,7 +1789,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
                 f1 = f4;
             }
         }
-        if (this.attackAnim > 0.0F || LivingEntityHooks.shouldFixRotation((LivingEntity) (Object) this)) {
+        if (this.attackAnim > 0.0F || LivingHooks.shouldFixRotation((LivingEntity) (Object) this)) {
             f1 = this.getYRot();
         }
         if (!this.onGround) {
@@ -1900,95 +1938,11 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         if (this.isEffectiveAi() || this.isControlledByLocalInstance()) {
             //noinspection ConstantConditions
             if (this.level.isClientSide &&
-                !((Object) this instanceof Player player && (player.isSpectator() || player.isCreative())) &&
-                this.level.getChunkAt(this.blockPosition()).isEmpty()) {
+                !((Object) this instanceof Player player && (player.isSpectator() || player.isCreative())) && this.touchingUnloadedChunk()) {
                 //Prevents players from moving in unloaded chunks, gaining momentum and then taking damage when the ground finally loads.
                 return;
             }
-            FluidState fluidState = this.level.getFluidState(this.blockPosition());
-            if (this.isInWater() && this.isAffectedByFluids() && !this.canStandOnFluid(fluidState)) {
-                //handleWaterMovement
-                //TODO
-                if (this.isOnGround() || this.noJumpDelay > 0) {
-                    if (this.getFluidHeight(FluidTags.WATER) <= 0.4) {
-                        int level = fluidState.getAmount();
-                        float slowdown = 1.0f - 0.05f * level;
-                        this.handleNormalMovement(travelVector, Fluid.AIR, slowdown);
-                        return;
-                    }
-                }
-                this.handleNormalMovement(travelVector, Fluid.WATER, 1.0f);
-//                float waterSpeedMult = 0.04F;
-//                waterSpeedMult *= (float) this.getAttributeValue(ForgeMod.SWIM_SPEED.get());
-//                Vec3 acceleration = this.getAbsoluteAcceleration(travelVector, waterSpeedMult);
-//                Vec3 motion = this.getDeltaMovement();
-//                double motionX = motion.x;
-//                double motionY = motion.y;
-//                double motionZ = motion.z;
-//                double mass = this.getAttributeValue(EvolutionAttributes.MASS.get());
-//                try (final Physics physics = Physics.getInstance(this)) {
-//                    double verticalDrag = physics.verticalWaterDrag(this) / mass;
-//                    double horizontalDrag = this.isSwimming() ? verticalDrag : physics.horizontalWaterDrag(this) / mass;
-//                    if (this.horizontalCollision && this.onClimbable()) {
-//                        motionY = 0.2;
-//                    }
-//                    if (!this.isNoGravity()) {
-//                        if (this.isSwimming()) {
-//                            motionY += physics.calcAccGravity() / 16;
-//                        }
-//                        else {
-//                            motionY += physics.calcAccGravity();
-//                        }
-//                    }
-//                    if (this.horizontalCollision && this.isFree(0, motionY + 1.5, 0)) {
-//                        motionY = 0.2;
-//                        if (this.getFluidHeight(FluidTags.WATER) <= 0.4) {
-//                            motionY += 0.2;
-//                            this.noJumpDelay = 10;
-//                        }
-//                    }
-//                    double dragX = Math.signum(motionX) * motionX * motionX * horizontalDrag;
-//                    if (Math.abs(dragX) > Math.abs(motionX / 2)) {
-//                        dragX = motionX / 2;
-//                    }
-//                    double dragY = Math.signum(motionY) * motionY * motionY * verticalDrag;
-//                    if (Math.abs(dragY) > Math.abs(motionY / 2)) {
-//                        dragY = motionY / 2;
-//                        EntityEvents.calculateWaterFallDamage((LivingEntity) (Object) this);
-//                    }
-//                    double dragZ = Math.signum(motionZ) * motionZ * motionZ * horizontalDrag;
-//                    if (Math.abs(dragZ) > Math.abs(motionZ / 2)) {
-//                        dragZ = motionZ / 2;
-//                    }
-//                    motionX += acceleration.x - dragX;
-//                    motionY += acceleration.y - dragY;
-//                    motionZ += acceleration.z - dragZ;
-//                }
-//                this.setDeltaMovement(motionX, motionY, motionZ);
-//                this.move(MoverType.SELF, this.getDeltaMovement());
-            }
-            else if (this.isInLava() && this.isAffectedByFluids() && !this.canStandOnFluid(fluidState)) {
-                //Handle lava movement
-                //TODO
-//                double posY = this.getY();
-//                this.moveRelative(0.02F, travelVector);
-//                this.move(MoverType.SELF, this.getDeltaMovement());
-//                Vec3 motion = this.getDeltaMovement();
-//                double motionX = motion.x * 0.5;
-//                double motionY = motion.y * 0.5;
-//                double motionZ = motion.z * 0.5;
-//                if (!this.isNoGravity()) {
-//                    try (Physics physics = Physics.getInstance(this)) {
-//                        motionY += physics.calcAccGravity() / 4;
-//                    }
-//                }
-//                if (this.horizontalCollision && this.isFree(motionX, motionY + 0.6 - this.getY() + posY, motionZ)) {
-//                    motionY = 0.3;
-//                }
-//                this.setDeltaMovement(motionX, motionY, motionZ);
-                this.handleNormalMovement(travelVector, Fluid.LAVA, 0.2f);
-            }
-            else if (this.isFallFlying()) {
+            if (this.isFallFlying()) {
                 //Handle elytra movement
                 //TODO
                 Vec3 motion = this.getDeltaMovement();
@@ -2006,8 +1960,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
                 }
             }
             else {
-                //handle normal movement
-                this.handleNormalMovement(travelVector, Fluid.AIR, 1.0f);
+                this.handleNormalMovement((Vec3d) travelVector, this.isInWater() ? Fluid.WATER : this.isInLava() ? Fluid.LAVA : Fluid.AIR, 1.0f);
             }
         }
         this.calculateEntityAnimation((LivingEntity) (Object) this, this instanceof FlyingAnimal);

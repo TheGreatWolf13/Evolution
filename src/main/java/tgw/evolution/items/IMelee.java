@@ -116,7 +116,7 @@ public interface IMelee {
             tooltip.add(TooltipDamage.charge(chargeAttack.getDamageType(), mult * dmg));
             tooltip.add(TooltipCooldown.cooldown(cooldown));
         }
-        if (stack.getItem() instanceof IThrowable throwable && throwable.isThrowable(stack)) {
+        if (stack.getItem() instanceof IThrowable throwable && throwable.isThrowable(stack, player)) {
             tooltip.add(EvolutionTexts.EITHER_EMPTY);
             tooltip.add(EvolutionTexts.throwAttack());
             tooltip.add(TooltipThrowSpeed.throwSpeed(throwable.projectileSpeed()));

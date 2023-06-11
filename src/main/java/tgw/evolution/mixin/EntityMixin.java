@@ -2,12 +2,16 @@ package tgw.evolution.mixin;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
@@ -35,16 +39,19 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.capabilities.CapabilityProvider;
+import net.minecraftforge.common.extensions.IForgeEntity;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.blocks.IClimbable;
-import tgw.evolution.hooks.LivingEntityHooks;
+import tgw.evolution.hooks.LivingHooks;
+import tgw.evolution.init.EvolutionAttributes;
 import tgw.evolution.init.EvolutionBlockTags;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.patches.IFluidPatch;
 import tgw.evolution.patches.IHolderReferencePatch;
 import tgw.evolution.util.OptionalMutableBlockPos;
 import tgw.evolution.util.constants.LevelEvents;
@@ -53,6 +60,7 @@ import tgw.evolution.util.math.AABBMutable;
 import tgw.evolution.util.math.ChunkPosMutable;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
+import tgw.evolution.util.physics.Physics;
 import tgw.evolution.util.physics.SI;
 import tgw.evolution.world.util.LevelUtils;
 
@@ -62,14 +70,25 @@ import java.util.Random;
 import java.util.Set;
 
 @Mixin(Entity.class)
-public abstract class EntityMixin extends CapabilityProvider<Entity> implements IEntityPatch<Entity> {
+public abstract class EntityMixin extends CapabilityProvider<Entity> implements IEntityPatch<Entity>, IForgeEntity {
 
+    @Shadow
+    @Final
+    protected static EntityDataAccessor<Pose> DATA_POSE;
+    @Shadow
+    @Final
+    private static AABB INITIAL_AABB;
     @Unique
     private final AABBMutable bbForPose = new AABBMutable();
     @Unique
     private final BlockPos.MutableBlockPos eyeBlockPos = new BlockPos.MutableBlockPos();
     @Unique
     private final Vec3d eyePosition = new Vec3d(Vec3d.NULL);
+    /**
+     * In the future, can be changed to a O2ByteMap to store more flags as needed.
+     */
+    @Unique
+    private final ObjectSet<TagKey<Fluid>> fluidFullySubmerged = new ObjectOpenHashSet<>();
     @Unique
     private final BlockPos.MutableBlockPos frictionPos = new BlockPos.MutableBlockPos();
     @Unique
@@ -123,6 +142,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     protected int boardingCooldown;
     @Shadow
+    @Final
+    protected SynchedEntityData entityData;
+    @Shadow
     protected boolean firstTick;
     @Shadow
     protected Object2DoubleMap<TagKey<Fluid>> fluidHeight;
@@ -139,6 +161,10 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     protected Vec3 stuckSpeedMultiplier;
     @Shadow
     protected boolean wasEyeInWater;
+    @Shadow
+    protected boolean wasTouchingWater;
+    @Shadow
+    private AABB bb;
     @Shadow
     private BlockPos blockPosition;
     @Unique
@@ -159,6 +185,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     private Set<TagKey<Fluid>> fluidOnEyes;
     @Unique
     private float lastPartialTickEyePosition;
+    @Nullable
+    @Unique
+    private Pose lastPose;
     @Shadow
     private EntityInLevelCallback levelCallback;
     @Shadow
@@ -177,6 +206,15 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     protected EntityMixin(Class<Entity> baseClass) {
         super(baseClass);
+    }
+
+    @Shadow
+    public static Vec3 collideBoundingBox(@Nullable Entity pEntity,
+                                          Vec3 pVec,
+                                          AABB pCollisionBox,
+                                          Level pLevel,
+                                          List<VoxelShape> pPotentialHits) {
+        throw new AbstractMethodError();
     }
 
     /**
@@ -204,7 +242,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     public void absMoveTo(double x, double y, double z, float yRot, float xRot) {
         this.absMoveTo(x, y, z);
         this.setYRot(yRot % 360.0F);
-        float xDelta = LivingEntityHooks.xDelta((Entity) (Object) this, 1.0f);
+        float xDelta = LivingHooks.xDelta((Entity) (Object) this, 1.0f);
         this.setXRot(Mth.clamp(xRot, -90.0F - xDelta, 90.0F - xDelta) % 360.0F);
         this.yRotO = this.getYRot();
         this.xRotO = this.getXRot();
@@ -325,6 +363,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     protected abstract Vec3 collide(Vec3 pVec);
 
+    @Shadow
+    protected abstract void doWaterSplashEffect();
+
     /**
      * @author TheGreatWolf
      * @reason Use cached pos
@@ -363,6 +404,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Shadow
     public abstract float getBbHeight();
+
+    @Shadow
+    public abstract float getBbWidth();
 
     @Shadow
     protected abstract float getBlockSpeedFactor();
@@ -466,7 +510,17 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     }
 
     @Override
+    public @Nullable Pose getLastPose() {
+        return this.lastPose;
+    }
+
+    @Override
     public double getLegSlowdown() {
+        return 0;
+    }
+
+    @Override
+    public double getLungCapacity() {
         return 0;
     }
 
@@ -572,6 +626,20 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     protected abstract void handleNetherPortal();
 
     @Override
+    public boolean hasAnyFluidInEye() {
+        if (this.fluidHeight.isEmpty()) {
+            return false;
+        }
+        if (!this.fluidFullySubmerged.isEmpty()) {
+            return true;
+        }
+        if (!this.cachedFluidOnEyes) {
+            this.updateFluidOnEyes();
+        }
+        return !this.fluidOnEyes.isEmpty();
+    }
+
+    @Override
     public final boolean hasCollidedOnXAxis() {
         return this.hasCollidedOnX;
     }
@@ -584,6 +652,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     public abstract boolean hurt(DamageSource p_19946_, float p_19947_);
 
+    @Override
     @Shadow
     public abstract boolean isAddedToWorld();
 
@@ -596,13 +665,11 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
      */
     @Overwrite
     public boolean isEyeInFluid(TagKey<Fluid> fluid) {
-        if (fluid == FluidTags.WATER) {
-            if (!this.isInWater()) {
-                return false;
-            }
-            if (this.getFluidHeight(fluid) >= this.getBbHeight()) {
-                return true;
-            }
+        if (fluid == FluidTags.WATER && !this.isInWater()) {
+            return false;
+        }
+        if (this.isFullySubmerged(fluid)) {
+            return true;
         }
         if (!this.cachedFluidOnEyes) {
             this.updateFluidOnEyes();
@@ -610,8 +677,19 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         return this.fluidOnEyes.contains(fluid);
     }
 
+    @Override
+    @Unique
+    public boolean isFullySubmerged(TagKey<Fluid> fluid) {
+        return this.fluidFullySubmerged.contains(fluid);
+    }
+
     @Shadow
     protected abstract boolean isHorizontalCollisionMinor(Vec3 pDeltaMovement);
+
+    @Override
+    public boolean isInAnyFluid() {
+        return !this.fluidHeight.isEmpty();
+    }
 
     @Shadow
     public abstract boolean isInLava();
@@ -681,6 +759,9 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Shadow
     public abstract boolean isRemoved();
+
+    @Shadow
+    public abstract boolean isSprinting();
 
     @Shadow
     public abstract boolean isSteppingCarefully();
@@ -844,12 +925,35 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         return 1;
     }
 
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInit(EntityType entityType, Level level, CallbackInfo ci) {
-        this.position = new Vec3d();
-        this.deltaMovement = new Vec3d();
-        this.blockPosition = new BlockPos.MutableBlockPos();
-        this.chunkPosition = new ChunkPosMutable();
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;" +
+                                                                    "chunkPosition:Lnet/minecraft/world/level/ChunkPos;", opcode = Opcodes.PUTFIELD))
+    private void onInit(Entity instance, ChunkPos value) {
+        this.chunkPosition = new ChunkPosMutable(value);
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;blockPosition:Lnet/minecraft/core/BlockPos;"
+            , opcode = Opcodes.PUTFIELD))
+    private void onInit(Entity instance, BlockPos value) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        this.blockPosition = pos.set(value);
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;bb:Lnet/minecraft/world/phys/AABB;",
+            opcode = Opcodes.PUTFIELD))
+    private void onInit(Entity instance, AABB value) {
+        this.bb = new AABBMutable(value);
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;" +
+                                                                    "deltaMovement:Lnet/minecraft/world/phys/Vec3;", opcode = Opcodes.PUTFIELD))
+    private void onInitMovement(Entity instance, Vec3 value) {
+        this.deltaMovement = new Vec3d(value);
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;position:Lnet/minecraft/world/phys/Vec3;",
+            opcode = Opcodes.PUTFIELD))
+    private void onInitPosition(Entity entity, Vec3 vec) {
+        this.position = new Vec3d(vec);
     }
 
     /**
@@ -929,10 +1033,22 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     public abstract Vec3 position();
 
     @Shadow
+    protected abstract void positionRider(Entity pPassenger, Entity.MoveFunction pCallback);
+
+    @Shadow
     public abstract void positionRider(Entity pPassenger);
 
     @Shadow
     protected abstract void processFlappingMovement();
+
+    @Unique
+    private void refreshBoundingBox() {
+        float radius = this.dimensions.width / 2;
+        double x = this.position.x;
+        double y = this.position.y;
+        double z = this.position.z;
+        this.setBoundingBox(x - radius, y, z - radius, x + radius, y + this.dimensions.height, z + radius);
+    }
 
     /**
      * @author TheGreatWolf
@@ -947,6 +1063,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         this.dimensions = newDims;
         this.eyeHeight = this.getEyeHeight(pose, newDims);
         boolean isSmall = newDims.width <= 4 && newDims.height <= 4;
+        this.refreshBoundingBox();
         if (!this.level.isClientSide &&
             !this.firstTick &&
             !this.noPhysics &&
@@ -967,6 +1084,20 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
 
     @Shadow
     public abstract void resetFallDistance();
+
+    /**
+     * @author TheGreatWolf
+     * @reason Preserve size
+     */
+    @Overwrite
+    public final void setBoundingBox(AABB bb) {
+        ((AABBMutable) this.bb).set(bb);
+    }
+
+    @Unique
+    private void setBoundingBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        ((AABBMutable) this.bb).set(minX, minY, minZ, maxX, maxY, maxZ);
+    }
 
     /**
      * @author TheGreatWolf
@@ -996,8 +1127,15 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         this.updateSupportingBlockPos(onGround);
     }
 
-    @Shadow
-    public abstract void setPos(double p_20210_, double p_20211_, double p_20212_);
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid allocations
+     */
+    @Overwrite
+    public void setPos(double x, double y, double z) {
+        this.setPosRaw(x, y, z);
+        this.refreshBoundingBox();
+    }
 
     @Shadow
     public abstract void setPos(Vec3 pPos);
@@ -1031,11 +1169,27 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         }
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason Record last pose
+     */
+    @Overwrite
+    public void setPose(Pose pose) {
+        Pose currentPose = this.getPose();
+        if (currentPose != pose) {
+            this.lastPose = currentPose;
+        }
+        this.entityData.set(DATA_POSE, pose);
+    }
+
     @Shadow
     public abstract void setRemainingFireTicks(int pRemainingFireTicks);
 
     @Shadow
     public abstract void setSharedFlagOnFire(boolean pIsOnFire);
+
+    @Shadow
+    public abstract void setSwimming(boolean pSwimming);
 
     @Shadow
     public abstract void setTicksFrozen(int pTicksFrozen);
@@ -1102,128 +1256,205 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     @Shadow
     public abstract void stopRiding();
 
-    @Shadow
-    public abstract boolean touchingUnloadedChunk();
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid allocations
+     */
+    @Overwrite
+    public boolean touchingUnloadedChunk() {
+        AABB bb = this.getBoundingBox();
+        int minX = Mth.floor(bb.minX - 1);
+        int maxX = Mth.ceil(bb.maxX + 1);
+        int minZ = Mth.floor(bb.minZ - 1);
+        int maxZ = Mth.ceil(bb.maxZ + 1);
+        return !this.level.hasChunksAt(minX, minZ, maxX, maxZ);
+    }
 
     @Shadow
     protected abstract void tryCheckInsideBlocks();
 
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid most allocations
-     */
-    @Overwrite
-    public boolean updateFluidHeightAndDoFluidPushing(TagKey<Fluid> fluid, double motionScale) {
+    @Unique
+    private void updateFluidHeightAndDoFluidPushing() {
         if (this.touchingUnloadedChunk()) {
-            return false;
+            return;
         }
-        AABB aabb = this.getBoundingBox();
-        int minX = Mth.floor(aabb.minX + 0.001);
-        int maxX = Mth.ceil(aabb.maxX - 0.001);
-        int minY = Mth.floor(aabb.minY + 0.001);
-        int maxY = Mth.ceil(aabb.maxY - 0.001);
-        int minZ = Mth.floor(aabb.minZ + 0.001);
-        int maxZ = Mth.ceil(aabb.maxZ - 0.001);
-        double height = 0.0;
+        AABB bb = this.getBoundingBox();
+        int minX = Mth.floor(bb.minX + 0.001);
+        int maxX = Mth.ceil(bb.maxX - 0.001);
+        int minY = Mth.floor(bb.minY - 0.001);
+        int maxY = Mth.ceil(bb.maxY + 0.001);
+        int minZ = Mth.floor(bb.minZ + 0.001);
+        int maxZ = Mth.ceil(bb.maxZ - 0.001);
         boolean pushedByFluid = this.isPushedByFluid();
-        boolean isInFluid = false;
-        //Vec3 flow = Vec3.ZERO;
-        double flowX = 0.0;
-        double flowY = 0.0;
-        double flowZ = 0.0;
-        int flowCount = 0;
-        BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
-        for (int dx = minX; dx < maxX; ++dx) {
-            mutableBlockPos.setX(dx);
-            for (int dy = minY; dy < maxY; ++dy) {
-                mutableBlockPos.setY(dy);
-                for (int dz = minZ; dz < maxZ; ++dz) {
-                    mutableBlockPos.setZ(dz);
-                    FluidState fluidState = this.level.getFluidState(mutableBlockPos);
-                    if (fluidState.is(fluid)) {
-                        double localHeight = dy + fluidState.getHeight(this.level, mutableBlockPos);
-                        if (localHeight >= aabb.minY) {
-                            isInFluid = true;
-                            height = Math.max(localHeight - aabb.minY, height);
+        double flowX = 0;
+        double flowY = 0;
+        double flowZ = 0;
+        int maxSubmerged = (maxX - minX) * (maxZ - minZ);
+        int submerged = 0;
+        tgw.evolution.util.physics.Fluid lastSubmergedFluid = null;
+        Vec3d flow = null;
+        BlockPos.MutableBlockPos flowPos = null;
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        double velX = 0;
+        double velY = 0;
+        double velZ = 0;
+        double mult = 0; //0.5 * coefDrag * mass
+        double dx = 0;
+        double dy = 0;
+        double dz = 0;
+        double sx = 0; //Reciprocal of sizeX
+        double sy = 0; //Reciprocal of sizeY
+        double sz = 0; //Reciprocal of sizeZ
+        tgw.evolution.util.physics.Fluid fallFluid = null;
+        boolean fallDamage = false;
+        if (pushedByFluid) {
+            flow = new Vec3d(Vec3.ZERO);
+            flowPos = new BlockPos.MutableBlockPos();
+            Vec3 deltaMovement = this.getDeltaMovement();
+            velX = deltaMovement.x;
+            velY = deltaMovement.y;
+            velZ = deltaMovement.z;
+            //noinspection ConstantConditions
+            mult = 0.5 * Physics.coefOfDrag((Entity) (Object) this) / ((Object) this instanceof LivingEntity living ?
+                                                                       living.getAttributeValue(EvolutionAttributes.MASS.get()) : this.getBaseMass());
+            sx = 1 / (bb.maxX - bb.minX);
+            sy = 1 / (bb.maxY - bb.minY);
+            sz = 1 / (bb.maxZ - bb.minZ);
+        }
+        for (int x = minX; x < maxX; ++x) {
+            mutablePos.setX(x);
+            if (pushedByFluid) {
+                dx = Math.min(x + 1, bb.maxX) - Math.max(x, bb.minX);
+            }
+            for (int z = minZ; z < maxZ; ++z) {
+                mutablePos.setZ(z);
+                if (pushedByFluid) {
+                    dz = Math.min(z + 1, bb.maxZ) - Math.max(z, bb.minZ);
+                }
+                for (int y = minY; y < maxY; ++y) {
+                    mutablePos.setY(y);
+                    FluidState fluidState = this.level.getFluidState(mutablePos);
+                    tgw.evolution.util.physics.Fluid fluid = null;
+                    double localHeight = 0;
+                    boolean needsSemiCalc = false;
+                    double localSemiHeight = 0;
+                    if (!fluidState.isEmpty()) {
+                        double selfHeight = fluidState.getHeight(this.level, mutablePos);
+                        localHeight = y + selfHeight;
+                        if (localHeight >= bb.minY) {
+                            IFluidPatch patch = (IFluidPatch) fluidState.getType();
+                            fluid = patch.fluid();
                             if (pushedByFluid) {
-                                Vec3 localFlow = fluidState.getFlow(this.level, mutableBlockPos);
-                                double localFlowX = localFlow.x;
-                                double localFlowY = localFlow.y;
-                                double localFlowZ = localFlow.z;
-                                if (height < 0.4) {
-                                    //localFlow = localFlow.scale(height);
-                                    localFlowX *= height;
-                                    localFlowY *= height;
-                                    localFlowZ *= height;
-                                }
-                                //flow = flow.add(localFlow);
-                                flowX += localFlowX;
-                                flowY += localFlowY;
-                                flowZ += localFlowZ;
-                                ++flowCount;
+                                patch.getFlow(this.level, mutablePos, fluidState, flowPos, flow.set(Vec3.ZERO))
+                                     .scaleMutable(patch.getFlowStrength(this.level.dimensionType()));
                             }
+                            if (localHeight >= bb.maxY) {
+                                localHeight = bb.maxY;
+                                if (lastSubmergedFluid == null) {
+                                    lastSubmergedFluid = fluid;
+                                }
+                                if (lastSubmergedFluid == fluid) {
+                                    ++submerged;
+                                }
+                            }
+                            else if (selfHeight < 1 && pushedByFluid) {
+                                //Block has top part of air at the top of aabb (aabb is semi on fluid, semi on air)
+                                //Calculated via loop
+                                needsSemiCalc = true;
+                                localSemiHeight = selfHeight;
+                            }
+                            double newHeight = localHeight - bb.minY;
+                            if (newHeight > this.fluidHeight.getDouble(fluid.tag())) {
+                                this.fluidHeight.put(fluid.tag(), newHeight);
+                            }
+                        }
+                        else if (pushedByFluid) {
+                            //Block has top part of air at bottom of aabb (aabb is fully on air)
+                            fluid = tgw.evolution.util.physics.Fluid.AIR;
+                            localHeight = y + 1;
+                            //TODO wind
+                            flow.set(Vec3.ZERO);
+                        }
+                    }
+                    else if (pushedByFluid) {
+                        //Block is fully air
+                        fluid = tgw.evolution.util.physics.Fluid.AIR;
+                        localHeight = y + 1;
+                        //TODO wind
+                        flow.set(Vec3.ZERO);
+                    }
+                    double properY = y;
+                    boolean pushing = pushedByFluid;
+                    while (pushing) {
+                        dy = localHeight - Math.max(properY, bb.minY);
+                        double density = fluid.density();
+                        double localFlowX = flow.x;
+                        double localFlowY = flow.y;
+                        double localFlowZ = flow.z;
+                        double relVelX = localFlowX - velX;
+                        double relVelY = localFlowY - velY;
+                        double relVelZ = localFlowZ - velZ;
+                        double dv = dx * dy * dz;
+                        double mul = mult * density * dv;
+                        double dragX = Math.signum(relVelX) * relVelX * relVelX * mul * sx;
+                        double dragY = Math.signum(relVelY) * relVelY * relVelY * mul * sy;
+                        double dragZ = Math.signum(relVelZ) * relVelZ * relVelZ * mul * sz;
+                        mul = sx * sy * sz * dv;
+                        double maxDrag = Math.abs(relVelX) * mul;
+                        if (Math.abs(dragX) > maxDrag) {
+                            dragX = Math.signum(dragX) * maxDrag;
+                        }
+                        maxDrag = Math.abs(relVelY) * mul;
+                        if (Math.abs(dragY) > maxDrag) {
+                            dragY = Math.signum(dragY) * maxDrag;
+                        }
+                        if (fallFluid == null) {
+                            if (fluid != tgw.evolution.util.physics.Fluid.AIR && fluid != tgw.evolution.util.physics.Fluid.VACUUM) {
+                                if (!(fluid == tgw.evolution.util.physics.Fluid.WATER && this.wasTouchingWater)) {
+                                    fallFluid = fluid;
+                                    fallDamage = true;
+                                }
+                            }
+                        }
+                        maxDrag = Math.abs(relVelZ) * mul;
+                        if (Math.abs(dragZ) > maxDrag) {
+                            dragZ = Math.signum(dragZ) * maxDrag;
+                        }
+                        flowX += dragX;
+                        flowY += dragY;
+                        flowZ += dragZ;
+                        if (needsSemiCalc) {
+                            needsSemiCalc = false;
+                            fluid = tgw.evolution.util.physics.Fluid.AIR;
+                            localHeight = y + 1;
+                            properY = y + localSemiHeight;
+                            //TODO wind
+                            flow.set(Vec3.ZERO);
+                        }
+                        else {
+                            pushing = false;
                         }
                     }
                 }
             }
         }
-        //flow.lengthSqr(); (original is length() which computes a sqrt for no reason)
-        if (flowX * flowX + flowY * flowY + flowZ * flowZ > 0.0) {
-            if (flowCount > 0) {
-                //flow = flow.scale(1.0 / flowCount);
-                double scale = 1.0 / flowCount;
-                flowX *= scale;
-                flowY *= scale;
-                flowZ *= scale;
-            }
-            //noinspection ConstantConditions
-            if (!((Object) this instanceof Player)) {
-                //flow = flow.normalize();
-                double norm = Mth.fastInvSqrt(flowX * flowX + flowY * flowY + flowZ * flowZ);
-                if (norm > 1.0E4) {
-                    flowX = 0.0;
-                    flowY = 0.0;
-                    flowZ = 0.0;
-                }
-                else {
-                    flowX *= norm;
-                    flowY *= norm;
-                    flowZ *= norm;
-                }
-            }
-            Vec3 velocity = this.getDeltaMovement();
-            //flow = flow.scale(motionScale);
-            flowX *= motionScale;
-            flowY *= motionScale;
-            flowZ *= motionScale;
-            //flow.lengthSqr; (original is length() which computes a sqrt for no reason)
-            if (Math.abs(velocity.x) < 0.003 &&
-                Math.abs(velocity.z) < 0.003 &&
-                flowX * flowX + flowY * flowY + flowZ * flowZ < 0.000_020_250_000_000_000_004_5) {
-                //flow = flow.normalize().scale(0.004_500_000_000_000_000_5);
-                double norm = Mth.fastInvSqrt(flowX * flowX + flowY * flowY + flowZ * flowZ);
-                if (norm > 1.0E4) {
-                    flowX = 0.0;
-                    flowY = 0.0;
-                    flowZ = 0.0;
-                }
-                else {
-                    flowX *= norm;
-                    flowY *= norm;
-                    flowZ *= norm;
-                }
-                flowX *= 0.004_5;
-                flowY *= 0.004_5;
-                flowZ *= 0.004_5;
-            }
-            //velocity.add(flow)
-            flowX += velocity.x;
-            flowY += velocity.y;
-            flowZ += velocity.z;
-            this.setDeltaMovement(flowX, flowY, flowZ);
+        //noinspection ConstantConditions
+        if (fallDamage && (Object) this instanceof LivingEntity living) {
+            LivingHooks.calculateFluidFallDamage(living, fallFluid);
         }
-        this.fluidHeight.put(fluid, height);
-        return isInFluid;
+        ((Vec3d) this.getDeltaMovement()).addMutable(flowX, flowY, flowZ);
+        if (submerged >= maxSubmerged) {
+            this.fluidFullySubmerged.add(lastSubmergedFluid.tag());
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Redirect
+     */
+    @Overwrite
+    public boolean updateFluidHeightAndDoFluidPushing(TagKey<Fluid> fluid, double motionScale) {
+        throw new IllegalStateException("Do not call! Call updateFluidHeightAndDoFluidPushing() instead and check if fluidHeight > 0");
     }
 
     /**
@@ -1251,8 +1482,41 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         }
     }
 
-    @Shadow
-    protected abstract boolean updateInWaterStateAndDoFluidPushing();
+    /**
+     * @return Whether the entity is in a fluid.
+     * @author TheGreatWolf
+     * @reason Simplify to a single calculation
+     */
+    @Overwrite
+    protected boolean updateInWaterStateAndDoFluidPushing() {
+        this.fluidHeight.clear();
+        this.fluidFullySubmerged.clear();
+        this.updateFluidHeightAndDoFluidPushing();
+        this.updateInWaterStateAndDoWaterCurrentPushing();
+        return this.isInWater() || this.fluidHeight.getDouble(FluidTags.LAVA) > 0;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Simplify to a single calculation
+     */
+    @Overwrite
+    protected void updateInWaterStateAndDoWaterCurrentPushing() {
+        if (this.getVehicle() instanceof Boat) {
+            this.wasTouchingWater = false;
+        }
+        else if (this.fluidHeight.getDouble(FluidTags.WATER) > 0) {
+            if (!this.wasTouchingWater && !this.firstTick) {
+                this.doWaterSplashEffect();
+            }
+            this.resetFallDistance();
+            this.wasTouchingWater = true;
+            this.clearFire();
+        }
+        else {
+            this.wasTouchingWater = false;
+        }
+    }
 
     @Unique
     private void updateSupportingBlockPos(boolean onGround) {
@@ -1266,6 +1530,19 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
         }
     }
 
-    @Shadow
-    public abstract void updateSwimming();
+    /**
+     * @author TheGreatWolf
+     * @reason Make it possible to start swimming when not submerged.
+     */
+    @Overwrite
+    public void updateSwimming() {
+        if (this.isSwimming()) {
+            this.setSwimming(this.isSprinting() && this.isInWater() && !this.isPassenger());
+        }
+        else {
+            this.setSwimming(this.isSprinting() &&
+                             !this.isPassenger() &&
+                             this.level.getFluidState(this.blockPosition).is(FluidTags.WATER));
+        }
+    }
 }

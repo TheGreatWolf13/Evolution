@@ -20,6 +20,7 @@ import tgw.evolution.patches.IBlockPatch;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.ILocked;
 import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.Vec3d;
 
 public final class Physics implements ILocked {
 
@@ -42,6 +43,7 @@ public final class Physics implements ILocked {
     private float cachedCosLat = Float.NaN;
     private double cachedGravity = Double.NaN;
     private float cachedLatitude = Float.NaN;
+    private double cachedNormal = Double.NaN;
     private double cachedRadius = Double.NaN;
     private float cachedSinLat = Float.NaN;
     private double coefDrag;
@@ -62,7 +64,7 @@ public final class Physics implements ILocked {
     private Physics() {
     }
 
-    private static double coefOfDrag(Entity entity) {
+    public static double coefOfDrag(Entity entity) {
         if (entity instanceof IAerodynamicEntity) {
             return 0.04;
         }
@@ -117,8 +119,18 @@ public final class Physics implements ILocked {
         return (EARTH_RADIUS_EQUATOR - EARTH_RADIUS_POLE) * cosLat * cosLat + EARTH_RADIUS_POLE;
     }
 
-    public void calcAccAbsolute(Entity entity, Vec3 direction, double magnitude) {
+    public void calcAccAbsolute(Entity entity, Vec3d direction, double magnitude) {
         double lengthSqr = direction.lengthSqr();
+        boolean swimming = entity.isSwimming();
+        if (swimming) {
+            float xRot = -entity.getXRot();
+            if (xRot <= 0 || ((IEntityPatch) entity).isFullySubmerged(FluidTags.WATER)) {
+                //up only allowed if fully submerged
+                //down always allowed
+                direction.addMutable(0, MathHelper.sinDeg(xRot), 0);
+                lengthSqr = direction.lengthSqr();
+            }
+        }
         this.hasCachedAcceleration = true;
         if (lengthSqr < 1.0E-8) {
             this.cachedAccX = 0;
@@ -126,13 +138,14 @@ public final class Physics implements ILocked {
             this.cachedAccZ = 0;
             return;
         }
-        if (entity.getPose() == Pose.CROUCHING) {
-            if (!(entity instanceof Player && ((Player) entity).getAbilities().flying)) {
-                magnitude *= 0.3;
+        if (!swimming) {
+            Pose pose = entity.getPose();
+            if (pose == Pose.CROUCHING) {
+                if (!(entity instanceof Player && ((Player) entity).getAbilities().flying)) {
+                    magnitude *= 0.3;
+                }
             }
-        }
-        if (entity instanceof Player) {
-            if (entity.getPose() == Pose.SWIMMING && !entity.isInWater()) {
+            else if (pose == Pose.SWIMMING && !entity.isInWater()) {
                 magnitude *= 0.3;
             }
         }
@@ -142,7 +155,7 @@ public final class Physics implements ILocked {
                 magnitude *= item.useItemSlowDownRate();
             }
         }
-        double norm = Mth.fastInvSqrt(lengthSqr);
+        double norm = lengthSqr > 1 ? Mth.fastInvSqrt(lengthSqr) : 1;
         double accX = direction.x * norm * magnitude;
         double accY = direction.y * norm * magnitude;
         double accZ = direction.z * norm * magnitude;
@@ -159,7 +172,7 @@ public final class Physics implements ILocked {
             float cosLat = this.cosLatitude();
             this.cachedCentY = omega * omega * this.radius() * cosLat * cosLat;
         }
-        return this.cachedCorY;
+        return this.cachedCentY;
     }
 
     public double calcAccCentrifugalZ() {
@@ -252,7 +265,10 @@ public final class Physics implements ILocked {
     }
 
     public double calcAccNormal() {
-        return -(this.calcAccGravity() + this.calcAccCoriolisY() + this.calcAccCentrifugalY());
+        if (Double.isNaN(this.cachedNormal)) {
+            this.cachedNormal = -(this.calcAccGravity() + this.calcAccCoriolisY() + this.calcAccCentrifugalY());
+        }
+        return this.cachedNormal;
     }
 
     public double calcForceBuoyancy(Entity entity) {
@@ -269,35 +285,42 @@ public final class Physics implements ILocked {
             submergedHeight = entity.getFluidHeight(this.fluid.tag());
         }
         double volumeDisplaced = this.sizeX * this.sizeZ * submergedHeight * ((IEntityPatch) entity).getVolumeCorrectionFactor();
-        return -this.calcAccGravity() * this.fluid.density() * volumeDisplaced;
+        double lungCapacity = ((IEntityPatch<?>) entity).getLungCapacity();
+        if (lungCapacity > 0) {
+            int airSupply = Math.max(0, entity.getAirSupply());
+            if (airSupply > 0) {
+                volumeDisplaced += lungCapacity * airSupply / entity.getMaxAirSupply();
+            }
+        }
+        return this.calcAccNormal() * this.fluid.density() * volumeDisplaced;
     }
 
-    public double calcForceDragX(double windVelX) {
-        assert this.fluid != null;
-        if (this.fluid == Fluid.VACUUM) {
-            return 0;
-        }
-        double relVel = windVelX - this.velX;
-        return Math.signum(relVel) * 0.5 * this.fluid.density() * this.sizeZ * this.sizeY * this.coefDrag * relVel * relVel;
-    }
+//    public double calcForceDragX(double windVelX) {
+//        assert this.fluid != null;
+//        if (this.fluid == Fluid.VACUUM) {
+//            return 0;
+//        }
+//        double relVel = windVelX - this.velX;
+//        return Math.signum(relVel) * 0.5 * this.fluid.density() * this.sizeZ * this.sizeY * this.coefDrag * relVel * relVel;
+//    }
 
-    public double calcForceDragY(double windVelY) {
-        assert this.fluid != null;
-        if (this.fluid == Fluid.VACUUM) {
-            return 0;
-        }
-        double relVel = windVelY - this.velY;
-        return Math.signum(relVel) * 0.5 * this.fluid.density() * this.sizeZ * this.sizeX * this.coefDrag * relVel * relVel;
-    }
+//    public double calcForceDragY(double windVelY) {
+//        assert this.fluid != null;
+//        if (this.fluid == Fluid.VACUUM) {
+//            return 0;
+//        }
+//        double relVel = windVelY - this.velY;
+//        return Math.signum(relVel) * 0.5 * this.fluid.density() * this.sizeZ * this.sizeX * this.coefDrag * relVel * relVel;
+//    }
 
-    public double calcForceDragZ(double windVelZ) {
-        assert this.fluid != null;
-        if (this.fluid == Fluid.VACUUM) {
-            return 0;
-        }
-        double relVel = windVelZ - this.velZ;
-        return Math.signum(relVel) * 0.5 * this.fluid.density() * this.sizeY * this.sizeX * this.coefDrag * relVel * relVel;
-    }
+//    public double calcForceDragZ(double windVelZ) {
+//        assert this.fluid != null;
+//        if (this.fluid == Fluid.VACUUM) {
+//            return 0;
+//        }
+//        double relVel = windVelZ - this.velZ;
+//        return Math.signum(relVel) * 0.5 * this.fluid.density() * this.sizeY * this.sizeX * this.coefDrag * relVel * relVel;
+//    }
 
     public float calcKineticFrictionCoef(Entity entity) {
         return this.calcStaticFrictionCoef(entity) * 0.8f;
@@ -338,6 +361,7 @@ public final class Physics implements ILocked {
         this.cachedGravity = Double.NaN;
         this.cachedCentY = Double.NaN;
         this.cachedCorY = Double.NaN;
+        this.cachedNormal = Double.NaN;
         this.hasCachedAcceleration = false;
     }
 

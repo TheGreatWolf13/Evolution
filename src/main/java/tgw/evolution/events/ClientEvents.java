@@ -868,7 +868,7 @@ public class ClientEvents {
         if (event.getEntity() instanceof Player player) {
             if (player.level.isClientSide) {
                 ItemStack stack = event.getItem();
-                if (stack.getItem() instanceof ICancelableUse cancel && cancel.isCancelable(stack)) {
+                if (stack.getItem() instanceof ICancelableUse cancel && cancel.isCancelable(stack, player)) {
                     player.displayClientMessage(cancel.getCancelMessage(this.mc.options.keyAttack.getTranslatedKeyMessage()), true);
                 }
             }
@@ -1197,11 +1197,21 @@ public class ClientEvents {
         else {
             this.offhandCooldownTime = 0;
         }
+        assert this.mc.player != null;
+        if (this.mc.player.isUsingItem() && this.mc.player.getUsedItemHand() == hand) {
+            this.mc.player.stopUsingItem();
+            EvolutionNetwork.sendToServer(new PacketCSStopUsingItem());
+        }
     }
 
     public void resetCooldowns() {
         this.mainhandCooldownTime = 0;
         this.offhandCooldownTime = 0;
+        assert this.mc.player != null;
+        if (this.mc.player.isUsingItem()) {
+            this.mc.player.stopUsingItem();
+            EvolutionNetwork.sendToServer(new PacketCSStopUsingItem());
+        }
     }
 
     public void setLastInventoryTab(@Range(from = 0, to = 1) int tab) {

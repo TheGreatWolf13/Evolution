@@ -1,5 +1,6 @@
 package tgw.evolution.util.hitbox.hms;
 
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
@@ -11,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import tgw.evolution.Evolution;
 import tgw.evolution.items.IMelee;
+import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.util.ArmPose;
 import tgw.evolution.util.math.MathHelper;
@@ -244,26 +246,24 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
         itemR.setPivot(0, 0, 0);
         itemL.setPivot(0, 0, 0);
         //  Rotation
-        head.setRotationX(Mth.DEG_TO_RAD * headPitch);
+        headPitch *= Mth.DEG_TO_RAD;
+        head.setRotationX(headPitch);
         head.setRotationY(Mth.DEG_TO_RAD * netHeadYaw);
-        body.setRotationX(0);
-        body.setRotationY(0);
+        body.setRotation(0, 0, 0);
         armR.setRotation(0, 0, 0);
         forearmR.setRotation(0, 0, 0);
         armL.setRotation(0, 0, 0);
         forearmL.setRotation(0, 0, 0);
-        legR.setRotationX(0);
-        legR.setRotationY(0);
+        legR.setRotation(0, 0, 0);
         forelegR.setRotationX(0);
-        legL.setRotationX(0);
-        legL.setRotationY(0);
+        legL.setRotation(0, 0, 0);
         forelegL.setRotationX(0);
         itemR.setRotation(0, 0, 0);
         itemL.setRotation(0, 0, 0);
         //Setup poses
         boolean crouching = this.crouching();
         boolean crawling = !inWater && (swimAmount > 0 || entity.getPose() == Pose.SWIMMING);
-        boolean swimming = inWater && swimAmount == 1;
+        boolean swimming = inWater && swimAmount > 0;
         boolean shouldWalk = false;
         if (this.riding()) {
             armR.setRotationX(18 * Mth.DEG_TO_RAD);
@@ -284,20 +284,26 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                 float bodyOffset;
                 float legOffset;
                 float bodyRot0;
-                if (!entity.canEnterPose(Pose.STANDING)) {
+                float legRot0;
+                float foreLegRot0;
+                if (((IEntityPatch) entity).getLastPose() == Pose.CROUCHING || entity.getPose() == Pose.CROUCHING) {
                     headOffset = -7;
                     bodyOffset = -6;
                     legOffset = 1;
                     bodyRot0 = -30 * Mth.DEG_TO_RAD;
+                    legRot0 = 75 * Mth.DEG_TO_RAD;
+                    foreLegRot0 = -90 * Mth.DEG_TO_RAD;
                 }
                 else {
                     headOffset = 0;
                     bodyOffset = 0;
                     legOffset = 0;
                     bodyRot0 = 0;
+                    legRot0 = 0;
+                    foreLegRot0 = 0;
                 }
                 if (swimAmount < 0.25) {
-                    float t = AnimationUtils.normPar(swimAmount, 0, 0.25f);
+                    float t = AnimationUtils.normParameter(swimAmount, 0, 0.25f);
                     float quadIn = AnimationUtils.easingQuadraticIn(t);
                     float offset = -5 * quadIn;
                     float antiT = 1 - t;
@@ -305,16 +311,16 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                     body.translateY(offset + bodyOffset);
                     body.setRotationX(bodyRot0);
                     legR.translateY(legOffset * antiT);
-                    legR.addRotationX(-35 * Mth.DEG_TO_RAD * t);
-                    forelegR.addRotationX(-55 * Mth.DEG_TO_RAD * t);
+                    legR.addRotationX(legRot0 * antiT - 35 * Mth.DEG_TO_RAD * t);
+                    forelegR.addRotationX(foreLegRot0 * antiT - 55 * Mth.DEG_TO_RAD * t);
                     legL.translateY(legOffset * antiT);
-                    legL.addRotationX(80 * Mth.DEG_TO_RAD * t);
-                    forelegL.addRotationX(-80 * Mth.DEG_TO_RAD * t);
+                    legL.addRotationX(legRot0 * antiT + 80 * Mth.DEG_TO_RAD * t);
+                    forelegL.addRotationX(foreLegRot0 * antiT - 80 * Mth.DEG_TO_RAD * t);
                 }
                 else if (swimAmount < 0.5) {
-                    float t = AnimationUtils.normPar(swimAmount, 0.25f, 0.5f);
+                    float t = AnimationUtils.normParameter(swimAmount, 0.25f, 0.5f);
                     float quadOut = AnimationUtils.easingQuadraticOut(t);
-                    float offset = -4 + (-5 + 4) * quadOut;
+                    float offset = -5 + 1 * quadOut;
                     head.translateY(offset + headOffset);
                     body.translateY(offset + bodyOffset);
                     body.setRotationX(bodyRot0);
@@ -324,7 +330,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                     forelegL.addRotationX(-80 * Mth.DEG_TO_RAD + (-90 * Mth.DEG_TO_RAD + 80 * Mth.DEG_TO_RAD) * t);
                 }
                 else {
-                    float t = AnimationUtils.normPar(swimAmount, 0.5f, 1.0f);
+                    float t = AnimationUtils.normParameter(swimAmount, 0.5f, 1.0f);
                     float sineIn = AnimationUtils.easingSineIn(t);
                     float offset18 = -4 + (-18 + 4) * sineIn;
                     float offset2 = 1.99f * sineIn;
@@ -386,7 +392,149 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
             forelegL.setRotationX(-90 * Mth.DEG_TO_RAD);
         }
         else if (swimming) {
-
+            //Transition
+            if (swimAmount < 1) {
+                if (swimAmount < 0.5) {
+                    float t = AnimationUtils.normParameter(swimAmount, 0, 0.5f);
+                    float offset = -19 * t;
+                    head.translateY(offset);
+                    body.translateY(offset);
+                }
+                else {
+                    float t = AnimationUtils.normParameter(swimAmount, 0.5f, 1);
+                    head.translateY(-19);
+                    body.translateY(-19);
+                    body.setRotationX((headPitch - Mth.HALF_PI) * t);
+                }
+            }
+            else {
+                //Swimming Animation
+                float anim = Math.abs(limbSwing) / (4 * Mth.PI);
+                head.translateY(-19);
+                body.translateY(-19);
+                body.setRotationX(headPitch - Mth.HALF_PI);
+                //      Fully submerged
+                if (((IEntityPatch) entity).isFullySubmerged(FluidTags.WATER)) {
+                    armR.setRotationY(180 * Mth.DEG_TO_RAD);
+                    armL.setRotationY(180 * Mth.DEG_TO_RAD);
+                    if (anim < 0.55) {
+                        float t = AnimationUtils.normParameter(anim, 0, 0.55f);
+                        float armZ = 180 * Mth.DEG_TO_RAD - 150 * Mth.DEG_TO_RAD * AnimationUtils.easingQuadraticOut(t);
+                        float legZ = 15 * Mth.DEG_TO_RAD - 15 * Mth.DEG_TO_RAD * AnimationUtils.easingCubicOut(t);
+                        armR.setRotationZ(armZ);
+                        armL.setRotationZ(-armZ);
+                        legR.setRotationZ(legZ);
+                        legL.setRotationZ(-legZ);
+                    }
+                    else if (anim < 0.85) {
+                        float t = AnimationUtils.normParameter(anim, 0.55f, 0.85f);
+                        float armX = -90 * Mth.DEG_TO_RAD * t;
+                        float armZ = 30 * Mth.DEG_TO_RAD + 150 * Mth.DEG_TO_RAD * t;
+                        float forearmZ = -60 * Mth.DEG_TO_RAD * AnimationUtils.easingQuadraticOut(t);
+                        float sineIn = AnimationUtils.easingSineIn(t);
+                        float legX = 60 * Mth.DEG_TO_RAD * sineIn;
+                        float forelegX = -120 * Mth.DEG_TO_RAD * sineIn;
+                        armR.setRotationX(armX);
+                        armR.setRotationZ(armZ);
+                        forearmR.setRotationZ(forearmZ);
+                        armL.setRotationX(armX);
+                        armL.setRotationZ(-armZ);
+                        forearmL.setRotationZ(-forearmZ);
+                        legR.setRotationX(legX);
+                        forelegR.setRotationX(forelegX);
+                        legL.setRotationX(legX);
+                        forelegL.setRotationX(forelegX);
+                    }
+                    else {
+                        float t = AnimationUtils.normParameter(anim, 0.85f, 1);
+                        float armX = -90 * Mth.DEG_TO_RAD + 90 * Mth.DEG_TO_RAD * t;
+                        float forearmZ = -60 * Mth.DEG_TO_RAD + 60 * Mth.DEG_TO_RAD * AnimationUtils.easingQuadraticOut(t);
+                        float cubicOut = AnimationUtils.easingCubicOut(t);
+                        float legX = 60 * Mth.DEG_TO_RAD - 60 * Mth.DEG_TO_RAD * cubicOut;
+                        float legZ = 15 * Mth.DEG_TO_RAD * cubicOut;
+                        float forelegX = -120 * Mth.DEG_TO_RAD + 120 * Mth.DEG_TO_RAD * AnimationUtils.easingSineOut(t);
+                        armR.setRotationX(armX);
+                        armR.setRotationZ(180 * Mth.DEG_TO_RAD);
+                        forearmR.setRotationZ(forearmZ);
+                        armL.setRotationX(armX);
+                        armL.setRotationZ(180 * Mth.DEG_TO_RAD);
+                        forearmL.setRotationZ(-forearmZ);
+                        legR.setRotationX(legX);
+                        legR.setRotationZ(legZ);
+                        forelegR.setRotationX(forelegX);
+                        legL.setRotationX(legX);
+                        legL.setRotationZ(-legZ);
+                        forelegL.setRotationX(forelegX);
+                    }
+                }
+                //      Surface
+                else {
+                    if (anim < 0.25) {
+                        float t = AnimationUtils.normParameter(anim, 0, 0.25f);
+                        float rot28 = 28 * Mth.DEG_TO_RAD * t;
+                        float rot90 = 90 * Mth.DEG_TO_RAD * t;
+                        body.setRotationY(rot28 * Mth.sin(headPitch));
+                        body.setRotationZ(-rot28 * Mth.cos(headPitch));
+                        armR.setRotationX(180 * Mth.DEG_TO_RAD - rot90);
+                        armR.setRotationY(-rot28);
+                        armL.setRotationX(-rot90);
+                        armL.setRotationY(-28 * 1.5f * Mth.DEG_TO_RAD * t);
+                        forearmL.setRotationX(-rot90);
+                        legR.setRotationY(-rot28);
+                        forelegR.setRotationX(-rot28);
+                        legL.setRotationX(rot28);
+                        legL.setRotationY(-rot28);
+                    }
+                    else if (anim < 0.5) {
+                        float t = AnimationUtils.normParameter(anim, 0.25f, 0.5f);
+                        float rot28 = 28 * Mth.DEG_TO_RAD * t;
+                        float rot90 = 90 * Mth.DEG_TO_RAD * t;
+                        body.setRotationY((28 * Mth.DEG_TO_RAD - rot28) * Mth.sin(headPitch));
+                        body.setRotationZ((-28 * Mth.DEG_TO_RAD + rot28) * Mth.cos(headPitch));
+                        armR.setRotationX(90 * Mth.DEG_TO_RAD - rot90);
+                        armR.setRotationY(-28 * Mth.DEG_TO_RAD + rot28);
+                        armL.setRotationX(-90 * Mth.DEG_TO_RAD - rot90);
+                        armL.setRotationY(-28 * 1.5f * Mth.DEG_TO_RAD + 28 * 1.5f * Mth.DEG_TO_RAD * t);
+                        forearmL.setRotationX(-90 * Mth.DEG_TO_RAD + rot90);
+                        legR.setRotationY(-28 * Mth.DEG_TO_RAD + rot28);
+                        forelegR.setRotationX(-28 * Mth.DEG_TO_RAD + rot28);
+                        legL.setRotationX(28 * Mth.DEG_TO_RAD - rot28);
+                        legL.setRotationY(-28 * Mth.DEG_TO_RAD + rot28);
+                    }
+                    else if (anim < 0.75) {
+                        float t = AnimationUtils.normParameter(anim, 0.5f, 0.75f);
+                        float rot28 = 28 * Mth.DEG_TO_RAD * t;
+                        float rot90 = 90 * Mth.DEG_TO_RAD * t;
+                        body.setRotationY(-rot28 * Mth.sin(headPitch));
+                        body.setRotationZ(rot28 * Mth.cos(headPitch));
+                        armR.setRotationX(-rot90);
+                        armR.setRotationY(28 * 1.5f * Mth.DEG_TO_RAD * t);
+                        forearmR.setRotationX(-rot90);
+                        armL.setRotationX(-180 * Mth.DEG_TO_RAD - rot90);
+                        armL.setRotationY(rot28);
+                        legR.setRotationX(rot28);
+                        legR.setRotationY(rot28);
+                        legL.setRotationY(rot28);
+                        forelegL.setRotationX(-rot28);
+                    }
+                    else {
+                        float t = AnimationUtils.normParameter(anim, 0.75f, 1);
+                        float rot28 = 28 * Mth.DEG_TO_RAD * t;
+                        float rot90 = 90 * Mth.DEG_TO_RAD * t;
+                        body.setRotationY((-28 * Mth.DEG_TO_RAD + rot28) * Mth.sin(headPitch));
+                        body.setRotationZ((28 * Mth.DEG_TO_RAD - rot28) * Mth.cos(headPitch));
+                        armR.setRotationX(-90 * Mth.DEG_TO_RAD - rot90);
+                        armR.setRotationY(28 * 1.5f * Mth.DEG_TO_RAD - 28 * 1.5f * Mth.DEG_TO_RAD * t);
+                        forearmR.setRotationX(-90 * Mth.DEG_TO_RAD + rot90);
+                        armL.setRotationX(-270 * Mth.DEG_TO_RAD - rot90);
+                        armL.setRotationY(28 * Mth.DEG_TO_RAD - rot28);
+                        legR.setRotationX(28 * Mth.DEG_TO_RAD - rot28);
+                        legR.setRotationY(28 * Mth.DEG_TO_RAD - rot28);
+                        legL.setRotationY(28 * Mth.DEG_TO_RAD - rot28);
+                        forelegL.setRotationX(-28 * Mth.DEG_TO_RAD + rot28);
+                    }
+                }
+            }
         }
         else {
             //Standing
@@ -418,7 +566,7 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
                                          entity.getMainArm() == HumanoidArm.RIGHT ? entity.getMainHandItem() : entity.getOffhandItem());
         AnimationUtils.setupItemPosition(itemL, HumanoidArm.LEFT,
                                          entity.getMainArm() == HumanoidArm.LEFT ? entity.getMainHandItem() : entity.getOffhandItem());
-        if (!crawling) {
+        if (!crawling && !swimming) {
             boolean isRightHanded = entity.getMainArm() == HumanoidArm.RIGHT;
             boolean isPoseTwoHanded = isRightHanded ? this.leftArmPose().isTwoHanded() : this.rightArmPose().isTwoHanded();
             if (isRightHanded != isPoseTwoHanded) {
@@ -431,117 +579,12 @@ public interface HMHumanoid<T extends LivingEntity> extends HMAgeableList<T> {
             }
         }
         this.setupAttackAnim(entity, ageInTicks);
-        //
-        if (true) {
-            return;
-        }
-        if (0 < swimAmount && swimAmount < 1) {
-            if (!entity.isInWater()) {
-                //Start crawling
-
-            }
-//            if (isVisuallySwimming) {
-//                if (!entity.isInWater()) {
-//                    //Crawling pose
-//                    head.setRotationX(Mth.DEG_TO_RAD * (headPitch + 90));
-//                }
-//                else {
-//                    head.setRotationX(rotlerpRad(swimAmount, head.xRot(), Mth.HALF_PI));
-//                }
-//                head.setRotationY(0);
-//                head.setRotationZ(Mth.DEG_TO_RAD * netHeadYaw);
-//            }
-//            else {
-//                //Return from swimming or crawling
-//                head.setRotationX(rotlerpRad(swimAmount, head.xRot(), -Mth.DEG_TO_RAD * headPitch));
-//                head.setRotationZ(0);
-//            }
-        }
-
         if (swimAmount == 0) {
             if (this.rightArmPose() != ArmPose.SPYGLASS) {
                 AnimationUtils.bobModelPart(armR, ageInTicks, 1.0F);
             }
             if (this.leftArmPose() != ArmPose.SPYGLASS) {
                 AnimationUtils.bobModelPart(armL, ageInTicks, -1.0F);
-            }
-        }
-        else if (swimAmount == 1.0F) {
-            if (!entity.isInWater()) {
-
-            }
-            else {
-                //Swimming Animation
-                float anim = limbSwing % (4 * Mth.PI) * 6.5f;
-                HumanoidArm attackArm = this.getSwingingArm(entity);
-                float attackTime = this.attackTime();
-                float rightArmAnim = attackArm == HumanoidArm.RIGHT && attackTime > 0.0F ? 0.0F : swimAmount;
-                float leftArmAnim = attackArm == HumanoidArm.LEFT && attackTime > 0.0F ? 0.0F : swimAmount;
-                if (anim < 14 * Mth.PI) {
-                    if (!this.shouldCancelRight()) {
-                        armR.setRotationX(Mth.lerp(rightArmAnim, armR.xRot(), 0.0F));
-                        armR.setRotationY(Mth.lerp(rightArmAnim, armR.yRot(), -Mth.PI));
-                        armR.setRotationZ(
-                                Mth.lerp(rightArmAnim, armR.zRot(),
-                                         Mth.PI - 1.870_796_4F * quadraticArmUpdate(anim) / quadraticArmUpdate(14 * Mth.PI)));
-                    }
-                    else {
-                        armR.addRotationX(Mth.HALF_PI);
-                    }
-                    if (!this.shouldCancelLeft()) {
-                        armL.setRotationX(rotlerpRad(leftArmAnim, armL.xRot(), 0.0F));
-                        armL.setRotationY(Mth.lerp(leftArmAnim, armL.yRot(), Mth.PI));
-                        armL.setRotationZ(
-                                rotlerpRad(leftArmAnim, armL.zRot(),
-                                           Mth.PI + 1.870_796_4F * quadraticArmUpdate(anim) / quadraticArmUpdate(14 * Mth.PI)));
-                    }
-                    else {
-                        armL.addRotationX(Mth.HALF_PI);
-                    }
-                }
-                else if (anim >= 14 * Mth.PI && anim < 22 * Mth.PI) {
-                    float f6 = (anim - 14 * Mth.PI) / (8 * Mth.PI);
-                    if (!this.shouldCancelRight()) {
-                        armR.setRotationX(-Mth.lerp(rightArmAnim, -armR.xRot(), Mth.HALF_PI * f6));
-                        armR.setRotationY(Mth.lerp(rightArmAnim, armR.yRot(), -Mth.PI));
-                        armR.setRotationZ(Mth.lerp(rightArmAnim, armR.zRot(), 1.270_796_3F + 1.870_796_4F * f6));
-                    }
-                    else {
-                        armR.addRotationX(Mth.HALF_PI);
-                    }
-                    if (!this.shouldCancelLeft()) {
-                        armL.setRotationX(rotlerpRad(leftArmAnim, armL.xRot(), -Mth.HALF_PI * f6));
-                        armL.setRotationY(Mth.lerp(leftArmAnim, armL.yRot(), Mth.PI));
-                        armL.setRotationZ(rotlerpRad(leftArmAnim, armL.zRot(), 5.012_389F - 1.870_796_4F * f6));
-                    }
-                    else {
-                        armL.addRotationX(Mth.HALF_PI);
-                    }
-                }
-                else {
-                    float f4 = (anim - 22 * Mth.PI) / (4 * Mth.PI);
-                    if (!this.shouldCancelRight()) {
-                        armR.setRotationX(-Mth.lerp(rightArmAnim, -armR.xRot(), Mth.HALF_PI - Mth.HALF_PI * f4));
-                        armR.setRotationY(Mth.lerp(rightArmAnim, armR.yRot(), -Mth.PI));
-                        armR.setRotationZ(Mth.lerp(rightArmAnim, armR.zRot(), Mth.PI));
-                    }
-                    else {
-                        armR.addRotationX(Mth.HALF_PI);
-                    }
-                    if (!this.shouldCancelLeft()) {
-                        armL.setRotationX(-rotlerpRad(leftArmAnim, -armL.xRot(), Mth.HALF_PI - Mth.HALF_PI * f4));
-                        armL.setRotationY(Mth.lerp(leftArmAnim, armL.yRot(), Mth.PI));
-                        armL.setRotationZ(rotlerpRad(leftArmAnim, armL.zRot(), Mth.PI));
-                    }
-                    else {
-                        armL.addRotationX(Mth.HALF_PI);
-                    }
-                }
-                float legRot = Mth.cos(limbSwing / 2);
-                legL.setRotationX(Mth.lerp(swimAmount, legL.xRot(), 0.3F * legRot));
-                legR.setRotationX(Mth.lerp(swimAmount, legR.xRot(), -0.3F * legRot));
-                forelegR.setRotationX(-15 * Mth.DEG_TO_RAD);
-                forelegL.setRotationX(-15 * Mth.DEG_TO_RAD);
             }
         }
         this.hat().copy(head);

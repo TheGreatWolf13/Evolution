@@ -24,6 +24,10 @@ public final class VectorUtil {
         return Math.sqrt(x * x + y * y + z * z);
     }
 
+    public static double lengthSqr(double x, double y, double z) {
+        return x * x + y * y + z * z;
+    }
+
     public static double normalizeComponent(double x, double length) {
         return length < 1.0E-4 ? 0 : x / length;
     }

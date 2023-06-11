@@ -40,7 +40,6 @@ import tgw.evolution.init.EvolutionEntities;
 import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.ClipContextMutable;
-import tgw.evolution.util.math.Vec3d;
 import tgw.evolution.util.physics.Fluid;
 import tgw.evolution.util.physics.Physics;
 import tgw.evolution.util.physics.SI;
@@ -49,11 +48,8 @@ import java.util.List;
 
 public class EntityFallingWeight extends Entity implements IEntityAdditionalSpawnData, IEntityPatch<EntityFallingWeight> {
 
-    private final ClipContextMutable clipContext = new ClipContextMutable(Vec3.ZERO, Vec3.ZERO, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE,
-                                                                          null);
-    private final Vec3d from = new Vec3d();
+    private final ClipContextMutable clipContext = new ClipContextMutable();
     private final MutableBlockPos mutablePos = new MutableBlockPos();
-    private final Vec3d to = new Vec3d();
     public int fallTime;
     private double mass = 500;
     private BlockState state = EvolutionBlocks.DESTROY_9.get().defaultBlockState();
@@ -259,28 +255,28 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
             }
             //Drag
             //TODO wind speed
-            double windVelX = 0;
-            double windVelY = 0;
-            double windVelZ = 0;
-            double dragX = physics.calcForceDragX(windVelX) / this.mass;
-            double dragY = physics.calcForceDragY(windVelY) / this.mass;
-            double dragZ = physics.calcForceDragZ(windVelZ) / this.mass;
-            double maxDrag = Math.abs(windVelX - motionX);
-            if (Math.abs(dragX) > maxDrag) {
-                dragX = Math.signum(dragX) * maxDrag;
-            }
-            maxDrag = Math.abs(windVelY - motionY);
-            if (Math.abs(dragY) > maxDrag) {
-                dragY = Math.signum(dragY) * maxDrag;
-            }
-            maxDrag = Math.abs(windVelZ - motionZ);
-            if (Math.abs(dragZ) > maxDrag) {
-                dragZ = Math.signum(dragZ) * maxDrag;
-            }
+//            double windVelX = 0;
+//            double windVelY = 0;
+//            double windVelZ = 0;
+//            double dragX = physics.calcForceDragX(windVelX) / this.mass;
+//            double dragY = physics.calcForceDragY(windVelY) / this.mass;
+//            double dragZ = physics.calcForceDragZ(windVelZ) / this.mass;
+//            double maxDrag = Math.abs(windVelX - motionX);
+//            if (Math.abs(dragX) > maxDrag) {
+//                dragX = Math.signum(dragX) * maxDrag;
+//            }
+//            maxDrag = Math.abs(windVelY - motionY);
+//            if (Math.abs(dragY) > maxDrag) {
+//                dragY = Math.signum(dragY) * maxDrag;
+//            }
+//            maxDrag = Math.abs(windVelZ - motionZ);
+//            if (Math.abs(dragZ) > maxDrag) {
+//                dragZ = Math.signum(dragZ) * maxDrag;
+//            }
             //Update Motion
-            motionX += -dissipativeX + dragX + accCoriolisX;
-            motionY += accY + dragY + accCoriolisY + accCentrifugalY;
-            motionZ += -dissipativeZ + dragZ + accCoriolisZ + accCentrifugalZ;
+            motionX += -dissipativeX + /*dragX +*/ accCoriolisX;
+            motionY += accY + /*dragY +*/ accCoriolisY + accCentrifugalY;
+            motionZ += -dissipativeZ + /*dragZ +*/ accCoriolisZ + accCentrifugalZ;
         }
         this.setDeltaMovement(motionX, motionY, motionZ);
         this.move(MoverType.SELF, this.getDeltaMovement());
@@ -288,9 +284,9 @@ public class EntityFallingWeight extends Entity implements IEntityAdditionalSpaw
         boolean isInWater = this.level.getFluidState(this.mutablePos).is(FluidTags.WATER);
         double motionLenSqr = this.getDeltaMovement().lengthSqr();
         if (motionLenSqr > 1) {
-            BlockHitResult hitResult = this.level.clip(
-                    this.clipContext.set(this.from.set(this.xo, this.yo, this.zo), this.to.set(this.getX(), this.getY(), this.getZ()),
-                                         ClipContext.Block.COLLIDER, ClipContext.Fluid.SOURCE_ONLY, this));
+            BlockHitResult hitResult = this.level.clip(this.clipContext.set(this.xo, this.yo, this.zo,
+                                                                            this.getX(), this.getY(), this.getZ(),
+                                                                            ClipContext.Block.COLLIDER, ClipContext.Fluid.SOURCE_ONLY, this));
             if (hitResult.getType() != HitResult.Type.MISS && this.level.getFluidState(hitResult.getBlockPos()).is(FluidTags.WATER)) {
                 this.mutablePos.set(hitResult.getBlockPos());
                 isInWater = true;

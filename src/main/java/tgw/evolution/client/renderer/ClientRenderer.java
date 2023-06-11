@@ -32,7 +32,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL14;
@@ -62,12 +61,14 @@ import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.hitbox.Hitbox;
 import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.world.util.MutableCollisionContext;
 
 import java.util.Collections;
 import java.util.Random;
 
 public class ClientRenderer {
 
+    private static final MutableCollisionContext COLLISION_CONTEXT = new MutableCollisionContext();
     private static @Nullable ClientRenderer instance;
     private static int slotMainHand;
     private final ClientEvents client;
@@ -159,7 +160,7 @@ public class ClientRenderer {
                                          double z,
                                          BlockPos pos,
                                          BlockState state) {
-        drawShape(matrices, buffer, state.getShape(entity.level, pos, CollisionContext.of(entity)), pos.getX() - x, pos.getY() - y, pos.getZ() - z,
+        drawShape(matrices, buffer, state.getShape(entity.level, pos, COLLISION_CONTEXT.set(entity)), pos.getX() - x, pos.getY() - y, pos.getZ() - z,
                   0.0F, 0.0F, 0.0F, 0.4F);
     }
 

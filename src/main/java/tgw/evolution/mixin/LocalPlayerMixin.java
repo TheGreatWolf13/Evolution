@@ -7,6 +7,7 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
@@ -15,7 +16,8 @@ import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.ForgeHooksClient;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -23,6 +25,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.util.EvolutionInput;
 import tgw.evolution.items.IEvolutionItem;
 import tgw.evolution.patches.IPlayerPatch;
+import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.world.util.LevelUtils;
 
 @Mixin(LocalPlayer.class)
 public abstract class LocalPlayerMixin extends AbstractClientPlayer implements IPlayerPatch {
@@ -76,13 +80,12 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
         this.handleNetherPortalClient();
         boolean isJumping = this.input.jumping;
         boolean isSneaking = this.input.shiftKeyDown;
-        boolean hasImpulseToStartSprint = this.hasEnoughImpulseToStartSprinting();
+        boolean hadImpulseToStartSprint = this.hasEnoughImpulseToStartSprinting();
         this.crouching = !this.getAbilities().flying &&
                          !this.isSwimming() &&
                          this.canEnterPose(Pose.CROUCHING) &&
                          (this.isShiftKeyDown() || !this.isSleeping() && !this.canEnterPose(Pose.STANDING));
         ((EvolutionInput) this.input).tick(this);
-        ForgeHooksClient.onMovementInputUpdate(this, this.input);
         this.minecraft.getTutorial().onInput(this.input);
         if (!this.noPhysics) {
             this.moveTowardsClosestSpace(this.getX() - this.getBbWidth() * 0.35, this.getZ() + this.getBbWidth() * 0.35);
@@ -95,9 +98,11 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
         }
         boolean effectsAllowSprinting = this.getEffectHelper().canSprint();
         boolean itemsAllowSprinting = this.itemsAllowSprinting();
-        if ((this.onGround || this.isUnderWater()) &&
+        boolean startedToSprint = false;
+        //Try to start sprinting by double tapping W
+        if ((this.onGround || this.isUnderWater() || this.isInWater() && this.getFluidHeight(FluidTags.WATER) >= 0.5 * this.getBbHeight()) &&
             !isSneaking &&
-            !hasImpulseToStartSprint &&
+            !hadImpulseToStartSprint &&
             !this.isSprinting() &&
             this.hasEnoughImpulseToStartSprinting() &&
             effectsAllowSprinting &&
@@ -107,27 +112,32 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
             }
             else {
                 this.setSprinting(true);
+                startedToSprint = true;
             }
         }
+        //Try to start sprinting by pressing Ctrl
         if (!this.isSprinting() &&
-            (!this.isInWater() || this.isUnderWater()) &&
+            (this.onGround || this.isUnderWater() || this.isInWater() && this.getFluidHeight(FluidTags.WATER) >= 0.5 * this.getBbHeight()) &&
+            !isSneaking &&
             this.hasEnoughImpulseToStartSprinting() &&
             effectsAllowSprinting &&
             itemsAllowSprinting &&
             this.minecraft.options.keySprint.isDown()) {
             this.setSprinting(true);
+            startedToSprint = true;
         }
-        if (this.isSprinting()) {
-            boolean cannotBeSwimming = !this.input.hasForwardImpulse() || !effectsAllowSprinting || !itemsAllowSprinting;
-            boolean cannotBeRunning = cannotBeSwimming ||
-                                      this.horizontalCollision && !this.minorHorizontalCollision ||
-                                      this.isInWater() && !this.isUnderWater();
+        //Try to cancel sprinting
+        if (!startedToSprint && this.isSprinting()) {
+            boolean cannotBeSwimming = isSneaking || !effectsAllowSprinting || !itemsAllowSprinting;
             if (this.isSwimming()) {
-                if (!this.onGround && !this.input.shiftKeyDown && cannotBeSwimming || !this.isInWater()) {
+                if (!this.onGround && cannotBeSwimming || !this.isInWater()) {
                     this.setSprinting(false);
                 }
             }
-            else if (cannotBeRunning) {
+            else if (cannotBeSwimming ||
+                     this.horizontalCollision && !this.minorHorizontalCollision ||
+                     this.isInWater() && !this.isUnderWater() ||
+                     !this.input.hasForwardImpulse()) {
                 this.setSprinting(false);
             }
         }
@@ -160,9 +170,6 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
             }
         }
         this.wasFallFlying = this.isFallFlying();
-        if (this.isInWater() && this.input.shiftKeyDown && this.isAffectedByFluids()) {
-            this.goDownInWater();
-        }
         if (this.isEyeInFluid(FluidTags.WATER)) {
             int i = this.isSpectator() ? 10 : 1;
             this.waterVisionTime = Mth.clamp(this.waterVisionTime + i, 0, 600);
@@ -173,7 +180,7 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
         }
         if (this.getAbilities().flying && this.isControlledCamera()) {
             int j = 0;
-            if (this.input.shiftKeyDown) {
+            if (isSneaking) {
                 j--;
             }
             if (this.input.jumping) {
@@ -300,8 +307,38 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
         return true;
     }
 
-    @Shadow
-    protected abstract void moveTowardsClosestSpace(double p_244389_1_, double p_244389_3_);
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid allocations when possible.
+     */
+    @Overwrite
+    private void moveTowardsClosestSpace(double x, double z) {
+        int posX = Mth.floor(x);
+        int posZ = Mth.floor(z);
+        if (this.suffocatesAt(posX, posZ)) {
+            double dx = x - posX;
+            double dz = z - posZ;
+            Direction chosenDir = null;
+            double minDist = Double.MAX_VALUE;
+            for (Direction dir : DirectionUtil.HORIZ_WENS) {
+                double delta = dir.getAxis() == Direction.Axis.X ? dx : dz;
+                double dist = dir.getAxisDirection() == Direction.AxisDirection.POSITIVE ? 1 - delta : delta;
+                if (dist < minDist && !this.suffocatesAt(posX + dir.getStepX(), posZ + dir.getStepZ())) {
+                    minDist = dist;
+                    chosenDir = dir;
+                }
+            }
+            if (chosenDir != null) {
+                Vec3 velocity = this.getDeltaMovement();
+                if (chosenDir.getAxis() == Direction.Axis.X) {
+                    this.setDeltaMovement(0.1 * chosenDir.getStepX(), velocity.y, velocity.z);
+                }
+                else {
+                    this.setDeltaMovement(velocity.x, velocity.y, 0.1 * chosenDir.getStepZ());
+                }
+            }
+        }
+    }
 
     @Override
     @Shadow
@@ -344,5 +381,12 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
             this.xBob += (this.getXRot() - this.xBob) * 0.5;
             this.yBob += (this.getYRot() - this.yBob) * 0.5;
         }
+    }
+
+    private boolean suffocatesAt(int x, int z) {
+        AABB bb = this.getBoundingBox();
+        return LevelUtils.collidesWithSuffocatingBlock(this.level, this,
+                                                       x + 1e-7, bb.minY + 1e-7, z + 1e-7,
+                                                       x + 1 - 1e-7, bb.maxY - 1e-7, z + 1 - 1e-7);
     }
 }

@@ -28,7 +28,6 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
@@ -37,7 +36,6 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
 import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
@@ -91,52 +89,103 @@ public class EntityEvents {
     private static final RandomGenerator RANDOM = new Random();
     private static final double[] LAST_TEMPERATURES = new double[20];
 
-    public static float calculateFallDamage(LivingEntity entity, double velocity, double distanceOfSlowDown, boolean isWater) {
-        if (velocity == 0) {
-            return 0;
-        }
-        //TODO leg height
-        double legHeight = PlayerHelper.LEG_HEIGHT;
-        distanceOfSlowDown += legHeight;
-        AttributeInstance massAttribute = entity.getAttribute(EvolutionAttributes.MASS.get());
-        assert massAttribute != null;
-        double baseMass = massAttribute.getBaseValue();
-        double totalMass = massAttribute.getValue();
-        double kineticEnergy = totalMass * velocity * velocity / 2;
-        double forceOfImpact = kineticEnergy / distanceOfSlowDown;
-        double area = entity.getBbWidth() * entity.getBbWidth();
-        double pressureOfFall = forceOfImpact / area;
-        double maxSupportedPressure = baseMass / (area * 0.035);
-        double deltaPressure = Math.max(400 * pressureOfFall - maxSupportedPressure, 0);
-        if (deltaPressure <= 1) {
-            return 0;
-        }
-        float amount = (float) Math.pow(deltaPressure, 1.7) / 750_000;
-        if (amount >= 1) {
-            if (isWater) {
-                entity.hurt(EvolutionDamage.WATER_IMPACT, amount);
+    public static void onPlayerTick(Player player, TickEvent.Phase phase) {
+        ProfilerFiller profiler = player.level.getProfiler();
+        if (phase == TickEvent.Phase.START) {
+            profiler.push("preTick");
+            profiler.push("reach");
+            AttributeInstance reachDist = player.getAttribute(ForgeMod.REACH_DISTANCE.get());
+            assert reachDist != null;
+            if (player.isCreative()) {
+                reachDist.setBaseValue(8);
             }
             else {
-                entity.hurt(EvolutionDamage.FALL, amount);
+                reachDist.setBaseValue(PlayerHelper.REACH_DISTANCE);
             }
         }
-        return amount;
-    }
-
-    public static void calculateWaterFallDamage(LivingEntity entity) {
-        BlockPos pos = entity.blockPosition();
-        FluidState fluidState = entity.level.getFluidState(pos);
-        FluidState fluidStateDown = entity.level.getFluidState(pos.below());
-        double distanceOfSlowDown = fluidState.getAmount() * 0.062_5;
-        if (!fluidStateDown.isEmpty()) {
-            distanceOfSlowDown += 1;
-            FluidState fluidStateDown2 = entity.level.getFluidState(pos.below(2));
-            if (!fluidStateDown2.isEmpty()) {
-                distanceOfSlowDown += 1;
+        else {
+            profiler.push("postTick");
+            profiler.push("stats");
+            player.awardStat(EvolutionStats.TIME_PLAYED);
+            if (player.getPose() == Pose.CROUCHING) {
+                player.setSprinting(false);
+                player.awardStat(EvolutionStats.TIME_SNEAKING);
+            }
+            if (!player.isSleeping()) {
+                if (player.isAlive()) {
+                    player.awardStat(EvolutionStats.TIME_SINCE_LAST_REST);
+                }
+            }
+            else {
+                PlayerHelper.takeStat(player, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_REST));
+            }
+            if (player.isAlive()) {
+                player.awardStat(EvolutionStats.TIME_SINCE_LAST_DEATH);
+            }
+            profiler.popPush("status");
+            //Handles Status Updates
+            if (!player.level.isClientSide) {
+                long time = player.level.getDayTime();
+                try (Temperature temperature = Temperature.getInstance((ServerLevel) player.level, player.getX(), player.getY(), player.getZ(),
+                                                                       time)) {
+                    LAST_TEMPERATURES[(int) (time % 20)] = Temperature.K2C(temperature.getAmbientBasedTemperature());
+                }
+                catch (Exception e) {
+                    Evolution.warn("An exception was thrown while calculating temperature!");
+                }
+                if (player.isCrouching() && time % 20 == 0) {
+                    double sum = 0;
+                    for (double lastTemperature : LAST_TEMPERATURES) {
+                        sum += lastTemperature;
+                    }
+                    Evolution.info("Average Temperature at {} is {}\u00B0C", time, Metric.TWO_PLACES.format(sum / 20.0));
+                }
+                //Ticks Player systems
+                if (!player.isCreative() && !player.isSpectator()) {
+                    ServerPlayer sPlayer = (ServerPlayer) player;
+                    EvolutionCapabilities.revive(player);
+                    profiler.push("thirst");
+                    IThirst thirst = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityThirst.INSTANCE);
+                    thirst.tick(sPlayer);
+                    profiler.popPush("health");
+                    IHealth health = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityHealth.INSTANCE);
+                    health.tick(sPlayer);
+                    profiler.popPush("hunger");
+                    IHunger hunger = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityHunger.INSTANCE);
+                    hunger.tick(sPlayer);
+                    profiler.popPush("temperature");
+                    ITemperature temperature = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityTemperature.INSTANCE);
+                    temperature.tick(sPlayer);
+                    profiler.pop();
+                    EvolutionCapabilities.invalidate(player);
+                }
+            }
+            profiler.popPush("water");
+            if (!player.level.isClientSide) {
+                //Put off torches in Water
+                if (player.isEyeInFluid(FluidTags.WATER)) {
+                    ItemStack mainHand = player.getMainHandItem();
+                    ItemStack offHand = player.getOffhandItem();
+                    boolean torch = false;
+                    if (mainHand.getItem() == EvolutionItems.TORCH.get()) {
+                        int count = mainHand.getCount();
+                        player.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(EvolutionItems.TORCH_UNLIT.get(), count));
+                        torch = true;
+                    }
+                    if (offHand.getItem() == EvolutionItems.TORCH.get()) {
+                        int count = offHand.getCount();
+                        player.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(EvolutionItems.TORCH_UNLIT.get(), count));
+                        torch = true;
+                    }
+                    if (torch) {
+                        player.level.playSound(null, player.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0F,
+                                               2.6F + (player.level.random.nextFloat() - player.level.random.nextFloat()) * 0.8F);
+                    }
+                }
             }
         }
-        double velocity = entity.getDeltaMovement().y;
-        calculateFallDamage(entity, velocity, distanceOfSlowDown, true);
+        profiler.pop();
+        profiler.pop();
     }
 
     private static void spawnDrops(ItemStack stack, Level level, BlockPos pos) {
@@ -291,19 +340,6 @@ public class EntityEvents {
         }
     }
 
-    @SubscribeEvent
-    public void onLivingTick(LivingUpdateEvent event) {
-        LivingEntity entity = event.getEntityLiving();
-        //Removes damage immunity
-        entity.invulnerableTime = 0;
-        //Deals damage inside blocks
-        if (entity.isInWall()) {
-            if (entity.tickCount % 10 == 0) {
-                entity.hurt(EvolutionDamage.IN_WALL, 5.0F);
-            }
-        }
-    }
-
     /**
      * Cancels the default player attack. Attack is calculated in {@link PlayerHelper#performAttack(PlayerEntity, Entity, Hand, double)}
      */
@@ -405,117 +441,10 @@ public class EntityEvents {
     }
 
     @SubscribeEvent
-    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        Player player = event.player;
-        ProfilerFiller profiler = player.level.getProfiler();
-        if (event.phase == TickEvent.Phase.START) {
-            profiler.push("preTick");
-            profiler.push("reach");
-            AttributeInstance reachDist = player.getAttribute(ForgeMod.REACH_DISTANCE.get());
-            assert reachDist != null;
-            if (player.isCreative()) {
-                reachDist.setBaseValue(8);
-            }
-            else {
-                reachDist.setBaseValue(PlayerHelper.REACH_DISTANCE);
-            }
-            profiler.pop();
-            profiler.pop();
-        }
-        else if (event.phase == TickEvent.Phase.END) {
-            profiler.push("postTick");
-            profiler.push("stats");
-            player.awardStat(EvolutionStats.TIME_PLAYED);
-            if (player.getPose() == Pose.CROUCHING) {
-                player.setSprinting(false);
-                player.awardStat(EvolutionStats.TIME_SNEAKING);
-            }
-            if (!player.isSleeping()) {
-                if (player.isAlive()) {
-                    player.awardStat(EvolutionStats.TIME_SINCE_LAST_REST);
-                }
-            }
-            else {
-                PlayerHelper.takeStat(player, Stats.CUSTOM.get(EvolutionStats.TIME_SINCE_LAST_REST));
-            }
-            if (player.isAlive()) {
-                player.awardStat(EvolutionStats.TIME_SINCE_LAST_DEATH);
-            }
-            profiler.popPush("status");
-            //Handles Status Updates
-            if (!player.level.isClientSide) {
-                long time = player.level.getDayTime();
-                try (Temperature temperature = Temperature.getInstance((ServerLevel) player.level, player.getX(), player.getY(), player.getZ(),
-                                                                       time)) {
-                    LAST_TEMPERATURES[(int) (time % 20)] = Temperature.K2C(temperature.getAmbientBasedTemperature());
-                }
-                catch (Exception e) {
-                    Evolution.warn("An exception was thrown while calculating temperature!");
-                }
-                if (player.isCrouching() && time % 20 == 0) {
-                    double sum = 0;
-                    for (double lastTemperature : LAST_TEMPERATURES) {
-                        sum += lastTemperature;
-                    }
-                    Evolution.info("Average Temperature at {} is {}\u00B0C", time, Metric.TWO_PLACES.format(sum / 20.0));
-                }
-                //Ticks Player systems
-                if (!player.isCreative() && !player.isSpectator()) {
-                    ServerPlayer sPlayer = (ServerPlayer) player;
-                    EvolutionCapabilities.revive(player);
-                    profiler.push("thirst");
-                    IThirst thirst = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityThirst.INSTANCE);
-                    thirst.tick(sPlayer);
-                    profiler.popPush("health");
-                    IHealth health = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityHealth.INSTANCE);
-                    health.tick(sPlayer);
-                    profiler.popPush("hunger");
-                    IHunger hunger = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityHunger.INSTANCE);
-                    hunger.tick(sPlayer);
-                    profiler.popPush("temperature");
-                    ITemperature temperature = EvolutionCapabilities.getCapabilityOrThrow(player, CapabilityTemperature.INSTANCE);
-                    temperature.tick(sPlayer);
-                    profiler.pop();
-                    EvolutionCapabilities.invalidate(player);
-                }
-            }
-            profiler.popPush("water");
-            if (!player.level.isClientSide) {
-                //Put off torches in Water
-                if (player.isEyeInFluid(FluidTags.WATER)) {
-                    ItemStack mainHand = player.getMainHandItem();
-                    ItemStack offHand = player.getOffhandItem();
-                    boolean torch = false;
-                    if (mainHand.getItem() == EvolutionItems.TORCH.get()) {
-                        int count = mainHand.getCount();
-                        player.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(EvolutionItems.TORCH_UNLIT.get(), count));
-                        torch = true;
-                    }
-                    if (offHand.getItem() == EvolutionItems.TORCH.get()) {
-                        int count = offHand.getCount();
-                        player.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(EvolutionItems.TORCH_UNLIT.get(), count));
-                        torch = true;
-                    }
-                    if (torch) {
-                        player.level.playSound(null, player.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0F,
-                                               2.6F + (player.level.random.nextFloat() - player.level.random.nextFloat()) * 0.8F);
-                    }
-                }
-            }
-            profiler.pop();
-            profiler.pop();
-        }
-    }
-
-    @SubscribeEvent
     public void onPotionAdded(PotionEvent.PotionAddedEvent event) {
         LivingEntity entity = event.getEntityLiving();
         MobEffectInstance oldInstance = event.getOldPotionEffect();
-//        if (oldInstance != null) {
-//            oldInstance.getEffect().removeAttributeModifiers(entity, entity.getAttributes(), oldInstance.getAmplifier());
-//        }
         MobEffectInstance newInstance = event.getPotionEffect();
-//        newInstance.getEffect().addAttributeModifiers(entity, entity.getAttributes(), newInstance.getAmplifier());
         if (entity instanceof ServerPlayer player) {
             if (oldInstance == null) {
                 EvolutionNetwork.send(player, new PacketSCAddEffect(newInstance, PacketSCAddEffect.Logic.ADD));

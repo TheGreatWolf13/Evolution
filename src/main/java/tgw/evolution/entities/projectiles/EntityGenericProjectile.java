@@ -59,8 +59,7 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
     private static final EntityDataAccessor<Byte> PIERCE_LEVEL = SynchedEntityData.defineId(EntityGenericProjectile.class,
                                                                                             EntityDataSerializers.BYTE);
     protected final IntSet hitEntities = new IntOpenHashSet();
-    private final ClipContextMutable clipContext = new ClipContextMutable(Vec3.ZERO, Vec3.ZERO, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE,
-                                                                          null);
+    private final ClipContextMutable clipContext = new ClipContextMutable();
     public byte arrowShake;
     public boolean inGround;
     public PickupStatus pickupStatus = PickupStatus.ALLOWED;
@@ -551,24 +550,24 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
                 double accCentrifugalZ = physics.calcAccCentrifugalZ();
                 //Drag
                 //TODO wind speed
-                double windVelX = 0;
-                double windVelY = 0;
-                double windVelZ = 0;
-                double dragX = physics.calcForceDragX(windVelX) / this.mass;
-                double dragY = physics.calcForceDragY(windVelY) / this.mass;
-                double dragZ = physics.calcForceDragZ(windVelZ) / this.mass;
-                double maxDrag = Math.abs(windVelX - motionX);
-                if (Math.abs(dragX) > maxDrag) {
-                    dragX = Math.signum(dragX) * maxDrag;
-                }
-                maxDrag = Math.abs(windVelY - motionY);
-                if (Math.abs(dragY) > maxDrag) {
-                    dragY = Math.signum(dragY) * maxDrag;
-                }
-                maxDrag = Math.abs(windVelZ - motionZ);
-                if (Math.abs(dragZ) > maxDrag) {
-                    dragZ = Math.signum(dragZ) * maxDrag;
-                }
+//                double windVelX = 0;
+//                double windVelY = 0;
+//                double windVelZ = 0;
+//                double dragX = physics.calcForceDragX(windVelX) / this.mass;
+//                double dragY = physics.calcForceDragY(windVelY) / this.mass;
+//                double dragZ = physics.calcForceDragZ(windVelZ) / this.mass;
+//                double maxDrag = Math.abs(windVelX - motionX);
+//                if (Math.abs(dragX) > maxDrag) {
+//                    dragX = Math.signum(dragX) * maxDrag;
+//                }
+//                maxDrag = Math.abs(windVelY - motionY);
+//                if (Math.abs(dragY) > maxDrag) {
+//                    dragY = Math.signum(dragY) * maxDrag;
+//                }
+//                maxDrag = Math.abs(windVelZ - motionZ);
+//                if (Math.abs(dragZ) > maxDrag) {
+//                    dragZ = Math.signum(dragZ) * maxDrag;
+//                }
                 if (this.isInWater()) {
                     for (int j = 0; j < 4; ++j) {
                         this.level.addParticle(ParticleTypes.BUBBLE, this.getX() - motionX * 0.25, this.getY() - motionY * 0.25,
@@ -577,9 +576,9 @@ public abstract class EntityGenericProjectile<T extends EntityGenericProjectile<
                 }
                 this.setPos(this.getX() + motionX, this.getY() + motionY, this.getZ() + motionZ);
                 //Update Motion
-                motionX += dragX + accCoriolisX;
-                motionY += accY + dragY + accCoriolisY + accCentrifugalY;
-                motionZ += dragZ + accCoriolisZ + accCentrifugalZ;
+                motionX += /*dragX +*/ accCoriolisX;
+                motionY += accY + /*dragY +*/ accCoriolisY + accCentrifugalY;
+                motionZ += /*dragZ +*/ accCoriolisZ + accCentrifugalZ;
             }
             this.setDeltaMovement(motionX, motionY, motionZ);
             this.checkInsideBlocks();

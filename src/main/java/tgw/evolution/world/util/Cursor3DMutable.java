@@ -1,9 +1,20 @@
 package tgw.evolution.world.util;
 
+import org.intellij.lang.annotations.MagicConstant;
+
 public class Cursor3DMutable {
 
+    public static final int INSIDE = 0;
+    public static final int FACE = 1;
+    public static final int EDGE = 2;
+    public static final int CORNER = 3;
     private int depth;
     private int end;
+    /**
+     * Bit 0: Should Recalculate X;<br>
+     * Bit 1: Should Recalculate Z;<br>
+     */
+    private byte flagRecalc = 0b11;
     private int height;
     private int index;
     private int originX;
@@ -19,10 +30,12 @@ public class Cursor3DMutable {
             return false;
         }
         if (this.index > 0) {
-            if (++this.x == this.width) {
-                this.x = 0;
-                if (++this.y == this.height) {
-                    this.y = 0;
+            if (++this.y == this.height) {
+                this.y = 0;
+                this.flagRecalc |= 1;
+                if (++this.x == this.width) {
+                    this.x = 0;
+                    this.flagRecalc |= 2;
                     if (++this.z == this.depth) {
                         this.z = 0;
                     }
@@ -33,8 +46,9 @@ public class Cursor3DMutable {
         return true;
     }
 
+    @MagicConstant(valuesFromClass = Cursor3DMutable.class)
     public int getNextType() {
-        int i = 0;
+        int i = INSIDE;
         if (this.x == 0 || this.x == this.width - 1) {
             ++i;
         }
@@ -45,6 +59,12 @@ public class Cursor3DMutable {
             ++i;
         }
         return i;
+    }
+
+    public byte getRecalculationFlag() {
+        byte old = this.flagRecalc;
+        this.flagRecalc = 0;
+        return old;
     }
 
     public int nextX() {
@@ -71,5 +91,6 @@ public class Cursor3DMutable {
         this.y = 0;
         this.z = 0;
         this.index = 0;
+        this.flagRecalc = 0b11;
     }
 }

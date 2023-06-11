@@ -33,6 +33,14 @@ public interface ILivingEntityPatch<T extends LivingEntity> extends IEntityPatch
     IMelee.IAttackType getSpecialAttackType();
 
     /**
+     * The intrinsic entity slowdown distance for fall damage. A higher distance means the energy is distributed throughout a longer distance,
+     * decreasing fall damage.
+     */
+    default double intrinsicSlowdown() {
+        return 0;
+    }
+
+    /**
      * @return Whether the current special attacks should lock the player camera.
      */
     boolean isCameraLocked();

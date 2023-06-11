@@ -4,23 +4,37 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.patches.IClipContextPatch;
+import tgw.evolution.mixin.ClipContextAccessor;
+import tgw.evolution.world.util.MutableCollisionContext;
 
 public class ClipContextMutable extends ClipContext {
 
-    public ClipContextMutable(Vec3 from,
-                              Vec3 to,
-                              Block block,
-                              Fluid fluid, @Nullable Entity entity) {
-        super(from, to, block, fluid, entity);
+    public ClipContextMutable() {
+        super(new Vec3d(), new Vec3d(), Block.COLLIDER, Fluid.NONE, null);
+    }
+
+    public void reset() {
+        ((MutableCollisionContext) ((ClipContextAccessor) this).getCollisionContext()).reset();
+    }
+
+    public ClipContextMutable set(double fromX,
+                                  double fromY,
+                                  double fromZ,
+                                  double toX,
+                                  double toY,
+                                  double toZ,
+                                  Block block,
+                                  Fluid fluid,
+                                  @Nullable Entity entity) {
+        ((Vec3d) this.getFrom()).set(fromX, fromY, fromZ);
+        ((Vec3d) this.getTo()).set(toX, toY, toZ);
+        ((ClipContextAccessor) this).setBlock(block);
+        ((ClipContextAccessor) this).setFluid(fluid);
+        ((MutableCollisionContext) ((ClipContextAccessor) this).getCollisionContext()).set(entity);
+        return this;
     }
 
     public ClipContextMutable set(Vec3 from, Vec3 to, Block block, Fluid fluid, @Nullable Entity entity) {
-        ((IClipContextPatch) this).setFrom(from);
-        ((IClipContextPatch) this).setTo(to);
-        ((IClipContextPatch) this).setBlock(block);
-        ((IClipContextPatch) this).setFluid(fluid);
-        ((IClipContextPatch) this).setEntity(entity);
-        return this;
+        return this.set(from.x, from.y, from.z, to.x, to.y, to.z, block, fluid, entity);
     }
 }

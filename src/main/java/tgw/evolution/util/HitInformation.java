@@ -4,7 +4,6 @@ import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import tgw.evolution.Evolution;
@@ -24,8 +23,7 @@ import tgw.evolution.util.math.Vec3d;
 
 public class HitInformation implements IHitInfo {
 
-    private final ClipContextMutable clipContext = new ClipContextMutable(Vec3.ZERO, Vec3.ZERO, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE,
-                                                                          null);
+    private final ClipContextMutable clipContext = new ClipContextMutable();
     private final I2LMap data = new I2LOpenHashMap();
     private final Vec3d[] vertices = new Vec3d[8];
     private final Vec3d[] verticesInHBVS = new Vec3d[8];
@@ -92,8 +90,9 @@ public class HitInformation implements IHitInfo {
     }
 
     public ClipContext getClipContext(@Range(from = 0, to = 11) int edge) {
-        this.clipContext.set(this.getOrMakeEdge(edge, true), this.getOrMakeEdge(edge, false), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE,
-                             null);
+        this.clipContext.set(this.getOrMakeEdge(edge, true),
+                             this.getOrMakeEdge(edge, false),
+                             ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null);
         return this.clipContext;
     }
 

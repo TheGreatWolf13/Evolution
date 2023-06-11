@@ -69,7 +69,7 @@ public final class AnimationUtils {
             mult = 1;
         }
         if (progress < 0.5f) {
-            float t = normPar(progress, 0, 0.5f);
+            float t = normParameter(progress, 0, 0.5f);
             float r;
             if (followUp) {
                 r = mult * 30 * Mth.DEG_TO_RAD;
@@ -98,7 +98,7 @@ public final class AnimationUtils {
             legL.setRotationY(-r);
         }
         else if (progress < 5 / 6.0f) {
-            float t = normPar(progress, 0.5f, 5 / 6.0f);
+            float t = normParameter(progress, 0.5f, 5 / 6.0f);
             float r = MathHelper.lerpRad(t, mult * 30 * Mth.DEG_TO_RAD, mult * -30 * Mth.DEG_TO_RAD, true);
             body.setRotationY(r);
             legR.setRotationY(-r);
@@ -159,25 +159,29 @@ public final class AnimationUtils {
         part.addRotationX(-mult * Mth.sin(ageInTicks * 0.067F) * 0.05F);
     }
 
-    /**
-     * Quadratic in easing. The value can be found as {@code x0 + (x1 - x0) * t}.
-     */
+    public static float easingCubicOut(float t) {
+        float f = 1 - t;
+        return 1 - f * f * f;
+    }
+
     public static float easingQuadraticIn(float t) {
         return t * t;
     }
 
-    /**
-     * Quadratic out easing. The value can be found as {@code x1 + (x0 - x1) * t}
-     */
     public static float easingQuadraticOut(float t) {
-        return 1 - t * t;
+        float f = 1 - t;
+        return 1 - f * f;
     }
 
     public static float easingSineIn(float t) {
         return 1 - Mth.cos(Mth.HALF_PI * t);
     }
 
-    public static float normPar(float progress, float start, float end) {
+    public static float easingSineOut(float t) {
+        return Mth.sin(Mth.HALF_PI * t);
+    }
+
+    public static float normParameter(float progress, float start, float end) {
         rangeChecks(progress, start, end);
         progress -= start;
         progress /= end - start;
@@ -208,7 +212,7 @@ public final class AnimationUtils {
 
     public static void strikeDown(float progress, int mult, HM body, HM legR, HM legL, HM arm, HM forearm, float xR, float yR, float zR) {
         if (progress < 0.5f) {
-            float t = normPar(progress, 0, 0.5f);
+            float t = normParameter(progress, 0, 0.5f);
             body.setRotationY(mult * MathHelper.lerpRad(t, 0, -30 * Mth.DEG_TO_RAD, false));
             float leg = mult * MathHelper.lerpRad(t, 0, 15 * Mth.DEG_TO_RAD, false);
             legR.setRotationY(leg);
@@ -221,7 +225,7 @@ public final class AnimationUtils {
             forearm.setRotationZ(MathHelper.lerpRad(t, 0, mult * -22.909_8f * Mth.DEG_TO_RAD, false));
         }
         else if (progress < 0.75f) {
-            float t = normPar(progress, 0.5f, 0.75f);
+            float t = normParameter(progress, 0.5f, 0.75f);
             body.setRotationY(mult * MathHelper.lerpRad(t, -30 * Mth.DEG_TO_RAD, 60 * Mth.DEG_TO_RAD, false));
             float leg = mult * MathHelper.lerpRad(t, 15 * Mth.DEG_TO_RAD, -30 * Mth.DEG_TO_RAD, false);
             legR.setRotationY(leg);
@@ -249,7 +253,7 @@ public final class AnimationUtils {
 
     public static void strikeFromFarSide(float progress, int mult, HM body, HM legR, HM legL, HM arm, HM forearm) {
         if (progress < 0.5f) {
-            float t = normPar(progress, 0, 0.5f);
+            float t = normParameter(progress, 0, 0.5f);
             body.setRotationY(mult * 60 * Mth.DEG_TO_RAD);
             float leg = mult * -30 * Mth.DEG_TO_RAD;
             legR.setRotationY(leg);
@@ -260,7 +264,7 @@ public final class AnimationUtils {
             forearm.setRotationX(MathHelper.lerpRad(t, 0, 45 * Mth.DEG_TO_RAD, false));
         }
         else if (progress < 0.75f) {
-            float t = normPar(progress, 0.5f, 0.75f);
+            float t = normParameter(progress, 0.5f, 0.75f);
             body.setRotationY(mult * MathHelper.lerpRad(t, 60 * Mth.DEG_TO_RAD, -30 * Mth.DEG_TO_RAD, false));
             float leg = mult * MathHelper.lerpRad(t, -30 * Mth.DEG_TO_RAD, 15 * Mth.DEG_TO_RAD, false);
             legR.setRotationY(leg);
@@ -292,7 +296,7 @@ public final class AnimationUtils {
                               HM holder,
                               float headPitch) {
         if (progress < 0.5f) {
-            float t = normPar(progress, 0, 0.5f);
+            float t = normParameter(progress, 0, 0.5f);
             body.setRotationY(MathHelper.lerpRad(t, 0, -10 * Mth.DEG_TO_RAD * mult, false));
             float leg = MathHelper.lerpRad(t, 0, 5 * Mth.DEG_TO_RAD * mult, false);
             legR.setRotationY(leg);
@@ -302,7 +306,7 @@ public final class AnimationUtils {
             forearm.setRotationX(MathHelper.lerpRad(t, 0, 52.5f * Mth.DEG_TO_RAD, false));
         }
         else if (progress < 0.75f) {
-            float t = normPar(progress, 0.5f, 0.75f);
+            float t = normParameter(progress, 0.5f, 0.75f);
             body.setRotationY(mult * MathHelper.lerpRad(t, -10 * Mth.DEG_TO_RAD, 30 * Mth.DEG_TO_RAD, false));
             float leg = mult * MathHelper.lerpRad(t, 5 * Mth.DEG_TO_RAD, -15 * Mth.DEG_TO_RAD, false);
             legR.setRotationY(leg);

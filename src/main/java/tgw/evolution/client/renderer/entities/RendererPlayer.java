@@ -115,9 +115,9 @@ public class RendererPlayer extends LivingEntityRenderer<AbstractClientPlayer, M
             //The hat should never be visible because it's placed enclosing the head, where the camera is placed
             this.model.hat.visible = false;
             //If in the swimming state, the head should not be visible, as the camera and the head will rotate in different ways
-            if (player.getSwimAmount(partialTicks) > 0.0f) {
-                this.model.head.visible = false;
-            }
+//            if (player.getSwimAmount(partialTicks) > 0.0f) {
+//                this.model.head.visible = false;
+//            }
             if (player.isUsingItem() && player.getUseItem().getUseAnimation() == UseAnim.SPYGLASS) {
                 HumanoidArm arm = player.getMainArm();
                 if (player.getUsedItemHand() != InteractionHand.MAIN_HAND) {

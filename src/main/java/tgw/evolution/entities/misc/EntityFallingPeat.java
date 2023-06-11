@@ -199,28 +199,28 @@ public class EntityFallingPeat extends Entity implements IEntityAdditionalSpawnD
             }
             //Drag
             //TODO wind speed
-            double windVelX = 0;
-            double windVelY = 0;
-            double windVelZ = 0;
-            double dragX = physics.calcForceDragX(windVelX) / this.mass;
-            double dragY = physics.calcForceDragY(windVelY) / this.mass;
-            double dragZ = physics.calcForceDragZ(windVelZ) / this.mass;
-            double maxDrag = Math.abs(windVelX - motionX);
-            if (Math.abs(dragX) > maxDrag) {
-                dragX = Math.signum(dragX) * maxDrag;
-            }
-            maxDrag = Math.abs(windVelY - motionY);
-            if (Math.abs(dragY) > maxDrag) {
-                dragY = Math.signum(dragY) * maxDrag;
-            }
-            maxDrag = Math.abs(windVelZ - motionZ);
-            if (Math.abs(dragZ) > maxDrag) {
-                dragZ = Math.signum(dragZ) * maxDrag;
-            }
+//            double windVelX = 0;
+//            double windVelY = 0;
+//            double windVelZ = 0;
+//            double dragX = physics.calcForceDragX(windVelX) / this.mass;
+//            double dragY = physics.calcForceDragY(windVelY) / this.mass;
+//            double dragZ = physics.calcForceDragZ(windVelZ) / this.mass;
+//            double maxDrag = Math.abs(windVelX - motionX);
+//            if (Math.abs(dragX) > maxDrag) {
+//                dragX = Math.signum(dragX) * maxDrag;
+//            }
+//            maxDrag = Math.abs(windVelY - motionY);
+//            if (Math.abs(dragY) > maxDrag) {
+//                dragY = Math.signum(dragY) * maxDrag;
+//            }
+//            maxDrag = Math.abs(windVelZ - motionZ);
+//            if (Math.abs(dragZ) > maxDrag) {
+//                dragZ = Math.signum(dragZ) * maxDrag;
+//            }
             //Update Motion
-            motionX += -dissipativeX + dragX + accCoriolisX;
-            motionY += accY + dragY + accCoriolisY + accCentrifugalY;
-            motionZ += -dissipativeZ + dragZ + accCoriolisZ + accCentrifugalZ;
+            motionX += -dissipativeX + /*dragX +*/ accCoriolisX;
+            motionY += accY + /*dragY +*/ accCoriolisY + accCentrifugalY;
+            motionZ += -dissipativeZ + /*dragZ +*/ accCoriolisZ + accCentrifugalZ;
         }
         this.setDeltaMovement(motionX, motionY, motionZ);
         this.move(MoverType.SELF, this.getDeltaMovement());
