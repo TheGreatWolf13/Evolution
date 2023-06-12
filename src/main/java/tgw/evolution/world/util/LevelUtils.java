@@ -2,8 +2,10 @@ package tgw.evolution.world.util;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.CollisionGetter;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.util.OptionalMutableBlockPos;
@@ -65,5 +67,24 @@ public final class LevelUtils {
             return pos.get();
         }
         return new BlockPos(x, y, z);
+    }
+
+    private static boolean forceHasChunk(LevelAccessor level, int secX, int secZ) {
+        return level.getChunkSource().hasChunk(secX, secZ);
+    }
+
+    public static boolean forceHasChunksAt(LevelAccessor level, int minX, int minZ, int maxX, int maxZ) {
+        int secX0 = SectionPos.blockToSectionCoord(minX);
+        int secX1 = SectionPos.blockToSectionCoord(maxX);
+        int secZ0 = SectionPos.blockToSectionCoord(minZ);
+        int secZ1 = SectionPos.blockToSectionCoord(maxZ);
+        for (int x = secX0; x <= secX1; ++x) {
+            for (int z = secZ0; z <= secZ1; ++z) {
+                if (!forceHasChunk(level, x, z)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

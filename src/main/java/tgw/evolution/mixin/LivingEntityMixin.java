@@ -66,6 +66,7 @@ import tgw.evolution.blocks.ICollisionBlock;
 import tgw.evolution.blocks.IFallSufixBlock;
 import tgw.evolution.blocks.util.BlockUtils;
 import tgw.evolution.entities.EffectHelper;
+import tgw.evolution.entities.EntityUtils;
 import tgw.evolution.hooks.LivingHooks;
 import tgw.evolution.init.*;
 import tgw.evolution.inventory.AdditionalSlotType;
@@ -1937,10 +1938,13 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
     public void travel(Vec3 travelVector) {
         if (this.isEffectiveAi() || this.isControlledByLocalInstance()) {
             //noinspection ConstantConditions
-            if (this.level.isClientSide &&
-                !((Object) this instanceof Player player && (player.isSpectator() || player.isCreative())) && this.touchingUnloadedChunk()) {
-                //Prevents players from moving in unloaded chunks, gaining momentum and then taking damage when the ground finally loads.
-                return;
+            if (this.level.isClientSide && (Object) this instanceof Player player) {
+                if (!player.isSpectator() && !player.isCreative()) {
+                    if (EntityUtils.isPlayerNearUnloadedChunks(player)) {
+                        //Prevents players from moving in unloaded chunks, gaining momentum and then taking damage when the ground finally loads.
+                        return;
+                    }
+                }
             }
             if (this.isFallFlying()) {
                 //Handle elytra movement
