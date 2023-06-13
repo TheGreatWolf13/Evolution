@@ -206,6 +206,7 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
         LevelChunk levelchunk = this.getClientChunk();
         if (levelchunk.isEmpty()) {
             this.gameInfo.add("Waiting for chunk...");
+            this.clearChunkCache();
         }
         else {
             int light = this.minecraft.level.getChunkSource().getLightEngine().getRawBrightness(pos, 0);
