@@ -26,6 +26,23 @@ public final class ItemUtils {
         return stack.getItem() instanceof ItemModular mod && mod.isHammer(stack);
     }
 
+    public static boolean isSameIgnoreCount(ItemStack stack, ItemStack other) {
+        if (stack.isEmpty() && other.isEmpty()) {
+            return true;
+        }
+        return !stack.isEmpty() && !other.isEmpty() && matches(stack, other);
+    }
+
+    private static boolean matches(ItemStack stack, ItemStack other) {
+        if (!stack.is(other.getItem())) {
+            return false;
+        }
+        if (stack.getTag() == null && other.getTag() != null) {
+            return false;
+        }
+        return (stack.getTag() == null || stack.getTag().equals(other.getTag())) && stack.areCapsCompatible(other);
+    }
+
     public static boolean usesModularRendering(ItemStack stack) {
         if (stack.getItem() instanceof IEvolutionItem item) {
             return item.usesModularRendering();

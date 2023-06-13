@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.items.ItemUtils;
 
 @Mixin(MultiPlayerGameMode.class)
 public abstract class MultiPlayerGameModeMixin {
@@ -107,7 +108,7 @@ public abstract class MultiPlayerGameModeMixin {
     @Overwrite
     private boolean sameDestroyTarget(BlockPos pos) {
         assert this.minecraft.player != null;
-        return pos.equals(this.destroyBlockPos) && ItemStack.matches(this.minecraft.player.getMainHandItem(), this.destroyingItem);
+        return pos.equals(this.destroyBlockPos) && ItemUtils.isSameIgnoreCount(this.minecraft.player.getMainHandItem(), this.destroyingItem);
     }
 
     @Shadow
