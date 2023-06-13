@@ -100,7 +100,10 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
         boolean itemsAllowSprinting = this.itemsAllowSprinting();
         boolean startedToSprint = false;
         //Try to start sprinting by double tapping W
-        if ((this.onGround || this.isUnderWater() || this.isInWater() && this.getFluidHeight(FluidTags.WATER) >= 0.5 * this.getBbHeight()) &&
+        if ((this.onGround ||
+             this.getAbilities().flying ||
+             this.isUnderWater() ||
+             this.isInWater() && this.getFluidHeight(FluidTags.WATER) >= 0.5 * this.getBbHeight()) &&
             !isSneaking &&
             !hadImpulseToStartSprint &&
             !this.isSprinting() &&
@@ -117,7 +120,10 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer implements I
         }
         //Try to start sprinting by pressing Ctrl
         if (!this.isSprinting() &&
-            (this.onGround || this.isUnderWater() || this.isInWater() && this.getFluidHeight(FluidTags.WATER) >= 0.5 * this.getBbHeight()) &&
+            (this.onGround ||
+             this.getAbilities().flying ||
+             this.isUnderWater() ||
+             this.isInWater() && this.getFluidHeight(FluidTags.WATER) >= 0.5 * this.getBbHeight()) &&
             !isSneaking &&
             this.hasEnoughImpulseToStartSprinting() &&
             effectsAllowSprinting &&
