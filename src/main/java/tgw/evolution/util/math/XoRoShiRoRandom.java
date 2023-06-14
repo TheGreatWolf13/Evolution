@@ -1,5 +1,7 @@
 package tgw.evolution.util.math;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Random;
 
 // XoRoShiRo128** implementation from DSI Utilities, adopted in a minimal implementation to not
@@ -8,10 +10,9 @@ import java.util.Random;
 // http://xoshiro.di.unimi.it/
 public class XoRoShiRoRandom extends Random {
 
-    private static final long serialVersionUID = 1L;
-    private static final SplitMixRandom seedUniquifier = new SplitMixRandom(System.nanoTime());
+    private static final SplitMixRandom SEED_UNIQUIFIER = new SplitMixRandom(System.nanoTime());
     private boolean hasSavedState; // True if we can be quickly reseed by using resetting the words
-    private SplitMixRandom mixer;
+    private @Nullable SplitMixRandom mixer;
     // The initialization words for the current seed
     private long p0;
     private long p1;
@@ -30,8 +31,8 @@ public class XoRoShiRoRandom extends Random {
 
     public static long randomSeed() {
         final long x;
-        synchronized (seedUniquifier) {
-            x = seedUniquifier.nextLong();
+        synchronized (SEED_UNIQUIFIER) {
+            x = SEED_UNIQUIFIER.nextLong();
         }
         return x ^ System.nanoTime();
     }

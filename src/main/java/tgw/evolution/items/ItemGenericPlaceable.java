@@ -38,7 +38,7 @@ public abstract class ItemGenericPlaceable extends ItemEv {
     }
 
     protected static boolean placeBlock(BlockPlaceContext context, BlockState state) {
-        return context.getLevel().setBlock(context.getClickedPos(), state, BlockFlags.NOTIFY_UPDATE_AND_RERENDER);
+        return context.getLevel().setBlock(context.getClickedPos(), state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.RERENDER);
     }
 
     public abstract boolean customCondition(Block block);

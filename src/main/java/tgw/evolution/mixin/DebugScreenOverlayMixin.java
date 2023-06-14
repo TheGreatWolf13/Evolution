@@ -38,6 +38,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
+import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.util.AllocationRateCalculator;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
@@ -137,8 +138,8 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
             this.gameInfo.add(this.getMC());
             this.gameInfo.add(this.minecraft.fpsString);
             this.gameInfo.add(pct);
-            this.gameInfo.add(this.minecraft.levelRenderer.getChunkStatistics());
-            this.gameInfo.add(this.minecraft.levelRenderer.getEntityStatistics());
+            this.gameInfo.add(((IMinecraftPatch) this.minecraft).lvlRenderer().getChunkStatistics());
+            this.gameInfo.add(((IMinecraftPatch) this.minecraft).lvlRenderer().getEntityStatistics());
             this.gameInfo.add("P: " + this.minecraft.particleEngine.countParticles() + ". T: " + this.minecraft.level.getEntityCount());
             this.gameInfo.add(this.minecraft.level.gatherChunkSourceStats());
             this.gameInfo.add("");
@@ -165,9 +166,9 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
         this.gameInfo.add(this.getMCFull());
         this.gameInfo.add(this.minecraft.fpsString);
         this.gameInfo.add(pct);
-        this.gameInfo.add(this.minecraft.levelRenderer.getChunkStatistics());
-        this.gameInfo.add(this.minecraft.levelRenderer.getEntityStatistics());
-        this.gameInfo.add("P: " + this.minecraft.particleEngine.countParticles() + ". T: " + this.minecraft.level.getEntityCount());
+        this.gameInfo.add(((IMinecraftPatch) this.minecraft).lvlRenderer().getChunkStatistics());
+        this.gameInfo.add(((IMinecraftPatch) this.minecraft).lvlRenderer().getEntityStatistics());
+        this.gameInfo.add("P: " + this.minecraft.particleEngine.countParticles());
         this.gameInfo.add(this.minecraft.level.gatherChunkSourceStats());
         String serverChunkStats = this.getServerChunkStats();
         if (serverChunkStats != null) {

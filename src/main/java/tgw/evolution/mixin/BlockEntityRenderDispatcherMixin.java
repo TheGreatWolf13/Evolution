@@ -8,10 +8,13 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 
 import javax.annotation.Nullable;
 
@@ -21,11 +24,19 @@ public abstract class BlockEntityRenderDispatcherMixin {
     @Shadow
     public Camera camera;
 
-    @Shadow
-    private static <T extends BlockEntity> void setupAndRender(BlockEntityRenderer<T> pRenderer,
-                                                               T pBlockEntity,
-                                                               float pPartialTick,
-                                                               PoseStack pPoseStack, MultiBufferSource pBufferSource) {
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Overwrite
+    private static <T extends BlockEntity> void setupAndRender(BlockEntityRenderer<T> renderer,
+                                                               T tile,
+                                                               float partialTick,
+                                                               PoseStack matrices,
+                                                               MultiBufferSource bufferSource) {
+        Level level = tile.getLevel();
+        int light = level != null ? EvLevelRenderer.getLightColor(level, tile.getBlockPos()) : 0xf0_00f0;
+        renderer.render(tile, partialTick, matrices, bufferSource, light, OverlayTexture.NO_OVERLAY);
     }
 
     @Shadow

@@ -102,7 +102,7 @@ public class TESchematic extends BlockEntity {
             this.setChanged();
             assert this.level != null;
             BlockState state = this.level.getBlockState(pos);
-            this.level.sendBlockUpdated(pos, state, state, BlockFlags.NOTIFY_AND_UPDATE);
+            this.level.sendBlockUpdated(pos, state, state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
             return true;
         }
         return false;
@@ -277,7 +277,7 @@ public class TESchematic extends BlockEntity {
             this.size = structureSize;
             this.setChanged();
             BlockState state = level.getBlockState(pos);
-            level.sendBlockUpdated(pos, state, state, BlockFlags.NOTIFY_AND_UPDATE);
+            level.sendBlockUpdated(pos, state, state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
         }
         if (matchingSize && !isSizeEquals) {
             return false;

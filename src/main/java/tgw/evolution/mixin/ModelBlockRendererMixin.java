@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix4f;
 import net.minecraft.client.color.block.BlockColors;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
@@ -21,6 +20,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.renderer.EvAmbientOcclusionFace;
 import tgw.evolution.client.renderer.RenderHelper;
+import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.client.util.ModelQuadUtil;
 import tgw.evolution.patches.IBakedQuadPatch;
 import tgw.evolution.util.math.*;
@@ -196,7 +196,7 @@ public abstract class ModelBlockRendererMixin {
             if (repackLight) {
                 this.calculateShape(level, state, pos, bakedQuad.getVertices(), bakedQuad.getDirection(), null, shapeFlags);
                 BlockPos blockpos = shapeFlags.get(0) ? pos.relative(bakedQuad.getDirection()) : pos;
-                light = LevelRenderer.getLightColor(level, state, blockpos);
+                light = EvLevelRenderer.getLightColor(level, state, blockpos);
             }
             float f = level.getShade(bakedQuad.getDirection(), bakedQuad.isShade());
             this.putQuadData(level, state, pos, buffer, matrices.last(), bakedQuad, f, f, f, f, light, light, light, light, overlay);
@@ -243,5 +243,45 @@ public abstract class ModelBlockRendererMixin {
             return true;
         }
         return hasRendered;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Overwrite
+    public boolean tesselateWithoutAO(BlockAndTintGetter level,
+                                      BakedModel model,
+                                      BlockState state,
+                                      BlockPos pos,
+                                      PoseStack matrices,
+                                      VertexConsumer builder,
+                                      boolean checkSides,
+                                      Random random,
+                                      long seed,
+                                      int packedOverlay,
+                                      IModelData modelData) {
+        boolean hasAnything = false;
+        BitSet bitset = new BitSet(3);
+        BlockPos.MutableBlockPos mutablePos = pos.mutable();
+        for (Direction direction : DIRECTIONS) {
+            random.setSeed(seed);
+            List<BakedQuad> quads = model.getQuads(state, direction, random, modelData);
+            if (!quads.isEmpty()) {
+                mutablePos.setWithOffset(pos, direction);
+                if (!checkSides || Block.shouldRenderFace(state, level, pos, direction, mutablePos)) {
+                    int light = EvLevelRenderer.getLightColor(level, state, mutablePos);
+                    this.renderModelFaceFlat(level, state, pos, light, packedOverlay, false, matrices, builder, quads, bitset);
+                    hasAnything = true;
+                }
+            }
+        }
+        random.setSeed(seed);
+        List<BakedQuad> quads = model.getQuads(state, null, random, modelData);
+        if (!quads.isEmpty()) {
+            this.renderModelFaceFlat(level, state, pos, 0xffff_ffff, packedOverlay, true, matrices, builder, quads, bitset);
+            return true;
+        }
+        return hasAnything;
     }
 }

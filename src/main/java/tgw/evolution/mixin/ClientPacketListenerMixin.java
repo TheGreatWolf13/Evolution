@@ -1,13 +1,13 @@
 package tgw.evolution.mixin;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import io.netty.buffer.Unpooled;
+import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import net.minecraft.client.ClientBrandRetriever;
 import net.minecraft.client.ClientRecipeBook;
 import net.minecraft.client.ClientTelemetryManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.RecipeToast;
+import net.minecraft.client.gui.screens.DeathScreen;
 import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -31,24 +31,20 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
-import net.minecraftforge.client.ForgeHooksClient;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
+import net.minecraft.world.scores.Scoreboard;
 import net.minecraftforge.network.NetworkHooks;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.client.gui.recipebook.IRecipeBook;
 import tgw.evolution.client.gui.recipebook.IRecipeBookUpdateListener;
 import tgw.evolution.client.util.EvolutionInput;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.patches.IClientboundLoginPacketPatch;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Mixin(ClientPacketListener.class)
 public abstract class ClientPacketListenerMixin implements ClientGamePacketListener {
@@ -151,9 +147,9 @@ public abstract class ClientPacketListenerMixin implements ClientGamePacketListe
         if (!this.connection.isMemoryConnection()) {
             this.registryAccess.registries().forEach(r -> r.value().resetTags());
         }
-        List<ResourceKey<Level>> list = Lists.newArrayList(packet.levels());
+        List<ResourceKey<Level>> list = new ArrayList<>(packet.levels());
         Collections.shuffle(list);
-        this.levels = Sets.newLinkedHashSet(list);
+        this.levels = new ReferenceLinkedOpenHashSet<>(list);
         ResourceKey<Level> resourcekey = packet.dimension();
         Holder<DimensionType> holder = packet.dimensionType();
         this.serverChunkRadius = packet.chunkRadius();
@@ -163,8 +159,9 @@ public abstract class ClientPacketListenerMixin implements ClientGamePacketListe
         ClientLevel.ClientLevelData levelData = new ClientLevel.ClientLevelData(Difficulty.NORMAL, packet.hardcore(), flag1);
         this.levelData = levelData;
         this.levelData.setDayTime(((IClientboundLoginPacketPatch) (Object) packet).getDaytime());
+        //noinspection ConstantConditions
         this.level = new ClientLevel((ClientPacketListener) (Object) this, levelData, resourcekey, holder, this.serverChunkRadius,
-                                     this.serverSimulationDistance, this.minecraft::getProfiler, this.minecraft.levelRenderer, flag, packet.seed());
+                                     this.serverSimulationDistance, this.minecraft::getProfiler, null, flag, packet.seed());
         this.minecraft.setLevel(this.level);
         if (this.minecraft.player == null) {
             this.minecraft.player = this.minecraft.gameMode.createPlayer(this.level, new StatsCounter(), new ClientRecipeBook());
@@ -178,10 +175,9 @@ public abstract class ClientPacketListenerMixin implements ClientGamePacketListe
         this.minecraft.player.setDeltaMovement(((IClientboundLoginPacketPatch) (Object) packet).getMotion());
         this.minecraft.player.fallDistance = 1.0f;
         assert this.minecraft.getConnection() != null;
-        ForgeHooksClient.firePlayerLogin(this.minecraft.gameMode, this.minecraft.player, this.minecraft.getConnection().getConnection());
-        int i = packet.playerId();
-        this.minecraft.player.setId(i);
-        this.level.addPlayer(i, this.minecraft.player);
+        int id = packet.playerId();
+        this.minecraft.player.setId(id);
+        this.level.addPlayer(id, this.minecraft.player);
         this.minecraft.player.input = new EvolutionInput(this.minecraft.options);
         this.minecraft.gameMode.adjustPlayer(this.minecraft.player);
         this.minecraft.cameraEntity = this.minecraft.player;
@@ -281,6 +277,65 @@ public abstract class ClientPacketListenerMixin implements ClientGamePacketListe
 
     /**
      * @author TheGreatWolf
+     * @reason Remove LevelRenderer from ClientLevel
+     */
+    @Override
+    @Overwrite
+    public void handleRespawn(ClientboundRespawnPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        ResourceKey<Level> dim = packet.getDimension();
+        Holder<DimensionType> dimType = packet.getDimensionType();
+        LocalPlayer player = this.minecraft.player;
+        assert player != null;
+        int id = player.getId();
+        if (dim != player.level.dimension()) {
+            Scoreboard scoreboard = this.level.getScoreboard();
+            Map<String, MapItemSavedData> map = this.level.getAllMapData();
+            boolean debug = packet.isDebug();
+            boolean flat = packet.isFlat();
+            ClientLevel.ClientLevelData data = new ClientLevel.ClientLevelData(this.levelData.getDifficulty(), this.levelData.isHardcore(), flat);
+            this.levelData = data;
+            //noinspection ConstantConditions
+            this.level = new ClientLevel((ClientPacketListener) (Object) this, data, dim, dimType, this.serverChunkRadius,
+                                         this.serverSimulationDistance, this.minecraft::getProfiler, null, debug, packet.getSeed());
+            this.level.setScoreboard(scoreboard);
+            this.level.addMapData(map);
+            this.minecraft.setLevel(this.level);
+            this.minecraft.setScreen(new ReceivingLevelScreen());
+        }
+        String s = player.getServerBrand();
+        this.minecraft.cameraEntity = null;
+        assert this.minecraft.gameMode != null;
+        LocalPlayer newPlayer = this.minecraft.gameMode.createPlayer(this.level, player.getStats(), player.getRecipeBook(), player.isShiftKeyDown(),
+                                                                     player.isSprinting());
+        newPlayer.setId(id);
+        this.minecraft.player = newPlayer;
+        if (dim != player.level.dimension()) {
+            this.minecraft.getMusicManager().stopPlaying();
+        }
+        this.minecraft.cameraEntity = newPlayer;
+        //noinspection ConstantConditions
+        newPlayer.getEntityData().assignValues(player.getEntityData().getAll());
+        if (packet.shouldKeepAllPlayerData()) {
+            newPlayer.getAttributes().assignValues(player.getAttributes());
+        }
+        newPlayer.updateSyncFields(player);
+        newPlayer.resetPos();
+        newPlayer.setServerBrand(s);
+        this.level.addPlayer(id, newPlayer);
+        newPlayer.setYRot(-180.0F);
+        newPlayer.input = new EvolutionInput(this.minecraft.options);
+        this.minecraft.gameMode.adjustPlayer(newPlayer);
+        newPlayer.setReducedDebugInfo(player.isReducedDebugInfo());
+        newPlayer.setShowDeathScreen(player.shouldShowDeathScreen());
+        if (this.minecraft.screen instanceof DeathScreen) {
+            this.minecraft.setScreen(null);
+        }
+        this.minecraft.gameMode.setLocalMode(packet.getPlayerGameType(), packet.getPreviousPlayerGameType());
+    }
+
+    /**
+     * @author TheGreatWolf
      * @reason Store the id of the player camera, in case it isn't loaded yet.
      */
     @Override
@@ -294,12 +349,5 @@ public abstract class ClientPacketListenerMixin implements ClientGamePacketListe
         else {
             ClientEvents.getInstance().setNotLoadedCameraId(((ClientboundSetCameraPacketAccessor) packet).getCameraId());
         }
-    }
-
-    @Redirect(method = "handleRespawn", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;adjustPlayer" +
-                                                                            "(Lnet/minecraft/world/entity/player/Player;)V"))
-    private void proxyHandleRespawn(MultiPlayerGameMode gameMode, Player player) {
-        ((LocalPlayer) player).input = new EvolutionInput(this.minecraft.options);
-        gameMode.adjustPlayer(player);
     }
 }

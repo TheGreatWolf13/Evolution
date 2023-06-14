@@ -87,6 +87,20 @@ public class AABBMutable extends AABB {
         return this;
     }
 
+    /**
+     * Same as {@link AABBMutable#set(double, double, double, double, double, double)}, but doesn't check for min max.
+     * Only use if you're sure the parameters are in the right order.
+     */
+    public AABBMutable setUnchecked(double x1, double y1, double z1, double x2, double y2, double z2) {
+        ((AABBAccessor) this).setMinX(x1);
+        ((AABBAccessor) this).setMinY(y1);
+        ((AABBAccessor) this).setMinZ(z1);
+        ((AABBAccessor) this).setMaxX(x2);
+        ((AABBAccessor) this).setMaxY(y2);
+        ((AABBAccessor) this).setMaxZ(z2);
+        return this;
+    }
+
     public AABBMutable setX(double x1, double x2) {
         ((AABBAccessor) this).setMinX(Math.min(x1, x2));
         ((AABBAccessor) this).setMaxX(Math.max(x1, x2));

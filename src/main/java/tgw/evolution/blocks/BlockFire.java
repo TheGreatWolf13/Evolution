@@ -399,7 +399,7 @@ public class BlockFire extends BlockGeneric implements IReplaceable, IFireSource
                                         int j2 = Math.min(15, age + random.nextInt(5) / 4);
                                         level.setBlock(mutableBlockPos,
                                                        this.getStateForPlacement(level, mutableBlockPos).setValue(AGE_0_15, j2),
-                                                       BlockFlags.NOTIFY_AND_UPDATE);
+                                                       BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
                                     }
                                 }
                             }

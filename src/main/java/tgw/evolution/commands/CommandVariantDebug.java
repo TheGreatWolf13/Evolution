@@ -27,7 +27,7 @@ public class CommandVariantDebug implements Command<CommandSourceStack> {
     private static void make3by3(LevelWriter level, BlockPos.MutableBlockPos mutablePos, BlockState state, Direction primary, Direction secondary) {
         for (int dx = 0; dx < 3; dx++) {
             for (int dz = 0; dz < 3; dz++) {
-                level.setBlock(mutablePos, state, BlockFlags.NOTIFY_AND_UPDATE);
+                level.setBlock(mutablePos, state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
                 mutablePos.move(primary);
             }
             mutablePos.move(primary.getOpposite(), 3);
@@ -40,22 +40,22 @@ public class CommandVariantDebug implements Command<CommandSourceStack> {
         mutablePos.setZ(minZ);
         for (int x = minX; x <= maxX; x++) {
             mutablePos.setX(x);
-            level.setBlock(mutablePos, Blocks.GOLD_BLOCK.defaultBlockState(), BlockFlags.NOTIFY_AND_UPDATE);
+            level.setBlock(mutablePos, Blocks.GOLD_BLOCK.defaultBlockState(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
         }
         mutablePos.setZ(maxZ);
         for (int x = minX; x <= maxX; x++) {
             mutablePos.setX(x);
-            level.setBlock(mutablePos, Blocks.GOLD_BLOCK.defaultBlockState(), BlockFlags.NOTIFY_AND_UPDATE);
+            level.setBlock(mutablePos, Blocks.GOLD_BLOCK.defaultBlockState(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
         }
         mutablePos.setX(minX);
         for (int z = minZ; z <= maxZ; z++) {
             mutablePos.setZ(z);
-            level.setBlock(mutablePos, Blocks.GOLD_BLOCK.defaultBlockState(), BlockFlags.NOTIFY_AND_UPDATE);
+            level.setBlock(mutablePos, Blocks.GOLD_BLOCK.defaultBlockState(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
         }
         mutablePos.setX(maxX);
         for (int z = minZ; z <= maxZ; z++) {
             mutablePos.setZ(z);
-            level.setBlock(mutablePos, Blocks.GOLD_BLOCK.defaultBlockState(), BlockFlags.NOTIFY_AND_UPDATE);
+            level.setBlock(mutablePos, Blocks.GOLD_BLOCK.defaultBlockState(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
         }
     }
 

@@ -2,12 +2,10 @@ package tgw.evolution.events;
 
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
-import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractButton;
@@ -22,7 +20,6 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -42,16 +39,17 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.client.ConfigGuiHandler;
-import net.minecraftforge.client.event.*;
+import net.minecraftforge.client.event.ModelBakeEvent;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.ScreenEvent;
+import net.minecraftforge.client.event.ScreenOpenEvent;
 import net.minecraftforge.client.gui.ModListScreen;
-import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -66,10 +64,6 @@ import org.lwjgl.glfw.GLFW;
 import tgw.evolution.ClientProxy;
 import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockGeneric;
-import tgw.evolution.blocks.BlockKnapping;
-import tgw.evolution.blocks.BlockMolding;
-import tgw.evolution.blocks.tileentities.TEKnapping;
-import tgw.evolution.blocks.tileentities.TEMolding;
 import tgw.evolution.client.audio.SoundEntityEmitted;
 import tgw.evolution.client.gui.GuiContainerCreativeHandler;
 import tgw.evolution.client.gui.GuiContainerHandler;
@@ -86,21 +80,21 @@ import tgw.evolution.client.util.ClientEffectInstance;
 import tgw.evolution.client.util.MouseButton;
 import tgw.evolution.entities.misc.EntityPlayerCorpse;
 import tgw.evolution.hooks.TickrateChanger;
-import tgw.evolution.init.*;
+import tgw.evolution.init.EvolutionNetwork;
+import tgw.evolution.init.EvolutionResources;
+import tgw.evolution.init.EvolutionSounds;
+import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.inventory.extendedinventory.EvolutionRecipeBook;
 import tgw.evolution.items.*;
 import tgw.evolution.network.*;
-import tgw.evolution.patches.IEntityPatch;
 import tgw.evolution.patches.IGameRendererPatch;
 import tgw.evolution.patches.ILivingEntityPatch;
 import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.stats.EvolutionStatsCounter;
-import tgw.evolution.util.AdvancedEntityHitResult;
 import tgw.evolution.util.HitInformation;
 import tgw.evolution.util.PlayerHelper;
 import tgw.evolution.util.collection.*;
 import tgw.evolution.util.constants.OptiFineHelper;
-import tgw.evolution.util.hitbox.hitboxes.HitboxEntity;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.toast.ToastHolderRecipe;
 import tgw.evolution.util.toast.Toasts;
@@ -237,6 +231,10 @@ public class ClientEvents {
         if (instance == null) {
             throw new IllegalStateException("ClientEvents has not yet initialized!");
         }
+        return instance;
+    }
+
+    public static @Nullable ClientEvents getInstanceNullable() {
         return instance;
     }
 
@@ -571,200 +569,6 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
-        this.mc.getProfiler().push("evolution");
-        this.mc.getProfiler().push("init");
-        if (this.mc.player == null) {
-            this.initialized = false;
-            this.clearMemory();
-            this.mc.getProfiler().pop();
-            this.mc.getProfiler().pop();
-            return;
-        }
-        if (this.mc.level == null) {
-            this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
-        }
-        if (!this.initialized) {
-            this.init();
-            this.initialized = true;
-        }
-        this.mc.getProfiler().pop();
-        //Runs at the start of each tick
-        if (event.phase == TickEvent.Phase.START) {
-            //Camera
-            this.mc.getProfiler().push("camera");
-            if (this.cameraId != -1) {
-                Entity entity = this.mc.level.getEntity(this.cameraId);
-                if (entity != null) {
-                    this.cameraId = -1;
-                    this.mc.setCameraEntity(entity);
-                }
-            }
-            //Apply shaders
-            this.mc.getProfiler().popPush("shaders");
-            this.desiredShaders.clear();
-            if (this.mc.options.getCameraType() == CameraType.FIRST_PERSON &&
-                !this.mc.player.isCreative() &&
-                !this.mc.player.isSpectator() &&
-                this.mc.player.equals(this.mc.getCameraEntity())) {
-                float health = this.mc.player.getHealth();
-                if (health <= 12.5f) {
-                    this.desiredShaders.add(25);
-                }
-                else if (health <= 25) {
-                    this.desiredShaders.add(50);
-                }
-                else if (health <= 50) {
-                    this.desiredShaders.add(75);
-                }
-            }
-            this.desiredShaders.addAll(this.forcedShaders);
-            if (this.desiredShaders.isEmpty()) {
-                if (!this.currentShaders.isEmpty()) {
-                    this.currentShaders.clear();
-                    ((IGameRendererPatch) this.mc.gameRenderer).shutdownAllShaders();
-                }
-            }
-            else {
-                if (!this.desiredShaders.containsAll(this.currentShaders)) {
-                    for (IntIterator it = this.currentShaders.intIterator(); it.hasNext(); ) {
-                        int shader = it.nextInt();
-                        if (!this.desiredShaders.contains(shader)) {
-                            it.remove();
-                            ((IGameRendererPatch) this.mc.gameRenderer).shutdownShader(shader);
-                        }
-                    }
-                }
-                if (!this.currentShaders.containsAll(this.desiredShaders)) {
-                    for (IntIterator it = this.desiredShaders.intIterator(); it.hasNext(); ) {
-                        int shader = it.nextInt();
-                        if (this.currentShaders.add(shader)) {
-                            ResourceLocation shaderLoc = this.getShader(shader);
-                            if (shaderLoc != null) {
-                                ((IGameRendererPatch) this.mc.gameRenderer).loadShader(shader, shaderLoc);
-                            }
-                            else {
-                                Evolution.warn("Unregistered shader id: {}", shader);
-                            }
-                        }
-                    }
-                }
-            }
-            this.mc.getProfiler().pop();
-            if (!this.mc.isPaused()) {
-                this.mc.getProfiler().push("dimension");
-                assert this.dimension != null;
-                this.dimension.tick();
-                this.mc.getProfiler().popPush("renderer");
-                this.renderer.startTick();
-                this.mc.getProfiler().popPush("updateHeld");
-                this.updateBeltItem();
-                this.updateBackItem();
-                //Handle two-handed items
-                this.mc.getProfiler().popPush("twoHanded");
-                ItemStack mainHandStack = this.mc.player.getMainHandItem();
-                if (mainHandStack.getItem() instanceof ITwoHanded twoHanded &&
-                    twoHanded.isTwoHanded(mainHandStack) &&
-                    !this.mc.player.getOffhandItem().isEmpty()) {
-                    this.mainhandCooldownTime = 0;
-                    this.mc.missTime = Integer.MAX_VALUE;
-                    this.mc.player.displayClientMessage(EvolutionTexts.ACTION_TWO_HANDED, true);
-                }
-                //Prevents the player from attacking if on cooldown
-                this.mc.getProfiler().popPush("cooldown");
-                boolean isSpecialAttacking = ((ILivingEntityPatch) this.mc.player).shouldRenderSpecialAttack();
-                if (this.wasSpecialAttacking && !isSpecialAttacking) {
-                    this.resetCooldown(InteractionHand.MAIN_HAND);
-                }
-                if (this.getMainhandIndicatorPercentage(0.0F) != 1 &&
-                    this.mc.hitResult != null &&
-                    this.mc.hitResult.getType() != HitResult.Type.BLOCK) {
-                    this.mc.missTime = Integer.MAX_VALUE;
-                }
-                this.wasSpecialAttacking = isSpecialAttacking;
-                this.mc.getProfiler().pop();
-            }
-        }
-        //Runs at the end of each tick
-        else if (event.phase == TickEvent.Phase.END) {
-            if (!this.mc.isPaused()) {
-                this.warmUpTicks++;
-                //Remove inactive effects
-                this.mc.getProfiler().push("effects");
-                if (!EFFECTS.isEmpty()) {
-                    boolean needsRemoving = false;
-                    for (int i = 0, l = EFFECTS.size(); i < l; i++) {
-                        ClientEffectInstance instance = EFFECTS.get(i);
-                        MobEffect effect = instance.getEffect();
-                        if (instance.getDuration() == 0 || !this.mc.player.hasEffect(effect) && this.warmUpTicks >= 100) {
-                            needsRemoving = true;
-                        }
-                        else {
-                            instance.tick();
-                        }
-                    }
-                    if (needsRemoving) {
-                        for (int i = 0; i < EFFECTS.size(); i++) {
-                            ClientEffectInstance instance = EFFECTS.get(i);
-                            if (instance.getDuration() == 0 || !this.mc.player.hasEffect(instance.getEffect())) {
-                                EFFECTS.remove(i--);
-                            }
-                        }
-                    }
-                }
-                if (!EFFECTS_TO_ADD.isEmpty()) {
-                    this.effectToAddTicks++;
-                }
-                else {
-                    this.renderer.isAddingEffect = false;
-                }
-                //Handle creative features
-                this.mc.getProfiler().popPush("creative");
-                if (this.mc.player.isCreative() && ClientProxy.KEY_BUILDING_ASSIST.isDown()) {
-                    if (this.mc.player.getMainHandItem().getItem() instanceof BlockItem) {
-                        assert this.mc.hitResult != null;
-                        if (this.mc.hitResult.getType() == HitResult.Type.BLOCK) {
-                            BlockPos pos = ((BlockHitResult) this.mc.hitResult).getBlockPos();
-                            if (!this.mc.level.getBlockState(pos).isAir()) {
-                                EvolutionNetwork.sendToServer(new PacketCSChangeBlock((BlockHitResult) this.mc.hitResult));
-                                this.mc.player.swing(InteractionHand.MAIN_HAND);
-                            }
-                        }
-                    }
-                }
-                //Handle swing
-                this.mc.getProfiler().popPush("swing");
-                this.ticks++;
-                assert this.mc.gameMode != null;
-                if (this.mc.player instanceof ILivingEntityPatch patch && patch.isSpecialAttacking()) {
-                    this.cachedAttackType = patch.getSpecialAttackType();
-                    if (patch.isInHitTicks()) {
-                        MathHelper.collideOBBWithCollider(MAINHAND_HITS, this.mc.player, 1.0f, MAINHAND_HIT_RESULT, true, false);
-                        if (MAINHAND_HIT_RESULT[0] != null && MAINHAND_HIT_RESULT[0].getType() != HitResult.Type.MISS) {
-                            patch.stopSpecialAttack(IMelee.StopReason.HIT_BLOCK);
-                            Evolution.info("Collided with {} at {} on {}", this.mc.level.getBlockState(MAINHAND_HIT_RESULT[0].getBlockPos()),
-                                           MAINHAND_HIT_RESULT[0].getBlockPos(), MAINHAND_HIT_RESULT[0].getLocation());
-                        }
-                    }
-                }
-                else {
-                    if (!MAINHAND_HITS.isEmpty() && this.cachedAttackType != null) {
-                        MAINHAND_HITS.sendHits(this.cachedAttackType);
-                        MAINHAND_HITS.clear();
-                    }
-                    this.cachedAttackType = null;
-                    MAINHAND_HIT_RESULT[0] = null;
-                }
-                //Ticks renderer
-                this.mc.getProfiler().popPush("renderer");
-                this.renderer.endTick();
-                this.mc.getProfiler().pop();
-            }
-        }
-        this.mc.getProfiler().pop();
-    }
-
-    @SubscribeEvent
     public void onEntityCreated(EntityJoinWorldEvent event) {
         if (event.getEntity() instanceof LocalPlayer player && player.equals(this.mc.player)) {
             this.mc.player.stats = new EvolutionStatsCounter();
@@ -772,32 +576,240 @@ public class ClientEvents {
         }
     }
 
-    @SubscribeEvent
-    public void onGUIMouseClickedPre(ScreenEvent.MouseClickedEvent.Pre event) {
-        @MouseButton int button = event.getButton();
-        if (this.onMouseClicked(event.getMouseX(), event.getMouseY(), button)) {
-            event.setCanceled(true);
+    /**
+     * @return Whether the MouseHandler should return early.
+     */
+    public boolean onGUIMouseClickedPre(double mouseX, double mouseY, @MouseButton int button) {
+        if (handler == null) {
+            return false;
+        }
+        Slot selectedSlot = handler.getSlotUnderMouse(mouseX, mouseY);
+        oldSelectedSlot = selectedSlot;
+        assert this.mc.player != null;
+        ItemStack stackOnMouse = this.mc.player.inventoryMenu.getCarried();
+        if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
+            if (stackOnMouse.isEmpty()) {
+                canDoLMBDrag = true;
+            }
+        }
+        else if (button == GLFW.GLFW_MOUSE_BUTTON_2) {
+            if (stackOnMouse.isEmpty()) {
+                return false;
+            }
+            canDoRMBDrag = true;
+            if (selectedSlot != null) {
+                rmbTweakNewSlot(selectedSlot, stackOnMouse);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public void onGUIMouseDragPre(double mouseX, double mouseY, @MouseButton int button) {
+        if (handler == null) {
+            return;
+        }
+        Slot selectedSlot = handler.getSlotUnderMouse(mouseX, mouseY);
+        if (selectedSlot == oldSelectedSlot) {
+            return;
+        }
+        oldSelectedSlot = selectedSlot;
+        if (selectedSlot == null) {
+            return;
+        }
+        if (handler.isIgnored(selectedSlot)) {
+            return;
+        }
+        assert this.mc.player != null;
+        ItemStack stackOnMouse = this.mc.player.inventoryMenu.getCarried();
+        if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
+            if (!canDoLMBDrag) {
+                return;
+            }
+            ItemStack selectedSlotStack = selectedSlot.getItem();
+            if (selectedSlotStack.isEmpty()) {
+                return;
+            }
+            boolean shiftIsDown = Screen.hasShiftDown();
+            if (stackOnMouse.isEmpty()) {
+                if (!shiftIsDown) {
+                    return;
+                }
+                handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, true);
+            }
+            else {
+                if (!areStacksCompatible(selectedSlotStack, stackOnMouse)) {
+                    return;
+                }
+                if (shiftIsDown) {
+                    handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, true);
+                }
+                else {
+                    if (stackOnMouse.getCount() + selectedSlotStack.getCount() > stackOnMouse.getMaxStackSize()) {
+                        return;
+                    }
+                    handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
+                    if (!handler.isCraftingOutput(selectedSlot)) {
+                        handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
+                    }
+                }
+            }
+        }
+        else if (button == GLFW.GLFW_MOUSE_BUTTON_2) {
+            if (!canDoRMBDrag) {
+                return;
+            }
+            if (stackOnMouse.isEmpty()) {
+                return;
+            }
+            rmbTweakNewSlot(selectedSlot, stackOnMouse);
         }
     }
 
-    @SubscribeEvent
-    public void onGUIMouseDragPre(ScreenEvent.MouseDragEvent.Pre event) {
-        @MouseButton int button = event.getMouseButton();
-        this.onMouseDrag(event.getMouseX(), event.getMouseY(), button);
-    }
-
-    @SubscribeEvent
-    public void onGUIMouseReleasedPre(ScreenEvent.MouseReleasedEvent.Pre event) {
-        @MouseButton int button = event.getButton();
-        if (this.onMouseReleased(button)) {
-            event.setCanceled(true);
+    /**
+     * @return Whether the MouseHandler should return early.
+     */
+    public boolean onGUIMouseReleasedPre(@MouseButton int button) {
+        if (handler == null) {
+            return false;
         }
+        if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
+            canDoLMBDrag = false;
+        }
+        else if (button == GLFW.GLFW_MOUSE_BUTTON_2) {
+            if (canDoRMBDrag) {
+                canDoRMBDrag = false;
+                return true;
+            }
+        }
+        return false;
     }
 
-    @SubscribeEvent
-    public void onGUIMouseScrollPost(ScreenEvent.MouseScrollEvent.Post event) {
-        if (this.onMouseScrolled(event.getMouseX(), event.getMouseY(), event.getScrollDelta())) {
-            event.setCanceled(true);
+    public void onGUIMouseScrollPost(double mouseX, double mouseY, double scrollDelta) {
+        if (handler == null) {
+            return;
+        }
+        Slot selectedSlot = handler.getSlotUnderMouse(mouseX, mouseY);
+        if (selectedSlot == null || handler.isIgnored(selectedSlot)) {
+            return;
+        }
+        double scaledDelta = Math.signum(scrollDelta);
+        if (accumulatedScrollDelta != 0 && scaledDelta != Math.signum(accumulatedScrollDelta)) {
+            accumulatedScrollDelta = 0;
+        }
+        accumulatedScrollDelta += scaledDelta;
+        int delta = (int) accumulatedScrollDelta;
+        accumulatedScrollDelta -= delta;
+        if (delta == 0) {
+            return;
+        }
+        List<Slot> slots = handler.getSlots();
+        ItemStack selectedSlotStack = selectedSlot.getItem();
+        if (selectedSlotStack.isEmpty()) {
+            return;
+        }
+        assert this.mc.player != null;
+        ItemStack stackOnMouse = this.mc.player.inventoryMenu.getCarried();
+        int numItemsToMove = Math.abs(delta);
+        boolean pushItems = delta < 0;
+        if (handler.isCraftingOutput(selectedSlot)) {
+            if (!areStacksCompatible(selectedSlotStack, stackOnMouse)) {
+                return;
+            }
+            if (stackOnMouse.isEmpty()) {
+                if (!pushItems) {
+                    return;
+                }
+                while (numItemsToMove-- > 0) {
+                    RList<Slot> targetSlots = this.findPushSlots(slots, selectedSlot, selectedSlotStack.getCount(), true);
+                    if (targetSlots == null) {
+                        break;
+                    }
+                    handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
+                    for (int i = 0; i < targetSlots.size(); i++) {
+                        Slot slot = targetSlots.get(i);
+                        if (i == targetSlots.size() - 1) {
+                            handler.clickSlot(slot, GLFW.GLFW_MOUSE_BUTTON_1, false);
+                        }
+                        else {
+                            int clickTimes = slot.getItem().getMaxStackSize() - slot.getItem().getCount();
+                            while (clickTimes-- > 0) {
+                                handler.clickSlot(slot, GLFW.GLFW_MOUSE_BUTTON_2, false);
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                while (numItemsToMove-- > 0) {
+                    handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
+                }
+            }
+            return;
+        }
+        if (!stackOnMouse.isEmpty() && areStacksCompatible(selectedSlotStack, stackOnMouse)) {
+            return;
+        }
+        if (pushItems) {
+            if (!stackOnMouse.isEmpty() && !selectedSlot.mayPlace(stackOnMouse)) {
+                return;
+            }
+            numItemsToMove = Math.min(numItemsToMove, selectedSlotStack.getCount());
+            RList<Slot> targetSlots = this.findPushSlots(slots, selectedSlot, numItemsToMove, false);
+            assert targetSlots != null;
+            if (targetSlots.isEmpty()) {
+                return;
+            }
+            handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
+            for (int i = 0, l = targetSlots.size(); i < l; i++) {
+                Slot slot = targetSlots.get(i);
+                int clickTimes = slot.getItem().getMaxStackSize() - slot.getItem().getCount();
+                clickTimes = Math.min(clickTimes, numItemsToMove);
+                numItemsToMove -= clickTimes;
+                while (clickTimes-- > 0) {
+                    handler.clickSlot(slot, GLFW.GLFW_MOUSE_BUTTON_2, false);
+                }
+            }
+            handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
+            return;
+        }
+        int maxItemsToMove = selectedSlotStack.getMaxStackSize() - selectedSlotStack.getCount();
+        numItemsToMove = Math.min(numItemsToMove, maxItemsToMove);
+        while (numItemsToMove > 0) {
+            Slot targetSlot = this.findPullSlot(slots, selectedSlot);
+            if (targetSlot == null) {
+                break;
+            }
+            int numItemsInTargetSlot = targetSlot.getItem().getCount();
+            if (handler.isCraftingOutput(targetSlot)) {
+                if (maxItemsToMove < numItemsInTargetSlot) {
+                    break;
+                }
+                maxItemsToMove -= numItemsInTargetSlot;
+                if (!stackOnMouse.isEmpty() && !selectedSlot.mayPlace(stackOnMouse)) {
+                    break;
+                }
+                handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
+                handler.clickSlot(targetSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
+                handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
+                continue;
+            }
+            int numItemsToMoveFromTargetSlot = Math.min(numItemsToMove, numItemsInTargetSlot);
+            maxItemsToMove -= numItemsToMoveFromTargetSlot;
+            numItemsToMove -= numItemsToMoveFromTargetSlot;
+            if (!stackOnMouse.isEmpty() && !targetSlot.mayPlace(stackOnMouse)) {
+                break;
+            }
+            handler.clickSlot(targetSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
+            if (numItemsToMoveFromTargetSlot == numItemsInTargetSlot) {
+                handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
+            }
+            else {
+                for (int i = 0; i < numItemsToMoveFromTargetSlot; i++) {
+                    handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_2, false);
+                }
+            }
+            handler.clickSlot(targetSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
         }
     }
 
@@ -875,238 +887,6 @@ public class ClientEvents {
         }
     }
 
-    public boolean onMouseClicked(double x, double y, @MouseButton int button) {
-        if (handler == null) {
-            return false;
-        }
-        Slot selectedSlot = handler.getSlotUnderMouse(x, y);
-        oldSelectedSlot = selectedSlot;
-        assert this.mc.player != null;
-        ItemStack stackOnMouse = this.mc.player.inventoryMenu.getCarried();
-        if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
-            if (stackOnMouse.isEmpty()) {
-                canDoLMBDrag = true;
-            }
-        }
-        else if (button == GLFW.GLFW_MOUSE_BUTTON_2) {
-            if (stackOnMouse.isEmpty()) {
-                return false;
-            }
-            canDoRMBDrag = true;
-            if (selectedSlot != null) {
-                rmbTweakNewSlot(selectedSlot, stackOnMouse);
-            }
-            return true;
-        }
-        return false;
-    }
-
-    public void onMouseDrag(double x, double y, @MouseButton int button) {
-        if (handler == null) {
-            return;
-        }
-        Slot selectedSlot = handler.getSlotUnderMouse(x, y);
-        if (selectedSlot == oldSelectedSlot) {
-            return;
-        }
-        oldSelectedSlot = selectedSlot;
-        if (selectedSlot == null) {
-            return;
-        }
-        if (handler.isIgnored(selectedSlot)) {
-            return;
-        }
-        assert this.mc.player != null;
-        ItemStack stackOnMouse = this.mc.player.inventoryMenu.getCarried();
-        if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
-            if (!canDoLMBDrag) {
-                return;
-            }
-            ItemStack selectedSlotStack = selectedSlot.getItem();
-            if (selectedSlotStack.isEmpty()) {
-                return;
-            }
-            boolean shiftIsDown = Screen.hasShiftDown();
-            if (stackOnMouse.isEmpty()) {
-                if (!shiftIsDown) {
-                    return;
-                }
-                handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, true);
-            }
-            else {
-                if (!areStacksCompatible(selectedSlotStack, stackOnMouse)) {
-                    return;
-                }
-                if (shiftIsDown) {
-                    handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, true);
-                }
-                else {
-                    if (stackOnMouse.getCount() + selectedSlotStack.getCount() > stackOnMouse.getMaxStackSize()) {
-                        return;
-                    }
-                    handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-                    if (!handler.isCraftingOutput(selectedSlot)) {
-                        handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-                    }
-                }
-            }
-        }
-        else if (button == GLFW.GLFW_MOUSE_BUTTON_2) {
-            if (!canDoRMBDrag) {
-                return;
-            }
-            if (stackOnMouse.isEmpty()) {
-                return;
-            }
-            rmbTweakNewSlot(selectedSlot, stackOnMouse);
-        }
-    }
-
-    public boolean onMouseReleased(@MouseButton int button) {
-        if (handler == null) {
-            return false;
-        }
-        if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
-            canDoLMBDrag = false;
-        }
-        else if (button == GLFW.GLFW_MOUSE_BUTTON_2) {
-            if (canDoRMBDrag) {
-                canDoRMBDrag = false;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean onMouseScrolled(double x, double y, double scrollDelta) {
-        if (handler == null) {
-            return false;
-        }
-        Slot selectedSlot = handler.getSlotUnderMouse(x, y);
-        if (selectedSlot == null || handler.isIgnored(selectedSlot)) {
-            return false;
-        }
-        double scaledDelta = Math.signum(scrollDelta);
-        if (accumulatedScrollDelta != 0 && scaledDelta != Math.signum(accumulatedScrollDelta)) {
-            accumulatedScrollDelta = 0;
-        }
-        accumulatedScrollDelta += scaledDelta;
-        int delta = (int) accumulatedScrollDelta;
-        accumulatedScrollDelta -= delta;
-        if (delta == 0) {
-            return true;
-        }
-        List<Slot> slots = handler.getSlots();
-        ItemStack selectedSlotStack = selectedSlot.getItem();
-        if (selectedSlotStack.isEmpty()) {
-            return true;
-        }
-        assert this.mc.player != null;
-        ItemStack stackOnMouse = this.mc.player.inventoryMenu.getCarried();
-        int numItemsToMove = Math.abs(delta);
-        boolean pushItems = delta < 0;
-        if (handler.isCraftingOutput(selectedSlot)) {
-            if (!areStacksCompatible(selectedSlotStack, stackOnMouse)) {
-                return true;
-            }
-            if (stackOnMouse.isEmpty()) {
-                if (!pushItems) {
-                    return true;
-                }
-                while (numItemsToMove-- > 0) {
-                    RList<Slot> targetSlots = this.findPushSlots(slots, selectedSlot, selectedSlotStack.getCount(), true);
-                    if (targetSlots == null) {
-                        break;
-                    }
-                    handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-                    for (int i = 0; i < targetSlots.size(); i++) {
-                        Slot slot = targetSlots.get(i);
-                        if (i == targetSlots.size() - 1) {
-                            handler.clickSlot(slot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-                        }
-                        else {
-                            int clickTimes = slot.getItem().getMaxStackSize() - slot.getItem().getCount();
-                            while (clickTimes-- > 0) {
-                                handler.clickSlot(slot, GLFW.GLFW_MOUSE_BUTTON_2, false);
-                            }
-                        }
-                    }
-                }
-            }
-            else {
-                while (numItemsToMove-- > 0) {
-                    handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-                }
-            }
-            return true;
-        }
-        if (!stackOnMouse.isEmpty() && areStacksCompatible(selectedSlotStack, stackOnMouse)) {
-            return true;
-        }
-        if (pushItems) {
-            if (!stackOnMouse.isEmpty() && !selectedSlot.mayPlace(stackOnMouse)) {
-                return true;
-            }
-            numItemsToMove = Math.min(numItemsToMove, selectedSlotStack.getCount());
-            RList<Slot> targetSlots = this.findPushSlots(slots, selectedSlot, numItemsToMove, false);
-            assert targetSlots != null;
-            if (targetSlots.isEmpty()) {
-                return true;
-            }
-            handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-            for (int i = 0, l = targetSlots.size(); i < l; i++) {
-                Slot slot = targetSlots.get(i);
-                int clickTimes = slot.getItem().getMaxStackSize() - slot.getItem().getCount();
-                clickTimes = Math.min(clickTimes, numItemsToMove);
-                numItemsToMove -= clickTimes;
-                while (clickTimes-- > 0) {
-                    handler.clickSlot(slot, GLFW.GLFW_MOUSE_BUTTON_2, false);
-                }
-            }
-            handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-            return true;
-        }
-        int maxItemsToMove = selectedSlotStack.getMaxStackSize() - selectedSlotStack.getCount();
-        numItemsToMove = Math.min(numItemsToMove, maxItemsToMove);
-        while (numItemsToMove > 0) {
-            Slot targetSlot = this.findPullSlot(slots, selectedSlot);
-            if (targetSlot == null) {
-                break;
-            }
-            int numItemsInTargetSlot = targetSlot.getItem().getCount();
-            if (handler.isCraftingOutput(targetSlot)) {
-                if (maxItemsToMove < numItemsInTargetSlot) {
-                    break;
-                }
-                maxItemsToMove -= numItemsInTargetSlot;
-                if (!stackOnMouse.isEmpty() && !selectedSlot.mayPlace(stackOnMouse)) {
-                    break;
-                }
-                handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-                handler.clickSlot(targetSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-                handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-                continue;
-            }
-            int numItemsToMoveFromTargetSlot = Math.min(numItemsToMove, numItemsInTargetSlot);
-            maxItemsToMove -= numItemsToMoveFromTargetSlot;
-            numItemsToMove -= numItemsToMoveFromTargetSlot;
-            if (!stackOnMouse.isEmpty() && !targetSlot.mayPlace(stackOnMouse)) {
-                break;
-            }
-            handler.clickSlot(targetSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-            if (numItemsToMoveFromTargetSlot == numItemsInTargetSlot) {
-                handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-            }
-            else {
-                for (int i = 0; i < numItemsToMoveFromTargetSlot; i++) {
-                    handler.clickSlot(selectedSlot, GLFW.GLFW_MOUSE_BUTTON_2, false);
-                }
-            }
-            handler.clickSlot(targetSlot, GLFW.GLFW_MOUSE_BUTTON_1, false);
-        }
-        return true;
-    }
-
     public void onPotionAdded(ClientEffectInstance instance, PacketSCAddEffect.Logic logic) {
         switch (logic) {
             case ADD, REPLACE -> EFFECTS_TO_ADD.add(instance);
@@ -1123,62 +903,186 @@ public class ClientEvents {
         }
     }
 
-    @SubscribeEvent
-    public void onRenderBlockHighlight(DrawSelectionEvent.HighlightBlock event) {
-        this.onRenderHightlight(event);
-    }
-
-    @SubscribeEvent
-    public void onRenderEntityHighlight(DrawSelectionEvent.HighlightEntity event) {
-        this.onRenderHightlight(event);
-    }
-
-    private void onRenderHightlight(DrawSelectionEvent event) {
-        event.setCanceled(true);
-        PoseStack matrices = event.getPoseStack();
-        MultiBufferSource buffer = event.getMultiBufferSource();
-        Camera camera = event.getCamera();
-        HitResult rayTrace = this.mc.hitResult;
-        if (rayTrace != null && rayTrace.getType() == HitResult.Type.BLOCK) {
-            BlockPos hitPos = ((BlockHitResult) rayTrace).getBlockPos();
-            assert this.mc.level != null;
-            if (this.mc.level.getWorldBorder().isWithinBounds(hitPos)) {
-                Block block = this.mc.level.getBlockState(hitPos).getBlock();
-                if (block instanceof BlockKnapping) {
-                    TEKnapping tile = (TEKnapping) this.mc.level.getBlockEntity(hitPos);
-                    assert tile != null;
-                    this.renderer.renderOutlines(matrices, buffer, tile.type.getShape(), camera, hitPos);
-                }
-                else if (block instanceof BlockMolding) {
-                    TEMolding tile = (TEMolding) this.mc.level.getBlockEntity(hitPos);
-                    assert tile != null;
-                    this.renderer.renderOutlines(matrices, buffer, tile.molding.getShape(), camera, hitPos);
-                }
-                this.renderer.renderBlockOutlines(matrices, buffer, camera, hitPos);
-            }
+    public void postClientTick() {
+        if (this.tickStart()) {
+            return;
         }
-        else if (rayTrace != null && rayTrace.getType() == HitResult.Type.ENTITY) {
-            if (this.mc.getEntityRenderDispatcher().shouldRenderHitBoxes() && rayTrace instanceof AdvancedEntityHitResult advRayTrace) {
-                if (advRayTrace.getHitbox() != null) {
-                    this.renderer.renderHitbox(matrices, buffer, advRayTrace.getEntity(), advRayTrace.getHitbox(), camera, event.getPartialTicks());
+        assert this.mc.level != null;
+        assert this.mc.player != null;
+        if (!this.mc.isPaused()) {
+            this.warmUpTicks++;
+            //Remove inactive effects
+            this.mc.getProfiler().push("effects");
+            if (!EFFECTS.isEmpty()) {
+                boolean needsRemoving = false;
+                for (int i = 0, l = EFFECTS.size(); i < l; i++) {
+                    ClientEffectInstance instance = EFFECTS.get(i);
+                    MobEffect effect = instance.getEffect();
+                    if (instance.getDuration() == 0 || !this.mc.player.hasEffect(effect) && this.warmUpTicks >= 100) {
+                        needsRemoving = true;
+                    }
+                    else {
+                        instance.tick();
+                    }
+                }
+                if (needsRemoving) {
+                    for (int i = 0; i < EFFECTS.size(); i++) {
+                        ClientEffectInstance instance = EFFECTS.get(i);
+                        if (instance.getDuration() == 0 || !this.mc.player.hasEffect(instance.getEffect())) {
+                            EFFECTS.remove(i--);
+                        }
+                    }
                 }
             }
-        }
-        if (this.mc.getEntityRenderDispatcher().shouldRenderHitBoxes()) {
-            assert this.mc.player != null;
-            if (this.mc.player.getMainHandItem().getItem() == EvolutionItems.DEBUG_ITEM.get() ||
-                this.mc.player.getOffhandItem().getItem() == EvolutionItems.DEBUG_ITEM.get()) {
-                HitboxEntity<? extends Entity> hitboxes = ((IEntityPatch) this.mc.player).getHitboxes();
-                if (hitboxes != null) {
-                    this.renderer.renderHitbox(matrices, buffer, this.mc.player, hitboxes.getBoxes().get(0), camera, event.getPartialTicks());
+            if (!EFFECTS_TO_ADD.isEmpty()) {
+                this.effectToAddTicks++;
+            }
+            else {
+                this.renderer.isAddingEffect = false;
+            }
+            //Handle creative features
+            this.mc.getProfiler().popPush("creative");
+            if (this.mc.player.isCreative() && ClientProxy.KEY_BUILDING_ASSIST.isDown()) {
+                if (this.mc.player.getMainHandItem().getItem() instanceof BlockItem) {
+                    assert this.mc.hitResult != null;
+                    if (this.mc.hitResult.getType() == HitResult.Type.BLOCK) {
+                        BlockPos pos = ((BlockHitResult) this.mc.hitResult).getBlockPos();
+                        if (!this.mc.level.getBlockState(pos).isAir()) {
+                            EvolutionNetwork.sendToServer(new PacketCSChangeBlock((BlockHitResult) this.mc.hitResult));
+                            this.mc.player.swing(InteractionHand.MAIN_HAND);
+                        }
+                    }
                 }
             }
+            //Handle swing
+            this.mc.getProfiler().popPush("swing");
+            this.ticks++;
+            assert this.mc.gameMode != null;
+            if (this.mc.player instanceof ILivingEntityPatch patch && patch.isSpecialAttacking()) {
+                this.cachedAttackType = patch.getSpecialAttackType();
+                if (patch.isInHitTicks()) {
+                    MathHelper.collideOBBWithCollider(MAINHAND_HITS, this.mc.player, 1.0f, MAINHAND_HIT_RESULT, true, false);
+                    if (MAINHAND_HIT_RESULT[0] != null && MAINHAND_HIT_RESULT[0].getType() != HitResult.Type.MISS) {
+                        patch.stopSpecialAttack(IMelee.StopReason.HIT_BLOCK);
+                        Evolution.info("Collided with {} at {} on {}", this.mc.level.getBlockState(MAINHAND_HIT_RESULT[0].getBlockPos()),
+                                       MAINHAND_HIT_RESULT[0].getBlockPos(), MAINHAND_HIT_RESULT[0].getLocation());
+                    }
+                }
+            }
+            else {
+                if (!MAINHAND_HITS.isEmpty() && this.cachedAttackType != null) {
+                    MAINHAND_HITS.sendHits(this.cachedAttackType);
+                    MAINHAND_HITS.clear();
+                }
+                this.cachedAttackType = null;
+                MAINHAND_HIT_RESULT[0] = null;
+            }
+            //Ticks renderer
+            this.mc.getProfiler().popPush("renderer");
+            this.renderer.endTick();
+            this.mc.getProfiler().pop();
         }
     }
 
-    @SubscribeEvent
-    public void onRenderMissHighlight(DrawSelectionEvent event) {
-        this.onRenderHightlight(event);
+    public void preClientTick() {
+        if (this.tickStart()) {
+            return;
+        }
+        assert this.mc.level != null;
+        assert this.mc.player != null;
+        //Camera
+        this.mc.getProfiler().push("camera");
+        if (this.cameraId != -1) {
+            Entity entity = this.mc.level.getEntity(this.cameraId);
+            if (entity != null) {
+                this.cameraId = -1;
+                this.mc.setCameraEntity(entity);
+            }
+        }
+        //Apply shaders
+        this.mc.getProfiler().popPush("shaders");
+        this.desiredShaders.clear();
+        if (this.mc.options.getCameraType() == CameraType.FIRST_PERSON &&
+            !this.mc.player.isCreative() &&
+            !this.mc.player.isSpectator() &&
+            this.mc.player.equals(this.mc.getCameraEntity())) {
+            float health = this.mc.player.getHealth();
+            if (health <= 12.5f) {
+                this.desiredShaders.add(25);
+            }
+            else if (health <= 25) {
+                this.desiredShaders.add(50);
+            }
+            else if (health <= 50) {
+                this.desiredShaders.add(75);
+            }
+        }
+        this.desiredShaders.addAll(this.forcedShaders);
+        if (this.desiredShaders.isEmpty()) {
+            if (!this.currentShaders.isEmpty()) {
+                this.currentShaders.clear();
+                ((IGameRendererPatch) this.mc.gameRenderer).shutdownAllShaders();
+            }
+        }
+        else {
+            if (!this.desiredShaders.containsAll(this.currentShaders)) {
+                for (IntIterator it = this.currentShaders.intIterator(); it.hasNext(); ) {
+                    int shader = it.nextInt();
+                    if (!this.desiredShaders.contains(shader)) {
+                        it.remove();
+                        ((IGameRendererPatch) this.mc.gameRenderer).shutdownShader(shader);
+                    }
+                }
+            }
+            if (!this.currentShaders.containsAll(this.desiredShaders)) {
+                for (IntIterator it = this.desiredShaders.intIterator(); it.hasNext(); ) {
+                    int shader = it.nextInt();
+                    if (this.currentShaders.add(shader)) {
+                        ResourceLocation shaderLoc = this.getShader(shader);
+                        if (shaderLoc != null) {
+                            ((IGameRendererPatch) this.mc.gameRenderer).loadShader(shader, shaderLoc);
+                        }
+                        else {
+                            Evolution.warn("Unregistered shader id: {}", shader);
+                        }
+                    }
+                }
+            }
+        }
+        this.mc.getProfiler().pop();
+        if (!this.mc.isPaused()) {
+            this.mc.getProfiler().push("dimension");
+            assert this.dimension != null;
+            this.dimension.tick();
+            this.mc.getProfiler().popPush("renderer");
+            this.renderer.startTick();
+            this.mc.getProfiler().popPush("updateHeld");
+            this.updateBeltItem();
+            this.updateBackItem();
+            //Handle two-handed items
+            this.mc.getProfiler().popPush("twoHanded");
+            ItemStack mainHandStack = this.mc.player.getMainHandItem();
+            if (mainHandStack.getItem() instanceof ITwoHanded twoHanded &&
+                twoHanded.isTwoHanded(mainHandStack) &&
+                !this.mc.player.getOffhandItem().isEmpty()) {
+                this.mainhandCooldownTime = 0;
+                this.mc.missTime = Integer.MAX_VALUE;
+                this.mc.player.displayClientMessage(EvolutionTexts.ACTION_TWO_HANDED, true);
+            }
+            //Prevents the player from attacking if on cooldown
+            this.mc.getProfiler().popPush("cooldown");
+            boolean isSpecialAttacking = ((ILivingEntityPatch) this.mc.player).shouldRenderSpecialAttack();
+            if (this.wasSpecialAttacking && !isSpecialAttacking) {
+                this.resetCooldown(InteractionHand.MAIN_HAND);
+            }
+            if (this.getMainhandIndicatorPercentage(0.0F) != 1 &&
+                this.mc.hitResult != null &&
+                this.mc.hitResult.getType() != HitResult.Type.BLOCK) {
+                this.mc.missTime = Integer.MAX_VALUE;
+            }
+            this.wasSpecialAttacking = isSpecialAttacking;
+            this.mc.getProfiler().pop();
+        }
     }
 
     public void renderTooltip(ItemStack stack, List<Either<FormattedText, TooltipComponent>> tooltip) {
@@ -1284,6 +1188,30 @@ public class ClientEvents {
                 player.startSpecialAttack(type);
             }
         }
+    }
+
+    /**
+     * @return Whether the main tick method should return prematurely.
+     */
+    private boolean tickStart() {
+        this.mc.getProfiler().push("init");
+        if (this.mc.player == null) {
+            this.initialized = false;
+            this.clearMemory();
+            this.mc.getProfiler().pop();
+            return true;
+        }
+        if (this.mc.level == null) {
+            this.updateClientTickrate(TickrateChanger.DEFAULT_TICKRATE);
+            this.mc.getProfiler().pop();
+            return true;
+        }
+        if (!this.initialized) {
+            this.init();
+            this.initialized = true;
+        }
+        this.mc.getProfiler().pop();
+        return false;
     }
 
     private void updateBackItem() {

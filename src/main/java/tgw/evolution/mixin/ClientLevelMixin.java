@@ -1,5 +1,9 @@
 package tgw.evolution.mixin;
 
+import net.minecraft.CrashReport;
+import net.minecraft.CrashReportCategory;
+import net.minecraft.ReportedException;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -10,6 +14,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.AmbientParticleSettings;
 import net.minecraft.world.level.block.Block;
@@ -17,10 +22,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.WritableLevelData;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.events.ClientEvents;
+import tgw.evolution.patches.IMinecraftPatch;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -30,11 +37,91 @@ import java.util.function.Supplier;
 @Mixin(ClientLevel.class)
 public abstract class ClientLevelMixin extends Level {
 
+    @Shadow @Final private Minecraft minecraft;
+
     public ClientLevelMixin(WritableLevelData pLevelData,
                             ResourceKey<Level> pDimension,
                             Holder<DimensionType> pDimensionTypeRegistration,
                             Supplier<ProfilerFiller> pProfiler, boolean pIsClientSide, boolean pIsDebug, long pBiomeZoomSeed) {
         super(pLevelData, pDimension, pDimensionTypeRegistration, pProfiler, pIsClientSide, pIsDebug, pBiomeZoomSeed);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Override
+    @Overwrite
+    public void addAlwaysVisibleParticle(ParticleOptions particleData,
+                                         double x,
+                                         double y,
+                                         double z,
+                                         double velX,
+                                         double velY,
+                                         double velZ) {
+        ((IMinecraftPatch) this.minecraft).lvlRenderer().listener().addParticle(particleData, false, true, x, y, z, velX, velY, velZ);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Override
+    @Overwrite
+    public void addAlwaysVisibleParticle(ParticleOptions particleData,
+                                         boolean ignoreRange,
+                                         double x,
+                                         double y,
+                                         double z,
+                                         double velX,
+                                         double velY,
+                                         double velZ) {
+        ((IMinecraftPatch) this.minecraft)
+                .lvlRenderer()
+                .listener()
+                .addParticle(particleData, particleData.getType().getOverrideLimiter() || ignoreRange, true, x, y, z, velX, velY, velZ);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Override
+    @Overwrite
+    public void addParticle(ParticleOptions particleData, double x, double y, double z, double velX, double velY, double velZ) {
+        ((IMinecraftPatch) this.minecraft).lvlRenderer()
+                                          .listener()
+                                          .addParticle(particleData, particleData.getType().getOverrideLimiter(), false, x, y, z, velX, velY, velZ);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Override
+    @Overwrite
+    public void addParticle(ParticleOptions particleData,
+                            boolean force,
+                            double x,
+                            double y,
+                            double z,
+                            double velX,
+                            double velY,
+                            double velZ) {
+        ((IMinecraftPatch) this.minecraft)
+                .lvlRenderer()
+                .listener()
+                .addParticle(particleData, particleData.getType().getOverrideLimiter() || force, false, x, y, z, velX, velY, velZ);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Override
+    @Overwrite
+    public void destroyBlockProgress(int breakerId, BlockPos pos, int progress) {
+        ((IMinecraftPatch) this.minecraft).lvlRenderer().destroyBlockProgress(breakerId, pos, progress);
     }
 
     /**
@@ -94,6 +181,67 @@ public abstract class ClientLevelMixin extends Level {
         float f = 1.0F - (Mth.cos(timeOfDay * Mth.TWO_PI) * 2.0F + 0.25F);
         f = Mth.clamp(f, 0, 1);
         return f * f * 0.5F;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Override
+    @Overwrite
+    public void globalLevelEvent(int id, BlockPos pos, int data) {
+        ((IMinecraftPatch) this.minecraft).lvlRenderer().globalLevelEvent(id, pos, data);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Override
+    @Overwrite
+    public void levelEvent(@Nullable Player player, int type, BlockPos pos, int data) {
+        try {
+            ((IMinecraftPatch) this.minecraft).lvlRenderer().levelEvent(type, pos, data);
+        }
+        catch (Throwable t) {
+            CrashReport crash = CrashReport.forThrowable(t, "Playing level event");
+            CrashReportCategory category = crash.addCategory("Level event being played");
+            category.setDetail("Block coordinates", CrashReportCategory.formatLocation(this, pos));
+            //noinspection ConstantConditions
+            category.setDetail("Event source", player);
+            category.setDetail("Event type", type);
+            category.setDetail("Event data", data);
+            throw new ReportedException(crash);
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Override
+    @Overwrite
+    public void sendBlockUpdated(BlockPos pos, BlockState oldState, BlockState newState, int flags) {
+        ((IMinecraftPatch) this.minecraft).lvlRenderer().blockChanged(this, pos, oldState, newState, flags);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Override
+    @Overwrite
+    public void setBlocksDirty(BlockPos pos, BlockState oldState, BlockState newState) {
+        ((IMinecraftPatch) this.minecraft).lvlRenderer().setBlockDirty(pos, oldState, newState);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Overwrite
+    public void setSectionDirtyWithNeighbors(int sectionX, int sectionY, int sectionZ) {
+        ((IMinecraftPatch) this.minecraft).lvlRenderer().setSectionDirtyWithNeighbors(sectionX, sectionY, sectionZ);
     }
 
     @Shadow

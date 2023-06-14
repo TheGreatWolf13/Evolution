@@ -3,7 +3,6 @@ package tgw.evolution.client.renderer.tile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -15,6 +14,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import tgw.evolution.blocks.tileentities.SchematicMode;
 import tgw.evolution.blocks.tileentities.TESchematic;
+import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 
 public class RenderTESchematic implements BlockEntityRenderer<TESchematic> {
 
@@ -38,13 +38,13 @@ public class RenderTESchematic implements BlockEntityRenderer<TESchematic> {
                 double y1 = (mutable.getY() - tilePos.getY()) + 0.55F + size;
                 double z1 = (mutable.getZ() - tilePos.getZ()) + 0.55F + size;
                 if (bool) {
-                    LevelRenderer.renderLineBox(matrices, buffer, x0, y0, z0, x1, y1, z1, 0.0F, 0.0F, 0.0F, 1.0F);
+                    EvLevelRenderer.renderLineBox(matrices, buffer, x0, y0, z0, x1, y1, z1, 0.0F, 0.0F, 0.0F, 1.0F);
                 }
                 else if (isAir) {
-                    LevelRenderer.renderLineBox(matrices, buffer, x0, y0, z0, x1, y1, z1, 0.5F, 0.5F, 1.0F, 1.0F);
+                    EvLevelRenderer.renderLineBox(matrices, buffer, x0, y0, z0, x1, y1, z1, 0.5F, 0.5F, 1.0F, 1.0F);
                 }
                 else {
-                    LevelRenderer.renderLineBox(matrices, buffer, x0, y0, z0, x1, y1, z1, 1.0F, 0.25F, 0.25F, 1.0F);
+                    EvLevelRenderer.renderLineBox(matrices, buffer, x0, y0, z0, x1, y1, z1, 1.0F, 0.25F, 0.25F, 1.0F);
                 }
             }
         }
@@ -109,21 +109,21 @@ public class RenderTESchematic implements BlockEntityRenderer<TESchematic> {
                     }
                     VertexConsumer drawBuffer = buffer.getBuffer(RenderType.lines());
                     if (tile.getMode() == SchematicMode.SAVE || tile.showsBoundingBox()) {
-                        LevelRenderer.renderLineBox(matrices,
-                                                    drawBuffer,
-                                                    startingX,
-                                                    startingY,
-                                                    startingZ,
-                                                    endX,
-                                                    endY,
-                                                    endZ,
-                                                    0.9f,
-                                                    0.9f,
-                                                    0.9f,
-                                                    1.0f,
-                                                    0.5f,
-                                                    0.5f,
-                                                    0.5f);
+                        EvLevelRenderer.renderLineBox(matrices,
+                                                      drawBuffer,
+                                                      startingX,
+                                                      startingY,
+                                                      startingZ,
+                                                      endX,
+                                                      endY,
+                                                      endZ,
+                                                      0.9f,
+                                                      0.9f,
+                                                      0.9f,
+                                                      1.0f,
+                                                      0.5f,
+                                                      0.5f,
+                                                      0.5f);
                     }
                     if (tile.getMode() == SchematicMode.SAVE && tile.showsAir()) {
                         renderInvisibleBlocks(tile, drawBuffer, schematicPos, true, matrices);

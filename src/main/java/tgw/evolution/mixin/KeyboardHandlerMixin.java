@@ -1,5 +1,6 @@
 package tgw.evolution.mixin;
 
+import com.google.common.base.MoreObjects;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
@@ -7,11 +8,17 @@ import net.minecraft.ReportedException;
 import net.minecraft.Util;
 import net.minecraft.client.*;
 import net.minecraft.client.gui.chat.NarratorChatListener;
+import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.SimpleOptionsSubScreen;
 import net.minecraft.client.gui.screens.controls.KeyBindsScreen;
+import net.minecraft.client.gui.screens.debug.GameModeSwitcherScreen;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.GameType;
 import net.minecraftforge.client.ForgeHooksClient;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Final;
@@ -23,10 +30,13 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.client.util.Action;
 import tgw.evolution.client.util.Key;
 import tgw.evolution.client.util.Modifiers;
+import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.patches.INarratorChatListenerPatch;
 
+import java.util.Locale;
+
 @Mixin(KeyboardHandler.class)
-public abstract class KeyboardListenerMixin {
+public abstract class KeyboardHandlerMixin {
 
     @Shadow
     private long debugCrashKeyReportedCount;
@@ -53,15 +63,8 @@ public abstract class KeyboardListenerMixin {
             Screen screen = this.minecraft.screen;
             if (screen != null && this.minecraft.getOverlay() == null) {
                 if (Character.charCount(codePoint) == 1) {
-                    outer:
                     try {
-                        if (ForgeHooksClient.onScreenCharTypedPre(screen, (char) codePoint, mod)) {
-                            break outer;
-                        }
-                        if (screen.charTyped((char) codePoint, mod)) {
-                            break outer;
-                        }
-                        ForgeHooksClient.onScreenCharTypedPost(screen, (char) codePoint, mod);
+                        screen.charTyped((char) codePoint, mod);
                     }
                     catch (Throwable t) {
                         CrashReport crashReport = CrashReport.forThrowable(t, "charTyped event handler");
@@ -72,15 +75,8 @@ public abstract class KeyboardListenerMixin {
                 }
                 else {
                     for (char c0 : Character.toChars(codePoint)) {
-                        outer:
                         try {
-                            if (ForgeHooksClient.onScreenCharTypedPre(screen, c0, mod)) {
-                                break outer;
-                            }
-                            if (screen.charTyped(c0, mod)) {
-                                break outer;
-                            }
-                            ForgeHooksClient.onScreenCharTypedPost(screen, c0, mod);
+                            screen.charTyped(c0, mod);
                         }
                         catch (Throwable t) {
                             CrashReport crashReport = CrashReport.forThrowable(t, "charTyped event handler");
@@ -96,7 +92,187 @@ public abstract class KeyboardListenerMixin {
     }
 
     @Shadow
-    protected abstract boolean handleDebugKeys(int pKey);
+    protected abstract void copyRecreateCommand(boolean pPrivileged, boolean pAskServer);
+
+    @Shadow
+    protected abstract void debugFeedback(String pMessage, Object... pArgs);
+
+    @Shadow
+    protected abstract void debugFeedbackComponent(Component p_167823_);
+
+    @Shadow
+    protected abstract void debugFeedbackTranslated(String pMessage, Object... pArgs);
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer.
+     */
+    @Overwrite
+    private boolean handleChunkDebugKeys(@Key int keycode) {
+        return switch (keycode) {
+            case 69 -> {
+                this.minecraft.chunkPath = !this.minecraft.chunkPath;
+                this.debugFeedback("ChunkPath: {0}", this.minecraft.chunkPath ? "shown" : "hidden");
+                yield true;
+            }
+            case 76 -> {
+                this.minecraft.smartCull = !this.minecraft.smartCull;
+                this.debugFeedback("SmartCull: {0}", this.minecraft.smartCull ? "enabled" : "disabled");
+                yield true;
+            }
+            case 85 -> {
+                if (Screen.hasShiftDown()) {
+                    ((IMinecraftPatch) this.minecraft).lvlRenderer().killFrustum();
+                    this.debugFeedback("Killed frustum");
+                }
+                else {
+                    ((IMinecraftPatch) this.minecraft).lvlRenderer().captureFrustum();
+                    this.debugFeedback("Captured frustum");
+                }
+                yield true;
+            }
+            case 86 -> {
+                this.minecraft.chunkVisibility = !this.minecraft.chunkVisibility;
+                this.debugFeedback("ChunkVisibility: {0}", this.minecraft.chunkVisibility ? "enabled" : "disabled");
+                yield true;
+            }
+            case 87 -> {
+                this.minecraft.wireframe = !this.minecraft.wireframe;
+                this.debugFeedback("WireFrame: {0}", this.minecraft.wireframe ? "enabled" : "disabled");
+                yield true;
+            }
+            default -> false;
+        };
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Overwrite
+    private boolean handleDebugKeys(@Key int key) {
+        if (this.debugCrashKeyTime > 0L && this.debugCrashKeyTime < Util.getMillis() - 100L) {
+            return true;
+        }
+        return switch (key) {
+            case GLFW.GLFW_KEY_A -> {
+                ((IMinecraftPatch) this.minecraft).lvlRenderer().allChanged();
+                this.debugFeedbackTranslated("debug.reload_chunks.message");
+                yield true;
+            }
+            case GLFW.GLFW_KEY_B -> {
+                boolean flag = !this.minecraft.getEntityRenderDispatcher().shouldRenderHitBoxes();
+                this.minecraft.getEntityRenderDispatcher().setRenderHitBoxes(flag);
+                this.debugFeedbackTranslated(flag ? "debug.show_hitboxes.on" : "debug.show_hitboxes.off");
+                yield true;
+            }
+            case GLFW.GLFW_KEY_C -> {
+                assert this.minecraft.player != null;
+                if (this.minecraft.player.isReducedDebugInfo()) {
+                    yield false;
+                }
+                this.debugFeedbackTranslated("debug.copy_location.message");
+                this.setClipboard(String.format(Locale.ROOT, "/execute in %s run tp @s %.2f %.2f %.2f %.2f %.2f",
+                                                this.minecraft.player.level.dimension().location(), this.minecraft.player.getX(),
+                                                this.minecraft.player.getY(), this.minecraft.player.getZ(), this.minecraft.player.getYRot(),
+                                                this.minecraft.player.getXRot()));
+                yield true;
+            }
+            case GLFW.GLFW_KEY_D -> {
+                this.minecraft.gui.getChat().clearMessages(false);
+                yield true;
+            }
+            case GLFW.GLFW_KEY_F -> {
+                Option.RENDER_DISTANCE.set(this.minecraft.options, Mth.clamp(this.minecraft.options.renderDistance + (Screen.hasShiftDown() ? -1 : 1),
+                                                                             Option.RENDER_DISTANCE.getMinValue(),
+                                                                             Option.RENDER_DISTANCE.getMaxValue()));
+                this.debugFeedbackTranslated("debug.cycle_renderdistance.message", this.minecraft.options.renderDistance);
+                yield true;
+            }
+            case GLFW.GLFW_KEY_G -> {
+                this.debugFeedbackTranslated(
+                        this.minecraft.debugRenderer.switchRenderChunkborder() ? "debug.chunk_boundaries.on" : "debug.chunk_boundaries.off");
+                yield true;
+            }
+            case GLFW.GLFW_KEY_H -> {
+                this.minecraft.options.advancedItemTooltips = !this.minecraft.options.advancedItemTooltips;
+                this.debugFeedbackTranslated(
+                        this.minecraft.options.advancedItemTooltips ? "debug.advanced_tooltips.on" : "debug.advanced_tooltips.off");
+                this.minecraft.options.save();
+                yield true;
+            }
+            case GLFW.GLFW_KEY_I -> {
+                assert this.minecraft.player != null;
+                if (!this.minecraft.player.isReducedDebugInfo()) {
+                    this.copyRecreateCommand(this.minecraft.player.hasPermissions(2), !Screen.hasShiftDown());
+                }
+                yield true;
+            }
+            case GLFW.GLFW_KEY_L -> {
+                if (this.minecraft.debugClientMetricsStart(this::debugFeedbackComponent)) {
+                    this.debugFeedbackTranslated("debug.profiling.start", 10);
+                }
+                yield true;
+            }
+            case GLFW.GLFW_KEY_N -> {
+                assert this.minecraft.player != null;
+                if (!this.minecraft.player.hasPermissions(2)) {
+                    this.debugFeedbackTranslated("debug.creative_spectator.error");
+                }
+                else if (!this.minecraft.player.isSpectator()) {
+                    this.minecraft.player.chat("/gamemode spectator");
+                }
+                else {
+                    assert this.minecraft.gameMode != null;
+                    this.minecraft.player.chat(
+                            "/gamemode " + MoreObjects.firstNonNull(this.minecraft.gameMode.getPreviousPlayerMode(), GameType.CREATIVE).getName());
+                }
+                yield true;
+            }
+            case GLFW.GLFW_KEY_P -> {
+                this.minecraft.options.pauseOnLostFocus = !this.minecraft.options.pauseOnLostFocus;
+                this.minecraft.options.save();
+                this.debugFeedbackTranslated(this.minecraft.options.pauseOnLostFocus ? "debug.pause_focus.on" : "debug.pause_focus.off");
+                yield true;
+            }
+            case GLFW.GLFW_KEY_Q -> {
+                this.debugFeedbackTranslated("debug.help.message");
+                ChatComponent chat = this.minecraft.gui.getChat();
+                chat.addMessage(new TranslatableComponent("debug.reload_chunks.help"));
+                chat.addMessage(new TranslatableComponent("debug.show_hitboxes.help"));
+                chat.addMessage(new TranslatableComponent("debug.copy_location.help"));
+                chat.addMessage(new TranslatableComponent("debug.clear_chat.help"));
+                chat.addMessage(new TranslatableComponent("debug.cycle_renderdistance.help"));
+                chat.addMessage(new TranslatableComponent("debug.chunk_boundaries.help"));
+                chat.addMessage(new TranslatableComponent("debug.advanced_tooltips.help"));
+                chat.addMessage(new TranslatableComponent("debug.inspect.help"));
+                chat.addMessage(new TranslatableComponent("debug.profiling.help"));
+                chat.addMessage(new TranslatableComponent("debug.creative_spectator.help"));
+                chat.addMessage(new TranslatableComponent("debug.pause_focus.help"));
+                chat.addMessage(new TranslatableComponent("debug.help.help"));
+                chat.addMessage(new TranslatableComponent("debug.reload_resourcepacks.help"));
+                chat.addMessage(new TranslatableComponent("debug.pause.help"));
+                chat.addMessage(new TranslatableComponent("debug.gamemodes.help"));
+                yield true;
+            }
+            case GLFW.GLFW_KEY_T -> {
+                this.debugFeedbackTranslated("debug.reload_resourcepacks.message");
+                this.minecraft.reloadResourcePacks();
+                yield true;
+            }
+            case GLFW.GLFW_KEY_F4 -> {
+                assert this.minecraft.player != null;
+                if (!this.minecraft.player.hasPermissions(2)) {
+                    this.debugFeedbackTranslated("debug.gamemodes.error");
+                }
+                else {
+                    this.minecraft.setScreen(new GameModeSwitcherScreen());
+                }
+                yield true;
+            }
+            default -> false;
+        };
+    }
 
     /**
      * @author TheGreatWolf
@@ -204,7 +380,7 @@ public abstract class KeyboardListenerMixin {
                     }
                 }
                 else {
-                    if (key == GLFW.GLFW_KEY_F4 && this.minecraft.gameRenderer != null) {
+                    if (key == GLFW.GLFW_KEY_F4) {
                         this.minecraft.gameRenderer.togglePostEffect();
                     }
                     boolean flag3 = false;
@@ -240,4 +416,7 @@ public abstract class KeyboardListenerMixin {
     private void onKeyPress(GameRenderer gameRenderer) {
         //Do nothing. Disables the ability to remove shaders by pressing F4.
     }
+
+    @Shadow
+    public abstract void setClipboard(String pString);
 }

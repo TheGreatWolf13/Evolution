@@ -33,6 +33,7 @@ import tgw.evolution.client.util.Modifiers;
 import tgw.evolution.init.EvolutionFormatter;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.util.ConfigHelper;
 import tgw.evolution.util.collection.*;
 import tgw.evolution.util.math.MathHelper;
@@ -173,7 +174,7 @@ public class ScreenConfig extends ScreenListMenu {
         if (this.folderEntry.isRoot()) {
             this.saveButton = this.addRenderableWidget(new Button(this.width / 2 - 160, this.height - 29, 100, 20, this.textSave, button -> {
                 this.saveConfig();
-                this.minecraft.levelRenderer.allChanged();
+                ((IMinecraftPatch) this.minecraft).lvlRenderer().allChanged();
                 this.minecraft.setScreen(this.parent);
             }));
             this.restoreButton = this.addRenderableWidget(

@@ -1,13 +1,16 @@
 package tgw.evolution.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Matrix4f;
 import com.mojang.math.Quaternion;
 import net.minecraft.util.Mth;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tgw.evolution.patches.IPoseStackPatch;
+import tgw.evolution.util.collection.OArrayList;
+import tgw.evolution.util.collection.OList;
 import tgw.evolution.util.hitbox.hrs.HR;
 import tgw.evolution.util.math.MathHelper;
 
@@ -15,9 +18,28 @@ import java.util.Deque;
 
 @Mixin(PoseStack.class)
 public abstract class PoseStackMixin implements IPoseStackPatch, HR {
-    @Shadow
-    @Final
-    private Deque<PoseStack.Pose> poseStack;
+
+    @Mutable @Shadow @Final private Deque<PoseStack.Pose> poseStack;
+    @Unique private OList<PoseStack.Pose> poses;
+    @Unique private int size;
+
+    /**
+     * @author TheGreatWolf
+     * @reason Recycle Poses
+     */
+    @Overwrite
+    public boolean clear() {
+        return this.size == 1;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Recycle Poses
+     */
+    @Overwrite
+    public PoseStack.Pose last() {
+        return this.poses.get(this.size - 1);
+    }
 
     /**
      * @author JellySquid
@@ -25,9 +47,18 @@ public abstract class PoseStackMixin implements IPoseStackPatch, HR {
      */
     @Overwrite
     public void mulPose(Quaternion q) {
-        PoseStack.Pose entry = this.poseStack.getLast();
+        PoseStack.Pose entry = this.poses.get(this.size - 1);
         MathHelper.getExtendedMatrix(entry.pose()).rotate(q);
         MathHelper.getExtendedMatrix(entry.normal()).rotate(q);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Recycle Poses
+     */
+    @Overwrite
+    public void mulPoseMatrix(Matrix4f matrix) {
+        this.poses.get(this.size - 1).pose().multiply(matrix);
     }
 
     @Override
@@ -35,7 +66,7 @@ public abstract class PoseStackMixin implements IPoseStackPatch, HR {
         radian /= 2.0f;
         float i = (float) Math.sin(radian);
         float r = (float) Math.cos(radian);
-        PoseStack.Pose entry = this.poseStack.getLast();
+        PoseStack.Pose entry = this.poses.get(this.size - 1);
         MathHelper.getExtendedMatrix(entry.pose()).rotateX(i, r);
         MathHelper.getExtendedMatrix(entry.normal()).rotateX(i, r);
     }
@@ -45,7 +76,7 @@ public abstract class PoseStackMixin implements IPoseStackPatch, HR {
         radian /= 2.0f;
         float j = (float) Math.sin(radian);
         float r = (float) Math.cos(radian);
-        PoseStack.Pose entry = this.poseStack.getLast();
+        PoseStack.Pose entry = this.poses.get(this.size - 1);
         MathHelper.getExtendedMatrix(entry.pose()).rotateY(j, r);
         MathHelper.getExtendedMatrix(entry.normal()).rotateY(j, r);
     }
@@ -55,9 +86,51 @@ public abstract class PoseStackMixin implements IPoseStackPatch, HR {
         radian /= 2.0f;
         float k = (float) Math.sin(radian);
         float r = (float) Math.cos(radian);
-        PoseStack.Pose entry = this.poseStack.getLast();
+        PoseStack.Pose entry = this.poses.get(this.size - 1);
         MathHelper.getExtendedMatrix(entry.pose()).rotateZ(k, r);
         MathHelper.getExtendedMatrix(entry.normal()).rotateZ(k, r);
+    }
+
+    @Inject(method = "<init>", at = @At(value = "TAIL"))
+    private void onInit(CallbackInfo ci) {
+        this.poses = new OArrayList<>();
+        this.poses.add(this.poseStack.getLast());
+        this.size = 1;
+        //noinspection ConstantConditions
+        this.poseStack = null;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Recycle Poses
+     */
+    @Overwrite
+    public void popPose() {
+        --this.size;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Recycle Poses
+     */
+    @Overwrite
+    public void pushPose() {
+        PoseStack.Pose entry = this.poses.get(this.size - 1);
+        if (this.poses.size() > this.size) {
+            PoseStack.Pose newPose = this.poses.get(this.size++);
+            newPose.pose().load(entry.pose());
+            newPose.normal().load(entry.normal());
+        }
+        else {
+            this.poses.add(new PoseStack.Pose(entry.pose().copy(), entry.normal().copy()));
+            ++this.size;
+        }
+    }
+
+    @Override
+    public void reset() {
+        this.size = 1;
+        this.setIdentity();
     }
 
     @Override
@@ -81,7 +154,7 @@ public abstract class PoseStackMixin implements IPoseStackPatch, HR {
      */
     @Overwrite
     public void scale(float x, float y, float z) {
-        PoseStack.Pose pose = this.poseStack.getLast();
+        PoseStack.Pose pose = this.poses.get(this.size - 1);
         MathHelper.getExtendedMatrix(pose.pose()).scale(x, y, z);
         if (x == y && y == z) {
             if (x > 0.0F) {
@@ -101,8 +174,26 @@ public abstract class PoseStackMixin implements IPoseStackPatch, HR {
         this.scale(scaleX, scaleY, scaleZ);
     }
 
-    @Shadow
-    public abstract void translate(double pX, double pY, double pZ);
+    /**
+     * @author TheGreatWolf
+     * @reason Recycle Poses
+     */
+    @Overwrite
+    public void setIdentity() {
+        PoseStack.Pose entry = this.poses.get(this.size - 1);
+        entry.pose().setIdentity();
+        entry.normal().setIdentity();
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Recycle Poses
+     */
+    @Overwrite
+    public void translate(double x, double y, double z) {
+        PoseStack.Pose entry = this.poses.get(this.size - 1);
+        entry.pose().multiplyWithTranslation((float) x, (float) y, (float) z);
+    }
 
     @Override
     public void translateHR(float x, float y, float z) {

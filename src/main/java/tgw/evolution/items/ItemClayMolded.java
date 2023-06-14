@@ -45,7 +45,8 @@ public class ItemClayMolded extends ItemBlock {
             if (!level.isUnobstructed(EvolutionBlocks.PIT_KILN.get().defaultBlockState(), pos, selectionContext)) {
                 return InteractionResult.FAIL;
             }
-            if (!level.setBlock(pos, EvolutionBlocks.PIT_KILN.get().defaultBlockState(), BlockFlags.NOTIFY_UPDATE_AND_RERENDER)) {
+            if (!level.setBlock(pos, EvolutionBlocks.PIT_KILN.get().defaultBlockState(),
+                                BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.RERENDER)) {
                 return InteractionResult.FAIL;
             }
             TEPitKiln tile = (TEPitKiln) level.getBlockEntity(pos);

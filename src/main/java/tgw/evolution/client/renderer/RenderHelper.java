@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.block.model.BlockFaceUV;
 import net.minecraft.client.renderer.block.model.FaceBakery;
 import net.minecraft.resources.ResourceLocation;
 import tgw.evolution.util.collection.*;
+import tgw.evolution.util.constants.RenderLayer;
 
 import java.util.List;
 import java.util.function.Function;
@@ -36,9 +37,12 @@ public final class RenderHelper {
                                                   "Sampler10",
                                                   "Sampler11"};
 
+    public static final Supplier<ShaderInstance> SHADER_PARTICLE = GameRenderer::getParticleShader;
     public static final Supplier<ShaderInstance> SHADER_POSITION = GameRenderer::getPositionShader;
     public static final Supplier<ShaderInstance> SHADER_POSITION_COLOR = GameRenderer::getPositionColorShader;
     public static final Supplier<ShaderInstance> SHADER_POSITION_COLOR_TEX = GameRenderer::getPositionColorTexShader;
+    public static final Supplier<ShaderInstance> SHADER_POSITION_TEX_COLOR = GameRenderer::getPositionTexColorShader;
+    public static final Supplier<ShaderInstance> SHADER_POSITION_TEX_COLOR_NORMAL = GameRenderer::getPositionTexColorNormalShader;
     public static final Supplier<ShaderInstance> SHADER_POSITION_TEX = GameRenderer::getPositionTexShader;
 
     public static final Function<ResourceLocation, RenderType> RENDER_TYPE_ENTITY_CUTOUT_NO_CULL = RenderType::entityCutoutNoCull;
@@ -54,5 +58,16 @@ public final class RenderHelper {
     public static final ThreadLocal<List<BakedQuad>> MODEL_QUAD_HOLDER = ThreadLocal.withInitial(RArrayList::new);
 
     private RenderHelper() {
+    }
+
+    public static String renderLayerName(@RenderLayer int renderLayer) {
+        return switch (renderLayer) {
+            case RenderLayer.SOLID -> "RenderType[Solid]";
+            case RenderLayer.CUTOUT_MIPPED -> "RenderType[CutoutMipped]";
+            case RenderLayer.CUTOUT -> "RenderType[Cutout]";
+            case RenderLayer.TRANSLUCENT -> "RenderType[Translucent]";
+            case RenderLayer.TRIPWIRE -> "RenderType[Tripwire]";
+            default -> "null";
+        };
     }
 }

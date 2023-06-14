@@ -100,7 +100,7 @@ public class BlockDoublePlant extends BlockBush {
         BlockPos blockpos = doubleblockhalf == DoubleBlockHalf.LOWER ? pos.above() : pos.below();
         BlockState blockstate = level.getBlockState(blockpos);
         if (blockstate.getBlock() == this && blockstate.getValue(HALF) != doubleblockhalf) {
-            level.setBlock(blockpos, Blocks.AIR.defaultBlockState(), BlockFlags.NO_NEIGHBOR_DROPS + BlockFlags.NOTIFY_AND_UPDATE);
+            level.setBlock(blockpos, Blocks.AIR.defaultBlockState(), BlockFlags.NO_NEIGHBOR_DROPS | BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
             level.levelEvent(player, LevelEvent.PARTICLES_DESTROY_BLOCK, blockpos, Block.getId(blockstate));
             if (!level.isClientSide && !player.isCreative()) {
                 dropResources(state, level, pos, null, player, player.getMainHandItem());
@@ -112,7 +112,7 @@ public class BlockDoublePlant extends BlockBush {
 
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack) {
-        level.setBlock(pos.above(), this.defaultBlockState().setValue(HALF, DoubleBlockHalf.UPPER), BlockFlags.NOTIFY_AND_UPDATE);
+        level.setBlock(pos.above(), this.defaultBlockState().setValue(HALF, DoubleBlockHalf.UPPER), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
     }
 
     @Override

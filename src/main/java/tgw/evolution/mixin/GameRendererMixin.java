@@ -2,6 +2,7 @@ package tgw.evolution.mixin;
 
 import com.google.gson.JsonSyntaxException;
 import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -14,7 +15,9 @@ import net.minecraft.ReportedException;
 import net.minecraft.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.Screenshot;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.resources.ResourceLocation;
@@ -22,6 +25,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -37,14 +41,17 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.client.gui.EvolutionGui;
 import tgw.evolution.client.gui.overlays.Overlays;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
+import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.patches.IGameRendererPatch;
+import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.patches.IPoseStackPatch;
 import tgw.evolution.util.collection.I2OMap;
 import tgw.evolution.util.collection.I2OOpenHashMap;
 import tgw.evolution.util.math.MathHelper;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Locale;
 
 @SuppressWarnings("MethodMayBeStatic")
@@ -57,11 +64,17 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
     @Shadow
     @Final
     private static Logger LOGGER;
+    @Unique private final PoseStack matrices = new PoseStack();
     private final I2OMap<PostChain> postEffects = new I2OOpenHashMap<>();
     @Shadow
     public boolean effectActive;
+    @Shadow @Final public ItemInHandRenderer itemInHandRenderer;
+    @Shadow private float darkenWorldAmount;
+    @Shadow private float darkenWorldAmountO;
     @Shadow
     private int effectIndex;
+    @Shadow @javax.annotation.Nullable private ItemStack itemActivationItem;
+    @Shadow private int itemActivationTicks;
     @Shadow
     private long lastActiveTime;
     @Mutable
@@ -219,7 +232,7 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
      * makes a check of its own. This allows us to render gui elements which should always remain on the screen (such as helmet overlays).
      */
     @Overwrite
-    public void render(float partialTicks, long nanoTime, boolean renderLevel) {
+    public void render(float partialTicks, long startTime, boolean renderLevel) {
         if (!this.minecraft.isWindowActive() &&
             this.minecraft.options.pauseOnLostFocus &&
             (!this.minecraft.options.touchscreen || !this.minecraft.mouseHandler.isRightPressed())) {
@@ -243,9 +256,10 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
             boolean setupHud = false;
             if (renderLevel && this.minecraft.level != null) {
                 this.minecraft.getProfiler().push("level");
-                this.renderLevel(partialTicks, nanoTime, new PoseStack());
+                ((IPoseStackPatch) this.matrices).reset();
+                this.renderLevel(partialTicks, startTime, this.matrices);
                 this.tryTakeScreenshotIfNeeded();
-                this.minecraft.levelRenderer.doEntityOutline();
+                ((IMinecraftPatch) this.minecraft).lvlRenderer().doEntityOutline();
                 RenderSystem.clear(GL11C.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
                 Matrix4f orthoMat = Matrix4f.orthographic(0.0F, (float) (width / guiScale), 0.0F, (float) (height / guiScale), 1_000.0F,
                                                           ForgeHooksClient.getGuiFarPlane());
@@ -256,7 +270,8 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
                 RenderSystem.applyModelViewMatrix();
                 Lighting.setupFor3DItems();
                 setupHud = true;
-                Overlays.renderAllGame(this.minecraft, (EvolutionGui) this.minecraft.gui, new PoseStack(), partialTicks, guiScaledWidth,
+                ((IPoseStackPatch) this.matrices).reset();
+                Overlays.renderAllGame(this.minecraft, (EvolutionGui) this.minecraft.gui, this.matrices, partialTicks, guiScaledWidth,
                                        guiScaledHeight);
                 if (this.effectActive) {
                     if (this.postEffect != null) {
@@ -287,7 +302,7 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
                 RenderSystem.applyModelViewMatrix();
                 Lighting.setupFor3DItems();
             }
-            PoseStack matrices = new PoseStack();
+            ((IPoseStackPatch) this.matrices).reset();
             if (renderLevel && this.minecraft.level != null) {
                 this.minecraft.getProfiler().popPush("gui");
                 if (this.minecraft.player != null) {
@@ -302,13 +317,13 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
                     this.renderItemActivationAnimation(guiScaledWidth, guiScaledHeight, partialTicks);
                 }
                 //Removed these two lines of code from the if block above and added them here
-                this.minecraft.gui.render(matrices, partialTicks);
+                this.minecraft.gui.render(this.matrices, partialTicks);
                 RenderSystem.clear(GL11C.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
                 this.minecraft.getProfiler().pop();
             }
             if (this.minecraft.getOverlay() != null) {
                 try {
-                    this.minecraft.getOverlay().render(matrices, mouseX, mouseY, this.minecraft.getDeltaFrameTime());
+                    this.minecraft.getOverlay().render(this.matrices, mouseX, mouseY, this.minecraft.getDeltaFrameTime());
                 }
                 catch (Throwable t) {
                     CrashReport crashReport = CrashReport.forThrowable(t, "Rendering overlay");
@@ -319,7 +334,7 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
             }
             else if (this.minecraft.screen != null) {
                 try {
-                    ForgeHooksClient.drawScreen(this.minecraft.screen, matrices, mouseX, mouseY, this.minecraft.getDeltaFrameTime());
+                    ForgeHooksClient.drawScreen(this.minecraft.screen, this.matrices, mouseX, mouseY, this.minecraft.getDeltaFrameTime());
                 }
                 catch (Throwable t) {
                     CrashReport crashReport = CrashReport.forThrowable(t, "Rendering screen");
@@ -359,7 +374,7 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
      * @reason Remove references to hand rendering, as even if we cancel the event, a lot of calculations still run.
      */
     @Overwrite
-    public void renderLevel(float partialTicks, long finishTimeNano, PoseStack matrices) {
+    public void renderLevel(float partialTicks, long endTickTime, PoseStack matrices) {
         this.lightTexture.updateLightTexture(partialTicks);
         assert this.minecraft.player != null;
         if (this.minecraft.getCameraEntity() == null) {
@@ -388,24 +403,23 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
             float f2 = -(this.tick + partialTicks) * i;
             posestack.mulPose(vector3f.rotationDegrees(f2));
         }
-        Matrix4f matrix4f = posestack.last().pose();
-        this.resetProjectionMatrix(matrix4f);
+        Matrix4f projMatrix = posestack.last().pose();
+        this.resetProjectionMatrix(projMatrix);
         assert this.minecraft.level != null;
         camera.setup(this.minecraft.level,
                      this.minecraft.getCameraEntity() == null ? this.minecraft.player : this.minecraft.getCameraEntity(),
                      !this.minecraft.options.getCameraType().isFirstPerson(), this.minecraft.options.getCameraType().isMirrored(), partialTicks);
         IPoseStackPatch extendedMatrix = MathHelper.getExtendedMatrix(matrices);
-//        extendedMatrix.mulPoseZ(0);
         extendedMatrix.mulPoseX(camera.getXRot());
         extendedMatrix.mulPoseY(camera.getYRot() + 180.0F);
         Matrix3f matrix3f = matrices.last().normal().copy();
         if (matrix3f.invert()) {
             RenderSystem.setInverseViewRotationMatrix(matrix3f);
         }
-        this.minecraft.levelRenderer.prepareCullFrustum(matrices, camera.getPosition(),
-                                                        this.getProjectionMatrix(Math.max(fov, this.minecraft.options.fov)));
-        this.minecraft.levelRenderer.renderLevel(matrices, partialTicks, finishTimeNano, shouldRenderOutline, camera, (GameRenderer) (Object) this,
-                                                 this.lightTexture, matrix4f);
+        EvLevelRenderer levelRenderer = ((IMinecraftPatch) this.minecraft).lvlRenderer();
+        levelRenderer.prepareCullFrustum(matrices, camera.getPosition(), this.getProjectionMatrix(Math.max(fov, this.minecraft.options.fov)));
+        levelRenderer.renderLevel(matrices, partialTicks, endTickTime, shouldRenderOutline, camera, (GameRenderer) (Object) this,
+                                  this.lightTexture, projMatrix);
         this.minecraft.getProfiler().pop();
     }
 
@@ -424,7 +438,7 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
         for (PostChain shader : this.postEffects.values()) {
             shader.resize(width, height);
         }
-        this.minecraft.levelRenderer.resize(width, height);
+        ((IMinecraftPatch) this.minecraft).lvlRenderer().resize(width, height);
     }
 
     @Shadow
@@ -445,6 +459,93 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
             shader.close();
         }
     }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Overwrite
+    private void takeAutoScreenshot(Path path) {
+        EvLevelRenderer levelRenderer = ((IMinecraftPatch) this.minecraft).lvlRenderer();
+        if (levelRenderer.countRenderedChunks() > 10 && levelRenderer.hasRenderedAllChunks()) {
+            NativeImage screenshot = Screenshot.takeScreenshot(this.minecraft.getMainRenderTarget());
+            Util.ioPool().execute(() -> {
+                int i = screenshot.getWidth();
+                int j = screenshot.getHeight();
+                int k = 0;
+                int l = 0;
+                if (i > j) {
+                    k = (i - j) / 2;
+                    i = j;
+                }
+                else {
+                    l = (j - i) / 2;
+                    j = i;
+                }
+                try {
+                    NativeImage image = new NativeImage(64, 64, false);
+                    try {
+                        screenshot.resizeSubRectTo(k, l, i, j, image);
+                        image.writeToFile(path);
+                    }
+                    catch (Throwable t) {
+                        try {
+                            image.close();
+                        }
+                        catch (Throwable s) {
+                            t.addSuppressed(s);
+                        }
+                        throw t;
+                    }
+
+                    image.close();
+                }
+                catch (IOException e) {
+                    LOGGER.warn("Couldn't save auto screenshot", e);
+                }
+                finally {
+                    screenshot.close();
+                }
+            });
+        }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Overwrite
+    public void tick() {
+        this.tickFov();
+        this.lightTexture.tick();
+        if (this.minecraft.getCameraEntity() == null) {
+            assert this.minecraft.player != null;
+            this.minecraft.setCameraEntity(this.minecraft.player);
+        }
+        this.mainCamera.tick();
+        ++this.tick;
+        this.itemInHandRenderer.tick();
+        ((IMinecraftPatch) this.minecraft).lvlRenderer().tickRain(this.mainCamera);
+        this.darkenWorldAmountO = this.darkenWorldAmount;
+        if (this.minecraft.gui.getBossOverlay().shouldDarkenScreen()) {
+            this.darkenWorldAmount += 0.05F;
+            if (this.darkenWorldAmount > 1) {
+                this.darkenWorldAmount = 1.0F;
+            }
+        }
+        else if (this.darkenWorldAmount > 0) {
+            this.darkenWorldAmount -= 0.012_5F;
+        }
+        if (this.itemActivationTicks > 0) {
+            --this.itemActivationTicks;
+            if (this.itemActivationTicks == 0) {
+                this.itemActivationItem = null;
+            }
+        }
+    }
+
+    @Shadow
+    protected abstract void tickFov();
 
     @Shadow
     protected abstract void tryTakeScreenshotIfNeeded();

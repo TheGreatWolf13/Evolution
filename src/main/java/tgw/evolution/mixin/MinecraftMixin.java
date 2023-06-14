@@ -1,21 +1,21 @@
 package tgw.evolution.mixin;
 
+import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.logging.LogUtils;
 import com.mojang.math.Matrix4f;
-import net.minecraft.CrashReport;
-import net.minecraft.CrashReportCategory;
-import net.minecraft.ReportedException;
-import net.minecraft.Util;
+import net.minecraft.*;
 import net.minecraft.client.*;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.chat.NarratorChatListener;
 import net.minecraft.client.gui.components.toasts.ToastComponent;
 import net.minecraft.client.gui.components.toasts.TutorialToast;
+import net.minecraft.client.gui.font.FontManager;
 import net.minecraft.client.gui.screens.*;
 import net.minecraft.client.gui.screens.advancements.AdvancementsScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
@@ -27,7 +27,12 @@ import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.resources.MobEffectTextureManager;
+import net.minecraft.client.resources.PaintingTextureManager;
+import net.minecraft.client.resources.language.LanguageManager;
+import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.client.searchtree.SearchRegistry;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.client.sounds.MusicManager;
@@ -36,18 +41,24 @@ import net.minecraft.client.tutorial.Tutorial;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.Connection;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
-import net.minecraft.util.FrameTimer;
-import net.minecraft.util.MemoryReserve;
-import net.minecraft.util.Mth;
+import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.repository.PackRepository;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.server.packs.resources.ReloadableResourceManager;
+import net.minecraft.util.*;
 import net.minecraft.util.profiling.ProfileResults;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.util.profiling.ResultField;
 import net.minecraft.util.profiling.SingleTickProfiler;
+import net.minecraft.util.profiling.metrics.profiling.ActiveMetricsRecorder;
+import net.minecraft.util.profiling.metrics.profiling.InactiveMetricsRecorder;
 import net.minecraft.util.profiling.metrics.profiling.MetricsRecorder;
+import net.minecraft.util.profiling.metrics.storage.MetricsPersister;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -57,22 +68,19 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.client.ForgeHooksClient;
-import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.server.ServerLifecycleHooks;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.client.gui.ScreenCrash;
 import tgw.evolution.client.gui.ScreenOutOfMemory;
 import tgw.evolution.client.renderer.ICrashReset;
 import tgw.evolution.client.renderer.RenderHelper;
+import tgw.evolution.client.renderer.chunk.EvClientMetricsSamplersProvider;
+import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.init.EvolutionNetwork;
 import tgw.evolution.items.ICancelableUse;
@@ -84,10 +92,12 @@ import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Metric;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -107,9 +117,8 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     @Final
     private static Logger LOGGER;
-    @Shadow
-    @Nullable
-    public Entity crosshairPickEntity;
+    @Shadow @Final private static CompletableFuture<Unit> RESOURCE_RELOAD_INITIAL_TASK;
+    @Shadow public @Nullable Entity crosshairPickEntity;
     @Shadow
     @Final
     public Font font;
@@ -136,9 +145,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     @Nullable
     public ClientLevel level;
-    @Shadow
-    @Final
-    public LevelRenderer levelRenderer;
     @Shadow
     public int missTime;
     @Shadow
@@ -168,12 +174,14 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     public Timer timer;
     private boolean attackKeyPressed;
     private int attackKeyTicks;
+    @Shadow @Final private BlockEntityRenderDispatcher blockEntityRenderDispatcher;
     private int cancelUseCooldown;
     @Shadow
     private String debugPath;
     @Shadow
     @Nullable
     private Supplier<CrashReport> delayedCrash;
+    @Shadow @Final private FontManager fontManager;
     @Shadow
     @Nullable
     private ProfileResults fpsPieResults;
@@ -183,15 +191,22 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     private Thread gameThread;
     @Shadow
     private boolean isLocalServer;
+    @Shadow @Final private LanguageManager languageManager;
+    @Unique private int lastFrameRateLimit = 60;
     @Shadow
     private long lastNanoTime;
     @Shadow
     private long lastTime;
+    @Shadow @Final private String launchedVersion;
+    @Unique
+    private EvLevelRenderer lvlRenderer;
     @Shadow
     @Final
     private RenderTarget mainRenderTarget;
     @Shadow
     private MetricsRecorder metricsRecorder;
+    @Shadow @Final private MobEffectTextureManager mobEffectTextures;
+    @Shadow @Final private ModelManager modelManager;
     private boolean multiplayerPause;
     @Shadow
     @Final
@@ -199,6 +214,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     @Nullable
     private Overlay overlay;
+    @Shadow @Final private PaintingTextureManager paintingTextures;
     @Shadow
     private boolean pause;
     @Shadow
@@ -212,6 +228,11 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     @Final
     private Queue<Runnable> progressTasks;
+    @Shadow @Final private PeriodicNotificationManager regionalCompliancies;
+    @Shadow @Final private ResourceLoadStateTracker reloadStateTracker;
+    @Shadow @Final private RenderBuffers renderBuffers;
+    @Shadow @Final private ReloadableResourceManager resourceManager;
+    @Shadow @Final private PackRepository resourcePackRepository;
     @Shadow
     private int rightClickDelay;
     @Shadow
@@ -234,6 +255,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     @Final
     private Tutorial tutorial;
+    @Shadow @Final private VirtualScreen virtualScreen;
     @Shadow
     @Final
     private Window window;
@@ -244,6 +266,14 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
 
     @Shadow
     public static void crash(CrashReport p_71377_0_) {
+        throw new AbstractMethodError();
+    }
+
+    @Shadow
+    private static SystemReport fillSystemReport(SystemReport pReport,
+                                                 @Nullable Minecraft pMinecraft,
+                                                 @Nullable LanguageManager pLanguageManager,
+                                                 String pLaunchVersion, Options pOptions) {
         throw new AbstractMethodError();
     }
 
@@ -272,10 +302,45 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     }
 
     @Shadow
+    protected abstract Path archiveProfilingReport(SystemReport p_167857_, List<Path> p_167858_);
+
+    @Shadow
     public abstract void clearLevel(Screen p_213231_1_);
 
     @Shadow
     public abstract void clearResourcePacksOnError(Throwable pThrowable, @Nullable Component pErrorMessage);
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Override
+    @Overwrite
+    public void close() {
+        try {
+            this.regionalCompliancies.close();
+            this.modelManager.close();
+            this.fontManager.close();
+            this.gameRenderer.close();
+            this.lvlRenderer.close();
+            this.soundManager.destroy();
+            this.resourcePackRepository.close();
+            this.particleEngine.close();
+            this.mobEffectTextures.close();
+            this.paintingTextures.close();
+            this.textureManager.close();
+            this.resourceManager.close();
+            Util.shutdownExecutors();
+        }
+        catch (Throwable throwable) {
+            LOGGER.error("Shutdown failure!", throwable);
+            throw throwable;
+        }
+        finally {
+            this.virtualScreen.close();
+            this.window.close();
+        }
+    }
 
     @Shadow
     protected abstract ProfilerFiller constructProfiler(boolean p_167971_, @Nullable SingleTickProfiler p_167972_);
@@ -297,21 +362,10 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
                 BlockPos hitPos = blockRayTrace.getBlockPos();
                 if (!this.level.isEmptyBlock(hitPos) && !((ILivingEntityPatch) this.player).shouldRenderSpecialAttack()) {
-                    InputEvent.ClickInputEvent inputEvent = ForgeHooksClient.onClickInput(GLFW.GLFW_MOUSE_BUTTON_1, this.options.keyAttack,
-                                                                                          InteractionHand.MAIN_HAND);
-                    if (inputEvent.isCanceled()) {
-                        if (inputEvent.shouldSwingHand()) {
-                            this.particleEngine.addBlockHitEffects(hitPos, blockRayTrace);
-                            this.player.swing(InteractionHand.MAIN_HAND);
-                        }
-                        return;
-                    }
                     Direction face = blockRayTrace.getDirection();
                     if (this.gameMode.continueDestroyBlock(hitPos, face)) {
-                        if (inputEvent.shouldSwingHand()) {
-                            this.particleEngine.addBlockHitEffects(hitPos, blockRayTrace);
-                            this.player.swing(InteractionHand.MAIN_HAND);
-                        }
+                        this.particleEngine.addBlockHitEffects(hitPos, blockRayTrace);
+                        this.player.swing(InteractionHand.MAIN_HAND);
                     }
                 }
             }
@@ -321,8 +375,60 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         }
     }
 
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Overwrite
+    public boolean debugClientMetricsStart(Consumer<TranslatableComponent> c) {
+        if (this.metricsRecorder.isRecording()) {
+            this.debugClientMetricsStop();
+            return false;
+        }
+        Consumer<ProfileResults> consumer = p -> {
+            int tickDuration = p.getTickDuration();
+            double d0 = p.getNanoDuration() / (double) TimeUtil.NANOSECONDS_PER_SECOND;
+            this.execute(() -> c.accept(new TranslatableComponent("commands.debug.stopped", String.format(Locale.ROOT, "%.2f", d0),
+                                                                  tickDuration, String.format(Locale.ROOT, "%.2f", tickDuration / d0))));
+        };
+        Consumer<Path> consumer1 = p -> {
+            Component component = new TextComponent(p.toString())
+                    .withStyle(ChatFormatting.UNDERLINE)
+                    .withStyle(s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, p.toFile().getParent())));
+            this.execute(() -> c.accept(new TranslatableComponent("debug.profiling.stop", component)));
+        };
+        SystemReport systemreport = fillSystemReport(new SystemReport(), (Minecraft) (Object) this, this.languageManager, this.launchedVersion,
+                                                     this.options);
+        Consumer<List<Path>> consumer2 = p -> {
+            Path path = this.archiveProfilingReport(systemreport, p);
+            consumer1.accept(path);
+        };
+        Consumer<Path> consumer3;
+        if (this.singleplayerServer == null) {
+            consumer3 = p -> consumer2.accept(ImmutableList.of(p));
+        }
+        else {
+            this.singleplayerServer.fillSystemReport(systemreport);
+            CompletableFuture<Path> completablefuture = new CompletableFuture<>();
+            CompletableFuture<Path> completablefuture1 = new CompletableFuture<>();
+            CompletableFuture.allOf(completablefuture,
+                                    completablefuture1)
+                             .thenRunAsync(() -> consumer2.accept(ImmutableList.of(completablefuture.join(),
+                                                                                   completablefuture1.join())), Util.ioPool());
+            this.singleplayerServer.startRecordingMetrics(p -> {}, completablefuture1::complete);
+            consumer3 = completablefuture::complete;
+        }
+        this.metricsRecorder = ActiveMetricsRecorder.createStarted(new EvClientMetricsSamplersProvider(Util.timeSource, this.lvlRenderer),
+                                                                   Util.timeSource, Util.ioPool(), new MetricsPersister("client"),
+                                                                   p_210757_ -> {
+                                                                       this.metricsRecorder = InactiveMetricsRecorder.INSTANCE;
+                                                                       consumer.accept(p_210757_);
+                                                                   }, consumer3);
+        return true;
+    }
+
     @Shadow
-    public abstract boolean debugClientMetricsStart(Consumer<TranslatableComponent> p_167947_);
+    protected abstract void debugClientMetricsStop();
 
     private void displayCrashScreen(CrashReport report) {
         try {
@@ -351,7 +457,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 MemoryReserve.release();
                 ((ICrashReset) Tesselator.getInstance().getBuilder()).resetAfterCrash();
                 ((ICrashReset) this.renderBuffers().bufferSource()).resetAfterCrash();
-                this.levelRenderer.clear();
+                this.lvlRenderer.clear();
             }
             catch (Throwable ignored) {
             }
@@ -400,6 +506,93 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     protected abstract int getFramerateLimit();
 
+    @Shadow
+    public abstract RenderTarget getMainRenderTarget();
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Overwrite
+    public Component grabPanoramixScreenshot(File directory, int width, int height) {
+        int i = this.window.getWidth();
+        int j = this.window.getHeight();
+        RenderTarget rendertarget = new TextureTarget(width, height, true, ON_OSX);
+        assert this.player != null;
+        float f = this.player.getXRot();
+        float f1 = this.player.getYRot();
+        float f2 = this.player.xRotO;
+        float f3 = this.player.yRotO;
+        this.gameRenderer.setRenderBlockOutline(false);
+        try {
+            this.gameRenderer.setPanoramicMode(true);
+            this.lvlRenderer.graphicsChanged();
+            this.window.setWidth(width);
+            this.window.setHeight(height);
+            for (int k = 0; k < 6; ++k) {
+                switch (k) {
+                    case 0 -> {
+                        this.player.setYRot(f1);
+                        this.player.setXRot(0.0F);
+                    }
+                    case 1 -> {
+                        this.player.setYRot((f1 + 90.0F) % 360.0F);
+                        this.player.setXRot(0.0F);
+                    }
+                    case 2 -> {
+                        this.player.setYRot((f1 + 180.0F) % 360.0F);
+                        this.player.setXRot(0.0F);
+                    }
+                    case 3 -> {
+                        this.player.setYRot((f1 - 90.0F) % 360.0F);
+                        this.player.setXRot(0.0F);
+                    }
+                    case 4 -> {
+                        this.player.setYRot(f1);
+                        this.player.setXRot(-90.0F);
+                    }
+                    default -> {
+                        this.player.setYRot(f1);
+                        this.player.setXRot(90.0F);
+                    }
+                }
+                this.player.yRotO = this.player.getYRot();
+                this.player.xRotO = this.player.getXRot();
+                rendertarget.bindWrite(true);
+                //noinspection ObjectAllocationInLoop
+                this.gameRenderer.renderLevel(1.0F, 0L, new PoseStack());
+                try {
+                    Thread.sleep(10L);
+                }
+                catch (InterruptedException ignored) {
+                }
+                //noinspection ObjectAllocationInLoop
+                Screenshot.grab(directory, "panorama_" + k + ".png", rendertarget, p_210769_ -> {
+                });
+            }
+            Component component = new TextComponent(directory.getName()).withStyle(ChatFormatting.UNDERLINE).withStyle(
+                    s -> s.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, directory.getAbsolutePath())));
+            return new TranslatableComponent("screenshot.success", component);
+        }
+        catch (Exception exception) {
+            LOGGER.error("Couldn't save image", exception);
+            return new TranslatableComponent("screenshot.failure", exception.getMessage());
+        }
+        finally {
+            this.player.setXRot(f);
+            this.player.setYRot(f1);
+            this.player.xRotO = f2;
+            this.player.yRotO = f3;
+            this.gameRenderer.setRenderBlockOutline(true);
+            this.window.setWidth(i);
+            this.window.setHeight(j);
+            rendertarget.destroyBuffers();
+            this.gameRenderer.setPanoramicMode(false);
+            this.lvlRenderer.graphicsChanged();
+            this.getMainRenderTarget().bindWrite(true);
+        }
+    }
+
     /**
      * @author TheGreatWolf
      * @reason Replace to handle Evolution's input.
@@ -410,7 +603,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         assert this.player != null;
         assert this.gameMode != null;
         assert this.getConnection() != null;
-        for (; this.options.keyTogglePerspective.consumeClick(); this.levelRenderer.needsUpdate()) {
+        for (; this.options.keyTogglePerspective.consumeClick(); this.lvlRenderer.needsUpdate()) {
             CameraType view = this.options.getCameraType();
             this.options.setCameraType(view.cycle());
             if (view.isFirstPerson() != this.options.getCameraType().isFirstPerson()) {
@@ -632,6 +825,19 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Shadow
     protected abstract boolean isMultiplayerServer();
 
+    @Override
+    public EvLevelRenderer lvlRenderer() {
+        return this.lvlRenderer;
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/packs/resources/ReloadableResourceManager;" +
+                                                                     "registerReloadListener(Lnet/minecraft/server/packs/resources" +
+                                                                     "/PreparableReloadListener;)V", ordinal = 15))
+    private void onInit(ReloadableResourceManager instance, PreparableReloadListener listener) {
+        this.lvlRenderer = new EvLevelRenderer((Minecraft) (Object) this, this.renderBuffers);
+        instance.registerReloadListener(this.lvlRenderer);
+    }
+
     @Shadow
     protected abstract void openChatScreen(String defaultText);
 
@@ -642,11 +848,38 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Overwrite
     private void pickBlock() {
         if (this.hitResult != null && this.hitResult.getType() != HitResult.Type.MISS) {
-            if (!ForgeHooksClient.onClickInput(GLFW.GLFW_MOUSE_BUTTON_3, this.options.keyPickItem, InteractionHand.MAIN_HAND).isCanceled()) {
-                assert this.player != null;
-                ForgeHooks.onPickBlock(this.hitResult, this.player, this.level);
-            }
+            assert this.player != null;
+            ForgeHooks.onPickBlock(this.hitResult, this.player, this.level);
         }
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Overwrite
+    private CompletableFuture<Void> reloadResourcePacks(boolean p_168020_) {
+        if (this.pendingReload != null) {
+            return this.pendingReload;
+        }
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        if (!p_168020_ && this.overlay instanceof LoadingOverlay) {
+            this.pendingReload = future;
+            return future;
+        }
+        this.resourcePackRepository.reload();
+        List<PackResources> list = this.resourcePackRepository.openAllSelected();
+        if (!p_168020_) {
+            this.reloadStateTracker.startReload(ResourceLoadStateTracker.ReloadReason.MANUAL, list);
+        }
+        this.setOverlay(new LoadingOverlay((Minecraft) (Object) this,
+                                           this.resourceManager.createReload(Util.backgroundExecutor(), this, RESOURCE_RELOAD_INITIAL_TASK, list),
+                                           t -> Util.ifElse(t, this::rollbackResourcePacks, () -> {
+                                               this.lvlRenderer.allChanged();
+                                               this.reloadStateTracker.finishReload();
+                                               future.complete(null);
+                                           }), true));
+        return future;
     }
 
     @SuppressWarnings("DeprecatedIsStillUsed")
@@ -761,6 +994,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         buffer.endBatch();
     }
 
+    @Shadow
+    protected abstract void rollbackResourcePacks(Throwable p_91240_);
+
     /**
      * @author TheGreatWolf
      * @reason Replaces Minecraft's run method to be able to catch more exceptions.
@@ -837,7 +1073,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     @Overwrite
     private void runTick(boolean shouldRender) {
         this.window.setErrorSection("Pre render");
-        long i = Util.getNanos();
+        long endTickTime = Util.getNanos() + 1_000_000_000L / this.lastFrameRateLimit;
         if (this.window.shouldClose()) {
             this.stop();
         }
@@ -846,8 +1082,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             this.pendingReload = null;
             this.reloadResourcePacks().thenRun(() -> completablefuture.complete(null));
         }
-        Runnable runnable;
-        while ((runnable = this.progressTasks.poll()) != null) {
+        for (Runnable runnable = this.progressTasks.poll(); runnable != null; runnable = this.progressTasks.poll()) {
             runnable.run();
         }
         if (shouldRender) {
@@ -877,13 +1112,11 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         RenderSystem.enableCull();
         this.profiler.pop();
         if (!this.noRender) {
-            ForgeEventFactory.onRenderTickStart(this.pause ? this.pausePartialTick : this.timer.partialTick);
             this.profiler.popPush("gameRenderer");
-            this.gameRenderer.render(this.pause ? this.pausePartialTick : this.timer.partialTick, i, shouldRender);
+            this.gameRenderer.render(this.pause ? this.pausePartialTick : this.timer.partialTick, endTickTime, shouldRender);
             this.profiler.popPush("toasts");
             this.toast.render(new PoseStack());
             this.profiler.pop();
-            ForgeEventFactory.onRenderTickEnd(this.pause ? this.pausePartialTick : this.timer.partialTick);
         }
         if (this.fpsPieResults != null) {
             this.profiler.push("fpsPie");
@@ -900,9 +1133,10 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         RenderSystem.applyModelViewMatrix();
         this.profiler.popPush("updateDisplay");
         this.window.updateDisplay();
-        int i1 = this.getFramerateLimit();
-        if (i1 < Option.FRAMERATE_LIMIT.getMaxValue()) {
-            RenderSystem.limitDisplayFPS(i1);
+        int fpsLimit = this.getFramerateLimit();
+        this.lastFrameRateLimit = Mth.clamp(fpsLimit, 1, 120);
+        if (fpsLimit < Option.FRAMERATE_LIMIT.getMaxValue()) {
+            RenderSystem.limitDisplayFPS(fpsLimit);
         }
         this.profiler.popPush("yield");
         Thread.yield();
@@ -948,6 +1182,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
     }
 
     @Shadow
+    public abstract void setOverlay(@Nullable Overlay pLoadingGui);
+
+    @Shadow
     public abstract void setScreen(@Nullable Screen screen);
 
     @Shadow
@@ -979,53 +1216,49 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             return true;
         }
         boolean shouldContinueAttacking = true;
-        InputEvent.ClickInputEvent inputEvent = ForgeHooksClient.onClickInput(GLFW.GLFW_MOUSE_BUTTON_1, this.options.keyAttack,
-                                                                              InteractionHand.MAIN_HAND);
-        if (!inputEvent.isCanceled()) {
-            switch (this.hitResult.getType()) {
-                case ENTITY: {
-                    assert this.gameMode != null;
-                    if (this.gameMode.getPlayerMode() != GameType.SPECTATOR) {
-                        if (!this.attackKeyPressed) {
-                            ClientEvents.getInstance().startShortAttack(this.player.getMainHandItem());
-                            inputEvent.setSwingHand(false);
-                        }
-                        else {
-                            return true;
-                        }
+        boolean swingHand = true;
+        switch (this.hitResult.getType()) {
+            case ENTITY: {
+                assert this.gameMode != null;
+                if (this.gameMode.getPlayerMode() != GameType.SPECTATOR) {
+                    if (!this.attackKeyPressed) {
+                        ClientEvents.getInstance().startShortAttack(this.player.getMainHandItem());
+                        swingHand = false;
                     }
                     else {
-                        assert this.crosshairPickEntity != null;
-                        this.gameMode.attack(this.player, this.crosshairPickEntity);
-                    }
-                    break;
-                }
-                case BLOCK: {
-                    BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
-                    BlockPos hitPos = blockRayTrace.getBlockPos();
-                    if (!this.level.isEmptyBlock(hitPos) && !((ILivingEntityPatch) this.player).shouldRenderSpecialAttack()) {
-                        this.gameMode.startDestroyBlock(hitPos, blockRayTrace.getDirection());
-                        if (this.level.getBlockState(hitPos).isAir()) {
-                            shouldContinueAttacking = false;
-                        }
-                        break;
-                    }
-                }
-                case MISS: {
-                    if (this.gameMode.hasMissTime()) {
-                        this.missTime = 10;
-                    }
-                    ForgeHooks.onEmptyLeftClick(this.player);
-                    if (this.attackKeyPressed) {
                         return true;
                     }
-                    ClientEvents.getInstance().startShortAttack(this.player.getMainHandItem());
-                    inputEvent.setSwingHand(false);
+                }
+                else {
+                    assert this.crosshairPickEntity != null;
+                    this.gameMode.attack(this.player, this.crosshairPickEntity);
+                }
+                break;
+            }
+            case BLOCK: {
+                BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
+                BlockPos hitPos = blockRayTrace.getBlockPos();
+                if (!this.level.isEmptyBlock(hitPos) && !((ILivingEntityPatch) this.player).shouldRenderSpecialAttack()) {
+                    this.gameMode.startDestroyBlock(hitPos, blockRayTrace.getDirection());
+                    if (this.level.getBlockState(hitPos).isAir()) {
+                        shouldContinueAttacking = false;
+                    }
                     break;
                 }
             }
+            case MISS: {
+                if (this.gameMode.hasMissTime()) {
+                    this.missTime = 10;
+                }
+                if (this.attackKeyPressed) {
+                    return true;
+                }
+                ClientEvents.getInstance().startShortAttack(this.player.getMainHandItem());
+                swingHand = false;
+                break;
+            }
         }
-        if (inputEvent.shouldSwingHand()) {
+        if (swingHand) {
             this.player.swing(InteractionHand.MAIN_HAND);
         }
         return shouldContinueAttacking;
@@ -1051,14 +1284,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                     return;
                 }
                 for (InteractionHand hand : MathHelper.HANDS_OFF_PRIORITY) {
-                    //noinspection ObjectAllocationInLoop
-                    InputEvent.ClickInputEvent inputEvent = ForgeHooksClient.onClickInput(GLFW.GLFW_MOUSE_BUTTON_2, this.options.keyUse, hand);
-                    if (inputEvent.isCanceled()) {
-                        if (inputEvent.shouldSwingHand()) {
-                            this.player.swing(hand);
-                        }
-                        return;
-                    }
                     ItemStack stack = this.player.getItemInHand(hand);
                     if (hand == InteractionHand.OFF_HAND && stack.isEmpty()) {
                         continue;
@@ -1073,9 +1298,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                             }
                             if (actionResult.consumesAction()) {
                                 if (actionResult.shouldSwing()) {
-                                    if (inputEvent.shouldSwingHand()) {
-                                        this.player.swing(hand);
-                                    }
+                                    this.player.swing(hand);
                                 }
                                 return;
                             }
@@ -1086,9 +1309,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                             InteractionResult actResult = this.gameMode.useItemOn(this.player, this.level, hand, blockRayTrace);
                             if (actResult.consumesAction()) {
                                 if (actResult.shouldSwing()) {
-                                    if (inputEvent.shouldSwingHand()) {
-                                        this.player.swing(hand);
-                                    }
+                                    this.player.swing(hand);
                                     if (!stack.isEmpty() && (stack.getCount() != count || this.gameMode.hasInfiniteItems())) {
                                         this.gameRenderer.itemInHandRenderer.itemUsed(hand);
                                     }
@@ -1102,10 +1323,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                     }
                 }
                 for (InteractionHand hand : MathHelper.HANDS_OFF_PRIORITY) {
-                    ItemStack stack = this.player.getItemInHand(hand);
-                    if (stack.isEmpty() && this.hitResult.getType() == HitResult.Type.MISS) {
-                        ForgeHooks.onEmptyClick(this.player, hand);
-                    }
                     if (hand == InteractionHand.MAIN_HAND) {
                         if (ClientEvents.getInstance().getMainhandIndicatorPercentage(0) < 1) {
                             return;
@@ -1116,6 +1333,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                             return;
                         }
                     }
+                    ItemStack stack = this.player.getItemInHand(hand);
                     if (!stack.isEmpty()) {
                         InteractionResult actionResult = this.gameMode.useItem(this.player, this.level, hand);
                         if (actionResult.consumesAction()) {
@@ -1144,7 +1362,10 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             --this.rightClickDelay;
         }
         this.profiler.push("preTick");
-        ForgeEventFactory.onPreClientTick();
+        ClientEvents client = ClientEvents.getInstanceNullable();
+        if (client != null) {
+            client.preClientTick();
+        }
         this.profiler.popPush("gui");
         this.gui.tick(this.pause);
         this.profiler.pop();
@@ -1184,7 +1405,15 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             this.missTime = 10_000;
         }
         if (this.screen != null) {
-            Screen.wrapScreenError(() -> this.screen.tick(), "Ticking screen", this.screen.getClass().getCanonicalName());
+            try {
+                this.screen.tick();
+            }
+            catch (Throwable t) {
+                CrashReport crash = CrashReport.forThrowable(t, "Ticking screen");
+                CrashReportCategory category = crash.addCategory("Affected screen");
+                category.setDetail("Screen name", this.screen.getClass().getCanonicalName());
+                throw new ReportedException(crash);
+            }
         }
         if (!this.options.renderDebug) {
             this.gui.clearCache();
@@ -1204,7 +1433,7 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
             }
             this.profiler.popPush("levelRenderer");
             if (!this.pause) {
-                this.levelRenderer.tick();
+                this.lvlRenderer.tick();
             }
             this.profiler.popPush("level");
             if (!this.pause) {
@@ -1224,10 +1453,10 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         if (this.level != null) {
             if (!this.pause) {
                 if (!this.options.joinedFirstServer && this.isMultiplayerServer()) {
-                    Component itextcomponent = new TranslatableComponent("tutorial.socialInteractions.title");
-                    Component itextcomponent1 = new TranslatableComponent("tutorial.socialInteractions.description",
-                                                                          Tutorial.key("socialInteractions"));
-                    this.socialInteractionsToast = new TutorialToast(TutorialToast.Icons.SOCIAL_INTERACTIONS, itextcomponent, itextcomponent1, true);
+                    Component title = new TranslatableComponent("tutorial.socialInteractions.title");
+                    Component message = new TranslatableComponent("tutorial.socialInteractions.description",
+                                                                  Tutorial.key("socialInteractions"));
+                    this.socialInteractionsToast = new TutorialToast(TutorialToast.Icons.SOCIAL_INTERACTIONS, title, message, true);
                     this.tutorial.addTimedToast(this.socialInteractionsToast, 160);
                     this.options.joinedFirstServer = true;
                     this.options.save();
@@ -1237,15 +1466,15 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                     this.level.tick(() -> true);
                 }
                 catch (Throwable t) {
-                    CrashReport crashReport = CrashReport.forThrowable(t, "Exception in world tick");
+                    CrashReport crash = CrashReport.forThrowable(t, "Exception in world tick");
                     if (this.level == null) {
-                        CrashReportCategory category = crashReport.addCategory("Affected level");
+                        CrashReportCategory category = crash.addCategory("Affected level");
                         category.setDetail("Problem", "Level is null!");
                     }
                     else {
-                        this.level.fillReportDetails(crashReport);
+                        this.level.fillReportDetails(crash);
                     }
-                    throw new ReportedException(crashReport);
+                    throw new ReportedException(crash);
                 }
             }
             this.profiler.popPush("animateTick");
@@ -1265,7 +1494,24 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         this.profiler.popPush("keyboard");
         this.keyboardHandler.tick();
         this.profiler.popPush("postTick");
-        ForgeEventFactory.onPostClientTick();
+        if (client != null) {
+            client.postClientTick();
+        }
         this.profiler.pop();
     }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Overwrite
+    private void updateLevelInEngines(@Nullable ClientLevel level) {
+        this.lvlRenderer.setLevel(level);
+        this.particleEngine.setLevel(level);
+        this.blockEntityRenderDispatcher.setLevel(level);
+        this.updateTitle();
+    }
+
+    @Shadow
+    public abstract void updateTitle();
 }

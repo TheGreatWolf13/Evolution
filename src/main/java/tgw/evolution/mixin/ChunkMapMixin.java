@@ -3,10 +3,7 @@ package tgw.evolution.mixin;
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.DataFixer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongIterator;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.*;
 import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
@@ -14,6 +11,7 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityLinkPacket;
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.server.level.*;
+import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.util.Mth;
 import net.minecraft.util.thread.BlockableEventLoop;
 import net.minecraft.world.entity.Entity;
@@ -46,6 +44,7 @@ import tgw.evolution.util.collection.OList;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
@@ -65,9 +64,11 @@ public abstract class ChunkMapMixin extends ChunkStorage {
     @Shadow
     @Final
     ServerLevel level;
+    @Shadow @Final private Long2LongMap chunkSaveCooldowns;
     @Shadow
     @Final
     private ChunkMap.DistanceManager distanceManager;
+    @Shadow @Final private LongSet entitiesInLevel;
     @Shadow
     @Final
     private Int2ObjectMap<ChunkMap.TrackedEntity> entityMap;
@@ -77,12 +78,15 @@ public abstract class ChunkMapMixin extends ChunkStorage {
     @Shadow
     @Final
     private BlockableEventLoop<Runnable> mainThreadExecutor;
+    @Shadow @Final private Long2ObjectLinkedOpenHashMap<ChunkHolder> pendingUnloads;
     @Shadow
     @Final
     private PlayerMap playerMap;
     @Shadow
     @Final
     private PoiManager poiManager;
+    @Shadow @Final private ChunkProgressListener progressListener;
+    @Shadow @Final private Queue<Runnable> unloadQueue;
     @Shadow
     @Final
     private Long2ObjectLinkedOpenHashMap<ChunkHolder> updatingChunkMap;
@@ -477,6 +481,41 @@ public abstract class ChunkMapMixin extends ChunkStorage {
 
     @Shadow
     protected abstract boolean saveChunkIfNeeded(ChunkHolder p_198875_);
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace event with direct method.
+     */
+    @Overwrite
+    private void scheduleUnload(long chunkPos, ChunkHolder holder) {
+        CompletableFuture<ChunkAccess> future = holder.getChunkToSave();
+        future.thenAcceptAsync(chunk -> {
+            if (holder.getChunkToSave() != future) {
+                this.scheduleUnload(chunkPos, holder);
+            }
+            else {
+                if (this.pendingUnloads.remove(chunkPos, holder) && chunk != null) {
+                    if (chunk instanceof LevelChunk c) {
+                        c.setLoaded(false);
+                        //Unload event
+                    }
+                    this.save(chunk);
+                    if (this.entitiesInLevel.remove(chunkPos) && chunk instanceof LevelChunk c) {
+                        this.level.unload(c);
+                    }
+                    this.lightEngine.updateChunkStatus(chunk.getPos());
+                    this.lightEngine.tryScheduleUpdate();
+                    this.progressListener.onStatusChange(chunk.getPos(), null);
+                    this.chunkSaveCooldowns.remove(chunkPos);
+                }
+
+            }
+        }, this.unloadQueue::add).whenComplete((v, t) -> {
+            if (t != null) {
+                LOGGER.error("Failed to save chunk {}", holder.getPos(), t);
+            }
+        });
+    }
 
     /**
      * @author TheGreatWolf

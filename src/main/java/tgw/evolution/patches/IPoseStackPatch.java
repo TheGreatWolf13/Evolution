@@ -21,4 +21,6 @@ public interface IPoseStackPatch {
     }
 
     void mulPoseZRad(float radian);
+
+    void reset();
 }

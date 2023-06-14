@@ -1,11 +1,14 @@
 package tgw.evolution.mixin;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkPacketData;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -21,8 +24,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+import tgw.evolution.client.renderer.chunk.EvModelDataManager;
 import tgw.evolution.patches.IClientChunkCachePatch;
 import tgw.evolution.patches.IClientChunkCache_StoragePatch;
+import tgw.evolution.patches.IMinecraftPatch;
 
 import java.util.function.Consumer;
 
@@ -56,7 +61,7 @@ public abstract class ClientChunkCacheMixin extends ChunkSource implements IClie
             int index = this.storage.getIndex(x, z);
             LevelChunk chunk = this.storage.getChunk(index);
             if (isValidChunk(chunk, x, z)) {
-                MinecraftForge.EVENT_BUS.post(new ChunkEvent.Unload(chunk));
+                EvModelDataManager.onChunkUnload(chunk);
                 this.storage.replace(index, chunk, null);
             }
         }
@@ -65,7 +70,7 @@ public abstract class ClientChunkCacheMixin extends ChunkSource implements IClie
                 int index = patch.getCameraIndex(x, z);
                 LevelChunk chunk = patch.getCameraChunk(index);
                 if (isValidChunk(chunk, x, z)) {
-                    MinecraftForge.EVENT_BUS.post(new ChunkEvent.Unload(chunk));
+                    EvModelDataManager.onChunkUnload(chunk);
                     patch.cameraReplace(index, chunk, null);
                 }
             }
@@ -92,20 +97,31 @@ public abstract class ClientChunkCacheMixin extends ChunkSource implements IClie
     @Overwrite
     @Nullable
     public LevelChunk getChunk(int x, int z, ChunkStatus status, boolean load) {
-        if (this.storage.inRange(x, z)) {
-            LevelChunk chunk = this.storage.getChunk(this.storage.getIndex(x, z));
+        ClientChunkCache.Storage storage = this.storage;
+        if (storage.inRange(x, z)) {
+            LevelChunk chunk = storage.getChunk(storage.getIndex(x, z));
             if (isValidChunk(chunk, x, z)) {
                 return chunk;
             }
         }
         else //noinspection ConstantConditions
-            if ((Object) this.storage instanceof IClientChunkCache_StoragePatch patch && patch.inCameraRange(x, z)) {
+            if ((Object) storage instanceof IClientChunkCache_StoragePatch patch && patch.inCameraRange(x, z)) {
                 LevelChunk chunk = patch.getCameraChunk(patch.getCameraIndex(x, z));
                 if (isValidChunk(chunk, x, z)) {
                     return chunk;
                 }
             }
         return load ? this.emptyChunk : null;
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Replace LevelRenderer
+     */
+    @Override
+    @Overwrite
+    public void onLightUpdate(LightLayer type, SectionPos pos) {
+        ((IMinecraftPatch) Minecraft.getInstance()).lvlRenderer().setSectionDirty(pos.x(), pos.y(), pos.z());
     }
 
     @Inject(method = "updateViewRadius", at = @At(value = "FIELD", target = "Lnet/minecraft/client/multiplayer/ClientChunkCache$Storage;" +

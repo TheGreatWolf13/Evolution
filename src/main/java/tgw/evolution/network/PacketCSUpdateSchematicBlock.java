@@ -151,7 +151,7 @@ public class PacketCSUpdateSchematicBlock implements IPacket {
                             player.displayClientMessage(new TranslatableComponent("structure_block.invalid_structure_name", packet.name), false);
                         }
                         teSchematic.setChanged();
-                        player.level.sendBlockUpdated(tilePos, state, state, BlockFlags.NOTIFY_AND_UPDATE);
+                        player.level.sendBlockUpdated(tilePos, state, state, BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
                     }
                 }
             });

@@ -123,6 +123,7 @@ public abstract class LevelMixin extends CapabilityProvider<Level> implements IL
             BlockUtils.updateSlopingBlocks(this, pos);
         }
         FluidState fluidState = this.getFluidState(pos);
-        return this.setBlock(pos, fluidState.createLegacyBlock(), BlockFlags.NOTIFY_AND_UPDATE | (isMoving ? BlockFlags.IS_MOVING : 0));
+        return this.setBlock(pos, fluidState.createLegacyBlock(),
+                             BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | (isMoving ? BlockFlags.IS_MOVING : 0));
     }
 }

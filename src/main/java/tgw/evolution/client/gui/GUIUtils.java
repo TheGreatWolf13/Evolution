@@ -37,10 +37,12 @@ import net.minecraft.world.level.storage.LevelData;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 import tgw.evolution.client.renderer.RenderHelper;
+import tgw.evolution.patches.IPoseStackPatch;
 
 public final class GUIUtils {
 
     public static final ResourceLocation UNDERWATER_LOCATION = new ResourceLocation("textures/misc/underwater.png");
+    private static final PoseStack MATRICES = new PoseStack();
     private static DifficultyInstance difficulty = new DifficultyInstance(Difficulty.NORMAL, 0, 0, 0);
     private static boolean inFillBatch;
     private static @Nullable BufferBuilder builder;
@@ -351,7 +353,8 @@ public final class GUIUtils {
         internalMat.translate(posX, posY, 1_050);
         internalMat.scale(1.0F, 1.0F, -1.0F);
         RenderSystem.applyModelViewMatrix();
-        PoseStack matrices = new PoseStack();
+        PoseStack matrices = MATRICES;
+        ((IPoseStackPatch) matrices).reset();
         matrices.translate(0, 0, 1_000);
         matrices.scale(scale, scale, scale);
         Quaternion zRot = Vector3f.ZP.rotationDegrees(180.0F);
@@ -447,7 +450,8 @@ public final class GUIUtils {
         internalMat.scale(1.0F, -1.0F, 1.0F);
         internalMat.scale(16.0F, 16.0F, 16.0F);
         RenderSystem.applyModelViewMatrix();
-        PoseStack matrices = new PoseStack();
+        PoseStack matrices = MATRICES;
+        ((IPoseStackPatch) matrices).reset();
         MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
         boolean notBlockLight = !model.usesBlockLight();
         if (notBlockLight) {

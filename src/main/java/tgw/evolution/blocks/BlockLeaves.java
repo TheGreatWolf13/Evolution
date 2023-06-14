@@ -194,7 +194,7 @@ public class BlockLeaves extends BlockGeneric implements IReplaceable, IForgeShe
 
     @Override
     public @NotNull List<ItemStack> onSheared(@Nullable Player player, ItemStack item, Level level, BlockPos pos, int fortune) {
-        level.setBlock(pos, Blocks.AIR.defaultBlockState(), BlockFlags.NOTIFY_UPDATE_AND_RERENDER);
+        level.setBlock(pos, Blocks.AIR.defaultBlockState(), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE | BlockFlags.RERENDER);
         return Collections.singletonList(new ItemStack(this));
     }
 

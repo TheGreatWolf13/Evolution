@@ -2,6 +2,7 @@ package tgw.evolution.util.math;
 
 import com.mojang.math.Vector4f;
 import net.minecraft.core.Vec3i;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 public final class VectorUtil {
@@ -28,8 +29,12 @@ public final class VectorUtil {
         return x * x + y * y + z * z;
     }
 
-    public static double normalizeComponent(double x, double length) {
-        return length < 1.0E-4 ? 0 : x / length;
+    public static double norm(double x, double y, double z) {
+        return Mth.fastInvSqrt(x * x + y * y + z * z);
+    }
+
+    public static double normalizeComponent(double x, double norm) {
+        return 1.0E4 < norm ? 0 : x * norm;
     }
 
     public static double subtractLengthSqr(Vec3 vec, double x, double y, double z) {

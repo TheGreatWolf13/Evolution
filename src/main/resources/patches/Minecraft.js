@@ -1,5 +1,6 @@
-var ASMAPI = Java.type("net.minecraftforge.coremod.api.ASMAPI");
 var Opcodes = Java.type("org.objectweb.asm.Opcodes");
+var InsnList = Java.type("org.objectweb.asm.tree.InsnList");
+var InsnNode = Java.type("org.objectweb.asm.tree.InsnNode");
 
 function log(message) {
 	print("[evolution/Minecraft Transformer]: " + message);
@@ -38,17 +39,45 @@ function initializeCoreMod() {
 }
 
 function patchMC(instructions) {
-    var found = false;
+    var list = new InsnList();
+    var foundGuiInit = false;
+    var foundGuiNew = false;
+    var foundLvlRenderer = false;
+    var isRemoving = false;
     for (var i = 0, l = instructions.size(); i < l; i++) {
         var inst = instructions.get(i);
-        if (inst.getOpcode() == Opcodes.NEW && inst.desc == "net/minecraftforge/client/gui/ForgeIngameGui") {
-            inst.desc = "tgw/evolution/client/gui/EvolutionGui";
-            found = true;
-            continue;
+        if (!foundLvlRenderer) {
+            if (inst.getOpcode() == Opcodes.NEW && inst.desc == "net/minecraft/client/renderer/LevelRenderer") {
+                foundLvlRenderer = true;
+                isRemoving = true;
+                list.add(new InsnNode(Opcodes.ACONST_NULL));
+                continue;
+            }
         }
-        if (found && inst.getOpcode() == Opcodes.INVOKESPECIAL && inst.owner == "net/minecraftforge/client/gui/ForgeIngameGui") {
-            inst.owner = "tgw/evolution/client/gui/EvolutionGui";
-            break;
+        else {
+            if (isRemoving) {
+                if (inst.getOpcode() != Opcodes.PUTFIELD) {
+                    continue;
+                }
+                isRemoving = false;
+            }
+            if (foundGuiNew) {
+                if (!foundGuiInit) {
+                    if (inst.getOpcode() == Opcodes.INVOKESPECIAL && inst.owner == "net/minecraftforge/client/gui/ForgeIngameGui") {
+                        inst.owner = "tgw/evolution/client/gui/EvolutionGui";
+                        foundGuiInit = true;
+                    }
+                }
+            }
+            else {
+                if (inst.getOpcode() == Opcodes.NEW && inst.desc == "net/minecraftforge/client/gui/ForgeIngameGui") {
+                    inst.desc = "tgw/evolution/client/gui/EvolutionGui";
+                    foundGuiNew = true;
+                }
+            }
         }
+        list.add(inst);
     }
+    instructions.clear();
+    instructions.add(list);
 }

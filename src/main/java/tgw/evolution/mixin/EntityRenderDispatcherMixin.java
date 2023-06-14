@@ -10,7 +10,6 @@ import net.minecraft.ReportedException;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -33,6 +32,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.renderer.ambient.LightTextureEv;
+import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
 import tgw.evolution.events.ClientEvents;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.Vec3d;
@@ -116,7 +116,7 @@ public abstract class EntityRenderDispatcherMixin {
     @Overwrite
     private static void renderHitbox(PoseStack matrices, VertexConsumer buffer, Entity entity, float partialTicks) {
         AABB box = entity.getBoundingBox().move(-entity.getX(), -entity.getY(), -entity.getZ());
-        LevelRenderer.renderLineBox(matrices, buffer, box, 1.0F, 1.0F, 1.0F, 1.0F);
+        EvLevelRenderer.renderLineBox(matrices, buffer, box, 1.0F, 1.0F, 1.0F, 1.0F);
         if (entity.isMultipartEntity()) {
             double x = -Mth.lerp(partialTicks, entity.xOld, entity.getX());
             double y = -Mth.lerp(partialTicks, entity.yOld, entity.getY());
@@ -128,8 +128,8 @@ public abstract class EntityRenderDispatcherMixin {
                 double yp = y + Mth.lerp(partialTicks, part.yOld, part.getY());
                 double zp = z + Mth.lerp(partialTicks, part.zOld, part.getZ());
                 matrices.translate(xp, yp, zp);
-                LevelRenderer.renderLineBox(matrices, buffer, part.getBoundingBox()
-                                                                  .move(-part.getX(), -part.getY(), -part.getZ()), 0.25F, 1.0F, 0.0F, 1.0F);
+                EvLevelRenderer.renderLineBox(matrices, buffer, part.getBoundingBox()
+                                                                    .move(-part.getX(), -part.getY(), -part.getZ()), 0.25F, 1.0F, 0.0F, 1.0F);
                 matrices.popPose();
             }
         }
@@ -138,8 +138,8 @@ public abstract class EntityRenderDispatcherMixin {
             float eyeX = (float) cameraPosition.x;
             double eyeHeight = cameraPosition.y;
             float eyeZ = (float) cameraPosition.z;
-            LevelRenderer.renderLineBox(matrices, buffer, box.minX, eyeHeight - 0.01, box.minZ, box.maxX, eyeHeight + 0.01, box.maxZ,
-                                        1.0F, 0.0F, 0.0F, 1.0F);
+            EvLevelRenderer.renderLineBox(matrices, buffer, box.minX, eyeHeight - 0.01, box.minZ, box.maxX, eyeHeight + 0.01, box.maxZ,
+                                          1.0F, 0.0F, 0.0F, 1.0F);
             Vec3 view = entity.getViewVector(partialTicks);
             Matrix4f pose = matrices.last().pose();
             Matrix3f normal = matrices.last().normal();

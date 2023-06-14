@@ -1939,7 +1939,7 @@ public abstract class LivingEntityMixin extends Entity implements ILivingEntityP
         if (this.isEffectiveAi() || this.isControlledByLocalInstance()) {
             //noinspection ConstantConditions
             if (this.level.isClientSide && (Object) this instanceof Player player) {
-                if (!player.isSpectator() && !player.isCreative()) {
+                if (!player.isSpectator() && (!player.isCreative() || !player.getAbilities().flying)) {
                     if (EntityUtils.isPlayerNearUnloadedChunks(player)) {
                         //Prevents players from moving in unloaded chunks, gaining momentum and then taking damage when the ground finally loads.
                         return;

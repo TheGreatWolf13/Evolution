@@ -59,14 +59,14 @@ public abstract class FrustumMixin {
     public boolean cubeInFrustum(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) {
         for (int i = 0; i < 6; ++i) {
             Vector4f vec = this.frustumData[i];
-            if (VectorUtil.dot(vec, minX, minY, minZ) < 0.0F &&
-                VectorUtil.dot(vec, maxX, minY, minZ) < 0.0F &&
-                VectorUtil.dot(vec, minX, maxY, minZ) < 0.0F &&
-                VectorUtil.dot(vec, maxX, maxY, minZ) < 0.0F &&
-                VectorUtil.dot(vec, minX, minY, maxZ) < 0.0F &&
-                VectorUtil.dot(vec, maxX, minY, maxZ) < 0.0F &&
-                VectorUtil.dot(vec, minX, maxY, maxZ) < 0.0F &&
-                VectorUtil.dot(vec, maxX, maxY, maxZ) < 0.0F) {
+            if (VectorUtil.dot(vec, minX, minY, minZ) <= 0.0F &&
+                VectorUtil.dot(vec, maxX, minY, minZ) <= 0.0F &&
+                VectorUtil.dot(vec, minX, maxY, minZ) <= 0.0F &&
+                VectorUtil.dot(vec, maxX, maxY, minZ) <= 0.0F &&
+                VectorUtil.dot(vec, minX, minY, maxZ) <= 0.0F &&
+                VectorUtil.dot(vec, maxX, minY, maxZ) <= 0.0F &&
+                VectorUtil.dot(vec, minX, maxY, maxZ) <= 0.0F &&
+                VectorUtil.dot(vec, maxX, maxY, maxZ) <= 0.0F) {
                 return false;
             }
         }

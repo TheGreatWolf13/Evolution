@@ -82,22 +82,24 @@ public class BlockPeat extends BlockPhysics implements IReplaceable, IAir {
                 if (state.getValue(LAYERS_1_4) == i) {
                     if (i + layers > 4) {
                         int remain = i + layers - 4;
-                        level.setBlock(pos, state.setValue(LAYERS_1_4, 4), BlockFlags.NOTIFY_AND_UPDATE);
+                        level.setBlock(pos, state.setValue(LAYERS_1_4, 4), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
                         level.setBlock(pos.above(), EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, remain),
-                                       BlockFlags.NOTIFY_AND_UPDATE);
+                                       BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
                         return;
                     }
-                    level.setBlock(pos, state.setValue(LAYERS_1_4, i + layers), BlockFlags.NOTIFY_AND_UPDATE);
+                    level.setBlock(pos, state.setValue(LAYERS_1_4, i + layers), BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
                     return;
                 }
             }
         }
         if (state.getBlock() instanceof IReplaceable) {
-            level.setBlock(pos, EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, layers), BlockFlags.NOTIFY_AND_UPDATE);
+            level.setBlock(pos, EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, layers),
+                           BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
             return;
         }
         if (state.getMaterial().isReplaceable()) {
-            level.setBlock(pos, EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, layers), BlockFlags.NOTIFY_AND_UPDATE);
+            level.setBlock(pos, EvolutionBlocks.PEAT.get().defaultBlockState().setValue(LAYERS_1_4, layers),
+                           BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
         }
     }
 
@@ -183,7 +185,9 @@ public class BlockPeat extends BlockPhysics implements IReplaceable, IAir {
         }
         this.playerWillDestroy(level, pos, state, player);
         level.setBlock(pos, state.setValue(LAYERS_1_4, state.getValue(LAYERS_1_4) - 1),
-                       level.isClientSide ? BlockFlags.NOTIFY_UPDATE_AND_RERENDER : BlockFlags.NOTIFY_AND_UPDATE);
+                       level.isClientSide ?
+                       BlockFlags.RERENDER | BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE :
+                       BlockFlags.NOTIFY | BlockFlags.BLOCK_UPDATE);
         return true;
     }
 
