@@ -61,8 +61,8 @@ public abstract class ModelBlockRendererMixin {
                 consumer.vertex(matrix, quad.getX(v), quad.getY(v), quad.getZ(v))
                         .color(color)
                         .uv(quad.getTexU(v), quad.getTexV(v))
-                        .uv2(light)
                         .overlayCoords(overlay)
+                        .uv2(light)
                         .normal(nx, ny, nz)
                         .endVertex();
             }
