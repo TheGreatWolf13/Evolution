@@ -402,33 +402,39 @@ public class ClientRenderer {
                     RenderSystem.applyModelViewMatrix();
                 }
                 else {
-                    GUIUtils.startBlitBatch(Tesselator.getInstance().getBuilder());
-                    Matrix4f matrix = matrices.last().pose();
+                    boolean inverted = false;
                     //Hitmarker
                     if (EvolutionConfig.CLIENT.hitmarkers.get()) {
                         if (this.killmarkerTick >= 0) {
                             if (this.killmarkerTick >= 10) {
-                                blitInBatch(matrix, (width - 17) / 2, (height - 17) / 2, 2 * 17, EvolutionResources.ICON_17_17, 17, 17);
+                                blit(matrices, (width - 17) / 2, (height - 17) / 2, 2 * 17, EvolutionResources.ICON_17_17, 17, 17);
                             }
                             else if (this.killmarkerTick >= 5) {
-                                blitInBatch(matrix, (width - 17) / 2, (height - 17) / 2, 3 * 17, EvolutionResources.ICON_17_17, 17, 17);
+                                blit(matrices, (width - 17) / 2, (height - 17) / 2, 3 * 17, EvolutionResources.ICON_17_17, 17, 17);
                             }
                             else {
                                 RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, (this.killmarkerTick + partialTicks) / 5);
-                                blitInBatch(matrix, (width - 17) / 2, (height - 17) / 2, 3 * 17, EvolutionResources.ICON_17_17, 17, 17);
+                                blit(matrices, (width - 17) / 2, (height - 17) / 2, 3 * 17, EvolutionResources.ICON_17_17, 17, 17);
                             }
                         }
                         else if (this.hitmarkerTick >= 0) {
+                            inverted = true;
+                            Blending.INVERTED_ADD.apply();
+                            RenderSystem.blendEquation(GL14.GL_FUNC_SUBTRACT);
                             if (this.hitmarkerTick < 5) {
                                 RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, (this.hitmarkerTick + partialTicks) / 5);
                             }
-                            blitInBatch(matrix, (width - 17) / 2, (height - 17) / 2, 17, EvolutionResources.ICON_17_17, 17, 17);
+                            blit(matrices, (width - 17) / 2, (height - 17) / 2, 17, EvolutionResources.ICON_17_17, 17, 17);
                         }
                     }
-                    RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-                    Blending.INVERTED_ADD.apply();
-                    RenderSystem.blendEquation(GL14.GL_FUNC_SUBTRACT);
                     //Crosshair
+                    Matrix4f matrix = matrices.last().pose();
+                    GUIUtils.startBlitBatch(Tesselator.getInstance().getBuilder());
+                    RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+                    if (!inverted) {
+                        Blending.INVERTED_ADD.apply();
+                        RenderSystem.blendEquation(GL14.GL_FUNC_SUBTRACT);
+                    }
                     int x = (width - 17) / 2;
                     int y = (height - 17) / 2;
                     blitInBatch(matrix, x, y, 0, EvolutionResources.ICON_17_17, 17, 17);
