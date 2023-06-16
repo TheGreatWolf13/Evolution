@@ -1123,20 +1123,21 @@ public class ClientRenderer {
             currentTemp += 69;
             //Draw meter
             blitInBatch(matrix, width / 2 - 93 + currentTemp, height - 29, 183, EvolutionResources.ICON_TEMPERATURE, 8, 5);
-        }
-        else if (currentTemp < 0) {
-            //Draw too cold indicator
-            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, MathHelper.sinDeg(this.client.getTickCount() * 9));
-            RenderSystem.enableBlend();
-            blitInBatch(matrix, width / 2 - 97, height - 29, 192, EvolutionResources.ICON_TEMPERATURE, 5, 5);
+            GUIUtils.endBlitBatch();
         }
         else {
-            //Draw too hot indicator
+            GUIUtils.endBlitBatch();
             RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, MathHelper.sinDeg(this.client.getTickCount() * 9));
             RenderSystem.enableBlend();
-            blitInBatch(matrix, width / 2 + 92, height - 29, 198, EvolutionResources.ICON_TEMPERATURE, 5, 5);
+            if (currentTemp < 0) {
+                //Draw too cold indicator
+                blit(matrices, width / 2 - 97, height - 29, 192, EvolutionResources.ICON_TEMPERATURE, 5, 5);
+            }
+            else {
+                //Draw too hot indicator
+                blit(matrices, width / 2 + 92, height - 29, 198, EvolutionResources.ICON_TEMPERATURE, 5, 5);
+            }
         }
-        GUIUtils.endBlitBatch();
     }
 
     public void setRenderingPlayer(boolean rendering) {
