@@ -2,6 +2,7 @@ package tgw.evolution.client.gui.overlays;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
+import com.mojang.math.Matrix4f;
 import net.minecraft.client.AttackIndicatorStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -130,32 +131,32 @@ public final class VanillaOverlays {
         if (mc.options.hideGui) {
             return;
         }
+        Player player = mc.player;
+        if (player == null) {
+            return;
+        }
         gui.setupOverlayRenderState(Blending.DEFAULT_1_0, false, Gui.WIDGETS_LOCATION);
         assert mc.gameMode != null;
         if (mc.gameMode.getPlayerMode() == GameType.SPECTATOR) {
             gui.getSpectatorGui().renderHotbar(matrices);
             return;
         }
-        Player player = mc.player;
-        if (player == null) {
-            return;
-        }
         ItemStack offhandStack = player.getOffhandItem();
         HumanoidArm offArm = player.getMainArm().getOpposite();
         int xMid = width / 2;
-        int oldBlitOffset = gui.getBlitOffset();
-        gui.setBlitOffset(-90);
-        gui.blit(matrices, xMid - 91, height - 22, 0, 0, 182, 22);
-        gui.blit(matrices, xMid - 91 - 1 + player.getInventory().selected * 20, height - 22 - 1, 0, 22, 24, 22);
+        Matrix4f matrix = matrices.last().pose();
+        GUIUtils.startBlitBatch(Tesselator.getInstance().getBuilder());
+        GUIUtils.blitInBatch(matrix, xMid - 91, height - 22, -90, 0, 0, 182, 22, 256, 256);
+        GUIUtils.blitInBatch(matrix, xMid - 91 - 1 + player.getInventory().selected * 20, height - 22 - 1, -90, 0, 22, 24, 22, 256, 256);
         if (!offhandStack.isEmpty()) {
             if (offArm == HumanoidArm.LEFT) {
-                gui.blit(matrices, xMid - 91 - 29, height - 23, 24, 22, 29, 24);
+                GUIUtils.blitInBatch(matrix, xMid - 91 - 29, height - 23, -90, 24, 22, 29, 24, 256, 256);
             }
             else {
-                gui.blit(matrices, xMid + 91, height - 23, 53, 22, 29, 24);
+                GUIUtils.blitInBatch(matrix, xMid + 91, height - 23, -90, 53, 22, 29, 24, 256, 256);
             }
         }
-        gui.setBlitOffset(oldBlitOffset);
+        GUIUtils.endBlitBatch();
         int seed = 1;
         NonNullList<ItemStack> items = player.getInventory().items;
         for (int i = 0; i < 9; i++) {
