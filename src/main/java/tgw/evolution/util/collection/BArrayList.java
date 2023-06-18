@@ -6,10 +6,15 @@ import it.unimi.dsi.fastutil.bytes.ByteIterator;
 import it.unimi.dsi.fastutil.bytes.ByteListIterator;
 import tgw.evolution.Evolution;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
 public class BArrayList extends ByteArrayList implements BList {
+
+    public BArrayList(int capacity) {
+        super(capacity);
+    }
 
     public BArrayList() {
         super();
@@ -29,6 +34,23 @@ public class BArrayList extends ByteArrayList implements BList {
 
     public BArrayList(Collection<? extends Byte> c) {
         super(c);
+    }
+
+    @Override
+    public void addMany(byte value, int length) {
+        if (length < 0) {
+            throw new NegativeArraySizeException("Length should be >= 0");
+        }
+        if (length == 0) {
+            return;
+        }
+        int size = this.size();
+        int end = size + length;
+        this.ensureCapacity(size + length);
+        if (value != 0) {
+            Arrays.fill(this.a, size, size + length, value);
+        }
+        this.size = end;
     }
 
     @Override

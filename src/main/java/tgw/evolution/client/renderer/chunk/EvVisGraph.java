@@ -1,10 +1,9 @@
 package tgw.evolution.client.renderer.chunk;
 
-import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
 import it.unimi.dsi.fastutil.ints.IntPriorityQueue;
 import net.minecraft.Util;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import tgw.evolution.util.collection.IArrayFIFOQueue;
 import tgw.evolution.util.math.DirectionUtil;
 
 import java.util.BitSet;
@@ -23,7 +22,7 @@ public class EvVisGraph {
         }
     });
     private final BitSet bitSet = new BitSet(4_096);
-    private final IntPriorityQueue queue = new IntArrayFIFOQueue();
+    private final IntPriorityQueue queue = new IArrayFIFOQueue();
     private int empty = 4_096;
 
     private static byte addEdges(int index, byte faces) {
@@ -53,10 +52,6 @@ public class EvVisGraph {
 
     private static int getIndex(int x, int y, int z) {
         return x | y << 8 | z << 4;
-    }
-
-    private static int getIndex(BlockPos pos) {
-        return getIndex(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15);
     }
 
     private static int getNeighborIndexAtFace(int index, Direction face) {
@@ -108,9 +103,6 @@ public class EvVisGraph {
         while (!this.queue.isEmpty()) {
             int i = this.queue.dequeueInt();
             set = addEdges(i, set);
-            if (set == 0b11_1111) {
-                return set;
-            }
             for (Direction direction : DirectionUtil.ALL) {
                 int j = getNeighborIndexAtFace(i, direction);
                 if (j >= 0 && !this.bitSet.get(j)) {
@@ -139,9 +131,6 @@ public class EvVisGraph {
         for (int i : INDEX_OF_EDGES) {
             if (!this.bitSet.get(i)) {
                 directions |= this.floodFill(i);
-                if (directions == 0b11_1111) {
-                    return 0b111111_111111_111111_111111_111111_111111L;
-                }
             }
         }
         long visibilitySet = 0;

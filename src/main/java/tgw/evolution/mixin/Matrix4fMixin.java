@@ -10,36 +10,22 @@ import tgw.evolution.patches.IMatrix4fPatch;
 @Mixin(Matrix4f.class)
 public abstract class Matrix4fMixin implements IMatrix4fPatch {
 
-    @Shadow
-    protected float m00;
-    @Shadow
-    protected float m01;
-    @Shadow
-    protected float m02;
-    @Shadow
-    protected float m03;
-    @Shadow
-    protected float m10;
-    @Shadow
-    protected float m11;
-    @Shadow
-    protected float m12;
-    @Shadow
-    protected float m13;
-    @Shadow
-    protected float m20;
-    @Shadow
-    protected float m21;
-    @Shadow
-    protected float m22;
-    @Shadow
-    protected float m23;
-    @Shadow
-    protected float m30;
-    @Shadow
-    protected float m31;
-    @Shadow
-    protected float m32;
+    @Shadow protected float m00;
+    @Shadow protected float m01;
+    @Shadow protected float m02;
+    @Shadow protected float m03;
+    @Shadow protected float m10;
+    @Shadow protected float m11;
+    @Shadow protected float m12;
+    @Shadow protected float m13;
+    @Shadow protected float m20;
+    @Shadow protected float m21;
+    @Shadow protected float m22;
+    @Shadow protected float m23;
+    @Shadow protected float m30;
+    @Shadow protected float m31;
+    @Shadow protected float m32;
+    @Shadow protected float m33;
 
     /**
      * @author TheGreatWolf
@@ -48,6 +34,37 @@ public abstract class Matrix4fMixin implements IMatrix4fPatch {
     @Overwrite
     public void multiply(Quaternion quaternion) {
         this.rotate(quaternion);
+    }
+
+    @Override
+    public void multiplyWithPerspective(double fov, float aspectRatio, float nearPlane, float farPlane) {
+        //Construct perspective
+        float d = (float) (1.0 / Math.tan(fov * (Math.PI / 360)));
+        float o00 = d / aspectRatio;
+        float o22 = (farPlane + nearPlane) / (nearPlane - farPlane);
+        float o32 = -1.0F;
+        float o23 = 2.0F * farPlane * nearPlane / (nearPlane - farPlane);
+        //Multiply
+        this.m00 *= o00;
+        this.m10 *= o00;
+        this.m20 *= o00;
+        this.m30 *= o00;
+        this.m01 *= d;
+        this.m11 *= d;
+        this.m21 *= d;
+        this.m31 *= d;
+        float m02 = this.m02 * o22 + this.m03 * o32;
+        this.m03 = this.m02 * o23;
+        this.m02 = m02;
+        float m12 = this.m12 * o22 + this.m13 * o32;
+        this.m13 = this.m12 * o23;
+        this.m12 = m12;
+        float m22 = this.m22 * o22 + this.m23 * o32;
+        this.m23 = this.m22 * o23;
+        this.m22 = m22;
+        float m32 = this.m32 * o22 + this.m33 * o32;
+        this.m33 = this.m32 * o23;
+        this.m32 = m32;
     }
 
     @Override
@@ -86,21 +103,17 @@ public abstract class Matrix4fMixin implements IMatrix4fPatch {
         float ta21 = 2.0F * ir;
         float ta12 = 2.0F * -ir;
         float m01 = this.m01 * ta11 + this.m02 * ta21;
-        float m02 = this.m01 * ta12 + this.m02 * ta22;
-        float m11 = this.m11 * ta11 + this.m12 * ta21;
-        float m12 = this.m11 * ta12 + this.m12 * ta22;
-        float m21 = this.m21 * ta11 + this.m22 * ta21;
-        float m22 = this.m21 * ta12 + this.m22 * ta22;
-        float m31 = this.m31 * ta11 + this.m32 * ta21;
-        float a32 = this.m31 * ta12 + this.m32 * ta22;
+        this.m02 = this.m01 * ta12 + this.m02 * ta22;
         this.m01 = m01;
-        this.m02 = m02;
+        float m11 = this.m11 * ta11 + this.m12 * ta21;
+        this.m12 = this.m11 * ta12 + this.m12 * ta22;
         this.m11 = m11;
-        this.m12 = m12;
+        float m21 = this.m21 * ta11 + this.m22 * ta21;
+        this.m22 = this.m21 * ta12 + this.m22 * ta22;
         this.m21 = m21;
-        this.m22 = m22;
+        float m31 = this.m31 * ta11 + this.m32 * ta21;
+        this.m32 = this.m31 * ta12 + this.m32 * ta22;
         this.m31 = m31;
-        this.m32 = a32;
     }
 
     private void rotateXYZ(Quaternion quaternion) {
@@ -128,28 +141,24 @@ public abstract class Matrix4fMixin implements IMatrix4fPatch {
         float ta12 = 2.0F * (jk - ir);
         float m00 = this.m00 * ta00 + this.m01 * ta10 + this.m02 * ta20;
         float m01 = this.m00 * ta01 + this.m01 * ta11 + this.m02 * ta21;
-        float m02 = this.m00 * ta02 + this.m01 * ta12 + this.m02 * ta22;
+        this.m02 = this.m00 * ta02 + this.m01 * ta12 + this.m02 * ta22;
+        this.m01 = m01;
+        this.m00 = m00;
         float m10 = this.m10 * ta00 + this.m11 * ta10 + this.m12 * ta20;
         float m11 = this.m10 * ta01 + this.m11 * ta11 + this.m12 * ta21;
-        float m12 = this.m10 * ta02 + this.m11 * ta12 + this.m12 * ta22;
+        this.m12 = this.m10 * ta02 + this.m11 * ta12 + this.m12 * ta22;
+        this.m11 = m11;
+        this.m10 = m10;
         float m20 = this.m20 * ta00 + this.m21 * ta10 + this.m22 * ta20;
         float m21 = this.m20 * ta01 + this.m21 * ta11 + this.m22 * ta21;
-        float m22 = this.m20 * ta02 + this.m21 * ta12 + this.m22 * ta22;
+        this.m22 = this.m20 * ta02 + this.m21 * ta12 + this.m22 * ta22;
+        this.m21 = m21;
+        this.m20 = m20;
         float m30 = this.m30 * ta00 + this.m31 * ta10 + this.m32 * ta20;
         float m31 = this.m30 * ta01 + this.m31 * ta11 + this.m32 * ta21;
-        float m32 = this.m30 * ta02 + this.m31 * ta12 + this.m32 * ta22;
-        this.m00 = m00;
-        this.m01 = m01;
-        this.m02 = m02;
-        this.m10 = m10;
-        this.m11 = m11;
-        this.m12 = m12;
-        this.m20 = m20;
-        this.m21 = m21;
-        this.m22 = m22;
-        this.m30 = m30;
+        this.m32 = this.m30 * ta02 + this.m31 * ta12 + this.m32 * ta22;
         this.m31 = m31;
-        this.m32 = m32;
+        this.m30 = m30;
     }
 
     @Override
@@ -161,21 +170,17 @@ public abstract class Matrix4fMixin implements IMatrix4fPatch {
         float ta20 = 2.0F * -jr;
         float ta02 = 2.0F * jr;
         float m00 = this.m00 * ta00 + this.m02 * ta20;
-        float m02 = this.m00 * ta02 + this.m02 * ta22;
-        float m10 = this.m10 * ta00 + this.m12 * ta20;
-        float m12 = this.m10 * ta02 + this.m12 * ta22;
-        float m20 = this.m20 * ta00 + this.m22 * ta20;
-        float m22 = this.m20 * ta02 + this.m22 * ta22;
-        float m30 = this.m30 * ta00 + this.m32 * ta20;
-        float m32 = this.m30 * ta02 + this.m32 * ta22;
+        this.m02 = this.m00 * ta02 + this.m02 * ta22;
         this.m00 = m00;
-        this.m02 = m02;
+        float m10 = this.m10 * ta00 + this.m12 * ta20;
+        this.m12 = this.m10 * ta02 + this.m12 * ta22;
         this.m10 = m10;
-        this.m12 = m12;
+        float m20 = this.m20 * ta00 + this.m22 * ta20;
+        this.m22 = this.m20 * ta02 + this.m22 * ta22;
         this.m20 = m20;
-        this.m22 = m22;
+        float m30 = this.m30 * ta00 + this.m32 * ta20;
+        this.m32 = this.m30 * ta02 + this.m32 * ta22;
         this.m30 = m30;
-        this.m32 = m32;
     }
 
     @Override
@@ -187,21 +192,17 @@ public abstract class Matrix4fMixin implements IMatrix4fPatch {
         float ta10 = 2.0F * kr;
         float ta01 = 2.0F * -kr;
         float m00 = this.m00 * ta00 + this.m01 * ta10;
-        float m01 = this.m00 * ta01 + this.m01 * ta11;
-        float m10 = this.m10 * ta00 + this.m11 * ta10;
-        float m11 = this.m10 * ta01 + this.m11 * ta11;
-        float m20 = this.m20 * ta00 + this.m21 * ta10;
-        float m21 = this.m20 * ta01 + this.m21 * ta11;
-        float m30 = this.m30 * ta00 + this.m31 * ta10;
-        float m31 = this.m30 * ta01 + this.m31 * ta11;
+        this.m01 = this.m00 * ta01 + this.m01 * ta11;
         this.m00 = m00;
-        this.m01 = m01;
+        float m10 = this.m10 * ta00 + this.m11 * ta10;
+        this.m11 = this.m10 * ta01 + this.m11 * ta11;
         this.m10 = m10;
-        this.m11 = m11;
+        float m20 = this.m20 * ta00 + this.m21 * ta10;
+        this.m21 = this.m20 * ta01 + this.m21 * ta11;
         this.m20 = m20;
-        this.m21 = m21;
+        float m30 = this.m30 * ta00 + this.m31 * ta10;
+        this.m31 = this.m30 * ta01 + this.m31 * ta11;
         this.m30 = m30;
-        this.m31 = m31;
     }
 
     @Override

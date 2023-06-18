@@ -26,7 +26,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.EmptyModelData;
@@ -37,7 +36,6 @@ import tgw.evolution.util.collection.RArrayList;
 import tgw.evolution.util.collection.ROpenHashSet;
 import tgw.evolution.util.collection.RSet;
 import tgw.evolution.util.constants.RenderLayer;
-import tgw.evolution.util.math.AABBMutable;
 import tgw.evolution.util.math.Vec3d;
 
 import javax.annotation.Nullable;
@@ -217,6 +215,9 @@ public class EvChunkRenderDispatcher {
         }
     }
 
+    /**
+     * This method only runs on the Main Thread. It schedules work to be done off-thread.
+     */
     private void schedule(RenderChunk.ChunkCompileTask compileTask) {
         this.mailbox.tell(() -> {
             if (compileTask.isHighPriority) {
@@ -259,8 +260,24 @@ public class EvChunkRenderDispatcher {
             public boolean facesCanSeeEachother(Direction face, Direction other) {
                 return false;
             }
+
+            @Override
+            public boolean isEmpty(@RenderLayer int renderType) {
+                return true;
+            }
         };
-        final List<BlockEntity> renderableBlockEntities = new RArrayList<>();
+        public static final CompiledChunk EMPTY = new CompiledChunk() {
+            @Override
+            public boolean facesCanSeeEachother(Direction face, Direction other) {
+                return true;
+            }
+
+            @Override
+            public boolean isEmpty(@RenderLayer int renderType) {
+                return true;
+            }
+        };
+        final List<BlockEntity> renderableTEs = new RArrayList<>();
         public @Nullable BufferBuilder.SortState transparencyState;
         /**
          * Bits arranged as per {@link RenderLayer}.
@@ -276,8 +293,8 @@ public class EvChunkRenderDispatcher {
             return (this.visibilitySet & 1L << face.ordinal() + other.ordinal() * 6) != 0;
         }
 
-        public List<BlockEntity> getRenderableBlockEntities() {
-            return this.renderableBlockEntities;
+        public List<BlockEntity> getRenderableTEs() {
+            return this.renderableTEs;
         }
 
         public boolean isEmpty(@RenderLayer int renderType) {
@@ -287,17 +304,37 @@ public class EvChunkRenderDispatcher {
 
     public class RenderChunk {
         public final int index;
-        private final AABBMutable bb = new AABBMutable();
         private final VertexBuffer[] buffers = new VertexBuffer[5];
         private final RSet<BlockEntity> globalBlockEntities = new ROpenHashSet<>();
+        /**
+         * Only access from the Main Thread.
+         */
+        public @Visibility int visibility;
         protected volatile CompiledChunk compiled = CompiledChunk.UNCOMPILED;
-        private byte cachedHasBlocks;
+        /**
+         * Only access from the Main Thread. <br>
+         * Bit 0: hasSolid;<br>
+         * Bit 1: hasCutoutMipped;<br>
+         * Bit 2: hasCutout;<br>
+         * Bit 3: hasTranslucent;<br>
+         * Bit 4: hasTripwire;<br>
+         * Bit 6: hasRenderableTileEntities;<br>
+         * Bit 7: isUncompiled;<br>
+         */
+        private byte cachedFlags;
+        /**
+         * Only access from the Main Thread.
+         */
         private boolean dirty = true;
-        @Nullable
-        private RebuildTask lastRebuildTask;
-        @Nullable
-        private ResortTransparencyTask lastResortTransparencyTask;
+        private @Nullable RebuildTask lastRebuildTask;
+        private @Nullable ResortTransparencyTask lastResortTransparencyTask;
+        /**
+         * This value is set from other threads, not atomically.
+         */
         private boolean needsUpdate = true;
+        /**
+         * Only access from the Main Thread.
+         */
         private boolean playerChanged;
         private int x;
         private int y;
@@ -330,17 +367,39 @@ public class EvChunkRenderDispatcher {
             return didCancel;
         }
 
+        /**
+         * This method only runs on the Main Thread.
+         */
         public void compileSync(EvRenderRegionCache cache) {
             boolean canceled = this.cancelTasks();
             EvRenderChunkRegion region = cache.createRegion(EvChunkRenderDispatcher.this.level,
                                                             this.x - 1, this.y - 1, this.z - 1, this.x + 16, this.y + 16, this.z + 16, 1);
+            if (region == null) {
+                RenderChunk.this.updateGlobalBlockEntities(ReferenceSets.emptySet());
+                RenderChunk.this.compiled = CompiledChunk.EMPTY;
+                RenderChunk.this.cachedFlags = 0;
+                EvChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
+                return;
+            }
+            CompiledChunk oldChunk = this.compiled;
             RebuildTask task = new RenderChunk.RebuildTask(chunkPos(this.x, this.z), this.getDistToPlayerSqr(), region,
-                                                           canceled || this.compiled != CompiledChunk.UNCOMPILED);
+                                                           canceled || oldChunk != CompiledChunk.UNCOMPILED);
             Vec3 cam = EvChunkRenderDispatcher.this.getCameraPosition();
             float camX = (float) cam.x;
             float camY = (float) cam.y;
             float camZ = (float) cam.z;
-            CompiledChunk compiledChunk = new CompiledChunk();
+            CompiledChunk compiledChunk;
+            if (oldChunk == CompiledChunk.UNCOMPILED || oldChunk == CompiledChunk.EMPTY) {
+                compiledChunk = new CompiledChunk();
+            }
+            else {
+                compiledChunk = oldChunk;
+                compiledChunk.visibilitySet = 0;
+                compiledChunk.hasBlocks = 0;
+                compiledChunk.hasLayer = 0;
+                compiledChunk.renderableTEs.clear();
+                compiledChunk.transparencyState = null;
+            }
             RenderChunk.this.updateGlobalBlockEntities(task.compile(camX, camY, camZ, compiledChunk, EvChunkRenderDispatcher.this.fixedBuffers));
             for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
                 if ((compiledChunk.hasLayer & 1 << i) != 0) {
@@ -352,22 +411,9 @@ public class EvChunkRenderDispatcher {
             EvChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
         }
 
-        public ChunkCompileTask createCompileTask(EvRenderRegionCache cache) {
-            boolean canceled = this.cancelTasks();
-            EvRenderChunkRegion region = cache.createRegion(EvChunkRenderDispatcher.this.level,
-                                                            this.x - 1, this.y - 1, this.z - 1, this.x + 16, this.y + 16, this.z + 16, 1);
-            this.lastRebuildTask = new RenderChunk.RebuildTask(chunkPos(this.x, this.z), this.getDistToPlayerSqr(), region,
-                                                               canceled || this.compiled != CompiledChunk.UNCOMPILED);
-            return this.lastRebuildTask;
-        }
-
         private boolean doesChunkExistAt(int posX, int posZ) {
             return EvChunkRenderDispatcher.this.level.getChunk(SectionPos.blockToSectionCoord(posX), SectionPos.blockToSectionCoord(posZ),
                                                                ChunkStatus.FULL, false) != null;
-        }
-
-        public AABB getBoundingBox() {
-            return this.bb;
         }
 
         public VertexBuffer getBuffer(@RenderLayer int renderType) {
@@ -377,9 +423,9 @@ public class EvChunkRenderDispatcher {
         protected double getDistToPlayerSqr() {
             Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
             Vec3 position = camera.getPosition();
-            double x = this.bb.minX + 8 - position.x;
-            double y = this.bb.minY + 8 - position.y;
-            double z = this.bb.minZ + 8 - position.z;
+            double x = this.x + 8 - position.x;
+            double y = this.y + 8 - position.y;
+            double z = this.z + 8 - position.z;
             return x * x + y * y + z * z;
         }
 
@@ -405,34 +451,69 @@ public class EvChunkRenderDispatcher {
                    this.doesChunkExistAt(this.x, this.z + 16);
         }
 
-        public boolean isCompletelyEmpty() {
+        public boolean hasRenderableTEs() {
             if (this.needsUpdate) {
-                this.cachedHasBlocks = this.compiled.hasBlocks;
-                this.needsUpdate = false;
+                this.updateCache();
             }
-            return this.cachedHasBlocks == 0;
+            return (this.cachedFlags & 1 << 6) != 0;
         }
 
+        /**
+         * This method only runs on the Main Thread.
+         */
+        public boolean isCompletelyEmpty() {
+            if (this.needsUpdate) {
+                this.updateCache();
+            }
+            return this.cachedFlags == 0;
+        }
+
+        /**
+         * This method only runs on the Main Thread.
+         */
         public boolean isDirty() {
             return this.dirty;
         }
 
+        /**
+         * This method only runs on the Main Thread.
+         */
         public boolean isDirtyFromPlayer() {
             return this.dirty && this.playerChanged;
         }
 
+        /**
+         * This method only runs on the Main Thread.
+         */
         public boolean isEmpty(@RenderLayer int renderType) {
             if (this.needsUpdate) {
-                this.cachedHasBlocks = this.compiled.hasBlocks;
-                this.needsUpdate = false;
+                this.updateCache();
             }
-            return (this.cachedHasBlocks & 1 << renderType) == 0;
+            return (this.cachedFlags & 1 << renderType) == 0;
         }
 
+        /**
+         * This method only runs on the Main Thread.
+         */
         public void rebuildChunkAsync(EvChunkRenderDispatcher dispatcher, EvRenderRegionCache cache) {
-            dispatcher.schedule(this.createCompileTask(cache));
+            boolean canceled = this.cancelTasks();
+            EvRenderChunkRegion region = cache.createRegion(EvChunkRenderDispatcher.this.level,
+                                                            this.x - 1, this.y - 1, this.z - 1, this.x + 16, this.y + 16, this.z + 16, 1);
+            if (region == null) {
+                RenderChunk.this.updateGlobalBlockEntities(ReferenceSets.emptySet());
+                RenderChunk.this.cachedFlags = 0;
+                RenderChunk.this.compiled = CompiledChunk.EMPTY;
+                EvChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
+                return;
+            }
+            this.lastRebuildTask = new RenderChunk.RebuildTask(chunkPos(this.x, this.z), this.getDistToPlayerSqr(), region,
+                                                               canceled || this.compiled != CompiledChunk.UNCOMPILED);
+            dispatcher.schedule(this.lastRebuildTask);
         }
 
+        /**
+         * This method only runs in the Main Thread.
+         */
         public void releaseBuffers() {
             this.reset();
             for (VertexBuffer buffer : this.buffers) {
@@ -440,13 +521,19 @@ public class EvChunkRenderDispatcher {
             }
         }
 
+        /**
+         * This method only runs on the Main Thread.
+         */
         private void reset() {
             this.cancelTasks();
             this.compiled = CompiledChunk.UNCOMPILED;
-            this.needsUpdate = true;
+            this.cachedFlags = (byte) (1 << 7);
             this.dirty = true;
         }
 
+        /**
+         * This method only runs on the Main Thread.
+         */
         public boolean resortTransparency(@RenderLayer int renderType, EvChunkRenderDispatcher dispatcher) {
             CompiledChunk compiledChunk = this.compiled;
             if (this.lastResortTransparencyTask != null) {
@@ -460,37 +547,64 @@ public class EvChunkRenderDispatcher {
             return true;
         }
 
+        /**
+         * This method only runs on the Main Thread.
+         */
         public void setDirty(boolean reRenderOnMainThread) {
             boolean wasDirty = this.dirty;
             this.dirty = true;
             this.playerChanged = reRenderOnMainThread | (wasDirty && this.playerChanged);
         }
 
+        /**
+         * This method only runs on the Main Thread.
+         */
         public void setNotDirty() {
             this.dirty = false;
             this.playerChanged = false;
         }
 
+        /**
+         * This method only runs on the Main Thread.
+         */
         public void setOrigin(int x, int y, int z) {
             this.reset();
             this.x = x;
             this.y = y;
             this.z = z;
-            this.bb.setUnchecked(x, y, z, x + 16, y + 16, z + 16);
         }
 
-        //TODO
-        void updateGlobalBlockEntities(ReferenceSet<BlockEntity> blockEntities) {
-            Set<BlockEntity> toAdd = new ROpenHashSet<>(blockEntities);
-            Set<BlockEntity> toRemove;
-            synchronized (this.globalBlockEntities) {
-                toRemove = new ROpenHashSet<>(this.globalBlockEntities);
-                toAdd.removeAll(this.globalBlockEntities);
-                toRemove.removeAll(blockEntities);
-                this.globalBlockEntities.clear();
-                this.globalBlockEntities.addAll(blockEntities);
+        /**
+         * This method only runs on the Main Thread.
+         */
+        private void updateCache() {
+            this.needsUpdate = false;
+            CompiledChunk compiled = this.compiled;
+            this.cachedFlags = compiled.hasBlocks;
+            if (compiled == CompiledChunk.UNCOMPILED) {
+                this.cachedFlags |= 1 << 7;
             }
-            EvChunkRenderDispatcher.this.renderer.updateGlobalBlockEntities(toRemove, toAdd);
+            else if (!compiled.renderableTEs.isEmpty()) {
+                this.cachedFlags |= 1 << 6;
+            }
+        }
+
+        void updateGlobalBlockEntities(ReferenceSet<BlockEntity> blockEntities) {
+            if (!blockEntities.isEmpty()) {
+                Set<BlockEntity> toAdd = new ROpenHashSet<>(blockEntities);
+                Set<BlockEntity> toRemove;
+                synchronized (this.globalBlockEntities) {
+                    toRemove = new ROpenHashSet<>(this.globalBlockEntities);
+                    toAdd.removeAll(this.globalBlockEntities);
+                    toRemove.removeAll(blockEntities);
+                    this.globalBlockEntities.clear();
+                    this.globalBlockEntities.addAll(blockEntities);
+                }
+                EvChunkRenderDispatcher.this.renderer.updateGlobalBlockEntities(toRemove, toAdd);
+            }
+            else {
+                EvChunkRenderDispatcher.this.renderer.updateGlobalBlockEntities(this.globalBlockEntities, blockEntities);
+            }
         }
 
         public abstract class ChunkCompileTask implements Comparable<ChunkCompileTask> {
@@ -540,20 +654,6 @@ public class EvChunkRenderDispatcher {
                 this.region = region;
             }
 
-            private static <E extends BlockEntity> void handleBlockEntity(CompiledChunk compiledChunk,
-                                                                          Set<BlockEntity> globalBlockEntitiesToRender,
-                                                                          E blockEntity) {
-                BlockEntityRenderer<E> renderer = Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(blockEntity);
-                if (renderer != null) {
-                    if (renderer.shouldRenderOffScreen(blockEntity)) {
-                        globalBlockEntitiesToRender.add(blockEntity);
-                    }
-                    else {
-                        compiledChunk.renderableBlockEntities.add(blockEntity);
-                    }
-                }
-            }
-
             @Override
             public void cancel() {
                 this.region = null;
@@ -593,10 +693,20 @@ public class EvChunkRenderDispatcher {
                                 if (blockState.hasBlockEntity()) {
                                     BlockEntity tile = region.getBlockEntity(mutable);
                                     if (tile != null) {
-                                        if (blockEntities == null) {
-                                            blockEntities = new ROpenHashSet<>();
+                                        BlockEntityRenderer<BlockEntity> renderer = Minecraft.getInstance()
+                                                                                             .getBlockEntityRenderDispatcher()
+                                                                                             .getRenderer(tile);
+                                        if (renderer != null) {
+                                            if (renderer.shouldRenderOffScreen(tile)) {
+                                                if (blockEntities == null) {
+                                                    blockEntities = new ROpenHashSet<>();
+                                                }
+                                                blockEntities.add(tile);
+                                            }
+                                            else {
+                                                compiledChunk.renderableTEs.add(tile);
+                                            }
                                         }
-                                        handleBlockEntity(compiledChunk, blockEntities, tile);
                                     }
                                 }
                                 FluidState fluidState = blockState.getFluidState();

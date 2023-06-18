@@ -58,51 +58,29 @@ import java.util.Locale;
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin implements IGameRendererPatch {
 
-    @Shadow
-    @Final
-    public static int EFFECT_NONE;
-    @Shadow
-    @Final
-    private static Logger LOGGER;
+    @Shadow public static @Final int EFFECT_NONE;
+    @Shadow private static @Final Logger LOGGER;
     @Unique private final PoseStack matrices = new PoseStack();
-    private final I2OMap<PostChain> postEffects = new I2OOpenHashMap<>();
-    @Shadow
-    public boolean effectActive;
-    @Shadow @Final public ItemInHandRenderer itemInHandRenderer;
+    @Unique private final I2OMap<PostChain> postEffects = new I2OOpenHashMap<>();
+    @Unique private final Matrix4f projMatrix = new Matrix4f();
+    @Shadow public boolean effectActive;
+    @Shadow public @Final ItemInHandRenderer itemInHandRenderer;
     @Shadow private float darkenWorldAmount;
     @Shadow private float darkenWorldAmountO;
-    @Shadow
-    private int effectIndex;
-    @Shadow @javax.annotation.Nullable private ItemStack itemActivationItem;
+    @Shadow private int effectIndex;
+    @Shadow private @Nullable ItemStack itemActivationItem;
     @Shadow private int itemActivationTicks;
-    @Shadow
-    private long lastActiveTime;
-    @Mutable
-    @Shadow
-    @Final
-    private LightTexture lightTexture;
-    @Shadow
-    @Final
-    private Camera mainCamera;
-    @Shadow
-    @Final
-    private Minecraft minecraft;
-    @Shadow
-    @Nullable
-    private PostChain postEffect;
-    @Shadow
-    private float renderDistance;
-    @Shadow
-    @Final
-    private ResourceManager resourceManager;
-    @Shadow
-    private int tick;
-    @Shadow
-    private float zoom;
-    @Shadow
-    private float zoomX;
-    @Shadow
-    private float zoomY;
+    @Shadow private long lastActiveTime;
+    @Mutable @Shadow private @Final LightTexture lightTexture;
+    @Shadow private @Final Camera mainCamera;
+    @Shadow private @Final Minecraft minecraft;
+    @Shadow private @Nullable PostChain postEffect;
+    @Shadow private float renderDistance;
+    @Shadow private @Final ResourceManager resourceManager;
+    @Shadow private int tick;
+    @Shadow private float zoom;
+    @Shadow private float zoomX;
+    @Shadow private float zoomY;
 
     @Shadow
     protected abstract void bobHurt(PoseStack pMatrixStack, float pPartialTicks);
@@ -115,22 +93,20 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
 
     /**
      * @author TheGreatWolf
-     * @reason Modify the near clipping plane to improve first person camera.
+     * @reason Modify the near clipping plane to improve first person camera; Avoid most allocations.
      */
     @Overwrite
     public Matrix4f getProjectionMatrix(double fov) {
-        PoseStack matrices = new PoseStack();
-        matrices.last().pose().setIdentity();
+        Matrix4f matrix = this.projMatrix;
+        matrix.setIdentity();
         if (this.zoom != 1.0F) {
-            matrices.translate(this.zoomX, -this.zoomY, 0);
-            matrices.scale(this.zoom, this.zoom, 1.0F);
+            matrix.multiplyWithTranslation(this.zoomX, -this.zoomY, 0);
+            MathHelper.getExtendedMatrix(matrix).scale(this.zoom, this.zoom, 1.0F);
         }
-        matrices.last()
-                .pose()
-                .multiply(
-                        Matrix4f.perspective(fov, this.minecraft.getWindow().getWidth() / (float) this.minecraft.getWindow().getHeight(), 0.006_25f,
-                                             this.getDepthFar()));
-        return matrices.last().pose();
+        MathHelper.getExtendedMatrix(matrix)
+                  .multiplyWithPerspective(fov, this.minecraft.getWindow().getWidth() / (float) this.minecraft.getWindow().getHeight(), 0.006_25f,
+                                           this.getDepthFar());
+        return matrix;
     }
 
     /**
@@ -219,10 +195,9 @@ public abstract class GameRendererMixin implements IGameRendererPatch {
         }
     }
 
-    @Nullable
     @Redirect(method = "shouldRenderBlockOutline", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;getCameraEntity()" +
                                                                                        "Lnet/minecraft/world/entity/Entity;"))
-    private Entity proxyShouldRenderBlockOutline(Minecraft mc) {
+    private @Nullable Entity proxyShouldRenderBlockOutline(Minecraft mc) {
         return mc.player;
     }
 

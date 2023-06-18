@@ -457,7 +457,6 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 MemoryReserve.release();
                 ((ICrashReset) Tesselator.getInstance().getBuilder()).resetAfterCrash();
                 ((ICrashReset) this.renderBuffers().bufferSource()).resetAfterCrash();
-                this.lvlRenderer.clear();
             }
             catch (Throwable ignored) {
             }
@@ -1253,7 +1252,10 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                 if (this.attackKeyPressed) {
                     return true;
                 }
-                ClientEvents.getInstance().startShortAttack(this.player.getMainHandItem());
+                ItemStack mainHandItem = this.player.getMainHandItem();
+                if (!this.player.isCreative() || mainHandItem.isEmpty() || mainHandItem.getItem() instanceof IMelee) {
+                    ClientEvents.getInstance().startShortAttack(mainHandItem);
+                }
                 swingHand = false;
                 break;
             }

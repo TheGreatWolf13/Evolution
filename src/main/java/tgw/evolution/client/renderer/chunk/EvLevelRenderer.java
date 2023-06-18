@@ -8,7 +8,9 @@ import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.logging.LogUtils;
-import com.mojang.math.*;
+import com.mojang.math.Matrix3f;
+import com.mojang.math.Matrix4f;
+import com.mojang.math.Vector3f;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -46,7 +48,6 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
@@ -86,6 +87,7 @@ import tgw.evolution.init.EvolutionItems;
 import tgw.evolution.mixin.RenderSystemAccessor;
 import tgw.evolution.patches.IDebugRendererPatch;
 import tgw.evolution.patches.IEntityPatch;
+import tgw.evolution.patches.IFrustumPatch;
 import tgw.evolution.util.AdvancedEntityHitResult;
 import tgw.evolution.util.collection.*;
 import tgw.evolution.util.constants.BlockFlags;
@@ -113,17 +115,16 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     private static final ResourceLocation FORCEFIELD_LOCATION = new ResourceLocation("textures/misc/forcefield.png");
     private static final ResourceLocation RAIN_LOCATION = new ResourceLocation("textures/environment/rain.png");
     private static final ResourceLocation SNOW_LOCATION = new ResourceLocation("textures/environment/snow.png");
-    private static final ThreadLocal<ArrayDeque<RenderChunkInfo>> QUEUE_CACHE = ThreadLocal.withInitial(ArrayDeque::new);
+    private static final ThreadLocal<OArrayFIFOQueue<RenderChunkInfo>> QUEUE_CACHE = ThreadLocal.withInitial(OArrayFIFOQueue::new);
     private static final ThreadLocal<LongSet> VISITED_CACHE = ThreadLocal.withInitial(LongOpenHashSet::new);
     private final BlockEntityRenderDispatcher blockEntityRenderDispatcher;
     private final BufferHolder bufferHolder;
     private final RenderChunkInfoComparator comparator = new RenderChunkInfoComparator();
+    private final Frustum cullingFrustum = new Frustum(new Matrix4f(), new Matrix4f());
     private final Int2ObjectMap<BlockDestructionProgress> destroyingBlocks = new Int2ObjectOpenHashMap<>();
     private final BlockPos.MutableBlockPos destructionPos = new BlockPos.MutableBlockPos();
     private final Long2ObjectMap<SortedSet<BlockDestructionProgress>> destructionProgress = new Long2ObjectOpenHashMap<>();
     private final EntityRenderDispatcher entityRenderDispatcher;
-    private final Vector4f[] frustumPoints = new Vector4f[8];
-    private final Vector3d frustumPos = new Vector3d(0, 0, 0);
     /**
      * Global block entities; these are always rendered, even if off-screen.
      * Any block entity is added to this if {@link
@@ -139,15 +140,12 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     private final float[] rainSizeZ = new float[1_024];
     private final BlockingQueue<EvChunkRenderDispatcher.RenderChunk> recentlyCompiledChunks = new LinkedBlockingQueue<>();
     private final EvRenderRegionCache renderCache = new EvRenderRegionCache();
-    private final OList<RenderChunkInfo> renderChunksInFrustum = new OArrayList<>(10_000);
+    private final OList<EvChunkRenderDispatcher.RenderChunk> renderChunksInFrustum = new OArrayList<>();
     private final SkyFogSetup skyFog = new SkyFogSetup();
-    private boolean captureFrustum;
-    private @Nullable Frustum capturedFrustum;
     private @Nullable EvChunkRenderDispatcher chunkRenderDispatcher;
     private @Nullable VertexBuffer cloudBuffer;
     private @Nullable RenderTarget cloudsTarget;
     private int culledEntities;
-    private Frustum cullingFrustum;
     private @Nullable PostChain entityEffect;
     private @Nullable RenderTarget entityTarget;
     private boolean generateClouds = true;
@@ -440,20 +438,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         }
     }
 
-    private void addFrustumQuad(VertexConsumer builder, int v1, int v2, int v3, int v4, int r, int g, int b) {
-        builder.vertex(this.frustumPoints[v1].x(), this.frustumPoints[v1].y(), this.frustumPoints[v1].z()).color(r, g, b, 0.25F).endVertex();
-        builder.vertex(this.frustumPoints[v2].x(), this.frustumPoints[v2].y(), this.frustumPoints[v2].z()).color(r, g, b, 0.25F).endVertex();
-        builder.vertex(this.frustumPoints[v3].x(), this.frustumPoints[v3].y(), this.frustumPoints[v3].z()).color(r, g, b, 0.25F).endVertex();
-        builder.vertex(this.frustumPoints[v4].x(), this.frustumPoints[v4].y(), this.frustumPoints[v4].z()).color(r, g, b, 0.25F).endVertex();
-    }
-
-    private void addFrustumVertex(VertexConsumer builder, int v) {
-        builder.vertex(this.frustumPoints[v].x(), this.frustumPoints[v].y(), this.frustumPoints[v].z())
-               .color(0, 0, 0, 255)
-               .normal(0, 0, -1)
-               .endVertex();
-    }
-
     public void addRecentlyCompiledChunk(EvChunkRenderDispatcher.RenderChunk chunk) {
         this.recentlyCompiledChunks.add(chunk);
     }
@@ -509,19 +493,30 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         assert Minecraft.getInstance().isSameThread() : "applyFrustum called from wrong thread: " + Thread.currentThread().getName();
         this.mc.getProfiler().push("apply_frustum");
         this.renderChunksInFrustum.clear();
-        RenderChunkStorage renderChunkStorage = this.renderChunkStorage;
-        if (renderChunkStorage != null) {
-            for (int i = 0, len = renderChunkStorage.renderChunks.size(); i < len; i++) {
-                RenderChunkInfo info = renderChunkStorage.renderChunks.get(i);
-                if (frustum.isVisible(info.chunk.getBoundingBox())) {
-                    this.renderChunksInFrustum.add(info);
+        RenderChunkStorage storage = this.renderChunkStorage;
+        if (storage != null) {
+            IFrustumPatch patch = (IFrustumPatch) frustum;
+            OList<EvChunkRenderDispatcher.RenderChunk> renderChunks = storage.renderChunks;
+            for (int i = 0, len = renderChunks.size(); i < len; i++) {
+                EvChunkRenderDispatcher.RenderChunk chunk = renderChunks.get(i);
+                if (chunk.isCompletelyEmpty() && !chunk.isDirty()) {
+                    chunk.visibility = Visibility.OUTSIDE;
+                    continue;
+                }
+                int x = chunk.getX();
+                int y = chunk.getY();
+                int z = chunk.getZ();
+                @Visibility int visibility = patch.intersectWith(x, y, z, x + 16, y + 16, z + 16);
+                chunk.visibility = visibility;
+                if (visibility != Visibility.OUTSIDE) {
+                    this.renderChunksInFrustum.add(chunk);
                 }
             }
         }
         this.mc.getProfiler().pop();
     }
 
-    public void blockChanged(BlockGetter level, BlockPos pos, BlockState oldState, BlockState newState, @BlockFlags int flags) {
+    public void blockChanged(BlockPos pos, BlockState oldState, BlockState newState, @BlockFlags int flags) {
         this.setBlockDirty(pos, (flags & BlockFlags.RERENDER) != 0);
     }
 
@@ -719,35 +714,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         }
     }
 
-    private void captureFrustum(Matrix4f viewMatrix, Matrix4f projMatrix, double camX, double camY, double camZ, Frustum frustum) {
-        this.capturedFrustum = frustum;
-        Matrix4f matrix4f = projMatrix.copy();
-        matrix4f.multiply(viewMatrix);
-        matrix4f.invert();
-        this.frustumPos.x = camX;
-        this.frustumPos.y = camY;
-        this.frustumPos.z = camZ;
-        this.frustumPoints[0] = new Vector4f(-1.0F, -1.0F, -1.0F, 1.0F);
-        this.frustumPoints[1] = new Vector4f(1.0F, -1.0F, -1.0F, 1.0F);
-        this.frustumPoints[2] = new Vector4f(1.0F, 1.0F, -1.0F, 1.0F);
-        this.frustumPoints[3] = new Vector4f(-1.0F, 1.0F, -1.0F, 1.0F);
-        this.frustumPoints[4] = new Vector4f(-1.0F, -1.0F, 1.0F, 1.0F);
-        this.frustumPoints[5] = new Vector4f(1.0F, -1.0F, 1.0F, 1.0F);
-        this.frustumPoints[6] = new Vector4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.frustumPoints[7] = new Vector4f(-1.0F, 1.0F, 1.0F, 1.0F);
-        for (int i = 0; i < 8; ++i) {
-            this.frustumPoints[i].transform(matrix4f);
-            this.frustumPoints[i].perspectiveDivide();
-        }
-    }
-
-    public void captureFrustum() {
-        this.captureFrustum = true;
-    }
-
-    public void clear() {
-    }
-
     @Override
     public void close() {
         if (this.entityEffect != null) {
@@ -774,7 +740,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         BlockPos cameraPos = camera.getBlockPosition();
         boolean forceOffThread = ForgeConfig.CLIENT.alwaysSetupTerrainOffThread.get();
         for (int i = 0, l = this.renderChunksInFrustum.size(); i < l; i++) {
-            EvChunkRenderDispatcher.RenderChunk chunk = this.renderChunksInFrustum.get(i).chunk;
+            EvChunkRenderDispatcher.RenderChunk chunk = this.renderChunksInFrustum.get(i);
             int chunkX = SectionPos.blockToSectionCoord(chunk.getX());
             int chunkZ = SectionPos.blockToSectionCoord(chunk.getZ());
             if (chunk.isDirty() && this.level.getChunk(chunkX, chunkZ).isClientLightReady()) {
@@ -813,13 +779,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     }
 
     public int countRenderedChunks() {
-        int count = 0;
-        for (int i = 0, len = this.renderChunksInFrustum.size(); i < len; i++) {
-            if (!this.renderChunksInFrustum.get(i).chunk.isCompletelyEmpty()) {
-                ++count;
-            }
-        }
-        return count;
+        return this.renderChunksInFrustum.size();
     }
 
     private void deinitTransparency() {
@@ -914,8 +874,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                                       float camX,
                                       float camY,
                                       float camZ) {
-        EvLevelRenderer.RenderChunkInfo renderChunkInfo = this.renderChunksInFrustum.get(i);
-        EvChunkRenderDispatcher.RenderChunk chunk = renderChunkInfo.chunk;
+        EvChunkRenderDispatcher.RenderChunk chunk = this.renderChunksInFrustum.get(i);
         if (!chunk.isEmpty(renderType)) {
             VertexBuffer buffer = chunk.getBuffer(renderType);
             if (uniform != null) {
@@ -947,9 +906,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         int totalChunks = this.viewArea.chunks.length;
         int visibleChunks = this.countRenderedChunks();
         String str = "C: " + visibleChunks + "/" + totalChunks + " ";
-        if (this.mc.smartCull) {
-            str += "(s) ";
-        }
         str += "D: " + this.lastViewDistance + ", " + (this.chunkRenderDispatcher == null ? "null" : this.chunkRenderDispatcher.getStats());
         return str;
     }
@@ -1051,7 +1007,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
      *             LevelEvent#SOUND_DRAGON_DEATH the dragon's death sound}, and {@linkplain
      *             LevelEvent#SOUND_END_PORTAL_SPAWN the end portal spawn sound}.
      */
-    public void globalLevelEvent(@LvlEvent int type, BlockPos pos, int data) {
+    public void globalLevelEvent(@LvlEvent int type, BlockPos pos) {
         assert this.level != null;
         switch (type) {
             case LevelEvent.SOUND_WITHER_BOSS_SPAWN, LevelEvent.SOUND_DRAGON_DEATH, LevelEvent.SOUND_END_PORTAL_SPAWN -> {
@@ -1164,7 +1120,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         }
     }
 
-    private void initializeQueueForFullUpdate(Camera camera, Collection<RenderChunkInfo> infoQueue) {
+    private void initializeQueueForFullUpdate(Camera camera, OArrayFIFOQueue queue) {
         assert this.level != null;
         assert this.viewArea != null;
         Vec3 camPos = camera.getPosition();
@@ -1174,7 +1130,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             int x = Mth.floor(camPos.x / 16) * 16;
             int y = camBlockPos.getY() > this.level.getMinBuildHeight() ? this.level.getMaxBuildHeight() - 8 : this.level.getMinBuildHeight() + 8;
             int z = Mth.floor(camPos.z / 16) * 16;
-            List<RenderChunkInfo> list = new RArrayList<>();
+            OList<RenderChunkInfo> list = new OArrayList<>();
             for (int i1 = -this.lastViewDistance; i1 <= this.lastViewDistance; ++i1) {
                 for (int j1 = -this.lastViewDistance; j1 <= this.lastViewDistance; ++j1) {
                     EvChunkRenderDispatcher.RenderChunk otherChunk = this.viewArea.getRenderChunkAt(x + SectionPos.sectionToBlockCoord(i1, 8),
@@ -1187,10 +1143,10 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                 }
             }
             list.sort(this.comparator.setCameraPos(camBlockPos));
-            infoQueue.addAll(list);
+            queue.enqueueMany(list);
         }
         else {
-            infoQueue.add(new EvLevelRenderer.RenderChunkInfo(chunk, null, 0));
+            queue.enqueue(new EvLevelRenderer.RenderChunkInfo(chunk, null, 0));
         }
     }
 
@@ -1198,10 +1154,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         assert this.viewArea != null;
         EvChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(pos);
         return chunk != null && chunk.compiled != EvChunkRenderDispatcher.CompiledChunk.UNCOMPILED;
-    }
-
-    public void killFrustum() {
-        this.capturedFrustum = null;
     }
 
     public void levelEvent(@LvlEvent int type, BlockPos pos, int data) {
@@ -1226,12 +1178,8 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     }
 
     public void prepareCullFrustum(PoseStack matrices, Vec3 camPos, Matrix4f projMatrix) {
-        Matrix4f matrix4f = matrices.last().pose();
-        double camX = camPos.x;
-        double camY = camPos.y;
-        double camZ = camPos.z;
-        this.cullingFrustum = new Frustum(matrix4f, projMatrix);
-        this.cullingFrustum.prepare(camX, camY, camZ);
+        this.cullingFrustum.calculateFrustum(matrices.last().pose(), projMatrix);
+        this.cullingFrustum.prepare(camPos.x, camPos.y, camPos.z);
     }
 
     private void removeProgress(BlockDestructionProgress progress) {
@@ -1266,7 +1214,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                 this.zTransparentOld = camZ;
                 int j = 0;
                 for (int i = 0; i < size; i++) {
-                    if (j < 15 && this.renderChunksInFrustum.get(i).chunk.resortTransparency(renderLayer, this.chunkRenderDispatcher)) {
+                    if (j < 15 && this.renderChunksInFrustum.get(i).resortTransparency(renderLayer, this.chunkRenderDispatcher)) {
                         j++;
                     }
                 }
@@ -1368,7 +1316,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                 if (this.cloudBuffer != null) {
                     this.cloudBuffer.close();
                 }
-
                 this.cloudBuffer = new VertexBuffer();
                 this.buildClouds(bufferbuilder, d2, d3, d4, vec3);
                 bufferbuilder.end();
@@ -1398,171 +1345,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             RenderSystem.enableCull();
             RenderSystem.disableBlend();
-        }
-    }
-
-    private void renderDebug(Camera camera) {
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder builder = tesselator.getBuilder();
-        RenderSystem.setShader(RenderHelper.SHADER_POSITION_COLOR);
-        if (this.mc.chunkPath || this.mc.chunkVisibility) {
-            double d0 = camera.getPosition().x();
-            double d1 = camera.getPosition().y();
-            double d2 = camera.getPosition().z();
-            RenderSystem.depthMask(true);
-            RenderSystem.disableCull();
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.disableTexture();
-            for (EvLevelRenderer.RenderChunkInfo chunkInfo : this.renderChunksInFrustum) {
-                EvChunkRenderDispatcher.RenderChunk chunk = chunkInfo.chunk;
-                PoseStack internalMat = RenderSystem.getModelViewStack();
-                internalMat.pushPose();
-                internalMat.translate(chunk.getX() - d0, chunk.getY() - d1, chunk.getZ() - d2);
-                RenderSystem.applyModelViewMatrix();
-                RenderSystem.setShader(GameRenderer::getRendertypeLinesShader);
-                if (this.mc.chunkPath) {
-                    builder.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR_NORMAL);
-                    RenderSystem.lineWidth(5.0F);
-                    int color = chunkInfo.step == 0 ? 0 : Mth.hsvToRgb(chunkInfo.step / 50.0F, 0.9F, 0.9F);
-                    int r = color >> 16 & 255;
-                    int g = color >> 8 & 255;
-                    int b = color & 255;
-                    for (Direction direction : DirectionUtil.ALL) {
-                        if (chunkInfo.hasSourceDirection(direction)) {
-                            builder.vertex(8.0, 8.0, 8.0)
-                                   .color(r, g, b, 255)
-                                   .normal(direction.getStepX(), direction.getStepY(), direction.getStepZ())
-                                   .endVertex();
-                            builder.vertex(8 - 16 * direction.getStepX(), 8 - 16 * direction.getStepY(), 8 - 16 * direction.getStepZ())
-                                   .color(r, g, b, 255)
-                                   .normal(direction.getStepX(), direction.getStepY(), direction.getStepZ())
-                                   .endVertex();
-                        }
-                    }
-                    tesselator.end();
-                    RenderSystem.lineWidth(1.0F);
-                }
-                if (this.mc.chunkVisibility && !chunk.isCompletelyEmpty()) {
-                    builder.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR_NORMAL);
-                    RenderSystem.setShader(GameRenderer::getRendertypeLinesShader);
-                    RenderSystem.lineWidth(5.0F);
-                    int j1 = 0;
-                    for (Direction dir1 : DirectionUtil.ALL) {
-                        for (Direction dir2 : DirectionUtil.ALL) {
-                            boolean flag = chunk.compiled.facesCanSeeEachother(dir1, dir2);
-                            if (!flag) {
-                                ++j1;
-                                builder.vertex(8 + 8 * dir1.getStepX(), 8 + 8 * dir1.getStepY(), 8 + 8 * dir1.getStepZ())
-                                       .color(255, 0, 0, 255)
-                                       .normal(dir1.getStepX(), dir1.getStepY(), dir1.getStepZ())
-                                       .endVertex();
-                                builder.vertex(8 + 8 * dir2.getStepX(), 8 + 8 * dir2.getStepY(), 8 + 8 * dir2.getStepZ())
-                                       .color(255, 0, 0, 255)
-                                       .normal(dir2.getStepX(), dir2.getStepY(), dir2.getStepZ())
-                                       .endVertex();
-                            }
-                        }
-                    }
-                    tesselator.end();
-                    RenderSystem.lineWidth(1.0F);
-                    RenderSystem.setShader(RenderHelper.SHADER_POSITION_COLOR);
-                    if (j1 > 0) {
-                        builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-                        builder.vertex(0.5, 15.5, 0.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(15.5, 15.5, 0.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(15.5, 15.5, 15.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(0.5, 15.5, 15.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(0.5, 0.5, 15.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(15.5, 0.5, 15.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(15.5, 0.5, 0.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(0.5, 0.5, 0.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(0.5, 15.5, 0.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(0.5, 15.5, 15.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(0.5, 0.5, 15.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(0.5, 0.5, 0.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(15.5, 0.5, 0.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(15.5, 0.5, 15.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(15.5, 15.5, 15.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(15.5, 15.5, 0.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(0.5, 0.5, 0.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(15.5, 0.5, 0.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(15.5, 15.5, 0.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(0.5, 15.5, 0.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(0.5, 15.5, 15.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(15.5, 15.5, 15.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(15.5, 0.5, 15.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        builder.vertex(0.5, 0.5, 15.5).color(0.9F, 0.9F, 0.0F, 0.2F).endVertex();
-                        tesselator.end();
-                    }
-                }
-                internalMat.popPose();
-                RenderSystem.applyModelViewMatrix();
-            }
-            RenderSystem.depthMask(true);
-            RenderSystem.disableBlend();
-            RenderSystem.enableCull();
-            RenderSystem.enableTexture();
-        }
-        //noinspection VariableNotUsedInsideIf
-        if (this.capturedFrustum != null) {
-            RenderSystem.disableCull();
-            RenderSystem.disableTexture();
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.lineWidth(5.0F);
-            RenderSystem.setShader(RenderHelper.SHADER_POSITION_COLOR);
-            PoseStack internalMat = RenderSystem.getModelViewStack();
-            internalMat.pushPose();
-            internalMat.translate((float) (this.frustumPos.x - camera.getPosition().x),
-                                  (float) (this.frustumPos.y - camera.getPosition().y),
-                                  (float) (this.frustumPos.z - camera.getPosition().z));
-            RenderSystem.applyModelViewMatrix();
-            RenderSystem.depthMask(true);
-            builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-            this.addFrustumQuad(builder, 0, 1, 2, 3, 0, 1, 1);
-            this.addFrustumQuad(builder, 4, 5, 6, 7, 1, 0, 0);
-            this.addFrustumQuad(builder, 0, 1, 5, 4, 1, 1, 0);
-            this.addFrustumQuad(builder, 2, 3, 7, 6, 0, 0, 1);
-            this.addFrustumQuad(builder, 0, 4, 7, 3, 0, 1, 0);
-            this.addFrustumQuad(builder, 1, 5, 6, 2, 1, 0, 1);
-            tesselator.end();
-            RenderSystem.depthMask(false);
-            RenderSystem.setShader(GameRenderer::getRendertypeLinesShader);
-            builder.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR_NORMAL);
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            this.addFrustumVertex(builder, 0);
-            this.addFrustumVertex(builder, 1);
-            this.addFrustumVertex(builder, 1);
-            this.addFrustumVertex(builder, 2);
-            this.addFrustumVertex(builder, 2);
-            this.addFrustumVertex(builder, 3);
-            this.addFrustumVertex(builder, 3);
-            this.addFrustumVertex(builder, 0);
-            this.addFrustumVertex(builder, 4);
-            this.addFrustumVertex(builder, 5);
-            this.addFrustumVertex(builder, 5);
-            this.addFrustumVertex(builder, 6);
-            this.addFrustumVertex(builder, 6);
-            this.addFrustumVertex(builder, 7);
-            this.addFrustumVertex(builder, 7);
-            this.addFrustumVertex(builder, 4);
-            this.addFrustumVertex(builder, 0);
-            this.addFrustumVertex(builder, 4);
-            this.addFrustumVertex(builder, 1);
-            this.addFrustumVertex(builder, 5);
-            this.addFrustumVertex(builder, 2);
-            this.addFrustumVertex(builder, 6);
-            this.addFrustumVertex(builder, 3);
-            this.addFrustumVertex(builder, 7);
-            tesselator.end();
-            internalMat.popPose();
-            RenderSystem.applyModelViewMatrix();
-            RenderSystem.depthMask(true);
-            RenderSystem.disableBlend();
-            RenderSystem.enableCull();
-            RenderSystem.enableTexture();
-            RenderSystem.lineWidth(1.0F);
         }
     }
 
@@ -1618,22 +1400,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         float camX = (float) camPos.x;
         float camY = (float) camPos.y;
         float camZ = (float) camPos.z;
-        Matrix4f pose = matrices.last().pose();
-        profiler.popPush("culling");
-        boolean hasFrustrum = this.capturedFrustum != null;
-        Frustum frustum;
-        if (hasFrustrum) {
-            frustum = this.capturedFrustum;
-            frustum.prepare(this.frustumPos.x, this.frustumPos.y, this.frustumPos.z);
-        }
-        else {
-            frustum = this.cullingFrustum;
-        }
-        this.mc.getProfiler().popPush("captureFrustum");
-        if (this.captureFrustum) {
-            this.captureFrustum(pose, projectionMatrix, camPos.x, camPos.y, camPos.z, hasFrustrum ? new Frustum(pose, projectionMatrix) : frustum);
-            this.captureFrustum = false;
-        }
         profiler.popPush("clear");
         FogRenderer.setupColor(camera, partialTicks, this.level, this.mc.options.getEffectiveRenderDistance(),
                                gameRenderer.getDarkenWorldAmount(partialTicks));
@@ -1649,7 +1415,8 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         profiler.popPush("fog");
         FogRenderer.setupFog(camera, FogRenderer.FogMode.FOG_TERRAIN, Math.max(renderDistance, 32.0F), isFoggy, partialTicks);
         profiler.popPush("terrain_setup");
-        this.setupRender(camera, frustum, hasFrustrum, this.mc.player.isSpectator());
+        Frustum frustum = this.cullingFrustum;
+        this.setupRender(camera, frustum, this.mc.player.isSpectator());
         profiler.popPush("compile_chunks");
         this.compileChunks(camera, endTickTime);
         profiler.popPush("terrain");
@@ -1683,8 +1450,9 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         boolean hasGlowing = false;
         MultiBufferSource.BufferSource buffer = this.bufferHolder.bufferSource();
         for (Entity entity : this.level.entitiesForRendering()) {
-            if ((this.entityRenderDispatcher.shouldRender(entity, frustum, camX, camY, camZ) || entity.hasIndirectPassenger(this.mc.player)) &&
-                (entity != camera.getEntity() || camera.isDetached())) {
+            if ((entity != camera.getEntity() || camera.isDetached()) &&
+                (this.entityRenderDispatcher.shouldRender(entity, frustum, camX, camY, camZ) || entity.hasIndirectPassenger(this.mc.player))) {
+                profiler.push(entity.getType().getRegistryName().getPath());
                 ++this.renderedEntities;
                 if (entity.tickCount == 0) {
                     entity.xOld = entity.getX();
@@ -1706,12 +1474,14 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                     multiBufferSource = buffer;
                 }
                 this.renderEntity(entity, camX, camY, camZ, partialTicks, matrices, multiBufferSource);
+                profiler.pop();
             }
         }
         //Render player in first person
         Entity cameraEntity = camera.getEntity();
         ClientEvents client = ClientEvents.getInstance();
         if (!camera.isDetached() && cameraEntity.isAlive()) {
+            profiler.push(cameraEntity.getType().getRegistryName().getPath());
             this.renderedEntities++;
             MultiBufferSource multiBufferSource;
             if (this.shouldShowEntityOutlines() && this.mc.shouldEntityAppearGlowing(cameraEntity)) {
@@ -1731,6 +1501,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             renderer.setRenderingPlayer(true);
             this.renderEntity(cameraEntity, camX, camY, camZ, partialTicks, matrices, multiBufferSource);
             renderer.setRenderingPlayer(false);
+            profiler.pop();
         }
         buffer.endLastBatch();
         checkPoseStack(matrices);
@@ -1740,12 +1511,16 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         buffer.endBatch(RenderType.entitySmoothCutout(TextureAtlas.LOCATION_BLOCKS));
         profiler.popPush("block_entities");
         for (int i = 0, l = this.renderChunksInFrustum.size(); i < l; i++) {
-            List<BlockEntity> blockEntities = this.renderChunksInFrustum.get(i).chunk.compiled.getRenderableBlockEntities();
+            EvChunkRenderDispatcher.RenderChunk renderChunk = this.renderChunksInFrustum.get(i);
+            if (!renderChunk.hasRenderableTEs()) {
+                continue;
+            }
+            List<BlockEntity> blockEntities = renderChunk.compiled.getRenderableTEs();
             if (!blockEntities.isEmpty()) {
                 for (int j = 0, len = blockEntities.size(); j < len; j++) {
                     BlockEntity blockEntity = blockEntities.get(j);
                     profiler.push(blockEntity.getType().getRegistryName().getPath());
-                    if (!frustum.isVisible(blockEntity.getRenderBoundingBox())) {
+                    if (renderChunk.visibility != Visibility.INSIDE && !frustum.isVisible(blockEntity.getRenderBoundingBox())) {
                         profiler.pop();
                         continue;
                     }
@@ -1952,7 +1727,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             this.renderWorldBorder(camera);
             RenderSystem.depthMask(true);
         }
-        this.renderDebug(camera);
         RenderSystem.depthMask(true);
         RenderSystem.disableBlend();
         internalMat.popPose();
@@ -2338,7 +2112,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         }
     }
 
-    private void setupRender(Camera camera, Frustum frustum, boolean hasCapturedFrustrum, boolean isSpectator) {
+    private void setupRender(Camera camera, Frustum frustum, boolean isSpectator) {
         assert this.level != null;
         assert this.mc.cameraEntity != null;
         assert this.chunkRenderDispatcher != null;
@@ -2346,7 +2120,8 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         if (this.mc.options.getEffectiveRenderDistance() != this.lastViewDistance) {
             this.allChanged();
         }
-        this.level.getProfiler().push("camera");
+        ProfilerFiller profiler = this.mc.getProfiler();
+        profiler.push("camera");
         Vec3 camPos = camera.getPosition();
         double camX = this.mc.cameraEntity.getX();
         double camY = this.mc.cameraEntity.getY();
@@ -2367,9 +2142,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             this.viewArea.repositionCamera(camX, camZ);
         }
         this.chunkRenderDispatcher.setCamera(camPos);
-        this.level.getProfiler().popPush("cull");
-        this.mc.getProfiler().popPush("culling");
-        BlockPos blockpos = camera.getBlockPosition();
+        profiler.popPush("culling");
         double currentCamX = Math.floor(camPos.x / 8.0);
         double currentCamY = Math.floor(camPos.y / 8.0);
         double currentCamZ = Math.floor(camPos.z / 8.0);
@@ -2387,52 +2160,46 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         this.prevCamX = currentCamX;
         this.prevCamY = currentCamY;
         this.prevCamZ = currentCamZ;
-        this.mc.getProfiler().popPush("update");
-        boolean smartCull = this.mc.smartCull;
-        if (isSpectator && this.level.getBlockState(blockpos).isSolidRender(this.level, blockpos)) {
-            smartCull = false;
-        }
-        if (!hasCapturedFrustrum) {
-            if (this.needsFullRenderChunkUpdate && (this.lastFullRenderChunkUpdate == null || this.lastFullRenderChunkUpdate.isDone())) {
-                this.mc.getProfiler().push("full_update_schedule");
-                this.needsFullRenderChunkUpdate = false;
-                boolean finalSmartCull = smartCull;
-                this.lastFullRenderChunkUpdate = Util.backgroundExecutor().submit(() -> {
-                    Queue<RenderChunkInfo> queue = QUEUE_CACHE.get();
-                    this.initializeQueueForFullUpdate(camera, queue);
-                    RenderChunkStorage renderChunkStorage = new RenderChunkStorage(this.viewArea.chunks.length);
-                    this.updateRenderChunks(renderChunkStorage.renderChunks, renderChunkStorage.renderInfoMap, camPos, queue, finalSmartCull);
-                    this.renderChunkStorage = renderChunkStorage;
-                    this.needsFrustumUpdate.set(true);
-                    queue.clear();
-                });
-                this.mc.getProfiler().pop();
-            }
-            RenderChunkStorage storage = this.renderChunkStorage;
-            if (storage != null && !this.recentlyCompiledChunks.isEmpty()) {
-                this.mc.getProfiler().push("partial_update");
-                Queue<RenderChunkInfo> queue = QUEUE_CACHE.get();
-                while (!this.recentlyCompiledChunks.isEmpty()) {
-                    EvChunkRenderDispatcher.RenderChunk renderChunk = this.recentlyCompiledChunks.poll();
-                    RenderChunkInfo renderChunkInfo = storage.renderInfoMap.get(renderChunk);
-                    if (renderChunkInfo != null && renderChunkInfo.chunk == renderChunk) {
-                        queue.add(renderChunkInfo);
-                    }
-                }
-                this.updateRenderChunks(storage.renderChunks, storage.renderInfoMap, camPos, queue, smartCull);
+        profiler.popPush("update");
+        boolean smartCull = !isSpectator || !this.level.getBlockState(camera.getBlockPosition()).isSolidRender(this.level, camera.getBlockPosition());
+        if (this.needsFullRenderChunkUpdate && (this.lastFullRenderChunkUpdate == null || this.lastFullRenderChunkUpdate.isDone())) {
+            profiler.push("full_update_schedule");
+            this.needsFullRenderChunkUpdate = false;
+            this.lastFullRenderChunkUpdate = Util.backgroundExecutor().submit(() -> {
+                OArrayFIFOQueue<RenderChunkInfo> queue = QUEUE_CACHE.get();
+                this.initializeQueueForFullUpdate(camera, queue);
+                RenderChunkStorage renderChunkStorage = new RenderChunkStorage(this.viewArea.chunks.length);
+                this.updateRenderChunks(renderChunkStorage, camPos, queue, smartCull);
+                this.renderChunkStorage = renderChunkStorage;
                 this.needsFrustumUpdate.set(true);
                 queue.clear();
-                this.mc.getProfiler().pop();
-            }
-            double camRotX = Math.floor(camera.getXRot() / 2.0F);
-            double camRotY = Math.floor(camera.getYRot() / 2.0F);
-            if (camRotX != this.prevCamRotX || camRotY != this.prevCamRotY || this.needsFrustumUpdate.compareAndSet(true, false)) {
-                this.applyFrustum(new Frustum(frustum).offsetToFullyIncludeCameraCube(8));
-                this.prevCamRotX = camRotX;
-                this.prevCamRotY = camRotY;
-            }
+            });
+            profiler.pop();
         }
-        this.mc.getProfiler().pop();
+        RenderChunkStorage storage = this.renderChunkStorage;
+        if (storage != null && !this.recentlyCompiledChunks.isEmpty()) {
+            profiler.push("partial_update");
+            OArrayFIFOQueue<RenderChunkInfo> queue = QUEUE_CACHE.get();
+            while (!this.recentlyCompiledChunks.isEmpty()) {
+                EvChunkRenderDispatcher.RenderChunk renderChunk = this.recentlyCompiledChunks.poll();
+                RenderChunkInfo renderChunkInfo = storage.renderInfoMap.get(renderChunk);
+                if (renderChunkInfo != null && renderChunkInfo.chunk == renderChunk) {
+                    queue.enqueue(renderChunkInfo);
+                }
+            }
+            this.updateRenderChunks(storage, camPos, queue, smartCull);
+            this.needsFrustumUpdate.set(true);
+            queue.clear();
+            profiler.pop();
+        }
+        double camRotX = Math.floor(camera.getXRot() / 2.0F);
+        double camRotY = Math.floor(camera.getYRot() / 2.0F);
+        if (camRotX != this.prevCamRotX || camRotY != this.prevCamRotY || this.needsFrustumUpdate.compareAndSet(true, false)) {
+            this.applyFrustum(frustum.offsetToFullyIncludeCameraCube(8));
+            this.prevCamRotX = camRotX;
+            this.prevCamRotY = camRotY;
+        }
+        profiler.pop();
     }
 
     protected boolean shouldShowEntityOutlines() {
@@ -2518,10 +2285,9 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         }
     }
 
-    private void updateRenderChunks(List<RenderChunkInfo> infos,
-                                    RenderInfoMap infoMap,
+    private void updateRenderChunks(RenderChunkStorage storage,
                                     Vec3 viewVector,
-                                    Queue<RenderChunkInfo> queue,
+                                    OArrayFIFOQueue<RenderChunkInfo> queue,
                                     boolean shouldCull) {
         assert this.level != null;
         assert this.viewArea != null;
@@ -2534,14 +2300,15 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         Entity.setViewScale(Mth.clamp(this.mc.options.getEffectiveRenderDistance() / 8.0, 1, 2.5) * this.mc.options.entityDistanceScaling);
         LongSet visited = VISITED_CACHE.get();
         visited.clear();
+        RenderInfoMap infoMap = storage.renderInfoMap;
         while (!queue.isEmpty()) {
-            RenderChunkInfo info = queue.poll();
+            RenderChunkInfo info = queue.dequeue();
             EvChunkRenderDispatcher.RenderChunk chunk = info.chunk;
             int chunkX = chunk.getX();
             int chunkY = chunk.getY();
             int chunkZ = chunk.getZ();
             if (visited.add(BlockPos.asLong(chunkX, chunkY, chunkZ))) {
-                infos.add(info);
+                storage.add(chunk);
             }
             Direction nearestDir = Direction.getNearest(chunkX - cameraX, chunkY - cameraY, chunkZ - cameraZ);
             boolean far = Math.abs(chunkX - cameraX) > 60 || Math.abs(chunkY - cameraY) > 60 || Math.abs(chunkZ - cameraZ) > 60;
@@ -2662,7 +2429,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                             //noinspection ObjectAllocationInLoop
                             RenderChunkInfo newInfo = new RenderChunkInfo(chunkAtDir, dir, info.step + 1);
                             newInfo.setDirections(info.directions, dir);
-                            queue.add(newInfo);
+                            queue.enqueue(newInfo);
                             infoMap.put(chunkAtDir, newInfo);
                         }
                     }
@@ -2742,12 +2509,16 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     }
 
     public static class RenderChunkStorage {
-        public final OList<RenderChunkInfo> renderChunks;
         public final RenderInfoMap renderInfoMap;
+        private final OList<EvChunkRenderDispatcher.RenderChunk> renderChunks;
 
         public RenderChunkStorage(int size) {
             this.renderInfoMap = new RenderInfoMap(size);
             this.renderChunks = new OArrayList<>(size);
+        }
+
+        public void add(EvChunkRenderDispatcher.RenderChunk chunk) {
+            this.renderChunks.add(chunk);
         }
     }
 

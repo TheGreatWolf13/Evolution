@@ -29,6 +29,7 @@ public class EvRenderRegionCache {
         int x1 = SectionPos.blockToSectionCoord(endX + offset);
         int z1 = SectionPos.blockToSectionCoord(endZ + offset);
         this.tempList.clear();
+        boolean hasAtLeastOneNotEmpty = false;
         for (int x = x0; x <= x1; ++x) {
             for (int z = z0; z <= z1; ++z) {
                 long key = ChunkPos.asLong(x, z);
@@ -37,14 +38,10 @@ public class EvRenderRegionCache {
                     chunk = level.getChunk(x, z);
                     this.chunkCache.put(key, chunk);
                 }
+                if (!hasAtLeastOneNotEmpty && !chunk.isYSpaceEmpty(startY, endY)) {
+                    hasAtLeastOneNotEmpty = true;
+                }
                 this.tempList.add(chunk);
-            }
-        }
-        boolean hasAtLeastOneNotEmpty = false;
-        for (int i = 0, len = this.tempList.size(); i < len; i++) {
-            if (!this.tempList.get(i).isYSpaceEmpty(startY, endY)) {
-                hasAtLeastOneNotEmpty = true;
-                break;
             }
         }
         if (!hasAtLeastOneNotEmpty) {

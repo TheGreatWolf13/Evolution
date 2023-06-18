@@ -4,6 +4,8 @@ import com.mojang.math.Quaternion;
 
 public interface IMatrix4fPatch {
 
+    void multiplyWithPerspective(double fov, float aspectRatio, float nearPlane, float farPlane);
+
     void rotate(Quaternion quaternion);
 
     void rotateX(float i, float r);

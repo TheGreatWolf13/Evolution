@@ -190,7 +190,7 @@ public abstract class ClientLevelMixin extends Level {
     @Override
     @Overwrite
     public void globalLevelEvent(int id, BlockPos pos, int data) {
-        ((IMinecraftPatch) this.minecraft).lvlRenderer().globalLevelEvent(id, pos, data);
+        ((IMinecraftPatch) this.minecraft).lvlRenderer().globalLevelEvent(id, pos);
     }
 
     /**
@@ -222,7 +222,7 @@ public abstract class ClientLevelMixin extends Level {
     @Override
     @Overwrite
     public void sendBlockUpdated(BlockPos pos, BlockState oldState, BlockState newState, int flags) {
-        ((IMinecraftPatch) this.minecraft).lvlRenderer().blockChanged(this, pos, oldState, newState, flags);
+        ((IMinecraftPatch) this.minecraft).lvlRenderer().blockChanged(pos, oldState, newState, flags);
     }
 
     /**

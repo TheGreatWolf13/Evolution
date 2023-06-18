@@ -14,19 +14,15 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.SimpleOptionsSubScreen;
 import net.minecraft.client.gui.screens.controls.KeyBindsScreen;
 import net.minecraft.client.gui.screens.debug.GameModeSwitcherScreen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.GameType;
-import net.minecraftforge.client.ForgeHooksClient;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import tgw.evolution.client.util.Action;
 import tgw.evolution.client.util.Key;
 import tgw.evolution.client.util.Modifiers;
@@ -102,48 +98,6 @@ public abstract class KeyboardHandlerMixin {
 
     @Shadow
     protected abstract void debugFeedbackTranslated(String pMessage, Object... pArgs);
-
-    /**
-     * @author TheGreatWolf
-     * @reason Replace LevelRenderer.
-     */
-    @Overwrite
-    private boolean handleChunkDebugKeys(@Key int keycode) {
-        return switch (keycode) {
-            case 69 -> {
-                this.minecraft.chunkPath = !this.minecraft.chunkPath;
-                this.debugFeedback("ChunkPath: {0}", this.minecraft.chunkPath ? "shown" : "hidden");
-                yield true;
-            }
-            case 76 -> {
-                this.minecraft.smartCull = !this.minecraft.smartCull;
-                this.debugFeedback("SmartCull: {0}", this.minecraft.smartCull ? "enabled" : "disabled");
-                yield true;
-            }
-            case 85 -> {
-                if (Screen.hasShiftDown()) {
-                    ((IMinecraftPatch) this.minecraft).lvlRenderer().killFrustum();
-                    this.debugFeedback("Killed frustum");
-                }
-                else {
-                    ((IMinecraftPatch) this.minecraft).lvlRenderer().captureFrustum();
-                    this.debugFeedback("Captured frustum");
-                }
-                yield true;
-            }
-            case 86 -> {
-                this.minecraft.chunkVisibility = !this.minecraft.chunkVisibility;
-                this.debugFeedback("ChunkVisibility: {0}", this.minecraft.chunkVisibility ? "enabled" : "disabled");
-                yield true;
-            }
-            case 87 -> {
-                this.minecraft.wireframe = !this.minecraft.wireframe;
-                this.debugFeedback("WireFrame: {0}", this.minecraft.wireframe ? "enabled" : "disabled");
-                yield true;
-            }
-            default -> false;
-        };
-    }
 
     /**
      * @author TheGreatWolf
@@ -280,22 +234,21 @@ public abstract class KeyboardHandlerMixin {
      */
     @Overwrite
     public void keyPress(long windowPointer, @Key int key, int scanCode, @Action int action, @Modifiers int mod) {
-        if (windowPointer == this.minecraft.getWindow().getWindow()) {
+        long window = this.minecraft.getWindow().getWindow();
+        if (windowPointer == window) {
             if (this.debugCrashKeyTime > 0L) {
-                if (!InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_C) ||
-                    !InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_F3)) {
+                if (!InputConstants.isKeyDown(window, GLFW.GLFW_KEY_C) || !InputConstants.isKeyDown(window, GLFW.GLFW_KEY_F3)) {
                     this.debugCrashKeyTime = -1L;
                 }
             }
-            else if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_C) &&
-                     InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_F3)) {
+            else if (InputConstants.isKeyDown(window, GLFW.GLFW_KEY_C) && InputConstants.isKeyDown(window, GLFW.GLFW_KEY_F3)) {
                 this.handledDebugKey = true;
                 this.debugCrashKeyTime = Util.getMillis();
                 this.debugCrashKeyReportedTime = Util.getMillis();
                 this.debugCrashKeyReportedCount = 0L;
             }
             Screen screen = this.minecraft.screen;
-            if (!(this.minecraft.screen instanceof KeyBindsScreen) || ((KeyBindsScreen) screen).lastKeySelection <= Util.getMillis() - 20L) {
+            if (!(screen instanceof KeyBindsScreen) || ((KeyBindsScreen) screen).lastKeySelection <= Util.getMillis() - 20L) {
                 if (action == GLFW.GLFW_PRESS) {
                     if (this.minecraft.options.keyFullscreen.matches(key, scanCode)) {
                         this.minecraft.getWindow().toggleFullScreen();
@@ -304,27 +257,25 @@ public abstract class KeyboardHandlerMixin {
                         return;
                     }
                     if (this.minecraft.options.keyScreenshot.matches(key, scanCode)) {
-//                        if (Screen.hasControlDown()) {
-//                        }
                         Screenshot.grab(this.minecraft.gameDirectory, this.minecraft.getMainRenderTarget(),
                                         comp -> this.minecraft.execute(() -> this.minecraft.gui.getChat().addMessage(comp)));
                         return;
                     }
                 }
-                else if (action == GLFW.GLFW_RELEASE && this.minecraft.screen instanceof KeyBindsScreen) {
-                    ((KeyBindsScreen) this.minecraft.screen).selectedKey = null; //Forge: Unset pure modifiers.
+                else if (action == GLFW.GLFW_RELEASE && screen instanceof KeyBindsScreen) {
+                    ((KeyBindsScreen) screen).selectedKey = null; //Forge: Unset pure modifiers.
                 }
             }
             if (((INarratorChatListenerPatch) NarratorChatListener.INSTANCE).isAvailable()) {
                 boolean flag = screen == null || !(screen.getFocused() instanceof EditBox) || !((EditBox) screen.getFocused()).canConsumeInput();
                 if (action != GLFW.GLFW_RELEASE && key == GLFW.GLFW_KEY_B && Screen.hasControlDown() && flag) {
-                    boolean flag1 = this.minecraft.options.narratorStatus == NarratorStatus.OFF;
+                    boolean narratorWasOff = this.minecraft.options.narratorStatus == NarratorStatus.OFF;
                     this.minecraft.options.narratorStatus = NarratorStatus.byId(this.minecraft.options.narratorStatus.getId() + 1);
                     NarratorChatListener.INSTANCE.updateNarratorStatus(this.minecraft.options.narratorStatus);
                     if (screen instanceof SimpleOptionsSubScreen) {
                         ((SimpleOptionsSubScreen) screen).updateNarratorButton();
                     }
-                    if (flag1 && screen != null) {
+                    if (narratorWasOff && screen != null) {
                         screen.narrationEnabled();
                     }
                 }
@@ -334,24 +285,12 @@ public abstract class KeyboardHandlerMixin {
                 try {
                     if (action != GLFW.GLFW_PRESS && (action != GLFW.GLFW_REPEAT || !this.sendRepeatsToGui)) {
                         if (action == GLFW.GLFW_RELEASE) {
-                            shouldReturn = ForgeHooksClient.onScreenKeyReleasedPre(screen, key, scanCode, mod);
-                            if (!shouldReturn) {
-                                shouldReturn = screen.keyReleased(key, scanCode, mod);
-                            }
-                            if (!shouldReturn) {
-                                shouldReturn = ForgeHooksClient.onScreenKeyReleasedPost(screen, key, scanCode, mod);
-                            }
+                            shouldReturn = screen.keyReleased(key, scanCode, mod);
                         }
                     }
                     else {
                         screen.afterKeyboardAction();
-                        shouldReturn = ForgeHooksClient.onScreenKeyPressedPre(screen, key, scanCode, mod);
-                        if (!shouldReturn) {
-                            shouldReturn = screen.keyPressed(key, scanCode, mod);
-                        }
-                        if (!shouldReturn) {
-                            shouldReturn = ForgeHooksClient.onScreenKeyPressedPost(screen, key, scanCode, mod);
-                        }
+                        shouldReturn = screen.keyPressed(key, scanCode, mod);
                     }
                 }
                 catch (Throwable t) {
@@ -364,7 +303,7 @@ public abstract class KeyboardHandlerMixin {
                     return;
                 }
             }
-            if (this.minecraft.screen == null || this.minecraft.screen.passEvents) {
+            if (screen == null || screen.passEvents) {
                 InputConstants.Key input = InputConstants.getKey(key, scanCode);
                 if (action == GLFW.GLFW_RELEASE) {
                     KeyMapping.set(input, false);
@@ -380,23 +319,19 @@ public abstract class KeyboardHandlerMixin {
                     }
                 }
                 else {
-                    if (key == GLFW.GLFW_KEY_F4) {
-                        this.minecraft.gameRenderer.togglePostEffect();
-                    }
-                    boolean flag3 = false;
-                    if (this.minecraft.screen == null) {
+                    boolean handleDebug = false;
+                    if (screen == null) {
+                        boolean isF3Down = InputConstants.isKeyDown(window, GLFW.GLFW_KEY_F3);
                         if (key == GLFW.GLFW_KEY_ESCAPE) {
-                            boolean isF3Down = InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_F3);
                             this.minecraft.pauseGame(isF3Down);
                         }
-                        flag3 = InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_F3) &&
-                                this.handleDebugKeys(key);
-                        this.handledDebugKey |= flag3;
+                        handleDebug = isF3Down && this.handleDebugKeys(key);
+                        this.handledDebugKey |= handleDebug;
                         if (key == GLFW.GLFW_KEY_F1) {
                             this.minecraft.options.hideGui = !this.minecraft.options.hideGui;
                         }
                     }
-                    if (flag3) {
+                    if (handleDebug) {
                         KeyMapping.set(input, false);
                     }
                     else {
@@ -408,13 +343,7 @@ public abstract class KeyboardHandlerMixin {
                     }
                 }
             }
-            ForgeHooksClient.fireKeyInput(key, scanCode, action, mod);
         }
-    }
-
-    @Redirect(method = "keyPress", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;togglePostEffect()V"))
-    private void onKeyPress(GameRenderer gameRenderer) {
-        //Do nothing. Disables the ability to remove shaders by pressing F4.
     }
 
     @Shadow
