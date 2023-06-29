@@ -489,6 +489,8 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     private void applyFrustum(Frustum frustum) {
         assert Minecraft.getInstance().isSameThread() : "applyFrustum called from wrong thread: " + Thread.currentThread().getName();
         this.mc.getProfiler().push("apply_frustum");
+        assert this.viewArea != null;
+        this.viewArea.resetVisibility();
         this.renderChunksInFrustum.clear();
         RenderChunkStorage storage = this.renderChunkStorage;
         if (storage != null) {
@@ -1446,8 +1448,9 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         }
         boolean hasGlowing = false;
         MultiBufferSource.BufferSource buffer = this.bufferHolder.bufferSource();
+        Entity cameraEntity = camera.getEntity();
         for (Entity entity : this.level.entitiesForRendering()) {
-            if ((entity != camera.getEntity() || camera.isDetached()) &&
+            if ((entity != cameraEntity || camera.isDetached()) &&
                 (this.entityRenderDispatcher.shouldRender(entity, frustum, camX, camY, camZ) || entity.hasIndirectPassenger(this.mc.player))) {
                 profiler.push(entity.getType().getRegistryName().getPath());
                 ++this.renderedEntities;
@@ -1475,7 +1478,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             }
         }
         //Render player in first person
-        Entity cameraEntity = camera.getEntity();
         ClientEvents client = ClientEvents.getInstance();
         if (!camera.isDetached() && cameraEntity.isAlive()) {
             profiler.push(cameraEntity.getType().getRegistryName().getPath());
@@ -2311,9 +2313,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                     }
                 }
                 else {
-//                    if (chunkAtDir.getX() == -3 * 16 && chunkAtDir.getY() == -1 * 16 && chunkAtDir.getZ() == 12 * 16) {
-//                        Evolution.info("hloo");
-//                    }
                     if (!shouldCull || !info.hasDirection(dir.getOpposite())) {
                         if (shouldCull) {
                             if (info.hasSourceDirections()) {
@@ -2424,6 +2423,36 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                 }
             }
         }
+    }
+
+    public boolean visibleOcclusionCulling(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        assert this.viewArea != null;
+        int x0 = Mth.floor(minX);
+        int y0 = Mth.floor(minY);
+        int z0 = Mth.floor(minZ);
+        int x1 = Mth.ceil(maxX);
+        int y1 = Mth.ceil(maxY);
+        int z1 = Mth.ceil(maxZ);
+        int secX0 = SectionPos.blockToSectionCoord(x0);
+        int secX1 = SectionPos.blockToSectionCoord(x1);
+        int secY0 = SectionPos.blockToSectionCoord(y0);
+        int secY1 = SectionPos.blockToSectionCoord(y1);
+        int secZ0 = SectionPos.blockToSectionCoord(z0);
+        int secZ1 = SectionPos.blockToSectionCoord(z1);
+        for (int x = x0, secX = secX0; secX <= secX1; ++secX, x += 16) {
+            for (int y = y0, secY = secY0; secY <= secY1; ++secY, y += 16) {
+                for (int z = z0, secZ = secZ0; secZ <= secZ1; ++secZ, z += 16) {
+                    EvChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(x, y, z);
+                    if (chunk == null || chunk.isCompletelyEmpty()) {
+                        return true;
+                    }
+                    if (chunk.visibility != Visibility.OUTSIDE) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private static class RenderChunkInfoComparator implements Comparator<RenderChunkInfo> {

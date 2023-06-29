@@ -14,6 +14,8 @@ public class EvViewArea {
     protected int chunkGridSizeX;
     protected int chunkGridSizeY;
     protected int chunkGridSizeZ;
+    protected int offsetX;
+    protected int offsetZ;
 
     public EvViewArea(EvChunkRenderDispatcher dispatcher, Level level, int viewDistance, EvLevelRenderer levelRenderer) {
         this.levelRenderer = levelRenderer;
@@ -41,11 +43,6 @@ public class EvViewArea {
     }
 
     @Nullable
-    public EvChunkRenderDispatcher.RenderChunk getRenderChunkAt(BlockPos pos) {
-        return this.getRenderChunkAt(pos.getX(), pos.getY(), pos.getZ());
-    }
-
-    @Nullable
     public EvChunkRenderDispatcher.RenderChunk getRenderChunkAt(int posX, int posY, int posZ) {
         int y = posY - this.level.getMinBuildHeight() >> 4;
         if (y >= 0 && y < this.chunkGridSizeY) {
@@ -58,6 +55,11 @@ public class EvViewArea {
         return null;
     }
 
+    @Nullable
+    public EvChunkRenderDispatcher.RenderChunk getRenderChunkAt(BlockPos pos) {
+        return this.getRenderChunkAt(pos.getX(), pos.getY(), pos.getZ());
+    }
+
     public void releaseAllBuffers() {
         for (EvChunkRenderDispatcher.RenderChunk chunk : this.chunks) {
             chunk.releaseBuffers();
@@ -65,24 +67,30 @@ public class EvViewArea {
     }
 
     public void repositionCamera(double viewEntityX, double viewEntityZ) {
-        int i = Mth.ceil(viewEntityX);
-        int j = Mth.ceil(viewEntityZ);
-        for (int k = 0; k < this.chunkGridSizeX; ++k) {
-            int l = this.chunkGridSizeX * 16;
-            int i1 = i - 8 - l / 2;
-            int j1 = i1 + Math.floorMod(k * 16 - i1, l);
-            for (int k1 = 0; k1 < this.chunkGridSizeZ; ++k1) {
-                int l1 = this.chunkGridSizeZ * 16;
-                int i2 = j - 8 - l1 / 2;
-                int j2 = i2 + Math.floorMod(k1 * 16 - i2, l1);
-                for (int k2 = 0; k2 < this.chunkGridSizeY; ++k2) {
-                    int l2 = this.level.getMinBuildHeight() + k2 * 16;
-                    EvChunkRenderDispatcher.RenderChunk chunk = this.chunks[this.getChunkIndex(k, k2, k1)];
-                    if (j1 != chunk.getX() || l2 != chunk.getY() || j2 != chunk.getZ()) {
-                        chunk.setOrigin(j1, l2, j2);
+        int camX = Mth.ceil(viewEntityX);
+        int camZ = Mth.ceil(viewEntityZ);
+        int xSize = this.chunkGridSizeX * 16;
+        int zSize = this.chunkGridSizeZ * 16;
+        int xOffset = this.offsetX = camX - 8 - xSize / 2;
+        int zOffset = this.offsetZ = camZ - 8 - zSize / 2;
+        for (int x = 0; x < this.chunkGridSizeX; ++x) {
+            int originX = xOffset + Math.floorMod(x * 16 - xOffset, xSize);
+            for (int z = 0; z < this.chunkGridSizeZ; ++z) {
+                int originZ = zOffset + Math.floorMod(z * 16 - zOffset, zSize);
+                for (int y = 0; y < this.chunkGridSizeY; ++y) {
+                    int originY = this.level.getMinBuildHeight() + y * 16;
+                    EvChunkRenderDispatcher.RenderChunk chunk = this.chunks[this.getChunkIndex(x, y, z)];
+                    if (originX != chunk.getX() || originY != chunk.getY() || originZ != chunk.getZ()) {
+                        chunk.setOrigin(originX, originY, originZ);
                     }
                 }
             }
+        }
+    }
+
+    public void resetVisibility() {
+        for (EvChunkRenderDispatcher.RenderChunk chunk : this.chunks) {
+            chunk.visibility = Visibility.OUTSIDE;
         }
     }
 

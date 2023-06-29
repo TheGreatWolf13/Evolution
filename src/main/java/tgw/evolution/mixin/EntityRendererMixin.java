@@ -1,5 +1,6 @@
 package tgw.evolution.mixin;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.world.entity.Entity;
@@ -10,14 +11,14 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import tgw.evolution.patches.IMinecraftPatch;
 import tgw.evolution.util.hitbox.hrs.HREntity;
 
 @SuppressWarnings("MethodMayBeStatic")
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererMixin<T extends Entity> implements HREntity<T> {
 
-    @Shadow
-    protected float shadowRadius;
+    @Shadow public float shadowRadius;
 
     /**
      * @author TheGreatWolf
@@ -72,6 +73,9 @@ public abstract class EntityRendererMixin<T extends Entity> implements HREntity<
             maxY = entity.getY() + 2;
             maxZ = entity.getZ() + 2;
         }
-        return frustum.cubeInFrustum(minX, minY, minZ, maxX, maxY, maxZ);
+        if (!frustum.cubeInFrustum(minX, minY, minZ, maxX, maxY, maxZ)) {
+            return false;
+        }
+        return ((IMinecraftPatch) Minecraft.getInstance()).lvlRenderer().visibleOcclusionCulling(minX, minY, minZ, maxX, maxY, maxZ);
     }
 }
