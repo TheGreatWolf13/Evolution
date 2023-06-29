@@ -145,7 +145,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     private @Nullable EvChunkRenderDispatcher chunkRenderDispatcher;
     private @Nullable VertexBuffer cloudBuffer;
     private @Nullable RenderTarget cloudsTarget;
-    private int culledEntities;
     private @Nullable PostChain entityEffect;
     private @Nullable RenderTarget entityTarget;
     private boolean generateClouds = true;
@@ -924,8 +923,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                this.renderedEntities +
                "/" +
                this.level.getEntityCount() +
-               ", B: " +
-               this.culledEntities +
                ", SD: " +
                this.level.getServerSimulationDistance();
     }
@@ -1432,7 +1429,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         }
         profiler.popPush("entities");
         this.renderedEntities = 0;
-        this.culledEntities = 0;
         if (this.itemEntityTarget != null) {
             this.itemEntityTarget.clear(Minecraft.ON_OSX);
             this.itemEntityTarget.copyDepthFrom(this.mc.getMainRenderTarget());
@@ -2423,6 +2419,15 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                 }
             }
         }
+    }
+
+    public boolean visibleOcclusionCulling(double x, double y, double z) {
+        assert this.viewArea != null;
+        EvChunkRenderDispatcher.RenderChunk chunk = this.viewArea.getRenderChunkAt(Mth.floor(x), Mth.floor(y), Mth.floor(z));
+        if (chunk == null || chunk.isCompletelyEmpty()) {
+            return true;
+        }
+        return chunk.visibility != Visibility.OUTSIDE;
     }
 
     public boolean visibleOcclusionCulling(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {

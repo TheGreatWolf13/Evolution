@@ -42,7 +42,7 @@ public class AABBMutable extends AABB {
     }
 
     public AABBMutable inflateMutable(double x, double y, double z) {
-        return this.set(this.minX - x, this.minY - y, this.minZ - z, this.maxX + x, this.maxY + y, this.maxZ + z);
+        return this.setUnchecked(this.minX - x, this.minY - y, this.minZ - z, this.maxX + x, this.maxY + y, this.maxZ + z);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class AABBMutable extends AABB {
         double x1 = Math.max(this.maxX, other.maxX);
         double y1 = Math.max(this.maxY, other.maxY);
         double z1 = Math.max(this.maxZ, other.maxZ);
-        return this.set(x0, y0, z0, x1, y1, z1);
+        return this.setUnchecked(x0, y0, z0, x1, y1, z1);
     }
 
     public AABBMutable moveMutable(double dx, double dy, double dz) {
@@ -74,7 +74,7 @@ public class AABBMutable extends AABB {
     }
 
     public AABBMutable set(AABB aabb) {
-        return this.set(aabb.minX, aabb.minY, aabb.minZ, aabb.maxX, aabb.maxY, aabb.maxZ);
+        return this.setUnchecked(aabb.minX, aabb.minY, aabb.minZ, aabb.maxX, aabb.maxY, aabb.maxZ);
     }
 
     public AABBMutable set(double x1, double y1, double z1, double x2, double y2, double z2) {

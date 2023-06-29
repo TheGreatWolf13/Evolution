@@ -67,7 +67,7 @@ public interface ISloppable extends IFallable {
                 Direction slopeDirection = slopePossibility.getRandomAndRemove(level.random);
                 int x0 = x + slopeDirection.getStepX();
                 int z0 = z + slopeDirection.getStepZ();
-                if (level.getEntitiesOfClass(EntityFallingWeight.class, testBB.set(x0, y, z0, x0 + 1, y + 1, z0 + 1)).isEmpty()) {
+                if (level.getEntitiesOfClass(EntityFallingWeight.class, testBB.setUnchecked(x0, y, z0, x0 + 1, y + 1, z0 + 1)).isEmpty()) {
                     this.slope(level, pos, slopeDirection);
                     return true;
                 }

@@ -422,7 +422,7 @@ public abstract class EntityMixin extends CapabilityProvider<Entity> implements 
     protected AABB getBoundingBoxForPose(Pose pose) {
         EntityDimensions dim = this.getDimensions(pose);
         float f = dim.width / 2.0F;
-        return this.bbForPose.set(this.getX() - f, this.getY(), this.getZ() - f, this.getX() + f, this.getY() + dim.height, this.getZ() + f);
+        return this.bbForPose.setUnchecked(this.getX() - f, this.getY(), this.getZ() - f, this.getX() + f, this.getY() + dim.height, this.getZ() + f);
     }
 
     @Unique

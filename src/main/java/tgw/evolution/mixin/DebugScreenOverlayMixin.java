@@ -39,6 +39,7 @@ import net.minecraft.world.phys.HitResult;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.*;
 import tgw.evolution.patches.IMinecraftPatch;
+import tgw.evolution.patches.IParticleEnginePatch;
 import tgw.evolution.util.AllocationRateCalculator;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
@@ -168,7 +169,10 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
         this.gameInfo.add(pct);
         this.gameInfo.add(((IMinecraftPatch) this.minecraft).lvlRenderer().getChunkStatistics());
         this.gameInfo.add(((IMinecraftPatch) this.minecraft).lvlRenderer().getEntityStatistics());
-        this.gameInfo.add("P: " + this.minecraft.particleEngine.countParticles());
+        this.gameInfo.add("P: " +
+                          ((IParticleEnginePatch) this.minecraft.particleEngine).getRenderedParticles() +
+                          "/" +
+                          this.minecraft.particleEngine.countParticles());
         this.gameInfo.add(this.minecraft.level.gatherChunkSourceStats());
         String serverChunkStats = this.getServerChunkStats();
         if (serverChunkStats != null) {
