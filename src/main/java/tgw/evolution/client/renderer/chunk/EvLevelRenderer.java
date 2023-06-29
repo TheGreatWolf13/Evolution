@@ -153,9 +153,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     private int lastCameraChunkX = Integer.MIN_VALUE;
     private int lastCameraChunkY = Integer.MIN_VALUE;
     private int lastCameraChunkZ = Integer.MIN_VALUE;
-    private double lastCameraX = Double.MIN_VALUE;
-    private double lastCameraY = Double.MIN_VALUE;
-    private double lastCameraZ = Double.MIN_VALUE;
     private @Nullable Future<?> lastFullRenderChunkUpdate;
     private int lastViewDistance = -1;
     private @Nullable ClientLevel level;
@@ -2051,9 +2048,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
      * @param level the level to set, or {@code null} to clear
      */
     public void setLevel(@Nullable ClientLevel level) {
-        this.lastCameraX = Double.MIN_VALUE;
-        this.lastCameraY = Double.MIN_VALUE;
-        this.lastCameraZ = Double.MIN_VALUE;
         this.lastCameraChunkX = Integer.MIN_VALUE;
         this.lastCameraChunkY = Integer.MIN_VALUE;
         this.lastCameraChunkZ = Integer.MIN_VALUE;
@@ -2126,16 +2120,10 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         double camX = this.mc.cameraEntity.getX();
         double camY = this.mc.cameraEntity.getY();
         double camZ = this.mc.cameraEntity.getZ();
-        double dx = camX - this.lastCameraX;
-        double dy = camY - this.lastCameraY;
-        double dz = camZ - this.lastCameraZ;
         int secX = SectionPos.posToSectionCoord(camX);
         int secY = SectionPos.posToSectionCoord(camY);
         int secZ = SectionPos.posToSectionCoord(camZ);
-        if (this.lastCameraChunkX != secX || this.lastCameraChunkY != secY || this.lastCameraChunkZ != secZ || dx * dx + dy * dy + dz * dz > 16.0) {
-            this.lastCameraX = camX;
-            this.lastCameraY = camY;
-            this.lastCameraZ = camZ;
+        if (this.lastCameraChunkX != secX || this.lastCameraChunkY != secY || this.lastCameraChunkZ != secZ) {
             this.lastCameraChunkX = secX;
             this.lastCameraChunkY = secY;
             this.lastCameraChunkZ = secZ;
