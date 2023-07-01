@@ -2,30 +2,23 @@ package tgw.evolution.mixin;
 
 import com.google.common.primitives.Floats;
 import com.mojang.blaze3d.vertex.*;
-import com.mojang.math.Matrix3f;
-import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.renderer.ICrashReset;
 import tgw.evolution.client.renderer.RenderHelper;
-import tgw.evolution.patches.IBakedQuadPatch;
+import tgw.evolution.patches.IMatrix3fPatch;
 import tgw.evolution.patches.IMatrix4fPatch;
 import tgw.evolution.patches.ISortStatePatch;
 import tgw.evolution.util.collection.FArrayList;
 import tgw.evolution.util.collection.FList;
 import tgw.evolution.util.collection.IList;
-import tgw.evolution.util.math.ColorABGR;
-import tgw.evolution.util.math.IColor;
 import tgw.evolution.util.math.MathHelper;
-import tgw.evolution.util.math.Norm3b;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -34,45 +27,24 @@ import java.util.List;
 @Mixin(BufferBuilder.class)
 public abstract class BufferBuilderMixin extends DefaultedVertexConsumer implements BufferVertexConsumer, ICrashReset {
 
-    @Shadow
-    @Final
-    private static Logger LOGGER;
-    private final FList newSortingPoints = new FArrayList();
-    @Shadow
-    private ByteBuffer buffer;
-    @Shadow
-    private boolean building;
-    @Shadow
-    @Nullable
-    private VertexFormatElement currentElement;
-    @Shadow
-    @Final
-    private List<BufferBuilder.DrawState> drawStates;
-    @Shadow
-    private int elementIndex;
-    @Shadow
-    private boolean fastFormat;
-    @Shadow
-    private VertexFormat format;
-    @Shadow
-    private boolean indexOnly;
-    @Shadow
-    private VertexFormat.Mode mode;
-    @Shadow
-    private int nextElementByte;
-    @Shadow
-    private float sortX;
-    @Shadow
-    private float sortY;
-    @Shadow
-    private float sortZ;
-    @Shadow
-    @Nullable
-    private Vector3f[] sortingPoints;
-    @Shadow
-    private int totalRenderedBytes;
-    @Shadow
-    private int vertices;
+    @Shadow @Final private static Logger LOGGER;
+    @Unique private final FList newSortingPoints = new FArrayList();
+    @Shadow private ByteBuffer buffer;
+    @Shadow private boolean building;
+    @Shadow private @Nullable VertexFormatElement currentElement;
+    @Shadow @Final private List<BufferBuilder.DrawState> drawStates;
+    @Shadow private int elementIndex;
+    @Shadow private boolean fastFormat;
+    @Shadow private VertexFormat format;
+    @Shadow private boolean indexOnly;
+    @Shadow private VertexFormat.Mode mode;
+    @Shadow private int nextElementByte;
+    @Shadow private float sortX;
+    @Shadow private float sortY;
+    @Shadow private float sortZ;
+    @Shadow private @Nullable Vector3f[] sortingPoints;
+    @Shadow private int totalRenderedBytes;
+    @Shadow private int vertices;
 
     @Shadow
     private static int roundUp(int pX) {
@@ -156,7 +128,7 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
     }
 
     @Override
-    public void putBulkData(PoseStack.Pose matrices,
+    public void putBulkData(PoseStack.Pose entry,
                             BakedQuad quad,
                             float[] brightnessTable,
                             float r,
@@ -166,48 +138,45 @@ public abstract class BufferBuilderMixin extends DefaultedVertexConsumer impleme
                             int overlay,
                             boolean colorize) {
         if (!this.fastFormat) {
-            super.putBulkData(matrices, quad, brightnessTable, r, g, b, light, overlay, colorize);
+            super.putBulkData(entry, quad, brightnessTable, r, g, b, light, overlay, colorize);
             return;
         }
         if (this.defaultColorSet) {
             throw new IllegalStateException();
         }
-        IBakedQuadPatch quadView = (IBakedQuadPatch) quad;
-        Matrix4f pose = matrices.pose();
-        IMatrix4fPatch poseExt = MathHelper.getExtendedMatrix(pose);
-        Matrix3f normal = matrices.normal();
-        int norm = MathHelper.computeNormal(normal, quad.getDirection());
-        float nx = Norm3b.unpackX(norm);
-        float ny = Norm3b.unpackY(norm);
-        float nz = Norm3b.unpackZ(norm);
-        for (int i = 0; i < 4; i++) {
-            float x = quadView.getX(i);
-            float y = quadView.getY(i);
-            float z = quadView.getZ(i);
-            float fR;
-            float fG;
-            float fB;
-            float brightness = brightnessTable[i];
+        IMatrix4fPatch poseMat = MathHelper.getExtendedMatrix(entry.pose());
+        IMatrix3fPatch normalMat = MathHelper.getExtendedMatrix(entry.normal());
+        Vec3i normal = quad.getDirection().getNormal();
+        float nx = normalMat.transformVecX(normal.getX(), normal.getY(), normal.getZ());
+        float ny = normalMat.transformVecY(normal.getX(), normal.getY(), normal.getZ());
+        float nz = normalMat.transformVecZ(normal.getX(), normal.getY(), normal.getZ());
+        int[] vertices = quad.getVertices();
+        for (int vertex = 0; vertex < 4; ++vertex) {
+            int offset = vertex * 8;
+            float posX = Float.intBitsToFloat(vertices[offset]);
+            float posY = Float.intBitsToFloat(vertices[offset + 1]);
+            float posZ = Float.intBitsToFloat(vertices[offset + 2]);
+            float x = poseMat.transformVecX(posX, posY, posZ);
+            float y = poseMat.transformVecY(posX, posY, posZ);
+            float z = poseMat.transformVecZ(posX, posY, posZ);
+            float cr;
+            float cg;
+            float cb;
+            float brightness = brightnessTable[vertex];
             if (colorize) {
-                int color = quadView.getColor(i);
-                float oR = IColor.normalize(ColorABGR.unpackRed(color));
-                float oG = IColor.normalize(ColorABGR.unpackGreen(color));
-                float oB = IColor.normalize(ColorABGR.unpackBlue(color));
-                fR = oR * brightness * r;
-                fG = oG * brightness * g;
-                fB = oB * brightness * b;
+                int color = vertices[offset + 3];
+                cr = (color & 0xff) * (1 / 255.0f) * brightness * r;
+                cg = (color >> 8 & 0xff) * (1 / 255.0f) * brightness * g;
+                cb = (color >> 16 & 0xff) * (1 / 255.0f) * brightness * b;
             }
             else {
-                fR = brightness * r;
-                fG = brightness * g;
-                fB = brightness * b;
+                cr = brightness * r;
+                cg = brightness * g;
+                cb = brightness * b;
             }
-            float u = quadView.getTexU(i);
-            float v = quadView.getTexV(i);
-            float x2 = poseExt.transformVecX(x, y, z);
-            float y2 = poseExt.transformVecY(x, y, z);
-            float z2 = poseExt.transformVecZ(x, y, z);
-            this.vertex(x2, y2, z2).color(fR, fG, fB, 1.0f).uv(u, v).uv2(light[i]).overlayCoords(overlay).normal(nx, ny, nz).endVertex();
+            float u = Float.intBitsToFloat(vertices[offset + 4]);
+            float v = Float.intBitsToFloat(vertices[offset + 5]);
+            this.vertex(x, y, z).color(cr, cg, cb, 1.0f).uv(u, v).uv2(light[vertex]).overlayCoords(overlay).normal(nx, ny, nz).endVertex();
         }
     }
 

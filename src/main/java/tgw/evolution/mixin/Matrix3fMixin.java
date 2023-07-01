@@ -2,46 +2,22 @@ package tgw.evolution.mixin;
 
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Quaternion;
-import net.minecraft.core.Direction;
-import net.minecraft.core.Vec3i;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.patches.IMatrix3fPatch;
-import tgw.evolution.util.math.Norm3b;
 
 @Mixin(Matrix3f.class)
 public abstract class Matrix3fMixin implements IMatrix3fPatch {
 
-    @Shadow
-    protected float m00;
-    @Shadow
-    protected float m01;
-    @Shadow
-    protected float m02;
-    @Shadow
-    protected float m10;
-    @Shadow
-    protected float m11;
-    @Shadow
-    protected float m12;
-    @Shadow
-    protected float m20;
-    @Shadow
-    protected float m21;
-    @Shadow
-    protected float m22;
-
-    @Override
-    public int computeNormal(Direction dir) {
-        Vec3i faceNorm = dir.getNormal();
-        float x = faceNorm.getX();
-        float y = faceNorm.getY();
-        float z = faceNorm.getZ();
-        float x2 = this.m00 * x + this.m01 * y + this.m02 * z;
-        float y2 = this.m10 * x + this.m11 * y + this.m12 * z;
-        float z2 = this.m20 * x + this.m21 * y + this.m22 * z;
-        return Norm3b.pack(x2, y2, z2);
-    }
+    @Shadow protected float m00;
+    @Shadow protected float m01;
+    @Shadow protected float m02;
+    @Shadow protected float m10;
+    @Shadow protected float m11;
+    @Shadow protected float m12;
+    @Shadow protected float m20;
+    @Shadow protected float m21;
+    @Shadow protected float m22;
 
     @Override
     public float getM00() {

@@ -413,8 +413,7 @@ public final class MathHelper {
         }
     }
 
-    @Nullable
-    public static BlockHitResult collideWithBlocks(HitInformation hits, Entity hitter) {
+    public static @Nullable BlockHitResult collideWithBlocks(HitInformation hits, Entity hitter) {
         Level level = hitter.level;
         for (int e = 0; e < 12; e++) {
             BlockHitResult clip = level.clip(hits.getClipContext(e));
@@ -486,10 +485,6 @@ public final class MathHelper {
         Collator collator = Collator.getInstance(Locale.ROOT);
         collator.setStrength(Collator.PRIMARY);
         return collator.compare(a, b);
-    }
-
-    public static int computeNormal(Matrix3f normalMatrix, Direction facing) {
-        return ((IMatrix3fPatch) (Object) normalMatrix).computeNormal(facing);
     }
 
     /**
@@ -663,13 +658,12 @@ public final class MathHelper {
         };
     }
 
-    @Nullable
-    public static MultipleEntityHitResult getProjectileHitResult(EntityGetter level,
-                                                                 Entity projectile,
-                                                                 Vec3 start,
-                                                                 Vec3 end,
-                                                                 Predicate<Entity> filter,
-                                                                 double inflation) {
+    public static @Nullable MultipleEntityHitResult getProjectileHitResult(EntityGetter level,
+                                                                           Entity projectile,
+                                                                           Vec3 start,
+                                                                           Vec3 end,
+                                                                           Predicate<Entity> filter,
+                                                                           double inflation) {
         List<Entity> foundEntities = level.getEntities(projectile, new AABBMutable(start, end).inflateMutable(inflation), filter);
         AABBMutable tempBB = null;
         MultipleEntityHitResult hitResult = null;
@@ -1011,8 +1005,7 @@ public final class MathHelper {
      * and a {@link Vec3} containing the position of the hit. If no {@link Entity} was hit by the ray,
      * this {@link EntityHitResult} will be {@code null}.
      */
-    @Nullable
-    public static EntityHitResult rayTraceEntities(Entity toExclude, Vec3 startVec, Vec3 endVec, AABB boundingBox, double distanceSquared) {
+    public static @Nullable EntityHitResult rayTraceEntities(Entity toExclude, Vec3 startVec, Vec3 endVec, AABB boundingBox, double distanceSquared) {
         Level level = toExclude.level;
         double range = distanceSquared;
         Entity entity = null;
@@ -1061,8 +1054,7 @@ public final class MathHelper {
      * @return An {@link EntityHitResult} containing the {@link Entity} hit by the ray traced and a {@link Vector3d}
      * containing the position of the hit. If no {@link Entity} was hit by the ray, this {@link EntityHitResult} will be {@code null}.
      */
-    @Nullable
-    public static EntityHitResult rayTraceEntitiesFromEyes(Entity victim, float partialTicks, final double reach) {
+    public static @Nullable EntityHitResult rayTraceEntitiesFromEyes(Entity victim, float partialTicks, final double reach) {
         //From vector
         Vec3 from = victim.getEyePosition(partialTicks);
         //Entity view vector (won't result in new allocations as we already dealt with those)
@@ -1118,8 +1110,7 @@ public final class MathHelper {
      * and a {@link Vec3} containing the position of the hit. If no {@link Entity} was hit by the ray,
      * this {@link EntityHitResult} will be {@code null}.
      */
-    @Nullable
-    public static EntityHitResult rayTraceEntityFromEyes(Entity victim, float partialTicks, double reachDistance) {
+    public static @Nullable EntityHitResult rayTraceEntityFromEyes(Entity victim, float partialTicks, double reachDistance) {
         Vec3 from = victim.getEyePosition(partialTicks);
         Vec3 look = victim.getViewVector(partialTicks).normalize();
         Vec3 to = from.add(look.x * reachDistance, look.y * reachDistance, look.z * reachDistance);
@@ -1396,17 +1387,6 @@ public final class MathHelper {
             throw new ArithmeticException("Short overflow " + value);
         }
         return s;
-    }
-
-    public static int transformPackedNormal(int norm, Matrix3f matrix) {
-        IMatrix3fPatch mat = getExtendedMatrix(matrix);
-        float normX1 = Norm3b.unpackX(norm);
-        float normY1 = Norm3b.unpackY(norm);
-        float normZ1 = Norm3b.unpackZ(norm);
-        float normX2 = mat.transformVecX(normX1, normY1, normZ1);
-        float normY2 = mat.transformVecY(normX1, normY1, normZ1);
-        float normZ2 = mat.transformVecZ(normX1, normY1, normZ1);
-        return Norm3b.pack(normX2, normY2, normZ2);
     }
 
     /**

@@ -2,11 +2,8 @@ package tgw.evolution.patches;
 
 import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
-import net.minecraft.core.Direction;
 
 public interface IMatrix3fPatch {
-
-    int computeNormal(Direction dir);
 
     float getM00();
 

@@ -18,9 +18,6 @@ import java.util.function.Supplier;
 
 public final class RenderHelper {
 
-    public static final float[] DEF_BRIGHTNESS = {1.0f, 1.0f, 1.0f, 1.0f};
-    public static final ThreadLocal<float[]> BRIGHTNESS = ThreadLocal.withInitial(() -> new float[4]);
-    public static final ThreadLocal<int[]> LIGHTMAP = ThreadLocal.withInitial(() -> new int[4]);
     public static final ThreadLocal<IList> INT_LIST = ThreadLocal.withInitial(IArrayList::new);
     public static final ThreadLocal<FList> FLOAT_LIST = ThreadLocal.withInitial(FArrayList::new);
     public static final ThreadLocal<float[]> TEMP_UV = ThreadLocal.withInitial(() -> new float[4]);

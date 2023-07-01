@@ -9,21 +9,19 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.model.data.IModelData;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import tgw.evolution.client.renderer.EvAmbientOcclusionFace;
-import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.client.renderer.chunk.EvLevelRenderer;
-import tgw.evolution.client.util.ModelQuadUtil;
-import tgw.evolution.patches.IBakedQuadPatch;
-import tgw.evolution.util.math.*;
+import tgw.evolution.patches.IVertexConsumerPatch;
+import tgw.evolution.util.math.DirectionUtil;
+import tgw.evolution.util.math.MathHelper;
+import tgw.evolution.util.math.XoRoShiRoRandom;
 
 import java.util.BitSet;
 import java.util.List;
@@ -32,17 +30,13 @@ import java.util.Random;
 @Mixin(ModelBlockRenderer.class)
 public abstract class ModelBlockRendererMixin {
 
-    private static final ThreadLocal<EvAmbientOcclusionFace> AOF = ThreadLocal.withInitial(EvAmbientOcclusionFace::new);
-    private static final ThreadLocal<float[]> SHAPES = ThreadLocal.withInitial(() -> new float[12]);
-    private static final ThreadLocal<BlockPos.MutableBlockPos> MUTABLE_POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
-    private static final ThreadLocal<BitSet> BITSET = ThreadLocal.withInitial(() -> new BitSet(3));
-    @Shadow
-    @Final
-    static Direction[] DIRECTIONS;
-    private final XoRoShiRoRandom random = new XoRoShiRoRandom();
-    @Shadow
-    @Final
-    private BlockColors blockColors;
+    @Unique private static final ThreadLocal<EvAmbientOcclusionFace> AOF = ThreadLocal.withInitial(EvAmbientOcclusionFace::new);
+    @Unique private static final ThreadLocal<float[]> SHAPES = ThreadLocal.withInitial(() -> new float[12]);
+    @Unique private static final ThreadLocal<BlockPos.MutableBlockPos> MUTABLE_POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
+    @Unique private static final ThreadLocal<BitSet> BITSET = ThreadLocal.withInitial(() -> new BitSet(3));
+    @Shadow @Final static Direction[] DIRECTIONS;
+    @Unique private final XoRoShiRoRandom random = new XoRoShiRoRandom();
+    @Shadow @Final private BlockColors blockColors;
 
     private static void renderQuad(PoseStack.Pose entry, VertexConsumer consumer, int defaultColor, List<BakedQuad> list, int light, int overlay) {
         if (list.isEmpty()) {
@@ -50,17 +44,21 @@ public abstract class ModelBlockRendererMixin {
         }
         Matrix4f matrix = entry.pose();
         for (int i = 0, l = list.size(); i < l; i++) {
-            BakedQuad bakedQuad = list.get(i);
-            int color = bakedQuad.isTinted() ? defaultColor : 0xFFFF_FFFF;
-            IBakedQuadPatch quad = (IBakedQuadPatch) bakedQuad;
-            int norm = ModelQuadUtil.getFacingNormal(bakedQuad.getDirection());
-            float nx = Norm3b.unpackX(norm);
-            float ny = Norm3b.unpackX(norm);
-            float nz = Norm3b.unpackX(norm);
-            for (int v = 0; v < 4; v++) {
-                consumer.vertex(matrix, quad.getX(v), quad.getY(v), quad.getZ(v))
+            BakedQuad quad = list.get(i);
+            int[] vertices = quad.getVertices();
+            int color = quad.isTinted() ? defaultColor : 0xFFFF_FFFF;
+            Vec3i normal = quad.getDirection().getNormal();
+            float nx = normal.getX();
+            float ny = normal.getY();
+            float nz = normal.getZ();
+            for (int vertex = 0; vertex < 4; ++vertex) {
+                int offset = vertex * 8;
+                consumer.vertex(matrix,
+                                Float.intBitsToFloat(vertices[offset]),
+                                Float.intBitsToFloat(vertices[offset + 1]),
+                                Float.intBitsToFloat(vertices[offset + 2]))
                         .color(color)
-                        .uv(quad.getTexU(v), quad.getTexV(v))
+                        .uv(Float.intBitsToFloat(vertices[offset + 4]), Float.intBitsToFloat(vertices[offset + 5]))
                         .overlayCoords(overlay)
                         .uv2(light)
                         .normal(nx, ny, nz)
@@ -82,7 +80,7 @@ public abstract class ModelBlockRendererMixin {
                              BlockState state,
                              BlockPos pos,
                              VertexConsumer consumer,
-                             PoseStack.Pose matrix,
+                             PoseStack.Pose entry,
                              BakedQuad quad,
                              float brightness0,
                              float brightness1,
@@ -107,17 +105,12 @@ public abstract class ModelBlockRendererMixin {
             g = 1.0F;
             b = 1.0F;
         }
-        int[] lightmap = RenderHelper.LIGHTMAP.get();
-        lightmap[0] = lightmap0;
-        lightmap[1] = lightmap1;
-        lightmap[2] = lightmap2;
-        lightmap[3] = lightmap3;
-        float[] brightness = RenderHelper.BRIGHTNESS.get();
-        brightness[0] = brightness0;
-        brightness[1] = brightness1;
-        brightness[2] = brightness2;
-        brightness[3] = brightness3;
-        consumer.putBulkData(matrix, quad, brightness, r, g, b, lightmap, packedOverlay, true);
+        ((IVertexConsumerPatch) consumer).putBulkData(entry,
+                                                      quad,
+                                                      brightness0, brightness1, brightness2, brightness3,
+                                                      r, g, b,
+                                                      lightmap0, lightmap1, lightmap2, lightmap3,
+                                                      packedOverlay);
     }
 
     /**
@@ -139,7 +132,7 @@ public abstract class ModelBlockRendererMixin {
         red = MathHelper.clamp(red, 0.0F, 1.0F);
         green = MathHelper.clamp(green, 0.0F, 1.0F);
         blue = MathHelper.clamp(blue, 0.0F, 1.0F);
-        int defaultColor = ColorABGR.pack(red, green, blue, 1.0F);
+        int defaultColor = 0xff << 24 | (int) (blue * 255) << 16 | (int) (green * 255) << 8 | (int) (red * 255);
         for (Direction direction : DirectionUtil.ALL) {
             List<BakedQuad> quads = bakedModel.getQuads(state, direction, random.setSeedAndReturn(42L));
             if (!quads.isEmpty()) {

@@ -16,19 +16,14 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.client.renderer.RenderHelper;
-import tgw.evolution.util.math.ColorABGR;
-import tgw.evolution.util.math.ColorARGB;
 
 @Mixin(LevelLoadingScreen.class)
 public abstract class LevelLoadingScreenMixin extends Screen {
 
-    private static final int NULL_STATUS_COLOR = ColorABGR.pack(0, 0, 0, 0xFF);
-    private static final int DEFAULT_STATUS_COLOR = ColorARGB.pack(0, 0x11, 0xFF, 0xFF);
-    @Shadow
-    @Final
-    private static Object2IntMap<ChunkStatus> COLORS;
-    @Nullable
-    private static Reference2IntOpenHashMap<ChunkStatus> STATUS_TO_COLOR_FAST;
+    private static final int NULL_STATUS_COLOR = 0xff00_0000;
+    private static final int DEFAULT_STATUS_COLOR = 0xff00_11ff;
+    @Shadow @Final private static Object2IntMap<ChunkStatus> COLORS;
+    private static @Nullable Reference2IntOpenHashMap<ChunkStatus> STATUS_TO_COLOR_FAST;
 
     protected LevelLoadingScreenMixin(Component text) {
         super(text);
@@ -51,7 +46,7 @@ public abstract class LevelLoadingScreenMixin extends Screen {
             STATUS_TO_COLOR_FAST = new Reference2IntOpenHashMap<>(COLORS.size());
             STATUS_TO_COLOR_FAST.put(null, NULL_STATUS_COLOR);
             for (Object2IntMap.Entry<ChunkStatus> entry : COLORS.object2IntEntrySet()) {
-                STATUS_TO_COLOR_FAST.put(entry.getKey(), ColorARGB.toABGR(entry.getIntValue(), 0xFF));
+                STATUS_TO_COLOR_FAST.put(entry.getKey(), Integer.reverseBytes(entry.getIntValue() << 8 | 0xff));
             }
         }
         RenderSystem.setShader(RenderHelper.SHADER_POSITION_COLOR);

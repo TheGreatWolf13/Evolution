@@ -1,29 +1,22 @@
 package tgw.evolution.mixin;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Vec3i;
 import net.minecraftforge.client.extensions.IForgeVertexConsumer;
-import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tgw.evolution.client.renderer.RenderHelper;
 import tgw.evolution.patches.IMatrix3fPatch;
 import tgw.evolution.patches.IMatrix4fPatch;
+import tgw.evolution.patches.IVertexConsumerPatch;
 import tgw.evolution.util.math.MathHelper;
 
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.util.Arrays;
-
 @Mixin(VertexConsumer.class)
-public interface VertexConsumerMixin extends IForgeVertexConsumer {
+public interface VertexConsumerMixin extends IForgeVertexConsumer, IVertexConsumerPatch {
 
     /**
      * @reason Avoid allocations
@@ -43,18 +36,61 @@ public interface VertexConsumerMixin extends IForgeVertexConsumer {
 
     /**
      * @author TheGreatWolf
-     * @reason Avoid allocations.
+     * @reason Avoid allocations and inline
      */
     @Overwrite
-    default void putBulkData(PoseStack.Pose matrix, BakedQuad quad, float red, float green, float blue, int combinedLight, int combinedOverlay) {
-        int[] lightmap = RenderHelper.LIGHTMAP.get();
-        Arrays.fill(lightmap, combinedLight);
-        this.putBulkData(matrix, quad, RenderHelper.DEF_BRIGHTNESS, red, green, blue, lightmap, combinedOverlay, false);
+    default void putBulkData(PoseStack.Pose entry, BakedQuad quad, float red, float green, float blue, int combinedLight, int combinedOverlay) {
+        int[] vertices = quad.getVertices();
+        Vec3i faceNormal = quad.getDirection().getNormal();
+        IMatrix4fPatch poseMat = MathHelper.getExtendedMatrix(entry.pose());
+        IMatrix3fPatch normalMat = MathHelper.getExtendedMatrix(entry.normal());
+        float normX = normalMat.transformVecX(faceNormal.getX(), faceNormal.getY(), faceNormal.getZ());
+        float normY = normalMat.transformVecY(faceNormal.getX(), faceNormal.getY(), faceNormal.getZ());
+        float normZ = normalMat.transformVecZ(faceNormal.getX(), faceNormal.getY(), faceNormal.getZ());
+        int bl = combinedLight & 0xFFFF;
+        int sl = combinedLight >> 16 & 0xFFFF;
+        for (int vertex = 0; vertex < 4; ++vertex) {
+            int offset = vertex * 8;
+            //Position : 3 float
+            float posX = Float.intBitsToFloat(vertices[offset]);
+            float posY = Float.intBitsToFloat(vertices[offset + 1]);
+            float posZ = Float.intBitsToFloat(vertices[offset + 2]);
+            float x = poseMat.transformVecX(posX, posY, posZ);
+            float y = poseMat.transformVecY(posX, posY, posZ);
+            float z = poseMat.transformVecZ(posX, posY, posZ);
+            //Texture : 2 float
+            float u = Float.intBitsToFloat(vertices[offset + 4]);
+            float v = Float.intBitsToFloat(vertices[offset + 5]);
+            //Light : 2 short
+            int light = vertices[offset + 6];
+            int blBaked = light & 0xffff;
+            int slBaked = light >> 16 & 0xffff;
+            bl = Math.max(bl, blBaked);
+            sl = Math.max(sl, slBaked);
+            int lightmapCoord = bl | sl << 16;
+            //Normal : 3 byte
+            int norm = vertices[offset + 7];
+            byte nx = (byte) (norm & 255);
+            byte ny = (byte) (norm >> 8 & 255);
+            byte nz = (byte) (norm >> 16 & 255);
+            if (nx != 0 || ny != 0 || nz != 0) {
+                normX = nx / 127.0f;
+                normY = ny / 127.0f;
+                normZ = nz / 127.0f;
+                float nX = normalMat.transformVecX(normX, normY, normZ);
+                float nY = normalMat.transformVecY(normX, normY, normZ);
+                float nZ = normalMat.transformVecZ(normX, normY, normZ);
+                normX = nX;
+                normY = nY;
+                normZ = nZ;
+            }
+            this.vertex(x, y, z, red, green, blue, 1.0F, u, v, combinedOverlay, lightmapCoord, normX, normY, normZ);
+        }
     }
 
     /**
      * @author TheGreatWolf
-     * @reason Avoid allocations
+     * @reason Avoid allocations.
      */
     @Overwrite
     default void putBulkData(PoseStack.Pose entry,
@@ -63,50 +99,161 @@ public interface VertexConsumerMixin extends IForgeVertexConsumer {
                              float red,
                              float green,
                              float blue,
-                             int[] light,
+                             int[] lightmapCoords,
                              int overlay,
                              boolean useBaseColors) {
-        int[] aint = quad.getVertices();
-        Vec3i vector3i = quad.getDirection().getNormal();
-        Vector3f normal = new Vector3f(vector3i.getX(), vector3i.getY(), vector3i.getZ());
-        Matrix4f pose = entry.pose();
-        IMatrix4fPatch poseExt = MathHelper.getExtendedMatrix(pose);
-        normal.transform(entry.normal());
-        int j = aint.length / 8;
-        try (MemoryStack memorystack = MemoryStack.stackPush()) {
-            ByteBuffer bytebuffer = memorystack.malloc(DefaultVertexFormat.BLOCK.getVertexSize());
-            IntBuffer intbuffer = bytebuffer.asIntBuffer();
-            for (int k = 0; k < j; ++k) {
-                intbuffer.clear();
-                intbuffer.put(aint, k * 8, 8);
-                float x = bytebuffer.getFloat(0);
-                float y = bytebuffer.getFloat(4);
-                float z = bytebuffer.getFloat(8);
-                float f3;
-                float f4;
-                float f5;
-                if (useBaseColors) {
-                    float f6 = (bytebuffer.get(12) & 255) / 255.0F;
-                    float f7 = (bytebuffer.get(13) & 255) / 255.0F;
-                    float f8 = (bytebuffer.get(14) & 255) / 255.0F;
-                    f3 = f6 * baseBrightness[k] * red;
-                    f4 = f7 * baseBrightness[k] * green;
-                    f5 = f8 * baseBrightness[k] * blue;
-                }
-                else {
-                    f3 = baseBrightness[k] * red;
-                    f4 = baseBrightness[k] * green;
-                    f5 = baseBrightness[k] * blue;
-                }
-                int l = this.applyBakedLighting(light[k], bytebuffer);
-                float f9 = bytebuffer.getFloat(16);
-                float f10 = bytebuffer.getFloat(20);
-                float x2 = poseExt.transformVecX(x, y, z);
-                float y2 = poseExt.transformVecY(x, y, z);
-                float z2 = poseExt.transformVecZ(x, y, z);
-                this.applyBakedNormals(normal, bytebuffer, entry.normal());
-                this.vertex(x2, y2, z2, f3, f4, f5, 1.0F, f9, f10, overlay, l, normal.x(), normal.y(), normal.z());
+        int[] vertices = quad.getVertices();
+        Vec3i faceNormal = quad.getDirection().getNormal();
+        IMatrix4fPatch poseMat = MathHelper.getExtendedMatrix(entry.pose());
+        IMatrix3fPatch normalMat = MathHelper.getExtendedMatrix(entry.normal());
+        float normX = normalMat.transformVecX(faceNormal.getX(), faceNormal.getY(), faceNormal.getZ());
+        float normY = normalMat.transformVecY(faceNormal.getX(), faceNormal.getY(), faceNormal.getZ());
+        float normZ = normalMat.transformVecZ(faceNormal.getX(), faceNormal.getY(), faceNormal.getZ());
+        for (int vertex = 0; vertex < 4; ++vertex) {
+            int offset = vertex * 8;
+            //Position : 3 float
+            float posX = Float.intBitsToFloat(vertices[offset]);
+            float posY = Float.intBitsToFloat(vertices[offset + 1]);
+            float posZ = Float.intBitsToFloat(vertices[offset + 2]);
+            float x = poseMat.transformVecX(posX, posY, posZ);
+            float y = poseMat.transformVecY(posX, posY, posZ);
+            float z = poseMat.transformVecZ(posX, posY, posZ);
+            //Color : 4 byte
+            float bright = baseBrightness[vertex];
+            float cr;
+            float cg;
+            float cb;
+            if (useBaseColors) {
+                int color = vertices[offset + 3];
+                cr = (color >> 24 & 255) * (1 / 255.0F) * bright * red;
+                cg = (color >> 16 & 255) * (1 / 255.0F) * bright * green;
+                cb = (color >> 8 & 255) * (1 / 255.0F) * bright * blue;
             }
+            else {
+                cr = bright * red;
+                cg = bright * green;
+                cb = bright * blue;
+            }
+            //Texture : 2 float
+            float u = Float.intBitsToFloat(vertices[offset + 4]);
+            float v = Float.intBitsToFloat(vertices[offset + 5]);
+            //Light : 2 short
+            int packedLight = lightmapCoords[vertex];
+            int bl = packedLight & 0xFFFF;
+            int sl = packedLight >> 16 & 0xFFFF;
+            int light = vertices[offset + 6];
+            int blBaked = light & 0xffff;
+            int slBaked = light >> 16 & 0xffff;
+            bl = Math.max(bl, blBaked);
+            sl = Math.max(sl, slBaked);
+            int lightmapCoord = bl | sl << 16;
+            //Normal : 3 byte
+            int norm = vertices[offset + 7];
+            byte nx = (byte) (norm & 255);
+            byte ny = (byte) (norm >> 8 & 255);
+            byte nz = (byte) (norm >> 16 & 255);
+            if (nx != 0 || ny != 0 || nz != 0) {
+                normX = nx / 127.0f;
+                normY = ny / 127.0f;
+                normZ = nz / 127.0f;
+                float nX = normalMat.transformVecX(normX, normY, normZ);
+                float nY = normalMat.transformVecY(normX, normY, normZ);
+                float nZ = normalMat.transformVecZ(normX, normY, normZ);
+                normX = nX;
+                normY = nY;
+                normZ = nZ;
+            }
+            this.vertex(x, y, z, cr, cg, cb, 1.0F, u, v, overlay, lightmapCoord, normX, normY, normZ);
+        }
+    }
+
+    @Override
+    default void putBulkData(PoseStack.Pose entry,
+                             BakedQuad quad,
+                             float bright0,
+                             float bright1,
+                             float bright2,
+                             float bright3,
+                             float r,
+                             float g,
+                             float b,
+                             int light0,
+                             int light1,
+                             int light2,
+                             int light3,
+                             int overlay) {
+        int[] vertices = quad.getVertices();
+        Vec3i faceNormal = quad.getDirection().getNormal();
+        IMatrix4fPatch poseMat = MathHelper.getExtendedMatrix(entry.pose());
+        IMatrix3fPatch normalMat = MathHelper.getExtendedMatrix(entry.normal());
+        float normX = normalMat.transformVecX(faceNormal.getX(), faceNormal.getY(), faceNormal.getZ());
+        float normY = normalMat.transformVecY(faceNormal.getX(), faceNormal.getY(), faceNormal.getZ());
+        float normZ = normalMat.transformVecZ(faceNormal.getX(), faceNormal.getY(), faceNormal.getZ());
+        for (int vertex = 0; vertex < 4; ++vertex) {
+            float bright;
+            int light;
+            switch (vertex) {
+                case 0 -> {
+                    bright = bright0;
+                    light = light0;
+                }
+                case 1 -> {
+                    bright = bright1;
+                    light = light1;
+                }
+                case 2 -> {
+                    bright = bright2;
+                    light = light2;
+                }
+                case 3 -> {
+                    bright = bright3;
+                    light = light3;
+                }
+                default -> throw new IncompatibleClassChangeError();
+            }
+            int offset = vertex * 8;
+            //Position : 3 float
+            float posX = Float.intBitsToFloat(vertices[offset]);
+            float posY = Float.intBitsToFloat(vertices[offset + 1]);
+            float posZ = Float.intBitsToFloat(vertices[offset + 2]);
+            float x = poseMat.transformVecX(posX, posY, posZ);
+            float y = poseMat.transformVecY(posX, posY, posZ);
+            float z = poseMat.transformVecZ(posX, posY, posZ);
+            //Color : 4 byte
+            int color = vertices[offset + 3];
+            float cr = (color >> 24 & 255) * (1 / 255.0F) * bright * r;
+            float cg = (color >> 16 & 255) * (1 / 255.0F) * bright * g;
+            float cb = (color >> 8 & 255) * (1 / 255.0F) * bright * b;
+            //Texture : 2 float
+            float u = Float.intBitsToFloat(vertices[offset + 4]);
+            float v = Float.intBitsToFloat(vertices[offset + 5]);
+            //Light : 2 short
+            int packedLight = light;
+            int bl = packedLight & 0xFFFF;
+            int sl = packedLight >> 16 & 0xFFFF;
+            int l = vertices[offset + 6];
+            int blBaked = l & 0xffff;
+            int slBaked = l >> 16 & 0xffff;
+            bl = Math.max(bl, blBaked);
+            sl = Math.max(sl, slBaked);
+            int lightmapCoord = bl | sl << 16;
+            //Normal : 3 byte
+            int norm = vertices[offset + 7];
+            byte nx = (byte) (norm & 255);
+            byte ny = (byte) (norm >> 8 & 255);
+            byte nz = (byte) (norm >> 16 & 255);
+            if (nx != 0 || ny != 0 || nz != 0) {
+                normX = nx / 127.0f;
+                normY = ny / 127.0f;
+                normZ = nz / 127.0f;
+                float nX = normalMat.transformVecX(normX, normY, normZ);
+                float nY = normalMat.transformVecY(normX, normY, normZ);
+                float nZ = normalMat.transformVecZ(normX, normY, normZ);
+                normX = nX;
+                normY = nY;
+                normZ = nZ;
+            }
+            this.vertex(x, y, z, cr, cg, cb, 1.0F, u, v, overlay, lightmapCoord, normX, normY, normZ);
         }
     }
 
