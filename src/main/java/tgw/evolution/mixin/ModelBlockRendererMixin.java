@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.model.data.IModelData;
@@ -23,7 +24,6 @@ import tgw.evolution.util.math.DirectionUtil;
 import tgw.evolution.util.math.MathHelper;
 import tgw.evolution.util.math.XoRoShiRoRandom;
 
-import java.util.BitSet;
 import java.util.List;
 import java.util.Random;
 
@@ -33,10 +33,144 @@ public abstract class ModelBlockRendererMixin {
     @Unique private static final ThreadLocal<EvAmbientOcclusionFace> AOF = ThreadLocal.withInitial(EvAmbientOcclusionFace::new);
     @Unique private static final ThreadLocal<float[]> SHAPES = ThreadLocal.withInitial(() -> new float[12]);
     @Unique private static final ThreadLocal<BlockPos.MutableBlockPos> MUTABLE_POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
-    @Unique private static final ThreadLocal<BitSet> BITSET = ThreadLocal.withInitial(() -> new BitSet(3));
     @Shadow @Final static Direction[] DIRECTIONS;
     @Unique private final XoRoShiRoRandom random = new XoRoShiRoRandom();
     @Shadow @Final private BlockColors blockColors;
+
+    @Unique
+    private static byte calculateShape(BlockGetter level,
+                                       BlockState state,
+                                       BlockPos pos,
+                                       int[] vertices,
+                                       Direction direction,
+                                       float[] shape) {
+        float x = Float.intBitsToFloat(vertices[0]);
+        float y = Float.intBitsToFloat(vertices[1]);
+        float z = Float.intBitsToFloat(vertices[2]);
+        float minX = x;
+        float minY = y;
+        float minZ = z;
+        float maxX = x;
+        float maxY = y;
+        float maxZ = z;
+        for (int vertex = 1; vertex < 4; ++vertex) {
+            int offset = vertex * 8;
+            x = Float.intBitsToFloat(vertices[offset]);
+            y = Float.intBitsToFloat(vertices[offset + 1]);
+            z = Float.intBitsToFloat(vertices[offset + 2]);
+            if (x < minX) {
+                minX = x;
+            }
+            else if (x > maxX) {
+                maxX = x;
+            }
+            if (y < minY) {
+                minY = y;
+            }
+            else if (y > maxY) {
+                maxY = y;
+            }
+            if (z < minZ) {
+                minZ = z;
+            }
+            else if (z > maxZ) {
+                maxZ = z;
+            }
+        }
+        shape[0] = minY;
+        shape[1] = maxY;
+        shape[2] = minZ;
+        shape[3] = maxZ;
+        shape[4] = minX;
+        shape[5] = maxX;
+        shape[6] = 1.0F - minY;
+        shape[7] = 1.0F - maxY;
+        shape[8] = 1.0F - minZ;
+        shape[9] = 1.0F - maxZ;
+        shape[10] = 1.0F - minX;
+        shape[11] = 1.0F - maxX;
+        byte flags = 0;
+        switch (direction) {
+            case DOWN -> {
+                if (minY == maxY && (minY < 1.0E-4F || state.isCollisionShapeFullBlock(level, pos))) {
+                    flags = 1;
+                }
+                if (minX >= 1.0E-4F || minZ >= 1.0E-4F || maxX <= 0.999_9F || maxZ <= 0.999_9F) {
+                    flags |= 2;
+                }
+            }
+            case UP -> {
+                if (minY == maxY && (maxY > 0.999_9F || state.isCollisionShapeFullBlock(level, pos))) {
+                    flags = 1;
+                }
+                if (minX >= 1.0E-4F || minZ >= 1.0E-4F || maxX <= 0.999_9F || maxZ <= 0.999_9F) {
+                    flags |= 2;
+                }
+            }
+            case NORTH -> {
+                if (minZ == maxZ && (minZ < 1.0E-4F || state.isCollisionShapeFullBlock(level, pos))) {
+                    flags = 1;
+                }
+                if (minX >= 1.0E-4F || minY >= 1.0E-4F || maxX <= 0.999_9F || maxY <= 0.999_9F) {
+                    flags |= 2;
+                }
+            }
+            case SOUTH -> {
+                if (minZ == maxZ && (maxZ > 0.999_9F || state.isCollisionShapeFullBlock(level, pos))) {
+                    flags = 1;
+                }
+                if (minX >= 1.0E-4F || minY >= 1.0E-4F || maxX <= 0.999_9F || maxY <= 0.999_9F) {
+                    flags |= 2;
+                }
+            }
+            case WEST -> {
+                if (minX == maxX && (minX < 1.0E-4F || state.isCollisionShapeFullBlock(level, pos))) {
+                    flags = 1;
+                }
+                if (minY >= 1.0E-4F || minZ >= 1.0E-4F || maxY <= 0.999_9F || maxZ <= 0.999_9F) {
+                    flags |= 2;
+                }
+            }
+            case EAST -> {
+                if (minX == maxX && (maxX > 0.999_9F || state.isCollisionShapeFullBlock(level, pos))) {
+                    flags = 1;
+                }
+                if (minY >= 1.0E-4F || minZ >= 1.0E-4F || maxY <= 0.999_9F || maxZ <= 0.999_9F) {
+                    flags |= 2;
+                }
+            }
+        }
+        return flags;
+    }
+
+    @Unique
+    private static boolean calculateShape(BlockGetter level,
+                                          BlockState state,
+                                          BlockPos pos,
+                                          int[] vertices,
+                                          Direction direction) {
+        int offset = switch (direction.getAxis()) {
+            case X -> 0;
+            case Y -> 1;
+            case Z -> 2;
+        };
+        float p = Float.intBitsToFloat(vertices[offset]);
+        float min = p;
+        float max = p;
+        for (int i = 1; i < 4; ++i) {
+            p = Float.intBitsToFloat(vertices[i * 8 + offset]);
+            if (p < min) {
+                min = p;
+            }
+            else if (p > max) {
+                max = p;
+            }
+        }
+        if (direction.getAxisDirection() == Direction.AxisDirection.NEGATIVE) {
+            return min == max && (min < 1.0E-4F || state.isCollisionShapeFullBlock(level, pos));
+        }
+        return min == max && (max > 0.999_9F || state.isCollisionShapeFullBlock(level, pos));
+    }
 
     private static void renderQuad(PoseStack.Pose entry, VertexConsumer consumer, int defaultColor, List<BakedQuad> list, int light, int overlay) {
         if (list.isEmpty()) {
@@ -66,15 +200,6 @@ public abstract class ModelBlockRendererMixin {
             }
         }
     }
-
-    @Shadow
-    protected abstract void calculateShape(BlockAndTintGetter pLevel,
-                                           BlockState pState,
-                                           BlockPos pPos,
-                                           int[] pVertices,
-                                           Direction pDirection,
-                                           @Nullable float[] pShape,
-                                           BitSet pShapeFlags);
 
     private void putQuadData(BlockAndTintGetter level,
                              BlockState state,
@@ -146,10 +271,9 @@ public abstract class ModelBlockRendererMixin {
     }
 
     /**
-     * @param shape      the array, of length 12, to store the shape bounds in
-     * @param shapeFlags the bit set to store the shape flags in. The first bit will be {@code true} if the face should
-     *                   be offset, and the second if the face is less than a block in width and height.
+     * @param shape the array, of length 12, to store the shape bounds in
      */
+    @Unique
     private void renderModelFaceAO(BlockAndTintGetter level,
                                    BlockState state,
                                    BlockPos pos,
@@ -157,23 +281,18 @@ public abstract class ModelBlockRendererMixin {
                                    VertexConsumer consumer,
                                    List<BakedQuad> quads,
                                    float[] shape,
-                                   BitSet shapeFlags,
                                    EvAmbientOcclusionFace AoFace,
                                    int packedOverlay) {
         for (int i = 0, l = quads.size(); i < l; i++) {
             BakedQuad bakedQuad = quads.get(i);
-            this.calculateShape(level, state, pos, bakedQuad.getVertices(), bakedQuad.getDirection(), shape, shapeFlags);
-            AoFace.calculate(level, state, pos, bakedQuad.getDirection(), shape, shapeFlags, bakedQuad.isShade());
+            AoFace.calculate(level, state, pos, bakedQuad.getDirection(), shape,
+                             calculateShape(level, state, pos, bakedQuad.getVertices(), bakedQuad.getDirection(), shape), bakedQuad.isShade());
             this.putQuadData(level, state, pos, consumer, matrices.last(), bakedQuad, AoFace.brightness0, AoFace.brightness1, AoFace.brightness2,
                              AoFace.brightness3, AoFace.lightmap0, AoFace.lightmap1, AoFace.lightmap2, AoFace.lightmap3, packedOverlay);
         }
     }
 
-    /**
-     * @author TheGreatWolf
-     * @reason Avoid allocations via iterator
-     */
-    @Overwrite
+    @Unique
     private void renderModelFaceFlat(BlockAndTintGetter level,
                                      BlockState state,
                                      BlockPos pos,
@@ -182,17 +301,17 @@ public abstract class ModelBlockRendererMixin {
                                      boolean repackLight,
                                      PoseStack matrices,
                                      VertexConsumer buffer,
-                                     List<BakedQuad> quads,
-                                     BitSet shapeFlags) {
+                                     List<BakedQuad> quads) {
         for (int i = 0, l = quads.size(); i < l; i++) {
-            BakedQuad bakedQuad = quads.get(i);
+            BakedQuad quad = quads.get(i);
             if (repackLight) {
-                this.calculateShape(level, state, pos, bakedQuad.getVertices(), bakedQuad.getDirection(), null, shapeFlags);
-                BlockPos blockpos = shapeFlags.get(0) ? pos.relative(bakedQuad.getDirection()) : pos;
+                BlockPos blockpos = calculateShape(level, state, pos, quad.getVertices(), quad.getDirection()) ?
+                                    MUTABLE_POS.get().setWithOffset(pos, quad.getDirection()) :
+                                    pos;
                 light = EvLevelRenderer.getLightColor(level, state, blockpos);
             }
-            float f = level.getShade(bakedQuad.getDirection(), bakedQuad.isShade());
-            this.putQuadData(level, state, pos, buffer, matrices.last(), bakedQuad, f, f, f, f, light, light, light, light, overlay);
+            float bright = level.getShade(quad.getDirection(), quad.isShade());
+            this.putQuadData(level, state, pos, buffer, matrices.last(), quad, bright, bright, bright, bright, light, light, light, light, overlay);
         }
     }
 
@@ -214,8 +333,6 @@ public abstract class ModelBlockRendererMixin {
                                    IModelData modelData) {
         boolean hasRendered = false;
         float[] shapes = SHAPES.get();
-        BitSet bitset = BITSET.get();
-        bitset.clear();
         EvAmbientOcclusionFace ambientOcclusionFace = AOF.get();
         BlockPos.MutableBlockPos mutableBlockPos = MUTABLE_POS.get().set(pos);
         for (Direction direction : DIRECTIONS) {
@@ -224,7 +341,7 @@ public abstract class ModelBlockRendererMixin {
             if (!quads.isEmpty()) {
                 mutableBlockPos.setWithOffset(pos, direction);
                 if (!checkSides || Block.shouldRenderFace(state, level, pos, direction, mutableBlockPos)) {
-                    this.renderModelFaceAO(level, state, pos, matrices, consumer, quads, shapes, bitset, ambientOcclusionFace, packedOverlay);
+                    this.renderModelFaceAO(level, state, pos, matrices, consumer, quads, shapes, ambientOcclusionFace, packedOverlay);
                     hasRendered = true;
                 }
             }
@@ -232,7 +349,7 @@ public abstract class ModelBlockRendererMixin {
         random.setSeed(seed);
         List<BakedQuad> quads = model.getQuads(state, null, random, modelData);
         if (!quads.isEmpty()) {
-            this.renderModelFaceAO(level, state, pos, matrices, consumer, quads, shapes, bitset, ambientOcclusionFace, packedOverlay);
+            this.renderModelFaceAO(level, state, pos, matrices, consumer, quads, shapes, ambientOcclusionFace, packedOverlay);
             return true;
         }
         return hasRendered;
@@ -255,8 +372,7 @@ public abstract class ModelBlockRendererMixin {
                                       int packedOverlay,
                                       IModelData modelData) {
         boolean hasAnything = false;
-        BitSet bitset = new BitSet(3);
-        BlockPos.MutableBlockPos mutablePos = pos.mutable();
+        BlockPos.MutableBlockPos mutablePos = MUTABLE_POS.get();
         for (Direction direction : DIRECTIONS) {
             random.setSeed(seed);
             List<BakedQuad> quads = model.getQuads(state, direction, random, modelData);
@@ -264,7 +380,7 @@ public abstract class ModelBlockRendererMixin {
                 mutablePos.setWithOffset(pos, direction);
                 if (!checkSides || Block.shouldRenderFace(state, level, pos, direction, mutablePos)) {
                     int light = EvLevelRenderer.getLightColor(level, state, mutablePos);
-                    this.renderModelFaceFlat(level, state, pos, light, packedOverlay, false, matrices, builder, quads, bitset);
+                    this.renderModelFaceFlat(level, state, pos, light, packedOverlay, false, matrices, builder, quads);
                     hasAnything = true;
                 }
             }
@@ -272,7 +388,7 @@ public abstract class ModelBlockRendererMixin {
         random.setSeed(seed);
         List<BakedQuad> quads = model.getQuads(state, null, random, modelData);
         if (!quads.isEmpty()) {
-            this.renderModelFaceFlat(level, state, pos, 0xffff_ffff, packedOverlay, true, matrices, builder, quads, bitset);
+            this.renderModelFaceFlat(level, state, pos, 0xffff_ffff, packedOverlay, true, matrices, builder, quads);
             return true;
         }
         return hasAnything;

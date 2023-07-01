@@ -6,10 +6,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.BitSet;
-
 public class EvAmbientOcclusionFace {
 
+    private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
     public float brightness0;
     public float brightness1;
     public float brightness2;
@@ -55,108 +54,104 @@ public class EvAmbientOcclusionFace {
     }
 
     /**
-     * @param shape      the array, of length 12, containing the shape bounds
-     * @param shapeFlags the bit set to store the shape flags in. The first bit will be {@code true} if the face
-     *                   should be offset, and the second if the face is less than a block in width and height.
+     * @param shape the array, of length 12, containing the shape bounds
+     * @param flags the bit set to store the shape flags in. The first bit will be {@code true} if the face
+     *              should be offset, and the second if the face is less than a block in width and height.
      */
     public void calculate(BlockAndTintGetter level,
                           BlockState state,
                           BlockPos pos,
                           Direction direction,
                           float[] shape,
-                          BitSet shapeFlags,
+                          byte flags,
                           boolean shade) {
-        BlockPos blockpos = shapeFlags.get(0) ? pos.relative(direction) : pos;
+        boolean offset = (flags & 1) != 0;
+        BlockPos blockpos = offset ? pos.relative(direction) : pos;
         ModelBlockRenderer.AdjacencyInfo adjacencyInfo = ModelBlockRenderer.AdjacencyInfo.fromFacing(direction);
-        BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
         ModelBlockRenderer.Cache cache = ModelBlockRenderer.CACHE.get();
-        mutableBlockPos.setWithOffset(blockpos, adjacencyInfo.corners[0]);
-        BlockState blockstate = level.getBlockState(mutableBlockPos);
-        int i = cache.getLightColor(blockstate, level, mutableBlockPos);
-        float f = cache.getShadeBrightness(blockstate, level, mutableBlockPos);
-        mutableBlockPos.setWithOffset(blockpos, adjacencyInfo.corners[1]);
-        BlockState blockstate1 = level.getBlockState(mutableBlockPos);
-        int j = cache.getLightColor(blockstate1, level, mutableBlockPos);
-        float f1 = cache.getShadeBrightness(blockstate1, level, mutableBlockPos);
-        mutableBlockPos.setWithOffset(blockpos, adjacencyInfo.corners[2]);
-        BlockState blockstate2 = level.getBlockState(mutableBlockPos);
-        int k = cache.getLightColor(blockstate2, level, mutableBlockPos);
-        float f2 = cache.getShadeBrightness(blockstate2, level, mutableBlockPos);
-        mutableBlockPos.setWithOffset(blockpos, adjacencyInfo.corners[3]);
-        BlockState blockstate3 = level.getBlockState(mutableBlockPos);
-        int l = cache.getLightColor(blockstate3, level, mutableBlockPos);
-        float f3 = cache.getShadeBrightness(blockstate3, level, mutableBlockPos);
-        BlockState blockstate4 = level.getBlockState(mutableBlockPos.setWithOffset(blockpos, adjacencyInfo.corners[0]).move(direction));
-        boolean flag = !blockstate4.isViewBlocking(level, mutableBlockPos) || blockstate4.getLightBlock(level, mutableBlockPos) == 0;
-        BlockState blockstate5 = level.getBlockState(mutableBlockPos.setWithOffset(blockpos, adjacencyInfo.corners[1]).move(direction));
-        boolean flag1 = !blockstate5.isViewBlocking(level, mutableBlockPos) || blockstate5.getLightBlock(level, mutableBlockPos) == 0;
-        BlockState blockstate6 = level.getBlockState(mutableBlockPos.setWithOffset(blockpos, adjacencyInfo.corners[2]).move(direction));
-        boolean flag2 = !blockstate6.isViewBlocking(level, mutableBlockPos) || blockstate6.getLightBlock(level, mutableBlockPos) == 0;
-        BlockState blockstate7 = level.getBlockState(mutableBlockPos.setWithOffset(blockpos, adjacencyInfo.corners[3]).move(direction));
-        boolean flag3 = !blockstate7.isViewBlocking(level, mutableBlockPos) || blockstate7.getLightBlock(level, mutableBlockPos) == 0;
+        BlockState state0 = level.getBlockState(this.mutablePos.setWithOffset(blockpos, adjacencyInfo.corners[0]));
+        int color0 = cache.getLightColor(state0, level, this.mutablePos);
+        float bright0 = cache.getShadeBrightness(state0, level, this.mutablePos);
+        BlockState state1 = level.getBlockState(this.mutablePos.setWithOffset(blockpos, adjacencyInfo.corners[1]));
+        int light1 = cache.getLightColor(state1, level, this.mutablePos);
+        float bright1 = cache.getShadeBrightness(state1, level, this.mutablePos);
+        BlockState state2 = level.getBlockState(this.mutablePos.setWithOffset(blockpos, adjacencyInfo.corners[2]));
+        int color2 = cache.getLightColor(state2, level, this.mutablePos);
+        float bright2 = cache.getShadeBrightness(state2, level, this.mutablePos);
+        BlockState state3 = level.getBlockState(this.mutablePos.setWithOffset(blockpos, adjacencyInfo.corners[3]));
+        int color3 = cache.getLightColor(state3, level, this.mutablePos);
+        float bright3 = cache.getShadeBrightness(state3, level, this.mutablePos);
+        BlockState state4 = level.getBlockState(this.mutablePos.setWithOffset(blockpos, adjacencyInfo.corners[0]).move(direction));
+        boolean flag0 = !state4.isViewBlocking(level, this.mutablePos) || state4.getLightBlock(level, this.mutablePos) == 0;
+        BlockState state5 = level.getBlockState(this.mutablePos.setWithOffset(blockpos, adjacencyInfo.corners[1]).move(direction));
+        boolean flag1 = !state5.isViewBlocking(level, this.mutablePos) || state5.getLightBlock(level, this.mutablePos) == 0;
+        BlockState state6 = level.getBlockState(this.mutablePos.setWithOffset(blockpos, adjacencyInfo.corners[2]).move(direction));
+        boolean flag2 = !state6.isViewBlocking(level, this.mutablePos) || state6.getLightBlock(level, this.mutablePos) == 0;
+        BlockState state7 = level.getBlockState(this.mutablePos.setWithOffset(blockpos, adjacencyInfo.corners[3]).move(direction));
+        boolean flag3 = !state7.isViewBlocking(level, this.mutablePos) || state7.getLightBlock(level, this.mutablePos) == 0;
         float f4;
         int i1;
-        if (!flag2 && !flag) {
-            f4 = f;
-            i1 = i;
+        if (!flag2 && !flag0) {
+            f4 = bright0;
+            i1 = color0;
         }
         else {
-            mutableBlockPos.setWithOffset(blockpos, adjacencyInfo.corners[0]).move(adjacencyInfo.corners[2]);
-            BlockState blockstate8 = level.getBlockState(mutableBlockPos);
-            f4 = cache.getShadeBrightness(blockstate8, level, mutableBlockPos);
-            i1 = cache.getLightColor(blockstate8, level, mutableBlockPos);
+            this.mutablePos.setWithOffset(blockpos, adjacencyInfo.corners[0]).move(adjacencyInfo.corners[2]);
+            BlockState state8 = level.getBlockState(this.mutablePos);
+            f4 = cache.getShadeBrightness(state8, level, this.mutablePos);
+            i1 = cache.getLightColor(state8, level, this.mutablePos);
         }
         float f5;
         int j1;
-        if (!flag3 && !flag) {
-            f5 = f;
-            j1 = i;
+        if (!flag3 && !flag0) {
+            f5 = bright0;
+            j1 = color0;
         }
         else {
-            mutableBlockPos.setWithOffset(blockpos, adjacencyInfo.corners[0]).move(adjacencyInfo.corners[3]);
-            BlockState blockstate10 = level.getBlockState(mutableBlockPos);
-            f5 = cache.getShadeBrightness(blockstate10, level, mutableBlockPos);
-            j1 = cache.getLightColor(blockstate10, level, mutableBlockPos);
+            this.mutablePos.setWithOffset(blockpos, adjacencyInfo.corners[0]).move(adjacencyInfo.corners[3]);
+            BlockState blockstate10 = level.getBlockState(this.mutablePos);
+            f5 = cache.getShadeBrightness(blockstate10, level, this.mutablePos);
+            j1 = cache.getLightColor(blockstate10, level, this.mutablePos);
         }
         float f6;
         int k1;
         if (!flag2 && !flag1) {
-            f6 = f;
-            k1 = i;
+            f6 = bright0;
+            k1 = color0;
         }
         else {
-            mutableBlockPos.setWithOffset(blockpos, adjacencyInfo.corners[1]).move(adjacencyInfo.corners[2]);
-            BlockState blockstate11 = level.getBlockState(mutableBlockPos);
-            f6 = cache.getShadeBrightness(blockstate11, level, mutableBlockPos);
-            k1 = cache.getLightColor(blockstate11, level, mutableBlockPos);
+            this.mutablePos.setWithOffset(blockpos, adjacencyInfo.corners[1]).move(adjacencyInfo.corners[2]);
+            BlockState blockstate11 = level.getBlockState(this.mutablePos);
+            f6 = cache.getShadeBrightness(blockstate11, level, this.mutablePos);
+            k1 = cache.getLightColor(blockstate11, level, this.mutablePos);
         }
         float f7;
         int l1;
         if (!flag3 && !flag1) {
-            f7 = f;
-            l1 = i;
+            f7 = bright0;
+            l1 = color0;
         }
         else {
-            mutableBlockPos.setWithOffset(blockpos, adjacencyInfo.corners[1]).move(adjacencyInfo.corners[3]);
-            BlockState blockstate12 = level.getBlockState(mutableBlockPos);
-            f7 = cache.getShadeBrightness(blockstate12, level, mutableBlockPos);
-            l1 = cache.getLightColor(blockstate12, level, mutableBlockPos);
+            this.mutablePos.setWithOffset(blockpos, adjacencyInfo.corners[1]).move(adjacencyInfo.corners[3]);
+            BlockState blockstate12 = level.getBlockState(this.mutablePos);
+            f7 = cache.getShadeBrightness(blockstate12, level, this.mutablePos);
+            l1 = cache.getLightColor(blockstate12, level, this.mutablePos);
         }
         int i3 = cache.getLightColor(state, level, pos);
-        mutableBlockPos.setWithOffset(pos, direction);
-        BlockState blockstate9 = level.getBlockState(mutableBlockPos);
-        if (shapeFlags.get(0) || !blockstate9.isSolidRender(level, mutableBlockPos)) {
-            i3 = cache.getLightColor(blockstate9, level, mutableBlockPos);
+        this.mutablePos.setWithOffset(pos, direction);
+        BlockState blockstate9 = level.getBlockState(this.mutablePos);
+        if (offset || !blockstate9.isSolidRender(level, this.mutablePos)) {
+            i3 = cache.getLightColor(blockstate9, level, this.mutablePos);
         }
-        float f8 = shapeFlags.get(0) ?
+        float f8 = offset ?
                    cache.getShadeBrightness(level.getBlockState(blockpos), level, blockpos) :
                    cache.getShadeBrightness(level.getBlockState(pos), level, pos);
         ModelBlockRenderer.AmbientVertexRemap ambientVertexRemap = ModelBlockRenderer.AmbientVertexRemap.fromFacing(direction);
-        if (shapeFlags.get(1) && adjacencyInfo.doNonCubicWeight) {
-            float f29 = (f3 + f + f5 + f8) * 0.25F;
-            float f31 = (f2 + f + f4 + f8) * 0.25F;
-            float f32 = (f2 + f1 + f6 + f8) * 0.25F;
-            float f33 = (f3 + f1 + f7 + f8) * 0.25F;
+        if ((flags & 2) != 0 && adjacencyInfo.doNonCubicWeight) {
+            float f29 = (bright3 + bright0 + f5 + f8) * 0.25F;
+            float f31 = (bright2 + bright0 + f4 + f8) * 0.25F;
+            float f32 = (bright2 + bright1 + f6 + f8) * 0.25F;
+            float f33 = (bright3 + bright1 + f7 + f8) * 0.25F;
             float f13 = shape[adjacencyInfo.vert0Weights[0].shape] * shape[adjacencyInfo.vert0Weights[1].shape];
             float f14 = shape[adjacencyInfo.vert0Weights[2].shape] * shape[adjacencyInfo.vert0Weights[3].shape];
             float f15 = shape[adjacencyInfo.vert0Weights[4].shape] * shape[adjacencyInfo.vert0Weights[5].shape];
@@ -177,24 +172,24 @@ public class EvAmbientOcclusionFace {
             this.setBrightness(ambientVertexRemap.vert1, f29 * f17 + f31 * f18 + f32 * f19 + f33 * f20);
             this.setBrightness(ambientVertexRemap.vert2, f29 * f21 + f31 * f22 + f32 * f23 + f33 * f24);
             this.setBrightness(ambientVertexRemap.vert3, f29 * f25 + f31 * f26 + f32 * f27 + f33 * f28);
-            int i2 = blend(l, i, j1, i3);
-            int j2 = blend(k, i, i1, i3);
-            int k2 = blend(k, j, k1, i3);
-            int l2 = blend(l, j, l1, i3);
+            int i2 = blend(color3, color0, j1, i3);
+            int j2 = blend(color2, color0, i1, i3);
+            int k2 = blend(color2, light1, k1, i3);
+            int l2 = blend(color3, light1, l1, i3);
             this.setLightmap(ambientVertexRemap.vert0, blend(i2, j2, k2, l2, f13, f14, f15, f16));
             this.setLightmap(ambientVertexRemap.vert1, blend(i2, j2, k2, l2, f17, f18, f19, f20));
             this.setLightmap(ambientVertexRemap.vert2, blend(i2, j2, k2, l2, f21, f22, f23, f24));
             this.setLightmap(ambientVertexRemap.vert3, blend(i2, j2, k2, l2, f25, f26, f27, f28));
         }
         else {
-            float f9 = (f3 + f + f5 + f8) * 0.25F;
-            float f10 = (f2 + f + f4 + f8) * 0.25F;
-            float f11 = (f2 + f1 + f6 + f8) * 0.25F;
-            float f12 = (f3 + f1 + f7 + f8) * 0.25F;
-            this.setLightmap(ambientVertexRemap.vert0, blend(l, i, j1, i3));
-            this.setLightmap(ambientVertexRemap.vert1, blend(k, i, i1, i3));
-            this.setLightmap(ambientVertexRemap.vert2, blend(k, j, k1, i3));
-            this.setLightmap(ambientVertexRemap.vert3, blend(l, j, l1, i3));
+            float f9 = (bright3 + bright0 + f5 + f8) * 0.25F;
+            float f10 = (bright2 + bright0 + f4 + f8) * 0.25F;
+            float f11 = (bright2 + bright1 + f6 + f8) * 0.25F;
+            float f12 = (bright3 + bright1 + f7 + f8) * 0.25F;
+            this.setLightmap(ambientVertexRemap.vert0, blend(color3, color0, j1, i3));
+            this.setLightmap(ambientVertexRemap.vert1, blend(color2, color0, i1, i3));
+            this.setLightmap(ambientVertexRemap.vert2, blend(color2, light1, k1, i3));
+            this.setLightmap(ambientVertexRemap.vert3, blend(color3, light1, l1, i3));
             this.setBrightness(ambientVertexRemap.vert0, f9);
             this.setBrightness(ambientVertexRemap.vert1, f10);
             this.setBrightness(ambientVertexRemap.vert2, f11);
