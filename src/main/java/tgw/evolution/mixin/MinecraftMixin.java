@@ -1275,77 +1275,79 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
         assert this.gameMode != null;
         assert this.player != null;
         assert this.level != null;
-        if (!this.gameMode.isDestroying()) {
-            this.rightClickDelay = 4;
-            if (!this.player.isHandsBusy()) {
-                if (this.hitResult == null) {
-                    LOGGER.warn("Null returned as 'hitResult', this shouldn't happen!");
+        if (this.gameMode.isDestroying()) {
+            return;
+        }
+        this.rightClickDelay = 4;
+        if (this.player.isHandsBusy()) {
+            return;
+        }
+        if (this.hitResult == null) {
+            LOGGER.warn("Null returned as 'hitResult', this shouldn't happen!");
+            return;
+        }
+        if (this.cancelUseCooldown > 0) {
+            return;
+        }
+        for (InteractionHand hand : MathHelper.HANDS_OFF_PRIORITY) {
+            ItemStack stack = this.player.getItemInHand(hand);
+            if (hand == InteractionHand.OFF_HAND && stack.isEmpty()) {
+                continue;
+            }
+            switch (this.hitResult.getType()) {
+                case ENTITY -> {
+                    EntityHitResult entityRayTrace = (EntityHitResult) this.hitResult;
+                    Entity entity = entityRayTrace.getEntity();
+                    InteractionResult actionResult = this.gameMode.interactAt(this.player, entity, entityRayTrace, hand);
+                    if (!actionResult.consumesAction()) {
+                        actionResult = this.gameMode.interact(this.player, entity, hand);
+                    }
+                    if (actionResult.consumesAction()) {
+                        if (actionResult.shouldSwing()) {
+                            this.player.swing(hand);
+                        }
+                        return;
+                    }
+                }
+                case BLOCK -> {
+                    BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
+                    int count = stack.getCount();
+                    InteractionResult actResult = this.gameMode.useItemOn(this.player, this.level, hand, blockRayTrace);
+                    if (actResult.consumesAction()) {
+                        if (actResult.shouldSwing()) {
+                            this.player.swing(hand);
+                            if (!stack.isEmpty() && (stack.getCount() != count || this.gameMode.hasInfiniteItems())) {
+                                this.gameRenderer.itemInHandRenderer.itemUsed(hand);
+                            }
+                        }
+                        return;
+                    }
+                    if (actResult == InteractionResult.FAIL) {
+                        return;
+                    }
+                }
+            }
+        }
+        for (InteractionHand hand : MathHelper.HANDS_OFF_PRIORITY) {
+            if (hand == InteractionHand.MAIN_HAND) {
+                if (ClientEvents.getInstance().getMainhandIndicatorPercentage(0) < 1) {
                     return;
                 }
-                if (this.cancelUseCooldown > 0) {
+            }
+            else {
+                if (ClientEvents.getInstance().getOffhandIndicatorPercentage(0) < 1) {
                     return;
                 }
-                for (InteractionHand hand : MathHelper.HANDS_OFF_PRIORITY) {
-                    ItemStack stack = this.player.getItemInHand(hand);
-                    if (hand == InteractionHand.OFF_HAND && stack.isEmpty()) {
-                        continue;
+            }
+            ItemStack stack = this.player.getItemInHand(hand);
+            if (!stack.isEmpty()) {
+                InteractionResult actionResult = this.gameMode.useItem(this.player, this.level, hand);
+                if (actionResult.consumesAction()) {
+                    if (actionResult.shouldSwing()) {
+                        this.player.swing(hand);
                     }
-                    switch (this.hitResult.getType()) {
-                        case ENTITY -> {
-                            EntityHitResult entityRayTrace = (EntityHitResult) this.hitResult;
-                            Entity entity = entityRayTrace.getEntity();
-                            InteractionResult actionResult = this.gameMode.interactAt(this.player, entity, entityRayTrace, hand);
-                            if (!actionResult.consumesAction()) {
-                                actionResult = this.gameMode.interact(this.player, entity, hand);
-                            }
-                            if (actionResult.consumesAction()) {
-                                if (actionResult.shouldSwing()) {
-                                    this.player.swing(hand);
-                                }
-                                return;
-                            }
-                        }
-                        case BLOCK -> {
-                            BlockHitResult blockRayTrace = (BlockHitResult) this.hitResult;
-                            int count = stack.getCount();
-                            InteractionResult actResult = this.gameMode.useItemOn(this.player, this.level, hand, blockRayTrace);
-                            if (actResult.consumesAction()) {
-                                if (actResult.shouldSwing()) {
-                                    this.player.swing(hand);
-                                    if (!stack.isEmpty() && (stack.getCount() != count || this.gameMode.hasInfiniteItems())) {
-                                        this.gameRenderer.itemInHandRenderer.itemUsed(hand);
-                                    }
-                                }
-                                return;
-                            }
-                            if (actResult == InteractionResult.FAIL) {
-                                return;
-                            }
-                        }
-                    }
-                }
-                for (InteractionHand hand : MathHelper.HANDS_OFF_PRIORITY) {
-                    if (hand == InteractionHand.MAIN_HAND) {
-                        if (ClientEvents.getInstance().getMainhandIndicatorPercentage(0) < 1) {
-                            return;
-                        }
-                    }
-                    else {
-                        if (ClientEvents.getInstance().getOffhandIndicatorPercentage(0) < 1) {
-                            return;
-                        }
-                    }
-                    ItemStack stack = this.player.getItemInHand(hand);
-                    if (!stack.isEmpty()) {
-                        InteractionResult actionResult = this.gameMode.useItem(this.player, this.level, hand);
-                        if (actionResult.consumesAction()) {
-                            if (actionResult.shouldSwing()) {
-                                this.player.swing(hand);
-                            }
-                            this.gameRenderer.itemInHandRenderer.itemUsed(hand);
-                            return;
-                        }
-                    }
+                    this.gameRenderer.itemInHandRenderer.itemUsed(hand);
+                    return;
                 }
             }
         }
