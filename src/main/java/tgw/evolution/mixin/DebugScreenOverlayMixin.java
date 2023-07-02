@@ -30,7 +30,9 @@ import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.FluidState;
@@ -48,40 +50,27 @@ import tgw.evolution.util.time.Time;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Mixin(DebugScreenOverlay.class)
 public abstract class DebugScreenOverlayMixin extends GuiComponent {
 
-    @Shadow
-    @Final
-    private static Map<Heightmap.Types, String> HEIGHTMAP_NAMES;
-    private final AllocationRateCalculator allocationRateCalculator = new AllocationRateCalculator();
-    private final OList<String> gameInfo = new OArrayList<>();
-    private final Heightmap.Types[] heightmapTypes = Heightmap.Types.values();
-    private final MobCategory[] mobCategories = MobCategory.values();
-    private final OList<String> systemInfo = new OArrayList<>();
-    @Shadow
-    protected HitResult block;
-    @Shadow
-    protected HitResult liquid;
-    @Nullable
-    @Unique
-    private String cpu;
-    @Unique
-    @Nullable
-    private String javaVersion;
-    @Shadow
-    @Nullable
-    private ChunkPos lastPos;
-    @Unique
-    @Nullable
-    private String mc;
-    @Unique
-    @Nullable
-    private String mcFull;
-    @Shadow
-    @Final
-    private Minecraft minecraft;
+    @Shadow @Final private static Map<Heightmap.Types, String> HEIGHTMAP_NAMES;
+    @Unique private final AllocationRateCalculator allocationRateCalculator = new AllocationRateCalculator();
+    @Unique private final OList<String> gameInfo = new OArrayList<>();
+    @Unique private final Heightmap.Types[] heightmapTypes = Heightmap.Types.values();
+    @Unique private final MobCategory[] mobCategories = MobCategory.values();
+    @Unique private final OList<String> systemInfo = new OArrayList<>();
+    @Shadow protected HitResult block;
+    @Shadow protected HitResult liquid;
+    @Unique private @Nullable String cpu;
+    @Unique private @Nullable String javaVersion;
+    @Shadow private @Nullable ChunkPos lastPos;
+    @Unique private @Nullable String mc;
+    @Unique private @Nullable String mcFull;
+    @Shadow @Final private Minecraft minecraft;
+    @Shadow private @Nullable CompletableFuture<LevelChunk> serverChunk;
 
     @Shadow
     private static long bytesToMegabytes(long pBytes) {
@@ -325,17 +314,42 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
     @Shadow
     protected abstract String getPropertyValueString(Map.Entry<Property<?>, Comparable<?>> pEntry);
 
-    @Shadow
-    @Nullable
-    protected abstract LevelChunk getServerChunk();
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid allocations when possible
+     */
+    @javax.annotation.Nullable
+    @Overwrite
+    private @Nullable LevelChunk getServerChunk() {
+        if (this.serverChunk == null) {
+            ServerLevel serverLevel = this.getServerLevel();
+            if (serverLevel != null) {
+                assert this.lastPos != null;
+                this.serverChunk = serverLevel.getChunkSource()
+                                              .getChunkFuture(this.lastPos.x, this.lastPos.z, ChunkStatus.FULL, false)
+                                              .thenApply(e -> {
+                                                  Optional<ChunkAccess> left = e.left();
+                                                  if (left.isPresent()) {
+                                                      return (LevelChunk) left.get();
+                                                  }
+                                                  //noinspection ReturnOfNull
+                                                  return null;
+                                              });
+            }
+            if (this.serverChunk == null) {
+                LevelChunk clientChunk = this.getClientChunk();
+                this.serverChunk = CompletableFuture.completedFuture(clientChunk);
+                return clientChunk;
+            }
+        }
+        return this.serverChunk.getNow(null);
+    }
 
     @Shadow
-    @Nullable
-    protected abstract String getServerChunkStats();
+    protected abstract @Nullable String getServerChunkStats();
 
     @Shadow
-    @Nullable
-    protected abstract ServerLevel getServerLevel();
+    protected abstract @Nullable ServerLevel getServerLevel();
 
     protected List<String> getSystemInformation() {
         long maxMem = Runtime.getRuntime().maxMemory();
