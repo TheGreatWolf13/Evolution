@@ -2,7 +2,6 @@ package tgw.evolution.items.modular;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import com.mojang.datafixers.util.Either;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
@@ -18,9 +17,9 @@ import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.IDurability;
 import tgw.evolution.items.IMass;
 import tgw.evolution.items.ItemEv;
+import tgw.evolution.util.collection.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 public abstract class ItemModular extends ItemEv implements IDurability, IMass {
@@ -138,7 +137,7 @@ public abstract class ItemModular extends ItemEv implements IDurability, IMass {
         return this.getModularCap(stack).isHammer();
     }
 
-    public void makeTooltip(List<Either<FormattedText, TooltipComponent>> tooltip, ItemStack stack) {
+    public void makeTooltip(EitherList<FormattedText, TooltipComponent> tooltip, ItemStack stack) {
         IModular modularCap = this.getModularCap(stack);
         modularCap.appendPartTooltip(tooltip);
     }

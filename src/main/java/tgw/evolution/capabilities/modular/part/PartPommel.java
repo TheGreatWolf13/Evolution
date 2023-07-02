@@ -1,6 +1,5 @@
 package tgw.evolution.capabilities.modular.part;
 
-import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
@@ -13,8 +12,7 @@ import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.ItemPartPommel;
-
-import java.util.List;
+import tgw.evolution.util.collection.EitherList;
 
 public class PartPommel implements IPartHit<PartTypes.Pommel, ItemPartPommel, PartPommel> {
 
@@ -28,7 +26,7 @@ public class PartPommel implements IPartHit<PartTypes.Pommel, ItemPartPommel, Pa
     }
 
     @Override
-    public void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num) {
+    public void appendText(EitherList<FormattedText, TooltipComponent> tooltip, int num) {
         //TODO implementation
 
     }

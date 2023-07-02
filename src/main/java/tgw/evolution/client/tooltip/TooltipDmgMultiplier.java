@@ -1,9 +1,7 @@
 package tgw.evolution.client.tooltip;
 
-import com.mojang.datafixers.util.Either;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
@@ -13,23 +11,20 @@ public final class TooltipDmgMultiplier implements ITooltip {
     private static final TooltipDmgMultiplier BASIC = new TooltipDmgMultiplier();
     private static final TooltipDmgMultiplier CHARGE = new TooltipDmgMultiplier();
     private static final TooltipDmgMultiplier THROWN = new TooltipDmgMultiplier();
-    private static final Either<FormattedText, TooltipComponent> EITHER_BASIC = Either.right(BASIC);
-    private static final Either<FormattedText, TooltipComponent> EITHER_CHARGE = Either.right(CHARGE);
-    private static final Either<FormattedText, TooltipComponent> EITHER_THROWN = Either.right(THROWN);
     private double oldMult = Double.NaN;
     private Component text = EvolutionTexts.EMPTY;
 
     private TooltipDmgMultiplier() {
     }
 
-    public static Either<FormattedText, TooltipComponent> basic(double mult) {
+    public static TooltipComponent basic(double mult) {
         setup(BASIC, mult);
-        return EITHER_BASIC;
+        return BASIC;
     }
 
-    public static Either<FormattedText, TooltipComponent> charge(double mult) {
+    public static TooltipComponent charge(double mult) {
         setup(CHARGE, mult);
-        return EITHER_CHARGE;
+        return CHARGE;
     }
 
     private static void setup(TooltipDmgMultiplier t, double mult) {
@@ -49,9 +44,9 @@ public final class TooltipDmgMultiplier implements ITooltip {
         return EvolutionTooltipRenderer.DMG_MULT_THROWN.setTooltip(t);
     }
 
-    public static Either<FormattedText, TooltipComponent> thrown(double mult) {
+    public static TooltipComponent thrown(double mult) {
         setup(THROWN, mult);
-        return EITHER_THROWN;
+        return THROWN;
     }
 
     @Override

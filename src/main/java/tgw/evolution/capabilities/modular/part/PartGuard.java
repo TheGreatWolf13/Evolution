@@ -1,6 +1,5 @@
 package tgw.evolution.capabilities.modular.part;
 
-import com.mojang.datafixers.util.Either;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
@@ -11,8 +10,7 @@ import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.modular.part.ItemPartGuard;
-
-import java.util.List;
+import tgw.evolution.util.collection.EitherList;
 
 public class PartGuard implements IPart<PartTypes.Guard, ItemPartGuard, PartGuard> {
 
@@ -26,7 +24,7 @@ public class PartGuard implements IPart<PartTypes.Guard, ItemPartGuard, PartGuar
     }
 
     @Override
-    public void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num) {
+    public void appendText(EitherList<FormattedText, TooltipComponent> tooltip, int num) {
         //TODO implementation
 
     }

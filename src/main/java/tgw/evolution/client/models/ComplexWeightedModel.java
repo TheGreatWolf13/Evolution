@@ -12,16 +12,16 @@ import net.minecraftforge.client.model.data.IDynamicBakedModel;
 import net.minecraftforge.client.model.data.IModelData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import tgw.evolution.util.collection.WeightedRList;
+import tgw.evolution.util.collection.WeightedList;
 
 import java.util.List;
 import java.util.Random;
 
 public class ComplexWeightedModel implements IDynamicBakedModel {
 
-    private final WeightedRList<BakedModel> list;
+    private final WeightedList<BakedModel> list;
 
-    public ComplexWeightedModel(WeightedRList<BakedModel> list) {
+    public ComplexWeightedModel(WeightedList<BakedModel> list) {
         this.list = list;
     }
 
@@ -84,7 +84,7 @@ public class ComplexWeightedModel implements IDynamicBakedModel {
     }
 
     public static class Builder {
-        private final WeightedRList<BakedModel> list = new WeightedRList<>();
+        private final WeightedList<BakedModel> list = new WeightedList<>();
 
         public Builder add(@Nullable BakedModel model, int weight) {
             if (model != null && weight >= 1) {

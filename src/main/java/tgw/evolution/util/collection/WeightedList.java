@@ -7,12 +7,12 @@ import org.jetbrains.annotations.Contract;
 
 import java.util.random.RandomGenerator;
 
-public class WeightedRList<K> implements ICollectionExtension {
+public class WeightedList<K> implements ICollectionExtension {
 
     /**
      * The backing array of elements.
      */
-    protected transient K[] a;
+    protected K[] a;
     /**
      * The current actual size of the list (never greater than the backing-array
      * length).
@@ -25,9 +25,9 @@ public class WeightedRList<K> implements ICollectionExtension {
     /**
      * The backing array of weights.
      */
-    protected transient int[] w;
+    protected int[] w;
 
-    public WeightedRList() {
+    public WeightedList() {
         this.a = (K[]) ObjectArrays.EMPTY_ARRAY;
         this.w = IntArrays.EMPTY_ARRAY;
     }

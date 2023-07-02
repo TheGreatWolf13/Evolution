@@ -1,7 +1,6 @@
 package tgw.evolution.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.datafixers.util.Either;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import net.minecraft.client.gui.Font;
@@ -26,6 +25,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.events.ClientEvents;
+import tgw.evolution.util.collection.EitherList;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
 
@@ -36,12 +36,9 @@ import java.util.Optional;
 public abstract class ForgeHooksClientMixin {
 
     private static final ThreadLocal<PoseStack> STACK = ThreadLocal.withInitial(PoseStack::new);
-    @Shadow
-    @Final
-    private static Matrix4f flipX;
-    @Shadow
-    @Final
-    private static Matrix3f flipXNormal;
+    private static final EitherList<FormattedText, TooltipComponent> EITHER_LIST = new EitherList<>();
+    @Shadow @Final private static Matrix4f flipX;
+    @Shadow @Final private static Matrix3f flipXNormal;
 
     /**
      * @author TheGreatWolf
@@ -57,20 +54,19 @@ public abstract class ForgeHooksClientMixin {
                                                                        @Nullable Font forcedFont,
                                                                        Font fallbackFont) {
         Font font = getTooltipFont(forcedFont, stack, fallbackFont);
-        OList<Either<FormattedText, TooltipComponent>> elements = new OArrayList<>(textElements.size());
+        EitherList<FormattedText, TooltipComponent> elements = EITHER_LIST;
         for (int i = 0, len = textElements.size(); i < len; i++) {
-            //noinspection ObjectAllocationInLoop
-            elements.add(Either.left(textElements.get(i)));
+            elements.addLeft(textElements.get(i));
         }
         if (itemComponent.isPresent()) {
-            elements.add(1, Either.right(itemComponent.get()));
+            elements.addRight(1, itemComponent.get());
         }
         ClientEvents.getInstance().renderTooltip(stack, elements);
         // text wrapping
         int tooltipTextWidth = 0;
         for (int i = 0, len = elements.size(); i < len; i++) {
-            Optional<FormattedText> left = elements.get(i).left();
-            int w = left.isPresent() ? font.width(left.get()) : 0;
+            FormattedText left = elements.getLeftOrNull(i);
+            int w = left != null ? font.width(left) : 0;
             if (w > tooltipTextWidth) {
                 tooltipTextWidth = w;
             }
@@ -92,34 +88,32 @@ public abstract class ForgeHooksClientMixin {
         OList<ClientTooltipComponent> list = new OArrayList<>();
         if (needsWrap) {
             for (int i = 0, len = elements.size(); i < len; i++) {
-                Either<FormattedText, TooltipComponent> either = elements.get(i);
-                Optional<FormattedText> left = either.left();
-                if (left.isPresent()) {
-                    List<FormattedCharSequence> split = font.split(left.get(), tooltipTextWidth);
+                if (elements.isLeft(i)) {
+                    List<FormattedCharSequence> split = font.split(elements.getLeft(i), tooltipTextWidth);
                     for (int j = 0, len1 = split.size(); j < len1; j++) {
                         //noinspection ObjectAllocationInLoop
                         list.add(ClientTooltipComponent.create(split.get(j)));
                     }
                 }
                 else {
-                    list.add(ClientTooltipComponent.create(either.right().get()));
+                    list.add(ClientTooltipComponent.create(elements.getRight(i)));
                 }
             }
+            elements.clear();
             return list;
         }
         for (int i = 0, len = elements.size(); i < len; i++) {
-            Either<FormattedText, TooltipComponent> either = elements.get(i);
-            Optional<FormattedText> left = either.left();
-            if (left.isPresent()) {
-                FormattedText text = left.get();
+            if (elements.isLeft(i)) {
+                FormattedText text = elements.getLeft(i);
                 //noinspection ObjectAllocationInLoop
                 list.add(ClientTooltipComponent.create(
                         text instanceof Component comp ? comp.getVisualOrderText() : Language.getInstance().getVisualOrder(text)));
             }
             else {
-                list.add(ClientTooltipComponent.create(either.right().get()));
+                list.add(ClientTooltipComponent.create(elements.getRight(i)));
             }
         }
+        elements.clear();
         return list;
     }
 

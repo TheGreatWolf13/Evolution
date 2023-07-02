@@ -1,6 +1,5 @@
 package tgw.evolution.capabilities.modular.part;
 
-import com.mojang.datafixers.util.Either;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.Mth;
@@ -12,8 +11,7 @@ import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.client.tooltip.TooltipDurability;
 import tgw.evolution.client.tooltip.TooltipMass;
 import tgw.evolution.items.modular.part.ItemPart;
-
-import java.util.List;
+import tgw.evolution.util.collection.EitherList;
 
 public abstract class PartGrab<T extends IGrabType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>> implements IPart<T, I, P> {
 
@@ -27,11 +25,11 @@ public abstract class PartGrab<T extends IGrabType<T, I, P>, I extends ItemPart<
     }
 
     @Override
-    public void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num) {
-        tooltip.add(Either.left(this.type.getComponent()));
+    public void appendText(EitherList<FormattedText, TooltipComponent> tooltip, int num) {
+        tooltip.addLeft(this.type.getComponent());
         this.material.appendText(tooltip);
-        tooltip.add(TooltipMass.part(num, this.getMass()));
-        tooltip.add(TooltipDurability.part(num, this.displayDurability(ItemStack.EMPTY)));
+        tooltip.addRight(TooltipMass.part(num, this.getMass()));
+        tooltip.addRight(TooltipDurability.part(num, this.displayDurability(ItemStack.EMPTY)));
     }
 
     @Override

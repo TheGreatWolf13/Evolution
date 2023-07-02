@@ -1,6 +1,5 @@
 package tgw.evolution.capabilities.modular;
 
-import com.mojang.datafixers.util.Either;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
@@ -8,9 +7,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.util.collection.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
-
-import java.util.List;
 
 public class MaterialInstance {
 
@@ -28,8 +26,8 @@ public class MaterialInstance {
         return new MaterialInstance(material);
     }
 
-    public void appendText(List<Either<FormattedText, TooltipComponent>> tooltip) {
-        tooltip.add(Either.left(EvolutionTexts.material(this.material)));
+    public void appendText(EitherList<FormattedText, TooltipComponent> tooltip) {
+        tooltip.addLeft(EvolutionTexts.material(this.material));
     }
 
     public double getDensity() {
@@ -44,8 +42,7 @@ public class MaterialInstance {
         return this.material.getHardness();
     }
 
-    @HarvestLevel
-    public int getHarvestLevel() {
+    public @HarvestLevel int getHarvestLevel() {
         return this.material.getHarvestLevel();
     }
 

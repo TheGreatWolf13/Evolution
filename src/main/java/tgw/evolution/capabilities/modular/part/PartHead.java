@@ -1,6 +1,5 @@
 package tgw.evolution.capabilities.modular.part;
 
-import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
@@ -17,8 +16,7 @@ import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.init.EvolutionTexts;
 import tgw.evolution.items.modular.part.ItemPartHead;
-
-import java.util.List;
+import tgw.evolution.util.collection.EitherList;
 
 public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead> {
 
@@ -34,14 +32,14 @@ public class PartHead implements IPartHit<PartTypes.Head, ItemPartHead, PartHead
     }
 
     @Override
-    public void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num) {
-        tooltip.add(Either.left(this.type.getComponent()));
+    public void appendText(EitherList<FormattedText, TooltipComponent> tooltip, int num) {
+        tooltip.addLeft(this.type.getComponent());
         this.material.appendText(tooltip);
         if (this.canBeSharpened()) {
-            tooltip.add(Either.left(EvolutionTexts.sharp(this.sharpAmount, this.material.getHardness())));
+            tooltip.addLeft(EvolutionTexts.sharp(this.sharpAmount, this.material.getHardness()));
         }
-        tooltip.add(TooltipMass.part(num, this.getMass()));
-        tooltip.add(TooltipDurability.part(num, this.displayDurability(ItemStack.EMPTY)));
+        tooltip.addRight(TooltipMass.part(num, this.getMass()));
+        tooltip.addRight(TooltipDurability.part(num, this.displayDurability(ItemStack.EMPTY)));
     }
 
     @Override

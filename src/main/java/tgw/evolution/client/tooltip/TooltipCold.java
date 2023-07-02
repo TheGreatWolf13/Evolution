@@ -1,8 +1,6 @@
 package tgw.evolution.client.tooltip;
 
-import com.mojang.datafixers.util.Either;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.init.EvolutionFormatter;
@@ -12,7 +10,6 @@ import tgw.evolution.init.EvolutionTexts;
 public final class TooltipCold implements ITooltip {
 
     private static final TooltipCold INSTANCE = new TooltipCold();
-    private static final Either<FormattedText, TooltipComponent> EITHER = Either.right(INSTANCE);
     private double oldCold = Double.NaN;
     private EvolutionFormatter.Temperature oldFormatter;
     private Component text = EvolutionTexts.EMPTY;
@@ -20,13 +17,13 @@ public final class TooltipCold implements ITooltip {
     private TooltipCold() {
     }
 
-    public static Either<FormattedText, TooltipComponent> cold(double cold) {
+    public static TooltipComponent cold(double cold) {
         if (INSTANCE.oldCold != cold || INSTANCE.oldFormatter != EvolutionConfig.CLIENT.bodyTemperature.get()) {
             INSTANCE.oldCold = cold;
             INSTANCE.oldFormatter = EvolutionConfig.CLIENT.bodyTemperature.get();
             INSTANCE.text = EvolutionTexts.coldResistance(cold);
         }
-        return EITHER;
+        return INSTANCE;
     }
 
     @Override

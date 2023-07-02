@@ -1,6 +1,5 @@
 package tgw.evolution.capabilities.modular;
 
-import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
@@ -13,9 +12,8 @@ import tgw.evolution.capabilities.modular.part.PartTypes;
 import tgw.evolution.init.EvolutionCapabilities;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.items.modular.ItemModular;
+import tgw.evolution.util.collection.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
-
-import java.util.List;
 
 public interface IModularTool extends IModular {
 
@@ -56,7 +54,7 @@ public interface IModularTool extends IModular {
         }
 
         @Override
-        public void appendPartTooltip(List<Either<FormattedText, TooltipComponent>> tooltip) {
+        public void appendPartTooltip(EitherList<FormattedText, TooltipComponent> tooltip) {
         }
 
         @Override

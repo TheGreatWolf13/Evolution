@@ -2,7 +2,6 @@ package tgw.evolution.events;
 
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
@@ -1085,7 +1084,7 @@ public class ClientEvents {
         }
     }
 
-    public void renderTooltip(ItemStack stack, List<Either<FormattedText, TooltipComponent>> tooltip) {
+    public void renderTooltip(ItemStack stack, EitherList<FormattedText, TooltipComponent> tooltip) {
         Item item = stack.getItem();
         if (!(item instanceof IEvolutionItem)) {
             return;

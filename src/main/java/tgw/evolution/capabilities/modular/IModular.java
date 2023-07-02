@@ -1,6 +1,5 @@
 package tgw.evolution.capabilities.modular;
 
-import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
@@ -8,15 +7,14 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.level.material.Material;
 import net.minecraftforge.common.util.INBTSerializable;
 import tgw.evolution.items.modular.ItemModular;
+import tgw.evolution.util.collection.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
-
-import java.util.List;
 
 public interface IModular extends INBTSerializable<CompoundTag> {
 
     IModular NULL = new Impl();
 
-    void appendPartTooltip(List<Either<FormattedText, TooltipComponent>> tooltip);
+    void appendPartTooltip(EitherList<FormattedText, TooltipComponent> tooltip);
 
     void damage(ItemModular.DamageCause cause, @HarvestLevel int harvestLevel);
 
@@ -55,7 +53,7 @@ public interface IModular extends INBTSerializable<CompoundTag> {
         }
 
         @Override
-        public void appendPartTooltip(List<Either<FormattedText, TooltipComponent>> tooltip) {
+        public void appendPartTooltip(EitherList<FormattedText, TooltipComponent> tooltip) {
         }
 
         @Override

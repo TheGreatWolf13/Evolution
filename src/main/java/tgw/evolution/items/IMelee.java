@@ -1,6 +1,5 @@
 package tgw.evolution.items;
 
-import com.mojang.datafixers.util.Either;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.sounds.SoundEvent;
@@ -14,10 +13,9 @@ import org.jetbrains.annotations.Nullable;
 import tgw.evolution.client.tooltip.*;
 import tgw.evolution.init.EvolutionDamage;
 import tgw.evolution.init.EvolutionTexts;
+import tgw.evolution.util.collection.EitherList;
 import tgw.evolution.util.hitbox.ColliderHitbox;
 import tgw.evolution.util.hitbox.HitboxType;
-
-import java.util.List;
 
 public interface IMelee {
 
@@ -94,38 +92,38 @@ public interface IMelee {
 
     boolean isHoldable(ItemStack stack);
 
-    default void makeTooltip(Player player, List<Either<FormattedText, TooltipComponent>> tooltip, ItemStack stack) {
-        tooltip.add(EvolutionTexts.basicAttack());
+    default void makeTooltip(Player player, EitherList<FormattedText, TooltipComponent> tooltip, ItemStack stack) {
+        tooltip.addLeft(EvolutionTexts.basicAttack());
         IMelee.BasicAttackType basicAttack = this.getBasicAttackType(stack);
         int followUps = basicAttack.getFollowUps();
         if (followUps > 0) {
-            tooltip.add(TooltipFollowUp.followUp(followUps));
+            tooltip.addRight(TooltipFollowUp.followUp(followUps));
         }
         double mult = basicAttack.getDmgMultiplier(this, stack);
-        tooltip.add(TooltipDmgMultiplier.basic(mult));
+        tooltip.addRight(TooltipDmgMultiplier.basic(mult));
         double dmg = player.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        tooltip.add(TooltipDamage.basic(basicAttack.getDamageType(), mult * dmg));
+        tooltip.addRight(TooltipDamage.basic(basicAttack.getDamageType(), mult * dmg));
         int cooldown = this.getCooldown(stack);
-        tooltip.add(TooltipCooldown.cooldown(cooldown));
+        tooltip.addRight(TooltipCooldown.cooldown(cooldown));
         IMelee.ChargeAttackType chargeAttack = this.getChargeAttackType(stack);
         if (chargeAttack != null) {
-            tooltip.add(EvolutionTexts.EITHER_EMPTY);
-            tooltip.add(EvolutionTexts.chargeAttack());
+            tooltip.addLeft(EvolutionTexts.EMPTY);
+            tooltip.addLeft(EvolutionTexts.chargeAttack());
             mult = chargeAttack.getDmgMultiplier(this, stack);
-            tooltip.add(TooltipDmgMultiplier.charge(mult));
-            tooltip.add(TooltipDamage.charge(chargeAttack.getDamageType(), mult * dmg));
-            tooltip.add(TooltipCooldown.cooldown(cooldown));
+            tooltip.addRight(TooltipDmgMultiplier.charge(mult));
+            tooltip.addRight(TooltipDamage.charge(chargeAttack.getDamageType(), mult * dmg));
+            tooltip.addRight(TooltipCooldown.cooldown(cooldown));
         }
         if (stack.getItem() instanceof IThrowable throwable && throwable.isThrowable(stack, player)) {
-            tooltip.add(EvolutionTexts.EITHER_EMPTY);
-            tooltip.add(EvolutionTexts.throwAttack());
-            tooltip.add(TooltipThrowSpeed.throwSpeed(throwable.projectileSpeed()));
-            tooltip.add(TooltipPrecision.precision(throwable.precision()));
-            tooltip.add(TooltipDmgMultiplier.thrown(mult));
+            tooltip.addLeft(EvolutionTexts.EMPTY);
+            tooltip.addLeft(EvolutionTexts.throwAttack());
+            tooltip.addRight(TooltipThrowSpeed.throwSpeed(throwable.projectileSpeed()));
+            tooltip.addRight(TooltipPrecision.precision(throwable.precision()));
+            tooltip.addRight(TooltipDmgMultiplier.thrown(mult));
             EvolutionDamage.Type type = throwable.projectileDamageType();
-            tooltip.add(TooltipDamage.thrown(type, dmg * this.getDmgMultiplier(stack, type)));
+            tooltip.addRight(TooltipDamage.thrown(type, dmg * this.getDmgMultiplier(stack, type)));
             if (throwable.isDamageProportionalToMomentum()) {
-                tooltip.add(TooltipInfo.info(EvolutionTexts.TOOLTIP_DAMAGE_PROPORTIONAL));
+                tooltip.addRight(TooltipInfo.info(EvolutionTexts.TOOLTIP_DAMAGE_PROPORTIONAL));
             }
         }
     }

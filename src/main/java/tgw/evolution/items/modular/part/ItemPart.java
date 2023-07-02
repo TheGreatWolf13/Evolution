@@ -2,7 +2,6 @@ package tgw.evolution.items.modular.part;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import com.mojang.datafixers.util.Either;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
@@ -26,8 +25,7 @@ import tgw.evolution.inventory.SlotType;
 import tgw.evolution.items.IDurability;
 import tgw.evolution.items.IMass;
 import tgw.evolution.items.ItemEv;
-
-import java.util.List;
+import tgw.evolution.util.collection.EitherList;
 
 public abstract class ItemPart<T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>> extends ItemEv
         implements IDurability, IMass {
@@ -121,7 +119,7 @@ public abstract class ItemPart<T extends IPartType<T, I, P>, I extends ItemPart<
 
     protected abstract T[] iterable();
 
-    public final void makeTooltip(List<Either<FormattedText, TooltipComponent>> tooltip, ItemStack stack, int num) {
+    public final void makeTooltip(EitherList<FormattedText, TooltipComponent> tooltip, ItemStack stack, int num) {
         P partCap = this.getPartCap(stack);
         partCap.appendText(tooltip, num);
     }

@@ -1,8 +1,6 @@
 package tgw.evolution.client.tooltip;
 
-import com.mojang.datafixers.util.Either;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.init.EvolutionFormatter;
@@ -12,7 +10,6 @@ import tgw.evolution.init.EvolutionTexts;
 public final class TooltipFood implements ITooltip {
 
     private static final TooltipFood INSTANCE = new TooltipFood();
-    private static final Either<FormattedText, TooltipComponent> EITHER = Either.right(INSTANCE);
     private EvolutionFormatter.Food oldFormatter;
     private int oldHunger = Integer.MIN_VALUE;
     private Component text = EvolutionTexts.EMPTY;
@@ -20,13 +17,13 @@ public final class TooltipFood implements ITooltip {
     private TooltipFood() {
     }
 
-    public static Either<FormattedText, TooltipComponent> hunger(int hunger) {
+    public static TooltipComponent hunger(int hunger) {
         if (hunger != INSTANCE.oldHunger || INSTANCE.oldFormatter != EvolutionConfig.CLIENT.food.get()) {
             INSTANCE.oldHunger = hunger;
             INSTANCE.oldFormatter = EvolutionConfig.CLIENT.food.get();
             INSTANCE.text = EvolutionTexts.food(hunger);
         }
-        return EITHER;
+        return INSTANCE;
     }
 
     @Override

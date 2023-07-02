@@ -1,6 +1,5 @@
 package tgw.evolution.capabilities.modular.part;
 
-import com.mojang.datafixers.util.Either;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
@@ -10,14 +9,13 @@ import tgw.evolution.capabilities.modular.MaterialInstance;
 import tgw.evolution.init.EvolutionMaterials;
 import tgw.evolution.items.IDurability;
 import tgw.evolution.items.modular.part.ItemPart;
+import tgw.evolution.util.collection.EitherList;
 import tgw.evolution.util.constants.HarvestLevel;
-
-import java.util.List;
 
 public interface IPart<T extends IPartType<T, I, P>, I extends ItemPart<T, I, P>, P extends IPart<T, I, P>>
         extends IDurability, INBTSerializable<CompoundTag> {
 
-    void appendText(List<Either<FormattedText, TooltipComponent>> tooltip, int num);
+    void appendText(EitherList<FormattedText, TooltipComponent> tooltip, int num);
 
     void damage(int amount);
 

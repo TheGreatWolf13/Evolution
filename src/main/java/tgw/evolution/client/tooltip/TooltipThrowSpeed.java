@@ -1,8 +1,6 @@
 package tgw.evolution.client.tooltip;
 
-import com.mojang.datafixers.util.Either;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.init.EvolutionFormatter;
@@ -12,7 +10,6 @@ import tgw.evolution.init.EvolutionTexts;
 public final class TooltipThrowSpeed implements ITooltip {
 
     private static final TooltipThrowSpeed INSTANCE = new TooltipThrowSpeed();
-    private static final Either<FormattedText, TooltipComponent> EITHER = Either.right(INSTANCE);
     private EvolutionFormatter.Speed oldFormatter;
     private double oldSpeed = Double.NaN;
     private Component text = EvolutionTexts.EMPTY;
@@ -20,13 +17,13 @@ public final class TooltipThrowSpeed implements ITooltip {
     private TooltipThrowSpeed() {
     }
 
-    public static Either<FormattedText, TooltipComponent> throwSpeed(double speed) {
+    public static TooltipComponent throwSpeed(double speed) {
         if (INSTANCE.oldSpeed != speed || INSTANCE.oldFormatter != EvolutionConfig.CLIENT.speed.get()) {
             INSTANCE.oldSpeed = speed;
             INSTANCE.oldFormatter = EvolutionConfig.CLIENT.speed.get();
             INSTANCE.text = EvolutionTexts.throwSpeed(speed);
         }
-        return EITHER;
+        return INSTANCE;
     }
 
     @Override

@@ -1,12 +1,10 @@
 package tgw.evolution.init;
 
-import com.mojang.datafixers.util.Either;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.*;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 import tgw.evolution.blocks.fluids.FluidGeneric;
 import tgw.evolution.items.IFireAspect;
@@ -100,8 +98,6 @@ public final class EvolutionTexts {
     public static final Component TOOLTIP_TWO_HANDED = transl("evolution.tooltip.twoHanded").setStyle(GOLD);
     public static final Component TOOLTIP_UNBREAKABLE = transl("evolution.tooltip.unbreakable").setStyle(BLUE);
     public static final Component TOOLTIP_VERY_EFFICIENT = transl("evolution.tooltip.veryEfficient").setStyle(BLUE);
-    //Either
-    public static final Either<FormattedText, TooltipComponent> EITHER_EMPTY = Either.left(EMPTY);
 
     private EvolutionTexts() {
     }
@@ -110,20 +106,18 @@ public final class EvolutionTexts {
         return new TextComponent(" \u25ba ").withStyle(category == BENEFICIAL ? DARK_GREEN : category == HARMFUL ? RED : DARK_YELLOW);
     }
 
-    public static Either<FormattedText, TooltipComponent> basicAttack() {
-        return Either.left(
-                new TranslatableComponent("evolution.tooltip.basicAttack",
-                                          Minecraft.getInstance().options.keyAttack.getTranslatedKeyMessage()));
+    public static FormattedText basicAttack() {
+        return new TranslatableComponent("evolution.tooltip.basicAttack",
+                                         Minecraft.getInstance().options.keyAttack.getTranslatedKeyMessage());
     }
 
     public static Component capacity(IItemFluidContainer container) {
         return new TranslatableComponent("evolution.tooltip.containerCapacity", VOLUME.format(container.getMaxAmount() / 100.0f)).setStyle(BLUE);
     }
 
-    public static Either<FormattedText, TooltipComponent> chargeAttack() {
-        return Either.left(
-                new TranslatableComponent("evolution.tooltip.chargeAttack",
-                                          Minecraft.getInstance().options.keyAttack.getTranslatedKeyMessage()));
+    public static FormattedText chargeAttack() {
+        return new TranslatableComponent("evolution.tooltip.chargeAttack",
+                                         Minecraft.getInstance().options.keyAttack.getTranslatedKeyMessage());
     }
 
     public static Component coldResistance(double amount) {
@@ -331,10 +325,9 @@ public final class EvolutionTexts {
         return new TextComponent("   ").append(new TranslatableComponent("evolution.tooltip.sharp", sharpAmount, hardness)).setStyle(DARK_AQUA);
     }
 
-    public static Either<FormattedText, TooltipComponent> throwAttack() {
-        return Either.left(
-                new TranslatableComponent("evolution.tooltip.throwAttack",
-                                          Minecraft.getInstance().options.keyUse.getTranslatedKeyMessage()));
+    public static FormattedText throwAttack() {
+        return new TranslatableComponent("evolution.tooltip.throwAttack",
+                                         Minecraft.getInstance().options.keyUse.getTranslatedKeyMessage());
     }
 
     public static Component throwSpeed(double speed) {

@@ -1,9 +1,7 @@
 package tgw.evolution.client.tooltip;
 
-import com.mojang.datafixers.util.Either;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
@@ -11,17 +9,13 @@ import tgw.evolution.init.EvolutionTexts;
 public final class TooltipDurability implements ITooltip {
 
     private static final TooltipDurability MAIN = new TooltipDurability(false);
-    private static final Either<FormattedText, TooltipComponent> EITHER_MAIN = Either.right(MAIN);
     private static final TooltipDurability[] PARTS = new TooltipDurability[4];
-    private static final Either<FormattedText, TooltipComponent>[] EITHER_PARTS = new Either[PARTS.length];
 
     static {
         for (int i = 0; i < PARTS.length; i++) {
             //noinspection ObjectAllocationInLoop
             TooltipDurability t = new TooltipDurability(true);
             PARTS[i] = t;
-            //noinspection ObjectAllocationInLoop
-            EITHER_PARTS[i] = Either.right(t);
         }
     }
 
@@ -33,14 +27,14 @@ public final class TooltipDurability implements ITooltip {
         this.isPart = isPart;
     }
 
-    public static Either<FormattedText, TooltipComponent> durability(String durability) {
+    public static TooltipComponent durability(String durability) {
         set(MAIN, durability);
-        return EITHER_MAIN;
+        return MAIN;
     }
 
-    public static Either<FormattedText, TooltipComponent> part(int index, String durability) {
+    public static TooltipComponent part(int index, String durability) {
         set(PARTS[index], durability);
-        return EITHER_PARTS[index];
+        return PARTS[index];
     }
 
     private static void set(TooltipDurability t, String durability) {

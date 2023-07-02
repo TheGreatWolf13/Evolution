@@ -1,9 +1,7 @@
 package tgw.evolution.client.tooltip;
 
-import com.mojang.datafixers.util.Either;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import tgw.evolution.config.EvolutionConfig;
 import tgw.evolution.init.EvolutionFormatter;
@@ -14,16 +12,12 @@ public final class TooltipMass implements ITooltip {
 
     private static final TooltipMass[] PARTS = new TooltipMass[4];
     private static final TooltipMass MAIN = new TooltipMass(false);
-    private static final Either<FormattedText, TooltipComponent> EITHER_MAIN = Either.right(MAIN);
-    private static final Either<FormattedText, TooltipComponent>[] EITHER_PARTS = new Either[PARTS.length];
 
     static {
         for (int i = 0; i < PARTS.length; i++) {
             //noinspection ObjectAllocationInLoop
             TooltipMass t = new TooltipMass(true);
             PARTS[i] = t;
-            //noinspection ObjectAllocationInLoop
-            EITHER_PARTS[i] = Either.right(t);
         }
     }
 
@@ -36,14 +30,14 @@ public final class TooltipMass implements ITooltip {
         this.isPart = isPart;
     }
 
-    public static Either<FormattedText, TooltipComponent> mass(double mass) {
+    public static TooltipComponent mass(double mass) {
         set(MAIN, mass);
-        return EITHER_MAIN;
+        return MAIN;
     }
 
-    public static Either<FormattedText, TooltipComponent> part(int index, double mass) {
+    public static TooltipComponent part(int index, double mass) {
         set(PARTS[index], mass);
-        return EITHER_PARTS[index];
+        return PARTS[index];
     }
 
     private static void set(TooltipMass t, double mass) {
