@@ -1,8 +1,6 @@
 package tgw.evolution.client.tooltip;
 
-import com.mojang.datafixers.util.Either;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import tgw.evolution.init.EvolutionResources;
 import tgw.evolution.init.EvolutionTexts;
@@ -10,19 +8,18 @@ import tgw.evolution.init.EvolutionTexts;
 public final class TooltipMining implements ITooltip {
 
     private static final TooltipMining INSTANCE = new TooltipMining();
-    private static final Either<FormattedText, TooltipComponent> EITHER = Either.right(INSTANCE);
     private double oldMining = Double.NaN;
     private Component text = EvolutionTexts.EMPTY;
 
     private TooltipMining() {
     }
 
-    public static Either<FormattedText, TooltipComponent> mining(double mining) {
+    public static TooltipComponent mining(double mining) {
         if (INSTANCE.oldMining != mining) {
             INSTANCE.oldMining = mining;
             INSTANCE.text = EvolutionTexts.mining(mining);
         }
-        return EITHER;
+        return INSTANCE;
     }
 
     @Override
