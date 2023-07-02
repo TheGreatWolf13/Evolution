@@ -15,6 +15,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.AmbientParticleSettings;
 import net.minecraft.world.level.block.Block;
@@ -27,6 +28,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import tgw.evolution.events.ClientEvents;
+import tgw.evolution.patches.ILevelReaderPatch;
 import tgw.evolution.patches.IMinecraftPatch;
 
 import javax.annotation.Nullable;
@@ -35,7 +37,7 @@ import java.util.Random;
 import java.util.function.Supplier;
 
 @Mixin(ClientLevel.class)
-public abstract class ClientLevelMixin extends Level {
+public abstract class ClientLevelMixin extends Level implements ILevelReaderPatch {
 
     @Shadow @Final private Minecraft minecraft;
 
@@ -112,6 +114,35 @@ public abstract class ClientLevelMixin extends Level {
                 .lvlRenderer()
                 .listener()
                 .addParticle(particleData, particleData.getType().getOverrideLimiter() || force, false, x, y, z, velX, velY, velZ);
+    }
+
+    /**
+     * @author TheGreatWolf
+     * @reason Avoid allocations
+     */
+    @Overwrite
+    public int calculateBlockTint(BlockPos pos, ColorResolver colorResolver) {
+        int blend = Minecraft.getInstance().options.biomeBlendRadius;
+        if (blend == 0) {
+            return colorResolver.getColor(this.getBiome(pos).value(), pos.getX(), pos.getZ());
+        }
+        int r = 0;
+        int g = 0;
+        int b = 0;
+        int total = 0;
+        int x1 = pos.getX() + blend;
+        int y = pos.getY();
+        int z1 = pos.getZ() + blend;
+        for (int x = pos.getX() - blend; x <= x1; ++x) {
+            for (int z = pos.getZ() - blend; z <= z1; ++z) {
+                ++total;
+                int color = colorResolver.getColor(this.getBiome(x, y, z).value(), x, z);
+                r += color >> 16 & 0xff;
+                g += color >> 8 & 0xff;
+                b += color & 0xff;
+            }
+        }
+        return (r / total & 255) << 16 | (g / total & 255) << 8 | b / total & 255;
     }
 
     /**

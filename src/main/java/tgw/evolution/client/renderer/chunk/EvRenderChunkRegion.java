@@ -16,28 +16,28 @@ import javax.annotation.Nullable;
 public class EvRenderChunkRegion implements BlockAndTintGetter {
     protected final EvRenderChunk[][] chunks;
     protected final Level level;
-    private final int centerX;
-    private final int centerZ;
+    private final int startX;
+    private final int startZ;
 
-    EvRenderChunkRegion(Level level, int centerX, int centerZ, EvRenderChunk[][] chunks) {
+    EvRenderChunkRegion(Level level, int startX, int startZ, EvRenderChunk[][] chunks) {
         this.level = level;
-        this.centerX = centerX;
-        this.centerZ = centerZ;
+        this.startX = startX;
+        this.startZ = startZ;
         this.chunks = chunks;
     }
 
     @Override
     @Nullable
     public BlockEntity getBlockEntity(BlockPos pos) {
-        int i = SectionPos.blockToSectionCoord(pos.getX()) - this.centerX;
-        int j = SectionPos.blockToSectionCoord(pos.getZ()) - this.centerZ;
+        int i = SectionPos.blockToSectionCoord(pos.getX()) - this.startX;
+        int j = SectionPos.blockToSectionCoord(pos.getZ()) - this.startZ;
         return this.chunks[i][j].getBlockEntity(pos);
     }
 
     @Override
     public BlockState getBlockState(BlockPos pos) {
-        int i = SectionPos.blockToSectionCoord(pos.getX()) - this.centerX;
-        int j = SectionPos.blockToSectionCoord(pos.getZ()) - this.centerZ;
+        int i = SectionPos.blockToSectionCoord(pos.getX()) - this.startX;
+        int j = SectionPos.blockToSectionCoord(pos.getZ()) - this.startZ;
         return this.chunks[i][j].getBlockState(pos);
     }
 
@@ -48,8 +48,8 @@ public class EvRenderChunkRegion implements BlockAndTintGetter {
 
     @Override
     public FluidState getFluidState(BlockPos pos) {
-        int i = SectionPos.blockToSectionCoord(pos.getX()) - this.centerX;
-        int j = SectionPos.blockToSectionCoord(pos.getZ()) - this.centerZ;
+        int i = SectionPos.blockToSectionCoord(pos.getX()) - this.startX;
+        int j = SectionPos.blockToSectionCoord(pos.getZ()) - this.startZ;
         return this.chunks[i][j].getBlockState(pos).getFluidState();
     }
 
@@ -74,8 +74,8 @@ public class EvRenderChunkRegion implements BlockAndTintGetter {
     }
 
     public boolean isSectionEmpty(int posX, int posY, int posZ) {
-        int i = SectionPos.blockToSectionCoord(posX) - this.centerX;
-        int j = SectionPos.blockToSectionCoord(posZ) - this.centerZ;
+        int i = SectionPos.blockToSectionCoord(posX) - this.startX;
+        int j = SectionPos.blockToSectionCoord(posZ) - this.startZ;
         return this.chunks[i][j].isSectionEmpty(posY);
     }
 }

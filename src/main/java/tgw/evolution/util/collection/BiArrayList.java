@@ -2,6 +2,7 @@ package tgw.evolution.util.collection;
 
 import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.objects.ObjectArrays;
+import org.jetbrains.annotations.Contract;
 
 import java.util.random.RandomGenerator;
 
@@ -34,6 +35,7 @@ public class BiArrayList<L, R> {
         this.b = (R[]) ObjectArrays.DEFAULT_EMPTY_ARRAY; // We delay allocation
     }
 
+    @Contract(mutates = "this")
     public void add(final L l, final R r) {
         this.grow(this.size + 1);
         this.a[this.size] = l;
@@ -42,12 +44,14 @@ public class BiArrayList<L, R> {
         assert this.size <= this.b.length;
     }
 
+    @Contract(mutates = "this")
     public void clear() {
         java.util.Arrays.fill(this.a, 0, this.size, null);
         java.util.Arrays.fill(this.b, 0, this.size, null);
         this.size = 0;
     }
 
+    @Contract(pure = true)
     public L getLeft(final int index) {
         if (index >= this.size) {
             throw new IndexOutOfBoundsException("Index (" + index + ") is greater than or equal to list size (" + this.size + ")");
@@ -55,6 +59,7 @@ public class BiArrayList<L, R> {
         return this.a[index];
     }
 
+    @Contract(pure = true)
     public R getRight(final int index) {
         if (index >= this.size) {
             throw new IndexOutOfBoundsException("Index (" + index + ") is greater than or equal to list size (" + this.size + ")");
@@ -69,6 +74,7 @@ public class BiArrayList<L, R> {
      *
      * @param capacity the new minimum capacity for this array list.
      */
+    @Contract(pure = true)
     private void grow(int capacity) {
         if (capacity <= this.a.length) {
             return;
@@ -90,6 +96,7 @@ public class BiArrayList<L, R> {
         assert this.size <= this.b.length;
     }
 
+    @Contract(mutates = "this")
     public void set(final int index, final L l, final R r) {
         if (index >= this.size) {
             throw new IndexOutOfBoundsException("Index (" + index + ") is greater than or equal to list size (" + this.size + ")");
@@ -98,6 +105,7 @@ public class BiArrayList<L, R> {
         this.b[index] = r;
     }
 
+    @Contract(mutates = "this")
     public L setLeft(final int index, final L l) {
         if (index >= this.size) {
             throw new IndexOutOfBoundsException("Index (" + index + ") is greater than or equal to list size (" + this.size + ")");
@@ -107,6 +115,7 @@ public class BiArrayList<L, R> {
         return old;
     }
 
+    @Contract(mutates = "this")
     public R setRight(final int index, final R r) {
         if (index >= this.size) {
             throw new IndexOutOfBoundsException("Index (" + index + ") is greater than or equal to list size (" + this.size + ")");
@@ -116,16 +125,19 @@ public class BiArrayList<L, R> {
         return old;
     }
 
+    @Contract(mutates = "this")
     public void shuffle(RandomGenerator rnd) {
         for (int i = this.size; i > 1; i--) {
             this.swap(i - 1, rnd.nextInt(i));
         }
     }
 
+    @Contract(pure = true)
     public int size() {
         return this.size;
     }
 
+    @Contract(mutates = "this")
     private void swap(int i, int j) {
         L tempL = this.getLeft(i);
         R tempR = this.getRight(i);

@@ -70,6 +70,7 @@ public final class EvolutionConfig {
         public final ForgeConfigSpec.BooleanValue showPlanets;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Speed> speed;
         public final ForgeConfigSpec.BooleanValue sunPath;
+        public final ForgeConfigSpec.BooleanValue syncRendering;
         public final ForgeConfigSpec.EnumValue<EvolutionFormatter.Volume> volume;
 
         Client(final ForgeConfigSpec.Builder builder) {
@@ -81,6 +82,7 @@ public final class EvolutionConfig {
             this.leavesCulling = builder.translation("evolution.config.leavesCulling").defineInRange("leavesCulling", 3, 0, 8);
             this.showPlanets = builder.translation("evolution.config.showPlanets").define("showPlanets", true);
             this.animatedTextures = builder.translation("evolution.config.animatedTextures").define("animatedTextures", true);
+            this.syncRendering = builder.translation("evolution.config.syncRendering").define("syncRendering", false);
             builder.pop();
             builder.push("units");
             this.limitTimeUnitsToHour = builder.translation("evolution.config.limitTimeUnitsToHour").define("limitTimeUnitsToHour", false);

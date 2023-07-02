@@ -62,6 +62,8 @@
   "evolution.config.speed": "Unidade de Velocidade",
   "evolution.config.sunPath": "Mostrar Caminho do Sol",
   "evolution.config.sunPath.comment": "Mostra uma linha verde nos céus representando o caminho do Sol através do dia.",
+  "evolution.config.syncRendering": "Compilar Chunks apenas no Thread Principal",
+  "evolution.config.syncRendering.comment": "Faz com que a compilação de chunks seja computada apenas no thread principal, como era em versões antigas como 1.6.4. Isso irá deixar o carregamento de chunks mais lento, mas a performance pode ficar mais estável.",
   "evolution.config.torchTime": "Tempo da Tocha",
   "evolution.config.torchTime.comment": "Define o tempo pelo qual a tocha ficará acessa, em horas dentro do jogo.\n0 vai desabilitar que elas apaguem.",
   "evolution.config.volume": "Unidade de Volume",

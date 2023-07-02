@@ -25,11 +25,13 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.client.model.data.IModelData;
+import org.jetbrains.annotations.Nullable;
 import tgw.evolution.Evolution;
 import tgw.evolution.patches.IPoseStackPatch;
 import tgw.evolution.util.collection.RArrayList;
@@ -38,7 +40,6 @@ import tgw.evolution.util.collection.RSet;
 import tgw.evolution.util.constants.RenderLayer;
 import tgw.evolution.util.math.Vec3d;
 
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -51,7 +52,11 @@ public class EvChunkRenderDispatcher {
     private final Vec3d camera = new Vec3d(Vec3.ZERO);
     private final Executor executor;
     private final Queue<ChunkBuilderPack> freeBuffers;
+    private final EvVisGraph graph = new EvVisGraph();
     private final ProcessorMailbox<Runnable> mailbox;
+    private final PoseStack matrices = new PoseStack();
+    private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+    private final Random random = new Random();
     private final PriorityBlockingQueue<RenderChunk.ChunkCompileTask> toBatchHighPriority = new PriorityBlockingQueue<>();
     private final Queue<RenderChunk.ChunkCompileTask> toBatchLowPriority = new LinkedBlockingDeque();
     private final Queue<Runnable> toUpload = new ConcurrentLinkedQueue<>();
@@ -161,8 +166,7 @@ public class EvChunkRenderDispatcher {
         return this.toBatchCount == 0 && this.toUpload.isEmpty();
     }
 
-    @Nullable
-    private RenderChunk.ChunkCompileTask pollTask() {
+    private @Nullable RenderChunk.ChunkCompileTask pollTask() {
         if (this.highPriorityQuota <= 0) {
             RenderChunk.ChunkCompileTask compileTask = this.toBatchLowPriority.poll();
             if (compileTask != null) {
@@ -179,8 +183,8 @@ public class EvChunkRenderDispatcher {
         return this.toBatchLowPriority.poll();
     }
 
-    public void rebuildChunkSync(RenderChunk chunk, EvRenderRegionCache cache) {
-        chunk.compileSync(cache);
+    public void rebuildChunkSync(RenderChunk chunk) {
+        chunk.compileSync();
     }
 
     private void runTask() {
@@ -370,11 +374,11 @@ public class EvChunkRenderDispatcher {
         /**
          * This method only runs on the Main Thread.
          */
-        public void compileSync(EvRenderRegionCache cache) {
-            boolean canceled = this.cancelTasks();
-            EvRenderChunkRegion region = cache.createRegion(EvChunkRenderDispatcher.this.level,
-                                                            this.x - 1, this.y - 1, this.z - 1, this.x + 16, this.y + 16, this.z + 16, 1);
-            if (region == null) {
+        public void compileSync() {
+            int chunkX = SectionPos.blockToSectionCoord(this.x);
+            int chunkZ = SectionPos.blockToSectionCoord(this.z);
+            LevelChunk chunk = EvChunkRenderDispatcher.this.level.getChunk(chunkX, chunkZ);
+            if (chunk.isYSpaceEmpty(this.y, this.y + 15)) {
                 RenderChunk.this.updateGlobalBlockEntities(ReferenceSets.emptySet());
                 RenderChunk.this.compiled = CompiledChunk.EMPTY;
                 RenderChunk.this.cachedFlags = 0;
@@ -382,12 +386,6 @@ public class EvChunkRenderDispatcher {
                 return;
             }
             CompiledChunk oldChunk = this.compiled;
-            RebuildTask task = new RenderChunk.RebuildTask(chunkPos(this.x, this.z), this.getDistToPlayerSqr(), region,
-                                                           canceled || oldChunk != CompiledChunk.UNCOMPILED);
-            Vec3 cam = EvChunkRenderDispatcher.this.getCameraPosition();
-            float camX = (float) cam.x;
-            float camY = (float) cam.y;
-            float camZ = (float) cam.z;
             CompiledChunk compiledChunk;
             if (oldChunk == CompiledChunk.UNCOMPILED || oldChunk == CompiledChunk.EMPTY) {
                 compiledChunk = new CompiledChunk();
@@ -400,10 +398,100 @@ public class EvChunkRenderDispatcher {
                 compiledChunk.renderableTEs.clear();
                 compiledChunk.transparencyState = null;
             }
-            RenderChunk.this.updateGlobalBlockEntities(task.compile(camX, camY, camZ, compiledChunk, EvChunkRenderDispatcher.this.fixedBuffers));
+            ChunkBuilderPack fixedBuffers = EvChunkRenderDispatcher.this.fixedBuffers;
+            ReferenceSet<BlockEntity> blockEntities = null;
+            int posX = RenderChunk.this.x;
+            int posY = RenderChunk.this.y;
+            int posZ = RenderChunk.this.z;
+            EvVisGraph visgraph = EvChunkRenderDispatcher.this.graph;
+            visgraph.reset();
+            PoseStack matrices = EvChunkRenderDispatcher.this.matrices;
+            ((IPoseStackPatch) matrices).reset();
+            ModelBlockRenderer.enableCaching();
+            Random random = EvChunkRenderDispatcher.this.random;
+            BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
+            BlockPos.MutableBlockPos mutable = EvChunkRenderDispatcher.this.mutablePos;
+            Long2ObjectMap<IModelData> modelDataCache = EvModelDataManager.getModelData(EvChunkRenderDispatcher.this.level, chunkPos(this.x, this.z));
+            for (int dx = 0; dx < 16; ++dx) {
+                mutable.setX(posX + dx);
+                for (int dy = 0; dy < 16; ++dy) {
+                    mutable.setY(posY + dy);
+                    for (int dz = 0; dz < 16; ++dz) {
+                        BlockState blockState = chunk.getBlockState(mutable.setZ(posZ + dz));
+                        if (blockState.isSolidRender(EvChunkRenderDispatcher.this.level, mutable)) {
+                            visgraph.setOpaque(dx, dy, dz);
+                        }
+                        if (blockState.hasBlockEntity()) {
+                            BlockEntity tile = chunk.getBlockEntity(mutable);
+                            if (tile != null) {
+                                BlockEntityRenderer<BlockEntity> renderer = Minecraft.getInstance()
+                                                                                     .getBlockEntityRenderDispatcher()
+                                                                                     .getRenderer(tile);
+                                if (renderer != null) {
+                                    if (renderer.shouldRenderOffScreen(tile)) {
+                                        if (blockEntities == null) {
+                                            blockEntities = new ROpenHashSet<>();
+                                        }
+                                        blockEntities.add(tile);
+                                    }
+                                    else {
+                                        compiledChunk.renderableTEs.add(tile);
+                                    }
+                                }
+                            }
+                        }
+                        FluidState fluidState = blockState.getFluidState();
+                        IModelData modelData = modelDataCache.getOrDefault(mutable.asLong(), EmptyModelData.INSTANCE);
+                        for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
+                            RenderType renderType = ChunkBuilderPack.RENDER_TYPES[i];
+                            ForgeHooksClient.setRenderType(renderType);
+                            if (!fluidState.isEmpty() && ItemBlockRenderTypes.canRenderInLayer(fluidState, renderType)) {
+                                BufferBuilder builder = fixedBuffers.builder(i);
+                                if ((compiledChunk.hasLayer & 1 << i) == 0) {
+                                    compiledChunk.hasLayer |= 1 << i;
+                                    RenderChunk.this.beginLayer(builder);
+                                }
+                                if (dispatcher.renderLiquid(mutable, EvChunkRenderDispatcher.this.level, builder, blockState, fluidState)) {
+                                    compiledChunk.hasBlocks |= 1 << i;
+                                }
+                            }
+                            if (blockState.getRenderShape() != RenderShape.INVISIBLE &&
+                                ItemBlockRenderTypes.canRenderInLayer(blockState, renderType)) {
+                                BufferBuilder builder = fixedBuffers.builder(i);
+                                if ((compiledChunk.hasLayer & 1 << i) == 0) {
+                                    compiledChunk.hasLayer |= 1 << i;
+                                    RenderChunk.this.beginLayer(builder);
+                                }
+                                matrices.pushPose();
+                                matrices.translate(dx, dy, dz);
+                                if (dispatcher.renderBatched(blockState, mutable, EvChunkRenderDispatcher.this.level, matrices, builder, true, random,
+                                                             modelData)) {
+                                    compiledChunk.hasBlocks |= 1 << i;
+                                }
+                                matrices.popPose();
+                            }
+                        }
+                    }
+                }
+            }
+            compiledChunk.visibilitySet = visgraph.resolve();
+            ForgeHooksClient.setRenderType(null);
+            if ((compiledChunk.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
+                BufferBuilder builder = fixedBuffers.builder(RenderLayer.TRANSLUCENT);
+                builder.setQuadSortOrigin(this.x - posX, this.y - posY, this.z - posZ);
+                compiledChunk.transparencyState = builder.getSortState();
+            }
             for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
                 if ((compiledChunk.hasLayer & 1 << i) != 0) {
-                    RenderChunk.this.getBuffer(i).upload(EvChunkRenderDispatcher.this.fixedBuffers.builder(i));
+                    fixedBuffers.builder(i).end();
+                }
+            }
+            ModelBlockRenderer.clearCache();
+            blockEntities = blockEntities == null ? ReferenceSets.emptySet() : blockEntities;
+            RenderChunk.this.updateGlobalBlockEntities(blockEntities);
+            for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
+                if ((compiledChunk.hasLayer & 1 << i) != 0) {
+                    RenderChunk.this.getBuffer(i).upload(fixedBuffers.builder(i));
                 }
             }
             RenderChunk.this.compiled = compiledChunk;
@@ -534,15 +622,36 @@ public class EvChunkRenderDispatcher {
         /**
          * This method only runs on the Main Thread.
          */
-        public boolean resortTransparency(@RenderLayer int renderType, EvChunkRenderDispatcher dispatcher) {
-            CompiledChunk compiledChunk = this.compiled;
+        public boolean resortTransparency(EvChunkRenderDispatcher dispatcher, boolean onThread) {
             if (this.lastResortTransparencyTask != null) {
                 this.lastResortTransparencyTask.cancel();
             }
-            if ((compiledChunk.hasLayer & 1 << renderType) == 0) {
+            if (this.isEmpty(RenderLayer.TRANSLUCENT)) {
                 return false;
             }
-            this.lastResortTransparencyTask = new ResortTransparencyTask(chunkPos(this.x, this.z), this.getDistToPlayerSqr(), compiledChunk);
+            if (onThread) {
+                if (!RenderChunk.this.hasAllNeighbors()) {
+                    return true;
+                }
+                CompiledChunk compiled = this.compiled;
+                BufferBuilder.SortState sortState = compiled.transparencyState;
+                if (sortState != null) {
+                    Vec3 cam = EvChunkRenderDispatcher.this.getCameraPosition();
+                    float camX = (float) cam.x;
+                    float camY = (float) cam.y;
+                    float camZ = (float) cam.z;
+                    BufferBuilder builder = EvChunkRenderDispatcher.this.fixedBuffers.builder(RenderLayer.TRANSLUCENT);
+                    RenderChunk.this.beginLayer(builder);
+                    builder.restoreSortState(sortState);
+                    builder.setQuadSortOrigin(camX - RenderChunk.this.x, camY - RenderChunk.this.y, camZ - RenderChunk.this.z);
+                    compiled.transparencyState = builder.getSortState();
+                    builder.end();
+                    RenderChunk.this.getBuffer(RenderLayer.TRANSLUCENT)
+                                    .upload(EvChunkRenderDispatcher.this.fixedBuffers.builder(RenderLayer.TRANSLUCENT));
+                }
+                return true;
+            }
+            this.lastResortTransparencyTask = new ResortTransparencyTask(this.getDistToPlayerSqr(), this.compiled);
             dispatcher.schedule(this.lastResortTransparencyTask);
             return true;
         }
@@ -611,18 +720,10 @@ public class EvChunkRenderDispatcher {
             protected final double distAtCreation;
             protected final AtomicBoolean isCancelled = new AtomicBoolean(false);
             protected final boolean isHighPriority;
-            protected Long2ObjectMap<IModelData> modelData;
 
-            public ChunkCompileTask(long chunkPos, double distAtCreation, boolean isHighPriority) {
+            public ChunkCompileTask(double distAtCreation, boolean isHighPriority) {
                 this.distAtCreation = distAtCreation;
                 this.isHighPriority = isHighPriority;
-                if (chunkPos == Long.MIN_VALUE) {
-                    this.modelData = Long2ObjectMaps.emptyMap();
-                }
-                else {
-                    assert Minecraft.getInstance().level != null;
-                    this.modelData = EvModelDataManager.getModelData(Minecraft.getInstance().level, chunkPos);
-                }
             }
 
             public abstract void cancel();
@@ -634,10 +735,6 @@ public class EvChunkRenderDispatcher {
 
             public abstract CompletableFuture<ChunkTaskResult> doTask(ChunkBuilderPack builderPack);
 
-            public IModelData getModelData(long blockPos) {
-                return this.modelData.getOrDefault(blockPos, EmptyModelData.INSTANCE);
-            }
-
             protected abstract String name();
         }
 
@@ -647,11 +744,19 @@ public class EvChunkRenderDispatcher {
             static final ThreadLocal<EvVisGraph> GRAPH_CACHE = ThreadLocal.withInitial(EvVisGraph::new);
             static final ThreadLocal<PoseStack> MATRICES_CACHE = ThreadLocal.withInitial(PoseStack::new);
             static final ThreadLocal<BlockPos.MutableBlockPos> POS_CACHE = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
+            protected Long2ObjectMap<IModelData> modelData;
             protected @Nullable EvRenderChunkRegion region;
 
             public RebuildTask(long chunkPos, double distAtCreation, @Nullable EvRenderChunkRegion region, boolean isHighPriority) {
-                super(chunkPos, distAtCreation, isHighPriority);
+                super(distAtCreation, isHighPriority);
                 this.region = region;
+                if (chunkPos == Long.MIN_VALUE) {
+                    this.modelData = Long2ObjectMaps.emptyMap();
+                }
+                else {
+                    assert Minecraft.getInstance().level != null;
+                    this.modelData = EvModelDataManager.getModelData(Minecraft.getInstance().level, chunkPos);
+                }
             }
 
             @Override
@@ -669,9 +774,6 @@ public class EvChunkRenderDispatcher {
                 int posX = RenderChunk.this.x;
                 int posY = RenderChunk.this.y;
                 int posZ = RenderChunk.this.z;
-//                if (posX == -2 * 16 && posY == -1 * 16 && posZ == 12 * 16) {
-//                    Evolution.info("Hi");
-//                }
                 if (region != null && !region.isSectionEmpty(posX, posY, posZ)) {
                     EvVisGraph visgraph = GRAPH_CACHE.get();
                     visgraph.reset();
@@ -806,6 +908,10 @@ public class EvChunkRenderDispatcher {
                 });
             }
 
+            public IModelData getModelData(long blockPos) {
+                return this.modelData.getOrDefault(blockPos, EmptyModelData.INSTANCE);
+            }
+
             @Override
             protected String name() {
                 return "rend_chk_rebuild";
@@ -816,8 +922,8 @@ public class EvChunkRenderDispatcher {
 
             private final CompiledChunk compiledChunk;
 
-            public ResortTransparencyTask(long chunkPos, double distAtCreation, CompiledChunk compiledChunk) {
-                super(chunkPos, distAtCreation, true);
+            public ResortTransparencyTask(double distAtCreation, CompiledChunk compiledChunk) {
+                super(distAtCreation, true);
                 this.compiledChunk = compiledChunk;
             }
 
@@ -838,12 +944,12 @@ public class EvChunkRenderDispatcher {
                 if (this.isCancelled.get()) {
                     return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
                 }
-                Vec3 cam = EvChunkRenderDispatcher.this.getCameraPosition();
-                float camX = (float) cam.x;
-                float camY = (float) cam.y;
-                float camZ = (float) cam.z;
                 BufferBuilder.SortState sortState = this.compiledChunk.transparencyState;
                 if (sortState != null && (this.compiledChunk.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
+                    Vec3 cam = EvChunkRenderDispatcher.this.getCameraPosition();
+                    float camX = (float) cam.x;
+                    float camY = (float) cam.y;
+                    float camZ = (float) cam.z;
                     BufferBuilder builder = builderPack.builder(RenderLayer.TRANSLUCENT);
                     RenderChunk.this.beginLayer(builder);
                     builder.restoreSortState(sortState);
