@@ -508,7 +508,7 @@ public class EvChunkRenderDispatcher {
             return this.buffers[renderType];
         }
 
-        protected double getDistToPlayerSqr() {
+        protected double getDistToCameraSqr() {
             Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
             Vec3 position = camera.getPosition();
             double x = this.x + 8 - position.x;
@@ -530,7 +530,7 @@ public class EvChunkRenderDispatcher {
         }
 
         public boolean hasAllNeighbors() {
-            if (this.getDistToPlayerSqr() <= 24 * 24) {
+            if (this.getDistToCameraSqr() <= 24 * 24) {
                 return true;
             }
             return this.doesChunkExistAt(this.x - 16, this.z) &&
@@ -594,7 +594,7 @@ public class EvChunkRenderDispatcher {
                 EvChunkRenderDispatcher.this.renderer.addRecentlyCompiledChunk(RenderChunk.this);
                 return;
             }
-            this.lastRebuildTask = new RenderChunk.RebuildTask(chunkPos(this.x, this.z), this.getDistToPlayerSqr(), region,
+            this.lastRebuildTask = new RenderChunk.RebuildTask(chunkPos(this.x, this.z), this.getDistToCameraSqr(), region,
                                                                canceled || this.compiled != CompiledChunk.UNCOMPILED);
             dispatcher.schedule(this.lastRebuildTask);
         }
@@ -651,7 +651,7 @@ public class EvChunkRenderDispatcher {
                 }
                 return true;
             }
-            this.lastResortTransparencyTask = new ResortTransparencyTask(this.getDistToPlayerSqr(), this.compiled);
+            this.lastResortTransparencyTask = new ResortTransparencyTask(this.getDistToCameraSqr(), this.compiled);
             dispatcher.schedule(this.lastResortTransparencyTask);
             return true;
         }

@@ -7,7 +7,6 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import com.mojang.logging.LogUtils;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
@@ -72,7 +71,7 @@ import net.minecraftforge.client.IWeatherRenderHandler;
 import net.minecraftforge.common.ForgeConfig;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11C;
-import org.slf4j.Logger;
+import tgw.evolution.Evolution;
 import tgw.evolution.blocks.BlockKnapping;
 import tgw.evolution.blocks.BlockMolding;
 import tgw.evolution.blocks.tileentities.TEKnapping;
@@ -108,7 +107,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.random.RandomGenerator;
 
 public class EvLevelRenderer implements ResourceManagerReloadListener, AutoCloseable {
-    private static final Logger LOGGER = LogUtils.getLogger();
     private static final ResourceLocation CLOUDS_LOCATION = new ResourceLocation("textures/environment/clouds.png");
     private static final ResourceLocation END_SKY_LOCATION = new ResourceLocation("textures/environment/end_sky.png");
     private static final ResourceLocation FORCEFIELD_LOCATION = new ResourceLocation("textures/misc/forcefield.png");
@@ -482,7 +480,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                     this.lastFullRenderChunkUpdate = null;
                 }
                 catch (Exception exception) {
-                    LOGGER.warn("Full update failed", exception);
+                    Evolution.warn("Full update failed", exception);
                 }
             }
             this.renderChunkStorage = new RenderChunkStorage(this.viewArea.chunks.length);
@@ -854,7 +852,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     public void doEntityOutline() {
         if (this.shouldShowEntityOutlines()) {
             assert this.entityTarget != null;
-            RenderSystem.enableBlend();
             Blending.DEFAULT_0_1.apply();
             this.entityTarget.blitToScreen(this.mc.getWindow().getWidth(), this.mc.getWindow().getHeight(), false);
             RenderSystem.disableBlend();
@@ -1078,12 +1075,12 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             this.entityTarget = this.entityEffect.getTempTarget("final");
         }
         catch (IOException e) {
-            LOGGER.warn("Failed to load shader: {}", resourcelocation, e);
+            Evolution.warn("Failed to load shader: {}", resourcelocation, e);
             this.entityEffect = null;
             this.entityTarget = null;
         }
         catch (JsonSyntaxException e) {
-            LOGGER.warn("Failed to parse shader: {}", resourcelocation, e);
+            Evolution.warn("Failed to parse shader: {}", resourcelocation, e);
             this.entityEffect = null;
             this.entityTarget = null;
         }
@@ -1095,17 +1092,12 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         try {
             PostChain chain = new PostChain(this.mc.getTextureManager(), this.mc.getResourceManager(), this.mc.getMainRenderTarget(), shader);
             chain.resize(this.mc.getWindow().getWidth(), this.mc.getWindow().getHeight());
-            RenderTarget translucent = chain.getTempTarget("translucent");
-            RenderTarget itemEntity = chain.getTempTarget("itemEntity");
-            RenderTarget particles = chain.getTempTarget("particles");
-            RenderTarget weather = chain.getTempTarget("weather");
-            RenderTarget clouds = chain.getTempTarget("clouds");
             this.transparencyChain = chain;
-            this.translucentTarget = translucent;
-            this.itemEntityTarget = itemEntity;
-            this.particlesTarget = particles;
-            this.weatherTarget = weather;
-            this.cloudsTarget = clouds;
+            this.translucentTarget = chain.getTempTarget("translucent");
+            this.itemEntityTarget = chain.getTempTarget("itemEntity");
+            this.particlesTarget = chain.getTempTarget("particles");
+            this.weatherTarget = chain.getTempTarget("weather");
+            this.cloudsTarget = chain.getTempTarget("clouds");
         }
         catch (Exception exception) {
             //noinspection InstanceofCatchParameter
@@ -1126,7 +1118,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                 CrashReport crashreport = this.mc.fillReport(new CrashReport(message, shaderException));
                 this.mc.options.graphicsMode = GraphicsStatus.FANCY;
                 this.mc.options.save();
-                LOGGER.error(LogUtils.FATAL_MARKER, message, shaderException);
+                Evolution.error(message, shaderException);
                 this.mc.emergencySave();
                 Minecraft.crash(crashreport);
             }
@@ -1177,6 +1169,23 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         return this.listener;
     }
 
+    private boolean needsFrustumUpdate(Camera camera) {
+        double camRotX = Math.floor(camera.getXRot() / 2.0F);
+        double camRotY = Math.floor(camera.getYRot() / 2.0F);
+        if (camRotX != this.prevCamRotX || camRotY != this.prevCamRotY) {
+            this.prevCamRotX = camRotX;
+            this.prevCamRotY = camRotY;
+            this.needsFrustumUpdate.set(false);
+            return true;
+        }
+        if (this.needsFrustumUpdate.compareAndSet(true, false)) {
+            this.prevCamRotX = camRotX;
+            this.prevCamRotY = camRotY;
+            return true;
+        }
+        return false;
+    }
+
     public void needsUpdate() {
         this.needsFullRenderChunkUpdate = true;
         this.generateClouds = true;
@@ -1193,6 +1202,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     private void partialUpdate(RenderChunkStorage storage, Vec3 camPos, boolean smartCull) {
         if (!this.recentlyCompiledChunks.isEmpty()) {
             OArrayFIFOQueue<RenderChunkInfo> queue = QUEUE_CACHE.get();
+            assert queue.isEmpty();
             for (int i = 0, len = this.recentlyCompiledChunks.size(); i < len; i++) {
                 EvChunkRenderDispatcher.RenderChunk chunk = this.recentlyCompiledChunks.get(i);
                 RenderChunkInfo renderChunkInfo = storage.renderInfoMap.get(chunk);
@@ -1235,17 +1245,14 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         ProfilerFiller profiler = this.mc.getProfiler();
         if (renderLayer == RenderLayer.TRANSLUCENT) {
             profiler.push("translucent_sort");
-            double d0 = camX - this.xTransparentOld;
-            double d1 = camY - this.yTransparentOld;
-            double d2 = camZ - this.zTransparentOld;
-            if (d0 * d0 + d1 * d1 + d2 * d2 > 1) {
+            if (this.shouldSortTransparent(camX, camY, camZ)) {
                 this.xTransparentOld = camX;
                 this.yTransparentOld = camY;
                 this.zTransparentOld = camZ;
                 int j = 0;
                 for (int i = 0; i < size; i++) {
                     if (j < 15 && this.renderChunksInFrustum.get(i).resortTransparency(this.chunkRenderDispatcher, this.renderOnThread)) {
-                        j++;
+                        ++j;
                     }
                 }
             }
@@ -1277,6 +1284,9 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         }
         if (shader.FOG_COLOR != null) {
             shader.FOG_COLOR.set(RenderSystem.getShaderFogColor());
+        }
+        if (shader.FOG_SHAPE != null) {
+            shader.FOG_SHAPE.set(RenderSystem.getShaderFogShape().getIndex());
         }
         if (shader.TEXTURE_MATRIX != null) {
             shader.TEXTURE_MATRIX.set(RenderSystem.getTextureMatrix());
@@ -1751,7 +1761,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             }
             else {
                 profiler.popPush("clouds");
-                RenderSystem.setShader(RenderHelper.SHADER_POSITION_TEX_COLOR_NORMAL);
+                RenderSystemAccessor.setShader(GameRenderer.getPositionTexColorNormalShader());
                 this.renderClouds(matrices, projectionMatrix, partialTicks, camX, camY, camZ);
             }
         }
@@ -2175,6 +2185,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             this.lastCameraChunkY = secY;
             this.lastCameraChunkZ = secZ;
             this.viewArea.repositionCamera(camX, camZ);
+            Evolution.info("Camera changed chunk");
         }
         this.chunkRenderDispatcher.setCamera(camPos);
         profiler.popPush("culling");
@@ -2202,34 +2213,30 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             this.needsFullRenderChunkUpdate = false;
             this.lastFullRenderChunkUpdate = Util.backgroundExecutor().submit(() -> {
                 OArrayFIFOQueue<RenderChunkInfo> queue = QUEUE_CACHE.get();
+                assert queue.isEmpty();
                 this.initializeQueueForFullUpdate(camera, queue);
                 RenderChunkStorage renderChunkStorage = new RenderChunkStorage(this.viewArea.chunks.length);
                 this.updateRenderChunks(renderChunkStorage, camPos, queue, smartCull);
+                queue.clear();
                 this.renderChunkStorage = renderChunkStorage;
                 this.needsFrustumUpdate.set(true);
-                queue.clear();
             });
             profiler.pop();
         }
         profiler.push("partial_update");
         RenderChunkStorage storage = this.renderChunkStorage;
-        if (storage != null) {
-            if (this.renderOnThread) {
+        assert storage != null;
+        if (this.renderOnThread) {
+            this.partialUpdate(storage, camPos, smartCull);
+        }
+        else {
+            synchronized (this.recentlyCompiledChunks) {
                 this.partialUpdate(storage, camPos, smartCull);
-            }
-            else {
-                synchronized (this.recentlyCompiledChunks) {
-                    this.partialUpdate(storage, camPos, smartCull);
-                }
             }
         }
         profiler.pop();
-        double camRotX = Math.floor(camera.getXRot() / 2.0F);
-        double camRotY = Math.floor(camera.getYRot() / 2.0F);
-        if (camRotX != this.prevCamRotX || camRotY != this.prevCamRotY || this.needsFrustumUpdate.compareAndSet(true, false)) {
+        if (this.needsFrustumUpdate(camera)) {
             this.applyFrustum(frustum.offsetToFullyIncludeCameraCube(8));
-            this.prevCamRotX = camRotX;
-            this.prevCamRotY = camRotY;
         }
         profiler.pop();
     }
@@ -2239,6 +2246,13 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
                this.entityTarget != null &&
                this.entityEffect != null &&
                this.mc.player != null;
+    }
+
+    private boolean shouldSortTransparent(double camX, double camY, double camZ) {
+        double d0 = camX - this.xTransparentOld;
+        double d1 = camY - this.yTransparentOld;
+        double d2 = camZ - this.zTransparentOld;
+        return d0 * d0 + d1 * d1 + d2 * d2 > 1;
     }
 
     public void tick() {
