@@ -45,6 +45,7 @@ import tgw.evolution.patches.IParticleEnginePatch;
 import tgw.evolution.util.AllocationRateCalculator;
 import tgw.evolution.util.collection.OArrayList;
 import tgw.evolution.util.collection.OList;
+import tgw.evolution.util.math.ChunkPosMutable;
 import tgw.evolution.util.math.Metric;
 import tgw.evolution.util.time.Time;
 
@@ -59,14 +60,13 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
     @Shadow @Final private static Map<Heightmap.Types, String> HEIGHTMAP_NAMES;
     @Unique private final AllocationRateCalculator allocationRateCalculator = new AllocationRateCalculator();
     @Unique private final OList<String> gameInfo = new OArrayList<>();
-    @Unique private final Heightmap.Types[] heightmapTypes = Heightmap.Types.values();
     @Unique private final MobCategory[] mobCategories = MobCategory.values();
     @Unique private final OList<String> systemInfo = new OArrayList<>();
     @Shadow protected HitResult block;
     @Shadow protected HitResult liquid;
     @Unique private @Nullable String cpu;
     @Unique private @Nullable String javaVersion;
-    @Shadow private @Nullable ChunkPos lastPos;
+    @Shadow private @Nullable ChunkPos lastPos = new ChunkPosMutable();
     @Unique private @Nullable String mc;
     @Unique private @Nullable String mcFull;
     @Shadow @Final private Minecraft minecraft;
@@ -96,6 +96,7 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
      */
     @Overwrite
     protected List<String> getGameInformation() {
+        assert this.lastPos != null;
         assert this.minecraft.player != null;
         assert this.minecraft.level != null;
         assert this.minecraft.getConnection() != null;
@@ -110,18 +111,18 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
                   Metric.format(integratedServer.getAverageTickTime(), 0) +
                   " ms ticks, " +
                   Metric.format(sentPackets, 0) +
-                  " tx, " +
+                  " sent, " +
                   Metric.format(receivedPackets, 0) +
-                  " rx";
+                  " received";
         }
         else {
             pct = "\"" +
                   this.minecraft.player.getServerBrand() +
                   "\" server, " +
                   Metric.format(sentPackets, 0) +
-                  " tx, " +
+                  " sent, " +
                   Metric.format(receivedPackets, 0) +
-                  " rx";
+                  " received";
         }
         BlockPos pos = this.minecraft.player.blockPosition();
         if (this.minecraft.showOnlyReducedInfo()) {
@@ -145,10 +146,10 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
             case EAST -> "Towards positive X";
             default -> "Invalid";
         };
-        if (this.lastPos == null ||
-            this.lastPos.x != SectionPos.blockToSectionCoord(pos.getX()) ||
-            this.lastPos.z != SectionPos.blockToSectionCoord(pos.getZ())) {
-            this.lastPos = new ChunkPos(pos);
+        int secX = SectionPos.blockToSectionCoord(pos.getX());
+        int secZ = SectionPos.blockToSectionCoord(pos.getZ());
+        if (this.lastPos.x != secX || this.lastPos.z != secZ) {
+            ((ChunkPosMutable) this.lastPos).set(secX, secZ);
             this.clearChunkCache();
         }
         Level level = this.getLevel();
@@ -162,11 +163,6 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
                           ((IParticleEnginePatch) this.minecraft.particleEngine).getRenderedParticles() +
                           "/" +
                           this.minecraft.particleEngine.countParticles());
-        this.gameInfo.add(this.minecraft.level.gatherChunkSourceStats());
-        String serverChunkStats = this.getServerChunkStats();
-        if (serverChunkStats != null) {
-            this.gameInfo.add(serverChunkStats);
-        }
         this.gameInfo.add(this.minecraft.level.dimension().location() + " FC: " + forcedChunks.size());
         this.gameInfo.add("");
         this.gameInfo.add("XYZ: " +
@@ -183,7 +179,7 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
                           " " +
                           (pos.getZ() & 15) +
                           " in " +
-                          SectionPos.blockToSectionCoord(pos.getX()) +
+                          secX +
                           " " +
                           SectionPos.blockToSectionCoord(pos.getY()) +
                           " " +
@@ -207,35 +203,13 @@ public abstract class DebugScreenOverlayMixin extends GuiComponent {
             int skyLight = this.minecraft.level.getBrightness(LightLayer.SKY, pos);
             int blockLight = this.minecraft.level.getBrightness(LightLayer.BLOCK, pos);
             this.gameInfo.add("Client Light: " + light + " (" + skyLight + " sky, " + blockLight + " block)");
-            LevelChunk chunk = this.getServerChunk();
-            StringBuilder builder = new StringBuilder("CH");
-            for (Heightmap.Types types : this.heightmapTypes) {
-                if (types.sendToClient()) {
-                    builder.append(" ").append(HEIGHTMAP_NAMES.get(types)).append(": ").append(levelchunk.getHeight(types, pos.getX(), pos.getZ()));
-                }
-            }
-            this.gameInfo.add(builder.toString());
-            builder.setLength(0);
-            builder.append("SH");
-            for (Heightmap.Types types : this.heightmapTypes) {
-                if (types.keepAfterWorldgen()) {
-                    builder.append(" ").append(HEIGHTMAP_NAMES.get(types)).append(": ");
-                    if (chunk != null) {
-                        builder.append(chunk.getHeight(types, pos.getX(), pos.getZ()));
-                    }
-                    else {
-                        builder.append("??");
-                    }
-                }
-            }
-            this.gameInfo.add(builder.toString());
             if (pos.getY() >= this.minecraft.level.getMinBuildHeight() && pos.getY() < this.minecraft.level.getMaxBuildHeight()) {
                 this.gameInfo.add("Biome: " +
                                   this.minecraft.level.registryAccess()
                                                       .registryOrThrow(Registry.BIOME_REGISTRY)
                                                       .getKey(this.minecraft.level.getBiome(pos).value()));
-                this.gameInfo.add("Day " + (1 + (this.minecraft.level.getDayTime() + 6L * Time.TICKS_PER_HOUR) / Time.TICKS_PER_DAY));
             }
+            this.gameInfo.add("Day " + (1 + (this.minecraft.level.getDayTime() + 6L * Time.TICKS_PER_HOUR) / Time.TICKS_PER_DAY));
         }
         ServerLevel serverLevel = this.getServerLevel();
         if (serverLevel != null) {

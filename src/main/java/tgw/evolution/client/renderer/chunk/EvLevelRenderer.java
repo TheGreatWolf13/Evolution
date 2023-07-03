@@ -915,9 +915,14 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         assert this.viewArea != null;
         int totalChunks = this.viewArea.chunks.length;
         int visibleChunks = this.countRenderedChunks();
-        String str = "C: " + visibleChunks + "/" + totalChunks + " ";
-        str += "D: " + this.lastViewDistance + ", " + (this.chunkRenderDispatcher == null ? "null" : this.chunkRenderDispatcher.getStats());
-        return str;
+        return "C: " +
+               visibleChunks +
+               "/" +
+               totalChunks +
+               " D: " +
+               this.lastViewDistance +
+               ", " +
+               (this.chunkRenderDispatcher == null ? "null" : this.chunkRenderDispatcher.getStats());
     }
 
     public RenderTarget getCloudsTarget() {
