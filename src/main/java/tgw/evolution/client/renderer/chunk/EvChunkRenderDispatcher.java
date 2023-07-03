@@ -38,7 +38,6 @@ import tgw.evolution.util.collection.RArrayList;
 import tgw.evolution.util.collection.ROpenHashSet;
 import tgw.evolution.util.collection.RSet;
 import tgw.evolution.util.constants.RenderLayer;
-import tgw.evolution.util.math.Vec3d;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -49,7 +48,6 @@ public class EvChunkRenderDispatcher {
 
     final ChunkBuilderPack fixedBuffers;
     final EvLevelRenderer renderer;
-    private final Vec3d camera = new Vec3d(Vec3.ZERO);
     private final Executor executor;
     private final Queue<ChunkBuilderPack> freeBuffers;
     private final EvVisGraph graph = new EvVisGraph();
@@ -61,6 +59,9 @@ public class EvChunkRenderDispatcher {
     private final Queue<RenderChunk.ChunkCompileTask> toBatchLowPriority = new LinkedBlockingDeque();
     private final Queue<Runnable> toUpload = new ConcurrentLinkedQueue<>();
     ClientLevel level;
+    private float camX;
+    private float camY;
+    private float camZ;
     private volatile int freeBufferCount;
     private int highPriorityQuota = 2;
     private volatile int toBatchCount;
@@ -140,10 +141,6 @@ public class EvChunkRenderDispatcher {
         this.clearBatchQueue();
         this.mailbox.close();
         this.freeBuffers.clear();
-    }
-
-    public Vec3 getCameraPosition() {
-        return this.camera;
     }
 
     public int getFreeBufferCount() {
@@ -235,8 +232,10 @@ public class EvChunkRenderDispatcher {
         });
     }
 
-    public void setCamera(Vec3 camera) {
-        this.camera.set(camera);
+    public void setCamera(float x, float y, float z) {
+        this.camX = x;
+        this.camY = y;
+        this.camZ = z;
     }
 
     public void setLevel(ClientLevel level) {
@@ -400,9 +399,9 @@ public class EvChunkRenderDispatcher {
             }
             ChunkBuilderPack fixedBuffers = EvChunkRenderDispatcher.this.fixedBuffers;
             ReferenceSet<BlockEntity> blockEntities = null;
-            int posX = RenderChunk.this.x;
-            int posY = RenderChunk.this.y;
-            int posZ = RenderChunk.this.z;
+            int posX = this.x;
+            int posY = this.y;
+            int posZ = this.z;
             EvVisGraph visgraph = EvChunkRenderDispatcher.this.graph;
             visgraph.reset();
             PoseStack matrices = EvChunkRenderDispatcher.this.matrices;
@@ -478,7 +477,9 @@ public class EvChunkRenderDispatcher {
             ForgeHooksClient.setRenderType(null);
             if ((compiledChunk.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
                 BufferBuilder builder = fixedBuffers.builder(RenderLayer.TRANSLUCENT);
-                builder.setQuadSortOrigin(this.x - posX, this.y - posY, this.z - posZ);
+                builder.setQuadSortOrigin(EvChunkRenderDispatcher.this.camX - posX,
+                                          EvChunkRenderDispatcher.this.camY - posY,
+                                          EvChunkRenderDispatcher.this.camZ - posZ);
                 compiledChunk.transparencyState = builder.getSortState();
             }
             for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
@@ -636,14 +637,12 @@ public class EvChunkRenderDispatcher {
                 CompiledChunk compiled = this.compiled;
                 BufferBuilder.SortState sortState = compiled.transparencyState;
                 if (sortState != null) {
-                    Vec3 cam = EvChunkRenderDispatcher.this.getCameraPosition();
-                    float camX = (float) cam.x;
-                    float camY = (float) cam.y;
-                    float camZ = (float) cam.z;
                     BufferBuilder builder = EvChunkRenderDispatcher.this.fixedBuffers.builder(RenderLayer.TRANSLUCENT);
                     RenderChunk.this.beginLayer(builder);
                     builder.restoreSortState(sortState);
-                    builder.setQuadSortOrigin(camX - RenderChunk.this.x, camY - RenderChunk.this.y, camZ - RenderChunk.this.z);
+                    builder.setQuadSortOrigin(EvChunkRenderDispatcher.this.camX - RenderChunk.this.x,
+                                              EvChunkRenderDispatcher.this.camY - RenderChunk.this.y,
+                                              EvChunkRenderDispatcher.this.camZ - RenderChunk.this.z);
                     compiled.transparencyState = builder.getSortState();
                     builder.end();
                     RenderChunk.this.getBuffer(RenderLayer.TRANSLUCENT)
@@ -767,7 +766,7 @@ public class EvChunkRenderDispatcher {
                 }
             }
 
-            private ReferenceSet<BlockEntity> compile(float x, float y, float z, CompiledChunk compiledChunk, ChunkBuilderPack builderPack) {
+            private ReferenceSet<BlockEntity> compile(float camX, float camY, float camZ, CompiledChunk compiledChunk, ChunkBuilderPack builderPack) {
                 RSet<BlockEntity> blockEntities = null;
                 EvRenderChunkRegion region = this.region;
                 this.region = null;
@@ -848,7 +847,7 @@ public class EvChunkRenderDispatcher {
                     ForgeHooksClient.setRenderType(null);
                     if ((compiledChunk.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
                         BufferBuilder builder = builderPack.builder(RenderLayer.TRANSLUCENT);
-                        builder.setQuadSortOrigin(x - posX, y - posY, z - posZ);
+                        builder.setQuadSortOrigin(camX - posX, camY - posY, camZ - posZ);
                         compiledChunk.transparencyState = builder.getSortState();
                     }
                     for (int i = RenderLayer.SOLID, len = ChunkBuilderPack.RENDER_TYPES.length; i < len; i++) {
@@ -878,12 +877,11 @@ public class EvChunkRenderDispatcher {
                 if (this.isCancelled.get()) {
                     return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
                 }
-                Vec3 cam = EvChunkRenderDispatcher.this.getCameraPosition();
-                float camX = (float) cam.x;
-                float camY = (float) cam.y;
-                float camZ = (float) cam.z;
                 CompiledChunk compiledChunk = new CompiledChunk();
-                RenderChunk.this.updateGlobalBlockEntities(this.compile(camX, camY, camZ, compiledChunk, builderPack));
+                RenderChunk.this.updateGlobalBlockEntities(this.compile(EvChunkRenderDispatcher.this.camX,
+                                                                        EvChunkRenderDispatcher.this.camY,
+                                                                        EvChunkRenderDispatcher.this.camZ,
+                                                                        compiledChunk, builderPack));
                 if (this.isCancelled.get()) {
                     return CompletableFuture.completedFuture(ChunkTaskResult.CANCELLED);
                 }
@@ -946,14 +944,12 @@ public class EvChunkRenderDispatcher {
                 }
                 BufferBuilder.SortState sortState = this.compiledChunk.transparencyState;
                 if (sortState != null && (this.compiledChunk.hasBlocks & 1 << RenderLayer.TRANSLUCENT) != 0) {
-                    Vec3 cam = EvChunkRenderDispatcher.this.getCameraPosition();
-                    float camX = (float) cam.x;
-                    float camY = (float) cam.y;
-                    float camZ = (float) cam.z;
                     BufferBuilder builder = builderPack.builder(RenderLayer.TRANSLUCENT);
                     RenderChunk.this.beginLayer(builder);
                     builder.restoreSortState(sortState);
-                    builder.setQuadSortOrigin(camX - RenderChunk.this.x, camY - RenderChunk.this.y, camZ - RenderChunk.this.z);
+                    builder.setQuadSortOrigin(EvChunkRenderDispatcher.this.camX - RenderChunk.this.x,
+                                              EvChunkRenderDispatcher.this.camY - RenderChunk.this.y,
+                                              EvChunkRenderDispatcher.this.camZ - RenderChunk.this.z);
                     this.compiledChunk.transparencyState = builder.getSortState();
                     builder.end();
                     if (this.isCancelled.get()) {

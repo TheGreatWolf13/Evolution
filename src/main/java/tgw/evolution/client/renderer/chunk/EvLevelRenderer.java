@@ -113,7 +113,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     private static final ResourceLocation RAIN_LOCATION = new ResourceLocation("textures/environment/rain.png");
     private static final ResourceLocation SNOW_LOCATION = new ResourceLocation("textures/environment/snow.png");
     private static final ThreadLocal<OArrayFIFOQueue<RenderChunkInfo>> QUEUE_CACHE = ThreadLocal.withInitial(OArrayFIFOQueue::new);
-    private static final ThreadLocal<LongSet> VISITED_CACHE = ThreadLocal.withInitial(LongOpenHashSet::new);
     private final BlockEntityRenderDispatcher blockEntityRenderDispatcher;
     private final BufferHolder bufferHolder;
     private final RenderChunkInfoComparator comparator = new RenderChunkInfoComparator();
@@ -485,10 +484,8 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             }
             this.renderChunkStorage = new RenderChunkStorage(this.viewArea.chunks.length);
             this.renderChunksInFrustum.clear();
-            Entity entity = this.mc.getCameraEntity();
-            if (entity != null) {
-                this.viewArea.repositionCamera(entity.getX(), entity.getZ());
-            }
+            Vec3 camPos = this.mc.gameRenderer.getMainCamera().getPosition();
+            this.viewArea.repositionCamera(camPos.x, camPos.z);
             this.renderCache.clear();
         }
     }
@@ -1321,7 +1318,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         float f = this.level.effects().getCloudHeight();
         if (!Float.isNaN(f)) {
             RenderSystem.disableCull();
-            RenderSystem.enableBlend();
             RenderSystem.enableDepthTest();
             Blending.DEFAULT.apply();
             RenderSystem.depthMask(true);
@@ -2165,7 +2161,6 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
 
     private void setupRender(Camera camera, Frustum frustum, boolean isSpectator) {
         assert this.level != null;
-        assert this.mc.cameraEntity != null;
         assert this.chunkRenderDispatcher != null;
         assert this.viewArea != null;
         if (this.mc.options.getEffectiveRenderDistance() != this.lastViewDistance) {
@@ -2174,9 +2169,9 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         ProfilerFiller profiler = this.mc.getProfiler();
         profiler.push("camera");
         Vec3 camPos = camera.getPosition();
-        double camX = this.mc.cameraEntity.getX();
-        double camY = this.mc.cameraEntity.getY();
-        double camZ = this.mc.cameraEntity.getZ();
+        double camX = camPos.x;
+        double camY = camPos.y;
+        double camZ = camPos.z;
         int secX = SectionPos.posToSectionCoord(camX);
         int secY = SectionPos.posToSectionCoord(camY);
         int secZ = SectionPos.posToSectionCoord(camZ);
@@ -2185,13 +2180,12 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
             this.lastCameraChunkY = secY;
             this.lastCameraChunkZ = secZ;
             this.viewArea.repositionCamera(camX, camZ);
-            Evolution.info("Camera changed chunk");
         }
-        this.chunkRenderDispatcher.setCamera(camPos);
+        this.chunkRenderDispatcher.setCamera((float) camX, (float) camY, (float) camZ);
         profiler.popPush("culling");
-        double currentCamX = Math.floor(camPos.x / 8.0);
-        double currentCamY = Math.floor(camPos.y / 8.0);
-        double currentCamZ = Math.floor(camPos.z / 8.0);
+        double currentCamX = Math.floor(camX / 8.0);
+        double currentCamY = Math.floor(camY / 8.0);
+        double currentCamZ = Math.floor(camZ / 8.0);
         this.needsFullRenderChunkUpdate = this.needsFullRenderChunkUpdate ||
                                           currentCamX != this.prevCamX ||
                                           currentCamY != this.prevCamY ||
@@ -2350,18 +2344,14 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         int centerY = cameraY + 8;
         int centerZ = cameraZ + 8;
         Entity.setViewScale(Mth.clamp(this.mc.options.getEffectiveRenderDistance() / 8.0, 1, 2.5) * this.mc.options.entityDistanceScaling);
-        LongSet visited = VISITED_CACHE.get();
-        visited.clear();
         RenderInfoMap infoMap = storage.renderInfoMap;
         while (!queue.isEmpty()) {
             RenderChunkInfo info = queue.dequeue();
             EvChunkRenderDispatcher.RenderChunk chunk = info.chunk;
+            storage.add(chunk);
             int chunkX = chunk.getX();
             int chunkY = chunk.getY();
             int chunkZ = chunk.getZ();
-            if (visited.add(BlockPos.asLong(chunkX, chunkY, chunkZ))) {
-                storage.add(chunk);
-            }
             Direction nearestDir = Direction.getNearest(chunkX - cameraX, chunkY - cameraY, chunkZ - cameraZ);
             boolean far = Math.abs(chunkX - cameraX) > 60 || Math.abs(chunkY - cameraY) > 60 || Math.abs(chunkZ - cameraZ) > 60;
             boolean askedForUpdate = false;
@@ -2599,6 +2589,7 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
     public static class RenderChunkStorage {
         public final RenderInfoMap renderInfoMap;
         private final OList<EvChunkRenderDispatcher.RenderChunk> renderChunks;
+        private final LongSet visited = new LongOpenHashSet();
 
         public RenderChunkStorage(int size) {
             this.renderInfoMap = new RenderInfoMap(size);
@@ -2606,7 +2597,9 @@ public class EvLevelRenderer implements ResourceManagerReloadListener, AutoClose
         }
 
         public void add(EvChunkRenderDispatcher.RenderChunk chunk) {
-            this.renderChunks.add(chunk);
+            if (this.visited.add(BlockPos.asLong(chunk.getX(), chunk.getY(), chunk.getZ()))) {
+                this.renderChunks.add(chunk);
+            }
         }
     }
 
