@@ -440,7 +440,7 @@
   "evolution.gui.config.title.client": "Configurações do Client",
   "evolution.gui.config.title.common": "Configurações Comuns",
   "evolution.gui.config.title.server": "Configurações do Servidor",
-  "evolution.gui.config.unsaved": "Existem mudanças não salvar. Você tem certeza que deseja parar de editar?",
+  "evolution.gui.config.unsaved": "Existem mudanças não salvas. Você tem certeza que deseja parar de editar?",
   "evolution.gui.controls.az": "A→Z",
   "evolution.gui.controls.category": "Categoria",
   "evolution.gui.controls.confirmReset": "Clique para Confirmar!",
