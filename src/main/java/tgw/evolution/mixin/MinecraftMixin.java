@@ -75,7 +75,6 @@ import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import tgw.evolution.Evolution;
 import tgw.evolution.client.gui.ScreenCrash;
 import tgw.evolution.client.gui.ScreenOutOfMemory;
 import tgw.evolution.client.renderer.ICrashReset;
@@ -1335,11 +1334,9 @@ public abstract class MinecraftMixin extends ReentrantBlockableEventLoop<Runnabl
                     continue;
                 }
                 InteractionResult actResult = this.gameMode.useItemOn(this.player, this.level, hand, blockRayTrace);
-                Evolution.info("{}", actResult);
                 if (actResult.consumesAction()) {
                     if (actResult.shouldSwing()) {
                         this.player.swing(hand);
-                        Evolution.info("Updated pos");
                         this.lastHoldingPos.setWithOffset(blockRayTrace.getBlockPos(), blockRayTrace.getDirection());
                     }
                     this.rightClickDelay = 4;
